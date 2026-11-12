@@ -213,7 +213,10 @@ def held(c, task, body=True):
 def items(c):
     """(name, text, gap, do): gap() is "" when the machine holds the item, else the fix; do() applies it."""
     names, mailer = os.path.join(c.loop, "private-names"), os.path.join(c.routines, "send-mail.py")
-    out = [("skills", "link the workflow skills into ~/.claude/skills" + WIN * c.win,
+    need = [x for x in ("git", "py" if c.win else "python3", "gh") if not shutil.which(x)]
+    out = [("prerequisites", "git, Python 3 and gh are installed (gh signed in: gh auth status)",
+            lambda: "run: install " + ", ".join(need) + "; then gh auth login" if need else "", lambda: None),
+           ("skills", "link the workflow skills into ~/.claude/skills" + WIN * c.win,
             lambda: "" if all(os.path.lexists(os.path.join(c.skills, d)) for d in skill_dirs()) else "run: machine.py apply",
             lambda: [link(c, os.path.join(SK, d), os.path.join(c.skills, d)) for d in skill_dirs()]),
            ("private-names", "create the empty private-names file ~/.workflow-loop/private-names (mode 600)",
