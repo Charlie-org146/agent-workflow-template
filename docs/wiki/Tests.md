@@ -582,18 +582,18 @@
 | <a id="t-setup-tsv-guard-127"></a>setup-tsv-guard-127 | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) open (2026-11-12) | not run | - | local | 2026-11-12 |
 | <a id="t-set8-health"></a>set8-health | requirement | SET-8 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-adoption-golden"></a>adoption-golden | requirement | SET-11 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-no-private"></a>machine-no-private | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-windows"></a>machine-windows | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-task-layout"></a>machine-task-layout | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-custom-items"></a>machine-custom-items | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-mailer"></a>machine-mailer | requirement | SET-16 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-caps"></a>machine-caps | requirement | SET-16 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-private"></a>machine-no-private | requirement | SET-13 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-windows"></a>machine-windows | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-task-layout"></a>machine-task-layout | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-custom-items"></a>machine-custom-items | requirement | SET-11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-mailer"></a>machine-mailer | requirement | SET-13 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-caps"></a>machine-caps | requirement | SET-11 | not run | - | local | 2026-11-12 |
 
 ## Other
 

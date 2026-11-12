@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-setup/scripts/machine.py docs/wiki/Setup.md README.md
 # reads: skills/workflow-monitoring/references/operation.md skills/workflow-regression/scripts/actions.py
-# Proves the machine setup (SET-16): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
+# Proves the machine setup (SET-11, SET-13): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
 set -u
@@ -86,7 +86,7 @@ fi
 if want machine-new-machine-docs; then
   grep -q 'New machine, in order' "$here/docs/wiki/Setup.md" || no "Setup has no New machine steps"
   grep -q 'New machine steps under' "$here/README.md" || no "README does not link the New machine steps"
-  for id in SET-16; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Setup.md" || no "$id is not listed Unreviewed"; done
+  for id in SET-11 SET-13; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Setup.md" || no "$id is not listed Unreviewed"; done
   echo "PASS: Setup has a New machine section linked from the README and the new requirements are Unreviewed"
 fi
 
