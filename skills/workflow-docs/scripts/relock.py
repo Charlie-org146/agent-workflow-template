@@ -4,6 +4,7 @@ it. When every requirement line is owner-reviewed text, `relock.py` re-stamps th
 (auto-relock: all lines owner-reviewed). A line nobody reviewed leaves the page LOCKED, for the owner.
 
 usage: relock.py"""
+import argparse
 import os
 import sys
 
@@ -60,6 +61,7 @@ def relock(root):
 
 
 def main():
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
     done = relock(criteria.git("rev-parse", "--show-toplevel"))
     print("RELOCKED " + ", ".join(done) if done else "RELOCKED nothing: no reviewed page moved only by owner-reviewed lines")
     return 0
