@@ -70,8 +70,9 @@ def linked_prd(root, page, text):
             sys.path.insert(0, os.path.dirname(spec.origin))
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        import counting
-        source = mod.link_of(text, counting.sources(root).get(page, ""))
+        with open(os.path.join(root, ".loop", "docs.tsv")) as rows:  # the optional third column is the PRD source
+            listed = {c[0]: c[2].strip() for c in (x.rstrip("\n").split("\t") for x in rows if x[:1] != "#") if len(c) > 2}
+        source = mod.link_of(text, listed.get(page, ""))
         return (mod.read_link(source)[0] or "") if source else ""
     except Exception:  # an unreadable source leaves its ids unknown; the docs check names it UNREAD
         return ""
