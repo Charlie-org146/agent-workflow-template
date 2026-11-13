@@ -68,6 +68,11 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=9ef7c158 N=81dd3484 M=4599
   - The code that renders the blocks stays readable and under health's size warning: `counting.py` holds the Automation block code and `render.py` the rest, so the text a config renders is the same wherever the code sits (issue 1402).
   - Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git.
 
+- DOC-17: **Unreviewed** A PRD kept outside the repo stays in step with the repo's copy
+  - A feature's PRD source can be a page in Notion or another service, read through the configured connector or a fetched link; `docs.py sync` compares its requirement ids and text with the repo's copy in `.loop/prd/` and prints DRIFT for each one added, removed or changed.
+  - Sync rewrites only the repo's copy, and only a file it wrote; it never writes to the external source and never touches a page whose PRD lives in the repo.
+  - With no connector, or a source it cannot read, sync prints that it is not connected and fails nothing.
+
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
   - Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it.
