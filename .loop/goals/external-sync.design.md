@@ -15,11 +15,13 @@ agents then work from stale ids and the Tests table keys on ids that no longer e
 `docs.py sync [--dry-run] [--text PAGE=FILE]` visits each feature whose PRD source is `url:` or `mcp:` (pages with source
 `page` are the repo's own PRD and are never touched). It reads the PRD through `deployments.read_link` (the same
 `LOOP_PRD_READER` connector or fetched URL as `check`; `--text` hands it text a session fetched through its own connector),
-extracts the requirement ids and their text, and compares them with the page's mirror: a comment block
-`<!-- prd-sync:begin --> ... <!-- prd-sync:end -->` under the `PRD:` line, one `ID: text` line each. A difference prints
-`DRIFT <page>: <ID> added|removed|changed ...`. Unless `--dry-run`, it rewrites only that block (creating it if absent),
-prints `SYNCED <page>` and `NEXT: criteria.py render` so the Tests table follows. A comment block keeps the page inside the
-link-form contract (PRD line, then generated sections) and is invisible to the count and id checks.
+extracts the requirement ids and their text, and compares them with the repo's copy, `.loop/prd/<Page>.md`: a file that
+opens with `<!-- prd-sync: owned -->` and holds one `- ID: text` line per requirement. A difference prints
+`DRIFT <page>: <ID> added|removed|changed ...`. Unless `--dry-run`, it rewrites that file to match and prints `SYNCED <page>`.
+Why a sidecar and not a block on the wiki page: a link-form page's head may hold only the title, Milestone and Review lines
+and its sections only Runbook, Deployments and Tests (Tests is rewritten by render), so any mirror text there would break the
+page contract. "Owns" is concrete: sync writes only a file that opens with its marker, creates it when absent, and prints
+`SKIPPED` for a hand-written file at that path.
 - Never writes to the external source: the reader is read-only and no write call exists.
 - No connector, or any unreadable source: prints `not connected: <page> (<source>): <why>`, changes nothing, exits 0.
 - A source with no requirement ids keeps the mirror (`EMPTY`), never wipes it.
