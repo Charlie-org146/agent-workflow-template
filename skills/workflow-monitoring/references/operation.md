@@ -49,7 +49,7 @@ the goal, its worktree and the report rules, and records `worker: session` and t
 session runs every flow step inside itself (`flow.py` prints `IN SESSION` and starts no agent) and sends this session a
 message at each change of step or status and at the end. For each such message, run
 `sessions.py report SLUG --step S`, or at the end `--status merged|failed|waiting --pr URL` (merged is checked with gh; an
-open pull request stays `done` and reports waiting, and where `auto_merge` is on the release step runs for it). A question
+open pull request stays `done` and reports waiting, and a report never merges: the goal's PR merges only through its own `merge.py` or the operation's go, #3868). A question
 for the owner is `--status waiting --ask Q --words W`, and `operate.py send` carries the answer to the session itself. A
 goal that ended frees its session, and the next ready goal gets it, renamed again. A session goal holds a `parallel`
 slot, and one silent for `silent_minutes` (default 30) is named under Needs you (MON-8). A session you start yourself with the app's tools is recorded with
@@ -84,7 +84,7 @@ gap between check-ins, or an hour when nothing runs or waits:
    progress, time left, tokens left, latest); **Dependencies**, the drawn top-to-bottom graph, marking each goal `[>]`
    running, `[=]` holding or paused, `[ ]` queued or `[!]` stuck; **Needs you**, each open question numbered with what it is
    about, its options and a recommended answer, or `Nothing needs you`; and last, **Coming up**, the next expected events
-   with rough times and `you:` heads-ups on what the owner will need to do. There is no separate Issues list: those
+   with rough times and `you:` heads-ups on what the owner will need to do. A step only another pod or machine can do (a red proof on another platform, a Mac-only check) is never a reason to hold a goal: it is an owed to-do (`regression.py red ID --owed`), listed in the check-in here as `off-machine to-do`, and the goal merges. There is no separate Issues list: those
    belong in Needs you. Where setup installed the reply hook (`setup.py --reply-hook`), a reply in any other layout is
    blocked and told what is missing (below).
 6. Wait `NEXT_DELAY` seconds, then go to step 1. `none` means the owner turned the loop off: stop and say so.

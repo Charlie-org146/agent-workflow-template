@@ -3,27 +3,12 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde98a8 U=74036c58 -->
+Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=1e7005de N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
 - I want one session that only governs: it starts every ready goal in its own worker session, passes my answers along, and never builds anything itself.
 - I want the work to finish as fast as it safely can and run unattended: re-plan the graph from real progress, run as much as possible in parallel, answer workers' routine questions with the recommended option, and only ask me for what's truly mine.
-
-## Usage
-
-- `/workflow-monitoring operate` — Runs the operation session's loop. Each pass starts and mends goals, re-plans (start, merge and split proposals with their reasons), answers routine worker decisions with their recommended option where `full_auto` is on, then prints the check-in (headline, All sessions, Dependencies, Needs you, Coming up), never the live board (`--board` adds it; its Issues also name each followed repo on an older or unknown template version), until nothing is left. Prints `NOTHING LEFT TO OPERATE: no goal is queued, running or waiting. Nothing was merged.` or `CADENCE OFF: the owner turned the loop off. Stop.` Refuses nothing. They also run on native Windows Python. It also queues one `migrate-<repo>` goal, through `goal.py queue`, in each followed repo that is behind the template (read from `origin/<base>` first), once, and only into a checkout on its base branch.
-- `/workflow-monitoring send SLUG "text"` — Sends a worker an answer or follow-up, which its agent sees the next time it runs. Prints `SENT to <slug>: <text>`. Refuses exit 1 `REFUSED: no run named <slug>.`
-- `/workflow-monitoring go "goal" --done "line"` — Queues a goal with its frozen done lines and starts it in its own worker session if a slot is free. Prints `STARTED <slug> in <worktree>. Run watch.` or `QUEUED <slug>: <why>. Run watch.` Refuses exit 1 `REFUSED: no readable .loop/config.json. Fix: run workflow-setup.`, `REFUSED: give at least one --done, and no | in any text.`, `REFUSED: no skill flow is set. ...`, `REFUSED: bad slug (lowercase letters, digits, dashes).`, `REFUSED: <slug> already exists. Pick a new --slug.` and `REFUSED: depends-on <slugs> is not a goal in the queue or the runs.`
-- `/workflow-monitoring watch` — Keeps goals moving: starts queued goals, mends failures if the config allows, and says what waits on you. Prints `<slug> <status> step=<step> pr=<pr>`, `WAITS ON YOU <slug>: <ask> Type: <words>`, `STILL QUEUED <slug>: <why>`, `NEEDS YOU <slug>: <finding>` and `NOTHING LEFT TO RUN. Nothing was merged.` Refuses exit 1 `REFUSED: no readable .loop/config.json. Fix: run workflow-setup.`
-- `/workflow-monitoring resume SLUG` — Restarts a failed or stopped goal on its branch with a fresh agent. Prints `<time> <slug>: resumed (was <status>)`, after `RECREATED worktree <path>` if the worktree had to be rebuilt. Refuses exit 1 `REFUSED: no run named <slug>.`, `REFUSED: <slug> is <status>; resume takes a failed or stopped goal.`, `REFUSED: no agent_command in .loop/config.json.` and `REFUSED: <slug> not restarted: the session pool can't be read (...)`.
-- `/workflow-monitoring report` — Prints the state of every run as a table, then what waits on you, findings, changed criteria and queued goals: `SLUG  KIND  STATUS  STEP  TRIES  PR`, then `WAITING ON YOU`, `FINDINGS`, `REVIEWED CRITERIA CHANGED`, `HELD OR FREEZING` and `QUEUED, NOT STARTED`, after the live board; an empty list prints `(no runs yet)`, `(nothing)` or `(none)`. Refuses exit 1 `REFUSED: git <args>: <error>`. The live board's estimate line names the model chosen by a time-ordered backtest (each goal predicted only from goals that finished before it started) and its typical whole-goal error. A goal with no recorded token count shows `tokens unread` in its budget line, never 0.
-- `/workflow-monitoring dashboard` — Writes the HTML dashboard of runs, waits, findings and queued goals. Prints the dashboard's path, `<git common dir>/loop/dashboard.html`. Refuses exit 1 `REFUSED: git <args>: <error>`.
-- `/workflow-monitoring fill-pool ID...` — Registers sessions the operation session just created with the app (after you say "fill pool" when the check-in reports the pool low) as free sessions in the pool. Prints `POOLED <n> session(s); pool: <free> free, <busy> busy, <total> total (target <pool_size>)`. Refuses exit 1 `REFUSED: session <id> is busy with <goal>; nothing was added.` and `REFUSED: the session pool can't be read (...)`.
-- `/workflow-monitoring met SLUG N` — Marks done line N as met in the goal's run record. Prints `<time> <slug>: done lines met: <N, ...>`. Refuses exit 1 `REFUSED: no run named <slug>.`
-- `/workflow-monitoring cleanup` — Deletes local `loop/` branches already merged into the base branch. Prints `DELETED <branch>`, `KEPT <branch>: git would not delete it` and `<n> merged loop branch(es) deleted`. Refuses nothing.
-- `/workflow-monitoring reply-check FILE` — Checks a check-in reply against the required layout. Prints one line per problem, such as `missing section <name>`, and exits 1; a clean reply prints nothing and exits 0. Refuses exit 2 `REFUSED: cannot read <file> (<reason>). Fix: name a readable file, or - for stdin.`
-- `/workflow-monitoring reply-status` — Says whether the reply hook is installed and on in this repo. Prints `REPLY HOOK: <installed|not installed>, setting <on|off>, script <found|missing|->, let-throughs logged <n>` or `REPLY HOOK: off here (no repo with .loop/config.json)`. Refuses nothing.
 
 ## Requirements
 
@@ -42,13 +27,14 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-13** Cadence and reply format <!-- reviewed eeace5fb -->
+- MON-5: **Reviewed 2026-11-13** Cadence and reply format <!-- reviewed 02876e30 -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line;
   - All sessions, one table of every session across my repos with what it is for, its status, progress, time left, tokens left and latest report;
   - Dependencies, a drawn graph marking what is running, holding, queued or stuck;
   - Needs you, each question numbered with its options and a recommended answer, or Nothing needs you; and last, Coming up, the next expected events and what I will need to do.
   - A hook that setup installs blocks a reply that doesn't follow this layout, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
+  - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
@@ -70,8 +56,9 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
 - MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
 
-- MON-14: **Reviewed 2026-11-12** The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks <!-- reviewed b94f70f7 -->
+- MON-14: **Reviewed 2026-11-13** The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks <!-- reviewed eeac7ce2 -->
   - Each repo prints as `== name ==` within 60 characters, then a `Between repos` list for `repo/slug` dependencies, then the legend once.
+  - The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
 
 - MON-15: **Reviewed 2026-11-12** Pods coordinate through shared state, not messages: every goal records its owning pod and only that pod starts, answers, merges or resumes it; other pods show it read-only as owned by that pod; merges into one repo's main are serialized across pods by a short lock <!-- reviewed 9f4be548 -->
   - The pod id is `LOOP_POD_ID`, else the operation session's own id; a goal with no recorded pod belongs to no one. Another pod's attempt prints one `REFUSED: goal <slug> is owned by pod <id>. Fix: ...` line, exit 2, and changes nothing.
@@ -127,6 +114,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
 | [guards-null-report-bind-mend](Tests#t-guards-null-report-bind-mend) | requirement | MON-2 | Given a failed or stopped goal restarted by a worker bind or by mend, when its record is written, then report is an empty record, never null. | not run |
 | [waits-first](Tests#t-waits-first) | requirement | MON-3 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | MON-3 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
+| [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | not run |
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | MON-4 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-12 |
 | [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-12 |
@@ -188,6 +176,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
 | [reply-hook-all](Tests#t-reply-hook-all) | requirement | MON-5 | Given the reply hook's toy suite, when it runs, then every check passes. | PASS 2026-11-10 |
 | [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | MON-5 | Given the Monitoring PRD, when MON-5 is read, then it carries the check-in reply layout the hook enforces. | PASS 2026-11-13 |
 | [checkin-passes-hook](Tests#t-checkin-passes-hook) | requirement | MON-5 | Given the check-in operate.py prints, when the reply hook checks it, then it passes the layout. | PASS 2026-11-10 |
+| [machine-local-checkin](Tests#t-machine-local-checkin) | requirement | MON-5 | Given proofs owed to another machine, when the check-in is written, then they are listed under Coming up as off-machine to-dos, not as blockers. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
@@ -200,6 +189,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
 | [mon15-pod-owner](Tests#t-mon15-pod-owner) | requirement | MON-15 | Given another pod's goal, when a pod acts on it, then it is refused naming the owner and shown owned by that pod. | PASS 2026-11-12 |
 | [mon15-merge-lock](Tests#t-mon15-merge-lock) | requirement | MON-15 | Given two pods merging into one main, when they run together, then the lock serializes them. | PASS 2026-11-12 |
 | [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | MON-15 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |
+| [pr-queue-order](Tests#t-pr-queue-order) | requirement | MON-15 | Given three goals asking for their pr turn in one repo, when they ask oldest first, then the first runs its lane and the others are told who is ahead; a goal that left the pr step, a stopped holder and a ticket older than 30 minutes each give their place to the next. | not run |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | MON-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | MON-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
@@ -214,6 +204,9 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=f91170ed N=9967b317 M=0fde
 | [worker-save-159](Tests#t-worker-save-159) | defect | [#159](https://github.com/jcl2018/agent-workflow-template/issues/159) closed (2026-11-11) | Given a worker loop whose run record is merged from outside while it runs, when the loop saves, then the outside merge is kept. | not run |
 | [issue-117-bind-self](Tests#t-issue-117-bind-self) | defect | [#117](https://github.com/jcl2018/agent-workflow-template/issues/117) closed (2026-11-11) | Given a worker session that doesn't know its own id, when it runs sessions.py bind SLUG self, then it is bound by its own session id (issue: Goals can't name GitHub-side changes ... a worker session cannot find its own session id). | not run |
 | [stop-tree-session-tool](Tests#t-stop-tree-session-tool) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a hung session tool or a late mender, when it is stopped on any platform, then its whole process tree goes with it. | not run |
+| [who-merges-report](Tests#t-who-merges-report) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given two goals at pr with auto_merge on, when a session report arrives for one, then merge.py runs for neither, and merge.py for one goal merges only that goal. | not run |
+| [who-merges-fallback](Tests#t-who-merges-fallback) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given a goal the operation holds and an unheld goal, both done at pr with auto_merge on, when the worker exits, then merge.py runs only for the unheld goal. | not run |
+| [who-merges-hold-flag](Tests#t-who-merges-hold-flag) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given a goal reported with --hold, when the worker exits, then merge.py does not run for it, whatever the report's wording says. | not run |
 | [held-stale-next](Tests#t-held-stale-next) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a session goal with an old failure report and a newer session report, when the live board prints, then its next line is the newer report. | PASS 2026-11-10 |
 | [held-shows-held](Tests#t-held-shows-held) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a running goal with no worker (session reassigned, worktree kept), when the live board prints, then it is listed as held, not running and not as a background worker. | PASS 2026-11-10 |
 | [held-freezing](Tests#t-held-freezing) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a goal handed to a worker session before it is frozen, when the live board prints, then it shows at once under that session with step freezing. | PASS 2026-11-10 |
