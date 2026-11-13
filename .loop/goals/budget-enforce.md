@@ -17,3 +17,5 @@ Frozen. A wrong done line needs a new goal.
    Expect: every line starts with PASS and the last line is ALL PASS.
 2. Run `python3 skills/workflow-monitoring/scripts/pool.py usage 90`, then `python3 skills/workflow-monitoring/scripts/checkin.py`.
    Expect: the first prints `PLAN USAGE 90% recorded: plan usage 90% is above plan_pause_percent 80%`; with a goal ready, the check-in lists that no new goal starts. Run `pool.py usage 10` to clear it.
+3. Run `grep min_free_memory_gb .loop/config.json skills/workflow-setup/scripts/settings.py`.
+   Expect: this repo's config sets `min_free_memory_gb` to 3.5 (the owner's decision for this repo); the shipped default in the settings table stays 4.
