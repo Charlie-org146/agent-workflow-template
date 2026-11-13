@@ -99,7 +99,9 @@ locks) has the rules and how the owner edits a reviewed requirement. Never revie
 set in the optional third column of `.loop/docs.tsv`; that page holds `PRD: <source>` and its generated sections only. Agents
 read the PRD from the source and never copy it into the repo; its ids drive the Tests tables and health. The check reads it
 fresh (`LOOP_PRD_READER`, given the source, reaches an MCP connector such as Notion's) and reports `UNREAD`, never a pass,
-when it cannot. The `topics` setting adds a Topic column to Home and `render` groups the rows by it.
+when it cannot. The `topics` setting adds a Topic column to Home and `render` groups the rows by it. `sync` (DOC-17) keeps
+the repo's copy of an external PRD, `.loop/prd/PAGE.md`, in step: it prints `DRIFT` for each requirement added, removed or
+changed, rewrites only a copy it wrote, never writes to the source, and prints `not connected` without a connector.
 
 ## `publish`
 
@@ -145,5 +147,6 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-docs prompts` | `python3 scripts/docs.py prompts` |
 | `/workflow-docs entry` | `python3 scripts/entry.py write` (`check`, `render`, `block`, `lag [--new SLUG]` the version line) |
 | `/workflow-docs publish` | `python3 scripts/docs.py publish` |
+| `/workflow-docs sync [--dry-run]` | `python3 scripts/docs.py sync [--dry-run] [--text PAGE=FILE]` (a session that fetched the PRD through its own connector passes the text as a file) |
 | `/workflow-docs restore` | `python3 scripts/docs.py restore` |
 | `/workflow-docs milestone new TITLE \| move ISSUE TITLE \| backlog` | `python3 scripts/milestone.py new TITLE`, `move ISSUE TITLE` (free form) or `backlog` (the standing Backlog milestones) |

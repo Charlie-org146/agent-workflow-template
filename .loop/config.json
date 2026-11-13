@@ -85,7 +85,8 @@
       "Setup"
     ],
     "Docs": [
-      "Documentation"
+      "Documentation",
+      "External-PRDs"
     ]
   }
 }
