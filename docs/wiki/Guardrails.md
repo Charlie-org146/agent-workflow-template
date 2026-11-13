@@ -65,6 +65,7 @@ None
 
 - No code here: each guardrail is built by its owner feature's own goal; this page only defines the set.
 - This page never says a guardrail is on; the Tests table does, from passing regression rows.
+- Starting a goal or a lane while free memory is below `min_free_memory_gb`, live goals are at `max_active_goals` or plan usage is above `plan_pause_percent`.
 
 ## Success metrics
 

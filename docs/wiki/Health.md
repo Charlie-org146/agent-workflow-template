@@ -74,6 +74,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=b4d391e0 R=4bb528ed N=e89b4f3b M=39cf
 - It never changes code, pages or requirements; it reports and files issues.
 - The review's suggestions never change the verdict.
 - It prints the commands that remove stale worktrees and branches and never runs them.
+- Stopping a goal that passes a limit: the Performance group warns about rounds, active goals, plan usage and lane memory waits, and nothing more.
 
 ## Success metrics
 - Two rule checks on an unchanged repo print the same lines.

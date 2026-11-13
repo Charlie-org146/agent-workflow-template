@@ -67,6 +67,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=14b68802 R=9a8691a0 N=f86bd012 M=d4d1
 - The owner never writes or manages tests; the loop does.
 - The loop never runs the full suite on every goal.
 - A known failure does not block a run.
+- Stopping a lane that is already running because memory is low: only a new land or nightly run waits for `min_free_memory_gb`.
 
 ## Success metrics
 - No goal's test run in the loop takes over 15 minutes (REG-7's budget floor), and the nightly full suite runs green or every failure has its issue.
