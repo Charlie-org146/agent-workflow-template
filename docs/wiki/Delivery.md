@@ -57,7 +57,6 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 - It doesn't decide what to build.
 - It never changes a done line once started.
 - It doesn't run several goals at once (Monitoring does).
-- Running a goal past `time_budget_minutes`, `token_budget` or `max_merge_rounds`: it starts no new step until the operation raises the limit.
 
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.

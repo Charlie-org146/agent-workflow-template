@@ -74,7 +74,6 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
 - It never commits private settings or values.
 - An update never overwrites a repo's own config, requirements, docs or local settings.
 - It doesn't rewrite a page that has its own sections; that page is listed for a person.
-- Hiding a limit: `time_budget_minutes`, `max_merge_rounds`, `max_active_goals`, `plan_pause_percent` and `min_free_memory_gb` are in the settings table.
 
 ## Success metrics
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.

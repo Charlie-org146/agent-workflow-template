@@ -76,7 +76,6 @@ Review: **Reviewed 2026-11-13** <!-- prd P=41bfc9ae R=15f81fda N=9967b317 M=0fde
 - The operation session never builds; workers do.
 - It never merges unless auto_merge is on (MON-7, MON-15); the delivery loop merges and releases.
 - Full auto never answers for me on destructive, money, security or owner-contradicting decisions.
-- Starting a goal past `max_active_goals`, above `plan_pause_percent` plan usage or below `min_free_memory_gb` of free memory; the check-in names the limit that holds.
 
 ## Success metrics
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
