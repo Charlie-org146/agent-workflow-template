@@ -82,7 +82,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
-| `min_free_memory_gb` | 4 | Free memory in GB (Windows: virtual) below which no lane or new goal starts; 0 is off. |
+| `min_free_memory_gb` | 3.5 | Free memory in GB (Windows: virtual) below which no lane or new goal starts; 0 is off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `plan_pause_percent` | 80 | Weekly plan usage % above which no goal starts (pool.py usage N); 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |

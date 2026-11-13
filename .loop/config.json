@@ -73,5 +73,5 @@
   "max_merge_rounds": 3,
   "max_active_goals": 20,
   "plan_pause_percent": 80,
-  "min_free_memory_gb": 4
+  "min_free_memory_gb": 3.5
 }
