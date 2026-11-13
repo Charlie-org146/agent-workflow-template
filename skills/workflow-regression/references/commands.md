@@ -245,7 +245,7 @@ only; bash reads are covered by the static rules above.
 
 ## Goal tier
 
-A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when
+A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 4 after four times the lane's time limit.
 the record's merge-base with the base branch is the current one (else from the merge-base, plus what a base merge
 brought in) and runs the rows a change reaches, new or edited rows, root runners and the record's failures; it takes a
 lane slot only when it has no plan to follow (FULL, no merge-base). It stays within `test_budget_minutes`: rows run in tier
@@ -405,3 +405,11 @@ GitHub's merge queue and "require branches to be up to date" make merges atomic 
 own base check for repos without them, and the window between its check and the merge is closed only by those
 settings. Actions concurrency groups already keep one regression run at a time in CI. Running AFFECTED lanes in CI
 was left out: CI runs the full suite only (REG-4).
+
+## Exact command entries (moved from the retired Usage section on the Automation page)
+
+- `/workflow-regression workflow` — Writes the scheduled regression workflow on `regression_cron` (five cron fields, or `off` for by-hand and release-tag runs only), for a public repo only: a private repo's regression runs on the Mac, so it prints `NOT WRITTEN: this repo is private; its regression runs on the Mac (local schedule)` and writes nothing (the Regression page has the whole entry). Prints `WROTE <repo>/.github/workflows/regression.yml`. Refuses (exit 1) `REFUSED: regression_cron is not five cron fields. ...` and `REFUSED: <path> exists, and this tool didn't write it. Fix: merge by hand.` Its run is split over eight parallel jobs and ends in one combined summary, and a newer run on the same ref cancels the one it supersedes; it keeps one open issue a row, files none for a row skipped for time and stops writing at a rate-limit reply; a run by hand with `cleanup` set closes the backlog of duplicate, skipped-only and removed-row issues, paced, until it prints `CLEANUP closed 0 issues`. A scheduled row that exits 77 (cannot run on this runner, such as the live Codex row) is recorded `SKIPPED` and opens no issue. The one local task per repo is named `<repo>-health-regression` (health and the full regression, every 4 hours or sooner); a repo recorded `regression_runs: mac`, public or private, runs its regression there and has no `regression.yml`, and `setup.py migration-check` names a missing, misnamed or slower task. A row that runs past its time limit has the processes then running (pid, parent, state, wait channel, command) written at the end of its log before it is killed, so a hang names what it is stuck on.
+
+## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
+
+- `/workflow-regression add ID --level land --command "cmd" --goal DEL-1` — Adds or replaces a regression row. Prints `ROW <id> <level>: <command>`. Refuses (exit 1) `REFUSED: bad id. Fix: letters, digits, dots, dashes.`, `REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.` and `REFUSED: a row can't hold a tab or new line. Fix: use a script.` The workflow's summary job text lives in `slots.py`. A failing row's issue body carries its last 40 output lines, in the workflow as on a Mac. Every skill holds the same `proctree.py` copy.
