@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.28.55 - 2026-11-14
+
+- size-caps: move criteria, workflow and refusals detail from three SKILL.md files into references
+- size-caps: row tying the docs skill's criteria reference to DOC-6
+- size-caps: rows tying the release and regression skills' references to DEL-5 and REG-4
+- skill-lines: keep the moved detail in the existing commands references (package file cap)
+- Merge remote-tracking branch 'origin/main' into loop/skill-lines
+- skill-lines: defect rows for the five skill-lines issues
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.54 - 2026-11-14
 
 - DECISIONS: the DOC-1 sync pointer and the Regression re-stamp
