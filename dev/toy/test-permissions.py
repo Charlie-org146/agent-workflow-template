@@ -119,6 +119,8 @@ docs = os.path.join(root, "skills", "workflow-docs", "scripts", "docs.py")
 top = repo(rows=[("other", "allow", "Bash(ls:*)", "x")])
 with open(os.path.join(top, ".loop", "docs.tsv"), "w") as handle:
     handle.write("Feature" + chr(9) + "src" + chr(10))
+with open(os.path.join(top, ".loop", "config.json"), "w") as handle:
+    json.dump({"wiki_dir": "docs/wiki", "criteria": False}, handle)
 done = subprocess.run([sys.executable, docs, "check"], cwd=top, capture_output=True, text=True)
 check("docs check prints the PERMISSIONS finding for an undeclared routine", "PERMISSIONS permissions.tsv: UNDECLARED round" in done.stdout)
 
