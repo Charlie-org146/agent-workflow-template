@@ -283,6 +283,7 @@ merge-base-undiffable	PASS	2026-11-11
 merge-base-unrecorded	PASS	2026-11-11	
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-11	
+merge-refuses-worktree	PASS	2026-11-14	
 merge-wiki-head	PASS	2026-11-11	
 merge-wiki-rename-refused	PASS	2026-11-11	
 merge-wiki-skill-refused	PASS	2026-11-11	

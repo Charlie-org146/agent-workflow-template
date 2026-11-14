@@ -149,20 +149,21 @@ def own_base(root, name):
     return None
 
 
-def own_touched(root, ref, paths):
-    """True when the goal's diff (merge-base of ref and HEAD, to HEAD) touches any of the page's mapped paths."""
-    out = own_git(root, "diff", "--name-only", ref + "...HEAD", "--", *paths)
+def own_touched(root, ref, paths, head="HEAD"):
+    """True when the goal's diff (merge-base of ref and head, to head) touches any of the page's mapped paths."""
+    out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
     return out is None or bool(out)  # no diff answer: judge the page as the goal's own
 
 
-def own_split(root, found, notes, rows, name="main"):
-    """(found, notes) with each STALE line of an untouched mapped page moved to notes as FINDING."""
+def own_split(root, found, notes, rows, name="main", head="HEAD"):
+    """(found, notes) with each STALE line of an untouched mapped page moved to notes as FINDING. head: the goal's branch
+    when this runs somewhere else, such as the main checkout, where HEAD is the base itself."""
     ref = own_base(root, name)
-    if not ref or own_git(root, "merge-base", "--is-ancestor", "HEAD", ref) is not None:
+    if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
         return found, notes  # no base, or on the base branch itself (main's own run keeps every STALE)
     keep, moved = [], []
     for item in found:
-        if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]]):
+        if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
             moved.append(("FINDING", "STALE " + item[1], item[2] + " (not touched by this goal; main's own, left for health)"))
         else:
             keep.append(item)
