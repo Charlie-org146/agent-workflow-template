@@ -16,3 +16,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-monitor-stray-runs.py`, then `python3 dev/toy/test-defects-a.py 3841`, `... 3840`, `... 3839` and `... 4184`.
+   Expect: each prints a line starting with PASS and exits 0.
+2. Run `python3 skills/workflow-regression/scripts/regression.py run monitor-stray-runs-3862 pr-body-no-home-3841 pr-statuses-only-lane-3840 tests-links-workflow-3839 app-refuses-headless-4184`.
+   Expect: `RESULT 5 passed, 0 known, 0 failed, 0 unproven`.
+3. On a Mac or Linux box run `bash dev/toy/test-statuses.sh`.
+   Expect: every line starts with PASS (it skips on Windows, so Linux CI is its check).
