@@ -29,7 +29,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lanekit, guards, fit, private  # noqa: E402,E401
+import lanekit, guards, fit, private, spend  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
@@ -218,7 +218,7 @@ def cmd_new(args):
     fields = fit.frozen_fields(ME, args, lines, touches)
     path = goal_file(args.slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    write(path, fit.TEMPLATE.format(goal=" ".join(args.goal.split()), slug=args.slug,
+    write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=args.slug,
                                 touches=", ".join(touches) or "not declared", done="\n".join(lines)))
     git("add", path)
     git("commit", "-m", "Goal: %s" % args.slug, "--", path)
@@ -265,7 +265,7 @@ def next_step(state):
 def cmd_record(args):
     state = held(args.slug)
     guards.waiting_gate(ME, state)
-    fit.add_tokens(state, args.step, args.tokens)
+    spend.add_tokens(state, args.step, args.tokens)
     ran = os.path.join(state_dir(), "%s.%s.ran" % (args.slug, args.step))
     if args.in_session:
         args.file = role.session_reply(state, args.slug, args.step, args.file, state_dir(), FLOW)
@@ -347,13 +347,16 @@ def cmd_pr(args):
     left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
+    waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
     if ahead := queue("turn", args.slug):
+        waited or save(state, "waiting: pr queue, behind " + ahead)  # held time: the budget counts none of it (#3878)
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
+    waited and save(state, "pr queue: its turn")
     what, detail = role.sync(base)
     if what == "merged":
         state = held(args.slug)
-    fit.round_stop(ME, state, what)
+    spend.round_stop(ME, state, what)
     if what == "conflict":
         why, fix = "merging %s conflicts in: %s" % (base, detail), "merge %s yourself, resolve the conflicts, commit, then pr" % base
         return queue("moved", ME, state, why, fix) or failed_try(state, why, "build", fix) or 1

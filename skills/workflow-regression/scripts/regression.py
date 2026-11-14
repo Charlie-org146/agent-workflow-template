@@ -12,6 +12,8 @@ usage: regression.py <command> [options]
                                 failing; --write drafts rows (a criterion's row has its id as id or goal)
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
+  red ID --owed --runner R [--live]
+                                machine R owes the proof: a to-do issue on the row's milestone; the goal goes on (PENDING)
   red ID --off-platform --runner R --commit SHA
                                 a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it
                                 (runs.py). A Windows runner is refused; a skip never sets seen red
@@ -24,7 +26,7 @@ usage: regression.py <command> [options]
 
 Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records its rows' last status and
 date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
-Issues dry-run unless GH_TOKEN or GITHUB_TOKEN is set, or you pass --live. It runs git, gh and your test
+Issues dry-run unless you pass --live; a token in the environment writes nothing. It runs git, gh and your test
 commands, and nothing else.
 """
 import argparse
@@ -41,7 +43,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True  # no __pycache__ in the skill folder: the package check refuses one
-import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, lanes, lanes_cli, memory, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
@@ -174,7 +176,7 @@ def cmd_sync(args):
     drafts = [row["id"] for row in rows.values() if row["level"] == "draft"]
     for key in drafts:
         print("DRAFT %s: not run until it has a command and level" % key)
-    never = [row["id"] for row in rows.values() if row["level"] in ("land", "nightly") and not SEEN.match(row["seen_red"])]
+    never = runs.unproven(root, [row for row in rows.values() if row["level"] in ("land", "nightly")], SEEN)
     for key in never:
         print("UNPROVEN %s: never seen failing. Run red." % key)
     bare = [row["id"] for row in rows.values() if row["level"] != "covered" and not row["description"]]
@@ -208,6 +210,8 @@ def cmd_criteria(_args):
 
 def cmd_red(args):
     root = top()
+    if args.owed:
+        return runs.owed_record(root, args, today, read_rows)
     if args.off_platform:
         return runs.off_record(root, args.id, args.runner, args.commit, today, read_rows, edit_rows)
     if not args.break_it:
@@ -237,6 +241,7 @@ def cmd_red(args):
         return 1
     edit_rows(root, lambda current: current[args.id].update(seen_red=today()) if args.id in current else None)
     print("SEEN RED %s on %s" % (args.id, today()))
+    runs.owed_clear(root, args.id)
     return 0
 
 
@@ -271,7 +276,7 @@ def cmd_run(args):
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
                                                        " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
     if todo and args.target in ("land", "nightly"):  # a by-id run never waits
-        slots.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
+        memory.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
     if todo and args.target in ("land", "nightly") and (why or not args.reuse):  # a lane with no plan to follow waits for a slot
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
@@ -298,13 +303,12 @@ def cmd_run(args):
                    results + [{"id": key, "state": "LEFT", "seconds": 0} for key in cut],
                    head, datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                    fresh=bool(args.reuse and why), base=tiers.BASE)
-    never = [row["id"] for row in picked if not SEEN.match(row["seen_red"])]
+    never = runs.unproven(root, picked, SEEN)
     for key in never:
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))
     if not args.reuse:
-        live = args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"))
-        runs.sync_issues(results, live, today())
+        runs.sync_issues(results, args.live, today())  # a token in the environment writes nothing (GRD-5)
     failed = [item["id"] for item in results if item["state"] == "FAIL"]
     kept = [old["rows"][key]["status"] for key in reused]  # a reused known failure still counts as known
     passed = sum(item["state"] == "PASS" for item in results) + kept.count("PASS")
@@ -338,7 +342,9 @@ def main():
     item = sub.add_parser("red")
     item.add_argument("id")
     item.add_argument("--break", dest="break_it")
-    item.add_argument("--off-platform", action="store_true", help="record a red proven on another runner")
+    item.add_argument("--off-platform", action="store_true", help="a red proven on another runner")
+    item.add_argument("--owed", action="store_true")
+    item.add_argument("--live", action="store_true")
     item.add_argument("--runner")
     item.add_argument("--commit")
     item.add_argument("--timeout", type=int, default=900)
@@ -346,14 +352,14 @@ def main():
     item = sub.add_parser("run")
     item.add_argument("target", nargs="?", default="land")
     item.add_argument("--timeout", type=int, default=900)
-    item.add_argument("--reuse", action="store_true", help="reuse this branch's last run; run only the rows a change can affect")
+    item.add_argument("--reuse", action="store_true", help="reuse the last run; run the rows a change affects")
     item.add_argument("--live", action="store_true")
-    item.add_argument("--tier", choices=("goal",), help="a goal lane: the rows the branch's change reaches, in tier order, within the time budget (tiers.py)")
+    item.add_argument("--tier", choices=("goal",), help="a goal lane (tiers.py)")
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
-    item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take (default: test_budget_minutes)")
+    item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")
-    item.add_argument("--visibility", choices=("public", "private"), help="skip the probe (the regression_runs setting says it too)")
+    item.add_argument("--visibility", choices=("public", "private"), help="skip the probe")
     item.set_defaults(func=cmd_workflow)
     item = sub.add_parser("reads")
     item.add_argument("id")

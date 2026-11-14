@@ -59,6 +59,7 @@ unchanged repo print the same lines.
 | | `template-version` | VERSION isn't the newest CHANGELOG heading (WARN) |
 | | `scheduled` | the regression or health workflow is missing or has no schedule (WARN) |
 | | `no-fit` | an open `[adoption]` line in `.loop/findings.md` (setup writes one per kind): one WARN row naming its subjects and fix |
+| | `matrix` | `.loop/matrix-runs.tsv` (one dated line per `dev/toy/matrix-smoke.py` run: agent, OS, machine, commit, result; no file, no rows): a cell of agent by machine that never ran is a WARN `pending: no run recorded`; one with no pass in 7 days is a WARN `not proven`, and a FAIL for a V1-required cell (Claude Code on Windows, Claude Code on macOS, CI on Linux) that ran and failed or whose last run is older than 7 days |
 | | `agent-tools` | `agent_command` or the flow file's command grants its agent no tools (WARN), naming each setting to fix |
 | | `prompt-pointer` | an installed scheduled-task prompt (`~/.claude/scheduled-tasks/<task>/SKILL.md`, for a routine whose `runs` is `claude:` or `mac:`) holds a line other than the Runbook pointer `docs.py prompts` prints (WARN) |
 | Controls (can each rule fire?) | `control` per rule | a rule's control stays green: it cannot fire (FAIL); a fixture that can't be built is UNREAD |
@@ -76,6 +77,16 @@ unchanged repo print the same lines.
 Mine runs the owner's own rules from `~/.workflow-loop/health.json` (or `LOOP_HEALTH`): exit 0 is PASS, 1 FAIL, 2 WARN,
 anything else UNREAD. It runs the owner's commands, so it is outside the read-only and same-answer promises, and it is
 filed only when named.
+
+The repo layer is `.loop/health-rules.json`, committed (setup and update write it empty): `{"rules": [{name, group, feature,
+command, fix, break}], "off": {"<default rule>": "<reason>"}}`. `group` is one of the twelve or `repo` (a heading of its own,
+before Mine); `command` and `break` are word lists. A command exits 0 PASS, 2 WARN, 1 FAIL, anything else UNREAD, as Mine's
+does, and its row carries its `feature` so filing treats FAIL as a defect and WARN as backlog on that feature. The Controls
+group runs `break` on a private copy of the repo's files and the rule must then exit 1 or 2 (else it is reported as unable
+to fire); a rule with no `break`, a repeated or default rule's name, or an unknown group makes health refuse (exit 2). A rule
+in `off` does not run and its group prints `INFO <rule>: turned off: <reason>`; an empty reason leaves it on and UNREAD. The
+commands are the repo's own and run for whoever runs the check. The numbers `health_script_bytes` (20480) and
+`health_skill_lines` (150) in `.loop/config.json` set the Size group's script and SKILL.md caps for that repo.
 
 Adding a rule: write `fn(root) -> rows` in a rule module, add its name to its group in `report.py`, list it in the
 module's `FUNCTIONS`, and add a fixture to its `CONTROLS` that makes it fire. Health refuses to load until the control exists.

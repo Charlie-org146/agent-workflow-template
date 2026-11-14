@@ -212,6 +212,7 @@ def start(args, runs, reply, job):
     command = step_command(spec, args.step)
     cfg = repo_config()
     state = role.goal_state(runs, args.slug)
+    fit.budget_stop(args.slug, state, runs, cfg)  # active minutes and tokens (#3878)
     if not shutil.which(command[0]):
         sys.exit("REFUSED: the flow's command %s isn't on this machine." % command[0])
     top = git("rev-parse", "--show-toplevel")
@@ -297,8 +298,6 @@ def main():
     reply, job = base + ".txt", base + ".job"
     if args.step in fit.STEPS:
         role.recorded_gate(args, runs, job)
-        if not os.path.exists(job) and not os.path.exists(base + ".asked"):  # only a step not yet started
-            fit.budget_stop(args.slug, role.goal_state(runs, args.slug), runs, repo_config())
     if args.step in ("qa", "ship") and not os.path.exists(job) and not os.path.exists(base + ".asked"):
         status, line, ids = role.lane(runs, args.slug, args.step, flow(), repo_config(), args.wait)
         print(line)

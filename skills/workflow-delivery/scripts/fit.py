@@ -109,61 +109,26 @@ def tokens_text(run):
     return "%s tokens" % format(spent_tokens(run), ",") if any(isinstance(n, int) and n for n in value.values()) else "tokens unread"
 
 
-TEMPLATE = """# {goal}
-
-- Slug: {slug}
-- Touches: {touches}
-
-## Done lines
-
-Frozen. A wrong done line needs a new goal.
-
-{done}
-
-## Verify by hand
-
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
-"""
-
-
-def budget_stop(slug, state, runs, cfg):
-    """GRD-2: past its time or token budget a goal starts no new step; only goal.py set raises it."""
-    import datetime
-    held, source = budget(view(state, runs), cfg)
+def active_minutes(state, at=None):
+    """Active step time in whole minutes (#3878): board_log's held-time rule, loaded by path; 0 when it won't load."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "board_log.py")
     try:
-        began = datetime.datetime.strptime(state["log"][0].split()[0], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
-        minutes = int((datetime.datetime.now(datetime.timezone.utc) - began).total_seconds() // 60)
-    except (KeyError, IndexError, ValueError, AttributeError):
-        minutes = 0
-    for name, spent in (("minutes", minutes), ("tokens", spent_tokens(state))):
+        sys.path.insert(0, os.path.dirname(path))
+        spec = importlib.util.spec_from_file_location("fit_board_log", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module.active_minutes(state, at)
+    except Exception:
+        return 0
+
+
+def budget_stop(slug, state, runs, cfg, at=None):
+    """Past its active-time or token budget a goal starts no new step; only goal.py set raises it."""
+    held, source = budget(view(state, runs), cfg)
+    for name, spent in (("minutes", active_minutes(state, at)), ("tokens", spent_tokens(state))):
         if held[name] and spent >= held[name]:
             sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
-                     "--why ... from the operation session (BUDGET_%s)" % (spent, name, name[:-1] if name == "minutes" else name,
-                                                                         held[name], source, slug, name, name.upper()))
-
-
-def add_tokens(state, step, given):
-    """A session worker's tokens for a step; unknown adds nothing, so the board says tokens unread."""
-    if str(given).isdigit():
-        held = state.get("tokens") if isinstance(state.get("tokens"), dict) else {}
-        old = held.get(step) if isinstance(held.get(step), int) else 0
-        state["tokens"] = dict(held, **{step: int(given) + old})
-
-
-def round_stop(g, state, what):
-    """A merge or conflict is one merge-and-rerun round; one past max_merge_rounds (default 3) makes the goal wait."""
-    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 3
-    if what not in ("merged", "conflict"):
-        return
-    over = count > limit
-    state["merge_rounds"] = 0 if over else count
-    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
-    if over:
-        state["status"], state["waiting"] = "waiting", {"ask": ask, "words": ["go on " + state["slug"], "stop " + state["slug"]]}
-    g.save(state, ask if over else None)
-    if over:
-        g.no(ask)
+                     "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
 
 
 def recorded(state, step):

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py
-# reads: skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/checkin.py
+# reads: skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/spend.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py
+# reads: skills/workflow-monitoring/scripts/limits.py skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/checkin.py
 # reads: skills/workflow-health/scripts/issues.py skills/workflow-setup/scripts/settings.py
 """GRD-2: time, token, merge-round, active-goal and plan-usage limits in .loop/config.json stop new work.
 
-Calls the real functions: fit.budget_stop / add_tokens / round_stop (delivery), pool.active_limit / plan_pause / cmd_usage
+Calls the real functions: fit.budget_stop / add_tokens / round_stop (delivery), limits.active_limit / plan_pause / cmd_usage
 (monitoring), cost.limit_rows (health) and the settings table, in throwaway repos. No model, no network."""
 import datetime
 import json
@@ -20,9 +20,12 @@ for skill in ("delivery", "monitoring", "health", "setup", "regression"):
     sys.path.insert(0, os.path.join(root, "skills", "workflow-" + skill, "scripts"))
 os.environ.pop("LOOP_ROLE", None)
 import fit  # noqa: E402
+import spend  # noqa: E402
+import limits  # noqa: E402
 import pool  # noqa: E402
 import issues as cost  # noqa: E402
 import settings  # noqa: E402
+import memory  # noqa: E402
 import slots  # noqa: E402
 
 failed = []
@@ -47,7 +50,7 @@ def ago(minutes):
 
 
 def goal(minutes, **more):
-    return dict({"slug": "g", "log": [ago(minutes) + " frozen 1 done lines"]}, **more)
+    return dict({"slug": "g", "status": "running", "step": "qa", "log": [ago(minutes) + " frozen 1 done lines"]}, **more)
 
 
 # 1. time and token budgets (GRD-2): a goal past either starts no new step
@@ -62,26 +65,26 @@ check(refused(fit.budget_stop, "g", goal(500, budget={"minutes": 600, "tokens": 
 
 # 2. tokens from a session worker: a number adds up, unknown stays unread (never 0)
 state = goal(5)
-fit.add_tokens(state, "idea", "unknown")
-fit.add_tokens(state, "idea", "")
+spend.add_tokens(state, "idea", "unknown")
+spend.add_tokens(state, "idea", "")
 check("tokens" not in state and fit.tokens_text(state) == "tokens unread", "unknown tokens record nothing and read 'tokens unread'")
-fit.add_tokens(state, "idea", "400")
-fit.add_tokens(state, "idea", "100")
+spend.add_tokens(state, "idea", "400")
+spend.add_tokens(state, "idea", "100")
 check(state["tokens"] == {"idea": 500} and fit.spent_tokens(state) == 500, "a session worker's counts add up per step")
 
 # 3. merge rounds: the 4th merge-main-and-rerun round is refused and the goal waits
 saved = []
 fake = SimpleNamespace(config=lambda: {}, save=lambda st, note=None: saved.append(note), no=lambda text: (_ for _ in ()).throw(SystemExit("REFUSED: " + text)))
 state = {"slug": "g"}
-check([refused(fit.round_stop, fake, state, "merged") for _ in range(3)] == ["", "", ""] and state["merge_rounds"] == 3, "three merge rounds are allowed and counted")
-fit.round_stop(fake, state, "current")
+check([refused(spend.round_stop, fake, state, "merged") for _ in range(3)] == ["", "", ""] and state["merge_rounds"] == 3, "three merge rounds are allowed and counted")
+spend.round_stop(fake, state, "current")
 check(state["merge_rounds"] == 3, "a pr that merged nothing is not a round")
-said = refused(fit.round_stop, fake, state, "conflict")
+said = refused(spend.round_stop, fake, state, "conflict")
 check("MERGE_ROUNDS" in said and state["status"] == "waiting" and "MERGE_ROUNDS" in state["waiting"]["ask"] and state["merge_rounds"] == 0, "the 4th round is refused, the goal waits for the owner and the count starts again")
 fake.config = lambda: {"max_merge_rounds": 1}
 state = {"slug": "g"}
-refused(fit.round_stop, fake, state, "merged")
-check("MERGE_ROUNDS" in refused(fit.round_stop, fake, state, "merged"), "max_merge_rounds sets the limit")
+refused(spend.round_stop, fake, state, "merged")
+check("MERGE_ROUNDS" in refused(spend.round_stop, fake, state, "merged"), "max_merge_rounds sets the limit")
 
 with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     tmp = os.path.realpath(tmp)
@@ -90,18 +93,18 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     loop = os.path.join(tmp, ".git", "loop")
     os.makedirs(os.path.join(loop, "runs"))
     # 4. active goals and plan usage
-    check(pool.active_limit({}) == 20, "max_active_goals defaults to 20")
-    check(pool.active_limit({"max_active_goals": 5, "parallel": 3}) == 3 and pool.active_limit({"max_active_goals": 5}) == 5, "the smaller of parallel and max_active_goals counts")
-    check(pool.active_limit({"max_active_goals": 0}) == 0, "max_active_goals 0 means no limit")
-    check(pool.plan_pause({}) == "", "plan usage that was never recorded pauses nothing")
-    pool.cmd_usage(SimpleNamespace(percent=83))
-    said = pool.plan_pause({})
+    check(limits.active_limit({}) == 20, "max_active_goals defaults to 20")
+    check(limits.active_limit({"max_active_goals": 5, "parallel": 3}) == 3 and limits.active_limit({"max_active_goals": 5}) == 5, "the smaller of parallel and max_active_goals counts")
+    check(limits.active_limit({"max_active_goals": 0}) == 0, "max_active_goals 0 means no limit")
+    check(limits.plan_pause({}) == "", "plan usage that was never recorded pauses nothing")
+    limits.cmd_usage(SimpleNamespace(percent=83), {})
+    said = limits.plan_pause({})
     check("PLAN_PAUSE" in said and "83%" in said, "plan usage above plan_pause_percent (default 80) pauses new goals and says why")
-    check(pool.plan_pause({"plan_pause_percent": 90}) == "" and pool.plan_pause({"plan_pause_percent": 0}) == "", "a higher plan_pause_percent, or 0, lets goals start")
+    check(limits.plan_pause({"plan_pause_percent": 90}) == "" and limits.plan_pause({"plan_pause_percent": 0}) == "", "a higher plan_pause_percent, or 0, lets goals start")
     with open(os.path.join(loop, "plan-usage.json"), "w") as handle:
         json.dump({"percent": 99, "at": ago(60 * 13)}, handle)
-    check(pool.plan_pause({}) == "", "a plan reading older than 12 hours is unread and pauses nothing")
-    pool.cmd_usage(SimpleNamespace(percent=83))
+    check(limits.plan_pause({}) == "", "a plan reading older than 12 hours is unread and pauses nothing")
+    limits.cmd_usage(SimpleNamespace(percent=83), {})
     # 5. health warns on each limit exceeded
     os.makedirs(os.path.join(tmp, ".loop"))
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
@@ -122,10 +125,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         json.dump({}, handle)
     os.environ["LOOP_MEMORY_WAIT_SECONDS"] = "1"
     os.environ["LOOP_FREE_GB"] = "9"
-    check(slots.free_gb() == 9.0 and refused(slots.wait_memory, tmp) == "", "a lane starts at once when free memory is above min_free_memory_gb (default 4)")
+    check(memory.free_gb() == 9.0 and refused(memory.wait_memory, tmp) == "", "a lane starts at once when free memory is above min_free_memory_gb (default 4)")
     os.environ["LOOP_FREE_GB"] = "1.5"
     try:
-        slots.wait_memory(tmp)
+        memory.wait_memory(tmp)
         code = None
     except SystemExit as stop:
         code = stop.code
@@ -134,12 +137,12 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     check(os.path.exists(log) and "LANE_MEMORY: 1.5 GB free" in open(log).read(), "the wait is logged for the check-in and health")
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
         json.dump({"min_free_memory_gb": 0}, handle)
-    check(refused(slots.wait_memory, tmp) == "", "min_free_memory_gb 0 turns the wait off")
+    check(refused(memory.wait_memory, tmp) == "", "min_free_memory_gb 0 turns the wait off")
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
         json.dump({"min_free_memory_gb": 1}, handle)
-    check(refused(slots.wait_memory, tmp) == "", "a lower min_free_memory_gb lets the lane start")
-    check("LOW_MEMORY" in pool.memory_hold({}) and pool.memory_hold({"min_free_memory_gb": 1}) == "" and pool.memory_hold({"min_free_memory_gb": 0}) == "", "no new goal starts below min_free_memory_gb, and the hold names LOW_MEMORY")
-    check(len(pool.memory_waits(os.path.join(tmp, ".git", "loop"))) == 1, "the check-in reads the lane waits of the last hour")
+    check(refused(memory.wait_memory, tmp) == "", "a lower min_free_memory_gb lets the lane start")
+    check("LOW_MEMORY" in limits.memory_hold({}) and limits.memory_hold({"min_free_memory_gb": 1}) == "" and limits.memory_hold({"min_free_memory_gb": 0}) == "", "no new goal starts below min_free_memory_gb, and the hold names LOW_MEMORY")
+    check(len(limits.memory_waits(os.path.join(tmp, ".git", "loop"))) == 1, "the check-in reads the lane waits of the last hour")
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
         json.dump({"max_active_goals": 50}, handle)
     check({r["rule"] for r in cost.limit_rows(tmp) if r["state"] == "WARN"} == {"waits"}, "health warns when lanes waited for memory")

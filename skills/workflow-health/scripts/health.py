@@ -33,6 +33,10 @@ if not sys.stdin or not sys.stdin.isatty():
 HERE = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
+    from defects import setting
+except ImportError:  # a lone health.py: the built-in numbers
+    setting = lambda root, key, default: default
+try:
     import report as G  # noqa: E402
 except ImportError:  # a lone health.py: only the rules it holds itself, in four groups, no angles
     class G:
@@ -72,21 +76,22 @@ def sibling(skill, script):
 
 def size_rows(root):
     rows, good = [], 0
+    limit = setting(root, "health_script_bytes", LIMIT)
     for path in sorted(glob.glob(os.path.join(root, "skills", "*", "scripts", "*.*"))):
         if not path.endswith((".py", ".sh")):
             continue
         with open(path, "rb") as handle:  # committed (LF) bytes: a Windows CRLF checkout reads the same
             size = len(handle.read().replace(b"\r\n", b"\n"))
         name = os.path.relpath(path, root)
-        if size > LIMIT:
-            rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, LIMIT), "split it into modules"))
-        elif size >= WARN_AT:
-            rows.append(row("WARN", "size", name, "scripts", "%d bytes, %d%% of %d" % (size, size * 100 // LIMIT, LIMIT),
+        if size > limit:
+            rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, limit), "split it into modules"))
+        elif size >= limit * 9 // 10:
+            rows.append(row("WARN", "size", name, "scripts", "%d bytes, %d%% of %d" % (size, size * 100 // limit, limit),
                             "trim or split before it passes the limit"))
         else:
             good += 1
     if not rows:
-        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts under %d bytes" % (good, WARN_AT)))
+        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts under %d bytes" % (good, limit * 9 // 10)))
     return rows
 
 
@@ -105,6 +110,11 @@ def criteria_rows(root):
             loose += 1
         elif gap and "criterion has no regression row" in gap.group(2):
             rows.append(sibling_module("enforce").row(root, gap.group(1), row))
+        elif line.startswith("PENDING "):  # owed to another machine: a warning past a week, never a failure
+            old = re.search(r"owed on (.+?) since (\d{4}-\d{2}-\d{2})", line)
+            if old and (datetime.date.today() - datetime.date.fromisoformat(old.group(2))).days > 7:
+                rows.append(row("WARN", "tests", line.split()[1].rstrip(":"), "owed-proof", "proof owed on %s since %s" % old.groups(),
+                                "regression.py red ID --off-platform"))
         elif line.startswith(("DRAFT ", "UNPROVEN ")):
             word, key = line.split()[:2]
             rows.append(row("FAIL", "requirements", key.rstrip(":"), "proof", "a draft row: no command or level yet",
@@ -223,7 +233,7 @@ def hard_unread(item):
 def rule_functions():
     """Each rule -> the function that checks it (and that its control calls)."""
     lean, extra = sibling_module("lean"), {}
-    for name in ("defects", "rules"):
+    for name in ("defects", "rules", "report"):
         module = sibling_module(name)
         extra.update(module.FUNCTIONS if module else {})
     found = {"scripts": size_rows, "rows": criteria_rows, "proof": criteria_rows, "done": criteria_rows,
@@ -250,7 +260,7 @@ def controls_rows(root):
     controls = sibling_module("controls")
     if controls is None:
         return [row("UNREAD", "controls", "controls.py", "control", "controls.py is missing")]
-    return controls.run({name: (lambda root, fn=fn: [placed(i) for i in fn(root)]) for name, fn in rule_functions().items()}, HERE)
+    return controls.run({name: (lambda root, fn=fn: [placed(i) for i in fn(root)]) for name, fn in rule_functions().items()}, HERE) + controls.repo_controls(root)
 
 
 def mine_rows(root):
@@ -295,7 +305,8 @@ def gather(root, family, ran_rules=None):
                 ran_rules.add(rule)
     for got in done.values():
         rows += [item for item in got if item["family"] in asked]
-    return rows
+    mine = sibling_module("enforce")
+    return mine.repo_merge(root, rows, asked) if mine else rows
 
 
 def groups_of(text):
@@ -379,4 +390,5 @@ def main():
 if __name__ == "__main__":
     _controls = sibling_module("controls")
     _controls and _controls.refuse(RULES)  # a new rule must come with its negative control (exit 2)
+    _controls and _controls.refuse_repo()  # and so must a repo rule: a break command, a known group, a name of its own
     sys.exit(main())

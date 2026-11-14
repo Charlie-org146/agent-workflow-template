@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import board_lines as prs  # noqa: E402  (its pull request lookups)
 import sessions as se  # noqa: E402
+import limits as lim  # noqa: E402  (the goal limits, GRD-2)
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 DEFAULT_SIZE = 20
@@ -60,60 +61,6 @@ def status_line(found, cfg):
     free, busy, total = counts(found)
     return "pool: %d free, %d busy, %d total (target %d)" % (free, busy, total, size_of(cfg))
 
-
-def number(cfg, key, default):
-    """A whole number setting; unset gives the default, 0 turns the limit off, anything unreadable gives the default."""
-    value = cfg.get(key, default)
-    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else default
-
-
-def active_limit(cfg):
-    """Goals live at once: the smaller of `parallel` and `max_active_goals` (default 20); 0 means no limit."""
-    caps = [n for n in (graph.parallel_of(cfg), number(cfg, "max_active_goals", 20)) if n]
-    return min(caps) if caps else 0
-
-
-def plan_usage():
-    """The account's weekly plan usage in percent, as the operation session recorded it (`pool.py usage N`) in the last 12 hours, else None."""
-    try:
-        held = se.read(os.path.join(se.base(), "plan-usage.json"), {})
-        age = time.time() - graph.parse_at(held["at"]).timestamp()
-        return float(held["percent"]) if 0 <= age < 43200 else None
-    except (KeyError, TypeError, ValueError, AttributeError, OSError):
-        return None
-
-
-def plan_pause(cfg):
-    """Why no new goal starts, or '': weekly plan usage above plan_pause_percent (default 80, 0 turns it off). Unread usage never pauses."""
-    limit, used = number(cfg, "plan_pause_percent", 80), plan_usage()
-    return "plan usage %g%% is above plan_pause_percent %d%%; no new goal starts until it falls (PLAN_PAUSE)" % (used, limit) if limit and used is not None and used > limit else ""
-
-
-def memory_hold(cfg):
-    """Why no new goal starts, or '': free memory (workflow-regression's slots.free_gb, loaded by path) below min_free_memory_gb (default 4, 0 is off)."""
-    need = cfg.get("min_free_memory_gb", 4)
-    if isinstance(need, bool) or not isinstance(need, (int, float)) or need <= 0:
-        return ""
-    try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("slots", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-regression", "scripts", "slots.py"))
-        slots = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(slots)
-        free = slots.free_gb()
-    except Exception:
-        return ""
-    return "free memory %.1f GB is below min_free_memory_gb %g; no new goal starts (LOW_MEMORY)" % (free, need) if free is not None and free < need else ""
-
-
-def memory_waits(root_loop, hours=1):
-    """The lane waits for memory logged by the last `hours` (<git common dir>/loop/memory-waits.log), newest last."""
-    try:
-        with open(os.path.join(root_loop, "memory-waits.log")) as handle:
-            lines = handle.read().splitlines()
-    except OSError:
-        return []
-    cut = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 3600 * hours))
-    return [line for line in lines if line[:20] >= cut]
 
 def board_line(found, root):
     """The pool line under the live board's Running goals; '' if it can't be built (the board never fails for it)."""
@@ -291,38 +238,57 @@ def cmd_return(args):
     return 0
 
 
-def cmd_usage(args):
-    se.write(os.path.join(se.base(), "plan-usage.json"), {"percent": args.percent, "at": graph.iso(datetime.datetime.now(datetime.timezone.utc))})
-    print("PLAN USAGE %g%% recorded: %s" % (args.percent, plan_pause(config()) or "no pause"))
-    return 0
+# The pr queue (#3877): goal.py pr asks here; a try lost to main moving has its own cap. graph.pr_queue(op, ...) forwards here.
+def pr_order(runs, keep=""):
+    """The one queue every goal reads, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue. A ticket is written
+    once, whole, holding the first-join time; <slug>.beat is the heartbeat a retry touches, and only it drives expiry (#3922).
+    A goal (but keep) no longer running or waiting, no longer at the pr step, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
+    folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        path = os.path.join(folder, name)
+        try:
+            if "." in name:
+                continue
+            joined, age = int(open(path).read()), time.time() - os.path.getmtime(path + ".beat" if os.path.exists(path + ".beat") else path)
+            if name != keep and (age > limit or (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE
+                                 or run.get("step") not in ("checks", "pr")):
+                os.unlink(path)
+                continue
+            line.append((joined, name, int(age)))
+        except (OSError, ValueError):
+            continue
+    return sorted(line)
 
 
-# The pr queue (#3877): goal.py pr asks here. Goals at pr take turns per repo, so main can't move under a running pr lane, and a try
-# lost to main moving has its own cap. graph.pr_queue(op, ...) forwards here (graph.py is at its size budget).
 def pr_turn(runs, slug):
-    """Join the repo's queue (one file per goal in <loop>/pr-queue holding its joining time; asking again keeps the place and
-    refreshes the file). Returns "" when it is slug's turn, else the goal ahead. A goal whose run is no longer running or waiting,
-    or no longer at the pr step (it failed a try or opened its PR), or whose file is older than LOOP_MERGE_LOCK_SECONDS (1800), loses its place."""
+    """Join the repo's queue; "" when it is slug's turn, else the goal ahead. Asking again touches only the heartbeat. A goal
+    waits only for an earlier goal whose touches overlap its own (a path equal or nested; none overlaps all), so goals with
+    disjoint touches go at once (DEL-15). A goal with no readable ticket never counts as first."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
     os.makedirs(folder, exist_ok=True)
     mine = os.path.join(folder, slug)
-    if not os.path.exists(mine):
-        with open(mine, "w") as handle:
+    if not os.path.exists(mine):  # whole or not at all: write a temp file, then link it into place (the first ask wins)
+        tmp = "%s.%d.tmp" % (mine, os.getpid())
+        with open(tmp, "w") as handle:
             handle.write(str(time.time_ns()))
-    os.utime(mine)
-    line = []
-    for name in os.listdir(folder):
-        path = os.path.join(folder, name)
         try:
-            joined, age = int(open(path).read()), time.time() - os.path.getmtime(path)
-            if name != slug and (age > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800) or
-                                 (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE or run.get("step") not in ("checks", "pr")):
-                os.unlink(path)
-                continue
-            line.append((joined, name))
-        except (OSError, ValueError):
-            continue
-    return min(line)[1] if line and min(line)[1] != slug else ""
+            os.link(tmp, mine)
+        except OSError:
+            pass
+        os.unlink(tmp)
+    with open(mine + ".beat", "a"):
+        os.utime(mine + ".beat")
+    line = pr_order(runs, slug)
+    at = dict((n, j) for j, n, _ in line).get(slug)
+    if at is None:
+        return line[0][1] if line else "the queue"
+
+    def paths(n):
+        return [str(t).strip("/") for t in se.read(os.path.join(runs, n + ".json"), {}).get("touches") or []]
+    ours = paths(slug)
+    ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
+        x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in paths(n)))]
+    return min(ahead)[1] if ahead else ""
 
 
 def pr_ahead(runs, base):
@@ -389,6 +355,12 @@ def pr_owed(runs, root, text):
     return owe
 
 
+def cmd_pr_list(args):
+    for number, (joined, name, age) in enumerate(pr_order(os.path.join(se.base(), "runs")), 1):
+        print("%d %s joined=%d heartbeat=%ds ago" % (number, name, joined, age))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -400,11 +372,12 @@ def main():
     item.add_argument("ids", nargs="+")
     item = sub.add_parser("return")
     item.add_argument("slug")
+    sub.add_parser("pr_turn").add_argument("--list", action="store_true", required=True, help="print the pr queue in its one order")
     item = sub.add_parser("usage")
     item.add_argument("percent", type=float)
     args = parser.parse_args()
     try:
-        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "usage": cmd_usage}[args.cmd](args)
+        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
     except se.PoolUnreadable as error:
         sys.exit("REFUSED: " + graph.pool_fix(error))
 

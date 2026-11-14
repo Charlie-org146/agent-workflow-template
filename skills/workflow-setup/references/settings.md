@@ -17,12 +17,12 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `pr_bumps_version` | `false` | true moves the last number of the version file once on a goal's branch. |
 | `version_file` | `VERSION` | The file that holds the version; a release bumps it and writes the changelog. |
 | `routines` | `[]` | Commands the release step runs on the base branch before it merges. |
-| `regression_cron` | `17 */4 * * *` | Five cron fields: when the full regression runs: in GitHub Actions for a public repo, with each Mac tick for a private one; off turns it off. |
+| `regression_cron` | `17 */4 * * *` | Five cron fields: when the full regression runs: GitHub Actions for a public repo, each Mac tick for a private one; off turns it off. |
 | `health_cron` | `47 */4 * * *` | Five cron fields: when health with the judge and its digest run on the Mac; off turns it off. |
 | `judge_env` | `ANTHROPIC_API_KEY` | No longer read; kept so old configs stay valid. |
 | `judge_setup` | `(empty)` | No longer read: kept so old configs stay valid. |
 | `digest_owner` | `(empty)` | Who the digest comment mentions; empty means the repo owner (an organisation notifies no one). |
-| `digest_mail` | `cloudflare` | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the address and keys live only in Actions secrets. |
+| `digest_mail` | `cloudflare` | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. |
 | `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp sends through (with DIGEST_SMTP_USER and DIGEST_SMTP_PASSWORD secrets). |
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `review_depth` | `full` | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
@@ -33,18 +33,19 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `step_limit` | `0` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. |
 | `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
-| `regression_runs` | `(empty)` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo, or a public one recorded mac); setup records it from the repo's live visibility and keeps a recorded mac; unset means not known (nothing is written for GitHub). |
-| `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}; setup declares the three built-in ones. |
+| `regression_runs` | `(empty)` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac; unset means not known. |
+| `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. |
+| `topics` | `{}` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
 | `ci_levels` | `nightly` | Target of the scheduled and tag regression runs: nightly (every row) or land. |
-| `time_budget_minutes` | `120` | Minutes from a goal's freeze before no new step starts; 0 is none. |
-| `max_merge_rounds` | `3` | Merge-and-rerun rounds goal.py pr may take before the goal waits. |
-| `max_active_goals` | `20` | Goals live at once (with parallel, the smaller); 0 is no limit. |
-| `plan_pause_percent` | `80` | Weekly plan usage % above which no goal starts (pool.py usage N); 0 is off. |
-| `min_free_memory_gb` | `4` | Free memory in GB (Windows: virtual) below which no lane or new goal starts; 0 is off. |
+| `time_budget_minutes` | `120` | Active minutes (held time not counted) before no new step starts; 0 is none. |
+| `max_merge_rounds` | `3` | Merge rounds goal.py pr may take before the goal waits. |
+| `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |
+| `plan_pause_percent` | `80` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
+| `min_free_memory_gb` | `4` | Free GB below which no lane or goal starts; 0 is off. |
 | `token_budget` | `0` | Tokens a goal may spend before no new step starts; 0 means none. |
-| `test_budget_minutes` | `15` | Minutes one in-loop test run (qa, ship, pull request) may take, 15 or more; rows past it are left to the scheduled full suite. |
-| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row (preparing, planning, waiting for a slot), 15 or more; a lane past it stops and says which part ran long. |
-| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes with what it has done and records what it left. |
+| `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. |
+| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. |
+| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes with what it has done. |
 | `stale_branch_days` | `14` | Days a local branch on no remote may sit before health lists it with its removal command. |
 | `mend` | `false` | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | `120` | Seconds a failed goal waits before a mender starts. |
@@ -55,10 +56,12 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `agent_files` | `["CLAUDE.md", "AGENTS.md"]` | Agent entry files setup wires the workflow-loop block into; [] turns wiring off. |
 | `template_repo` | `(empty)` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
 | `reply_hook` | `true` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
-| `govern_hook` | `true` | false turns off the govern-only hook (setup.py --govern-hook installs it): edits, commits and pushes refused in the operation session. |
+| `govern_hook` | `true` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
 | `full_auto` | `true` | true lets the operation session answer a worker's routine decision with its recommended option, logged; risky ones wait. |
 | `pool_size` | `20` | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |
 | `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. |
+| `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
+| `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true makes health file and the regression workflow tag each issue feature:<Page> for its feature, and create that label. |
 
 ## Private settings
@@ -77,7 +80,7 @@ Outside the repo, never committed: `~/.workflow-loop/flow.json` (or `$LOOP_FLOW`
 | `probe` | `[]` | Flow file: a command that prints probe_expect when the skills run unattended. |
 | `probe_expect` | `unattended` | Flow file: the word the probe must print. |
 | `leak_prefixes` | `[]` | Flow file: case-insensitive regexes the package scan blocks in any file or file name, as your leak hook does. |
-| `full_markers` | `{}` | Flow file: per step, strings a full plan or review reply must contain, e.g. {"review": ["..."]}; none checked when empty. |
+| `full_markers` | `{}` | Flow file: per step, strings a full plan or review reply must contain, e.g. {"review": ["..."]}. |
 | `limit` | `2700` | Flow file: seconds one flow step may run. |
 | `lane_limit` | `2` | Flow file: full regression lanes that may run at once on this machine; more wait their turn (0 is unlimited). |
 | `rules` | `[]` | Health file: your own health rules, each {name, command, fix}. |
