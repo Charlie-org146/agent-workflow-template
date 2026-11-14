@@ -390,7 +390,7 @@ def cmd_pr(args):
     save(state, "pr")
     url = fit.pr_open(ME, state, base, info, body)
     state["pr"] = url
-    state["statuses"] = "ok" if private.pr_result(root(), base, head, state["branch"], True) else "failed"
+    state["statuses"] = "ok" if private.pr_result(root(), base, git("rev-parse", "HEAD"), state["branch"], True) else "failed"
     state["step"] = "release"
     state["status"] = "done"
     save(state, "pull request " + url)

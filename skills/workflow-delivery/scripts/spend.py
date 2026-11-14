@@ -23,3 +23,30 @@ def round_stop(g, state, what):
     g.save(state, ask if over else None)
     if over:
         g.no(ask)
+
+
+def app_only(cfg, state, slug):
+    """With `workers: app`, the refusal for a headless step on a goal no app session is bound to (#4184); '' otherwise."""
+    if cfg.get("workers") == "app" and state.get("worker") != "session":
+        return "REFUSED: workers is app and %s has no bound app session, so no headless agent starts. Fix: sessions.py bind %s SESSION (NO_SESSION)" % (slug, slug)
+    return ""
+
+
+def lane_checks(top, contexts):
+    """The required checks whose job the lane really performs (#3840): a job of .github/workflows whose steps only run regression.py.
+    Each other check is printed as BLOCKS and gets no status."""
+    import glob
+    import os
+    import re
+    jobs = {}
+    for path in glob.glob(os.path.join(top, ".github", "workflows", "*.y*ml")):
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            for job, body in re.findall(r"^  ([\w-]+):\n((?:    .*\n|\n)*)", handle.read() + "\n", re.M):
+                name = re.search(r"^    name:\s*(.+?)\s*$", body, re.M)
+                runs = re.findall(r"^\s*-?\s*run:\s*(.+)$", body, re.M)
+                held = bool(runs) and all("regression.py" in line for line in runs) and not re.search(r"uses:\s*(?!actions/(?:checkout|setup-))", body)
+                jobs.update({job: held, name[1].strip("'\"") if name else job: held})
+    ours = [name for name in contexts if jobs.get(name)]
+    for name in set(contexts) - set(ours):
+        print("BLOCKS: %s is a check the lane does not run, so it posts no status for it; its own job must report it (BLOCKS)" % name)
+    return ours
