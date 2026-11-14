@@ -150,6 +150,7 @@
 | <a id="t-merge-refused-failed"></a>merge-refused-failed | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
 | <a id="t-merge-failed-retry"></a>merge-failed-retry | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
 | <a id="t-skill-refusals-in-references"></a>skill-refusals-in-references | requirement | DEL-5 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-windows-safe-posix-names"></a>windows-safe-posix-names | requirement | DEL-12 | not run | - | local | 2026-11-14 |
 
 ## Documentation
 
@@ -771,6 +772,7 @@
 | <a id="t-topics-in-reference"></a>topics-in-reference | requirement | SET-2 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
 | <a id="t-go-app-holds-goal"></a>go-app-holds-goal | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-go-background-default"></a>go-background-default | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-package-passes-3800"></a>package-passes-3800 | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) state unknown | not run | - | local | 2026-11-14 |
 
 ## Other
 
@@ -916,6 +918,4 @@
 | <a id="t-held-time-pr-queue"></a>held-time-pr-queue | requirement | done line held-time-budget:1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-held-time-owner-wait"></a>held-time-owner-wait | requirement | done line held-time-budget:1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-held-time-stopped"></a>held-time-stopped | requirement | done line held-time-budget:1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
-| <a id="t-windows-safe-posix-names"></a>windows-safe-posix-names | defect | [#2871](https://github.com/jcl2018/agent-workflow-template/issues/2871) state unknown | not run | - | local | 2026-11-14 |
-| <a id="t-package-passes-3800"></a>package-passes-3800 | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) state unknown | not run | - | local | 2026-11-14 |
 | <a id="t-pods-caps-3919"></a>pods-caps-3919 | defect | [#3919](https://github.com/jcl2018/agent-workflow-template/issues/3919) state unknown | not run | - | local | 2026-11-14 |
