@@ -120,7 +120,7 @@ def check(root):
         if not mine:
             findings.append("UNDECLARED %s: no rows in .loop/permissions.tsv. Fix: list the commands, paths and sites its Runbook needs" % routine)
         for kind, rule, _ in mine:
-            if rule not in (written.get(kind) or []):
+            if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
                 findings.append("NOT WRITTEN %s %s %s. Fix: permissions.py write" % (routine, kind, rule))
         for tool, text in needs(root, routine, page):
             if mine and not covered(mine, tool, text):
@@ -153,6 +153,9 @@ def write(root, dry):
     for mine in table.values():
         for kind, rule, _ in mine:
             held = block.setdefault(kind, [])
+            if not isinstance(held, list):
+                print("REFUSED: .claude/settings.json permissions.%s is not a list. Nothing was written." % kind)
+                return 1
             if rule not in held:
                 held.append(rule)
                 added += 1

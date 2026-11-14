@@ -65,6 +65,8 @@ def save(path, data):
 def sent(to=""):
     """Log one send; never raises, so a send does not fail on the log."""
     try:
+        if not common():
+            return
         path = os.path.join(common(), "sends.json")
         held = load(path, {"since": stamp(), "count": 0})
         held["count"] = int(held.get("count", 0)) + 1
@@ -82,9 +84,10 @@ def sends_status():
 
 def loop_status():
     held = load(os.path.join(common(), "checkin-loop.json"), {})
-    if not held.get("expires"):
+    try:
+        left = datetime.datetime.strptime(held["expires"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc) - now()
+    except (KeyError, ValueError, TypeError):
         return "LOOP none recorded: run `loop created` after creating the check-in loop", True
-    left = datetime.datetime.strptime(held["expires"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc) - now()
     hours = int(left.total_seconds() // 3600)
     if left.total_seconds() <= 0:
         return "LOOP EXPIRED: re-create the check-in loop now, then run `loop created`", True
@@ -94,6 +97,8 @@ def loop_status():
 
 def lines():
     """(the Operation line for Coming up, the Needs-you items) the check-in prints."""
+    if not common():
+        return "", []
     try:
         sends, warn_sends = sends_status()
         loop, warn_loop = loop_status()
@@ -142,7 +147,10 @@ def standing(args):
         return 0
     for row in rows:  # check
         if not row[5] and row[2] == "merge" and (row[3] == "all" or args.text in row[3].split(",")):
-            print("STANDING %s: %s" % (row[0], json.loads(row[4])))
+            try:
+                print("STANDING %s: %s" % (row[0], json.loads(row[4])))
+            except ValueError:
+                print("STANDING %s" % row[0])
             return 0
     print("NO STANDING instruction covers %s: wait for the operation session's go" % args.text)
     return 1
@@ -152,7 +160,8 @@ def mode_line():
     top = run("rev-parse", "--show-toplevel")[1] or "."
     for path in (os.path.join(top, ".claude", "settings.local.json"), os.path.join(top, ".claude", "settings.json"),
                  os.path.join(os.path.expanduser("~"), ".claude", "settings.json")):
-        mode = (load(path, {}).get("permissions") or {}).get("defaultMode")
+        held = load(path, {})
+        mode = ((held.get("permissions") if isinstance(held, dict) else None) or {}).get("defaultMode")
         if mode:
             return ("MISSING permission mode: defaultMode is %s, which holds cross-session messages for approval. Fix: acceptEdits or auto" % mode) \
                 if mode in ("default", "plan") else ""
@@ -209,6 +218,8 @@ def main():
     item.add_argument("--goals", default="all")
     sub.add_parser("selfcheck")
     args = parser.parse_args()
+    if not common():
+        sys.exit("REFUSED: not inside a git repository. Nothing was written.")
     if args.cmd == "selfcheck":
         return selfcheck()
     if args.cmd == "standing":
