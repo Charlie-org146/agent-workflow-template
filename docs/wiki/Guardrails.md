@@ -7,7 +7,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109
 
 ## Problem
 
-- My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on.
+- My  guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on.
 - Runs can quietly cost too much: CI minutes on superseded or no-code runs, a step spending far more tokens than usual, a run going far longer than usual.
 - I want one set of guardrails that the health checks prove are on and that every adopted repo gets, each one showing what it protects against, where it lives and the setting that controls it.
 
@@ -122,4 +122,5 @@ None
 | [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | GRD-11 | no passing test | not enforced |
 | - | requirement | GRD-12 | no passing test | not enforced |
+| [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |

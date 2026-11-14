@@ -13,6 +13,7 @@
 | Operations | [Automation](Automation) | Runs health on your always-on machine (the Mac, or a Windows PC with `local register`; the digest's mail file can be named with `LOOP_MAIL_ENV`) and regression in GitHub Actions for a public repo or on your Mac for a private one, every 4 hours by default, plus any routine a repo adds with one config entry, each with a Runbook in the repo that its one-line scheduled prompt points to; files each failure and finding as an issue tagged with its group (and its feature, when feature_labels is on), and emails you one digest per round; the CI suite runs in eight shards with one combined summary. | [README › Automation](https://github.com/jcl2018/agent-workflow-template#how-to-use-automation) | [Automation](https://github.com/jcl2018/agent-workflow-template/milestone/10) |
 | Operations | [Setup](Setup) | Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, and keeps it in step with the template. | [README › Setup](https://github.com/jcl2018/agent-workflow-template#how-to-use-setup) | [Setup](https://github.com/jcl2018/agent-workflow-template/milestone/9) |
 | Docs | [Documentation](Documentation) | Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section; the README's How to use tables and each skill's command reference cover usage), and publishes them on every release; the README's Automation rows follow the Automation requirements and show health on the Mac's local schedule. | [README › Documentation](https://github.com/jcl2018/agent-workflow-template#how-to-use-documentation) | [Documentation](https://github.com/jcl2018/agent-workflow-template/milestone/3) |
+| Docs | [External-PRDs](External-PRDs) | Keeps the repo's copy of a PRD that lives in Notion or another service in step with it, and never writes to your document. | [README › External PRDs](https://github.com/jcl2018/agent-workflow-template#how-to-use-external-prds) | - |
 
 <!-- settings:begin -->
 ## Settings
@@ -40,7 +41,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
 | `review_depth` | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
 | `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
-| `criteria_max` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `17` |
+| `criteria_max` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `18` |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
@@ -48,7 +49,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. | set "goal_levels" in .loop/config.json | `land` | default |
 | `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo, or a public one recorded mac); setup records it from the repo's live visibility, keeps a recorded mac, and unset means it is not known (nothing is written for GitHub). | set "regression_runs" in .loop/config.json | `(empty)` | default |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}; setup declares the three built-in ones. | set "automation" in .loop/config.json | `[]` | default |
-| `topics` | Home's Topic column: {topic: [feature pages]}; rows are grouped by topic in this order, unlisted pages sit under Other, and empty means no Topic column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]}` |
+| `topics` | Home's Topic column: {topic: [feature pages]}; rows are grouped by topic in this order, unlisted pages sit under Other, and empty means no Topic column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation", "External-PRDs"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
 | `token_budget` | Tokens a goal may spend over all steps before no new step starts; 0 means no budget. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
 | `test_budget_minutes` | Minutes one in-loop test run (qa, ship, pull request) may take, 15 or more; rows past it are left to the scheduled full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
@@ -70,7 +71,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
-| `feature_labels` | true makes health file and the regression workflow tag each issue feature:<Page> for its feature, and create that label; off by default, so issues carry their group or regression label only. | set "feature_labels" in .loop/config.json | `false` | default |
+| `feature_labels` | true tags each health and regression issue feature:<Page> and creates the label. | set "feature_labels" in .loop/config.json | `false` | default |
+| `workers` | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->

@@ -240,3 +240,81 @@ def relock(root):
             handle.write("%s\trelock\t%s\tauto-relock: all lines owner-reviewed\n" % (criteria.datetime.datetime.now(
                 criteria.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), ",".join(done)))
     return done
+
+
+SYNC_MARK = "<!-- prd-sync: owned -->"
+REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
+
+
+def req_key(ident):
+    prefix, _, number = ident.partition("-")
+    return prefix, int(number)
+
+
+def requirements(body):
+    """{id: text} of the requirements an external PRD states: a top-level bullet, numbered item or table row that starts
+    with an id (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), its Reviewed stamp and markup dropped."""
+    found = {}
+    for line in body.replace("\r\n", "\n").split("\n"):
+        match = REQ.match(line)
+        if match and match.group(1) not in found:
+            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
+            found[match.group(1)] = " ".join(text.split())
+    return found
+
+
+def mirror_of(path):
+    """({id: text}, owned) of the repo's copy of a PRD: owned is True when sync wrote it (it opens with SYNC_MARK) or
+    nothing is there yet, False for any other file, which sync never touches."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().replace("\r\n", "\n").split("\n")
+    except OSError:
+        return {}, True
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == SYNC_MARK
+
+
+def sync(root, dry=False, texts=None):
+    """Compare each feature's external PRD with the repo's copy, .loop/prd/<Page>.md, and rewrite that copy to match
+    (unless dry). It reads the source and never writes to it: nothing here can. Exit 1 only for drift under --dry-run; a
+    source that can't be read is `not connected` and changes nothing."""
+    import counting
+    listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
+    if not listed:
+        print("NO EXTERNAL PRDS: no feature's PRD source in .loop/docs.tsv is a url or an mcp source")
+    drifted = steady = away = 0
+    for page, source in listed:
+        if page in (texts or {}):
+            try:
+                with open(texts[page], encoding="utf-8", errors="replace") as handle:
+                    body, why = handle.read(), None
+            except OSError as error:
+                body, why = None, str(error)
+        else:
+            body, why = prd.read_link(source)
+        if body is None:
+            print("not connected: %s (%s): %s" % (page, source, why))
+            away += 1
+            continue
+        want = requirements(body)
+        path = os.path.join(root, ".loop", "prd", page + ".md")
+        have, owned = mirror_of(path)
+        if not want:
+            print("EMPTY %s: the source states no requirement ids; the repo copy is kept" % page)
+        elif not owned:
+            print("SKIPPED %s: %s is not a file sync wrote; it is left as it is" % (page, os.path.relpath(path, root)))
+        else:
+            diffs = ["%s %s" % (i, "added" if i not in have else "removed" if i not in want
+                                else "changed (repo: %s | source: %s)" % (have[i][:50], want[i][:50]))
+                     for i in sorted(set(have) | set(want), key=req_key) if have.get(i) != want.get(i)]
+            for line in diffs:
+                print("DRIFT %s: %s" % (page, line))
+            steady, drifted = steady + (not diffs), drifted + bool(diffs)
+            if diffs and not dry:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                    handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source)
+                    handle.write("".join("- %s: %s\n" % (i, want[i]) for i in sorted(want, key=req_key)))
+                print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
+    print("SYNC: %d in step, %d drifted, %d not connected" % (steady, drifted, away))
+    return 1 if dry and drifted else 0
