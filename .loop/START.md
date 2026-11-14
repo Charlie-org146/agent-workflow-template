@@ -108,3 +108,4 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |
+| `workers` | app |  |
