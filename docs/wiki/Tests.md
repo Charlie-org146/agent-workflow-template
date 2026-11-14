@@ -265,6 +265,16 @@
 | <a id="t-home-topic-live"></a>home-topic-live | requirement | DOC-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-launchctl-missing-unknown"></a>launchctl-missing-unknown | requirement | DOC-15 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 
+## External PRDs
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-sync-drift-rewrites"></a>sync-drift-rewrites | requirement | EXT-1 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | EXT-1 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | EXT-3 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | EXT-2 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-source-readonly"></a>sync-source-readonly | requirement | EXT-2 | not run | - | local | 2026-11-13 |
+
 ## Guardrails
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
@@ -746,7 +756,7 @@
 | <a id="t-set8-health"></a>set8-health | requirement | SET-8 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-adoption-golden"></a>adoption-golden | requirement | SET-11 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-12 |
 | <a id="t-set13-hooks-once"></a>set13-hooks-once | defect | [#2880](https://github.com/jcl2018/agent-workflow-template/issues/2880) closed (2026-11-12) | not run | - | local | 2026-11-13 |
-| <a id="t-package-gate-head"></a>package-gate-head | requirement | SET-3 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
+| <a id="t-package-gate-head"></a>package-gate-head | requirement | SET-3 | PASS 2026-11-14 FLAKY | - | local | 2026-11-13 |
 | <a id="t-backlog-milestones-made"></a>backlog-milestones-made | requirement | SET-17 | not run | - | local | 2026-11-13 |
 | <a id="t-backlog-setup-makes"></a>backlog-setup-makes | requirement | SET-17 | not run | - | local | 2026-11-13 |
 | <a id="t-backlog-adoption-warns"></a>backlog-adoption-warns | requirement | SET-17 | not run | - | local | 2026-11-13 |
@@ -881,7 +891,7 @@
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-wording"></a>review-findings-wording | requirement | done line review-findings:1 | not run | - | local | 2026-11-12 |
-| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
+| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | FAIL | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-findings-one-per-lesson"></a>findings-one-per-lesson | workflow | done line migration-lessons:1 | not run | - | local | 2026-11-12 |
 | <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | not run | - | local | 2026-11-12 |
