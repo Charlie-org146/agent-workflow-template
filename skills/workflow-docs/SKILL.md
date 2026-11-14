@@ -145,6 +145,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-docs unreview PAGE\|ID` | `python3 scripts/criteria.py unreview PAGE\|ID --user` |
 | `/workflow-docs prd NAME "<idea>" --paths A,B` | `python3 scripts/prd.py new NAME "<idea>" --paths A,B` |
 | `/workflow-docs convert` | `python3 scripts/prd.py convert --write` |
+| `/workflow-docs relock` | `python3 scripts/docs.py audit --relock` |
 | `/workflow-docs render` | `python3 scripts/criteria.py render` |
 | `/workflow-docs automation` | `python3 scripts/docs.py automation` |
 | `/workflow-docs prompts` | `python3 scripts/docs.py prompts` |
