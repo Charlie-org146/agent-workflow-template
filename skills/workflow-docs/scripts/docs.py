@@ -13,8 +13,8 @@ usage: docs.py <command> [options]
   criteria PAGE                print the requirement format and the next free id for a page
   publish [--dry-run] [--adopt PAGE]
                                copy the pages to the wiki, commit and push
-  sync [--dry-run] [--text PAGE=FILE]
-                               compare each external PRD with .loop/prd/PAGE.md and rewrite that copy; never writes the source
+  sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]
+                               report each difference between an external PRD and .loop/prd/PAGE.md as a DELTA, post it for review, write an accepted side
   restore                      revert the last publish, if nothing came after it
   automation                   each routine's live state here: a workflow's newest run, a launch agent loaded or not
 
@@ -387,7 +387,7 @@ def cmd_prompts(_args):
 
 def cmd_sync(args):
     import audit
-    return audit.sync(top(), args.dry_run, dict(x.split("=", 1) for x in args.text if "=" in x))
+    return audit.sync(top(), args.dry_run, args.accept, args.open)
 
 
 def cmd_restore(_args):
@@ -439,7 +439,8 @@ def main():
     item.set_defaults(func=cmd_publish)
     item = sub.add_parser("sync")
     item.add_argument("--dry-run", action="store_true")
-    item.add_argument("--text", action="append", default=[], metavar="PAGE=FILE")
+    item.add_argument("--accept", action="append", default=[], metavar="PAGE:ID=repo|source")
+    item.add_argument("--open", action="store_true")
     item.set_defaults(func=cmd_sync)
     sub.add_parser("restore").set_defaults(func=cmd_restore)
     sub.add_parser("automation").set_defaults(func=cmd_automation)

@@ -306,3 +306,38 @@ def automation_block(root):
     head = ["Routine", "What it does", "State", "Cadence", "Runs on", "Last run", "Owed by you"]
     return "\n".join(["<!-- automation:begin -->", "## Automation", "",
                        "Health and regression, then each `automation` entry in `.loop/config.json`; to add one, add an entry.", ""] + pageformat.table(head, rows) + ["<!-- automation:end -->", ""])
+
+
+REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
+
+
+def req_key(ident):
+    prefix, _, number = ident.partition("-")
+    return prefix, int(number)
+
+
+def requirements(body):
+    """{id: text} of the requirements an external PRD states: a top-level bullet, numbered item or table row that starts
+    with an id (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), its Reviewed stamp and markup dropped."""
+    found = {}
+    for line in body.replace("\r\n", "\n").split("\n"):
+        match = REQ.match(line)
+        if match and match.group(1) not in found:
+            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
+            found[match.group(1)] = " ".join(text.split())
+    return found
+
+
+def ledger(root, rows=None):
+    """The posted deltas {PAGE:ID: [side, issue, commented 1/0, sha8]}, in <git common dir>/loop/deltas.tsv."""
+    folder = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir", check=False) or os.path.join(root, ".git")), "loop")
+    path = os.path.join(folder, "deltas.tsv")
+    if rows is not None:
+        os.makedirs(folder, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write("".join("\t".join([k] + v) + "\n" for k, v in sorted(rows.items())))
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return {r[0]: r[1:] for r in (x.rstrip("\n").split("\t") for x in handle) if len(r) == 5}
+    except OSError:
+        return {}

@@ -243,78 +243,140 @@ def relock(root):
 
 
 SYNC_MARK = "<!-- prd-sync: owned -->"
-REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
-
-
-def req_key(ident):
-    prefix, _, number = ident.partition("-")
-    return prefix, int(number)
-
-
-def requirements(body):
-    """{id: text} of the requirements an external PRD states: a top-level bullet, numbered item or table row that starts
-    with an id (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), its Reviewed stamp and markup dropped."""
-    found = {}
-    for line in body.replace("\r\n", "\n").split("\n"):
-        match = REQ.match(line)
-        if match and match.group(1) not in found:
-            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
-            found[match.group(1)] = " ".join(text.split())
-    return found
+def put(path, source, have, base):
+    """Write the copy (SYNC_MARK, `- ID: text` lines) and its baseline .base (`ID<TAB>sha8` of the agreed text)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
+    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("".join("%s\t%s\n" % item for item in sorted(base.items(), key=lambda x: counting.req_key(x[0]))))
 
 
 def mirror_of(path):
-    """({id: text}, owned) of the repo's copy of a PRD: owned is True when sync wrote it (it opens with SYNC_MARK) or
-    nothing is there yet, False for any other file, which sync never touches."""
+    """({id: text}, owned, {id: sha8 agreed}) of the repo's copy: owned unless another file is there (never touched)."""
     try:
         with open(path, encoding="utf-8") as handle:
             lines = handle.read().replace("\r\n", "\n").split("\n")
     except OSError:
-        return {}, True
-    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == SYNC_MARK
+        return {}, True, {}
+    try:
+        with open(path[:-3] + ".base", encoding="utf-8") as handle:
+            agreed = dict(x.split("\t") for x in handle.read().split("\n") if "\t" in x)
+    except OSError:
+        agreed = {}
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == SYNC_MARK, agreed
 
 
-def sync(root, dry=False, texts=None):
-    """Compare each feature's external PRD with the repo's copy, .loop/prd/<Page>.md, and rewrite that copy to match
-    (unless dry). It reads the source and never writes to it: nothing here can. Exit 1 only for drift under --dry-run; a
-    source that can't be read is `not connected` and changes nothing."""
-    import counting
+def sha(text):
+    return None if text is None else criteria.seal(text)
+
+
+def out(env, *args, **kw):
+    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER, an agent's Notion connector: `WRITER SOURCE comment|replace
+    ID|remove ID`, text on stdin). Never raises."""
+    cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
+    if not cmd:
+        return False, "set %s to the command that writes to the document" % env
+    try:
+        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, timeout=120, **kw)
+    except (OSError, subprocess.SubprocessError) as error:
+        return False, str(error)[:100]
+    return done.returncode == 0, (done.stdout if done.returncode == 0 else done.stderr).strip()
+
+
+def sync(root, dry=False, accept=(), opened=False):
+    """Compare each external PRD with the repo's copy, .loop/prd/<Page>.md, against what both last agreed on. A difference is a
+    DELTA (page, id, side, both texts) and sync overwrites neither side: it posts each new one as a GitHub issue and a comment
+    on the external page, and --accept PAGE:ID=repo|source writes that side's text, that id only, to the other side and closes
+    the issue. --dry-run posts and writes nothing (exit 1 with a delta). An unreachable source, gh or writer is `not connected`."""
+    held = counting.ledger(root)
+    if opened:
+        print("".join("DELTA %s %s changed (review: %s)\n" % (k.replace(":", ": "), v[0], v[1]) for k, v in held.items()), end="")
+        return 0
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:
         print("NO EXTERNAL PRDS: no feature's PRD source in .loop/docs.tsv is a url or an mcp source")
-    drifted = steady = away = 0
+    same = new = away = 0
     for page, source in listed:
-        if page in (texts or {}):
-            try:
-                with open(texts[page], encoding="utf-8", errors="replace") as handle:
-                    body, why = handle.read(), None
-            except OSError as error:
-                body, why = None, str(error)
-        else:
-            body, why = prd.read_link(source)
+        body, why = prd.read_link(source)
         if body is None:
             print("not connected: %s (%s): %s" % (page, source, why))
             away += 1
             continue
-        want = requirements(body)
-        path = os.path.join(root, ".loop", "prd", page + ".md")
-        have, owned = mirror_of(path)
+        want, path = counting.requirements(body), os.path.join(root, ".loop", "prd", page + ".md")
+        have, owned, agreed = mirror_of(path)
         if not want:
             print("EMPTY %s: the source states no requirement ids; the repo copy is kept" % page)
-        elif not owned:
+            continue
+        if not owned:
             print("SKIPPED %s: %s is not a file sync wrote; it is left as it is" % (page, os.path.relpath(path, root)))
-        else:
-            diffs = ["%s %s" % (i, "added" if i not in have else "removed" if i not in want
-                                else "changed (repo: %s | source: %s)" % (have[i][:50], want[i][:50]))
-                     for i in sorted(set(have) | set(want), key=req_key) if have.get(i) != want.get(i)]
-            for line in diffs:
-                print("DRIFT %s: %s" % (page, line))
-            steady, drifted = steady + (not diffs), drifted + bool(diffs)
-            if diffs and not dry:
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                with open(path, "w", encoding="utf-8", newline="\n") as handle:
-                    handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source)
-                    handle.write("".join("- %s: %s\n" % (i, want[i]) for i in sorted(want, key=req_key)))
+            continue
+        if not os.path.exists(path):  # the first sync adopts the source: nothing to compare yet
+            if not dry:
+                put(path, source, want, {i: sha(t) for i, t in want.items()})
                 print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
-    print("SYNC: %d in step, %d drifted, %d not connected" % (steady, drifted, away))
-    return 1 if dry and drifted else 0
+            continue
+        for item in (a for a in accept if not dry and a.split(":")[0] == page):
+            ident, _, side = item.partition(":")[2].partition("=")
+            r, s = have.get(ident), want.get(ident)
+            keep = r if side == "repo" else s  # the text both sides will hold
+            if r == s or side not in ("repo", "source"):
+                print("NO DELTA %s: %s (nothing to accept for %s)" % (page, ident, item))
+                continue
+            ok, why = out("LOOP_PRD_WRITER", source, "replace" if r else "remove", ident, input=r or "") if side == "repo" else (True, "")
+            if not ok:
+                print("not connected: %s (%s): %s" % (page, source, why))
+                continue
+            for side_of in (want, have):
+                if keep:
+                    side_of[ident] = keep
+                else:
+                    side_of.pop(ident, None)
+            agreed[ident] = sha(keep) or ""
+            put(path, source, have, {i: h for i, h in agreed.items() if h})
+            row = held.pop("%s:%s" % (page, ident), None)
+            if row:
+                out("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted the %s's text; both sides now say the same." % side)
+            print("ACCEPTED %s: %s, the %s's text is on both sides" % (page, ident, side))
+        found = []
+        for ident in sorted(set(have) | set(want), key=counting.req_key):
+            r, s = have.get(ident), want.get(ident)
+            if r != s:
+                b = agreed.get(ident) or None
+                found.append((ident, "both sides" if (sha(r) != b) == (sha(s) != b) else "the repo" if sha(r) != b else "the source", r, s))
+        fresh = {i: sha(have[i]) for i in have if have[i] == want.get(i)}
+        fresh.update({i: agreed[i] for i, *_ in found if i in agreed})
+        if fresh != agreed and not dry:
+            put(path, source, have, fresh)
+        same, new = same + (not found), new + len(found)
+        for ident, side, r, s in found:
+            print("DELTA %s: %s %s changed (repo: %s | source: %s)" % (page, ident, side, (r or "<none>")[:160], (s or "<none>")[:160]))
+        if dry:
+            continue
+        for key in [k for k in held if k.startswith(page + ":") and k.split(":")[1] not in [f[0] for f in found]]:
+            out("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Both sides now say the same.")
+        for ident, side, r, s in found:
+            key, text = "%s:%s" % (page, ident), "Delta in %s %s: %s changed.\nRepo copy: %s\nSource: %s\nAccept one side with: docs.py sync --accept %s:%s=repo or =source" % (
+                page, ident, side, r or "<none>", s or "<none>", page, ident)
+            row = held.get(key) or [side, "", "0", ""]
+            if row[1] and row[3] != sha(text):
+                out("LOOP_GH", "issue", "comment", row[1], "--body", "The delta changed.\n" + text)
+                row[2] = "0"
+            elif not row[1]:
+                for stone in (["--milestone", page], []):  # the page's milestone is named like it; without one the issue is still made
+                    ok, made = out("LOOP_GH", "issue", "create", "--title", "DELTA %s %s: %s changed" % (page, ident, side), "--body", text, *stone)
+                    if ok:
+                        break
+                if not ok:
+                    print("not connected: %s %s (gh): %s" % (page, ident, made[:100]))
+                    away += 1
+                    continue
+                row[1] = made.split("\n")[-1]
+            if row[2] != "1":
+                ok, why = out("LOOP_PRD_WRITER", source, "comment", input=text)
+                row[2] = "1" if ok else "0"
+                print("POSTED %s %s: %s%s" % (page, ident, row[1], "" if ok else " (not connected to %s: %s)" % (source, why[:80])))
+            held[key] = [side, row[1], row[2], sha(text)]
+    counting.ledger(root, held)
+    print("SYNC: %d in step, %d with a delta, %d not connected" % (same, new, away))
+    return 1 if dry and new else 0
