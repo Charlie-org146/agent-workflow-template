@@ -43,7 +43,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True  # no __pycache__ in the skill folder: the package check refuses one
-import actions, lanes, lanes_cli, memory, runs, slots, tiers  # noqa: E401,E402
+import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
@@ -276,7 +276,7 @@ def cmd_run(args):
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
                                                        " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
     if todo and args.target in ("land", "nightly"):  # a by-id run never waits
-        memory.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
+        lanes_cli.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
     if todo and args.target in ("land", "nightly") and (why or not args.reuse):  # a lane with no plan to follow waits for a slot
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:

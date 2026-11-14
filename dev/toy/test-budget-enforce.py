@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/spend.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py
-# reads: skills/workflow-monitoring/scripts/limits.py skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/checkin.py
-# reads: skills/workflow-health/scripts/issues.py skills/workflow-setup/scripts/settings.py
+# reads: skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/checkin.py
+# reads: skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/regression.py skills/workflow-health/scripts/issues.py skills/workflow-setup/scripts/settings.py
 """GRD-2: time, token, merge-round, active-goal and plan-usage limits in .loop/config.json stop new work.
 
 Calls the real functions: fit.budget_stop / add_tokens / round_stop (delivery), limits.active_limit / plan_pause / cmd_usage
@@ -21,11 +21,11 @@ for skill in ("delivery", "monitoring", "health", "setup", "regression"):
 os.environ.pop("LOOP_ROLE", None)
 import fit  # noqa: E402
 import spend  # noqa: E402
-import limits  # noqa: E402
+import replan as limits  # noqa: E402
 import pool  # noqa: E402
 import issues as cost  # noqa: E402
 import settings  # noqa: E402
-import memory  # noqa: E402
+import lanes_cli as memory  # noqa: E402
 import slots  # noqa: E402
 
 failed = []
