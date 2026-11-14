@@ -133,7 +133,7 @@ The owner decided 2026-11-13: "remove the usage section, because you cannot say 
 Drafted 2026-11-13 by the drop-usage goal. Main's recent code changes left three Reviewed pages stale, and Usage edits no longer touch pages. One real, accurate sub-bullet each, none applied until the owner un-reviews the named requirement and page and approves the wording; the code and tests it describes are already on main.
 
 - Automation (#3848, suite-shard), AUT-2, add this sub-bullet after the last one: The CI suite runs in eight shards with one combined summary: each row is given the time left, the suite-time line counts the rows skipped for time (the unrun rows), and a newer run on the same ref cancels the older.
-- Guardrails (#3860, backlog-milestones' `criteria_max` 16 to 17), GRD-9, add this sub-bullet after the last one: A page's requirement cap, `criteria_max` (17 in this repo), is read by health's Size group, so a page too large to review shows as a finding.
+- Guardrails (#3860, backlog-milestones' `criteria_max` 16 to 17), GRD-9, add this sub-bullet after the last one: A page's requirement cap, `criteria_max` (18 in this repo), is read by health's Size group, so a page too large to review shows as a finding.
 - Monitoring (#3861, the reply hook and the check-in dependency code), MON-14, add this sub-bullet after the last one: The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
 
 Applied 2026-11-13 on the owner's three approvals typed in the drop-usage session: AUT-2, GRD-9 and MON-14 and their pages were un-reviewed, given the sub-bullets above, and reviewed again.
@@ -257,3 +257,5 @@ The owner types two sentences (the session that relays them runs `criteria.py un
 2. Review, after the goal has added it: "Review the Monitoring page and MON-19 again."
 
 Applied 2026-11-14 (blockers-first): the owner's words, recorded as o11 in owner-words.tsv, un-reviewed the Monitoring page; MON-19 was added exactly as drafted above, the goal's row moved from MON-5 to MON-19, and the page and MON-19 are reviewed again with the same words.
+
+The cap: MON-19 makes the Monitoring page 18 requirements, so `criteria_max` goes from 17 to 18 in this goal, as backlog-milestones did from 16 to 17.
