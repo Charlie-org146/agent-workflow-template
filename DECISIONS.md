@@ -255,3 +255,5 @@ The owner types two sentences (the session that relays them runs `criteria.py un
 
 1. Un-review: "Un-review the Monitoring page so MON-19 can be added."
 2. Review, after the goal has added it: "Review the Monitoring page and MON-19 again."
+
+Applied 2026-11-14 (blockers-first): the owner's words, recorded as o11 in owner-words.tsv, un-reviewed the Monitoring page; MON-19 was added exactly as drafted above, the goal's row moved from MON-5 to MON-19, and the page and MON-19 are reviewed again with the same words.

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=f2a85bfd N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -72,6 +72,10 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
 - MON-17: **Reviewed 2026-11-14** A check-in lists only this machine's goals. <!-- reviewed d4cc2e30 -->
   - Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod.
+- MON-19: **Reviewed 2026-11-14** Blockers first. Each item under Needs you says what it holds up, so the owner sees the priorities. <!-- reviewed bd613495 -->
+  - An item names the goals, merges or release it holds up, with the count of goals behind it, and says whether it is on the critical path to the next release; an item that holds nothing says "blocks nothing".
+  - Items are sorted with the one holding up the most goals first, and the Dependencies graph marks the owner item on each chain.
+  - The Stop hook refuses a check-in whose Needs you items do not say what they hold up.
 
 ### Non-functional
 - MON-7: **Reviewed 2026-11-10** Govern only <!-- reviewed da6f1852 -->
@@ -186,7 +190,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | MON-5 | Given the Monitoring PRD, when MON-5 is read, then it carries the check-in reply layout the hook enforces. | PASS 2026-11-13 |
 | [checkin-passes-hook](Tests#t-checkin-passes-hook) | requirement | MON-5 | Given the check-in operate.py prints, when the reply hook checks it, then it passes the layout. | PASS 2026-11-10 |
 | [machine-local-checkin](Tests#t-machine-local-checkin) | requirement | MON-5 | Given proofs owed to another machine, when the check-in is written, then they are listed under Coming up as off-machine to-dos, not as blockers. | not run |
-| [blockers-first](Tests#t-blockers-first) | requirement | MON-5 | Given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not. | PASS 2026-11-14 |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
@@ -207,6 +210,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MON-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
 | - | requirement | MON-16 | no passing test | not enforced |
 | - | requirement | MON-17 | no passing test | not enforced |
+| [blockers-first](Tests#t-blockers-first) | requirement | MON-19 | Given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not. | PASS 2026-11-14 |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | MON-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | MON-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
