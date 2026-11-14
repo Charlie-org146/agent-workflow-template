@@ -89,6 +89,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-setup git-hooks` | `python3 scripts/setup.py --git-hooks` (`--remove` takes out only the stubs setup wrote; `--check [--json]` prints the list's and each hook's state): the private-name scan as `pre-commit`, `commit-msg` and `pre-push` hooks in `.git/hooks`; a default `setup` installs them too (`--no-git-hooks` or `LOOP_NO_GIT_HOOKS=1` skips) |
 | `/workflow-setup settings` | `python3 scripts/settings.py reference` (`show [--repo DIR] [--json]` gives each value with its layer) |
 | `/workflow-setup fill-repo` | `python3 scripts/settings.py fill-repo` |
+| `/workflow-setup permissions` | `python3 ../workflow-docs/scripts/permissions.py write` (`--dry-run` previews; `check` is part of `docs.py check`): each routine's rows in `.loop/permissions.tsv` into the committed `.claude/settings.json` (AUT-9) |
 | `/workflow-setup update --check` | `python3 scripts/update.py --check` (exit 1 means behind) |
 | `/workflow-setup update` | `python3 scripts/update.py --apply` (`--take FILE`, `--tag vX`, `--from ZIP\|DIR`, `--template OWNER/NAME`) |
 | `/workflow-setup update --propose` | `python3 scripts/update.py --propose` (`--file-issue` files it) |

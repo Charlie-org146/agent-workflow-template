@@ -87,6 +87,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=150a6df4 N=e081872e M=4670
 | [runbook-repo](Tests#t-runbook-repo) | requirement | AUT-8 | Given this repo's Health and Regression pages, when their Runbook sections are read, then each routine in the registry has every field, says a full run is live, and names a fixture or dry run as forbidden. | not run |
 | [aut-routine-block](Tests#t-aut-routine-block) | requirement | AUT-8 | Given a routine added to the config's automation list, when the Automation block renders, then it has a row for the routine with its schedule and where it runs. | not run |
 | [aut-routine-prompt](Tests#t-aut-routine-prompt) | requirement | AUT-8 | Given a routine in the registry, when docs.py prompts runs, then it prints one line saying to fast-forward to origin/main and follow the repo's Runbook section for the routine. | not run |
+| [perms-undeclared](Tests#t-perms-undeclared) | requirement | AUT-8 | Given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. | not run |
+| [perms-not-written](Tests#t-perms-not-written) | requirement | AUT-8 | Given declared rows the project settings lack, when permissions.py check runs, then each is NOT WRITTEN and it exits 1. | not run |
+| [perms-uncovered](Tests#t-perms-uncovered) | requirement | AUT-8 | Given a Runbook that names a command and a site no allow row covers, when permissions.py check runs, then each is UNCOVERED. | not run |
+| [perms-conflict](Tests#t-perms-conflict) | requirement | AUT-8 | Given an allow rule that a deny rule covers, when permissions.py check runs, then it prints CONFLICT. | not run |
+| [perms-private-refused](Tests#t-perms-private-refused) | requirement | AUT-8 | Given a row holding a home path, when permissions.py write runs, then it is refused and no settings file is written. | not run |
+| [perms-write-keeps](Tests#t-perms-write-keeps) | requirement | AUT-8 | Given a settings file with other keys and rules, when permissions.py write runs, then they are all kept. | not run |
+| [perms-repo-ok](Tests#t-perms-repo-ok) | requirement | AUT-8 | Given this repo, when permissions.py check runs, then its routines are declared, written and covered. | not run |
 | - | requirement | AUT-8 | no passing test | not enforced |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
 | [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given regression_cron off, when the regression workflow runs, then it writes nothing and says the routine is off. | PASS 2026-11-12 |
