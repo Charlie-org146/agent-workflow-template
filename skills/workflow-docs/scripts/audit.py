@@ -14,7 +14,6 @@ do not fail the audit. It runs git and gh, and nothing else.
 """
 import argparse
 import contextlib
-import fnmatch
 import io
 import json
 import os
@@ -244,120 +243,91 @@ def relock(root):
     return done
 
 
-# --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
-PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
-allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
-PERM_PROGRAMS = ("python3", "python", "gh", "git", "claude", "curl", "node")
-PERM_PRIVATE = re.compile(r"(/Users/|/home/[A-Za-z]|[A-Za-z]:[\\/]+Users|\bsk-[A-Za-z0-9]{8}|\bghp_|\bxox[bp]-)")
-PERM_FIELD = re.compile(r"^- \*\*([A-Za-z ]+):\*\*\s*(.*)$")
+SYNC_MARK = "<!-- prd-sync: owned -->"
+REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
 
 
-def perm_root_of(repo):
-    top = subprocess.run(["git", "-C", repo or ".", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-    return top.stdout.strip() or os.path.abspath(repo or ".")
+def req_key(ident):
+    prefix, _, number = ident.partition("-")
+    return prefix, int(number)
 
 
-def perm_rows(path):
-    """The (line number, fields) of a tab file, comments and blanks skipped; [] when the file is absent."""
-    try:
-        with open(path, encoding="utf-8-sig") as handle:
-            return [(n, line.rstrip("\r\n").split("\t")) for n, line in enumerate(handle, 1)
-                    if line.strip() and not line.lstrip().startswith("#")]
-    except OSError:
-        return []
-
-
-def perm_declared(root):
-    """{routine: [(kind, rule, why)]} and the problems in the file itself."""
-    out, bad = {}, []
-    for number, row in perm_rows(os.path.join(root, ".loop", "permissions.tsv")):
-        routine, kind, rule = (row + ["", "", ""])[:3]
-        if kind not in ("allow", "deny") or not re.match(r"^[A-Za-z]+\(.+\)$", rule) or not routine:
-            bad.append("BAD ROW permissions.tsv:%d (routine<TAB>allow|deny<TAB>Tool(spec)<TAB>why)" % number)
-        elif PERM_PRIVATE.search(rule) or os.path.expanduser("~") in rule:
-            bad.append("PERM_PRIVATE ROW permissions.tsv:%d holds a home path, a user name or a token: write it with ~ or a glob" % number)
-        else:
-            out.setdefault(routine, []).append((kind, rule, row[3] if len(row) > 3 else ""))
-    return out, bad
-
-
-def perm_matches(rule, tool, text):
-    """Does a permission rule `Tool(spec)` cover `text` for that tool: a prefix rule `x:*`, else a glob."""
-    found = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
-    if not found or found.group(1) != tool:
-        return False
-    spec = found.group(2)
-    if spec.endswith(":*"):
-        return text == spec[:-2] or text.startswith(spec[:-2] + " ")
-    return fnmatch.fnmatchcase(text, spec)
-
-
-def perm_wiki_page(root, page):
-    try:
-        folder = docs.wiki_dir(root)
-    except SystemExit:
-        folder = "docs/wiki"
-    try:
-        with open(os.path.join(root, folder, page + ".md"), encoding="utf-8-sig") as handle:
-            return handle.read().splitlines()
-    except OSError:
-        return []
-
-
-def perm_needs(root, routine, page):
-    """The (tool, text) pairs the Runbook's Steps and Full run name: a backticked command that starts with a program, and
-    each https host as a WebFetch domain."""
-    lines, inside, field, found = perm_wiki_page(root, page), False, "", []
-    for line in lines:
-        if line.startswith("### "):
-            inside = line[4:].strip() == routine
-        elif line.startswith("## "):
-            inside = False
-        elif inside:
-            match = PERM_FIELD.match(line)
-            field = match.group(1) if match else field
-            if field in ("Steps", "Full run"):
-                for span in re.findall(r"`([^`]+)`", line):
-                    if " " in span and span.split(" ", 1)[0] in PERM_PROGRAMS:
-                        found.append(("Bash", " ".join(span.split())))
-                found += [("WebFetch", "domain:" + host) for host in re.findall(r"https?://([A-Za-z0-9.-]+)", line)]
+def requirements(body):
+    """{id: text} of the requirements an external PRD states: a top-level bullet, numbered item or table row that starts
+    with an id (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), its Reviewed stamp and markup dropped."""
+    found = {}
+    for line in body.replace("\r\n", "\n").split("\n"):
+        match = REQ.match(line)
+        if match and match.group(1) not in found:
+            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
+            found[match.group(1)] = " ".join(text.split())
     return found
 
 
-def perm_covered(allow, tool, text):
-    return any(perm_matches(rule, tool, text) for kind, rule, _ in allow if kind == "allow")
-
-
-def perm_check(root):
-    """The findings, one line each, for every routine in .loop/routines.tsv."""
-    table, findings = perm_declared(root)
-    if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
-        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"]             if perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
+def mirror_of(path):
+    """({id: text}, owned) of the repo's copy of a PRD: owned is True when sync wrote it (it opens with SYNC_MARK) or
+    nothing is there yet, False for any other file, which sync never touches."""
     try:
-        with open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8") as handle:
-            written = (json.load(handle).get("permissions") or {})
-    except (OSError, ValueError):
-        written = {}
-    for _, row in perm_rows(os.path.join(root, ".loop", "routines.tsv")):
-        routine, page = (row + ["", ""])[:2]
-        mine = table.get(routine, [])
-        if not mine:
-            findings.append("UNDECLARED %s: no rows in .loop/permissions.tsv. Fix: list what its Runbook needs" % routine)
-        for kind, rule, _ in mine:
-            if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
-                findings.append("NOT WRITTEN %s %s %s. Fix: audit.py permissions write" % (routine, kind, rule))
-        for tool, text in perm_needs(root, routine, page):
-            if mine and not perm_covered(mine, tool, text):
-                findings.append("UNCOVERED %s: the Runbook names %s(%s) and no allow row covers it" % (routine, tool, text))
-        for kind, rule, _ in mine:
-            inner = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
-            if kind == "allow" and inner and any(k == "deny" and perm_matches(r, inner.group(1), inner.group(2)) for k, r, _ in mine):
-                findings.append("CONFLICT %s: the allow %s is covered by a deny, which wins" % (routine, rule))
-    return findings
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().replace("\r\n", "\n").split("\n")
+    except OSError:
+        return {}, True
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == SYNC_MARK
+
+
+def sync(root, dry=False, texts=None):
+    """Compare each feature's external PRD with the repo's copy, .loop/prd/<Page>.md, and rewrite that copy to match
+    (unless dry). It reads the source and never writes to it: nothing here can. Exit 1 only for drift under --dry-run; a
+    source that can't be read is `not connected` and changes nothing."""
+    import counting
+    listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
+    if not listed:
+        print("NO EXTERNAL PRDS: no feature's PRD source in .loop/docs.tsv is a url or an mcp source")
+    drifted = steady = away = 0
+    for page, source in listed:
+        if page in (texts or {}):
+            try:
+                with open(texts[page], encoding="utf-8", errors="replace") as handle:
+                    body, why = handle.read(), None
+            except OSError as error:
+                body, why = None, str(error)
+        else:
+            body, why = prd.read_link(source)
+        if body is None:
+            print("not connected: %s (%s): %s" % (page, source, why))
+            away += 1
+            continue
+        want = requirements(body)
+        path = os.path.join(root, ".loop", "prd", page + ".md")
+        have, owned = mirror_of(path)
+        if not want:
+            print("EMPTY %s: the source states no requirement ids; the repo copy is kept" % page)
+        elif not owned:
+            print("SKIPPED %s: %s is not a file sync wrote; it is left as it is" % (page, os.path.relpath(path, root)))
+        else:
+            diffs = ["%s %s" % (i, "added" if i not in have else "removed" if i not in want
+                                else "changed (repo: %s | source: %s)" % (have[i][:50], want[i][:50]))
+                     for i in sorted(set(have) | set(want), key=req_key) if have.get(i) != want.get(i)]
+            for line in diffs:
+                print("DRIFT %s: %s" % (page, line))
+            steady, drifted = steady + (not diffs), drifted + bool(diffs)
+            if diffs and not dry:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                    handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source)
+                    handle.write("".join("- %s: %s\n" % (i, want[i]) for i in sorted(want, key=req_key)))
+                print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
+    print("SYNC: %d in step, %d drifted, %d not connected" % (steady, drifted, away))
+    return 1 if dry and drifted else 0
+
+
+# --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
 
 
 def perm_write(root, dry):
-    table, bad = perm_declared(root)
+    table, bad = counting.perm_declared(root)
     if bad:
         print("\n".join(bad))
         return 1
@@ -400,10 +370,10 @@ def perm_main(argv):
     parser.add_argument("--repo", default="")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
-    root = perm_root_of(args.repo)
+    root = counting.perm_root_of(args.repo)
     if args.command == "write":
         return perm_write(root, args.dry_run)
-    findings = perm_check(root)
+    findings = entry.perm_check(root)
     print("\n".join(findings) if findings else "PERMISSIONS OK")
     return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
 

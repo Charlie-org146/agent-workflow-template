@@ -122,6 +122,15 @@ Say these to the agent:
 | "Post the automation digest" | One comment on the pinned digest issue lists what ran, the new, still-open and fixed issues, and a request per open issue. |
 | "Write the scheduled regression run again" | The regression workflow is rewritten from the current config, so its schedule matches. |
 
+### How to use External PRDs
+
+Say these to the agent:
+
+| You say | What happens |
+|---|---|
+| "Keep the repo's copy of the Thermis PRD in step with Notion" | The feature's PRD source is set to its Notion page in `.loop/docs.tsv`, and the sync compares it with the repo's copy and rewrites the copy to match. |
+| "Has the Notion PRD changed?" | A dry run lists each requirement added, removed or changed as DRIFT, writes nothing, and says not connected when no connector is set. |
+
 ### How to use Guardrails
 
 Say these to the agent:
@@ -438,7 +447,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. | set "goal_levels" in .loop/config.json | `land` | default |
 | `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo, or a public one recorded mac); setup records it from the repo's live visibility, keeps a recorded mac, and unset means it is not known (nothing is written for GitHub). | set "regression_runs" in .loop/config.json | `(empty)` | default |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}; setup declares the three built-in ones. | set "automation" in .loop/config.json | `[]` | default |
-| `topics` | Home's Topic column: {topic: [feature pages]}; rows are grouped by topic in this order, unlisted pages sit under Other, and empty means no Topic column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]}` |
+| `topics` | Home's Topic column: {topic: [feature pages]}; rows are grouped by topic in this order, unlisted pages sit under Other, and empty means no Topic column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation", "External-PRDs"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
 | `token_budget` | Tokens a goal may spend over all steps before no new step starts; 0 means no budget. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
 | `test_budget_minutes` | Minutes one in-loop test run (qa, ship, pull request) may take, 15 or more; rows past it are left to the scheduled full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
@@ -460,7 +469,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
-| `feature_labels` | true makes health file and the regression workflow tag each issue feature:<Page> for its feature, and create that label; off by default, so issues carry their group or regression label only. | set "feature_labels" in .loop/config.json | `false` | default |
+| `feature_labels` | true tags each health and regression issue feature:<Page> and creates the label. | set "feature_labels" in .loop/config.json | `false` | default |
+| `workers` | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->

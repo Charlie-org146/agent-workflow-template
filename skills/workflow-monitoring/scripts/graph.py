@@ -120,6 +120,11 @@ def parallel_of(cfg):
         return 0
 
 
+def app_only(cfg):
+    """True when the pod's rule is app sessions only (`workers: app` in .loop/config.json): no background process starts."""
+    return cfg.get("workers") == "app"
+
+
 def pool_fix(why):
     """The one line every reader prints for a pool it can't trust."""
     return ("the session pool can't be read (%s); fix: check it with python3 -m json.tool, repair it (moved aside, every held goal is forgotten); "
