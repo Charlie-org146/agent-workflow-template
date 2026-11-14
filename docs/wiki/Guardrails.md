@@ -122,5 +122,5 @@ None
 | [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | GRD-11 | no passing test | not enforced |
 | - | requirement | GRD-12 | no passing test | not enforced |
-| [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) open (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
+| [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
