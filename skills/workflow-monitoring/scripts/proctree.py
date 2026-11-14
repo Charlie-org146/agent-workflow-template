@@ -65,12 +65,12 @@ else:
 
     def kill(pid, sig=signal.SIGKILL):
         try:
-            os.killpg(pid, sig)
+            os.killpg(pid, sig)  # posix-only branch
         except OSError:  # already gone
             pass
 
     def probe(pid):
-        os.kill(pid, 0)
+        os.kill(pid, 0)  # posix-only branch
 
     def pstart(pid):
         return subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
