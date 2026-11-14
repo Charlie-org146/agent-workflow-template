@@ -96,6 +96,7 @@ None
 | [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | GRD-3 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
 | [grd3-hooks-health](Tests#t-grd3-hooks-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed, when health runs, then it passes the hooks rule. | not run |
 | [grd3-hook-bypass](Tests#t-grd3-hook-bypass) | requirement | GRD-3 | Given a commit or push that skips hooks (no-verify, empty hooks path), when a loop command runs it, then it is refused and health flags it (not built). | not run |
+| [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | GRD-3 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
 | [grd4-touches](Tests#t-grd4-touches) | requirement | GRD-4 | Given a worker session, when it tries to widen its goal's touches, then the command refuses. | not run |
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
 | [grd4-budget](Tests#t-grd4-budget) | requirement | GRD-4 | Given a worker session, when it tries to set its own goal's budget, then the command refuses. | not run |

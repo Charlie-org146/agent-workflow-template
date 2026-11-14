@@ -54,13 +54,13 @@
 | <a id="t-health-register-no-launchd"></a>health-register-no-launchd | requirement | AUT-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-health-mail-env-named"></a>health-mail-env-named | requirement | AUT-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-health-mail-env-windows"></a>health-mail-env-windows | requirement | AUT-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
-| <a id="t-perms-undeclared"></a>perms-undeclared | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-not-written"></a>perms-not-written | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-uncovered"></a>perms-uncovered | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-conflict"></a>perms-conflict | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-private-refused"></a>perms-private-refused | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-8 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-8 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-undeclared"></a>perms-undeclared | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-not-written"></a>perms-not-written | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-uncovered"></a>perms-uncovered | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-conflict"></a>perms-conflict | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-private-refused"></a>perms-private-refused | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 
 ## Delivery
 
@@ -308,6 +308,7 @@
 | <a id="t-repo-rules-off"></a>repo-rules-off | requirement | GRD-9 | not run | - | local | 2026-11-13 |
 | <a id="t-machine-local-guardrail"></a>machine-local-guardrail | requirement | GRD-11 | not run | - | local | 2026-11-13 |
 | <a id="t-config-holds-topics"></a>config-holds-topics | requirement | GRD-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-perms-private-never-written"></a>perms-private-never-written | requirement | GRD-3 | not run | - | local | 2026-11-14 |
 
 ## Health
 
@@ -522,11 +523,11 @@
 | <a id="t-pr-order-one-queue"></a>pr-order-one-queue | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-held-time-session-hold"></a>held-time-session-hold | requirement | MON-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-operate-toy-no-check"></a>operate-toy-no-check | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
-| <a id="t-unattended-sends-warn"></a>unattended-sends-warn | requirement | MON-11 | not run | - | local | 2026-11-14 |
-| <a id="t-unattended-loop-recreate"></a>unattended-loop-recreate | requirement | MON-11 | not run | - | local | 2026-11-14 |
-| <a id="t-unattended-standing-worker-refused"></a>unattended-standing-worker-refused | requirement | MON-11 | not run | - | local | 2026-11-14 |
-| <a id="t-unattended-selfcheck-missing"></a>unattended-selfcheck-missing | requirement | MON-11 | not run | - | local | 2026-11-14 |
-| <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | MON-11 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-sends-warn"></a>unattended-sends-warn | requirement | MON-18 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-loop-recreate"></a>unattended-loop-recreate | requirement | MON-18 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-standing-worker-refused"></a>unattended-standing-worker-refused | requirement | MON-18 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-selfcheck-missing"></a>unattended-selfcheck-missing | requirement | MON-18 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | MON-18 | not run | - | local | 2026-11-14 |
 
 ## Regression
 

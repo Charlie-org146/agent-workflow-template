@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -72,6 +72,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
 - MON-17: **Reviewed 2026-11-14** A check-in lists only this machine's goals. <!-- reviewed d4cc2e30 -->
   - Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod.
+
+- MON-18: **Reviewed 2026-11-14** The operation session keeps running unattended. <!-- reviewed a7a95ff4 -->
+  - One standing instruction to merge, recorded once by the operation session for named goals or all, replaces a go per merge; a worker at pr reads it and does not wait for another.
+  - The check-in says how many cross-session sends are left before the app's cap of 20 without an owner message; from 16 sent it asks the owner for any message, which resets the count.
+  - The check-in loop is re-created before its 7 days run out; the check-in says when.
+  - Every worker accepts an owner-words record the operation session names, per the Delivery rule, and does not ask the owner again; a record covers only its listed ids.
+  - On start the operation session runs a self-check and lists what is missing, each with its fix: a permission mode that holds cross-session messages for approval, a routine whose rules are not written or do not cover its Runbook (AUT-9), and the main checkout behind origin/main (MON-16).
 
 ### Non-functional
 - MON-7: **Reviewed 2026-11-10** Govern only <!-- reviewed da6f1852 -->
@@ -189,11 +196,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
-| [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-11 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
-| [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | MON-11 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
-| [unattended-standing-worker-refused](Tests#t-unattended-standing-worker-refused) | requirement | MON-11 | Given a worker session, when it adds a standing instruction, then it is refused. | not run |
-| [unattended-selfcheck-missing](Tests#t-unattended-selfcheck-missing) | requirement | MON-11 | Given a main checkout behind origin, when the start-up self-check runs, then it lists it as MISSING with its fix (the routine-rules line runs audit.py permissions check). | not run |
-| [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | MON-11 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
 | [mon12-pool](Tests#t-mon12-pool) | requirement | MON-12 | Given a session pool, when it runs low, then the check-in asks to create every missing session in one step; pool.py add fills it, no pool hides the ask, and a full pool makes ready goals wait with the fix. | PASS 2026-11-10 |
 | [mon13-two-layers](Tests#t-mon13-two-layers) | requirement | MON-13 | Given a second session's claim, when it claims, then the first stays an operation session and nothing refuses or warns. | PASS 2026-11-12 |
 | [operation-checkout-ff](Tests#t-operation-checkout-ff) | requirement | MON-13 | Given a main checkout that is behind origin, when the operation loop runs a pass, then the checkout moves by fast-forward only, uncommitted work stays, and one line says it moved or could not. | not run |
@@ -211,6 +213,12 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MON-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
 | - | requirement | MON-16 | no passing test | not enforced |
 | - | requirement | MON-17 | no passing test | not enforced |
+| [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
+| [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | MON-18 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
+| [unattended-standing-worker-refused](Tests#t-unattended-standing-worker-refused) | requirement | MON-18 | Given a worker session, when it adds a standing instruction, then it is refused. | not run |
+| [unattended-selfcheck-missing](Tests#t-unattended-selfcheck-missing) | requirement | MON-18 | Given a main checkout behind origin, when the start-up self-check runs, then it lists it as MISSING with its fix (the routine-rules line runs audit.py permissions check). | not run |
+| [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | MON-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
+| - | requirement | MON-18 | no passing test | not enforced |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | MON-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | MON-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
