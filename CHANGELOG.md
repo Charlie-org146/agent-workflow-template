@@ -1,5 +1,134 @@
 # Changelog
 
+## v0.28.46 - 2026-11-14
+
+- The lane's file walk skips node_modules and __pycache__ (#3939, #3943)
+- Merge remote-tracking branch 'origin/main' into loop/lane-skips-node-modules
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.45 - 2026-11-14
+
+- Health repo rules: .loop/health-rules.json (rules with a break, thresholds, off with a reason), setup writes it
+- Health repo rules: docs, settings reference, regression rows seen red
+- Guardrails: the Size caps are repo settings
+- Health repo rules: glue moved out of health.py (under its size warning); no repo rules leaves the report as it was
+- Health repo rules: the commands live in the skill reference and the settings table, not the Usage lines
+- Tests pages rendered
+- Merge origin/main into health-repo-rules
+- Tests page rendered
+- Merge remote-tracking branch 'origin/main' into loop/health-repo-rules
+- Repo rules rows serve HLT-2, GRD-9 and SET-1; Tests tables rendered
+- Merge origin/main into health-repo-rules
+- Tests rendered
+- Merge remote-tracking branch 'origin/main' into loop/health-repo-rules
+- Shorter setting texts (settings.py under its cap); listing names owner-words
+- The threshold row serves SET-2; Tests tables rendered
+- Merge origin/main into health-repo-rules
+- The off row serves GRD-9; Tests tables rendered
+- Wiki: update pages for health-repo-rules
+- Merge remote-tracking branch 'origin/main' into loop/health-repo-rules
+- Home settings block re-rendered with the health settings
+- Merge remote-tracking branch 'origin/main' into loop/health-repo-rules
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.44 - 2026-11-14
+
+- docs.py automation reports an unknown state when launchctl or gh is missing
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.43 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.42 - 2026-11-14
+
+- Home leads with a Topic column and the settings blocks list topics
+- Rows: Home's Topic column and the topics setting are live
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.41 - 2026-11-14
+
+- docs: a feature's PRD can live at a page, url or mcp source; Home groups features by a Topic column
+- Merge origin/main into loop/prd-link-topics
+- review: import prd properly in link_of, guard the sys.path insert
+- qa: three regression rows for link-form pages and the Topic column, each seen failing
+- Merge origin/main into loop/prd-link-topics: Home and Tests re-rendered
+- Merge origin/main into loop/prd-link-topics: decisions merged, Home and Tests re-rendered
+- docs: Setup, Guardrails and Regression name the topics setting and linked PRD ids; SKILL.md back under 150 lines
+- docs: Documentation names the PRD source and the Topic column
+- Tests re-rendered after the lane rows ran
+- Merge origin/main into loop/prd-link-topics: Documentation Usage merged
+- Drop this goal's Usage edits; the lines live in each skill's references
+- Merge origin/main (v0.28.27) into loop/prd-link-topics
+- Notion app links need the reader; rows that guard topics and link-form ids; toy fixture without Usage
+- Row: an app.notion.com link without a reader is UNREAD
+- Row proven red: an app.notion.com link without a reader is UNREAD
+- Merge remote-tracking branch 'origin/main' into loop/prd-link-topics
+- tests.py reads docs.tsv itself so the regression skill imports nothing outside its folder
+- Row: tests.py keeps to its own folder
+- Merge origin/main (v0.28.39) into loop/prd-link-topics; read_link moves to prd.py to keep deployments.py under the cap
+- Expand step: Home accepts the old header and the Topic header; topics row and column are optional (shown once the repo sets topics)
+- Row: topics shows its default when the repo sets none
+- Merge remote-tracking branch 'origin/main' into loop/prd-link-topics
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.40 - 2026-11-14
+
+- Release head status: carry the goal's pass over a bump-only head, post failure only for rows that failed, name them in the refusal (#3870)
+- Lane: re-render the Tests tables
+- Tests: map release-head-status to DEL-5 and refresh the Tests tables
+- Tests: re-render with the recorded runs
+- Toy: write no bytecode into the skills folder
+- Toy: run in its own repo so no run record reaches the real common dir
+- Merge origin/main into loop/release-head-status
+- Merge origin/main into loop/release-head-status
+- Merge origin/main into loop/release-head-status
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.39 - 2026-11-14
+
+- health: local register, LOOP_MAIL_ENV, no mail mode check on Windows
+- health-on-windows: uninstall writes no launch agent on Windows; review notes
+- Lane: re-render the Tests tables
+- health-on-windows: fold register into rounds.py (package cap), rows link AUT-1/AUT-6
+- docs: always-on machine wording on Automation and Home; render Tests
+- docs: Home and Health say the always-on machine
+- docs: render Tests
+- Merge origin/main into health-on-windows
+- Resolve the merge of origin/main (keep both DECISIONS sections)
+- docs: always-on machine wording in AUT-1, AUT-3 and AUT-6 (owner record o2)
+- docs: Home names LOOP_MAIL_ENV
+- docs: render Tests
+- Merge origin/main into health-on-windows
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.38 - 2026-11-14
 
 - merge.py's wiki check refuses only for pages the goal's own diff makes stale (#3941)
