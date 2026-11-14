@@ -14,3 +14,6 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-lane-affected-memory.py`. Expect: three PASS lines, and a peak under 100 MB (about 58 MB here).
+2. In a large repo with many rows (the thermis checkout), run `python3 skills/workflow-regression/scripts/lanes_cli.py affected PATH...` for about ten changed paths. Expect: the same AFFECTED line and the same DELETED and UNMAPPED lines as before, in minutes not tens of minutes, with a peak memory under about 200 MB.
+3. Read `.loop/goals/lane-affected-memory.design.md`. Expect: it says why done line 3 (waiting for free memory) was left out.
