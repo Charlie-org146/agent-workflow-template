@@ -149,6 +149,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 | [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-4 | Given this repo's topics setting, when Home is read, then its table leads with a Topic column. | PASS 2026-11-14 |
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-5 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
+| [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in references/criteria.md, SKILL.md points to it, and SKILL.md is under 150 lines. | not run |
 | - | requirement | DOC-6 | no passing test | not enforced |
 | [format-bullets](Tests#t-format-bullets) | requirement | DOC-7 | Given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-7. | PASS 2026-11-10 |
 | [format-orphan-bullet](Tests#t-format-orphan-bullet) | requirement | DOC-7 | Given a sub-bullet with no requirement above it, when the docs check runs, then it is refused. | PASS 2026-11-10 |
