@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-docs/scripts/relock.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/criteria.py
+# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/criteria.py
 """DOC-2: two branches each change a different reviewed line on one page; the merged page relocks with no new owner words.
 A page with an unreviewed line stays LOCKED."""
 import os
@@ -83,7 +83,7 @@ main_line = [l for l in main_text.splitlines() if l.startswith("- TOY-2:")][0]
 write(chr(10).join(main_line if l.startswith("- TOY-2:") else l for l in read().splitlines()))  # the merge: both reviewed lines
 red = [t for t in trouble() if t[0] == "LOCKED"]
 check(not red, "no LOCKED while every line is owner-reviewed (main's line or reviewed here)")
-done = subprocess.run([sys.executable, os.path.join(docs, "relock.py")], cwd=repo, capture_output=True, text=True)
+done = subprocess.run([sys.executable, os.path.join(docs, "docs.py"), "audit", "--relock"], cwd=repo, capture_output=True, text=True)
 check("RELOCKED Toy" in done.stdout, "relock re-stamps the page (%s)" % done.stdout.strip())
 log = os.path.join(repo, ".git", "loop", "reviews.tsv")
 check(os.path.exists(log) and "auto-relock: all lines owner-reviewed" in open(log).read(), "the reason is logged in reviews.tsv")
