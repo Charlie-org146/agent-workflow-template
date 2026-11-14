@@ -6,7 +6,7 @@ usage: goal.py <command> <slug> [options]
   new SLUG --here --goal TEXT --done LINE [--touches A,B] [--release R]
   queue SLUG --goal TEXT --done LINE [--touches A,B] [--depends-on A,B]
   step SLUG NAME [--note TEXT] [--tokens N]
-  record SLUG STEP --file REPLY [--in-session]
+  record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
   pr SLUG  merge the latest base, push, open the PR
 Goal steps (step, record, pr) refuse outside a worker.
   wait SLUG --ask TEXT --words W [--words W]
@@ -29,7 +29,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lanekit, guards, fit, private  # noqa: E402,E401
+import lanekit, guards, fit, private, spend  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
@@ -248,6 +248,7 @@ def cmd_set(args):
 
 def cmd_step(args):
     state = load(args.slug)
+    fit.budget_stop(args.slug, state, state_dir(), config())
     state["step"] = args.name
     if args.tokens:
         state["tokens"] = dict(state.get("tokens") or {}, **{args.name: args.tokens})
@@ -264,6 +265,7 @@ def next_step(state):
 def cmd_record(args):
     state = held(args.slug)
     guards.waiting_gate(ME, state)
+    spend.add_tokens(state, args.step, args.tokens)
     ran = os.path.join(state_dir(), "%s.%s.ran" % (args.slug, args.step))
     if args.in_session:
         args.file = role.session_reply(state, args.slug, args.step, args.file, state_dir(), FLOW)
@@ -340,6 +342,7 @@ def queue(op, *args):  # #3877: pool.py
 
 def cmd_pr(args):
     state, base = held(args.slug), config()["base"]
+    fit.budget_stop(args.slug, state, state_dir(), config())
     guards.waiting_gate(ME, state)
     left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
     if left:
@@ -351,6 +354,9 @@ def cmd_pr(args):
         return 0
     waited and save(state, "pr queue: its turn")
     what, detail = role.sync(base)
+    if what == "merged":
+        state = held(args.slug)
+    spend.round_stop(ME, state, what)
     if what == "conflict":
         why, fix = "merging %s conflicts in: %s" % (base, detail), "merge %s yourself, resolve the conflicts, commit, then pr" % base
         return queue("moved", ME, state, why, fix) or failed_try(state, why, "build", fix) or 1
@@ -358,7 +364,6 @@ def cmd_pr(args):
         no("the merge was refused: %s. Fix: commit or remove the changes, then run pr again." % detail)
     if what == "merged":
         print("MERGED %s into the branch" % detail)
-        state = held(args.slug)
     guards.sync_touches(goal_file(args.slug), guards.touches_of(state_dir(), state))
     if git("status", "--porcelain", "--", goal_file(args.slug)):
         git("commit", "-m", "Goal: %s touches" % args.slug, "--", goal_file(args.slug))
@@ -435,7 +440,8 @@ def main():
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
-    add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}))
+    add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
+        ("--tokens", {"default": ""}))
     add("wait", cmd_wait, ("--ask", {"required": True}), ("--words", {"action": "append", "required": True}))
     add("finding", cmd_finding, ("text", {}))
     add("resume", cmd_resume, ("--why", {"required": True}), ("--by", {"default": "operation session"}))
