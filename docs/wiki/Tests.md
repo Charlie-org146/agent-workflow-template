@@ -273,6 +273,7 @@
 | <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
 | <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
 | <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
+| <a id="t-prd-no-dunder-import-3800"></a>prd-no-dunder-import-3800 | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) state unknown | not run | - | local | 2026-11-14 |
 
 ## External PRDs
 
