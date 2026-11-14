@@ -430,7 +430,7 @@ if want v1; then fresh
   export LOOP_TEMPLATE_HAS=usage-kept; mig "$r" --offline
   check "a clean toy whose template carries no new feature exits 0 and prints no new gap" '[ $rc = 0 ] && ! grep -qE "^GAP MIG_(USAGE|RULES|ROUTINES|HOOKS)" <<<"$out"'
   check "the clean toy still lists what only the owner can do, as OWNER STEP lines with their instruction" 'grep -q "^OWNER STEP hook reply_hook.py: in the operation repo run .*--reply-hook" <<<"$out" && grep -q "^CHECKLIST: " <<<"$out"'
-  export LOOP_TEMPLATE_HAS=usage-kept,health-rules; mig "$r" --offline
+  rm -f "$r/.loop/health-rules.json"; export LOOP_TEMPLATE_HAS=usage-kept,health-rules; mig "$r" --offline
   check "a template that carries .loop/health-rules.json: its absence is a gap with its fix, exit 1" '[ $rc = 1 ] && grep -q "^GAP MIG_RULES .loop/health-rules.json: missing. Fix: run workflow-setup" <<<"$out"'
   echo "{}" > "$r/.loop/health-rules.json"; mig "$r" --offline
   check "with .loop/health-rules.json present the gap is gone and the check exits 0" '[ $rc = 0 ] && ! grep -q "MIG_RULES" <<<"$out"'

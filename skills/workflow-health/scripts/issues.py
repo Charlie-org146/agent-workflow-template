@@ -10,10 +10,11 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
-from defects import defined, table
+from defects import clean, defined, read, table, tool
 
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -330,3 +331,54 @@ def close(root, kind, why, only=None, older=0, yes=False, most=CAP, numbers=()):
             done = subprocess.run(["gh", "issue", "edit", number, "--add-label", "health:closed"], cwd=root, capture_output=True, text=True)
         print(("FAILED #%s: %s" % (number, done.stderr.strip()[:120])) if done.returncode else "CLOSED #%s" % number)
     return 0
+
+
+def owner_steps(root, steps):
+    """What only the owner can do."""
+    done = shutil.which("gh") and subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    if not done or done.returncode:
+        steps.append(("gh", "sign-in", "install gh, then sign in: gh auth login --web"))
+    plat = {"darwin": "mac", "win32": "windows"}.get(sys.platform, "linux")
+    for r in table(root):
+        if r["id"] == "smoke-" + plat:
+            steps.append(("smoke", r["id"], "run the %s smoke cell: %s" % (plat, tool("workflow-regression", "regression.py", "run --id " + r["id"]))))
+    toolchain_steps(root, steps)
+
+
+def toolchain_steps(root, steps):
+    """node and python as the repo asks (engines, .nvmrc, .tool-versions, requires-python)."""
+    get = lambda rel: read(os.path.join(root, rel))
+    try:
+        eng = json.loads(get("package.json") or "{}")["engines"]["node"]
+    except (ValueError, KeyError, TypeError):
+        eng = ""
+    tv = dict(l.split()[:2] for l in get(".tool-versions").splitlines() if len(l.split()) > 1)
+    py = re.search(r'requires-python\s*=\s*"([^"]*)"', get("pyproject.toml"))
+    plat = (os.environ.get("LOOP_SCHEDULE_PLATFORM") if os.environ.get("LOOP_TEST") == "1" else "") or sys.platform
+    ask = {"node": (str(eng or get(".nvmrc") or tv.get("nodejs", "")), "node", ("winget install OpenJS.NodeJS.LTS", "brew install node@%s", "nvm install %s")),
+           "python": ((py and py[1]) or tv.get("python", ""), "python3", ("winget install Python.Python.%s", "brew install python@%s", "install python %s"))}
+    for name, (spec, exe, cmds) in ask.items():
+        m = re.search(r"(\d+)(?:\.(\d+))?", spec)
+        if m:
+            need = (int(m[1]),) if name == "node" else (int(m[1]), int(m[2] or 0))
+            path = shutil.which(exe) or shutil.which(name)
+            got = tuple(int(x) for x in re.findall(r"\d+", subprocess.run([path, "--version"], capture_output=True, text=True).stdout if path else "")[:len(need)])
+            if not got or got < need:
+                ver, cmd = ".".join(map(str, need)), cmds[0 if plat == "win32" else 1 if plat == "darwin" else 2]
+                steps.append(("toolchain", name, "needs %s %s (%s here): %s" % (name, ver, ".".join(map(str, got)) or "none", cmd % ver if "%s" in cmd else cmd)))
+
+
+def step_lines(info):
+    """The OWNER STEP and ADAPTED lines of migration-check."""
+    return (["OWNER STEP %s %s: %s" % (clean(k), clean(n), clean(i)) for k, n, i in info["steps"]]
+            + ["ADAPTED %s: its setting is off" % n for n, v in info["off"].items() if v])
+
+
+def checklist(info, gaps):
+    return "CHECKLIST: %d owner step(s), %d adapted, %d gap(s); every other item is installed" % (len(info["steps"]), sum(info["off"].values()), gaps)
+
+
+def step_rows(info, mode, row):
+    """Health's Adoption INFO rows, one per owner step."""
+    return [row("INFO", "adoption", "owner step " + clean(n), "migration", "%s: %s [%s]" % (clean(k), clean(i), mode)) for k, n, i in info["steps"]]
+
