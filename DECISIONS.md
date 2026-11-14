@@ -241,3 +241,12 @@ Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the
 
 ## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
 Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
+
+## wiki-current: DOC-1 sync pointer and Regression re-stamp (2026-11-14)
+Owner words (records o13 and o14, recorded by the operation session): "Un-review the Documentation page and DOC-1 so the sync pointer in DECISIONS.md can be added, and un-review the Regression page; then review both again, Regression with REG-1 as it stands."
+
+The sync pointer, added as DOC-1's last sub-bullet:
+
+- A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+
+Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
