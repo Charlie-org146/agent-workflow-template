@@ -253,12 +253,14 @@ Regression is un-reviewed and reviewed again with no text change: external-sync'
 
 ## Waiting on owner un-review (ext-two-way)
 
-Drafted by the ext-two-way goal, 2026-11-14. It changes a reviewed requirement, so it waits for the owner's own typed words: Documentation is Reviewed.
+Drafted by the ext-two-way goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: Documentation, Health and Monitoring are Reviewed, and the goal's changes to docs.py and audit.py, health.py and board.py make each of the three pages stale, which merge.py refuses.
 
-- Documentation, DOC-1 (PRD template), as a new last sub-bullet next to the sync pointer wiki-current added: "A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works."
+- Documentation, DOC-1 (PRD template), a new last sub-bullet next to the sync pointer wiki-current added: "A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works."
+- Health, HLT-2 (The rules), a new last sub-bullet: "A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one."
+- Monitoring, MON-3 (Live board), a new last sub-bullet: "The board lists each open PRD delta of a page that opted in to syncing as waiting on the owner, with its issue and the words to accept either side; a page with no external source never shows one."
 
 The owner types one sentence in the operation session:
 
-"Un-review the Documentation page and DOC-1 so the opt-in sync sub-bullet in DECISIONS.md can be added; then review the Documentation page and DOC-1 again."
+"Un-review the Documentation page and DOC-1, the Health page and HLT-2, and the Monitoring page and MON-3, so the opt-in sync sub-bullets in DECISIONS.md can be added; then review those three pages and requirements again."
 
-After it, the goal edits the one line as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge: its change to docs.py and audit.py makes the Documentation page stale, and merge.py refuses a stale page its own diff made.
+After it, the goal edits the three lines as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge.

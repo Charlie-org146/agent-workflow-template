@@ -130,7 +130,7 @@ Say these to the agent:
 |---|---|
 | "Keep the repo's copy of the Thermis PRD in step with Notion" | Syncing is opt-in per PRD. The owner sets that page's PRD source, the third column of its `.loop/docs.tsv` row, to `url:<link>` or `mcp:<server>:<resource>`; the sync then adopts it into the repo's copy, and after that either side can change a requirement. A page with no source stays in the repo and raises no signal. |
 | "Has the Notion PRD changed?" | A dry run lists each difference as a DELTA with the page, the id, which side changed and both texts, writes nothing, and says not connected when no connector is set. |
-| "Use the Notion text for TH-2" or "Keep the repo's text for TH-2" | The sync writes only that requirement to the other side, Notion included, closes the delta's issue and leaves every other requirement as it was. |
+| "Use the Notion text for TH-2" | The sync writes only that requirement into the repo's copy and closes the delta's issue; saying "Keep the repo's text for TH-2" instead writes the repo's text to Notion through the connector. Every other requirement is left as it was. |
 | "What is out of step?" | Health and the check-in list each open delta, with its issue, as an inconsistency until one side's text is accepted. |
 
 ### How to use Guardrails

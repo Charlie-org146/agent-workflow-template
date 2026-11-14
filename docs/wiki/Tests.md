@@ -270,11 +270,25 @@
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-sync-drift-rewrites"></a>sync-drift-rewrites | requirement | EXT-1 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | EXT-1 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | EXT-3 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | EXT-2 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-source-readonly"></a>sync-source-readonly | requirement | EXT-2 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-first-adopts"></a>sync-first-adopts | requirement | EXT-1 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-repo-delta"></a>sync-repo-delta | requirement | EXT-1 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-source-delta"></a>sync-source-delta | requirement | EXT-1 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-both-sides"></a>sync-both-sides | requirement | EXT-2 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | EXT-2 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-delta-no-overwrite"></a>sync-delta-no-overwrite | requirement | EXT-2 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | EXT-2 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-delta-posted"></a>sync-delta-posted | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-posts-once"></a>sync-posts-once | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-source"></a>sync-accept-source | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-repo"></a>sync-accept-repo | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-agree-after-accept"></a>sync-agree-after-accept | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-open-lists"></a>sync-open-lists | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-health-delta"></a>sync-health-delta | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-board-delta"></a>sync-board-delta | requirement | EXT-3 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | EXT-4 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-no-writer-posted"></a>sync-no-writer-posted | requirement | EXT-4 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-no-writer"></a>sync-accept-no-writer | requirement | EXT-4 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-no-gh"></a>sync-no-gh | requirement | EXT-4 | not run | - | local | 2026-11-14 |
 
 ## Guardrails
 

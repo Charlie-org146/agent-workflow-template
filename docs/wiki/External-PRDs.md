@@ -49,11 +49,26 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [sync-drift-rewrites](Tests#t-sync-drift-rewrites) | requirement | EXT-1 | Given an external PRD whose requirement changed, when docs.py sync runs, then it prints DRIFT for it and rewrites the repo copy to match. | not run |
-| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | EXT-1 | Given a source that added, removed and changed requirements, when docs.py sync --dry-run runs, then each is a DRIFT line, nothing is written and it exits 1. | not run |
+| [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | EXT-1 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | not run |
+| [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | EXT-1 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | not run |
+| [sync-source-delta](Tests#t-sync-source-delta) | requirement | EXT-1 | Given a requirement people changed in the external document, when docs.py sync runs, then it prints a DELTA naming the source as the side and both texts. | not run |
 | - | requirement | EXT-1 | no passing test | not enforced |
+| [sync-both-sides](Tests#t-sync-both-sides) | requirement | EXT-2 | Given a requirement changed in the repo and in the document, when docs.py sync runs, then its DELTA says both sides changed. | not run |
+| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | EXT-2 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
+| [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | EXT-2 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
 | [sync-owns-only](Tests#t-sync-owns-only) | requirement | EXT-2 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
-| [sync-source-readonly](Tests#t-sync-source-readonly) | requirement | EXT-2 | Given an external PRD, when docs.py sync runs, then the source text is unchanged. | not run |
 | - | requirement | EXT-2 | no passing test | not enforced |
-| [sync-not-connected](Tests#t-sync-not-connected) | requirement | EXT-3 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
+| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | EXT-3 | Given a new delta, when docs.py sync runs, then it posts one GitHub issue on the feature's milestone and one comment on the external page. | not run |
+| [sync-posts-once](Tests#t-sync-posts-once) | requirement | EXT-3 | Given a delta already posted, when docs.py sync runs again, then it posts nothing more. | not run |
+| [sync-accept-source](Tests#t-sync-accept-source) | requirement | EXT-3 | Given a delta, when docs.py sync --accept PAGE:ID=source runs, then the source's text is written to the repo copy for that id only and the issue is closed. | not run |
+| [sync-accept-repo](Tests#t-sync-accept-repo) | requirement | EXT-3 | Given a delta, when docs.py sync --accept PAGE:ID=repo runs, then the repo's text is written to the external document through the writer for that id only and the issue is closed. | not run |
+| [sync-agree-after-accept](Tests#t-sync-agree-after-accept) | requirement | EXT-3 | Given every delta accepted, when docs.py sync runs, then the sides are in step and no delta is open. | not run |
+| [sync-open-lists](Tests#t-sync-open-lists) | requirement | EXT-3 | Given an open delta, when docs.py sync --open runs, then it lists the delta with no call to gh or the connector. | not run |
+| [sync-health-delta](Tests#t-sync-health-delta) | requirement | EXT-3 | Given an open delta, when health checks the docs, then it reports a FAIL row of the docs rule for it. | not run |
+| [sync-board-delta](Tests#t-sync-board-delta) | requirement | EXT-3 | Given an open delta, when the check-in's board is built, then it lists the delta as waiting on the owner. | not run |
 | - | requirement | EXT-3 | no passing test | not enforced |
+| [sync-not-connected](Tests#t-sync-not-connected) | requirement | EXT-4 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
+| [sync-no-writer-posted](Tests#t-sync-no-writer-posted) | requirement | EXT-4 | Given no writer, when docs.py sync finds a delta, then the issue is posted and the comment says not connected. | not run |
+| [sync-accept-no-writer](Tests#t-sync-accept-no-writer) | requirement | EXT-4 | Given no writer, when docs.py sync --accept PAGE:ID=repo runs, then it says not connected, exits 0 and changes nothing. | not run |
+| [sync-no-gh](Tests#t-sync-no-gh) | requirement | EXT-4 | Given gh that fails, when docs.py sync finds a delta, then it shows the delta, says not connected and exits 0. | not run |
+| - | requirement | EXT-4 | no passing test | not enforced |
