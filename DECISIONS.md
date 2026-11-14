@@ -148,6 +148,20 @@ The owner types two sentences in the operation session (it runs `criteria.py unr
 
 1. Un-review: "Un-review the Documentation page and DOC-15 so the local-schedule sub-bullet can be added."
 2. Review, after the goal has added it: "Review the Documentation page and DOC-15 again."
+
+## Waiting on owner un-review (fast-merge-queue, DEL-15)
+
+Drafted 2026-11-13 by the fast-merge-queue goal (applied: DEL-15 on the Delivery page. Main moved the Monitoring and Regression requirements in the meantime, so the goal's rows for the parallel queue and the main-moved rerun are tied to MON-15 and REG-7 and show in those pages' Tests tables; their sub-bullets were dropped to keep main's reviewed text). The code, toys and rows are on the branch; none of the page text below is applied until the owner un-reviews and approves the wording. Adding DEL-15 changes the Delivery page's review lock, and the code changes leave Delivery, Monitoring and Regression stale, with no place on a reviewed page for a sentence other than a requirement's sub-bullets.
+
+- Delivery, new requirement after DEL-14: "DEL-15: Fast merge queue. PRs merge one after another, but each waits only as long as needed." with these sub-bullets:
+  - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
+  - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
+  - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
+
+The owner types two sentences (the session that relays them runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Delivery, Monitoring and Regression pages, and MON-15 and REG-7, so DEL-15 and the fast-merge-queue sub-bullets can be added."
+2. Review, after the goal has added them: "Review the Delivery, Monitoring and Regression pages, and DEL-15, MON-15 and REG-7 again."
 ## Waiting on owner un-review (machine-local)
 
 The owner decided 2026-11-13: "some tasks in this session should only rely on things on this session, right? This machine. There are other machines proof and other things. They can be added like to do some milestones, but shouldn't be related." Built by the machine-local goal (`regression.py red ID --owed --runner R`, health WARN after 7 days, the check-in's off-machine to-do lines). Guardrails is Reviewed, so the requirement below is not applied until the owner un-reviews Guardrails and approves the wording.
@@ -210,3 +224,6 @@ The owner types one sentence in the operation session:
 After it, the goal (or the operation session) edits the two lines as drafted, and the owner's review follows with the same words. Until the owner's words are in, merge.py runs for merge-stale-own only on the operation session's turn.
 
 Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the operation session): the Delivery page and DEL-5 were un-reviewed, DEL-5's second sub-bullet and the Delivery success metric were reworded exactly as drafted, and the Delivery page and DEL-5 were reviewed again, all with `--owner-record o5`.
+
+## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
+Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
