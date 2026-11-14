@@ -286,6 +286,9 @@ def cmd_check(args):
     point = entry.problems(root)
     notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]  # said, never a failure
     found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    import permissions  # AUT-9: a routine's declared permissions match its Runbook and the project settings
+    for line in permissions.check(root):
+        (notes if line.startswith("NOTE") else found).append(("PERMISSIONS", "permissions.tsv", line))
     if args.own:
         import audit
         found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main")
