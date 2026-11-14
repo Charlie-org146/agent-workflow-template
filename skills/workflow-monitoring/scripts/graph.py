@@ -135,6 +135,27 @@ def memory_room():
         return None
 
 
+def rank(needs, edges, live):
+    """MON-19: (lines, tags). needs are owner items opening with a goal key; edges maps each goal key to the keys it waits on;
+    live holds the keys with a goal underway. Each line ends with what it holds up, the goal and everything behind it,
+    with the count, and whether it is on the critical path to the next release, or says it blocks nothing. Most goals first."""
+    rows = []
+    for i, text in enumerate(needs):
+        key = re.split(r"[ :]", text, 1)[0]
+        held, todo = ([key] if key in edges else []), [key]
+        while todo:
+            cur = todo.pop()
+            for goal, deps in edges.items():
+                if cur in deps and goal not in held:
+                    held.append(goal)
+                    todo.append(goal)
+        tail = "; ".join(["holds up " + ", ".join(held[:4]) + (" and %d more" % (len(held) - 4) if len(held) > 4 else "") + " (%d goal%s)" % (
+            len(held), "" if len(held) == 1 else "s")] + ["on the critical path to the next release"] * (key in live)) if held else "blocks nothing"
+        rows.append((-len(held), -(key in live), i, "%s [%s]" % (text, tail), key if held else None))
+    rows.sort()
+    return [row[3] for row in rows], {row[4]: n for n, row in enumerate(rows, 1) if row[4]}
+
+
 def ready(goals, records, limit, taken=None, why=""):
     """Split queued goals into (start, held). held is [(goal, reason)]; start never exceeds the free worker slots (limit 0: no limit).
     taken (from assigned) adds one slot per goal a session holds with no run yet, and holds that goal: its session freezes it.

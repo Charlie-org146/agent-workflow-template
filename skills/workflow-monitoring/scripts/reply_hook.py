@@ -5,17 +5,17 @@ usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
        reply_hook.py check FILE|-  print what a reply is missing (exit 0 clean, 1 with problems, 2 unreadable)
        reply_hook.py status        say whether the hook is installed and on in this repo, and its recent let-throughs
 
-A check-in reply passes with one headline line (a Machine line and one line per other pod may follow it), then the sections All sessions (a table), Dependencies (a graph with a
-`== repo ==` block per repo naming every goal on the board, MON-14), Needs you (numbered questions with options and a
-recommended answer, or "Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
+A check-in reply passes with one headline line (a Machine line and one line per other pod may follow), then the sections
+All sessions (a table), Dependencies (a graph with an `== repo ==` block per repo naming every goal, MON-14), Needs you
+(numbered items, most-blocking first, each saying what it holds up with a goal count, or "blocks nothing", MON-19; or
+"Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
 
 The hook checks only the operation session: one named in <common>/loop/operation.id, or whose transcript ran
-'operate.py run|claim' without a refusal as its latest signal. A worker is never checked: a session that ran a flow step
-('flow.py', 'goal.py step|record|pr') after that, or whose cwd is in <git common dir>/loop/worktrees/ before any signal.
-A session in another repo, or in a repo with no .loop/config.json, is never checked. Each stop reads only the new bytes.
-"reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0, turns it off. A failing reply is blocked with a reason
-naming what is missing; the third block in a row is let through and logged in <git common dir>/loop/reply-hook/log.
-Any error lets the reply through and logs one line. setup.py --reply-hook installs it.
+'operate.py run|claim' without a refusal as its latest signal. A worker (a session that ran 'flow.py' or 'goal.py
+step|record|pr' after that, or whose cwd is in <git common dir>/loop/worktrees/) is never checked, nor is a session in
+another repo or one with no .loop/config.json. Each stop reads only the new bytes. "reply_hook": false in
+.loop/config.json, or LOOP_REPLY_HOOK=0, turns it off. A failing reply is blocked with a reason; the third block in a
+row is let through and logged in <git common dir>/loop/reply-hook/log, as is any error. setup.py --reply-hook installs it.
 """
 import json
 import os
@@ -47,7 +47,7 @@ COUNT = re.compile(r"\s*\(\s*\d+\s*\)$")
 MARKS = re.compile(r"[*#`_]")
 TEMPLATE = ("Write the check-in reply in this layout: one headline line; All sessions (one table: session, repo, what it "
             "is for, status, progress, time left, tokens left, latest); Dependencies (the drawn graph); Needs you (each "
-            "question numbered with its options and a recommended answer, or 'Nothing needs you'); and last, Coming up "
+            "item numbered, most-blocking first, saying what it holds up or 'blocks nothing', or 'Nothing needs you'); and last, Coming up "
             "(the next expected events and what the owner will need to do).")
 
 
@@ -328,10 +328,10 @@ def left_out(text, cwd):
     """The goals Dependencies leaves out, by name (checkin.missing); fails open."""
     try:
         import checkin
-        gone = checkin.missing(text, cwd)
+        gone, wrong = checkin.missing(text, cwd), checkin.unranked(text)
     except Exception:
         return []
-    return ["Dependencies leaves out %s (MON-14)" % ", ".join(gone)] * bool(gone)
+    return ["Dependencies leaves out %s (MON-14)" % ", ".join(gone)] * bool(gone) + wrong
 
 
 def hook(payload):
