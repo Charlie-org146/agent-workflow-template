@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.28.50 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.49 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.48 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.47 - 2026-11-14
 
 - fast-merge-queue: affected-only rerun, parallel pr turns, batch merge; toys and rows

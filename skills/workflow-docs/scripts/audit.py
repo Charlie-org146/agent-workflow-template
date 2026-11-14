@@ -26,6 +26,7 @@ import counting
 import criteria
 import docs
 import entry
+import prd
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -196,12 +197,56 @@ def live(root):
     return 0
 
 
+def owned(root, rel, body, rule):
+    """True when every requirement line is owner-reviewed text: its seal holds, and it is main's own line or its id is in
+    the reviews log; no line main has was dropped. A line nobody reviewed is not owned, so the page stays LOCKED."""
+    name = rule["sections"][1]
+    shown = criteria.git("show", "origin/main:" + rel, check=False)
+    main = [(line, tuple(below), m.group(1)) for line, m, below in criteria.blocks(dict(criteria.sections(shown)).get(name) or []) if m]
+    try:
+        with open(os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop", "reviews.tsv")) as handle:
+            logged = {key for row in handle for item in row.split("\t")[2:3] for key in item.split(",") if row.split("\t")[1:2] == ["review"]}
+    except OSError:
+        logged = set()
+    have = set()
+    for line, m, below in criteria.blocks(body.get(name) or []):
+        if not m or m.group(2) == "Unreviewed" or m.group(5) != criteria.seal_of(m.group(4), below):
+            return False
+        if (line, tuple(below), m.group(1)) not in main and m.group(1) not in logged:
+            return False
+        have.add(m.group(1))
+    return {key for _, _, key in main} <= have
+
+
+def relock(root):
+    """Relock (DOC-2): re-stamp each reviewed page whose only change is another goal's owner-reviewed line (R moved, all lines owned)."""
+    rule, done = criteria.rules(), []
+    for rel in criteria.pages(root):
+        with open(os.path.join(root, rel)) as handle:
+            text = handle.read()
+        line, why = prd.review_of(text, rule)
+        match = prd.REVIEW.match(line or "")
+        parts = criteria.sections(text)
+        if why or not match or not match.group(2):
+            continue
+        now = prd.prints(parts, rule)
+        if [k for k in prd.KEYS[:4] if match.group(3 + prd.KEYS.index(k)) != now[k]] == ["R"] and owned(root, rel, dict(parts), rule):
+            fresh = prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS)))
+            with open(os.path.join(root, rel), "w") as handle:
+                handle.write(fresh)
+            done.append(os.path.basename(rel)[:-3])
+    if done:
+        log = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop")
+        os.makedirs(log, exist_ok=True)
+        with open(os.path.join(log, "reviews.tsv"), "a") as handle:
+            handle.write("%s\trelock\t%s\tauto-relock: all lines owner-reviewed\n" % (criteria.datetime.datetime.now(
+                criteria.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), ",".join(done)))
+    return done
+
+
 # --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
-PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run].
-.loop/permissions.tsv rows are `routine<TAB>allow|deny<TAB>Tool(spec)<TAB>why`. write merges them into the committed
-.claude/settings.json (other keys and rules kept; a row with a home path, user name or token is refused). check prints
-UNDECLARED, NOT WRITTEN, UNCOVERED (a Runbook command or site no allow covers) or CONFLICT (a deny covers an allow),
-else PERMISSIONS OK; a repo with no permissions.tsv gets a NOTE, never a failure."""
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
 PERM_PROGRAMS = ("python3", "python", "gh", "git", "claude", "curl", "node")
 PERM_PRIVATE = re.compile(r"(/Users/|/home/[A-Za-z]|[A-Za-z]:[\\/]+Users|\bsk-[A-Za-z0-9]{8}|\bghp_|\bxox[bp]-)")
 PERM_FIELD = re.compile(r"^- \*\*([A-Za-z ]+):\*\*\s*(.*)$")
@@ -249,9 +294,8 @@ def perm_matches(rule, tool, text):
 
 def perm_wiki_page(root, page):
     try:
-        with open(os.path.join(root, ".loop", "config.json"), encoding="utf-8") as handle:
-            folder = json.load(handle).get("wiki_dir") or "docs/wiki"
-    except (OSError, ValueError):
+        folder = docs.wiki_dir(root)
+    except SystemExit:
         folder = "docs/wiki"
     try:
         with open(os.path.join(root, folder, page + ".md"), encoding="utf-8-sig") as handle:
@@ -298,7 +342,7 @@ def perm_check(root):
         routine, page = (row + ["", ""])[:2]
         mine = table.get(routine, [])
         if not mine:
-            findings.append("UNDECLARED %s: no rows in .loop/permissions.tsv. Fix: list the commands, paths and sites its Runbook needs" % routine)
+            findings.append("UNDECLARED %s: no rows in .loop/permissions.tsv. Fix: list what its Runbook needs" % routine)
         for kind, rule, _ in mine:
             if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
                 findings.append("NOT WRITTEN %s %s %s. Fix: audit.py permissions write" % (routine, kind, rule))

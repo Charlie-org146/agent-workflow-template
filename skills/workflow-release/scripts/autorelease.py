@@ -112,8 +112,20 @@ def fail(state, text):
         note = "" if report is None else "(the stored report was a %s and was reset) " % type(report).__name__
         report = state["report"] = {}
     report["text"] = ("%s %sRelease failed: %s" % (str(report.get("text") or ""), note, text)).strip()[:600]
+    if state.get("release") != "merged":  # the pull request is still open: the goal is not finished, and resume can revive it
+        state["status"] = "failed"
     release.save(state, "release failed: " + text[:200])
     sys.exit("REFUSED: " + text)
+
+
+def mergeable(state):
+    """merge.py's gate: a finished goal with its pull request, or one a refused merge left failed with its release_error."""
+    return bool(state.get("pr")) and (state.get("status") == "done" or (state.get("status") == "failed" and bool(state.get("release_error"))))
+
+
+def mark_merged(state):
+    state["release"] = state["release"] if state.get("release") == "cut" else "merged"
+    state["status"] = "done"
 
 
 def base_config(top, cfg):
