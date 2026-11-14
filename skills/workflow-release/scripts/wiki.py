@@ -32,7 +32,6 @@ import tempfile
 
 import autorelease
 import release
-import where
 from release import base_of, git, load, read_config, run, save
 
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # release.py sets the rest on import
@@ -312,6 +311,30 @@ def cmd_batch(args):
     return code
 
 
+def where(script, base=None):
+    """The release runs from the main checkout (fast-forwarded to origin/<base>) or the installed skills, never from a path
+    in the repo's own goal worktrees, where a goal could loosen the check that judges it, nor from a checkout behind its
+    base (issue 4020). A script outside this repo (installed skills, a toy's repo) is not checked."""
+    here = os.path.dirname(os.path.realpath(script))
+    common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=here, check=False)
+    mine = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
+    norm = lambda path: os.path.normcase(os.path.realpath(path))
+    if not common or not mine or norm(common) != norm(mine):
+        return
+    main = os.path.dirname(norm(common))
+    if norm(here).startswith(os.path.join(norm(common), "loop", "worktrees") + os.sep):
+        sys.exit("REFUSED (RUN_FROM_WORKTREE): %s is inside a goal worktree, where a goal could change the check that judges it. "
+                 "Fix: run it from the main checkout %s, fast-forwarded to origin, or from the installed skills." % (script, main))
+    base = base or "main"
+    if release.run(["git", "fetch", "-q", "origin", base], cwd=here).returncode:
+        return  # the base check reports a fetch it cannot make
+    behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
+    if behind.isdigit() and int(behind):
+        sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
+                 "rules. Fix: git -C %s merge --ff-only origin/%s, then run it again." % (
+                     main, behind, "" if behind == "1" else "s", base, main, base))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -329,7 +352,7 @@ def main():
     item.set_defaults(func=cmd_batch, slug="")
     args = parser.parse_args()
     args.slug and release.state_path(args.slug)
-    args.command == "publish" and where.where(__file__)
+    args.command == "publish" and where(__file__)
     return args.func(args)
 
 

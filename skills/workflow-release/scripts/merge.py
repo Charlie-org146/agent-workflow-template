@@ -32,7 +32,6 @@ import sys
 
 import autorelease
 import release
-import where
 import wiki
 
 
@@ -263,7 +262,7 @@ def main():
             cfg = json.load(handle)
     except (OSError, ValueError):
         sys.exit("REFUSED: no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
-    where.where(__file__, cfg.get("base"))
+    wiki.where(__file__, cfg.get("base"))
     if cfg.get("auto_merge") is not True:
         sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
     path = os.path.join(os.path.abspath(common), "loop", "runs", args.slug + ".json")

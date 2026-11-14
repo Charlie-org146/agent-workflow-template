@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-release/scripts/where.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/wiki.py skills/workflow-release/scripts/autorelease.py
+# reads: skills/workflow-release/scripts/wiki.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/wiki.py skills/workflow-release/scripts/autorelease.py
 """merge-from-main-checkout (#4020, #4004): the release runs from the repo's main checkout fast-forwarded to origin/<base>,
-or the installed skills: where.where() refuses a script inside the repo's own goal worktrees (RUN_FROM_WORKTREE) and a
+or the installed skills: wiki.where() refuses a script inside the repo's own goal worktrees (RUN_FROM_WORKTREE) and a
 checkout behind origin/<base> (CHECKOUT_BEHIND, naming how far and the git merge --ff-only fix); a script outside the repo
 is not checked. A merge refused for a moved head or base leaves the goal running at step pr, not done.
 
@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
 os.environ["LOOP_ROLE"] = "worker"
 import autorelease  # noqa: E402
 import merge  # noqa: E402
-import where  # noqa: E402
+import wiki  # noqa: E402
 
 fails = 0
 
@@ -52,11 +52,11 @@ os.makedirs(os.path.dirname(away_script))
 
 
 def verdict(script):
-    """The SystemExit text where.where(script, 'main') ends with, or '' when it lets the release run (cwd is the repo)."""
+    """The SystemExit text wiki.where(script, 'main') ends with, or '' when it lets the release run (cwd is the repo)."""
     old = os.getcwd()
     os.chdir(repo)
     try:
-        where.where(script, "main")
+        wiki.where(script, "main")
         return ""
     except SystemExit as stop:
         return str(stop.code)
@@ -87,7 +87,7 @@ check("once fast-forwarded the main checkout runs", verdict(main_script) == "")
 
 # a refused move sends the goal back to its pr step, live
 record = os.path.join(common, "loop", "runs", "g.json")
-os.makedirs(os.path.dirname(record))
+os.makedirs(os.path.dirname(record), exist_ok=True)
 head = git("rev-parse", "HEAD", cwd=repo).stdout.strip()
 
 
