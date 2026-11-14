@@ -11,10 +11,11 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
-from defects import defined, table
+from defects import clean, defined, read, table, tool
 
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -333,54 +334,52 @@ def close(root, kind, why, only=None, older=0, yes=False, most=CAP, numbers=()):
     return 0
 
 
-def number(config, key, default):
-    value = config.get(key)
-    return value if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 else default
+def owner_steps(root, steps):
+    """What only the owner can do."""
+    done = shutil.which("gh") and subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    if not done or done.returncode:
+        steps.append(("gh", "sign-in", "install gh, then sign in: gh auth login --web"))
+    plat = {"darwin": "mac", "win32": "windows"}.get(sys.platform, "linux")
+    for r in table(root):
+        if r["id"] == "smoke-" + plat:
+            steps.append(("smoke", r["id"], "run the %s smoke cell: %s" % (plat, tool("workflow-regression", "regression.py", "run --id " + r["id"]))))
+    toolchain_steps(root, steps)
 
 
-def limit_row(state, subject, rule, detail, fix=""):
-    return {"state": state, "family": "cost", "subject": subject, "rule": rule, "detail": detail, "fix": fix}
-
-
-def limit_rows(root):
-    """GRD-2: WARN rows for the live goals past max_merge_rounds, for more live goals than max_active_goals, and for weekly plan
-    usage (pool.py usage N, kept in the git common dir) above plan_pause_percent. Each limit that is 0 is off."""
+def toolchain_steps(root, steps):
+    """node and python as the repo asks (engines, .nvmrc, .tool-versions, requires-python)."""
+    get = lambda rel: read(os.path.join(root, rel))
     try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            config = json.load(handle)
-        done = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True)
-        loop = os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip() or ".git")), "loop")
-    except (OSError, ValueError):
-        return []
-    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 3)
-    for path in glob.glob(os.path.join(loop, "runs", "*.json")):
-        try:
-            with open(path) as handle:
-                state = json.load(handle)
-        except (OSError, ValueError):
-            continue
-        if not isinstance(state, dict) or state.get("status") in ("done", "merged", "retired", "failed", "stopped"):
-            continue
-        live += 1
-        if rounds and "MERGE_ROUNDS" in str((state.get("waiting") or {}).get("ask", "")):
-            rows.append(limit_row("WARN", state.get("slug") or os.path.basename(path)[:-5], "rounds", "waits after more than %d merge-main-and-rerun rounds" % rounds,
-                            "land it when main is quiet, or raise max_merge_rounds, then goal.py answer"))
-    try:
-        with open(os.path.join(loop, "memory-waits.log")) as handle:
-            waits = len(handle.read().splitlines())
-        if waits and number(config, "min_free_memory_gb", 4):
-            rows.append(limit_row("WARN", "memory", "waits", "%d lane wait(s) for free memory (min_free_memory_gb %s)" % (waits, config.get("min_free_memory_gb", 4)), "close sessions to free memory, or lower min_free_memory_gb"))
-    except OSError:
-        pass
-    active = number(config, "max_active_goals", 20)
-    if active and live > active:
-        rows.append(limit_row("WARN", "goals", "active", "%d goals live, over max_active_goals %d" % (live, active), "finish or stop goals, or raise max_active_goals"))
-    try:
-        with open(os.path.join(loop, "plan-usage.json")) as handle:
-            used = float(json.load(handle)["percent"])
-        pause = number(config, "plan_pause_percent", 80)
-        if pause and used > pause:
-            rows.append(limit_row("WARN", "plan", "usage", "weekly plan usage %g%%, over plan_pause_percent %d%%; no new goal starts" % (used, pause), "wait for the plan to reset, or raise plan_pause_percent"))
-    except (OSError, ValueError, KeyError, TypeError):
-        pass
-    return rows
+        eng = json.loads(get("package.json") or "{}")["engines"]["node"]
+    except (ValueError, KeyError, TypeError):
+        eng = ""
+    tv = dict(l.split()[:2] for l in get(".tool-versions").splitlines() if len(l.split()) > 1)
+    py = re.search(r'requires-python\s*=\s*"([^"]*)"', get("pyproject.toml"))
+    plat = (os.environ.get("LOOP_SCHEDULE_PLATFORM") if os.environ.get("LOOP_TEST") == "1" else "") or sys.platform
+    ask = {"node": (str(eng or get(".nvmrc") or tv.get("nodejs", "")), "node", ("winget install OpenJS.NodeJS.LTS", "brew install node@%s", "nvm install %s")),
+           "python": ((py and py[1]) or tv.get("python", ""), "python3", ("winget install Python.Python.%s", "brew install python@%s", "install python %s"))}
+    for name, (spec, exe, cmds) in ask.items():
+        m = re.search(r"(\d+)(?:\.(\d+))?", spec)
+        if m:
+            need = (int(m[1]),) if name == "node" else (int(m[1]), int(m[2] or 0))
+            path = shutil.which(exe) or shutil.which(name)
+            got = tuple(int(x) for x in re.findall(r"\d+", subprocess.run([path, "--version"], capture_output=True, text=True).stdout if path else "")[:len(need)])
+            if not got or got < need:
+                ver, cmd = ".".join(map(str, need)), cmds[0 if plat == "win32" else 1 if plat == "darwin" else 2]
+                steps.append(("toolchain", name, "needs %s %s (%s here): %s" % (name, ver, ".".join(map(str, got)) or "none", cmd % ver if "%s" in cmd else cmd)))
+
+
+def step_lines(info):
+    """The OWNER STEP and ADAPTED lines of migration-check."""
+    return (["OWNER STEP %s %s: %s" % (clean(k), clean(n), clean(i)) for k, n, i in info["steps"]]
+            + ["ADAPTED %s: its setting is off" % n for n, v in info["off"].items() if v])
+
+
+def checklist(info, gaps):
+    return "CHECKLIST: %d owner step(s), %d adapted, %d gap(s); every other item is installed" % (len(info["steps"]), sum(info["off"].values()), gaps)
+
+
+def step_rows(info, mode, row):
+    """Health's Adoption INFO rows, one per owner step."""
+    return [row("INFO", "adoption", "owner step " + clean(n), "migration", "%s: %s [%s]" % (clean(k), clean(i), mode)) for k, n, i in info["steps"]]
+

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.28.56 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.55 - 2026-11-14
 
 - size-caps: move criteria, workflow and refusals detail from three SKILL.md files into references
