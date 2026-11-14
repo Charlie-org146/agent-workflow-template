@@ -5,7 +5,7 @@ Review: **Unreviewed**
 
 ## Problem
 
-- My product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me.
+- My  product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me.
 - When a requirement changes there, the agents working in the repo keep building from the old wording until someone notices.
 - I never want a tool in the loop to write into my own document.
 

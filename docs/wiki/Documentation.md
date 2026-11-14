@@ -6,7 +6,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599a537 U=03828777 -->
 
 ## Problem
-- I  can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
+- I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
 - Pages drift from the code, and each repo writes them its own way, so reviewing them takes too long.
 - I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me.
 
