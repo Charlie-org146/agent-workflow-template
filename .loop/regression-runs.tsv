@@ -7,6 +7,7 @@ adopt-set-5	FAIL	2026-11-12
 adoption-golden	PASS	2026-11-13	
 affected-quiet-release	PASS	2026-11-11	
 agents-wire	PASS	2026-11-12	
+app-refuses-headless-4184	PASS	2026-11-14	
 attempt-114	PASS	2026-11-10	
 aut-backlog-milestone	PASS	2026-11-12	
 aut-by-hand-runs	PASS	2026-11-12	
@@ -304,6 +305,7 @@ mon6-merged-frees	PASS	2026-11-10
 mon7-govern-blocks	PASS	2026-11-10	
 mon8-silent-30	PASS	2026-11-10	
 mon9-board-fast	PASS	2026-11-10	
+monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-10	
 needs-you-stuck	PASS	2026-11-12	
 never-merges	PASS	2026-11-09	
@@ -352,10 +354,12 @@ pool-edges-122	PASS	2026-11-10
 pr-body-by-file	PASS	2026-11-13	
 pr-body-criterion	PASS	2026-11-12	
 pr-body-no-checks	PASS	2026-11-12	
+pr-body-no-home-3841	PASS	2026-11-14	
 pr-commit-scope	PASS	2026-11-11	
 pr-in-milestone	PASS	2026-11-12	
 pr-needs-flow	PASS	2026-11-09	
 pr-real-fail-costs-try	PASS	2026-11-13	
+pr-statuses-only-lane-3840	PASS	2026-11-14	
 pr-waits-owed	PASS	2026-11-13	
 prd-audit-ignores-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-convert	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -500,6 +504,7 @@ summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 template-sheet	PASS	2026-11-12	
 tests-last-run	PASS	2026-11-12	
+tests-links-workflow-3839	PASS	2026-11-14	
 tests-not-enforced	PASS	2026-11-12	
 tests-own-folder	PASS	2026-11-13	
 tests-page-run-link	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
