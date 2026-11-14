@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=73a5c832 N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -49,10 +49,11 @@ Review: **Unreviewed**
   - When a decision needs my words, I answer in the operation session, which records my message verbatim with the IDs it covers (sessions.py owner-words) for the workers to use.
   - Turning it off takes effect at the next decision.
 
-- MON-12: **Reviewed 2026-11-10** Session pool <!-- reviewed 7a470c28 -->
+- MON-12: **Reviewed 2026-11-14** Session pool <!-- reviewed 804e0364 -->
   - The operation session keeps a pool of idle worker sessions, sized by a setting (default 20), and hands each ready goal one from the pool instead of starting a new session.
   - Because sessions can only be created from the desktop app, whenever the pool runs low the operation session asks me, at the desktop, to fill it, and it creates every missing session in one step on my word.
   - A finished goal's session goes back to the pool (MON-6), the board shows the pool as free, busy and total, and a goal that finds the pool empty waits under Needs you with the one action that fixes it.
+  - A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds.
 
 - MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.

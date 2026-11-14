@@ -46,6 +46,8 @@ Five wiki pages show STALE because budget-enforce's commits touch their scripts,
 
 Sentence for the owner: "Un-review DEL-8 on Delivery, HLT-2 on Health, MON-12 on Monitoring and REG-7 on Regression, apply the four sub-bullets drafted under 'budget-enforce pages' in DECISIONS.md exactly as written, then review Delivery, Health, Monitoring, Regression and Setup again (Setup needs only the re-stamp, SET-2 covers its settings)."
 
+Applied 2026-11-14 on the owner's approval, owner-words records o7 (DEL-8, HLT-2, MON-12, REG-7 un-reviewed, sub-bullets added as drafted, re-reviewed) and o10 (Delivery, Health, Monitoring, Regression and Setup reviewed again; Setup is a re-stamp with no text change).
+
 ## Waiting on owner un-review
 
 Proposed wording for the budget-enforce goal (limits in `.loop/config.json` stop new work). DEL-8 and GRD-2 are Reviewed, so the owner un-reviews them to apply this; nothing on the pages changed.
