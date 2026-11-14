@@ -267,11 +267,11 @@
 | <a id="t-launchctl-missing-unknown"></a>launchctl-missing-unknown | requirement | DOC-15 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-skill-criteria-in-references"></a>skill-criteria-in-references | requirement | DOC-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-doc1-sync-pointer"></a>doc1-sync-pointer | requirement | DOC-1 | not run | - | local | 2026-11-14 |
-| <a id="t-skill-lines-release-4172"></a>skill-lines-release-4172 | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) open (2026-11-14) | not run | - | local | 2026-11-14 |
-| <a id="t-skill-lines-docs-4171"></a>skill-lines-docs-4171 | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) open (2026-11-14) | not run | - | local | 2026-11-14 |
-| <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
-| <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
-| <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) open (2026-11-14) | failing (issue reopened) 2026-11-14 | - | local | 2026-11-14 |
+| <a id="t-skill-lines-release-4172"></a>skill-lines-release-4172 | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-skill-lines-docs-4171"></a>skill-lines-docs-4171 | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 
 ## External PRDs
 
@@ -329,6 +329,16 @@
 | <a id="t-tokens-unread-shown"></a>tokens-unread-shown | requirement | GRD-2 | not run | - | local | 2026-11-13 |
 | <a id="t-issues-live-only-ci"></a>issues-live-only-ci | requirement | GRD-5 | not run | - | local | 2026-11-13 |
 | <a id="t-issues-live-only-local"></a>issues-live-only-local | requirement | GRD-5 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-time-stop"></a>grd2-time-stop | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-token-stop"></a>grd2-token-stop | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-tokens-unknown"></a>grd2-tokens-unknown | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-merge-rounds"></a>grd2-merge-rounds | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-active-goals"></a>grd2-active-goals | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-plan-pause"></a>grd2-plan-pause | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-limits-in-settings"></a>grd2-limits-in-settings | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-memory-lane-waits"></a>grd2-memory-lane-waits | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-memory-new-goal"></a>grd2-memory-new-goal | requirement | GRD-2 | not run | - | local | 2026-11-13 |
+| <a id="t-grd2-memory-health"></a>grd2-memory-health | requirement | GRD-2 | not run | - | local | 2026-11-13 |
 | <a id="t-repo-rules-control"></a>repo-rules-control | requirement | GRD-9 | not run | - | local | 2026-11-13 |
 | <a id="t-repo-rules-refuse"></a>repo-rules-refuse | requirement | GRD-9 | not run | - | local | 2026-11-13 |
 | <a id="t-repo-rules-off"></a>repo-rules-off | requirement | GRD-9 | not run | - | local | 2026-11-13 |
@@ -535,7 +545,7 @@
 | <a id="t-mon8-silent-worker"></a>mon8-silent-worker | requirement | MON-8 | not run | - | local | 2026-11-13 |
 | <a id="t-operation-checkout-ff"></a>operation-checkout-ff | requirement | MON-13 | not run | - | local | 2026-11-13 |
 | <a id="t-mon14-reply-deps-whole"></a>mon14-reply-deps-whole | requirement | MON-14 | not run | - | local | 2026-11-13 |
-| <a id="t-mon-stray-runs"></a>mon-stray-runs | requirement | MON-3 | not run | - | local | 2026-11-13 |
+| <a id="t-mon-stray-runs"></a>mon-stray-runs | requirement | MON-3 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-mon14-map-finish"></a>mon14-map-finish | requirement | MON-14 | not run | - | local | 2026-11-13 |
 | <a id="t-mon14-map-arrows"></a>mon14-map-arrows | requirement | MON-14 | not run | - | local | 2026-11-13 |
 | <a id="t-mon14-map-live-only"></a>mon14-map-live-only | requirement | MON-14 | not run | - | local | 2026-11-13 |
@@ -672,7 +682,7 @@
 | <a id="t-issue-list-reads-all"></a>issue-list-reads-all | requirement | REG-5 | not run | - | local | 2026-11-13 |
 | <a id="t-issue-list-cut-off-refused"></a>issue-list-cut-off-refused | requirement | REG-5 | not run | - | local | 2026-11-13 |
 | <a id="t-job-skip-opens-no-issue"></a>job-skip-opens-no-issue | requirement | REG-5 | not run | - | local | 2026-11-13 |
-| <a id="t-lanes-abs-not-walked"></a>lanes-abs-not-walked | requirement | REG-4 | not run | - | local | 2026-11-12 |
+| <a id="t-lanes-abs-not-walked"></a>lanes-abs-not-walked | requirement | REG-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-12 |
 | <a id="t-lanes-abs-same-reach"></a>lanes-abs-same-reach | requirement | REG-4 | not run | - | local | 2026-11-12 |
 | <a id="t-lanes-dotdot-not-walked"></a>lanes-dotdot-not-walked | requirement | REG-4 | not run | - | local | 2026-11-12 |
 | <a id="t-budgets-agree"></a>budgets-agree | requirement | REG-7 | not run | - | local | 2026-11-12 |
