@@ -47,14 +47,15 @@ def top_of():
     return top if os.path.exists(os.path.join(top, ".loop", "docs.tsv")) else None
 
 
-def pending(top, cfg, fix=False):
+def pending(top, cfg, fix=False, head="HEAD"):
     """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first."""
     base = base_of(top, cfg)
     if fix:
         release.docs_trouble(top, base, True)  # mend the goal's own mechanical trouble, scoped to its commits
     lines = release.docs_trouble(top, base, whole=True)
     # a page stale from a commit this goal's diff does not touch is main's own: a finding, not a refusal (the --own scope)
-    done = run([sys.executable, DOCS, "check", "--own"], top)
+    head != "HEAD" and run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch, not this checkout's HEAD
+    done = run([sys.executable, DOCS, "check", "--own", head], top)
     other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
     kept = [l for l in lines if not (l.startswith("REWRITE ") and l.split()[1].rstrip(":") in other and ": STALE " in l)]
     for l in lines:
