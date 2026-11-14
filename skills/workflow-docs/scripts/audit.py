@@ -377,6 +377,7 @@ def sync(root, dry=False, accept=(), opened=False):
                 row[2] = "1" if ok else "0"
                 print("POSTED %s %s: %s%s" % (page, ident, row[1], "" if ok else " (not connected to %s: %s)" % (source, why[:80])))
             held[key] = [side, row[1], row[2], sha(text)]
-    counting.ledger(root, held)
+    if not dry:
+        counting.ledger(root, held)
     print("SYNC: %d in step, %d with a delta, %d not connected" % (same, new, away))
     return 1 if dry and new else 0
