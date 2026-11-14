@@ -11,7 +11,8 @@ The workflow skills share this contract. The design guide at the end explains ho
 | `.loop/goals/<slug>.md` | One goal: done lines, plan, log |
 | `.loop/findings.md` | Open findings, one line each |
 | `.loop/docs.tsv` | Each wiki page and the paths it describes |
-| `.loop/prd/PAGE.md` | The repo's copy of a feature's external PRD, one `- ID: text` line per requirement; written only by `docs.py sync` (first line `<!-- prd-sync: owned -->`) |
+| `.loop/prd/PAGE.md` | The repo's copy of a feature's external PRD, one `- ID: text` line per requirement; an agent's goal may edit a line, and `docs.py sync` writes it (first line `<!-- prd-sync: owned -->`) when it adopts the source or accepts a side |
+| `.loop/prd/PAGE.base` | What the copy and the external PRD last agreed on, `ID<TAB>sha8` per requirement; written by `docs.py sync` |
 | `.loop/config.json` key `session_command` | The session tool, as a list: called `start NAME` (prints the new session's id), `rename ID NAME` and `send ID TEXT`; a non-zero exit or 30 seconds means no session, so the goal falls back to a background process. `$LOOP_SESSION_TOOL` replaces it. The pool is `loop/session-pool.json` under the git common dir |
 | `.loop/config.json` key `criteria` | `true` makes `docs.py check` enforce the criteria contract on the wiki pages; each regression row links to one criterion by its goal or id; a reviewed line ends with a hash of its text, and `docs.py check` fails if the text changes; `criteria.py render` makes each page's Tests table |
 | `.loop/regression.tsv` | Each test row: id, level, command, goal, date seen failing |

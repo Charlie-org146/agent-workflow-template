@@ -5,23 +5,28 @@ Review: **Unreviewed**
 
 ## Problem
 
-- My  product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me.
-- When a requirement changes there, the agents working in the repo keep building from the old wording until someone notices.
-- I never want a tool in the loop to write into my own document.
+- My product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me.
+- Agents change a requirement in the repo as they build and people change it in Notion, and neither side learns of the other's change until someone happens to notice.
+- I never want a tool to overwrite either side on its own: when the two differ I want to be told, decide which text stands, and have the agent write only that text, Notion included.
 
 ## Requirements
 
 ### Functional
 
-- EXT-1: **Unreviewed** The repo's copy of a PRD kept elsewhere follows it
-  - A feature's PRD source can be `url:<link>` or `mcp:<server>:<resource>`; `docs.py sync` reads it and compares its requirement ids and text with the repo's copy in `.loop/prd/`.
-  - Each requirement added, removed or changed is a DRIFT line naming the page and the id, and the copy is rewritten to match; `--dry-run` only reports and exits 1.
-  - A page whose PRD lives in the repo is never visited.
-- EXT-2: **Unreviewed** The loop only ever reads my document
-  - Sync rewrites only the repo's copy, and only a file it wrote itself; a hand-written file at that path is left as it is.
-  - Nothing in sync calls a write on the source, whether it is a link or a connector.
-- EXT-3: **Unreviewed** No connector never breaks the loop
-  - A source sync cannot read prints `not connected`, changes nothing and exits 0.
+- EXT-1: **Unreviewed** Either side can change a requirement
+  - A requirement can be added or changed in the repo's copy, by an agent's goal, or in the external document, by people.
+  - A feature's PRD source can be `url:<link>` or `mcp:<server>:<resource>`; `.loop/prd/PAGE.md` is the repo's copy, and the first `docs.py sync` adopts the source into it.
+  - Syncing is opt-in per PRD: a PRD lives in the repo by default, and only a page whose PRD source in `.loop/docs.tsv` is a `url:` or `mcp:` source takes part. Every other page is never visited and raises no signal.
+- EXT-2: **Unreviewed** A difference is a delta, never a silent overwrite
+  - `docs.py sync` compares both sides with what they last agreed on, and each difference is a DELTA naming the page, the id, which side changed (the repo, the source or both) and both texts.
+  - Sync never overwrites either side on its own, and `--dry-run` only reports and exits 1.
+  - A hand-written file at the repo copy's path is left as it is.
+- EXT-3: **Unreviewed** A delta is reviewed, then both sides agree
+  - Each delta is posted once as a GitHub issue on the feature's milestone and once as a comment on the Notion page, and stays open until someone accepts one side's text.
+  - `docs.py sync --accept PAGE:ID=repo|source` writes only the accepted text to the other side, Notion included, closes the delta and leaves every other requirement as it was.
+  - Health and the check-in show each open delta as an inconsistency, only for a page that opted in; a repo or page with no external source never shows one.
+- EXT-4: **Unreviewed** No connector never breaks the loop
+  - A source, gh or writer that sync cannot reach prints `not connected`, changes nothing and exits 0, and the delta stays open.
   - A source with no requirement ids keeps the repo's copy instead of emptying it.
 
 ### Non-functional
@@ -30,13 +35,15 @@ None
 
 ## Non-goals
 
-- Syncing milestones or the README from an external source: left for a later goal.
-- Writing to Notion, or to any source, from the repo.
+- Syncing milestones (the GitHub milestones and a Notion Milestones page) or the README: left for a later goal.
+- Choosing which pages opt in: the owner sets a page's PRD source, and nothing here sets one.
+- Writing to Notion, or to any source, without an accepted delta: the agent writes only text the owner accepted.
 - Google Docs: the same mechanism, added when a repo needs it.
 
 ## Success metrics
 
-- A requirement edited in Notion shows as DRIFT on the next sync and is gone after it, with the Notion page untouched.
+- A requirement edited in Notion or in the repo shows as a delta on the next sync with neither side touched, and after it is accepted both sides say the same.
+- Every open delta shows in health and the check-in until it is accepted.
 
 ## Tests
 

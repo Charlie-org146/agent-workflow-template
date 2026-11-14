@@ -134,15 +134,15 @@ with tempfile.TemporaryDirectory() as tmp:
 
     edit(copy, "- TH-2:", "- TH-3: A new alert\n- TH-2:")
     code, out = sync(LOOP_PRD_WRITER=None)
-    ok(code == 0 and "DELTA Sensor: TH-3 the repo changed" in out and "not connected" in out and "POSTED Sensor TH-3" in out, "with no writer the delta is still posted as an issue, and the comment says not connected")
+    ok(code == 0 and "DELTA Sensor: TH-3 the repo changed" in out and "not connected to" in out and "POSTED Sensor TH-3" in out, "with no writer the delta is still posted as an issue, and the comment says not connected")
     code, out = sync("--accept", "Sensor:TH-3=repo", LOOP_PRD_WRITER=None)
-    ok(code == 0 and "not connected" in out and "TH-3" not in read(source) and "- TH-3: A new alert" in read(copy), "accepting the repo's text with no writer says not connected, exits 0 and changes nothing")
+    ok(code == 0 and "not connected: Sensor" in out and "TH-3" not in read(source) and "- TH-3: A new alert" in read(copy), "accepting the repo's text with no writer says not connected, exits 0 and changes nothing")
     edit(copy, "A new alert", "A newer alert")
     code, out = sync(TOY_GH_FAIL="1")
-    ok(code == 0 and "not connected" in out and "DELTA Sensor: TH-3" in out, "with no working gh the delta is shown, nothing is posted, and the loop is not broken")
+    ok(code == 0 and "not connected: Sensor TH-3 (gh)" in out and "DELTA Sensor: TH-3" in out, "with no working gh the delta is shown, nothing is posted, and the loop is not broken")
     seen = len(calls(log))
     code, listed = sync("--open")
-    ok(code == 0 and "DELTA Sensor: TH-3" in listed and len(calls(log)) == seen, "sync --open lists each open delta from the ledger, with no call to gh or the connector")
+    ok(code == 0 and "DELTA Sensor: TH-3 the repo changed (review: https://" in listed and len(calls(log)) == seen, "sync --open lists each open delta from the ledger, with no call to gh or the connector")
 
     import importlib.util
 

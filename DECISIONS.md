@@ -250,3 +250,15 @@ The sync pointer, added as DOC-1's last sub-bullet:
 - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
 
 Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
+
+## Waiting on owner un-review (ext-two-way)
+
+Drafted by the ext-two-way goal, 2026-11-14. It changes a reviewed requirement, so it waits for the owner's own typed words: Documentation is Reviewed.
+
+- Documentation, DOC-1 (PRD template), as a new last sub-bullet next to the sync pointer wiki-current added: "A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works."
+
+The owner types one sentence in the operation session:
+
+"Un-review the Documentation page and DOC-1 so the opt-in sync sub-bullet in DECISIONS.md can be added; then review the Documentation page and DOC-1 again."
+
+After it, the goal edits the one line as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge: its change to docs.py and audit.py makes the Documentation page stale, and merge.py refuses a stale page its own diff made.
