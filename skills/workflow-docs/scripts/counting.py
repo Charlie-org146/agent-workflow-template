@@ -3,7 +3,7 @@
 
 docs.py check, audit and publish call counts() through docs.counts(root). prose() is the text a reader sees: no fenced
 or indented code, comments or code spans. The page map of docs.py (map_path, read_map, write_map),
-and its live() and render.py's cadence(), config_of(), entries() and automation_block(), moved unchanged, and real(), which drops block-only commits from its staleness, sit at the end.
+and render.py's cadence(), config_of(), entries() and automation_block(), moved unchanged, and real(), which drops block-only commits from its staleness, sit at the end.
 """
 import glob
 import json
@@ -173,7 +173,7 @@ def read_map(root):
             for line in handle:
                 if line.strip() and not line.startswith("#"):
                     page, _, paths = line.rstrip("\n").partition("\t")
-                    paths = paths.partition("\t")[0]  # an optional third column is the PRD source (sources())
+                    paths = paths.partition("\t")[0]
                     rows[page] = [item.strip() for item in paths.split(",") if item.strip()]
     except OSError:
         pass
@@ -181,18 +181,12 @@ def read_map(root):
 
 
 def sources(root):
-    """{page: PRD source} from the optional third column of .loop/docs.tsv: `page` (the wiki page itself, the default),
-    `url:<link>` or `mcp:<server>:<resource>`; a page with no entry has its PRD on the page."""
-    out = {}
+    """The optional third column of docs.tsv: a page's PRD source (`url:<link>`, `mcp:<server>:<resource>`, or `page`)."""
     try:
-        with open(map_path(root)) as handle:
-            for line in handle:
-                cols = line.rstrip("\n").split("\t")
-                if line.strip() and not line.startswith("#") and len(cols) > 2 and cols[2].strip():
-                    out[cols[0]] = cols[2].strip()
+        rows = [x.rstrip("\n").split("\t") for x in open(map_path(root)) if x.strip() and x[0] != "#"]
     except OSError:
-        pass
-    return out
+        return {}
+    return {r[0]: r[2].strip() for r in rows if len(r) > 2 and r[2].strip()}
 
 
 def write_map(root, rows):
@@ -226,25 +220,6 @@ def real(root, changed, paths):
 
     return [c for c in changed if not (names.get(c.split()[0]) and all(
         os.path.basename(rel) in ("README.md", "Home.md") and blocks_only(c.split()[0], rel) for rel in names[c.split()[0]]))]
-
-
-def live(root):
-    """Print each routine's live state: a workflow's newest run, a launch agent loaded or not."""
-    for e in entries(root):
-        kind, _, target = str(e.get("runs", "")).partition(":")
-        if kind == "github":
-            done = subprocess.run(["gh", "run", "list", "--workflow", target, "--limit", "1", "--json", "conclusion,createdAt",
-                                   "-q", ".[0] | \"\\(.conclusion) \\(.createdAt)\""], capture_output=True, text=True)
-            said = done.stdout.strip() if done.returncode == 0 and done.stdout.strip() else "no run found or gh unavailable"
-        elif kind == "mac":
-            done = subprocess.run(["launchctl", "list", target], capture_output=True, text=True)
-            said = "loaded" if done.returncode == 0 else "not loaded"
-        elif kind == "local":
-            said = "runs on this Mac's local schedule, not in GitHub Actions"
-        else:
-            said = "a Claude scheduled task is checked in the Claude app"
-        print("%s: %s" % (e["name"], said))
-    return 0
 
 
 def cadence(cron):  # render.py's Automation block cadence, moved here unchanged

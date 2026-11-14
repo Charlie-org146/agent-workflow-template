@@ -79,10 +79,6 @@ Review: **Unreviewed**
 
 - I want the median of my numbers without working it out by hand.
 
-## Usage
-
-- `/toy median LIST` — Works out the median and prints it (`MEDIAN 2`). Refuses an empty list (exit 1, `REFUSED: no numbers`).
-
 ## Requirements
 
 ### Functional
@@ -158,7 +154,7 @@ cat > $P <<EOF
 <!-- workflow-docs -->
 # Delivery
 
-PRD: https://www.notion.so/toy/Delivery-PRD-1234
+PRD: https://app.notion.com/p/4178261590fd81d59adff26e65faec0a
 
 ## Tests
 
@@ -169,6 +165,8 @@ print(open(sys.argv[1]).read())
 out=$(check); grep -q "^UNREAD Delivery: .*MCP connector" <<<"$out" && ok "a Notion link with no reader is UNREAD naming the connector" || bad "notion: $out"
 LOOP_PRD_READER="$rd" $cri render >/dev/null
 out=$(LOOP_PRD_READER="$rd" check); grep -q "^DOCS OK" <<<"$out" && ok "a Notion link read through the reader passes" || bad "reader: $out"
+$reg add list-ids --level land --command true --goal DEL-1 --describe "Given a link-form page, when the tests are listed, then its ids show." --category criterion >/dev/null
+out=$(LOOP_PRD_READER="$rd" python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "DEL-1" <<<"$out" && ok "tests.py list reads a link-form page's ids" || bad "tests list: $out"
 cat >> $P <<'EOF'
 
 ## Problem
@@ -207,11 +205,14 @@ reset
 
 echo "== Home groups rows by topic"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['topics'] = {'Build loop': ['Delivery'], 'Quality': ['Monitoring']}; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
-has "^FORMAT Home:.*one table with the header | Topic |" && ok "with topics set a Home without a Topic column fails" || bad "topic header: $(check)"
+out=$(check); grep -q "^FORMAT Home" <<<"$out" && bad "old header refused: $out" || ok "with topics set the old Home header (no Topic column) is accepted"
 $cri render >/dev/null
 grep -q "^| Topic | Feature |" $H && grep -q "^| Build loop | \[Delivery\]" $H && ok "render adds the Topic column with the page's topic" || bad "regroup: $(cat $H)"
 out=$(check); grep -q "^DOCS OK" <<<"$out" && ok "the regrouped Home passes" || bad "regrouped: $out"
 edit $H "| Build loop |" "| Quality |"; has "^FORMAT Home:.*Topic cell" && ok "a wrong Topic cell fails" || bad "wrong topic"
+python3 -c "import json; c = json.load(open('.loop/config.json')); c.pop('topics'); json.dump(c, open('.loop/config.json', 'w'), indent=2)"
+$cri render >/dev/null
+out=$(check); grep -q "^FORMAT Home" <<<"$out" && bad "topic header refused without the setting: $out" || ok "the Topic header is accepted when the setting is not set"
 reset
 echo
 [ "$fails" -eq 0 ] && { echo "ALL PASS"; exit 0; } || { echo "$fails FAILED"; exit 1; }

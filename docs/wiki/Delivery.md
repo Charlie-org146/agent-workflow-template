@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd4612 U=db89d57b -->
+Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d0857c8 U=03828777 -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -25,8 +25,8 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
   - A decision for me waits under Needs you, or, where the repo allows, is auto-approved and logged.
 - DEL-4: **Reviewed 2026-11-08** The pull request <!-- reviewed 7cc0d031 -->
   - Carries the done lines, the plan, how to verify by hand, and each step's result.
-- DEL-5: **Reviewed 2026-11-13** Release <!-- reviewed 6d02eda3 -->
-  - Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page is stale, runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you.
+- DEL-5: **Reviewed 2026-11-14** Release <!-- reviewed 696bfc11 -->
+  - Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it), runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you.
 - DEL-6: **Reviewed 2026-11-13** Review depth fits the goal <!-- reviewed cb62ccd5 -->
   - Plan and review run at full depth by default (`review_depth: full`); a condensed plan and review happens only when `review_depth: condensed`, and I can override it per goal. Tests never shrink: every goal runs its test lane, the affected rows within the test budget (REG-7).
 - DEL-10: **Reviewed 2026-11-13** A goal started on another machine can be adopted <!-- reviewed 6e9abcdb -->
@@ -52,6 +52,10 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
   - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows a merge waiting on review.
 - DEL-14: **Reviewed 2026-11-13** Leftover findings are filed by kind at ship <!-- reviewed a02600dc -->
   - When a goal ships, each finding it did not fix is filed once. A break of a Reviewed requirement inside the goal's touches is fixed in place; outside them it is an open issue labelled `defect`. An improvement, idea or saving is an issue labelled `backlog` on its feature's milestone "Backlog: <Feature>" ("Backlog: Other" when it fits no feature). Filing writes to GitHub only with `--live`, which the goal passes after ship is recorded, and a finding already filed is not filed again.
+- DEL-15: **Reviewed 2026-11-14** Fast merge queue. PRs merge one after another, but each waits only as long as needed. <!-- reviewed 565f503b -->
+  - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
+  - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
+  - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
 
 ## Non-goals
 - It doesn't decide what to build.
@@ -61,7 +65,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.
 - A goal that fails three tries stops and says why.
-- No goal merges while a wiki page is stale.
+- No goal merges while a wiki page its own diff made stale is still stale.
 
 ## Tests
 
@@ -89,7 +93,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 | [never-merges](Tests#t-never-merges) | requirement | DEL-5 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
 | [wiki-release](Tests#t-wiki-release) | requirement | DEL-5 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-12 |
 | [auto-release](Tests#t-auto-release) | requirement | DEL-5 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
-| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | DEL-5 | Given a page no touched path maps to, when the release step runs, then it refreshes the page and refuses to merge while it is stale. | PASS 2026-11-12 |
+| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | DEL-5 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-12 |
 | [del5-patch-default](Tests#t-del5-patch-default) | requirement | DEL-5 | Given a goal with a code change and no bump set, when it is released, then the version bump is patch. | PASS 2026-11-12 |
 | [del5-bump-set](Tests#t-del5-bump-set) | requirement | DEL-5 | Given the operation recorded a minor bump with goal.py set, when the goal is released, then the bump is minor. | PASS 2026-11-12 |
 | [del5-release-pr](Tests#t-del5-release-pr) | requirement | DEL-5 | Given a protected main that refuses direct pushes, when a goal is released, then the version and changelog land through a release pull request. | PASS 2026-11-12 |
@@ -129,7 +133,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 | [del8-goal-budget](Tests#t-del8-goal-budget) | requirement | DEL-8 | Given a repo with a time and token budget, when a goal is frozen, then the goal carries both budgets. | not run |
 | [del8-board-over](Tests#t-del8-board-over) | requirement | DEL-8 | Given a running goal past its time and token budget, when the live board prints, then the goal's budget line says OVER time and OVER tokens. | not run |
 | [del8-session-tokens](Tests#t-del8-session-tokens) | requirement | DEL-8 | Given a goal past token_budget whose steps run in a session, when the next step starts, then it is refused (not built: only headless goals are refused today). | not run |
-| - | requirement | DEL-8 | no passing test | not enforced |
+| [held-time-over-still-stops](Tests#t-held-time-over-still-stops) | requirement | DEL-8 | Given a goal whose steps ran past its time budget, when a new step starts, then it is refused with BUDGET_MINUTES. | PASS 2026-11-14 |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
 | [del9-scan-sites](Tests#t-del9-scan-sites) | requirement | DEL-9 | Given the delivery, release and monitoring scripts, when any function pushes or writes to GitHub, then it calls the private-name scan first. | not run |
 | [del9-lane-part-no-path](Tests#t-del9-lane-part-no-path) | requirement | DEL-9 | Given a lane record whose LANE line ends with a local log path, when the pull request body's lane part is built, then it keeps the LANE line, the before-rows parts and the rows and drops the log path, so the private-name scan does not refuse every pull request from a machine whose home folder is on the list. | not run |
@@ -138,6 +142,8 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 | [backlog-leftovers-filed](Tests#t-backlog-leftovers-filed) | requirement | DEL-14 | Given a ship reply with FILE defect and FILE backlog lines, when the goal records ship with --live, then a defect is filed on no milestone, backlog items on Backlog: <Feature> or Backlog: Other, and a line holding an email is skipped. | not run |
 | [backlog-leftovers-once](Tests#t-backlog-leftovers-once) | requirement | DEL-14 | Given leftovers already filed, when ship is recorded again, then nothing is filed twice. | not run |
 | - | requirement | DEL-14 | no passing test | not enforced |
+| [merge-batch-split](Tests#t-merge-batch-split) | requirement | DEL-15 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
+| - | requirement | DEL-15 | no passing test | not enforced |
 | [scripts-no-hang](Tests#t-scripts-no-hang) | defect | [#35](https://github.com/jcl2018/agent-workflow-template/issues/35) closed (2026-11-09) | Given a script with no terminal, when it needs a prompt, then it fails with an error instead of hanging. | PASS 2026-11-12 |
 | [guards-rule-start](Tests#t-guards-rule-start) | defect | [#147](https://github.com/jcl2018/agent-workflow-template/issues/147) closed (2026-11-11) | Given a reply-format rule added after a step started, when that step is recorded, then the rule doesn't bind it, and a step started after it is refused naming the rule and the release that added it. | PASS 2026-11-10 |
 | [guards-no-try](Tests#t-guards-no-try) | defect | [#148](https://github.com/jcl2018/agent-workflow-template/issues/148) closed (2026-11-11) | Given a record refused for format (no DEPTH or STEP line) or a wrong HEAD, when it is refused, then no try is used, the goal keeps running and the fix is printed. | PASS 2026-11-12 |
@@ -155,4 +161,10 @@ Review: **Reviewed 2026-11-13** <!-- prd P=7884b325 R=9cbdaa2a N=9f4c33da M=f8cd
 | [issue-134-protected-release](Tests#t-issue-134-protected-release) | defect | [#134](https://github.com/jcl2018/agent-workflow-template/issues/134) closed (2026-11-11) | Given a PR-only ruleset on main, when a goal is released, then a release PR lands the version and exactly one GitHub release is made at its merge commit (issue: Autorelease fails on a protected base branch). | PASS 2026-11-12 |
 | [issue-154-release-pr-merge](Tests#t-issue-154-release-pr-merge) | defect | [#154](https://github.com/jcl2018/agent-workflow-template/issues/154) closed (2026-11-11) | Given a release PR the loop can't merge because review is required, when merge.py runs, then it records the owner's merge command (issue: merge.py's release push fails on a protected main). | PASS 2026-11-12 |
 | [issue-170-patch-on-remove](Tests#t-issue-170-patch-on-remove) | defect | [#170](https://github.com/jcl2018/agent-workflow-template/issues/170) closed (2026-11-11) | Given a goal that removes a file, when it is released, then the bump is patch and the removal is named in the reason (issue: autorelease turns release.py's 'ask' into a silent major bump). | PASS 2026-11-12 |
+| [release-head-status](Tests#t-release-head-status) | defect | [#3870](https://github.com/jcl2018/agent-workflow-template/issues/3870) open (2026-11-14) | Given a release pull request whose head only moves the version and changelog, a lane that could not run, or rows that failed, when merge.py's release step posts statuses, then the goal's pass carries over without a lane, an untested head gets no status, only rows that ran and failed post failure, and the refusal names them instead of asking for a manual merge (#3870). | not run |
+| [merge-stale-other-passes](Tests#t-merge-stale-other-passes) | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | Given a page stale from a commit the goal never touches, when merge.py checks the wiki, then it prints the page as a FINDING and does not refuse. | not run |
+| [merge-stale-own-refuses](Tests#t-merge-stale-own-refuses) | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | Given a page the goal's own diff made stale, when merge.py checks the wiki, then it still refuses and names the page. | not run |
+| [merge-refused-failed](Tests#t-merge-refused-failed) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | Given a merge.py that gh refuses before the merge, when it ends, then the goal is failed at the same step, never done, so resume works and the board shows it unfinished. | failing (issue reopened) 2026-11-14 |
+| [merge-failed-retry](Tests#t-merge-failed-retry) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | Given a goal a refused merge left failed, when merge.py runs again with the fault gone, then it merges the pull request and the goal ends done. | failing (issue reopened) 2026-11-14 |
 | [stop-takes-tree](Tests#t-stop-takes-tree) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or child stopped for a timeout or a mend, when it is stopped on any platform, then its whole process tree goes with it. | PASS 2026-11-12 |
+| [held-time-3878](Tests#t-held-time-3878) | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) open (2026-11-13) | Given a goal held 772 minutes and active 20 minutes, when a new step starts at a 300 minute budget, then it is not refused (#3878). | PASS 2026-11-14 |

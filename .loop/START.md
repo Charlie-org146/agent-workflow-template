@@ -43,8 +43,8 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Feature | Milestone | What it is for | How to use it |
 |---|---|---|---|
 | Automation | https://github.com/jcl2018/agent-workflow-template/milestone/10 | Things break between my sessions, and I only find out when I next open one; the important checks should run on their own. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
-| Delivery | https://github.com/jcl2018/agent-workflow-template/milestone/1 | I have more changes to make than time to babysit them: I want to hand over one sentence and walk away. | `/workflow-delivery`: go / step / record / pr / `/workflow-release`: merge / ask / cut / leave |
-| Documentation | https://github.com/jcl2018/agent-workflow-template/milestone/3 | I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / render / automation / prompts / entry / publish / sync / restore / milestone / `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
+| Delivery | https://github.com/jcl2018/agent-workflow-template/milestone/1 | I have more changes to make than time to babysit them: I want to hand over one sentence and walk away. | `/workflow-delivery`: go / step / record / pr / `/workflow-release`: merge / batch / ask / cut / leave |
+| Documentation | https://github.com/jcl2018/agent-workflow-template/milestone/3 | I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / relock / render / automation / prompts / entry / publish / sync / restore / milestone / `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | External-PRDs | none | My product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me. | none |
 | Guardrails | https://github.com/jcl2018/agent-workflow-template/milestone/11 | My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on. | none |
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
@@ -74,6 +74,8 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `govern_hook` | true | false turns off the govern-only hook (setup.py --govern-hook installs it): edits, commits and pushes refused in the operation session. |
 | `health_cron` | 47 */4 * * * | Five cron fields (every N hours, or fixed hours): when health with the judge and its digest run on the Mac; off turns it off. |
+| `health_script_bytes` | 20480 | Script size health fails, in bytes (warns at 90%). |
+| `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_command` | ["claude", "-p", "--tools", ""] |  |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read: the judge runs on the Mac with your own claude login. Kept so old configs stay valid. |
 | `judge_setup` | none | No longer read: kept so old configs stay valid. |
@@ -81,6 +83,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
+| `min_free_memory_gb` | 3.5 |  |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `pool_size` | 20 | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |
 | `pr_bumps_version` | false | true moves the last number of the version file once on a goal's branch. |
@@ -103,7 +106,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `test_budget_minutes` | 15 | Minutes one in-loop test run (qa, ship, pull request) may take, 15 or more; rows past it are left to the scheduled full suite. |
 | `time_budget_minutes` | 120 |  |
 | `token_budget` | 3000000 | Tokens a goal may spend over all steps before no new step starts; 0 means no budget. |
-| `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation", "External-PRDs"]} |  |
+| `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation", "External-PRDs"]} | Home's Topic column: {topic: [feature pages]}; rows are grouped by topic in this order, unlisted pages sit under Other, and empty means no Topic column. |
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |

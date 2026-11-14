@@ -300,6 +300,10 @@ def cmd_check(args):
 
 def cmd_audit(args):
     import audit
+    if args.relock:  # DOC-2: re-stamp a reviewed page moved only by owner-reviewed lines
+        done = audit.relock(top())
+        print("RELOCKED " + (", ".join(done) or "nothing"))
+        return 0
     return audit.audit(top(), args.base, args.dry_run)
 
 
@@ -364,7 +368,8 @@ def cmd_publish(args):
 
 
 def cmd_automation(_args):
-    return counting.live(top())
+    import audit
+    return audit.live(top())
 
 
 def cmd_prompts(_args):
@@ -423,6 +428,7 @@ def main():
     item = sub.add_parser("audit")
     item.add_argument("--base", default="")
     item.add_argument("--dry-run", action="store_true")
+    item.add_argument("--relock", action="store_true")
     item.set_defaults(func=cmd_audit)
     item = sub.add_parser("criteria")
     item.add_argument("page")

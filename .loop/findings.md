@@ -56,8 +56,6 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - settings-render-windows: Failed 3 tries. Last: regression lane failed: LANE_DIRTY at start: .loop/regression-issues.tsv. Fix: commit or remove them; the lane committed and pushed nothing.
 - govern-hook-notes: Failed 3 tries. Last: merging main conflicts in: .loop/regression-runs.tsv, docs/wiki/Tests.md
 - capture-row-output: Failed 4 tries. Last: merging main conflicts in: .loop/regression-issues.tsv
-- prd-link-topics: Failed 3 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh, capture-row-ci
-- prd-link-topics: Failed 4 tries. Last: merging main conflicts in: docs/wiki/Documentation.md
 - health-v1: Failed 3 tries. Last: merging main conflicts in: .loop/regression.tsv, DECISIONS.md, docs/wiki/Health.md, docs/wiki/Tests.md
 - health-v1: Failed 4 tries. Last: merging main conflicts in: .loop/regression.tsv, DECISIONS.md, docs/wiki/Health.md, docs/wiki/Tests.md
 - doc-fixes-v1: Failed 3 tries. Last: regression lane failed: capture-row-ci
@@ -67,3 +65,8 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - package-under-cap: done line over-scoped by the operation session
 - package-under-cap: done line over-scoped by the operation session
 - drop-usage: Failed 5 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh
+- matrix-smoke: Failed 3 tries. Last: regression lane failed: settings-render-fresh
+- matrix-smoke: Failed 4 tries. Last: regression lane failed: package-caps-held, package-headroom-held
+- regression-issues-trust: Failed 4 tries. Last: regression lane failed: package-caps-held, package-headroom-held
+- health-repo-rules: Failed 3 tries. Last: regression lane failed: LANE_DIRTY at start: .loop/START.md, README.md. Fix: commit or remove them; the lane committed and pushed nothing.
+- health-repo-rules: Failed 4 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh

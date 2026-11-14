@@ -20,9 +20,11 @@ import re
 import subprocess
 import sys
 
+import counting
 import criteria
 import docs
 import entry
+import prd
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -164,6 +166,80 @@ def own_split(root, found, notes, rows, name="main"):
         else:
             keep.append(item)
     return keep, notes + moved
+
+
+def probe(cmd):
+    """The finished command, or None when the program is missing (no gh, or no launchctl off the Mac): the state is then unknown."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True)
+    except OSError:
+        return None
+
+
+def live(root):
+    """Print each routine's live state: a workflow's newest run, a launch agent loaded or not."""
+    for e in counting.entries(root):
+        kind, _, target = str(e.get("runs", "")).partition(":")
+        if kind == "github":
+            done = probe(["gh", "run", "list", "--workflow", target, "--limit", "1", "--json", "conclusion,createdAt",
+                          "-q", ".[0] | \"\\(.conclusion) \\(.createdAt)\""])
+            said = "unknown: gh is not installed here" if done is None else done.stdout.strip() if done.returncode == 0 and done.stdout.strip() else "no run found or gh unavailable"
+        elif kind == "mac":
+            done = probe(["launchctl", "list", target])
+            said = "unknown: launchctl is not available on this host" if done is None else "loaded" if done.returncode == 0 else "not loaded"
+        elif kind == "local":
+            said = "runs on this Mac's local schedule, not in GitHub Actions"
+        else:
+            said = "a Claude scheduled task is checked in the Claude app"
+        print("%s: %s" % (e["name"], said))
+    return 0
+
+
+def owned(root, rel, body, rule):
+    """True when every requirement line is owner-reviewed text: its seal holds, and it is main's own line or its id is in
+    the reviews log; no line main has was dropped. A line nobody reviewed is not owned, so the page stays LOCKED."""
+    name = rule["sections"][1]
+    shown = criteria.git("show", "origin/main:" + rel, check=False)
+    main = [(line, tuple(below), m.group(1)) for line, m, below in criteria.blocks(dict(criteria.sections(shown)).get(name) or []) if m]
+    try:
+        with open(os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop", "reviews.tsv")) as handle:
+            logged = {key for row in handle for item in row.split("\t")[2:3] for key in item.split(",") if row.split("\t")[1:2] == ["review"]}
+    except OSError:
+        logged = set()
+    have = set()
+    for line, m, below in criteria.blocks(body.get(name) or []):
+        if not m or m.group(2) == "Unreviewed" or m.group(5) != criteria.seal_of(m.group(4), below):
+            return False
+        if (line, tuple(below), m.group(1)) not in main and m.group(1) not in logged:
+            return False
+        have.add(m.group(1))
+    return {key for _, _, key in main} <= have
+
+
+def relock(root):
+    """Relock (DOC-2): re-stamp each reviewed page whose only change is another goal's owner-reviewed line (R moved, all lines owned)."""
+    rule, done = criteria.rules(), []
+    for rel in criteria.pages(root):
+        with open(os.path.join(root, rel)) as handle:
+            text = handle.read()
+        line, why = prd.review_of(text, rule)
+        match = prd.REVIEW.match(line or "")
+        parts = criteria.sections(text)
+        if why or not match or not match.group(2):
+            continue
+        now = prd.prints(parts, rule)
+        if [k for k in prd.KEYS[:4] if match.group(3 + prd.KEYS.index(k)) != now[k]] == ["R"] and owned(root, rel, dict(parts), rule):
+            fresh = prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS)))
+            with open(os.path.join(root, rel), "w") as handle:
+                handle.write(fresh)
+            done.append(os.path.basename(rel)[:-3])
+    if done:
+        log = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop")
+        os.makedirs(log, exist_ok=True)
+        with open(os.path.join(log, "reviews.tsv"), "a") as handle:
+            handle.write("%s\trelock\t%s\tauto-relock: all lines owner-reviewed\n" % (criteria.datetime.datetime.now(
+                criteria.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), ",".join(done)))
+    return done
 
 
 SYNC_MARK = "<!-- prd-sync: owned -->"

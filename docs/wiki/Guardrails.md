@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-13** <!-- prd P=506dd70a R=a0f1201a N=e6bf17f7 M=5109e571 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109e571 U=03828777 -->
 
 ## Problem
 
@@ -60,6 +60,8 @@ Review: **Reviewed 2026-11-13** <!-- prd P=506dd70a R=a0f1201a N=e6bf17f7 M=5109
   - A step only another machine can do (a red proof on another platform, a smoke cell, a Mac-only check) is filed as a to-do issue on the feature's milestone and never blocks the goal, its merge or the release.
   - A row whose red proof needs another platform is recorded owed (Regression, `red ID --owed --runner R`): it reads PENDING, opens one `other-machine` to-do on its feature milestone, and its goal merges.
   - Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
+- GRD-12: **Reviewed 2026-11-14** The machine's status is read every round, and no goal starts under the memory floor. <!-- reviewed 0b68aa9f -->
+  - Each check-in reads free RAM, free commit memory, CPU and the number of claude and node processes (Monitoring, MON-16). A goal starts only while free commit memory is at or above `min_free_memory_gb` (default 3.5, in `.loop/config.json`; 0 turns the floor off). The pool creates no session and the board holds every ready goal as "memory low" until memory frees up. A figure that can't be read never blocks a start.
 
 ### Non-functional
 
@@ -81,7 +83,7 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [grd1-guardrail-list](Tests#t-grd1-guardrail-list) | requirement | GRD-1 | Given the Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check (not built: the page is a definition only). | not run |
-| - | requirement | GRD-1 | no passing test | not enforced |
+| [config-holds-topics](Tests#t-config-holds-topics) | requirement | GRD-1 | Given the repo's config, when the settings are shown, then topics is held in the committed config. | PASS 2026-11-14 |
 | [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | GRD-2 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
 | [del8-step-stops](Tests#t-del8-step-stops) | requirement | GRD-2 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |
 | [grd2-step-budget](Tests#t-grd2-step-budget) | requirement | GRD-2 | Given a review or ship step that reaches step_budget_minutes, when it is stopped, then it records done with what it left and costs no failed try. | not run |
@@ -101,6 +103,8 @@ None
 | - | requirement | GRD-4 | no passing test | not enforced |
 | [grd5-regression-dry](Tests#t-grd5-regression-dry) | requirement | GRD-5 | Given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call. | not run |
 | [grd5-health-close](Tests#t-grd5-health-close) | requirement | GRD-5 | Given open findings, when triage close runs without --yes, then it lists them and writes nothing. | not run |
+| [issues-live-only-ci](Tests#t-issues-live-only-ci) | requirement | GRD-5 | Given a GitHub token and no --live, when the workflow's issue step runs, then it prints WOULD lines and writes no issue, comment or label. | not run |
+| [issues-live-only-local](Tests#t-issues-live-only-local) | requirement | GRD-5 | Given a GitHub token and no --live, when regression.py run reaches an issue write, then it prints WOULD and makes no gh write. | not run |
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
@@ -109,9 +113,13 @@ None
 | [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | GRD-8 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
 | - | requirement | GRD-8 | no passing test | not enforced |
 | [grd9-controls](Tests#t-grd9-controls) | requirement | GRD-9 | Given every health rule, when the controls run on broken copies, then each rule fires. | not run |
+| [repo-rules-control](Tests#t-repo-rules-control) | requirement | GRD-9 | Given a repo rule with a break command, when the Controls group runs, then the rule whose break makes it fail passes its control and one whose break changes nothing is reported as unable to fire. | not run |
+| [repo-rules-refuse](Tests#t-repo-rules-refuse) | requirement | GRD-9 | Given a repo rule with no break command, when health runs, then it refuses with exit 2 naming the rule. | not run |
+| [repo-rules-off](Tests#t-repo-rules-off) | requirement | GRD-9 | Given a default rule turned off in .loop/health-rules.json, when health checks, then its group prints the reason, and a default turned off with no reason stays on and is UNREAD. | not run |
 | - | requirement | GRD-9 | no passing test | not enforced |
 | [grd10-install-hooks](Tests#t-grd10-install-hooks) | requirement | GRD-10 | Given a repo being adopted, when setup runs by default, then it installs the three private-name hooks after its commit. | not run |
 | - | requirement | GRD-10 | no passing test | not enforced |
 | [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | GRD-11 | no passing test | not enforced |
+| - | requirement | GRD-12 | no passing test | not enforced |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
