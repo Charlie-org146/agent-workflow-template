@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.28.47 - 2026-11-14
+
+- fast-merge-queue: affected-only rerun, parallel pr turns, batch merge; toys and rows
+- fast-merge-queue: seen red, tables
+- fast-merge-queue: DEL-15 text and the owner's sentences drafted in DECISIONS
+- fast-merge-queue: mergebatch in the release command map and reference
+- Home: the Delivery row names the file-based pr queue
+- fast-merge-queue: the file-based pr turn lives in pool.py (one new script only)
+- fast-merge-queue: DEL-15, MON-15 and REG-7 sub-bullets (owner un-reviewed the pages)
+- Monitoring: MON-15 gets a short title and its sentence moves under it (DOC-7)
+- Delivery, Monitoring, Regression, DEL-15, MON-15 and REG-7 reviewed again by the owner
+- fast-merge-queue: the batch merge lives in wiki.py (no new script; the package stays at 98 files)
+- fast-merge-queue: the batch row names wiki.py batch run
+- fast-merge-queue: one pr queue order (first-join ticket written once, heartbeat apart), pr_turn --list (#3922)
+- Lane: re-render the Tests tables
+- fast-merge-queue: pr_turn --list in the monitoring reference
+- Merge origin/main into fast-merge-queue
+- fast-merge-queue: take main's Monitoring and Regression pages; rows tied to MON-15 and REG-7
+- Home: the Monitoring row names the one pr queue order
+- Merge origin/main into fast-merge-queue
+- Merge origin/main into fast-merge-queue
+- Merge origin/main into fast-merge-queue
+- pr-queue toy: age the heartbeat, which now drives expiry (#3922)
+- pr: record issue states and the lane's results
+- Merge origin/main into fast-merge-queue (Delivery review lock pending owner words)
+- Delivery and DEL-15 reviewed again (owner record o6)
+- Merge origin/main into fast-merge-queue
+- Home: Delivery row names batch merging
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.46 - 2026-11-14
 
 - The lane's file walk skips node_modules and __pycache__ (#3939, #3943)
