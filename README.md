@@ -469,7 +469,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
-| `feature_labels` | true makes health file and the regression workflow tag each issue feature:<Page> for its feature, and create that label; off by default, so issues carry their group or regression label only. | set "feature_labels" in .loop/config.json | `false` | default |
+| `feature_labels` | true tags each health and regression issue feature:<Page> and creates the label. | set "feature_labels" in .loop/config.json | `false` | default |
+| `workers` | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->

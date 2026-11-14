@@ -325,6 +325,7 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
+package-gate-head	PASS	2026-11-14		da552878ace3
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
