@@ -14,3 +14,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Add `os.getuid()` with no guard to any script under `skills/*/scripts`, then run `python3 dev/toy/test-windows-safe.py`.
+   Expect: `FAIL` naming that file, its line and `os.getuid`; remove the line and the run ends `ALL PASS`.
+2. Run `python3 dev/package.py --out dist/check.zip`.
+   Expect: `PASS: 98 files` and no `FAIL` line.
+3. Run `bash dev/toy/test-pods.sh size` on a Linux or Mac machine.
+   Expect: `PASS: the touched scripts stay within their budgets`.
+
