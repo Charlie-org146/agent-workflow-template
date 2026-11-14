@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/deployments.py
+# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/prd.py
 """external-sync (DOC-17): docs.py sync reads each feature's external PRD (a url or an MCP connector) and reports DRIFT when
 the repo's copy, .loop/prd/<Page>.md, differs; it rewrites only that file, only when sync owns it, never writes to the
 source, and prints 'not connected' with no connector."""

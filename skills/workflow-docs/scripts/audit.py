@@ -279,7 +279,6 @@ def sync(root, dry=False, texts=None):
     (unless dry). It reads the source and never writes to it: nothing here can. Exit 1 only for drift under --dry-run; a
     source that can't be read is `not connected` and changes nothing."""
     import counting
-    import deployments
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:
         print("NO EXTERNAL PRDS: no feature's PRD source in .loop/docs.tsv is a url or an mcp source")
@@ -292,7 +291,7 @@ def sync(root, dry=False, texts=None):
             except OSError as error:
                 body, why = None, str(error)
         else:
-            body, why = deployments.read_link(source)
+            body, why = prd.read_link(source)
         if body is None:
             print("not connected: %s (%s): %s" % (page, source, why))
             away += 1
