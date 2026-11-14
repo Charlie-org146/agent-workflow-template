@@ -114,7 +114,7 @@ two files and reports the error. Report it too. Don't retry with other flags.
 - Never edit `VERSION` or `CHANGELOG.md` by hand to get around a refusal.
 
 ## Refusals
-Every refusal and its fix is in [references/refusals.md](references/refusals.md).
+Every refusal and its fix is in [references/commands.md](references/commands.md).
 
 ## Rules
 

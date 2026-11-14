@@ -108,7 +108,7 @@ Actions, keeps the issues. `bash dev/toy/test-lanes.sh "" regression` walks ever
 check <script>` and `affected <file>`; `LANES_WIDE=1` forces the wide mapping. Rules: `references/commands.md`, "Narrow rows".
 
 ## `workflow`
-The `workflow` command and the job it writes are in [references/workflow.md](references/workflow.md).
+The `workflow` command and the job it writes are in [references/commands.md](references/commands.md).
 
 ## Test listing
 

@@ -64,7 +64,7 @@ python3 scripts/docs.py audit [--base <ref>] [--dry-run]
 The one command: it checks every page against `references/template.md`, the code, the tests and the required docs, fixes the mechanical (`FIXED`: Tests tables), and lists wording for a person as `REWRITE` and Reviewed criteria with no test as `UNTESTED`. Exit 0 only when nothing is left. It never deletes a page or edits a criterion. Details: `references/commands.md` (audit).
 
 ## `criteria`: the PRD page
-The full rules for `criteria` are in [references/criteria.md](references/criteria.md).
+The full rules for `criteria` are in [references/commands.md](references/commands.md).
 
 ## `publish`
 
