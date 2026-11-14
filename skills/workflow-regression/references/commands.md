@@ -250,7 +250,7 @@ only; bash reads are covered by the static rules above.
 
 ## Goal tier
 
-A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when
+A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 4 after four times the lane's time limit.
 the record's merge-base with the base branch is the current one (else from the merge-base, plus what a base merge
 brought in) and runs the rows a change reaches, new or edited rows, root runners and the record's failures; it takes a
 lane slot only when it has no plan to follow (FULL, no merge-base). It stays within `test_budget_minutes`: rows run in tier
@@ -418,3 +418,18 @@ was left out: CI runs the full suite only (REG-4).
 ## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
 
 - `/workflow-regression add ID --level land --command "cmd" --goal DEL-1` — Adds or replaces a regression row. Prints `ROW <id> <level>: <command>`. Refuses (exit 1) `REFUSED: bad id. Fix: letters, digits, dots, dashes.`, `REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.` and `REFUSED: a row can't hold a tab or new line. Fix: use a script.` The workflow's summary job text lives in `slots.py`. A failing row's issue body carries its last 40 output lines, in the workflow as on a Mac. Every skill holds the same `proctree.py` copy.
+
+## workflow
+
+```bash
+python3 scripts/regression.py workflow
+```
+
+Writes `.github/workflows/regression.yml`: rows run on `regression_cron` (4-hourly by default; `off` drops the schedule), on
+`v*` tags and by hand; each failing row's issue is labeled `regression` and `defect`, names what it guards and, with `feature_labels` on, carries its `feature:<Page>` label (no milestone is read, made or set); a failed write fails the step (`FILE_FAILED`). It refuses to replace a workflow it didn't write. The job has 90 minutes. Each row runs in its own process group
+with a 15-minute limit, and starts only if that full limit still fits the job's time; a row that doesn't fit is
+skipped, reported `SKIPPED`, and fails with an issue. Each row's result is saved as it ends, and a last step that
+always runs writes the run summary: one header with totals and the run time, then one table per feature (`tests.py
+summary`); if that fails, the plain results still reach the summary. Rows (here too, under `regression.py run`) run with no GitHub token and none of the
+runner's own files (`GITHUB_STEP_SUMMARY`, `GITHUB_ENV`, `GITHUB_OUTPUT`, `GITHUB_PATH`, `GITHUB_STATE`) in their
+environment, so no row inherits the real summary (this stops accidents, not a hostile row), and the checkout keeps no token in its git config.

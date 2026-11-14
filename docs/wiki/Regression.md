@@ -46,11 +46,12 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
   - A reopened issue's test is marked failing until it passes again.
 
 ### Non-functional
-- REG-7: **Reviewed 2026-11-13** Fast in the loop <!-- reviewed 4841a292 -->
+- REG-7: **Reviewed 2026-11-14** Fast in the loop <!-- reviewed 80d60ba6 -->
   - Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't.
   - The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over.
   - Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off.
   - Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit.
+  - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped.
 - REG-8: **Reviewed 2026-11-10** Controllable <!-- reviewed e39ec809 -->
   - Which levels run where, the GitHub schedule, the time limits and how many test lanes run at once are settings.
   - Lanes running side by side never share files or ports or time each other out, and a lane over its limit says so.
@@ -162,6 +163,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 | [lanes-abs-not-walked](Tests#t-lanes-abs-not-walked) | requirement | REG-4 | Given a script that quotes an absolute folder outside the repo, when its reach is analysed, then that folder is not walked. | PASS 2026-11-14 |
 | [lanes-abs-same-reach](Tests#t-lanes-abs-same-reach) | requirement | REG-4 | Given a script that quotes an outside folder, when its reach is analysed, then the rows it picks are the same as without it. | not run |
 | [lanes-dotdot-not-walked](Tests#t-lanes-dotdot-not-walked) | requirement | REG-4 | Given a script whose path climbs out of the repo with .., when its reach is analysed, then that folder is not walked, also where the path separators are Windows backslashes. | not run |
+| [skill-workflow-in-references](Tests#t-skill-workflow-in-references) | requirement | REG-4 | Given the regression skill's workflow command, when SKILL.md and its references folder are read, then the nightly job's text sits in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-12 |
 | [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
 | [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-12 |
