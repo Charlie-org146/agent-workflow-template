@@ -67,16 +67,16 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `criteria_max` | 17 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty means the repo owner (an organisation notifies no one). |
-| `feature_labels` | false | true makes health file and the regression workflow tag each issue feature:<Page> for its feature, and create that label. |
+| `feature_labels` | false | true tags each health and regression issue feature:<Page> and creates the label. |
 | `full_auto` | true | true lets the operation session answer a worker's routine decision with its recommended option, logged; risky ones wait. |
 | `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `govern_hook` | true | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
-| `health_cron` | 47 */4 * * * | Five cron fields: when health with the judge and its digest run on the Mac; off turns it off. |
+| `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; off is off. |
 | `health_script_bytes` | 20480 | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_command` | ["claude", "-p", "--tools", ""] |  |
-| `judge_env` | ANTHROPIC_API_KEY | No longer read; kept so old configs stay valid. |
+| `judge_env` | ANTHROPIC_API_KEY | No longer read. |
 | `judge_setup` | none | No longer read: kept so old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
@@ -84,14 +84,14 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
-| `min_free_memory_gb` | 3.5 | Free GB below which no lane or goal starts; 0 is off. |
+| `min_free_memory_gb` | 3.5 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `plan_pause_percent` | 80 | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |
 | `pr_bumps_version` | false | true moves the last number of the version file once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. |
-| `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs: GitHub Actions for a public repo, each Mac tick for a private one; off turns it off. |
-| `regression_runs` | none | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac; unset means not known. |
+| `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs (Actions for a public repo, each Mac tick for a private one); off is off. |
+| `regression_runs` | none | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `resume_on_limit` | false | true lets watch resume a goal that hit a usage limit. |
 | `review_depth` | full | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
@@ -106,9 +106,10 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
 | `template_version` | 0.27.29 |  |
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. |
-| `time_budget_minutes` | 120 | Active minutes (held time not counted) before no new step starts; 0 is none. |
+| `time_budget_minutes` | 120 | Active minutes before no new step starts; 0 is none. |
 | `token_budget` | 3000000 | Tokens a goal may spend before no new step starts; 0 means none. |
 | `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |
+| `workers` | app | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. |
