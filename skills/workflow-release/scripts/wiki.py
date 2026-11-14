@@ -32,6 +32,7 @@ import tempfile
 
 import autorelease
 import release
+import where
 from release import base_of, git, load, read_config, run, save
 
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # release.py sets the rest on import
@@ -328,6 +329,7 @@ def main():
     item.set_defaults(func=cmd_batch, slug="")
     args = parser.parse_args()
     args.slug and release.state_path(args.slug)
+    args.command == "publish" and where.where(__file__)
     return args.func(args)
 
 
