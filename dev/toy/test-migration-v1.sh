@@ -1,6 +1,6 @@
 #!/bin/bash
 # windows: ok
-# reads: skills/workflow-health/scripts/enforce.py skills/workflow-health/scripts/defects.py skills/workflow-setup/scripts/setup.py
+# reads: skills/workflow-health/scripts/lean.py skills/workflow-health/scripts/issues.py skills/workflow-health/scripts/defects.py skills/workflow-setup/scripts/setup.py
 # reads: skills/workflow-setup/scripts/agents.py skills/workflow-setup/scripts/settings.py skills/workflow-docs/scripts/entry.py
 # reads: dev/toy/test-migration.sh docs/wiki/Setup.md
 # The v1 part of test-migration.sh (format gaps, hooks once, owner steps, toolchains) as its own row, so it runs on native Windows:
