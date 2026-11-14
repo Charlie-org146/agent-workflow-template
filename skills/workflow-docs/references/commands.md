@@ -365,3 +365,49 @@ The wiki Home page also carries a Settings section (each setting's meaning, how 
 - `/workflow-docs milestone new TITLE | move ISSUE TITLE` — Optional, for planning by version: `new` makes a free-form milestone such as v1.0 and `move` puts an issue on an existing one (or `none` clears it; a title that doesn't exist is refused). Prints `CREATED <title>`, `EXISTS <title>` or `WOULD create milestone <title> (dry run; add --live)`; running it again creates nothing. Refuses (exit 1) `REFUSED: no milestone <title> (issue <n> unchanged). Fix: milestone.py new <title> --live` and `REFUSED: no GitHub token, nothing created. ...`. `milestone backlog` makes every missing `Backlog: <Feature>` milestone (one per feature page) and `Backlog: Other`, renaming an old `Backlog` milestone to `Backlog: Other` first. Setup runs it on adoption, and `milestone leftovers FILE` files the `FILE` lines of a ship reply. No check ever runs `new` or `move`.
 
 - `/workflow-docs sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]` — For each feature whose PRD source in `.loop/docs.tsv` is `url:<link>` or `mcp:<server>:<resource>`, reads the PRD (`LOOP_PRD_READER` or the fetched link) and compares it with the repo's copy, `.loop/prd/PAGE.md`, against what both last agreed on (`.loop/prd/PAGE.base`: `ID<TAB>sha8`). The first sync adopts the source (`SYNCED`). After that each difference is `DELTA PAGE: ID the repo|the source|both sides changed (repo: ... | source: ...)` and neither side is overwritten; the loop ends with `SYNC: N in step, N with a delta, N not connected` and exits 0 (`--dry-run` posts and writes nothing and exits 1 with a delta). Each new delta is posted once as a GitHub issue on the page's milestone and once as a comment on the external page: `gh` is `LOOP_GH` (default `gh`) and the comment goes through `LOOP_PRD_WRITER`, a command run as `WRITER SOURCE comment|replace ID|remove ID` with the text on stdin, which an agent's Notion connector sets; the posted deltas are kept in `<git common dir>/loop/deltas.tsv`. `--accept PAGE:ID=source` writes the source's text into the repo copy, `=repo` writes the repo's text into the document through the writer, for that id only, and closes the issue (`ACCEPTED`). `--open` lists the open deltas from the ledger with no network call; health reports each as a FAIL docs row and the check-in's board as waiting on the owner. A source, gh or writer that can't be reached prints `not connected` and changes nothing; a source with no ids prints `EMPTY` and keeps the copy; a file at the copy's path that sync did not write (it opens with `<!-- prd-sync: owned -->`) prints `SKIPPED`. Pages whose source is `page` are not visited.
+
+## criteria: the PRD page
+
+With `"criteria": true` in `.loop/config.json`, every feature page (each page in `.loop/docs.tsv` but Home, which is
+free-form, and a guide: a how-to page with the line `<!-- workflow-docs guide -->` under the marker, kept fresh but
+with no PRD, Home row or README section, and not stale on a `.loop/config.json` change) is a short PRD and `check` enforces it, from the rules block of `references/template.md`:
+
+the title, `Milestone:` and `Review:` lines, then `## Problem`, `## Requirements` (up to
+`criteria_max` lines like `- DEL-3: **Unreviewed** what must hold`; take the next free id from `criteria PAGE`, never
+reuse or renumber one), `## Non-goals`, `## Success metrics` and `## Tests`, which only `criteria.py render` writes.
+The full list, and the lines `check` prints: `references/commands.md` (The PRD page).
+
+**The PRD is the owner's.** Only the owner reviews it, and only when their own words say so (`--user`):
+
+```bash
+python3 scripts/criteria.py review <PAGE|ID> [...] --user [--date YYYY-MM-DD]
+python3 scripts/criteria.py unreview <PAGE|ID> [...] --user
+python3 scripts/criteria.py render [--check] [--tables]
+```
+
+Run from a session with no terminal, `review` and `unreview` refuse `--user` unless `LOOP_OWNER_WORDS` holds the
+owner's own message that said to, quoted exactly; each change is logged with those words in `.git/loop/reviews.tsv`.
+
+A record in `.git/loop/owner-words.tsv` is the owner's own words too: only the operation session writes it
+(`sessions.py owner-words "TEXT" --ids A,B`), and a worker never does. Pass `--owner-record ID` with `--user` and the
+record's words are used, so don't ask the owner for them again. A record covers only the IDs and pages it lists, once for
+`review` and once for `unreview`; any other ID, or a second use, is refused with nothing changed.
+
+An argument like `DEL-3` is a requirement; any other is a page. Every argument is checked before anything is written.
+`review PAGE` locks the PRD: after it, an edit shows as `LOCKED` or `CHANGED`; `references/commands.md` (Review
+locks) has the rules and how the owner edits a reviewed requirement. Never review or unreview on a goal's own initiative.
+
+**Tests follow on their own.** Write each new regression row's description as one scenario,
+`Given <context>, when <action>, then <outcome>.`; what `audit`, `sync` and `cut` do with them: `references/commands.md`.
+
+**New and old pages.** `python3 scripts/prd.py new NAME "<idea>" --paths A,B` drafts a new feature's PRD and
+`prd.py convert --write` turns old Summary/Criteria pages into PRD pages; what each leaves to do: `references/commands.md`.
+
+**Where a PRD lives, and topics.** A feature's PRD source is `page` (the default), `url:<link>` or `mcp:<server>:<resource>`,
+set in the optional third column of `.loop/docs.tsv`; that page holds `PRD: <source>` and its generated sections only. Agents
+read the PRD from the source and never copy it into the repo; its ids drive the Tests tables and health. The check reads it
+fresh (`LOOP_PRD_READER`, given the source, reaches an MCP connector such as Notion's) and reports `UNREAD`, never a pass,
+when it cannot. The `topics` setting adds a Topic column to Home and `render` groups the rows by it. `sync` (DOC-17) keeps
+the repo's copy of an external PRD, `.loop/prd/PAGE.md`, and the document the same: either side may change a requirement, each
+difference is a `DELTA` (never a silent overwrite) posted as an issue and a comment, and `--accept` writes the accepted side to the other.
+It is opt-in per PRD: a page takes part only once its `.loop/docs.tsv` row has a `url:` or `mcp:` source in the third column, and every other page is never visited.

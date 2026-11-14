@@ -20,9 +20,12 @@ import math
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
+
+from defects import SKILLS, clean, mod, read, table, tool
 
 # No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -342,3 +345,48 @@ def facts(root):
     return ["land lane: %d rows, %d s (budget %d s); slowest: %s" % (
         len(seconds), sum(seconds.values()), (budget_minutes(root) or TEST_BUDGET) * 60,
         ", ".join("%s %ds" % pair for pair in slow))]
+
+
+def carries(name, skill, text, *places):
+    """True when the installed template names the feature (test-only: LOOP_TEST=1 with LOOP_TEMPLATE_HAS decides)."""
+    if os.environ.get("LOOP_TEST") == "1" and "LOOP_TEMPLATE_HAS" in os.environ:
+        return name in os.environ["LOOP_TEMPLATE_HAS"].split(",")
+    for place in places or ("scripts/*.py", "references/*.md"):
+        for path in glob.glob(os.path.join(SKILLS, skill, place)):
+            if os.path.basename(path) not in ("enforce.py", "lean.py", "issues.py") and text in read(path):  # these name them themselves
+                return True
+    return False
+
+
+def format_gaps(root, cfg, g, steps):
+    """Format changes, judged only when the template carries them."""
+    if not carries("usage-kept", "workflow-docs", "usage_section", "references/template.md"):
+        for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
+            if re.search(r"^## Usage\s*$", read(page), re.M):
+                g("MIG_USAGE", os.path.basename(page), "still has a Usage section", "delete the section, then " + tool("workflow-docs", "docs.py", "audit"))
+    if carries("health-rules", "workflow-health", "health-rules.json") and not os.path.exists(os.path.join(root, ".loop", "health-rules.json")):
+        g("MIG_RULES", ".loop/health-rules.json", "missing", "run workflow-setup (setup.py), which writes it")
+    if carries("backlog", "workflow-health", "Backlog", "scripts/milestone.py"):
+        steps.append(("milestones", "Backlog", "approve the Backlog milestones, then run " + tool("workflow-health", "milestone.py", "backlog --live")))
+
+
+def hook_gaps(root, g, steps):
+    """Each hook once in .claude/settings.local.json (twice: a gap; none: an owner step)."""
+    if carries("prompt-pointer", "workflow-health", "def prompt_pointer", "scripts/rules.py", "scripts/report.py"):  # a scheduled prompt beyond the Runbook pointer
+        for r in mod("workflow-health", "rules").prompt_pointer(root):
+            g("MIG_ROUTINES", clean(r["subject"]), clean(r["detail"]), clean(r["fix"]))
+    text = read(os.path.join(root, ".claude", "settings.local.json"))
+    for name in ("reply_hook.py", "govern_hook.py"):
+        count = text.count(name)
+        if count > 1:
+            g("MIG_HOOKS", name, "is installed %d times" % count, "remove the duplicate entry")
+        elif not count:
+            steps.append(("hook", name, "in the operation repo run " + tool("workflow-setup", "setup.py", "--reply-hook") + " (both hooks)"))
+
+
+def v1(root, cfg, g, info, pr):
+    """The format gaps, then (not for a pull request) the hook gaps and owner steps."""
+    format_gaps(root, cfg, g, info["steps"])
+    if not pr:
+        hook_gaps(root, g, info["steps"])
+        mod("workflow-health", "issues").owner_steps(root, info["steps"])
