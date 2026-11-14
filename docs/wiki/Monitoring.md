@@ -49,10 +49,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
   - When a decision needs my words, I answer in the operation session, which records my message verbatim with the IDs it covers (sessions.py owner-words) for the workers to use.
   - Turning it off takes effect at the next decision.
 
-- MON-12: **Reviewed 2026-11-10** Session pool <!-- reviewed 7a470c28 -->
+- MON-12: **Reviewed 2026-11-14** Session pool <!-- reviewed 804e0364 -->
   - The operation session keeps a pool of idle worker sessions, sized by a setting (default 20), and hands each ready goal one from the pool instead of starting a new session.
   - Because sessions can only be created from the desktop app, whenever the pool runs low the operation session asks me, at the desktop, to fill it, and it creates every missing session in one step on my word.
   - A finished goal's session goes back to the pool (MON-6), the board shows the pool as free, busy and total, and a goal that finds the pool empty waits under Needs you with the one action that fixes it.
+  - A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds.
 
 - MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
@@ -129,7 +130,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 | [guards-null-report-bind-mend](Tests#t-guards-null-report-bind-mend) | requirement | MON-2 | Given a failed or stopped goal restarted by a worker bind or by mend, when its record is written, then report is an empty record, never null. | not run |
 | [waits-first](Tests#t-waits-first) | requirement | MON-3 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | MON-3 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
-| [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | not run |
+| [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | PASS 2026-11-14 |
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | MON-4 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-12 |
 | [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-12 |

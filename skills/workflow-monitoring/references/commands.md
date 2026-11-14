@@ -22,7 +22,7 @@ resume SLUG
   the cadence is off. `operate send SLUG TEXT` leaves a worker an answer or follow-up, which `goal.py` and `flow.py`
   print to its agent the next time they run. An LLM asked to run the operation session runs this command and nothing else.
 - `go` adds the goal to `.loop/queue.md` and starts a worker for it if a slot is free, or prints `QUEUED`.
-- `watch` starts every queued goal whose `depends-on` goals are merged (all at once by default; set `parallel` to a number to cap them, 0 is unlimited), each on branch `loop/<slug>` in its own worktree, and ends when
+- `watch` starts every queued goal whose `depends-on` goals are merged (all at once by default; set `parallel` to a number to cap them, 0 is unlimited), each on branch `loop/<slug>` in its own worktree, and ends when It starts no goal while `max_active_goals` (default 20) goals are live or while weekly plan usage is above `plan_pause_percent` (default 80, recorded with `pool.py usage PERCENT`; unread usage pauses nothing), and the check-in says which limit holds. It also starts no goal while free memory is below `min_free_memory_gb` (default 4; Windows: free virtual memory), and the check-in names the hold and any lane that waited for memory in the last hour.
   nothing is left. `--once` makes one pass, for a check-in.
 - `report` lists each run, what waits on you with the exact words to type, findings, criteria changed after review, and
   queued goals.

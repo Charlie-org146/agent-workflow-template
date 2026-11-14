@@ -237,6 +237,7 @@ lane-pass-reused	PASS	2026-11-11
 lane-ports-tmpdir	PASS	2026-11-11	
 lane-start-mark-once	PASS	2026-11-11	
 lane-walk-skips-node-modules	PASS	2026-11-14	
+lanes-abs-not-walked	PASS	2026-11-14	
 lanes-affected	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-always	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-check	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -290,6 +291,7 @@ milestone-links	PASS	2026-11-12
 milestone-rows-seen-red	PASS	2026-11-12	
 milestone-wording-unreviewed	PASS	2026-11-12	
 milestones-once	PASS	2026-11-12	
+mon-stray-runs	PASS	2026-11-14	
 mon10-replan	PASS	2026-11-10	
 mon11-full-auto	PASS	2026-11-10	
 mon12-pool	PASS	2026-11-10	
@@ -325,7 +327,7 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
-package-gate-head	PASS	2026-11-14		da552878ace3
+package-gate-head	FAIL	2026-11-14	
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
@@ -456,9 +458,12 @@ size-140	PASS	2026-11-12
 size-141	PASS	2026-11-12	
 size-budget	PASS	2026-11-11	
 size-fail	PASS	2026-11-12	
+skill-criteria-in-references	PASS	2026-11-14	
 skill-kept	PASS	2026-11-12	
+skill-refusals-in-references	PASS	2026-11-14	
 skill-says-governs	PASS	2026-11-12	
 skill-size-116	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+skill-workflow-in-references	PASS	2026-11-14	
 slot-pool-112	PASS	2026-11-10	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-12	

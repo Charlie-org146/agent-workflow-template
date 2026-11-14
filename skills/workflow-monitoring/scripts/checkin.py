@@ -192,6 +192,15 @@ def render(root=None, at=None, stamp=None):
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
+    if ready and replan.plan_pause(cfg):  # MON-12: the weekly plan is nearly used
+        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.plan_pause(cfg)))
+    if ready and replan.memory_hold(cfg):
+        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.memory_hold(cfg)))
+    waited = replan.memory_waits(folder)
+    if waited:
+        needs.append("%d lane wait(s) for memory in the last hour; the last: %s" % (len(waited), waited[-1][21:140]))
+    if ready and replan.active_limit(cfg) and len(live) >= replan.active_limit(cfg):
+        needs.append("%d ready goal(s) wait: %d goals are live, at max_active_goals/parallel %d (ACTIVE_GOALS)" % (len(ready), len(live), replan.active_limit(cfg)))
     if found is not None:
         needs += [line[2:] for line in pl.ask_lines(found, cfg, len(ready)) if line.startswith("- ")]
         needs += ["archive session %s with the app (pool above pool_size)" % (item.get("name") or sid)

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d0857c8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=21bfadde N=9f4c33da M=3d0857c8 U=03828777 -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -39,10 +39,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d08
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-10** Resumable <!-- reviewed 0f9f447b -->
   - A stopped or crashed goal resumes from its last recorded step, never from the start.
-- DEL-8: **Reviewed 2026-11-13** Budgeted <!-- reviewed 16c92402 -->
+- DEL-8: **Reviewed 2026-11-14** Budgeted <!-- reviewed c6fabe37 -->
   - Each goal has a time and token budget, and going over shows on the board.
   - Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting.
   - A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits.
+  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit.
 - DEL-9: **Reviewed 2026-11-10** Nothing private ships <!-- reviewed ad7ed0f0 -->
   - Every commit and pull request passes the private-name scan before it is pushed.
 - DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
@@ -104,6 +105,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d08
 | [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | DEL-5 | Given a goal set to ask and auto_merge on, when its worker ends with the pull request open, then the release step does not merge it. | not run |
 | [resume-unasked-merges](Tests#t-resume-unasked-merges) | requirement | DEL-5 | Given a goal with no ask and auto_merge on, when its worker ends with the pull request open, then the release step still merges it. | not run |
 | [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-5 | Given a package with a script over 20,480 bytes, more than 99 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
+| [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-6 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-10 |
 | [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-6 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-10 |
 | [depth-markers](Tests#t-depth-markers) | requirement | DEL-6 | Given private evidence markers, when a full review reply lacks one, then it is refused with no try used, without showing the marker. | PASS 2026-11-10 |
