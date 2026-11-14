@@ -270,7 +270,7 @@ def main():
             state = json.load(handle)
     except (OSError, ValueError):
         sys.exit("REFUSED: no goal named %s." % args.slug)
-    if state.get("status") != "done" or not state.get("pr"):
+    if not autorelease.mergeable(state):
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % args.slug)
     if pods:
         pods.refuse(state)
@@ -320,7 +320,7 @@ def main():
         if done.returncode:
             autorelease.fail(state, "gh could not merge %s: %s" % (state["pr"], done.stderr.strip()[-300:]))
     at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    state["release"] = state["release"] if state.get("release") == "cut" else "merged"
+    autorelease.mark_merged(state)
     state["updated"] = at
     state.setdefault("log", []).append("%s merged %s (auto_merge)" % (at, state["pr"]))
     with open(path + ".tmp", "w") as handle:
