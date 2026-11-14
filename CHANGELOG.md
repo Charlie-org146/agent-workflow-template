@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.28.52 - 2026-11-14
+
+- Backlog triage report 2026-11-14
+- Merge remote-tracking branch 'origin/main' into loop/backlog-triage
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.51 - 2026-11-14
 
 - No code changes
