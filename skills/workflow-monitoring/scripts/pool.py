@@ -9,6 +9,7 @@ usage: pool.py <command> [options]
                       low (fewer free sessions than ready goals), then K = pool_size - total (every missing session)
   add ID [ID ...]     register sessions the operation session just created with the app, as free (POOLED)
   decline             the owner said "no pool": hide the ask until K grows past today's K (cleared once K is 0)
+  usage PERCENT       record the account's weekly plan usage (the operation session reads it from the app); above plan_pause_percent no goal starts
   return SLUG         a goal ended: its sessions go back to the pool, or are marked archive when the total is above
                       pool_size (the check-in tells the operation session to archive them with the app); a merged
                       goal's worktree and loop/SLUG branch are removed (a dirty worktree is kept and named)
@@ -20,6 +21,7 @@ Attempt identity (issue 114): each bind raises the run's `attempt`; a report tha
 not applied (attempt_ok). A freed session keeps who it was freed from in `history`, so a reuse never loses it.
 """
 import argparse
+import datetime
 import json
 import os
 import re
@@ -31,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import board_lines as prs  # noqa: E402  (its pull request lookups)
 import sessions as se  # noqa: E402
+import replan as lim  # noqa: E402  (the goal limits, GRD-2)
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 DEFAULT_SIZE = 20
@@ -372,9 +375,11 @@ def main():
     item = sub.add_parser("return")
     item.add_argument("slug")
     sub.add_parser("pr_turn").add_argument("--list", action="store_true", required=True, help="print the pr queue in its one order")
+    item = sub.add_parser("usage")
+    item.add_argument("percent", type=float)
     args = parser.parse_args()
     try:
-        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "pr_turn": cmd_pr_list}[args.cmd](args)
+        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
     except se.PoolUnreadable as error:
         sys.exit("REFUSED: " + graph.pool_fix(error))
 
