@@ -197,3 +197,19 @@ Proof: toy tests.
 - `merge.py SLUG` — The release step: docs check, merge (where auto_merge is on), version bump, changelog, GitHub release, wiki publish. Prints `MERGED <pr> into main`, `RELEASED vX.Y.Z <release link> (<bump> bump)` and `PUBLISHED <wiki link>`. Refuses while a page is stale. Before the wiki publish it re-renders the generated Tests tables on the merged head (`RERENDERED Tests`), so staleness in only those tables never blocks the wiki; a stale hand-written page still refuses. Takes a per-repo merge lock so two pods never merge into one main at once, and refuses another pod's goal with one line naming the owner. The pod is `LOOP_POD_ID`, else the operation session's own id: a restarted operation session keeps its goals by setting `LOOP_POD_ID` to its old pod id.
 
 - `wiki.py batch plan|run [--size N] [--merge]` — The batch merge (DEL-15). `plan` prints `BATCH n: a, b, c` for the ready goals (done, with a pull request, not held, no release ask), grouped so no two goals in a batch have overlapping touches (3 by default, at most 4). `run` merges each batch's branches into one temporary tree from origin/<base> and runs the check there (`batch_check` in the config, default `regression.py run`); a failing batch splits, each half is checked alone, and `CULPRIT slug` names the goal that fails (`a+b+c` when the halves pass alone but fail together). Prints `BATCH n PASSES: ...` or `BATCH n SPLIT: ...`, the goals that pass. Only with `--merge` does it run merge.py for the goals that pass; merge.py still refuses a goal whose base moved in paths its rows reach. Proof: dev/toy/test-merge-batch.py.
+
+## Refusals
+
+Each refusal says `REFUSED:` and a fix. Common ones:
+
+| Refusal | Fix |
+|---|---|
+| Checks have not passed | Finish the goal with `workflow-delivery` |
+| No complete steps under `## Verify by hand` | Give every numbered step an `Expect:` line, and commit it |
+| Pages are stale | Update them with `workflow-docs`, commit, and run the release again |
+| A batch goal, no `--user` | Wait for the human's own `cut <slug>` |
+| On the wrong branch | Switch to `loop/<slug>` in the goal's worktree |
+| Uncommitted changes | Commit or set them aside |
+| Tag already exists | Ask the user which version to use |
+
+`release.py show <slug>` prints the `release` field, and the version and draft URL after a cut.
