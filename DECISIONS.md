@@ -264,3 +264,5 @@ The owner types one sentence in the operation session:
 "Un-review the Documentation page and DOC-1, the Health page and HLT-2, and the Monitoring page and MON-3, so the opt-in sync sub-bullets in DECISIONS.md can be added; then review those three pages and requirements again."
 
 After it, the goal edits the three lines as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge.
+
+Applied 2026-11-14 on owner-words record o15 (the sentence above, recorded by the operation session after the owner's "Yes, I want to do both."): the Documentation, Health and Monitoring pages and DOC-1, HLT-2 and MON-3 were un-reviewed, the three sub-bullets were added exactly as drafted, and the three pages and requirements were reviewed again, all with `--owner-record o15` (record o16 was not needed).

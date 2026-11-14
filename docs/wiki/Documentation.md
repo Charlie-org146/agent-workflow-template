@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599a537 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=5c393490 N=81dd3484 M=4599a537 U=03828777 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -13,10 +13,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 ## Requirements
 
 ### Functional
-- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed 736fc4a2 -->
+- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed 7df55deb -->
   - One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section.
   - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
   - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+  - A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works.
 - DOC-2: **Reviewed 2026-11-13** The PRD is mine <!-- reviewed 2e17a232 -->
   - I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message.
   - A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words.
