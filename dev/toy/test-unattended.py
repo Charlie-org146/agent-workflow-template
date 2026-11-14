@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/unattended.py skills/workflow-docs/scripts/permissions.py
+# reads: skills/workflow-monitoring/scripts/unattended.py skills/workflow-docs/scripts/audit.py
 """MON-18: unattended.py in throwaway git repos: the send count and its warning, the check-in loop's expiry, a standing
 merge instruction (a worker cannot add one), and the start-up self-check's three MISSING lines."""
 import datetime

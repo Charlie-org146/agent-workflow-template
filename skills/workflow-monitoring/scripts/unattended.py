@@ -15,12 +15,11 @@ The records live in <git common dir>/loop/ (sends.json, checkin-loop.json, stand
   standing    one instruction replaces a go per merge; only the operation session adds one (a worker is refused), and a
               worker at pr runs `standing check SLUG`: STANDING <id> means go on without another go
   selfcheck   MISSING permission mode (defaultMode default or plan holds cross-session messages for approval), MISSING
-              routine rules (permissions.py check, workflow-docs), MISSING main checkout behind origin; CHECK lines are
+              routine rules (audit.py permissions check, workflow-docs), MISSING main checkout behind origin; CHECK lines are
               what could not be read; SELFCHECK OK or exit 1
 """
 import argparse
 import datetime
-import importlib.util
 import json
 import os
 import subprocess
@@ -169,14 +168,13 @@ def mode_line():
 
 
 def routine_lines():
-    path = os.path.join(os.path.dirname(HERE), "..", "workflow-docs", "scripts", "permissions.py")
+    path = os.path.join(os.path.dirname(HERE), "..", "workflow-docs", "scripts", "audit.py")
     if not os.path.exists(path):
         return ["CHECK routine rules: workflow-docs is not installed beside workflow-monitoring"]
-    spec = importlib.util.spec_from_file_location("permissions", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
     root = run("rev-parse", "--show-toplevel")[1] or "."
-    return [("CHECK " if line.startswith("NOTE") else "MISSING routine rules: ") + line.replace("NOTE ", "", 1) for line in module.check(root)]
+    done = subprocess.run([sys.executable, path, "permissions", "check", "--repo", root], capture_output=True, text=True, timeout=120)
+    return [("CHECK " if line.startswith("NOTE") else "MISSING routine rules: ") + line.replace("NOTE ", "", 1)
+            for line in done.stdout.splitlines() if line.strip() and line != "PERMISSIONS OK"]
 
 
 def main_line():

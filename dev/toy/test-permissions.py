@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-docs/scripts/permissions.py
-"""AUT-9: permissions.py write and check. Each case builds a throwaway repo with one routine (a Runbook on a page) and
+# reads: skills/workflow-docs/scripts/audit.py
+"""AUT-9: audit.py permissions write and check. Each case builds a throwaway repo with one routine (a Runbook on a page) and
 runs the script; the broken copies prove each finding can fire."""
 import json
 import os
@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-script = os.path.join(root, "skills", "workflow-docs", "scripts", "permissions.py")
+script = os.path.join(root, "skills", "workflow-docs", "scripts", "audit.py")
 fails = 0
 
 PAGE = """# Feature
@@ -56,7 +56,7 @@ def repo(rows=ROWS, settings=None, page=PAGE):
 
 
 def run(top, command):
-    done = subprocess.run([sys.executable, script, command, "--repo", top], capture_output=True, text=True)
+    done = subprocess.run([sys.executable, script, "permissions", command, "--repo", top], capture_output=True, text=True)
     return done.returncode, done.stdout + done.stderr
 
 
