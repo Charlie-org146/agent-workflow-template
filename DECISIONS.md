@@ -241,3 +241,17 @@ Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the
 
 ## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
 Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
+
+## Waiting on owner un-review (blockers-first)
+
+The owner asked 2026-11-14: "can you add a small requirement for the printout in the monitoring session? It's like right now you just tell me what do I need to do, but you should make it more clear like what is blocking the whole process so I can know the priorities." Built by the blockers-first goal (the check-in's Needs you ranking, and the Stop hook that enforces it). The Monitoring page is Reviewed, so the requirement below is not applied until the owner un-reviews the page and approves the wording. The goal's rows are tied to MON-5 until then.
+
+- Monitoring, new requirement after MON-18 (pool-12's, the next free ID is MON-19): **MON-19: Blockers first.** Each item under Needs you says what it holds up, so the owner sees the priorities.
+  - An item names the goals, merges or release it holds up, with the count of goals behind it, and says whether it is on the critical path to the next release; an item that holds nothing says "blocks nothing".
+  - Items are sorted with the one holding up the most goals first, and the Dependencies graph marks the owner item on each chain.
+  - The Stop hook refuses a check-in whose Needs you items do not say what they hold up.
+
+The owner types two sentences (the session that relays them runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Monitoring page so MON-19 can be added."
+2. Review, after the goal has added it: "Review the Monitoring page and MON-19 again."
