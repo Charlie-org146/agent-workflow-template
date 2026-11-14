@@ -13,3 +13,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. From the repo root run `python3 skills/workflow-docs/scripts/docs.py check` and `docs.py check --own`.
+   Expect: `DOCS OK: 10 pages` from both, with no `STALE Documentation` or `STALE Regression` line.
+2. Open `docs/wiki/Documentation.md` and read DOC-1.
+   Expect: its last sub-bullet says a PRD that lives outside the repo is kept in step through `docs.py sync`, and the Review lines of Documentation and Regression read `Reviewed 2026-11-14`.
