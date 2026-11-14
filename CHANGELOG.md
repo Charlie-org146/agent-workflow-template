@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.28.54 - 2026-11-14
+
+- DECISIONS: the DOC-1 sync pointer and the Regression re-stamp
+- build: DOC-1 sync pointer, Documentation and Regression reviewed again (owner records o13, o14); row doc1-sync-pointer
+- docs: Home's Documentation row names docs.py sync
+
+### How to verify
+
+1. From the repo root run `python3 skills/workflow-docs/scripts/docs.py check` and `docs.py check --own`.
+   Expect: `DOCS OK: 10 pages` from both, with no `STALE Documentation` or `STALE Regression` line.
+2. Open `docs/wiki/Documentation.md` and read DOC-1.
+   Expect: its last sub-bullet says a PRD that lives outside the repo is kept in step through `docs.py sync`, and the Review lines of Documentation and Regression read `Reviewed 2026-11-14`.
+
 ## v0.28.53 - 2026-11-14
 
 - No code changes

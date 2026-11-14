@@ -250,3 +250,12 @@ The owner approved both sentences ("Yes, for one, and then start two.", owner-wo
 - MON-18 (new, Monitoring page): "The operation session keeps running unattended." Bullets: "One standing instruction to merge, recorded once by the operation session for named goals or all, replaces a go per merge; a worker at pr reads it and does not wait for another."; "The check-in says how many cross-session sends are left before the app's cap of 20 without an owner message; from 16 sent it asks the owner for any message, which resets the count."; "The check-in loop is re-created before its 7 days run out; the check-in says when."; "Every worker accepts an owner-words record the operation session names, per the Delivery rule, and does not ask the owner again; a record covers only its listed ids."; "On start the operation session runs a self-check and lists what is missing, each with its fix: a permission mode that holds cross-session messages for approval, a routine whose rules are not written or do not cover its Runbook (AUT-9), and the main checkout behind origin/main (MON-16)."
 - Applied: `criteria_max` 17 to 18 in `.loop/config.json`, because Monitoring then holds 18 requirements (Setup stays at 17 and gets none; its part is the command in AUT-9).
 - Owner sentences, one per page: Automation: "Un-review the Automation page so AUT-9 can be added as drafted in DECISIONS.md, then review the Automation page and AUT-9 again." Monitoring: "Un-review the Monitoring page so MON-18 can be added as drafted in DECISIONS.md and criteria_max raised to 18, then review the Monitoring page and MON-18 again."
+
+## wiki-current: DOC-1 sync pointer and Regression re-stamp (2026-11-14)
+Owner words (records o13 and o14, recorded by the operation session): "Un-review the Documentation page and DOC-1 so the sync pointer in DECISIONS.md can be added, and un-review the Regression page; then review both again, Regression with REG-1 as it stands."
+
+The sync pointer, added as DOC-1's last sub-bullet:
+
+- A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+
+Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
