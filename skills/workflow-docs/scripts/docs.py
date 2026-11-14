@@ -13,12 +13,13 @@ usage: docs.py <command> [options]
   criteria PAGE                print the requirement format and the next free id for a page
   publish [--dry-run] [--adopt PAGE]
                                copy the pages to the wiki, commit and push
+  sync [--dry-run] [--text PAGE=FILE]
+                               compare each external PRD with .loop/prd/PAGE.md and rewrite that copy; never writes the source
   restore                      revert the last publish, if nothing came after it
   automation                   each routine's live state here: a workflow's newest run, a launch agent loaded or not
 
-With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/template.md).
-It also enforces the page format (pageformat.py, FORMAT lines) and that the generated Tests page matches a fresh render.
-criteria.py reviews requirements and PRDs and renders Tests; prd.py drafts and converts pages; counting.py reads counts.
+With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/template.md), the page
+format (FORMAT lines) and that the generated Tests page matches a fresh render.
 
 Publish never deletes a page, and refuses to replace a page without this tool's marker unless you name it with --adopt.
 It runs git and nothing else.
@@ -384,6 +385,11 @@ def cmd_prompts(_args):
     return 0
 
 
+def cmd_sync(args):
+    import audit
+    return audit.sync(top(), args.dry_run, dict(x.split("=", 1) for x in args.text if "=" in x))
+
+
 def cmd_restore(_args):
     try:
         with open(state_file()) as handle:
@@ -431,6 +437,10 @@ def main():
     item.add_argument("--dry-run", action="store_true")
     item.add_argument("--adopt", action="append", default=[])
     item.set_defaults(func=cmd_publish)
+    item = sub.add_parser("sync")
+    item.add_argument("--dry-run", action="store_true")
+    item.add_argument("--text", action="append", default=[], metavar="PAGE=FILE")
+    item.set_defaults(func=cmd_sync)
     sub.add_parser("restore").set_defaults(func=cmd_restore)
     sub.add_parser("automation").set_defaults(func=cmd_automation)
     sub.add_parser("prompts").set_defaults(func=cmd_prompts)
