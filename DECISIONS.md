@@ -259,3 +259,12 @@ The owner types two sentences (the session that relays them runs `criteria.py un
 Applied 2026-11-14 (blockers-first): the owner's words, recorded as o11 in owner-words.tsv, un-reviewed the Monitoring page; MON-19 was added exactly as drafted above, the goal's row moved from MON-5 to MON-19, and the page and MON-19 are reviewed again with the same words.
 
 The cap: MON-19 makes the Monitoring page 18 requirements, so `criteria_max` goes from 17 to 18 in this goal, as backlog-milestones did from 16 to 17.
+
+## wiki-current: DOC-1 sync pointer and Regression re-stamp (2026-11-14)
+Owner words (records o13 and o14, recorded by the operation session): "Un-review the Documentation page and DOC-1 so the sync pointer in DECISIONS.md can be added, and un-review the Regression page; then review both again, Regression with REG-1 as it stands."
+
+The sync pointer, added as DOC-1's last sub-bullet:
+
+- A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+
+Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
