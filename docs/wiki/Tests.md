@@ -147,8 +147,8 @@
 | <a id="t-held-time-3878"></a>held-time-3878 | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) open (2026-11-13) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-merge-stale-other-passes"></a>merge-stale-other-passes | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | not run | - | local | 2026-11-14 |
 | <a id="t-merge-stale-own-refuses"></a>merge-stale-own-refuses | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | not run | - | local | 2026-11-14 |
-| <a id="t-merge-refused-failed"></a>merge-refused-failed | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) state unknown | not run | - | local | 2026-11-14 |
-| <a id="t-merge-failed-retry"></a>merge-failed-retry | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) state unknown | not run | - | local | 2026-11-14 |
+| <a id="t-merge-refused-failed"></a>merge-refused-failed | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-merge-failed-retry"></a>merge-failed-retry | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | not run | - | local | 2026-11-14 |
 
 ## Documentation
 
@@ -510,7 +510,7 @@
 | <a id="t-who-merges-fallback"></a>who-merges-fallback | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-who-merges-hold-flag"></a>who-merges-hold-flag | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-pr-parallel-disjoint"></a>pr-parallel-disjoint | requirement | MON-15 | not run | - | local | 2026-11-13 |
-| <a id="t-pr-order-one-queue"></a>pr-order-one-queue | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) open (2026-11-13) | not run | - | local | 2026-11-14 |
+| <a id="t-pr-order-one-queue"></a>pr-order-one-queue | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-held-time-session-hold"></a>held-time-session-hold | requirement | MON-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-operate-toy-no-check"></a>operate-toy-no-check | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
 
