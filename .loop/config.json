@@ -24,6 +24,7 @@
   "pr_bumps_version": false,
   "mend": true,
   "resume_on_limit": false,
+  "workers": "app",
   "criteria": true,
   "criteria_max": 17,
   "auto_approve": true,

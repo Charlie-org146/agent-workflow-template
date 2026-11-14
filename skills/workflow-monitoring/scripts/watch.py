@@ -153,7 +153,7 @@ def runs():
     for name in sorted(os.listdir(folder)):
         if name.endswith(".json"):
             state = load(name[:-5])
-            if state and state.get("slug") and not graph.foreign(state):  # another pod's goals are not this pod's to watch
+            if isinstance(state, dict) and state.get("slug") and not graph.foreign(state):  # another pod's goals are not this pod's to watch
                 found.append(state)
     return found
 
@@ -350,7 +350,12 @@ def start_round(args, cfg):
             state.update(status="failed", finding=graph.pool_fix(error))
             save(state, "not started")
             continue
-        if not handed:
+        if handed:
+            continue
+        if graph.app_only(cfg):  # workers: app: no process; the goal stays queued until a session is bound
+            state["worker"], state["worker_why"] = "app", "workers: app; bind an app session: sessions.py bind %s ID" % state["slug"]
+            save(state, "no app session took it; waiting for sessions.py bind (workers: app)")
+        else:
             launch(state, prompt, cfg)  # no session could be started or reached: the board says background
     return begun, held
 
