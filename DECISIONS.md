@@ -34,6 +34,18 @@ One line each, where the roadmap didn't say.
 
 - 2026-11-13, where a PRD lives and Home's topics: each feature's PRD has one source, `page` (the default), `url:<link>` or `mcp:<server>:<resource>` (Notion through its connector is one), set in the optional third column of `.loop/docs.tsv`; a page whose PRD lives elsewhere shows `PRD: <source>` plus its generated Runbook, Deployments and Tests sections, and agents read the PRD only from that source and never copy its text into the repo, because a copy drifts from the document the owner edits. The docs check reads the source fresh and reports UNREAD, never a pass, when it cannot (a reader command in `LOOP_PRD_READER` reaches an MCP connector). Home gets a Topic column from the `topics` setting (default below), grouping the rows. DOC-1, DOC-2 and DOC-4 are Reviewed, so their wording is proposed (waiting on owner un-review); the code and the generated Home already follow the proposal. The lock for a PRD at a source is not enforced in code yet: the check reads its requirement ids but does not compare a reviewed version or date.
 
+## Waiting on owner un-review (budget-enforce pages, 2026-11-14)
+
+Five wiki pages show STALE because budget-enforce's commits touch their scripts, and every unreviewed region of them is generated, so clearing it takes a real, reviewed edit. Verdict per page, from what the commits change for that feature. Nothing below is on a page; the four requirements are Reviewed and stay as they are until the owner un-reviews them.
+
+- Delivery, DEL-8 (Budgeted): behavior, add one sub-bullet: "A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit."
+- Health, HLT-2 (The rules, Performance): behavior, add one sub-bullet: "The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`)."
+- Monitoring, MON-12 (Session pool): behavior, add one sub-bullet: "A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds."
+- Regression, REG-7 (Fast in the loop): behavior, add one sub-bullet: "A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped."
+- Setup, SET-2 (Layered settings): no new behavior, no text change. The five settings (`time_budget_minutes`, `max_merge_rounds`, `max_active_goals`, `plan_pause_percent`, `min_free_memory_gb`) are settings with a default and a one-line explanation, which SET-2 already requires. The code moves for the size caps (limits.py, spend.py, memory.py) are covered by the requirements above and add no behavior. The page needs a re-stamp only.
+
+Sentence for the owner: "Un-review DEL-8 on Delivery, HLT-2 on Health, MON-12 on Monitoring and REG-7 on Regression, apply the four sub-bullets drafted under 'budget-enforce pages' in DECISIONS.md exactly as written, then review Delivery, Health, Monitoring, Regression and Setup again (Setup needs only the re-stamp, SET-2 covers its settings)."
+
 ## Waiting on owner un-review
 
 Proposed wording for the budget-enforce goal (limits in `.loop/config.json` stop new work). DEL-8 and GRD-2 are Reviewed, so the owner un-reviews them to apply this; nothing on the pages changed.
