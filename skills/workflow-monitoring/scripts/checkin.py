@@ -6,16 +6,17 @@ usage: checkin.py [--since ISO]
 
   headline        one line: goals running, waiting on you or queued, and the session pool
   All sessions    one table row per live goal: session, repo, purpose, status, progress, time left, latest
-  Re-plan         what replan.py changed since the last check-in (MON-10)
-  Auto-answered   what auto.py answered or sent to you since the last check-in, and how to revert it (MON-11)
-  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' top-to-bottom graph; a
-                  `repo/slug` in depends-on is listed under `Between repos`; only live goals, and goals merged
-                  since the last check-in (one [x] line, then gone), are listed
-  Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, silent
-                  workers (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
-  Coming up       the next expected step of each goal and what the owner will need to do
+  Re-plan         what replan.py changed since the last check-in, with its reason (MON-10)
+  Auto-answered   what auto.py answered or sent since the last check-in, with the words that revert it (MON-11)
+  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' graph; a `repo/slug`
+                  in depends-on is listed under `Between repos`; only live goals and goals merged since the
+                  last check-in (one [x] line, then gone) are listed
+  Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, workers
+                  silent past silent_minutes (MON-8; STALLED: nothing runs for it), the pool ask
+                  (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
+  Coming up       each goal's next expected step and what the owner will need to do
 
---since defaults to the last check-in time in <git common dir>/loop/checkin.json. Read-only.
+--since defaults to the last check-in in <git common dir>/loop/checkin.json. Read-only.
 """
 import argparse
 import datetime
@@ -178,7 +179,9 @@ def render(root=None, at=None, stamp=None):
     needs, readonly = [], []
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
-        if graph.foreign(run):
+        if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
+            needs.append(line)
+        elif graph.foreign(run):
             readonly += ["- %s asks (owned by %s, read-only here)" % (run["slug"], graph.foreign(run))] * (state == "waiting")
         elif state == "waiting":
             words = ask.get("words") or ["go on " + run["slug"]]

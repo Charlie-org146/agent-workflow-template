@@ -330,3 +330,21 @@ Applied 2026-11-14 on owner-words record o17 (the owner's "Yes, let's do your th
 Owner words (record o20, with o21 for the page, recorded by the operation session after the owner's "Yes, apply A."): the External-PRDs page is folded into Documentation. It becomes DOC-17, "A PRD kept outside the repo stays in step through reviewed deltas", with EXT-1 to EXT-4 as its four sub-bullets in order (EXT-4's title is now "a missing connector never breaks the loop"); External-PRDs' Problem and non-goals were trimmed into Documentation's sections, its success metrics into Documentation's third, the page left `docs/wiki`, `.loop/docs.tsv`, the topics setting and Home, its README rows moved into "How to use Documentation", and every sync regression row is tied to DOC-17. DOC-1's sync pointer now ends "DOC-17 owns how that sync works". The HLT-2 and MON-3 sub-bullets did not name External PRDs and are unchanged. Documentation is at 17 requirements, its cap. Reviewed with `--owner-record o20` (DOC-1, DOC-17) and `--owner-record o21` (the page).
 
 Guardrails re-stamped (ext-two-way, 2026-11-14): removing External-PRDs from the topics setting in `.loop/config.json` made the Reviewed Guardrails page stale although its text is still true (GRD-1 `config-holds-topics`). Un-reviewed with owner record o22 and reviewed again with o23, with no text change.
+
+## Waiting on owner un-review (adoption)
+
+Drafted by the adoption goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: the goal's changes to `.loop/config.json`, `setup.py`, `unattended.py`, `board.py` and `private.py` make the Guardrails, Setup, Monitoring and Delivery pages stale, which merge.py refuses.
+
+- Guardrails, GRD-3, a new last sub-bullet: "A private-name line may be scoped with `@public` or `@repos=a,b`, so a private repo can hold a name a public one must never show; an unscoped line applies everywhere (Delivery, DEL-9)."
+- Delivery, DEL-9, a new last sub-bullet: "The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo."
+- Setup, SET-11, a new last sub-bullet: "Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12."
+- Setup, SET-15, a new last sub-bullet: "The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`)."
+- Monitoring, MON-13, a new last sub-bullet: "`board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12)."
+
+The owner types one sentence in the operation session:
+
+"Un-review the Guardrails page and GRD-3, the Delivery page and DEL-9, the Setup page with SET-11 and SET-15, and the Monitoring page and MON-13, so the adoption sub-bullets in DECISIONS.md can be added; then review those pages and requirements again."
+
+After it, the goal edits the five lines as drafted and the owner's review follows with the same words. Until the owner's words are in, adoption cannot merge.
+
+Applied 2026-11-14 with the owner's typed words "Do your recommendations." (records o25 and o26): the five sub-bullets above were added to Guardrails GRD-3, Delivery DEL-9, Setup SET-11 and SET-15 and Monitoring MON-13, and those pages and IDs were reviewed again.

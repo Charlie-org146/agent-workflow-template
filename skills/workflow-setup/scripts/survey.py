@@ -2,8 +2,6 @@
 """Survey a git repo for setup: what it holds, and what adopting it would add or convert.
 
 usage: survey.py [--repo DIR]
-
-Prints the FOUND line and the add:/convert:/skip:/no fit: plan that setup.py would apply. Read-only.
 """
 import argparse
 import fnmatch
@@ -17,7 +15,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import settings  # noqa: E402
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -51,7 +48,7 @@ def read(repo, rel):
 
 
 def ci_commands(repo, files):
-    """Single-line run: commands in the CI workflows that run tests. Matrix, working-directory and multiline blocks are skipped."""
+    """Single-line run."""
     found = []
     for rel in files:
         if not re.match(r"\.github/workflows/[^/]+\.ya?ml$", rel):
@@ -74,7 +71,6 @@ def py_tests(files, base, pats):
 
 
 def runs_tests(repo, files, cmd):
-    """None when the command finds a test by its runner's real pattern, else why not (static; nothing runs)."""
     has = lambda name: os.path.exists(os.path.join(repo, name))
     for word in cmd.split():
         if word.endswith((".sh", ".py")) and "/" in word or word.startswith("./"):
@@ -103,7 +99,6 @@ def runs_tests(repo, files, cmd):
 
 
 def py_guess(repo, files):
-    """The python test command for the repo's test files, by their content (unittest or pytest style)."""
     found = py_tests(files, "", ["test*.py", "*_test.py"])
     if not found:
         return []
@@ -116,7 +111,6 @@ def py_guess(repo, files):
 
 
 def checks(repo, files):
-    """(checks, notes): the repo's real test commands, CI first, and why each dropped candidate was dropped."""
     has = lambda name: os.path.exists(os.path.join(repo, name))
     guesses = []
     if has("package.json"):
@@ -142,7 +136,6 @@ def checks(repo, files):
 
 
 def features(repo, files, wiki):
-    """name -> path of the repo's own features: milestone or track headings, else folders with code in them."""
     for rel in ("ROADMAP.md", "docs/ROADMAP.md", "roadmap.md", "README.md"):
         names = [page_name(m) for m in HEADING.findall(read(repo, rel) or "")]
         names = [n for n in dict.fromkeys(names) if n]
@@ -159,7 +152,6 @@ def features(repo, files, wiki):
 
 
 def version_habit(repo, files):
-    """(version_file, notes): where the repo keeps its version, and how its changelog reads."""
     notes, where = [], None
     for rel in ("VERSION", "package.json", "pyproject.toml", "Cargo.toml"):
         if rel in files and (rel == "VERSION" or re.search(r'^\s*"?version"?\s*[:=]\s*"[\d.]+', read(repo, rel) or "", re.M)):
@@ -184,7 +176,6 @@ def ignored(repo, paths):
 
 
 def blocked(repo, paths):
-    """(path, exception line, source ignore file) for each path an ignore rule keeps out of the setup commit."""
     found, tracked = [], set(git(repo, "ls-files").splitlines())
     for path in paths:
         if path in tracked:
@@ -193,7 +184,7 @@ def blocked(repo, paths):
         for size in range(1, len(parts) + 1):
             part = "/".join(parts[:size])
             done = subprocess.run(["git", "-C", repo, "check-ignore", "-v", "--no-index", part], capture_output=True, text=True)
-            rule = done.stdout.split("\t")[0].split(":", 2)  # source, line, pattern; a !pattern match is an exception, not a block
+            rule = done.stdout.split("\t")[0].split(":", 2)
             if done.returncode == 0 and not rule[-1].startswith("!"):
                 found.append((path, "!" + (rule[-1] if rule[-1].endswith("/") else part + ("/" if size < len(parts) else "")), rule[0]))
                 break
@@ -201,12 +192,10 @@ def blocked(repo, paths):
 
 
 def own_ignore(source):
-    """True for a .gitignore of the repo, not .git/info/exclude or the owner's global excludes."""
     return bool(source) and not os.path.isabs(source) and not source.startswith(".git/") and os.path.basename(source) == ".gitignore"
 
 
 def guards(repo, files):
-    """The repo's hook and guard files that mention .tsv (one that refuses tracked data would refuse setup's commit)."""
     hooks = git(repo, "rev-parse", "--git-path", "hooks")
     cands = [f for f in files if re.match(r"\.(githooks|husky)/[^_]", f) or f == ".pre-commit-config.yaml"
              or re.search(r"(guard|hook)", os.path.basename(f), re.I) and f.endswith((".sh", ".py"))]
@@ -243,8 +232,7 @@ def fits(key, value, default):
 
 
 def borrow(model, defaults, private_value, allow=()):
-    """(values, lines): an adopted repo's portable settings, read-only, as borrow:/held:/skip:/adapt: lines; a value holding a
-    private value is never printed, and a held key is taken only when allow names it."""
+    """(values, lines)."""
     root = os.path.realpath(model)
     path = os.path.realpath(os.path.join(root, ".loop", "config.json"))
     try:
@@ -351,7 +339,6 @@ def precheck(repo, branch):
 
 
 def file_issues(repo, no_issues, count=0):
-    """Open or link an issue per Adoption row (health.py file --open-only) when gh is signed in and origin is on GitHub."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin"))
     py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-health", "scripts", "health.py")
     if no_issues or os.environ.get("LOOP_NO_ISSUES") == "1" or not (found and os.path.exists(py) and shutil.which("gh") and

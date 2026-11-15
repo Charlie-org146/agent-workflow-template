@@ -5,10 +5,6 @@ usage: settings.py reference [--write]   print the settings reference (--write s
        settings.py fill-repo [--repo DIR]  add every missing repo setting, with its default, to .loop/config.json
        settings.py fill-private [--file F]  add every missing private setting to the private flow file (mode 0600)
        settings.py show [--repo DIR] [--json]  each value with its layer (default, repo or local) and home
-
-Repo settings live in .loop/config.json (committed). Private settings live outside the repo and are never committed: the flow
-file ~/.workflow-loop/flow.json ($LOOP_FLOW), the health rules health.json ($LOOP_HEALTH) and the followed repos file. A value
-already set is never overwritten, and every script reads the files fresh, so a change takes effect at once.
 """
 import argparse
 import functools
@@ -19,12 +15,10 @@ import re
 import subprocess
 import sys
 
-# No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 REPO, PRIVATE = "repo", "private"
 RISKY = ["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]
-# (key, home, default, one-line explanation)
 TABLE = [
     ("base", REPO, "main", "The branch goals start from and pull requests target."),
     ("agent_command", REPO, [], "The command that runs a goal in the background; the prompt is its last argument."),
@@ -125,11 +119,11 @@ def reference():
 
 
 def write_json(path, data, mode=None):
-    path = os.path.realpath(path)  # a symlinked settings file (dotfiles) is written through, never replaced
+    path = os.path.realpath(path)
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     if mode is None and os.path.exists(path):
-        mode = os.stat(path).st_mode & 0o777  # keep the file's own mode
-    temp = "%s.%d.tmp" % (path, os.getpid())  # a full disk must not leave a truncated settings file
+        mode = os.stat(path).st_mode & 0o777
+    temp = "%s.%d.tmp" % (path, os.getpid())
     try:
         with os.fdopen(os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode or 0o644), "w") as handle:
             json.dump(data, handle, indent=2)
@@ -150,7 +144,6 @@ def load(path):
         return {}
 
 
-# What setup leaves in .loop/health-rules.json when the repo has none.
 HEALTH_RULES = {"_comment": "rules: [{name, group (a health group or repo), feature, command (words; exit 0 pass, 2 warn, 1 fail), fix, "
                 "break (a command that makes it fail)}]. off: {default rule: reason}.", "rules": [], "off": {}}
 
@@ -160,13 +153,11 @@ def repo_defaults():
 
 
 def check_depth(held, path):
-    """Refuse an unknown review_depth: anything but full or condensed would silently count as full."""
     if "review_depth" in held and held["review_depth"] not in DEPTHS:
         sys.exit("REFUSED: review_depth is %r in %s. Fix: full or condensed." % (held["review_depth"], path))
 
 
 def repo_help(held):
-    """The config's _help map: review_depth's and criteria_max's explanations added when missing, the rest kept."""
     found = held.get("_help") if isinstance(held.get("_help"), dict) else {}
     return dict({k: t for k, _, _, t in TABLE if k in ("review_depth", "criteria_max")}, **found)
 
@@ -176,7 +167,7 @@ def private_path():
 
 
 def fill_private(path=None):
-    """Add each missing flow-file setting with its default and a one-line explanation. Never overwrites. Returns what was added."""
+    """Add each missing flow-file setting with its default and a one-line explanation."""
     path = path or private_path()
     held = load(path)
     added = [k for k in FLOW_KEYS if k not in held]
@@ -211,7 +202,7 @@ def health_path():
 
 @functools.lru_cache(None)
 def names():
-    """The owner's private-name patterns (workflow-delivery's private.py reads the list); none when absent or unreadable."""
+    """The owner's private-name patterns (workflow-delivery's private.py reads the list)."""
     try:
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py")
         spec = importlib.util.spec_from_file_location("private_names", path)
@@ -224,15 +215,13 @@ def names():
 
 
 def private_value(text):
-    """True when text holds the home folder, an email, a token-looking string or a match in the private-name list."""
     text, home = str(text), os.path.expanduser("~")
     return bool((len(home) > 1 and home in text) or any(p.search(text) for p in names())
                 or re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+|\b(?:sk-|ghp_|github_pat_|xox[abp]-|AKIA)[\w-]{8,}|\b[A-Za-z0-9]{41,}\b", text))
 
 
 def resolve(repo):
-    """[(setting, value, layer, home)]: default, then repo (.loop/config.json), then local (flow or health file), a later layer
-    winning. Each setting has one home today, so a key is its default or its home's value."""
+    """[(setting, value, layer, home)]."""
     held, flow, health = load(os.path.join(repo, ".loop", "config.json")), load(private_path()), load(health_path())
     named = lambda var, path: "$" + var if os.environ.get(var) else path.replace(os.path.expanduser("~"), "~")
     homes = {"flow": named("LOOP_FLOW", private_path()), "health": named("LOOP_HEALTH", health_path())}
@@ -250,7 +239,6 @@ def resolve(repo):
 
 
 def show(repo, as_json):
-    """Each setting with the layer its value came from; a private value is withheld and env prints its names only."""
     out = []
     for key, value, layer, at in resolve(repo):
         value = sorted(value) if key == "env" and isinstance(value, dict) else value
@@ -263,8 +251,7 @@ def show(repo, as_json):
 
 
 def fill_repo(path):
-    """Add each missing repo setting, with its default and _help line, to the config at path; never changes a value set.
-    Keeps the config's key order, new keys last. Returns what was added (update's repo half calls it too)."""
+    """Add each missing repo setting, with its default and _help line, to the config at path."""
     held = load(path)
     if "criteria_max" in held and (isinstance(held["criteria_max"], bool) or not isinstance(held["criteria_max"], int)
                                    or not 1 <= held["criteria_max"] <= 50):

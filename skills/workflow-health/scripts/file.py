@@ -55,7 +55,7 @@ def tag_of(group, item=None):
 
 
 def home(item, page):
-    """(label, milestone) of a new issue: a defect has no milestone, a backlog item sits on its feature's Backlog milestone."""
+    """(label, milestone) of a new issue."""
     if (item["state"] == "FAIL" and item["family"] != "performance") or (item["family"] == "review" and item["rule"] == "conflict"):
         return "defect", ""
     return "backlog", "Backlog: " + page if page else MS.OTHER
@@ -67,7 +67,6 @@ def line_of(item):
 
 
 def body_of(item):
-    # A mine rule's output, fix and settings path are private: the issue names the rule and its state only.
     line = line_of(item) if item["family"] != "mine" else "%s mine %s %s: details stay local; run health.py check --group mine" % (
         item["state"], item["subject"], item["rule"])
     angle = G.ANGLE.get(item["family"], "the reviewer's angle: %s" % item.get("angle", "per feature"))
@@ -164,7 +163,6 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         if closed:
             out.append(dict(act, kind="reopen", unclose="health:closed" in names))
         old = re.sub(r" placed=\S* -->", " placed= -->", issue.get("body") or "", count=1)  # a marker from before: not a change
-        # trailing whitespace is no change: gh and a shell's $(cat) both drop the body's last newline
         if old.rstrip() != act["body"].rstrip() or act["tag"] not in names or act["stale"] or (act["feature"] and act["feature"] not in names):
             out.append(dict(act, kind="update"))
         elif not closed:
@@ -198,14 +196,19 @@ def words(act):
 
 
 def args_of(act):
-    n = act.get("number")
-    return {"open": ["issue", "create", "--title", act["title"], "--label", "health", "--label", act["tag"], "--label", act["label"]]
-            + (["--label", act["feature"]] if act.get("feature") else []) + (["--milestone", act["stone"]] if act["stone"] else []),
-            "update": ["issue", "edit", n, "--add-label", act["tag"]] + (["--add-label", act["label"]] if act.get("label") else [])
-            + (["--add-label", act["feature"]] if act.get("feature") else [])
-            + [part for t in act.get("stale") or [] for part in ("--remove-label", t)],
-            "reopen": ["issue", "reopen", n],
-            "close": ["issue", "close", n, "--comment", "No longer found by health.py file."]}[act["kind"]]
+    kind, n = act["kind"], act.get("number")
+    if kind == "open":
+        return (["issue", "create", "--title", act["title"], "--label", "health", "--label", act["tag"], "--label", act["label"]]
+                + (["--label", act["feature"]] if act.get("feature") else []) + (["--milestone", act["stone"]] if act["stone"] else []))
+    if kind == "update":
+        return (["issue", "edit", n, "--add-label", act["tag"]] + (["--add-label", act["label"]] if act.get("label") else [])
+                + (["--add-label", act["feature"]] if act.get("feature") else [])
+                + [part for t in act.get("stale") or [] for part in ("--remove-label", t)])
+    if kind == "reopen":
+        return ["issue", "reopen", n]
+    if kind == "close":
+        return ["issue", "close", n, "--comment", "No longer found by health.py file."]
+    raise KeyError(kind)
 
 
 def issue_text(act):
@@ -214,8 +217,7 @@ def issue_text(act):
 
 
 def only_open(acts):
-    """--open-only: just the plan's open and link actions, so filing never closes, reopens or updates an issue. An issue that would
-    hold the home folder or an email is skipped with a NOTE."""
+    """--open-only."""
     home, keep = os.path.expanduser("~"), []
     for act in acts:
         text = act["title"] + act["body"]
@@ -246,8 +248,7 @@ def linked(root, number, act):
 
 
 def apply(acts, root, groups):
-    """Carry out the plan: labels first, then each issue's writes in plan order (reopen before update). A feature label
-    that can't be made or set is dropped, the issue still filed, with a FAILED label line."""
+    """Carry out the plan."""
     for tag in sorted({act["tag"] for act in acts} | {"health"}):
         run(["label", "create", tag, "--description", "Filed by health.py file", "--force"], root)
     for kind in sorted({act["label"] for act in acts if act.get("label")}):
@@ -283,7 +284,6 @@ def apply(acts, root, groups):
         else:
             done = run(args_of(act), root, issue_text(act))
             if done.returncode not in (0, 127) and "label" in done.stderr.lower() and act.get("feature") and act["kind"] in ("open", "update"):
-                # a refused label never loses the report (a timeout, 127, is never retried: the issue may exist)
                 print("FAILED label %s: %s" % (act["feature"], done.stderr.strip()[:160]))
                 act = dict(act, feature="")
                 done = run(args_of(act), root, issue_text(act))
@@ -302,8 +302,7 @@ def limit_row(state, subject, rule, detail, fix=""):
 
 
 def limit_rows(root):
-    """GRD-2: WARN rows for the live goals past max_merge_rounds, for more live goals than max_active_goals, and for weekly plan
-    usage (pool.py usage N, kept in the git common dir) above plan_pause_percent. Each limit that is 0 is off."""
+    """GRD-2."""
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
             config = json.load(handle)

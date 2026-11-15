@@ -4,22 +4,20 @@
 usage: wiki.py <command> SLUG
        wiki.py batch plan|run [--size N] [--merge]   verify 3-4 ready pull requests with disjoint touches together (DEL-15)
 
-  prepare SLUG [--commit]   list every wiki page docs.py check calls stale or missing, mapped to a touched path or not (exit 1);
-                            with --commit, first commit edited pages in the wiki folder on the goal's branch, and when
-                            nothing is stale push the branch. The agent rewrites the pages; this only checks.
+  prepare SLUG [--commit]   list every wiki page docs.py check calls stale or missing (exit 1); with --commit, first commit
+                            edited pages on the goal's branch, and push it when nothing is stale. It only checks.
   publish SLUG              after the merge: run docs.py publish from a clean checkout of origin/<base>; on a refusal
                             record `wiki_error` (page and reason) on the goal, which shows under Issues.
 
-Both scan for private names first: prepare --commit scans the branch before its push; publish scans every page in the
-wiki folder and publishes nothing on a hit (wiki_error names the page and line). A GitHub wiki with no first page can't
-be cloned: the error says to create the first page in the repo's Wiki tab, then run merge.py SLUG again (issue 129).
+Both scan for private names first: prepare --commit scans the branch before its push; publish scans every wiki page and
+publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the repo's Wiki tab
+and run merge.py again (issue 129).
 
 A repo without .loop/docs.tsv has no wiki: both commands do nothing. It runs git and docs.py, and nothing else.
 
-It also holds the release notes' proof lines (REG-6), fixes_lines: one "Fixes #N: test ROW, seen failing DATE, passing"
-line per issue fixed since the previous v* tag, from workflow-regression's tests.py fixes. Called by release.py (cut) and
-autorelease.py. A missing tests.py gives "Fixes: unknown (workflow-regression not installed)"; a failing one gives
-"Fixes: not listed (<first line>). Note: ...": a report never fails a release. workflow-regression/references/commands.md.
+Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
+(REG-6), from workflow-regression's tests.py fixes; a missing or failing tests.py gives a "Fixes: unknown/not listed" line,
+never a failed release. Called by release.py and autorelease.py.
 """
 import argparse
 import glob
@@ -47,19 +45,30 @@ def top_of():
     return top if os.path.exists(os.path.join(top, ".loop", "docs.tsv")) else None
 
 
+def own_entry(tree, lines):
+    """START.md and the agent blocks come from the head's own entry.py (#4340)."""
+    script = os.path.join(tree, "skills", "workflow-docs", "scripts", "entry.py")
+    if not os.path.exists(script):
+        return lines
+    said = run([sys.executable, script, "check", "--repo", tree], tree).stdout.splitlines()
+    bad = [l.split()[1].rstrip(":") for l in said if "ENTRY_STALE" in l or "no entry point" in l]
+    return [l for l in lines if not l.endswith("(entry.py write)")] + ["WOULD FIX %s: regenerate it (entry.py write)" % x for x in bad]
+
+
 def pending(top, cfg, fix=False, head="HEAD"):
     """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first. A head
     other than HEAD is audited from its own tree (a temporary worktree), not this checkout's (#4208)."""
     base = base_of(top, cfg)
     if fix:
-        release.docs_trouble(top, base, True)  # mend the goal's own mechanical trouble, scoped to its commits
+        release.docs_trouble(top, base, True)  # mend the goal's mechanical trouble
     tree = top
     if head != "HEAD":
-        run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch, not this checkout's HEAD
+        run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch
         tree = tempfile.mkdtemp(prefix="pending-")
         tree = tree if run(["git", "worktree", "add", "-q", "--detach", tree, head], top).returncode == 0 else top
     try:
         lines = release.docs_trouble(tree, base, whole=True)
+        lines = own_entry(tree, lines) if tree != top else lines
         done = run([sys.executable, DOCS, "check", "--own", head if tree == top else "HEAD"], tree)  # a page stale from a commit this goal's diff does not touch is main's own
     finally:
         tree != top and run(["git", "worktree", "remove", "--force", tree], top)
@@ -110,9 +119,8 @@ def cmd_prepare(args):
 
 
 def rerender(tree, cfg):
-    """Re-render the generated Tests tables in the publish tree and commit them there (DOC-11), so staleness that is only
-    generated never blocks the publish. Returns the pages it changed. Hand-written pages are not touched, and a failed
-    render is printed, not fatal: docs.py publish then names what is still stale."""
+    """Re-render the generated Tests tables in the publish tree and commit them (DOC-11), so generated staleness never blocks
+    the publish. Returns the pages it changed; a failed render is printed, not fatal."""
     done = run([sys.executable, CRITERIA, "render", "--tables"], cwd=tree)
     if done.returncode:
         print("RENDER FAILED: " + ((done.stderr or done.stdout).strip().splitlines() or ["exit %d" % done.returncode])[0][:200])
@@ -255,9 +263,8 @@ def group(goals, size=3):
 
 
 def culprits(slugs, passes):
-    """The goals that make `passes(list of slugs)` fail: [] when the batch passes; one slug when a single goal fails alone;
-    a pair of halves that each pass but fail together is named as 'a+b'. Halves are checked alone, so a batch of n costs
-    about 2*log2(n) more checks."""
+    """The goals that make `passes(slugs)` fail: [] when it passes; one slug when a goal fails alone; 'a+b' for halves that
+    each pass but fail together. About 2*log2(n) more checks for a batch of n."""
     if passes(slugs):
         return []
     if len(slugs) == 1:
@@ -320,9 +327,8 @@ def cmd_batch(args):
 
 
 def where(script, base=None):
-    """The release runs from the main checkout (fast-forwarded to origin/<base>) or the installed skills, never from a path
-    in the repo's own goal worktrees, where a goal could loosen the check that judges it, nor from a checkout behind its
-    base (issue 4020). A script outside this repo (installed skills, a toy's repo) is not checked."""
+    """The release runs from the main checkout (fast-forwarded to origin/<base>) or the installed skills, never from a goal
+    worktree, where a goal could loosen the check that judges it, nor from a checkout behind its base (issue 4020)."""
     here = os.path.dirname(os.path.realpath(script))
     common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=here, check=False)
     mine = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)

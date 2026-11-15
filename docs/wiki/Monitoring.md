@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -57,8 +57,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
   - A finished goal's session goes back to the pool (MON-6), the board shows the pool as free, busy and total, and a goal that finds the pool empty waits under Needs you with the one action that fixes it.
   - A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds.
 
-- MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
+- MON-13: **Reviewed 2026-11-15** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed a3510a67 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
+  - `board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12).
 
 - MON-14: **Reviewed 2026-11-15** Dependency map grouped by repo <!-- reviewed 9adcf143 -->
   - The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks.
@@ -198,6 +199,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 | [roadmap-finished-not-queued](Tests#t-roadmap-finished-not-queued) | requirement | MON-4 | Given a goal still named in queue.md whose run record is done, when batch.py roadmap runs, then an issue it names reads open, not queued. | not run |
 | [roadmap-paths-scrubbed](Tests#t-roadmap-paths-scrubbed) | requirement | MON-4 | Given a run record whose goal text holds a home folder path, when batch.py roadmap runs, then the page shows no user name or path. | not run |
 | [roadmap-odd-input-ok](Tests#t-roadmap-odd-input-ok) | requirement | MON-4 | Given a null issues file, an issue with no title and an --out folder that does not exist, when batch.py roadmap runs, then it finishes without a traceback and still writes the page. | not run |
+| [budget-fair-base-moved](Tests#t-budget-fair-base-moved) | requirement | MON-4 | Given five pr lanes that each end BASE_MOVED (a refused merge, or main moved), when the time budget is read, then none of that lane time is charged: only the 30 minutes of steps count, and neither a 60 minute budget nor a 400 minute one with 24 lost lanes is stopped (#4261). | PASS 2026-11-15 |
+| [budget-fair-failed-stays](Tests#t-budget-fair-failed-stays) | requirement | MON-4 | Given a pr lane that really failed, when the time budget is read, then its time is still charged. | PASS 2026-11-15 |
+| [budget-fair-held-time](Tests#t-budget-fair-held-time) | requirement | MON-4 | Given a goal held in the pr queue, on a hold, on an owner answer or after a stop, when the time budget is read, then that time is never charged, and a goal that truly runs past its budget is still stopped (#3878). | PASS 2026-11-15 |
 | [no-change-quiet](Tests#t-no-change-quiet) | requirement | MON-5 | Given a board field the old board lacked or gh not answering, when boards are compared, then it counts as no change. | PASS 2026-11-09 |
 | [operate-wakes-on-report](Tests#t-operate-wakes-on-report) | requirement | MON-5 | Given a worker's report, when it arrives before the cadence, then operate wakes and every pass prints the full board. | PASS 2026-11-09 |
 | [live-board-no-oneline](Tests#t-live-board-no-oneline) | requirement | MON-5 | Given an unchanged pass, when the operation session checks in, then the full check-in is printed again and there is no one-line mode. | PASS 2026-11-12 |
@@ -234,7 +238,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 | [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | MON-15 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |
 | [pr-queue-order](Tests#t-pr-queue-order) | requirement | MON-15 | Given three goals asking for their pr turn in one repo, when they ask oldest first, then the first runs its lane and the others are told who is ahead; a goal that left the pr step, a stopped holder and a ticket older than 30 minutes each give their place to the next. | not run |
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MON-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
+| [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | MON-15 | Given a goal whose pull request merged, when the pr queue is read, then its ticket and beat are removed and it holds nobody. | not run |
+| [merge-leaves-queue-4343](Tests#t-merge-leaves-queue-4343) | requirement | MON-15 | Given a merged goal, when merge.py finishes the merge, then its pr-queue ticket and beat are gone. | not run |
+| [mon16-machine-line](Tests#t-mon16-machine-line) | requirement | MON-16 | Given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows. | not run |
+| [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | MON-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
+| [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | MON-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
 | - | requirement | MON-16 | no passing test | not enforced |
+| [mon17-this-pod-only](Tests#t-mon17-this-pod-only) | requirement | MON-17 | Given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line. | not run |
 | - | requirement | MON-17 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
 | [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | MON-18 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
@@ -248,6 +258,8 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
 | [mon8-silent-30](Tests#t-mon8-silent-30) | requirement | MON-8 | Given a worker with no report for 31 minutes, when the operation session checks in, then it shows under Needs you; at 29 minutes it does not. | PASS 2026-11-10 |
 | [mon8-silent-worker](Tests#t-mon8-silent-worker) | requirement | MON-8 | Given a running worker whose last report is 31 minutes old, when the check-in is built, then Needs you names it and a worker that reported 5 minutes ago is not named. | not run |
+| [stalled-no-process-4359](Tests#t-stalled-no-process-4359) | requirement | MON-8 | Given a live goal whose log has not moved for silent_minutes and no goal.py, flow.py or lane process for it, when the check-in is built, then Needs you says STALLED, since when, and which worker to restart. | not run |
+| [stalled-process-quiet-4359](Tests#t-stalled-process-quiet-4359) | requirement | MON-8 | Given a quiet goal with a process running for it, when the check-in is built, then it is not STALLED. | not run |
 | [mon9-board-fast](Tests#t-mon9-board-fast) | requirement | MON-9 | Given 12 goals with pull requests and a slow GitHub, when the board is built, then it takes under 10 seconds. | PASS 2026-11-10 |
 | [operate-toy-no-check](Tests#t-operate-toy-no-check) | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | Given test-operate.sh, when it is read, then it no longer calls the removed goal.py check command. | PASS 2026-11-13 |
 | [runs-skips-non-dict](Tests#t-runs-skips-non-dict) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given a list or string JSON file in the runs folder, when watch reads the goals, then it skips it and keeps the real goals. | not run |
