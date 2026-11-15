@@ -67,7 +67,7 @@ def tests_page(root):
     """The full Tests page (DOC-10), from tests.py's entries and the runs file's fourth column."""
     fmt = tests_format()
     groups = fmt.entries(root, markdown=True) if fmt else []
-    return full_page(groups, {row[0]: row[3] for row in criteria.tsv(root, "regression-runs.tsv")}, repo_of(root))
+    return full_page(groups, {row[0]: row[3] for row in criteria.tsv(root, "regression-runs.tsv")}, repo_of(root), workflow_file(root))
 
 
 def maps(root):
@@ -191,18 +191,18 @@ def tests_table(ids, linked, defects, rows, fields, ran):
     return pageformat.table(TESTS, shown) if shown else []
 
 
-def run_cell(value, repo, day=""):
+def run_cell(value, repo, day="", flow="regression.yml"):
     """A URL is its Actions run; an empty cell, that day's CI runs; an old sha, its commit; else local."""
     if re.match(r"^https?://\S+$", value):
         return "[run](%s)" % value
     if re.match(r"^[0-9a-f]{7,40}$", value):
         return "[%s](https://github.com/%s/commit/%s)" % (value[:7], repo, value) if repo else value[:7]
     if not value and repo and re.match(r"^\d{4}-\d\d-\d\d$", day):
-        return "[CI %s](https://github.com/%s/actions/workflows/regression.yml?query=created%%3A%s)" % (day, repo, day)
+        return "[CI %s](https://github.com/%s/actions/workflows/%s?query=created%%3A%s)" % (day, repo, flow, day)
     return "local"
 
 
-def full_page(groups, runs, repo):
+def full_page(groups, runs, repo, flow="regression.yml"):
     """docs/wiki/Tests.md: the marker, '# Tests', then per feature '## <Feature>' and a FULL table whose first cell
     carries the anchor feature pages link to. `groups` is tests.py's entries(); `runs` maps a row to its run."""
     out = [pageformat.MARKER, "# Tests", ""]
@@ -213,7 +213,7 @@ def full_page(groups, runs, repo):
             guard = x[2].split(": ", 1)[0] if x[1] == "requirement" else x[2]
             rows.append(['<a id="t-%s"></a>%s' % (test_slug(x[0]), x[0]), x[1], guard, result.group(1) if result else x[5],
                          result.group(2) if result else "-", run_cell(runs.get(x[0], ""), repo,
-                         result.group(2) if result else ""), x[6]])
+                         result.group(2) if result else "", flow), x[6]])
         out += ["## " + feature, ""] + pageformat.table(FULL, rows) + [""]
     return "\n".join(out if groups else out + ["No tests yet.", ""])
 
@@ -240,6 +240,12 @@ def block_re(name):
 
 
 config_of = counting.config_of
+def workflow_file(root):
+    """The regression routine's workflow file, else regression.yml (#3839)."""
+    for e in counting.entries(root):
+        if e.get("name") == "regression" and str(e.get("runs")).startswith("github:"):
+            return e["runs"][7:] or "regression.yml"
+    return "regression.yml"
 
 
 def reference():
@@ -376,6 +382,21 @@ def perm_needs(root, routine, page):
                         found.append(("Bash", " ".join(span.split())))
                 found += [("WebFetch", "domain:" + host) for host in re.findall(r"https?://([A-Za-z0-9.-]+)", line)]
     return found
+
+
+def mirror_of(path):
+    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; owned unless another file is there (never touched)."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().replace("\r\n", "\n").split("\n")
+    except OSError:
+        return {}, True, {}
+    try:
+        with open(path[:-3] + ".base", encoding="utf-8") as handle:
+            agreed = dict(x.split("\t") for x in handle.read().split("\n") if "\t" in x)
+    except OSError:
+        agreed = {}
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == criteria.SYNC_MARK, agreed
 
 
 if __name__ == "__main__":

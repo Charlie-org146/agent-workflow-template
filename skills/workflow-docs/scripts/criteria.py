@@ -60,6 +60,22 @@ def seal(text):
     return hashlib.sha256(text.encode()).hexdigest()[:8]
 
 
+SYNC_MARK = "<!-- prd-sync: owned -->"
+
+
+def sha(text):
+    return None if text is None else seal(text)
+
+
+def put(path, source, have, base):
+    """Write a PRD's repo copy (SYNC_MARK, `- ID: text` lines) and its baseline .base (`ID<TAB>sha8` of the agreed text)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
+    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("".join("%s\t%s\n" % item for item in base.items()))
+
+
 def subs(lines, number):
     """The indented lines (sub-bullets) under line `number`."""
     out = []

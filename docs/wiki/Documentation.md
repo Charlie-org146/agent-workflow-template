@@ -3,20 +3,21 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599a537 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f85c3 U=03828777 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
 - Pages drift from the code, and each repo writes them its own way, so reviewing them takes too long.
-- I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me.
+- I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me; and when a PRD also lives in Notion, I want any difference between the two told to me, never silently overwritten.
 
 ## Requirements
 
 ### Functional
-- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed 736fc4a2 -->
+- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed f481e6f9 -->
   - One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section.
   - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
   - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+  - A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works.
 - DOC-2: **Reviewed 2026-11-13** The PRD is mine <!-- reviewed 2e17a232 -->
   - I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message.
   - A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words.
@@ -70,6 +71,12 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
   - The code that renders the blocks stays readable and under health's size warning: `counting.py` holds the Automation block code and `render.py` the rest, so the text a config renders is the same wherever the code sits (issue 1402).
   - Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git.
 
+- DOC-17: **Reviewed 2026-11-14** A PRD kept outside the repo stays in step through reviewed deltas <!-- reviewed de3acdb8 -->
+  - Either side can change a requirement: an agent's goal in the repo's copy, `.loop/prd/PAGE.md`, or people in the external document. A feature's PRD source is `url:<link>` or `mcp:<server>:<resource>`, the first `docs.py sync` adopts it, and syncing is opt-in per PRD: a page with no such source is never visited and raises no signal.
+  - A difference is a delta, never a silent overwrite: `docs.py sync` compares both sides with what they last agreed on, and each difference is a DELTA naming the page, the id, which side changed (the repo, the source or both) and both texts. Sync never overwrites either side on its own, `--dry-run` only reports and exits 1, and a hand-written file at the copy's path is left as it is.
+  - A delta is reviewed, then both sides agree: each delta is posted once as a GitHub issue on the feature's milestone and once as a comment on the Notion page, and stays open until someone accepts one side's text. `docs.py sync --accept PAGE:ID=repo|source` writes only the accepted text to the other side, Notion included, closes the delta and leaves every other requirement as it was. Health and the check-in show each open delta as an inconsistency, only for a page that opted in.
+  - A missing connector never breaks the loop: a source, gh or writer that sync cannot reach prints `not connected`, changes nothing and exits 0, and the delta stays open; a source with no requirement ids keeps the repo's copy instead of emptying it.
+
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
   - Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it.
@@ -82,11 +89,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 ## Non-goals
 - It never writes or reviews the owner's PRD for them: only the owner marks a PRD or a requirement Reviewed.
 - It keeps docs only in the repo's wiki folder and its GitHub wiki, nowhere else.
+- It never writes to an external document without an accepted delta, and never chooses which PRDs opt in: the owner sets a page's PRD source.
+- Syncing milestones, the README or Google Docs from an external source: left for later goals.
 
 ## Success metrics
 - The docs check prints DOCS OK on the main branch after every merge.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
-- No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first.
+- No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
 
 ## Tests
 
@@ -104,7 +113,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 | [docs-audit](Tests#t-docs-audit) | requirement | DOC-1 | Given rewording left in the docs, when the docs command runs, then it fixes the Tests table, lists wording to rewrite and exits 1 while any is left. | PASS 2026-11-12 |
 | [release-runs-audit](Tests#t-release-runs-audit) | requirement | DOC-1 | Given trouble in the docs, when the release step runs, then it reads the docs command and sees the trouble. | PASS 2026-11-12 |
 | [criteria-max-config](Tests#t-criteria-max-config) | requirement | DOC-1 | Given criteria_max in the config, when a page has more criteria than it allows, then the check fails. | PASS 2026-11-12 |
-| [usage-section-refused](Tests#t-usage-section-refused) | requirement | DOC-1 | Given a Usage section of API entries between Problem and Requirements, when the check runs, then it fails with a USAGE line (the owner dropped Usage on 2026-11-13). | not run |
+| [usage-section-refused](Tests#t-usage-section-refused) | requirement | DOC-1 | Given a Usage section of API entries between Problem and Requirements, when the check runs, then it fails with a USAGE line (the owner dropped Usage on 2026-11-13). | SKIPPED 2026-11-15 |
 | [no-usage-passes](Tests#t-no-usage-passes) | requirement | DOC-1 | Given a page with no commands and no Usage section, when the check runs, then it passes. | not run |
 | [docs-count-mismatch](Tests#t-docs-count-mismatch) | requirement | DOC-1 | Given a page stating the wrong number of skills, when the docs check runs, then it fails naming the file, the stated number and the real one. | PASS 2026-11-12 |
 | [prd-section-order](Tests#t-prd-section-order) | requirement | DOC-1 | Given a PRD page with swapped sections, an unknown section or stray text before the first one, when the docs check runs, then it fails with SECTIONS. | PASS 2026-11-10 |
@@ -120,8 +129,8 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 | [spec-decisions-log](Tests#t-spec-decisions-log) | requirement | DOC-1 | Given the owner's 2026-11-12 decisions, when DECISIONS.md is read, then it holds ten dated entries and the proposed wording of each locked requirement. | PASS 2026-11-13 |
 | [link-page-passes](Tests#t-link-page-passes) | requirement | DOC-1 | Given a feature page holding a PRD line and a readable linked PRD, when the docs check runs, then it passes and the Tests table lists the linked ids without copying the PRD text. | PASS 2026-11-13 |
 | [link-unread-never-pass](Tests#t-link-unread-never-pass) | requirement | DOC-1 | Given a feature page whose PRD source cannot be read, when the docs check runs, then it reports UNREAD and exits non-zero. | PASS 2026-11-13 |
-| [stale-own-finding](Tests#t-stale-own-finding) | requirement | DOC-1 | Given main has a stale page the goal's diff doesn't map to, when docs.py check --own runs on the goal branch, then it prints the page as a FINDING line and passes. | not run |
-| [stale-own-main-reported](Tests#t-stale-own-main-reported) | requirement | DOC-1 | Given the same stale page on main, when plain docs.py check runs on main (as health and the scheduled run do), then it still prints the STALE line, so --own hides nothing from them. | not run |
+| [stale-own-finding](Tests#t-stale-own-finding) | requirement | DOC-1 | Given main has a stale page the goal's diff doesn't map to, when docs.py check --own runs on the goal branch, then it prints the page as a FINDING line and passes. | PASS 2026-11-15 |
+| [stale-own-main-reported](Tests#t-stale-own-main-reported) | requirement | DOC-1 | Given the same stale page on main, when plain docs.py check runs on main (as health and the scheduled run do), then it still prints the STALE line, so --own hides nothing from them. | PASS 2026-11-15 |
 | [stale-own-goal-fails](Tests#t-stale-own-goal-fails) | requirement | DOC-1 | Given a goal whose own diff makes a mapped page stale, when docs.py check --own runs, then it still prints STALE for that page and fails. | not run |
 | [stale-own-main-own-fails](Tests#t-stale-own-main-own-fails) | requirement | DOC-1 | Given a stale page on main, when docs.py check --own runs on main itself (the scheduled run's rows), then it still prints STALE and fails. | not run |
 | [stale-own-block-kept](Tests#t-stale-own-block-kept) | requirement | DOC-1 | Given a Settings, Automation or README block that differs from a fresh render, when docs.py check --own runs, then its STALE line is kept, never moved to a FINDING. | not run |
@@ -191,6 +200,26 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 | [blocks-setup-clean](Tests#t-blocks-setup-clean) | requirement | DOC-15 | Given setup with criteria on, when it adopts a repo, then the README and Home blocks are in the adoption commit and the tree is clean. | PASS 2026-11-12 |
 | [automation-links-runbook](Tests#t-automation-links-runbook) | requirement | DOC-15 | Given routines with a Runbook, when the Automation block is generated, then each routine's name links to its page's Runbook. | not run |
 | [launchctl-missing-unknown](Tests#t-launchctl-missing-unknown) | requirement | DOC-15 | Given a host with no launchctl and no gh, when docs.py automation runs, then it reports each routine's state as unknown and exits 0. | PASS 2026-11-14 |
+| [sync-not-connected](Tests#t-sync-not-connected) | requirement | DOC-17 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
+| [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | DOC-17 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | not run |
+| [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | DOC-17 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | not run |
+| [sync-source-delta](Tests#t-sync-source-delta) | requirement | DOC-17 | Given a requirement people changed in the external document, when docs.py sync runs, then it prints a DELTA naming the source as the side and both texts. | not run |
+| [sync-both-sides](Tests#t-sync-both-sides) | requirement | DOC-17 | Given a requirement changed in the repo and in the document, when docs.py sync runs, then its DELTA says both sides changed. | not run |
+| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | DOC-17 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
+| [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | DOC-17 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
+| [sync-owns-only](Tests#t-sync-owns-only) | requirement | DOC-17 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
+| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta, when docs.py sync runs, then it posts one GitHub issue on the feature's milestone and one comment on the external page. | not run |
+| [sync-posts-once](Tests#t-sync-posts-once) | requirement | DOC-17 | Given a delta already posted, when docs.py sync runs again, then it posts nothing more. | not run |
+| [sync-accept-source](Tests#t-sync-accept-source) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=source runs, then the source's text is written to the repo copy for that id only and the issue is closed. | not run |
+| [sync-accept-repo](Tests#t-sync-accept-repo) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=repo runs, then the repo's text is written to the external document through the writer for that id only and the issue is closed. | not run |
+| [sync-agree-after-accept](Tests#t-sync-agree-after-accept) | requirement | DOC-17 | Given every delta accepted, when docs.py sync runs, then the sides are in step and no delta is open. | not run |
+| [sync-open-lists](Tests#t-sync-open-lists) | requirement | DOC-17 | Given an open delta, when docs.py sync --open runs, then it lists the delta with no call to gh or the connector. | not run |
+| [sync-health-delta](Tests#t-sync-health-delta) | requirement | DOC-17 | Given an open delta, when health checks the docs, then it reports a FAIL row of the docs rule for it. | not run |
+| [sync-board-delta](Tests#t-sync-board-delta) | requirement | DOC-17 | Given an open delta, when the check-in's board is built, then it lists the delta as waiting on the owner. | not run |
+| [sync-no-writer-posted](Tests#t-sync-no-writer-posted) | requirement | DOC-17 | Given no writer, when docs.py sync finds a delta, then the issue is posted and the comment says not connected. | not run |
+| [sync-accept-no-writer](Tests#t-sync-accept-no-writer) | requirement | DOC-17 | Given no writer, when docs.py sync --accept PAGE:ID=repo runs, then it says not connected, exits 0 and changes nothing. | not run |
+| [sync-no-gh](Tests#t-sync-no-gh) | requirement | DOC-17 | Given gh that fails, when docs.py sync finds a delta, then it shows the delta, says not connected and exits 0. | not run |
+| - | requirement | DOC-17 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
@@ -205,7 +234,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 | [docs-guide-page-issue-125](Tests#t-docs-guide-page-issue-125) | defect | [#125](https://github.com/jcl2018/agent-workflow-template/issues/125) closed (2026-11-11) | Given a guide-marked wiki page, when docs check runs, then it passes with no PRD sections, Home row or README section. | PASS 2026-11-10 |
 | [docs-merged-base-issue-156](Tests#t-docs-merged-base-issue-156) | defect | [#156](https://github.com/jcl2018/agent-workflow-template/issues/156) closed (2026-11-11) | Given a branch that merged the base branch, when docs check runs with --base, then the base's commits don't make its page stale. | PASS 2026-11-10 |
 | [merge-main-own-finding](Tests#t-merge-main-own-finding) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main from another goal, when it checks the wiki, then the page is a FINDING and the goal still merges. | not run |
-| [lane-rows-judge-own-diff](Tests#t-lane-rows-judge-own-diff) | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) open (2026-11-14) | Given the lane rows that grep docs check for STALE, when they run, then each judges the goal's own diff (--own), so a page stale on main never fails a goal. | not run |
+| [lane-rows-judge-own-diff](Tests#t-lane-rows-judge-own-diff) | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) closed (2026-11-14) | Given the lane rows that grep docs check for STALE, when they run, then each judges the goal's own diff (--own), so a page stale on main never fails a goal. | not run |
 | [docs-locked-hint-issue-133](Tests#t-docs-locked-hint-issue-133) | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | Given a reviewed requirement whose wording changed, when docs check runs, then its LOCKED hint says restore or unreview, never review. | PASS 2026-11-10 |
 | [skill-lines-release-4172](Tests#t-skill-lines-release-4172) | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-14) | Given the release skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4172). | not run |
 | [skill-lines-docs-4171](Tests#t-skill-lines-docs-4171) | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4171). | not run |
@@ -213,3 +242,4 @@ Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599
 | [skill-lines-regression-3815](Tests#t-skill-lines-regression-3815) | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3815). | not run |
 | [skill-lines-docs-1403](Tests#t-skill-lines-docs-1403) | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 1403). | not run |
 | [docs-milestone-line-issue-130](Tests#t-docs-milestone-line-issue-130) | defect | [#130](https://github.com/jcl2018/agent-workflow-template/issues/130) closed (2026-11-11) | Given a page whose Milestone line names a milestone with another title, when the audit runs, then it reports no missing milestone. | PASS 2026-11-10 |
+| [tests-links-workflow-3839](Tests#t-tests-links-workflow-3839) | defect | [#3839](https://github.com/jcl2018/agent-workflow-template/issues/3839) open (2026-11-14) | Given an automation entry that runs the regression routine from another workflow file, when the Tests page is rendered, then its CI links name that file, and regression.yml only when none is set (issue 3839). | PASS 2026-11-14 |

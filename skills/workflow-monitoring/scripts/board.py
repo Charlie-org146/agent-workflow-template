@@ -243,6 +243,18 @@ def kind(run):
     return "goal"
 
 
+def open_deltas(name, path):
+    """Each open delta in a repo's ledger (docs.py sync): a PRD kept elsewhere and its repo copy differ, which waits on the
+    owner's choice of side. An inconsistency, never a quiet one."""
+    try:
+        with open(os.path.join(common(path), "loop", "deltas.tsv")) as handle:
+            held = [x.rstrip("\n").split("\t") for x in handle]
+    except OSError:
+        return []
+    return [{"repo": name, "slug": r[0], "ask": "inconsistency: %s changed (review %s)." % (r[1], r[2]), "where": "the repo, docs.py sync --accept",
+             "words": ["--accept %s=repo" % r[0], "--accept %s=source" % r[0]]} for r in held if len(r) == 5]
+
+
 def build(at, since):
     rows, deps, names = [], [], []
     for name, path, base in followed():
@@ -250,7 +262,7 @@ def build(at, since):
         more, wait = collect(name, path, base, at)
         rows, deps = rows + more, deps + wait
     live = [r for r in rows if r["status"] in ("running", "waiting")]
-    waiting = []
+    waiting = [d for name, path, _ in followed() for d in open_deltas(name, path)]
     for r in rows:
         if r["status"] == "waiting" and r["waiting"]:
             words = [clean(w) for w in r["waiting"].get("words") or []]
