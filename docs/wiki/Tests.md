@@ -61,6 +61,8 @@
 | <a id="t-perms-private-refused"></a>perms-private-refused | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-settings-tracked"></a>perms-settings-tracked | requirement | AUT-9 | not run | - | local | 2026-11-15 |
+| <a id="t-perms-no-repo-deny"></a>perms-no-repo-deny | requirement | AUT-9 | not run | - | local | 2026-11-15 |
 
 ## Delivery
 
@@ -711,6 +713,7 @@
 | <a id="t-list-link-ids"></a>list-link-ids | requirement | REG-1 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
 | <a id="t-tests-own-folder"></a>tests-own-folder | requirement | REG-1 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
 | <a id="t-lane-walk-skips-node-modules"></a>lane-walk-skips-node-modules | requirement | REG-7 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-lane-affected-memory"></a>lane-affected-memory | defect | 4151 | not run | - | local | 2026-11-14 |
 | <a id="t-skill-workflow-in-references"></a>skill-workflow-in-references | requirement | REG-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 
 ## Setup
