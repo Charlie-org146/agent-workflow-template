@@ -798,9 +798,9 @@
 | <a id="t-lane-fail-text"></a>lane-fail-text | defect | 3911 | not run | - | local | 2026-11-15 |
 | <a id="t-owed-close"></a>owed-close | defect | 3907 | not run | - | local | 2026-11-15 |
 | <a id="t-scripts-c-regression-under-19000"></a>scripts-c-regression-under-19000 | requirement | REG-9 | not run | - | local | 2026-11-15 |
-| <a id="t-config-lane-duplicate-key"></a>config-lane-duplicate-key | requirement | REG-4 | not run | - | local | 2026-11-15 |
-| <a id="t-config-lane-key-change"></a>config-lane-key-change | requirement | REG-4 | not run | - | local | 2026-11-15 |
-| <a id="t-config-lane-unparseable"></a>config-lane-unparseable | requirement | REG-4 | not run | - | local | 2026-11-15 |
+| <a id="t-config-lane-duplicate-key"></a>config-lane-duplicate-key | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-config-lane-key-change"></a>config-lane-key-change | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-config-lane-unparseable"></a>config-lane-unparseable | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 
 ## Setup
 
