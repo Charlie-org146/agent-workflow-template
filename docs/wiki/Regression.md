@@ -69,7 +69,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 - The owner never writes or manages tests; the loop does.
 - The loop never runs the full suite on every goal.
 - A known failure does not block a run.
-- Working out which rows a change affects never keeps every file's text in memory for the whole run (#4151).
 
 ## Success metrics
 - No goal's test run in the loop takes over 15 minutes (REG-7's budget floor), and the nightly full suite runs green or every failure has its issue.
