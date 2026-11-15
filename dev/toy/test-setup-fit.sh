@@ -7,6 +7,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 export HOME="$d/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 no() { echo "FAIL setup-fit: $1"; exit 1; }
 setup="python3 $here/skills/workflow-setup/scripts/setup.py"
 

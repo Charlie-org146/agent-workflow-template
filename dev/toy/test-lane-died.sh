@@ -14,6 +14,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 "$here/dev/toy/make.sh" "$T" >/dev/null
 export LOOP_FLOW="$T/flow.json"; echo '{"limit": 60}' > "$LOOP_FLOW"
 export LOOP_LANES_DIR="$T/lanes" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"

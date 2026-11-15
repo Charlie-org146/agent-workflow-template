@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory() as tmp:
     os.makedirs(repo)
     for cmd in (["init", "-q"], ["remote", "add", "origin", "https://github.com/o/r.git"]):
         subprocess.run(["git"] + cmd, cwd=repo, check=True)
-    env = dict(os.environ, LOOP_SCHEDULE_HOME=home, LOOP_AGENTS_DIR=agents, LOOP_SCHEDULE_PLATFORM="linux", PYTHONUTF8="1")
+    env = dict(os.environ, LOOP_SCHEDULE_HOME=home, LOOP_AGENTS_DIR=agents, LOOP_SCHEDULE_PLATFORM="linux", PYTHONUTF8="1", HOME=tmp, USERPROFILE=tmp)
     done = subprocess.run([sys.executable, AUT, "local", "register", "--root", repo], capture_output=True, text=True, env=env)
     data = json.load(open(os.path.join(home, "repos.json"))) if os.path.exists(os.path.join(home, "repos.json")) else {"repos": {}}
     entries = list(data["repos"].values())

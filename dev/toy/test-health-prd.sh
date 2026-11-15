@@ -13,6 +13,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 d=${1:-$(mktemp -d)}; part=${2:-all}; rm -rf "${d:?}"; mkdir -p "$d"
 S="$here/skills/workflow-health/scripts"; H="python3 $S/health.py"
 export HOME="$d/home" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"; mkdir -p "$HOME" "$FAKE_GH_DIR"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

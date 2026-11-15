@@ -10,6 +10,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" || exit 1

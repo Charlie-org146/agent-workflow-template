@@ -12,6 +12,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_O
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
 export LOOP_FLOW="$d/flow.json" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" TOY_LOG="$d/ran.log"
