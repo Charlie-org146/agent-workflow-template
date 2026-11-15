@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""The numbers the docs state that the repo can check: skills, feature pages, and a feature page's criteria and tests.
+"""The numbers the docs state that the repo can check: skills, feature pages, a page's criteria and tests.
 
 docs.py check, audit and publish call counts() through docs.counts(root). prose() is the text a reader sees: no fenced
-or indented code, comments or code spans. The page map of docs.py (map_path, read_map, write_map),
-and render.py's cadence(), config_of(), entries() and automation_block(), moved unchanged, and real(), which drops block-only commits from its staleness, sit at the end.
+or indented code, comments or code spans. At the end, moved unchanged: the page map of docs.py (map_path, read_map,
+write_map), render.py's cadence(), config_of(), entries() and automation_block(), and real(), which drops block-only commits from its staleness.
 """
 import fnmatch
 import glob
@@ -16,7 +16,7 @@ import sys
 import criteria
 import pageformat
 
-# No terminal, no waiting: a prompt from git must fail, not block.
+# No terminal: a git prompt must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -24,9 +24,8 @@ if not sys.stdin or not sys.stdin.isatty():
 WORDS = "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
 NOUNS = {"skill": "skill", "skills": "skill", "feature page": "page", "feature pages": "page", "criterion": "criteria",
          "criteria": "criteria", "test": "test", "tests": "test"}
-# One word may sit between the number and the noun, but only a word meaning "all of them" ("eight workflow-ready
-# skills"); any other word ("two delivery skills", "3 regression tests") is a part or a label, so nothing is read.
-# "defect" is the one part read: "2 defect tests" is checked against the page's defect tests.
+# One word may sit between number and noun only if it means "all of them" ("eight workflow-ready skills"); any other
+# ("two delivery skills") is a part or label, so nothing is read. "defect" is the one part read ("2 defect tests").
 ALL = r"workflow(?:-ready)?|installed|available|bundled|shipped|listed|defect"
 CLAIM = re.compile(r"(?<![-\w.,/#])(\d+|%s)[ \t]+(?:(%s)[ \t]+)?(skills?|feature pages?|criteri(?:on|a)|tests?)\b"
                    % ("|".join(WORDS), ALL), re.I | re.ASCII)
@@ -41,8 +40,8 @@ ID = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 def prose(text):
     """The lines a reader sees as prose: no fenced or indented code, comments or code spans; None if a fence never
-    closes. Indented code is CommonMark's: four columns past the list item's text (or the margin), after a blank line;
-    a code line stays as an empty line so the paragraphs around it stay apart."""
+    closes. Indented code is CommonMark's: four columns past the list item's text (or margin), after a blank line;
+    it stays as an empty line so paragraphs stay apart."""
     lines, fence, comment, blank, code, column = [], None, False, True, False, None
     for raw in text.splitlines():
         line = QUOTE.sub("", raw)
@@ -50,7 +49,7 @@ def prose(text):
         opener = FENCE.match(line)
         if fence is not None:
             if opener and opener.group(1)[0] == fence[0] and len(opener.group(1)) >= len(fence) and not opener.group(2).strip():
-                fence, blank = None, True  # indented code may follow a closing fence
+                fence, blank = None, True
             continue
         flat = line.expandtabs(4)
         indent = len(flat) - len(flat.lstrip(" "))
@@ -63,14 +62,14 @@ def prose(text):
             if BREAK.match(flat) and indent < 4:
                 column = None
             elif item and indent < (column or 0) + 4:
-                gap = len(item.group(3)) if flat[item.end():].strip() else 0  # marker, then 1-4 spaces to the text
+                gap = len(item.group(3)) if flat[item.end():].strip() else 0
                 column = len(item.group(1) + item.group(2)) + (gap if 0 < gap <= 4 else 1)
             elif indent == 0 and (was_blank or opener or re.match(r"[#|]", flat)):
-                column = None  # a paragraph, heading, fence or table at the margin ends the list
+                column = None  # ends the list
         if opener and not comment:
             fence, code = opener.group(1), False
             continue
-        line = re.sub(r"(`+)(?!`).*?(?<!`)\1(?!`)", "", line)  # code spans of any backtick length
+        line = re.sub(r"(`+)(?!`).*?(?<!`)\1(?!`)", "", line)  # code spans
         marked = NOT_A_COUNT in line
         if comment:
             end = line.find("-->")
@@ -79,7 +78,7 @@ def prose(text):
         if "<!--" in line:
             comment, line = True, line[:line.index("<!--")]
         lines.append(line + (" " + NOT_A_COUNT if marked else ""))
-        blank = blank or bool(re.match(r" {0,3}#{1,6}(\s|$)", flat))  # indented code may follow a heading
+        blank = blank or bool(re.match(r" {0,3}#{1,6}(\s|$)", flat))
     return lines if fence is None else None
 
 
@@ -89,8 +88,8 @@ def text_of(path):
 
 
 def counts(root, folder, rows, on):
-    """Numbers the docs state that the repo can check, as (COUNT, file, detail) rows. `folder` is the wiki folder,
-    `rows` the page map (.loop/docs.tsv) and `on` the criteria setting."""
+    """Checkable numbers the docs state, as (COUNT, file, detail) rows. `folder` is the wiki folder, `rows` the page map
+    (.loop/docs.tsv), `on` the criteria setting."""
     real_root = os.path.realpath(root)
     skills = len(glob.glob(os.path.join(root, "skills", "*", "SKILL.md")))
     pages = [p for p in rows if p != "Home" and p not in pageformat.GENERATED and os.path.exists(os.path.join(root, folder, p + ".md"))
@@ -105,17 +104,16 @@ def counts(root, folder, rows, on):
     texts, ids = {}, {}
     for rel in names:
         full = os.path.realpath(os.path.join(root, rel))
-        if full.startswith(real_root + os.sep) and os.path.isfile(full):  # only regular files inside the repo
-            with open(full, encoding="utf-8", errors="replace") as handle:
-                texts[rel] = handle.read()
+        if full.startswith(real_root + os.sep) and os.path.isfile(full):  # regular files inside the repo only
+            texts[rel] = text_of(full)
             page = os.path.basename(rel)[:-3] if rel.startswith(folder + "/") else ""
             if on and page in pages:
-                part, keep = [], False  # the Requirements section, read with prose()'s code rules
+                part, keep = [], False  # the Requirements section
                 for line in prose(texts[rel]) or []:
                     keep = bool(re.match(r"##\s+(Requirements|Criteria)\s*$", line)) or (keep and not line.startswith("## "))
                     part += [line] if keep else []
                 ids[rel] = [m.group(1) for _, m in criteria.criteria_of(part) if m]
-    known = set(i for found in ids.values() for i in found)
+    known = {i for f in ids.values() for i in f}
     found = []
     for rel, text in texts.items():
         lines = prose(text)
@@ -128,66 +126,58 @@ def counts(root, folder, rows, on):
                 "criteria": len(mine) if mine is not None else None,
                 "test": sum(len(linked.get(i, [])) + len(defects.get(i, [])) for i in mine) if mine is not None else None,
                 "defect": sum(len(defects.get(i, [])) for i in mine) if mine is not None else None}
-        # A line naming this file's own criterion is about that criterion: skipped whole. A line naming another page's
-        # criterion still has its skills and pages counts read; its criteria and tests counts are about that one.
+        # A line naming this file's own criterion is skipped whole. One naming another page's criterion still has its
+        # skills and pages counts read; its criteria and tests counts are about that one.
         alone = lambda s: NOT_A_COUNT in s or own.intersection(ID.findall(s))
         other = lambda s: known.intersection(ID.findall(s))
         paras = []
-        for line in lines:  # soft-wrapped lines joined; a skipped line stays alone, so its skip covers only itself
+        for line in lines:  # soft-wrapped lines joined; a skipped line stays alone
             new = not paras or not line.strip() or re.match(r"\s*([|#]|$)", paras[-1]) or re.match(r"\s*([-*+|#>]|\d+\.)", line)
             new = new or alone(line) or alone(paras[-1]) or other(line) or other(paras[-1])
             paras.append(line) if new else paras.__setitem__(-1, paras[-1] + " " + line.strip())
         for line in paras:
             if alone(line):
-                continue  # marked, or about one of this page's criteria
+                continue
             for match in CLAIM.finditer(line):
                 said, word, noun = match.group(1).lower(), (match.group(2) or "").lower(), match.group(3).lower()
-                if BOUND.search(line[:match.start()]):  # "up to 6 criteria" is a limit, not a count
-                    continue
-                if said == "one":  # "one test" is nearly always "a single test", not a count
+                if BOUND.search(line[:match.start()]) or said == "one":  # a limit ("up to 6"), or "a single test"
                     continue
                 said = int(said) if said.isdigit() else WORDS.index(said) + 1
                 if said != 1 and noun in ("skill", "feature page", "test", "criterion"):
-                    continue  # a singular noun after a number above one is a compound, as in "two test doubles"
+                    continue  # "two test doubles"
                 kind = NOUNS[noun]
                 if word == "defect":
                     if kind != "test":
                         continue
                     kind = "defect"
                 if kind in ("criteria", "test", "defect") and other(line):
-                    continue  # about another page's criterion
+                    continue
                 want = real[kind]
                 if want is not None and said != want:
                     found.append(("COUNT", rel, "says %s, the repo has %d" % (match.group(0), want)))
     return found
 
 
-# The page map of docs.py, moved here unchanged (size); docs.py imports it back.
+# The page map of docs.py, moved here (size); docs.py imports it back.
 def map_path(root):
     return os.path.join(root, ".loop", "docs.tsv")
 
 
-def read_map(root):
-    rows = {}
+def map_rows(root):
     try:
         with open(map_path(root)) as handle:
-            for line in handle:
-                if line.strip() and not line.startswith("#"):
-                    page, _, paths = line.rstrip("\n").partition("\t")
-                    paths = paths.partition("\t")[0]
-                    rows[page] = [item.strip() for item in paths.split(",") if item.strip()]
+            return [line.rstrip("\n").split("\t") + ["", ""] for line in handle if line.strip() and line[0] != "#"]
     except OSError:
-        pass
-    return rows
+        return []
+
+
+def read_map(root):
+    return {r[0]: [item.strip() for item in r[1].split(",") if item.strip()] for r in map_rows(root)}
 
 
 def sources(root):
-    """The optional third column of docs.tsv: a page's PRD source (`url:<link>`, `mcp:<server>:<resource>`, or `page`)."""
-    try:
-        rows = [x.rstrip("\n").split("\t") for x in open(map_path(root)) if x.strip() and x[0] != "#"]
-    except OSError:
-        return {}
-    return {r[0]: r[2].strip() for r in rows if len(r) > 2 and r[2].strip()}
+    """docs.tsv's optional third column: a page's PRD source (`url:<link>`, `mcp:<server>:<resource>`, or `page`)."""
+    return {r[0]: r[2].strip() for r in map_rows(root) if r[2].strip()}
 
 
 def write_map(root, rows):
@@ -204,11 +194,11 @@ BLOCK = re.compile(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:e
 
 def real(root, changed, paths):
     """changed ('<sha> <subject>' lines) without the commits whose change to paths lies only inside the generated
-    blocks of README.md or a Home.md: a block refresh (or setup's insert) says nothing about the pages mapped there."""
+    blocks of README.md or a Home.md: a block refresh says nothing about the pages mapped there."""
     if not changed:
         return changed
     git = lambda *a: subprocess.run(["git", "-C", root] + list(a), capture_output=True, text=True)  # noqa: E731
-    names = {}  # one git call for every commit's files
+    names = {}  # one git call for all commits
     for chunk in git("log", "--no-walk=unsorted", "--no-renames", "--format=%x01%h", "--name-only",
                      *[c.split()[0] for c in changed], "--", *paths).stdout.split("\x01")[1:]:
         sha, *files = chunk.strip("\n").split("\n")
@@ -216,14 +206,14 @@ def real(root, changed, paths):
 
     def blocks_only(sha, rel):
         old, new = git("show", "%s^:%s" % (sha, rel)), git("show", "%s:%s" % (sha, rel))
-        bare = lambda t: re.sub(r"\n{3,}", "\n\n", BLOCK.sub("", t)).strip()  # noqa: E731 an insert leaves a blank line
+        bare = lambda t: re.sub(r"\n{3,}", "\n\n", BLOCK.sub("", t)).strip()  # noqa: E731
         return not old.returncode and not new.returncode and bare(old.stdout) == bare(new.stdout)
 
     return [c for c in changed if not (names.get(c.split()[0]) and all(
         os.path.basename(rel) in ("README.md", "Home.md") and blocks_only(c.split()[0], rel) for rel in names[c.split()[0]]))]
 
 
-def cadence(cron):  # render.py's Automation block cadence, moved here unchanged
+def cadence(cron):
     if cron == "off":
         return "off"
     f = cron.split()
@@ -252,8 +242,8 @@ BUILT_IN = (("health", "Checks the repo and files each finding.", "health_cron",
 
 
 def entries(root):
-    """Built-in routines, then the `automation` entries of config: {name, does, cadence, runs: github:FILE | mac:LABEL |
-    claude:TASK, enabled?, last_run?}; an entry named like a built-in replaces it."""
+    """Built-in routines, then config's `automation` entries {name, does, cadence, runs: github:FILE | mac:LABEL |
+    claude:TASK, enabled?, last_run?}; one named like a built-in replaces it."""
     cfg, out = config_of(root), []
     for name, does, key, default, flow in BUILT_IN:
         mail = str(cfg.get("digest_mail", "cloudflare"))
@@ -267,8 +257,8 @@ def entries(root):
 
 
 def runbook_link(root, entry, wiki):
-    """The wiki link to the Runbook of an entry's routine: its `runbook` key, else the .loop/routines.tsv routine named like it
-    (health -> health-round); '' when there is none or the repo has no GitHub origin."""
+    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it
+    (health -> health-round); '' when none or no GitHub origin."""
     try:
         with open(os.path.join(root, ".loop", "routines.tsv"), encoding="utf-8") as handle:
             held = [line.split("\t")[:2] for line in handle if line.strip() and line[0] != "#" and "\t" in line]
@@ -289,9 +279,9 @@ def automation_block(root):
     for e in entries(root):
         kind, _, target = str(e.get("runs", "")).partition(":")
         on = e.get("enabled", True) is not False and str(e.get("cadence")) != "off"
-        last, owed = str(e.get("last_run") or "docs.py automation"), "none"  # a live time in the page would change on every run
+        last, owed = str(e.get("last_run") or "docs.py automation"), "none"  # no live time: it would change every run
         if kind == "local":
-            where, state = "this Mac's local schedule", "on" if on else "off"  # health never runs in Actions: no workflow is owed
+            where, state = "this Mac's local schedule", "on" if on else "off"
         elif kind == "github":
             there = os.path.exists(os.path.join(flows, target))
             where, state = ("GitHub Actions (%s)" % target) if there else "not deployed", "on" if on and there else "off"
@@ -301,7 +291,7 @@ def automation_block(root):
             state, owed = "on (declared)" if on else "off (declared)", "confirm it is live: docs.py automation"
         else:
             where, state, owed = "not set", "off", 'add "runs": github:FILE, mac:LABEL or claude:TASK'
-        if e["name"] == "digest email" and on and str(e.get("cadence")) != "off":
+        if e["name"] == "digest email" and on:
             owed = "set the digest address and keys in the schedule's mail.env on the Mac (yours, outside git)" if owed == "none" else owed
         rows.append([runbook_link(root, e, wiki) or str(e["name"]), str(e.get("does", "")), state, cadence(str(e.get("cadence", ""))), where, last, owed])
     head = ["Routine", "What it does", "State", "Cadence", "Runs on", "Last run", "Owed by you"]
@@ -321,7 +311,7 @@ def perm_root_of(repo):
 
 
 def perm_rows(path):
-    """The (line number, fields) of a tab file, comments and blanks skipped; [] when the file is absent."""
+    """The (line number, fields) of a tab file, comments and blanks skipped; [] when absent."""
     try:
         with open(path, encoding="utf-8-sig") as handle:
             return [(n, line.rstrip("\r\n").split("\t")) for n, line in enumerate(handle, 1)
@@ -331,7 +321,7 @@ def perm_rows(path):
 
 
 def perm_declared(root):
-    """{routine: [(kind, rule, why)]} and the problems in the file itself."""
+    """{routine: [(kind, rule, why)]} and the file's problems."""
     out, bad = {}, []
     for number, row in perm_rows(os.path.join(root, ".loop", "permissions.tsv")):
         routine, kind, rule = (row + ["", "", ""])[:3]
@@ -345,7 +335,7 @@ def perm_declared(root):
 
 
 def perm_matches(rule, tool, text):
-    """Does a permission rule `Tool(spec)` cover `text` for that tool: a prefix rule `x:*`, else a glob."""
+    """Does rule `Tool(spec)` cover `text` for that tool: a prefix rule `x:*`, else a glob."""
     found = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
     if not found or found.group(1) != tool:
         return False

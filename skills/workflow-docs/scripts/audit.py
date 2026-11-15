@@ -26,8 +26,9 @@ import criteria
 import docs
 import entry
 import prd
+from deployments import slurp
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal, no waiting.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -38,8 +39,7 @@ REWRITE = {"CAP", "SCRIPT", "STALE", "UNWRITTEN", "PROBLEM", "SECTIONS", "CRITER
 def release_trouble(root):
     """A tag with neither a CHANGELOG section nor a GitHub release has no release note."""
     try:
-        with open(os.path.join(root, "CHANGELOG.md")) as handle:
-            notes = handle.read()
+        notes = slurp(os.path.join(root, "CHANGELOG.md"))
     except OSError:
         notes = ""
     out = []
@@ -60,8 +60,7 @@ def scenarios(root):
 
 
 def untested(root):
-    """(id, reason) for each Reviewed requirement (its own line, or its page's PRD) with no test, or none that passed
-    since its wording appeared."""
+    """(id, reason) per Reviewed requirement (own line or its page's PRD) with no test, or none passed since its wording."""
     linked, _ = criteria.test_rows(root)
     rows = {row[0]: row for row in criteria.tsv(root, "regression.tsv")}
     ran = {row[0]: row[2] for row in criteria.tsv(root, "regression-runs.tsv") if row[1] == "PASS"}
@@ -103,7 +102,6 @@ def audit(root, base, dry):
     if config_criteria(root):
         would += ["%s: re-render the Tests table" % name for name in render(not fix)]
     found = []
-    # The entry point and a stale agent block are generated: rewriting them is mechanical (a missing block needs agents.py).
     stale = [path for kind, path, why in entry.problems(root) if path == entry.ENTRY and kind in ("STALE", "MISSING") or
              kind == "STALE" and path in entry.agent_files(docs.config(root)) and "ENTRY_MARKER" not in why]
     if stale and fix:
@@ -112,10 +110,10 @@ def audit(root, base, dry):
     for line in would:
         print("%s %s" % ("WOULD FIX" if dry else "FIXED", line))
     found += docs.problems(root, base) + docs.contract(root) + docs.counts(root) + release_trouble(root)
-    found = [item for item in found if item[0] != "CHANGED"]  # kept for older pages; Usage is gone
+    found = [item for item in found if item[0] != "CHANGED"]
     found += scenarios(root) if config_criteria(root) else []
     if dry:
-        found = [item for item in found if item[0] != "TESTS" and item[:2] != ("STALE", "Tests")]  # render fixes these
+        found = [item for item in found if item[0] != "TESTS" and item[:2] != ("STALE", "Tests")]
     for kind, page, detail in found:
         print("%s %s: %s" % ("REWRITE" if kind in REWRITE else kind, page, "%s %s" % (kind, detail) if kind in REWRITE else detail))
     todo = untested(root) if config_criteria(root) else []
@@ -134,7 +132,6 @@ def config_criteria(root):
 
 
 # check --own: a stale page the goal's own diff doesn't touch is a FINDING, not a failure.
-import subprocess
 
 
 def own_git(root, *args):
@@ -150,17 +147,17 @@ def own_base(root, name):
 
 
 def own_touched(root, ref, paths, head="HEAD"):
-    """True when the goal's diff (merge-base of ref and head, to head) touches any of the page's mapped paths."""
+    """True when the goal's diff (merge-base of ref and head, to head) touches any mapped path of the page."""
     out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
-    return out is None or bool(out)  # no diff answer: judge the page as the goal's own
+    return out is None or bool(out)
 
 
 def own_split(root, found, notes, rows, name="main", head="HEAD"):
     """(found, notes) with each STALE line of an untouched mapped page moved to notes as FINDING. head: the goal's branch
-    when this runs somewhere else, such as the main checkout, where HEAD is the base itself."""
+    when run elsewhere, such as the main checkout, where HEAD is the base itself."""
     ref = own_base(root, name)
     if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
-        return found, notes  # no base, or on the base branch itself (main's own run keeps every STALE)
+        return found, notes
     keep, moved = [], []
     for item in found:
         if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
@@ -171,7 +168,7 @@ def own_split(root, found, notes, rows, name="main", head="HEAD"):
 
 
 def probe(cmd):
-    """The finished command, or None when the program is missing (no gh, or no launchctl off the Mac): the state is then unknown."""
+    """The finished command, or None when the program is missing (no gh, or no launchctl off the Mac)."""
     try:
         return subprocess.run(cmd, capture_output=True, text=True)
     except OSError:
@@ -198,8 +195,8 @@ def live(root):
 
 
 def owned(root, rel, body, rule):
-    """True when every requirement line is owner-reviewed text: its seal holds, and it is main's own line or its id is in
-    the reviews log; no line main has was dropped. A line nobody reviewed is not owned, so the page stays LOCKED."""
+    """True when every requirement line is owner-reviewed: its seal holds, and it is main's own line or its id is in the
+    reviews log; no line main has was dropped. An unreviewed line is not owned, so the page stays LOCKED."""
     name = rule["sections"][1]
     shown = criteria.git("show", "origin/main:" + rel, check=False)
     main = [(line, tuple(below), m.group(1)) for line, m, below in criteria.blocks(dict(criteria.sections(shown)).get(name) or []) if m]
@@ -219,11 +216,10 @@ def owned(root, rel, body, rule):
 
 
 def relock(root):
-    """Relock (DOC-2): re-stamp each reviewed page whose only change is another goal's owner-reviewed line (R moved, all lines owned)."""
+    """DOC-2: re-stamp each reviewed page whose only change is another goal's owner-reviewed line (R moved, all owned)."""
     rule, done = criteria.rules(), []
     for rel in criteria.pages(root):
-        with open(os.path.join(root, rel)) as handle:
-            text = handle.read()
+        text = slurp(os.path.join(root, rel))
         line, why = prd.review_of(text, rule)
         match = prd.REVIEW.match(line or "")
         parts = criteria.sections(text)
@@ -254,8 +250,8 @@ def req_key(ident):
 
 
 def requirements(body):
-    """{id: text} of the requirements an external PRD states: a top-level bullet, numbered item or table row that starts
-    with an id (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), its Reviewed stamp and markup dropped."""
+    """{id: text} of an external PRD's requirements: a top-level bullet, numbered item or table row starting with an id
+    (`- XX-1: **Unreviewed** text`, `| XX-1 | text |`), Reviewed stamp and markup dropped."""
     found = {}
     for line in body.replace("\r\n", "\n").split("\n"):
         match = REQ.match(line)
@@ -266,8 +262,8 @@ def requirements(body):
 
 
 def mirror_of(path):
-    """({id: text}, owned) of the repo's copy of a PRD: owned is True when sync wrote it (it opens with SYNC_MARK) or
-    nothing is there yet, False for any other file, which sync never touches."""
+    """({id: text}, owned) of the repo's copy of a PRD: owned when sync wrote it (opens with SYNC_MARK) or nothing is
+    there yet; any other file is never touched."""
     try:
         with open(path, encoding="utf-8") as handle:
             lines = handle.read().replace("\r\n", "\n").split("\n")
@@ -277,9 +273,8 @@ def mirror_of(path):
 
 
 def sync(root, dry=False, texts=None):
-    """Compare each feature's external PRD with the repo's copy, .loop/prd/<Page>.md, and rewrite that copy to match
-    (unless dry). It reads the source and never writes to it: nothing here can. Exit 1 only for drift under --dry-run; a
-    source that can't be read is `not connected` and changes nothing."""
+    """Compare each feature's external PRD with the repo's copy, .loop/prd/<Page>.md, and rewrite that copy (unless dry).
+    It never writes the source. Exit 1 only for drift under --dry-run; an unreadable source is `not connected`."""
     import counting
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:

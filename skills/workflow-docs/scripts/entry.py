@@ -28,15 +28,15 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SKILLS = os.path.dirname(os.path.dirname(HERE))  # the folder holding the workflow-* skills
+SKILLS = os.path.dirname(os.path.dirname(HERE))  # the workflow-* skills
 TEMPLATES = os.path.join(os.path.dirname(HERE), "references", "commands.md")
-REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")  # every repo setting, default and line
+REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")
 ENTRY = os.path.join(".loop", "START.md")
 OPEN, CLOSE = "<!-- workflow-loop -->", "<!-- /workflow-loop -->"
 AGENT_FILES = ["CLAUDE.md", "AGENTS.md"]
 PARTS = ("Loop", "Release", "Operation and workers", "Docs", "Regression", "Health", "Settings")
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal: a git or gh prompt must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -47,8 +47,7 @@ def version_key(text):
 
 def read(path, default=""):
     try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read()
+        return open(path, encoding="utf-8").read()
     except OSError:
         return default
 
@@ -89,7 +88,7 @@ def section(text, name):
 
 
 def reference():
-    """{setting: (default, explanation)} for every repo setting in workflow-setup's generated reference, if installed."""
+    """{setting: (default, explanation)} for every repo setting in workflow-setup's reference, if installed."""
     part = read(REFERENCE).split("## Repo settings", 1)[-1].split("\n## ", 1)[0] if os.path.exists(REFERENCE) else ""
     rows = re.findall(r"^\| `([a-z_]+)` \| `(.*?)` \| (.*?) \|$", part, re.M)
     out = {}
@@ -102,14 +101,14 @@ def reference():
 
 
 def settings(cfg):
-    """[(key, value, explanation)]: every repo setting, the config's value or else its default, plus any other key held."""
+    """[(key, value, explanation)]: every repo setting, the config's value or its default, plus any other key held."""
     known, helps = reference(), cfg.get("_help") if isinstance(cfg.get("_help"), dict) else {}
-    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics is optional: shown once the repo sets it
+    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics: shown once set
     return [(k, cfg[k] if k in cfg else known[k][0], helps.get(k) or known.get(k, ("", ""))[1]) for k in keys]
 
 
 def purpose(problem):
-    """The first sentence of Problem that says what the feature is for (a leading 'Skill: ...' sentence is skipped)."""
+    """The first sentence of Problem saying what the feature is for (a leading 'Skill: ...' sentence is skipped)."""
     first = sentence(problem)
     rest = problem[len(first):].strip()
     return sentence(rest) if re.match(r"^Skills?:", first) and rest else first
@@ -137,13 +136,13 @@ def features(root, cfg):
         text = read(os.path.join(folder, name)) if name.endswith(".md") else ""
         if not (section(text, "Problem") and re.search(r"^## Requirements", text, re.M)):
             continue
-        mile = re.search(r"^Milestone:\s*(\S.*)$", text, re.M)
+        page, mile = name[:-3], re.search(r"^Milestone:\s*(\S.*)$", text, re.M)
         first = section(text, "Problem").split("\n\n")[0]
-        if first.startswith("- "):  # a Problem written as bullets: the first bullet says what the feature is for
+        if first.startswith("- "):  # bullets: the first says what it is for
             first = re.split(r"\n(?=- )", first)[0][2:]
         problem = " ".join(first.split())
-        items = [commands(skill) for skill in owned(root, name[:-3])]
-        rows.append("| %s | %s | %s | %s |" % (name[:-3], cell(mile.group(1) if mile else "none"), cell(purpose(problem)),
+        items = [commands(skill) for skill in owned(root, page)]
+        rows.append("| %s | %s | %s | %s |" % (page, cell(mile.group(1) if mile else "none"), cell(purpose(problem)),
                                               cell(" / ".join(items) or "none")))
     return rows
 
@@ -175,7 +174,7 @@ def render(root):
 
 
 def skills():
-    """(name, description) for each installed workflow-* skill beside this one, in name order."""
+    """(name, description) of each installed workflow-* skill beside this one, in name order."""
     out = []
     for name in sorted(os.listdir(SKILLS)):
         head = read(os.path.join(SKILLS, name, "SKILL.md")) if name.startswith("workflow-") else ""
@@ -198,16 +197,15 @@ def block():
 
 
 def held_block(text):
-    """The marked block, LF endings and no final newline (a file may end at the close marker), or None."""
+    """The marked block, LF endings, no final newline (a file may end at the close marker), or None."""
     found = re.search(r"%s.*?%s" % (re.escape(OPEN), re.escape(CLOSE)), text, re.S)
     return found.group(0).replace("\r\n", "\n") if found else None
 
 
 def raw_text(path):
-    """A file as written: line endings untouched (empty when missing or not UTF-8)."""
+    """A file as written, line endings untouched (empty when missing or not UTF-8)."""
     try:
-        with open(path, encoding="utf-8", newline="") as handle:
-            return handle.read()
+        return open(path, encoding="utf-8", newline="").read()
     except (OSError, ValueError):
         return ""
 
@@ -228,21 +226,24 @@ def installed():
         return ""
 
 
+def ours(root):
+    """Whether root is the template's own checkout."""
+    return os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep)
+
+
 def lagging(root, cfg):
     """True when the installed skills are newer than the repo's template_version (never for the template's own checkout)."""
-    if os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep) or not installed():
-        return False
-    return version_key(installed()) > version_key(cfg.get("template_version"))
+    return not ours(root) and bool(installed()) and version_key(installed()) > version_key(cfg.get("template_version"))
 
 
 NOTE = "this repo is at v%s, the template is at v%s, run the migrate goal"
 
 
 def lag(root, new=""):
-    """(line, refusal): the version nag for a repo behind the installed template, '' when current. The refusal is set only for
-    goal.py new (new = the slug) when both majors are known and differ; a migrate- slug is exempt."""
+    """(line, refusal): the version nag for a repo behind the installed template, '' when current. The refusal is set only
+    for goal.py new (new = the slug) when both majors are known and differ; a migrate- slug is exempt."""
     want, held = installed(), config(root).get("template_version")
-    if not want or os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep):
+    if not want or ours(root):
         return "", ""
     known = isinstance(held, str) and re.fullmatch(r"\d+\.\d+\.\d+", held)
     if known and version_key(held) >= version_key(want):
@@ -261,14 +262,14 @@ def problems(root):
     lag = lagging(root, cfg)
     fix = "Fix: python3 <workflow-docs>/scripts/entry.py write (or docs.py audit)"
     note = NOTE % (cfg.get("template_version") or "0", installed())
-    # MISSING applies once a repo was set up by a version that writes the entry point (it holds template_version), or
-    # to the template's own checkout; a repo adopted before keeps passing until update writes it.
-    owed = cfg.get("criteria") and (cfg.get("template_version") or os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep))
+    # MISSING applies once a repo was set up by a version that writes the entry point (it holds template_version), or to
+    # the template's own checkout; an older adopted repo passes until update writes it.
+    owed = cfg.get("criteria") and (cfg.get("template_version") or ours(root))
     if have is None:
         if owed:
             found.append(("MISSING", ENTRY, "no entry point (ENTRY_MISSING). " + fix))
     elif have != want:
-        own = ["| `%s` |" % k for k in cfg if not k.startswith("_")]  # rows the repo's config holds, not new defaults
+        own = ["| `%s` |" % k for k in cfg if not k.startswith("_")]  # rows the config holds, not new defaults
         rows = lambda text: sorted(r for r in section(text, "Settings table").splitlines() if r.startswith(tuple(own)))
         data_same = section(have, "Features") == section(want, "Features") and rows(have) == rows(want)
         found.append(("LAG", ENTRY, note + " (ENTRY_LAG)") if lag and data_same else ("STALE", ENTRY, "differs from its sources (ENTRY_STALE). " + fix))
@@ -295,18 +296,16 @@ def write(root):
     text = render(root)
     changed = read(path, None) != text
     if changed:
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(text)
+        open(path, "w", encoding="utf-8").write(text)
     names, want = [], block().rstrip("\n")
     for name in agent_files(config(root)) if skills() else []:
         full = os.path.join(root, name)
         raw = raw_text(full)
         span = re.search(r"%s.*?%s" % (re.escape(OPEN), re.escape(CLOSE)), raw, re.S)
         if not span or raw.count(OPEN) != 1 or raw.count(CLOSE) != 1:
-            continue  # no block, or stray markers: agents.py wire refuses those with the fix (AGENTS_MARKER)
+            continue  # no block, or stray markers: agents.py wire refuses those (AGENTS_MARKER)
         if span.group(0).replace("\r\n", "\n") != want:
-            with open(full, "w", encoding="utf-8", newline="") as handle:
-                handle.write(raw[:span.start()] + want.replace("\n", "\r\n" if "\r\n" in raw else "\n") + raw[span.end():])
+            open(full, "w", encoding="utf-8", newline="").write(raw[:span.start()] + want.replace("\n", "\r\n" if "\r\n" in raw else "\n") + raw[span.end():])
             names.append(name)
     return (["FIXED " + ENTRY] if changed else []) + ["FIXED " + n for n in names]
 
@@ -340,21 +339,15 @@ def main():
     return 0
 
 
-def perm_covered(allow, tool, text):
-    import counting
-    return any(counting.perm_matches(rule, tool, text) for kind, rule, _ in allow if kind == "allow")
-
-
 def perm_check(root):
     """The findings, one line each, for every routine in .loop/routines.tsv."""
     import counting
     import render
     table, findings = counting.perm_declared(root)
     if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
-        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"]             if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
+        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"] if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
     try:
-        with open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8") as handle:
-            written = (json.load(handle).get("permissions") or {})
+        written = json.load(open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8")).get("permissions") or {}
     except (OSError, ValueError):
         written = {}
     for _, row in counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")):
@@ -366,7 +359,7 @@ def perm_check(root):
             if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
                 findings.append("NOT WRITTEN %s %s %s. Fix: audit.py permissions write" % (routine, kind, rule))
         for tool, text in render.perm_needs(root, routine, page):
-            if mine and not perm_covered(mine, tool, text):
+            if mine and not any(counting.perm_matches(r, tool, text) for k, r, _ in mine if k == "allow"):
                 findings.append("UNCOVERED %s: the Runbook names %s(%s) and no allow row covers it" % (routine, tool, text))
         for kind, rule, _ in mine:
             inner = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)

@@ -34,7 +34,7 @@ import re
 import subprocess
 import sys
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal, no waiting.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -42,11 +42,11 @@ if not sys.stdin or not sys.stdin.isatty():
 
 LINE = re.compile(r"^- ([A-Z]{2,5}-\d+): \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\* (\S.*?)(?: <!-- reviewed (\w+) -->)?$")
 ID = re.compile(r"^[A-Z]{2,5}-\d+$")
-GOAL = re.compile(r"^[a-z0-9][a-z0-9-]*:\d+$")  # slug:N, a goal's done line
+GOAL = re.compile(r"^[a-z0-9][a-z0-9-]*:\d+$")  # slug:N
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
 SCRIPT_FILE = re.compile(r"[\w./-]*\w\.(?:py|sh|bash|zsh|js|mjs|cjs|ts|rb|pl|php|ps1|bat)\b", re.I)
-from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, link_of, link_page, owner_words, rules  # noqa: E402,F401
+from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, link_of, link_page, owner_words, rules, slurp  # noqa: E402,F401
 
 
 def git(*args, check=True):
@@ -71,7 +71,7 @@ def subs(lines, number):
 
 
 def seal_of(text, below=()):
-    """A requirement's seal: of its text and sub-bullet lines joined by newlines (no sub-bullets: the old seal)."""
+    """A requirement's seal: of its text and sub-bullet lines joined by newlines."""
     return seal("\n".join([text] + list(below)))
 
 
@@ -93,7 +93,7 @@ def pages(root):
 
 
 def sections(text):
-    """The page's level-2 sections, as (name, lines), outside code fences."""
+    """The page's level-2 sections as (name, lines), outside code fences."""
     found, fenced = [], False
     for line in text.splitlines():
         if line.startswith("```"):
@@ -114,7 +114,7 @@ def tsv(root, name):
 
 
 def test_rows(root):
-    """Requirement and workflow tests as {criterion: [row id]}, plus ids linked to none."""
+    """Requirement and workflow tests as {criterion: [row id]}, plus loose ones."""
     linked, loose = {}, []
     for row in tsv(root, "regression.tsv"):
         if row[6] == "defect":
@@ -124,7 +124,7 @@ def test_rows(root):
             continue
         if key:
             linked.setdefault(key, []).append(row[0])
-        elif GOAL.match(row[3]):  # a done-line row (issue 128): fine while its goal has that done line
+        elif GOAL.match(row[3]):  # a done-line row (issue 128)
             slug, number = row[3].rsplit(":", 1)
             have = done_count(root, slug)
             if int(number) > have:
@@ -146,7 +146,7 @@ def done_count(root, slug):
 
 
 def defect_rows(root):
-    """Defect tests as {criterion whose page they guard: [row id]}; a row with goal '-' belongs to no page."""
+    """Defect tests as {criterion they guard: [row id]}; goal '-' belongs to no page."""
     found = {}
     for row in tsv(root, "regression.tsv"):
         if row[6] == "defect" and row[1] != "draft" and ID.match(row[3]):
@@ -165,13 +165,13 @@ def cmd_render(args):
 
 
 def criteria_of(lines):
-    """(line, LINE match or None) per requirement line: indented lines (sub-bullets) belong to the line above, and the
-    group headings (### Functional, ### Non-functional) and a group's 'None' are not requirements."""
+    """(line, LINE match or None) per requirement line: indented lines belong to the line above; group headings
+    (### Functional, ### Non-functional) and a group's 'None' are not requirements."""
     return [(line, match) for line, match, _ in blocks(lines)]
 
 
 def blocks(lines):
-    """criteria_of, with each line's sub-bullets."""
+    """criteria_of with each line's sub-bullets."""
     return [(line, LINE.match(line), subs(lines, number)) for number, line in enumerate(lines)
             if line.strip() and not line[:1].isspace() and not line.startswith("### ") and line.strip() != "None"]
 
@@ -189,24 +189,23 @@ def contract(root, names, seen):
     linked, loose = test_rows(root)
     head, books = rule["sections"], {page: [] for page in names}
     for page in names:
-        with open(os.path.join(root, folder_of(root), page + ".md")) as handle:
-            text = handle.read()
+        text = slurp(os.path.join(root, folder_of(root), page + ".md"))
         parts = sections(text)
         have = [name for name, _ in parts]
-        if rule["usage"] in have:  # the owner dropped Usage (2026-11-13): commands live in each skill's command reference
+        if rule["usage"] in have:
             found.append(("USAGE", page, "has a %s section. Fix: remove it; the commands are in the skill's Command map and "
                           "references/commands.md, and the README's How to use table" % rule["usage"]))
             have = [name for name in have if name != rule["usage"]]
         numbered = {name: (start, lines) for name, start, lines in pf.parts(text)}
         link = link_of(text, counting.sources(root).get(page, ""))
-        if link:  # DOC-1: a link-form page holds the PRD line and the generated sections; the linked document is the PRD
+        if link:
             books[page] = numbered.get(rule["runbook"], (0, []))[1]
             got = link_page(root, page, text, link, parts, numbered, rule, seen, linked, set(on))
             unread, found = unread or any(x[0] == "UNREAD" for x in got), found + got
             continue
-        books[page] = numbered.get(rule["runbook"], (0, []))[1]  # read before the order check, so a misordered page is not also "no runbook"
+        books[page] = numbered.get(rule["runbook"], (0, []))[1]
         want = head[:1] + [x for x in (rule["runbook"],) if x in have] + head[1:]
-        if rule["deploy"] in have:  # optional, after Success metrics (before Tests)
+        if rule["deploy"] in have:
             want = want[:-1] + [rule["deploy"]] + want[-1:]
         if have != want:
             hint = ""
@@ -254,7 +253,7 @@ def contract(root, names, seen):
             found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], table(root, ids, linked))] if x]
     if "runbook" in on:
         found += deployments.owed(root, books, rule["runbook"])
-        if not any(item[0] == "SECTIONS" for item in found):  # a misordered page defines no ids here: say that, not a false Serves finding
+        if not any(item[0] == "SECTIONS" for item in found):
             found += deployments.unserved(books, seen, rule["runbook"])
     if "tests" in on:
         found += [("FORMAT", "Tests:1", "Tests: DOC-9 one anchor per row (got %s). Fix: rename one row id" % x)
@@ -273,8 +272,7 @@ def rewrite(root, change):
     """Run change(match, subs) over every criterion line. It returns a new line, or None to leave it."""
     touched, names = [], []
     for rel in pages(root):
-        with open(os.path.join(root, rel)) as handle:
-            text = handle.read()
+        text = slurp(os.path.join(root, rel))
         lines = text.split("\n")
         for number, line in enumerate(lines):
             match = LINE.match(line)
@@ -298,8 +296,8 @@ def today():
 
 
 def mark_all(args, make, page_change):
-    """Validate every argument, then change the requirement lines (make) and the PRD review lines (page_change).
-    Nothing is written unless every argument is good."""
+    """Validate every argument, then change the requirement lines (make) and PRD review lines (page_change); nothing is
+    written unless every argument is good."""
     if not args.user:
         sys.exit("REFUSED: only the owner changes a review. Fix: pass --user when their own words said to.")
     words = " ".join(os.environ.get("LOOP_OWNER_WORDS", "").split())
@@ -320,7 +318,7 @@ def mark_all(args, make, page_change):
         sys.exit("REFUSED: no requirement %s (an ID matches ^[A-Z]{2,5}-\\d+$). Nothing was changed. Fix: use an ID "
                  "from a page's Requirements." % ", ".join(missing))
     held = dict(touched)
-    known = {os.path.basename(rel)[:-3]: rel for rel in pages(root)}  # exact names, keyed like rewrite()'s
+    known = {os.path.basename(rel)[:-3]: rel for rel in pages(root)}
     for name in names:
         rel = known.get(name)
         if name == "Home" or not rel:
@@ -337,7 +335,7 @@ def mark_all(args, make, page_change):
     write(root, held.items())
     log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop")
     os.makedirs(log, exist_ok=True)
-    with open(os.path.join(log, "reviews.tsv"), "a") as handle:  # who said so, for the owner to check
+    with open(os.path.join(log, "reviews.tsv"), "a") as handle:
         handle.write("%s\t%s\t%s\t%s\n" % (datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                      args.command, ",".join(args.ids), words or "(typed at a terminal)"))
     return found, names
