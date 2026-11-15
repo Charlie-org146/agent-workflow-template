@@ -27,3 +27,9 @@ The board's Issues (board_lines.issues) and the check-in's Needs you show "merge
 
 ## Open questions
 None for the owner: the setting is per repo (config.json), and a per-goal switch is not built.
+
+## Approval
+The owner approved building it. The operation session recommended "a goal builds the review hold described in DEL-13",
+and relayed the owner's reply, word for word: "Yes". The requirement text stays as it is: "Where a review hold is set,
+the release step merges only after the operation session records that it has read the diff, and the board shows a merge
+waiting on review."
