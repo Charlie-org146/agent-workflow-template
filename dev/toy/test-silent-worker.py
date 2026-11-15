@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/graph.py
-# reads: skills/workflow-monitoring/scripts/live_board.py
-"""MON-8: a worker with no report for 30 minutes shows under Needs you in the check-in; a fresh one does not."""
+# reads: skills/workflow-monitoring/scripts/live_board.py skills/workflow-monitoring/scripts/board_status.py
+"""MON-8: a worker with no report for 30 minutes shows under Needs you in the check-in; a fresh one does not. #4359: when
+no goal.py, flow.py or lane process runs for it, the line is STALLED and names the worker to restart."""
 import datetime
 import json
 import os
@@ -53,6 +54,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
                "pid": os.getpid(), "updated": stamp(minutes), "report": {"at": stamp(minutes), "text": "working"}}
         with open(os.path.join(runs, slug + ".json"), "w") as f:
             json.dump(run, f)
+    os.environ["LOOP_PROCS"] = "python goal.py pr quietone" + chr(10) + "python flow.py freshone qa"  # both goals have a process running
     out = checkin.render(tmp, NOW)
     section = needs(out)
     check("quietone" in section and "sent nothing" in section, "MON-8: a worker silent for 31 minutes shows under Needs you")
@@ -63,4 +65,14 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
         json.dump({"base": "main", "silent_minutes": 60}, f)
     os.environ.pop("LOOP_SESSION_QUIET")
     check("quietone" not in needs(checkin.render(tmp, NOW)), "MON-8: silent_minutes 60 lets a 31 minute silence pass")
+    with open(os.path.join(tmp, ".loop", "config.json"), "w") as f:
+        json.dump({"base": "main"}, f)
+    os.environ["LOOP_PROCS"] = "python goal.py pr quietone"
+    check("STALLED quietone" not in needs(checkin.render(tmp, NOW)), "#4359: a quiet goal with a process running for it is not STALLED")
+    os.environ["LOOP_PROCS"] = "python flow.py freshone qa"  # nothing runs for quietone any more
+    section = needs(checkin.render(tmp, NOW))
+    check("STALLED quietone: no process since " in section and "; restart " in section,
+          "#4359: a goal quiet for 31 minutes with no process of its own is flagged STALLED naming the worker to restart")
+    check("STALLED freshone" not in section and "quietone: its worker has sent nothing" not in section,
+          "#4359: a goal that reported recently is not STALLED, and a stalled one is not also listed as silent")
 sys.exit(1 if failed else 0)

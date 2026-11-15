@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/pool.py
+# reads: skills/workflow-monitoring/scripts/pool.py skills/workflow-release/scripts/merge.py
 """#3922: every goal at pr sees one queue order. A goal's place is its first-join time, written once; a retry touches only its
 heartbeat, and only the heartbeat drives expiry. Three goals retrying in a loop never reorder or livelock."""
 import json
@@ -13,6 +13,8 @@ import time
 here = os.path.dirname(os.path.abspath(__file__))
 pool_py = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts", "pool.py")
 sys.path.insert(0, os.path.dirname(pool_py))
+sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-release", "scripts"))
+import merge  # noqa: E402
 import pool  # noqa: E402
 
 failed = []
@@ -64,6 +66,17 @@ with tempfile.TemporaryDirectory() as tmp:
     check(pool.pr_turn(runs, "g3") == "", "when the first goal leaves, the next in the one order has its turn")
     listed = subprocess.run([sys.executable, pool_py, "pr_turn", "--list"], cwd=tmp, capture_output=True, text=True).stdout.splitlines()
     check([line.split()[1] for line in listed] == ["g3"] and listed[0].startswith("1 g3 joined="), "pool.py pr_turn --list prints the queue in its one order: %s" % listed)
+    goal("g5")
+    pool.pr_turn(runs, "g5")
+    with open(os.path.join(runs, "g5.json"), "w") as handle:  # its pull request merged; the release step has not finished
+        json.dump({"slug": "g5", "status": "running", "step": "pr", "release": "merged"}, handle)
+    check("g5" not in [n for _, n, _ in pool.pr_order(runs, "g3")] and not os.path.exists(os.path.join(folder, "g5.beat")),
+          "a goal whose pull request merged is free in the queue, and its ticket and beat are removed")
+    goal("g6")
+    pool.pr_turn(runs, "g6")
+    merge.leave_queue(os.path.join(runs, "g6.json"), "g6")
+    check(not os.path.exists(os.path.join(folder, "g6")) and not os.path.exists(os.path.join(folder, "g6.beat")),
+          "merge.py removes a merged goal's pr-queue ticket and beat")
     os.chdir(here)
 if not failed:
     print("PASS: #3922: three goals retrying in a loop see one pr queue order and never livelock")
