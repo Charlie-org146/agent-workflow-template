@@ -205,10 +205,10 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         print("%s %s%s" % (state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
         if signal and state != "PASS":  # workflow-regression/references/commands.md
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
-        if state == "FAIL" and reuse:
-            print("\n".join("    " + line for line in text.rstrip().splitlines()[-20:]), file=sys.stderr)
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
         tail = rowtail.shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
+        if state == "FAIL" and reuse:  # the lane shows the row's text, a `| grep -q` stage made loud (#3911), never a bare FAIL
+            print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal})
     if left:
@@ -312,12 +312,17 @@ def owed_read(root):
     return {c[0]: c for c in cells}
 
 
-def owed_clear(root, row_id):
+def owed_clear(root, row_id, live=False):
     held = owed_read(root)
-    if held.pop(row_id, None):
+    mine = held.pop(row_id, None)
+    if mine:
         with open(os.path.join(root, ".loop", OWED), "w", newline="\n") as out:
             out.write("".join("\t".join(c) + "\n" for c in held.values()))
-        print("OWED CLEARED %s: close its issue" % row_id)
+        if mine[3] and live:  # the other machine's to-do is done: close it (#3907)
+            gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
+            print("OWED CLEARED %s: closed %s" % (row_id, mine[3]))
+        else:
+            print("OWED CLEARED %s: close its issue" % row_id)
 
 
 def unproven(root, rows, seen):

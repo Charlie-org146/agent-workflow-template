@@ -254,6 +254,12 @@ def picks(root, picked, paths, old, ok, cache, memo):
     return found
 
 
+def rank(because):
+    """Run order (#531): a new or changed row, a rerun, a row that reaches a changed file, then the root runners and the picks."""
+    return 0 if because.startswith("new row") else 1 if because.startswith(("failure", "skipped")) else 3 if because.startswith(
+        ("root runner", "names")) else 2
+
+
 def plan(root, picked, record):
     """(to run ids in tier order, reused ids, usable record or None, why no plan or ''); prints its plan lines."""
     global BASE
@@ -274,7 +280,7 @@ def plan(root, picked, record):
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
     todo = [row["id"] for row in picked if why[row["id"]]]
-    todo.sort(key=lambda rid: why[rid].startswith(("root runner", "names")))  # the goal's own rows first, the picks after
+    todo.sort(key=lambda rid: rank(why[rid]))  # the goal's own new and changed rows first, then reruns, reaches, the picks last
     reused = [rid for rid in why if ok and rid in old["rows"] and not why[rid]]
     print("\n".join(lines)) if lines else None
     summary(picked, todo, why, len(loose) + len(gone), (full, text), old if ok else None)
