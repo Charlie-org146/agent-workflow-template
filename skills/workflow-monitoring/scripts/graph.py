@@ -379,7 +379,8 @@ def refuse(state):
 def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.py, loaded here
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     import pool
-    return getattr(pool, "pr_" + op)(*args)
+    import slot
+    return getattr(slot if op in ("hold", "free", "before") else pool, "pr_" + op)(*args)
 
 
 def merge_lock(common):

@@ -338,9 +338,10 @@ def where(script, base=None):
         return  # the base check reports a fetch it cannot make
     behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
     if behind.isdigit() and int(behind):
+        went = __import__("restamp").forward(main, base)  # merge.py moves it itself; the running code is old, so it still stops
         sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
-                 "rules. Fix: git -C %s merge --ff-only origin/%s, then run it again." % (
-                     main, behind, "" if behind == "1" else "s", base, main, base))
+                 "rules. %s: git -C %s merge --ff-only origin/%s, then run it again." % (
+                     main, behind, "" if behind == "1" else "s", base, "Done now" if went else "Fix", main, base))
 
 
 def main():

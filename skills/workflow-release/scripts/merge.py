@@ -32,6 +32,7 @@ import sys
 
 import autorelease
 import release
+import restamp
 import wiki
 
 
@@ -72,25 +73,6 @@ def reach(top, paths):
     if done.returncode or not found or re.search(r"^(UNMAPPED|DELETED) ", done.stdout, re.M):
         return None  # a planner that fails or can't map a path can't clear the merge
     return set(found.group(1).split(", ")) - {"none", ""}
-
-
-def wiki_only(top, cfg, old, new):
-    """True when NEW descends from OLD (the head the pr lane passed) and every commit between only adds or edits .md pages
-    in the base branch's wiki folder (wiki_dir from origin/<base>'s config: the branch can't widen it), no SKILL.md."""
-    if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
-        return False
-    head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
-    shown = run(["git", "show", "%s:.loop/config.json" % (head or "origin/main")], cwd=top)
-    try:
-        folder = (json.loads(shown.stdout).get("wiki_dir") if shown.returncode == 0 else None) or "docs/wiki"
-    except (ValueError, AttributeError):
-        folder = "docs/wiki"
-    done = run(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)  # a move shows its source
-    rows = [(line.split("\t")[0].split(), line.split("\t")[1:]) for line in done.stdout.split("\n") if line]
-    return not done.returncode and bool(rows) and all(
-        len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
-        and p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md"
-        for m, p in rows)
 
 
 def base_moved(state, cfg, top):
@@ -275,7 +257,9 @@ def main():
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % args.slug)
     if pods:
         pods.refuse(state)
+        restamp.wait(pods, common, args.slug)
         pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
+    restamp.apply(top, cfg, state, args.slug, wiki)  # a Reviewed page stale only through mapped code is re-stamped first (#3867)
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known = info.get("state", "")
@@ -291,7 +275,7 @@ def main():
         if known != "OPEN":
             sys.exit("REFUSED: the pull request %s is %s, not open." % (state["pr"], known or "unknown"))
         tested = state.get("pr_head")
-        if tested and info.get("headRefOid") and info["headRefOid"] != tested and wiki_only(top, cfg, tested, info["headRefOid"]):
+        if tested and info.get("headRefOid") and info["headRefOid"] != tested and restamp.wiki_only(top, cfg, tested, info["headRefOid"]):
             print("NOTE: the pull request head moved only by wiki page commits (wiki.py prepare); merging %s" % info["headRefOid"][:12])
             tested = info["headRefOid"]  # only wiki pages changed since the lane: no row's code moved
         if tested and info.get("headRefOid") and info["headRefOid"] != tested:

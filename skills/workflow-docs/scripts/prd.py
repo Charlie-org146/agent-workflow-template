@@ -34,7 +34,7 @@ import criteria
 MARKER = "<!-- workflow-docs -->"
 PLACEHOLDER = "Write this page from what is really in the repo."
 REVIEW = re.compile(r"^Review: \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\*"
-                    r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?$")
+                    r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?(?: <!-- kept [\w.-]+ -->)?$")
 KEYS = "PRNMU"
 def names(rule):
     """Section names in fingerprint order: Problem, Requirements, Non-goals, Success metrics, Usage."""

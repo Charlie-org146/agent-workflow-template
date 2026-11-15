@@ -56,7 +56,7 @@ TABLE = [
     ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column."),
     ("ci_levels", REPO, "nightly", "Target of the scheduled and tag regression runs: nightly (every row) or land."),
     ("time_budget_minutes", REPO, 240, "Active minutes before no new step starts; 0 is none."),
-    ("max_merge_rounds", REPO, 3, "Merge rounds goal.py pr may take before the goal waits."),
+    ("max_merge_rounds", REPO, 8, "Merge rounds goal.py pr may take before the goal waits."),
     ("max_active_goals", REPO, 20, "Goals live at once (or parallel, if smaller); 0 is none."),
     ("plan_pause_percent", REPO, 80, "Weekly plan % above which no goal starts (pool.py usage N); 0 is off."),
     ("min_free_memory_gb", REPO, 4, "Free GB below which no lane or goal starts; 0 off."),

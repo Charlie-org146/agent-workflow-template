@@ -219,8 +219,9 @@ def real(root, changed, paths):
         bare = lambda t: re.sub(r"\n{3,}", "\n\n", BLOCK.sub("", t)).strip()  # noqa: E731 an insert leaves a blank line
         return not old.returncode and not new.returncode and bare(old.stdout) == bare(new.stdout)
 
-    return [c for c in changed if not (names.get(c.split()[0]) and all(
-        os.path.basename(rel) in ("README.md", "Home.md") and blocks_only(c.split()[0], rel) for rel in names[c.split()[0]]))]
+    return [c for c in changed if not (names.get(c.split()[0]) and (all(
+        os.path.basename(rel) in ("README.md", "Home.md") and blocks_only(c.split()[0], rel) for rel in names[c.split()[0]])
+        or __import__("docfresh").same_code(root, c.split()[0], names[c.split()[0]])))]  # comments only: nothing to describe (#3122)
 
 
 def cadence(cron):  # render.py's Automation block cadence, moved here unchanged
