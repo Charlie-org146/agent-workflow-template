@@ -10,6 +10,7 @@ import tempfile
 here = os.environ.get("TOY_HERE") or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(here, "skills", "workflow-regression", "scripts"))
 import lanes  # noqa: E402
+import tiers  # noqa: E402
 
 fails = []
 
@@ -53,6 +54,9 @@ def stale_rows(after):
         put(repo, ".loop/config.json", after)
         git(repo, "commit", "-qam", "config")
         run, reused, notes, why = lanes.plan(repo, selected, record, {}, {})
+        memo, cache = {"tsv": {}, "known": {}, "moved": []}, {}
+        lane = sorted(r["id"] for r in selected if tiers.reason(repo, r, record, True, head, cache, memo))  # what the pr lane runs
+        assert lane == sorted(run), (lane, sorted(run))
         return sorted(run)
 
 
