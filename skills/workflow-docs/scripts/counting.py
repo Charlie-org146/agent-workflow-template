@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """The numbers the docs state that the repo can check: skills, feature pages, a page's criteria and tests.
 
-docs.py check, audit and publish call counts() through docs.counts(root). prose() is the text a reader sees: no fenced
-or indented code, comments or code spans. At the end, moved here unchanged: docs.py's page map, render.py's cadence,
-config_of, entries and automation_block, and real() (drops block-only commits).
+docs.py check, audit and publish call counts() through docs.counts(root). prose() is the text a reader sees: no code,
+comments or code spans. Also here: docs.py's page map, render.py's cadence, config_of, entries, automation_block, real().
 """
 import ast
 import fnmatch
@@ -42,8 +41,7 @@ def git(root, *args):
 
 def prose(text):
     """Prose lines as a reader sees them: no fenced or indented code, comments or code spans; None if a fence never
-    closes. Indented code is CommonMark's: four columns past the list item's text (or margin), after a blank line; it
-    stays an empty line, keeping paragraphs apart."""
+    closes. Indented code is CommonMark's: four columns past the item's text, after a blank line; it stays empty."""
     lines, fence, comment, blank, code, column = [], None, False, True, False, None
     for raw in text.splitlines():
         line = QUOTE.sub("", raw)
@@ -91,8 +89,7 @@ def text_of(path):
 
 
 def counts(root, folder, rows, on):
-    """Checkable numbers the docs state, as (COUNT, file, detail) rows. `folder`: wiki folder, `rows`: page map (.loop/docs.tsv),
-    `on`: criteria setting."""
+    """Checkable numbers the docs state, as (COUNT, file, detail) rows; folder: wiki folder, rows: page map, on: criteria."""
     top = os.path.realpath(root) + os.sep
     skills = len(glob.glob(os.path.join(root, "skills", "*", "SKILL.md")))
     wiki = os.path.join(root, folder)
@@ -174,7 +171,7 @@ def read_map(root):
 
 
 def sources(root):
-    """docs.tsv's optional third column: a page's PRD source (`url:<link>`, `mcp:<server>:<resource>`, or `page`)."""
+    """docs.tsv's optional third column: a page's PRD source (url:, mcp: or page)."""
     return {r[0]: s for r in map_rows(root) if (s := r[2].strip())}
 
 
@@ -191,23 +188,20 @@ BLOCK = re.compile(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:e
 
 
 def code_only(root, sha, files):
-    """True when every file the commit changed is Python with the same syntax tree before and after, docstrings aside (#3122)."""
-    def tree(ref, rel):
+    """True when each changed file is Python with the same syntax tree before and after: comments, docstrings only (#3122)."""
+    drop = type("Drop", (ast.NodeTransformer,), {"visit_Expr": lambda self, n: None if isinstance(getattr(n.value, "value", 0), str) else n})
+
+    def tree(ref, f):
         try:
-            node = ast.parse(git(root, "show", ref + ":" + rel).stdout)
+            return ast.dump(drop().visit(ast.parse(git(root, "show", ref + ":" + f).stdout)))
         except (SyntaxError, ValueError):
             return None
-        for n in ast.walk(node):
-            body = getattr(n, "body", None)
-            if isinstance(body, list) and body and isinstance(body[0], ast.Expr) and isinstance(getattr(body[0].value, "value", None), str):
-                body[:] = body[1:] or [ast.Pass()]
-        return ast.dump(node)
     return bool(files) and all(f.endswith(".py") and tree(sha + "^", f) is not None and tree(sha + "^", f) == tree(sha, f) for f in files)
 
 
 def real(root, changed, paths):
-    """changed ('<sha> <subject>' lines) without the commits whose change to paths lies only inside the generated
-    blocks of README.md or a Home.md: a block refresh says nothing about the pages mapped there."""
+    """changed ('<sha> <subject>' lines) without the commits that only refresh a generated block of README.md or Home.md, or
+    only change comments in Python (code_only)."""
     if not changed:
         return changed
     names, shas = {}, [c.split()[0] for c in changed]  # one git call for all commits
@@ -255,8 +249,8 @@ BUILT_IN = (("health", "Checks the repo and files each finding.", "health_cron",
 
 
 def entries(root):
-    """Built-in routines, then config's `automation` entries {name, does, cadence, runs: github:FILE | mac:LABEL |
-    claude:TASK, enabled?, last_run?}; a same-named one replaces the built-in."""
+    """Built-in routines, then config's `automation` entries {name, does, cadence, runs, enabled?, last_run?}; a same-named
+    one replaces the built-in."""
     cfg, out = config_of(root), []
     for name, does, key, default, flow in BUILT_IN:
         mail = str(cfg.get("digest_mail", "cloudflare"))
@@ -270,8 +264,7 @@ def entries(root):
 
 
 def runbook_link(root, entry, wiki):
-    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it
-    (health -> health-round); '' if none or no GitHub origin."""
+    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it; '' if none."""
     try:
         with open(os.path.join(root, ".loop", "routines.tsv"), encoding="utf-8") as fh:
             held = [line.split("\t")[:2] for line in fh if line.strip() and line[0] != "#" and "\t" in line]
@@ -322,7 +315,7 @@ def perm_root_of(repo):
 
 
 def perm_rows(path):
-    """The (line number, fields) of a tab file, comments and blanks skipped; [] if absent."""
+    """The (line number, fields) of a tab file, comments and blanks skipped."""
     try:
         with open(path, encoding="utf-8-sig") as fh:
             return [(n, line.rstrip("\r\n").split("\t")) for n, line in enumerate(fh, 1)
@@ -346,7 +339,7 @@ def perm_declared(root):
 
 
 def perm_matches(rule, tool, text):
-    """Does rule `Tool(spec)` cover `text` for that tool: a prefix rule `x:*`, else a glob."""
+    """Does rule `Tool(spec)` cover `text`: a prefix rule `x:*`, else a glob."""
     found = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
     if not found or found.group(1) != tool:
         return False
