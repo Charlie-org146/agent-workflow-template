@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """The check-in (MON-4, MON-5): what operate.py prints each pass instead of the live board, in the one layout the reply
-hook checks. The board itself prints only for `report`, `dashboard` and "where do things stand".
+hook checks. The board prints only for `report`, `dashboard` and "where do things stand".
 
 usage: checkin.py [--since ISO]
 
   headline        one line: how many goals run, wait on you or are queued, and the session pool
   All sessions    one table row per live goal: session, repo, what it is for, status, progress, time left, latest
-  Re-plan         what replan.py changed since the last check-in, each with its reason (MON-10)
-  Auto-answered   what auto.py answered or sent to you since the last check-in, with the words that revert it (MON-11)
-  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' top-to-bottom graph; a
-                  `repo/slug` in depends-on is listed under `Between repos`; the legend prints once
+  Re-plan         what replan.py changed since the last check-in, with its reason (MON-10)
+  Auto-answered   what auto.py answered or sent since the last check-in, with the words that revert it (MON-11)
+  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' graph; a `repo/slug`
+                  in depends-on is listed under `Between repos`; the legend prints once
   Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, workers
-                  silent past silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees;
-                  or "Nothing needs you"
-  Coming up       the next expected step of each goal and what the owner will need to do
+                  silent past silent_minutes (MON-8; STALLED: nothing runs for it), the pool ask
+                  (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
+  Coming up       each goal's next expected step and what the owner will need to do
 
---since defaults to the last check-in time in <git common dir>/loop/checkin.json. Read-only.
+--since defaults to the last check-in in <git common dir>/loop/checkin.json. Read-only.
 """
 import argparse
 import datetime
@@ -60,7 +60,7 @@ def gather(root, at, stamp=None):
     taken = graph.assigned(found)
     states = {r["slug"]: mood(r, graph.classify(r, taken, at, cfg)) for r in runs}
     live = [r for r in runs if states[r["slug"]] not in ("merged", "retired") and shown(r)]
-    away = {}  # another pod's goals are not this machine's: one line per pod, "<pod>: N goals, last activity HH:MM"
+    away = {}  # another pod's goals: one line per pod, "<pod>: N goals, last activity HH:MM"
     for r in live:
         if graph.foreign(r):
             count, last = away.get(graph.foreign(r), (0, None))
@@ -99,7 +99,7 @@ def expected(root=None, at=None):
     root = bs.git("rev-parse", "--show-toplevel", cwd=root or None) or root
     at = at or datetime.datetime.now(datetime.timezone.utc)
     pod, here = [gather(root, at)], os.getcwd()
-    os.chdir(root)  # bd.followed() starts from the working directory
+    os.chdir(root)  # bd.followed() starts here
     try:
         followed = bd.followed()
     finally:
@@ -108,7 +108,7 @@ def expected(root=None, at=None):
         if os.path.realpath(path) != os.path.realpath(root):
             try:
                 pod.append(gather(path, at))
-            except Exception:  # one unreadable repo never hides the others
+            except Exception:  # one bad repo never hides the others
                 continue
     return [(g["name"], item["slug"]) for g in pod for item in g["live"] + g["queue"]]
 
@@ -125,7 +125,7 @@ def render(root=None, at=None, stamp=None):
         if os.path.realpath(path) != os.path.realpath(root):
             try:
                 others.append(gather(path, at))
-            except Exception as error:  # one unreadable repo never hides the others
+            except Exception as error:  # one bad repo never hides the others
                 broken.append((name, lb.plain(type(error).__name__, 40)))
     pod = [mine] + others
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
@@ -169,12 +169,14 @@ def render(root=None, at=None, stamp=None):
                       left=bs.left_time(r, g["runs"], at)) for r in g["live"]]
         blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"]) for q in g["queue"]]))
     out += ["", "Dependencies"]
-    spot = len(out)  # the graph goes here once Needs you is ranked and numbered
+    spot = len(out)  # the graph goes here once Needs you is numbered
     out += ["", "Needs you"]
     needs, readonly = [], []
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
-        if graph.foreign(run):  # another pod's goal: shown, never a question for this pod
+        if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
+            needs.append(line)
+        elif graph.foreign(run):  # another pod's goal: shown, never asked
             readonly += ["- %s asks (owned by %s, read-only here)" % (run["slug"], graph.foreign(run))] * (state == "waiting")
         elif state == "waiting":
             words = ask.get("words") or ["go on " + run["slug"]]
@@ -188,7 +190,7 @@ def render(root=None, at=None, stamp=None):
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
-    if ready and replan.plan_pause(cfg):  # MON-12: the weekly plan is nearly used
+    if ready and replan.plan_pause(cfg):  # MON-12: the weekly plan is used up
         needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.plan_pause(cfg)))
     if ready and replan.memory_hold(cfg):
         needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.memory_hold(cfg)))
@@ -203,7 +205,7 @@ def render(root=None, at=None, stamp=None):
                   for sid, item in sorted(found.items()) if item.get("state") == "archive"]
     elif why:
         needs.append(graph.pool_fix(why))
-    for sid, item in sorted((found or {}).items()):  # a retired goal's session still busy holds a slot nobody sees (122)
+    for sid, item in sorted((found or {}).items()):  # a retired goal's busy session holds a slot nobody sees (122)
         old = bs.read_json(os.path.join(folder, "runs", "%s.json" % item.get("slug"))) if item.get("state") == "busy" else None
         if isinstance(old, dict) and old.get("status") == "retired":
             needs.append("%s is retired but session %s is still busy; free it with pool.py return %s" % (
@@ -225,7 +227,7 @@ def render(root=None, at=None, stamp=None):
                 needs.append("%s/%s asks: %s; options: %s" % (g["name"], run["slug"], lb.plain(ask.get("ask"), 160),
                                                               " / ".join('"%s"' % w for w in ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
-    operation, asks = unattended.lines()  # MON-18: sends left, the loop's expiry, standing instructions
+    operation, asks = unattended.lines()  # MON-18: sends left, expiry, standing instructions
     needs += asks
     try:  # operate.py behind_ask: the main checkout is behind origin/main and a free worker must fast-forward it
         needs += [line for line in open(os.path.join(folder, "checkout-behind.txt")).read().splitlines()[:1] if line]
