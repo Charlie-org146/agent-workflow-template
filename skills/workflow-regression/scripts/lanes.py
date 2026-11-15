@@ -174,9 +174,10 @@ def widen(path):
     return "skills/%s/" % parts[1] if parts[0] == "skills" and len(parts) > 1 else path
 
 
-def references(root, text, folder, wide=True):
+def references(root, text, folder, wide=True, memo=None):
     """Repo paths a text names (folders end /) and whether it names the whole repo; wide=False: no widening, no
     skill-name words."""
+    memo = {} if memo is None else memo
     text = HERE_FORMS.sub("$here/", text)
     text = text if wide else re.sub(r"""(["'])/(skills|dev)/""", r"\1\2/", text)  # root + "/skills/x" -> skills/x
     found, whole = set(), bool(ROOT.search(text))
@@ -192,23 +193,16 @@ def references(root, text, folder, wide=True):
             if cand.split("/")[0] == ".git":  # git's own store: in a full clone .git/index names every file (issue 178)
                 continue
             full = os.path.join(root, cand)
-            if os.path.isdir(full):
+            if narrow.kind(memo, full) == "d":
                 cand = cand.rstrip("/") + "/"
                 found.add(widen(cand) if wide else cand)
-            elif os.path.isfile(full):
+            elif narrow.kind(memo, full) == "f":
                 found.add(widen(cand) if wide else cand)
     return found, whole
 
 
 def read(root, rel, cache):
-    texts = cache.setdefault("text", {})
-    if rel not in texts:
-        try:
-            with open(os.path.join(root, rel), errors="replace") as handle:
-                texts[rel] = handle.read(400000)
-        except OSError:
-            texts[rel] = None
-    return texts[rel]
+    return cache.setdefault("text", narrow.Texts()).load(root, rel)
 
 
 def scan(root, rel, cache):
@@ -216,7 +210,7 @@ def scan(root, rel, cache):
     files = cache.setdefault(None, {})
     if rel not in files:
         text = read(root, rel, cache) or ""
-        more, _ = references(root, text, os.path.dirname(rel))  # a script's own `cd "$here"` reads nothing by itself
+        more, _ = references(root, text, os.path.dirname(rel), True, cache.setdefault("kind", {}))  # a script's own `cd "$here"` reads nothing by itself
         if rel.endswith(".py"):
             more |= {os.path.join(os.path.dirname(rel), m + ".py") for m in modules(text)
                      if os.path.isfile(os.path.join(root, os.path.dirname(rel), m + ".py"))}
@@ -333,15 +327,19 @@ def no_effect(path):
     return any(path == n or (n.endswith("/") and path.startswith(n)) for n in NO_EFFECT)
 
 
+def named_in(root, rel, path, cache):
+    key = ("names", rel, path)
+    if key not in cache:
+        cache[key] = narrow.names(read(root, rel, cache) or "", path)
+    return cache[key]
+
+
 def names_any(root, command, paths, cache):
     """Whether a row's command, or a file it reaches, names one of paths (a file gone from the tree can't be mapped by reach)."""
     deps, _ = closure(root, command, cache)
     files = [p for p in deps if not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
-    texts = [command] + [read(root, p, cache) or "" for p in files]
-    for path in paths:
-        name = os.path.basename(path)
-        stem = re.escape(name[:-3]) if name.endswith(".py") else None  # `import stem` names a module without its path
-        if any(path in t or name in t or (stem and re.search(r"(?m)^\s*(?:from|import)\s+(?:[\w, ]*\b)?%s\b" % stem, t)) for t in texts):
+    for path in paths:  # each (file, path) answer is kept: rows share most files
+        if narrow.names(command, path) or any(named_in(root, p, path, cache) for p in files):
             return True
     return False
 
