@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import zlib
 
-# GIT_TERMINAL_PROMPT: the children here (taskkill, ps) never ask for input, so no prompt guard is needed
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # a child that asks for a password fails instead of waiting
 
 if os.name == "nt":
     import ctypes
