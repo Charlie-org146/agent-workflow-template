@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f85c3 U=03828777 --> <!-- kept v1-go-no-go@c61340c0 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
