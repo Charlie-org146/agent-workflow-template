@@ -610,6 +610,8 @@
 | <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | not run | - | local | 2026-11-15 |
 | <a id="t-queue-merged-free-4343"></a>queue-merged-free-4343 | requirement | MON-15 | not run | - | local | 2026-11-15 |
 | <a id="t-merge-leaves-queue-4343"></a>merge-leaves-queue-4343 | requirement | MON-15 | not run | - | local | 2026-11-15 |
+| <a id="t-stalled-no-process-4359"></a>stalled-no-process-4359 | requirement | MON-8 | not run | - | local | 2026-11-15 |
+| <a id="t-stalled-process-quiet-4359"></a>stalled-process-quiet-4359 | requirement | MON-8 | not run | - | local | 2026-11-15 |
 
 ## Regression
 
