@@ -581,6 +581,9 @@
 | <a id="t-runs-skips-non-dict"></a>runs-skips-non-dict | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-monitor-stray-runs-3862"></a>monitor-stray-runs-3862 | defect | [#3862](https://github.com/jcl2018/agent-workflow-template/issues/3862) open (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-app-refuses-headless-4184"></a>app-refuses-headless-4184 | defect | [#4184](https://github.com/jcl2018/agent-workflow-template/issues/4184) open (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-budget-fair-base-moved"></a>budget-fair-base-moved | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-budget-fair-failed-stays"></a>budget-fair-failed-stays | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-budget-fair-held-time"></a>budget-fair-held-time | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 
 ## Regression
 
