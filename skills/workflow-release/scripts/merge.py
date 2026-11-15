@@ -4,20 +4,18 @@
 usage: merge.py SLUG
 
 Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs
-the base's routines (refusing if one fails), merges, and releases (autorelease.py: bump, CHANGELOG, GitHub
-release); failure: `release_error`. Where .loop/docs.tsv maps pages, it first refuses while one is stale
-and after the merge publishes the wiki (wiki.py; refused: `wiki_error`).
+the base's routines (refusing if one fails), merges, and releases (autorelease.py; failure: `release_error`). Where
+.loop/docs.tsv maps pages, it first refuses while one is stale and after the merge publishes the wiki (wiki.py; refused:
+`wiki_error`). With "review_hold": true it refuses REVIEW_HOLD until review.py records a review of the head.
 Before merging it scans the branch and notes for private names, and holds the merge (REQUIREMENT_MISSING) while a
 criterion row the goal adds names a requirement ID no base wiki page names, where the base's pages use that prefix
-(else a NOTE). Takes <common>/loop/merge.lock (one per repo), refuses another pod's goal; a merged goal leaves
-the pr queue.
+(else a NOTE). Takes <common>/loop/merge.lock (one per repo), refuses another pod's goal; a merged goal leaves the queue.
 
 Also here, the release pull request (autorelease.py calls `merge.advance` when the base takes no direct push): it pushes
-the commit to `release/vX-<slug>`, opens `Release vX (<slug>)` with the notes as its body (scanned) and
-merges it with `gh pr merge --merge`, never `--admin`. `gh pr view` decides the next move: MERGED: VERSION at the merge
-commit must be vX (else RELEASE_VERSION_MISMATCH); OPEN: pending checks wait, a review or block records
-RELEASE_PR_BLOCKED, no passing status RELEASE_STATUS_FAILED or _UNTESTED, a conflict restarts with the next
-version; CLOSED: restart.
+`release/vX-<slug>`, opens `Release vX (<slug>)` with the notes as its body (scanned) and merges it with `gh pr merge
+--merge`, never `--admin`. `gh pr view` decides: MERGED: VERSION must be vX (else RELEASE_VERSION_MISMATCH); OPEN: pending
+checks wait, a review or block records RELEASE_PR_BLOCKED, no passing status RELEASE_STATUS_FAILED or _UNTESTED, a
+conflict restarts with the next version; CLOSED: restart.
 """
 import argparse
 import datetime
@@ -30,6 +28,7 @@ import sys
 
 import autorelease as ar
 import release
+import review
 import wiki
 
 
@@ -62,7 +61,7 @@ REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "
 
 
 def reach(top, paths):
-    """Row ids a change to PATHS can affect, or None for every row (unmapped, deleted, no planner)."""
+    """Row ids PATHS can affect, or None for every row (unmapped, deleted, no planner)."""
     if not paths:
         return set()
     if not os.path.exists(REACH):
@@ -158,7 +157,6 @@ def forget(state, why):
 
 
 def start(top, cfg, state):
-    """Push release/vX-<slug>, open its pull request, record release_pr."""
     base, slug = cfg.get("base", "main"), state["slug"]
     version = ar.push_release_commit(top, cfg, state, state["release_part"], to_branch=True)[0]
     branch = "release/v%s-%s" % (version, slug)
@@ -183,7 +181,7 @@ def pending(seen):
 
 
 def advance(top, cfg, state, again=False):
-    """(version, merge commit) once the release PR is merged, None while it waits."""
+    """(version, merge commit) once the release PR merges, else None."""
     if not state.get("release_pr"):
         start(top, cfg, state)
     url, version, slug = state["release_pr"], state["release_pr_version"], state["slug"]
@@ -242,7 +240,6 @@ def load(path):
 
 
 def leave_queue(path, slug):
-    """A merged goal leaves the pr queue (#4343)."""
     for name in (slug, slug + ".beat"):
         gone = os.path.join(os.path.dirname(os.path.dirname(path)), "pr-queue", name)
         os.path.exists(gone) and os.unlink(gone)
@@ -299,6 +296,10 @@ def main():
         if moved:
             print(moved[1], file=sys.stderr)
             return ar.reopen(state, moved[0])
+        why = review.held(cfg, state, new)
+        if why:
+            print(why, file=sys.stderr)
+            return review.wait(state)
         ar.stage_notes(top, state, cfg)
         ar.stage_part(top, state)
         if not state.get("branch") or run(["git", "fetch", "-q", "origin", state["branch"]], cwd=top).returncode:

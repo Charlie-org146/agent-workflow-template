@@ -174,6 +174,7 @@ def render(root=None, at=None, stamp=None):
     needs, readonly = [], []
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
+        run.get("review_wait") and needs.append("%s: merge waiting on review; review.py record %s" % (run["slug"], run["slug"]))
         if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
             needs.append(line)
         elif graph.foreign(run):  # another pod's goal: shown, never asked
