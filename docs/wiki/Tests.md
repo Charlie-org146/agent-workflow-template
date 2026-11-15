@@ -334,6 +334,18 @@
 | <a id="t-restamp-wording-locked-3867"></a>restamp-wording-locked-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-restamp-at-merge-3867"></a>restamp-at-merge-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-repo-delta"></a>milestone-sync-repo-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-source-delta"></a>milestone-sync-source-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-conflict"></a>milestone-sync-conflict | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-no-overwrite"></a>milestone-sync-no-overwrite | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-source"></a>milestone-sync-accept-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-repo"></a>milestone-sync-accept-repo | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-not-connected"></a>milestone-sync-not-connected | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-generic"></a>milestone-sync-generic | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-reopen"></a>milestone-sync-reopen | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-dropped-source"></a>milestone-sync-dropped-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-fails"></a>milestone-sync-accept-fails | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
@@ -1053,3 +1065,4 @@
 | <a id="t-pods-caps-3919"></a>pods-caps-3919 | defect | [#3919](https://github.com/jcl2018/agent-workflow-template/issues/3919) open (2026-11-15) | not run | - | local | 2026-11-14 |
 | <a id="t-defect-3854-long-pr-body"></a>defect-3854-long-pr-body | defect | [#3854](https://github.com/jcl2018/agent-workflow-template/issues/3854) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-defect-3939-lane-skips-node-modules"></a>defect-3939-lane-skips-node-modules | defect | [#3939](https://github.com/jcl2018/agent-workflow-template/issues/3939) closed (2026-11-15) | not run | - | local | 2026-11-15 |
+| <a id="t-listing-names-every-command"></a>listing-names-every-command | defect | done line package-cap-3:1 | not run | - | local | 2026-11-15 |

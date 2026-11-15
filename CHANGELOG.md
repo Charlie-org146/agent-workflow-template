@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.28.91 - 2026-11-15
+
+- List apply, forward and wiki-only; toy and row keep every command listed
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.90 - 2026-11-15
+
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Documentation: DOC-17 sub-bullet for milestone sync (owner records o31, o32)
+- milestone-sync: milestones.py, the docs.py sync hook and its toy
+- milestone-sync: Tests rows on the Documentation page, command reference
+- milestone-sync: review fixes (reopen, dropped source, utf-8 helper) and tests
+- milestone-sync: Tests rows for the review fixes
+- Merge origin/main into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.89 - 2026-11-15
 
 - No code changes
