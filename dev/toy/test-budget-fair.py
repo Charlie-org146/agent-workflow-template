@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/fit.py skills/workflow-monitoring/scripts/board_log.py skills/workflow-monitoring/scripts/held.py
+# reads: skills/workflow-delivery/scripts/fit.py skills/workflow-monitoring/scripts/board_log.py skills/workflow-monitoring/scripts/board_log.py
 """budget-fair (#4261): a pr lane lost to a moved base is held time, never charged to time_budget_minutes. Replays five
 15-minute lanes that each end in `merge refused (exit 2)` (BASE_MOVED) and `main moved, try not counted`, against the real
 fit.active_minutes / fit.budget_stop, and checks that a lane that really failed, and time truly spent on steps, stay charged."""
 import datetime
 import os
-import subprocess
 import sys
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 for part in ("workflow-delivery", "workflow-monitoring"):
     sys.path.insert(0, os.path.join(root, "skills", part, "scripts"))
 import fit  # noqa: E402
-import held  # noqa: E402
+import board_log  # noqa: E402
 
 fails = 0
 T0 = datetime.datetime(2026, 11, 14, 21, 0, 0, tzinfo=datetime.timezone.utc)
@@ -71,7 +69,5 @@ check("steps that ran before a refusal stay charged", minutes((0, "frozen 1 done
 check("a goal that truly runs past its budget is still stopped, lost lanes or not", "minutes spent" in stopped(*run(*lanes(5), (200, "stopped: x"), (200, "start qa"), (400, "qa done")), 300))
 real = [(0, "frozen 1 done lines")] + [(60 * i, "%s done" % s) for i, s in enumerate(("idea", "plan", "build", "review", "qa", "ship"), 1)]
 check("a goal that truly runs 360 minutes of steps is stopped at 300", "360 minutes spent" in stopped(*run(*real), 300))
-check("held.lost names the refusals and the pr lane before each", held.lost([m for m in ("t pr", "t merge refused (exit 2): x", "t try 1 failed", "t main moved, try not counted (1 of 5)")]) == {0, 1, 3})
-out = subprocess.run([sys.executable, os.path.join(scripts, "held.py"), "--help"], capture_output=True, text=True)
-check("held.py answers --help", out.returncode == 0 and "lost" in out.stdout)
+check("lost_lanes names the refusals and the pr lane before each", board_log.lost_lanes([m for m in ("t pr", "t merge refused (exit 2): x", "t try 1 failed", "t main moved, try not counted (1 of 5)")]) == {0, 1, 3})
 sys.exit(1 if fails else 0)

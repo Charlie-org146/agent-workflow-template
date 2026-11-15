@@ -12,10 +12,10 @@ and five lost lanes ran a budget of 400 out with the branch ready.
 1. **Log a held entry at the refusal.** `autorelease.reopen` and `pool.pr_moved` write an extra "held" entry and
    `flow_seconds` pauses after it. Cost: two release/pool edits. Risk: the lane time is already behind the entry, so the pause
    starts too late and the lost lane is still charged.
-2. **Read the lost lane out of the log at accounting time (chosen).** A new module `held.py` (workflow-monitoring) names the
+2. **Read the lost lane out of the log at accounting time (chosen).** `board_log.lost_lanes` (a new function in an existing script, because the package gate caps shipped files) names the
    gaps to drop: the gap that ends in a lost-lane entry (`merge refused (exit N)`, `main moved, try not counted`), and when
    that refusal follows a `pr` entry, the gap ending in that `pr` entry too (the lane that produced the pull request the base
-   then left behind). `flow_seconds` skips those gaps. Cost: one module and a three-line call in `board_log.py`. Risk: the
+   then left behind). `flow_seconds` skips those gaps. Cost: one function in `board_log.py` and a three-line call in `flow_seconds`. Risk: the
    rule must not drop a lane that really failed; a `try N failed` entry is not a lost lane and stays charged.
 
 ## Choice
@@ -30,7 +30,7 @@ lane really failed.
 2. #3878: the toy also replays a pr-queue wait, a hold, an owner answer and a stop around active time and reads only the active
    time; the row proves it red by breaking the pause rules. Anything #3878 still lists as open is closed with that proof in the
    pull request.
-3. Size: `board_log.py` is 8,412 bytes and grows by about 200; `held.py` is new and small; `fit.py`, `pool.py`, `autorelease.py`
+3. Size: `board_log.py` is 8,412 bytes and grows by about 200; `fit.py`, `pool.py`, `autorelease.py`
    and `merge.py` stay untouched.
 
 ## Open questions

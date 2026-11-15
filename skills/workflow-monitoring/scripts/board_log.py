@@ -12,7 +12,6 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
-from held import lost as lost_lanes  # noqa: E402
 
 FLOW = ("idea", "plan", "build", "review", "qa", "ship", "pr", "release")
 STEPS = FLOW[:-1]
@@ -99,6 +98,25 @@ WAIT = re.compile(r"waiting\b|[a-z]+ waits for the owner|[a-z]+ pending: |refuse
 
 def waiting(entry):
     return bool(WAIT.match((str(entry).split(" ", 1) + [""])[1]))
+
+
+# A pr lane lost to a moved base is held time, not active time (#4261): the main branch moving made merge.py refuse
+# (`merge refused (exit N)`, logged by autorelease.reopen) or pool.pr_moved log `main moved, try not counted`. The gap
+# before that entry is lost, and so is the gap before the `pr` entry just ahead of a refusal: the lane that opened the pull
+# request the base then left behind. A `try N failed` entry is the goal's own failure and stays charged.
+LOST = re.compile(r"merge refused \(exit \d+\)|main moved, try not counted")
+
+
+def lost_lanes(log):
+    """The indexes of the log entries whose preceding gap is a lane lost to a moved base (flow_seconds skips those gaps)."""
+    drop = set()
+    for index, entry in enumerate(log):
+        text = (str(entry).split(" ", 1) + [""])[1]
+        if LOST.match(text):
+            drop.add(index)
+            if text.startswith("merge refused") and index and (str(log[index - 1]).split(" ", 2) + ["", ""])[1].rstrip(":") == "pr":
+                drop.add(index - 1)
+    return drop
 
 
 def flow_seconds(run, at, held=None):
