@@ -35,7 +35,7 @@
   "judge_setup": "",
   "digest_owner": "",
   "routines": [],
-  "time_budget_minutes": 120,
+  "time_budget_minutes": 240,
   "token_budget": 3000000,
   "review_depth": "full",
   "_help": {
