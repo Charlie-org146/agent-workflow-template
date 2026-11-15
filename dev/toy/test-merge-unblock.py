@@ -118,7 +118,7 @@ if only in ("", "merge"):
     after = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("after the merge step's re-stamp nothing is stale (%s)" % after, not after)
     check("and the goal's branch got a re-stamp commit", "re-stamp pages for my-goal" in git("log", "-1", "--format=%s", "origin/goal").stdout)
-if only in ("", "ff"):
+if only in ("", "ff", "ffconflict"):
     tmp = tempfile.mkdtemp(prefix="merge-unblock-ff-")
     origin, repo, other = (os.path.join(tmp, n) for n in ("origin.git", "repo", "other"))
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", origin], capture_output=True)
@@ -135,6 +135,13 @@ if only in ("", "ff"):
     for step in (["add", "-A"], ["commit", "-q", "-m", "origin moves"], ["push", "-q", "origin", "main"]):
         subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + step, cwd=other, capture_output=True)
     git("fetch", "-q", "origin")
+    if only == "ffconflict":
+        write(".loop/regression-runs.tsv", "a\tpass\nm\tpass\nz\tskip\n")  # the line origin changed too: the stash apply conflicts
+        code, said = operate.fast_forward(repo, "main")
+        left = open(os.path.join(repo, ".loop", "regression-runs.tsv")).read().replace("\r", "")
+        check("a conflicting lane record never leaves the file unmerged (%s)" % git("status", "--porcelain").stdout.strip(), code == 0 and not git("ls-files", "-u").stdout.strip() and "<<<<" not in left)
+        check("the file is origin's, and the dirty results stay in the named stash the step prints", left == "a\tpass\nm\tpass\nz\tfail\n" and "operate-forward-" in said and "operate-forward-" in git("stash", "list").stdout)
+        sys.exit(1 if fails else 0)
     write(".loop/regression-runs.tsv", "a\tfail\nm\tpass\nz\tpass\n")
     check("a plain fast-forward refuses while the lane record is dirty", git("merge", "--ff-only", "-q", "origin/main").returncode != 0)
     check("a dirty lane record alone is stashed, the checkout moves", operate.fast_forward(repo, "main")[0] == 0 and git("rev-parse", "HEAD").stdout == git("rev-parse", "origin/main").stdout)
