@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/lane.py skills/workflow-regression/scripts/narrow.py skills/workflow-delivery/scripts/flow.py
+# reads: skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/lane.py skills/workflow-regression/scripts/tests.py skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/counting.py
 """Defects 3841, 3840, 3839 and 4184. usage: test-defects-a.py CASE (3841 | 3840 | 3839 | 4184); exit 0 when it holds.
 No model, no network: a throwaway repo, and gh is replaced by a function."""
