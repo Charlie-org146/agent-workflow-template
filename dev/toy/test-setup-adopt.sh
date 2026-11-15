@@ -30,6 +30,10 @@ state() { # a hash of the tree, the index, the branches, the stash and the home 
     find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; } | shasum
    find "$HOME" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum) | tr -d ' \n-'
 }
+snap() { # the same facts as state, as text, so a failure can show what changed
+  (cd "$1" && { git rev-parse HEAD; git branch -a; git stash list; git write-tree; git status --porcelain=v2 --untracked-files=all
+    find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; }; find "$HOME" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null)
+}
 tracked() { git ls-tree -r --name-only "$1"; }
 
 # SET-1 health first and last: HEALTH START before the first write line, the verdict last with each gap's fix.
@@ -177,11 +181,11 @@ fi
 # SET-8 a local setting in the committed config is refused, nothing written.
 if want set8-local-setting-refused; then
   mk ls; mkdir -p .loop; printf '{"base": "main", "allowed_tools": ["qz-secret-tool"]}\n' > .loop/config.json
-  before=$(state "$d/ls/repo")
+  before=$(state "$d/ls/repo"); snap "$d/ls/repo" > "$d/before.snap"
   out=$($setup 2>&1); rc=$?
   [ $rc = 1 ] && echo "$out" | grep -q 'REFUSED: .*\.loop/config.json:[0-9]* holds the local setting allowed_tools.*SETUP_PRIVATE_VALUE' || no "not refused: rc=$rc $(echo "$out" | tail -3)"
   echo "$out" | grep -q 'qz-secret-tool' && no "the refusal prints the value"
-  [ "$(state "$d/ls/repo")" = "$before" ] || no "the refusal left something written"
+  [ "$(state "$d/ls/repo")" = "$before" ] || { snap "$d/ls/repo" | diff "$d/before.snap" - | head -12; no "the refusal left something written"; }
   echo "PASS set8-local-setting-refused: a private-home key in the config is refused by name, nothing written"
 fi
 
