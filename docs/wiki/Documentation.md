@@ -138,6 +138,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
 | [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |
 | [docs-scripts-under-19000](Tests#t-docs-scripts-under-19000) | requirement | DOC-1 | Given the workflow-docs scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [template-in-commands](Tests#t-template-in-commands) | requirement | DOC-1 | Given the docs skill, when its page rules are read, then they live in references/commands.md and no separate template file ships. | not run |
+| [docs-scripts-import-by-name](Tests#t-docs-scripts-import-by-name) | requirement | DOC-1 | Given the docs scripts, when render.py and prd.py load a sibling script, then they import it by name through importlib and never call __import__. | not run |
 | [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-12 |
 | [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-12 |
 | [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |
