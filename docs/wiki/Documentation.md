@@ -136,6 +136,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
 | [stale-own-block-kept](Tests#t-stale-own-block-kept) | requirement | DOC-1 | Given a Settings, Automation or README block that differs from a fresh render, when docs.py check --own runs, then its STALE line is kept, never moved to a FINDING. | not run |
 | [notion-app-link-unread](Tests#t-notion-app-link-unread) | requirement | DOC-1 | Given a feature page whose PRD is an app.notion.com link and no reader, when the docs check runs, then it reports UNREAD instead of reading the sign-in page. | PASS 2026-11-13 |
 | [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |
+| [docs-scripts-under-19000](Tests#t-docs-scripts-under-19000) | requirement | DOC-1 | Given the workflow-docs scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-12 |
 | [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-12 |
 | [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |

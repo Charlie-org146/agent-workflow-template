@@ -165,6 +165,7 @@
 | <a id="t-skill-refusals-in-references"></a>skill-refusals-in-references | requirement | DEL-5 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-pr-body-no-home-3841"></a>pr-body-no-home-3841 | defect | [#3841](https://github.com/jcl2018/agent-workflow-template/issues/3841) open (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-release-red-checks-named"></a>release-red-checks-named | defect | [#3870](https://github.com/jcl2018/agent-workflow-template/issues/3870) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-release-scripts-under-19000"></a>release-scripts-under-19000 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 
 ## Documentation
 
@@ -310,6 +311,7 @@
 | <a id="t-sync-no-writer-posted"></a>sync-no-writer-posted | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-accept-no-writer"></a>sync-accept-no-writer | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-no-gh"></a>sync-no-gh | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-docs-scripts-under-19000"></a>docs-scripts-under-19000 | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
