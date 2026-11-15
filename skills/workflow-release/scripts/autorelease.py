@@ -118,6 +118,13 @@ def fail(state, text):
     sys.exit("REFUSED: " + text)
 
 
+def reopen(state, code):
+    """A merge refused because the head or base moved sends the goal back to its pr step, live, not done."""
+    state.update(status="running", step="pr")
+    release.save(state, "merge refused (exit %d): run goal.py pr, then merge.py again" % code)
+    return code
+
+
 def mergeable(state):
     """merge.py's gate: a finished goal with its pull request, or one a refused merge left failed with its release_error."""
     return bool(state.get("pr")) and (state.get("status") == "done" or (state.get("status") == "failed" and bool(state.get("release_error"))))

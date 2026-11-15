@@ -262,6 +262,7 @@ def main():
             cfg = json.load(handle)
     except (OSError, ValueError):
         sys.exit("REFUSED: no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
+    wiki.where(__file__, cfg.get("base"))
     if cfg.get("auto_merge") is not True:
         sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
     path = os.path.join(os.path.abspath(common), "loop", "runs", args.slug + ".json")
@@ -279,8 +280,9 @@ def main():
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known = info.get("state", "")
     if known != "MERGED":
+        head = "origin/" + state.get("branch", "")  # the pull request's own tip, wherever merge.py runs
         if wiki.top_of():
-            stale = wiki.pending(top, cfg)
+            stale = wiki.pending(top, cfg, head=head)
             if stale:
                 autorelease.fail(state, "stale wiki pages: %s. Fix: update %s, then run wiki.py prepare %s --commit." % (
                     ", ".join(stale), ", ".join(sorted({l.split(":")[0].split()[1] for l in stale if l.startswith("REWRITE ")})) or "them", args.slug))
@@ -295,14 +297,13 @@ def main():
         if tested and info.get("headRefOid") and info["headRefOid"] != tested:
             print("REFUSED (HEAD_MOVED): the pull request head moved since the pr lane passed (lane on %s, PR head %s). Fix: "
                   "goal.py pr %s, then merge.py %s" % (tested[:12], info["headRefOid"][:12], args.slug, args.slug), file=sys.stderr)
-            return 4
+            return autorelease.reopen(state, 4)
         moved = base_moved(state, cfg, top)
         if moved:
             print(moved[1], file=sys.stderr)
-            return moved[0]
+            return autorelease.reopen(state, moved[0])
         autorelease.stage_notes(top, state, cfg)
         autorelease.stage_part(top, state)
-        head = "origin/" + state.get("branch", "")  # the pull request's own tip, wherever merge.py runs
         if not state.get("branch") or run(["git", "fetch", "-q", "origin", state["branch"]], cwd=top).returncode:
             autorelease.fail(state, "could not fetch the goal branch %s to scan it; nothing was merged (PRIVATE_LIST)" % state.get("branch"))
         autorelease.check(state, top, "origin/" + cfg.get("base", "main"), {"release notes": autorelease.notes_text(state)}, True, head)

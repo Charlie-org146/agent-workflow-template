@@ -176,7 +176,7 @@ def usage_readme(root):
 
 # --- migration-check: one engine for `setup.py migration-check` (main) and health's migration rule. It writes nothing.
 SKILLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-STATE = ("MIG_TASK", "MIG_WIKI_ORPHAN", "MIG_WIKI_STALE", "MIG_WIKI_UNREADABLE")  # close on the Mac or in the wiki, after the merge
+STATE = ("MIG_HOOKS", "MIG_ROUTINES", "MIG_TASK", "MIG_WIKI_ORPHAN", "MIG_WIKI_STALE", "MIG_WIKI_UNREADABLE")  # close on the Mac or in the wiki, after the merge
 CLASSES = ("MIG_VERSION", "MIG_FILES", "MIG_SETTINGS", "MIG_BLOCKS", "MIG_AUTOMATION", "MIG_RUNBOOK", "MIG_FORMAT", "MIG_CHECKS") + STATE
 PROTOCOLS = "https:ssh:git:file"  # the only transports the wiki clone may use: an ext:: origin runs nothing
 SEMVER = re.compile(r"\d+\.\d+\.\d+")
@@ -274,7 +274,7 @@ def migration_gaps(root, online=True, pr=False, info=None):
     """[(code, subject, what, fix)] for the repo at root. pr: only the gaps a pull request can close. online: also read the published
     wiki (one bounded clone). info is filled with what the run checked and what it could not."""
     info = {} if info is None else info
-    info.update(skipped=[], notes=[], held="none", want="unknown", platform=sys.platform, off={"health": False, "regression": False})
+    info.update(skipped=[], notes=[], steps=[], held="none", want="unknown", platform=sys.platform, off={"health": False, "regression": False})
     found, g = [], lambda *item: found.append(item)
     cfg = config_of(root)
     if cfg is None:
@@ -287,6 +287,7 @@ def migration_gaps(root, online=True, pr=False, info=None):
     gate = mod("workflow-health", "enforce")
     gate.automation_gaps(root, cfg, g, info)
     gate.checks_gaps(root, cfg, g)
+    mod("workflow-health", "lean").v1(root, cfg, g, info, pr)
     if wiki_on:
         if cfg.get("criteria"):
             gaps_blocks(root, cfg, g)
@@ -307,8 +308,10 @@ def lines(root, gaps, info, pr, offline):
     out = ["GAP %s %s: %s. Fix: %s" % (code, clean(subject), clean(what), clean(fix)) for code, subject, what, fix in gaps]
     skipped = ["branch protection (no gh read)"] + (["the pull-request check, none exists in mac mode"] if config_of(root) and (config_of(root) or {}).get("regression_runs") == "mac" else []) + info["skipped"] + info["notes"]
     out += [x for x in skipped if x.startswith("SKIP ")]
+    out += mod("workflow-health", "issues").step_lines(info)
     out.append("NOT CHECKED: " + "; ".join(x for x in skipped if not x.startswith("SKIP ")))
     out.append("CHECKED: installed %s, repo template_version %s (working tree), platform %s, mode %s" % (info["want"], info["held"], info["platform"], "offline" if offline or pr else "online"))
+    out.append(mod("workflow-health", "issues").checklist(info, len(gaps)))
     out.append("DOCS: each code's cause, class and fix are in the Setup page, Usage, migration-check")
     state = sum(1 for gap in gaps if gap[0] in STATE)
     cut = " (--pr: state codes not checked)" if pr else " (offline: wiki not checked)" if offline else ""
@@ -366,6 +369,7 @@ def migration(root):
         out.append(row("WARN", "adoption", code, "migration", "%s [%s]" % (shown, mode), "run the check for each page's fix (setup.py migration-check)", code))
     out += [row("INFO", "adoption", "migration", "migration", "not checked here: %s [%s]" % (clean(item), mode)) for item in info["skipped"] if "state codes" not in item and not item.startswith("SKIP ")]
     out += [row("INFO", "adoption", "migration", "migration", "%s [%s]" % (clean(item), mode)) for item in info["skipped"] if item.startswith("SKIP ")]
+    out += mod("workflow-health", "issues").step_rows(info, mode, row)
     return out
 
 

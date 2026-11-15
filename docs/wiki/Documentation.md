@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599a537 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=63d54ff2 R=1bd98c6f N=81dd3484 M=4599a537 U=03828777 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -13,9 +13,10 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 ## Requirements
 
 ### Functional
-- DOC-1: **Reviewed 2026-11-13** PRD template <!-- reviewed 422243c4 -->
+- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed 736fc4a2 -->
   - One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section.
   - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
+  - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
 - DOC-2: **Reviewed 2026-11-13** The PRD is mine <!-- reviewed 2e17a232 -->
   - I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message.
   - A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words.
@@ -125,6 +126,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 | [stale-own-main-own-fails](Tests#t-stale-own-main-own-fails) | requirement | DOC-1 | Given a stale page on main, when docs.py check --own runs on main itself (the scheduled run's rows), then it still prints STALE and fails. | not run |
 | [stale-own-block-kept](Tests#t-stale-own-block-kept) | requirement | DOC-1 | Given a Settings, Automation or README block that differs from a fresh render, when docs.py check --own runs, then its STALE line is kept, never moved to a FINDING. | not run |
 | [notion-app-link-unread](Tests#t-notion-app-link-unread) | requirement | DOC-1 | Given a feature page whose PRD is an app.notion.com link and no reader, when the docs check runs, then it reports UNREAD instead of reading the sign-in page. | PASS 2026-11-13 |
+| [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |
 | [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-12 |
 | [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-12 |
 | [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |
@@ -149,7 +151,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 | [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-4 | Given this repo's topics setting, when Home is read, then its table leads with a Topic column. | PASS 2026-11-14 |
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-5 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
-| - | requirement | DOC-6 | no passing test | not enforced |
+| [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [format-bullets](Tests#t-format-bullets) | requirement | DOC-7 | Given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-7. | PASS 2026-11-10 |
 | [format-orphan-bullet](Tests#t-format-orphan-bullet) | requirement | DOC-7 | Given a sub-bullet with no requirement above it, when the docs check runs, then it is refused. | PASS 2026-11-10 |
 | [format-groups](Tests#t-format-groups) | requirement | DOC-7 | Given Requirements without the Functional or Non-functional heading, when the docs check runs, then it fails. | PASS 2026-11-10 |
@@ -178,6 +180,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 | [runbook-not-locked](Tests#t-runbook-not-locked) | requirement | DOC-16 | Given a Reviewed feature page that gains a Runbook section, when the docs check runs, then the page is neither locked nor marked changed. | not run |
 | [runbook-output-names-row](Tests#t-runbook-output-names-row) | requirement | DOC-16 | Given a Runbook whose Output names a Deployments row that does not exist, when the docs check runs, then it is refused naming the row; an existing row passes. | not run |
 | [aut-routine-runbook-owed](Tests#t-aut-routine-runbook-owed) | requirement | DOC-16 | Given a routine in the config's automation list whose page has no Runbook section for it, when the docs check runs, then it reports the missing Runbook. | not run |
+| [perms-docs-check](Tests#t-perms-docs-check) | requirement | DOC-16 | Given a routine with no declared permissions, when docs.py check runs, then it prints a PERMISSIONS finding (the same check as audit.py permissions check, run inside docs.py check). | not run |
 | - | requirement | DOC-16 | no passing test | not enforced |
 | [settings-overridden](Tests#t-settings-overridden) | requirement | DOC-15 | Given a toy repo with one overridden setting, when render runs, then Home's Settings table marks exactly that one overridden with its value. | PASS 2026-11-12 |
 | [settings-stale](Tests#t-settings-stale) | requirement | DOC-15 | Given a setting changed after render, when docs check runs, then it says STALE Settings. | PASS 2026-11-12 |
@@ -201,5 +204,11 @@ Review: **Reviewed 2026-11-13** <!-- prd P=63d54ff2 R=d93be5bd N=81dd3484 M=4599
 | [docs-count-other-id-issue-107](Tests#t-docs-count-other-id-issue-107) | defect | [#107](https://github.com/jcl2018/agent-workflow-template/issues/107) closed (2026-11-10) | Given a line naming another page's criterion, when the docs check runs, then its skills count is still checked and its tests count is not. | PASS 2026-11-12 |
 | [docs-guide-page-issue-125](Tests#t-docs-guide-page-issue-125) | defect | [#125](https://github.com/jcl2018/agent-workflow-template/issues/125) closed (2026-11-11) | Given a guide-marked wiki page, when docs check runs, then it passes with no PRD sections, Home row or README section. | PASS 2026-11-10 |
 | [docs-merged-base-issue-156](Tests#t-docs-merged-base-issue-156) | defect | [#156](https://github.com/jcl2018/agent-workflow-template/issues/156) closed (2026-11-11) | Given a branch that merged the base branch, when docs check runs with --base, then the base's commits don't make its page stale. | PASS 2026-11-10 |
+| [merge-main-own-finding](Tests#t-merge-main-own-finding) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main from another goal, when it checks the wiki, then the page is a FINDING and the goal still merges. | not run |
 | [docs-locked-hint-issue-133](Tests#t-docs-locked-hint-issue-133) | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | Given a reviewed requirement whose wording changed, when docs check runs, then its LOCKED hint says restore or unreview, never review. | PASS 2026-11-10 |
+| [skill-lines-release-4172](Tests#t-skill-lines-release-4172) | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-14) | Given the release skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4172). | not run |
+| [skill-lines-docs-4171](Tests#t-skill-lines-docs-4171) | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4171). | not run |
+| [skill-lines-regression-3983](Tests#t-skill-lines-regression-3983) | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3983). | not run |
+| [skill-lines-regression-3815](Tests#t-skill-lines-regression-3815) | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3815). | not run |
+| [skill-lines-docs-1403](Tests#t-skill-lines-docs-1403) | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 1403). | not run |
 | [docs-milestone-line-issue-130](Tests#t-docs-milestone-line-issue-130) | defect | [#130](https://github.com/jcl2018/agent-workflow-template/issues/130) closed (2026-11-11) | Given a page whose Milestone line names a milestone with another title, when the audit runs, then it reports no missing milestone. | PASS 2026-11-10 |

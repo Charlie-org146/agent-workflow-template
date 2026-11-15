@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d0857c8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=21bfadde N=9f4c33da M=3d0857c8 U=03828777 -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -39,10 +39,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d08
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-10** Resumable <!-- reviewed 0f9f447b -->
   - A stopped or crashed goal resumes from its last recorded step, never from the start.
-- DEL-8: **Reviewed 2026-11-13** Budgeted <!-- reviewed 16c92402 -->
+- DEL-8: **Reviewed 2026-11-14** Budgeted <!-- reviewed c6fabe37 -->
   - Each goal has a time and token budget, and going over shows on the board.
   - Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting.
   - A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits.
+  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit.
 - DEL-9: **Reviewed 2026-11-10** Nothing private ships <!-- reviewed ad7ed0f0 -->
   - Every commit and pull request passes the private-name scan before it is pushed.
 - DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
@@ -104,6 +105,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d08
 | [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | DEL-5 | Given a goal set to ask and auto_merge on, when its worker ends with the pull request open, then the release step does not merge it. | not run |
 | [resume-unasked-merges](Tests#t-resume-unasked-merges) | requirement | DEL-5 | Given a goal with no ask and auto_merge on, when its worker ends with the pull request open, then the release step still merges it. | not run |
 | [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-5 | Given a package with a script over 20,480 bytes, more than 99 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
+| [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-6 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-10 |
 | [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-6 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-10 |
 | [depth-markers](Tests#t-depth-markers) | requirement | DEL-6 | Given private evidence markers, when a full review reply lacks one, then it is refused with no try used, without showing the marker. | PASS 2026-11-10 |
@@ -164,7 +166,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=85a1aa26 N=9f4c33da M=3d08
 | [release-head-status](Tests#t-release-head-status) | defect | [#3870](https://github.com/jcl2018/agent-workflow-template/issues/3870) open (2026-11-14) | Given a release pull request whose head only moves the version and changelog, a lane that could not run, or rows that failed, when merge.py's release step posts statuses, then the goal's pass carries over without a lane, an untested head gets no status, only rows that ran and failed post failure, and the refusal names them instead of asking for a manual merge (#3870). | not run |
 | [merge-stale-other-passes](Tests#t-merge-stale-other-passes) | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | Given a page stale from a commit the goal never touches, when merge.py checks the wiki, then it prints the page as a FINDING and does not refuse. | not run |
 | [merge-stale-own-refuses](Tests#t-merge-stale-own-refuses) | defect | [#3941](https://github.com/jcl2018/agent-workflow-template/issues/3941) closed (2026-11-13) | Given a page the goal's own diff made stale, when merge.py checks the wiki, then it still refuses and names the page. | not run |
-| [merge-refused-failed](Tests#t-merge-refused-failed) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | Given a merge.py that gh refuses before the merge, when it ends, then the goal is failed at the same step, never done, so resume works and the board shows it unfinished. | failing (issue reopened) 2026-11-14 |
-| [merge-failed-retry](Tests#t-merge-failed-retry) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) open (2026-11-14) | Given a goal a refused merge left failed, when merge.py runs again with the fault gone, then it merges the pull request and the goal ends done. | failing (issue reopened) 2026-11-14 |
+| [merge-refused-failed](Tests#t-merge-refused-failed) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) closed (2026-11-14) | Given a merge.py that gh refuses before the merge, when it ends, then the goal is failed at the same step, never done, so resume works and the board shows it unfinished. | not run |
+| [merge-failed-retry](Tests#t-merge-failed-retry) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) closed (2026-11-14) | Given a goal a refused merge left failed, when merge.py runs again with the fault gone, then it merges the pull request and the goal ends done. | not run |
+| [merge-refuses-worktree](Tests#t-merge-refuses-worktree) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from a path inside the repo's goal worktrees, when it starts, then it refuses and names the main checkout or the installed skills. | PASS 2026-11-14 |
+| [merge-refuses-behind](Tests#t-merge-refuses-behind) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given a main checkout behind origin/base, when merge.py starts, then it refuses, says how many commits behind and prints the fast-forward command. | not run |
+| [moved-exit-live-at-pr](Tests#t-moved-exit-live-at-pr) | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) closed (2026-11-14) | Given a merge refused because the head or base moved, when it exits, then the goal is running at step pr, not done. | not run |
+| [merge-main-own-printed](Tests#t-merge-main-own-printed) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main, when it checks the wiki, then it prints the page as a FINDING for health and does not refuse. | not run |
 | [stop-takes-tree](Tests#t-stop-takes-tree) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or child stopped for a timeout or a mend, when it is stopped on any platform, then its whole process tree goes with it. | PASS 2026-11-12 |
 | [held-time-3878](Tests#t-held-time-3878) | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) open (2026-11-13) | Given a goal held 772 minutes and active 20 minutes, when a new step starts at a 300 minute budget, then it is not refused (#3878). | PASS 2026-11-14 |

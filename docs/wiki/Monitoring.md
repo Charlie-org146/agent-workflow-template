@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -49,10 +49,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
   - When a decision needs my words, I answer in the operation session, which records my message verbatim with the IDs it covers (sessions.py owner-words) for the workers to use.
   - Turning it off takes effect at the next decision.
 
-- MON-12: **Reviewed 2026-11-10** Session pool <!-- reviewed 7a470c28 -->
+- MON-12: **Reviewed 2026-11-14** Session pool <!-- reviewed 804e0364 -->
   - The operation session keeps a pool of idle worker sessions, sized by a setting (default 20), and hands each ready goal one from the pool instead of starting a new session.
   - Because sessions can only be created from the desktop app, whenever the pool runs low the operation session asks me, at the desktop, to fill it, and it creates every missing session in one step on my word.
   - A finished goal's session goes back to the pool (MON-6), the board shows the pool as free, busy and total, and a goal that finds the pool empty waits under Needs you with the one action that fixes it.
+  - A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds.
 
 - MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
@@ -72,6 +73,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
 - MON-17: **Reviewed 2026-11-14** A check-in lists only this machine's goals. <!-- reviewed d4cc2e30 -->
   - Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod.
+
+- MON-18: **Reviewed 2026-11-14** The operation session keeps running unattended. <!-- reviewed a7a95ff4 -->
+  - One standing instruction to merge, recorded once by the operation session for named goals or all, replaces a go per merge; a worker at pr reads it and does not wait for another.
+  - The check-in says how many cross-session sends are left before the app's cap of 20 without an owner message; from 16 sent it asks the owner for any message, which resets the count.
+  - The check-in loop is re-created before its 7 days run out; the check-in says when.
+  - Every worker accepts an owner-words record the operation session names, per the Delivery rule, and does not ask the owner again; a record covers only its listed ids.
+  - On start the operation session runs a self-check and lists what is missing, each with its fix: a permission mode that holds cross-session messages for approval, a routine whose rules are not written or do not cover its Runbook (AUT-9), and the main checkout behind origin/main (MON-16).
 
 ### Non-functional
 - MON-7: **Reviewed 2026-11-10** Govern only <!-- reviewed da6f1852 -->
@@ -122,7 +130,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [guards-null-report-bind-mend](Tests#t-guards-null-report-bind-mend) | requirement | MON-2 | Given a failed or stopped goal restarted by a worker bind or by mend, when its record is written, then report is an empty record, never null. | not run |
 | [waits-first](Tests#t-waits-first) | requirement | MON-3 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | MON-3 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
-| [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | not run |
+| [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | PASS 2026-11-14 |
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | MON-4 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-12 |
 | [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-12 |
@@ -206,6 +214,12 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=ba03c08b N=9967b317 M=0fde
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MON-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
 | - | requirement | MON-16 | no passing test | not enforced |
 | - | requirement | MON-17 | no passing test | not enforced |
+| [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
+| [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | MON-18 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
+| [unattended-standing-worker-refused](Tests#t-unattended-standing-worker-refused) | requirement | MON-18 | Given a worker session, when it adds a standing instruction, then it is refused. | not run |
+| [unattended-selfcheck-missing](Tests#t-unattended-selfcheck-missing) | requirement | MON-18 | Given a main checkout behind origin, when the start-up self-check runs, then it lists it as MISSING with its fix (the routine-rules line runs audit.py permissions check). | not run |
+| [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | MON-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
+| - | requirement | MON-18 | no passing test | not enforced |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | MON-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | MON-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |

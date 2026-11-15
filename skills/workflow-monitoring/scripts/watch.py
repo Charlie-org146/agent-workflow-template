@@ -27,6 +27,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import replan as lim  # noqa: E402
 import proctree  # noqa: E402
 try:
     import sessions  # noqa: E402  worker sessions in the app; without it, background processes
@@ -323,13 +324,16 @@ def plan(limit):
 
 
 def limit_of(args, cfg):
-    return args.max if args.max else graph.parallel_of(cfg)
+    return args.max if args.max else lim.active_limit(cfg)
 
 
 def start_round(args, cfg):
     if sessions:
         sessions.HUNG.clear()  # a session tool that hung last round gets another chance
     begun, held = plan(limit_of(args, cfg))
+    stop = begun and (lim.plan_pause(cfg) or lim.memory_hold(cfg))  # plan or memory used up
+    if stop:
+        begun, held = [], held + [(goal, stop) for goal in begun]
     for goal in list(begun):
         now_taken = taken()
         if now_taken is None or goal["slug"] in now_taken:  # the pool broke, or a session took it since plan

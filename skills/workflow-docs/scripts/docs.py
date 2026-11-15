@@ -287,9 +287,12 @@ def cmd_check(args):
     point = entry.problems(root)
     notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]  # said, never a failure
     found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    from entry import perm_check  # AUT-9: a routine's declared permissions match its Runbook and the project settings
+    for line in perm_check(root):
+        (notes if line.startswith("NOTE") else found).append(("PERMISSIONS", "permissions.tsv", line))
     if args.own:
         import audit
-        found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main")
+        found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main", args.own)
     for kind, page, detail in found + notes:
         print("%s %s: %s" % (kind, page, detail))
     if found:
@@ -423,7 +426,7 @@ def main():
     item.set_defaults(func=cmd_add)
     item = sub.add_parser("check")
     item.add_argument("--base", default="")
-    item.add_argument("--own", action="store_true")
+    item.add_argument("--own", nargs="?", const="HEAD")
     item.set_defaults(func=cmd_check)
     item = sub.add_parser("audit")
     item.add_argument("--base", default="")

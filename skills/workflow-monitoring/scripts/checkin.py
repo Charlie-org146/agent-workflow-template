@@ -34,6 +34,7 @@ import graph  # noqa: E402
 import live_board as lb  # noqa: E402
 import pool as pl  # noqa: E402
 import replan  # noqa: E402
+import unattended  # noqa: E402
 import board_page  # noqa: E402
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
@@ -191,6 +192,15 @@ def render(root=None, at=None, stamp=None):
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
+    if ready and replan.plan_pause(cfg):  # MON-12: the weekly plan is nearly used
+        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.plan_pause(cfg)))
+    if ready and replan.memory_hold(cfg):
+        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.memory_hold(cfg)))
+    waited = replan.memory_waits(folder)
+    if waited:
+        needs.append("%d lane wait(s) for memory in the last hour; the last: %s" % (len(waited), waited[-1][21:140]))
+    if ready and replan.active_limit(cfg) and len(live) >= replan.active_limit(cfg):
+        needs.append("%d ready goal(s) wait: %d goals are live, at max_active_goals/parallel %d (ACTIVE_GOALS)" % (len(ready), len(live), replan.active_limit(cfg)))
     if found is not None:
         needs += [line[2:] for line in pl.ask_lines(found, cfg, len(ready)) if line.startswith("- ")]
         needs += ["archive session %s with the app (pool above pool_size)" % (item.get("name") or sid)
@@ -219,13 +229,15 @@ def render(root=None, at=None, stamp=None):
                 needs.append("%s/%s asks: %s; options: %s" % (g["name"], run["slug"], lb.plain(ask.get("ask"), 160),
                                                               " / ".join('"%s"' % w for w in ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
+    operation, asks = unattended.lines()  # MON-18: sends left, the loop's expiry, standing instructions
+    needs += asks
     try:  # operate.py behind_ask: the main checkout is behind origin/main and a free worker must fast-forward it
         needs += [line for line in open(os.path.join(folder, "checkout-behind.txt")).read().splitlines()[:1] if line]
     except OSError:
         pass
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
-    out += ["", "Coming up"]
+    out += ["", "Coming up"] + ([operation] if operation else [])
     for run in live:
         if states[run["slug"]] == "done":
             out.append("- %s: its pull request waits for merge (you: review %s)" % (run["slug"], run.get("pr") or "it"))

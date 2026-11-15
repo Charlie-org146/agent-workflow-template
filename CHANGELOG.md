@@ -1,5 +1,64 @@
 # Changelog
 
+## v0.28.59 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.58 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.57 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.56 - 2026-11-14
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.55 - 2026-11-14
+
+- size-caps: move criteria, workflow and refusals detail from three SKILL.md files into references
+- size-caps: row tying the docs skill's criteria reference to DOC-6
+- size-caps: rows tying the release and regression skills' references to DEL-5 and REG-4
+- skill-lines: keep the moved detail in the existing commands references (package file cap)
+- Merge remote-tracking branch 'origin/main' into loop/skill-lines
+- skill-lines: defect rows for the five skill-lines issues
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.54 - 2026-11-14
+
+- DECISIONS: the DOC-1 sync pointer and the Regression re-stamp
+- build: DOC-1 sync pointer, Documentation and Regression reviewed again (owner records o13, o14); row doc1-sync-pointer
+- docs: Home's Documentation row names docs.py sync
+
+### How to verify
+
+1. From the repo root run `python3 skills/workflow-docs/scripts/docs.py check` and `docs.py check --own`.
+   Expect: `DOCS OK: 10 pages` from both, with no `STALE Documentation` or `STALE Regression` line.
+2. Open `docs/wiki/Documentation.md` and read DOC-1.
+   Expect: its last sub-bullet says a PRD that lives outside the repo is kept in step through `docs.py sync`, and the Review lines of Documentation and Regression read `Reviewed 2026-11-14`.
+
 ## v0.28.53 - 2026-11-14
 
 - No code changes

@@ -22,7 +22,7 @@ resume SLUG
   the cadence is off. `operate send SLUG TEXT` leaves a worker an answer or follow-up, which `goal.py` and `flow.py`
   print to its agent the next time they run. An LLM asked to run the operation session runs this command and nothing else.
 - `go` adds the goal to `.loop/queue.md` and starts a worker for it if a slot is free, or prints `QUEUED`.
-- `watch` starts every queued goal whose `depends-on` goals are merged (all at once by default; set `parallel` to a number to cap them, 0 is unlimited), each on branch `loop/<slug>` in its own worktree, and ends when
+- `watch` starts every queued goal whose `depends-on` goals are merged (all at once by default; set `parallel` to a number to cap them, 0 is unlimited), each on branch `loop/<slug>` in its own worktree, and ends when It starts no goal while `max_active_goals` (default 20) goals are live or while weekly plan usage is above `plan_pause_percent` (default 80, recorded with `pool.py usage PERCENT`; unread usage pauses nothing), and the check-in says which limit holds. It also starts no goal while free memory is below `min_free_memory_gb` (default 4; Windows: free virtual memory), and the check-in names the hold and any lane that waited for memory in the last hour.
   nothing is left. `--once` makes one pass, for a check-in.
 - `report` lists each run, what waits on you with the exact words to type, findings, criteria changed after review, and
   queued goals.
@@ -528,6 +528,7 @@ Proof: toy tests (dev/toy/test-guards.sh).
 ## Exact command entries (moved from the retired Usage section on the Monitoring page)
 
 - `/workflow-monitoring fill-pool ID...` — Registers sessions the operation session just created with the app (after you say "fill pool" when the check-in reports the pool low) as free sessions in the pool. Prints `POOLED <n> session(s); pool: <free> free, <busy> busy, <total> total (target <pool_size>)`. Refuses exit 1 `REFUSED: session <id> is busy with <goal>; nothing was added.` and `REFUSED: the session pool can't be read (...)`.
+- `/workflow-monitoring selfcheck` — `python3 scripts/unattended.py selfcheck` (MON-18), run when the operation session starts. Prints `MISSING permission mode: ...` (a defaultMode of default or plan holds cross-session messages for approval), `MISSING routine rules: <finding>` (`audit.py permissions check` in workflow-docs), `MISSING main checkout: N commit(s) behind origin/<base>`, and `CHECK ...` for what it could not read, or `SELFCHECK OK`; exit 1 when any line is MISSING. Its siblings: `unattended.py sends [add TO|reset]` (`SENDS n of 20 since <time> (m left)`, with a WARNING from 16), `unattended.py loop [created [--days N]]` (`LOOP expires in 6d 23h`, `LOOP RECREATE: ...`, `LOOP EXPIRED`), `unattended.py standing add TEXT [--goals A,B|all]` (operation only: `REFUSED: only the operation session records a standing instruction.` in a worker), `standing check SLUG` (`STANDING s1: <text>` exit 0, or `NO STANDING instruction covers <slug>` exit 1) and `standing revoke ID`.
 
 - `/workflow-monitoring reply-check FILE` — Checks a check-in reply against the required layout. Prints one line per problem, such as `missing section <name>`, and exits 1; a clean reply prints nothing and exits 0. Refuses exit 2 `REFUSED: cannot read <file> (<reason>). Fix: name a readable file, or - for stdin.`
 

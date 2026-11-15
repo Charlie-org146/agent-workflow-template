@@ -90,12 +90,23 @@ None
 | [grd2-test-budget](Tests#t-grd2-test-budget) | requirement | GRD-2 | Given an in-loop test run that reaches test_budget_minutes, when it stops, then it runs rows in order until the budget and lists the rest for the scheduled full suite. | not run |
 | [grd2-goal-over](Tests#t-grd2-goal-over) | requirement | GRD-2 | Given a goal past its time and token budget, when the live board prints, then it flags OVER time and OVER tokens. | not run |
 | [tokens-unread-shown](Tests#t-tokens-unread-shown) | requirement | GRD-2 | Given a goal with no token count, when the board or the pull request shows its spend, then it says tokens unread, never 0, and a goal with a count shows the number. | not run |
+| [grd2-time-stop](Tests#t-grd2-time-stop) | requirement | GRD-2 | Given a goal past time_budget_minutes, when a step or goal.py pr is asked for, then it is refused with one line naming goal.py set. | not run |
+| [grd2-token-stop](Tests#t-grd2-token-stop) | requirement | GRD-2 | Given a goal past token_budget, when a step is asked for, then it is refused with one line naming goal.py set. | not run |
+| [grd2-tokens-unknown](Tests#t-grd2-tokens-unknown) | requirement | GRD-2 | Given a session worker that passes unknown tokens, when the step is recorded, then the goal reads tokens unread, never 0. | not run |
+| [grd2-merge-rounds](Tests#t-grd2-merge-rounds) | requirement | GRD-2 | Given a goal that merged the base three times, when goal.py pr would merge a 4th round, then it is refused and the goal waits for the owner. | not run |
+| [grd2-active-goals](Tests#t-grd2-active-goals) | requirement | GRD-2 | Given max_active_goals live goals, when watch plans, then no new goal starts. | not run |
+| [grd2-plan-pause](Tests#t-grd2-plan-pause) | requirement | GRD-2 | Given weekly plan usage above plan_pause_percent, when the operation plans, then no new goal starts and it says why. | not run |
+| [grd2-limits-in-settings](Tests#t-grd2-limits-in-settings) | requirement | GRD-2 | Given the settings table, when it is read, then it lists the four limits with their defaults. | not run |
+| [grd2-memory-lane-waits](Tests#t-grd2-memory-lane-waits) | requirement | GRD-2 | Given free memory below min_free_memory_gb, when a lane is about to run rows, then it waits and does not start them. | not run |
+| [grd2-memory-new-goal](Tests#t-grd2-memory-new-goal) | requirement | GRD-2 | Given free memory below min_free_memory_gb, when the operation plans, then no new goal starts and the hold names LOW_MEMORY. | not run |
+| [grd2-memory-health](Tests#t-grd2-memory-health) | requirement | GRD-2 | Given lanes that waited for memory, when health runs, then its Performance group warns. | not run |
 | - | requirement | GRD-2 | no passing test | not enforced |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | GRD-3 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. | not run |
 | [del9-hooks](Tests#t-del9-hooks) | requirement | GRD-3 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
 | [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | GRD-3 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
 | [grd3-hooks-health](Tests#t-grd3-hooks-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed, when health runs, then it passes the hooks rule. | not run |
 | [grd3-hook-bypass](Tests#t-grd3-hook-bypass) | requirement | GRD-3 | Given a commit or push that skips hooks (no-verify, empty hooks path), when a loop command runs it, then it is refused and health flags it (not built). | not run |
+| [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | GRD-3 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
 | [grd4-touches](Tests#t-grd4-touches) | requirement | GRD-4 | Given a worker session, when it tries to widen its goal's touches, then the command refuses. | not run |
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
 | [grd4-budget](Tests#t-grd4-budget) | requirement | GRD-4 | Given a worker session, when it tries to set its own goal's budget, then the command refuses. | not run |
