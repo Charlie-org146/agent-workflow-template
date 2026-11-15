@@ -80,4 +80,13 @@ with tempfile.TemporaryDirectory() as repo:
     check("it picks the rows that name the deleted file, none here, and notes both paths",
           any(l.startswith("DELETED gone.txt") for l in lines) and any(l.startswith("UNMAPPED other/new.txt") for l in lines)
           and lines[0].startswith("AFFECTED"))
+sys.path.insert(0, scripts)
+sys.dont_write_bytecode = True
+import narrow  # noqa: E402
+
+check("a text that imports a deleted module names it, and a longer module name does not",
+      narrow.names("from a import b
+import os, gone
+", "x/gone.py") and not narrow.names("import gonex
+", "x/gone.py"))
 sys.exit(1 if fails else 0)

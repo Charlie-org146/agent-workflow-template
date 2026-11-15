@@ -48,7 +48,7 @@ def names(text, path):
     """Whether a text names path: the path, its basename, or `import <stem>` for a .py file."""
     name = os.path.basename(path)
     stem = re.escape(name[:-3]) if name.endswith(".py") else None
-    return path in text or name in text or bool(stem and re.search(r"(?m)^\s*(?:from|import)\s+(?:[\w, ]*)?%s" % stem, text))
+    return path in text or name in text or bool(stem and re.search(r"(?m)^\s*(?:from|import)\s+(?:[\w, ]*\b)?%s\b" % stem, text))
 
 
 def kind(memo, full):
