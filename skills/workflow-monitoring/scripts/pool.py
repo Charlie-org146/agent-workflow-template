@@ -5,20 +5,18 @@
 usage: pool.py <command> [options]
 
   status              pool: F free, B busy, T total (target N)
-  need                how many sessions to create now (K) and the one action that does it; K is 0 unless the pool runs
-                      low (fewer free sessions than ready goals), then K = pool_size - total (every missing session)
+  need                how many sessions to create now (K); K is 0 unless the pool runs low (fewer free sessions
+                      than ready goals), then K = pool_size - total
   add ID [ID ...]     register sessions the operation session just created with the app, as free (POOLED)
   decline             the owner said "no pool": hide the ask until K grows past today's K (cleared once K is 0)
   usage PERCENT       record the account's weekly plan usage (the operation session reads it from the app); above plan_pause_percent no goal starts
   return SLUG         a goal ended: its sessions go back to the pool, or are marked archive when the total is above
-                      pool_size (the check-in tells the operation session to archive them with the app); a merged
-                      goal's worktree and loop/SLUG branch are removed (a dirty worktree is kept and named)
+                      pool_size; a merged goal's worktree and loop/SLUG branch are removed (a dirty worktree is kept)
 
-Only the desktop app can create, rename or archive a session, so this script records and asks; the operation session
-acts. The pool file is <git common dir>/loop/session-pool.json (sessions.py owns its lock). A malformed entry is set
-aside in session-pool.bad.json and named under Issues; the rest of the pool keeps working (issue 122).
-Attempt identity (issue 114): each bind raises the run's `attempt`; a report that names an older attempt is recorded but
-not applied (attempt_ok). A freed session keeps who it was freed from in `history`, so a reuse never loses it.
+Only the desktop app can create, rename or archive a session, so this script records and asks. The pool file is
+<git common dir>/loop/session-pool.json (sessions.py owns its lock). A malformed entry is set aside in
+session-pool.bad.json and named under Issues (issue 122). Each bind raises the run's `attempt`; a report naming an
+older attempt is recorded but not applied (attempt_ok, issue 114). A freed session keeps who it was in `history`.
 """
 import argparse
 import datetime
@@ -75,8 +73,7 @@ def side_path():
 
 
 def need(found, cfg, ready):
-    """(K, declined): K sessions to create now. The pool runs low when free sessions are fewer than ready goals; then
-    every missing session (pool_size - total) is created in one step. K never takes the total past pool_size."""
+    """(K, declined): sessions to create now: every missing one (pool_size - total) when free sessions are fewer than ready goals."""
     free, _, total = counts(found)
     k = max(size_of(cfg) - total, 0) if free < ready else 0
     if k and graph.memory_room() == 0:  # under min_free_memory_gb of free commit memory no session is created: nothing starts
@@ -114,8 +111,7 @@ def attempt_ok(state, attempt):
 
 
 def stale(state, args):
-    """sessions.py report's guards: refuse a --recommend that isn't one of --words; record, not apply, a report from an
-    older attempt. True when the report is fully handled here."""
+    """sessions.py report's guards: refuse a --recommend not in --words; record, not apply, an older attempt's report. True when handled."""
     if args.attempt not in (None, "") and not str(args.attempt).isdigit():
         sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
     if args.recommend and args.recommend not in args.words:
@@ -242,9 +238,9 @@ def cmd_return(args):
 
 # The pr queue (#3877): goal.py pr asks here; a try lost to main moving has its own cap. graph.pr_queue(op, ...) forwards here.
 def pr_order(runs, keep=""):
-    """The one queue every goal reads, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue. A ticket is written
-    once, whole, holding the first-join time; <slug>.beat is the heartbeat a retry touches, and only it drives expiry (#3922).
-    A goal (but keep) no longer running or waiting, no longer at the pr step, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
+    """The one queue every goal reads, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue. A ticket holds the
+    first-join time; <slug>.beat is the heartbeat a retry touches, and only it drives expiry (#3922). A goal (but keep) no
+    longer running or waiting, not at the pr step, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
     folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
         path = os.path.join(folder, name)
@@ -263,9 +259,8 @@ def pr_order(runs, keep=""):
 
 
 def pr_turn(runs, slug):
-    """Join the repo's queue; "" when it is slug's turn, else the goal ahead. Asking again touches only the heartbeat. A goal
-    waits only for an earlier goal whose touches overlap its own (a path equal or nested; none overlaps all), so goals with
-    disjoint touches go at once (DEL-15). A goal with no readable ticket never counts as first."""
+    """Join the repo's queue; "" when it is slug's turn, else the goal ahead. A goal waits only for an earlier goal whose
+    touches overlap its own (a path equal or nested; none overlaps all) (DEL-15). No readable ticket never counts as first."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
     os.makedirs(folder, exist_ok=True)
     mine = os.path.join(folder, slug)
@@ -300,8 +295,8 @@ def pr_ahead(runs, base):
 
 
 def pr_moved(runs, g, state, why, fix):
-    """A try lost to main moving (a conflict with it, or a lane that failed while it moved) is not the goal's fault: it counts
-    in state["moved"], capped by max_moved (default 5), and leaves tries and max_tries alone. Past the cap it counts as a try."""
+    """A try lost to main moving is not the goal's fault: it counts in state["moved"], capped by max_moved (default 5), not
+    in tries. Past the cap it counts as a try."""
     state["moved"] = state.get("moved", 0) + 1
     most = int(g.config().get("max_moved") or 5)
     if state["moved"] > most:
@@ -313,7 +308,7 @@ def pr_moved(runs, g, state, why, fix):
     return True
 
 
-# The goal's defect-test check (E-10), moved here from fit.py to keep it under its size budget: fit.owed calls pr_owed.
+# The goal's defect-test check (E-10): fit.owed calls pr_owed.
 VERB = r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)\s+"
 SEEN = re.compile(r"\d{4}-\d{2}-\d{2}$")  # seen_red counts only as a date
 FIXES = re.compile(VERB + r"(?:issue\s+)?#(\d+)|" + VERB + r"finding:([a-z0-9][a-z0-9-]*)", re.I)

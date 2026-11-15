@@ -100,6 +100,7 @@ None
 | [grd2-memory-lane-waits](Tests#t-grd2-memory-lane-waits) | requirement | GRD-2 | Given free memory below min_free_memory_gb, when a lane is about to run rows, then it waits and does not start them. | not run |
 | [grd2-memory-new-goal](Tests#t-grd2-memory-new-goal) | requirement | GRD-2 | Given free memory below min_free_memory_gb, when the operation plans, then no new goal starts and the hold names LOW_MEMORY. | not run |
 | [grd2-memory-health](Tests#t-grd2-memory-health) | requirement | GRD-2 | Given lanes that waited for memory, when health runs, then its Performance group warns. | not run |
+| [grd2-default-240](Tests#t-grd2-default-240) | requirement | GRD-2 | Given the settings table and this repo's config, when the default goal time budget is read, then it is 240 minutes. | not run |
 | - | requirement | GRD-2 | no passing test | not enforced |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | GRD-3 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. | not run |
 | [del9-hooks](Tests#t-del9-hooks) | requirement | GRD-3 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
@@ -132,6 +133,7 @@ None
 | - | requirement | GRD-10 | no passing test | not enforced |
 | [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | GRD-11 | no passing test | not enforced |
+| [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once and the settings table registers it. | not run |
 | - | requirement | GRD-12 | no passing test | not enforced |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |

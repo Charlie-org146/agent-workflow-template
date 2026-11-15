@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a58c6 U=03828777 -->
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -179,3 +179,4 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
 | [size-140](Tests#t-size-140) | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) open (2026-11-14) | Given docs.py's page map moved into counting.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on docs. | failing (issue reopened) 2026-11-14 |
 | [size-141](Tests#t-size-141) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/141) open (2026-11-14) | Given regression.py's row and page readers moved into runs.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on regression. | failing (issue reopened) 2026-11-14 |
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
+| [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 99 files, no Safety or Disclosure failure (issue 3800). | not run |

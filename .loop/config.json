@@ -35,7 +35,7 @@
   "judge_setup": "",
   "digest_owner": "",
   "routines": [],
-  "time_budget_minutes": 120,
+  "time_budget_minutes": 240,
   "token_budget": 3000000,
   "review_depth": "full",
   "_help": {
@@ -75,7 +75,6 @@
   "max_merge_rounds": 3,
   "max_active_goals": 20,
   "plan_pause_percent": 80,
-  "min_free_memory_gb": 3.5,
   "health_script_bytes": 20480,
   "health_skill_lines": 150,
   "topics": {

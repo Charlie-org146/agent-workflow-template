@@ -151,10 +151,11 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
 
 # 7. every setting is in the settings table with its default, and this repo's config carries them
 table = {name: default for name, home, default, _ in settings.TABLE}
-check(table.get("time_budget_minutes") == 120 and table.get("max_merge_rounds") == 3 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 4,
+check(table.get("time_budget_minutes") == 240 and table.get("max_merge_rounds") == 3 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 4,
       "the settings table lists time_budget_minutes, max_merge_rounds, max_active_goals and plan_pause_percent with their defaults")
 with open(os.path.join(root, ".loop", "config.json")) as handle:
     live = json.load(handle)
+check(table.get("time_budget_minutes") == 240 and live.get("time_budget_minutes") == 240, "the default time budget is 240 minutes")
 check(all(key in live for key in ("max_merge_rounds", "max_active_goals", "plan_pause_percent", "time_budget_minutes", "min_free_memory_gb")), "this repo's config carries the new settings")
 with open(os.path.join(root, "skills", "workflow-delivery", "scripts", "flow.py")) as handle:
     text = handle.read()

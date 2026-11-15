@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-"""Keep goals stopping only for real failures: rules that bind only the steps started after them, refusals and dead lanes
-that cost no try, and the operation's repairs (resume, touches, a finding on a finished goal). Imported by goal.py;
-`guards.py known` prints the rule ids as JSON.
-
-  rules      RULES maps each format rule id to the release that added it; a step binds the ids in state["rules_at"][step].
-  refusals   refuse_no_try: exit 2, no try, status, step or ran marker changed; the 5th in a row leaves a note.
-  extra      <runs>/<slug>.extra.json: touches and findings only operation commands add, under an flock.
-"""
+"""Goals stop only for real failures: format rules bind steps started after them (RULES, state["rules_at"]), refusals and
+dead lanes cost no try, the operation repairs (resume, touches, findings). Imported by goal.py; `guards.py known` prints the
+rule ids as JSON. <runs>/<slug>.extra.json holds touches and findings, added under an flock."""
 import datetime
 import json
 import os
@@ -23,7 +18,7 @@ import role  # noqa: E402
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 RULES = {"depth-line": "0.12.1", "depth-condensed": "0.12.1", "full-markers": "0.12.1"}
-NOTE_AT, WAIT_AT = 5, 10  # refused records in a row before a board note, and before the owner is asked
+NOTE_AT, WAIT_AT = 5, 10
 FORMAT_RULE, NO_STEP_LINE, NOT_RUN_BY_FLOW = "FORMAT_RULE", "NO_STEP_LINE", "NOT_RUN_BY_FLOW"
 WORKER_SELF_REPAIR, RESUME_STATUS, RESUME_NO_SESSION = "WORKER_SELF_REPAIR", "RESUME_STATUS", "RESUME_NO_SESSION"
 RESUME_NO_WORKTREE, SESSION_TAKEN, DONE_LINES_CHANGED = "RESUME_NO_WORKTREE", "SESSION_TAKEN", "DONE_LINES_CHANGED"
@@ -40,8 +35,7 @@ def known():
 
 
 def stamp(state, step):
-    """The rules known now are the ones step started under."""
-    if not isinstance(state.get("rules_at"), dict):  # missing, or null in an older record
+    if not isinstance(state.get("rules_at"), dict):
         state["rules_at"] = {}
     state["rules_at"][step] = known()
 
@@ -56,8 +50,7 @@ def named(rule):
 
 
 def check_record(state, step, text, cfg, result):
-    """(stamp, refusal, ask, skipped) for a step that advances: refusal is (why, fix, code), ask a question for the owner,
-    skipped the rules a step started before and so isn't held to."""
+    """(stamp, refusal (why, fix, code), ask, skipped rules)."""
     skipped = []
 
     def held(rule):
@@ -66,7 +59,7 @@ def check_record(state, step, text, cfg, result):
         skipped.append("%s (v%s) not applied: %s started before it" % (rule, RULES[rule], step))
         return False
 
-    if result == "done" and lanekit.reached(state, step):  # stopped at its step budget: it finishes with what it has done
+    if result == "done" and lanekit.reached(state, step):
         state.setdefault("depth", {})[step] = "condensed"
         return " (stopped at its step budget)", None, None, skipped
     common = role.git("rev-parse", "--git-common-dir").stdout.strip()
@@ -102,13 +95,12 @@ ENDS = re.compile(r"\W*(?:STEP|DEPTH|PENDING|VERDICT|BUDGET):")
 
 
 def pending_items(text):
-    """Owner decisions in a reply: each PENDING: line, or line under a bare one; none, nothing, n/a are not."""
     lines, got = text.splitlines(), []
     for n, line in enumerate(lines):
         found = re.match(r"\W*PENDING:[ \t]*(.*)", line)
         if found:
             got.append(found.group(1))
-            if not re.search(r"\w", found.group(1)):  # a heading
+            if not re.search(r"\w", found.group(1)):
                 for under in lines[n + 1:]:
                     if not under.strip() or ENDS.match(under):
                         break
@@ -118,11 +110,9 @@ def pending_items(text):
 
 
 def refuse_no_try(state, why, fix, code, save):
-    """A refusal that changes nothing: no try, the goal keeps running; at NOTE_AT in a row the run record's note says so."""
     state["refusals"] = int(state.get("refusals") or 0) + 1
-    if state["refusals"] >= WAIT_AT:  # the owner decides, never a silent loop
-        state["status"], state["waiting"] = "waiting", {"ask": "%d %s: %s" % (state["refusals"], REFUSALS, why),
-                                                        "words": ["go on " + state["slug"], "stop " + state["slug"]]}
+    if state["refusals"] >= WAIT_AT:
+        hold(state, "%d %s: %s" % (state["refusals"], REFUSALS, why))
     if state["refusals"] >= NOTE_AT:
         state["note"] = {"text": "%s: %d %s: %s" % (state.get("step") or "-", state["refusals"], REFUSALS, why), "at": now()}
     save(state, "refused (no try used): %s (%s)" % (why, code))
@@ -137,9 +127,20 @@ def clear_refusals(state):
         state["note"] = None
 
 
+def add_tokens(state, step, given):
+    """A worker's tokens for a step (GRD-2); unknown adds nothing."""
+    if str(given).isdigit():
+        held = state.get("tokens") if isinstance(state.get("tokens"), dict) else {}
+        old = held.get(step) if isinstance(held.get(step), int) else 0
+        state["tokens"] = dict(held, **{step: int(given) + old})
+
+
+def hold(state, ask):
+    state["status"], state["waiting"] = "waiting", {"ask": ask, "words": ["go on " + state["slug"], "stop " + state["slug"]]}
+
+
 def revive(state, how, by, why):
-    """The one revival of a failed or stopped goal (resume; sessions.py bind keeps the same fields, a toy test checks).
-    Returns the log line."""
+    """The one revival of a failed or stopped goal (sessions.py bind keeps the same fields). Returns the log line."""
     state.update(status="running", tries=0, free=0, refusals=0, finding="", waiting=None, note=None, report={})
     return "%s by %s: %s" % (how, by, " ".join(why.split())) if why else "%s by %s" % (how, by)
 
@@ -156,13 +157,12 @@ def extra(runs, slug):
         found = {}
     found = found if isinstance(found, dict) else {}
     data = {key: list(found.get(key) or []) for key in ("touches", "findings", "log")}
-    data["set"] = dict(found["set"]) if isinstance(found.get("set"), dict) else {}  # the owner's settings (fit.view)
+    data["set"] = dict(found["set"]) if isinstance(found.get("set"), dict) else {}
     return data
 
 
 def add_extra(runs, slug, key, item, line, setting=False):
-    """Append item to the sidecar's key (or, with setting, set it in the owner's settings) and line to its log, under an
-    exclusive lock, atomically."""
+    """Append item to the sidecar's key (or set it, with setting) and line to its log, under an exclusive lock."""
     with open(os.path.join(runs, slug + ".extra.lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         data = extra(runs, slug)
@@ -189,7 +189,7 @@ def touches_of(runs, state):
 
 def check_path(path, have):
     """None when PATH may widen touches, else the reason."""
-    if path.startswith("github:"):  # a GitHub surface, never a file path (issue 117)
+    if path.startswith("github:"):
         if path[7:] not in fit.SURFACES:
             return "%r isn't a GitHub surface (one of github:%s)" % (path, ", github:".join(fit.SURFACES))
     elif not path or os.path.isabs(path) or ".." in path.split("/") or path.startswith("~") or re.search(r"[,|\s\x00-\x1f]", path):
@@ -200,7 +200,7 @@ def check_path(path, have):
 
 
 def sync_touches(goal_file, touches):
-    """Rewrite the goal file's '- Touches:' line from touches; True when it changed. The line isn't in the done-line hash."""
+    """Rewrite the goal file's '- Touches:' line; True when it changed."""
     try:
         with open(goal_file) as handle:
             text = handle.read()
@@ -223,7 +223,7 @@ def write_finding(g, state, text):
     g.git("commit", "-m", "Finding: %s" % state["slug"], "--", ".loop/findings.md", check=False)
     found = private.scan(g.root(), g.base_ref(state))
     stop = private.refusal(found, g.base_ref(state))
-    if stop:  # the finding commit stays local; the board shows why (X1)
+    if stop:
         state["finding_error"] = "%s. Fix: %s (%s)" % (stop[0][:300], stop[1][:200], FINDING_LOCAL)
         g.save(state, "finding stays local: private-name scan (%s)" % stop[2])
         print("NOTE: finding stays local: private-name scan: %s (%s)" % (stop[0][:300], FINDING_LOCAL))
@@ -277,14 +277,13 @@ def cmd_answer(g, args):
             args.slug, state.get("status"), args.slug, ANSWER_STATUS))
     state["status"] = "running"
     state["waiting"] = None
-    clear_refusals(state)  # an answer after the refusal wait starts the count again
+    clear_refusals(state)
     g.save(state, "answered")
     print("ANSWERED %s" % args.slug)
     return 0
 
 
 def waiting_gate(g, state):
-    """A waiting goal can't record or open its pull request until the owner answers; that costs no try (exit 2)."""
     if state.get("status") == "waiting":
         sys.stderr.write("REFUSED (no try used): %s waits for the owner: %s. Fix: the operation answers (goal.py answer %s), "
                          "then try again (%s)\n" % (state["slug"], (state.get("waiting") or {}).get("ask") or "see the board",
@@ -293,7 +292,6 @@ def waiting_gate(g, state):
 
 
 def advance(g, state):
-    """After a recorded step: the next step starts under the rules known now; the touches catch up."""
     left = [step for step in g.FLOW if step not in state.get("flow", {})]
     if left:
         stamp(state, left[0])
@@ -315,7 +313,6 @@ def operation_only(g, name, slug):
 
 
 def cmd_resume(g, args):
-    """The operation revives a failed or stopped goal for its session. Every check runs first; it starts no process."""
     operation_only(g, "resume", args.slug)
     state, slug = g.load(args.slug), args.slug
     if state.get("status") not in ("failed", "stopped"):
@@ -328,18 +325,17 @@ def cmd_resume(g, args):
     try:
         if not os.path.isdir(tree):
             raise OSError(tree)
-        text = g.read(os.path.join(tree, ".loop", "goals", slug + ".md"))
+        lines = done_lines(g, tree, slug)
     except OSError:
         g.no("the goal's worktree or goal file is gone (%s). Fix: watch.py resume %s (%s)" % (tree, slug, RESUME_NO_WORKTREE))
-    part = text.split("## Done lines", 1)[-1].split("\n## ", 1)[0]
-    if g.done_sha([line.strip() for line in part.splitlines() if re.match(r"\s*\d+\. ", line)]) != state.get("done_sha"):
+    if g.done_sha(lines) != state.get("done_sha"):
         sys.stderr.write("REFUSED: the done lines changed after they were frozen; a wrong done line needs a new goal (%s)\n" % DONE_LINES_CHANGED)
         return 1
     tool = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "sessions.py")
     loop = os.path.dirname(g.state_dir())
-    with open(os.path.join(loop, "session-pool.json.lock"), "a") as lock:  # sessions.py's lock
+    with open(os.path.join(loop, "session-pool.json.lock"), "a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        state = g.load(slug)  # recheck under the lock: a goal bound or cleared meanwhile isn't revived
+        state = g.load(slug)
         if state.get("status") not in ("failed", "stopped") or (state.get("session") or {}).get("id") != sid:
             g.no("%s changed while resuming (now %s); nothing changed (%s)" % (slug, state.get("status"), RESUME_STATUS))
         path = os.path.join(loop, "session-pool.json")
@@ -347,13 +343,13 @@ def cmd_resume(g, args):
             pool = json.load(open(path)) if os.path.exists(path) else {}
         except (OSError, ValueError):
             pool = None
-        if not isinstance(pool, dict):  # never write a pool that can't be read (sessions.py's rule)
+        if not isinstance(pool, dict):
             g.no("the session pool %s can't be read. Fix: repair it, then resume again; nothing changed" % path)
         item = pool.get(sid) or {}
         if item.get("state") == "busy" and item.get("slug") != slug:
             g.no("session %s now serves goal %s. Fix: sessions.py bind %s ID with a free session (%s)" % (sid, item.get("slug"), slug, SESSION_TAKEN))
         note = revive(state, "resumed", args.by, args.why)
-        g.save(state, note)  # a failed save raises before the pool changes
+        g.save(state, note)
         pool[sid] = dict(item, name=item.get("name") or "worker · " + slug, slug=slug, state="busy", since=now())
         temp = path + ".%d.tmp" % os.getpid()
         with open(temp, "w") as handle:
@@ -375,8 +371,13 @@ def cmd_resume(g, args):
     return 0
 
 
+def done_lines(g, tree, slug):
+    part = g.read(os.path.join(tree, ".loop", "goals", slug + ".md")).split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+    return [line.strip() for line in part.splitlines() if re.match(r"\s*\d+\. ", line)]
+
+
 def moved_since_plan(g, state, tree="."):
-    """True when a commit landed after the plan was recorded (so build is done and review is next); None if unknown."""
+    """True when a commit landed after the plan was recorded; None if unknown."""
     head = state.get("plan_head")
     if not head:
         return None
@@ -385,7 +386,6 @@ def moved_since_plan(g, state, tree="."):
 
 
 def cmd_touches(g, args):
-    """The operation widens a goal's touches. Only the sidecar changes; the worker syncs the goal file itself."""
     operation_only(g, "widen touches of", args.slug)
     state = g.load(args.slug)
     bad = check_path(args.add, touches_of(g.state_dir(), state))
@@ -394,14 +394,12 @@ def cmd_touches(g, args):
     add_extra(g.state_dir(), args.slug, "touches", args.add, "touches +%s: %s" % (args.add, " ".join(args.why.split())))
     print("TOUCHES %s +%s" % (args.slug, args.add))
     size = state.get("size") if isinstance(state.get("size"), dict) else None
-    if size and size.get("small"):  # widened touches can make a small goal large, never the reverse (E1)
+    if size and size.get("small"):
         tree = state.get("worktree") or g.root()
         try:
-            text = g.read(os.path.join(tree, ".loop", "goals", args.slug + ".md"))
+            lines = done_lines(g, tree, args.slug)
         except OSError:
-            text = ""
-        part = text.split("## Done lines", 1)[-1].split("\n## ", 1)[0]
-        lines = [line for line in part.splitlines() if re.match(r"\s*\d+\. ", line)]
+            lines = []
         new = fit.size_of(lines, touches_of(g.state_dir(), state), tree)
         if not new["small"]:
             add_set(g.state_dir(), args.slug, "size", new, "re-sized: " + new["why"])

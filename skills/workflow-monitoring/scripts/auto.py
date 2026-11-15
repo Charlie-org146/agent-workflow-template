@@ -44,6 +44,8 @@ WORDS = ["delet", "remov", "drop", "dropp", "rm", "wip", "truncat", "discard", "
          "migrat", "schema", "auth", "authenticat", "authoriz", "secur", "security", "rebas", "amend", "squash", "eras",
          "destroy", "uninstall", "kill", "unlink", "rmdir", "removal", "revert", "rewrit", "rewritten"]
 RISKY = re.compile(r"\b(?:%s)%s\b|reset\s+--hard|git\s+clean" % ("|".join(WORDS), END), re.I)
+# A PENDING line that asks for the owner's words (a reviewed page or requirement change, a criteria_max raise) is never full auto's to answer (#4287).
+OWNER_WORDS = re.compile(r"owner[- ]words|criteria_max|\b(?:un|re)-?review|reviewed\s+(?:page|requirement|prd)|\b(?-i:[A-Z]{2,5})-\d+\b[^.?]{0,60}\b(?:sub-?bullet|wording)", re.I)
 
 
 def top():
@@ -91,6 +93,8 @@ def why_not(waiting, cfg, answered=False):
     if not rec or rec not in (waiting.get("words") or []):
         return "no recommended answer among its words"
     said = " ".join([str(waiting.get("ask") or ""), rec])
+    if OWNER_WORDS.search(said):
+        return "it asks for owner words"
     hit = RISKY.search(said)
     if hit:
         return "it mentions %s" % hit.group(0).lower()

@@ -7,24 +7,19 @@ usage: board_page.py [--in FILE] [--out DIR]
        board_page.py lag | migrate
 
 Reads board.json (default <git common dir>/loop/board.json) and writes both pages beside it, or into --out. Both show the live
-board that live_board.py prints, so the page and the text agree. board-artifact.html has no doctype, html, head or body tags.
-The pages have no scripts and load nothing from the network.
+board that live_board.py prints. board-artifact.html has no doctype, html, head or body tags; the pages have no scripts.
 
-Run records: `note SLUG TEXT` records a worker's latest message on its run; `retire SLUG --reason TEXT` retires it;
-`checkin` marks now as the last check-in.
+Run records: `note` records a worker's latest message on its run; `retire` retires it; `checkin` marks now as the last check-in.
 
 Template lag (template_lag, which live_board.py calls; `lag` prints the Issues lines): each followed repo on an older
-template version than the operator's installed skills. The baseline is the installed workflow-package.json beside the
-skills, else a checkout's VERSION. Each repo's version is template_version in its base branch's .loop/config.json; a
-repo with none reads "template version unknown". A repo that holds the board's own skills checkout is the template
-itself and is skipped. It runs git and nothing else. `migrate` (operate.py runs it each pass, queue_migrations) queues one
-`migrate-<repo>` goal in each such repo through goal.py queue and prints the Issues lines for what it did not queue.
+template version than the installed skills (workflow-package.json beside the skills, else a checkout's VERSION). A repo's
+version is template_version in its base branch's .loop/config.json; none reads "template version unknown". The board's own
+checkout is skipped. `migrate` (operate.py runs it each pass) queues one `migrate-<repo>` goal in each such repo through
+goal.py queue and prints the Issues lines for what it did not queue.
 
-Status graph (span, mark, chain, unknown, total, levels, render_text, ...; shared by the live board): a node is a dict:
-slug, mark, depends (slugs it waits on), stage (0 to 8, steps begun), left (seconds still needed, 0 when nothing is, None
-when there is no estimate yet). Marks: merged, awaiting merge, running, waiting, failed, queued, and unknown for a
-dependency that is no goal here. The total is the longest chain of what is left through the dependencies, because goals
-that don't wait on each other run side by side; it is never the sum. Pure functions, nothing read from disk.
+Status graph (shared by the live board): a node is a dict: slug, mark, depends, stage (0 to 8), left (seconds still needed,
+None when there is no estimate). The total is the longest chain of what is left through the dependencies, never the sum.
+Pure functions, nothing read from disk.
 """
 import argparse
 import datetime
