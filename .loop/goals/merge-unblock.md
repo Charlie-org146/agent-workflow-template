@@ -12,3 +12,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. In a scratch repo, map a Reviewed page to a.py, then change only a comment in a.py and run `python3 skills/workflow-docs/scripts/docs.py check`. Expect: the page is not STALE.
+2. Change a line of code in a.py instead and run the same check, then `python3 skills/workflow-docs/scripts/audit.py restamp SLUG PAGE`. Expect: RESTAMPED PAGE, the page's Review line ends in `kept SLUG@sha`, and `.git/loop/reviews.tsv` has a restamp row naming SLUG.
+3. Run `python3 dev/toy/test-merge-unblock.py`. Expect: every line PASS, ending in `PASS: merge-unblock A`.
+4. Read `max_merge_rounds` in `.loop/START.md`. Expect: default 8.
+
+Closes #3867, closes #3122.
