@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """The narrow half of lanes.py's row mapping: a test script's `# reads:` header and what its entry points reach.
 
-Imported by lanes.py, not run. A header is one or more `# reads: <path> [<path>...]` lines in the file's leading
-comment block: repo-relative paths, whitespace-separated, a trailing / for a folder. Narrow means no folder widening:
-shell files add the paths they name, Python files their same-folder imports and quoted file names (and each quoted
-same-folder module name, with importlib.import_module), and anything unresolved is a problem that reruns the row always.
+Imported by lanes.py, not run. A header is `# reads: <path> [<path>...]` lines in the leading comment block: repo-relative
+paths, a trailing / for a folder. Shell files add the paths they name, Python files their same-folder imports and quoted
+file names (and quoted module names with importlib.import_module); anything unresolved reruns the row always.
 """
 import collections
 import json
@@ -16,11 +15,12 @@ import zlib
 import lanes
 
 
+CONFIG = ".loop/config.json"
 LIMIT = 32000000  # characters of file text held at once; a dropped text is read again
 
 
 class Texts(dict):
-    """file name -> text for one run, the oldest dropped past LIMIT; the names stay."""
+    """file name -> text for one run, the oldest dropped past LIMIT."""
     def __init__(self):
         super().__init__()
         self.live, self.size = collections.OrderedDict(), 0
@@ -44,14 +44,39 @@ class Texts(dict):
 
 
 def names(text, path):
-    """Whether a text names path: the path, its basename, or `import <stem>` for a .py file."""
+    """Whether a text names path, its basename, or (.py) `import <stem>`."""
     name = os.path.basename(path)
     stem = re.escape(name[:-3]) if name.endswith(".py") else None
     return path in text or name in text or bool(stem and re.search(r"(?m)^\s*(?:from|import)\s+(?:[\w, ]*\b)?%s\b" % stem, text))
 
 
+def flat(text, out=None, path=()):
+    """config.json as a Counter of (key path, value), duplicates counted; None if unparseable."""
+    if out is None:
+        try:
+            return flat(json.loads(text, object_pairs_hook=list), collections.Counter())
+        except (TypeError, ValueError):
+            return None
+    if text and isinstance(text, list) and all(isinstance(i, tuple) for i in text):
+        for k, v in text:
+            flat(v, out, path + (k,))
+    else:
+        out[path, json.dumps(text)] += 1
+    return out
+
+
+def config_hit(root, commit, command, cache):
+    """Whether a config.json change since commit can affect a row: it reaches it and names a changed key."""
+    if ("cfg", commit) not in cache:
+        old, now = (flat(t or "") for t in (lanes.git(root, "show", commit + ":" + CONFIG), lanes.read(root, CONFIG, cache)))
+        cache["cfg", commit] = None if old is None or now is None else {k for p, _ in (old - now) + (now - old) for k in p[-1:]}
+    keys = cache["cfg", commit]
+    deps = {d.replace("\\", "/") for d in lanes.closure(root, command, cache)[0]}
+    return lanes.hits(CONFIG, deps) and (keys is None or lanes.names_any(root, command, keys, cache, CONFIG))
+
+
 def kind(memo, full):
-    """"d", "f" or "" for a path, asked of the disk once per run."""
+    """"d", "f" or "" for a path, asked once per run."""
     if full not in memo:
         memo[full] = "d" if os.path.isdir(full) else "f" if os.path.isfile(full) else ""
     return memo[full]
@@ -72,13 +97,12 @@ PARTS = ("schema", "runner", "head", "rows", "wide", "loop")
 
 
 def sound(path):
-    """A path the plan cache may hold: relative, no .. part."""
+    """A relative path, no .. part."""
     return isinstance(path, str) and not path.startswith("/") and ".." not in path.split("/")
 
 
 def warm(path, key, picked, cache):
-    """Seed cache with every row closure of the plan cache file at path when its key is key; the state text:
-    `hit (N rows)`, or `miss (<why>)`. A bad file seeds nothing."""
+    """Seed cache from the plan cache file at path when its key matches: `hit (N rows)` or `miss (<why>)`."""
     digest, parts = key
     try:
         with open(path, "rb") as handle:
@@ -110,7 +134,7 @@ def warm(path, key, picked, cache):
 
 
 def store(path, key, cache):
-    """Write every row closure the plan holds; atomic, last writer wins, files over 30 days old pruned. The error class name on failure, else None."""
+    """Write every row closure the plan holds (atomic; files over 30 days pruned). The error class name or None."""
     rows = {}
     for item in [k for k in cache if isinstance(k, tuple) and k[0] == "closure"]:
         deps, always = cache[item]
@@ -142,7 +166,7 @@ def store(path, key, cache):
 
 
 def header(root, rel, cache):
-    """(declared paths or None, problems (code, file, line, what)) of a file's `# reads:` lines (leading comments only)."""
+    """(declared paths or None, problems) of a file's `# reads:` lines."""
     key = ("header", rel)
     if key in cache:
         return cache[key]
@@ -183,8 +207,7 @@ def header(root, rel, cache):
 
 
 def scan(root, rel, cache):
-    """(files, folders) one file reaches, unwidened. Shell: named paths. Python: same-folder imports, quoted file names
-    and quoted folders of its own skill. Else a leaf."""
+    """(files, folders) one file reaches, unwidened: shell, named paths; Python, same-folder imports and quoted names."""
     key = ("narrow", rel)
     if key in cache:
         return cache[key]
@@ -233,8 +256,7 @@ def scan(root, rel, cache):
 
 
 def wholes(root, text, base, bound):
-    """Skill folders a shell text reads as a whole: named bare by a command (ls, grep -r, cp -R, "$d", "$d/sub").
-    cd, pushd, mkdir and PYTHONPATH or sys.path read nothing; a cd into a skill folder then a listing reads it whole."""
+    """Skill folders a shell text reads as a whole (ls, grep -r, cp -R, "$d"); cd, mkdir and PYTHONPATH read nothing."""
     out = set()
     for line in lanes.HERE_FORMS.sub("$here/", text).split("\n"):
         entered = set()
@@ -256,8 +278,7 @@ def wholes(root, text, base, bound):
 
 
 def narrow(root, seeds, cache):
-    """(deps, problems, parent) reached from the seeds. Fail-wide: a named skill folder needs a declared path in it,
-    `skills/` needs `skills/` declared."""
+    """(deps, problems, parent) reached from the seeds."""
     deps, problems, parent, declared, marks, shell, sh = set(), [], {}, [], set(), [], []
     todo = [(s, None) for s in seeds]
     while True:
@@ -323,8 +344,7 @@ def narrow(root, seeds, cache):
 
 
 def suggest(root, rid):
-    """regression.py reads ROW: a `# reads:` header for the row's script from the newest check-reads trace of it, kept in
-    <git dir>/lanes-trace.tsv (id, epoch, path). The trace sees Python reads only; bash reads stay the author's."""
+    """regression.py reads ROW: a `# reads:` header for the row's script from its newest trace in <git dir>/lanes-trace.tsv."""
     rows = [line.split("\t") for line in (lanes.read(root, lanes.TABLE, {}) or "").splitlines() if line[:1] != "#"]
     command = next((cells[2] for cells in rows if len(cells) > 2 and cells[0] == rid), None)
     if command is None:
