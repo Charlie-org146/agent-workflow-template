@@ -64,6 +64,13 @@ def linked_prd(root, page, text):
     """The linked PRD's text for a link-form page (its docs.tsv source or 'PRD:' line), read through workflow-docs beside
     this skill; '' when the page is not link-form or the source cannot be read (its ids are then unknown)."""
     try:
+        with open(os.path.join(root, ".loop", "prd", page + ".md"), encoding="utf-8") as handle:  # the repo's copy, when sync made one (DOC-17)
+            copy = handle.read()
+        if "\n## Requirements" in copy:
+            return copy
+    except OSError:
+        pass
+    try:
         import importlib.util
         spec = importlib.util.spec_from_file_location("prd_reader", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "deployments.py"))
         if os.path.dirname(spec.origin) not in sys.path:
