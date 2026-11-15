@@ -231,6 +231,7 @@ def cmd_new(args):
     pods and pods.stamp(state)
     save(state, "frozen %d done lines" % len(lines))
     print("FROZEN %s branch=%s step=idea" % (args.slug, branch))
+    fit.bind_here(ME, args.slug)
     return 0
 
 
@@ -327,7 +328,7 @@ def cmd_record(args):
         save(state, "%s %s" % (args.step, state["flow"][args.step]))
         print("RECORDED %s %s" % (args.step, state["flow"][args.step]))
         tool = os.path.join(SKILLS, "workflow-health", "scripts", "milestone.py")
-        if args.step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):  # DEL-14: FILE lines
+        if args.step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):
             print(subprocess.run([sys.executable, tool, "leftovers", reply, "--goal", args.slug, "--live"], capture_output=True, text=True).stdout.strip())
         print("NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state))
         return 0
@@ -349,7 +350,7 @@ def cmd_pr(args):
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
     if ahead := queue("turn", args.slug):
-        waited or save(state, "waiting: pr queue, behind " + ahead)  # held time: the budget counts none of it (#3878)
+        waited or save(state, "waiting: pr queue, behind " + ahead)
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")

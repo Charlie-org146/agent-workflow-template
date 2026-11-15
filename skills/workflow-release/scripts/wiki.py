@@ -48,14 +48,21 @@ def top_of():
 
 
 def pending(top, cfg, fix=False, head="HEAD"):
-    """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first."""
+    """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first. A head
+    other than HEAD is audited from its own tree (a temporary worktree), not this checkout's (#4208)."""
     base = base_of(top, cfg)
     if fix:
         release.docs_trouble(top, base, True)  # mend the goal's own mechanical trouble, scoped to its commits
-    lines = release.docs_trouble(top, base, whole=True)
-    # a page stale from a commit this goal's diff does not touch is main's own: a finding, not a refusal (the --own scope)
-    head != "HEAD" and run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch, not this checkout's HEAD
-    done = run([sys.executable, DOCS, "check", "--own", head], top)
+    tree = top
+    if head != "HEAD":
+        run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch, not this checkout's HEAD
+        tree = tempfile.mkdtemp(prefix="pending-")
+        tree = tree if run(["git", "worktree", "add", "-q", "--detach", tree, head], top).returncode == 0 else top
+    try:
+        lines = release.docs_trouble(tree, base, whole=True)
+        done = run([sys.executable, DOCS, "check", "--own"], tree)  # a page stale from a commit this goal's diff does not touch is main's own
+    finally:
+        tree != top and run(["git", "worktree", "remove", "--force", tree], top)
     other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
     kept = [l for l in lines if not (l.startswith("REWRITE ") and l.split()[1].rstrip(":") in other and ": STALE " in l)]
     for l in lines:
