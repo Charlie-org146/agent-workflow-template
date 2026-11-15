@@ -223,6 +223,7 @@ def cmd_new(args):
     pods and pods.stamp(state)
     save(state, "frozen %d done lines" % len(lines))
     print("FROZEN %s branch=%s step=idea" % (args.slug, branch))
+    fit.bind_here(ME, args.slug)
     return 0
 
 
