@@ -4,13 +4,16 @@
 usage: homeguard.py snap FILE   write what ~/.workflow-loop holds now (each file's path and sha256) to FILE
        homeguard.py diff FILE   compare with that snapshot; print a LEAK line per change and exit 1, else exit 0
 
-The folder is os.path.expanduser("~/.workflow-loop"), so on Windows it follows USERPROFILE as Python does; TOY_REAL_WL
-names another folder (the test of this guard). It reads files and never writes inside the folder; the snapshot goes to FILE.
+The folder is os.path.expanduser("~/.workflow-loop") at snap time, so on Windows it follows USERPROFILE as Python does; the
+snapshot remembers it, so a toy that changes HOME later is still judged on the owner's folder. A home inside the system temp
+folder (a lane's own) is not the owner's and is not judged. TOY_REAL_WL names another folder (the test of this guard). It
+reads files and never writes inside the folder; the snapshot goes to FILE.
 """
 import hashlib
 import json
 import os
 import sys
+import tempfile
 
 
 def folder():
@@ -33,14 +36,18 @@ def scan(top):
 def main(argv):
     if len(argv) != 2 or argv[0] not in ("snap", "diff"):
         sys.exit(__doc__)
-    top = folder()
     if argv[0] == "snap":
+        top = folder()
+        own = os.environ.get("TOY_REAL_WL") or not os.path.realpath(top).startswith(os.path.realpath(tempfile.gettempdir()))
         with open(argv[1], "w") as handle:
-            json.dump(scan(top), handle)
+            json.dump({"top": top, "files": scan(top)} if own else {}, handle)
         return 0
     try:
         with open(argv[1]) as handle:
-            before = json.load(handle)
+            seen = json.load(handle)
+        top, before = seen["top"], seen["files"]
+    except KeyError:
+        return 0
     except (OSError, ValueError):
         sys.stderr.write("LEAK GUARD: no snapshot of %s was taken, so a change there is not judged\n" % top)
         return 0
