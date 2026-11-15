@@ -822,6 +822,7 @@
 | <a id="t-owed-close"></a>owed-close | defect | 3907 | not run | - | local | 2026-11-15 |
 | <a id="t-scripts-c-regression-under-19000"></a>scripts-c-regression-under-19000 | requirement | REG-9 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-rows-list"></a>prd-copy-rows-list | requirement | REG-1 | not run | - | local | 2026-11-15 |
+| <a id="t-rowtail-block-in-workflow"></a>rowtail-block-in-workflow | requirement | REG-5 | not run | - | local | 2026-11-15 |
 
 ## Setup
 
