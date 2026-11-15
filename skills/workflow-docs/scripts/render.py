@@ -361,6 +361,53 @@ def stale_blocks(root):
             for where, name in refresh(root, True)]
 
 
+def perm_wiki_page(root, page):
+    try:
+        folder = __import__("docs").wiki_dir(root)
+    except SystemExit:
+        folder = "docs/wiki"
+    try:
+        with open(os.path.join(root, folder, page + ".md"), encoding="utf-8-sig") as handle:
+            return handle.read().splitlines()
+    except OSError:
+        return []
+
+
+def perm_needs(root, routine, page):
+    """The (tool, text) pairs the Runbook's Steps and Full run name: a backticked command that starts with a program, and
+    each https host as a WebFetch domain."""
+    lines, inside, field, found = perm_wiki_page(root, page), False, "", []
+    for line in lines:
+        if line.startswith("### "):
+            inside = line[4:].strip() == routine
+        elif line.startswith("## "):
+            inside = False
+        elif inside:
+            match = counting.PERM_FIELD.match(line)
+            field = match.group(1) if match else field
+            if field in ("Steps", "Full run"):
+                for span in re.findall(r"`([^`]+)`", line):
+                    if " " in span and span.split(" ", 1)[0] in counting.PERM_PROGRAMS:
+                        found.append(("Bash", " ".join(span.split())))
+                found += [("WebFetch", "domain:" + host) for host in re.findall(r"https?://([A-Za-z0-9.-]+)", line)]
+    return found
+
+
+def mirror_of(path):
+    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; owned unless another file is there (never touched)."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().replace("\r\n", "\n").split("\n")
+    except OSError:
+        return {}, True, {}
+    try:
+        with open(path[:-3] + ".base", encoding="utf-8") as handle:
+            agreed = dict(x.split("\t") for x in handle.read().split("\n") if "\t" in x)
+    except OSError:
+        agreed = {}
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == criteria.SYNC_MARK, agreed
+
+
 if __name__ == "__main__":
     sys.argv[1:] in (["blocks"], ["--help"]) or sys.exit("usage: render.py blocks")
     if sys.argv[1:] == ["--help"]:

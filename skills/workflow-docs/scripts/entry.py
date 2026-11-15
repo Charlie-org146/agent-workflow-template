@@ -311,6 +311,24 @@ def write(root):
     return (["FIXED " + ENTRY] if changed else []) + ["FIXED " + n for n in names]
 
 
+REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
+
+
+def req_key(ident):
+    prefix, _, number = ident.partition("-")
+    return prefix, int(number)
+
+
+def requirements(body):
+    """{id: text} of an external PRD: each top-level bullet, numbered item or table row that starts with an id."""
+    found = {}
+    for line in body.replace("\r\n", "\n").split("\n"):
+        match = REQ.match(line)
+        if match and match.group(1) not in found:
+            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
+            found[match.group(1)] = " ".join(text.split())
+    return found
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("render", "write", "check", "block", "lag"))
@@ -338,6 +356,41 @@ def main():
             return 1
         print("ENTRY OK")
     return 0
+
+
+def perm_covered(allow, tool, text):
+    import counting
+    return any(counting.perm_matches(rule, tool, text) for kind, rule, _ in allow if kind == "allow")
+
+
+def perm_check(root):
+    """The findings, one line each, for every routine in .loop/routines.tsv."""
+    import counting
+    import render
+    table, findings = counting.perm_declared(root)
+    if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
+        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"]             if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
+    try:
+        with open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8") as handle:
+            written = (json.load(handle).get("permissions") or {})
+    except (OSError, ValueError):
+        written = {}
+    for _, row in counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")):
+        routine, page = (row + ["", ""])[:2]
+        mine = table.get(routine, [])
+        if not mine:
+            findings.append("UNDECLARED %s: no rows in .loop/permissions.tsv. Fix: list what its Runbook needs" % routine)
+        for kind, rule, _ in mine:
+            if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
+                findings.append("NOT WRITTEN %s %s %s. Fix: audit.py permissions write" % (routine, kind, rule))
+        for tool, text in render.perm_needs(root, routine, page):
+            if mine and not perm_covered(mine, tool, text):
+                findings.append("UNCOVERED %s: the Runbook names %s(%s) and no allow row covers it" % (routine, tool, text))
+        for kind, rule, _ in mine:
+            inner = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
+            if kind == "allow" and inner and any(k == "deny" and counting.perm_matches(r, inner.group(1), inner.group(2)) for k, r, _ in mine):
+                findings.append("CONFLICT %s: the allow %s is covered by a deny, which wins" % (routine, rule))
+    return findings
 
 
 if __name__ == "__main__":

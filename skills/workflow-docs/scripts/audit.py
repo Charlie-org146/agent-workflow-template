@@ -15,6 +15,7 @@ do not fail the audit. It runs git and gh, and nothing else.
 import argparse
 import contextlib
 import io
+import json
 import os
 import re
 import subprocess
@@ -25,6 +26,10 @@ import criteria
 import docs
 import entry
 import prd
+from criteria import put, sha
+from entry import req_key, requirements
+from prd import out as post
+from render import mirror_of
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -243,60 +248,16 @@ def relock(root):
     return done
 
 
-SYNC_MARK = "<!-- prd-sync: owned -->"
-def put(path, source, have, base):
-    """Write the copy (SYNC_MARK, `- ID: text` lines) and its baseline .base (`ID<TAB>sha8` of the agreed text)."""
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
-    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as handle:
-        handle.write("".join("%s\t%s\n" % item for item in sorted(base.items(), key=lambda x: counting.req_key(x[0]))))
-
-
-def mirror_of(path):
-    """({id: text}, owned, {id: sha8 agreed}) of the repo's copy: owned unless another file is there (never touched)."""
-    try:
-        with open(path, encoding="utf-8") as handle:
-            lines = handle.read().replace("\r\n", "\n").split("\n")
-    except OSError:
-        return {}, True, {}
-    try:
-        with open(path[:-3] + ".base", encoding="utf-8") as handle:
-            agreed = dict(x.split("\t") for x in handle.read().split("\n") if "\t" in x)
-    except OSError:
-        agreed = {}
-    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == SYNC_MARK, agreed
-
-
-def sha(text):
-    return None if text is None else criteria.seal(text)
-
-
-def out(env, *args, **kw):
-    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER, an agent's Notion connector: `WRITER SOURCE comment|replace
-    ID|remove ID`, text on stdin). Never raises."""
-    cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
-    if not cmd:
-        return False, "set %s to the command that writes to the document" % env
-    try:
-        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, timeout=120, **kw)
-    except (OSError, subprocess.SubprocessError) as error:
-        return False, str(error)[:100]
-    return done.returncode == 0, (done.stdout if done.returncode == 0 else done.stderr).strip()
-
-
 def sync(root, dry=False, accept=(), opened=False):
-    """Compare each external PRD with the repo's copy, .loop/prd/<Page>.md, against what both last agreed on. A difference is a
-    DELTA (page, id, side, both texts) and sync overwrites neither side: it posts each new one as a GitHub issue and a comment
-    on the external page, and --accept PAGE:ID=repo|source writes that side's text, that id only, to the other side and closes
-    the issue. --dry-run posts and writes nothing (exit 1 with a delta). An unreachable source, gh or writer is `not connected`."""
+    """Each external PRD against the repo's copy, .loop/prd/<Page>.md, and what both last agreed on: a difference is a DELTA
+    (posted as an issue and a comment, never overwritten); --accept PAGE:ID=repo|source writes that side to the other."""
     held = counting.ledger(root)
     if opened:
         print("".join("DELTA %s %s changed (review: %s)\n" % (k.replace(":", ": "), v[0], v[1]) for k, v in held.items()), end="")
         return 0
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:
-        print("NO EXTERNAL PRDS: no PRD source in .loop/docs.tsv is a url or mcp source")
+        print("NO EXTERNAL PRDS: no url: or mcp: source in .loop/docs.tsv")
     same = new = away = 0
     for page, source in listed:
         body, why = prd.read_link(source)
@@ -304,13 +265,10 @@ def sync(root, dry=False, accept=(), opened=False):
             print("not connected: %s (%s): %s" % (page, source, why))
             away += 1
             continue
-        want, path = counting.requirements(body), os.path.join(root, ".loop", "prd", page + ".md")
+        want, path = requirements(body), os.path.join(root, ".loop", "prd", page + ".md")
         have, owned, agreed = mirror_of(path)
-        if not want:
-            print("EMPTY %s: no ids in the source; the copy is kept" % page)
-            continue
-        if not owned:
-            print("SKIPPED %s: %s is not sync's own file; left as it is" % (page, os.path.relpath(path, root)))
+        if not want or not owned:
+            print("SKIPPED %s: %s" % (page, "no ids in the source" if not want else "its copy is not sync's own"))
             continue
         if not os.path.exists(path):  # the first sync adopts the source
             if not dry:
@@ -322,9 +280,9 @@ def sync(root, dry=False, accept=(), opened=False):
             r, s = have.get(ident), want.get(ident)
             keep = r if side == "repo" else s  # the text both sides will hold
             if r == s or side not in ("repo", "source"):
-                print("NO DELTA %s: %s (nothing to accept for %s)" % (page, ident, item))
+                print("NO DELTA %s: %s" % (page, ident))
                 continue
-            ok, why = out("LOOP_PRD_WRITER", source, "replace" if r else "remove", ident, input=r or "") if side == "repo" else (True, "")
+            ok, why = post("LOOP_PRD_WRITER", source, "replace" if r else "remove", ident, input=r or "") if side == "repo" else (True, "")
             if not ok:
                 print("not connected: %s (%s): %s" % (page, source, why))
                 continue
@@ -337,35 +295,30 @@ def sync(root, dry=False, accept=(), opened=False):
             put(path, source, have, {i: h for i, h in agreed.items() if h})
             row = held.pop("%s:%s" % (page, ident), None)
             if row:
-                out("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted the %s's text." % side)
-            print("ACCEPTED %s: %s, the %s's text is on both sides" % (page, ident, side))
+                post("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted: %s." % side)
+            print("ACCEPTED %s: %s, the %s's text" % (page, ident, side))
         found = []
-        for ident in sorted(set(have) | set(want), key=counting.req_key):
-            r, s = have.get(ident), want.get(ident)
+        for ident in sorted(set(have) | set(want), key=req_key):
+            r, s, b = have.get(ident), want.get(ident), agreed.get(ident) or None
             if r != s:
-                b = agreed.get(ident) or None
                 found.append((ident, "both sides" if (sha(r) != b) == (sha(s) != b) else "the repo" if sha(r) != b else "the source", r, s))
-        fresh = {i: sha(have[i]) for i in have if have[i] == want.get(i)}
-        fresh.update({i: agreed[i] for i, *_ in found if i in agreed})
-        if fresh != agreed and not dry:
-            put(path, source, have, fresh)
         same, new = same + (not found), new + len(found)
         for ident, side, r, s in found:
-            print("DELTA %s: %s %s changed (repo: %s | source: %s)" % (page, ident, side, (r or "<none>")[:160], (s or "<none>")[:160]))
+            print("DELTA %s: %s %s changed (repo: %s | source: %s)" % (page, ident, side, (r or "-")[:160], (s or "-")[:160]))
         if dry:
             continue
         for key in [k for k in held if k.startswith(page + ":") and k.split(":")[1] not in [f[0] for f in found]]:
-            out("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Both sides agree now.")
+            post("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Resolved.")
         for ident, side, r, s in found:
-            key, text = "%s:%s" % (page, ident), "Delta in %s %s: %s changed.\nRepo copy: %s\nSource: %s\nAccept one side with: docs.py sync --accept %s:%s=repo or =source" % (
-                page, ident, side, r or "<none>", s or "<none>", page, ident)
+            key, text = "%s:%s" % (page, ident), "Delta in %s %s: %s changed.\nRepo copy: %s\nSource: %s\nAccept one: docs.py sync --accept %s:%s=repo|source" % (
+                page, ident, side, r or "-", s or "-", page, ident)
             row = held.get(key) or [side, "", "0", ""]
             if row[1] and row[3] != sha(text):
-                out("LOOP_GH", "issue", "comment", row[1], "--body", "The delta changed.\n" + text)
+                post("LOOP_GH", "issue", "comment", row[1], "--body", text)
                 row[2] = "0"
             elif not row[1]:
-                for stone in (["--milestone", page], []):  # the milestone is named like the page
-                    ok, made = out("LOOP_GH", "issue", "create", "--title", "DELTA %s %s: %s changed" % (page, ident, side), "--body", text, *stone)
+                for stone in (["--milestone", page], []):
+                    ok, made = post("LOOP_GH", "issue", "create", "--title", "DELTA %s %s: %s changed" % (page, ident, side), "--body", text, *stone)
                     if ok:
                         break
                 if not ok:
@@ -374,7 +327,7 @@ def sync(root, dry=False, accept=(), opened=False):
                     continue
                 row[1] = made.split("\n")[-1]
             if row[2] != "1":
-                ok, why = out("LOOP_PRD_WRITER", source, "comment", input=text)
+                ok, why = post("LOOP_PRD_WRITER", source, "comment", input=text)
                 row[2] = "1" if ok else "0"
                 print("POSTED %s %s: %s%s" % (page, ident, row[1], "" if ok else " (not connected to %s: %s)" % (source, why[:80])))
             held[key] = [side, row[1], row[2], sha(text)]
@@ -382,3 +335,64 @@ def sync(root, dry=False, accept=(), opened=False):
         counting.ledger(root, held)
     print("SYNC: %d in step, %d with a delta, %d not connected" % (same, new, away))
     return 1 if dry and new else 0
+
+
+# --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
+
+
+def perm_write(root, dry):
+    table, bad = counting.perm_declared(root)
+    if bad:
+        print("\n".join(bad))
+        return 1
+    path = os.path.join(root, ".claude", "settings.json")
+    data = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError) as error:
+            print("REFUSED: .claude/settings.json is not readable JSON (%s). Nothing was written. Fix: repair it." % error)
+            return 1
+    if not isinstance(data, dict) or not isinstance(data.get("permissions", {}), dict):
+        print("REFUSED: .claude/settings.json has no permissions object I can extend. Nothing was written.")
+        return 1
+    block, added = data.setdefault("permissions", {}), 0
+    for mine in table.values():
+        for kind, rule, _ in mine:
+            held = block.setdefault(kind, [])
+            if not isinstance(held, list):
+                print("REFUSED: .claude/settings.json permissions.%s is not a list. Nothing was written." % kind)
+                return 1
+            if rule not in held:
+                held.append(rule)
+                added += 1
+    if dry or not added:
+        print("PERMISSIONS %s: %d rule(s) to add" % ("DRY RUN" if dry else "CURRENT", added))
+        return 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    print("PERMISSIONS WRITTEN: %d rule(s) in .claude/settings.json" % added)
+    return 0
+
+
+def perm_main(argv):
+    parser = argparse.ArgumentParser(prog="audit.py permissions", description=PERM_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("command", choices=("write", "check"))
+    parser.add_argument("--repo", default="")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    root = counting.perm_root_of(args.repo)
+    if args.command == "write":
+        return perm_write(root, args.dry_run)
+    findings = entry.perm_check(root)
+    print("\n".join(findings) if findings else "PERMISSIONS OK")
+    return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)
