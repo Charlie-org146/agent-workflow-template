@@ -136,7 +136,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
 | [stale-own-block-kept](Tests#t-stale-own-block-kept) | requirement | DOC-1 | Given a Settings, Automation or README block that differs from a fresh render, when docs.py check --own runs, then its STALE line is kept, never moved to a FINDING. | not run |
 | [notion-app-link-unread](Tests#t-notion-app-link-unread) | requirement | DOC-1 | Given a feature page whose PRD is an app.notion.com link and no reader, when the docs check runs, then it reports UNREAD instead of reading the sign-in page. | PASS 2026-11-13 |
 | [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |
-| [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |
 | [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-12 |
 | [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-12 |
 | [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |
@@ -201,11 +200,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
 | [blocks-setup-clean](Tests#t-blocks-setup-clean) | requirement | DOC-15 | Given setup with criteria on, when it adopts a repo, then the README and Home blocks are in the adoption commit and the tree is clean. | PASS 2026-11-12 |
 | [automation-links-runbook](Tests#t-automation-links-runbook) | requirement | DOC-15 | Given routines with a Runbook, when the Automation block is generated, then each routine's name links to its page's Runbook. | not run |
 | [launchctl-missing-unknown](Tests#t-launchctl-missing-unknown) | requirement | DOC-15 | Given a host with no launchctl and no gh, when docs.py automation runs, then it reports each routine's state as unknown and exits 0. | PASS 2026-11-14 |
-| [sync-drift-rewrites](Tests#t-sync-drift-rewrites) | requirement | DOC-17 | Given an external PRD whose requirement changed, when docs.py sync runs, then it prints DRIFT for it and rewrites the repo copy to match. | not run |
-| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | DOC-17 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
 | [sync-not-connected](Tests#t-sync-not-connected) | requirement | DOC-17 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
-| [sync-owns-only](Tests#t-sync-owns-only) | requirement | DOC-17 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
-| [sync-source-readonly](Tests#t-sync-source-readonly) | requirement | DOC-17 | Given an external PRD, when docs.py sync runs, then the source text is unchanged. | not run |
 | [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | DOC-17 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | not run |
 | [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | DOC-17 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | not run |
 | [sync-source-delta](Tests#t-sync-source-delta) | requirement | DOC-17 | Given a requirement people changed in the external document, when docs.py sync runs, then it prints a DELTA naming the source as the side and both texts. | not run |
@@ -221,7 +216,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
 | [sync-open-lists](Tests#t-sync-open-lists) | requirement | DOC-17 | Given an open delta, when docs.py sync --open runs, then it lists the delta with no call to gh or the connector. | not run |
 | [sync-health-delta](Tests#t-sync-health-delta) | requirement | DOC-17 | Given an open delta, when health checks the docs, then it reports a FAIL row of the docs rule for it. | not run |
 | [sync-board-delta](Tests#t-sync-board-delta) | requirement | DOC-17 | Given an open delta, when the check-in's board is built, then it lists the delta as waiting on the owner. | not run |
-| [sync-not-connected](Tests#t-sync-not-connected) | requirement | DOC-17 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
 | [sync-no-writer-posted](Tests#t-sync-no-writer-posted) | requirement | DOC-17 | Given no writer, when docs.py sync finds a delta, then the issue is posted and the comment says not connected. | not run |
 | [sync-accept-no-writer](Tests#t-sync-accept-no-writer) | requirement | DOC-17 | Given no writer, when docs.py sync --accept PAGE:ID=repo runs, then it says not connected, exits 0 and changes nothing. | not run |
 | [sync-no-gh](Tests#t-sync-no-gh) | requirement | DOC-17 | Given gh that fails, when docs.py sync finds a delta, then it shows the delta, says not connected and exits 0. | not run |
