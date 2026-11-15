@@ -6,17 +6,14 @@ usage: setup.py [--repo DIR] [--branch NAME] [--dry-run] [--bare] [--from REPO [
        setup.py [--repo DIR] --git-hooks [--remove | --check [--json]]
        setup.py migration-check [--repo DIR] [--pr] [--offline]   every gap to the current template, each with its fix; writes nothing
 
-Prints the health check's start state, the plan (add, convert, skip, no fit, GAP, GUARD, borrow, held) and, after a real run,
-ADOPTION VERDICT. Writes .loop/ (config with every repo setting and its default, queue, findings, docs map, rows), a page for
-each top-level code folder and Home, the README How to use sections and the regression workflow, and commits them on a branch
-(default workflow-setup). An existing file is adapted, never overwritten. A refusal rolls everything back; a second run changes
-nothing. Exit 0 whenever the adoption is on its branch, 3 with --strict and gaps, 1 or 2 refused, 4 half undone, 130
-interrupted. --bare writes only the config, queue and findings.
+Prints the prerequisite checklist (SET-11), the health check's start state, the plan (add, convert, skip, no fit, GAP, GUARD,
+borrow, held) and, after a real run, ADOPTION VERDICT; writes .loop/, the docs and the regression workflow on a branch
+(default workflow-setup). An existing file is adapted, never overwritten; a refusal rolls everything back; a second run changes
+nothing. Exit 0 whenever the adoption is on its branch, 3 with --strict and gaps, 1 or 2 refused, 4 half undone, 130 interrupted.
 
---reply-hook and --govern-hook install the operation session's hooks (workflow-monitoring) in the repo's machine-local
-.claude/settings.local.json, keeping every other key; --remove takes them out. --git-hooks writes the private-name scan as git
-hooks (pre-commit, commit-msg, pre-push), as a default run does after its commit unless --no-git-hooks or LOOP_NO_GIT_HOOKS=1;
-a hook that is not ours is never touched; --check [--json] prints their state.
+--reply-hook and --govern-hook install the operation session's hooks in the repo's machine-local .claude/settings.local.json;
+--git-hooks writes the private-name scan as git hooks (a default run does too, unless --no-git-hooks or LOOP_NO_GIT_HOOKS=1);
+--remove takes a hook out, --check [--json] prints their state. A hook that is not ours is never touched.
 """
 import argparse
 import errno
@@ -329,6 +326,9 @@ def main():
         return reply_hook(repo, args.remove) or (0 if args.remove else reply_hook(repo, False, "govern_hook.py"))
     if args.no_health:
         os.environ["LOOP_NO_HEALTH"] = "1"
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "unattended.py")
+    if os.path.exists(tool):  # SET-11: the checklist first, before anything is written; a gap never blocks
+        print("PREREQUISITES:\n" + subprocess.run([sys.executable, tool, "prerequisites"], capture_output=True, text=True).stdout.rstrip())
     return adopt(args, repo)
 
 

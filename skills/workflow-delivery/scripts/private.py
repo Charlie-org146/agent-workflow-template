@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """The private-name scan: nothing private ships (DEL-9); every push or GitHub write runs it, and setup's git hooks run it as
-`hook staged | message FILE | push`. Also a private repo's commit statuses, which live here as every other script is full.
+`hook staged | message FILE | push`.
 
-usage: private.py where | check | scan [--base REF]    the worker check, the list, the scan from REF (default origin/<base>)
-       private.py visibility | required | statuses --head SHA --ok|--fail [--base B]   the private-repo statuses
+usage: private.py where | check | scan [--base REF]    worker check, list, scan from REF (default origin/<base>)
+       private.py visibility | required | statuses --head SHA --ok|--fail [--base B]   private-repo statuses
 
-The list: `$LOOP_PRIVATE_NAMES` (a file path) or `~/.workflow-loop/private-names`, one regex per line, matched without
-case; `#` starts a comment. No file: nothing checked. Only comments: off. A broken file: every scan refuses.
+The list: `$LOOP_PRIVATE_NAMES` (a file path) or `~/.workflow-loop/private-names`, one regex per line, matched without case;
+`#` starts a comment; `@public REGEX` or `@repos=a,b REGEX` applies only to public repos or the named ones. No file: nothing
+checked. Only comments: off. A broken file: every scan refuses.
 """
 import json
 import os
@@ -28,7 +29,7 @@ def plain(text):
 
 
 def mend(git, files, base):
-    """Resolve a merge that conflicts only in generated files (tsv rows union, Tests.md re-rendered); else False."""
+    """Mend a merge that conflicts only in generated files; else False."""
     import tempfile
     top, tsv = git("rev-parse", "--show-toplevel").stdout.strip(), (".loop/regression.tsv", ".loop/regression-runs.tsv")
     page = lambda f: os.path.basename(f) == "Tests.md" and os.path.dirname(f).endswith("wiki")
@@ -79,12 +80,20 @@ DEFAULT = "~/.workflow-loop/private-names"
 LIMIT, WIDTH = 60, 4096
 PRIVATE_NAME, PRIVATE_LIST = "PRIVATE_NAME", "PRIVATE_LIST"
 WORKER_PUSH, WORKER_PUSH_INTERNAL = "WORKER_PUSH", "WORKER_PUSH_INTERNAL"
-SEE_WHY = "run private.py where in this folder to see why, then tell the owner; do not use --no-verify"
+SEE_WHY = "run private.py where here to see why, tell the owner; never --no-verify"
 
 
 def source():
     given = os.environ.get("LOOP_PRIVATE_NAMES")
     return (given, "$LOOP_PRIVATE_NAMES") if given else (os.path.expanduser(DEFAULT), DEFAULT)
+
+
+def in_scope(scope):
+    try:
+        top = git(".", "rev-parse", "--show-toplevel").strip()
+    except RuntimeError:
+        top = "."
+    return repo_is_private(top) is not True if scope == "public" else os.path.basename(top) in scope[6:].split(",")
 
 
 def patterns():
@@ -103,6 +112,10 @@ def patterns():
         text = line.strip()
         if not text or text.startswith("#"):
             continue
+        if text.startswith("@"):
+            scope, _, text = text[1:].partition(" ")
+            if not in_scope(scope):
+                continue
         try:
             found.append((number, re.compile(text, re.I)))
         except re.error:
@@ -197,11 +210,10 @@ def refusal(result, base="the base branch", pushed=False):
         return None
     shown = "; ".join(result["hits"][:8]) + (" and %d more" % (len(result["hits"]) - 8) if len(result["hits"]) > 8 else "")
     if pushed:
-        fix = ("the branch is already on origin: the owner decides how to rewrite it (the loop never force-pushes); for a "
-               "false positive, edit that line of the list")
+        fix = ("the branch is already on origin: the owner decides how to rewrite it; for a false positive, edit that line of the list")
     else:
-        fix = ("remove the text, then squash so no commit keeps it: git reset --soft $(git merge-base HEAD %s) && git "
-               "commit -m \"<goal>\", and run the command again; for a false positive, edit that line of the list" % base)
+        fix = ("squash so no commit keeps the text: git reset --soft $(git merge-base HEAD %s) && git commit -m "
+               "\"<goal>\"; for a false positive, edit that line of the list" % base)
     return "a private name would be pushed: %s; nothing was pushed" % shown, fix, PRIVATE_NAME
 
 
@@ -236,10 +248,9 @@ def worker_push(lines):
             return ("the worker-branch check could not read git's ref line; nothing was pushed",
                     SEE_WHY, WORKER_PUSH_INTERNAL)
         if parts[2] != "refs/heads/loop/" + slug or not parts[1].strip("0"):
-            return ("a worker session for goal %s may push only loop/%s (expected ref refs/heads/loop/%s; the worktree folder "
-                    "must equal the goal slug), not %s; nothing was pushed" % (slug, slug, slug, parts[2] if parts[1].strip("0") else "a deletion of " + parts[2]),
-                    "push your own branch (goal.py pr %s); only the operation session publishes to main (merge.py), and another "
-                    "goal's branch is pushed from that goal's own worktree" % slug, WORKER_PUSH)
+            return ("a worker session for goal %s may push only loop/%s (the worktree folder must equal the "
+                    "goal slug), not %s; nothing was pushed" % (slug, slug, parts[2] if parts[1].strip("0") else "a deletion of " + parts[2]),
+                    "push your own branch (goal.py pr %s); only the operation session publishes to main (merge.py)" % slug, WORKER_PUSH)
     return None
 
 
