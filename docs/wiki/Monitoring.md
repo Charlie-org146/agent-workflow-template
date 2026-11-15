@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde98a8 U=03828777 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -28,7 +28,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-13** Cadence and reply format <!-- reviewed 02876e30 -->
+- MON-5: **Reviewed 2026-11-15** Cadence and reply format <!-- reviewed 480ea269 -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line;
   - All sessions, one table of every session across my repos with what it is for, its status, progress, time left, tokens left and latest report;
@@ -36,6 +36,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
   - Needs you, each question numbered with its options and a recommended answer, or Nothing needs you; and last, Coming up, the next expected events and what I will need to do.
   - A hook that setup installs blocks a reply that doesn't follow this layout, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
   - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
+  - A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good.
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
@@ -60,10 +61,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
   - `board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12).
 
-- MON-14: **Reviewed 2026-11-13** Dependency map grouped by repo <!-- reviewed 2fa99e5b -->
+- MON-14: **Reviewed 2026-11-15** Dependency map grouped by repo <!-- reviewed 9adcf143 -->
   - The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks.
   - Each goal shows its expected time left from past runs, each repo block ends with its expected finish, and each wait is drawn as an arrow.
   - The map lists only live goals: a record with no goal or status, a stopped goal and a goal left with release: leave are not drawn, and a worker held at pr reads holding, not stuck.
+  - The check requires only live goals: running, holding, queued, waiting on the owner, or merged since the previous check-in; a goal merged before the previous check-in is never required.
   - Each repo prints as `== name ==` within 60 characters, then a `Between repos` list for `repo/slug` dependencies, then the legend once.
   - The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
 
@@ -214,6 +216,8 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
 | [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | MON-5 | Given the Monitoring PRD, when MON-5 is read, then it carries the check-in reply layout the hook enforces. | PASS 2026-11-13 |
 | [checkin-passes-hook](Tests#t-checkin-passes-hook) | requirement | MON-5 | Given the check-in operate.py prints, when the reply hook checks it, then it passes the layout. | PASS 2026-11-10 |
 | [machine-local-checkin](Tests#t-machine-local-checkin) | requirement | MON-5 | Given proofs owed to another machine, when the check-in is written, then they are listed under Coming up as off-machine to-dos, not as blockers. | not run |
+| [mon5-pr-merged-closes](Tests#t-mon5-pr-merged-closes) | requirement | MON-5 | Given a done run whose pull request merged on GitHub before the last check-in, when the check-in prints, then the goal is gone from the graph and the check. | not run |
+| [mon5-merged-pr-retires](Tests#t-mon5-merged-pr-retires) | requirement | MON-5 | Given a running record whose pull request merged, when it is retired with --pr, then it closes for good; with no merged pull request it is still refused. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
@@ -228,6 +232,8 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
 | [mon14-map-arrows](Tests#t-mon14-map-arrows) | requirement | MON-14 | Given a goal that waits on another, when the check-in draws Dependencies, then the wait is drawn as an arrow. | not run |
 | [mon14-map-live-only](Tests#t-mon14-map-live-only) | requirement | MON-14 | Given a record with no goal, a stopped goal, a left goal and a worker held at pr, when the check-in draws Dependencies, then only live goals show and the held one reads holding. | not run |
 | [mon14-map-times](Tests#t-mon14-map-times) | requirement | MON-14 | Given live goals with past runs to estimate from, when the check-in draws Dependencies, then each goal shows its time left. | not run |
+| [mon14-merged-since-once](Tests#t-mon14-merged-since-once) | requirement | MON-14 | Given a goal merged since the previous check-in, when the check-in draws Dependencies, then it is listed once as [x]. | not run |
+| [mon14-merged-before-dropped](Tests#t-mon14-merged-before-dropped) | requirement | MON-14 | Given a goal merged before the previous check-in, when the check-in draws and checks Dependencies, then it is neither drawn nor required. | not run |
 | [mon15-pod-owner](Tests#t-mon15-pod-owner) | requirement | MON-15 | Given another pod's goal, when a pod acts on it, then it is refused naming the owner and shown owned by that pod. | PASS 2026-11-12 |
 | [mon15-merge-lock](Tests#t-mon15-merge-lock) | requirement | MON-15 | Given two pods merging into one main, when they run together, then the lock serializes them. | PASS 2026-11-12 |
 | [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | MON-15 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |

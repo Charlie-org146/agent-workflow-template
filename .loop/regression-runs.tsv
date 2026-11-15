@@ -100,6 +100,7 @@ del1-new-here-main-refused	PASS	2026-11-14
 del5-bump-set	PASS	2026-11-12	
 del5-docs-bump-minor	PASS	2026-11-15	
 del5-docs-patch-default	PASS	2026-11-15	
+del5-merge-forwards-checkout	PASS	2026-11-15	
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
 del9-hooks	PASS	2026-11-12	
@@ -146,7 +147,7 @@ done-line-rows-128	PASS	2026-11-12
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-12	
 estimates-shown	PASS	2026-11-12	
-every-row-described	PASS	2026-11-14	
+every-row-described	FAIL	2026-11-15	
 failed-waits-mender	PASS	2026-11-09	
 file-one-group	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 fixed-closes	PASS	2026-11-12	
@@ -165,6 +166,9 @@ format-usage-api	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 frozen-done-lines	PASS	2026-11-09	
 full-goal-lane-timeout	PASS	2026-11-10	
 goal-levels-nightly	PASS	2026-11-11	
+grd2-merge-rounds-default-8	PASS	2026-11-15	
+grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
+grd4-worker-commit-main-refused	PASS	2026-11-15	
 grd9-controls	SKIPPED	2026-11-14	
 guards-extra	PASS	2026-11-10	
 guards-no-try	PASS	2026-11-12	
@@ -431,9 +435,12 @@ report-done-final	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 report-header	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 report-held-111	PASS	2026-11-10	
 report-sub-bullets	PASS	2026-11-12	
+restamp-at-merge-3867	PASS	2026-11-15	
+restamp-marks-3867	PASS	2026-11-15	
+restamp-wording-locked-3867	PASS	2026-11-15	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	PASS	2026-11-15	
+review-findings-skill-lines	FAIL	2026-11-15	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -494,6 +501,7 @@ skill-workflow-in-references	PASS	2026-11-14
 slot-pool-112	PASS	2026-11-10	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-12	
+stale-comments-only-3122	PASS	2026-11-15	
 stale-found	PASS	2026-11-12	
 stale-groups-defect	PASS	2026-11-12	
 stale-merge-order	PASS	2026-11-12	
@@ -564,6 +572,7 @@ wiki-no-report	PASS	2026-11-12
 wiki-release	PASS	2026-11-12	
 wiki-release-pycache	PASS	2026-11-12	
 wiki-unmapped-stale	PASS	2026-11-12	
+win-posix-calls-gone	PASS	2026-11-15	
 worker-per-goal	PASS	2026-11-12	
 worker-refuses	PASS	2026-11-12	
 worker-reports	PASS	2026-11-12	

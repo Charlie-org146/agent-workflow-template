@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1a48b U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept merge-unblock@4bcf6ff3 -->
 
 ## Problem
 - I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it.
@@ -97,7 +97,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-2 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
 | [describe-needed](Tests#t-describe-needed) | requirement | REG-2 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-12 |
 | [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-2 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-12 |
-| [every-row-described](Tests#t-every-row-described) | requirement | REG-2 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | PASS 2026-11-14 |
+| [every-row-described](Tests#t-every-row-described) | requirement | REG-2 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | FAIL 2026-11-15 |
 | [defect-categories](Tests#t-defect-categories) | requirement | REG-2 | Given the test rows, when they are checked, then every row has a category, defect rows link their issue, and the page shows defect tests apart. | FAIL 2026-11-12 |
 | [summary-groups](Tests#t-summary-groups) | requirement | REG-2 | Given tests guarding requirements on two wiki pages and one guarding none, when they are listed, then they come grouped by feature in page order, then Other. | PASS 2026-11-10 |
 | [summary-fields](Tests#t-summary-fields) | requirement | REG-2 | Given requirement and defect tests, when they are listed, then each shows its kind, what it guards (requirement ID and words, or issue link and state), what it checks, when it runs, its last result and date, and seen failing. | PASS 2026-11-10 |
@@ -206,6 +206,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 | [lane-tmpdir-per-goal](Tests#t-lane-tmpdir-per-goal) | requirement | REG-8 | Given lanes of different goals, when they run, then each has its own loop-lane folder under the system temp, gone when the lane ends, and a system temp inside a git checkout is refused with LANE_TMPDIR. | not run |
 | [flaky-marked](Tests#t-flaky-marked) | requirement | REG-9 | Given a row whose result flips on one clean commit and runner, when it runs FAIL, PASS, PASS and later PASS, FAIL, FAIL, then each run prints the FLAKY line with the raw result kept, exits by that result, the flag stays sticky in regression-runs.tsv, tests.py list, health's TESTS block and the lane record, the row is never reused, and a later commit's clean pass clears it. | PASS 2026-11-10 |
 | [flaky-no-false-mark](Tests#t-flaky-no-false-mark) | requirement | REG-9 | Given a row whose result flips, when the flip happens on a dirty tree, on another runner, or against a record and regression-runs.tsv from before the commit, clean, runner and python fields, then no FLAKY line is printed and no flag is set. | PASS 2026-11-10 |
+| [scripts-c-regression-under-19000](Tests#t-scripts-c-regression-under-19000) | requirement | REG-9 | Given the workflow-regression scripts, when their sizes are counted in LF bytes, then each is at or under 19,000 bytes. | not run |
 | [reg10-skip-never-red](Tests#t-reg10-skip-never-red) | requirement | REG-10 | Given a row that exits 77, when red runs on it, then it is refused and the row's seen-failing date stays empty. | not run |
 | [reg10-windows-refused](Tests#t-reg10-windows-refused) | requirement | REG-10 | Given a red proof naming a Windows runner, when it is recorded with --off-platform, then it is refused and the row stays unproven. | not run |
 | [reg10-commit-checked](Tests#t-reg10-commit-checked) | requirement | REG-10 | Given a red proof naming a commit this repo does not have, when it is recorded, then it is refused. | not run |

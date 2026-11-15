@@ -1,6 +1,5 @@
-"""The local schedule: one user launch agent that fires `tick`, a registry of repos kept outside every repo, and the tick:
-health and the judge (the owner's own claude login) for every repo, the full regression for a private repo, the digest, the mail.
-launchd runs one coalesced fire at wake, so a run missed while the Mac slept happens at the next wake. Nothing goes in a repo.
+"""The local schedule: one user launch agent firing `tick`, a registry of repos outside every repo, and the tick: health and
+the judge for every repo, the full regression for a private repo, the digest, the mail. Nothing goes in a repo.
 """
 import contextlib
 import datetime
@@ -24,11 +23,11 @@ MAIL_SECRETS = ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE
 HERE = os.path.dirname(os.path.abspath(__file__))
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
 UID = "gui/%d" % getattr(os, "getuid", lambda: 0)()
-TASK, MAX_HOURS = "%s-health-regression", 4  # the one local task per repo, and the longest gap between its runs
+TASK, MAX_HOURS = "%s-health-regression", 4
 
 
 def alive(pid):
-    """Raises ProcessLookupError when pid is gone; on Windows asks tasklist, as a signal probe would send Ctrl+C."""
+    """Raises ProcessLookupError when pid is gone."""
     if os.name == "nt":
         if str(pid).encode() not in subprocess.run(["tasklist", "/FI", "PID eq %d" % pid, "/NH"], capture_output=True).stdout.split():
             raise ProcessLookupError(pid)
@@ -37,7 +36,6 @@ def alive(pid):
 
 
 def stop(pid):
-    """Kill a child started with start_new_session=True and everything it started."""
     if os.name == "nt":
         subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
     else:
@@ -98,7 +96,7 @@ def save(data):
 
 @contextlib.contextmanager
 def locked(name, wait=0):
-    """Yield None, or the pid holding this mkdir lock; a lock whose pid is dead is taken over."""
+    """Yield None, or the pid holding this mkdir lock."""
     os.makedirs(home(), 0o700, exist_ok=True)
     path, holder = os.path.join(home(), name + ".lock"), 0
     for _ in range(wait * 10 + 2):
@@ -123,7 +121,6 @@ def locked(name, wait=0):
 
 
 def key_of(origin):
-    """12 hex of host/owner/repo: the ssh, https and .git forms of one repository give one key."""
     text = re.sub(r"^[^@/]+@", "", re.sub(r"^[a-z+]+://", "", origin.strip()))
     colon = text.find(":")
     text = text[:colon] + "/" + text[colon + 1:] if 0 <= colon < (text.find("/") if "/" in text else len(text)) else text
@@ -131,7 +128,7 @@ def key_of(origin):
 
 
 def slots(cron):
-    """([(hour, minute)], hours between runs) for `M */N * * *` or `M h[,h] * * *`; None for any other shape."""
+    """([(hour, minute)], hours between runs) for `M */N * * *` or `M h[,h] * * *`."""
     got = re.fullmatch(r"(\d{1,2}) (?:\*/(\d{1,2})|(\d{1,2}(?:,\d{1,2})*)) \* \* \*", cron or "")
     if not got or int(got.group(1)) > 59:
         return None
@@ -155,7 +152,7 @@ def agent_text(data):
 
 
 def write_agent(data):
-    """Write the agent for the repos left (or remove it with the last); True when its text changed."""
+    """Write (or, for no repos, remove) the agent; True when it changed."""
     if not data["repos"]:
         launchctl("bootout", UID + "/" + LABEL)
         return os.path.exists(plist_path()) and not os.remove(plist_path())
@@ -173,7 +170,6 @@ def origin_of(root):
 
 
 def task_name(root):
-    """The repo's one local task: <repo name from its origin>-health-regression."""
     return TASK % (re.split(r"[/:]", re.sub(r"(\.git)?/*$", "", origin_of(root)))[-1] or os.path.basename(os.path.realpath(root)))
 
 
@@ -194,7 +190,7 @@ def install(root, cfg, load_it=False):
     if not origin:
         sys.exit("REFUSED: this repo has no origin remote (SCHEDULE_NO_ORIGIN)")
     key, path = key_of(origin), os.path.realpath(root)
-    os.makedirs(os.path.join(home(), "log"), 0o700, exist_ok=True)  # launchd opens the agent's log file before the first tick
+    os.makedirs(os.path.join(home(), "log"), 0o700, exist_ok=True)
     with locked("registry", 10):
         data = load()
         other = data["repos"].get(key, {}).get("path", path)
@@ -217,14 +213,14 @@ def uninstall(root):
     with locked("registry", 10):
         data = load()
         data["repos"] = {k: e for k, e in data["repos"].items() if e["path"] != os.path.realpath(root)}
-        os.name == "nt" or write_agent(data)  # a Windows PC has no launch agent
+        os.name == "nt" or write_agent(data)
         save(data)
     print("SCHEDULE removed here (%d repos left)%s" % (len(data["repos"]), "; NOTE: the agent stays loaded for them" * bool(data["repos"])))
     return 0
 
 
 def child(argv, cwd, env, seconds, log):
-    """(exit code, scrubbed output); the child runs in its own process group and a timeout kills the whole group."""
+    """(exit code, scrubbed output); a timeout kills the process group."""
     with tempfile.TemporaryFile("w+") as out:
         try:
             run = subprocess.Popen(argv, cwd=cwd, env=env, stdout=out, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
@@ -241,11 +237,11 @@ def child(argv, cwd, env, seconds, log):
     return code, text
 
 
-REGRESSION_WAIT = 20 * 60  # at most this long for a running regression to end before health goes on without it (AUT-7: 30 + 15)
+REGRESSION_WAIT = 20 * 60
 
 
 def wait_regression(path, env, log, finish):
-    """WAITED when the newest regression.yml run was in progress and ended, else the state it found; never past `finish`."""
+    """Wait for the newest regression.yml run, never past `finish`."""
     began = time.time()
     while True:
         done = child(["gh", "run", "list", "--workflow", "regression.yml", "--limit", "1", "--json", "status"], path, env, 30, log)
@@ -260,18 +256,23 @@ def wait_regression(path, env, log, finish):
         time.sleep(60)
 
 
+def conf_of(root):
+    path = os.path.join(root, ".loop", "config.json")
+    return json.load(open(path)) if os.path.exists(path) else {}
+
+
 def tick_repo(key, entry, begin, finish):
-    """One repo's tick: True when every step ran, False when a step did not, None when it was skipped."""
+    """True: every step ran; False: one did not; None: skipped."""
     path, log, py, env = entry["path"], open(os.path.join(home(), "log", "tick.log"), "a"), sys.executable, dict(os.environ)
-    say = lambda text: (print(text), log.write(text + "\n"))  # noqa: E731
+    say = lambda text: (print(text), log.write(text + "\n"))
     for argv, code, fix in ((["gh", "auth", "status"], "SCHEDULE_AUTH", "gh auth login"), (["gh", "api", "rate_limit"], "SCHEDULE_OFFLINE", "check the network")):
         if child(argv, path, env, 20, log)[0]:
             say("SKIPPED %s (%s failed) Fix: %s (%s)" % (key, " ".join(argv[:3]), fix, code))
             entry["skips"], entry["cause"] = entry.get("skips", 0) + 1, code
             return None
-    conf = json.load(open(os.path.join(path, ".loop", "config.json"))) if os.path.exists(os.path.join(path, ".loop", "config.json")) else {}
+    conf = conf_of(path)
     base, tree = conf.get("base") or "main", os.path.join(home(), key, "tree")
-    if not re.fullmatch(r"\w[\w./-]*", str(base)):  # a base is a branch name, never an option for git fetch
+    if not re.fullmatch(r"\w[\w./-]*", str(base)):
         say("SKIPPED %s (base %r is not a branch name) (SCHEDULE_BASE)" % (key, base))
         return False
     os.makedirs(os.path.dirname(tree), exist_ok=True)
@@ -293,13 +294,13 @@ def tick_repo(key, entry, begin, finish):
         for row in [] if note else open(mail):
             name, _, value = row.strip().partition("=")
             secrets.update({name: value} if name in MAIL_SECRETS else {})
-    has = lambda *names: str(all(secrets.get(n) for n in names)).lower()  # noqa: E731
+    has = lambda *names: str(all(secrets.get(n) for n in names)).lower()
     report = os.path.join(home(), key, "health-report.txt")
     env.update(DIGEST_RUN=begin.strftime("%Y%m%d%H%M"), HEALTH_REPORT=report, DIGEST_LAST=entry.get("last_run") or "", DIGEST_MAIL_NOTE=note,
                DIGEST_INTERVAL=str((slots(entry.get("cron")) or (0, 24))[1]), MAIL_ADDR_SET=has("DIGEST_TO", "DIGEST_FROM"),
                MAIL_CF_SET=has("CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAIL_TOKEN"), MAIL_SMTP_SET=has("DIGEST_SMTP_USER", "DIGEST_SMTP_PASSWORD"))
-    cfg = json.load(open(os.path.join(tree, ".loop", "config.json"))) if os.path.exists(os.path.join(tree, ".loop", "config.json")) else {}
-    ok, script = True, lambda skill, name: [py, os.path.join(skills, skill, "scripts", name)]  # noqa: E731
+    cfg = conf_of(tree)
+    ok, script = True, lambda skill, name: [py, os.path.join(skills, skill, "scripts", name)]
 
     def step(name, argv, floor=0, extra=None):
         seconds = max(finish - time.time(), floor)
@@ -309,7 +310,7 @@ def tick_repo(key, entry, begin, finish):
         return child(argv, tree, dict(env, **(extra or {})), seconds, log)
 
     if conf.get("regression_runs") == "actions" and conf.get("regression_cron") != "off":
-        say(wait_regression(path, env, log, finish))  # health follows the regression run's end, not a fixed offset after its start
+        say(wait_regression(path, env, log, finish))
     got = step("health check", script("workflow-health", "health.py") + ["check"], extra={"LOOP_MIGRATION_ONLINE": "1"})
     open(report, "w").write(got[1] if got else "")
     ok &= got is not None and step("health file", script("workflow-health", "health.py") + ["file", "--group", GROUPS]) is not None
@@ -359,7 +360,7 @@ def tick(scheduled=False, dry=False, only=""):
                 started = time.time()
                 try:
                     result = tick_repo(key, entry, begin, min(started + cap, total))
-                except Exception as error:  # noqa: BLE001 - the next repo still runs
+                except Exception as error:
                     import traceback
                     trace = os.path.join(home(), "log", "trace-%s.txt" % key)
                     open(trace, "w").write(scrub(traceback.format_exc()))

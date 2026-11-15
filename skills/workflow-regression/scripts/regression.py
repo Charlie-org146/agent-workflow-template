@@ -42,11 +42,11 @@ import tempfile
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.dont_write_bytecode = True  # no __pycache__ in the skill folder: the package check refuses one
+sys.dont_write_bytecode = True
 import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# A prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -54,7 +54,7 @@ if not sys.stdin or not sys.stdin.isatty():
 LEVELS = ("land", "nightly", "draft", "covered")
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,60}$")
 FIELDS = ("id", "level", "command", "goal", "seen_red", "description", "category", "link")
-SEEN = re.compile(r"\d{4}-\d{2}-\d{2}$")  # seen_red counts only as a date; "", "-" or any other text is never seen failing
+SEEN = re.compile(r"\d{4}-\d{2}-\d{2}$")
 HEADER = "# " + "\t".join(FIELDS) + "\n"
 CRON = "17 */4 * * *"
 def run(args, cwd=None):
@@ -128,7 +128,7 @@ def cmd_add(args):
 
 
 def active(root, slug):
-    """A goal still being built: its run record (git common dir) exists and is not done, failed, retired or stopped."""
+    """A goal still being built: its run record exists and is not done, failed, retired or stopped."""
     common = os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")
     try:
         with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -143,7 +143,7 @@ def gaps(root):
     out = []
     for path in sorted(glob.glob(path_of(root, "goals/*.md"))):
         slug = os.path.basename(path)[:-3]
-        if not active(root, slug):  # issue 143: a finished goal's done lines are history, its criteria rows guard them
+        if not active(root, slug):
             continue
         for number, line in done_lines(path):
             if "%s:%s" % (slug, number) not in covered:
@@ -275,18 +275,18 @@ def cmd_run(args):
             ids = ", ".join(todo[:10]) + (", +%d more" % (len(todo) - 10) if len(todo) > 10 else "")
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
                                                        " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
-    if todo and args.target in ("land", "nightly"):  # a by-id run never waits
-        lanes_cli.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
-    if todo and args.target in ("land", "nightly") and (why or not args.reuse):  # a lane with no plan to follow waits for a slot
+    if todo and args.target in ("land", "nightly"):
+        lanes_cli.wait_memory(root)
+    if todo and args.target in ("land", "nightly") and (why or not args.reuse):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
-    limit = (args.budget or runs.budget(root)) if args.reuse else None  # CI's plain run is the full suite: no budget
+    limit = (args.budget or runs.budget(root)) if args.reuse else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
-    for line in tiers.flaky_apply(record, results, head, not unclean):  # REG-9: advisory; the result decides
+    for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
-    if not args.reuse and results:  # a reusing run writes nothing in the worktree and opens no issue: CI's plain run owns both
+    if not args.reuse and results:
         slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, results, today(), head))
     tiers.suite_time(root, args, head, results, today())
     left = sorted(set(lanes.dirty(root)) - set(unclean)) if record and not unclean else []
@@ -294,7 +294,7 @@ def cmd_run(args):
         print("NOT RECORDED: detached HEAD")
     elif unclean:
         print("NOT RECORDED: uncommitted changes")
-    elif left:  # a row that leaves files must not pass by reuse once they're tidied: drop the record, next run is full
+    elif left:
         print("NOT RECORDED: the rows left uncommitted files: %s; record dropped" % ", ".join(left[:10]))
         if os.path.exists(record):
             os.remove(record)
@@ -308,9 +308,9 @@ def cmd_run(args):
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))
     if not args.reuse:
-        runs.sync_issues(results, args.live, today())  # a token in the environment writes nothing (GRD-5)
+        runs.sync_issues(results, args.live, today())
     failed = [item["id"] for item in results if item["state"] == "FAIL"]
-    kept = [old["rows"][key]["status"] for key in reused]  # a reused known failure still counts as known
+    kept = [old["rows"][key]["status"] for key in reused]
     passed = sum(item["state"] == "PASS" for item in results) + kept.count("PASS")
     print("RESULT %d passed%s, %d known, %d failed, %d unproven%s" % (
         passed, " (%d reused)" % len(reused) if args.reuse else "",

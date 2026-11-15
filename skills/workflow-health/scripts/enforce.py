@@ -1,8 +1,7 @@
 """When a requirement with no regression row fails health (HLT-2, REG-1, DOC-1; issue 118).
 
-A requirement with no passing test shows as not enforced. Health warns while it is new and fails only when it stays not
-enforced: an Unreviewed requirement warns; a Reviewed one warns for GRACE days after its Reviewed date, then fails.
-The date comes from the requirement's own line on its wiki page, so no goal mapping is needed.
+A requirement with no passing test is not enforced: Unreviewed warns; Reviewed warns for GRACE days, then fails.
+The date comes from the requirement's own line on its wiki page.
 """
 import datetime
 import glob
@@ -22,7 +21,7 @@ GRACE = 7  # days a Reviewed requirement may stay not enforced (HLT-2: "none sta
 
 
 def stamp(root, key):
-    """('Reviewed', date), ('Unreviewed', None), or (None, None) when no page holds the requirement."""
+    """('Reviewed', date), ('Unreviewed', None), or (None, None) when no page holds it."""
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
             folder = json.load(handle).get("wiki_dir", "docs/wiki")
@@ -38,7 +37,7 @@ def stamp(root, key):
 
 
 def row(root, key, make, today=None):
-    """The health row for requirement `key` with no regression row, made with health.py's row()."""
+    """The health row for requirement `key` with no regression row."""
     mark, day = stamp(root, key)
     fix = "add a row with regression.py add"
     if mark == "Unreviewed":
@@ -55,14 +54,11 @@ def row(root, key, make, today=None):
     return make("FAIL", "criteria", key, "rows", "criterion has no regression row", fix)
 
 
-# The Mine group (health.py reads it through sibling_module("enforce")): The Mine group: the owner's own rules, named in a private file outside the repo.
-# 
-# ~/.workflow-loop/health.json (or the file LOOP_HEALTH names):
+# The Mine group: the owner's rules in a private file outside the repo, ~/.workflow-loop/health.json (or LOOP_HEALTH):
 #   {"rules": [{"name": "lint", "command": ["make", "lint"], "fix": "run make lint"}]}
-# Each command runs in the repo. Exit 0 is PASS, 2 is WARN, 1 is FAIL; any other exit, a missing command, a timeout
-# or an unreadable setting is UNREAD, never a pass. Rules run the owner's commands, so Mine is outside the
-# "changes nothing" and "same answer twice" promises of the fixed rules.
-# No terminal, no waiting: a prompt from git or gh must fail, not block. health.py sets the same.
+# Each command runs in the repo. Exit 0 PASS, 2 WARN, 1 FAIL; any other exit, a missing command, a timeout or an
+# unreadable setting is UNREAD, never a pass. Mine is outside the "changes nothing" and "same answer twice" promises.
+# No terminal, no waiting: a prompt from git or gh must fail, not block (health.py sets the same).
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 GROUP = "mine"
@@ -81,7 +77,7 @@ def words(command):
 
 
 def run_rule(root, rule, name, family=GROUP, label="mine", **more):
-    """One rule's row: its command run in root (exit 0 PASS, 2 WARN, 1 FAIL, else UNREAD)."""
+    """One rule's row: its command run in root."""
     row = lambda state, detail, fix="": mine_row(state, name, detail, fix, family, label, **more)
     command = rule.get("command") if isinstance(rule, dict) else None
     if not words(command):
@@ -116,14 +112,14 @@ def mine_rows(root):
 
 
 # The repo layer: .loop/health-rules.json, committed. {"rules": [{"name", "group" (one of the twelve, or "repo"), "feature",
-# "command", "fix", "break"}], "off": {"<default rule>": "<reason>"}}. A command runs as Mine's does. "break" is a command that
-# makes it fail, which the Controls group runs on a copy of the repo. They are the repo's own commands, with the repo's own trust.
+# "command", "fix", "break"}], "off": {"<default rule>": "<reason>"}}. A command runs as Mine's does. "break" makes it
+# fail; the Controls group runs it on a copy of the repo.
 REPO_FILE = os.path.join(".loop", "health-rules.json")
 
 
 def repo_load(root):
-    """(rules, off, problems, rows): the valid rules and the off map (empty when the file is absent or unreadable); problems
-    are refusal lines (health.py exits 2); rows are the repo group's own INFO and UNREAD rows."""
+    """(rules, off, problems, rows): valid rules and the off map; problems are refusal lines (health.py exits 2); rows are the
+    repo group's own INFO and UNREAD rows."""
     note = lambda state, detail, fix="": [mine_row(state, REPO_FILE, detail, fix, "repo", "repo")]
     if not os.path.exists(os.path.join(root, REPO_FILE)):
         return [], {}, [], []
@@ -156,26 +152,26 @@ def repo_load(root):
 
 
 def repo_rows(root):
-    """The repo rules' rows, each in its own group with its feature, then the repo group's own rows."""
+    """The repo rules' rows, each in its own group, then the repo group's own rows."""
     rules, _, _, rows = repo_load(root)
     return [run_rule(root, rule, rule["name"], rule["group"], rule["name"], feature=str(rule.get("feature") or ""), evidence=rule["name"])
             for rule in rules] + rows
 
 
 def repo_merge(root, rows, asked):
-    """rows without the rules the repo turned off, plus the repo's own rows in the groups asked."""
+    """rows minus the rules the repo turned off, plus the repo's own rows in the groups asked."""
     import report as G
     off = {item["rule"] for item in off_rows(root)}
     return [item for item in rows if G.rule_of(item) not in off] + [item for item in repo_rows(root) + off_rows(root) if item["family"] in asked]
 
 
 def off_rows(root):
-    """One INFO row, in its own group, for each default rule the repo turned off: the reason is printed."""
+    """One INFO row per default rule the repo turned off, with its reason."""
     import report as G
     return [mine_row("INFO", rule, "turned off: %s" % why, "", G.GROUP_OF[rule], rule) for rule, why in sorted(repo_load(root)[1].items())]
 
 
-# --- migration-check: the routine, task and check gaps, then the docs check and the published wiki (the engine is defects.py)
+# --- migration-check: routine, task and check gaps, then docs and the published wiki (engine: defects.py)
 def automation_gaps(root, cfg, g, info):
     wf = mod("workflow-health", "workflows")
     label, items = wf.task_name(root), cfg.get("automation")
@@ -197,12 +193,13 @@ def automation_gaps(root, cfg, g, info):
             g("MIG_AUTOMATION", key, "is not an every-N-hours or fixed-hours cron", "set %s to a shape like 47 */4 * * *" % key)
     if off["health"] and not off["regression"]:
         g("MIG_AUTOMATION", "health_cron", "is off while regression_cron is on, and the one task runs both", "turn health_cron on (47 */4 * * *), or turn regression_cron off")
-    if not off["regression"] and cfg.get("regression_runs") != "mac":
-        g("MIG_AUTOMATION", "regression_runs", "is not mac while regression_cron is on, public or private", "set regression_runs to mac in .loop/config.json")
+    here = os.path.join(root, ".github", "workflows", "regression.yml")  # SET-16, AUT-1
+    if not off["regression"] and not (cfg.get("regression_runs") == "mac" or cfg.get("regression_runs") == "actions" and os.path.exists(here)):
+        g("MIG_AUTOMATION", "regression_runs", "is not mac (a private repo) or actions with .github/workflows/regression.yml (a public repo) while regression_cron is on", "set regression_runs to mac, or to actions with regression.yml")
 
 
 def scheduled_task(label):
-    """True when the Mac has a scheduled task folder named label (Claude's scheduled tasks, each at ~/.claude/scheduled-tasks/<id>/SKILL.md); LOOP_SCHEDULED_TASKS_DIR overrides the places."""
+    """True when a scheduled task folder named label exists (~/.claude/scheduled-tasks); LOOP_SCHEDULED_TASKS_DIR overrides."""
     dirs = [os.environ["LOOP_SCHEDULED_TASKS_DIR"]] if os.environ.get("LOOP_SCHEDULED_TASKS_DIR") else [os.path.expanduser("~/.claude/scheduled-tasks")]
     return any(os.path.isdir(os.path.join(d, label)) for d in dirs)
 
@@ -223,7 +220,7 @@ def task_gaps(root, cfg, g, info):
         return g("MIG_TASK", "registry", "the local registry can't be read", "fix or remove repos.json in the schedule home, then " + tool("workflow-health", "automation.py", "local install"))
     install = tool("workflow-health", "automation.py", "local install")
     if scheduled_task(label):
-        return  # the Mac's own scheduled task <repo>-health-regression runs it; the launch agent's registry need not list the repo
+        return  # the Mac's own scheduled task runs it
     if not origin:
         g("MIG_TASK", label, "this repo has no origin remote, so no task can be registered", "git remote add origin <url>, then " + install)
     elif found is None:
@@ -239,15 +236,14 @@ def checks_gaps(root, cfg, g):
     if cfg.get("regression_cron") == "off":
         return
     if os.path.exists(yml):
-        if "pull_request" not in read(yml) and cfg.get("regression_runs") != "mac":  # a mac repo's pr lane posts the statuses itself (AUT-2)
+        if "pull_request" not in read(yml) and cfg.get("regression_runs") != "mac":  # AUT-2
             g("MIG_CHECKS", "regression.yml", "does not trigger on pull_request, so no regression check reports on a PR", "add pull_request: under on: in regression.yml")
     elif cfg.get("regression_runs") == "mac" and not any(r["level"] == "land" for r in table(root)):
         g("MIG_CHECKS", ".loop/regression.tsv", "has no land row, so a pull-request check has nothing to run", "regression.py add a row at level land")
 
 
 def docs_gaps(root, g):
-    """docs.py check lines: a Runbook line is MIG_RUNBOOK, any other line (the PRD format, a page stale against the code) MIG_FORMAT.
-    The blocks and the entry point have their own codes; a review note or the requirement cap is not a migration gap."""
+    """docs.py check lines: a Runbook line is MIG_RUNBOOK, any other MIG_FORMAT. Blocks, the entry point, review notes and the cap are not gaps."""
     done = subprocess.run([sys.executable, os.path.join(SKILLS, "workflow-docs", "scripts", "docs.py"), "check"],
                           cwd=root, capture_output=True, text=True)
     out = [x for x in done.stdout.splitlines() if x.strip()]
@@ -263,8 +259,8 @@ def docs_gaps(root, g):
 
 
 def wiki_gaps(root, g, info):
-    """The published wiki against docs/wiki: one shallow clone in a private temp dir (30 s, a short list of transports), removed after.
-    A page there with no source page is an orphan; a source page whose published text differs is stale. Nothing is written or deleted."""
+    """The published wiki against docs/wiki: one shallow clone in a temp dir (30 s), removed after. A page with no source is an
+    orphan; a source page whose published text differs is stale. Nothing is written or deleted."""
     origin = subprocess.run(["git", "remote", "get-url", "origin"], cwd=root, capture_output=True, text=True).stdout.strip()
     fix = "check the origin and sign-in, then rerun; with no network pass --offline"
     if not origin:

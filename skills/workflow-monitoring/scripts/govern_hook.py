@@ -183,8 +183,30 @@ def in_followed(given, cwd, top, common):
     return any(target == r or target.startswith(r.rstrip(os.sep) + os.sep) for r in followed_roots(top, common))
 
 
+def stray(payload):
+    """The refusal for a pool worker session's `git commit` run in the main checkout (the governing checkout takes no commit,
+    GRD-4), or ''. Only a plain commit: a command with a cd or -C may be aimed at the worker's own worktree."""
+    command = str((payload.get("tool_input") or {}).get("command") or "")
+    if payload.get("tool_name") != "Bash" or "commit" not in command or re.search(r"(^|[\s;&|])cd\s|\s-C\s|--git-dir|--work-tree", command):
+        return ""
+    where = reply_hook.repo_of(str(payload.get("cwd") or ""))
+    if not where or verdict(command) != "git commit" or os.path.realpath(where[0]) != os.path.realpath(os.path.dirname(where[1])):
+        return ""
+    try:
+        with open(os.path.join(where[1], "loop", "session-pool.json")) as handle:
+            pool = json.load(handle)
+    except (OSError, ValueError):
+        return ""
+    if str(payload.get("session_id") or "") not in pool or str(where[2].get("govern_hook", True)).strip().lower() in ("false", "0", "off", "no"):
+        return ""
+    log(where[1], "blocked worker commit in the main checkout")
+    return "git commit is refused here: this is the main checkout, which takes no commit (GRD-4). Fix: commit in the goal's worktree (git -C .git/loop/worktrees/SLUG commit)"
+
+
 def decide(payload):
     """The deny reason for one tool call, or '' to let it run."""
+    if os.environ.get("LOOP_GOVERN_HOOK") != "0" and (said := stray(payload)):
+        return said
     cwd = os.path.realpath(str(payload.get("cwd") or ""))
     if os.environ.get("LOOP_GOVERN_HOOK") == "0" or os.environ.get("LOOP_ROLE") == "worker" or "%sloop%sworktrees%s" % (os.sep, os.sep, os.sep) in cwd:
         return ""  # a worker, cheaply, before any git call: the hook runs on every tool call

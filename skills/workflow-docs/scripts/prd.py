@@ -34,7 +34,7 @@ import criteria
 MARKER = "<!-- workflow-docs -->"
 PLACEHOLDER = "Write this page from what is really in the repo."
 REVIEW = re.compile(r"^Review: \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\*"
-                    r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?$")
+                    r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?(?: <!-- kept [\w.@-]+ -->)?$")
 KEYS = "PRNMU"
 def names(rule):
     """Section names in fingerprint order."""
@@ -346,7 +346,7 @@ def out(env, *args, **kw):
     if not cmd:
         return False, "set %s to the command that writes to the document" % env
     try:
-        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, timeout=120, **kw)
+        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, **kw)
     except (OSError, subprocess.SubprocessError) as error:
         return False, str(error)[:100]
     return done.returncode == 0, (done.stdout if done.returncode == 0 else done.stderr).strip()

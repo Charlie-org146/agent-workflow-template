@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d0857c8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -39,11 +39,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d08
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-10** Resumable <!-- reviewed 0f9f447b -->
   - A stopped or crashed goal resumes from its last recorded step, never from the start.
-- DEL-8: **Reviewed 2026-11-14** Budgeted <!-- reviewed c6fabe37 -->
+- DEL-8: **Reviewed 2026-11-15** Budgeted <!-- reviewed 5161cddb -->
   - Each goal has a time and token budget, and going over shows on the board.
   - Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting.
   - A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits.
-  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit.
+  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a merge-and-rerun round past `max_merge_rounds` (default 8) is refused: the goal waits under Needs you, and only the operation session raises a limit.
 - DEL-9: **Reviewed 2026-11-15** Nothing private ships <!-- reviewed e53156c1 -->
   - Every commit and pull request passes the private-name scan before it is pushed.
   - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo.
@@ -109,10 +109,12 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d08
 | [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | DEL-5 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | DEL-5 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
+| [del5-merge-forwards-checkout](Tests#t-del5-merge-forwards-checkout) | requirement | DEL-5 | Given a main checkout behind origin with a dirty lane record, when merge.py fast-forwards it, then the record is stashed and put back; any other change keeps the checkout as it is. | PASS 2026-11-15 |
 | [start-from-head-passes-4340](Tests#t-start-from-head-passes-4340) | requirement | DEL-5 | Given a pull request that adds a skill command and carries the START.md its own skills render, when merge.py's wiki.pending audits it, then START.md is not reported. | not run |
 | [start-from-head-refuses-4340](Tests#t-start-from-head-refuses-4340) | requirement | DEL-5 | Given a pull request whose START.md is stale for its own skills, when merge.py's wiki.pending audits it, then it still reports START.md (#4340). | not run |
 | [merge-main-own-finding-4343](Tests#t-merge-main-own-finding-4343) | requirement | DEL-5 | Given a goal branch that merged main's stale page, when merge.py's wiki.pending audits it, then main's stale page is printed as a FINDING for health. | not run |
 | [audit-head-judges-own-docs](Tests#t-audit-head-judges-own-docs) | requirement | DEL-5 | Given a pull request whose head carries its own docs.py, when merge.py's wiki.pending audits it, then the head's own docs.py judges its pages, not the main checkout's. | not run |
+| [ff-stash-conflict-never-unmerged](Tests#t-ff-stash-conflict-never-unmerged) | requirement | DEL-5 | Given a main checkout whose dirty .loop/regression-runs.tsv conflicts with origin when merge.py fast-forwards it, when the stash apply fails, then the file is restored from HEAD, never left unmerged or with conflict markers, and the dirty results stay in the named stash the step prints. | not run |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-6 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-10 |
 | [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-6 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-10 |
 | [depth-markers](Tests#t-depth-markers) | requirement | DEL-6 | Given private evidence markers, when a full review reply lacks one, then it is refused with no try used, without showing the marker. | PASS 2026-11-10 |
