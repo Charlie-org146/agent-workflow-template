@@ -49,7 +49,7 @@ def main(argv):
     except KeyError:
         return 0
     except (OSError, ValueError):
-        sys.stderr.write("LEAK GUARD: no snapshot of %s was taken, so a change there is not judged\n" % top)
+        sys.stderr.write("LEAK GUARD: no snapshot was taken, so a change there is not judged\n")
         return 0
     after = scan(top)
     changes = ["%s %s" % (what, name) for what, name in sorted(
