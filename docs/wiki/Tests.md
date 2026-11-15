@@ -148,7 +148,7 @@
 | <a id="t-package-gate-controls"></a>package-gate-controls | requirement | DEL-5 | not run | - | local | 2026-11-13 |
 | <a id="t-backlog-leftovers-filed"></a>backlog-leftovers-filed | requirement | DEL-14 | not run | - | local | 2026-11-13 |
 | <a id="t-backlog-leftovers-once"></a>backlog-leftovers-once | requirement | DEL-14 | not run | - | local | 2026-11-13 |
-| <a id="t-del1-new-here-main-refused"></a>del1-new-here-main-refused | defect | 3468 | not run | - | local | 2026-11-13 |
+| <a id="t-del1-new-here-main-refused"></a>del1-new-here-main-refused | defect | 3468 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-release-head-status"></a>release-head-status | defect | [#3870](https://github.com/jcl2018/agent-workflow-template/issues/3870) open (2026-11-14) | not run | - | local | 2026-11-13 |
 | <a id="t-pr-moved-uncounted"></a>pr-moved-uncounted | requirement | DEL-1 | not run | - | local | 2026-11-13 |
 | <a id="t-merge-batch-split"></a>merge-batch-split | requirement | DEL-15 | not run | - | local | 2026-11-13 |
@@ -163,6 +163,7 @@
 | <a id="t-moved-exit-live-at-pr"></a>moved-exit-live-at-pr | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-merge-main-own-printed"></a>merge-main-own-printed | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-refusals-in-references"></a>skill-refusals-in-references | requirement | DEL-5 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-release-red-checks-named"></a>release-red-checks-named | defect | [#3870](https://github.com/jcl2018/agent-workflow-template/issues/3870) open (2026-11-14) | not run | - | local | 2026-11-14 |
 
 ## Documentation
 
@@ -287,6 +288,7 @@
 | <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-lane-rows-judge-own-diff"></a>lane-rows-judge-own-diff | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) open (2026-11-14) | not run | - | local | 2026-11-14 |
 
 ## External PRDs
 
@@ -923,7 +925,7 @@
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-wording"></a>review-findings-wording | requirement | done line review-findings:1 | not run | - | local | 2026-11-12 |
-| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
+| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | PASS 2026-11-15 FLAKY | - | local | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-findings-one-per-lesson"></a>findings-one-per-lesson | workflow | done line migration-lessons:1 | not run | - | local | 2026-11-12 |
 | <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | not run | - | local | 2026-11-12 |
