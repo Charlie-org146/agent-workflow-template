@@ -291,7 +291,7 @@ def lane_part(slug):
             import private  # lazily
             line = private.plain(re.sub(r"; log: \S+", "", str(json.load(handle).get("line", "")).split("\n")[0]))  # no local path in a pull request (DEL-9)
         with open(base + ".txt") as handle:
-            rows = [text.rstrip() for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
+            rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
     folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows) if rows else ""

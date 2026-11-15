@@ -290,9 +290,12 @@ def main():
         sys.exit("REFUSED: no goal named %s. Fix: start it with new." % args.slug)
     role.inbox(os.path.dirname(os.path.dirname(runs)), args.slug)
     try:
-        headless = json.loads(read(os.path.join(runs, args.slug + ".json"))).get("worker") != "session"
+        state = json.loads(read(os.path.join(runs, args.slug + ".json")))
     except (OSError, ValueError):
-        headless = True
+        state = {}
+    headless = state.get("worker") != "session"
+    if headless and repo_config().get("workers") == "app" and not os.path.exists(os.path.join(runs, "%s.%s.job" % (args.slug, args.step))):
+        sys.exit("REFUSED: workers is app and %s has no bound app session, so no headless agent starts. Fix: sessions.py bind %s SESSION (NO_SESSION)" % (args.slug, args.slug))
     runnable(flow(), headless)
     base = os.path.join(runs, "%s.%s" % (args.slug, args.step))
     reply, job = base + ".txt", base + ".job"
