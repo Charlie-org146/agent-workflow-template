@@ -269,6 +269,9 @@ After it, the goal (or the operation session) edits the two lines as drafted, an
 
 Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the operation session): the Delivery page and DEL-5 were un-reviewed, DEL-5's second sub-bullet and the Delivery success metric were reworded exactly as drafted, and the Delivery page and DEL-5 were reviewed again, all with `--owner-record o5`.
 
+
+Applied 2026-11-14 with the owner's typed words "Do your recommendations." (records o25 and o26): the five sub-bullets above were added to Guardrails GRD-3, Delivery DEL-9, Setup SET-11 and SET-15 and Monitoring MON-13, and those pages and IDs were reviewed again.
+
 ## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
 Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
 

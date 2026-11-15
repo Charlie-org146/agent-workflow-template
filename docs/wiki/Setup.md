@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 -->
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -34,10 +34,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
   - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo.
 - SET-10: **Reviewed 2026-11-10** The right format for every agent <!-- reviewed 06345b05 -->
   - The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way.
-- SET-11: **Reviewed 2026-11-13** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 3d61b462 -->
+- SET-11: **Reviewed 2026-11-15** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 82510048 -->
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC.
   - Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent.
   - Comes from [#1408](https://github.com/jcl2018/agent-workflow-template/issues/1408), with the Windows crashes in [#1395](https://github.com/jcl2018/agent-workflow-template/issues/1395), [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) and [#1397](https://github.com/jcl2018/agent-workflow-template/issues/1397).
+  - Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12.
 - SET-12: **Reviewed 2026-11-13** Adopt all my repos in one pass <!-- reviewed e8a784e2 -->
   - From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version.
   - It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version.
@@ -63,10 +64,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
   - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten.
 - SET-8: **Reviewed 2026-11-10** Private stays private <!-- reviewed 22a16ae7 -->
   - Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one.
-- SET-15: **Reviewed 2026-11-13** One private-name list that fits every repo <!-- reviewed 3f8e2427 -->
+- SET-15: **Reviewed 2026-11-15** One private-name list that fits every repo <!-- reviewed eef2ccdb -->
   - When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits.
   - A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show.
   - Comes from [#1411](https://github.com/jcl2018/agent-workflow-template/issues/1411).
+  - The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`).
 - SET-17: **Reviewed 2026-11-13** The Backlog milestones exist after adoption <!-- reviewed e4d6023c -->
   - Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing.
 
