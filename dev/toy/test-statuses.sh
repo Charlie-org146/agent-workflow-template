@@ -25,6 +25,7 @@ log="$FAKE_GH_DIR/statuses.log"
 git init -q --bare -b main "$d/origin.git"
 git clone -q "$d/origin.git" "$d/repo" 2>/dev/null; cd "$d/repo"
 git config user.email t@example.test; git config user.name Toy
+mkdir -p .github/workflows; printf 'jobs:\n  lane-a:\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n  lane-b:\n    name: lane-b\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n' > .github/workflows/lane.yml
 mkdir -p .loop src; printf 'a\n' > src/a.txt; printf '{"base": "main", "auto_merge": true}\n' > .loop/config.json
 git add -A; git commit -qm base; git push -q origin main
 base=$(git rev-parse HEAD)
