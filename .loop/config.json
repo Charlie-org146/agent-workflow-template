@@ -26,7 +26,7 @@
   "resume_on_limit": false,
   "workers": "app",
   "criteria": true,
-  "criteria_max": 18,
+  "criteria_max": 19,
   "auto_approve": true,
   "auto_merge": true,
   "regression_cron": "17 */4 * * *",
