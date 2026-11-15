@@ -100,9 +100,9 @@ tables and done-line lists are left out. Estimates come from finished goals. The
 least a minute), so time left and the finish time grow; a minute or more past, it reads `over by Nm` in its brackets. Every line
 fits 60 characters: the step flow wraps at its ` > ` joints and a long header splits in two.
 
-#### board_report.py
+#### board_log.py report
 
-`python3 skills/workflow-monitoring/scripts/board_report.py [--root DIR] [--json]` shows why the board uses the model it
+`python3 skills/workflow-monitoring/scripts/board_log.py report [--root DIR] [--json]` shows why the board uses the model it
 does: the backtest of every candidate over the repo's finished goals (`<git common dir>/loop/runs`, read the way the board
 reads them). It only reads files and runs `git rev-parse`; it writes nothing. On this repo's runs (2026-11-12):
 

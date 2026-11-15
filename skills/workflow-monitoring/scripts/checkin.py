@@ -46,17 +46,14 @@ def cell(text, size=48):
 
 
 def shown(run):
-    """A goal the check-in draws: a real record (goal and status), not stopped, not left (release: leave) (graph-times)."""
     return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
 
 
 def mood(run, state):
-    """A worker told to hold at pr reads silent: the map calls it holding, not stuck."""
     return "held" if state == "silent" and run.get("step") == "pr" else state
 
 
 def gather(root, at, stamp=None):
-    """One repo's state, read from its own .loop: name, root, cfg, folder, runs, found, why, taken, states, live, queue."""
     folder, cfg = lb.loop_dir(root), bs.read_json(os.path.join(root, ".loop", "config.json")) or {}
     runs = lb.load(root)
     found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
@@ -75,8 +72,6 @@ def gather(root, at, stamp=None):
 
 
 def grouped(blocks, at=None, tags=None):
-    """The Dependencies section: [(repo name, items)] as one `== name ==` block per repo (MON-14), then `Between repos`
-    for each `repo/slug` dependency, then the legend once. Every line is wrapped at board_lines.WIDTH."""
     out, edges, marks = [], [], {}
     for name, items in blocks:
         marks[name] = {item["slug"]: item.get("mark") for item in items}
@@ -101,8 +96,6 @@ def grouped(blocks, at=None, tags=None):
 
 
 def expected(root=None, at=None):
-    """[(repo name, slug)] of every goal the Dependencies section must draw: each live goal and each queued line of the
-    pod, read from the run records and queue files. The reply hook (missing, below) checks a reply against it."""
     root = bs.git("rev-parse", "--show-toplevel", cwd=root or None) or root
     at = at or datetime.datetime.now(datetime.timezone.utc)
     pod, here = [gather(root, at)], os.getcwd()
@@ -265,7 +258,6 @@ NEXT = ("needs you", "coming up")
 
 
 def body(text):
-    """The text of the Dependencies section, fences included, or None when the reply has none."""
     lines, start = str(text or "").splitlines(), None
     for i, line in enumerate(lines):
         name = (HEAD.match(line) or [None, ""])[1].strip().lower()
@@ -277,7 +269,6 @@ def body(text):
 
 
 def blocks(section):
-    """{repo name: its text} for each `== name ==` block; the whole section under '' when it has none."""
     found, name = {"": []}, ""
     for line in section.splitlines():
         head = re.match(r"^\s*==\s*(.+?)\s*==\s*$", line)
@@ -287,8 +278,6 @@ def blocks(section):
 
 
 def unranked(text):
-    """MON-19: what a reply's Needs you gets wrong, plain lines: an item that says neither what it holds up nor 'blocks
-    nothing', or items not sorted with the one holding up the most goals first."""
     items, inside = [], False
     for line in str(text or "").splitlines():
         name = (HEAD.match(line) or [None, ""])[1].strip().lower()
@@ -306,7 +295,6 @@ def unranked(text):
 
 
 def missing(text, cwd=None):
-    """['repo/slug', ...] of the goals the Dependencies section leaves out; [] when whole or when it cannot be told."""
     section = body(text)
     if section is None:
         return []  # the missing section is reported by the layout check

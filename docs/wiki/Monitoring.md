@@ -123,6 +123,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
 | [steps-in-session](Tests#t-steps-in-session) | requirement | MON-1 | Given a worker session, when it runs steps, then it runs each step itself with no headless agent. | PASS 2026-11-12 |
 | [record-in-session](Tests#t-record-in-session) | requirement | MON-1 | Given a step a worker session ran, when it is recorded, then it is recorded as in session and a goal with no session is refused. | PASS 2026-11-12 |
 | [session-holds-slot](Tests#t-session-holds-slot) | requirement | MON-1 | Given a goal in a worker session, when the parallel limit is counted, then it counts against the limit. | PASS 2026-11-12 |
+| [scripts-a-monitoring-under-19000](Tests#t-scripts-a-monitoring-under-19000) | requirement | MON-1 | Given the workflow-monitoring scripts (board_report.py folded into board_log.py, whose --help exits 0), when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
 | [worker-reports](Tests#t-worker-reports) | requirement | MON-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-12 |
 | [worker-reports-live](Tests#t-worker-reports-live) | requirement | MON-2 | Given a report to a running worker, when goal.py next runs, then the report reaches its agent once. | PASS 2026-11-09 |
 | [session-reports](Tests#t-session-reports) | requirement | MON-2 | Given a worker session's step report, when it arrives, then it is recorded on its goal. | PASS 2026-11-12 |
