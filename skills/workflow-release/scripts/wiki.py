@@ -51,7 +51,7 @@ def own_entry(tree, lines):
     if not os.path.exists(script):
         return lines
     said = run([sys.executable, script, "check", "--repo", tree], tree).stdout.splitlines()
-    bad = [l.split()[1].rstrip(":") for l in said if l.startswith(("STALE ", "MISSING ")) and "_MARKER" not in l]
+    bad = [l.split()[1].rstrip(":") for l in said if "ENTRY_STALE" in l or "no entry point" in l]
     return [l for l in lines if not l.endswith("(entry.py write)")] + ["WOULD FIX %s: regenerate it (entry.py write)" % x for x in bad]
 
 
