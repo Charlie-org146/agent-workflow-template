@@ -63,6 +63,7 @@ automation-missing-workflow	PASS	2026-11-12
 autorelease-no-report	PASS	2026-11-12	
 bad-schedule-refused	PASS	2026-11-12	
 batch-cut-user	PASS	2026-11-09	
+blockers-first	PASS	2026-11-14	
 blocks-setup-clean	PASS	2026-11-12	
 board-estimates-overrun	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 board-sections	PASS	2026-11-09	
@@ -159,6 +160,7 @@ format-usage-api	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 frozen-done-lines	PASS	2026-11-09	
 full-goal-lane-timeout	PASS	2026-11-10	
 goal-levels-nightly	PASS	2026-11-11	
+grd9-controls	SKIPPED	2026-11-14	
 guards-extra	PASS	2026-11-10	
 guards-no-try	PASS	2026-11-12	
 guards-null-report-nofiles	PASS	2026-11-12	
@@ -347,6 +349,7 @@ pass3-symlink-page	PASS	2026-11-11
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
 pending-waits	PASS	2026-11-12	
+perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-12	
 plan-identity	PASS	2026-11-12	
@@ -424,6 +427,7 @@ review-dated	PASS	2026-11-12
 review-findings-skill-lines	FAIL	2026-11-15	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
+roadmap-closed-drops	PASS	2026-11-15	
 row-timeout-holds	PASS	2026-11-11	
 run-kind-filter	PASS	2026-11-10	
 run-ledger	PASS	2026-11-12	

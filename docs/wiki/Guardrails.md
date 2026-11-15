@@ -124,7 +124,7 @@ None
 | - | requirement | GRD-7 | no passing test | not enforced |
 | [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | GRD-8 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
 | - | requirement | GRD-8 | no passing test | not enforced |
-| [grd9-controls](Tests#t-grd9-controls) | requirement | GRD-9 | Given every health rule, when the controls run on broken copies, then each rule fires. | not run |
+| [grd9-controls](Tests#t-grd9-controls) | requirement | GRD-9 | Given every health rule, when the controls run on broken copies, then each rule fires. | SKIPPED 2026-11-14 |
 | [repo-rules-control](Tests#t-repo-rules-control) | requirement | GRD-9 | Given a repo rule with a break command, when the Controls group runs, then the rule whose break makes it fail passes its control and one whose break changes nothing is reported as unable to fire. | not run |
 | [repo-rules-refuse](Tests#t-repo-rules-refuse) | requirement | GRD-9 | Given a repo rule with no break command, when health runs, then it refuses with exit 2 naming the rule. | not run |
 | [repo-rules-off](Tests#t-repo-rules-off) | requirement | GRD-9 | Given a default rule turned off in .loop/health-rules.json, when health checks, then its group prints the reason, and a default turned off with no reason stays on and is UNREAD. | not run |
