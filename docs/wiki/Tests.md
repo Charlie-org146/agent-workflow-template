@@ -178,6 +178,7 @@
 | <a id="t-review-recorded-merges"></a>review-recorded-merges | requirement | DEL-13 | not run | - | local | 2026-11-15 |
 | <a id="t-review-worker-refused"></a>review-worker-refused | requirement | DEL-13 | not run | - | local | 2026-11-15 |
 | <a id="t-review-help-runs-alone"></a>review-help-runs-alone | requirement | DEL-13 | not run | - | local | 2026-11-15 |
+| <a id="t-audit-head-judges-own-docs"></a>audit-head-judges-own-docs | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 
 ## Documentation
 
