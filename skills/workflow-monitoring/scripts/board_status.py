@@ -154,6 +154,30 @@ def allowed(cfg=None):
     return None if commit is None or floor <= 0 else 0 if commit < floor else 1 + int((commit - floor) / each)
 
 
+def slug_busy(slug):
+    """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read. LOOP_PROCS (one
+    command line per line) stands in for the list in tests."""
+    try:
+        if os.environ.get("LOOP_PROCS") is not None:
+            text = os.environ["LOOP_PROCS"]
+        elif os.name == "nt":
+            text = subprocess.run(["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_Process | % { $_.CommandLine }"],
+                                  capture_output=True, text=True, timeout=60).stdout
+        else:
+            text = subprocess.run(["ps", "-A", "-o", "args="], capture_output=True, text=True, timeout=30).stdout
+    except Exception:
+        return True
+    return any(slug in l and re.search(r"goal\.py|flow\.py|role\.py|lane|regression\.py", l) for l in text.splitlines())
+
+
+def stalled_line(run, state, at, cfg, worker):
+    """The Needs-you line for a live goal whose log has not moved for silent_minutes while nothing runs for it (#4359), else ''."""
+    quiet = graph.silent_for(run, at)
+    if state in ("silent", "held", "running") and quiet is not None and quiet >= graph.silent_limit(cfg) and not slug_busy(run["slug"]):
+        return "STALLED %s: no process since %s; restart %s" % (run["slug"], graph.last_spoke(run).astimezone().strftime("%H:%M"), worker)
+    return ""
+
+
 def machine_line(cfg):
     """Machine: free RAM and commit memory, CPU, the claude and node processes, and the goal slots memory allows."""
     ram, commit = memory()

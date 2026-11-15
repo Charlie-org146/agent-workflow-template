@@ -11,10 +11,10 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (filled from .loop/config.json through references/commands.md, Entry point templates), then a Features table
-(every PRD page in the wiki folder: its name, milestone, first sentence of Problem and the asks in its skills' Command maps) and a Settings
-table (each repo setting, its value and its _help line). Private settings are never read. It holds no count, date or
-machine path, so it changes only when a page or a setting does.
+regression, health and settings (from .loop/config.json through references/commands.md, Entry point templates), then a
+Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
+Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
+holds no count, date or machine path, so it changes only when a page or a setting does.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
 (the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
@@ -28,27 +28,26 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SKILLS = os.path.dirname(os.path.dirname(HERE))  # the folder holding the workflow-* skills
+SKILLS = os.path.dirname(os.path.dirname(HERE))
 TEMPLATES = os.path.join(os.path.dirname(HERE), "references", "commands.md")
-REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")  # every repo setting, default and line
+REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")
 ENTRY = os.path.join(".loop", "START.md")
 OPEN, CLOSE = "<!-- workflow-loop -->", "<!-- /workflow-loop -->"
 AGENT_FILES = ["CLAUDE.md", "AGENTS.md"]
 PARTS = ("Loop", "Release", "Operation and workers", "Docs", "Regression", "Health", "Settings")
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal: a prompt must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
 def version_key(text):
-    """The first three integers of a version; empty or unreadable is older than any version."""
+    """The first three integers of a version; unreadable is oldest."""
     return tuple(int(x) for x in re.findall(r"\d+", str(text or ""))[:3])
 
 
 def read(path, default=""):
     try:
-        with open(path, encoding="utf-8") as handle:
-            return handle.read()
+        return open(path, encoding="utf-8").read()
     except OSError:
         return default
 
@@ -67,14 +66,14 @@ def cell(text):
 
 def show(value):
     if isinstance(value, bool):
-        return "true" if value else "false"
+        return str(value).lower()
     if value in (None, "", [], {}):
         return "none"
     return value if isinstance(value, (str, int, float)) else json.dumps(value)
 
 
 def sentence(text):
-    """The first sentence: up to the first '. ' outside backticks."""
+    """The first sentence (to the first '. ' outside backticks)."""
     ticks = 0
     for n, char in enumerate(text):
         ticks += char == "`"
@@ -89,7 +88,7 @@ def section(text, name):
 
 
 def reference():
-    """{setting: (default, explanation)} for every repo setting in workflow-setup's generated reference, if installed."""
+    """{setting: (default, explanation)} from workflow-setup's reference."""
     part = read(REFERENCE).split("## Repo settings", 1)[-1].split("\n## ", 1)[0] if os.path.exists(REFERENCE) else ""
     rows = re.findall(r"^\| `([a-z_]+)` \| `(.*?)` \| (.*?) \|$", part, re.M)
     out = {}
@@ -102,21 +101,21 @@ def reference():
 
 
 def settings(cfg):
-    """[(key, value, explanation)]: every repo setting, the config's value or else its default, plus any other key held."""
+    """[(key, value, explanation)] per repo setting: the config's value or default, plus other keys held."""
     known, helps = reference(), cfg.get("_help") if isinstance(cfg.get("_help"), dict) else {}
-    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics is optional: shown once the repo sets it
+    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics: once set
     return [(k, cfg[k] if k in cfg else known[k][0], helps.get(k) or known.get(k, ("", ""))[1]) for k in keys]
 
 
 def purpose(problem):
-    """The first sentence of Problem that says what the feature is for (a leading 'Skill: ...' sentence is skipped)."""
+    """The first sentence of Problem (a leading 'Skill: ...' one is skipped)."""
     first = sentence(problem)
     rest = problem[len(first):].strip()
     return sentence(rest) if re.match(r"^Skills?:", first) and rest else first
 
 
 def owned(root, page):
-    """The skills a page describes, from its .loop/docs.tsv paths."""
+    """The skills a page describes (its .loop/docs.tsv paths)."""
     for line in read(os.path.join(root, ".loop", "docs.tsv")).splitlines():
         cells = line.split("	")
         if cells[0] == page and len(cells) > 1:
@@ -125,7 +124,7 @@ def owned(root, page):
 
 
 def commands(skill):
-    """'`/skill`: verb / verb' for the asks in the skill's SKILL.md Command map."""
+    """'`/skill`: verb / verb' from the skill's Command map."""
     asks = re.findall(r"^\| `/%s ([\w-]+)" % re.escape(skill), section(read(os.path.join(SKILLS, skill, "SKILL.md")), "Command map"), re.M)
     return "`/%s`: %s" % (skill, " / ".join(dict.fromkeys(asks)) or "see its SKILL.md")
 
@@ -137,13 +136,13 @@ def features(root, cfg):
         text = read(os.path.join(folder, name)) if name.endswith(".md") else ""
         if not (section(text, "Problem") and re.search(r"^## Requirements", text, re.M)):
             continue
-        mile = re.search(r"^Milestone:\s*(\S.*)$", text, re.M)
+        page, mile = name[:-3], re.search(r"^Milestone:\s*(\S.*)$", text, re.M)
         first = section(text, "Problem").split("\n\n")[0]
-        if first.startswith("- "):  # a Problem written as bullets: the first bullet says what the feature is for
+        if first.startswith("- "):  # bullets: the first one
             first = re.split(r"\n(?=- )", first)[0][2:]
         problem = " ".join(first.split())
-        items = [commands(skill) for skill in owned(root, name[:-3])]
-        rows.append("| %s | %s | %s | %s |" % (name[:-3], cell(mile.group(1) if mile else "none"), cell(purpose(problem)),
+        items = [commands(skill) for skill in owned(root, page)]
+        rows.append("| %s | %s | %s | %s |" % (page, cell(mile.group(1) if mile else "none"), cell(purpose(problem)),
                                               cell(" / ".join(items) or "none")))
     return rows
 
@@ -175,7 +174,7 @@ def render(root):
 
 
 def skills():
-    """(name, description) for each installed workflow-* skill beside this one, in name order."""
+    """(name, description) of each installed workflow-* skill."""
     out = []
     for name in sorted(os.listdir(SKILLS)):
         head = read(os.path.join(SKILLS, name, "SKILL.md")) if name.startswith("workflow-") else ""
@@ -197,17 +196,19 @@ def block():
     return "\n".join(lines + [CLOSE]) + "\n"
 
 
+BLOCK = re.compile(re.escape(OPEN) + ".*?" + re.escape(CLOSE), re.S)
+
+
 def held_block(text):
-    """The marked block, LF endings and no final newline (a file may end at the close marker), or None."""
-    found = re.search(r"%s.*?%s" % (re.escape(OPEN), re.escape(CLOSE)), text, re.S)
+    """The marked block, LF endings, no final newline, or None."""
+    found = BLOCK.search(text)
     return found.group(0).replace("\r\n", "\n") if found else None
 
 
 def raw_text(path):
-    """A file as written: line endings untouched (empty when missing or not UTF-8)."""
+    """A file as written, endings untouched."""
     try:
-        with open(path, encoding="utf-8", newline="") as handle:
-            return handle.read()
+        return open(path, encoding="utf-8", newline="").read()
     except (OSError, ValueError):
         return ""
 
@@ -218,8 +219,8 @@ def agent_files(cfg):
 
 
 def installed():
-    """The installed template version from workflow-package.json beside the skills; empty for a checkout (never LAG).
-    A toy may set LOOP_INSTALLED_VERSION, honoured only with LOOP_TEST=1."""
+    """The installed template version (workflow-package.json); empty for a checkout. LOOP_INSTALLED_VERSION counts only
+    with LOOP_TEST=1."""
     if os.environ.get("LOOP_TEST") == "1" and os.environ.get("LOOP_INSTALLED_VERSION"):
         return os.environ["LOOP_INSTALLED_VERSION"]
     try:
@@ -228,21 +229,24 @@ def installed():
         return ""
 
 
+def ours(root):
+    """Whether root is the template's checkout."""
+    return os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep)
+
+
 def lagging(root, cfg):
-    """True when the installed skills are newer than the repo's template_version (never for the template's own checkout)."""
-    if os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep) or not installed():
-        return False
-    return version_key(installed()) > version_key(cfg.get("template_version"))
+    """True when installed skills are newer than the repo's template_version (never for the template's own)."""
+    return not ours(root) and bool(installed()) and version_key(installed()) > version_key(cfg.get("template_version"))
 
 
 NOTE = "this repo is at v%s, the template is at v%s, run the migrate goal"
 
 
 def lag(root, new=""):
-    """(line, refusal): the version nag for a repo behind the installed template, '' when current. The refusal is set only for
+    """(line, refusal): the version nag for a repo behind the template, '' when current. The refusal is set only for
     goal.py new (new = the slug) when both majors are known and differ; a migrate- slug is exempt."""
     want, held = installed(), config(root).get("template_version")
-    if not want or os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep):
+    if not want or ours(root):
         return "", ""
     known = isinstance(held, str) and re.fullmatch(r"\d+\.\d+\.\d+", held)
     if known and version_key(held) >= version_key(want):
@@ -255,20 +259,19 @@ def lag(root, new=""):
 
 
 def problems(root):
-    """(kind, path, detail) for the entry point and the agent blocks; LAG never fails a check."""
+    """(kind, path, detail) for the entry point and blocks; LAG never fails."""
     cfg, found = config(root), []
     want, have = render(root), read(os.path.join(root, ENTRY), None)
     lag = lagging(root, cfg)
     fix = "Fix: python3 <workflow-docs>/scripts/entry.py write (or docs.py audit)"
     note = NOTE % (cfg.get("template_version") or "0", installed())
-    # MISSING applies once a repo was set up by a version that writes the entry point (it holds template_version), or
-    # to the template's own checkout; a repo adopted before keeps passing until update writes it.
-    owed = cfg.get("criteria") and (cfg.get("template_version") or os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep))
+    # MISSING applies once the repo holds template_version, or to the template's own checkout.
+    owed = cfg.get("criteria") and (cfg.get("template_version") or ours(root))
     if have is None:
         if owed:
             found.append(("MISSING", ENTRY, "no entry point (ENTRY_MISSING). " + fix))
     elif have != want:
-        own = ["| `%s` |" % k for k in cfg if not k.startswith("_")]  # rows the repo's config holds, not new defaults
+        own = ["| `%s` |" % k for k in cfg if not k.startswith("_")]
         rows = lambda text: sorted(r for r in section(text, "Settings table").splitlines() if r.startswith(tuple(own)))
         data_same = section(have, "Features") == section(want, "Features") and rows(have) == rows(want)
         found.append(("LAG", ENTRY, note + " (ENTRY_LAG)") if lag and data_same else ("STALE", ENTRY, "differs from its sources (ENTRY_STALE). " + fix))
@@ -295,18 +298,16 @@ def write(root):
     text = render(root)
     changed = read(path, None) != text
     if changed:
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(text)
+        open(path, "w", encoding="utf-8").write(text)
     names, want = [], block().rstrip("\n")
     for name in agent_files(config(root)) if skills() else []:
         full = os.path.join(root, name)
         raw = raw_text(full)
-        span = re.search(r"%s.*?%s" % (re.escape(OPEN), re.escape(CLOSE)), raw, re.S)
+        span = BLOCK.search(raw)
         if not span or raw.count(OPEN) != 1 or raw.count(CLOSE) != 1:
-            continue  # no block, or stray markers: agents.py wire refuses those with the fix (AGENTS_MARKER)
+            continue  # agents.py wire refuses these (AGENTS_MARKER)
         if span.group(0).replace("\r\n", "\n") != want:
-            with open(full, "w", encoding="utf-8", newline="") as handle:
-                handle.write(raw[:span.start()] + want.replace("\n", "\r\n" if "\r\n" in raw else "\n") + raw[span.end():])
+            open(full, "w", encoding="utf-8", newline="").write(raw[:span.start()] + want.replace("\n", "\r\n" if "\r\n" in raw else "\n") + raw[span.end():])
             names.append(name)
     return (["FIXED " + ENTRY] if changed else []) + ["FIXED " + n for n in names]
 
@@ -320,7 +321,7 @@ def req_key(ident):
 
 
 def requirements(body):
-    """{id: text} of an external PRD: each top-level bullet, numbered item or table row that starts with an id."""
+    """{id: text} of an external PRD: each bullet, item or table row starting with an id."""
     found = {}
     for line in body.replace("\r\n", "\n").split("\n"):
         match = REQ.match(line)
@@ -358,21 +359,15 @@ def main():
     return 0
 
 
-def perm_covered(allow, tool, text):
-    import counting
-    return any(counting.perm_matches(rule, tool, text) for kind, rule, _ in allow if kind == "allow")
-
-
 def perm_check(root):
-    """The findings, one line each, for every routine in .loop/routines.tsv."""
+    """Finding lines for each routine in .loop/routines.tsv."""
     import counting
     import render
     table, findings = counting.perm_declared(root)
     if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
-        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"]             if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
+        return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"] if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
     try:
-        with open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8") as handle:
-            written = (json.load(handle).get("permissions") or {})
+        written = json.load(open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8")).get("permissions") or {}
     except (OSError, ValueError):
         written = {}
     for _, row in counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")):
@@ -384,7 +379,7 @@ def perm_check(root):
             if rule not in [r for r in (written.get(kind) if isinstance(written, dict) else None) or [] if isinstance(r, str)]:
                 findings.append("NOT WRITTEN %s %s %s. Fix: audit.py permissions write" % (routine, kind, rule))
         for tool, text in render.perm_needs(root, routine, page):
-            if mine and not perm_covered(mine, tool, text):
+            if mine and not any(counting.perm_matches(r, tool, text) for k, r, _ in mine if k == "allow"):
                 findings.append("UNCOVERED %s: the Runbook names %s(%s) and no allow row covers it" % (routine, tool, text))
         for kind, rule, _ in mine:
             inner = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)

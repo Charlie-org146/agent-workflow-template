@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-docs/scripts/docfresh.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/prd.py
+# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/prd.py
 # reads: skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/graph.py skills/workflow-monitoring/scripts/govern_hook.py
 """merge-unblock A (#3867, #3122): a comments-only change to mapped code stales no page; a code change stales it and the
 merge re-stamps it (reviewed text unchanged, slug logged); a changed wording stays LOCKED.
@@ -16,7 +16,7 @@ os.environ["LOOP_ROLE"] = "worker"
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-monitoring", "scripts"))
 import criteria  # noqa: E402
-import docfresh  # noqa: E402
+import audit  # noqa: E402
 import docs  # noqa: E402
 import prd  # noqa: E402
 import operate  # noqa: E402
@@ -86,7 +86,7 @@ if only in ("", "restamp"):
     write("a.py", "def run():\n    return 2\n")
     commit("a real change")
     check("the page is stale before the merge", stale() == ["A"])
-    done = docfresh.restamp(repo, ["A"], "my-goal")
+    done = audit.relock(repo, "my-goal", ["A"])
     commit("Wiki: re-stamp pages for my-goal")
     check("restamp marks the page kept by the goal (%s)" % done, done == ["A"] and "kept my-goal" in open(os.path.join(repo, "docs/wiki/A.md")).read())
     check("and the page is no longer stale (%s)" % stale(), not stale())
@@ -98,7 +98,7 @@ if only in ("", "locked"):
     write("a.py", "def run():\n    return 2\n")
     write("docs/wiki/A.md", open(os.path.join(repo, "docs/wiki/A.md")).read().replace("what a.py does", "what a.py is for"))
     commit("code and wording both change")
-    check("a changed wording is not re-stamped, so it stays LOCKED", docfresh.restamp(repo, ["A"], "my-goal") == [])
+    check("a changed wording is not re-stamped, so it stays LOCKED", audit.relock(repo, "my-goal", ["A"]) == [])
 if only in ("", "merge"):
     build()
     bare = tempfile.mkdtemp(prefix="merge-unblock-origin-")

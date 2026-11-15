@@ -295,7 +295,7 @@ def apply(slug, branch):
         base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
-        said = pages and run([sys.executable, os.path.join(docs, "docfresh.py"), "restamp", slug] + pages, tree).stdout.strip()
+        said = pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()
         if said and run(["git", "add", "-A", "--", folder], tree).returncode == 0:
             run(["git", "commit", "-q", "-m", "Wiki: re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)

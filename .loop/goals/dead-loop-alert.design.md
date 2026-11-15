@@ -1,0 +1,6 @@
+# Design: dead-loop-alert
+
+Problem: (#4359) a worker whose background `goal.py pr` retry loop died sat idle for 3.5 hours with the goal at the pr step; the check-in showed it as held or silent-by-design and named no one to restart, so scripts-c, milestone-sync, merge-unblock and config-lane waited behind it.
+
+Approach A: change graph.classify so a silent goal at the pr step is never "held". Rejected: it moves a state many boards read. Approach B (chosen): in the check-in only, a live goal (running, silent or held) whose log has not moved for silent_minutes and for which no goal.py, flow.py, role.py, lane or regression.py process runs is a Needs-you line `STALLED <slug>: no process since <time>; restart <worker>`; a goal with a process keeps the old behaviour. The process list is read on demand (powershell on Windows, ps elsewhere; unreadable means "busy", so no false alarm), and LOOP_PROCS stands in for it in tests.
+Done line: the check-in names the stalled goal; toy cases in test-silent-worker.py, two rows seen red. checkin.py was over 19,000 bytes: the change is net -6 there (new code lives in board_status.py). No reviewed Monitoring text changes: it is the existing silent line gaining a stronger variant. Out of scope: the retry loop itself, watch.py.

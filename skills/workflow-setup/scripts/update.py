@@ -3,13 +3,6 @@
 
 usage: update.py [--check | --apply | --propose [--file-issue]] [--take FILE ...] [--from PACKAGE] [--tag vX]
                  [--template OWNER/NAME] [--skills DIR] [--repo DIR]
-
---check (or no flag) writes nothing: INSTALLED, AVAILABLE, REPO, what's new, each file to change and each LOCAL FIX
-(a skill file edited here). Exit 0 up to date, 1 behind, 2 refused. --apply writes the skills folder (hashes checked
-first, atomic writes, workflow-package.json last; a LOCAL FIX is kept unless --take names it), then the repo half
-(sync.py) on branch workflow-update-vX. --propose sends each LOCAL FIX back as an issue (sync.py). The source is
---from (a package or a source tree) or the template's latest GitHub release archive; the template is the stamp's
-repo, else template_repo (both set and different: refused unless --template). It never downgrades.
 """
 import argparse
 import contextlib
@@ -25,21 +18,21 @@ import time
 import zipfile
 try:
     import fcntl
-except ImportError:  # native Windows: msvcrt byte-range locks under flock's names
+except ImportError:
     import msvcrt
     import types
 
     def _flock(handle, op):
         fd = handle if isinstance(handle, int) else handle.fileno()
         here = os.lseek(fd, 0, 1)
-        os.lseek(fd, 0x7FFFFFFF, 0)  # one byte far past any content: readers never block
+        os.lseek(fd, 0x7FFFFFFF, 0)
         try:
             while True:
                 try:
                     return msvcrt.locking(fd, msvcrt.LK_UNLCK if op & 8 else msvcrt.LK_NBLCK, 1)
                 except OSError:
                     if op & 8:
-                        return  # unlock of a lock not held: a no-op, as with flock
+                        return
                     if op & 4:
                         raise BlockingIOError("locked")
                     time.sleep(0.05)
@@ -69,7 +62,7 @@ def strings(value, skip=()):
 
 
 def local_values():
-    """The owner's local strings that look like a path or an address (/, ~ or @; 8+ characters) and are not a template default."""
+    """The owner's local strings that look like a path or an address (/, ~ or @."""
     import settings
     found = set(strings([settings.load(settings.private_path()), settings.load(settings.health_path())], ("_help",)))
     try:
@@ -81,7 +74,7 @@ def local_values():
 
 
 def guard_staged(repo, paths):
-    """SET-8: what the staged adoption adds that is a local setting or private value, as file:line or key (never the value)."""
+    """SET-8."""
     import settings
     private = {row[0] for row in settings.TABLE if row[1] == settings.PRIVATE}
     home, mail, local = os.path.expanduser("~"), subprocess.run(["git", "-C", repo, "config", "user.email"], capture_output=True, text=True).stdout.strip(), local_values()
@@ -103,7 +96,7 @@ def guard_staged(repo, paths):
 
 
 def commit(repo, message, files):
-    """(exit code, output) of git commit for exactly these files, run in its own process group so a signal reaches git and its hooks."""
+    """(exit code, output) of git commit for exactly these files, in its own process group."""
     proc = subprocess.Popen(["git", "-C", repo, "commit", "--allow-empty", "-m", message, "--"] + files, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, start_new_session=True)
     try:
@@ -122,7 +115,7 @@ def mask(line):
 
 
 def step(name, fix, run, failed):
-    """A post-commit step: its output is read as well as its exit status; a failure is a NOTE and a gap, never a refusal."""
+    """A post-commit step."""
     out = io.StringIO()
     try:
         with contextlib.redirect_stdout(out):
@@ -202,7 +195,7 @@ def stamp(skills):
 
 
 def checkout(skills):
-    """The checkout's VERSION when the skills folder is a source checkout (linked, or no stamp and a VERSION above it)."""
+    """The checkout's VERSION when the skills folder is a source checkout."""
     linked = os.path.islink(skills) or any(os.path.islink(os.path.join(skills, n)) for n in os.listdir(skills) if n.startswith("workflow-"))
     above = os.path.join(os.path.realpath(skills), os.pardir, "VERSION")
     if linked or (not os.path.exists(os.path.join(skills, STAMP)) and os.path.exists(above)):
@@ -286,7 +279,6 @@ def check(skills, manifest, old, fixes, ours):
 
 
 def apply_skills(skills, manifest, read, old, fixes, take, where):
-    """Write the skills half: verify every hash, write each file atomically, save kept copies, write the stamp last."""
     files, kept = manifest["files"], dict(old.get("kept") or {})
     keep = [r for r in fixes if r not in take]
     blobs = {}
@@ -401,7 +393,6 @@ def main():
     if wrote:
         with locked(skills):
             apply_skills(skills, manifest, read, old, fixes, args.take, where)
-        # The repo half runs the sync.py just written, so the new version's settings and rules apply, not this run's.
         new = os.path.join(skills, "workflow-setup", "scripts", "sync.py")
         if repo and os.path.isfile(new) and "workflow-setup/scripts/sync.py" not in set(fixes) - set(args.take):
             sys.stdout.flush()
