@@ -352,6 +352,7 @@ pass3-symlink-page	PASS	2026-11-11
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
 pending-waits	PASS	2026-11-12	
+perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-12	
 plan-identity	PASS	2026-11-12	
@@ -429,6 +430,7 @@ review-dated	PASS	2026-11-12
 review-findings-skill-lines	PASS	2026-11-15		144bcc92bdf7
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
+roadmap-closed-drops	PASS	2026-11-15	
 row-timeout-holds	PASS	2026-11-11	
 run-kind-filter	PASS	2026-11-10	
 run-ledger	PASS	2026-11-12	

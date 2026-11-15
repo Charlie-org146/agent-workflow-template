@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.28.67 - 2026-11-15
+
+- Commit .claude/settings.json: .claude/ was ignored, so fresh checkouts failed the AUT-9 permissions check
+- roadmap-wiki: batch.py roadmap builds the Roadmap guide page from docs/ROADMAP.md, open issues and run records; toy, rows, command reference
+- roadmap-wiki: record row runs, re-render Tests
+- roadmap-wiki: review: batch.py roadmap refuses unreadable inputs with one line
+- Merge origin/main into roadmap-wiki; review fixes: hand rows on Backlog or To-do issues listed once, finished goals not queued, paths scrubbed, odd input handled
+- roadmap-wiki: Monitoring Tests table follows the new rows
+- roadmap-wiki: rebuild the Roadmap page from the live issues
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- Merge origin/main (v0.28.61) into roadmap-wiki
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.66 - 2026-11-15
 
 - No code changes

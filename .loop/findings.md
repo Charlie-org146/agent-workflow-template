@@ -71,3 +71,4 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - regression-issues-trust: Failed 4 tries. Last: regression lane failed: package-caps-held, package-headroom-held
 - health-repo-rules: Failed 3 tries. Last: regression lane failed: LANE_DIRTY at start: .loop/START.md, README.md. Fix: commit or remove them; the lane committed and pushed nothing.
 - health-repo-rules: Failed 4 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh
+- roadmap-wiki: paused by the operation session: permissions-committed goes first; resume roadmap-wiki after it merges (build and review done, review reply pending)
