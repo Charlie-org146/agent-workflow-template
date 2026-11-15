@@ -61,6 +61,7 @@
 | <a id="t-perms-private-refused"></a>perms-private-refused | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-9 | not run | - | local | 2026-11-14 |
+| <a id="t-perms-settings-tracked"></a>perms-settings-tracked | requirement | AUT-9 | not run | - | local | 2026-11-15 |
 
 ## Delivery
 
@@ -285,6 +286,7 @@
 | <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-roadmap-page-passes-check"></a>roadmap-page-passes-check | requirement | DOC-13 | not run | - | local | 2026-11-15 |
 
 ## External PRDs
 
@@ -563,6 +565,12 @@
 | <a id="t-unattended-selfcheck-missing"></a>unattended-selfcheck-missing | requirement | MON-18 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | MON-18 | not run | - | local | 2026-11-14 |
 | <a id="t-runs-skips-non-dict"></a>runs-skips-non-dict | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-roadmap-closed-drops"></a>roadmap-closed-drops | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-status-values"></a>roadmap-status-values | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-backlog-apart"></a>roadmap-backlog-apart | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-priority-empty"></a>roadmap-priority-empty | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-unreviewed-listed"></a>roadmap-unreviewed-listed | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-todos-apart"></a>roadmap-todos-apart | requirement | MON-4 | not run | - | local | 2026-11-15 |
 
 ## Regression
 

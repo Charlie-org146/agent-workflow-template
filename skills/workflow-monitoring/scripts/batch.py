@@ -10,11 +10,17 @@ usage: batch.py <command> [options]
       and reports back by prompt message; otherwise print the command that starts them
   status NAME
       one line for each goal of the batch
+  roadmap [--issues FILE] [--out FILE]
+      the Roadmap wiki page: docs/ROADMAP.md's v1.0.0 group tables and Rollout, each open issue in its group (a hand row
+      first, else by label), a status per row (in flight, queued or open; a closed issue drops out), the Backlog milestones
+      apart as "after v1.0", the "To-do:" issues, the goals in flight and each page's Unreviewed requirements; Priority is
+      left empty. Open issues come from gh (--issues FILE reads the same JSON); with --out it writes the page, else prints it
 
 Each goal runs the one skill flow in its own worktree, in its own worker. Nothing is merged.
 """
 import argparse
 import datetime
+import glob
 import json
 import os
 import re
@@ -181,6 +187,94 @@ def cmd_status(args):
     print("%d line(s) in batch %s" % (len(items), args.name)) if items else print("EMPTY batch " + args.name)
     return 0
 
+GROUPS = ("Size caps", "Windows-safe", "Regression trust", "Open defects", "Adoption", "Unreviewed requirements", "Package rules")
+LABEL_GROUP = (("health:size", 0), ("regression", 2), ("defect", 3), ("health:adoption", 4))
+
+
+def table(head, rows):
+    return ["| %s |" % " | ".join(head), "|" + "---|" * len(head)] + ["| %s |" % " | ".join(c.replace("|", "/") for c in r) for r in rows] + [""]
+
+
+def section(text, name):
+    found = re.search(r"^## %s\s*\n(.*?)(?=^## |\Z)" % re.escape(name), text, re.M | re.S)
+    return found.group(1) if found else ""
+
+
+def cmd_roadmap(args):
+    top = root()
+    with open(os.path.join(top, "docs", "ROADMAP.md"), encoding="utf-8") as handle:
+        source = handle.read()
+    if args.issues:
+        with open(args.issues, encoding="utf-8") as handle:
+            raw = json.load(handle)
+    else:
+        done = subprocess.run(["gh", "issue", "list", "--state", "open", "--limit", "1000", "--json", "number,title,labels,milestone"], capture_output=True, text=True, cwd=top)
+        if done.returncode:
+            sys.exit("REFUSED: gh issue list failed: %s" % done.stderr.strip()[:200])
+        raw = json.loads(done.stdout or "[]")
+    names = lambda x: x.get("name") if isinstance(x, dict) else x
+    issues = {i["number"]: (i["title"], [names(l) for l in i.get("labels") or []], (i["milestone"].get("title") if isinstance(i.get("milestone"), dict) else i.get("milestone")) or "") for i in raw}
+    states = {}
+    for name in os.listdir(loop_dir("runs")):
+        record = load(name[:-5]) if name.endswith(".json") and "." not in name[:-5] else None
+        if isinstance(record, dict) and record.get("slug"):
+            states[record["slug"]] = record
+    flying = {s: str(r.get("goal", "")) for s, r in states.items() if r.get("status") in ("running", "waiting") and r.get("goal")}
+    queued = {f.get("slug"): f.get("goal", "") for f in (fields(l) for l in read_queue() if l.startswith("- slug:")) if f.get("slug") not in flying}
+    hit = lambda ref, goals: any(ref == s or (ref[0] == "#" and re.search(ref + r"(?!\d)", t)) for s, t in goals.items())
+    status = lambda ref: "in flight" if hit(ref, flying) else "queued" if hit(ref, queued) else "open"
+    rows, hand = {g: [] for g in GROUPS}, set()
+    for part in re.split(r"^### ", section(source, "v1.0.0"), flags=re.M)[1:]:
+        group = part.split("\n", 1)[0].strip()
+        for line in part.splitlines()[1:]:
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            ref = cells[0].strip("`") if line.startswith("| ") else ""
+            if group not in rows or not (ref.startswith("#") or SLUG.match(ref)) or len(cells) < 3:
+                continue
+            number = int(ref[1:]) if ref.startswith("#") and ref[1:].isdigit() else 0
+            if number:
+                hand.add(number)
+            if (number and number in issues) or (not number and states.get(ref, {}).get("status") not in ("done", "merged")):
+                rows[group].append((cells[0], cells[1], cells[2], status(ref), ""))
+    after, todos = {}, []
+    for number, (title, labels, stone) in sorted(issues.items()):
+        if stone.startswith("Backlog"):
+            after.setdefault(stone, []).append(("#%d" % number, title[:110], ""))
+        elif title.startswith("To-do:"):
+            todos.append(("#%d" % number, title[6:].strip()[:110], status("#%d" % number)))
+        elif number not in hand:
+            group = next((g for l, g in LABEL_GROUP if l in labels), None)
+            rows["Package rules" if group is None and "package" in title.lower() else "Windows-safe" if group is None and "windows" in title.lower() else GROUPS[group] if group is not None else "Open defects"].append(("#%d" % number, title[:110], "v1.0.0", status("#%d" % number), ""))
+    out = ["<!-- workflow-docs -->", "<!-- workflow-docs guide -->", "# Roadmap", "",
+           "Generated by `batch.py roadmap` from docs/ROADMAP.md, the open issues and the run records (%d open issues, %s); edit docs/ROADMAP.md, never this page. "
+           "v1.0.0 is done when every open issue below is closed. Fill the Priority column to rank them." % (len(issues), now()[:10]), "", "## Before v1.0.0", ""]
+    for group in GROUPS:
+        out += ["### " + group, ""]
+        if group == "Unreviewed requirements":
+            pages = []
+            for page in sorted(glob.glob(os.path.join(top, "docs", "wiki", "*.md"))):
+                with open(page, encoding="utf-8") as handle:
+                    for found in re.finditer(r"^- ([A-Z]+-\d+): \*\*Unreviewed\*\* (.*?)(?: <!--.*)?$", handle.read(), re.M):
+                        pages.append((os.path.basename(page)[:-3], found.group(1), found.group(2)[:110], "open", ""))
+            out += table(("Issue or goal", "Outcome", "Blocks", "Status", "Priority"), rows[group]) if rows[group] else []
+            out += table(("Page", "Requirement", "Outcome", "Status", "Priority"), pages) if pages else ["No requirement is Unreviewed.", ""]
+        else:
+            out += table(("Issue or goal", "Outcome", "Blocks", "Status", "Priority"), rows[group]) if rows[group] else ["Nothing open.", ""]
+    out += ["## Goals in flight", ""] + ["- `%s`: %s" % (s, " ".join(str(states[s].get("goal", "")).split())[:140]) for s in sorted(flying)] + [""]
+    out += ["## Off-machine to-dos (these do not block v1.0.0)", ""] + (table(("Issue", "To-do", "Status"), todos) if todos else ["None.", ""])
+    out += ["## After v1.0", "", "Backlog milestones wait for v1.1 and later.", ""]
+    for stone in sorted(after):
+        out += ["### " + stone, ""] + table(("Issue", "Outcome", "Priority"), after[stone])
+    out += ["## Rollout", ""] + section(source, "Rollout").strip().splitlines() + [""]
+    text = "\n".join(out).rstrip("\n") + "\n"
+    if args.out:
+        with open(os.path.join(top, args.out), "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+        print("WROTE %s: %d open issues, %d goals in flight" % (args.out, len(issues), len(flying)))
+    else:
+        sys.stdout.write(text)
+    return 0
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -198,6 +292,9 @@ def main():
     item.add_argument("--max", type=int, default=0)
     item.add_argument("--skill-dir", default="")
     sub.add_parser("status").add_argument("name")
+    item = sub.add_parser("roadmap")
+    item.add_argument("--issues", default="")
+    item.add_argument("--out", default="")
     if sys.argv[1:2] and sys.argv[1] in STEPS and os.environ.get("LOOP_ROLE") != "worker":
         sys.exit(REFUSE % sys.argv[1])
     args = parser.parse_args()
