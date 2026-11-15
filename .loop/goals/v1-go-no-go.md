@@ -12,4 +12,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/package.py` on the release commit.
+   Expect: PASS with 99 files and a ZIP named for v1.0.0.
+2. Run `python3 skills/workflow-health/scripts/health.py check`.
+   Expect: HEALTH green with 0 fail.
+3. Open the draft release v1.0.0 and read the notes.
+   Expect: it lists the changes since v0.28.x and is still a draft.
