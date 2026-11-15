@@ -296,7 +296,7 @@ def sync(root, dry=False, accept=(), opened=False):
         return 0
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:
-        print("NO EXTERNAL PRDS: no feature's PRD source in .loop/docs.tsv is a url or an mcp source")
+        print("NO EXTERNAL PRDS: no PRD source in .loop/docs.tsv is a url or mcp source")
     same = new = away = 0
     for page, source in listed:
         body, why = prd.read_link(source)
@@ -307,12 +307,12 @@ def sync(root, dry=False, accept=(), opened=False):
         want, path = counting.requirements(body), os.path.join(root, ".loop", "prd", page + ".md")
         have, owned, agreed = mirror_of(path)
         if not want:
-            print("EMPTY %s: the source states no requirement ids; the repo copy is kept" % page)
+            print("EMPTY %s: no ids in the source; the copy is kept" % page)
             continue
         if not owned:
-            print("SKIPPED %s: %s is not a file sync wrote; it is left as it is" % (page, os.path.relpath(path, root)))
+            print("SKIPPED %s: %s is not sync's own file; left as it is" % (page, os.path.relpath(path, root)))
             continue
-        if not os.path.exists(path):  # the first sync adopts the source: nothing to compare yet
+        if not os.path.exists(path):  # the first sync adopts the source
             if not dry:
                 put(path, source, want, {i: sha(t) for i, t in want.items()})
                 print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
@@ -337,7 +337,7 @@ def sync(root, dry=False, accept=(), opened=False):
             put(path, source, have, {i: h for i, h in agreed.items() if h})
             row = held.pop("%s:%s" % (page, ident), None)
             if row:
-                out("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted the %s's text; both sides now say the same." % side)
+                out("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted the %s's text." % side)
             print("ACCEPTED %s: %s, the %s's text is on both sides" % (page, ident, side))
         found = []
         for ident in sorted(set(have) | set(want), key=counting.req_key):
@@ -355,7 +355,7 @@ def sync(root, dry=False, accept=(), opened=False):
         if dry:
             continue
         for key in [k for k in held if k.startswith(page + ":") and k.split(":")[1] not in [f[0] for f in found]]:
-            out("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Both sides now say the same.")
+            out("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Both sides agree now.")
         for ident, side, r, s in found:
             key, text = "%s:%s" % (page, ident), "Delta in %s %s: %s changed.\nRepo copy: %s\nSource: %s\nAccept one side with: docs.py sync --accept %s:%s=repo or =source" % (
                 page, ident, side, r or "<none>", s or "<none>", page, ident)
@@ -364,7 +364,7 @@ def sync(root, dry=False, accept=(), opened=False):
                 out("LOOP_GH", "issue", "comment", row[1], "--body", "The delta changed.\n" + text)
                 row[2] = "0"
             elif not row[1]:
-                for stone in (["--milestone", page], []):  # the page's milestone is named like it; without one the issue is still made
+                for stone in (["--milestone", page], []):  # the milestone is named like the page
                     ok, made = out("LOOP_GH", "issue", "create", "--title", "DELTA %s %s: %s changed" % (page, ident, side), "--body", text, *stone)
                     if ok:
                         break
