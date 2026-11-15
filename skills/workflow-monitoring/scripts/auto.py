@@ -15,8 +15,6 @@ you with its reason (logged once per question):
   drop, rm, wipe, truncate, discard, reset --hard, git clean, force, overwrite, rename, publish, release, deploy,
   merge, push, pay, purchase, billing, cost, spend, money, permission, access, token, secret, credential, password, key,
   license, migration, schema, auth, security), nor a path matching `risky_paths`;
-- the question doesn't ask for the owner's words (a reviewed page or requirement change, a criteria_max raise): it
-  waits for an owner-words record, whatever its kind;
 - the owner hasn't answered that goal before: an owner answer on the goal sends every later question to the owner
   (answers.jsonl, source owner), so full auto never answers over the owner's word.
 An answer goes through `operate.py send SLUG WORDS --source auto` (the inbox and the session message, as an owner answer
