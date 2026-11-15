@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/lanes_cli.py
-# reads: skills/workflow-regression/scripts/textcache.py skills/workflow-regression/scripts/narrow.py
+# reads: skills/workflow-regression/scripts/narrow.py
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/slots.py
 """lane-affected-memory (#4151): `lanes_cli.py affected` keeps its memory bounded and gives the same answer.
 

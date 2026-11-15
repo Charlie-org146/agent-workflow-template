@@ -16,7 +16,6 @@ import subprocess
 import sys
 
 import narrow
-import textcache
 from slots import fcntl
 
 # No terminal, no waiting: a prompt from git must fail, not block.
@@ -194,16 +193,16 @@ def references(root, text, folder, wide=True, memo=None):
             if cand.split("/")[0] == ".git":  # git's own store: in a full clone .git/index names every file (issue 178)
                 continue
             full = os.path.join(root, cand)
-            if textcache.kind(memo, full) == "d":
+            if narrow.kind(memo, full) == "d":
                 cand = cand.rstrip("/") + "/"
                 found.add(widen(cand) if wide else cand)
-            elif textcache.kind(memo, full) == "f":
+            elif narrow.kind(memo, full) == "f":
                 found.add(widen(cand) if wide else cand)
     return found, whole
 
 
 def read(root, rel, cache):
-    return cache.setdefault("text", textcache.Texts()).load(root, rel)
+    return cache.setdefault("text", narrow.Texts()).load(root, rel)
 
 
 def scan(root, rel, cache):
@@ -331,7 +330,7 @@ def no_effect(path):
 def named_in(root, rel, path, cache):
     key = ("names", rel, path)
     if key not in cache:
-        cache[key] = textcache.names(read(root, rel, cache) or "", path)
+        cache[key] = narrow.names(read(root, rel, cache) or "", path)
     return cache[key]
 
 
@@ -340,7 +339,7 @@ def names_any(root, command, paths, cache):
     deps, _ = closure(root, command, cache)
     files = [p for p in deps if not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
     for path in paths:  # each (file, path) answer is kept: rows share most files
-        if textcache.names(command, path) or any(named_in(root, p, path, cache) for p in files):
+        if narrow.names(command, path) or any(named_in(root, p, path, cache) for p in files):
             return True
     return False
 

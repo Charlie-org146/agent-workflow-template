@@ -7,6 +7,7 @@ shell files add the paths they name, Python files their same-folder imports and 
 imports by name with importlib.import_module, each quoted same-folder module name), and anything this cannot resolve
 becomes a problem that makes the row run on every change.
 """
+import collections
 import json
 import os
 import re
@@ -14,6 +15,47 @@ import time
 import zlib
 
 import lanes
+
+
+LIMIT = 32000000  # characters of file text held at once (#4151); a dropped text is read again, slower but never different
+
+
+class Texts(dict):
+    """file name -> text for one run, the oldest dropped past LIMIT; the names stay (tiers.unsafe lists the files read)."""
+    def __init__(self):
+        super().__init__()
+        self.live, self.size = collections.OrderedDict(), 0
+
+    def load(self, root, rel):
+        if rel in self.live:
+            self.live.move_to_end(rel)
+            return self[rel]
+        try:
+            with open(os.path.join(root, rel), errors="replace") as handle:
+                text = handle.read(400000)
+        except OSError:
+            text = None
+        self[rel] = text
+        self.live[rel] = len(text or "")
+        self.size += self.live[rel]
+        while self.size > LIMIT and len(self.live) > 1:
+            old, count = self.live.popitem(last=False)
+            self[old], self.size = "", self.size - count
+        return text
+
+
+def names(text, path):
+    """Whether a text names path: the path, its basename, or `import <stem>` for a .py file."""
+    name = os.path.basename(path)
+    stem = re.escape(name[:-3]) if name.endswith(".py") else None
+    return path in text or name in text or bool(stem and re.search(r"(?m)^\s*(?:from|import)\s+(?:[\w, ]*)?%s" % stem, text))
+
+
+def kind(memo, full):
+    """"d", "f" or "" for a path, asked of the disk once per run."""
+    if full not in memo:
+        memo[full] = "d" if os.path.isdir(full) else "f" if os.path.isfile(full) else ""
+    return memo[full]
 
 READS = re.compile(r"^#\s*reads:(.*)$")
 QUOTED = re.compile(r"""["']([\w./-]*\w)["']""")
