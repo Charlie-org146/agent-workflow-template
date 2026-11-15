@@ -275,7 +275,6 @@ def cmd_run(args):
             ids = ", ".join(todo[:10]) + (", +%d more" % (len(todo) - 10) if len(todo) > 10 else "")
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
                                                        " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
-    print('DIAG plan: todo=%s reused=%s old=%s why=%r' % (todo, len(reused), bool(old), why), flush=True)
     if todo and args.target in ("land", "nightly"):  # a by-id run never waits
         lanes_cli.wait_memory(root)  # min_free_memory_gb: no rows start on a machine out of memory
     if todo and args.target in ("land", "nightly") and (why or not args.reuse):  # a lane with no plan to follow waits for a slot
@@ -285,7 +284,6 @@ def cmd_run(args):
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     limit = (args.budget or runs.budget(root)) if args.reuse else None  # CI's plain run is the full suite: no budget
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
-    print('DIAG ran=%s cut=%s' % ([r['id'] for r in results], cut), flush=True)
     for line in tiers.flaky_apply(record, results, head, not unclean):  # REG-9: advisory; the result decides
         print(line)
     if not args.reuse and results:  # a reusing run writes nothing in the worktree and opens no issue: CI's plain run owns both

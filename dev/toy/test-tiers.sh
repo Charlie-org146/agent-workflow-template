@@ -11,7 +11,6 @@
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-export DIAG_TRACE="/tmp/diag-trace-$$.txt" PYTHONPATH="$here/dev/toy/diag-sc"
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
 unset _LOOP_LANE_LABEL _LOOP_LANE_HELD _LOOP_LANE_STARTED _LOOP_LANE_QUEUED _LOOP_LANE_NOTE LOOP_LANE_LIMIT LANES_WIDE
 export HOME=$(mktemp -d)
@@ -39,7 +38,7 @@ branch() { git switch -q main; git switch -q -c "$1"; }
 # a reads src/a.txt; b, k (defect) and w (workflow) read src/b.txt; c names no path (a root runner); old.txt no row reads.
 mkdir -p dev src
 printf 'ok\n' > src/a.txt; printf 'ok\n' > src/b.txt; printf 'old\n' > old.txt
-printf 'ps -o pid=,ppid=,args= -p $(ps -o ppid= -p $PPID) | cut -c1-170 >> "${DIAG_TRACE:-/dev/null}"; echo a >> "$TOY_LOG"; grep -q ok src/a.txt  # old.txt\n' > dev/a.sh
+printf 'echo a >> "$TOY_LOG"; grep -q ok src/a.txt  # old.txt\n' > dev/a.sh
 printf 'grep -q ok src/b.txt && echo "$1" >> "$TOY_LOG"\n' > dev/b.sh
 printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n' > .loop/regression.tsv
 printf 'a\tland\tbash dev/a.sh\tX-1\t2026-01-01\tA works.\tcriterion\t\n' >> .loop/regression.tsv
@@ -101,7 +100,6 @@ import json, sys, time
 sys.path.insert(0, sys.argv[1]); import lane
 for _ in range(600):
     status, line, _ = lane.lane(sys.argv[2], sys.argv[3], sys.argv[4], lane.flow_spec(), json.load(open(".loop/config.json")), 1)
-    print("poll %s %.3f %s" % (status, time.time() % 100, line[:70]), file=sys.stderr)
     if status != "running":
         break
 print(status); print(line)
@@ -124,6 +122,9 @@ sys.path.insert(0, sys.argv[1]); import lane
 lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 0)
 held = json.load(open(sys.argv[2] + "/t4.qa-lane.job"))
 print("LIMIT %d %s" % (held["limit"], held.get("source")))
+for _ in range(600):  # let the lane end: its run goes on in this repo, and the next case sets up while it plans (#4373)
+    if lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 1)[0] != "running":
+        break
 PY
 echo '{"limit": 600}' > "$LOOP_FLOW"
 out=$(cat "$d/t4.out")
@@ -135,15 +136,9 @@ git switch -q main; branch t6
 python3 -c "import json;c=json.load(open('.loop/config.json'));c.update(goal_levels='nightly',goal_lane_minutes=0.0001);json.dump(c,open('.loop/config.json','w'),indent=2)"
 printf 'm\tnightly\tgrep -q ok src/a.txt && echo m >> "$TOY_LOG"\tX-1\t2026-01-01\tM runs nightly.\tcriterion\t\n' >> .loop/regression.tsv
 git add -A; git commit -qm "t6 rows"; printf 'ok, t6\n' > src/a.txt; git commit -qam "t6"
-pre=$(find "$common/loop" -name "*t6*" -printf "%TT %p
-" | sed "s|$common/||"; echo "hooks: $(git config --get core.hooksPath) $(ls .git/hooks | grep -v sample | tr '
-' ' ')"; git status --short | head -3)
 out=$(python3 "$d/h.py" "$S" "$RUNS" t6 qa 2>&1)
 # Value: protects=goal_levels nightly makes a goal lane plan from land and nightly rows (S23) and a lane over goal_lane_minutes says so on its LANE line (S21); fails_when=the setting is ignored or the note is missing; why_new=both settings are new; seam=none; no_claim=a real 10-minute lane (0.0001 min stands in)
 check "goal_levels nightly: a goal lane selects the nightly row a change reaches" 'grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt"'
-grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt" || { echo "-- the process trace"; grep -vE "'git'|'ps'|'find'" "$DIAG_TRACE" | tail -n 45 | cut -c1-170; echo "-- before the lane"; echo "$pre"; echo "-- the t6 lane log"; head -6 "$RUNS/t6.qa-lane.txt" | cut -c1-200; find "$common/loop" -name "*t6*" -printf "%TT %s %p
-" | sed "s|$common/||"; tr -d " 
-" < "$RUNS/t6.qa-lane.last" | cut -c1-400; echo; python3 -c "import json,glob;d=json.load(open(glob.glob('$common/loop/tests/*t6*.json')[0]));print(d['at'],d['commit'][:8],{k:(v['status'],v['pid']) for k,v in d['rows'].items()})"; git log --format="%h %ad %s" --date=format:%T -4; }
 check "a goal lane over goal_lane_minutes adds '; over N min (goal_lane_minutes)' to its LANE line" 'grep -q "^LANE qa AFFECTED .*; over 0.0001 min (goal_lane_minutes)" <<<"$out"'
 t0=$(date +%s); rr=$(python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import lanes;print(lanes.run_row('sleep 20 & echo \$! > $d/left.pid; exec sleep 20','.',None,1)[0])" "$here/skills/workflow-regression/scripts"); took=$(( $(date +%s) - t0 ))
 # Value: protects=a row's timeout holds even when its shell left a child holding the output (red team); fails_when=run_row waits for the pipe to close; why_new=run_row is new; seam=none; no_claim=none beyond protects
