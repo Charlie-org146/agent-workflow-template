@@ -323,6 +323,15 @@
 | <a id="t-docs-scripts-under-19000"></a>docs-scripts-under-19000 | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 | <a id="t-template-in-commands"></a>template-in-commands | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-repo-delta"></a>milestone-sync-repo-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-source-delta"></a>milestone-sync-source-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-conflict"></a>milestone-sync-conflict | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-no-overwrite"></a>milestone-sync-no-overwrite | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-source"></a>milestone-sync-accept-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-repo"></a>milestone-sync-accept-repo | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-not-connected"></a>milestone-sync-not-connected | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-generic"></a>milestone-sync-generic | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
