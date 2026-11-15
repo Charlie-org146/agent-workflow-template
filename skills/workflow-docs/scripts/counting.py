@@ -353,3 +353,18 @@ def perm_matches(rule, tool, text):
     if spec.endswith(":*"):
         return text == spec[:-2] or text.startswith(spec[:-2] + " ")
     return fnmatch.fnmatchcase(text, spec)
+
+
+def ledger(root, rows=None):
+    """The posted deltas {PAGE:ID: [side, issue, commented 1/0, sha8]}, in <git common dir>/loop/deltas.tsv."""
+    folder = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir", check=False) or os.path.join(root, ".git")), "loop")
+    path = os.path.join(folder, "deltas.tsv")
+    if rows is not None:
+        os.makedirs(folder, exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write("".join("\t".join([k] + v) + "\n" for k, v in sorted(rows.items())))
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return {r[0]: r[1:] for r in (x.rstrip("\n").split("\t") for x in handle) if len(r) == 5}
+    except OSError:
+        return {}

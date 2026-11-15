@@ -241,7 +241,7 @@ def cmd_red(args):
         return 1
     edit_rows(root, lambda current: current[args.id].update(seen_red=today()) if args.id in current else None)
     print("SEEN RED %s on %s" % (args.id, today()))
-    runs.owed_clear(root, args.id)
+    runs.owed_clear(root, args.id, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
     return 0
 
 
