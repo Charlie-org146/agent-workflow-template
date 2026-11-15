@@ -196,8 +196,9 @@ out=$(sync)
 grep -q "^SYNCED Delivery: 3 requirement" <<<"$out" && ok "the first sync adopts the source: 3 requirements" || bad "adopt: $out"
 grep -qx -- '- DEL-1: \*\*Reviewed 2026-11-10\*\* Functional: The calculator prints a `median`.' $COPY && grep -qx -- "- DEL-2: \*\*Unreviewed\*\* Non-functional: It answers quickly." $COPY \
   && grep -qx -- "- DEL-3: \*\*Unreviewed\*\* Functional: It rejects an empty list." $COPY && grep -q "^  - The median of the numbers given is printed." $COPY \
-  && ! grep -qE "<b>|<i>|<code>|^Source:|Serves|Page . Link" $COPY \
-  && ok "the copy holds each requirement in the repo's layout: html tags gone, the title from the first sub-bullet, the kind kept, the mark before or after, New requirements merged, Source and Runbook left out" || bad "normalise: $(cat $COPY)"
+  && ok "the copy holds each requirement in the repo's layout: the title from the first sub-bullet, the kind kept, the mark before or after, New requirements merged" || bad "normalise: $(cat $COPY)"
+! grep -qE "<b>|<i>|<code>|^Source:|^Milestone:|^Review:|Serves|Page . Link" $COPY && grep -q 'prints a `median`' $COPY \
+  && ok "Notion's html tags become markdown, and its Source, Milestone, Review, Runbook and Deployments lines stay out of the copy" || bad "notion shape: $(cat $COPY)"
 grep -q "^## Non-goals" $COPY && grep -q "^No charts." $COPY && grep -q "^## Success metrics" $COPY && ok "the copy holds the four sections" || bad "sections: $(cat $COPY)"
 
 echo "== a page with a copy passes with no reader, and shows the PRD as a generated block"
