@@ -88,6 +88,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 | [defect-owed-branch-proved](Tests#t-defect-owed-branch-proved) | requirement | REG-1 | Given an old defect row for an issue proved before the goal, when the goal that fixes that issue runs goal.py pr, then the pull request is refused until the branch adds its own row seen failing. | PASS 2026-11-10 |
 | [list-link-ids](Tests#t-list-link-ids) | requirement | REG-1 | Given a feature page whose PRD lives at a link, when tests.py list runs, then the requirement ids come from that PRD. | PASS 2026-11-13 |
 | [tests-own-folder](Tests#t-tests-own-folder) | requirement | REG-1 | Given the regression skill, when tests.py reads a link-form page's ids, then it imports nothing outside its own folder. | PASS 2026-11-13 |
+| [prd-copy-rows-list](Tests#t-prd-copy-rows-list) | requirement | REG-1 | Given a page with a PRD source and a copy in .loop/prd and no block yet, when tests.py list runs with no reader, then it groups the page's rows under the page, not under Other. | not run |
 | [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-12 |
 | [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-12 |
 | [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-12 |
