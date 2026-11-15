@@ -179,6 +179,7 @@ def adopt(args, repo):
         print("REFUSED: wiki_dir %s is not a folder inside the repo (SETUP_WIKI_DIR). Fix: set wiki_dir in .loop/config.json to a relative folder such as docs/wiki; nothing written." % wiki)
         return 1
     print(survey.found_line(found, config))
+    print("NOTE: un-reviewing a locked requirement needs the owner's own sentence, not a relayed letter or an agent (OWNER_WORDS)")
     files = git(repo, "ls-files").splitlines()
     for note in survey.checks(repo, files)[1] + survey.version_habit(repo, files)[1]:
         print("NOTE: " + note)
