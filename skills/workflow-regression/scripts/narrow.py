@@ -3,9 +3,8 @@
 
 Imported by lanes.py, not run. A header is one or more `# reads: <path> [<path>...]` lines in the file's leading
 comment block: repo-relative paths, whitespace-separated, a trailing / for a folder. Narrow means no folder widening:
-shell files add the paths they name, Python files their same-folder imports and quoted file names (and, in a file that
-imports by name with importlib.import_module, each quoted same-folder module name), and anything this cannot resolve
-becomes a problem that makes the row run on every change.
+shell files add the paths they name, Python files their same-folder imports and quoted file names (and each quoted
+same-folder module name, with importlib.import_module), and anything unresolved is a problem that reruns the row always.
 """
 import collections
 import json
@@ -17,11 +16,11 @@ import zlib
 import lanes
 
 
-LIMIT = 32000000  # characters of file text held at once (#4151); a dropped text is read again, slower but never different
+LIMIT = 32000000  # characters of file text held at once; a dropped text is read again
 
 
 class Texts(dict):
-    """file name -> text for one run, the oldest dropped past LIMIT; the names stay (tiers.unsafe lists the files read)."""
+    """file name -> text for one run, the oldest dropped past LIMIT; the names stay."""
     def __init__(self):
         super().__init__()
         self.live, self.size = collections.OrderedDict(), 0
@@ -61,9 +60,9 @@ READS = re.compile(r"^#\s*reads:(.*)$")
 QUOTED = re.compile(r"""["']([\w./-]*\w)["']""")
 NOREAD = "# lanes: no read"
 ASSIGN = re.compile(r"""(?:^|[;\s])(\w+)=["']?(?:\$here/)?(skills/[\w./-]+?)/?["']?(?=\s*(?:;|$))""")
-SYSPATH_ARG = "sys.path.insert(0, sys.argv["  # python3 - "$folder": the folder only goes on sys.path
-ENTER = re.compile(r"\s*(?:\w+=)?\$?\(?\s*(?:cd|pushd|mkdir)\s")  # a command that names a folder and reads nothing
-NAMES_ONLY = re.compile(r"PYTHONPATH=\S+|sys\.path\.(?:insert|append)\([^)]*\)")  # put a folder on a search path
+SYSPATH_ARG = "sys.path.insert(0, sys.argv["
+ENTER = re.compile(r"\s*(?:\w+=)?\$?\(?\s*(?:cd|pushd|mkdir)\s")
+NAMES_ONLY = re.compile(r"PYTHONPATH=\S+|sys\.path\.(?:insert|append)\([^)]*\)")
 LISTING = re.compile(r"\b(?:ls|find|grep\s+-\w*[rR]|rg|tar|zip|cp\s+-\w*[rRa]|rsync|du|wc)\b|\s\.(?:\s|/|$)")
 GLOB = re.compile(r"(?:\$here/)?((?:skills|dev|docs)/[\w./-]*?)/?\*")
 FILEISH = re.compile(r"\.(?:py|md|json|sh|tsv|txt|yml|yaml|toml)$")
@@ -78,13 +77,13 @@ def sound(path):
 
 
 def warm(path, key, picked, cache):
-    """Seed cache with every row closure of the plan cache file at path when its key is key (tiers.key); the state text:
-    `hit (N rows)`, or `miss (<why>)`. The whole file is checked first; a bad file seeds nothing."""
+    """Seed cache with every row closure of the plan cache file at path when its key is key; the state text:
+    `hit (N rows)`, or `miss (<why>)`. A bad file seeds nothing."""
     digest, parts = key
     try:
         with open(path, "rb") as handle:
             inflate = zlib.decompressobj()
-            text = inflate.decompress(handle.read(), 64 << 20)  # a cap: a bomb is a bad file
+            text = inflate.decompress(handle.read(), 64 << 20)
             assert inflate.eof and not inflate.unconsumed_tail
             data = json.loads(text)
         paths, rows, was = data["paths"], data["rows"], data["parts"]
@@ -96,7 +95,7 @@ def warm(path, key, picked, cache):
             assert isinstance(table, (bool, type(None)))
     except FileNotFoundError:
         return "miss (absent)"
-    except Exception:  # fail open on anything (a bad file, RecursionError, MemoryError)
+    except Exception:
         return "miss (corrupt)"
     if data["key"] != digest:
         first = next((n for n, a, b in zip(PARTS, parts, was) if a != b), "schema")
@@ -111,8 +110,7 @@ def warm(path, key, picked, cache):
 
 
 def store(path, key, cache):
-    """Write every row closure the plan holds (a path the cache may not hold drops its row); atomic, last writer wins,
-    files over 30 days old pruned. The OSError class name on failure, else None."""
+    """Write every row closure the plan holds; atomic, last writer wins, files over 30 days old pruned. The error class name on failure, else None."""
     rows = {}
     for item in [k for k in cache if isinstance(k, tuple) and k[0] == "closure"]:
         deps, always = cache[item]
@@ -128,7 +126,7 @@ def store(path, key, cache):
         with open(temp, "wb") as handle:
             handle.write(zlib.compress(json.dumps(data, sort_keys=True).encode()))
         os.replace(temp, path)
-    except Exception as error:  # never raises out of a plan
+    except Exception as error:
         try:
             os.remove(temp)
         except OSError:
@@ -149,7 +147,7 @@ def header(root, rel, cache):
     if key in cache:
         return cache[key]
     text, paths, problems, lead = lanes.read(root, rel, cache), [], [], True
-    if text is None or not (rel.endswith(".sh") or "." not in os.path.basename(rel)):  # headers live in shell files
+    if text is None or not (rel.endswith(".sh") or "." not in os.path.basename(rel)):
         cache[key] = (None, [])
         return cache[key]
     code = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#"))
@@ -186,7 +184,7 @@ def header(root, rel, cache):
 
 def scan(root, rel, cache):
     """(files, folders) one file reaches, unwidened. Shell: named paths. Python: same-folder imports, quoted file names
-    (every file of that base name under skills/ or beside it) and quoted folders of its own skill. Else a leaf."""
+    and quoted folders of its own skill. Else a leaf."""
     key = ("narrow", rel)
     if key in cache:
         return cache[key]
@@ -201,29 +199,29 @@ def scan(root, rel, cache):
         skill = "/".join(rel.split("/")[:2]) + "/" if rel.startswith("skills/") else None
         files |= {os.path.join(base, m + ".py") for m in lanes.modules(text)
                   if os.path.isfile(os.path.join(root, base, m + ".py"))}
-        dynamic = "import_module(" in text  # importlib by name (health.py's sibling_module("enforce")): no import line
+        dynamic = "import_module(" in text
         for lit in set(QUOTED.findall(text)):
             name = os.path.basename(lit)
             if dynamic and "/" not in lit and os.path.isfile(os.path.join(root, base, lit + ".py")):
-                files.add(os.path.join(base, lit + ".py"))  # each quoted same-folder module name is a module it may load
+                files.add(os.path.join(base, lit + ".py"))
             if FILEISH.search(name):
                 files |= index.get(name, set())
                 if os.path.isfile(os.path.join(root, base, name)):
                     files.add(os.path.join(base, name))
-            elif "/" in lit and not lit.startswith("/") and not os.path.normpath(lit).startswith("..") and os.path.isdir(os.path.join(root, os.path.normpath(lit))):  # "/abs" is not in the repo
-                folders.add(os.path.normpath(lit) + "/")  # Path("skills/a/scripts").glob(...)
+            elif "/" in lit and not lit.startswith("/") and not os.path.normpath(lit).startswith("..") and os.path.isdir(os.path.join(root, os.path.normpath(lit))):
+                folders.add(os.path.normpath(lit) + "/")
             elif skill and "/" not in lit:
                 for here in [os.path.join(skill, lit)] + [os.path.join(skill, d, lit) for d in ("scripts", "references")]:
                     if os.path.isdir(os.path.join(root, here)) and os.path.normpath(here) != base:
                         folders.add(os.path.normpath(here) + "/")
-    elif "." not in os.path.basename(rel) or rel.endswith(".sh"):  # comments and `# lanes: no read` lines read nothing
+    elif "." not in os.path.basename(rel) or rel.endswith(".sh"):
         text = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#") and NOREAD not in line)
         found, _ = lanes.references(root, text, base, wide=False)
         files = {p for p in found if not p.endswith("/")}
         folders = {p for p in found if p.endswith("/")}
         globs = {m.rstrip("/") + "/" for m in GLOB.findall(lanes.HERE_FORMS.sub("$here/", text))
-                 if os.path.isdir(os.path.join(root, m))}  # a glob needs its folder declared, not one file in it
-        bound = {}  # VAR=<skill folder>, from this file and the shell files it sources (merged in narrow())
+                 if os.path.isdir(os.path.join(root, m))}
+        bound = {}
         for line in text.split("\n"):
             for var, folder in ASSIGN.findall(lanes.HERE_FORMS.sub("$here/", line)):
                 bound[var] = folder.rstrip("/") + "/"
@@ -235,9 +233,8 @@ def scan(root, rel, cache):
 
 
 def wholes(root, text, base, bound):
-    """Skill folders a shell text reads as a whole: named bare by a command (ls, grep -r, cp -R, "$d", "$d/sub")
-    rather than as the prefix of a named file. Per command: cd, pushd and mkdir read nothing, nor does putting a folder
-    on PYTHONPATH or sys.path; a cd into a skill folder followed by a listing or recursive read reads it whole."""
+    """Skill folders a shell text reads as a whole: named bare by a command (ls, grep -r, cp -R, "$d", "$d/sub").
+    cd, pushd, mkdir and PYTHONPATH or sys.path read nothing; a cd into a skill folder then a listing reads it whole."""
     out = set()
     for line in lanes.HERE_FORMS.sub("$here/", text).split("\n"):
         entered = set()
@@ -260,7 +257,7 @@ def wholes(root, text, base, bound):
 
 def narrow(root, seeds, cache):
     """(deps, problems, parent) reached from the seeds. Fail-wide: a named skill folder needs a declared path in it,
-    `skills/` needs `skills/` declared, and its files whose names appear in reached shell text are followed too."""
+    `skills/` needs `skills/` declared."""
     deps, problems, parent, declared, marks, shell, sh = set(), [], {}, [], set(), [], []
     todo = [(s, None) for s in seeds]
     while True:
@@ -285,13 +282,13 @@ def narrow(root, seeds, cache):
             for folder in folders:
                 if folder.startswith("skills/") and not rel.endswith(".py"):
                     marks.add((folder, rel))
-                else:  # a folder holding the file that names it (dev/, dev/toy/) is a prefix, not walked
+                else:
                     deps.add(folder)
                     todo += [] if rel.startswith(folder) else [(f, rel) for f in lanes.walk(root, folder, cache)]
             if rel.endswith(".sh") or "." not in os.path.basename(rel):
                 shell.append(lanes.read(root, rel, cache) or "")
                 sh.append(rel)
-        for rel in sh:  # a VAR=<folder> set in a file this one sources counts here too
+        for rel in sh:
             text = "\n".join(x for x in (lanes.read(root, rel, cache) or "").split("\n")
                              if not x.lstrip().startswith("#") and NOREAD not in x)
             sourced = {os.path.basename(s) for s in re.findall(r"(?m)^\s*(?:\.|source)\s+\"?([^\s\";]+)", text)}

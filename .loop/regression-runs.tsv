@@ -572,6 +572,7 @@ wiki-no-report	PASS	2026-11-12
 wiki-release	PASS	2026-11-12	
 wiki-release-pycache	PASS	2026-11-12	
 wiki-unmapped-stale	PASS	2026-11-12	
+win-posix-calls-gone	PASS	2026-11-15	
 worker-per-goal	PASS	2026-11-12	
 worker-refuses	PASS	2026-11-12	
 worker-reports	PASS	2026-11-12	

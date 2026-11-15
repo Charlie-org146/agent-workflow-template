@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, review depth, budget, and the owner's `goal.py set`
-settings (the sidecar `<runs>/<slug>.extra.json`, merged by `view`). Small: at most 3 done lines, no `github:` touch, one code
-area. Also: `set`, `queue`, what `new`, `record` and `pr` keep, the pull request body, and `fit.py owed SLUG` (E-10)."""
+"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget and the owner's `goal.py set`
+settings, plus `queue`, the pull request body and `fit.py owed SLUG` (E-10)."""
 import importlib.util
 import json
 import os
@@ -168,7 +167,7 @@ SET_AFTER_RECORD = "SET_AFTER_RECORD"
 
 
 def cmd_set(g, args):
-    import guards  # noqa: E401
+    import guards
     guards.operation_only(g, "set", args.slug)
     state = g.load(args.slug)
     if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None):
@@ -266,7 +265,6 @@ def nag(g, args):
 
 
 def bind_here(g, slug):
-    """In an app session, bind the new goal to it (#4257)."""
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "sessions.py")
     if os.environ.get("CLAUDE_CODE_HOST_SESSION_ID") and os.path.exists(tool):
         done = g.run([sys.executable, tool, "bind", slug, "self"])
@@ -300,7 +298,7 @@ def pr_open(g, state, base, info, body):
 
 
 def pr_text(g, state):
-    import guards, private, role  # noqa: E401
+    import guards, private, role
     base, cfg = g.base_ref(state), g.config()
     body = pr_body(g.read(g.goal_file(state["slug"])), view(state, g.state_dir()), cfg, role.setting_of(cfg),
                           "", regen_warnings(g.root(), base))
