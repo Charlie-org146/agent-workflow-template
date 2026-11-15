@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.28.87 - 2026-11-15
+
+- check-in: only live goals and goals merged since the last check-in are required; a merged PR closes a done run
+- board.py retire --pr: a merged pull request closes a running record; toy and row
+- Lane: re-render the Tests tables
+- Monitoring: MON-5 and MON-14 say finished goals leave the check-in (owner-records o35, o36)
+- Merge origin/main into checkin-tidy
+- Merge origin/main into checkin-tidy
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- regression.tsv: drop a stray merge marker
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.86 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.85 - 2026-11-15
 
 - No code changes

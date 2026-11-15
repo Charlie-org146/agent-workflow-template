@@ -93,7 +93,7 @@ RUNS_DOC = """Change run records for board.py, which forwards these commands her
 usage: board_page.py <command> [options]
 
   note SLUG TEXT        record a worker's latest message on its run
-  retire SLUG --reason TEXT
+  retire SLUG --reason TEXT [--pr URL]
   checkin               mark now as the last check-in; marks the last check-in
 """
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,50}$")
@@ -145,8 +145,9 @@ def cmd_note(args):
 
 def cmd_retire(args):
     path, run = run_of(args.slug)
-    if run.get("status") == "running":
-        sys.exit("REFUSED: %s is running. Fix: stop its agent, then run watch --once." % args.slug)
+    landed = args.pr and subprocess.run(["gh", "pr", "view", args.pr, "--json", "state", "-q", ".state"], capture_output=True, text=True).stdout.strip() == "MERGED"
+    if run.get("status") == "running" and not landed:
+        sys.exit("REFUSED: %s is running. Fix: stop its agent, run watch --once, or pass --pr of its merged pull request." % args.slug)
     run["retired"] = {"reason": clean(args.reason), "at": run["updated"]}
     run["status"], run["waiting"] = "retired", None
     run.setdefault("log", []).append("%s retired: %s" % (run["updated"], clean(args.reason)))
@@ -170,6 +171,7 @@ def runs_main():
     item = sub.add_parser("retire")
     item.add_argument("slug")
     item.add_argument("--reason", required=True)
+    item.add_argument("--pr", default="")
     sub.add_parser("checkin")
     args = parser.parse_args()
     return globals()["cmd_" + args.command](args)
