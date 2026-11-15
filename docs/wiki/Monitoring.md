@@ -28,7 +28,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-13** Cadence and reply format <!-- reviewed 02876e30 -->
+- MON-5: **Reviewed 2026-11-15** Cadence and reply format <!-- reviewed 480ea269 -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line;
   - All sessions, one table of every session across my repos with what it is for, its status, progress, time left, tokens left and latest report;
@@ -36,6 +36,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
   - Needs you, each question numbered with its options and a recommended answer, or Nothing needs you; and last, Coming up, the next expected events and what I will need to do.
   - A hook that setup installs blocks a reply that doesn't follow this layout, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
   - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
+  - A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good.
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
@@ -59,10 +60,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 - MON-13: **Reviewed 2026-11-12** Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <!-- reviewed 7dca4de6 -->
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
 
-- MON-14: **Reviewed 2026-11-13** Dependency map grouped by repo <!-- reviewed 2fa99e5b -->
+- MON-14: **Reviewed 2026-11-15** Dependency map grouped by repo <!-- reviewed 9adcf143 -->
   - The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks.
   - Each goal shows its expected time left from past runs, each repo block ends with its expected finish, and each wait is drawn as an arrow.
   - The map lists only live goals: a record with no goal or status, a stopped goal and a goal left with release: leave are not drawn, and a worker held at pr reads holding, not stuck.
+  - The check requires only live goals: running, holding, queued, waiting on the owner, or merged since the previous check-in; a goal merged before the previous check-in is never required.
   - Each repo prints as `== name ==` within 60 characters, then a `Between repos` list for `repo/slug` dependencies, then the legend once.
   - The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
 
