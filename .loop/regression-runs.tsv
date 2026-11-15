@@ -481,6 +481,7 @@ stale-found	PASS	2026-11-12
 stale-groups-defect	PASS	2026-11-12	
 stale-merge-order	PASS	2026-11-12	
 stale-own-finding	PASS	2026-11-15	
+stale-own-main-reported	PASS	2026-11-15	
 stale-page-row	PASS	2026-11-12	
 starts-at-idea	PASS	2026-11-09	
 state-shared-113	PASS	2026-11-10	
