@@ -18,10 +18,11 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
   - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
   - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
   - A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works.
-- DOC-2: **Reviewed 2026-11-13** The PRD is mine <!-- reviewed 2e17a232 -->
+- DOC-2: **Reviewed 2026-11-15** The PRD is mine <!-- reviewed 3b43042e -->
   - I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message.
   - A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words.
   - After it, nothing in Problem, Requirements, Non-goals or Success metrics changes unless I un-review it.
+  - A change to code or config a page maps never needs my words when none of the page's own text changed: a change that leaves the code's syntax tree the same (comments and docstrings only) doesn't make the page stale at all, and any other mapped change re-stamps the page's review at merge, logged with the goal's slug. A change to the page's wording still needs my words.
 - DOC-3: **Reviewed 2026-11-08** Tests follow on their own <!-- reviewed 2e9e1c3f -->
   - Once I review a PRD, the loop writes Given/When/Then scenarios and tests for each requirement, links each to a regression row, and keeps them in step when a requirement changes.
   - I never write or manage tests.
