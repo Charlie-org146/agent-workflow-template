@@ -32,7 +32,6 @@ import sys
 
 import autorelease
 import release
-import restamp
 import wiki
 
 
@@ -73,6 +72,9 @@ def reach(top, paths):
     if done.returncode or not found or re.search(r"^(UNMAPPED|DELETED) ", done.stdout, re.M):
         return None  # a planner that fails or can't map a path can't clear the merge
     return set(found.group(1).split(", ")) - {"none", ""}
+
+
+FRESH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docfresh.py")
 
 
 def base_moved(state, cfg, top):
@@ -257,9 +259,9 @@ def main():
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % args.slug)
     if pods:
         pods.refuse(state)
-        restamp.wait(pods, common, args.slug)
+        pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), args.slug)  # an earlier pr lane holds the slot
         pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
-    restamp.apply(top, cfg, state, args.slug, wiki)  # a Reviewed page stale only through mapped code is re-stamped first (#3867)
+    wiki.top_of() and print(run([sys.executable, FRESH, "apply", args.slug, str(state.get("branch"))], top).stdout.strip())  # #3867
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known = info.get("state", "")
@@ -275,7 +277,7 @@ def main():
         if known != "OPEN":
             sys.exit("REFUSED: the pull request %s is %s, not open." % (state["pr"], known or "unknown"))
         tested = state.get("pr_head")
-        if tested and info.get("headRefOid") and info["headRefOid"] != tested and restamp.wiki_only(top, cfg, tested, info["headRefOid"]):
+        if tested and info.get("headRefOid") and info["headRefOid"] != tested and run([sys.executable, FRESH, "wiki-only", tested, info["headRefOid"]], top).returncode == 0:
             print("NOTE: the pull request head moved only by wiki page commits (wiki.py prepare); merging %s" % info["headRefOid"][:12])
             tested = info["headRefOid"]  # only wiki pages changed since the lane: no row's code moved
         if tested and info.get("headRefOid") and info["headRefOid"] != tested:

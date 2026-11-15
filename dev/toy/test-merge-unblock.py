@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-docs/scripts/docfresh.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/prd.py
+# reads: skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/graph.py skills/workflow-monitoring/scripts/govern_hook.py
 """merge-unblock A (#3867, #3122): a comments-only change to mapped code stales no page; a code change stales it and the
 merge re-stamps it (reviewed text unchanged, slug logged); a changed wording stays LOCKED.
 usage: test-merge-unblock.py [comments|restamp|locked|merge|ff|slot|hook]"""
@@ -17,7 +18,6 @@ import criteria  # noqa: E402
 import docfresh  # noqa: E402
 import docs  # noqa: E402
 import prd  # noqa: E402
-import restamp  # noqa: E402
 import wiki  # noqa: E402
 
 fails = 0
@@ -111,7 +111,7 @@ if only in ("", "merge"):
     git("fetch", "-q", "origin")
     before = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("merge.py would refuse the page before the re-stamp (%s)" % before, bool(before))
-    restamp.apply(repo, {}, {"branch": "goal"}, "my-goal", wiki)
+    docfresh.apply("my-goal", "goal")
     git("fetch", "-q", "origin")
     after = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("after the merge step's re-stamp nothing is stale (%s)" % after, not after)
@@ -133,9 +133,9 @@ if only in ("", "ff"):
     git("fetch", "-q", "origin")
     write(".loop/regression-runs.tsv", "a\tpass\nb\tfail\n")
     write("a.txt", "dirty\n")
-    check("another dirty file keeps the checkout as it is", restamp.forward(repo, "main") is False and git("rev-parse", "HEAD").stdout != git("rev-parse", "origin/main").stdout)
+    check("another dirty file keeps the checkout as it is", docfresh.forward(repo, "main") is False and git("rev-parse", "HEAD").stdout != git("rev-parse", "origin/main").stdout)
     git("checkout", "--", "a.txt")
-    check("a dirty lane record alone is stashed, the checkout moves", restamp.forward(repo, "main") is True and git("rev-parse", "HEAD").stdout == git("rev-parse", "origin/main").stdout)
+    check("a dirty lane record alone is stashed, the checkout moves", docfresh.forward(repo, "main") is True and git("rev-parse", "HEAD").stdout == git("rev-parse", "origin/main").stdout)
     check("and the record is put back, with no stash left", open(os.path.join(repo, ".loop", "regression-runs.tsv")).read().replace("\r", "") == "a\tpass\nb\tfail\n" and not git("stash", "list").stdout.strip())
 if only in ("", "slot"):
     import contextlib
@@ -158,7 +158,7 @@ if only in ("", "slot"):
     out = io.StringIO()
     began = time.time()
     with contextlib.redirect_stdout(out):
-        restamp.wait(graph, common, "second")
+        graph.pr_queue("wait", runs, "second")
     check("merge.py waits for the earlier lane's goal, then goes on (%s)" % out.getvalue().strip(), time.time() - began >= 0.25 and "first" in out.getvalue())
 if only in ("", "hook"):
     import json
