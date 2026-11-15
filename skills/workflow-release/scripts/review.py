@@ -16,6 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import release  # noqa: E402
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 def worker():
