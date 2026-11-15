@@ -31,6 +31,9 @@
     "Keep regression tests visible, with an issue per failure"
   ],
   "commands": [
+    "prerequisites",
+    "replay",
+    "connectors",
     "setup",
     "reference",
     "fill-repo",

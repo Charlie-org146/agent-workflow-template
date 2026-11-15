@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-docs/references/template.md skills/workflow-docs/scripts/criteria.py
+# reads: skills/workflow-docs/references/commands.md skills/workflow-docs/scripts/criteria.py
 # reads: skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/audit.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-release/scripts/release.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-docs/
@@ -50,20 +50,20 @@ ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 
 echo "== 1. the template sheet holds the rules and the check reads them"
-sheet=$here/skills/workflow-docs/references/template.md
+sheet=$here/skills/workflow-docs/references/commands.md
 grep -q '^```rules' "$sheet" && grep -q "last result" "$sheet" && grep -q "not enforced" "$sheet" && ok "the sheet defines the page and each Tests column" || bad "sheet"
 cp -r "$here/skills/workflow-docs" "$d/skill"
 page "Short." "- DEL-1: **Unreviewed** One.
 - CAL-2: **Unreviewed** Two."
 $cri render >/dev/null
 python3 "$d/skill/scripts/docs.py" check | grep -q "^CAP" && bad "two criteria are over the default limit of ten" || ok "the default limit of 10 lets two criteria pass"
-grep -q max_criteria "$d/skill/references/template.md" && bad "the sheet still holds max_criteria" || ok "the sheet no longer holds the limit"
+grep -q max_criteria "$d/skill/references/commands.md" && bad "the sheet still holds max_criteria" || ok "the sheet no longer holds the limit"
 python3 - <<'PY'
 import json
 c = json.load(open(".loop/config.json")); c["criteria_max"] = 1; json.dump(c, open(".loop/config.json", "w"))
 PY
 python3 "$d/skill/scripts/docs.py" check | grep -q "^CAP Delivery: has 2 requirements, over the limit of 1 (criteria_max" && ok "criteria_max in the config changes the check" || bad "cap from config"
-sed -i.bak '/^```rules/,/^```$/d' "$d/skill/references/template.md"
+sed -i.bak '/^```rules/,/^```$/d' "$d/skill/references/commands.md"
 python3 "$d/skill/scripts/docs.py" check 2>&1 | grep -q "REFUSED: the rules block" && ok "no rules block: the check refuses" || bad "refuse without sheet"
 
 echo "== 2. one command fixes the mechanical, lists the wording, and the release step runs it"

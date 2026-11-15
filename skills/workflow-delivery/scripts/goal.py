@@ -173,6 +173,7 @@ def fail_stop(state, text):
 
 
 def failed_try(state, why, step="build", fix="fix it, then run the step again"):
+    queue("free", state["slug"])  # a failed try gives the merge slot back
     guards.failed_try(ME, state, why, step, fix)
 
 
@@ -337,6 +338,7 @@ def cmd_pr(args):
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")
+    queue("hold", args.slug)  # the lane starts: this goal holds the merge slot until it merges or fails
     what, detail = role.sync(base)
     if what == "merged":
         state = held(args.slug)
@@ -440,7 +442,7 @@ add_tokens = guards.add_tokens
 
 def round_stop(g, state, what):
     limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 3
+    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
     if what not in ("merged", "conflict"):
         return
     over = count > limit

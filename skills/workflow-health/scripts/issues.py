@@ -112,8 +112,13 @@ OLD = {"requirements": "criteria", "performance": "cost", "traceability": "crite
 OLD_RULE = {"scripts": "limit", "seen-red": "proof", "done": "rows"}
 
 
+def posix(text):
+    """A key or citation with forward slashes only, so Windows, Mac and Linux runs name one finding one way (#4379)."""
+    return text.replace("\\", "/")
+
+
 def key_of(item):
-    return "%s:%s:%s" % (item["family"], item["subject"], item["rule"])
+    return posix("%s:%s:%s" % (item["family"], item["subject"], item["rule"]))
 
 
 def legacy(item):
@@ -122,12 +127,12 @@ def legacy(item):
     out = ["%s:%s:%s" % (family, item["subject"], rule)] if family else []
     if item["family"] == "size":
         out.append("size:%s:limit" % item["subject"])
-    return out
+    return [posix(k) for k in out]
 
 
 def evidence_of(item):
     """sha8 of the finding's identity and stable citations; never details, ages, counts or sizes (review: normalized)."""
-    cites = item.get("evidence") or item["subject"]
+    cites = posix(item.get("evidence") or item["subject"])
     if item["family"] == "review":
         cites = ",".join(sorted({re.sub(r":\d+(-\d+)?$", "", c.strip()) for c in cites.split(",") if c.strip()}))
     return hashlib.sha1(("%s|%s" % (key_of(item), cites)).encode()).hexdigest()[:8]

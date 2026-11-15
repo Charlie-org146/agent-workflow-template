@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109e571 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109e571 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
 ## Problem
 
@@ -26,10 +26,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109
   - A goal past `time_budget_minutes` starts no new step, and the setting is in the settings reference with its default (Delivery, new).
   - A goal past `token_budget` starts no new step, whether its steps run in a session or headless (Delivery, DEL-8 for showing it on the board; new for steps run in a session: today only headless goals are refused).
   - A goal with no token count records "unknown" and the board shows "tokens unread", never 0, so an unread count is never mistaken for an unspent budget (Delivery, new).
-- GRD-3: **Reviewed 2026-11-13** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed 61ef99d4 -->
+- GRD-3: **Reviewed 2026-11-15** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed eecc70d8 -->
   - Private-name scan on every commit and push: DEL-9.
   - A commit or push that skips the repo's hooks (a no-verify flag, an empty hooks path) is refused by the loop's own commands and flagged by health (Delivery, new).
   - Where the scanned names live: SET-8 (SET-2 for the private layer).
+  - A private-name line may be scoped with `@public` or `@repos=a,b`, so a private repo can hold a name a public one must never show; an unscoped line applies everywhere (Delivery, DEL-9).
 - GRD-4: **Reviewed 2026-11-13** A worker writes only its own goal's work, never shared loop state or its own limits <!-- reviewed 2267af49 -->
   - A worker can't widen its own goal's touches, resume itself or change its own budget; only the operation session can (Delivery, new: today a role check, not a boundary).
   - A worker changes shared loop state only for its own goal and only through the goal's commands (`goal.py step`, `record` and `pr`, `sessions.py bind` and `report`); the queue, other goals' run records and the session pool's other sessions are the operation session's to change (Monitoring, new: today the commands scope a worker to its own slug, and nothing stops a hand edit).
@@ -93,7 +94,7 @@ None
 | [grd2-time-stop](Tests#t-grd2-time-stop) | requirement | GRD-2 | Given a goal past time_budget_minutes, when a step or goal.py pr is asked for, then it is refused with one line naming goal.py set. | not run |
 | [grd2-token-stop](Tests#t-grd2-token-stop) | requirement | GRD-2 | Given a goal past token_budget, when a step is asked for, then it is refused with one line naming goal.py set. | not run |
 | [grd2-tokens-unknown](Tests#t-grd2-tokens-unknown) | requirement | GRD-2 | Given a session worker that passes unknown tokens, when the step is recorded, then the goal reads tokens unread, never 0. | not run |
-| [grd2-merge-rounds](Tests#t-grd2-merge-rounds) | requirement | GRD-2 | Given a goal that merged the base three times, when goal.py pr would merge a 4th round, then it is refused and the goal waits for the owner. | not run |
+| [grd2-merge-rounds](Tests#t-grd2-merge-rounds) | requirement | GRD-2 | Given a goal that merged the base eight times, when goal.py pr would merge a 9th round, then it is refused and the goal waits for the owner. | not run |
 | [grd2-active-goals](Tests#t-grd2-active-goals) | requirement | GRD-2 | Given max_active_goals live goals, when watch plans, then no new goal starts. | not run |
 | [grd2-plan-pause](Tests#t-grd2-plan-pause) | requirement | GRD-2 | Given weekly plan usage above plan_pause_percent, when the operation plans, then no new goal starts and it says why. | not run |
 | [grd2-limits-in-settings](Tests#t-grd2-limits-in-settings) | requirement | GRD-2 | Given the settings table, when it is read, then it lists the four limits with their defaults. | not run |
@@ -101,7 +102,8 @@ None
 | [grd2-memory-new-goal](Tests#t-grd2-memory-new-goal) | requirement | GRD-2 | Given free memory below min_free_memory_gb, when the operation plans, then no new goal starts and the hold names LOW_MEMORY. | not run |
 | [grd2-memory-health](Tests#t-grd2-memory-health) | requirement | GRD-2 | Given lanes that waited for memory, when health runs, then its Performance group warns. | not run |
 | [grd2-default-240](Tests#t-grd2-default-240) | requirement | GRD-2 | Given the settings table and this repo's config, when the default goal time budget is read, then it is 240 minutes. | not run |
-| - | requirement | GRD-2 | no passing test | not enforced |
+| [grd2-merge-rounds-default-8](Tests#t-grd2-merge-rounds-default-8) | requirement | GRD-2 | Given no max_merge_rounds in the config, when goal.py pr merges the base, then eight rounds are allowed. | PASS 2026-11-15 |
+| [grd2-pr-lane-holds-merge-slot](Tests#t-grd2-pr-lane-holds-merge-slot) | requirement | GRD-2 | Given a goal whose pr lane started before another's, when the other's merge.py runs, then it waits until the first merges or fails. | PASS 2026-11-15 |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | GRD-3 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. | not run |
 | [del9-hooks](Tests#t-del9-hooks) | requirement | GRD-3 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
 | [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | GRD-3 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
@@ -112,7 +114,7 @@ None
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
 | [grd4-budget](Tests#t-grd4-budget) | requirement | GRD-4 | Given a worker session, when it tries to set its own goal's budget, then the command refuses. | not run |
 | [grd4-govern](Tests#t-grd4-govern) | requirement | GRD-4 | Given the operation session governing goals, when workers build, then the governing checkout gets no commit. | not run |
-| - | requirement | GRD-4 | no passing test | not enforced |
+| [grd4-worker-commit-main-refused](Tests#t-grd4-worker-commit-main-refused) | requirement | GRD-4 | Given a pool worker session, when it runs git commit in the main checkout, then the govern hook refuses it; a worktree commit and other sessions pass. | PASS 2026-11-15 |
 | [grd5-regression-dry](Tests#t-grd5-regression-dry) | requirement | GRD-5 | Given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call. | not run |
 | [grd5-health-close](Tests#t-grd5-health-close) | requirement | GRD-5 | Given open findings, when triage close runs without --yes, then it lists them and writes nothing. | not run |
 | [issues-live-only-ci](Tests#t-issues-live-only-ci) | requirement | GRD-5 | Given a GitHub token and no --live, when the workflow's issue step runs, then it prints WOULD lines and writes no issue, comment or label. | not run |
@@ -133,7 +135,8 @@ None
 | - | requirement | GRD-10 | no passing test | not enforced |
 | [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | GRD-11 | no passing test | not enforced |
-| [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once and the settings table registers it. | not run |
+| [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
+| [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
 | - | requirement | GRD-12 | no passing test | not enforced |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |

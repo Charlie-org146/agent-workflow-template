@@ -18,6 +18,7 @@ and a new queue line. Each change goes once into <git common dir>/loop/replan.lo
 a proposal already logged with the same reason is not logged or shown again.
 """
 import argparse
+import atexit
 import datetime
 import json
 import os
@@ -234,6 +235,59 @@ def cmd_usage(args, cfg):
     se.write(os.path.join(se.base(), "plan-usage.json"), {"percent": args.percent, "at": graph.iso(datetime.datetime.now(datetime.timezone.utc))})
     print("PLAN USAGE %g%% recorded: %s" % (args.percent, plan_pause(cfg) or "no pause"))
     return 0
+
+
+# The merge slot (GRD-2): a goal whose pr lane has started holds it until it merges or fails, so the merge.py of a goal that
+# started its lane later waits for it. graph.pr_queue(op, runs, slug) forwards hold, free and before here.
+def folder(runs):
+    return os.path.join(os.path.dirname(runs), "pr-slots")
+
+
+def pr_hold(runs, slug):
+    """Take the slot at the lane's start (the first start time stays) and keep it fresh on each call."""
+    path = os.path.join(folder(runs), slug)
+    os.makedirs(folder(runs), exist_ok=True)
+    if not os.path.exists(path):
+        with open(path, "w") as handle:
+            handle.write(str(time.time_ns()))
+    os.utime(path)
+
+
+def pr_free(runs, slug):
+    try:
+        os.unlink(os.path.join(folder(runs), slug))
+    except OSError:
+        pass
+
+
+def pr_before(runs, slug):
+    """The other goal that holds the slot and started its lane before slug's, else "". A holder silent for
+    LOOP_MERGE_LOCK_SECONDS (1800) is dropped; a goal with no slot of its own waits for none."""
+    limit, held = int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800), []
+    try:
+        for name in os.listdir(folder(runs)):
+            path = os.path.join(folder(runs), name)
+            if time.time() - os.path.getmtime(path) > limit:
+                os.unlink(path)
+            else:
+                held.append((int(open(path).read()), name))
+    except (OSError, ValueError):
+        pass
+    mine = dict((n, j) for j, n in held).get(slug)
+    return min([(j, n) for j, n in held if n != slug and j < mine] or [(0, "")])[1] if mine else ""
+
+
+def pr_wait(runs, slug):
+    """merge.py: wait while another goal's pr lane that started first holds the slot, keeping this goal's own fresh, and give
+    the slot back when merge.py ends."""
+    atexit.register(lambda: pr_free(runs, slug))
+    told = ""
+    while ahead := pr_before(runs, slug):
+        told == ahead or print("WAITING: %s's pr lane started first and holds the merge slot; waiting for it to merge or fail" % ahead)
+        told = ahead
+        pr_hold(runs, slug)
+        time.sleep(float(os.environ.get("LOOP_SLOT_POLL") or 20))
+
 
 if __name__ == "__main__":
     sys.exit(main())

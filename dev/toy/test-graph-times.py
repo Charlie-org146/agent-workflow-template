@@ -12,6 +12,7 @@ import tempfile
 
 here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts"))
+import board_page  # noqa: E402
 import checkin  # noqa: E402
 
 failed = []
@@ -67,4 +68,40 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     check("[=] holdpr" in deps, "a worker held at pr reads holding, not stuck")
     check("first ~" in deps and " left" in deps, "each goal shows its time left")
     check("expected finish" in deps, "the repo block ends with its expected finish")
+    # MON-14 (live-only): only live goals, and goals merged since the previous check-in, are required; older merged ones are never drawn
+    with open(os.path.join(root, ".git", "loop", "checkin.json"), "w") as f:
+        json.dump({"at": stamp(now - datetime.timedelta(hours=1))}, f)
+    write("mergedold", status="done", release="merged", step="release", updated=old)
+    write("mergednew", status="done", release="merged", step="release", updated=stamp(now))
+    write("prmerged", status="done", step="pr", pr="https://example.test/pull/9", updated=stamp(now - datetime.timedelta(hours=2)))
+    real = checkin.board_lines.states
+    checkin.board_lines.states = lambda runs_, root_, merged=None: {"prmerged": "MERGED"}
+    try:
+        text = "\n".join(checkin.render(root, now))
+        deps = text.split("Dependencies")[1].split("Needs you")[0]
+        needed = [slug for _, slug in checkin.expected(root, now)]
+    finally:
+        checkin.board_lines.states = real
+    check("[x] mergednew" in deps, "a goal merged since the previous check-in is drawn once, as [x]")
+    check("mergedold" not in deps and "mergedold" not in needed, "a goal merged before the previous check-in is never drawn or required")
+    check("prmerged" not in deps and "prmerged" not in needed, "a done run whose PR merged on GitHub before the check-in drops off the graph")
+    check("first" in needed and "mergednew" in needed, "the check requires the live goals and the one merged since")
+    # MON-5 (closes for good): a running record whose pull request merged is retired; one with no merged PR still is refused
+    import argparse
+    import types
+    cwd, run = os.getcwd(), subprocess.run
+    os.chdir(root)
+    write("lingers")
+    ask = argparse.Namespace(slug="lingers", reason="merged", pr="https://example.test/pull/9")
+    board_page.subprocess = types.SimpleNamespace(run=lambda cmd, **k: types.SimpleNamespace(stdout="OPEN") if cmd[0] == "gh" else run(cmd, **k))
+    try:
+        board_page.cmd_retire(ask)
+        refused = False
+    except SystemExit as stop:
+        refused = "is running" in str(stop)
+    board_page.subprocess = types.SimpleNamespace(run=lambda cmd, **k: types.SimpleNamespace(stdout="MERGED") if cmd[0] == "gh" else run(cmd, **k))
+    board_page.cmd_retire(ask)
+    os.chdir(cwd)
+    with open(os.path.join(runs, "lingers.json")) as f:
+        check(refused and json.load(f)["status"] == "retired", "a running record is retired only once its pull request merged")
 sys.exit(1 if failed else 0)

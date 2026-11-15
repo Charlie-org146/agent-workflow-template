@@ -51,7 +51,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 WIDTH = 60
 MARKS = {"running": ">", "held": "=", "paused": "=", "holding": "=", "awaiting merge": "=", "done": "=", "queued": " ",
-         "waiting": "?", "failed": "!", "stopped": "!", "stuck": "!", "silent": "!", "freezing": ">"}
+         "waiting": "?", "failed": "!", "stopped": "!", "stuck": "!", "silent": "!", "freezing": ">", "merged": "x"}
 LEGEND = "[>] running [=] holding [ ] queued [?] you [!] stuck"
 
 
@@ -361,6 +361,9 @@ def issues(root, runs=()):
         if wait and not run.get("release_url"):  # nothing reruns merge.py by itself once the goal's PR merged
             out += ["- %s: the release pull request waits: %s" % (run["slug"], wait[:200]),
                     "    fix: run merge.py %s again once its checks pass; it merges the release PR and creates the release" % run["slug"]]
+        if run.get("review_wait") and not run.get("release_url"):
+            out += ["- %s: merge waiting on review (review_hold is on)" % run["slug"],
+                    "    fix: the operation session reads the diff, then runs review.py record %s and merge.py %s" % (run["slug"], run["slug"])]
         text = " ".join(str(run.get("finding_error") or "").split())
         if text:
             said, _, fix = text.partition(". Fix: ")

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
@@ -100,6 +100,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 | [hlt2-defect-exempt-health](Tests#t-hlt2-defect-exempt-health) | requirement | HLT-2 | Given a closed issue labelled health or backlog, when Traceability checks defect tests, then it is exempt; a closed bug without a defect test still fails. | not run |
 | [aut-prompt-warns](Tests#t-aut-prompt-warns) | requirement | HLT-2 | Given an installed scheduled-task prompt that holds steps beyond the Runbook pointer, when health checks the Adoption group, then it warns. | not run |
 | [machine-local-health-warn](Tests#t-machine-local-health-warn) | requirement | HLT-2 | Given a red proof owed to another machine for 9 days, when health checks, then it warns and never fails. | not run |
+| [docs-release-scripts-under-19000](Tests#t-docs-release-scripts-under-19000) | requirement | HLT-2 | Given the workflow-docs and workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
+| [scripts-c-health-under-19000](Tests#t-scripts-c-health-under-19000) | requirement | HLT-2 | Given the workflow-health scripts, when their sizes are counted in LF bytes, then each is at or under 19,000 bytes. | not run |
+| [lean-reads-commands-sheet](Tests#t-lean-reads-commands-sheet) | requirement | HLT-2 | Given the usage-kept migration check, when it looks for the page rules, then it reads references/commands.md. | not run |
 | [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-12 |
 | [report-header](Tests#t-report-header) | requirement | HLT-3 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
 | [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |
@@ -111,6 +114,8 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 | [hlt4-feature-milestones](Tests#t-hlt4-feature-milestones) | requirement | HLT-4 | Given findings about a feature and about none, when they are previewed and filed, then each is a tagged issue on no milestone, a repeat updates, a fix closes, a return reopens, an old marker moves, and an issue that names the subject is linked once instead of duplicated. | not run |
 | [backlog-item-home](Tests#t-backlog-item-home) | requirement | HLT-4 | Given a size finding about the Calc feature, when health files it, then the issue is labelled backlog on Backlog: Calc, and a repeat opens no second issue and leaves a milestone the owner chose. | not run |
 | [backlog-defect-home](Tests#t-backlog-defect-home) | requirement | HLT-4 | Given a FAIL finding, when health files it, then the issue is labelled defect and sits on no milestone. | not run |
+| [sweep-health-record](Tests#t-sweep-health-record) | requirement | HLT-4 | Given the sweep record, when its closed table is summed, then it equals the closed count and the record names the tracking issue, scripts-b and scripts-c. | not run |
+| [file-close-no-crash](Tests#t-file-close-no-crash) | requirement | HLT-4 | Given a close and a reopen action with no label or milestone, when health.py file builds and carries them out, then each runs its own gh command and the run is not stopped by a KeyError. | not run |
 | [judge-section-format](Tests#t-judge-section-format) | requirement | HLT-5 | Given the judge, when it runs, then it prints its three reviews in a section marked as suggestions. | PASS 2026-11-12 |
 | [judge-verdict-unchanged](Tests#t-judge-verdict-unchanged) | requirement | HLT-5 | Given a failing or garbage judge, when health runs, then the verdict and exit code are unchanged. | PASS 2026-11-12 |
 | [judge-needs-you](Tests#t-judge-needs-you) | requirement | HLT-5 | Given suggested criterion wording, when the board is printed, then it is listed under Needs you for the owner to apply. | PASS 2026-11-12 |
@@ -142,4 +147,5 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 | [health-tokens-124](Tests#t-health-tokens-124) | defect | [#124](https://github.com/jcl2018/agent-workflow-template/issues/124) closed (2026-11-11) | Given goals that predate token recording and done lines from before adoption, when health and sync run, then neither keeps the repo red. | not run |
 | [health-unreviewed-warn-issue-118](Tests#t-health-unreviewed-warn-issue-118) | defect | [#118](https://github.com/jcl2018/agent-workflow-template/issues/118) closed (2026-11-11) | Given an Unreviewed requirement with no test, when health runs, then it warns and never fails. | PASS 2026-11-10 |
 | [health-docs-159](Tests#t-health-docs-159) | defect | [#159](https://github.com/jcl2018/agent-workflow-template/issues/159) closed (2026-11-11) | Given the health skill's docs, when they are read, then they describe check's twelve groups, review, filing and triage, and no stale run chart. | not run |
+| [defect-4379-health-key-posix](Tests#t-defect-4379-health-key-posix) | defect | [#4379](https://github.com/jcl2018/agent-workflow-template/issues/4379) closed (2026-11-15) | Given one finding seen on a Windows run and on a Mac or Linux run, when health.py file keys it, then both runs name it with forward slashes only and find one issue, never reopening each other's. | not run |
 | [judge-cause-158](Tests#t-judge-cause-158) | defect | [#158](https://github.com/jcl2018/agent-workflow-template/issues/158) closed (2026-11-11) | Given a judge command that fails, when review runs, then JUDGE UNAVAILABLE names the command's last output and stderr lines. | not run |

@@ -4,10 +4,11 @@
 usage: board.py <command> [options]
 
   board [--at TIME] [--since FILE] [--out DIR]
-                        write board.json, for board_page.py to finish and draw; print the live board, DIGEST, CHANGED, CHANGE lines,
-                        NEXT_DELAY and its path
+                        write board.json (board_page.py draws it); print the live board, DIGEST, CHANGED, CHANGE lines, NEXT_DELAY, path
   cadence [N|off]       minutes between check-ins, 1-60 (default 30), or off
   repos add PATH|list   follow another repo (~/.workflow-loop/repos), or list them
+  repos adopt [OWNER/NAME ...] [--recent N] [--into DIR]
+                        list my recent GitHub repos, or clone, follow and set up or update each named one (SET-12)
   note SLUG TEXT        record a worker's latest message on its run (this and retire run in board_page.py)
   retire SLUG --reason TEXT
   handoff [--at TIME] [--out FILE]
@@ -23,11 +24,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
-try:  # board.py runs alone with graph.py; without board_status.py there is no estimate
+try:  # without board_status.py there is no estimate
     import board_status  # noqa: E402
 except ImportError:
     board_status = None
-try:  # fast pull request states (MON-9), when board_lines.py is beside this file
+try:  # fast pull request states (MON-9)
         import board_lines as prs  # noqa: E402  (its pull request lookups)
 except ImportError:
     prs = None
@@ -335,10 +336,14 @@ def cmd_cadence(args):
 
 
 def cmd_repos(args):
+    if args.action == "adopt":
+        import unattended
+        return unattended.adopt(args)
     if args.action == "add":
-        top = git("rev-parse", "--show-toplevel", cwd=args.path) if args.path and os.path.isdir(args.path) else ""
+        path = args.path[0] if args.path else ""
+        top = git("rev-parse", "--show-toplevel", cwd=path) if path and os.path.isdir(path) else ""
         if not top:
-            sys.exit("REFUSED: %s is not a git repo." % args.path)
+            sys.exit("REFUSED: %s is not a git repo." % path)
         os.makedirs(os.path.dirname(repo_file()), exist_ok=True)
         if top not in [r[1] for r in followed()]:
             with open(repo_file(), "a") as handle:
@@ -381,8 +386,10 @@ def main():
     item = sub.add_parser("cadence")
     item.add_argument("value", nargs="?")
     item = sub.add_parser("repos")
-    item.add_argument("action", choices=["add", "list"])
-    item.add_argument("path", nargs="?")
+    item.add_argument("action", choices=["add", "list", "adopt"])
+    item.add_argument("path", nargs="*")
+    item.add_argument("--recent", type=int, default=0)
+    item.add_argument("--into", default="~/.workflow-loop/clones")
     item = sub.add_parser("handoff")
     for flag in ("--at", "--out"):
         item.add_argument(flag, default="")
