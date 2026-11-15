@@ -75,9 +75,9 @@ def release(top, sha, state, outcome=None):
     return state
 
 
-def refusal(state):
+def refusal(state, seen=None):
     try:
-        autorelease.status_held(state, "https://example.test/pull/9", 9)
+        autorelease.status_held(state, "https://example.test/pull/9", 9, seen)
     except SystemExit as stop:
         return str(stop)
     return ""
@@ -111,6 +111,14 @@ with tempfile.TemporaryDirectory() as tmp:
     check(not posted and state["release_status"] == "untested", "a lane that exits 1 with no failed row (unproven rows only) is untested, not a failure")
     state = release(top, code, {"slug": "g", "statuses": "ok", "release_status": "success"}, lane(1, "FAIL row-b\n"))
     check(not ran and not posted, "a head already at success is left alone")
+
+    red = {"statusCheckRollup": [{"name": "stories", "conclusion": "FAILURE"}, {"context": "Cloudflare Pages", "state": "ERROR"},
+                                  {"name": "lint", "conclusion": "SUCCESS"}, {"name": "slow", "status": "IN_PROGRESS"}]}
+    held = refusal({"slug": "g", "statuses": "ok"}, red)
+    check("Cloudflare Pages, stories" in held and "lint" not in held and "RELEASE_CHECKS_FAILED" in held and "gh pr merge" not in held,
+          "#3870: a release PR blocked by red required checks names them and never advises a manual merge")
+    check(refusal({"slug": "g"}, {"statusCheckRollup": [{"name": "lint", "conclusion": "SUCCESS"}, {"name": "slow", "status": "IN_PROGRESS"}]}) == "",
+          "#3870: checks that are green or still running are not a refusal")
 
     mine = os.path.join(top, ".git", "loop", "runs", "g.json")
     check(os.path.exists(mine), "the refusal saved its run record in the toy's own repo")
