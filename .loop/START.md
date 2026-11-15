@@ -43,7 +43,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Feature | Milestone | What it is for | How to use it |
 |---|---|---|---|
 | Automation | https://github.com/jcl2018/agent-workflow-template/milestone/10 | Things break between my sessions, and I only find out when I next open one; the important checks should run on their own. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
-| Delivery | https://github.com/jcl2018/agent-workflow-template/milestone/1 | I have more changes to make than time to babysit them: I want to hand over one sentence and walk away. | `/workflow-delivery`: go / step / record / pr / `/workflow-release`: merge / batch / ask / cut / leave |
+| Delivery | https://github.com/jcl2018/agent-workflow-template/milestone/1 | I have more changes to make than time to babysit them: I want to hand over one sentence and walk away. | `/workflow-delivery`: go / step / record / pr / `/workflow-release`: merge / batch / review / ask / cut / leave |
 | Documentation | https://github.com/jcl2018/agent-workflow-template/milestone/3 | I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / relock / render / automation / prompts / entry / publish / sync / restore / milestone / `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | Guardrails | https://github.com/jcl2018/agent-workflow-template/milestone/11 | My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on. | none |
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
@@ -79,7 +79,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `judge_setup` | none | No longer read: kept so old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
-| `max_merge_rounds` | 3 | Merge rounds goal.py pr may take before the goal waits. |
+| `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before the goal waits. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |

@@ -308,7 +308,7 @@ def limit_rows(root):
         loop = os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip() or ".git")), "loop")
     except (OSError, ValueError):
         return []
-    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 3)
+    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 8)
     for path in glob.glob(os.path.join(loop, "runs", "*.json")):
         try:
             with open(path) as handle:

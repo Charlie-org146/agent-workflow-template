@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d0857c8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -39,11 +39,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d08
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-10** Resumable <!-- reviewed 0f9f447b -->
   - A stopped or crashed goal resumes from its last recorded step, never from the start.
-- DEL-8: **Reviewed 2026-11-14** Budgeted <!-- reviewed c6fabe37 -->
+- DEL-8: **Reviewed 2026-11-15** Budgeted <!-- reviewed 5161cddb -->
   - Each goal has a time and token budget, and going over shows on the board.
   - Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting.
   - A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits.
-  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit.
+  - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a merge-and-rerun round past `max_merge_rounds` (default 8) is refused: the goal waits under Needs you, and only the operation session raises a limit.
 - DEL-9: **Reviewed 2026-11-15** Nothing private ships <!-- reviewed e53156c1 -->
   - Every commit and pull request passes the private-name scan before it is pushed.
   - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo.
@@ -109,6 +109,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d08
 | [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | DEL-5 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | DEL-5 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
+| [del5-merge-forwards-checkout](Tests#t-del5-merge-forwards-checkout) | requirement | DEL-5 | Given a main checkout behind origin with a dirty lane record, when merge.py fast-forwards it, then the record is stashed and put back; any other change keeps the checkout as it is. | PASS 2026-11-15 |
 | [start-from-head-passes-4340](Tests#t-start-from-head-passes-4340) | requirement | DEL-5 | Given a pull request that adds a skill command and carries the START.md its own skills render, when merge.py's wiki.pending audits it, then START.md is not reported. | not run |
 | [start-from-head-refuses-4340](Tests#t-start-from-head-refuses-4340) | requirement | DEL-5 | Given a pull request whose START.md is stale for its own skills, when merge.py's wiki.pending audits it, then it still reports START.md (#4340). | not run |
 | [merge-main-own-finding-4343](Tests#t-merge-main-own-finding-4343) | requirement | DEL-5 | Given a goal branch that merged main's stale page, when merge.py's wiki.pending audits it, then main's stale page is printed as a FINDING for health. | not run |
@@ -148,6 +149,10 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d08
 | [del9-lane-part-no-path](Tests#t-del9-lane-part-no-path) | requirement | DEL-9 | Given a lane record whose LANE line ends with a local log path, when the pull request body's lane part is built, then it keeps the LANE line, the before-rows parts and the rows and drops the log path, so the private-name scan does not refuse every pull request from a machine whose home folder is on the list. | not run |
 | [windows-safe-posix-names](Tests#t-windows-safe-posix-names) | requirement | DEL-12 | Given a script under skills/*/scripts, when it names fcntl outside the lock shim, os.getuid, os.killpg, os.getpgrp, os.O_NOFOLLOW, signal.SIGHUP, os.kill(pid, 0) or os.WNOHANG with no guard, then the lane fails naming its file and line, and the real tree passes (issue 2871). | not run |
 | - | requirement | DEL-12 | no passing test | not enforced |
+| [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | DEL-13 | Given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review. | not run |
+| [review-recorded-merges](Tests#t-review-recorded-merges) | requirement | DEL-13 | Given review_hold is on, when the operation session records a review of the head, then merge.py merges, and with the setting off merging is unchanged. | not run |
+| [review-worker-refused](Tests#t-review-worker-refused) | requirement | DEL-13 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
+| [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | DEL-13 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
 | - | requirement | DEL-13 | no passing test | not enforced |
 | [backlog-leftovers-filed](Tests#t-backlog-leftovers-filed) | requirement | DEL-14 | Given a ship reply with FILE defect and FILE backlog lines, when the goal records ship with --live, then a defect is filed on no milestone, backlog items on Backlog: <Feature> or Backlog: Other, and a line holding an email is skipped. | not run |
 | [backlog-leftovers-once](Tests#t-backlog-leftovers-once) | requirement | DEL-14 | Given leftovers already filed, when ship is recorded again, then nothing is filed twice. | not run |

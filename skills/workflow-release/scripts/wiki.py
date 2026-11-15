@@ -30,6 +30,7 @@ import release
 from release import base_of, git, load, read_config, run, save
 
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # release.py sets the rest on import
+OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
 CRITERIA = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts",
                                          "criteria.py"))
@@ -345,9 +346,10 @@ def where(script, base=None):
         return  # the base check reports a fetch it cannot make
     behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
     if behind.isdigit() and int(behind):
+        went = not run([sys.executable, OPERATE, "forward", base], main).returncode  # moved here; the running code is old, so it still stops
         sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
-                 "rules. Fix: git -C %s merge --ff-only origin/%s, then run it again." % (
-                     main, behind, "" if behind == "1" else "s", base, main, base))
+                 "rules. %s: git -C %s merge --ff-only origin/%s, then run it again." % (
+                     main, behind, "" if behind == "1" else "s", base, "Done now" if went else "Fix", main, base))
 
 
 def main():

@@ -4,11 +4,9 @@
 usage: docs.py audit [--base REF] [--dry-run]
 
 It checks the pages against the template sheet (references/commands.md), the code (stale pages), the tests (Tests
-tables, rows not Given/When/Then, Reviewed requirements with no or a stale test) and the required docs (a release note
-per tag). It fixes the mechanical trouble (Tests tables and page) and prints the rest as REWRITE lines. It never deletes
-a page or changes a criterion's wording. --dry-run only says what it would fix. Exit 0 only when nothing is left.
-UNTESTED lines go to .git/loop/untested.tsv (id, reason) for the loop to queue goals from; they do not fail the audit.
-It runs git and gh, and nothing else.
+tables, rows not Given/When/Then, Reviewed requirements with no or a stale test) and a release note per tag. It fixes the
+mechanical trouble and prints the rest as REWRITE lines; it never deletes a page or changes a criterion's wording.
+--dry-run only says what it would fix. Exit 0 only when nothing is left. UNTESTED lines go to .git/loop/untested.tsv.
 """
 import argparse
 import contextlib
@@ -209,10 +207,12 @@ def owned(root, rel, body, rule):
     return {key for _, _, key in main} <= have
 
 
-def relock(root):
-    """Relock (DOC-2): re-stamp a reviewed page changed only by another goal's reviewed line."""
+def relock(root, slug="", only=()):
+    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page in only stale by code alone."""
     rule, done = cr.rules(), []
     for rel in cr.pages(root):
+        if only and os.path.basename(rel)[:-3] not in only:
+            continue
         with open(join(root, rel)) as handle:
             text = handle.read()
         line, why = prd.review_of(text, rule)
@@ -221,17 +221,17 @@ def relock(root):
         if why or not match or not match.group(2):
             continue
         now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
-        if [k for k in prd.KEYS[:4] if was[k] != now[k]] == ["R"] and owned(root, rel, dict(parts), rule):
-            fresh = prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS)))
+        moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
+        if (moved == ["R"] and owned(root, rel.replace(os.sep, "/"), dict(parts), rule)) or (slug and not moved):
+            kept = " <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip()) if slug else ""
             with open(join(root, rel), "w") as handle:
-                handle.write(fresh)
+                handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
             done.append(os.path.basename(rel)[:-3])
     if done:
         log = join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop")
         os.makedirs(log, exist_ok=True)
         with open(join(log, "reviews.tsv"), "a") as handle:
-            handle.write("%s\trelock\t%s\tauto-relock: all lines owner-reviewed\n" % (cr.datetime.datetime.now(
-                cr.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), ",".join(done)))
+            handle.write("%s\t%s\t%s\t%s\n" % (cr.datetime.datetime.now(cr.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "restamp" if slug else "relock", ",".join(done), slug + ": mapped code only" if slug else "auto-relock: all lines owner-reviewed"))
     return done
 
 
@@ -381,4 +381,7 @@ def perm_main(argv):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["restamp"] and len(sys.argv) > 3:
+        print("".join("RESTAMPED %s\n" % page for page in relock(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
+        sys.exit(0)
     sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)

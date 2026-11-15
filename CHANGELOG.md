@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.28.86 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.85 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.84 - 2026-11-15
 
 - No code changes

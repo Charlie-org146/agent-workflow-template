@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=7c843d7b N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -137,6 +137,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
 | [waits-first](Tests#t-waits-first) | requirement | MON-3 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | MON-3 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
 | [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | PASS 2026-11-14 |
+| [review-board-shows-wait](Tests#t-review-board-shows-wait) | requirement | MON-3 | Given a goal held by review_hold, when the live board lists its Issues, then it says merge waiting on review and names the review.py command. | not run |
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | MON-4 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-12 |
 | [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-12 |
