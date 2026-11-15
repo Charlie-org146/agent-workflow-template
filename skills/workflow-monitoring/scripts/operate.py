@@ -87,8 +87,8 @@ def fast_forward(root, base):
     code, said = fgit(root, "merge", "--ff-only", "-q", "origin/" + base)
     if sha:
         if fgit(root, "stash", "apply", sha)[0]:
-            fgit(root, "checkout", "-q", "--", RUNS)
-            said += " (the lane record %s stays in stash entry %s)" % (RUNS, sha[:12])
+            fgit(root, "checkout", "-q", "HEAD", "--", RUNS)  # a conflicted apply leaves RUNS unmerged: HEAD's copy clears it
+            said += " (the lane record %s stays in stash entry %s, %s)" % (RUNS, tag, sha[:12])
         else:
             drop = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%gd %gs")[1].splitlines() if l.endswith(tag)), "")
             drop and fgit(root, "stash", "drop", "-q", drop)
