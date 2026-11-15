@@ -814,6 +814,12 @@
 | <a id="t-topics-in-reference"></a>topics-in-reference | requirement | SET-2 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
 | <a id="t-go-app-holds-goal"></a>go-app-holds-goal | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-go-background-default"></a>go-background-default | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-adopt-stamps-version"></a>adopt-stamps-version | requirement | SET-16 | not run | - | local | 2026-11-15 |
+| <a id="t-adopt-prerequisites"></a>adopt-prerequisites | requirement | SET-11 | not run | - | local | 2026-11-15 |
+| <a id="t-adopt-replay-strict"></a>adopt-replay-strict | requirement | SET-11 | not run | - | local | 2026-11-15 |
+| <a id="t-adopt-connectors-probed"></a>adopt-connectors-probed | requirement | SET-14 | not run | - | local | 2026-11-15 |
+| <a id="t-adopt-many-one-pass"></a>adopt-many-one-pass | requirement | SET-12 | not run | - | local | 2026-11-15 |
+| <a id="t-private-names-scoped"></a>private-names-scoped | requirement | SET-15 | not run | - | local | 2026-11-15 |
 
 ## Other
 
