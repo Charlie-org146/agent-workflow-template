@@ -8,6 +8,7 @@ usage: private.py where | check | scan [--base REF]    the worker check, the lis
 The list: `$LOOP_PRIVATE_NAMES` (a file path) or `~/.workflow-loop/private-names`, one regex per line, matched without
 case; `#` starts a comment. No file: nothing checked. Only comments: off. A broken file: every scan refuses.
 """
+import importlib
 import json
 import os
 import re
@@ -347,7 +348,7 @@ def pr_result(top, base, head, branch, ok):
     got = repo_is_private(top) and required_checks(top, base)
     if not got:
         return print("STATUSES none: public or unreadable") or True
-    got = (__import__("lane").lane_checks(top, got[0]), got[1])
+    got = (importlib.import_module("lane").lane_checks(top, got[0]), got[1])
     for name in got[1] + ADVICE:
         print("BLOCKS: %s cannot be satisfied by a status; remove it from the ruleset (BLOCKS)" % name)
     there = subprocess.run(["git", "ls-remote", "origin", "refs/heads/" + branch], cwd=top, capture_output=True, text=True).stdout.split()
