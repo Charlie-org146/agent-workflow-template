@@ -334,7 +334,7 @@
 | <a id="t-grd6-head-moved"></a>grd6-head-moved | requirement | GRD-6 | not run | - | local | 2026-11-12 |
 | <a id="t-grd7-round-cost"></a>grd7-round-cost | requirement | GRD-7 | not run | - | local | 2026-11-12 |
 | <a id="t-grd8-silent-worker"></a>grd8-silent-worker | requirement | GRD-8 | not run | - | local | 2026-11-12 |
-| <a id="t-grd9-controls"></a>grd9-controls | requirement | GRD-9 | not run | - | local | 2026-11-12 |
+| <a id="t-grd9-controls"></a>grd9-controls | requirement | GRD-9 | SKIPPED | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-12 |
 | <a id="t-grd10-install-hooks"></a>grd10-install-hooks | requirement | GRD-10 | not run | - | local | 2026-11-12 |
 | <a id="t-grd1-guardrail-list"></a>grd1-guardrail-list | requirement | GRD-1 | not run | - | local | 2026-11-13 |
 | <a id="t-grd3-hook-bypass"></a>grd3-hook-bypass | requirement | GRD-3 | not run | - | local | 2026-11-13 |
@@ -578,6 +578,7 @@
 | <a id="t-unattended-standing-worker-refused"></a>unattended-standing-worker-refused | requirement | MON-18 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-selfcheck-missing"></a>unattended-selfcheck-missing | requirement | MON-18 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | MON-18 | not run | - | local | 2026-11-14 |
+| <a id="t-blockers-first"></a>blockers-first | requirement | MON-19 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-runs-skips-non-dict"></a>runs-skips-non-dict | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-roadmap-closed-drops"></a>roadmap-closed-drops | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-roadmap-status-values"></a>roadmap-status-values | requirement | MON-4 | not run | - | local | 2026-11-15 |
