@@ -12,6 +12,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+from held import lost as lost_lanes  # noqa: E402
 
 FLOW = ("idea", "plan", "build", "review", "qa", "ship", "pr", "release")
 STEPS = FLOW[:-1]
@@ -107,12 +108,13 @@ def flow_seconds(run, at, held=None):
     force (see holding). The time since the last entry counts while running, unless the goal is held: held is True or
     False when the session pool says so, and None when it is unknown, when a pause in force at the last entry stops it."""
     found, force, paused, log = {}, None, False, run.get("log") or []
-    for before, entry in zip(log, log[1:]):
+    lost = lost_lanes(log)  # a pr lane lost to a moved base is held time (#4261)
+    for index, (before, entry) in enumerate(zip(log, log[1:]), 1):
         a, b, word = stamp(before), stamp(entry), named(entry)
         paused = holding(before, paused)
         pause = paused or waiting(before) or (str(before).split(" ", 2) + ["", ""])[1].rstrip(":") in ("stopped", "failed")
         step = word if word in STEPS and not re.search(r"\bstep [a-z]+, running", str(entry)) else force
-        if a and b and step in STEPS and not pause:
+        if a and b and step in STEPS and not pause and index not in lost:
             found[step] = found.get(step, 0) + max(0, (b - a).total_seconds())
         force = after(entry) or force
     last = stamp(log[-1]) if log else None
