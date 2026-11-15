@@ -71,7 +71,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=b2106ed4 N=f86bd012 M=d4d1
 - A known failure does not block a run.
 
 ## Success metrics
-- No goal's test run in the loop takes over 15 minutes (REG-7's budget floor), and working out which rows a change affects stays under about 200 MB on a large repo (#4151); the nightly full suite runs green or every failure has its issue.
+- No goal's test run in the loop takes over 15 minutes (REG-7's budget floor), and the nightly full suite runs green or every failure has its issue.
 - Every closed issue fixed by a goal has a passing defect test listed in its release note.
 - A GitHub run and a local run of the same rows end the same way.
 
