@@ -54,6 +54,7 @@ and its fix above it); it exits 0 whenever the adoption is on its branch, and `-
    `["claude", "-p", "--allowedTools=Bash,Read,Write,Edit"]`. For Codex, it means `-s workspace-write` with the git
    folder, the remote and `~/.workflow-loop` in `sandbox_workspace_write.writable_roots` (a read-only home leaves the private settings unwritten: setup says so and goes on, and `go` is refused until they exist). They choose the list. You don't.
 2. Tell the user to review the branch and merge it. The other skills read the config from the base branch.
+3. Tell the user that a Reviewed requirement is locked: only their own typed sentence clears it, never a relayed letter or an agent (setup prints this as `OWNER_WORDS`).
 
 Keep to these rules:
 

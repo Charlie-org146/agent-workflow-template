@@ -851,6 +851,7 @@
 | <a id="t-adopt-connectors-probed"></a>adopt-connectors-probed | requirement | SET-14 | not run | - | local | 2026-11-15 |
 | <a id="t-adopt-many-one-pass"></a>adopt-many-one-pass | requirement | SET-12 | not run | - | local | 2026-11-15 |
 | <a id="t-private-names-scoped"></a>private-names-scoped | requirement | SET-15 | not run | - | local | 2026-11-15 |
+| <a id="t-setup-owner-words-up-front"></a>setup-owner-words-up-front | requirement | SET-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 
 ## Other
 
