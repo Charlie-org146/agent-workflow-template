@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import criteria  # noqa: E402
 import prd  # noqa: E402
 
-KEPT = re.compile(r" <!-- kept [\w.-]+ -->$")
+KEPT = re.compile(r" <!-- kept [\w.@-]+ -->$")
 
 
 def tree(text):
@@ -66,7 +66,7 @@ def restamp(root, pages, slug):
             continue  # a moved R is another goal's owner-reviewed line, which relock accepts (DOC-2)
         stamp = "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS))
         with open(os.path.join(root, rel), "w", newline="") as handle:
-            handle.write(prd.set_review(text, stamp + " <!-- kept %s -->" % slug))
+            handle.write(prd.set_review(text, stamp + " <!-- kept %s@%s -->" % (slug, subprocess.run(["git", "-C", root, "rev-parse", "--short", "HEAD"], capture_output=True, text=True).stdout.strip() or "0")))
         done.append(page)
     if done:
         log = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop")
