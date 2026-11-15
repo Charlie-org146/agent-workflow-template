@@ -34,6 +34,7 @@ import graph  # noqa: E402
 import live_board as lb  # noqa: E402
 import pool as pl  # noqa: E402
 import replan  # noqa: E402
+import unattended  # noqa: E402
 import board_page  # noqa: E402
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
@@ -231,6 +232,8 @@ def render(root=None, at=None, stamp=None):
                 needs.append("%s/%s asks: %s; options: %s" % (g["name"], run["slug"], lb.plain(ask.get("ask"), 160),
                                                               " / ".join('"%s"' % w for w in ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
+    operation, asks = unattended.lines()  # MON-18: sends left, the loop's expiry, standing instructions
+    needs += asks
     try:  # operate.py behind_ask: the main checkout is behind origin/main and a free worker must fast-forward it
         needs += [line for line in open(os.path.join(folder, "checkout-behind.txt")).read().splitlines()[:1] if line]
     except OSError:
@@ -241,7 +244,7 @@ def render(root=None, at=None, stamp=None):
     out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags})
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
-    out += ["", "Coming up"]
+    out += ["", "Coming up"] + ([operation] if operation else [])
     for run in live:
         if states[run["slug"]] == "done":
             out.append("- %s: its pull request waits for merge (you: review %s)" % (run["slug"], run.get("pr") or "it"))
