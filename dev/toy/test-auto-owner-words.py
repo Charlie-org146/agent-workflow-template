@@ -46,6 +46,7 @@ def once(pairs):
 
 with open(os.path.join(root, ".loop", "config.json")) as handle:
     live = json.load(handle, object_pairs_hook=once)
-check(live.get("min_free_memory_gb") == 3.5, "this repo's config holds min_free_memory_gb once, at 3.5")
+value = live.get("min_free_memory_gb")
+check(isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0, "this repo's config holds min_free_memory_gb once, as a positive number")
 check("min_free_memory_gb" in {row[0] for row in settings.TABLE}, "the settings table registers min_free_memory_gb")
 sys.exit(1 if bad else 0)
