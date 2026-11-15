@@ -121,6 +121,7 @@ def forward(main, base):
             return False
     moved = git("merge", "--ff-only", "-q", "origin/" + base).returncode == 0
     if sha and git("stash", "apply", sha).returncode:
+        git("checkout", "-q", "--", RUNS)  # a conflict leaves no markers behind
         print("NOTE: %s could not be put back; it is kept in stash entry %s" % (RUNS, sha[:12]))
         return moved
     if sha:
@@ -140,11 +141,12 @@ def apply(slug, branch):
         return 0
     try:
         with open(os.path.join(tree, ".loop", "config.json")) as handle:
-            base = json.load(handle).get("base") or "main"
+            config = json.load(handle)
+        base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs.py")
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, docs, "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
         said = pages and run([sys.executable, os.path.abspath(__file__), "restamp", slug] + pages, tree).stdout.strip()
-        if said and run(["git", "add", "--", "docs"], tree).returncode == 0:
+        if said and run(["git", "add", "-A", "--", folder], tree).returncode == 0:
             run(["git", "commit", "-q", "-m", "Wiki: re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
