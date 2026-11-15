@@ -12,3 +12,6 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-audit-head-docs.py`. Expect: three PASS lines and `PASS: merge.py judges the head's pages with the head's docs scripts`.
+2. Run `python3 dev/toy/test-audit-pr-head.py`. Expect: `PASS: merge.py audits the PR head's pages`.
