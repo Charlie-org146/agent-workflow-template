@@ -174,6 +174,9 @@
 | <a id="t-start-from-head-passes-4340"></a>start-from-head-passes-4340 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-start-from-head-refuses-4340"></a>start-from-head-refuses-4340 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-merge-main-own-finding-4343"></a>merge-main-own-finding-4343 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
+| <a id="t-review-hold-blocks"></a>review-hold-blocks | requirement | DEL-13 | not run | - | local | 2026-11-15 |
+| <a id="t-review-recorded-merges"></a>review-recorded-merges | requirement | DEL-13 | not run | - | local | 2026-11-15 |
+| <a id="t-review-worker-refused"></a>review-worker-refused | requirement | DEL-13 | not run | - | local | 2026-11-15 |
 
 ## Documentation
 
