@@ -26,6 +26,8 @@ if os.environ.get("TOY_GH_FAIL"):
 items = json.load(open(os.environ["TOY_MS"]))
 if args[0] == "api":
     method = args[args.index("-X") + 1] if "-X" in args else "GET"
+    if method != "GET" and os.environ.get("TOY_GH_WRITE_FAIL"):
+        sys.exit("gh: no permission")
     if method == "GET":
         print(json.dumps(items[:2]) + "\\n" + json.dumps(items[2:]))
     else:
@@ -50,6 +52,8 @@ sys.stdout.write(open(os.environ["TOY_PAGE"]).read())
 FAKE_WRITER = '''import json, os, sys
 action, text = sys.argv[2:], sys.stdin.read()
 open(os.environ["TOY_LOG"], "a").write(json.dumps(["writer"] + action + [text]) + "\\n")
+if os.environ.get("TOY_WRITER_FAIL"):
+    sys.exit(1)
 if action[0] in ("replace", "remove"):
     lines = open(os.environ["TOY_PAGE"]).read().split("\\n")
     keep = [x for x in lines if not x.startswith("- %s: " % action[1])]
@@ -135,7 +139,7 @@ with tempfile.TemporaryDirectory() as tmp:
     code, out = sync()
     ok(code == 0 and "DELTA milestones: v2 the repo changed" in out and read(page) == before[0] and milestones()["v2"] == ("open", "2027-01-15") and not calls('"PATCH"'),
        "a delta overwrites neither side")
-    ok(len(calls("issue", "create")) == 1 and "DELTA milestones v2" in calls("issue", "create")[0] and "--milestone" not in calls("issue", "create")[0]
+    ok(len(calls("issue", "create")) == 1 and "DELTA milestones v2" in calls("issue", "create")[0]
        and len(calls("writer", "comment")) == 1 and "2027-01-15" in calls("writer", "comment")[0], "a new delta is posted once as an issue and once as a comment on the page")
     sync()
     ok(len(calls("issue", "create")) == 1 and len(calls("writer", "comment")) == 1, "a second sync posts nothing more")
@@ -186,10 +190,25 @@ with tempfile.TemporaryDirectory() as tmp:
     code, out = sync("--accept", "milestones:v4=source", TOY_GH_FAIL="1")
     ok(code == 0 and "not connected" in out and "ACCEPTED" not in out, "accepting with gh unreachable says not connected and accepts nothing")
 
+    code, out = sync("--accept", "milestones:v4=source", TOY_GH_WRITE_FAIL="1")
+    ok(code == 0 and "not connected: milestones (gh)" in out and "ACCEPTED" not in out and "v4" not in milestones(), "accepting the source with GitHub refusing the write says not connected and accepts nothing")
+    code, out = sync("--accept", "milestones:v4=repo", TOY_WRITER_FAIL="1")
+    ok(code == 0 and "not connected: milestones (mcp:toy:milestones)" in out and "ACCEPTED" not in out and "- v4: open" in read(page),
+       "accepting the repo with the writer failing says not connected and leaves the page as it was")
+
+    items = json.load(open(ms))
+    next(m for m in items if m["title"] == "v0")["state"] = "open"
+    write(ms, json.dumps(items))
+    code, out = sync()
+    ok("DELTA milestones: v0 the repo changed (repo: open | due 2026-01-01 | source: -)" in out and "CONFLICT milestones: v0" not in out,
+       "a closed milestone missing from the page that GitHub reopens is the repo's change alone, never a conflict")
+
     write(config, json.dumps({"base": "main"}))
     count = len(calls())
+    code, out = sync("--open")
+    ok(code == 0 and "ilestone" not in out and len(calls()) == count, "a repo that dropped its milestones_source lists none of its old milestone deltas")
     code, out = sync()
-    ok(code == 0 and "ilestone" not in out and len(calls()) == count, "a repo that drops its milestones_source is no longer visited")
+    ok(code == 0 and "ilestone" not in out and len(calls()) == count, "and is no longer visited")
 
     scripts = os.path.join(ROOT, "skills", "workflow-docs", "scripts")
     texts = [read(os.path.join(scripts, name)) for name in ("milestones.py", "docs.py")]

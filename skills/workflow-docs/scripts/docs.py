@@ -391,7 +391,7 @@ def cmd_prompts(_args):
 
 def cmd_sync(args):
     import audit, milestones
-    return audit.sync(top(), args.dry_run, args.accept, args.open) | milestones.sync(top(), args)
+    return milestones.sync(top(), args) | audit.sync(top(), args.dry_run, args.accept, args.open)
 
 
 def cmd_restore(_args):

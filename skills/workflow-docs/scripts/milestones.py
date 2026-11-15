@@ -74,7 +74,12 @@ def to_repo(title, number, text):
 
 def sync(root, args):
     source = counting.config_of(root).get("milestones_source")
-    if not isinstance(source, str) or not source.startswith(("url:", "mcp:")) or args.open:
+    if not isinstance(source, str) or not source.startswith(("url:", "mcp:")):
+        held = counting.ledger(root)  # a repo that dropped its source keeps no milestone rows, and none is listed
+        if not args.dry_run and any(k.startswith(KEY) for k in held):
+            counting.ledger(root, {k: v for k, v in held.items() if not k.startswith(KEY)})
+        return 0
+    if args.open:
         return 0
     dry, path = args.dry_run, join(root, ".loop", "milestones.md")
     body, why = prd.read_link(source)
@@ -89,7 +94,8 @@ def sync(root, args):
     if not want:
         print("SKIPPED milestones: no `- TITLE: state | due` line in the source")
         return 0
-    for title in [t for t in have if t not in want and have[t].startswith("closed")]:
+    gone = [t for t in have if t not in want and have[t].startswith("closed")]
+    for title in gone:
         want[title] = have[title]
     if os.path.exists(path):
         with open(path, encoding="utf-8") as handle:
@@ -125,7 +131,10 @@ def sync(root, args):
     for title in sorted(set(have) | set(want)):
         r, s, a = have.get(title), want.get(title), agreed.get(title)
         if r == s:
-            agreed[title] = r
+            if title in gone:  # closed and not on the page: nothing agreed, so a reopen is the repo's change alone
+                agreed.pop(title, None)
+            else:
+                agreed[title] = r
         else:
             found.append((title, "both sides" if (r != a) == (s != a) else "the repo" if r != a else "the source", r, s))
     for title in [t for t in agreed if t not in have and t not in want]:
