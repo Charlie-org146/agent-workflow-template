@@ -18,7 +18,7 @@ a lost lane out of the estimate (MON-4 already leaves held time out).
    shape (a failed try, a pr-queue wait, holds), asserting the lost lanes drop out and a `try N failed` lane stays charged;
    (c) a pr-queue wait, a session hold, an owner-answer wait and a stop around 20 active minutes read 20 (#3878); (d) a goal
    that truly runs past its budget is still refused.
-4. `.loop/regression.tsv` rows: `budget-fair-base-moved` (done line 1) and `budget-fair-held` (done line 2), each seen red with a
+4. `.loop/regression.tsv` rows: `budget-fair-base-moved` (done line 1) and `budget-fair-held-time` (done line 2) and `budget-fair-failed-stays`, each seen red with a
    break that disables the rule (`regression.py red`), requirement MON-4 as the nearest reviewed requirement (no wording changes).
 5. Pages: Tests re-rendered; the Monitoring page is Reviewed and untouched; Home only if the check says so.
 

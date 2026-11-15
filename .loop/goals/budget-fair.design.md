@@ -24,7 +24,7 @@ no change to the release or pool scripts. The 81-minute failed try (`try 1 faile
 lane really failed.
 
 ## What each done line needs
-1. BASE_MOVED lane held, not charged: `held.lost(log)` plus the call in `flow_seconds`; toy `dev/toy/test-budget-fair.py`
+1. BASE_MOVED lane held, not charged: `board_log.lost_lanes(log)` plus the call in `flow_seconds`; toy `dev/toy/test-budget-fair.py`
    replays five BASE_MOVED lanes and the real blockers-first shape (a 15-minute lane, refused, repeated) and reads the budget unspent;
    a `merge refused` after a lane that really spent time elsewhere (a build, a review) leaves those steps charged.
 2. #3878: the toy also replays a pr-queue wait, a hold, an owner answer and a stop around active time and reads only the active
