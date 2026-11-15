@@ -35,6 +35,12 @@ GRACE = 60  # seconds a claimed rc is its finisher's
 flow_spec = lanekit._flow  # the flow file as a dict
 
 
+def lane_checks(top, contexts):
+    """The required checks the lane really runs (narrow.lane_checks, #3840)."""
+    sys.path.insert(0, REG)
+    import narrow
+    return narrow.lane_checks(top, contexts)
+
 def lane_argv(seconds=0):
     return ["python3", os.path.join(REG, "regression.py"), "run", "land", "--reuse", "--tier", "goal"] + (
         ["--budget", str(int(seconds))] if seconds else [])

@@ -15,6 +15,7 @@ do not fail the audit. It runs git and gh, and nothing else.
 import argparse
 import contextlib
 import io
+import json
 import os
 import re
 import subprocess
@@ -148,20 +149,21 @@ def own_base(root, name):
     return None
 
 
-def own_touched(root, ref, paths):
-    """True when the goal's diff (merge-base of ref and HEAD, to HEAD) touches any of the page's mapped paths."""
-    out = own_git(root, "diff", "--name-only", ref + "...HEAD", "--", *paths)
+def own_touched(root, ref, paths, head="HEAD"):
+    """True when the goal's diff (merge-base of ref and head, to head) touches any of the page's mapped paths."""
+    out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
     return out is None or bool(out)  # no diff answer: judge the page as the goal's own
 
 
-def own_split(root, found, notes, rows, name="main"):
-    """(found, notes) with each STALE line of an untouched mapped page moved to notes as FINDING."""
+def own_split(root, found, notes, rows, name="main", head="HEAD"):
+    """(found, notes) with each STALE line of an untouched mapped page moved to notes as FINDING. head: the goal's branch
+    when this runs somewhere else, such as the main checkout, where HEAD is the base itself."""
     ref = own_base(root, name)
-    if not ref or own_git(root, "merge-base", "--is-ancestor", "HEAD", ref) is not None:
+    if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
         return found, notes  # no base, or on the base branch itself (main's own run keeps every STALE)
     keep, moved = [], []
     for item in found:
-        if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]]):
+        if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
             moved.append(("FINDING", "STALE " + item[1], item[2] + " (not touched by this goal; main's own, left for health)"))
         else:
             keep.append(item)
@@ -318,3 +320,64 @@ def sync(root, dry=False, texts=None):
                 print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
     print("SYNC: %d in step, %d drifted, %d not connected" % (steady, drifted, away))
     return 1 if dry and drifted else 0
+
+
+# --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
+
+
+def perm_write(root, dry):
+    table, bad = counting.perm_declared(root)
+    if bad:
+        print("\n".join(bad))
+        return 1
+    path = os.path.join(root, ".claude", "settings.json")
+    data = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError) as error:
+            print("REFUSED: .claude/settings.json is not readable JSON (%s). Nothing was written. Fix: repair it." % error)
+            return 1
+    if not isinstance(data, dict) or not isinstance(data.get("permissions", {}), dict):
+        print("REFUSED: .claude/settings.json has no permissions object I can extend. Nothing was written.")
+        return 1
+    block, added = data.setdefault("permissions", {}), 0
+    for mine in table.values():
+        for kind, rule, _ in mine:
+            held = block.setdefault(kind, [])
+            if not isinstance(held, list):
+                print("REFUSED: .claude/settings.json permissions.%s is not a list. Nothing was written." % kind)
+                return 1
+            if rule not in held:
+                held.append(rule)
+                added += 1
+    if dry or not added:
+        print("PERMISSIONS %s: %d rule(s) to add" % ("DRY RUN" if dry else "CURRENT", added))
+        return 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    print("PERMISSIONS WRITTEN: %d rule(s) in .claude/settings.json" % added)
+    return 0
+
+
+def perm_main(argv):
+    parser = argparse.ArgumentParser(prog="audit.py permissions", description=PERM_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("command", choices=("write", "check"))
+    parser.add_argument("--repo", default="")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    root = counting.perm_root_of(args.repo)
+    if args.command == "write":
+        return perm_write(root, args.dry_run)
+    findings = entry.perm_check(root)
+    print("\n".join(findings) if findings else "PERMISSIONS OK")
+    return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)

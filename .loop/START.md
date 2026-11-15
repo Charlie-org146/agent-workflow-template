@@ -24,7 +24,7 @@ One session governs and the others build: the operation session assigns goals, w
 
 ## Docs
 
-Feature pages live in `docs/wiki`, one PRD page per feature with numbered requirements, at most 17 each. The criteria contract is `true`. The docs command finds stale pages, and the release step rewrites them.
+Feature pages live in `docs/wiki`, one PRD page per feature with numbered requirements, at most 18 each. The criteria contract is `true`. The docs command finds stale pages, and the release step rewrites them.
 
 ## Regression
 
@@ -48,9 +48,9 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | External-PRDs | none | My product requirements live in Notion, and the repo's copy of them goes stale without anyone telling me. | none |
 | Guardrails | https://github.com/jcl2018/agent-workflow-template/milestone/11 | My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on. | none |
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
-| Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / met / cleanup / reply-check / reply-status / fill-pool |
+| Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / met / cleanup / selfcheck / reply-check / reply-status / fill-pool |
 | Regression | https://github.com/jcl2018/agent-workflow-template/milestone/7 | I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it. | `/workflow-regression`: add / red / run / sync / workflow / list / issues |
-| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / update / agents / migration-check |
+| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / agents / migration-check |
 
 ## Settings table
 
@@ -65,7 +65,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `cadence` | 30 | Minutes between check-ins of the operation session, 1 to 60, or off. |
 | `ci_levels` | nightly | Target of the scheduled and tag regression runs: nightly (every row) or land. |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
-| `criteria_max` | 17 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
+| `criteria_max` | 18 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty means the repo owner (an organisation notifies no one). |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page> and creates the label. |

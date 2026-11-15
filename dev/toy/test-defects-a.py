@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/spend.py skills/workflow-delivery/scripts/flow.py
+# reads: skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/lane.py skills/workflow-regression/scripts/narrow.py skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/counting.py
 """Defects 3841, 3840, 3839 and 4184. usage: test-defects-a.py CASE (3841 | 3840 | 3839 | 4184); exit 0 when it holds.
 No model, no network: a throwaway repo, and gh is replaced by a function."""
@@ -71,12 +71,22 @@ def workflow_link():
 
 
 def app_refuses():
-    """4184: with workers: app, a goal with no bound session is refused a headless step, and the refusal names sessions.py bind."""
-    import spend
-    said = spend.app_only({"workers": "app"}, {"slug": "g", "worker": "app"}, "g")
+    """4184: with workers: app, flow.py refuses a step for a goal with no bound session and names sessions.py bind; a bound goal is not refused."""
+    tmp = repo()
+    flow = os.path.join(tmp, "flow.json")
+    write(flow, json.dumps({"steps": dict.fromkeys(("idea", "plan", "build", "review", "qa", "ship"), "built-in"), "command": ["true"]}))
+    write(os.path.join(tmp, ".loop", "config.json"), json.dumps({"workers": "app", "base": "main"}))
+    script = os.path.join(top, "skills", "workflow-delivery", "scripts", "flow.py")
+    env = dict(os.environ, LOOP_FLOW=flow, LOOP_ROLE="worker")
+
+    def run(worker):
+        write(os.path.join(tmp, ".git", "loop", "runs", "g.json"), json.dumps({"slug": "g", "worker": worker, "status": "running", "step": "idea"}))
+        done = subprocess.run([sys.executable, script, "g", "idea"], cwd=tmp, capture_output=True, text=True, env=env)
+        return done.returncode, done.stdout + done.stderr
+
+    code, said = run("app")
     print(said)
-    return "sessions.py bind g" in said and not spend.app_only({"workers": "app"}, {"slug": "g", "worker": "session"}, "g") \
-        and not spend.app_only({}, {"slug": "g", "worker": "app"}, "g")
+    return code != 0 and "sessions.py bind g" in said and "NO_SESSION" in said and "NO_SESSION" not in run("session")[1]
 
 
 CASES = {"3841": home_in_body, "3840": statuses, "3839": workflow_link, "4184": app_refuses}

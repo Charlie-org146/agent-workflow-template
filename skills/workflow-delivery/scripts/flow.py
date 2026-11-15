@@ -26,7 +26,6 @@ import fit
 import lanekit
 import proctree
 import role
-import spend
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -295,8 +294,8 @@ def main():
     except (OSError, ValueError):
         state = {}
     headless = state.get("worker") != "session"
-    if headless and spend.app_only(repo_config(), state, args.slug) and not os.path.exists(os.path.join(runs, "%s.%s.job" % (args.slug, args.step))):
-        sys.exit(spend.app_only(repo_config(), state, args.slug))
+    if headless and repo_config().get("workers") == "app" and not os.path.exists(os.path.join(runs, "%s.%s.job" % (args.slug, args.step))):
+        sys.exit("REFUSED: workers is app and %s has no bound app session, so no headless agent starts. Fix: sessions.py bind %s SESSION (NO_SESSION)" % (args.slug, args.slug))
     runnable(flow(), headless)
     base = os.path.join(runs, "%s.%s" % (args.slug, args.step))
     reply, job = base + ".txt", base + ".job"

@@ -29,7 +29,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lanekit, guards, fit, private, spend  # noqa: E402,E401
+import lanekit, guards, fit, private  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
@@ -265,7 +265,7 @@ def next_step(state):
 def cmd_record(args):
     state = held(args.slug)
     guards.waiting_gate(ME, state)
-    spend.add_tokens(state, args.step, args.tokens)
+    add_tokens(state, args.step, args.tokens)
     ran = os.path.join(state_dir(), "%s.%s.ran" % (args.slug, args.step))
     if args.in_session:
         args.file = role.session_reply(state, args.slug, args.step, args.file, state_dir(), FLOW)
@@ -356,7 +356,7 @@ def cmd_pr(args):
     what, detail = role.sync(base)
     if what == "merged":
         state = held(args.slug)
-    spend.round_stop(ME, state, what)
+    round_stop(ME, state, what)
     if what == "conflict":
         why, fix = "merging %s conflicts in: %s" % (base, detail), "merge %s yourself, resolve the conflicts, commit, then pr" % base
         return queue("moved", ME, state, why, fix) or failed_try(state, why, "build", fix) or 1
@@ -455,6 +455,30 @@ def main():
         role.guard(args.command, args.slug)
         role.inbox(os.path.abspath(git("rev-parse", "--git-common-dir")), args.slug)
     return args.func(args)
+
+
+def add_tokens(state, step, given):
+    """A worker's tokens for a step (GRD-2); unknown adds nothing."""
+    if str(given).isdigit():
+        held = state.get("tokens") if isinstance(state.get("tokens"), dict) else {}
+        old = held.get(step) if isinstance(held.get(step), int) else 0
+        state["tokens"] = dict(held, **{step: int(given) + old})
+
+
+def round_stop(g, state, what):
+    """A merge or conflict is one round; past max_merge_rounds (default 3) the goal waits (GRD-2)."""
+    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
+    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 3
+    if what not in ("merged", "conflict"):
+        return
+    over = count > limit
+    state["merge_rounds"] = 0 if over else count
+    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
+    if over:
+        state["status"], state["waiting"] = "waiting", {"ask": ask, "words": ["go on " + state["slug"], "stop " + state["slug"]]}
+    g.save(state, ask if over else None)
+    if over:
+        g.no(ask)
 
 
 if __name__ == "__main__":

@@ -310,3 +310,15 @@ def suggest(root, rid):
         out[-1] += " " + path
     print("\n".join(out) if out != ["# reads:"] else "# reads: (the trace saw no skill file read)")
     return 0
+
+
+def lane_checks(top, contexts):
+    """The required checks whose workflow job only runs regression.py get a status (#3840); the others print BLOCKS."""
+    jobs, flows = [], os.path.join(top, ".github", "workflows")
+    for name in os.listdir(flows) if os.path.isdir(flows) else []:
+        jobs += re.findall(r"^  ([\w-]+):\n((?:    .*\n|\n)*)", open(os.path.join(flows, name), errors="replace").read() + "\n", re.M)
+    ok = [c for c in contexts for j, b in jobs if c in (j, *re.findall(r"^    name:\s*(.+?)\s*$", b, re.M)) and re.search(r"run:", b)
+          and all("regression.py" in r for r in re.findall(r"run:\s*(.+)", b)) and not re.search(r"uses:\s*(?!actions/)", b)]
+    for c in set(contexts) - set(ok):
+        print("BLOCKS: %s is a check the lane does not run, so it posts no status for it (BLOCKS)" % c)
+    return ok

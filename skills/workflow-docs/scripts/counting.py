@@ -5,6 +5,7 @@ docs.py check, audit and publish call counts() through docs.counts(root). prose(
 or indented code, comments or code spans. The page map of docs.py (map_path, read_map, write_map),
 and render.py's cadence(), config_of(), entries() and automation_block(), moved unchanged, and real(), which drops block-only commits from its staleness, sit at the end.
 """
+import fnmatch
 import glob
 import json
 import os
@@ -266,10 +267,10 @@ def entries(root):
 
 
 def workflow_file(root):
-    """The workflow file the automation registry runs the regression routine from (`github:FILE`), else regression.yml (#3839)."""
-    for entry in entries(root):
-        if entry.get("name") == "regression" and str(entry.get("runs", "")).startswith("github:"):
-            return entry["runs"][7:] or "regression.yml"
+    """The file the automation registry runs the regression routine from (`github:FILE`), else regression.yml (#3839)."""
+    for e in entries(root):
+        if e.get("name") == "regression" and str(e.get("runs", "")).startswith("github:"):
+            return e["runs"][7:] or "regression.yml"
     return "regression.yml"
 
 
@@ -309,8 +310,54 @@ def automation_block(root):
         else:
             where, state, owed = "not set", "off", 'add "runs": github:FILE, mac:LABEL or claude:TASK'
         if e["name"] == "digest email" and on and str(e.get("cadence")) != "off":
-            owed = "set the digest address and keys in the schedule's mail.env on the Mac (yours, outside git)" if owed == "none" else owed
-        rows.append([runbook_link(root, e, wiki) or str(e["name"]), str(e.get("does", "")), state, cadence(str(e.get("cadence", ""))), where, last, owed])
+            owed = "set the digest address and keys in the schedule's mail.env on the Mac (yours, outside git)" if owed == "none" else owed
+        rows.append([runbook_link(root, e, wiki) or str(e["name"]), str(e.get("does", "")), state, cadence(str(e.get("cadence", ""))), where, last, owed])
     head = ["Routine", "What it does", "State", "Cadence", "Runs on", "Last run", "Owed by you"]
     return "\n".join(["<!-- automation:begin -->", "## Automation", "",
                        "Health and regression, then each `automation` entry in `.loop/config.json`; to add one, add an entry.", ""] + pageformat.table(head, rows) + ["<!-- automation:end -->", ""])
+
+
+# AUT-9: the permission rows a repo declares (audit.py permissions)
+PERM_PROGRAMS = ("python3", "python", "gh", "git", "claude", "curl", "node")
+PERM_PRIVATE = re.compile(r"(/Users/|/home/[A-Za-z]|[A-Za-z]:[\\/]+Users|\bsk-[A-Za-z0-9]{8}|\bghp_|\bxox[bp]-)")
+PERM_FIELD = re.compile(r"^- \*\*([A-Za-z ]+):\*\*\s*(.*)$")
+
+
+def perm_root_of(repo):
+    top = subprocess.run(["git", "-C", repo or ".", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    return top.stdout.strip() or os.path.abspath(repo or ".")
+
+
+def perm_rows(path):
+    """The (line number, fields) of a tab file, comments and blanks skipped; [] when the file is absent."""
+    try:
+        with open(path, encoding="utf-8-sig") as handle:
+            return [(n, line.rstrip("\r\n").split("\t")) for n, line in enumerate(handle, 1)
+                    if line.strip() and not line.lstrip().startswith("#")]
+    except OSError:
+        return []
+
+
+def perm_declared(root):
+    """{routine: [(kind, rule, why)]} and the problems in the file itself."""
+    out, bad = {}, []
+    for number, row in perm_rows(os.path.join(root, ".loop", "permissions.tsv")):
+        routine, kind, rule = (row + ["", "", ""])[:3]
+        if kind not in ("allow", "deny") or not re.match(r"^[A-Za-z]+\(.+\)$", rule) or not routine:
+            bad.append("BAD ROW permissions.tsv:%d (routine<TAB>allow|deny<TAB>Tool(spec)<TAB>why)" % number)
+        elif PERM_PRIVATE.search(rule) or os.path.expanduser("~") in rule:
+            bad.append("PRIVATE ROW permissions.tsv:%d holds a home path, a user name or a token: write it with ~ or a glob" % number)
+        else:
+            out.setdefault(routine, []).append((kind, rule, row[3] if len(row) > 3 else ""))
+    return out, bad
+
+
+def perm_matches(rule, tool, text):
+    """Does a permission rule `Tool(spec)` cover `text` for that tool: a prefix rule `x:*`, else a glob."""
+    found = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
+    if not found or found.group(1) != tool:
+        return False
+    spec = found.group(2)
+    if spec.endswith(":*"):
+        return text == spec[:-2] or text.startswith(spec[:-2] + " ")
+    return fnmatch.fnmatchcase(text, spec)
