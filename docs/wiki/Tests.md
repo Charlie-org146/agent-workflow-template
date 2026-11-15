@@ -328,6 +328,15 @@
 | <a id="t-docs-scripts-under-19000"></a>docs-scripts-under-19000 | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 | <a id="t-template-in-commands"></a>template-in-commands | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-prd-copy-normalised"></a>prd-copy-normalised | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-copy-no-reader"></a>prd-copy-no-reader | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-copy-block"></a>prd-copy-block | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-copy-block-stale"></a>prd-copy-block-stale | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-sync-source-add"></a>prd-sync-source-add | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-sync-repo-add"></a>prd-sync-repo-add | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-sync-conflict"></a>prd-sync-conflict | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-sync-no-reader"></a>prd-sync-no-reader | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-prd-copy-no-source"></a>prd-copy-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
