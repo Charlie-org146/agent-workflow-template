@@ -1,5 +1,54 @@
 # Changelog
 
+## v0.28.69 - 2026-11-15
+
+- scripts-a: trim delivery and monitoring scripts under 19,000 bytes
+- Lane: re-render the Tests tables
+- scripts-a: size rows per skill, render Tests tables
+- scripts-a: render after runs
+- Merge origin/main into scripts-a
+- scripts-a: keep lane.py and flow.py under 19,000 after merging main
+- scripts-a: delivery size row names lane.py and flow.py
+- Merge origin/main into scripts-a; trim checkin.py and graph.py under 19,000
+- pr: record issue states and the lane's results
+- Merge origin/main into scripts-a
+- scripts-a: fold board_report.py into board_log.py (package back to 98 files)
+- scripts-a: monitoring size row names the fold
+- scripts-a: board_log.py --help exits 0 (package gate)
+- scripts-a: size row notes board_log --help
+- Merge origin/main into scripts-a
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.68 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.67 - 2026-11-15
+
+- Commit .claude/settings.json: .claude/ was ignored, so fresh checkouts failed the AUT-9 permissions check
+- roadmap-wiki: batch.py roadmap builds the Roadmap guide page from docs/ROADMAP.md, open issues and run records; toy, rows, command reference
+- roadmap-wiki: record row runs, re-render Tests
+- roadmap-wiki: review: batch.py roadmap refuses unreadable inputs with one line
+- Merge origin/main into roadmap-wiki; review fixes: hand rows on Backlog or To-do issues listed once, finished goals not queued, paths scrubbed, odd input handled
+- roadmap-wiki: Monitoring Tests table follows the new rows
+- roadmap-wiki: rebuild the Roadmap page from the live issues
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- Merge origin/main (v0.28.61) into roadmap-wiki
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- Merge remote-tracking branch 'origin/main' into loop/roadmap-wiki
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.66 - 2026-11-15
 
 - No code changes
