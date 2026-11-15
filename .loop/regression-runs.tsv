@@ -427,7 +427,7 @@ report-held-111	PASS	2026-11-10
 report-sub-bullets	PASS	2026-11-12	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	PASS	2026-11-15		144bcc92bdf7
+review-findings-skill-lines	PASS	2026-11-15	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -442,6 +442,9 @@ runs-upgrade	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-url	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 same-lines	PASS	2026-11-12	
 schedule-setting	PASS	2026-11-12	
+scripts-a-delivery-under-19000	PASS	2026-11-15	
+scripts-a-monitoring-under-19000	PASS	2026-11-15	
+scripts-a-under-19000	PASS	2026-11-15	
 scripts-no-hang	PASS	2026-11-12	
 seal-sub-bullets	PASS	2026-11-12	
 session-answer	PASS	2026-11-12	
@@ -466,7 +469,7 @@ settings-publish-refresh	PASS	2026-11-12
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	PASS	2026-11-14	
+settings-render-fresh	FAIL	2026-11-15	
 settings-stale	PASS	2026-11-12	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
