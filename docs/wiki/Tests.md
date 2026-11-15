@@ -627,6 +627,7 @@
 | <a id="t-mon16-memory-floor"></a>mon16-memory-floor | requirement | MON-16 | not run | - | local | 2026-11-15 |
 | <a id="t-mon16-checkout-ff"></a>mon16-checkout-ff | requirement | MON-16 | not run | - | local | 2026-11-15 |
 | <a id="t-mon17-this-pod-only"></a>mon17-this-pod-only | requirement | MON-17 | not run | - | local | 2026-11-15 |
+| <a id="t-review-board-shows-wait"></a>review-board-shows-wait | requirement | MON-3 | not run | - | local | 2026-11-15 |
 
 ## Regression
 
@@ -878,6 +879,7 @@
 | <a id="t-private-names-scoped"></a>private-names-scoped | requirement | SET-15 | not run | - | local | 2026-11-15 |
 | <a id="t-setup-owner-words-up-front"></a>setup-owner-words-up-front | requirement | SET-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-set13-hooks-once-bullet"></a>set13-hooks-once-bullet | requirement | SET-13 | not run | - | local | 2026-11-15 |
+| <a id="t-review-hold-setting-listed"></a>review-hold-setting-listed | requirement | SET-2 | not run | - | local | 2026-11-15 |
 
 ## Other
 
