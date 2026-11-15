@@ -116,7 +116,6 @@ def runnable(spec, headless):
 
 
 def routine(step):
-    """This step's section of references/commands.md."""
     try:
         text = read(ROUTINES)
     except OSError:
@@ -132,7 +131,6 @@ def RUNS():
 
 
 def step_prompt(spec, args):
-    """(skill, prompt) for this step; a built-in step's prompt carries its routine in place of a skill's name."""
     skill = skill_of(spec, args.step)
     text = PROMPT.format(skill=skill, step=args.step, slug=args.slug, branch=git("branch", "--show-current"),
                          purpose=PURPOSE[args.step].format(slug=args.slug, lane=role.lane_text()),
