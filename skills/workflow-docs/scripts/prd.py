@@ -4,23 +4,21 @@
 usage: prd.py <command> [options]
 
   new NAME "<idea>" --paths A,B [--prefix XX]
-                               draft a new feature's PRD from a one-line idea, marked Unreviewed, and map it
-  convert [--write]            turn old pages (Summary, Criteria, Tests) into PRD pages; without --write only says what
-                               it would do
+                               draft a new feature's PRD from a one-line idea, Unreviewed, and map it
+  convert [--write]            turn old pages (Summary, Criteria, Tests) into PRD pages; without --write only says so
   skeleton PATH --title T --problem P --requirement LINE
                                write one PRD page (the one page writer; workflow-setup uses it)
 
 The review line sits under the title (or the Milestone line): 'Review: **Unreviewed**', or
 'Review: **Reviewed DATE** <!-- prd P=.. R=.. N=.. M=.. U=.. -->', one 8-hex fingerprint each for Problem,
 Requirements, Non-goals, Success metrics and Usage, written by criteria.py review PAGE --user. Each covers the
-section's name and paragraphs, whitespace collapsed, requirement stamps removed. While the PRD is Reviewed, a change
-to any of the first four is LOCKED (the check fails); Usage was dropped on 2026-11-13: its fingerprint U is still
-written, but a change to it is never reported.
+section's name and paragraphs, whitespace collapsed, requirement stamps removed. While Reviewed, a change to any of the
+first four is LOCKED (the check fails); Usage was dropped on 2026-11-13: U is still written, never reported.
 
-convert completes these partial pages: Summary+Criteria (old), Problem+Criteria, Summary+Requirements, a missing
-Review line, a missing Non-goals and/or Success metrics section. A page already in PRD form is skipped; any other is
-refused with what is missing. New Non-goals and Success metrics sections get one placeholder line, so the docs check
-says UNWRITTEN until real drafts replace it. It runs git and nothing else.
+convert completes partial pages: Summary+Criteria (old), Problem+Criteria, Summary+Requirements, a missing Review
+line, a missing Non-goals and/or Success metrics section. A page in PRD form is skipped; any other is refused with
+what is missing. New sections get one placeholder line, so the docs check says UNWRITTEN until real drafts replace it.
+It runs git and nothing else.
 """
 import argparse
 import itertools
@@ -38,17 +36,17 @@ REVIEW = re.compile(r"^Review: \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\*"
                     r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?$")
 KEYS = "PRNMU"
 def names(rule):
-    """Section names in fingerprint order (Usage last)."""
+    """Section names in fingerprint order."""
     return rule["sections"][:4] + [rule["usage"]]
 
 
 def core(parts, rule):
-    """The names of the sections that are not Usage, Deployments or Runbook."""
+    """The section names other than Usage, Deployments, Runbook."""
     return [name for name, _ in parts if name not in (rule["usage"], rule["deploy"], rule["runbook"])]
 
 
 def paras(lines):
-    """A section's lines: blank lines and list items each start a new one; a wrapped line joins the last."""
+    """A section's paragraphs: a blank line or list item starts one; a wrapped line joins the last."""
     out = []
     for block in re.split(r"\n[ \t]*\n", "\n".join(lines or []).replace("\r\n", "\n").replace("\r", "\n")):
         new = True
@@ -62,14 +60,9 @@ def paras(lines):
 
 
 def norm(name, lines):
-    """A section as hashed: its name, then each line, whitespace collapsed, requirement stamps removed."""
-    found = []
-    for para in paras(lines):
-        out = []
-        for line in para.split("\n"):
-            match = criteria.LINE.match(line.rstrip())
-            out.append("- %s: %s" % (match.group(1), match.group(4)) if match else line)
-        found.append(" ".join(" ".join(out).split()))
+    """A section as hashed: name, then lines, whitespace collapsed, stamps removed."""
+    found = [" ".join(" ".join("- %s: %s" % (m.group(1), m.group(4)) if m else x for x, m in
+                               ((x, criteria.LINE.match(x.rstrip())) for x in para.split("\n"))).split()) for para in paras(lines)]
     return name + "\n" + "\n".join(found)
 
 
@@ -79,12 +72,12 @@ def prints(parts, rule):
 
 
 def head(text):
-    """The page's lines before its first section."""
+    """The lines before the first section."""
     return list(itertools.takewhile(lambda line: not line.startswith("## "), text.replace("\r\n", "\n").split("\n")))
 
 
 def review_of(text, rule):
-    """(review line or None, trouble or None) from the page head: marker, title, Milestone, Review lines."""
+    """(review line or None, trouble or None) from the page head."""
     seq = [line.strip() for line in head(text) if line.strip()]
     starts = lambda n, pre: n < len(seq) and seq[n].startswith(pre)  # noqa: E731
     at = 1 if seq[:1] == [MARKER] else 0
@@ -108,7 +101,7 @@ def review_of(text, rule):
 
 
 def trouble(root, page, text, parts, rule):
-    """The PRD contract lines for one page whose sections are in order, as (kind, page, detail)."""
+    """The PRD contract lines for one page, as (kind, page, detail)."""
     found, body, top = [], dict(parts), rule["metrics_lines"]
     nongoals, metrics = rule["sections"][2:4]
     line, why = review_of(text, rule)
@@ -140,7 +133,7 @@ def trouble(root, page, text, parts, rule):
 
 
 def set_review(text, line):
-    """The text, Review line replaced."""
+    """The text with its Review line replaced."""
     lines = text.split("\n")
     for number in range(len(head(text))):
         if lines[number].startswith("Review:"):
@@ -150,7 +143,7 @@ def set_review(text, line):
 
 
 def review_text(text, day, page):
-    """(new text, None) with the PRD Reviewed on day and its fingerprints, or (text, why) if it can't be."""
+    """(new text, None) Reviewed on day, or (text, why)."""
     rule = criteria.rules()
     parts = criteria.sections(text)
     have = core(parts, rule)
@@ -169,21 +162,21 @@ def unreview_text(text, page):
 
 
 def skeleton(title, problem, requirement, milestone=""):
-    """The one PRD page writer: an Unreviewed page, placeholder Non-goals and Success metrics."""
+    """The one PRD page writer: an Unreviewed page with placeholder sections."""
     return "%s\n%s\n\n%sReview: **Unreviewed**\n\n## Problem\n\n%s\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- %s\n\n" \
            "## Success metrics\n\n- %s\n\n## Tests\n\n" % (MARKER, title, milestone + "\n\n" if milestone else "",
                                                            problem.strip(), group(requirement), PLACEHOLDER, PLACEHOLDER)
 
 
 def group(requirements):
-    """Requirement lines under the two DOC-7 groups: all Functional, Non-functional 'None'; kept if grouped."""
+    """Requirement lines under the two DOC-7 groups (all Functional); kept if grouped."""
     if re.search(r"^### ", requirements, re.M):
         return requirements
     return "### Functional\n\n%s\n\n### Non-functional\n\nNone" % requirements.strip("\n")
 
 
 def convert_text(text, rule):
-    """(outcome, new text): skipped, converted, completed, or 'refused: why'."""
+    """(outcome, new text): skipped, converted, completed, 'refused: why'."""
     parts = criteria.sections(text)
     have = core(parts, rule)
     first, second, third, fourth = rule["sections"][:4]
@@ -220,7 +213,7 @@ def convert_text(text, rule):
         out.append(raw)
     fresh = "\n".join(out)
     head_, _, rest = fresh.partition("\n## %s\n" % second)
-    if rest:  # group the requirements under Functional and Non-functional
+    if rest:
         body, _, tail = rest.partition("\n## ")
         fresh = head_ + "\n## %s\n\n%s\n\n" % (second, group(body.strip("\n"))) + ("## " + tail if tail else "")
     if not line:
@@ -258,7 +251,7 @@ def cmd_convert(args):
 
 
 def used_prefixes(root):
-    """Every ID prefix in use: requirements, regression ids and goals, defects."""
+    """Every ID prefix in use."""
     used = set()
     for rel in criteria.pages(root):
         used |= set(re.findall(r"^- ([A-Z]{2,5})-\d+: ", open(os.path.join(root, rel)).read(), re.M))
@@ -318,14 +311,13 @@ def cmd_skeleton(args):
     return 0
 
 
-READER = "LOOP_PRD_READER"  # a command run as `COMMAND URL`; its stdout is the linked PRD
+READER = "LOOP_PRD_READER"  # run as `COMMAND URL`; stdout is the PRD
 
 
 def read_link(url):
-    """(text, None) of the PRD at a source (`url:<link>` or `mcp:<server>:<resource>`), or (None, why) when unreadable:
-    never a guess, never a cached copy. A reader command in $LOOP_PRD_READER (given the whole source) wins, and is how
-    an MCP connector is reached; else a file path, file: link or http(s) page. An mcp source or a Notion link needs
-    the reader: a script cannot sign in."""
+    """(text, None) of the PRD at a source (`url:<link>` or `mcp:<server>:<resource>`), or (None, why): never a guess or
+    cache. A reader command in $LOOP_PRD_READER (given the whole source) wins, and is how an MCP connector is reached;
+    else a file path, file: link or http(s) page. An mcp source or a Notion link needs the reader (no sign-in)."""
     try:
         source, url = url, url[4:] if url.startswith("url:") else url
         reader = os.environ.get(READER)
@@ -342,13 +334,13 @@ def read_link(url):
             with urllib.request.urlopen(url, timeout=20) as page:
                 return page.read().decode("utf-8", "replace"), None
         return None, "not a path or an http(s) link"
-    except Exception as error:  # unreadable is UNREAD, never a crash
+    except Exception as error:
         return None, "%s: %s" % (type(error).__name__, str(error)[:80])
 
 
 def out(env, *args, **kw):
-    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER, an agent's Notion connector: `WRITER SOURCE
-    comment|replace ID|remove ID`, text on stdin). Never raises."""
+    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER: `WRITER SOURCE comment|replace ID|remove ID`,
+    text on stdin). Never raises."""
     cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
     if not cmd:
         return False, "set %s to the command that writes to the document" % env

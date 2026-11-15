@@ -70,14 +70,14 @@ def sha(text):
 def put(path, source, have, base):
     """Write a PRD's repo copy (SYNC_MARK, `- ID: text` lines) and its baseline .base (`ID<TAB>sha8` of the agreed text)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
-    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as handle:
-        handle.write("".join("%s\t%s\n" % item for item in base.items()))
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
+    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("".join("%s\t%s\n" % item for item in base.items()))
 
 
 def subs(lines, number):
-    """The indented lines (sub-bullets) under line `number`."""
+    """The indented sub-bullet lines under line `number`."""
     out = []
     for line in lines[number + 1:]:
         if not line.strip() or not line[:1].isspace():
@@ -93,8 +93,8 @@ def seal_of(text, below=()):
 
 def folder_of(root):
     try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            return json.load(handle).get("wiki_dir") or "docs/wiki"
+        with open(os.path.join(root, ".loop", "config.json")) as fh:
+            return json.load(fh).get("wiki_dir") or "docs/wiki"
     except (OSError, ValueError):
         sys.exit("REFUSED: no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
 
@@ -123,14 +123,14 @@ def sections(text):
 
 def tsv(root, name):
     try:
-        with open(os.path.join(root, ".loop", name)) as handle:
-            return [line.rstrip("\n").split("\t") + [""] * 8 for line in handle if line.strip() and line[0] != "#"]
+        with open(os.path.join(root, ".loop", name)) as fh:
+            return [line.rstrip("\n").split("\t") + [""] * 8 for line in fh if line.strip() and line[0] != "#"]
     except OSError:
         return []
 
 
 def test_rows(root):
-    """Requirement and workflow tests as {criterion: [row id]}, plus loose ones."""
+    """Requirement and workflow tests {criterion: [row id]}, plus loose ones."""
     linked, loose = {}, []
     for row in tsv(root, "regression.tsv"):
         if row[6] == "defect":
@@ -152,10 +152,10 @@ def test_rows(root):
 
 
 def done_count(root, slug):
-    """How many numbered done lines .loop/goals/SLUG.md has (0 when there is no such goal)."""
+    """Numbered done lines in .loop/goals/SLUG.md (0 if no such goal)."""
     try:
-        with open(os.path.join(root, ".loop", "goals", slug + ".md")) as handle:
-            part = handle.read().split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+        with open(os.path.join(root, ".loop", "goals", slug + ".md")) as fh:
+            part = fh.read().split("## Done lines", 1)[-1].split("\n## ", 1)[0]
     except OSError:
         return 0
     return len(re.findall(r"^\d+\.\s+\S", part, re.M))
@@ -187,21 +187,20 @@ def criteria_of(lines):
 
 
 def blocks(lines):
-    """criteria_of with each line's sub-bullets."""
+    """criteria_of plus each line's sub-bullets."""
     return [(line, LINE.match(line), subs(lines, number)) for number, line in enumerate(lines)
             if line.strip() and not line[:1].isspace() and not line.startswith("### ") and line.strip() != "None"]
 
 
 def contract(root, names, seen):
-    """Page contract trouble for these feature pages, as (kind, page, detail). `seen` maps ids to their page."""
+    """Page contract trouble for these pages, as (kind, page, detail). `seen` maps ids to pages."""
     import counting
     import deployments
     import pageformat as pf
     import prd
     import render
     found, rule, unread = [], rules(), False
-    limit, on, held = criteria_max(root), rule["format"], render.maps(root)
-    owns = {row[0]: re.findall(r"(?:^|,)skills/([\w-]+)", row[1]) for row in tsv(root, "docs.tsv")}
+    limit, on = criteria_max(root), rule["format"]
     linked, loose = test_rows(root)
     head, books = rule["sections"], {page: [] for page in names}
     for page in names:
@@ -214,17 +213,15 @@ def contract(root, names, seen):
             have = [name for name in have if name != rule["usage"]]
         numbered = {name: (start, lines) for name, start, lines in pf.parts(text)}
         link = link_of(text, counting.sources(root).get(page, ""))
+        books[page] = numbered.get(rule["runbook"], (0, []))[1]
         if link:
-            books[page] = numbered.get(rule["runbook"], (0, []))[1]
             got = link_page(root, page, text, link, parts, numbered, rule, seen, linked, set(on))
             unread, found = unread or any(x[0] == "UNREAD" for x in got), found + got
             continue
-        books[page] = numbered.get(rule["runbook"], (0, []))[1]
-        want = head[:1] + [x for x in (rule["runbook"],) if x in have] + head[1:]
+        want = head[:1] + [rule["runbook"]] * (rule["runbook"] in have) + head[1:]
         if rule["deploy"] in have:
             want = want[:-1] + [rule["deploy"]] + want[-1:]
         if have != want:
-            hint = ""
             if "Commands" in have:
                 hint = ". Fix: remove the Commands section; the commands are in the skill's Command map and references/commands.md"
             elif "Summary" in have or "Criteria" in have:
@@ -274,8 +271,7 @@ def contract(root, names, seen):
     if "tests" in on:
         found += [("FORMAT", "Tests:1", "Tests: DOC-9 one anchor per row (got %s). Fix: rename one row id" % x)
                   for x in render.clashes([row[0] for row in tsv(root, "regression.tsv") if row[1] != "draft"])]
-    for text in loose:
-        found.append(("LINK", "regression", text))
+    found += [("LINK", "regression", text) for text in loose]
     for key in sorted(set(defect_rows(root)) - set(seen)):
         found.append(("LINK", "regression", "defect tests guard %s, which no page has" % key))
     for key in sorted(set(linked) - set(seen)):
@@ -303,8 +299,8 @@ def rewrite(root, change):
 
 def write(root, touched):
     for rel, text in touched:
-        with open(os.path.join(root, rel), "w") as handle:
-            handle.write(text)
+        with open(os.path.join(root, rel), "w") as fh:
+            fh.write(text)
 
 
 def today():
@@ -328,7 +324,7 @@ def mark_all(args, make, page_change):
     root = git("rev-parse", "--show-toplevel")
     keys = [key for key in args.ids if ID.match(key)]
     names = [key for key in args.ids if not ID.match(key)]
-    touched, found = rewrite(root, lambda match, below: make(match, day, below) if match.group(1) in keys else None)
+    touched, found = rewrite(root, lambda match, b: make(match, day, b) if match.group(1) in keys else None)
     missing = sorted(set(keys) - set(found))
     if missing:
         sys.exit("REFUSED: no requirement %s (an ID matches ^[A-Z]{2,5}-\\d+$). Nothing was changed. Fix: use an ID "
@@ -342,8 +338,7 @@ def mark_all(args, make, page_change):
                      "^[A-Z]{2,5}-\\d+$). Nothing was changed. Fix: name a page such as Delivery, or a requirement ID."
                      % (name, folder_of(root)))
         if rel not in held:
-            with open(os.path.join(root, rel)) as handle:
-                held[rel] = handle.read()
+            held[rel] = slurp(os.path.join(root, rel))
         fresh, why = page_change(held[rel], day, name)
         if why:
             sys.exit("REFUSED: %s: %s. Nothing was changed." % (name, why))
@@ -351,32 +346,30 @@ def mark_all(args, make, page_change):
     write(root, held.items())
     log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop")
     os.makedirs(log, exist_ok=True)
-    with open(os.path.join(log, "reviews.tsv"), "a") as handle:
-        handle.write("%s\t%s\t%s\t%s\n" % (datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    with open(os.path.join(log, "reviews.tsv"), "a") as fh:
+        fh.write("%s\t%s\t%s\t%s\n" % (datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                      args.command, ",".join(args.ids), words or "(typed at a terminal)"))
     return found, names
 
 
+def said(word, keys, names):
+    for key in keys:
+        print(word + " " + key)
+    for name in names:
+        print(word + " PAGE " + name)
+    return 0
+
+
 def cmd_review(args):
     import prd
-    keys, names = mark_all(args, lambda m, day, below: "- %s: **Reviewed %s** %s <!-- reviewed %s -->" % (
-        m.group(1), day, m.group(4), seal_of(m.group(4), below)), prd.review_text)
-    for key in keys:
-        print("REVIEWED " + key)
-    for name in names:
-        print("REVIEWED PAGE " + name)
-    return 0
+    return said("REVIEWED", *mark_all(args, lambda m, day, b: "- %s: **Reviewed %s** %s <!-- reviewed %s -->" % (
+        m.group(1), day, m.group(4), seal_of(m.group(4), b)), prd.review_text))
 
 
 def cmd_unreview(args):
     import prd
-    keys, names = mark_all(args, lambda m, day, below: "- %s: **Unreviewed** %s" % (m.group(1), m.group(4)),
-                           lambda text, day, name: prd.unreview_text(text, name))
-    for key in keys:
-        print("UNREVIEWED " + key)
-    for name in names:
-        print("UNREVIEWED PAGE " + name)
-    return 0
+    return said("UNREVIEWED", *mark_all(args, lambda m, day, b: "- %s: **Unreviewed** %s" % (m.group(1), m.group(4)),
+                                        lambda text, day, name: prd.unreview_text(text, name)))
 
 
 def main():
