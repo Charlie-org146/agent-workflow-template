@@ -133,6 +133,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a
 | [adopt-replay-strict](Tests#t-adopt-replay-strict) | requirement | SET-11 | Given a machine that differs from the golden first adoption, when the replay runs, then it stops at the first mismatch naming what differs and never passes a step it cannot observe (the live check-in, step 8, is reported as not observed). | not run |
 | [adopt-many-one-pass](Tests#t-adopt-many-one-pass) | requirement | SET-12 | Given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version. | not run |
 | - | requirement | SET-12 | no passing test | not enforced |
+| [set13-hooks-once-bullet](Tests#t-set13-hooks-once-bullet) | requirement | SET-13 | Given a repo where setup runs the reply and govern hook commands several times, when it finishes, then each hook is installed exactly once (the SET-13 bullet on hooks; the app-session, pool and model bullets are not covered by this row). | not run |
 | - | requirement | SET-13 | no passing test | not enforced |
 | [adopt-connectors-probed](Tests#t-adopt-connectors-probed) | requirement | SET-14 | Given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled. | not run |
 | - | requirement | SET-14 | no passing test | not enforced |

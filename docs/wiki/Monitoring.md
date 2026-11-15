@@ -234,7 +234,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=caeb37b5 N=9967b317 M=0fde
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MON-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
 | [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | MON-15 | Given a goal whose pull request merged, when the pr queue is read, then its ticket and beat are removed and it holds nobody. | not run |
 | [merge-leaves-queue-4343](Tests#t-merge-leaves-queue-4343) | requirement | MON-15 | Given a merged goal, when merge.py finishes the merge, then its pr-queue ticket and beat are gone. | not run |
+| [mon16-machine-line](Tests#t-mon16-machine-line) | requirement | MON-16 | Given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows. | not run |
+| [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | MON-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
+| [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | MON-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
 | - | requirement | MON-16 | no passing test | not enforced |
+| [mon17-this-pod-only](Tests#t-mon17-this-pod-only) | requirement | MON-17 | Given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line. | not run |
 | - | requirement | MON-17 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
 | [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | MON-18 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
