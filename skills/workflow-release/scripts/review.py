@@ -61,6 +61,9 @@ def record(slug):
 
 
 def main():
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        print(__doc__)
+        return 0
     if sys.argv[1:2] != ["record"] or len(sys.argv) != 3:
         sys.exit(__doc__)
     return record(sys.argv[2])
