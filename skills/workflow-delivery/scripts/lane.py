@@ -37,8 +37,11 @@ flow_spec = lanekit._flow  # the flow file as a dict
 
 def lane_checks(top, contexts):
     """The required checks the lane really runs (narrow.lane_checks, #3840)."""
+    import importlib.util as u
     sys.path.insert(0, REG)
-    import narrow
+    spec = u.spec_from_file_location("narrow", os.path.join(REG, "narrow.py"))
+    narrow = u.module_from_spec(spec)
+    spec.loader.exec_module(narrow)
     return narrow.lane_checks(top, contexts)
 
 def lane_argv(seconds=0):
