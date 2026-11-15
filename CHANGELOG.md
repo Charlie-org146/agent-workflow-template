@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.28.70 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.69 - 2026-11-15
+
+- scripts-a: trim delivery and monitoring scripts under 19,000 bytes
+- Lane: re-render the Tests tables
+- scripts-a: size rows per skill, render Tests tables
+- scripts-a: render after runs
+- Merge origin/main into scripts-a
+- scripts-a: keep lane.py and flow.py under 19,000 after merging main
+- scripts-a: delivery size row names lane.py and flow.py
+- Merge origin/main into scripts-a; trim checkin.py and graph.py under 19,000
+- pr: record issue states and the lane's results
+- Merge origin/main into scripts-a
+- scripts-a: fold board_report.py into board_log.py (package back to 98 files)
+- scripts-a: monitoring size row names the fold
+- scripts-a: board_log.py --help exits 0 (package gate)
+- scripts-a: size row notes board_log --help
+- Merge origin/main into scripts-a
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.68 - 2026-11-15
 
 - No code changes

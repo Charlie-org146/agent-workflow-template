@@ -2,7 +2,7 @@
 # reads: skills/workflow-monitoring/scripts/board_status.py skills/workflow-monitoring/scripts/graph.py
 # reads: skills/workflow-monitoring/scripts/live_board.py skills/workflow-monitoring/scripts/board_page.py
 # reads: skills/workflow-monitoring/scripts/board_log.py skills/workflow-monitoring/scripts/board_model.py
-# reads: skills/workflow-monitoring/scripts/board_report.py skills/workflow-health/scripts/milestone.py
+# reads: skills/workflow-health/scripts/milestone.py
 # reads: skills/workflow-regression/scripts/lanes_cli.py
 # Goal estimates from size and similar finished goals (issue 96), the backtest that picks the estimate model, held and
 # stalled goals under Issues (issue 37), on a made-up repo of finished runs. No model is called. usage: test-estimates.sh [CHECK]  (no CHECK runs them all)
@@ -360,8 +360,8 @@ def check_stall_held():
 
 
 def report(repo, *args):
-    """board_report.py on a fixture repo: (exit code, stdout, stderr)."""
-    done = subprocess.run([sys.executable, os.path.join(M, "board_report.py"), "--root", repo.root, *args], capture_output=True, text=True)
+    """board_log.py report on a fixture repo: (exit code, stdout, stderr)."""
+    done = subprocess.run([sys.executable, os.path.join(M, "board_log.py"), "report", "--root", repo.root, *args], capture_output=True, text=True)
     return done.returncode, done.stdout, done.stderr
 
 
@@ -417,7 +417,7 @@ def check_backtest_best():
     finally:
         del bm.CELLS["none"]
     plain = tempfile.mkdtemp()
-    done = subprocess.run([sys.executable, os.path.join(M, "board_report.py"), "--root", plain], capture_output=True, text=True)
+    done = subprocess.run([sys.executable, os.path.join(M, "board_log.py"), "report", "--root", plain], capture_output=True, text=True)
     code, err = done.returncode, done.stderr
     need(code == 1 and "REFUSED: %s is not inside a git repo (NO_REPO)" % plain in err and "Pass --root" in err, "a folder outside git is refused: %s" % err)
     code, out, _ = report(Repo())
@@ -589,7 +589,7 @@ def check_held_idle():
 
 
 def check_module_size():
-    for name in ("board_status", "board_log", "board_model", "board_report"):
+    for name in ("board_status", "board_log", "board_model"):
         size = os.path.getsize(os.path.join(M, name + ".py"))
         need(size < 18432, "%s.py is %d bytes, not under 18,432" % (name, size))
     spec = importlib.util.spec_from_file_location("bs_by_path", os.path.join(M, "board_status.py"))
@@ -607,7 +607,7 @@ def check_module_size():
     top = os.path.join(M, "..", "..", "..")
     deps = subprocess.run([sys.executable, os.path.join(top, "skills/workflow-regression/scripts/lanes_cli.py"), "deps", "dev/toy/test-estimates.sh"],
                           cwd=top, capture_output=True, text=True).stdout
-    need(all("scripts/%s.py" % n in deps for n in ("board_log", "board_model", "board_report")), "the test lanes follow the split: %s" % deps[:200])
+    need(all("scripts/%s.py" % n in deps for n in ("board_log", "board_model")), "the test lanes follow the split: %s" % deps[:200])
 
 
 def spread_history(repo, count, most):

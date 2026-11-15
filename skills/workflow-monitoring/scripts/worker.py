@@ -8,14 +8,13 @@ usage: worker.py <command> [options]
   loop SLUG -- COMMAND...   run the goal's agent command; when it ends, send the result back (watch.py and mend.py start this)
   report SLUG STATUS [--pr URL] [--words TEXT]
                             send a result back by hand: STATUS is merged, failed or waiting
-  met SLUG N [N...]         record that done lines N are met, (kept off the live board)
+  met SLUG N [N...]         record that done lines N are met (kept off the live board)
   cleanup [--dry-run]       delete the loop/* branches already merged into main that no worktree has checked out
                             (git branch -d, never a remote); health.py check names this as the fix
-  send SLUG TEXT            the operation session sends a worker an answer or follow-up; goal.py and flow.py print it
-                            to the worker's agent the next time they run, then file it away
+  send SLUG TEXT            send a worker an answer; goal.py and flow.py print it to its agent next run, then file it away
 
-A report is a prompt message in the run record's `report`: {"status", "pr", "text", "at"}. The board shows it, and a
-failed or waiting one stays at the top of Issues until the goal moves on. It never merges.
+A report is the run record's `report`: {"status", "pr", "text", "at"}. A failed or waiting one stays at the top of
+Issues until the goal moves on. It never merges.
 """
 import argparse
 import datetime
@@ -37,7 +36,7 @@ except ImportError:  # native Windows msvcrt byte-range locks under flock's name
     def _flock(handle, op):
         fd = handle if isinstance(handle, int) else handle.fileno()
         here = os.lseek(fd, 0, 1)
-        os.lseek(fd, 0x7FFFFFFF, 0)  # one byte far past any content: readers never block
+        os.lseek(fd, 0x7FFFFFFF, 0)  # one byte far past any content
         try:
             while True:
                 try:
@@ -108,8 +107,8 @@ def merged(url):
 
 
 def held_by_operation(state):
-    """Whether the operation holds the goal: held_at or hold_at (sessions.py report --hold) is stamped, or its run log's last hold entry (a session report that it
-    is held at or before a step) has no later step, bind or resume (board_log.holding). A held goal merges only on a go."""
+    """Whether the operation holds the goal: held_at or hold_at (sessions.py report --hold) is stamped, or its run log's last
+    hold entry has no later step, bind or resume (board_log.holding). A held goal merges only on a go."""
     import board_log
     paused = False
     for entry in state.get("log") or []:
@@ -118,9 +117,8 @@ def held_by_operation(state):
 
 
 def release_step(state):
-    """The release step is part of the goal: a worker that ended with its pull request waiting, where auto_merge is on,
-    gets merge.py run for it, so the goal is never left half done. It goes through merge.py, so merge.py's own lock and
-    queue cover it, and it skips a goal the operation holds (#3868)."""
+    """A worker that ended with its pull request waiting, where auto_merge is on, gets merge.py run for it (its own lock and
+    queue cover it), unless the operation holds the goal (#3868)."""
     tree = state.get("worktree") or ""
     try:
         with open(os.path.join(tree, ".loop", "config.json")) as handle:
@@ -174,8 +172,8 @@ def cmd_loop(args):
     found = TOKENS.findall(text)
     if found:
         state["tokens"] = dict(state.get("tokens") or {}, total=int(found[-1].replace(",", "")))
-    report = outcome(state, text)  # asks gh whether the pull request merged: slow, so reread before saving
-    fresh = load(args.slug) or state  # issue 159: a merge recorded from outside meanwhile is never overwritten
+    report = outcome(state, text)
+    fresh = load(args.slug) or state  # issue 159: a merge recorded meanwhile is never overwritten
     if (fresh.get("report") or {}).get("status") == "merged" or fresh.get("status") in ("merged",):
         report = fresh.get("report") or report
     elif fresh.get("status") != state.get("status") and fresh.get("status") not in ("running",):
@@ -229,10 +227,10 @@ def cmd_cleanup(args):
         name = "main"
     ref = "origin/" + name if git("rev-parse", "--verify", "--quiet", "origin/" + name) else name
     gone = 0
-    listed = subprocess.run(["git", "branch", "--merged", ref], capture_output=True, text=True).stdout  # git() strips the first line's indent
+    listed = subprocess.run(["git", "branch", "--merged", ref], capture_output=True, text=True).stdout
     for line in sorted(listed.splitlines()):
         branch = line[2:].strip()
-        if line.startswith("  ") and branch.startswith("loop/"):  # "*" and "+" mark a branch checked out somewhere
+        if line.startswith("  ") and branch.startswith("loop/"):
             if not args.dry_run and subprocess.run(["git", "branch", "-d", branch], capture_output=True).returncode:
                 print("KEPT %s: git would not delete it" % branch)
                 continue
@@ -267,7 +265,6 @@ def main():
     return globals()["cmd_" + args.cmd](args)
 
 
-
 def worker_line(slug):
     delivery = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts"))
     return "WORKER %s: run goal steps as LOOP_ROLE=worker python3 %s/goal.py ... (and flow.py, role.py lane)" % (slug, delivery)
@@ -279,7 +276,7 @@ def inside(folder, tree):
 
 
 def announce(g, args, tree, was, worker):
-    """Print the WORKER and WORKTREE lines for whoever binds to pass on (assign's message already carries them)."""
+    """Print the WORKER and WORKTREE lines for whoever binds to pass on."""
     attempt = (g.load(args.slug) or {}).get("attempt")
     lines = [worker_line(args.slug) + (" (attempt %s: pass --attempt %s to sessions.py report)" % (attempt, attempt) if attempt else "")]
     lines += ["WORKTREE %s: %s" % (args.slug, tree)] if tree else []
@@ -290,8 +287,7 @@ def announce(g, args, tree, was, worker):
 
 
 def self_id(args):
-    """`bind SLUG self`: the id of the session this runs in, from CLAUDE_CODE_HOST_SESSION_ID (issue 117); unset is a
-    usage error before any work."""
+    """`bind SLUG self`: the id from CLAUDE_CODE_HOST_SESSION_ID (issue 117); unset is a usage error."""
     if args.id != "self":
         return
     args.id = os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "").strip()
@@ -309,7 +305,7 @@ def cmd_bind(g, args):
     worker = os.environ.get("LOOP_ROLE") == "worker"
     g.graph.refuse(g.load(args.slug) or {})
     tree = (g.load(args.slug) or {}).get("worktree") or ""
-    for folder in [f for f in (args.cwd, os.getcwd() if worker else "") if f and tree]:  # a worker is checked where it runs
+    for folder in [f for f in (args.cwd, os.getcwd() if worker else "") if f and tree]:
         if not inside(folder, tree):
             sys.exit("REFUSED: session folder %s is outside the goal worktree %s. Fix: start or move the session in %s, "
                      "then bind again (CWD_OUTSIDE)" % (os.path.realpath(folder), tree, tree))
@@ -327,20 +323,20 @@ def cmd_bind(g, args):
         same = other.get("state") == "busy" and other.get("slug") == args.slug
         if state and same and (state.get("session") or {}).get("id") == args.id and state.get("status") in ("running", "waiting", "done"):
             print("BOUND %s to session %s (%s)" % (args.slug, args.id, other.get("name") or name))
-            return announce(g, args, tree, None, worker)  # both records already agree: nothing changes, bound_at stays
+            return announce(g, args, tree, None, worker)  # records agree: nothing changes
         if not same:
-            g.release(args.slug, found)  # a session the goal had before goes back to the pool
+            g.release(args.slug, found)
             found[args.id] = {"name": name, "slug": args.slug, "state": "busy", "since": g.now()}
             g.save_pool(found)
         if state:
             was = state.get("status")
-            if was in ("failed", "stopped") and not worker:  # the same fields as goal.py resume (guards.revive)
+            if was in ("failed", "stopped") and not worker:  # as goal.py resume
                 state.update(status="running", tries=0, refusals=0, finding="", waiting=None, note=None, report={})
             elif was in ("queued", "", None):
                 state.update(status="running", finding="", report={})
-            new = (state.get("session") or {}).get("id") != args.id or was in ("failed", "stopped")  # a new worker: next attempt
+            new = (state.get("session") or {}).get("id") != args.id or was in ("failed", "stopped")
             state.update(worker="session", worker_why="", session={"id": args.id, "name": name}, pid=None, bound_at=g.now(),
-                         attempt=int(state.get("attempt") or 0) + (1 if new else 0))  # an older attempt's report is not applied (114)
+                         attempt=int(state.get("attempt") or 0) + (1 if new else 0))
             state.pop("held_at", None)
             found[args.id]["attempt"] = state["attempt"]
             g.save_pool(found)
@@ -361,8 +357,8 @@ def tool(cfg):
     return [os.path.expanduser(str(part)) for part in found] if isinstance(found, list) and found else []
 
 
-HUNG = []  # set when a call times out: the tool is given up for the rest of this run
-LAST_ERROR = [""]  # the last call's failure: the tool's first stderr line, "cannot start", or "timed out"
+HUNG = []  # set when a call times out: the tool is given up for this run
+LAST_ERROR = [""]  # the last call's failure
 
 
 def timeout():
@@ -373,9 +369,9 @@ def timeout():
 
 
 def call(command, *args):
-    """One session tool call: its last output line, or None when it can't start or reach a session. A call past the
-    timeout (LOOP_SESSION_TIMEOUT, default 30 s) is killed with its process group, then the tool is given up for the
-    run (watch.py clears that each round). Output goes to a file, so a helper the tool leaves running can't hold it."""
+    """One session tool call: its last output line, or None when it can't start or reach a session. A call past
+    LOOP_SESSION_TIMEOUT (default 30 s) is killed with its process group; the tool is then given up for the run (watch.py
+    clears that each round). Output goes to a file, so a helper the tool leaves running can't hold it."""
     LAST_ERROR[0] = ""
     if HUNG:
         LAST_ERROR[0] = "the session tool timed out earlier in this run"
