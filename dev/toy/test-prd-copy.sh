@@ -240,6 +240,19 @@ open(p, "w").write(t)
 PY
 out=$(sync); grep -q "^MARKED Delivery: DEL-4" <<<"$out" && grep -qx -- "- DEL-4: \*\*Reviewed 2026-11-12\*\* It prints a mean too." $COPY && ok "the copy takes the source's Reviewed mark when the text is the same" || bad "mark: $out $(cat $COPY)"
 
+echo "== a copy from before the repo's layout is left as it was"
+printf -- '- LG-1: **Unreviewed** Old text.
+' > "$d/legacy.md"
+mkdir -p .loop/prd; printf '<!-- prd-sync: owned -->
+<!-- source: x -->
+- LG-1: Old text
+' > .loop/prd/Legacy.md; cp .loop/prd/Legacy.md "$d/legacy-before.md"
+printf 'Delivery	calc.py	mcp:notion:delivery-prd
+Legacy	calc.py	url:%s/legacy.md
+Home	README.md
+' "$dw" > .loop/docs.tsv
+out=$(sync); grep -q "^SKIPPED Legacy: its copy is from before the repo's layout" <<<"$out" && cmp -s .loop/prd/Legacy.md "$d/legacy-before.md" && ok "a copy from before the layout is skipped with the fix named, and left as it was" || bad "legacy: $out"
+
 echo "== a page with no source is left alone"
 out=$(env -u LOOP_PRD_READER $docs check 2>&1)
 grep -q "^<!-- prd:begin -->" $H && bad "Home got a block" || ok "a page with no source gets no block and no read"
