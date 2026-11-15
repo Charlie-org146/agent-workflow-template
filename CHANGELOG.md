@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.28.68 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.67 - 2026-11-15
 
 - Commit .claude/settings.json: .claude/ was ignored, so fresh checkouts failed the AUT-9 permissions check

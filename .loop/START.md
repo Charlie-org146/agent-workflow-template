@@ -106,7 +106,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
 | `template_version` | 0.27.29 |  |
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. |
-| `time_budget_minutes` | 120 | Active minutes before no new step starts; 0 is none. |
+| `time_budget_minutes` | 240 | Active minutes before no new step starts; 0 is none. |
 | `token_budget` | 3000000 | Tokens a goal may spend before no new step starts; 0 means none. |
 | `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
