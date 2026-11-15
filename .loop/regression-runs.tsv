@@ -147,7 +147,7 @@ done-line-rows-128	PASS	2026-11-12
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-12	
 estimates-shown	PASS	2026-11-12	
-every-row-described	PASS	2026-11-14	
+every-row-described	FAIL	2026-11-15	
 failed-waits-mender	PASS	2026-11-09	
 file-one-group	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 fixed-closes	PASS	2026-11-12	
@@ -440,7 +440,7 @@ restamp-marks-3867	PASS	2026-11-15
 restamp-wording-locked-3867	PASS	2026-11-15	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	PASS	2026-11-15	
+review-findings-skill-lines	FAIL	2026-11-15	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
