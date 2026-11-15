@@ -122,6 +122,9 @@ sys.path.insert(0, sys.argv[1]); import lane
 lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 0)
 held = json.load(open(sys.argv[2] + "/t4.qa-lane.job"))
 print("LIMIT %d %s" % (held["limit"], held.get("source")))
+for _ in range(600):  # let the lane end: its run goes on in this repo, and the next case sets up while it plans (#4373)
+    if lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 1)[0] != "running":
+        break
 PY
 echo '{"limit": 600}' > "$LOOP_FLOW"
 out=$(cat "$d/t4.out")
