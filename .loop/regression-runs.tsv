@@ -96,6 +96,7 @@ defect-wording	PASS	2026-11-12
 del1-new-here-main-refused	PASS	2026-11-14	
 del5-bump-set	PASS	2026-11-12	
 del5-docs-bump-minor	PASS	2026-11-15	
+del5-docs-patch-default	PASS	2026-11-15	
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
 del9-hooks	PASS	2026-11-12	
@@ -316,6 +317,7 @@ monitor-stray-runs-3862	PASS	2026-11-14
 narrow-root-172	PASS	2026-11-10	
 needs-you-stuck	PASS	2026-11-12	
 never-merges	PASS	2026-11-09	
+new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
 no-done-line-refused	PASS	2026-11-12	
 no-flow-refused	PASS	2026-11-12	
@@ -364,6 +366,8 @@ pr-body-criterion	PASS	2026-11-12
 pr-body-no-checks	PASS	2026-11-12	
 pr-body-no-home-3841	PASS	2026-11-14	
 pr-commit-scope	PASS	2026-11-11	
+pr-head-audit-passes-4208	PASS	2026-11-15	
+pr-head-audit-refuses-4208	PASS	2026-11-15	
 pr-in-milestone	PASS	2026-11-12	
 pr-moved-uncounted	PASS	2026-11-15	
 pr-needs-flow	PASS	2026-11-09	
