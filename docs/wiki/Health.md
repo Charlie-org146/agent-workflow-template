@@ -101,6 +101,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 | [aut-prompt-warns](Tests#t-aut-prompt-warns) | requirement | HLT-2 | Given an installed scheduled-task prompt that holds steps beyond the Runbook pointer, when health checks the Adoption group, then it warns. | not run |
 | [machine-local-health-warn](Tests#t-machine-local-health-warn) | requirement | HLT-2 | Given a red proof owed to another machine for 9 days, when health checks, then it warns and never fails. | not run |
 | [docs-release-scripts-under-19000](Tests#t-docs-release-scripts-under-19000) | requirement | HLT-2 | Given the workflow-docs and workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
+| [lean-reads-commands-sheet](Tests#t-lean-reads-commands-sheet) | requirement | HLT-2 | Given the usage-kept migration check, when it looks for the page rules, then it reads references/commands.md. | not run |
 | [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-12 |
 | [report-header](Tests#t-report-header) | requirement | HLT-3 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
 | [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |

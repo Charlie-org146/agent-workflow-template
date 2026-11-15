@@ -312,6 +312,7 @@
 | <a id="t-sync-accept-no-writer"></a>sync-accept-no-writer | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-no-gh"></a>sync-no-gh | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-docs-scripts-under-19000"></a>docs-scripts-under-19000 | requirement | DOC-1 | not run | - | local | 2026-11-15 |
+| <a id="t-template-in-commands"></a>template-in-commands | requirement | DOC-1 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
@@ -422,6 +423,7 @@
 | <a id="t-aut-prompt-warns"></a>aut-prompt-warns | requirement | HLT-2 | not run | - | local | 2026-11-13 |
 | <a id="t-machine-local-health-warn"></a>machine-local-health-warn | requirement | HLT-2 | not run | - | local | 2026-11-13 |
 | <a id="t-docs-release-scripts-under-19000"></a>docs-release-scripts-under-19000 | requirement | HLT-2 | not run | - | local | 2026-11-15 |
+| <a id="t-lean-reads-commands-sheet"></a>lean-reads-commands-sheet | requirement | HLT-2 | not run | - | local | 2026-11-15 |
 
 ## Monitoring
 
