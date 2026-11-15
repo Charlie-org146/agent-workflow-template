@@ -14,6 +14,7 @@ group=${1:-all}; case "$group" in all|refuse|allow|where) shift 2>/dev/null ;; *
 want() { [ "$group" = all ] || [ "$group" = "$1" ]; }
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_EDITOR=true GIT_TERMINAL_PROMPT=0; : > "$GIT_CONFIG_GLOBAL"
 export LOOP_PRIVATE_NAMES="$T/none"; printf '# comments only\n' > "$T/none"
 cp -R "$here/skills" "$T/skills"

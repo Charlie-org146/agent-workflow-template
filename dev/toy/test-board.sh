@@ -14,6 +14,7 @@ B="python3 $here/skills/workflow-monitoring/scripts/board.py"
 W="python3 $here/skills/workflow-monitoring/scripts/watch.py"
 P="python3 $here/skills/workflow-monitoring/scripts/board_page.py"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

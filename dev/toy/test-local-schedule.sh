@@ -25,6 +25,7 @@ want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 fresh() {  # a new temp HOME, schedule home, agents folder, fake gh and fake launchctl
   export HOME="$d/home$RANDOM"; mkdir -p "$HOME"
+  export USERPROFILE="$HOME"
   export LOOP_SCHEDULE_HOME="$HOME/sched" LOOP_AGENTS_DIR="$HOME/agents" LOOP_LAUNCHCTL="$here/dev/toy/fakegh/launchctl" LOOP_SCHEDULE_PROGRAM="$A"
   export FAKE_GH_DIR="$HOME/gh"; mkdir -p "$FAKE_GH_DIR"; export PATH="$here/dev/toy/fakegh:$ORIG_PATH"
   unset LOOP_REPO_VISIBILITY FAKE_GH_OFFLINE FAKE_GH_PRIVATE LOOP_SCHEDULE_PLATFORM LOOP_TICK_MINUTES LOOP_TICK_TOTAL_MINUTES

@@ -19,6 +19,7 @@ T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 S="$here/skills/workflow-monitoring/scripts"
 W="python3 $S/watch.py"; SE="python3 $S/sessions.py"; LB="python3 $S/live_board.py"
 export HOME="$T/home" FAKE_AGENT="$T/fake" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME" "$FAKE_AGENT"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

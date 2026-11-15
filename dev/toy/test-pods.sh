@@ -72,7 +72,7 @@ claim alpha-app s1
 check "the same session claiming again leaves two ids" '[ "$(ids alpha-app)" = "s1 s2 " ]'
 check "the claim also reached every followed repo, keeping both sessions" '[ "$(ids beta-svc)" = "s1 s2 " ] && [ "$(ids gamma-lib)" = "s1 s2 " ]'
 mkdir -p "$T/home2/.workflow-loop"; printf '%s\n' "$T/delta-tool" > "$T/home2/.workflow-loop/repos"
-r "cd $T/delta-tool && HOME=$T/home2 python3 $SCRIPTS/operate.py claim --id s3"
+r "cd $T/delta-tool && HOME=$T/home2 USERPROFILE=$T/home2 python3 $SCRIPTS/operate.py claim --id s3"
 check "an independent second pod claims with no refusal and sees only its own repo" '[ $rc = 0 ] && '"$quiet"' && [ "$(ids delta-tool)" = "s3 " ] && [ "$(ids alpha-app)" = "s1 s2 " ]'
 claim delta-tool s4
 check "a session outside the first pod's repos claims too" '[ $rc = 0 ] && '"$quiet"
@@ -92,7 +92,7 @@ r "cd $T/alpha-app && LOOP_ROLE=worker python3 $SCRIPTS/operate.py claim --id s6
 check "a worker is still refused" '[ $rc != 0 ] && has "a worker can'"'"'t claim"'
 r "cd $T/alpha-app && python3 $SCRIPTS/checkin.py"
 check "the check-in runs for the first pod" '[ $rc = 0 ] && has Dependencies && has "Needs you" && ! has Traceback'
-r "cd $T/delta-tool && HOME=$T/home2 python3 $SCRIPTS/checkin.py"
+r "cd $T/delta-tool && HOME=$T/home2 USERPROFILE=$T/home2 python3 $SCRIPTS/checkin.py"
 check "and for the second pod" '[ $rc = 0 ] && has Dependencies && ! has Traceback'
 r "cd $T/beta-svc && CLAUDE_SESSION_ID=s7 python3 $SCRIPTS/operate.py run --once"
 check "operate.py run in a repo another session governs is not refused" '! has REFUSED'
@@ -219,14 +219,14 @@ if want twopods; then
 echo "== MON-13 and MON-15: two independent pods on one repo"
 mkdir -p "$T/homeA/.workflow-loop" "$T/homeB/.workflow-loop"; printf '%s\n' "$T/beta-svc" > "$T/homeA/.workflow-loop/repos"
 echo '{"auto_merge": true}' > "$T/alpha-app/.loop/config.json"; rm -f "$T/alpha-app/.git/loop/operation.id"
-r "cd $T/alpha-app && HOME=$T/homeA python3 $SCRIPTS/operate.py claim --id pod-a"; ca=$out; rca=$rc
-r "cd $T/alpha-app && HOME=$T/homeB python3 $SCRIPTS/operate.py claim --id pod-b"
+r "cd $T/alpha-app && HOME=$T/homeA USERPROFILE=$T/homeA python3 $SCRIPTS/operate.py claim --id pod-a"; ca=$out; rca=$rc
+r "cd $T/alpha-app && HOME=$T/homeB USERPROFILE=$T/homeB python3 $SCRIPTS/operate.py claim --id pod-b"
 check "both pods claim the one repo: nothing refuses or warns, both ids are kept" '[ $rca = 0 ] && [ $rc = 0 ] && ! grep -qiE "REFUSED|WARN|already|replaced" <<<"$ca$out" && grep -qx pod-a "$T/alpha-app/.git/loop/operation.id" && grep -qx pod-b "$T/alpha-app/.git/loop/operation.id"'
 own alpha-app api pod-a failed; own alpha-app web pod-b failed; own alpha-app m1 pod-a done 5; own alpha-app m2 pod-b done 6
 ra=$(fp alpha-app api); rw=$(fp alpha-app web)
-r "cd $T/alpha-app && HOME=$T/homeA LOOP_POD_ID=pod-a python3 $SCRIPTS/checkin.py"
+r "cd $T/alpha-app && HOME=$T/homeA USERPROFILE=$T/homeA LOOP_POD_ID=pod-a python3 $SCRIPTS/checkin.py"
 check "pod-a's check-in shows its own goal plain and the other's as owned by pod-b" 'has "web owned by pod-b" && has api && ! has "api owned by"'
-r "cd $T/alpha-app && HOME=$T/homeB LOOP_POD_ID=pod-b python3 $SCRIPTS/checkin.py"
+r "cd $T/alpha-app && HOME=$T/homeB USERPROFILE=$T/homeB LOOP_POD_ID=pod-b python3 $SCRIPTS/checkin.py"
 check "pod-b's shows the reverse" 'has "api owned by pod-a" && ! has "web owned by"'
 as pod-a "python3 $SCRIPTS/operate.py send api hi"; ok1=$rc; o1=$out
 as pod-a "python3 $SCRIPTS/operate.py send web hi"

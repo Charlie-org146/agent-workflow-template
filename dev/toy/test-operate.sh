@@ -21,6 +21,7 @@ M="$here/skills/workflow-monitoring/scripts"; D="$here/skills/workflow-delivery/
 W="python3 $M/watch.py"; OP="python3 $M/operate.py"; BO="python3 $M/board.py"; BA="python3 $M/batch.py"
 goal="env LOOP_ROLE=worker python3 $D/goal.py"; F="env LOOP_ROLE=worker python3 $D/flow.py"
 export HOME="$T/home" FAKE_AGENT="$T/fake" FAKE_GH_DIR="$T/gh" GOAL="$D/goal.py"; mkdir -p "$HOME" "$FAKE_AGENT"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

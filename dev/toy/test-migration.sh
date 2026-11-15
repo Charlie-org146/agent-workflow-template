@@ -25,6 +25,7 @@ want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 ORIG_PATH="$PATH"
 fresh() {  # a new temp HOME, schedule home, fake gh and fake launchctl; the test-only overrides are set here
   export HOME="$d/home$RANDOM"; mkdir -p "$HOME"
+  export USERPROFILE="$HOME"
   export LOOP_SCHEDULE_HOME="$HOME/sched" LOOP_AGENTS_DIR="$HOME/agents" LOOP_LAUNCHCTL="$here/dev/toy/fakegh/launchctl" LOOP_SCHEDULE_PROGRAM="$HEALTH/automation.py"
   export LOOP_SCHEDULE_PLATFORM=darwin LOOP_TEST=1 LOOP_INSTALLED_VERSION=1.0.0 FAKE_GH_PRIVATE=true
   export FAKE_GH_DIR="$HOME/gh"; mkdir -p "$FAKE_GH_DIR"; export PATH="$here/dev/toy/fakegh:$ORIG_PATH"

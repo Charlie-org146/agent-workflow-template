@@ -13,6 +13,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 d=$(mktemp -d); toy_on_exit 'chmod -R u+w "$d" 2>/dev/null; rm -rf "$d"'
 export HOME="$d/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 printf '# a toy: no private names\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
 no() { echo "FAIL ${only:-setup-adopt}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }

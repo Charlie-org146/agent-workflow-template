@@ -12,6 +12,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 T=$(mktemp -d)
 export HOME="$T/home" LOOP_BOARD_HEALTH=green PYTHONDONTWRITEBYTECODE=1 PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
+export USERPROFILE="$HOME"
 mkdir -p "$HOME" "$T/gh"
 cat > "$T/checks.py" <<'PY'
 import contextlib, datetime, importlib.util, io, json, math, os, re, shutil, statistics, subprocess, sys, tempfile, time
