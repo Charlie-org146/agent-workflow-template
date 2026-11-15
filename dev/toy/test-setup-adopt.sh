@@ -25,14 +25,14 @@ mk() { # mk NAME: a toy repo with a code folder and a test, at $d/NAME/repo
   mkdir -p engine; printf 'def run():\n    return 1\n' > engine/core.py
   git add -A; git commit -qm "Code folder"
 }
-state() { # a hash of the tree, the index, the branches, the stash and the home folder
+state() { # a hash of the tree, the index, the branches, the stash and the home folder (not gh's own state: the CLI writes its device-id there on a first run)
   (cd "$1" && { git rev-parse HEAD; git branch -a; git stash list; git write-tree; git status --porcelain=v2 --untracked-files=all
     find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; } | shasum
-   find "$HOME" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum) | tr -d ' \n-'
+   find "$HOME" -path "$HOME/.local/state/gh" -prune -o -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum) | tr -d ' \n-'
 }
 snap() { # the same facts as state, as text, so a failure can show what changed
   (cd "$1" && { git rev-parse HEAD; git branch -a; git stash list; git write-tree; git status --porcelain=v2 --untracked-files=all
-    find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; }; find "$HOME" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null)
+    find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; }; find "$HOME" -path "$HOME/.local/state/gh" -prune -o -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null)
 }
 tracked() { git ls-tree -r --name-only "$1"; }
 
