@@ -85,8 +85,6 @@ sys.dont_write_bytecode = True
 import narrow  # noqa: E402
 
 check("a text that imports a deleted module names it, and a longer module name does not",
-      narrow.names("from a import b
-import os, gone
-", "x/gone.py") and not narrow.names("import gonex
-", "x/gone.py"))
+      narrow.names("from a import b" + chr(10) + "import os, gone" + chr(10), "x/gone.py")
+      and not narrow.names("import gonex" + chr(10), "x/gone.py"))
 sys.exit(1 if fails else 0)
