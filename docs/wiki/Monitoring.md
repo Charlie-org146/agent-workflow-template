@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde98a8 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=b18c582c N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept merge-unblock -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.

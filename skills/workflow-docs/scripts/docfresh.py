@@ -50,11 +50,14 @@ def restamp(root, pages, slug):
             continue
         line, why = prd.review_of(text, rule)
         match = prd.REVIEW.match(KEPT.sub("", line or ""))
-        now = prd.prints(criteria.sections(text), rule)
-        if why or not match or not match.group(3) or [k for k, g in zip(prd.KEYS, match.group(3, 4, 5, 6)) if now[k] != g]:
-            continue
+        parts = criteria.sections(text)
+        now = prd.prints(parts, rule)
+        moved = [k for k, g in zip(prd.KEYS, match.group(3, 4, 5, 6)) if now[k] != g] if match and match.group(3) else ["?"]
+        if why or not match or moved not in ([], ["R"]) or (moved and not __import__("audit").owned(root, rel, dict(parts), rule)):
+            continue  # a moved R is another goal's owner-reviewed line, which relock accepts (DOC-2)
+        stamp = "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS))
         with open(os.path.join(root, rel), "w", newline="") as handle:
-            handle.write(prd.set_review(text, KEPT.sub("", line) + " <!-- kept %s -->" % slug))
+            handle.write(prd.set_review(text, stamp + " <!-- kept %s -->" % slug))
         done.append(page)
     if done:
         log = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir")), "loop")
