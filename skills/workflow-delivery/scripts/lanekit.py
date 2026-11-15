@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
-"""The lane's kit, imported by lane.py and goal.py; not a command. Five parts:
-
-1. Copies of the slots.py pieces lane.py uses (EXIT_WAIT, EXIT_STALE, POLL, flow_file, time_limit, lanes_dir, port_base,
-   last_change, lane_limit, timeout_line, rows_line and their helpers): a skill imports only its own scripts. Each copy
-   (COPIED) must match workflow-regression/scripts/slots.py exactly; dev/toy/test-lane-control.sh fails on drift.
-2. The one commit a lane may make before it starts (prep, generated): the re-rendered wiki Tests tables and the run
-   dates they come from, as `git commit --only` of those paths (60 s timeout). Any other change refuses with LANE_DIRTY;
-   a refused or hung commit unstages and starts nothing (LANE_PREP_FAILED).
-3. What goal.py pr does after its lane passes, before it pushes (record(state, base)): issue states (`tests.py issues
-   --write`, 120 s), run results merged into .loop/regression-runs.tsv (`lanes_cli.py merge-runs`), one commit of
-   those two files with the Tests tables re-rendered, then state["pr_lane"], ["pr_head"] and ["pr_base"] for
-   merge.py's HEAD_MOVED and BASE_MOVED checks. Messages: workflow-regression/references/commands.md.
-4. The step budgets: step_budget_minutes (default 30) bounds a review or ship step, test_budget_minutes (15) a test
-run; neither goes under 15; budget_hits in the run file names what a stopped step left.
-5. Who may signal a lane: pstart/same (a pid counts only while its start time matches the stored one), audit
-(runs/kills.log, a line per signal sent) and died/death (LANE_DIED names the signal that ended a lane).
+"""The lane's kit, imported by lane.py and goal.py; not a command. Parts:
+1. Copies of the slots.py pieces lane.py uses (COPIED, flow_file ... rows_line): each must match
+   workflow-regression/scripts/slots.py exactly; dev/toy/test-lane-control.sh fails on drift.
+2. The one commit a lane may make before it starts (prep, generated): re-rendered Tests tables and run dates, else LANE_DIRTY;
+   a refused or hung commit starts nothing (LANE_PREP_FAILED).
+3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, then pr_lane, pr_head
+   and pr_base for merge.py's checks.
+4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a stopped step left.
+5. Who may signal a lane: pstart/same, audit (runs/kills.log) and died/death (LANE_DIED).
 """
 import glob
 import json
@@ -29,21 +22,21 @@ import proctree
 from proctree import pstart  # noqa: F401
 try:
     import fcntl
-except ImportError:  # Windows: msvcrt locks
+except ImportError:
     import msvcrt
     import types
 
     def _flock(handle, op):
         fd = handle if isinstance(handle, int) else handle.fileno()
         here = os.lseek(fd, 0, 1)
-        os.lseek(fd, 0x7FFFFFFF, 0)  # one far byte: readers never block
+        os.lseek(fd, 0x7FFFFFFF, 0)
         try:
             while True:
                 try:
                     return msvcrt.locking(fd, msvcrt.LK_UNLCK if op & 8 else msvcrt.LK_NBLCK, 1)
                 except OSError:
                     if op & 8:
-                        return  # not held: no-op
+                        return
                     if op & 4:
                         raise BlockingIOError("locked")
                     time.sleep(0.05)
@@ -52,7 +45,6 @@ except ImportError:  # Windows: msvcrt locks
 
     fcntl = types.SimpleNamespace(LOCK_SH=1, LOCK_EX=2, LOCK_NB=4, LOCK_UN=8, flock=_flock)
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -61,9 +53,9 @@ NOTHING = "the lane committed and pushed nothing"
 BOOKKEEPING = (".loop/regression-runs.tsv", ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
 FILES = (".loop/regression-issues.tsv", ".loop/regression-runs.tsv")
 EXIT_WAIT, EXIT_STALE, POLL = 4, 5, 2.0
-EXIT_PREP = 125  # a lane stopped at its preparation budget, before any row
+EXIT_PREP = 125
 TERMINAL = ("pass", "fail")
-COPIED = ('flow_file', '_flow', 'time_limit', 'lanes_dir', 'check', '_open', 'port_base', 'last_change', 'lane_limit', 'timeout_line', 'rows_line')  # from slots.py, kept identical
+COPIED = ('flow_file', '_flow', 'time_limit', 'lanes_dir', 'check', '_open', 'port_base', 'last_change', 'lane_limit', 'timeout_line', 'rows_line')
 
 
 def flow_file():
@@ -97,7 +89,7 @@ def lanes_dir():
 def check(pool):
     """Create the pool 0700; refuse one that isn't yours or that others can write (OSError names why)."""
     os.makedirs(pool, mode=0o700, exist_ok=True)
-    if os.name == "nt":  # no uid or group bits: the pool is in the user's own profile, private by its ACL
+    if os.name == "nt":
         return
     info = os.stat(pool)
     if info.st_uid != getattr(os, "getuid", lambda: 0)() or info.st_mode & 0o022:
@@ -144,7 +136,6 @@ def timeout_line(text, why, held):
 
 
 def budget_note(text, base, name):
-    """The BUDGET line of a run that stopped at its test budget (kept on the goal's record), else ''."""
     cut = re.findall(r"^BUDGET (\d+) min: .*?LEFT \d+ to the scheduled full suite: (.*)$", text, re.M)
     if not cut:
         return ""
@@ -163,7 +154,6 @@ def rows_line(text, ran, log):
         count, parts, reused, max(int(count) - ran, 0), loose, log)
 
 
-# Small lane helpers (moved from lane.py to keep it under the size cap).
 
 def mtime(path):
     try:
@@ -176,7 +166,7 @@ def drop(*paths):
     for path in paths:
         try:
             os.remove(path)
-        except (FileNotFoundError, TypeError):  # another poller took it first, or no path
+        except (FileNotFoundError, TypeError):
             pass
 
 
@@ -189,7 +179,6 @@ def read_json(path):
 
 
 def set_last(path, attempt, **fields):
-    """Write .last under the lane's lock; pass and fail are terminal for their attempt and never replaced."""
     with open(path + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         old = read_json(path) or {}
@@ -203,11 +192,8 @@ def set_last(path, attempt, **fields):
         return data
 
 
-# Prep budget (REG-7, DEL-8): Tests-table prep, planning and slot wait share prep_budget_minutes. lane-exec writes a
-# `.times` record; lane.py's finalize reads it, names the parts on each LANE line, and on a cut prints LANE_PREP_BUDGET.
 
 def holders(pool):
-    """Labels of the lanes holding slots now, for the cut line."""
     out = []
     for path in sorted(glob.glob(os.path.join(pool or "", "slot-*"))):
         label = (read_json(path) or {}).get("label")
@@ -217,20 +203,17 @@ def holders(pool):
 
 
 def timing(held, rc):
-    """(plan, wait, cut) seconds and part from the lane child's one .times record; zeros when absent or malformed."""
     data = read_json(rc + ".times") or {}
     num = lambda key: float(data[key]) if isinstance(data.get(key), (int, float)) and not isinstance(data.get(key), bool) else 0.0
     return num("plan"), num("wait"), str(data.get("cut") or "")
 
 
 def before_rows(held, plan, wait):
-    """The LANE line's before-rows part (appended after the existing text): prep, planning and slot wait seconds."""
     note = "; before rows: prep %ds, planning %ds, slot wait %ds" % (held.get("prep_s") or 0, plan, wait)
     return note + ("; LOOP_PREP_BUDGET in effect" if held.get("override") else "")
 
 
 def cut_line(name, held, plan, wait, part):
-    """The LANE_PREP_BUDGET text: which part ran long, all three parts, the one shared budget, who holds the slots."""
     got = ", ".join(holders(held.get("pool"))) or "none"
     return ("LANE_PREP_BUDGET: the %s lane used its %s preparation budget before any row ran: %s ran long (prep %ds, "
             "planning %ds, slot wait %ds; the three share one budget); slots held by: %s; no row ran, %s beyond the prep "
@@ -241,19 +224,16 @@ def cut_line(name, held, plan, wait, part):
 
 
 def prep_hit(base, name, held, plan, wait, part):
-    """Record the cut on the goal's run file (kind prep), so the board and health list it with the part."""
     left = "%s ran long (prep %ds, planning %ds, slot wait %ds)" % (part or "preparation", held.get("prep_s") or 0, plan, wait)
     hit(os.path.dirname(base), os.path.basename(base)[:-len(".%s-lane" % name)], name, "prep",
                round(held.get("budget", 0) / 60), left)
 
 
 def same(pid, start):
-    """pid still began at start; with none stored it is never ours to signal."""
     return bool(start) and pstart(pid) == start
 
 
 def audit(runs, who, pid, why):
-    """One line per signal the loop sends: a lane that dies traces to it, or shows there was none."""
     with open(os.path.join(runs, "kills.log"), "a") as handle:
         handle.write("%s %s -> %s (%s): %s\n" % (time.strftime("%FT%T"), who, pid, pstart(pid), why))
 
@@ -263,7 +243,6 @@ def died(log, sig=""):
 
 
 def death(base, log, sig=""):
-    """A lane that ended with no exit status, or was signalled from outside: LANE_DIED, naming the signal."""
     return "fail", died(log, sig), []
 
 
@@ -279,7 +258,6 @@ def running_line(held, other=None):
     return "RUNNING: the regression lane is running; run this same command again"
 
 
-# The lane's prep commit (was tables.py).
 
 def git(*args):
     return subprocess.run(["git"] + list(args), capture_output=True, text=True)
@@ -291,7 +269,6 @@ def dirty():
 
 
 def generated(cfg):
-    """The dirty paths a lane may leave or commit before it starts: rendered Tests sections and the full Tests page."""
     return [p for p in dirty() if is_page(p, cfg) and tests_only(p)]
 
 
@@ -300,8 +277,6 @@ def is_page(path, cfg):
 
 
 def tests_only(path):
-    """A page whose edits are all in its ## Tests section (what criteria.py renders) is a prep path; so is the full Tests
-    page (Tests.md), which render writes whole (DOC-10)."""
     if os.path.basename(path) == "Tests.md":
         return True
     now = open(path).read() if os.path.exists(path) else None
@@ -312,16 +287,14 @@ def tests_only(path):
 
 
 def outside(text):
-    """A page without its ## Tests section (from that heading to the next ## heading): what a render never changes."""
     found = re.search(r"^## Tests[ \t]*$", text, re.M)
     if not found:
-        return None  # a page with no Tests section: only an identical page is unchanged
+        return None
     rest = re.search(r"^## ", text[found.end():], re.M)
     return text[:found.start()] + (text[found.end() + rest.start():] if rest else "")
 
 
 def prep(top, cfg, log):
-    """Re-render the Tests tables and commit them with the run dates (or nothing). Returns (line, refusal)."""
     criteria = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-docs", "scripts", "criteria.py"))
     for path in dirty():
         if not (is_page(path, cfg) and tests_only(path)):
@@ -342,7 +315,7 @@ def prep(top, cfg, log):
         return "", None
     proc = subprocess.Popen(["git", "commit", "--only", "-q", "-m", "Lane: re-render the Tests tables", "--"] + paths,
                             cwd=top, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=subprocess.DEVNULL,
-                            start_new_session=True)  # its own group: a hung hook's children die with it
+                            start_new_session=True)
     try:
         out, err = proc.communicate(timeout=60)
         why = (err or out).strip().splitlines()[-1:] if proc.returncode else None
@@ -350,7 +323,7 @@ def prep(top, cfg, log):
         proctree.kill(proc.pid)
         out, err = proc.communicate()
         lock = os.path.join(top, git("rev-parse", "--git-path", "index.lock").stdout.strip())
-        if os.path.exists(lock):  # the commit we killed held it; left behind it blocks every later commit
+        if os.path.exists(lock):
             os.remove(lock)
         why = ["timed out after 60s"]
     if why is not None:
@@ -363,16 +336,13 @@ def prep(top, cfg, log):
     return "LANE_PREP: re-rendered the Tests tables (commit %s)" % git("rev-parse", "--short", "HEAD").stdout.strip(), None
 
 
-# goal.py pr's bookkeeping (was prsteps.py).
 
-# ---- the time budgets of the loop's steps (was budget.py)
 FLOOR = 15
 DEFAULTS = {"step_budget_minutes": 30, "test_budget_minutes": 15, "prep_budget_minutes": 15}
 LEFT = re.compile(r"^\W*BUDGET:\s*left:\s*(.+)$", re.M | re.I)
 
 
 def minutes(cfg, key):
-    """The setting in whole minutes; exits with a fix line when it is under the 15-minute floor or not a whole number."""
     value = cfg.get(key, DEFAULTS[key])
     if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
         sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
@@ -381,8 +351,6 @@ def minutes(cfg, key):
 
 
 def prep_seconds(cfg):
-    """(seconds, override) a lane may spend before its first row: prep_budget_minutes, or the test-only LOOP_PREP_BUDGET
-    (whole seconds, never read from config), which the lane line then says is in effect."""
     value = os.environ.get("LOOP_PREP_BUDGET", "")
     if value.isdigit() and int(value) > 0:
         return int(value), True
@@ -390,24 +358,20 @@ def prep_seconds(cfg):
 
 
 def label(hit):
-    """What a budget hit was: a step, preparation (before a lane's first row) or tests."""
     return {"step": "step", "prep": "preparation"}.get(hit.get("kind"), "tests")
 
 
 def seconds(cfg, key, limit=0):
-    """Seconds a step or run may take: the budget, or the flow file's own limit when that is shorter."""
     budget = minutes(cfg, key) * 60
     return min(budget, limit) if limit else budget
 
 
 def left_of(text):
-    """What a reply says it left, from its last `BUDGET: left: ...` line, else ''."""
     found = LEFT.findall(text or "")
     return " ".join(found[-1].split())[:300] if found else ""
 
 
 def hit(runs, slug, step, kind, limit, left):
-    """Record that STEP (kind step: the step itself, test: its test run) reached its budget of LIMIT minutes and what it left."""
     path = os.path.join(runs, slug + ".json")
     try:
         with open(path) as handle:
@@ -422,12 +386,55 @@ def hit(runs, slug, step, kind, limit, left):
 
 
 def reached(state, step):
-    """Whether this goal's step was stopped at its step budget (recorded by flow.py, never by the step's own words)."""
     return any(h.get("step") == step and h.get("kind") == "step" for h in state.get("budget_hits") or [])
 
 
 def lines(state):
-    """One line per budget hit of a run record, for the board and for health."""
     return ["%s: %s hit its %s-minute budget; left: %s" % (
         state.get("slug", "?"), "%s %s" % (h.get("step"), label(h)), h.get("minutes"),
         h.get("left")) for h in state.get("budget_hits") or [] if isinstance(h, dict)]
+
+
+def mend(git, files, base):
+    top, tsv = git("rev-parse", "--show-toplevel").stdout.strip(), (".loop/regression.tsv", ".loop/regression-runs.tsv")
+    page = lambda f: os.path.basename(f) == "Tests.md" and os.path.dirname(f).endswith("wiki")
+    criteria = os.path.join(HERE, "..", "..", "workflow-docs", "scripts", "criteria.py")
+    if not files or not all(f in tsv or page(f) for f in files):
+        return False
+    if any(page(f) for f in files) and not (os.path.exists(top + "/.loop/docs.tsv") and os.path.exists(criteria)):
+        return False
+    for f in files:
+        s = [git("show", ":%d:%s" % (n, f)) for n in (1, 2, 3)]
+        if s[1].returncode or s[2].returncode:
+            return False
+        if f not in tsv:
+            git("checkout", "--theirs", "--", f)
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            for n, r in zip("abc", (s[1], s[0], s[2])):
+                open(tmp + "/" + n, "w").write(r.stdout if not r.returncode else "")
+            union = subprocess.run(["git", "merge-file", "-p", "--union"] + [tmp + "/" + n for n in "abc"],
+                                   capture_output=True, text=True).stdout
+        rows = lambda t: {l.split("\t")[0]: l for l in t.splitlines() if l and l[0] != "#"}
+        b, o, t = rows(s[0].stdout if not s[0].returncode else ""), rows(s[1].stdout), rows(s[2].stdout)
+        if any(k not in o or k not in t for k in b):
+            return False
+        out, at = [], {}
+        for line in union.splitlines():
+            k = line.split("\t")[0]
+            if line[0:1] == "#" or not line or k not in at:
+                at[k] = len(out)
+                out.append(line)
+            elif line != out[at[k]]:
+                if f != tsv[1] or line.split("\t")[2:3] == out[at[k]].split("\t")[2:3]:
+                    return False
+                out[at[k]] = max(line, out[at[k]], key=lambda l: l.split("\t")[2:3])
+        open(top + "/" + f, "w").write("\n".join(out) + "\n")
+    if any(page(f) for f in files):
+        if subprocess.run([sys.executable, criteria, "render", "--tables"], cwd=top, capture_output=True).returncode:
+            return False
+        git("add", "-u")
+    if git("add", "--", *files).returncode or git("commit", "--no-edit", "-q").returncode:
+        return False
+    print("MENDED %s: rows unioned, Tests.md taken from %s and re-rendered" % (", ".join(files), base))
+    return True

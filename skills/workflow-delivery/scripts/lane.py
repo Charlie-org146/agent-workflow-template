@@ -36,7 +36,6 @@ flow_spec = lanekit._flow  # the flow file as a dict
 
 
 def lane_checks(top, contexts):
-    """The required checks the lane really runs (tests.lane_checks, #3840)."""
     import importlib.util as u
     sys.path.insert(0, REG)
     spec = u.spec_from_file_location("tests", os.path.join(REG, "tests.py"))
@@ -54,7 +53,6 @@ def lane_text():
 
 
 def kill(pid, start="", base="", why=""):
-    """Stop pid's tree while it still began at start; audited in runs/kills.log."""
     if not lanekit.same(pid, start):
         return
     lanekit.audit(os.path.dirname(base) or ".", os.path.basename(base), pid, why)
@@ -62,7 +60,6 @@ def kill(pid, start="", base="", why=""):
 
 
 def deadline(held):
-    """The liveness clock: the limit from the started marker, 4x while queued or planning."""
     if "markers" not in held:
         return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
     began = mtime(held["rc"] + ".started")
@@ -77,7 +74,6 @@ def deadline(held):
 
 
 def live(held):
-    """A lane job running: no exit status yet, inside its deadline."""
     return not os.path.exists(held["rc"]) and time.time() < deadline(held)[0] + 60 and alive(held["pid"], held.get("pstart", ""))
 
 
