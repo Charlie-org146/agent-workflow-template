@@ -13,7 +13,7 @@ generic, only thermis opts in, an inconsistency is reported and never overwritte
    proven behaviour.
 2. **A new generic module, `milestones.py`, that reuses DOC-17's parts and leaves its engine alone.** A milestone becomes an `id: text` pair
    (id = the milestone's title, text = `state | due YYYY-MM-DD`), so the existing pieces work as they are: `prd.read_link` reads the source,
-   `criteria.sha` and `criteria.put` write the agreed copy and baseline, `prd.out` posts through the fakeable `LOOP_GH` and `LOOP_PRD_WRITER`
+   `criteria.sha` and `criteria.put` write the agreed copy and baseline (`render.mirror_of` is not reused: it reads only ids like `AB-12`, so a small reader of the same file shape is written), `prd.out` posts through the fakeable `LOOP_GH` and `LOOP_PRD_WRITER`
    hooks, and `counting.ledger` keeps the posted deltas (key `milestones:TITLE`). Cost: one new file and about 90 lines that mirror the delta
    loop. Risk: the two loops drift; mitigated by one toy for each and by reusing the helpers.
 
@@ -43,3 +43,18 @@ generic, only thermis opts in, an inconsistency is reported and never overwritte
 ## Open questions
 - PENDING: DOC-17 is Reviewed and speaks only of PRDs. Milestone sync needs one sub-bullet (drafted in DECISIONS.md for the owner); the code and
   rows go in first, and the page changes only with the owner's words.
+
+## Changes after the independent review (all verified in the code by the reviewer)
+- **Reader:** a small `read_copy` in milestones.py (sync mark, `- TITLE: text` lines, the `.base` file), not `mirror_of`; the source page is parsed by the
+  module itself with `rsplit(": ", 1)`, not `entry.requirements` (which drops `|`). Duplicate titles on the page are SKIPPED, never collapsed.
+- **First run:** the baseline holds only titles whose text is equal on both sides, so a repo-only title reads "the repo" and a source-only title
+  "the source"; nothing is removed from either side on a first run.
+- **Absent equals closed:** a title absent on the source and closed on the repo is in step, so accepting `source` for a missing title clears the delta.
+- **Titles:** accept splits with `rpartition("=")` so a title may hold `=`, `:` or `|`; the `--open` print is left to audit.sync (it already lists every
+  ledger row, so milestones.sync prints nothing in `--open` mode), and a `milestones:` ledger row is ignored when no source is set.
+- **gh:** `gh api repos/{owner}/{repo}/milestones?state=all&per_page=100 --paginate`; a failed call or bad JSON prints `not connected` and never reads as an
+  empty repo; `due_on` is cut to its date, null is `-`; a milestone delta's issue is created with no `--milestone`.
+- **Size and package:** docs.py (20,414) and audit.py (20,447) have no room until scripts-b lands, so the `docs.py sync` call is built only after it
+  and main is merged in; the package is at 99 files and the goal wants 98 or fewer, so one new file needs the scripts trims to free two files first, else
+  the module folds into an existing docs script.
+- **Tests:** the generic-code row greps scripts for a page URL or a 32-hex id (the word Notion already appears in prd.py and the references).
