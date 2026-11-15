@@ -77,9 +77,6 @@ def unmet(goal, records, queued):
 
 
 def read_pool(path):
-    """The session pool as (entries, ""), or (None, reason) when it can't be trusted: unreadable, not JSON or not an
-    object. An entry that isn't an object, or a busy entry without a valid goal, is left out and kept in LAST_BAD
-    (pool.quarantine moves it to a side file). A missing file is an empty pool."""
     try:
         with open(path) as handle:
             found = json.load(handle)
@@ -138,10 +135,25 @@ def memory_room():
         return None
 
 
+def rank(needs, edges, live):
+    rows = []
+    for i, text in enumerate(needs):
+        key = re.split(r"[ :]", text, 1)[0]
+        held, todo = ([key] if key in edges else []), [key]
+        while todo:
+            cur = todo.pop()
+            for goal, deps in edges.items():
+                if cur in deps and goal not in held:
+                    held.append(goal)
+                    todo.append(goal)
+        tail = "; ".join(["holds up " + ", ".join(held[:4]) + (" and %d more" % (len(held) - 4) if len(held) > 4 else "") + " (%d goal%s)" % (
+            len(held), "" if len(held) == 1 else "s")] + ["on the critical path to the next release"] * (key in live)) if held else "blocks nothing"
+        rows.append((-len(held), -(key in live), i, "%s [%s]" % (text, tail), key if held else None))
+    rows.sort()
+    return [row[3] for row in rows], {row[4]: n for n, row in enumerate(rows, 1) if row[4]}
+
+
 def ready(goals, records, limit, taken=None, why=""):
-    """Split queued goals into (start, held). held is [(goal, reason)]; start never exceeds the free worker slots (limit 0: no limit).
-    taken (from assigned) adds one slot per goal a session holds with no run yet, and holds that goal: its session freezes it.
-    With why set and taken None (the pool can't be read), nothing starts: every goal is held with the fix."""
     if taken is None and why:
         return [], [(goal, pool_fix(why)) for goal in goals]
     queued = {goal["slug"] for goal in goals}
@@ -371,9 +383,6 @@ def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.p
 
 
 def merge_lock(common):
-    """Take <git common dir>/loop/merge.lock (created exclusively, holding the pid), waiting while its holder is alive and
-    its file younger than LOOP_MERGE_LOCK_SECONDS (default 1800); a dead or older holder is replaced by one atomic rename,
-    so two waiters never both take it. Released at exit if still ours."""
     path, told = os.path.join(common, "loop", "merge.lock"), False
     os.makedirs(os.path.dirname(path), exist_ok=True)
     while True:

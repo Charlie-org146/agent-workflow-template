@@ -46,17 +46,14 @@ def cell(text, size=48):
 
 
 def shown(run):
-    """A goal the check-in draws: a real record (goal and status), not stopped, not left (release: leave) (graph-times)."""
     return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
 
 
 def mood(run, state):
-    """A worker told to hold at pr reads silent: the map calls it holding, not stuck."""
     return "held" if state == "silent" and run.get("step") == "pr" else state
 
 
 def gather(root, at, stamp=None):
-    """One repo's state, read from its own .loop: name, root, cfg, folder, runs, found, why, taken, states, live, queue."""
     folder, cfg = lb.loop_dir(root), bs.read_json(os.path.join(root, ".loop", "config.json")) or {}
     runs = lb.load(root)
     found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
@@ -74,9 +71,7 @@ def gather(root, at, stamp=None):
                 states=states, live=live, queue=bs.queued(root, runs))
 
 
-def grouped(blocks, at=None):
-    """The Dependencies section: [(repo name, items)] as one `== name ==` block per repo (MON-14), then `Between repos`
-    for each `repo/slug` dependency, then the legend once. Every line is wrapped at board_lines.WIDTH."""
+def grouped(blocks, at=None, tags=None):
     out, edges, marks = [], [], {}
     for name, items in blocks:
         marks[name] = {item["slug"]: item.get("mark") for item in items}
@@ -85,6 +80,7 @@ def grouped(blocks, at=None):
         out += ["== %s ==" % (name if len(name) <= 54 else name[:51] + "...")]
         out += board_lines.render(local)[:-2] if items else ["- (none)"]
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
+        out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
         out += ["%s ~%s left" % (item["slug"], board_page.span(item["left"])) for item in items if item.get("left")]
         left = [item["left"] for item in items if item.get("left")]
         out += ["expected finish %s (about %s)" % ((at + datetime.timedelta(seconds=max(left))).astimezone().strftime("%H:%M"), board_page.span(max(left)))] if left and at else []
@@ -100,8 +96,6 @@ def grouped(blocks, at=None):
 
 
 def expected(root=None, at=None):
-    """[(repo name, slug)] of every goal the Dependencies section must draw: each live goal and each queued line of the
-    pod, read from the run records and queue files. The reply hook (missing, below) checks a reply against it."""
     root = bs.git("rev-parse", "--show-toplevel", cwd=root or None) or root
     at = at or datetime.datetime.now(datetime.timezone.utc)
     pod, here = [gather(root, at)], os.getcwd()
@@ -174,7 +168,9 @@ def render(root=None, at=None, stamp=None):
                       depends=[d for d in r.get("waits_on") or []], owner=graph.foreign(r),
                       left=bs.left_time(r, g["runs"], at)) for r in g["live"]]
         blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"]) for q in g["queue"]]))
-    out += ["", "Dependencies"] + grouped(blocks, at) + ["", "Needs you"]
+    out += ["", "Dependencies"]
+    spot = len(out)  # the graph goes here once Needs you is ranked and numbered
+    out += ["", "Needs you"]
     needs, readonly = [], []
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
@@ -235,6 +231,10 @@ def render(root=None, at=None, stamp=None):
         needs += [line for line in open(os.path.join(folder, "checkout-behind.txt")).read().splitlines()[:1] if line]
     except OSError:
         pass
+    keys = lambda name, slug: slug if name == mine["name"] else "%s/%s" % (name, slug)
+    edges = {keys(n, i["slug"]): [d if "/" in d else keys(n, d) for d in i["depends"]] for n, items in blocks for i in items}
+    needs, tags = graph.rank(needs, edges, {keys(n, i["slug"]) for n, items in blocks for i in items if i["mark"] != "queued"})
+    out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags})
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
     out += ["", "Coming up"] + ([operation] if operation else [])
@@ -258,7 +258,6 @@ NEXT = ("needs you", "coming up")
 
 
 def body(text):
-    """The text of the Dependencies section, fences included, or None when the reply has none."""
     lines, start = str(text or "").splitlines(), None
     for i, line in enumerate(lines):
         name = (HEAD.match(line) or [None, ""])[1].strip().lower()
@@ -270,7 +269,6 @@ def body(text):
 
 
 def blocks(section):
-    """{repo name: its text} for each `== name ==` block; the whole section under '' when it has none."""
     found, name = {"": []}, ""
     for line in section.splitlines():
         head = re.match(r"^\s*==\s*(.+?)\s*==\s*$", line)
@@ -279,8 +277,24 @@ def blocks(section):
     return {key: re.sub(r"-\s*\n\s*", "-", "\n".join(rows)) for key, rows in found.items()}  # a long name wraps at a hyphen
 
 
+def unranked(text):
+    items, inside = [], False
+    for line in str(text or "").splitlines():
+        name = (HEAD.match(line) or [None, ""])[1].strip().lower()
+        inside = name == "needs you" or (inside and name != "coming up")
+        if inside and re.match(r"\s*\d+\.\s", line):
+            items.append(line)
+        elif inside and items and name != "needs you" and not line.lstrip().startswith("-"):
+            items[-1] += " " + line.strip()
+    held = [re.search(r"holds up[^\[\]]*?\((\d+) goals?\)|blocks nothing", item, re.I) for item in items]
+    counts = [int(m.group(1) or 0) for m in held if m]
+    if not all(held):
+        return ["Needs you item %s does not say what it holds up, or 'blocks nothing' (MON-19)" % ", ".join(
+            str(n) for n, m in enumerate(held, 1) if not m)]
+    return [] if counts == sorted(counts, reverse=True) else ["Needs you is not sorted with the item holding up the most goals first (MON-19)"]
+
+
 def missing(text, cwd=None):
-    """['repo/slug', ...] of the goals the Dependencies section leaves out; [] when whole or when it cannot be told."""
     section = body(text)
     if section is None:
         return []  # the missing section is reported by the layout check

@@ -5,9 +5,10 @@ usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
        reply_hook.py check FILE|-  print what a reply is missing (exit 0 clean, 1 with problems, 2 unreadable)
        reply_hook.py status        say whether the hook is installed and on in this repo, and its recent let-throughs
 
-A check-in reply passes with one headline line (Machine and pod lines may follow), then the sections All sessions (a
-table), Dependencies (a graph with a `== repo ==` block per repo naming every goal, MON-14), Needs you (numbered questions
-with options and a recommended answer, or "Nothing needs you") and, last, Coming up, each with something under it.
+A check-in reply passes with one headline line (a Machine line and one line per other pod may follow), then the sections
+All sessions (a table), Dependencies (a graph with an `== repo ==` block per repo naming every goal, MON-14), Needs you
+(numbered items, most-blocking first, each saying what it holds up with a goal count, or "blocks nothing", MON-19; or
+"Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
 
 Only the operation session is checked: one named in <common>/loop/operation.id, or whose latest signal is an unrefused
 'operate.py run|claim'. A worker (a flow step, 'goal.py step|record|pr', or a cwd in <common>/loop/worktrees/) is never
@@ -45,7 +46,7 @@ COUNT = re.compile(r"\s*\(\s*\d+\s*\)$")
 MARKS = re.compile(r"[*#`_]")
 TEMPLATE = ("Write the check-in reply in this layout: one headline line; All sessions (one table: session, repo, what it "
             "is for, status, progress, time left, tokens left, latest); Dependencies (the drawn graph); Needs you (each "
-            "question numbered with its options and a recommended answer, or 'Nothing needs you'); and last, Coming up "
+            "item numbered, most-blocking first, saying what it holds up or 'blocks nothing', or 'Nothing needs you'); and last, Coming up "
             "(the next expected events and what the owner will need to do).")
 
 
@@ -318,10 +319,10 @@ def problems(text):
 def left_out(text, cwd):
     try:
         import checkin
-        gone = checkin.missing(text, cwd)
+        gone, wrong = checkin.missing(text, cwd), checkin.unranked(text)
     except Exception:
         return []
-    return ["Dependencies leaves out %s (MON-14)" % ", ".join(gone)] * bool(gone)
+    return ["Dependencies leaves out %s (MON-14)" % ", ".join(gone)] * bool(gone) + wrong
 
 
 def hook(payload):
