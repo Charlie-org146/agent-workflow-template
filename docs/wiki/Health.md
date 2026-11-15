@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept merge-unblock -->
 
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
