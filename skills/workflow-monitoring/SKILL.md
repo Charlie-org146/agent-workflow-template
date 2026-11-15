@@ -144,6 +144,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-monitoring dashboard` | `python3 scripts/monitor.py dashboard` |
 | `/workflow-monitoring met SLUG N` | `python3 scripts/worker.py met SLUG N` |
 | `/workflow-monitoring cleanup` | `python3 scripts/worker.py cleanup` |
+| `/workflow-monitoring selfcheck` | `python3 scripts/unattended.py selfcheck` (also `sends [add TO\|reset]`, `loop [created]`, `standing add\|check\|revoke`: MON-18) |
 | `/workflow-monitoring reply-check FILE` | `python3 scripts/reply_hook.py check FILE` |
 | `/workflow-monitoring reply-status` | `python3 scripts/reply_hook.py status` |
 | `/workflow-monitoring fill-pool ID...` | `python3 scripts/pool.py add ID...` |

@@ -15,6 +15,7 @@ do not fail the audit. It runs git and gh, and nothing else.
 import argparse
 import contextlib
 import io
+import json
 import os
 import re
 import subprocess
@@ -319,3 +320,64 @@ def sync(root, dry=False, texts=None):
                 print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
     print("SYNC: %d in step, %d drifted, %d not connected" % (steady, drifted, away))
     return 1 if dry and drifted else 0
+
+
+# --- AUT-9: each routine declares what it may do (python3 audit.py permissions write|check) ---
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
+
+
+def perm_write(root, dry):
+    table, bad = counting.perm_declared(root)
+    if bad:
+        print("\n".join(bad))
+        return 1
+    path = os.path.join(root, ".claude", "settings.json")
+    data = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError) as error:
+            print("REFUSED: .claude/settings.json is not readable JSON (%s). Nothing was written. Fix: repair it." % error)
+            return 1
+    if not isinstance(data, dict) or not isinstance(data.get("permissions", {}), dict):
+        print("REFUSED: .claude/settings.json has no permissions object I can extend. Nothing was written.")
+        return 1
+    block, added = data.setdefault("permissions", {}), 0
+    for mine in table.values():
+        for kind, rule, _ in mine:
+            held = block.setdefault(kind, [])
+            if not isinstance(held, list):
+                print("REFUSED: .claude/settings.json permissions.%s is not a list. Nothing was written." % kind)
+                return 1
+            if rule not in held:
+                held.append(rule)
+                added += 1
+    if dry or not added:
+        print("PERMISSIONS %s: %d rule(s) to add" % ("DRY RUN" if dry else "CURRENT", added))
+        return 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    print("PERMISSIONS WRITTEN: %d rule(s) in .claude/settings.json" % added)
+    return 0
+
+
+def perm_main(argv):
+    parser = argparse.ArgumentParser(prog="audit.py permissions", description=PERM_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("command", choices=("write", "check"))
+    parser.add_argument("--repo", default="")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    root = counting.perm_root_of(args.repo)
+    if args.command == "write":
+        return perm_write(root, args.dry_run)
+    findings = entry.perm_check(root)
+    print("\n".join(findings) if findings else "PERMISSIONS OK")
+    return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)

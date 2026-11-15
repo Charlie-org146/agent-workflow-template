@@ -366,6 +366,7 @@ def cmd_send(args):
         print("UNREACHED session %s for %s: the inbox carries it (%s)" % (sid, args.slug, LAST_ERROR[0]))
         return 1
     print("SENT to session %s (%s)" % (sid, (state.get("session") or {}).get("name")))
+    import unattended; unattended.sent(sid)  # MON-18: counts toward the app's 20-send cap
     return 0
 
 
