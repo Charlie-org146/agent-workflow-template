@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The goal dependency graph: which queued goals wait on which, and which may start. Shared by watch, monitor and board.
 
-A queue line may carry `depends: a, b` or `depends-on: a, b` (both spellings mean the same). A goal waits only on goals it depends on, and only until they are merged;
-sharing files is never a reason to wait (the later goal merges the base before its pull request). The only other limit
-is `parallel` in .loop/config.json (0 or unset: unlimited). A goal a worker session was handed before it was frozen
-(a busy entry in the session pool with no run yet) holds a slot too, and is never started a second time. Imported, not run.
+A queue line may carry `depends: a, b` or `depends-on: a, b`. A goal waits only on goals it depends on, until they are merged;
+sharing files is never a reason to wait. The only other limit is `parallel` in .loop/config.json (0 or unset: unlimited).
+A goal a worker session was handed before it was frozen (a busy pool entry with no run yet) holds a slot too, and is never
+started a second time. Imported, not run.
 """
 import atexit
 import datetime
@@ -110,8 +110,6 @@ def assigned(pool):
     return taken
 
 
-
-
 def parallel_of(cfg):
     """Workers allowed at once, read fresh from the config. 0, unset or unreadable means unlimited."""
     try:
@@ -169,7 +167,6 @@ def ready(goals, records, limit, taken=None, why=""):
     return start, held
 
 
-
 def clock(at):
     """HH:MM in the local time zone with its name; a platform with no zone name gets UTC+hhmm."""
     local = at.astimezone()
@@ -201,16 +198,15 @@ def flow(nodes):
     return ["flow (arrow = must finish before):"] + ["%s --> %s" % (label(dep), ", ".join(label(s) for s in waiting[dep])) for dep in sorted(waiting)]
 
 
-# One goal's state, decided once for every reader (issue 113), so held, freezing, silent and slot-holding mean the same
-# everywhere. Imported, not run.
+# One goal's state, decided once for every reader (issue 113). Imported, not run.
 #   classify(run, taken, at, cfg)  running, waiting, failed, stopped, held, silent, done, merged, retired or queued
 #   holds_slot(run, taken)         a live goal uses a worker slot: a pid, or a busy pool entry (issue 112)
-#   held(run, taken)               running with no worker: the pool is known, no busy session names it, no pid
+#   held(run, taken)               running with no worker: pool known, no busy session names it, no pid
 #   freezing(taken, on_disk)       pool entries handed a goal that has no run record yet
 #   silent_for(run, at)            seconds since the worker last spoke, or None
-#   stamp_held(runs, taken, at, folder) / with_held(runs, folder)  when each goal first read held, in <loop>/held.json
-# The pool is the busy map from graph.assigned (None when unreadable: then nothing is called held).
-# `silent_minutes` in .loop/config.json (default 30) is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
+#   stamp_held / with_held         when each goal first read held, in <loop>/held.json
+# `taken` is graph.assigned (None when unreadable: nothing is called held). `silent_minutes` in config (default 30)
+# is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
 
 def parse_at(text):
     """A recorded time as an aware UTC datetime (naive counts as UTC), or None."""
@@ -233,8 +229,6 @@ def silent_limit(cfg=None):
         return max(1, int((cfg or {}).get("silent_minutes") or 30)) * 60
     except (TypeError, ValueError):
         return 1800
-
-
 
 
 def held(run, taken):
@@ -339,9 +333,7 @@ def load_run(slug):
         return {}
 
 
-# Pods (MON-15) and the merge lock (MON-15): the one place every skill asks. goal.py and merge.py load this file by path
-# and carry on without it when workflow-monitoring isn't installed. Imported, not run.
-#
+# Pods and the merge lock (MON-15): goal.py and merge.py load this file by path and carry on without it. Imported, not run.
 #   pod_id()        $LOOP_POD_ID, else the operation session's own id ($CLAUDE_SESSION_ID); "" in a worker or with neither
 #   stamp(state)    record the caller's pod on a goal that has none; a goal with no pod belongs to no one
 #   foreign(state)  the owning pod's id when it is not the caller's (a worker never counts), else ""

@@ -27,16 +27,15 @@ import lanekit
 import proctree
 import role
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 STEPS = ("idea", "plan", "build", "review", "qa", "ship", "pr", "release")
-BUDGETED = ("review", "ship")  # the steps held to step_budget_minutes
-NEEDED = ("idea", "plan", "review", "qa", "ship")  # the others may stay unmapped: delivery runs them itself
+BUDGETED = ("review", "ship")
+NEEDED = ("idea", "plan", "review", "qa", "ship")
 FLOW_FILE = "~/.workflow-loop/flow.json"
-BUILTIN = "built-in"  # a step mapped to this runs delivery's own routine (references/commands.md, The built-in flow): no skill suite needed
+BUILTIN = "built-in"
 ROUTINES = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "references", "commands.md")
 LANE = ("The regression lane (label regression, command `{lane}`) already passed on this content: reuse that run "
         "through your own check of recorded test runs instead of running the suite again; if your own test step runs "
@@ -212,7 +211,7 @@ def start(args, runs, reply, job):
     command = step_command(spec, args.step)
     cfg = repo_config()
     state = role.goal_state(runs, args.slug)
-    fit.budget_stop(args.slug, state, runs, cfg)  # active minutes and tokens (#3878)
+    fit.budget_stop(args.slug, state, runs, cfg)
     if not shutil.which(command[0]):
         sys.exit("REFUSED: the flow's command %s isn't on this machine." % command[0])
     top = git("rev-parse", "--show-toplevel")
@@ -220,14 +219,14 @@ def start(args, runs, reply, job):
     if os.path.exists(reply):
         os.replace(reply, reply + ".last")
     if os.path.basename(command[0]) == "claude" and not any(part.startswith("--output-format") for part in command):
-        command += ["--output-format", "json"]  # its usage numbers come back in the reply, for role.usage
+        command += ["--output-format", "json"]
     with open(reply, "w") as out, open(reply + ".err", "w") as err:
         child = subprocess.Popen(command + [prompt], cwd=top, stdin=subprocess.DEVNULL, stdout=out, env=env,
                                  stderr=err, start_new_session=True)
     role.begin(os.path.join(runs, args.slug + ".json"), args.step)
     with open(job, "w") as handle:
         limit = spec.get("limit") or int(cfg.get("step_limit") or 0) or args.limit
-        if args.step in BUDGETED:  # review and ship stop at min(the flow file's limit, step_budget_minutes)
+        if args.step in BUDGETED:
             limit = lanekit.seconds(cfg, "step_budget_minutes", limit)
         json.dump({"pid": child.pid, "pstart": lanekit.pstart(child.pid), "started": time.time(), "limit": limit}, handle)
     print("FLOW %s: running your %s skill unattended" % (args.step, args.step))
@@ -242,11 +241,11 @@ def in_session(args, runs, reply, base):
         state = {}
     if state.get("worker") != "session":
         return False
-    asked = base + ".asked"  # a reply counts only if written after this step was asked for, never one left by a try before
+    asked = base + ".asked"
     fresh = os.path.exists(asked) and os.path.exists(reply) and os.path.getmtime(reply) >= os.path.getmtime(asked)
     text = read(reply) if fresh else ""
     if not re.search(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I):
-        if not os.path.exists(asked):  # first ask: the step starts now, and a reply from before is moved aside
+        if not os.path.exists(asked):
             if os.path.exists(reply):
                 os.replace(reply, reply + ".last")
             role.begin(os.path.join(runs, args.slug + ".json"), args.step)
@@ -261,7 +260,7 @@ def in_session(args, runs, reply, base):
                       repo_config(), "step_budget_minutes"))
         print("Write its reply, ending with the DEPTH line and then the STEP line, to %s, then run this same command again." % reply)
         return True
-    if args.step in BUDGETED:  # a session-run step that took longer than its budget is recorded, with what it said it left
+    if args.step in BUDGETED:
         mins = lanekit.minutes(repo_config(), "step_budget_minutes")
         if os.path.getmtime(reply) - os.path.getmtime(asked) > mins * 60:
             lanekit.hit(runs, args.slug, args.step, "step", mins, lanekit.left_of(text))
@@ -303,7 +302,7 @@ def main():
         print(line)
         if status == "running":
             return 0
-        if status == "fail":  # the skill never starts on a red lane: record counts it as a failed try
+        if status == "fail":
             if os.path.exists(reply):
                 os.replace(reply, reply + ".last")
             with open(reply, "w") as out:
@@ -325,11 +324,11 @@ def main():
         if time.time() - held["started"] < held["limit"]:
             print("RUNNING: run this same command again")
             return 0
-        if lanekit.same(held["pid"], mine):  # never a process that only reuses the pid
+        if lanekit.same(held["pid"], mine):
             lanekit.audit(runs, "flow %s %s" % (args.slug, args.step), held["pid"], "step past its limit")
             proctree.kill(held["pid"], signal.SIGTERM)
         with open(reply, "a") as out:
-            if args.step in BUDGETED:  # it finishes with what it has done and says what it left; the goal goes on
+            if args.step in BUDGETED:
                 mins = round(held["limit"] / 60, 1)
                 lanekit.hit(runs, args.slug, args.step, "step", mins, "whatever the stopped step had not finished; see its reply")
                 out.write("\nBUDGET: left: whatever the step had not finished at its %g-minute budget\nDEPTH: condensed\n"
@@ -340,14 +339,14 @@ def main():
     open(base + ".ran", "w").close()
     raw = read(reply)
     spent, text = role.usage(raw)
-    if text != raw:  # JSON reply: keep it beside the file, and leave the result text where record reads it
+    if text != raw:
         os.replace(reply, reply + ".raw")
         with open(reply, "w") as out:
             out.write(text)
     if spent:
         record = os.path.join(runs, args.slug + ".json")
         state = json.loads(read(record))
-        old = (state.get("tokens") or {}).get(args.step)  # every attempt counts against the budget (failed tries, --again)
+        old = (state.get("tokens") or {}).get(args.step)
         state["tokens"] = dict(state.get("tokens") or {}, **{args.step: spent + (old if isinstance(old, int) else 0)})
         with open(record + ".%d.tmp" % os.getpid(), "w") as handle:
             json.dump(state, handle, indent=2)

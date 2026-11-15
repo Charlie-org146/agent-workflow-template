@@ -5,17 +5,15 @@ usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
        reply_hook.py check FILE|-  print what a reply is missing (exit 0 clean, 1 with problems, 2 unreadable)
        reply_hook.py status        say whether the hook is installed and on in this repo, and its recent let-throughs
 
-A check-in reply passes with one headline line (a Machine line and one line per other pod may follow it), then the sections All sessions (a table), Dependencies (a graph with a
-`== repo ==` block per repo naming every goal on the board, MON-14), Needs you (numbered questions with options and a
-recommended answer, or "Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
+A check-in reply passes with one headline line (Machine and pod lines may follow), then the sections All sessions (a
+table), Dependencies (a graph with a `== repo ==` block per repo naming every goal, MON-14), Needs you (numbered questions
+with options and a recommended answer, or "Nothing needs you") and, last, Coming up, each with something under it.
 
-The hook checks only the operation session: one named in <common>/loop/operation.id, or whose transcript ran
-'operate.py run|claim' without a refusal as its latest signal. A worker is never checked: a session that ran a flow step
-('flow.py', 'goal.py step|record|pr') after that, or whose cwd is in <git common dir>/loop/worktrees/ before any signal.
-A session in another repo, or in a repo with no .loop/config.json, is never checked. Each stop reads only the new bytes.
-"reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0, turns it off. A failing reply is blocked with a reason
-naming what is missing; the third block in a row is let through and logged in <git common dir>/loop/reply-hook/log.
-Any error lets the reply through and logs one line. setup.py --reply-hook installs it.
+Only the operation session is checked: one named in <common>/loop/operation.id, or whose latest signal is an unrefused
+'operate.py run|claim'. A worker (a flow step, 'goal.py step|record|pr', or a cwd in <common>/loop/worktrees/) is never
+checked, nor a session in a repo with no .loop/config.json. "reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0,
+turns it off. A failing reply is blocked with a reason; the third block in a row is let through and logged in
+<common>/loop/reply-hook/log, as is any error. setup.py --reply-hook installs it.
 """
 import json
 import os
@@ -25,24 +23,24 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git must fail, not block. (stdin is the hook's input, so it stays open.)
+# No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
-SECTIONS = ("All sessions", "Dependencies", "Needs you", "Coming up")  # the reply's sections, in order; Coming up last
+SECTIONS = ("All sessions", "Dependencies", "Needs you", "Coming up")  # in order
 NOTHING = "Nothing needs you"
 
-TRIES = 3  # the third block in a row is let through
-KEEP = 200  # log lines kept
-TAIL = 4 << 20  # bytes of the transcript read for the final reply
-STALE = 14 * 86400  # seconds before a finished session's state files are removed
+TRIES = 3
+KEEP = 200
+TAIL = 4 << 20
+STALE = 14 * 86400
 OPERATORS = {"&&", "||", ";", "|", "&", ";;", "(", ")"}
 KNOWN = {"goal.py": {"new", "queue", "step", "record", "wait", "finding", "pr", "answer", "show"}, "operate.py": {"run", "send", "claim"}}
-FIRST = 16 << 20  # bytes read on a session's first stop: its recent history is enough to find its kind
+FIRST = 16 << 20
 SESSION = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 FENCE = re.compile(r"^\s*(```|~~~)")
-FENCE_ALONE = re.compile(r"^\s*(```|~~~)[\w+.-]*\s*$")  # a line that opens or closes a fence, not a one-line fence
+FENCE_ALONE = re.compile(r"^\s*(```|~~~)[\w+.-]*\s*$")
 NUMBERED = re.compile(r"^\s*(?:[-*+]\s+)?\**(?:q\d+[.):]|\d+[.)])(?!\d)", re.I)
-REPO = re.compile(r"^\s*==\s*\S.*\S\s*==\s*$")  # a repo block heading of the dependency map (MON-14)
+REPO = re.compile(r"^\s*==\s*\S.*\S\s*==\s*$")
 COUNT = re.compile(r"\s*\(\s*\d+\s*\)$")
 MARKS = re.compile(r"[*#`_]")
 TEMPLATE = ("Write the check-in reply in this layout: one headline line; All sessions (one table: session, repo, what it "
@@ -57,14 +55,14 @@ def git(cwd, *args):
 
 
 def repo_of(cwd):
-    """(top, common dir, config) of the repo at cwd, or None outside a repo with a .loop config."""
+    """(top, common dir, config) of the repo at cwd, or None without a .loop config."""
     if not cwd or not os.path.isdir(cwd):
         return None
     top = git(cwd, "rev-parse", "--show-toplevel")
     common = git(cwd, "rev-parse", "--git-common-dir")
     if not top or not common:
         return None
-    common = os.path.join(cwd, common)  # a relative answer is relative to cwd; an absolute one stays as it is
+    common = os.path.join(cwd, common)
     try:
         with open(os.path.join(top, ".loop", "config.json")) as handle:
             config = json.load(handle)
@@ -80,7 +78,6 @@ def folder(common):
 
 
 def log(common, text):
-    """Append one line; keep the last KEEP lines."""
     path = os.path.join(folder(common), "log")
     line = "%s %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%S"), " ".join(str(text).split())[:400])
     fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
@@ -93,14 +90,13 @@ def log(common, text):
 
 
 def write(path, text):
-    tmp = "%s.%d.tmp" % (path, os.getpid())  # one per process, so two sessions never share it
+    tmp = "%s.%d.tmp" % (path, os.getpid())
     with open(tmp, "w") as handle:
         handle.write(text)
     os.replace(tmp, path)
 
 
 def claimed(common):
-    """Session ids in <common>/loop/operation.id."""
     try:
         with open(os.path.join(common, "loop", "operation.id")) as handle:
             return {line.strip() for line in handle if line.strip()}
@@ -113,19 +109,18 @@ def off(config):
 
 
 def entries(path, tail=0, start=0):
-    """(main-chain entries, end offset) of the transcript: from byte start, or only its last tail bytes. Subagent
-    sidechains are left out; a last line still being written is left for the next read."""
+    """(main-chain entries, end offset) of the transcript: from byte start, or only its last tail bytes. Sidechains and a last line still being written are left out."""
     found = []
     with open(path, "rb") as handle:
         size = os.path.getsize(path)
         if tail and size - start > tail:
             handle.seek(-tail, os.SEEK_END)
-            handle.readline()  # a partial first line
+            handle.readline()
         else:
-                handle.seek(min(start, size))
+            handle.seek(min(start, size))
         at = handle.tell()
         data = handle.read()
-        cut = data.rfind(b"\n") + 1  # a last line still being written is left for the next read
+        cut = data.rfind(b"\n") + 1
         end = at + cut
         for raw in data[:cut].split(b"\n"):
             here, at = at, at + len(raw) + 1
@@ -141,9 +136,7 @@ def entries(path, tail=0, start=0):
 
 def blocks(entry):
     content = (entry.get("message") or {}).get("content")
-    if isinstance(content, str):
-        return [{"type": "text", "text": content}]
-    return [b for b in content or [] if isinstance(b, dict)]
+    return [{"type": "text", "text": content}] if isinstance(content, str) else [b for b in content or [] if isinstance(b, dict)]
 
 
 def flat(content):
@@ -154,7 +147,7 @@ def flat(content):
 
 def refused(text, error=False):
     """Whether a command did not run: its first output line (after an 'Exit code N' line) starts REFUSED, or it is an
-    error with no exit code (the user or a rule denied it). One that ran and failed, timed out or was stopped did run."""
+    error with no exit code (denied). One that ran and failed, timed out or was stopped did run."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if lines and re.match(r"^Exit code -?\d+$", lines[0]):
         lines = lines[1:]
@@ -164,7 +157,7 @@ def refused(text, error=False):
 
 
 def runs(found):
-    """([(command, refused)] for each Bash call with its result here, byte offset of the first call still waiting)."""
+    """([(command, refused)] per Bash call with a result, offset of the first call still waiting)."""
     results = {}
     for entry in found:
         if entry.get("type") == "user":
@@ -191,7 +184,7 @@ def words_of(line):
 
 
 def runner(part, i):
-    """Whether part[i], a .py word, is run as a script: by python, by uv run, or as ./x.py."""
+    """Whether part[i], a .py word, is run: by python, uv run, or as ./x.py."""
     if i == 0 and (part[i].startswith("./") or "/" in part[i]):
         return True
     before = part[:i]
@@ -205,7 +198,7 @@ def runner(part, i):
 
 
 def calls(command, depth=0):
-    """(script basename, subcommand) for each python script a shell command runs."""
+    """(script, subcommand) for each python script a shell command runs."""
     found = []
     for line in command.splitlines():
         try:
@@ -218,7 +211,7 @@ def calls(command, depth=0):
                 part.append(word)
                 continue
             for i, item in enumerate(part):
-                if item in ("-c",) and i and os.path.basename(part[i - 1]) in ("sh", "bash", "zsh") and i + 1 < len(part) and depth < 2:
+                if item == "-c" and i and os.path.basename(part[i - 1]) in ("sh", "bash", "zsh") and i + 1 < len(part) and depth < 2:
                     found += calls(part[i + 1], depth + 1)
                     break
                 if item.endswith(".py") and runner(part, i):
@@ -229,7 +222,7 @@ def calls(command, depth=0):
 
 
 def subcommand(rest, known):
-    """The first word after the script that isn't a flag or a flag's value."""
+    """The first word that isn't a flag or a flag's value."""
     skip = False
     for word in rest:
         if word.startswith("-"):
@@ -243,15 +236,13 @@ def subcommand(rest, known):
 
 
 def signal(script, sub):
-    """'worker', 'operation' or '' for one script run."""
     if script == "flow.py" or (script == "goal.py" and sub in ("step", "record", "pr")):
         return "worker"
     return "operation" if script == "operate.py" and sub in ("run", "claim") else ""
 
 
 def kind(found, known=""):
-    """(the session's kind after these entries: its latest signal among non-refused commands, else known;
-    the byte offset of the first Bash call still waiting for its result, if any)."""
+    """(the session's kind: its latest signal among non-refused commands, else known; offset of the first Bash call still waiting)."""
     done, waiting = runs(found)
     for command, no in done:
         if not no:
@@ -261,7 +252,7 @@ def kind(found, known=""):
 
 
 def final_reply(payload, found):
-    """The final assistant message's text, or None when it can't be confirmed (then the hook passes)."""
+    """The final assistant message's text, or None when unconfirmed (the hook passes)."""
     if isinstance(payload.get("last_assistant_message"), str):
         return payload["last_assistant_message"] or None
     chat = [e for e in found if e.get("type") in ("user", "assistant")]
@@ -269,10 +260,10 @@ def final_reply(payload, found):
         return None
     last = chat[-1]
     if last.get("isApiErrorMessage") or (last.get("message") or {}).get("model") == "<synthetic>":
-        return None  # an API error or usage-limit notice, not a reply
+        return None
     mine = [e for e in chat if e.get("type") == "assistant" and (e.get("message") or {}).get("id") == (last.get("message") or {}).get("id")]
     if any(b.get("type") == "tool_use" for e in mine for b in blocks(e)):
-        return None  # the turn's last message still calls a tool: the reply is not written yet
+        return None
     texts = [b.get("text", "") for e in mine for b in blocks(e) if b.get("type") == "text"]
     return "\n".join(texts) if texts else None
 
@@ -282,12 +273,12 @@ def bare(line):
 
 
 def heading(line):
-    """A line as a heading: marks, a trailing colon and a count like (2) dropped, case ignored."""
+    """A line as a heading: marks, trailing colon and count dropped, case ignored."""
     return COUNT.sub("", bare(line).rstrip(":").strip()).rstrip(":").strip().lower()
 
 
 def problems(text):
-    """What a check-in reply is missing, one plain line each; an empty list means it passes."""
+    """What a check-in reply is missing, one line each; empty means it passes."""
     lines, fenced, inside = [], [], False
     for line in str(text or "").splitlines():
         if FENCE_ALONE.match(line):
@@ -296,7 +287,7 @@ def problems(text):
             continue
         elif line.strip():
             lines.append(line)
-            fenced.append(inside)  # a line inside a code fence is never a heading
+            fenced.append(inside)
     spots, at = {}, -1
     for name in SECTIONS:
         spot = next((i for i in range(at + 1, len(lines)) if not fenced[i] and heading(lines[i]) == name.lower()), None)
@@ -325,7 +316,6 @@ def problems(text):
 
 
 def left_out(text, cwd):
-    """The goals Dependencies leaves out, by name (checkin.missing); fails open."""
     try:
         import checkin
         gone = checkin.missing(text, cwd)
@@ -335,7 +325,6 @@ def left_out(text, cwd):
 
 
 def hook(payload):
-    """The block decision for one stop, or None to let the session stop."""
     session = str(payload.get("session_id") or "")
     if os.environ.get("LOOP_REPLY_HOOK") == "0" or not SESSION.match(session):
         return None
@@ -345,7 +334,7 @@ def hook(payload):
     _, common, _ = where
     try:
         return decide(payload, session, common)
-    except Exception as error:  # fail open, with a trace
+    except Exception as error:
         log(common, "fail-open %s: %s: %s" % (session, type(error).__name__, error))
         return None
 
@@ -360,7 +349,6 @@ def state(base):
 
 
 def prune(where):
-    """Remove state files of sessions not seen for STALE seconds."""
     now = time.time()
     for name in os.listdir(where):
         path = os.path.join(where, name)
@@ -376,27 +364,25 @@ def decide(payload, session, common):
         prune(folder(common))
     path = payload.get("transcript_path")
     new, end = entries(path, FIRST if first else 0, offset) if path and os.path.exists(path) else ([], offset)
-    if end < offset:  # a transcript that shrank was replaced: read it again
+    if end < offset:
         new, end = entries(path, FIRST)
     if not known and os.path.realpath(str(payload.get("cwd"))).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
         known = "worker"
     known, waiting = kind(new, known)
-    if known != "worker" and session in claimed(common):  # operate.py claim (or the govern hook) named it (issue 321)
+    if known != "worker" and session in claimed(common):
         known = "operation"
-    keep = end if waiting is None or end - waiting > FIRST else waiting  # a call that never got its result stops holding
+    keep = end if waiting is None or end - waiting > FIRST else waiting
     write(base + ".kind", json.dumps({"kind": known, "offset": keep}))
     if known != "operation":
         return None
     found = None if isinstance(payload.get("last_assistant_message"), str) else entries(path, TAIL)[0] if path else []
     text = final_reply(payload, found or [])
     wrong = problems(text) + left_out(text, payload.get("cwd")) if text is not None else []
-    count = 0
-    if payload.get("stop_hook_active") and os.path.exists(base + ".count") and time.time() - os.path.getmtime(base + ".count") < 900:
-        try:
-            with open(base + ".count") as handle:
-                count = int(handle.read().strip() or 0)
-        except (OSError, ValueError):
-            count = 0
+    try:
+        counted = payload.get("stop_hook_active") and time.time() - os.path.getmtime(base + ".count") < 900
+        count = int(open(base + ".count").read().strip() or 0) if counted else 0
+    except (OSError, ValueError):
+        count = 0
     if not wrong or count + 1 >= TRIES:
         if wrong:
             log(common, "let-through %s after %d blocks: %s" % (session, count, "; ".join(wrong)))

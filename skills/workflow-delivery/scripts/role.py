@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""What goal.py and flow.py do as a worker: refuse outside one, read the operation session's messages, report each
-change of step or status, bring the latest base into the branch, count tokens, and run the regression lane.
-Imported; run only as `role.py lane SLUG qa|ship|pr` (start or poll a lane by hand) and `role.py lane-wait SLUG qa|ship|pr`
-(block until it ends). The lane itself is lane.py, whose child runs as `lane.py lane-exec`."""
+"""What goal.py and flow.py do as a worker: refuse outside one, read messages, report steps, merge the base, count tokens,
+run the regression lane. Imported; run only as `role.py lane SLUG qa|ship|pr` and `role.py lane-wait SLUG qa|ship|pr`."""
 import os
 import re
 import shlex
@@ -13,15 +11,12 @@ import json
 import datetime
 
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 TOKENS = re.compile(r"(\d[\d,]*) (?:total )?tokens", re.I)
 
 
 def guard(name, slug=None):
-    """Goal steps run in a worker, which has LOOP_ROLE=worker; anywhere else they refuse. For a goal bound to a session the
-    refusal gives the exact command to run there (LOOP_ROLE is a role convention, not a security boundary); otherwise it
-    says how to start or bind a worker."""
+    """Goal steps run in a worker (LOOP_ROLE=worker); elsewhere they refuse, naming the command or how to start a worker."""
     if os.environ.get("LOOP_ROLE") == "worker":
         return
     state = {}
@@ -43,10 +38,9 @@ def guard(name, slug=None):
 
 
 def inbox(common, slug):
-    """Print, and file away, what the operation session sent this worker (`worker.py send`)."""
     path = os.path.join(common, "loop", "inbox", slug + ".txt")
     try:
-        os.replace(path, path + ".taking")  # a message sent from now on lands in a new file, so none is lost
+        os.replace(path, path + ".taking")
         with open(path + ".taking") as handle:
             text = " ".join(handle.read().split())
         with open(path[:-4] + ".read", "a") as handle:
@@ -59,7 +53,6 @@ def inbox(common, slug):
 
 
 def report(old, state, at):
-    """A worker reports each change of step or status as it happens: the latest 30 go in state['reports']."""
     if (old.get("step"), old.get("status")) != (state.get("step"), state.get("status")):
         state.setdefault("reports", []).append({"at": at, "step": state.get("step") or "-", "status": state.get("status") or "-",
                                                 "text": "worker %s: step %s, %s" % (state["slug"], state.get("step") or "-", state.get("status") or "-")})
@@ -67,14 +60,12 @@ def report(old, state, at):
 
 
 def tokens(text):
-    """The last token count an agent reported in text, or None."""
     found = TOKENS.findall(text or "")
     return int(found[-1].replace(",", "")) if found else None
 
 
 def usage(text):
-    """(tokens, reply) from an agent's JSON output: the tokens it used (input + output + cache-creation, no cache reads)
-    and its result text. Anything else comes back as (the last count it printed in words, or None, the text itself)."""
+    """(tokens, reply) from an agent's JSON output (input + output + cache-creation tokens); else (printed count or None, text)."""
     try:
         data = json.loads(text)
         use = data["usage"]
@@ -89,8 +80,7 @@ def git(*args):
 
 
 def sync(base):
-    """Merge the latest base branch into this one. Returns (what, detail): current, merged or conflict (files, or git's error).
-    A conflict is aborted so the tree stays clean; the agent resolves it by merging the base itself."""
+    """Merge the latest base into this branch: (current|merged|conflict|dirty, detail). A conflict is aborted."""
     git("fetch", "origin", base)
     ref = "origin/" + base if git("rev-parse", "--verify", "--quiet", "origin/" + base).returncode == 0 else base
     if git("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0:
@@ -99,7 +89,7 @@ def sync(base):
     if done.returncode == 0:
         return "merged", ref
     files = git("diff", "--name-only", "--diff-filter=U").stdout.split()
-    import private  # lazily: private is a script of its own
+    import private
     if files and private.mend(git, files, ref):
         return "merged", ref
     git("merge", "--abort")
@@ -116,10 +106,9 @@ def goal_state(runs, slug):
 
 
 def recorded_gate(args, runs, job):
-    """A step the record already holds isn't run again by accident (DEL-7): it refuses with no try and names where the
-    goal resumes. --again reruns it on purpose: it clears that step and every later step, never tries or tokens."""
+    """A recorded step isn't rerun by accident (DEL-7); --again clears it and every later step, never tries or tokens."""
     record = os.path.join(runs, args.slug + ".json")
-    import fit  # lazily: fit imports role
+    import fit
     state = goal_state(runs, args.slug)
     if not fit.recorded(state, args.step):
         return
@@ -148,23 +137,21 @@ def recorded_gate(args, runs, job):
 
 
 def after(step):
-    """The label once a flow step is recorded: what comes next, never the step that just finished."""
     return {"idea": "plan", "plan": "build"}.get(step, "checks")
 
 
 def begin(record, step):
-    """A step's label changes when the step starts: set it in the run record and log the start, so the time from here
-    to the recorded step is the step's own. The log word 'start' is no step name, so the gap before it counts for none."""
+    """Set the step's label in the run record and log its start, so the time to the recorded step is the step's own."""
     try:
         with open(record) as handle:
             state = json.load(handle)
     except (OSError, ValueError):
         return
     state["step"] = step
-    (state.get("depth") or {}).pop(step, None)  # a rerun step's earlier depth no longer stands
+    (state.get("depth") or {}).pop(step, None)
     state["budget_hits"] = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == "step")]
-    import guards  # lazily: guards imports role
-    guards.stamp(state, step)  # the format rules this step started under
+    import guards
+    guards.stamp(state, step)
     state["updated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     state.setdefault("log", []).append("%s start %s" % (state["updated"], step))
     temp = record + ".%d.tmp" % os.getpid()
@@ -173,23 +160,21 @@ def begin(record, step):
     os.replace(temp, record)
 
 
-DEPTH = re.compile(r"^[ \t*_]*DEPTH:\s*(full|condensed)[ \t*_.]*$", re.M | re.I)  # a line of its own, never prose or a quote
+DEPTH = re.compile(r"^[ \t*_]*DEPTH:\s*(full|condensed)[ \t*_.]*$", re.M | re.I)
 STEP = re.compile(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", re.M | re.I)
 
 
 def depth_of(cfg, state=None, runs=None):
-    """The depth a step must run at. With a goal's state: fit.depth_for over the setting and the goal (its size and the
-    owner's override, DEL-6). Without: the setting alone."""
+    """The depth a step must run at: fit.depth_for over the setting and the goal (DEL-6), or the setting alone."""
     setting = setting_of(cfg)
     if state is None:
         return setting
-    import fit  # lazily: fit is pure, but role is imported early by everything
+    import fit
     return fit.depth_for(setting, fit.view(state, runs))[0]
 
 
 def setting_of(cfg):
-    """review_depth from the base branch's .loop/config.json, which a worker's worktree can't change: condensed only
-    when the base branch says so, full otherwise (the default). cfg is the worktree's config, read for its base name."""
+    """review_depth from the base branch's .loop/config.json (a worker can't change it): condensed only if it says so."""
     base = (cfg or {}).get("base") or "main"
     for ref in ("origin/" + base, base):
         done = git("show", "%s:.loop/config.json" % ref)
@@ -202,8 +187,7 @@ def setting_of(cfg):
 
 
 def markers(step):
-    """(markers, error): the private strings a full plan or review reply must carry, from full_markers in the flow file
-    at its default place and at $LOOP_FLOW (both, so pointing LOOP_FLOW elsewhere can't drop them). Malformed is an error."""
+    """(markers, error): the strings a full plan or review reply must carry, from full_markers in both flow files."""
     found = []
     for path in dict.fromkeys(os.path.expanduser(p) for p in ("~/.workflow-loop/flow.json", os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")):
         try:
@@ -228,10 +212,9 @@ from lanekit import FILES, REG, generated  # noqa: E402
 
 
 def need_lane(runs, slug, reply, step="qa"):
-    """(why, fix, code) when record qa|ship must refuse (no lane passed on HEAD), else None."""
     text = open(reply).read() if os.path.isfile(reply) else ""
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
-    import guards  # lazily: guards imports role
+    import guards
     if found and found[-1].lower() == "failed" and not guards.pending_items(text):
         return None
     head = git("rev-parse", "HEAD").stdout.strip()
@@ -249,7 +232,6 @@ def need_lane(runs, slug, reply, step="qa"):
     return None
 
 
-# goal.py pr's bookkeeping (was in lanekit.py).
 
 def git_out(*args):
     done = subprocess.run(["git"] + list(args), capture_output=True, text=True)
@@ -271,25 +253,24 @@ def issues(top):
 
 
 def results(top):
-    """Run results (DX-19): workflow-regression's lanes_cli.py merge-runs, run by path (a skill never imports another's)."""
+    """Run results (DX-19): lanes_cli.py merge-runs, run by path."""
     cli = os.path.join(REG, "lanes_cli.py")
     if not os.path.exists(cli):
         return
     done = subprocess.run([sys.executable, "-B", cli, "merge-runs", "--root", top], capture_output=True, text=True,
-                          stdin=subprocess.DEVNULL)  # -B: it must not write a cache into the skill folder
+                          stdin=subprocess.DEVNULL)
     if done.returncode:
         why = ((done.stderr or done.stdout).strip().splitlines() or ["exit %d" % done.returncode])[-1]
         print("NOTE: lane results not recorded in regression-runs.tsv: %s" % why[:200])
 
 
 def lane_part(slug):
-    """The pull request body's lane part (DX-21): the pr lane's LANE line, and each row with why it ran, folded."""
     common = git_out("rev-parse", "--git-common-dir")
     base = os.path.join(os.path.abspath(common), "loop", "runs", "%s.pr-lane" % slug) if common and slug else ""
     try:
         with open(base + ".last") as handle:
-            import private  # lazily
-            line = private.plain(re.sub(r"; log: \S+", "", str(json.load(handle).get("line", "")).split("\n")[0]))  # no local path in a pull request (DEL-9)
+            import private
+            line = private.plain(re.sub(r"; log: \S+", "", str(json.load(handle).get("line", "")).split("\n")[0]))
         with open(base + ".txt") as handle:
             rows = [text.rstrip() for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
@@ -299,7 +280,6 @@ def lane_part(slug):
 
 
 def undo(top, paths):
-    """Put the uncommitted bookkeeping back to HEAD, so the next lane doesn't start on LANE_DIRTY."""
     subprocess.run(["git", "reset", "-q", "--"] + paths, cwd=top, capture_output=True)
     for path in paths:
         if subprocess.run(["git", "cat-file", "-e", "HEAD:" + path], cwd=top, capture_output=True).returncode == 0:
@@ -307,7 +287,6 @@ def undo(top, paths):
 
 
 def record(state, base):
-    """Refresh issue states and run results, commit them if they changed, then note the head and base for merge.py."""
     top = git_out("rev-parse", "--show-toplevel")
     if top:
         issues(top)
@@ -322,8 +301,8 @@ def record(state, base):
         try:
             if changed and os.path.exists(os.path.join(top, ".loop", "docs.tsv")) and os.path.exists(criteria):
                 subprocess.run([sys.executable, criteria, "render", "--tables"], cwd=top, capture_output=True, text=True, timeout=300)
-                changed += generated(cfg)  # only the Tests tables it re-rendered: never other dirty files
-            if changed:  # a new (untracked) file must be added before --only can commit it
+                changed += generated(cfg)
+            if changed:
                 subprocess.run(["git", "add", "--"] + changed, cwd=top, capture_output=True, text=True)
                 done = subprocess.run(["git", "commit", "--only", "-q", "-m", "pr: record issue states and the lane's results",
                                        "--"] + changed, cwd=top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
@@ -332,10 +311,10 @@ def record(state, base):
                     print("NOTE: the bookkeeping commit failed: %s; those files were put back (a new file stays, untracked), so "
                           "the next pr run derives them again" % ((done.stderr or done.stdout).strip().splitlines() or ["?"])[-1])
                     undo(top, changed)
-        except subprocess.TimeoutExpired as error:  # never crash pr after its lane passed
+        except subprocess.TimeoutExpired as error:
             print("NOTE: the bookkeeping step timed out (%s); nothing more committed" % " ".join(error.cmd[:3]))
             lock = os.path.join(top, git_out("rev-parse", "--git-path", "index.lock"))
-            if error.cmd[0] == "git" and os.path.exists(lock):  # only our killed commit's lock; a render takes none
+            if error.cmd[0] == "git" and os.path.exists(lock):
                 os.remove(lock)
             undo(top, changed)
     state["pr_lane"] = lane_part(state.get("slug", ""))
@@ -345,7 +324,6 @@ def record(state, base):
 
 
 def bump_version(g, state, head):
-    """goal.py pr: bump the version file once per pull request where the repo asks for it (pr_bumps_version)."""
     cfg = g.config()
     name = cfg.get("version_file") or "VERSION"
     path = os.path.join(g.root(), name)
@@ -374,9 +352,6 @@ if __name__ == "__main__":
 
 
 def session_reply(state, slug, step, path, runs, flow):
-    """The reply file a worker session hands to goal.py record --in-session, put where record reads it, with the
-    step's ran marker; refused when the run names no worker session or an earlier step isn't recorded."""
-    import shutil
     if state.get("worker") != "session" or not (state.get("session") or {}).get("id"):
         sys.exit("REFUSED: %s names no worker session. Fix: sessions.py bind %s ID, or run the step with flow.py." % (slug, slug))
     early = [s for s in flow[:flow.index(step)] if not str((state.get("flow") or {}).get(s, "")).startswith(("done", "skipped"))]
