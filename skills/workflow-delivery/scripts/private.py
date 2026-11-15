@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The private-name scan: nothing private ships (DEL-9); every push or GitHub write runs it, and setup's git hooks run it as
-`hook staged | message FILE | push`. Also a private repo's commit statuses, which live here as every other script is full.
+`hook staged | message FILE | push`. Also a private repo's commit statuses.
 
 usage: private.py where | check | scan [--base REF]    the worker check, the list, the scan from REF (default origin/<base>)
        private.py visibility | required | statuses --head SHA --ok|--fail [--base B]   the private-repo statuses
@@ -19,7 +19,7 @@ import time
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 LOCAL_PATH = re.compile(r"(?<![\w/.:~])/(?:Users|home|private|var|tmp|mnt|opt|srv|root|etc|usr|Volumes)(?:/[\w.@+-]+)+")
-HOME_DIR = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s]+")
+HOME_DIR = re.compile(r"(?:file://)?(?:/(?:Users|home)/|[A-Za-z]:[\\/]Users[\\/])[^\\/\s)]+")
 
 
 def plain(text):
@@ -347,6 +347,7 @@ def pr_result(top, base, head, branch, ok):
     got = repo_is_private(top) and required_checks(top, base)
     if not got:
         return print("STATUSES none: public or unreadable") or True
+    got = (__import__("lane").lane_checks(top, got[0]), got[1])
     for name in got[1] + ADVICE:
         print("BLOCKS: %s cannot be satisfied by a status; remove it from the ruleset (BLOCKS)" % name)
     there = subprocess.run(["git", "ls-remote", "origin", "refs/heads/" + branch], cwd=top, capture_output=True, text=True).stdout.split()
