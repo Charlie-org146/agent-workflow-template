@@ -17,12 +17,8 @@ the rows were only ever exercised by Actions on Linux, and the failures there we
   this 4 GB PC: mon12 fails 3 checks and test-settings fails the parallel checks until the machine is made up. The code is
   right; the toys leaked the real machine. Fix: `dev/toy/reap.sh` (every toy sources it) exports a made-up LOOP_MACHINE with room
   unless a toy set its own.
-- #4373 lane-over-minutes: fails at v0.28.76, v0.28.77, v0.28.79, v0.28.81 and passes at v0.28.78 and v0.28.80, so it is
-  flaky, not a regression of one release. Its toy section asks for a nightly row to be selected, and the lane answered REUSED
-  with 6 reused rows; the cause is unproven.
-- #4367 set8-local-setting-refused: FAIL at v0.28.78 and v0.28.80, SKIPPED in the other runs; first run with the row was
-  v0.28.76's adoption release. The state comparison fails with no output saying what changed; passes on this PC.
-  Fix here: the case prints a diff of what the refusal wrote, so the next Actions run names it.
+- #4373 lane-over-minutes (and #4380 goal-levels-nightly, the same toy): found by logging every Popen of every python process in an Actions run. The toy's t4 case starts a lane with `lane.lane(..., 0)` and never waits for it; that lane's regression run goes on in the toy repo while the t6 case switches branch, commits its rows and starts its own lane. The t4 run executes rows m, a and c in the new working tree and saves a record for the branch t6 at its HEAD, so the t6 lane reuses it (REUSED, no row selected). Whether it finishes before t6 sets up depends on the runner's speed, which is why it passed at v0.28.78 and v0.28.80 and failed at the other releases. The code is right; the toy raced itself. Fix: t4 polls its lane to the end before the next case.
+- #4367 set8-local-setting-refused: the toy's state hash covers the home folder, and the real gh (version 2.10x) writes its own `.local/state/gh/device-id` there on a first run (the case runs no stand-in gh). The refusal wrote nothing; gh did. Fix: the state hash leaves gh's own state folder out, and a failing case now prints a diff of what changed (seen on Actions).
 
 ## Approaches
 1. Fix each toy (isolate the machine, give mon8 its process). Cost: small, no product code. Risk: none for the requirements.

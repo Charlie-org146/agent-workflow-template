@@ -8,7 +8,7 @@ every toy), `board_status.py` (`memory`, `allowed`, `LOOP_MACHINE`), `skills/wor
 ## Build steps
 1. mon8: `case_mon8` sets LOOP_PROCS so both goals have a process (done, passes with the fake machine on this PC).
 2. Machine: `reap.sh` exports LOOP_MACHINE "64,64,10,0,0" unless a toy set one (done); mon12 now passes on this 4 GB PC.
-3. set8 and lane-over-minutes: both toys print what they cannot explain (a diff of what the refusal wrote; the t6 lane log).
+3. set8 (gh's device-id in HOME) and lane-over-minutes (t4's unwaited lane racing t6): both found by running the rows on Actions from this branch; both toys fixed.
    Run both rows on Actions from this branch, read the output, fix the code or toy it names, and repeat until both pass.
 4. #4379: `issues.posix` in `key_of`, `legacy`, `evidence_of`; `file.held_all` and the issue title use it (done).
 5. After the merge: close the existing duplicate pairs once, naming the issue kept; close each of the seven issues with the passing
