@@ -16,6 +16,8 @@ import subprocess
 import tempfile
 import zlib
 
+# GIT_TERMINAL_PROMPT: the children here (taskkill, ps) never ask for input, so no prompt guard is needed
+
 if os.name == "nt":
     import ctypes
 
