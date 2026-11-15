@@ -2,18 +2,6 @@
 """The repo half of update.py: bring one repo's generated files and settings up to the installed template version.
 
 usage: sync.py [--repo DIR] [--version X] [--wrote-skills]   (update.py --apply runs it; alone it syncs to the installed version)
-
-It reads the base branch's .loop/config.json, never the checkout's, and writes in a temporary worktree on branch
-workflow-update-vX cut from the base branch:
-
-    base ──(git worktree add -b workflow-update-vX)──> <git common dir>/loop/update-worktree
-      fill missing repo settings (settings.fill_repo) · template_version = X · entry.py write · agents.py wire
-      commit .loop/config.json .loop/START.md and the agent files ──> remove the worktree (always)
-    branch states: none -> cut from base; unmerged -> reused (no new commit if unchanged: PENDING);
-                   merged but base's config still older -> refused (UPDATE_BRANCH_MERGED)
-
-Hand-written data (config values set, pages, rules, local settings) is only added to; generated files (START.md, the marked
-agent blocks, the stamp) are replaced. It never merges or pushes: NEXT says how to merge.
 """
 import argparse
 import difflib
@@ -34,8 +22,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 
 class Txn:
-    """setup's transaction: folders copied and a journal kept in the git dir before the first write, so a refusal, exception,
-    signal or hard kill (the next run recovers) leaves the tree, index and branches as they were."""
+    """setup's transaction."""
 
     def __init__(self, repo, branch, extra=(), journal=None):
         self.repo, self.branch, self.j = repo, branch, journal
@@ -80,7 +67,7 @@ class Txn:
     def rollback(self):
         """Undo the adoption: the paths not restored, or None when the branch moved (it was committed; kept)."""
         j, bad = self.j, []
-        try:  # a tool still writing would outlive the restore; no pkill (Windows) must not stop it
+        try:
             subprocess.run(["pkill", "-KILL", "-P", str(os.getpid())], capture_output=True)
             while True:
                 os.waitpid(-1, 0)
@@ -126,7 +113,7 @@ class Txn:
         except (OSError, ValueError):
             return None
         txn = cls(repo, j["branch"], tuple(j["tops"][4:]), j)
-        if git(repo, "rev-parse", "HEAD", check=False) != j["head"]:  # HEAD moved (committed, merged or switched): restoring would undo newer work
+        if git(repo, "rev-parse", "HEAD", check=False) != j["head"]:
             shutil.rmtree(txn.dir, ignore_errors=True)
             bad = None
         else:
@@ -146,7 +133,7 @@ def git(repo, *args, check=True):
 
 
 def base_config(repo):
-    """The base branch's .loop/config.json ({} when none): origin/<b> before <b>, b from the checkout's base, origin/HEAD, main, master."""
+    """The base branch's .loop/config.json ({} when none)."""
     try:
         own = json.load(open(os.path.join(repo, ".loop", "config.json")))["base"]
     except (OSError, ValueError, KeyError, TypeError):
@@ -249,7 +236,7 @@ def apply_repo(repo, cfg, target, wrote_skills):
         return 0
     except (RuntimeError, OSError, SystemExit) as error:
         why = str(error).strip().splitlines()[-20:]
-        if where == "none":  # a branch cut this run with no commit would read as merged and refuse the rerun
+        if where == "none":
             git(repo, "worktree", "remove", "--force", tree, check=False)
             if git(repo, "rev-list", "--count", "%s..%s" % (base, name), check=False) == "0":
                 git(repo, "branch", "-D", name, check=False)
@@ -265,11 +252,10 @@ def apply_repo(repo, cfg, target, wrote_skills):
         git(repo, "worktree", "prune", check=False)
 
 
-# --- Propose: skill files edited in an adopted repo (LOCAL FIX lines) go back to the template as one GitHub issue.
 
 
 def base_copy(skills, old, rel):
-    """The package copy a local fix was made on: the kept copy, else what the stamp's hash says was installed (unknown)."""
+    """The package copy a local fix was made on."""
     kept = os.path.join(skills, ".workflow-kept", rel)
     if os.path.isfile(kept) and (old.get("kept") or {}).get(rel):
         return open(kept, encoding="utf-8", errors="replace").read(), (old["kept"][rel].get("base_version") or old.get("version"))
