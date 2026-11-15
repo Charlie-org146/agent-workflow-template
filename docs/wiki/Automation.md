@@ -100,9 +100,8 @@ Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=6efeb669 N=e081872e M=4670
 | [perms-private-refused](Tests#t-perms-private-refused) | requirement | AUT-9 | Given a row holding a home path, when permissions.py write runs, then it is refused and no settings file is written. | not run |
 | [perms-write-keeps](Tests#t-perms-write-keeps) | requirement | AUT-9 | Given a settings file with other keys and rules, when permissions.py write runs, then they are all kept. | not run |
 | [perms-repo-ok](Tests#t-perms-repo-ok) | requirement | AUT-9 | Given this repo, when permissions.py check runs, then its routines are declared, written and covered. | not run |
-| [perms-settings-tracked](Tests#t-perms-settings-tracked) | requirement | AUT-9 | Given a fresh checkout, when the permissions check runs, then .claude/settings.json is in it, because it is tracked and not ignored. | not run |
+| [perms-settings-tracked](Tests#t-perms-settings-tracked) | requirement | AUT-9 | Given a fresh checkout, when the permissions check runs, then .claude/settings.json is in it, because it is tracked and not ignored. | PASS 2026-11-15 |
 | [perms-no-repo-deny](Tests#t-perms-no-repo-deny) | requirement | AUT-9 | Given the committed .claude/settings.json, when it is read, then it holds allow rules only, because a deny would apply to every session in the repo. | not run |
-| - | requirement | AUT-9 | no passing test | not enforced |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
 | [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given regression_cron off, when the regression workflow runs, then it writes nothing and says the routine is off. | PASS 2026-11-12 |
 | [aut-off-by-hand](Tests#t-aut-off-by-hand) | requirement | AUT-5 | Given regression_cron off, when its workflow is written, then it has no schedule and can still be started by hand. | PASS 2026-11-12 |

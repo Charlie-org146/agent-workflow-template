@@ -462,6 +462,27 @@ Status: built and proven: Read the batch's lines; Print one line each. Built onl
 Stops for the owner: none.
 Proof: toy tests.
 
+#### `roadmap`
+
+`python3 skills/workflow-monitoring/scripts/batch.py roadmap [--issues FILE] [--out FILE]` builds the Roadmap wiki page. `docs/ROADMAP.md`
+holds the v1.0.0 group tables and the Rollout; the command adds each open issue to its group (a hand row first, else by label), a status per
+row (in flight when a running goal names the issue, queued when queue.md does, else open), the Backlog milestones apart as "after v1.0", the
+"To-do:" issues, the goals in flight and each page's Unreviewed requirements. A closed issue drops out; Priority is left empty. Open issues come
+from `gh issue list` (`--issues FILE` reads the same JSON). With `--out` it writes the page (docs/wiki/Roadmap.md, a guide page `docs.py
+publish` owns), else it prints it. Rebuild after editing docs/ROADMAP.md.
+
+```mermaid
+flowchart LR
+  a["Read docs/ROADMAP.md and the open issues"]
+  b["Join them with the run records and queue"]
+  c["Write the page"]
+  a --> b --> c
+```
+
+Status: built and proven: Read docs/ROADMAP.md and the open issues; Join them with the run records and queue; Write the page. Built only: none. Planned: none.
+Stops for the owner: none.
+Proof: toy tests.
+
 #### `worker`
 
 ```mermaid

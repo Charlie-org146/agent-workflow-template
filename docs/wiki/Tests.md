@@ -61,7 +61,7 @@
 | <a id="t-perms-private-refused"></a>perms-private-refused | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-9 | not run | - | local | 2026-11-14 |
-| <a id="t-perms-settings-tracked"></a>perms-settings-tracked | requirement | AUT-9 | not run | - | local | 2026-11-15 |
+| <a id="t-perms-settings-tracked"></a>perms-settings-tracked | requirement | AUT-9 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-perms-no-repo-deny"></a>perms-no-repo-deny | requirement | AUT-9 | not run | - | local | 2026-11-15 |
 
 ## Delivery
@@ -292,6 +292,7 @@
 | <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-regression-3815"></a>skill-lines-regression-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-roadmap-page-passes-check"></a>roadmap-page-passes-check | requirement | DOC-13 | not run | - | local | 2026-11-15 |
 | <a id="t-tests-links-workflow-3839"></a>tests-links-workflow-3839 | defect | [#3839](https://github.com/jcl2018/agent-workflow-template/issues/3839) closed (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-lane-rows-judge-own-diff"></a>lane-rows-judge-own-diff | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-sync-first-adopts"></a>sync-first-adopts | requirement | DOC-17 | not run | - | local | 2026-11-14 |
@@ -360,6 +361,7 @@
 | <a id="t-config-holds-topics"></a>config-holds-topics | requirement | GRD-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-perms-private-never-written"></a>perms-private-never-written | requirement | GRD-3 | not run | - | local | 2026-11-14 |
 | <a id="t-workers-setting-listed"></a>workers-setting-listed | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-grd2-default-240"></a>grd2-default-240 | requirement | GRD-2 | not run | - | local | 2026-11-15 |
 
 ## Health
 
@@ -581,8 +583,18 @@
 | <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | MON-18 | not run | - | local | 2026-11-14 |
 | <a id="t-blockers-first"></a>blockers-first | requirement | MON-19 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-runs-skips-non-dict"></a>runs-skips-non-dict | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
+| <a id="t-roadmap-closed-drops"></a>roadmap-closed-drops | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-roadmap-status-values"></a>roadmap-status-values | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-backlog-apart"></a>roadmap-backlog-apart | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-priority-empty"></a>roadmap-priority-empty | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-unreviewed-listed"></a>roadmap-unreviewed-listed | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-todos-apart"></a>roadmap-todos-apart | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-monitor-stray-runs-3862"></a>monitor-stray-runs-3862 | defect | [#3862](https://github.com/jcl2018/agent-workflow-template/issues/3862) closed (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-app-refuses-headless-4184"></a>app-refuses-headless-4184 | defect | [#4184](https://github.com/jcl2018/agent-workflow-template/issues/4184) closed (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-roadmap-hand-backlog-once"></a>roadmap-hand-backlog-once | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-finished-not-queued"></a>roadmap-finished-not-queued | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-paths-scrubbed"></a>roadmap-paths-scrubbed | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-odd-input-ok"></a>roadmap-odd-input-ok | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-new-binds-app-session-4257"></a>new-binds-app-session-4257 | defect | [#4257](https://github.com/jcl2018/agent-workflow-template/issues/4257) open (2026-11-14) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-14 |
 
 ## Regression
@@ -946,7 +958,7 @@
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-wording"></a>review-findings-wording | requirement | done line review-findings:1 | not run | - | local | 2026-11-12 |
-| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | PASS 2026-11-15 FLAKY | - | local | 2026-11-13 |
+| <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | FAIL | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-findings-one-per-lesson"></a>findings-one-per-lesson | workflow | done line migration-lessons:1 | not run | - | local | 2026-11-12 |
 | <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | not run | - | local | 2026-11-12 |
