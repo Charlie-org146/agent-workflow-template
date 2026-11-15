@@ -202,12 +202,15 @@ def section(text, name):
 
 def cmd_roadmap(args):
     top = root()
-    with open(os.path.join(top, "docs", "ROADMAP.md"), encoding="utf-8") as handle:
-        source = handle.read()
-    if args.issues:
-        with open(args.issues, encoding="utf-8") as handle:
-            raw = json.load(handle)
-    else:
+    try:
+        with open(os.path.join(top, "docs", "ROADMAP.md"), encoding="utf-8") as handle:
+            source = handle.read()
+        if args.issues:
+            with open(args.issues, encoding="utf-8") as handle:
+                raw = json.load(handle)
+    except (OSError, ValueError) as error:
+        sys.exit("REFUSED: cannot read docs/ROADMAP.md or the issues file: %s. Fix: run from the repo and pass a JSON list." % error)
+    if not args.issues:
         done = subprocess.run(["gh", "issue", "list", "--state", "open", "--limit", "1000", "--json", "number,title,labels,milestone"], capture_output=True, text=True, cwd=top)
         if done.returncode:
             sys.exit("REFUSED: gh issue list failed: %s" % done.stderr.strip()[:200])
