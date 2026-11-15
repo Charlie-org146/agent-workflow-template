@@ -97,7 +97,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
     code, out = sync()
     ok(code == 0 and "SYNCED Sensor" in out and "DELTA" not in out and not calls(log), "the first sync adopts the source: a copy and a baseline, no delta, nothing posted")
-    ok(os.path.exists(copy) and os.path.exists(copy[:-3] + ".base") and "- TH-2: Alerts above 80 degrees" in read(copy), "the repo copy holds each requirement id and its text beside its baseline")
+    ok(os.path.exists(copy) and os.path.exists(copy[:-3] + ".base") and "- TH-2: **Unreviewed** Alerts above 80 degrees" in read(copy), "the repo copy holds each requirement id and its text beside its baseline")
 
     edit(copy, "every second", "every two seconds")
     code, out = sync("--dry-run")
@@ -120,11 +120,11 @@ with tempfile.TemporaryDirectory() as tmp:
        "a requirement changed only in the external document is a DELTA naming the source, and is posted as its own issue")
     edit(source, "every second", "every three seconds")
     code, out = sync()
-    ok("DELTA Sensor: TH-1 both sides changed" in out and len(calls(log, "issue", "comment")) == 1, "a requirement changed on both sides is a DELTA for both, commented on its issue again")
+    ok("CONFLICT Sensor: TH-1 both sides changed" in out and len(calls(log, "issue", "comment")) == 1, "a requirement changed on both sides is a CONFLICT naming both texts, commented on its issue again")
 
     code, out = sync("--accept", "Sensor:TH-2=source")
     text = read(copy)
-    ok("ACCEPTED Sensor: TH-2" in out and "- TH-2: Alerts above 90 degrees" in text and "every two seconds" in text and len(calls(log, "issue", "close")) == 1 and "TH-2" not in out.split("ACCEPTED")[1].split("\n", 1)[1],
+    ok("ACCEPTED Sensor: TH-2" in out and "- TH-2: **Unreviewed** Alerts above 90 degrees" in text and "every two seconds" in text and len(calls(log, "issue", "close")) == 1 and "TH-2" not in out.split("ACCEPTED")[1].split("\n", 1)[1],
        "accept source writes only that requirement into the repo copy, leaves every other as it was, and closes its issue")
     code, out = sync("--accept", "Sensor:TH-1=repo")
     ok("ACCEPTED Sensor: TH-1" in out and "- TH-1: **Unreviewed** Reads the sensor every two seconds" in read(source) and "above 90" in read(source)
