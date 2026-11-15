@@ -123,9 +123,10 @@ def held_all(root):
     for issue in sorted(found, key=lambda one: one["number"]):
         match = FOUND.search(issue.get("body") or "")
         if match and IS.is_health(issue):
-            seen = out.get(match.group(1))
+            name = IS.posix(match.group(1))
+            seen = out.get(name)
             if seen is None or (seen.get("state") != "open" and issue.get("state") == "open"):  # an open duplicate wins
-                out[match.group(1)] = dict(issue, evidence=match.group(2) or "")
+                out[name] = dict(issue, evidence=match.group(2) or "")
     return out, found, ""
 
 
@@ -148,7 +149,7 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         label, stone = home(item, page)
         act = {"group": group, "key": key, "body": body_of(item), "evidence": mark, "tag": tag_of(group, item),
                "label": label, "stone": stone, "feature": IS.feature_label(page) if page and tagging else "",
-               "title": "health: %s %s %s" % (group, item["subject"], item["rule"])}
+               "title": "health: %s %s %s" % (group, IS.posix(item["subject"]), item["rule"])}
         if not issue:
             cover = covering(item, everything)
             out.append(dict(act, kind="link", number=str(cover["number"])) if cover else dict(act, kind="open"))
@@ -310,7 +311,7 @@ def limit_rows(root):
         loop = os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip() or ".git")), "loop")
     except (OSError, ValueError):
         return []
-    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 3)
+    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 8)
     for path in glob.glob(os.path.join(loop, "runs", "*.json")):
         try:
             with open(path) as handle:

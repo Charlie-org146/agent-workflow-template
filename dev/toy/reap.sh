@@ -29,6 +29,9 @@ toy_skip() { echo "SKIP: $*"; [ -z "${TOY_SKIP_FILE:-}" ] || echo skip > "$TOY_S
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) grep -q "^# windows: ok" "$0" || toy_skip "$(basename "$0") is not marked '# windows: ok'";; esac
 export LOOP_NO_GIT_HOOKS=1  # a toy never installs git hooks into its repos (the guard-enforce test unsets it)
 export LOOP_NO_HEALTH=1 LOOP_NO_ISSUES=1  # setup's two health runs and its issue filing are off in a toy; the setup-adopt rows that test them unset these
+# The machine is made up too: the goal start decisions (parallel, the pool, memory holds) read free memory (MON-16), which on a loaded
+# runner or a small PC drops under the floor and stops every start; a toy that tests memory sets its own LOOP_MACHINE (#4375).
+export LOOP_MACHINE="${LOOP_MACHINE:-64,64,10,0,0}"
 _toy_reap_on=1
 _toy_reap_py="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/reap.py"
 _toy_reap_label=$(basename "$0")

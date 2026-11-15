@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=ab68e827 N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=72f34003 N=8441e908 M=885f85c3 U=03828777 --> <!-- kept merge-unblock@4bcf6ff3 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -18,10 +18,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=ab68e827 N=8441e908 M=885f
   - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
   - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
   - A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works.
-- DOC-2: **Reviewed 2026-11-13** The PRD is mine <!-- reviewed 2e17a232 -->
+- DOC-2: **Reviewed 2026-11-15** The PRD is mine <!-- reviewed 3b43042e -->
   - I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message.
   - A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words.
   - After it, nothing in Problem, Requirements, Non-goals or Success metrics changes unless I un-review it.
+  - A change to code or config a page maps never needs my words when none of the page's own text changed: a change that leaves the code's syntax tree the same (comments and docstrings only) doesn't make the page stale at all, and any other mapped change re-stamps the page's review at merge, logged with the goal's slug. A change to the page's wording still needs my words.
 - DOC-3: **Reviewed 2026-11-08** Tests follow on their own <!-- reviewed 2e9e1c3f -->
   - Once I review a PRD, the loop writes Given/When/Then scenarios and tests for each requirement, links each to a regression row, and keeps them in step when a requirement changes.
   - I never write or manage tests.
@@ -253,6 +254,10 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=ab68e827 N=8441e908 M=885f
 | [merge-main-own-finding](Tests#t-merge-main-own-finding) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main from another goal, when it checks the wiki, then the page is a FINDING and the goal still merges. | not run |
 | [lane-rows-judge-own-diff](Tests#t-lane-rows-judge-own-diff) | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) closed (2026-11-14) | Given the lane rows that grep docs check for STALE, when they run, then each judges the goal's own diff (--own), so a page stale on main never fails a goal. | not run |
 | [docs-locked-hint-issue-133](Tests#t-docs-locked-hint-issue-133) | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | Given a reviewed requirement whose wording changed, when docs check runs, then its LOCKED hint says restore or unreview, never review. | PASS 2026-11-10 |
+| [stale-comments-only-3122](Tests#t-stale-comments-only-3122) | defect | [#3122](https://github.com/jcl2018/agent-workflow-template/issues/3122) open (2026-11-15) | Given a code change to a mapped file that only edits comments or docstrings, when the docs check runs, then the page is not stale; a real code change still stales it (issue 3122). | PASS 2026-11-15 |
+| [restamp-marks-3867](Tests#t-restamp-marks-3867) | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) open (2026-11-15) | Given a Reviewed page stale only through mapped code with its reviewed text unchanged, when the merge step re-stamps it, then it is kept by the goal's slug, no longer stale, and the reviews log names the slug (issue 3867). | PASS 2026-11-15 |
+| [restamp-wording-locked-3867](Tests#t-restamp-wording-locked-3867) | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) open (2026-11-15) | Given a Reviewed page whose reviewed wording changed, when the merge step re-stamps pages, then it is not re-stamped and stays LOCKED (issue 3867). | PASS 2026-11-15 |
+| [restamp-at-merge-3867](Tests#t-restamp-at-merge-3867) | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) open (2026-11-15) | Given a goal branch that stales a Reviewed page only through mapped code, when merge.py runs its re-stamp step, then the branch gets a re-stamp commit and nothing is stale (issue 3867). | PASS 2026-11-15 |
 | [skill-lines-release-4172](Tests#t-skill-lines-release-4172) | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-14) | Given the release skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4172). | not run |
 | [skill-lines-docs-4171](Tests#t-skill-lines-docs-4171) | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4171). | not run |
 | [skill-lines-regression-3983](Tests#t-skill-lines-regression-3983) | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3983). | not run |

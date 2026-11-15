@@ -132,6 +132,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 |---|---|
 | `/workflow-release merge SLUG` | `python3 scripts/merge.py SLUG` |
 | `/workflow-release batch` | `python3 scripts/wiki.py batch plan` |
+| `/workflow-release review SLUG` | `python3 scripts/review.py record SLUG` |
 | `/workflow-release ask SLUG` | `python3 scripts/release.py ask SLUG` |
 | `/workflow-release cut SLUG` | `python3 scripts/release.py cut SLUG` |
 | `/workflow-release leave SLUG` | `python3 scripts/release.py leave SLUG` |
