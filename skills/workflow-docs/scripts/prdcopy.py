@@ -250,7 +250,7 @@ def sync(root, dry=False, accept=(), opened=False):
         if not os.path.exists(path):
             if not dry:
                 write(path, compose(parts, source), {i: sha(t) for i, t in want.items()})
-                print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
+                print("SYNCED %s: %d requirement(s) from %s; docs.py render shows them on the page" % (page, len(want), source))
             continue
         with open(path, encoding="utf-8") as handle:
             copy = handle.read().replace("\r\n", "\n")
