@@ -1,22 +1,17 @@
 """Read and write .loop/regression-runs.tsv: each row's last run as id, status, date, run, flaky.
 
-run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else
-empty, so same-day runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's
-result flipped on (tiers.py flaky_apply, REG-9); status stays the raw PASS or FAIL. The per-result evidence (commit,
-clean, host, python) lives in the branch's lane record in the git common dir, never here: a commit cell would differ
-per branch and conflict every same-day merge. Files from before the run or flaky column still read, with those cells
-empty. A line carries the 5th cell only while it is set. A row not rerun keeps its cells, and a result with no flaky
-field (a dirty tree) keeps the row's flaky cell.
+run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day
+runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's result flipped on (tiers.py
+flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
+record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
 
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in
-its body. Dry-run (WOULD lines) unless live; live, it creates, labels, reopens, comments on and closes issues with gh.
-The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
+It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body.
+Dry-run (WOULD lines) unless live. The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
 
-The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (the loop's qa, ship
-and pull-request lanes) never goes past test_budget_minutes in .loop/config.json (default 15, floor 15). Rows run in
-tier order while their estimated seconds fit, a row still running at the budget is stopped, and every row not run is
-left to the scheduled full suite and listed. A left row is recorded as LEFT, so a later lane on the same content
-doesn't rerun it. The row and page readers of regression.py (chosen, clean, criteria_ids and others) sit at the end.
+The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (qa, ship and pull-request lanes)
+never goes past test_budget_minutes in .loop/config.json (default 15, floor 15); rows run in tier order while their estimated
+seconds fit, a row still running at the budget is stopped, and the rest are listed and recorded LEFT for the scheduled full suite.
+regression.py's row and page readers sit at the end.
 """
 import datetime
 import glob
@@ -30,7 +25,6 @@ import time
 
 import actions
 import lanes
-import rowtail
 
 # A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -43,6 +37,26 @@ ISSUE_LIMIT = 1000
 SKIP_CODE = 77
 LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
+
+# rowtail:begin (actions.py copies this block into the workflow)
+LAST = 40  # output lines an issue carries (defect 3789)
+QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")  # `| grep -q PATTERN` hides its stream
+
+
+def again(command):
+    """The command with each `| grep -q PATTERN` made `| cat`, or None when it has none."""
+    loud = QUIET.sub("| cat", command)
+    return loud if loud != command else None
+
+
+def shown(run, command, code, text):
+    """A failing row's last LAST lines, never empty; a row that printed nothing runs once more with its quiet stage loud (run is
+    the caller's (code, text) runner)."""
+    if not text.strip() and again(command):
+        text = run(again(command))[1]
+    lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
+    return "\n".join(lines).replace("`" * 3, "'" * 3) or "(the row printed nothing; it exited %s)" % code
+# rowtail:end
 
 
 def path(root):
@@ -167,7 +181,7 @@ def budget(root):
 
 
 def fit(todo, est, limit):
-    """(rows that fit, rows left): todo in tier order, each kept while the estimated total stays within limit."""
+    """(rows that fit, rows left) of todo, in tier order, within limit."""
     keep, left, used = [], [], 0.0
     for key in todo:
         if used + est.get(key, 0) <= limit:
@@ -204,7 +218,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
-        tail = rowtail.shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
+        tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
@@ -237,7 +251,7 @@ def done_lines(path):
 
 
 def criteria_ids(root):
-    """Requirement ids written under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
+    """Requirement ids under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
     try:
         with open(path_of(root, "config.json")) as handle:
             folder = json.load(handle).get("wiki_dir") or "docs/wiki"

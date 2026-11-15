@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/rowtail.py
+# reads: skills/workflow-regression/scripts/runs.py
 # reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/lanes.py
 """REG-3, defect 3789: a failing row's issue holds the row's last 40 output lines, never an empty block.
 

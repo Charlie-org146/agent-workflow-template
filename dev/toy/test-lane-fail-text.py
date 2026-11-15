@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/rowtail.py
+# reads: skills/workflow-regression/scripts/runs.py
 # reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/lanes.py
 """lane-fail-text (#3911): a row that ends in `| grep -q PATTERN` and fails shows its own output in the lane, not a bare FAIL.
 
