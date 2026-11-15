@@ -204,14 +204,6 @@ def tests_table(ids, linked, defects, rows, fields, ran):
     return pageformat.table(TESTS, shown) if shown else []
 
 
-def workflow_file(root):
-    """The workflow file the automation registry runs the regression routine from (`github:FILE`), else regression.yml (#3839)."""
-    for entry in counting.entries(root):
-        if entry.get("name") == "regression" and str(entry.get("runs", "")).startswith("github:"):
-            return entry["runs"][7:] or "regression.yml"
-    return "regression.yml"
-
-
 def run_cell(value, repo, day="", flow="regression.yml"):
     """A URL is its Actions run; an empty cell links that day's CI runs of the regression workflow; an old sha cell
     links its commit; else local."""
@@ -262,6 +254,7 @@ def block_re(name):
 
 
 config_of = counting.config_of
+workflow_file = counting.workflow_file
 
 
 def reference():

@@ -265,6 +265,14 @@ def entries(root):
     return out
 
 
+def workflow_file(root):
+    """The workflow file the automation registry runs the regression routine from (`github:FILE`), else regression.yml (#3839)."""
+    for entry in entries(root):
+        if entry.get("name") == "regression" and str(entry.get("runs", "")).startswith("github:"):
+            return entry["runs"][7:] or "regression.yml"
+    return "regression.yml"
+
+
 def runbook_link(root, entry, wiki):
     """The wiki link to the Runbook of an entry's routine: its `runbook` key, else the .loop/routines.tsv routine named like it
     (health -> health-round); '' when there is none or the repo has no GitHub origin."""
