@@ -11,13 +11,13 @@ usage: wiki.py <command> SLUG
 
 Both scan for private names first: prepare --commit scans the branch before its push; publish scans every wiki page and
 publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the repo's Wiki tab
-and run merge.py SLUG again (issue 129).
+and run merge.py again (issue 129).
 
 A repo without .loop/docs.tsv has no wiki: both commands do nothing. It runs git and docs.py, and nothing else.
 
 Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
 (REG-6), from workflow-regression's tests.py fixes; a missing or failing tests.py gives a "Fixes: unknown/not listed" line,
-never a failed release. Called by release.py (cut) and autorelease.py.
+never a failed release. Called by release.py and autorelease.py.
 """
 import argparse
 import glob

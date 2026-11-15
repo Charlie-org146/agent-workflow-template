@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/workflow-docs/scripts/deployments.py skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/entry.py skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/render.py
-# reads: skills/workflow-docs/references/template.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md
+# reads: skills/workflow-docs/references/commands.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md
 # reads: skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/reply_hook.py
 # Proves the optional Deployments section (DOC-14) on a copy of this repo's own wiki: a page with or without it passes,
 # each malformed table is refused naming the table and column, the section never locks a Reviewed page, review and

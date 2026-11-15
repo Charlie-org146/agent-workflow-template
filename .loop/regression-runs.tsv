@@ -141,6 +141,7 @@ docs-locked-hint-issue-133	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479d
 docs-merged-base-issue-156	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-milestone-line-issue-130	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-only	PASS	2026-11-09	
+docs-scripts-import-by-name	PASS	2026-11-15	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-12	
@@ -346,7 +347,8 @@ package-hang-bound	PASS	2026-11-12
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
 package-hang-stdin	PASS	2026-11-12	
-package-headroom-held	PASS	2026-11-14	
+package-headroom-held	FAIL	2026-11-15	
+package-rows-tracked	FAIL	2026-11-15	
 page-relock	PASS	2026-11-14	
 page-shape	PASS	2026-11-12	
 parallel-unlimited	PASS	2026-11-12	
