@@ -33,7 +33,7 @@ def check(name, ok):
         fails.append(name)
 
 
-BASE = '{\n  "min_free_memory_gb": 3.0,\n  "other_key": 1,\n  "min_free_memory_gb": 3.0\n}\n'
+BASE = '{\n  "min_free_memory_gb": 2.0,\n  "other_key": 1,\n  "min_free_memory_gb": 3.0\n}\n'
 SCRIPT = 'import json\njson.load(open(".loop/config.json"))["%s"]\n'
 ROW = "#!/bin/bash\n# reads: skills/x/scripts/%s.py .loop/config.json\npython3 skills/x/scripts/%s.py\n"
 
@@ -60,12 +60,14 @@ def stale_rows(after):
         return sorted(run)
 
 
+check("a removed duplicate min_free_memory_gb that json.load never returned reruns no row (the guard-fixes case)",
+      stale_rows('{\n  "other_key": 1,\n  "min_free_memory_gb": 3.0\n}\n') == [])
 check("a removed duplicate min_free_memory_gb reruns only the row that names it",
-      stale_rows('{\n  "min_free_memory_gb": 3.0,\n  "other_key": 1\n}\n') == ["a"])
+      stale_rows('{\n  "min_free_memory_gb": 2.0,\n  "other_key": 1\n}\n') == ["a"])
 check("a changed value reruns only the row that names its key",
       stale_rows(BASE.replace('"other_key": 1', '"other_key": 2')) == ["b"])
 check("an added key nobody reads reruns no row", stale_rows(BASE.replace("}\n", ', "brand_new": 1}\n')) == [])
-check("a removed key reruns the row that names it", stale_rows('{"min_free_memory_gb": 3.0, "min_free_memory_gb": 3.0}') == ["b"])
+check("a removed key reruns the row that names it", stale_rows('{"min_free_memory_gb": 2.0, "min_free_memory_gb": 3.0}') == ["b"])
 check("a reformat-only change reruns no row", stale_rows(BASE.replace("\n  ", " ")) == [])
 check("a config that does not parse reruns every row that reads it", stale_rows("{ not json") == ["a", "b"])
 sys.exit(1 if fails else 0)

@@ -51,14 +51,14 @@ def names(text, path):
 
 
 def flat(text, out=None, path=()):
-    """config.json as a Counter of (key path, value), duplicates counted; None if unparseable."""
+    """config.json as a Counter of (key path, value), the last duplicate winning; None if unparseable."""
     if out is None:
         try:
             return flat(json.loads(text, object_pairs_hook=list), collections.Counter())
         except (TypeError, ValueError):
             return None
     if text and isinstance(text, list) and all(isinstance(i, tuple) for i in text):
-        for k, v in text:
+        for k, v in dict(text).items():
             flat(v, out, path + (k,))
     else:
         out[path, json.dumps(text)] += 1
