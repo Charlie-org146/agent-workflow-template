@@ -13,3 +13,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-audit-pr-head.py` and `python3 dev/toy/test-new-binds.py`.
+   Expect: every line starts with PASS and the last line is a PASS summary.
+2. Run `python3 skills/workflow-regression/scripts/regression.py run pr-head-audit-passes-4208 pr-head-audit-refuses-4208 new-binds-app-session-4257`.
+   Expect: `RESULT 3 passed, 0 known, 0 failed, 0 unproven`.
+
+Closes #4208, closes #4257.
