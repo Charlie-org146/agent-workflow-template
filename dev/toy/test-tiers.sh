@@ -136,7 +136,9 @@ git add -A; git commit -qm "t6 rows"; printf 'ok, t6\n' > src/a.txt; git commit 
 out=$(python3 "$d/h.py" "$S" "$RUNS" t6 qa 2>&1)
 # Value: protects=goal_levels nightly makes a goal lane plan from land and nightly rows (S23) and a lane over goal_lane_minutes says so on its LANE line (S21); fails_when=the setting is ignored or the note is missing; why_new=both settings are new; seam=none; no_claim=a real 10-minute lane (0.0001 min stands in)
 check "goal_levels nightly: a goal lane selects the nightly row a change reaches" 'grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt"'
-grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt" || { echo "-- the t6 lane log, to show why m was not selected"; head -30 "$RUNS/t6.qa-lane.txt"; echo "-- the files of t6"; find "$common/loop" -name "*t6*" -exec ls -l --time-style=full-iso {} +; echo "-- the lane state"; cat "$RUNS/t6.qa-lane.last"; echo; echo "-- the records"; head -c 700 "$common"/loop/tests/*t6*.json; echo; }
+grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt" || { echo "-- the t6 lane log"; head -6 "$RUNS/t6.qa-lane.txt" | cut -c1-200; find "$common/loop" -name "*t6*" -printf "%TT %s %p
+" | sed "s|$common/||"; tr -d " 
+" < "$RUNS/t6.qa-lane.last" | cut -c1-400; echo; python3 -c "import json,glob;d=json.load(open(glob.glob('$common/loop/tests/*t6*.json')[0]));print(d['at'],d['commit'][:8],d['merge_base'][:8],{k:(v['status'],v['commit'][:8]) for k,v in d['rows'].items()})"; git log --format="%h %ad %s" --date=format:%T -4; }
 check "a goal lane over goal_lane_minutes adds '; over N min (goal_lane_minutes)' to its LANE line" 'grep -q "^LANE qa AFFECTED .*; over 0.0001 min (goal_lane_minutes)" <<<"$out"'
 t0=$(date +%s); rr=$(python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import lanes;print(lanes.run_row('sleep 20 & echo \$! > $d/left.pid; exec sleep 20','.',None,1)[0])" "$here/skills/workflow-regression/scripts"); took=$(( $(date +%s) - t0 ))
 # Value: protects=a row's timeout holds even when its shell left a child holding the output (red team); fails_when=run_row waits for the pipe to close; why_new=run_row is new; seam=none; no_claim=none beyond protects
