@@ -11,6 +11,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 d=${TOY_KEEP:-$(mktemp -d)}; [ -n "${TOY_KEEP:-}" ] || toy_on_exit 'rm -rf "$d"'
 export HOME="$d/home" PYTHONDONTWRITEBYTECODE=1; mkdir -p "$HOME"  # setup writes private settings under HOME
+export USERPROFILE="$HOME"
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 fails=0
 ok() { echo "PASS: $1"; }

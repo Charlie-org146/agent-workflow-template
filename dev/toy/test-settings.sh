@@ -17,6 +17,7 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 SET="python3 $here/skills/workflow-setup/scripts/settings.py"
 "$here/dev/toy/make.sh" "$T" >/dev/null || exit 1
 export HOME="$T/home"; mkdir -p "$HOME"; unset LOOP_FLOW LOOP_HEALTH
+export USERPROFILE="$HOME"
 ref=$($SET reference)
 missing=""
 for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths criteria_max command allowed_tools model steps overrides rules repos; do

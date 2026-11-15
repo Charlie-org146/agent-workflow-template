@@ -10,6 +10,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 M="$here/skills/workflow-monitoring/scripts"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
 export TZ=UTC  # the checks compare HH:MM text and the zone name; pin the zone so they hold everywhere
 fails=0

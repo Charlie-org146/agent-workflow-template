@@ -12,6 +12,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_O
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d) PATH="$here/dev/toy/fakegh:$PATH"
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 export FAKE_GH_DIR="$d/gh"; mkdir -p "$FAKE_GH_DIR"
 unset LOOP_PRIVATE_NAMES

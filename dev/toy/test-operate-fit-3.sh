@@ -10,6 +10,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 M="$here/skills/workflow-monitoring/scripts"; OP="python3 $M/operate.py"; DOCS="python3 $here/skills/workflow-docs/scripts/docs.py"
 export HOME="$T/home"; mkdir -p "$HOME"; export TZ=Asia/Kolkata
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

@@ -14,6 +14,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
 unset _LOOP_LANE_LABEL _LOOP_LANE_HELD _LOOP_LANE_STARTED _LOOP_LANE_QUEUED _LOOP_LANE_NOTE LOOP_LANE_LIMIT LANES_WIDE
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 [ -n "${1:-}" ] || toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1

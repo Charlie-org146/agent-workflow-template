@@ -11,6 +11,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 set -u
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID GH_TOKEN GITHUB_TOKEN
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 fails=0
 ok() { echo "PASS: $1"; }
