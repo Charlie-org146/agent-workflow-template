@@ -21,6 +21,7 @@ what is missing. New sections get one placeholder line, so the docs check says U
 It runs git and nothing else.
 """
 import argparse
+import importlib
 import itertools
 import os
 import re
@@ -120,7 +121,7 @@ def trouble(root, page, text, parts, rule):
     was, now = dict(zip(KEYS, match.group(3, 4, 5, 6, 7))), prints(parts, rule)
     moved = [key for key in KEYS[:4] if was[key] != now[key]]
     rel = "%s/%s.md" % (criteria.folder_of(root), page)
-    if moved == ["R"] and __import__("audit").owned(root, rel, dict(parts), rule):
+    if moved == ["R"] and importlib.import_module("audit").owned(root, rel, dict(parts), rule):
         moved = []  # another goal's reviewed line moved the lock: relock re-stamps it
     if moved:
         found.append(("LOCKED", page, "the reviewed PRD changed in %s (reviewed lock %s, now %s). Fix: git log -p -- %s to "

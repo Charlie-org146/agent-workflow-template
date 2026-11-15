@@ -68,6 +68,9 @@ blocks-setup-clean	PASS	2026-11-12
 board-estimates-overrun	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 board-sections	PASS	2026-11-09	
 breaking-asks	PASS	2026-11-09	
+budget-fair-base-moved	PASS	2026-11-15	
+budget-fair-failed-stays	PASS	2026-11-15	
+budget-fair-held-time	PASS	2026-11-15	
 builtin-flow	PASS	2026-11-12	
 cap-default-10	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 capture-row-ci	FAIL	2026-11-13	
@@ -96,6 +99,7 @@ defect-wording	PASS	2026-11-12
 del1-new-here-main-refused	PASS	2026-11-14	
 del5-bump-set	PASS	2026-11-12	
 del5-docs-bump-minor	PASS	2026-11-15	
+del5-docs-patch-default	PASS	2026-11-15	
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
 del9-hooks	PASS	2026-11-12	
@@ -316,6 +320,7 @@ monitor-stray-runs-3862	PASS	2026-11-14
 narrow-root-172	PASS	2026-11-10	
 needs-you-stuck	PASS	2026-11-12	
 never-merges	PASS	2026-11-09	
+new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
 no-done-line-refused	PASS	2026-11-12	
 no-flow-refused	PASS	2026-11-12	
@@ -365,6 +370,8 @@ pr-body-criterion	PASS	2026-11-12
 pr-body-no-checks	PASS	2026-11-12	
 pr-body-no-home-3841	PASS	2026-11-14	
 pr-commit-scope	PASS	2026-11-11	
+pr-head-audit-passes-4208	PASS	2026-11-15	
+pr-head-audit-refuses-4208	PASS	2026-11-15	
 pr-in-milestone	PASS	2026-11-12	
 pr-moved-uncounted	PASS	2026-11-15	
 pr-needs-flow	PASS	2026-11-09	
@@ -471,6 +478,7 @@ settings-render-fresh	FAIL	2026-11-15
 settings-stale	PASS	2026-11-12	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
+setup-owner-words-up-front	PASS	2026-11-15	
 size-139	PASS	2026-11-12	
 size-140	PASS	2026-11-12	
 size-141	PASS	2026-11-12	

@@ -258,11 +258,19 @@ def keep(g, state, step, text):
 def nag(g, args):
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "entry.py")
     if not os.path.exists(tool):
-        return print("NOTE: entry.py not found beside workflow-delivery, so the template version was not checked. Fix: reinstall the skills from one release", file=sys.stderr)
+        return print("NOTE: entry.py is missing, so the template version was not checked. Fix: reinstall the skills", file=sys.stderr)
     seen = g.run([sys.executable, tool, "lag", "--new", args.slug, "--repo", g.root()])
     sys.stdout.write(seen.stdout)
     sys.stderr.write(seen.stderr)
     seen.returncode == 3 and sys.exit(2)
+
+
+def bind_here(g, slug):
+    """In an app session, bind the new goal to it (#4257)."""
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "sessions.py")
+    if os.environ.get("CLAUDE_CODE_HOST_SESSION_ID") and os.path.exists(tool):
+        done = g.run([sys.executable, tool, "bind", slug, "self"])
+        print(done.stdout + done.stderr, end="")
 
 
 def frozen_fields(g, args, lines, touches):

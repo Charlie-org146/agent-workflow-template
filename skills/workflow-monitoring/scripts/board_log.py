@@ -105,6 +105,25 @@ def waiting(entry):
     return bool(WAIT.match((str(entry).split(" ", 1) + [""])[1]))
 
 
+# A pr lane lost to a moved base is held time, not active time (#4261): the main branch moving made merge.py refuse
+# (`merge refused (exit N)`, logged by autorelease.reopen) or pool.pr_moved log `main moved, try not counted`. The gap
+# before that entry is lost, and so is the gap before the `pr` entry just ahead of a refusal: the lane that opened the pull
+# request the base then left behind. A `try N failed` entry is the goal's own failure and stays charged.
+LOST = re.compile(r"merge refused \(exit \d+\)|main moved, try not counted")
+
+
+def lost_lanes(log):
+    """The indexes of the log entries whose preceding gap is a lane lost to a moved base (flow_seconds skips those gaps)."""
+    drop = set()
+    for index, entry in enumerate(log):
+        text = (str(entry).split(" ", 1) + [""])[1]
+        if LOST.match(text):
+            drop.add(index)
+            if text.startswith("merge refused") and index and (str(log[index - 1]).split(" ", 2) + ["", ""])[1].rstrip(":") == "pr":
+                drop.add(index - 1)
+    return drop
+
+
 def flow_seconds(run, at, held=None):
     """Time per step with one rule for past and live runs: a gap before an entry naming a step counts toward that step;
     any other gap counts toward the step in force (the last one named, or the next after a finished one). A gap after a
@@ -112,12 +131,13 @@ def flow_seconds(run, at, held=None):
     force (see holding). The time since the last entry counts while running, unless the goal is held: held is True or
     False when the session pool says so, and None when it is unknown, when a pause in force at the last entry stops it."""
     found, force, paused, log = {}, None, False, run.get("log") or []
-    for before, entry in zip(log, log[1:]):
+    lost = lost_lanes(log)  # a pr lane lost to a moved base is held time (#4261)
+    for index, (before, entry) in enumerate(zip(log, log[1:]), 1):
         a, b, word = stamp(before), stamp(entry), named(entry)
         paused = holding(before, paused)
         pause = paused or waiting(before) or (str(before).split(" ", 2) + ["", ""])[1].rstrip(":") in ("stopped", "failed")
         step = word if word in STEPS and not re.search(r"\bstep [a-z]+, running", str(entry)) else force
-        if a and b and step in STEPS and not pause:
+        if a and b and step in STEPS and not pause and index not in lost:
             found[step] = found.get(step, 0) + max(0, (b - a).total_seconds())
         force = after(entry) or force
     last = stamp(log[-1]) if log else None

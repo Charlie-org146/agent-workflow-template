@@ -6,6 +6,7 @@ criteria.py render calls render(); docs.py check calls generated() and front(); 
 insert of the marked blocks (the rest only refresh them). Files are written via a temp file, printed as WROTE <file>.
 It runs git only.
 """
+import importlib
 import json
 import os
 import re
@@ -341,7 +342,7 @@ def stale_blocks(root):
 
 def perm_wiki_page(root, page):
     try:
-        folder = __import__("docs").wiki_dir(root)
+        folder = importlib.import_module("docs").wiki_dir(root)
     except SystemExit:
         folder = "docs/wiki"
     try:

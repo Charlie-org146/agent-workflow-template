@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Merge a finished goal's pull request into the base branch: the release step.
+"""Merge a finished goal's pull request into the base branch, then release.
 
 usage: merge.py SLUG
 
 Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs
-the base's routines (refusing if one fails), merges, and releases (autorelease.py: version bump, CHANGELOG, GitHub
-release); a failure is recorded as `release_error`. Where .loop/docs.tsv maps pages, it first refuses while one is stale
-and after the merge publishes the wiki (wiki.py; `wiki_error` if refused, not undone).
+the base's routines (refusing if one fails), merges, and releases (autorelease.py: bump, CHANGELOG, GitHub
+release); failure: `release_error`. Where .loop/docs.tsv maps pages, it first refuses while one is stale
+and after the merge publishes the wiki (wiki.py; refused: `wiki_error`).
 Before merging it scans the branch and notes for private names, and holds the merge (REQUIREMENT_MISSING) while a
-criterion row the goal adds names a requirement ID no base wiki page names, where the base's pages already use that ID's
-prefix; otherwise a missing ID is only a NOTE.
-Takes <common>/loop/merge.lock (one merge per repo across pods) and refuses another pod's goal.
+criterion row the goal adds names a requirement ID no base wiki page names, where the base's pages use that prefix
+(else a NOTE). Takes <common>/loop/merge.lock (one per repo), refuses another pod's goal; a merged goal leaves
+the pr queue.
 
 Also here, the release pull request (autorelease.py calls `merge.advance` when the base takes no direct push): it pushes
-the release commit to `release/vX-<slug>`, opens `Release vX (<slug>)` with the notes as its body (scanned first) and
+the commit to `release/vX-<slug>`, opens `Release vX (<slug>)` with the notes as its body (scanned) and
 merges it with `gh pr merge --merge`, never `--admin`. `gh pr view` decides the next move: MERGED: VERSION at the merge
-commit must be vX (else RELEASE_VERSION_MISMATCH); OPEN: pending checks wait (`release_pr_waiting`), a review or a block
-records RELEASE_PR_BLOCKED, a head with no passing status RELEASE_STATUS_FAILED or _UNTESTED, a conflict restarts with
-the next version; CLOSED: restart.
+commit must be vX (else RELEASE_VERSION_MISMATCH); OPEN: pending checks wait, a review or block records
+RELEASE_PR_BLOCKED, no passing status RELEASE_STATUS_FAILED or _UNTESTED, a conflict restarts with the next
+version; CLOSED: restart.
 """
 import argparse
 import datetime
@@ -75,8 +75,8 @@ def reach(top, paths):
 
 
 def wiki_only(top, cfg, old, new):
-    """True when NEW descends from OLD (the pr lane's head) and every commit between only adds or edits .md pages in the
-    base's wiki folder (wiki_dir from origin/<base>'s config: the branch can't widen it), no SKILL.md."""
+    """True when NEW descends from OLD (the pr lane's head) and every commit between only edits .md pages in the base's
+    wiki folder (wiki_dir from origin/<base>'s config), no SKILL.md."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -95,7 +95,7 @@ def wiki_only(top, cfg, old, new):
 
 def base_moved(state, cfg, top):
     """None when the merge may go ahead, else (exit code, refusal): the base moved since the pr lane in paths this goal's
-    rows reach (2), or origin can't be fetched (3); a move elsewhere only notes it (regression references/commands.md)."""
+    rows reach (2), or origin can't be fetched (3); a move elsewhere only notes it."""
     base, was, slug = cfg.get("base", "main"), state.get("pr_base"), state.get("slug", "SLUG")
     if not was and state.get("pr_head"):  # a head but no base: never clear
         return 2, "REFUSED (BASE_MOVED): the base the pr lane ran on was not recorded. Fix: goal.py pr %s, then merge.py %s" % (
@@ -125,7 +125,7 @@ def base_moved(state, cfg, top):
 
 
 def missing_ids(top, cfg, head="HEAD"):
-    """(held, noted): requirement IDs of criterion rows this goal adds that no origin/<base> wiki page names."""
+    """(held, noted): requirement IDs this goal's criterion rows add that no origin/<base> wiki page names."""
     base = "origin/" + cfg.get("base", "main")
     folder = (cfg.get("wiki_dir") or "docs/wiki").strip("/")
     added = run(["git", "diff", "-U0", base + "..." + head, "--", ".loop/regression.tsv"], cwd=top).stdout
@@ -257,6 +257,13 @@ def load(path):
         return None
 
 
+def leave_queue(path, slug):
+    """A merged goal leaves the pr queue (#4343)."""
+    for name in (slug, slug + ".beat"):
+        gone = os.path.join(os.path.dirname(os.path.dirname(path)), "pr-queue", name)
+        os.path.exists(gone) and os.unlink(gone)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("slug")
@@ -331,6 +338,7 @@ def main():
         json.dump(state, handle, indent=2)
     os.replace(path + ".tmp", path)
     print("MERGED %s into %s" % (state["pr"], base))
+    leave_queue(path, slug)
     ar.finish(top, cfg, state)
     if wiki.top_of():
         wiki.cmd_publish(argparse.Namespace(slug=slug))

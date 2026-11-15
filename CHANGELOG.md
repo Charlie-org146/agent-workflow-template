@@ -1,5 +1,63 @@
 # Changelog
 
+## v0.28.76 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.75 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.74 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.73 - 2026-11-15
+
+- Merge remote-tracking branch 'origin/main' into loop/package-green
+- package-green: setup says up front that un-reviewing needs the owner's own sentence (#2874)
+- Merge remote-tracking branch 'origin/main' into loop/package-green
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.72 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.71 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.70 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.69 - 2026-11-15
 
 - scripts-a: trim delivery and monitoring scripts under 19,000 bytes

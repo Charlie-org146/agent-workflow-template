@@ -15,8 +15,8 @@ usage: pool.py <command> [options]
 
 Only the desktop app can create, rename or archive a session, so this script records and asks. The pool file is
 <git common dir>/loop/session-pool.json (sessions.py owns its lock). A malformed entry is set aside in
-session-pool.bad.json and named under Issues (issue 122). Each bind raises the run's `attempt`; a report naming an
-older attempt is recorded but not applied (attempt_ok, issue 114). A freed session keeps who it was in `history`.
+session-pool.bad.json (issue 122). Each bind raises the run's `attempt`; a report naming an older one is recorded but not
+applied (issue 114). A freed session keeps who it was in `history`.
 """
 import argparse
 import datetime
@@ -61,7 +61,7 @@ def status_line(found, cfg):
 
 
 def board_line(found, root):
-    """The pool line under the live board's Running goals; '' if it can't be built (the board never fails for it)."""
+    """The pool line under the live board's Running goals; '' if it can't be built."""
     try:
         return status_line(found, se.read(os.path.join(root, ".loop", "config.json"), {}))
     except Exception:
@@ -88,7 +88,7 @@ def need(found, cfg, ready):
 
 
 def ask_lines(found, cfg, ready):
-    """The Needs you lines for the pool: the fill ask, or a ready goal's wait when the pool is full or declined."""
+    """The Needs you lines for the pool: the fill ask, or a ready goal's wait when it is full or declined."""
     k, declined = need(found, cfg, ready)
     free, busy, total = counts(found)
     if k and not declined:
@@ -239,8 +239,8 @@ def cmd_return(args):
 # The pr queue (#3877): goal.py pr asks here; a try lost to main moving has its own cap. graph.pr_queue(op, ...) forwards here.
 def pr_order(runs, keep=""):
     """The one queue every goal reads, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue. A ticket holds the
-    first-join time; <slug>.beat is the heartbeat a retry touches, and only it drives expiry (#3922). A goal (but keep) no
-    longer running or waiting, not at the pr step, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
+    first-join time; <slug>.beat is the heartbeat a retry touches (#3922). A goal (but keep) no longer running or waiting,
+    not at the pr step, merged, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped, ticket and beat."""
     folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
         path = os.path.join(folder, name)
@@ -249,8 +249,9 @@ def pr_order(runs, keep=""):
                 continue
             joined, age = int(open(path).read()), time.time() - os.path.getmtime(path + ".beat" if os.path.exists(path + ".beat") else path)
             if name != keep and (age > limit or (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE
-                                 or run.get("step") not in ("checks", "pr")):
-                os.unlink(path)
+                                 or run.get("step") not in ("checks", "pr") or run.get("release") in ("merged", "cut")):
+                for gone in (path, path + ".beat"):
+                    os.path.exists(gone) and os.unlink(gone)
                 continue
             line.append((joined, name, int(age)))
         except (OSError, ValueError):
@@ -259,8 +260,8 @@ def pr_order(runs, keep=""):
 
 
 def pr_turn(runs, slug):
-    """Join the repo's queue; "" when it is slug's turn, else the goal ahead. A goal waits only for an earlier goal whose
-    touches overlap its own (a path equal or nested; none overlaps all) (DEL-15). No readable ticket never counts as first."""
+    """Join the repo's queue; "" when it is slug's turn, else the goal ahead: only an earlier goal whose touches overlap its
+    own (a path equal or nested; none overlaps all) holds it (DEL-15). No readable ticket never counts as first."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
     os.makedirs(folder, exist_ok=True)
     mine = os.path.join(folder, slug)
@@ -295,8 +296,7 @@ def pr_ahead(runs, base):
 
 
 def pr_moved(runs, g, state, why, fix):
-    """A try lost to main moving is not the goal's fault: it counts in state["moved"], capped by max_moved (default 5), not
-    in tries. Past the cap it counts as a try."""
+    """A try lost to main moving counts in state["moved"], capped by max_moved (default 5), not in tries; past it, a try."""
     state["moved"] = state.get("moved", 0) + 1
     most = int(g.config().get("max_moved") or 5)
     if state["moved"] > most:
