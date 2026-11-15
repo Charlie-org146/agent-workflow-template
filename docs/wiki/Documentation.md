@@ -233,6 +233,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=c6988ad6 N=8441e908 M=885f
 | [prd-sync-conflict](Tests#t-prd-sync-conflict) | requirement | DOC-17 | Given a requirement changed in the repo copy and in the external document, when docs.py sync runs, then it prints a CONFLICT naming both texts and overwrites neither side. | not run |
 | [prd-sync-no-reader](Tests#t-prd-sync-no-reader) | requirement | DOC-17 | Given a source no reader can reach, when docs.py sync runs, then it prints not connected, exits 0 and leaves the copy as it was. | not run |
 | [prd-copy-no-source](Tests#t-prd-copy-no-source) | requirement | DOC-17 | Given a page with no PRD source, when docs.py sync and render run, then the page is never visited, gets no block and raises no signal. | not run |
+| [prd-copy-old-layout](Tests#t-prd-copy-old-layout) | requirement | DOC-17 | Given a copy written before the repo's layout, when docs.py sync runs, then it skips the page naming the fix and leaves the copy as it was. | not run |
 | - | requirement | DOC-17 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
