@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
-"""The release step's wiki half: bring the goal's pages up to date before the merge, publish them after it.
+"""The release step's wiki half: bring the goal's pages up to date before the merge, publish after it.
 
 usage: wiki.py <command> SLUG
        wiki.py batch plan|run [--size N] [--merge]   verify 3-4 ready pull requests with disjoint touches together (DEL-15)
 
   prepare SLUG [--commit]   list every wiki page docs.py check calls stale or missing (exit 1); with --commit, first commit
-                            edited pages on the goal's branch, and push it when nothing is stale. It only checks.
+                            edited pages on the goal's branch, and push it when nothing is stale.
   publish SLUG              after the merge: run docs.py publish from a clean checkout of origin/<base>; on a refusal
                             record `wiki_error` (page and reason) on the goal, which shows under Issues.
 
 Both scan for private names first: prepare --commit scans the branch before its push; publish scans every wiki page and
-publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the repo's Wiki tab
-and run merge.py again (issue 129).
-
-A repo without .loop/docs.tsv has no wiki: both commands do nothing. It runs git and docs.py, and nothing else.
+publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the Wiki tab
+and run merge.py again. A repo without .loop/docs.tsv has no wiki: both do nothing.
 
 Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
-(REG-6), from workflow-regression's tests.py fixes; a missing or failing tests.py gives a "Fixes: unknown/not listed" line,
-never a failed release. Called by release.py and autorelease.py.
+(REG-6), from tests.py fixes; a missing or failing tests.py gives "Fixes: unknown/not listed", never a failure.
 """
 import argparse
 import glob
@@ -57,8 +54,8 @@ def own_entry(tree, lines):
 
 
 def pending(top, cfg, fix=False, head="HEAD"):
-    """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first. A head
-    other than HEAD is audited from its own tree (a temporary worktree), not this checkout's (#4208)."""
+    """What the docs audit still finds for the goal, one line each; fix mends the mechanical trouble first. A head other than
+    HEAD is audited from its own tree and docs scripts (a temporary worktree), not this checkout's (#4208)."""
     base = base_of(top, cfg)
     if fix:
         release.docs_trouble(top, base, True)  # mend the goal's mechanical trouble
@@ -67,11 +64,15 @@ def pending(top, cfg, fix=False, head="HEAD"):
         run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch
         tree = tempfile.mkdtemp(prefix="pending-")
         tree = tree if run(["git", "worktree", "add", "-q", "--detach", tree, head], top).returncode == 0 else top
+    docs = os.path.join(tree, "skills", "workflow-docs", "scripts", "docs.py")
+    saved, docs = release.DOCS, docs if tree != top and os.path.exists(docs) else DOCS
     try:
+        release.DOCS = docs
         lines = release.docs_trouble(tree, base, whole=True)
         lines = own_entry(tree, lines) if tree != top else lines
-        done = run([sys.executable, DOCS, "check", "--own", head if tree == top else "HEAD"], tree)  # a page stale from a commit this goal's diff does not touch is main's own
+        done = run([sys.executable, docs, "check", "--own", head if tree == top else "HEAD"], tree)  # main's own stale page
     finally:
+        release.DOCS = saved
         tree != top and run(["git", "worktree", "remove", "--force", tree], top)
     other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
     kept = [l for l in lines if not (l.startswith("REWRITE ") and l.split()[1].rstrip(":") in other and ": STALE " in l)]

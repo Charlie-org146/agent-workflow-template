@@ -175,6 +175,7 @@
 | <a id="t-start-from-head-passes-4340"></a>start-from-head-passes-4340 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-start-from-head-refuses-4340"></a>start-from-head-refuses-4340 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-merge-main-own-finding-4343"></a>merge-main-own-finding-4343 | requirement | DEL-5 | not run | - | local | 2026-11-15 |
+| <a id="t-audit-head-judges-own-docs"></a>audit-head-judges-own-docs | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 
 ## Documentation
 
