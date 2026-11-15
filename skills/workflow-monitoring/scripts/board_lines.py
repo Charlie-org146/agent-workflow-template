@@ -51,7 +51,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 WIDTH = 60
 MARKS = {"running": ">", "held": "=", "paused": "=", "holding": "=", "awaiting merge": "=", "done": "=", "queued": " ",
-         "waiting": "?", "failed": "!", "stopped": "!", "stuck": "!", "silent": "!", "freezing": ">"}
+         "waiting": "?", "failed": "!", "stopped": "!", "stuck": "!", "silent": "!", "freezing": ">", "merged": "x"}
 LEGEND = "[>] running [=] holding [ ] queued [?] you [!] stuck"
 
 
