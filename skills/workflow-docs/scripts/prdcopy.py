@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""The repo's copy of an external PRD (DOC-17), and docs.py sync. `.loop/prd/PAGE.md` holds the last agreed version in the repo's
-layout and every check reads it, never the source; normalise() brings a source's layout to the repo's, block() is the part of the wiki
-page generated from the copy (the four PRD sections between prd:begin and prd:end), link_page() is the docs check of a page that has
-a source, and sync() compares the source with the copy and what both last agreed on: a requirement added or changed on one side is a
-DELTA, one changed on both is a CONFLICT, neither is ever overwritten, and --accept PAGE:ID=repo|source writes one side over the
-other. The source is read only where a reader can reach it (prd.read_link), else `not connected`. Imports are lazy: criteria.py and
-deployments.py import this module."""
+"""The repo's copy of an external PRD (DOC-17), and docs.py sync. `.loop/prd/PAGE.md` is the last agreed version, in the repo's layout;
+every check reads it, never the source. normalise() brings a source's layout to the repo's, block() is the page's generated PRD block,
+link_page() the docs check of a page with a source, sync() compares source and copy with what both last agreed: one side changed is a
+DELTA, both a CONFLICT, nothing is overwritten, --accept PAGE:ID=repo|source writes one side over the other. Imports are lazy."""
 import os
 import re
 
@@ -13,63 +10,83 @@ SYNC_MARK = "<!-- prd-sync: owned -->"
 BEGIN, END = "<!-- prd:begin -->", "<!-- prd:end -->"
 HEADS = ("Problem", "Requirements", "Non-goals", "Success metrics")
 EMPTY = {"Problem": "Not written in the source.", "Non-goals": "None", "Success metrics": "Not written in the source."}
-NAMES = {"problem": "Problem", "summary": "Problem", "overview": "Problem", "background": "Problem",
-         "requirements": "Requirements", "functional": "Requirements", "non-functional": "Requirements", "nonfunctional": "Requirements",
-         "new requirements": "Requirements", "non-goals": "Non-goals", "non goals": "Non-goals", "nongoals": "Non-goals",
-         "out of scope": "Non-goals", "success metrics": "Success metrics", "success": "Success metrics", "metrics": "Success metrics"}
-ITEM = re.compile(r"^(\s*)(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
-MARK = re.compile(r"^(?:[A-Z][\w -]{0,24}:\s*)?(?:\*\*|\()(Un)?[Rr]eviewed(?:\s+(\d{4}-\d\d-\d\d))?(?:\*\*|\))\s*[:–—-]?\s*(.*)$")
-FLAT = re.compile(r"^(?:Functional|Non-?functional)\s*:\s*", re.I)
+NAMES = {"problem": "Problem", "summary": "Problem", "overview": "Problem", "background": "Problem", "requirements": "Requirements",
+         "functional": "Requirements", "non-functional": "Requirements", "nonfunctional": "Requirements", "new requirements": "Requirements",
+         "non-goals": "Non-goals", "non goals": "Non-goals", "nongoals": "Non-goals", "out of scope": "Non-goals",
+         "success metrics": "Success metrics", "success": "Success metrics", "metrics": "Success metrics"}
+KEYS = sorted(NAMES, key=len, reverse=True)
+ITEM = re.compile(r"^(\s*)(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.\u2013\u2014-]*\s*(.*)$")
+MARK = r"(?:\*\*|\()(Un)?[Rr]eviewed(?:\s+(\d{4}-\d\d-\d\d))?(?:\*\*|\))"
+KIND = re.compile(r"^(Functional|Non-?functional)\s*:?\s*", re.I)
 
 
 def path_of(root, page):
     return os.path.join(root, ".loop", "prd", page + ".md")
 
 
-def item_line(ident, rest):
-    """`- ID: **Reviewed DATE** title` (or Unreviewed) from what follows an id in a source, or None when it holds no title."""
-    rest = re.sub(r"<!--.*?-->", " ", rest.strip().strip("|").strip())
-    found = MARK.match(FLAT.sub("", rest))
-    mark, title = ("Reviewed " + found.group(2) if found and not found.group(1) and found.group(2) else "Unreviewed",
-                   found.group(3)) if found else ("Unreviewed", FLAT.sub("", rest))
-    title = " ".join(title.replace("|", " ").split())
-    return "- %s: **%s** %s" % (ident, mark, title) if title else None
+def tidy(line):
+    """A line with the html a Notion export writes (b, i, u, code, br) as markdown."""
+    return re.sub(r"</?[iu]>|<br\s*/?>", "", re.sub(r"</?b>", "**", re.sub(r"</?code>", "`", line)))
+
+
+def item_line(ident, rest, first=""):
+    """(`- ID: **Reviewed DATE** Kind: title`, whether the first sub-bullet was the title) from what follows an id: the kind stays in
+    the title, the mark comes before or after it, and an id line with no title takes its first sub-bullet, as Notion writes it."""
+    rest = " ".join(re.sub(r"<!--.*?-->", " ", rest).replace("|", " ").split())
+    kind, mark = KIND.match(rest), "Unreviewed"
+    rest = rest[kind.end():] if kind else rest
+    for pattern in (r"^(?:[A-Z][\w -]{0,24}:\s*)?%s\s*[:\u2013\u2014-]?\s*" % MARK, r"\s*%s\s*$" % MARK):
+        found = re.search(pattern, rest)
+        if found:
+            mark = "Reviewed " + found.group(2) if not found.group(1) and found.group(2) else "Unreviewed"
+            rest = (rest[:found.start()] + " " + rest[found.end():]).strip()
+            break
+    title = rest or first
+    if kind and not title.lower().startswith(kind.group(1).lower()):
+        title = "%s: %s" % (kind.group(1), title)
+    return ("- %s: **%s** %s" % (ident, mark, title) if title else None), not rest and bool(first)
 
 
 def normalise(text):
-    """{section: [lines]} of a source in the repo's layout; Requirements lines are `- ID: **mark** title` with their sub-bullets.
-    `NL-1 Functional: (Reviewed 2026-11-10) text` is a requirement, a `New requirements` heading adds to Requirements, a
-    heading the repo has no section for is skipped, and an id line outside any heading is a requirement."""
+    """{section: [lines]} of a source in the repo's layout: `NL-1 Functional: (Reviewed 2026-11-10) text`, or Notion's `**NL-1**
+    Functional: (Reviewed ...)` over a `Functional: text` sub-bullet, becomes `- NL-1: **Reviewed 2026-11-10** Functional: text`; a
+    `New requirements` heading adds to Requirements; other headings (Runbook, Deployments) and anything before the first are skipped."""
     out, mine, seen, fenced = {name: [] for name in HEADS}, None, set(), False
-    lines = text.replace("\r\n", "\n").split("\n")
+    lines = [tidy(x) for x in text.replace("\r\n", "\n").split("\n")]
     for number, line in enumerate(lines):
         if line.startswith("```"):
             fenced = not fenced
         heading = re.match(r"^(#{1,4})\s+(.*?)\s*#*\s*$", line) if not fenced else None
         if heading:
-            mine = NAMES.get(re.sub(r"[^\w -]", "", heading.group(2)).strip().lower(), None if heading.group(1) == "#" else "skip")
+            low = re.sub(r"[^\w -]", "", heading.group(2)).strip().lower()
+            mine = next((NAMES[k] for k in KEYS if low == k or low.startswith(k + " ")), None if heading.group(1) == "#" else "skip")
             continue
         found = ITEM.match(line) if mine in (None, "Requirements") else None
         if found and found.group(2) not in seen:
-            made = item_line(found.group(2), found.group(3))
+            subs = []
+            for sub in lines[number + 1:]:
+                if sub.strip() and len(sub) - len(sub.lstrip()) <= len(found.group(1)):
+                    break
+                if sub.strip() and not ITEM.match(sub):
+                    subs.append(sub.strip().lstrip("-* ").strip())
+            made, used = item_line(found.group(2), found.group(3), subs[0] if subs else "")
             if made:
                 seen.add(found.group(2))
-                out["Requirements"].append(made)
-                for sub in lines[number + 1:]:
-                    if sub.strip() and len(sub) - len(sub.lstrip()) <= len(found.group(1)):
-                        break
-                    if sub.strip() and not ITEM.match(sub):
-                        out["Requirements"].append("  - " + sub.strip().lstrip("-* ").strip())
+                out["Requirements"] += [made] + ["  - " + x for x in subs[used:]]
             continue
         if mine in ("Problem", "Non-goals", "Success metrics") and line.strip():
             out[mine].append(line.rstrip())
     return out
 
 
+def sections(parts, sep="\n\n"):
+    """The four sections as `## Name` and their lines, an empty one with a placeholder."""
+    return sep.join("## %s\n%s" % (name, "\n".join(parts.get(name) or [EMPTY.get(name, "None")])) for name in HEADS)
+
+
 def compose(parts, source):
     """The copy's text: the sync mark, the source, then the four sections."""
-    body = "".join("## %s\n%s\n\n" % (name, "\n".join(parts.get(name) or [EMPTY.get(name, "None")])) for name in HEADS)
-    return "%s\n<!-- source: %s -->\n%s" % (SYNC_MARK, source, body.rstrip("\n") + "\n")
+    return "%s\n<!-- source: %s -->\n%s\n" % (SYNC_MARK, source, sections(parts))
 
 
 def split(text):
@@ -95,8 +112,7 @@ def copy_of(root, page):
 
 def block(copy):
     """The generated part of the wiki page: the copy's four sections between the prd markers."""
-    parts = split(copy)
-    return BEGIN + "\n" + "\n\n".join("## %s\n%s" % (name, "\n".join(parts.get(name) or [EMPTY.get(name, "None")])) for name in HEADS) + "\n" + END + "\n"
+    return "%s\n%s\n%s\n" % (BEGIN, sections(split(copy)), END)
 
 
 def with_block(text, copy):
@@ -134,13 +150,12 @@ def set_item(copy, ident, lines):
         kept = [x for x in kept if x.strip() and x != "None"] + lines
     parts["Requirements"] = kept
     head = copy.split("\n## ")[0].rstrip("\n")
-    return head + "\n" + "".join("## %s\n%s\n\n" % (name, "\n".join(parts.get(name) or [EMPTY.get(name, "None")])) for name in HEADS).rstrip("\n") + "\n"
+    return head + "\n" + sections(parts) + "\n"
 
 
 def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
-    """Trouble for a page that has a source, as (kind, page, detail). Ids come from the page's copy, else from the source read now
-    (UNREAD, never a pass, when neither can be read); the four PRD sections may stand on the page only as the block generated
-    from the copy."""
+    """Trouble for a page with a source, as (kind, page, detail): ids come from its copy, else the source read now (UNREAD when neither
+    reads); the four PRD sections may stand on the page only as the block generated from the copy."""
     import criteria
     import deployments as D
     import pageformat as pf
@@ -218,6 +233,14 @@ def write(path, text, agreed):
             handle.write(body)
 
 
+def kind_of(side):
+    return "CONFLICT" if side == "both sides" else "DELTA"
+
+
+def what(side):
+    return "both sides changed" if side == "both sides" else side + " changed"
+
+
 def sync(root, dry=False, accept=(), opened=False):
     import counting
     import prd
@@ -227,8 +250,7 @@ def sync(root, dry=False, accept=(), opened=False):
     from render import mirror_of
     held = counting.ledger(root)
     if opened:
-        print("".join("%s %s %s (review: %s)\n" % ("CONFLICT" if v[0] == "both sides" else "DELTA", k.replace(":", ": "),
-                                                    "both sides changed" if v[0] == "both sides" else v[0] + " changed", v[1]) for k, v in held.items()), end="")
+        print("".join("%s %s %s (review: %s)\n" % (kind_of(v[0]), k.replace(":", ": "), what(v[0]), v[1]) for k, v in held.items()), end="")
         return 0
     listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
     if not listed:
@@ -301,25 +323,21 @@ def sync(root, dry=False, accept=(), opened=False):
             print("MARKED %s: %s follow the source's review marks" % (page, ", ".join(marks)))
         same, new = same + (not found), new + len(found)
         for ident, side, r, s in found:
-            print("%s %s: %s %s (repo: %s | source: %s)" % ("CONFLICT" if side == "both sides" else "DELTA", page, ident,
-                  "both sides changed" if side == "both sides" else side + " changed", (r or "-")[:160], (s or "-")[:160]))
+            print("%s %s: %s %s (repo: %s | source: %s)" % (kind_of(side), page, ident, what(side), (r or "-")[:160], (s or "-")[:160]))
         if dry:
             continue
         for key in [k for k in held if k.startswith(page + ":") and k.split(":")[1] not in [f[0] for f in found]]:
             post("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Resolved.")
         for ident, side, r, s in found:
             key, text = "%s:%s" % (page, ident), "%s in %s %s: %s.\nRepo copy: %s\nSource: %s\nAccept one: docs.py sync --accept %s:%s=repo|source" % (
-                "Conflict" if side == "both sides" else "Delta", page, ident, "both sides changed" if side == "both sides" else side + " changed",
-                r or "-", s or "-", page, ident)
+                kind_of(side).title(), page, ident, what(side), r or "-", s or "-", page, ident)
             row = held.get(key) or [side, "", "0", ""]
             if row[1] and row[3] != sha(text):
                 post("LOOP_GH", "issue", "comment", row[1], "--body", text)
                 row[2] = "0"
             elif not row[1]:
                 for stone in (["--milestone", page], []):
-                    ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (
-                        "CONFLICT" if side == "both sides" else "DELTA", page, ident, "both sides changed" if side == "both sides" else side + " changed"),
-                        "--body", text, *stone)
+                    ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (kind_of(side), page, ident, what(side)), "--body", text, *stone)
                     if ok:
                         break
                 if not ok:

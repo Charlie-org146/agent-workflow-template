@@ -133,21 +133,32 @@ sync() { LOOP_PRD_READER="$rd" LOOP_GH="python3 $dw/gh.py" LOOP_PRD_WRITER="pyth
 nosync() { env -u LOOP_PRD_READER LOOP_GH="python3 $dw/gh.py" $docs sync "$@" 2>&1; }
 COPY=.loop/prd/Delivery.md
 cat > "$d/notion.md" <<'EOF'
-# Delivery PRD (Notion)
+Source: toy repo, <code>docs/wiki/Delivery.md</code> at v0 (2026-11-14), made up for the toy
+Milestone: [x](y)
+Review: <b>Unreviewed</b>
 
 ## Problem
 
 I want the median of my numbers without working it out by hand.
 
+## Runbook
+
+### toy-run
+
+- <b>Serves:</b> nobody
+
 ## Requirements
 
-DEL-1 Functional: (Reviewed 2026-11-10) The calculator prints a median.
+### Functional
+
+- <b>DEL-1</b> Functional: <i>(Reviewed 2026-11-10)</i>
+  - Functional: The calculator prints a <code>median</code>.
   - The median of the numbers given is printed.
-DEL-2 Non-functional: It answers quickly.
 
-## New requirements
+### Non-functional
 
-DEL-3 Functional: It rejects an empty list.
+- <b>DEL-2</b> Non-functional: <i>(Unreviewed)</i>
+  - Non-functional: It answers quickly.
 
 ## Non-goals
 
@@ -156,6 +167,15 @@ No charts.
 ## Success metrics
 
 The median is right for every list in the toy run.
+
+## Deployments
+
+| Page | Link |
+
+## New requirements (2026-11-13, Unreviewed, being built in goal toy)
+
+- <b>DEL-3</b> Functional: It rejects an empty list. <i>(Unreviewed)</i>
+  - A made-up sub-bullet.
 EOF
 cat > $P <<'EOF'
 <!-- workflow-docs -->
@@ -174,15 +194,16 @@ git add -A; git commit -qm "Link page and rows" >/dev/null
 echo "== the source's layout is normalised into the copy"
 out=$(sync)
 grep -q "^SYNCED Delivery: 3 requirement" <<<"$out" && ok "the first sync adopts the source: 3 requirements" || bad "adopt: $out"
-grep -qx -- "- DEL-1: \*\*Reviewed 2026-11-10\*\* The calculator prints a median." $COPY && grep -qx -- "- DEL-2: \*\*Unreviewed\*\* It answers quickly." $COPY \
-  && grep -qx -- "- DEL-3: \*\*Unreviewed\*\* It rejects an empty list." $COPY && grep -q "^  - The median of the numbers given is printed." $COPY \
-  && ok "the copy holds each requirement in the repo's layout: category dropped, Reviewed mark kept, New requirements merged, sub-bullets kept" || bad "normalise: $(cat $COPY)"
+grep -qx -- '- DEL-1: \*\*Reviewed 2026-11-10\*\* Functional: The calculator prints a `median`.' $COPY && grep -qx -- "- DEL-2: \*\*Unreviewed\*\* Non-functional: It answers quickly." $COPY \
+  && grep -qx -- "- DEL-3: \*\*Unreviewed\*\* Functional: It rejects an empty list." $COPY && grep -q "^  - The median of the numbers given is printed." $COPY \
+  && ! grep -qE "<b>|<i>|<code>|^Source:|Serves|Page . Link" $COPY \
+  && ok "the copy holds each requirement in the repo's layout: html tags gone, the title from the first sub-bullet, the kind kept, the mark before or after, New requirements merged, Source and Runbook left out" || bad "normalise: $(cat $COPY)"
 grep -q "^## Non-goals" $COPY && grep -q "^No charts." $COPY && grep -q "^## Success metrics" $COPY && ok "the copy holds the four sections" || bad "sections: $(cat $COPY)"
 
 echo "== a page with a copy passes with no reader, and shows the PRD as a generated block"
 out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "^FEATURE Delivery" <<<"$out" && ! grep -q "^FEATURE Other" <<<"$out" && ok "the rows' listing groups the page's rows under it from the copy, before any block, with no reader" || bad "tests list before the block: $out"
 $cri render >/dev/null
-grep -q "^<!-- prd:begin -->" $P && grep -q "^## Requirements" $P && grep -q "DEL-3: \*\*Unreviewed\*\* It rejects" $P && grep -q "^## Problem" $P && grep -q "^<!-- prd:end -->" $P \
+grep -q "^<!-- prd:begin -->" $P && grep -q "^## Requirements" $P && grep -q "DEL-3: \*\*Unreviewed\*\* Functional: It rejects" $P && grep -q "^## Problem" $P && grep -q "^<!-- prd:end -->" $P \
   && ok "render writes Problem, Requirements, Non-goals and Success metrics as a block generated from the copy" || bad "block: $(cat $P)"
 grep -q "DEL-1" $P && ok "the Tests table lists the copy's ids" || bad "tests table: $(cat $P)"
 out=$(env -u LOOP_PRD_READER $docs check 2>&1); grep -q "^DOCS OK" <<<"$out" && ! grep -qE "^(UNREAD|LINK)" <<<"$out" && ok "an opted-in page with a copy passes the docs check with no reader: no UNREAD, no LINK" || bad "no reader: $out"
@@ -202,11 +223,10 @@ out=$(nosync); rc=$?
 grep -q "^not connected: Delivery (mcp:notion:delivery-prd)" <<<"$out" && [ "$rc" = 0 ] && [ "$(cat $COPY)" = "$before" ] && ok "with no reader sync prints not connected, exits 0 and leaves the copy as it was" || bad "no reader: $rc $out"
 
 echo "== a requirement added on either side is a delta accepted with --accept"
-edit "$d/notion.md" "DEL-3 Functional: It rejects an empty list." "DEL-3 Functional: It rejects an empty list.
-DEL-4 Functional: It prints a mean too."
+printf '\n- <b>DEL-4</b> Functional: It prints a mean too. <i>(Unreviewed)</i>\n' >> "$d/notion.md"
 out=$(sync); grep -q "^DELTA Delivery: DEL-4 the source changed" <<<"$out" && ok "a requirement added in the source is a DELTA naming the source" || bad "source add: $out"
 grep -q "DEL-4" $COPY && bad "the delta changed the copy" || ok "the delta leaves the copy as it was"
-out=$(sync --accept Delivery:DEL-4=source); grep -q "^ACCEPTED Delivery: DEL-4" <<<"$out" && grep -qx -- "- DEL-4: \*\*Unreviewed\*\* It prints a mean too." $COPY && grep -q "DEL-1: \*\*Reviewed" $COPY && ok "accepting the source writes that requirement into the copy and leaves the others" || bad "accept source: $out $(cat $COPY)"
+out=$(sync --accept Delivery:DEL-4=source); grep -q "^ACCEPTED Delivery: DEL-4" <<<"$out" && grep -qx -- "- DEL-4: \*\*Unreviewed\*\* Functional: It prints a mean too." $COPY && grep -q "DEL-1: \*\*Reviewed" $COPY && ok "accepting the source writes that requirement into the copy and leaves the others" || bad "accept source: $out $(cat $COPY)"
 python3 - "$COPY" <<'PY'
 import sys
 p = sys.argv[1]
@@ -225,7 +245,7 @@ for p, old, new in ((sys.argv[1], "It answers quickly.", "It answers in a second
     open(p, "w").write(t.replace(old, new, 1))
 PY
 cp $COPY "$d/copy-before.md"; cp "$d/notion.md" "$d/notion-before.md"
-out=$(sync); grep -q "^CONFLICT Delivery: DEL-2 both sides changed (repo: It answers in a second. | source: It answers in two seconds.)" <<<"$out" && ok "a requirement changed on both sides is a CONFLICT naming both texts" || bad "conflict: $out"
+out=$(sync); grep -q "^CONFLICT Delivery: DEL-2 both sides changed (repo: Non-functional: It answers in a second. | source: Non-functional: It answers in two seconds.)" <<<"$out" && ok "a requirement changed on both sides is a CONFLICT naming both texts" || bad "conflict: $out"
 cmp -s $COPY "$d/copy-before.md" && cmp -s "$d/notion.md" "$d/notion-before.md" && ok "a conflict overwrites neither side" || bad "conflict overwrote"
 grep -q "^gh issue create .*CONFLICT Delivery DEL-2" "$TOY_LOG" && ok "a conflict is posted once as an issue" || bad "conflict issue: $(cat $TOY_LOG)"
 n=$(grep -c '^gh issue create' $TOY_LOG); out=$(sync); [ "$(grep -c '^gh issue create' $TOY_LOG)" = "$n" ] && grep -q "CONFLICT Delivery: DEL-2" <<<"$out" && ok "a second sync still reports it and posts nothing more" || bad "second: $out"
@@ -235,10 +255,10 @@ python3 - "$d/notion.md" <<'PY'
 import sys
 p = sys.argv[1]
 t = open(p).read()
-t = t.replace("It answers in two seconds.", "It answers in a second.").replace("DEL-4 Functional: It prints", "DEL-4 Functional: (Reviewed 2026-11-12) It prints")
+t = t.replace("It answers in two seconds.", "It answers in a second.").replace("It prints a mean too. <i>(Unreviewed)</i>", "It prints a mean too. <i>(Reviewed 2026-11-12)</i>")
 open(p, "w").write(t)
 PY
-out=$(sync); grep -q "^MARKED Delivery: DEL-4" <<<"$out" && grep -qx -- "- DEL-4: \*\*Reviewed 2026-11-12\*\* It prints a mean too." $COPY && ok "the copy takes the source's Reviewed mark when the text is the same" || bad "mark: $out $(cat $COPY)"
+out=$(sync); grep -q "^MARKED Delivery: DEL-4" <<<"$out" && grep -qx -- "- DEL-4: \*\*Reviewed 2026-11-12\*\* Functional: It prints a mean too." $COPY && ok "the copy takes the source's Reviewed mark when the text is the same" || bad "mark: $out $(cat $COPY)"
 
 echo "== a copy from before the repo's layout is left as it was"
 printf -- '- LG-1: **Unreviewed** Old text.
