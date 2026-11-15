@@ -1,20 +1,17 @@
 """File health findings as tagged issues, under the owner's control (HLT-4). Used by health.py preview and file.
 
-plan() works out what each finding does: open, update, reopen, close, link or same. preview prints the plan and has no
+plan() works out what each finding does (open, update, reopen, close, link or same). preview prints the plan and has no
 write path; file carries it out for the named groups (and --feature) only.
-- Each issue is labelled health and health:<group> (review findings: health:review-<kind>), and is a defect (a FAIL except a performance
-  one, a review conflict) or a backlog item (the rest, HLT-4): labelled defect on no milestone, or labelled backlog on
-  its feature's milestone "Backlog: <Feature>" ("Backlog: Other" when it fits none), made first when missing. An issue the owner
-  moved stays where it is. When the feature_labels setting is on (default
-  off) it is also tagged feature:<Page> for the feature the finding is about (issues.feature_label), the label made
-  beforehand with label create --force; if that label can't be made or set, the issue is filed without it and a
-  FAILED label line says so.
+- Each issue is labelled health and health:<group> (review findings: health:review-<kind>), and is a defect (a FAIL except a
+  performance one, a review conflict: labelled defect, no milestone) or a backlog item (labelled backlog, on its feature's
+  milestone "Backlog: <Feature>", "Backlog: Other" when none, made first when missing). An issue the owner moved stays put.
+  With the feature_labels setting on (default off) it is also tagged feature:<Page> (issues.feature_label), made beforehand
+  with label create --force; if that fails the issue is filed without it and a FAILED label line says so.
 - Its marker `<!-- loop-health KEY evidence=H placed= -->` names the finding and a hash of its stable evidence (placed= is
-  always empty; older markers that name a milestone still parse). A repeat updates, a fix closes (only when that rule
-  itself ran and read its data), a return reopens. A closed health:closed issue (closed by triage with the owner's words)
-  stays closed while its evidence hash is unchanged.
-- An open non-health issue that names the finding's subject (an exact path, requirement id or row id) already covers it:
-  it gets one link comment, `<!-- loop-health-link KEY evidence=H -->`, never a duplicate issue.
+  always empty; older markers naming a milestone still parse). A repeat updates, a fix closes (only when that rule ran and
+  read its data), a return reopens. A health:closed issue (closed by triage) stays closed while its evidence hash is unchanged.
+- An open non-health issue naming the finding's subject (an exact path, requirement id or row id) already covers it: it gets
+  one link comment, `<!-- loop-health-link KEY evidence=H -->`, never a duplicate issue.
 - Markers from before the twelve groups (criteria:, cost:, size:...:limit) are found and moved to the new key.
 It runs gh and nothing else, never edits a tracked page, and stops before any write when gh can't list the issues.
 """
@@ -32,20 +29,20 @@ import issues as IS
 import milestone as MS
 from issues import covering, evidence_of, key_of, legacy
 
-# No terminal, no waiting: a prompt from gh or the judge must fail, not block.
+# No terminal, no waiting: a prompt must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 MARK = "<!-- loop-health %s evidence=%s placed=%s -->"
 LINK = "<!-- loop-health-link %s evidence=%s -->"
-FOUND = re.compile(r"<!-- loop-health (.+?)(?: evidence=(\w+))?(?: placed=(\S*))? -->")  # a key may hold spaces (/workflow-x verb)
+FOUND = re.compile(r"<!-- loop-health (.+?)(?: evidence=(\w+))?(?: placed=(\S*))? -->")  # a key may hold spaces
 GROUPS = tuple(g for g in G.ORDER if g != "controls") + ("review",)
-DEFAULT = tuple(g for g in G.ORDER if g not in ("mine", "controls"))  # a preview with no group names these, never mine
+DEFAULT = tuple(g for g in G.ORDER if g not in ("mine", "controls"))  # a preview with no group names these
 BAD = ("WARN", "FAIL", "UNREAD")
-# Shown, never filed: local paths and machine state, the controls, and the check's own clock.
+# Shown, never filed: local state, the controls, the check's own clock.
 REPORT_ONLY = ("test-time", "worktrees", "local-branches", "idle-sessions", "scan-hook", "hooks", "check-time", "control",
-               "finding-age")  # finding-age is about issues themselves: filing it would feed itself
+               "finding-age")  # finding-age would feed itself
 
 
 def tag_of(group, item=None):
@@ -76,7 +73,7 @@ def body_of(item):
 
 
 def run(args, root, body=None):
-    """gh; a long text (body=) goes in a temp file as --body-file, never on the command line (Windows caps it)."""
+    """gh; a long body= goes in a temp --body-file (Windows caps the command line)."""
     if body is not None:
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
             f.write(body)
@@ -91,13 +88,13 @@ def run(args, root, body=None):
 
 
 def saves(root, here, rows):
-    """(items, read): the judge's savings as rows, and whether the judge answered. Calls a model, so only on request."""
+    """(items, read): the judge's savings as rows, and whether it answered. Calls a model."""
     sys.path.insert(0, here)
     try:
         import judge
         answer, why = judge.ask(judge.gather(root, here, rows), root)
         found = judge.parse(answer)["SAVES"]
-    except Exception:  # advice only: no answer means no savings issues opened or closed
+    except Exception:  # advice only
         return [], False
     finally:
         sys.path.pop(0)
@@ -109,13 +106,13 @@ def saves(root, here, rows):
 
 
 def held(root):
-    """({marker key: issue} of the health issues, why), or (None, why) when gh can't list them."""
+    """({marker key: issue}, why), or (None, why) when gh can't list."""
     found, _, why = held_all(root)
     return found, why
 
 
 def held_all(root):
-    """({marker key: issue} of the health issues, every issue, why) or (None, None, why) when gh can't list them all."""
+    """({marker key: issue}, every issue, why) or (None, None, why) when gh can't list."""
     found, why = IS.fetch(root, "held")
     if found is None:
         return None, None, why
@@ -124,13 +121,13 @@ def held_all(root):
         match = FOUND.search(issue.get("body") or "")
         if match and IS.is_health(issue):
             seen = out.get(match.group(1))
-            if seen is None or (seen.get("state") != "open" and issue.get("state") == "open"):  # an open duplicate wins
+            if seen is None or (seen.get("state") != "open" and issue.get("state") == "open"):  # open wins
                 out[match.group(1)] = dict(issue, evidence=match.group(2) or "")
     return out, found, ""
 
 
 def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None, everything=(), only=None, reviewed=False):
-    """Actions for the named groups (and feature `only`): kind open, update, reopen, close, link or same."""
+    """Actions (kind open, update, reopen, close, link or same) for the groups and feature `only`."""
     found = [item for item in list(rows) + list(extra)
              if item["state"] in BAD and item["family"] in groups and item["rule"] not in REPORT_ONLY]
     cache, out, current = {}, [], set()
@@ -140,11 +137,11 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         if only and page != only:
             continue
         key, group, mark = key_of(item), item["family"], evidence_of(item)
-        if key in current:  # two findings with one identity (same kind and evidence) are one issue
+        if key in current:  # one identity, one issue
             continue
         current.add(key)
         issue = issues.get(key) or next((issues[k] for k in legacy(item) if k in issues), None)
-        current.update(k for k in legacy(item) if k in issues)  # a migrated issue is updated, never closed
+        current.update(k for k in legacy(item) if k in issues)  # migrated: updated, never closed
         label, stone = home(item, page)
         act = {"group": group, "key": key, "body": body_of(item), "evidence": mark, "tag": tag_of(group, item),
                "label": label, "stone": stone, "feature": IS.feature_label(page) if page and tagging else "",
@@ -154,7 +151,7 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
             out.append(dict(act, kind="link", number=str(cover["number"])) if cover else dict(act, kind="open"))
             continue
         act["number"] = str(issue["number"])
-        names = [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]  # gh's dicts or fetch's names
+        names = [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]
         act["stale"] = [t for t in names if t.startswith("health:") and t not in (act["tag"], "health:closed")]
         closed = issue.get("state", "").lower() != "open"
         if closed and "health:closed" in names and issue.get("evidence") == mark:
@@ -171,15 +168,15 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         family, _, rest = key.partition(":")
         family = G.ALIASES.get(family, family)
         rule = G.rule_of({"family": family, "rule": rest.rsplit(":", 1)[-1], "subject": rest.rsplit(":", 1)[0]})
-        if family == "mine":  # a private rule closes only when that same rule ran here
+        if family == "mine":  # a private rule closes only when it ran here
             rule = "mine:" + rest.rsplit(":", 1)[0]
         if key in current or family not in groups or issue.get("state", "").lower() != "open" or only:
             continue
         savings = ":judge:saves-" in key
         whole = {"criteria": {"requirements", "traceability", "tests"}, "cost": {"performance"}}.get(key.partition(":")[0])
-        if whole and not whole <= set(groups):  # an old key could mean a rule in a group not run now: leave it
+        if whole and not whole <= set(groups):  # an old key may mean a rule in a group not run: leave it
             continue
-        if (savings and judged) or (not savings and ran_rules is not None and rule in ran_rules) or (reviewed and family == "review"):  # its own rule passed, or an answered review no longer holds it
+        if (savings and judged) or (not savings and ran_rules is not None and rule in ran_rules) or (reviewed and family == "review"):
             out.append({"kind": "close", "group": family, "key": key, "number": str(issue["number"]), "title": "", "body": "",
                         "tag": tag_of(family), "feature": ""})
     return out
@@ -212,7 +209,7 @@ def args_of(act):
 
 
 def issue_text(act):
-    """The long text of an open or update action: run() passes it as --body-file."""
+    """The long text of an open or update action (--body-file)."""
     return act["body"] if act["kind"] in ("open", "update") else None
 
 
@@ -239,7 +236,7 @@ def preview(acts):
 
 
 def linked(root, number, act):
-    """True when the covering issue already has this finding's link comment."""
+    """True when the covering issue has this finding's link comment."""
     got = run(["issue", "view", number, "--json", "comments"], root)
     try:
         return LINK % (act["key"], act["evidence"]) in json.dumps(json.loads(got.stdout))
@@ -252,7 +249,7 @@ def apply(acts, root, groups):
     for tag in sorted({act["tag"] for act in acts} | {"health"}):
         run(["label", "create", tag, "--description", "Filed by health.py file", "--force"], root)
     for kind in sorted({act["label"] for act in acts if act.get("label")}):
-        run(["label", "create", kind, "--description", "Filed by health.py file"], root)  # not --force: defect keeps its own words
+        run(["label", "create", kind, "--description", "Filed by health.py file"], root)  # not --force
     gone, have = set(), None
     for stone in sorted({act["stone"] for act in acts if act.get("stone") and act["kind"] == "open"}):
         try:
@@ -287,7 +284,7 @@ def apply(acts, root, groups):
                 print("FAILED label %s: %s" % (act["feature"], done.stderr.strip()[:160]))
                 act = dict(act, feature="")
                 done = run(args_of(act), root, issue_text(act))
-            if act["kind"] == "reopen" and act.get("unclose") and not done.returncode:  # the owner's close no longer holds
+            if act["kind"] == "reopen" and act.get("unclose") and not done.returncode:
                 run(["issue", "edit", act["number"], "--remove-label", "health:closed"], root)
         print(("FAILED %s: %s" % (words(act), done.stderr.strip()[:160])) if done.returncode else "DONE " + words(act))
 
