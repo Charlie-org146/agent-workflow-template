@@ -424,15 +424,16 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `parallel` | Workers running at once; 0 means unlimited. | set "parallel" in .loop/config.json | `0` | default |
 | `cadence` | Minutes between check-ins of the operation session, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
 | `auto_approve` | true approves what a flow step leaves for the owner, logged as auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |
-| `auto_merge` | true lets the release step merge a goal's pull request and publish its release. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
+| `auto_merge` | true lets the release step merge a goal's pull request and publish. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
+| `review_hold` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. | set "review_hold" in .loop/config.json | `false` | default |
 | `pr_bumps_version` | true moves the last number of the version file once on a goal's branch. | set "pr_bumps_version" in .loop/config.json | `false` | default |
 | `version_file` | The file that holds the version; a release bumps it and writes the changelog. | set "version_file" in .loop/config.json | `VERSION` | default |
 | `routines` | Commands the release step runs on the base branch before it merges. | set "routines" in .loop/config.json | `[]` | default |
-| `regression_cron` | Five cron fields: when the full regression runs (Actions for a public repo, each Mac tick for a private one); off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | default |
+| `regression_cron` | Five cron fields: when the full regression runs (Actions if public, each Mac tick if private); off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | default |
 | `health_cron` | Five cron fields: when health, the judge and its digest run on the Mac; off is off. | set "health_cron" in .loop/config.json | `47 */4 * * *` | default |
 | `judge_env` | No longer read. | set "judge_env" in .loop/config.json | `ANTHROPIC_API_KEY` | default |
 | `judge_setup` | No longer read: kept so old configs stay valid. | set "judge_setup" in .loop/config.json | `(empty)` | default |
-| `digest_owner` | Who the digest comment mentions; empty means the repo owner (an organisation notifies no one). | set "digest_owner" in .loop/config.json | `(empty)` | default |
+| `digest_owner` | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). | set "digest_owner" in .loop/config.json | `(empty)` | default |
 | `digest_mail` | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. | set "digest_mail" in .loop/config.json | `cloudflare` | default |
 | `smtp_host` | The SMTP server digest_mail smtp sends through (with DIGEST_SMTP_USER and DIGEST_SMTP_PASSWORD secrets). | set "smtp_host" in .loop/config.json | `smtp.gmail.com` | default |
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
@@ -473,8 +474,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
-| `feature_labels` | true tags each health and regression issue feature:<Page> and creates the label. | set "feature_labels" in .loop/config.json | `false` | default |
-| `workers` | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
+| `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
+| `workers` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->
