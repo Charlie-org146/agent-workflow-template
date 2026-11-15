@@ -348,6 +348,19 @@ def read_link(url):
         return None, "%s: %s" % (type(error).__name__, str(error)[:80])
 
 
+def out(env, *args, **kw):
+    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER, an agent's Notion connector: `WRITER SOURCE
+    comment|replace ID|remove ID`, text on stdin). Never raises."""
+    cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
+    if not cmd:
+        return False, "set %s to the command that writes to the document" % env
+    try:
+        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, timeout=120, **kw)
+    except (OSError, subprocess.SubprocessError) as error:
+        return False, str(error)[:100]
+    return done.returncode == 0, (done.stdout if done.returncode == 0 else done.stderr).strip()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)

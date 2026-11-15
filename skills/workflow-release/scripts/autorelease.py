@@ -306,9 +306,19 @@ def release_statuses(top, cfg, state, branch, sha):
     state["release_status"] = "success" if ok and posted else "failure"
 
 
-def status_held(state, url, number):
-    """Refuse, naming the cause, when the release PR's head has no passing status (RELEASE_STATUS_FAILED, _UNTESTED)."""
+RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_REQUIRED")
+
+
+def status_held(state, url, number, seen=None):
+    """Refuse, naming the cause, when the release PR's head has no passing status (RELEASE_STATUS_FAILED, _UNTESTED), or a required
+    check of its own is red (RELEASE_CHECKS_FAILED): a merge past a red check is never advised (issue 3870)."""
+    red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
+           if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
     why = state.get("release_status_why")
+    if red and not (state.get("release_status") in ("failure", "untested") and why):
+        fail(state, "the release PR %s (#%s) can't merge: required checks failed: %s. Nothing needs the owner's merge, and none "
+                    "may be merged past a red check; fix the cause and run merge.py %s again (RELEASE_CHECKS_FAILED)"
+             % (url, number, ", ".join(sorted(set(red))[:8]), state["slug"]))
     if state.get("release_status") not in ("failure", "untested") or not why:
         return
     fail(state, ("the release PR %s (#%s) can't merge: %s. Nothing needs the owner's merge; fix the cause and run merge.py %s again "

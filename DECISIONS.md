@@ -308,3 +308,25 @@ The sync pointer, added as DOC-1's last sub-bullet:
 Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
 
 The cap again: MON-18 (settings-in-spec) and MON-19 together make the Monitoring page 19 requirements, so `criteria_max` goes from 18 to 19, on the owner's approval of both requirements.
+## Waiting on owner un-review (ext-two-way)
+
+Drafted by the ext-two-way goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: Documentation, Health and Monitoring are Reviewed, and the goal's changes to docs.py and audit.py, health.py and board.py make each of the three pages stale, which merge.py refuses.
+
+- Documentation, DOC-1 (PRD template), a new last sub-bullet next to the sync pointer wiki-current added: "A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works."
+- Health, HLT-2 (The rules), a new last sub-bullet: "A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one."
+- Monitoring, MON-3 (Live board), a new last sub-bullet: "The board lists each open PRD delta of a page that opted in to syncing as waiting on the owner, with its issue and the words to accept either side; a page with no external source never shows one."
+
+The owner types one sentence in the operation session:
+
+"Un-review the Documentation page and DOC-1, the Health page and HLT-2, and the Monitoring page and MON-3, so the opt-in sync sub-bullets in DECISIONS.md can be added; then review those three pages and requirements again."
+
+After it, the goal edits the three lines as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge.
+
+Applied 2026-11-14 on owner-words record o15 (the sentence above, recorded by the operation session after the owner's "Yes, I want to do both."): the Documentation, Health and Monitoring pages and DOC-1, HLT-2 and MON-3 were un-reviewed, the three sub-bullets were added exactly as drafted, and the three pages and requirements were reviewed again, all with `--owner-record o15` (record o16 was not needed).
+
+Applied 2026-11-14 on owner-words record o17 (the owner's "Yes, let's do your thing.", recorded by the operation session): after merging origin/main, main's Performance sub-bullet and the opt-in sync sub-bullet both stand on HLT-2 (main's first). The Health page and HLT-2 were un-reviewed and reviewed again with both sub-bullets exactly as they are, with `--owner-record o17` (record o18 was not needed).
+
+## ext-two-way: External PRDs folded into Documentation as DOC-17 (2026-11-14)
+Owner words (record o20, with o21 for the page, recorded by the operation session after the owner's "Yes, apply A."): the External-PRDs page is folded into Documentation. It becomes DOC-17, "A PRD kept outside the repo stays in step through reviewed deltas", with EXT-1 to EXT-4 as its four sub-bullets in order (EXT-4's title is now "a missing connector never breaks the loop"); External-PRDs' Problem and non-goals were trimmed into Documentation's sections, its success metrics into Documentation's third, the page left `docs/wiki`, `.loop/docs.tsv`, the topics setting and Home, its README rows moved into "How to use Documentation", and every sync regression row is tied to DOC-17. DOC-1's sync pointer now ends "DOC-17 owns how that sync works". The HLT-2 and MON-3 sub-bullets did not name External PRDs and are unchanged. Documentation is at 17 requirements, its cap. Reviewed with `--owner-record o20` (DOC-1, DOC-17) and `--owner-record o21` (the page).
+
+Guardrails re-stamped (ext-two-way, 2026-11-14): removing External-PRDs from the topics setting in `.loop/config.json` made the Reviewed Guardrails page stale although its text is still true (GRD-1 `config-holds-topics`). Un-reviewed with owner record o22 and reviewed again with o23, with no text change.
