@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.28.88 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.87 - 2026-11-15
 
 - check-in: only live goals and goals merged since the last check-in are required; a merged PR closes a done run
