@@ -346,7 +346,7 @@ def out(env, *args, **kw):
     if not cmd:
         return False, "set %s to the command that writes to the document" % env
     try:
-        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, timeout=120, **kw)
+        done = subprocess.run(cmd.split() + list(args), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, **kw)
     except (OSError, subprocess.SubprocessError) as error:
         return False, str(error)[:100]
     return done.returncode == 0, (done.stdout if done.returncode == 0 else done.stderr).strip()

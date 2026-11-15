@@ -334,6 +334,18 @@
 | <a id="t-restamp-wording-locked-3867"></a>restamp-wording-locked-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-restamp-at-merge-3867"></a>restamp-at-merge-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-repo-delta"></a>milestone-sync-repo-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-source-delta"></a>milestone-sync-source-delta | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-conflict"></a>milestone-sync-conflict | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-no-overwrite"></a>milestone-sync-no-overwrite | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-source"></a>milestone-sync-accept-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-repo"></a>milestone-sync-accept-repo | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-not-connected"></a>milestone-sync-not-connected | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-generic"></a>milestone-sync-generic | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-reopen"></a>milestone-sync-reopen | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-dropped-source"></a>milestone-sync-dropped-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-accept-fails"></a>milestone-sync-accept-fails | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 
 ## Guardrails
 
