@@ -93,6 +93,7 @@ defect-owed	PASS	2026-11-12
 defect-owed-branch-proved	PASS	2026-11-10	
 defect-wording	PASS	2026-11-12	
 del5-bump-set	PASS	2026-11-12	
+del5-docs-bump-minor	PASS	2026-11-15	
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
 del9-hooks	PASS	2026-11-12	
@@ -221,6 +222,7 @@ issue-no-milestone-fails	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6
 issue-states	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-truncated-unread	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issues-no-rows	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+issues-one-open-ci	PASS	2026-11-15	
 issues-phone-97	PASS	2026-11-10	
 judge-needs-you	PASS	2026-11-12	
 judge-section-format	PASS	2026-11-12	
