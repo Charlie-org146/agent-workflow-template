@@ -222,7 +222,7 @@ def relock(root, slug="", only=()):
             continue
         now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
         moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
-        if (moved == ["R"] and owned(root, rel, dict(parts), rule)) or (slug and not moved):
+        if (moved == ["R"] and owned(root, rel.replace(os.sep, "/"), dict(parts), rule)) or (slug and not moved):
             kept = " <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip()) if slug else ""
             with open(join(root, rel), "w") as handle:
                 handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
