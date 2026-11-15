@@ -38,7 +38,7 @@ branch() { git switch -q main; git switch -q -c "$1"; }
 # a reads src/a.txt; b, k (defect) and w (workflow) read src/b.txt; c names no path (a root runner); old.txt no row reads.
 mkdir -p dev src
 printf 'ok\n' > src/a.txt; printf 'ok\n' > src/b.txt; printf 'old\n' > old.txt
-printf 'echo a >> "$TOY_LOG"; grep -q ok src/a.txt  # old.txt\n' > dev/a.sh
+printf 'ps -o pid=,ppid=,args= -p $(ps -o ppid= -p $PPID) | cut -c1-170 >> "${DIAG_TRACE:-/dev/null}"; echo a >> "$TOY_LOG"; grep -q ok src/a.txt  # old.txt\n' > dev/a.sh
 printf 'grep -q ok src/b.txt && echo "$1" >> "$TOY_LOG"\n' > dev/b.sh
 printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n' > .loop/regression.tsv
 printf 'a\tland\tbash dev/a.sh\tX-1\t2026-01-01\tA works.\tcriterion\t\n' >> .loop/regression.tsv
