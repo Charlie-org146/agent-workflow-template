@@ -180,6 +180,7 @@ grep -qx -- "- DEL-1: \*\*Reviewed 2026-11-10\*\* The calculator prints a median
 grep -q "^## Non-goals" $COPY && grep -q "^No charts." $COPY && grep -q "^## Success metrics" $COPY && ok "the copy holds the four sections" || bad "sections: $(cat $COPY)"
 
 echo "== a page with a copy passes with no reader, and shows the PRD as a generated block"
+out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "^FEATURE Delivery" <<<"$out" && ! grep -q "^FEATURE Other" <<<"$out" && ok "the rows' listing groups the page's rows under it from the copy, before any block, with no reader" || bad "tests list before the block: $out"
 $cri render >/dev/null
 grep -q "^<!-- prd:begin -->" $P && grep -q "^## Requirements" $P && grep -q "DEL-3: \*\*Unreviewed\*\* It rejects" $P && grep -q "^## Problem" $P && grep -q "^<!-- prd:end -->" $P \
   && ok "render writes Problem, Requirements, Non-goals and Success metrics as a block generated from the copy" || bad "block: $(cat $P)"
