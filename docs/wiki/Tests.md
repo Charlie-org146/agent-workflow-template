@@ -602,6 +602,10 @@
 | <a id="t-new-binds-app-session-4257"></a>new-binds-app-session-4257 | defect | [#4257](https://github.com/jcl2018/agent-workflow-template/issues/4257) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-14 |
 | <a id="t-scripts-a-monitoring-under-19000"></a>scripts-a-monitoring-under-19000 | requirement | MON-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | not run | - | local | 2026-11-15 |
+| <a id="t-mon14-merged-since-once"></a>mon14-merged-since-once | requirement | MON-14 | not run | - | local | 2026-11-15 |
+| <a id="t-mon14-merged-before-dropped"></a>mon14-merged-before-dropped | requirement | MON-14 | not run | - | local | 2026-11-15 |
+| <a id="t-mon5-pr-merged-closes"></a>mon5-pr-merged-closes | requirement | MON-5 | not run | - | local | 2026-11-15 |
+| <a id="t-mon5-merged-pr-retires"></a>mon5-merged-pr-retires | requirement | MON-5 | not run | - | local | 2026-11-15 |
 
 ## Regression
 
