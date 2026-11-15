@@ -254,7 +254,12 @@ def block_re(name):
 
 
 config_of = counting.config_of
-workflow_file = counting.workflow_file
+def workflow_file(root):
+    """The regression routine's workflow file, else regression.yml (#3839)."""
+    for e in counting.entries(root):
+        if e.get("name") == "regression" and str(e.get("runs")).startswith("github:"):
+            return e["runs"][7:] or "regression.yml"
+    return "regression.yml"
 
 
 def reference():
