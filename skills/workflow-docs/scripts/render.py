@@ -393,6 +393,21 @@ def perm_needs(root, routine, page):
     return found
 
 
+def mirror_of(path):
+    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; owned unless another file is there (never touched)."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().replace("\r\n", "\n").split("\n")
+    except OSError:
+        return {}, True, {}
+    try:
+        with open(path[:-3] + ".base", encoding="utf-8") as handle:
+            agreed = dict(x.split("\t") for x in handle.read().split("\n") if "\t" in x)
+    except OSError:
+        agreed = {}
+    return {m.group(1): m.group(2) for m in (re.match(r"- ([A-Z]{2,5}-\d+): (.*)$", x) for x in lines) if m}, lines[0] == criteria.SYNC_MARK, agreed
+
+
 if __name__ == "__main__":
     sys.argv[1:] in (["blocks"], ["--help"]) or sys.exit("usage: render.py blocks")
     if sys.argv[1:] == ["--help"]:

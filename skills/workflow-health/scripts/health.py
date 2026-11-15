@@ -221,8 +221,13 @@ def sibling_module(name):
 
 
 def docs_check(root):
-    """docs.py's check."""
-    return docs_rows(root)
+    """docs.py's check, and each open delta between a PRD kept elsewhere and the repo's copy (docs.py sync --open)."""
+    script, rows = sibling("workflow-docs", "docs.py"), docs_rows(root)
+    for line in run([sys.executable, script, "sync", "--open"], root).stdout.splitlines() if script else []:
+        page, _, detail = line[6:].partition(": ")
+        if line.startswith("DELTA "):
+            rows.append(row("FAIL", "docs", page, "delta", detail[:120], "review it: docs.py sync --accept %s:ID=repo|source" % page))
+    return rows
 
 
 def hard_unread(item):
