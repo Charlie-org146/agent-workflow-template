@@ -134,10 +134,13 @@ git switch -q main; branch t6
 python3 -c "import json;c=json.load(open('.loop/config.json'));c.update(goal_levels='nightly',goal_lane_minutes=0.0001);json.dump(c,open('.loop/config.json','w'),indent=2)"
 printf 'm\tnightly\tgrep -q ok src/a.txt && echo m >> "$TOY_LOG"\tX-1\t2026-01-01\tM runs nightly.\tcriterion\t\n' >> .loop/regression.tsv
 git add -A; git commit -qm "t6 rows"; printf 'ok, t6\n' > src/a.txt; git commit -qam "t6"
+pre=$(find "$common/loop" -name "*t6*" -printf "%TT %p
+" | sed "s|$common/||"; echo "hooks: $(git config --get core.hooksPath) $(ls .git/hooks | grep -v sample | tr '
+' ' ')"; git status --short | head -3)
 out=$(python3 "$d/h.py" "$S" "$RUNS" t6 qa 2>&1)
 # Value: protects=goal_levels nightly makes a goal lane plan from land and nightly rows (S23) and a lane over goal_lane_minutes says so on its LANE line (S21); fails_when=the setting is ignored or the note is missing; why_new=both settings are new; seam=none; no_claim=a real 10-minute lane (0.0001 min stands in)
 check "goal_levels nightly: a goal lane selects the nightly row a change reaches" 'grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt"'
-grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt" || { echo "-- the t6 lane log"; head -6 "$RUNS/t6.qa-lane.txt" | cut -c1-200; find "$common/loop" -name "*t6*" -printf "%TT %s %p
+grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt" || { echo "-- before the lane"; echo "$pre"; echo "-- the t6 lane log"; head -6 "$RUNS/t6.qa-lane.txt" | cut -c1-200; find "$common/loop" -name "*t6*" -printf "%TT %s %p
 " | sed "s|$common/||"; tr -d " 
 " < "$RUNS/t6.qa-lane.last" | cut -c1-400; echo; python3 -c "import json,glob;d=json.load(open(glob.glob('$common/loop/tests/*t6*.json')[0]));print(d['at'],d['commit'][:8],d['merge_base'][:8],{k:(v['status'],v['commit'][:8]) for k,v in d['rows'].items()})"; git log --format="%h %ad %s" --date=format:%T -4; }
 check "a goal lane over goal_lane_minutes adds '; over N min (goal_lane_minutes)' to its LANE line" 'grep -q "^LANE qa AFFECTED .*; over 0.0001 min (goal_lane_minutes)" <<<"$out"'
