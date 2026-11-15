@@ -15,3 +15,6 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-lane-order.py`, `python3 dev/toy/test-lane-fail-text.py` and `python3 dev/toy/test-owed-close.py`. Expect: every line starts with PASS and each exits 0.
+2. Read the SELECTED lines at the top of a lane log after a base merge. Expect: rows marked `new row` come before the rows marked `reaches`.
+3. Run a lane with a failing row that ends in `| grep -q` (for example the toy's). Expect: the row's own text appears under its FAIL line, not a bare FAIL.
