@@ -297,4 +297,5 @@ def main(argv=None):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["report"]:
         sys.exit(main(sys.argv[2:]))
-    sys.exit("usage: board_log.py report [--root DIR] [--json]")
+    print("usage: board_log.py report [--root DIR] [--json]")
+    sys.exit(0 if sys.argv[1:2] in (["--help"], ["-h"]) else 2)
