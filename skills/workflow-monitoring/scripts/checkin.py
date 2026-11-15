@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""The check-in (MON-4, MON-5): what operate.py prints each pass instead of the live board, in the one layout the reply
-hook checks. The board itself prints only for `report`, `dashboard` and "where do things stand".
+"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. The board
+prints only for `report`, `dashboard` and "where do things stand".
 
 usage: checkin.py [--since ISO]
 
-  headline        one line: how many goals run, wait on you or are queued, and the session pool
-  All sessions    one table row per live goal: session, repo, what it is for, status, progress, time left, latest
-  Re-plan         what replan.py changed since the last check-in, each with its reason (MON-10)
-  Auto-answered   what auto.py answered or sent to you since the last check-in, with the words that revert it (MON-11)
+  headline        one line: goals running, waiting on you or queued, and the session pool
+  All sessions    one table row per live goal: session, repo, purpose, status, progress, time left, latest
+  Re-plan         what replan.py changed since the last check-in (MON-10)
+  Auto-answered   what auto.py answered or sent to you since the last check-in, and how to revert it (MON-11)
   Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' top-to-bottom graph; a
-                  `repo/slug` in depends-on is listed under `Between repos`; the legend prints once
-  Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, workers
-                  silent past silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees;
-                  or "Nothing needs you"
+                  `repo/slug` in depends-on is listed under `Between repos`; only live goals, and goals merged
+                  since the last check-in (one [x] line, then gone), are listed
+  Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, silent
+                  workers (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
   Coming up       the next expected step of each goal and what the owner will need to do
 
 --since defaults to the last check-in time in <git common dir>/loop/checkin.json. Read-only.
@@ -58,9 +58,12 @@ def gather(root, at, stamp=None):
     runs = lb.load(root)
     found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
     taken = graph.assigned(found)
-    states = {r["slug"]: mood(r, graph.classify(r, taken, at, cfg)) for r in runs}
-    live = [r for r in runs if states[r["slug"]] not in ("merged", "retired") and shown(r)]
-    away = {}  # another pod's goals are not this machine's: one line per pod, "<pod>: N goals, last activity HH:MM"
+    landed = board_lines.states(runs, root, graph.merged)
+    states = {r["slug"]: "merged" if landed.get(r["slug"]) == "MERGED" else mood(r, graph.classify(r, taken, at, cfg)) for r in runs}
+    since = graph.parse_at(stamp)
+    new = lambda r: states[r["slug"]] == "merged" and bool(since) and (graph.parse_at(r.get("updated")) or since) > since
+    live = [r for r in runs if (states[r["slug"]] != "retired" and (states[r["slug"]] != "merged" or new(r))) and shown(r)]
+    away = {}
     for r in live:
         if graph.foreign(r):
             count, last = away.get(graph.foreign(r), (0, None))
@@ -98,8 +101,9 @@ def grouped(blocks, at=None, tags=None):
 def expected(root=None, at=None):
     root = bs.git("rev-parse", "--show-toplevel", cwd=root or None) or root
     at = at or datetime.datetime.now(datetime.timezone.utc)
-    pod, here = [gather(root, at)], os.getcwd()
-    os.chdir(root)  # bd.followed() starts from the working directory
+    stamp = (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at")
+    pod, here = [gather(root, at, stamp)], os.getcwd()
+    os.chdir(root)
     try:
         followed = bd.followed()
     finally:
@@ -107,8 +111,8 @@ def expected(root=None, at=None):
     for name, path, _ in followed:
         if os.path.realpath(path) != os.path.realpath(root):
             try:
-                pod.append(gather(path, at))
-            except Exception:  # one unreadable repo never hides the others
+                pod.append(gather(path, at, stamp))
+            except Exception:
                 continue
     return [(g["name"], item["slug"]) for g in pod for item in g["live"] + g["queue"]]
 
@@ -116,16 +120,16 @@ def expected(root=None, at=None):
 def render(root=None, at=None, stamp=None):
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
-    mine = gather(root, at)
+    stamp = stamp or (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at") or "0000"
+    mine = gather(root, at, stamp)
     folder, cfg, runs, found, why, taken, states, live, queue = (mine[k] for k in (
         "folder", "cfg", "runs", "found", "why", "taken", "states", "live", "queue"))
-    stamp = stamp or (bs.read_json(os.path.join(folder, "checkin.json")) or {}).get("at") or "0000"
     others, broken = [], []
     for name, path, _ in bd.followed():
         if os.path.realpath(path) != os.path.realpath(root):
             try:
-                others.append(gather(path, at))
-            except Exception as error:  # one unreadable repo never hides the others
+                others.append(gather(path, at, stamp))
+            except Exception as error:
                 broken.append((name, lb.plain(type(error).__name__, 40)))
     pod = [mine] + others
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
@@ -169,12 +173,12 @@ def render(root=None, at=None, stamp=None):
                       left=bs.left_time(r, g["runs"], at)) for r in g["live"]]
         blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"]) for q in g["queue"]]))
     out += ["", "Dependencies"]
-    spot = len(out)  # the graph goes here once Needs you is ranked and numbered
+    spot = len(out)
     out += ["", "Needs you"]
     needs, readonly = [], []
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
-        if graph.foreign(run):  # another pod's goal: shown, never a question for this pod
+        if graph.foreign(run):
             readonly += ["- %s asks (owned by %s, read-only here)" % (run["slug"], graph.foreign(run))] * (state == "waiting")
         elif state == "waiting":
             words = ask.get("words") or ["go on " + run["slug"]]
@@ -188,14 +192,14 @@ def render(root=None, at=None, stamp=None):
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
-    if ready and replan.plan_pause(cfg):  # MON-12: the weekly plan is nearly used
+    if ready and replan.plan_pause(cfg):
         needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.plan_pause(cfg)))
     if ready and replan.memory_hold(cfg):
         needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.memory_hold(cfg)))
     waited = replan.memory_waits(folder)
     if waited:
         needs.append("%d lane wait(s) for memory in the last hour; the last: %s" % (len(waited), waited[-1][21:140]))
-    if ready and replan.active_limit(cfg) and len(live) >= replan.active_limit(cfg):
+    if ready and replan.active_limit(cfg) and sum(states[r["slug"]] != "merged" for r in live) >= replan.active_limit(cfg):
         needs.append("%d ready goal(s) wait: %d goals are live, at max_active_goals/parallel %d (ACTIVE_GOALS)" % (len(ready), len(live), replan.active_limit(cfg)))
     if found is not None:
         needs += [line[2:] for line in pl.ask_lines(found, cfg, len(ready)) if line.startswith("- ")]
@@ -203,7 +207,7 @@ def render(root=None, at=None, stamp=None):
                   for sid, item in sorted(found.items()) if item.get("state") == "archive"]
     elif why:
         needs.append(graph.pool_fix(why))
-    for sid, item in sorted((found or {}).items()):  # a retired goal's session still busy holds a slot nobody sees (122)
+    for sid, item in sorted((found or {}).items()):
         old = bs.read_json(os.path.join(folder, "runs", "%s.json" % item.get("slug"))) if item.get("state") == "busy" else None
         if isinstance(old, dict) and old.get("status") == "retired":
             needs.append("%s is retired but session %s is still busy; free it with pool.py return %s" % (
@@ -225,9 +229,9 @@ def render(root=None, at=None, stamp=None):
                 needs.append("%s/%s asks: %s; options: %s" % (g["name"], run["slug"], lb.plain(ask.get("ask"), 160),
                                                               " / ".join('"%s"' % w for w in ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
-    operation, asks = unattended.lines()  # MON-18: sends left, the loop's expiry, standing instructions
+    operation, asks = unattended.lines()
     needs += asks
-    try:  # operate.py behind_ask: the main checkout is behind origin/main and a free worker must fast-forward it
+    try:
         needs += [line for line in open(os.path.join(folder, "checkout-behind.txt")).read().splitlines()[:1] if line]
     except OSError:
         pass
@@ -243,7 +247,7 @@ def render(root=None, at=None, stamp=None):
             out.append("- %s: its pull request waits for merge (you: review %s)" % (run["slug"], run.get("pr") or "it"))
         elif states[run["slug"]] in ("running", "silent", "held"):
             out.append("- %s: %s" % (run["slug"], lb.next_line(run)))
-    try:  # proofs another machine owes (regression.py red --owed): coming up for that machine, never a blocker here
+    try:
         owed = [line.split("	") + [""] * 4 for line in open(os.path.join(root, ".loop", "regression-owed.tsv")) if line.strip()]
     except OSError:
         owed = []
@@ -274,7 +278,7 @@ def blocks(section):
         head = re.match(r"^\s*==\s*(.+?)\s*==\s*$", line)
         name = head.group(1) if head else name
         found.setdefault(name, []).append("" if head else line)
-    return {key: re.sub(r"-\s*\n\s*", "-", "\n".join(rows)) for key, rows in found.items()}  # a long name wraps at a hyphen
+    return {key: re.sub(r"-\s*\n\s*", "-", "\n".join(rows)) for key, rows in found.items()}
 
 
 def unranked(text):
@@ -297,7 +301,7 @@ def unranked(text):
 def missing(text, cwd=None):
     section = body(text)
     if section is None:
-        return []  # the missing section is reported by the layout check
+        return []
     parts = blocks(section)
     found = []
     for repo, slug in expected(cwd or None):

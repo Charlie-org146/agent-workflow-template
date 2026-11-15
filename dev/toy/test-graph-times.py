@@ -67,4 +67,22 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     check("[=] holdpr" in deps, "a worker held at pr reads holding, not stuck")
     check("first ~" in deps and " left" in deps, "each goal shows its time left")
     check("expected finish" in deps, "the repo block ends with its expected finish")
+    # MON-14 (live-only): only live goals, and goals merged since the previous check-in, are required; older merged ones are never drawn
+    with open(os.path.join(root, ".git", "loop", "checkin.json"), "w") as f:
+        json.dump({"at": stamp(now - datetime.timedelta(hours=1))}, f)
+    write("mergedold", status="done", release="merged", step="release", updated=old)
+    write("mergednew", status="done", release="merged", step="release", updated=stamp(now))
+    write("prmerged", status="done", step="pr", pr="https://example.test/pull/9", updated=stamp(now - datetime.timedelta(hours=2)))
+    real = checkin.board_lines.states
+    checkin.board_lines.states = lambda runs_, root_, merged=None: {"prmerged": "MERGED"}
+    try:
+        text = "\n".join(checkin.render(root, now))
+        deps = text.split("Dependencies")[1].split("Needs you")[0]
+        needed = [slug for _, slug in checkin.expected(root, now)]
+    finally:
+        checkin.board_lines.states = real
+    check("[x] mergednew" in deps, "a goal merged since the previous check-in is drawn once, as [x]")
+    check("mergedold" not in deps and "mergedold" not in needed, "a goal merged before the previous check-in is never drawn or required")
+    check("prmerged" not in deps and "prmerged" not in needed, "a done run whose PR merged on GitHub before the check-in drops off the graph")
+    check("first" in needed and "mergednew" in needed, "the check requires the live goals and the one merged since")
 sys.exit(1 if failed else 0)
