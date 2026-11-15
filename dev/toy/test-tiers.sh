@@ -100,6 +100,7 @@ import json, sys, time
 sys.path.insert(0, sys.argv[1]); import lane
 for _ in range(600):
     status, line, _ = lane.lane(sys.argv[2], sys.argv[3], sys.argv[4], lane.flow_spec(), json.load(open(".loop/config.json")), 1)
+    print("poll %s %.3f %s" % (status, time.time() % 100, line[:70]), file=sys.stderr)
     if status != "running":
         break
 print(status); print(line)
