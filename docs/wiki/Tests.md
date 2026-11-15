@@ -408,6 +408,7 @@
 | <a id="t-hlt2-defect-exempt-health"></a>hlt2-defect-exempt-health | requirement | HLT-2 | not run | - | local | 2026-11-13 |
 | <a id="t-aut-prompt-warns"></a>aut-prompt-warns | requirement | HLT-2 | not run | - | local | 2026-11-13 |
 | <a id="t-machine-local-health-warn"></a>machine-local-health-warn | requirement | HLT-2 | not run | - | local | 2026-11-13 |
+| <a id="t-docs-release-scripts-under-19000"></a>docs-release-scripts-under-19000 | requirement | HLT-2 | not run | - | local | 2026-11-15 |
 
 ## Monitoring
 
