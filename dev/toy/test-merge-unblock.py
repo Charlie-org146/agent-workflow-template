@@ -14,10 +14,12 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 sys.path.insert(0, os.path.join(root, "skills", "workflow-docs", "scripts"))
 os.environ["LOOP_ROLE"] = "worker"
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
+sys.path.insert(0, os.path.join(root, "skills", "workflow-monitoring", "scripts"))
 import criteria  # noqa: E402
 import docfresh  # noqa: E402
 import docs  # noqa: E402
 import prd  # noqa: E402
+import operate  # noqa: E402
 import wiki  # noqa: E402
 
 fails = 0
@@ -111,7 +113,7 @@ if only in ("", "merge"):
     git("fetch", "-q", "origin")
     before = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("merge.py would refuse the page before the re-stamp (%s)" % before, bool(before))
-    docfresh.apply("my-goal", "goal")
+    subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "operate.py"), "apply", "my-goal", "goal"], cwd=repo)
     git("fetch", "-q", "origin")
     after = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("after the merge step's re-stamp nothing is stale (%s)" % after, not after)
@@ -121,22 +123,22 @@ if only in ("", "ff"):
     origin, repo, other = (os.path.join(tmp, n) for n in ("origin.git", "repo", "other"))
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", origin], capture_output=True)
     subprocess.run(["git", "clone", "-q", origin, repo], capture_output=True)
-    write(".loop/regression-runs.tsv", "a\tpass\n")
+    write(".loop/regression-runs.tsv", "a\tpass\nm\tpass\nz\tpass\n")
     write("a.txt", "a\n")
     commit("base")
     git("push", "-q", "origin", "main")
     subprocess.run(["git", "clone", "-q", origin, other], capture_output=True)
     with open(os.path.join(other, "b.txt"), "w") as handle:
         handle.write("b\n")
+    with open(os.path.join(other, ".loop", "regression-runs.tsv"), "w", newline="\n") as handle:
+        handle.write("a\tpass\nm\tpass\nz\tfail\n")
     for step in (["add", "-A"], ["commit", "-q", "-m", "origin moves"], ["push", "-q", "origin", "main"]):
         subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + step, cwd=other, capture_output=True)
     git("fetch", "-q", "origin")
-    write(".loop/regression-runs.tsv", "a\tpass\nb\tfail\n")
-    write("a.txt", "dirty\n")
-    check("another dirty file keeps the checkout as it is", docfresh.forward(repo, "main") is False and git("rev-parse", "HEAD").stdout != git("rev-parse", "origin/main").stdout)
-    git("checkout", "--", "a.txt")
-    check("a dirty lane record alone is stashed, the checkout moves", docfresh.forward(repo, "main") is True and git("rev-parse", "HEAD").stdout == git("rev-parse", "origin/main").stdout)
-    check("and the record is put back, with no stash left", open(os.path.join(repo, ".loop", "regression-runs.tsv")).read().replace("\r", "") == "a\tpass\nb\tfail\n" and not git("stash", "list").stdout.strip())
+    write(".loop/regression-runs.tsv", "a\tfail\nm\tpass\nz\tpass\n")
+    check("a plain fast-forward refuses while the lane record is dirty", git("merge", "--ff-only", "-q", "origin/main").returncode != 0)
+    check("a dirty lane record alone is stashed, the checkout moves", operate.fast_forward(repo, "main")[0] == 0 and git("rev-parse", "HEAD").stdout == git("rev-parse", "origin/main").stdout)
+    check("and the record is put back, with no stash left", open(os.path.join(repo, ".loop", "regression-runs.tsv")).read().replace("\r", "") == "a\tfail\nm\tpass\nz\tfail\n" and not git("stash", "list").stdout.strip())
 if only in ("", "slot"):
     import contextlib
     import io

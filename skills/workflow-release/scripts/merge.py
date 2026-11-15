@@ -74,7 +74,7 @@ def reach(top, paths):
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
-FRESH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docfresh.py")
+OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
 
 
 def base_moved(state, cfg, top):
@@ -261,7 +261,7 @@ def main():
         pods.refuse(state)
         pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), args.slug)  # an earlier pr lane holds the slot
         pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
-    wiki.top_of() and print(run([sys.executable, FRESH, "apply", args.slug, str(state.get("branch"))], top).stdout.strip())  # #3867
+    wiki.top_of() and print(run([sys.executable, OPERATE, "apply", args.slug, str(state.get("branch"))], top).stdout.strip())  # #3867
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known = info.get("state", "")
@@ -277,7 +277,7 @@ def main():
         if known != "OPEN":
             sys.exit("REFUSED: the pull request %s is %s, not open." % (state["pr"], known or "unknown"))
         tested = state.get("pr_head")
-        if tested and info.get("headRefOid") and info["headRefOid"] != tested and run([sys.executable, FRESH, "wiki-only", tested, info["headRefOid"]], top).returncode == 0:
+        if tested and info.get("headRefOid") and info["headRefOid"] != tested and run([sys.executable, OPERATE, "wiki-only", tested, info["headRefOid"]], top).returncode == 0:
             print("NOTE: the pull request head moved only by wiki page commits (wiki.py prepare); merging %s" % info["headRefOid"][:12])
             tested = info["headRefOid"]  # only wiki pages changed since the lane: no row's code moved
         if tested and info.get("headRefOid") and info["headRefOid"] != tested:

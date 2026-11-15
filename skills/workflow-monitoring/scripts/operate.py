@@ -28,6 +28,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
@@ -74,6 +75,26 @@ def fgit(root, *args, timeout=60):
     return done.returncode, (done.stdout if done.returncode == 0 else done.stderr or done.stdout).strip()
 
 
+RUNS = ".loop/regression-runs.tsv"
+
+
+def fast_forward(root, base):
+    """merge --ff-only; a dirty lane record RUNS is stashed under a tag first and applied back by its sha (never a bare pop),
+    left in the stash with a note when it no longer applies."""
+    tag, sha = "operate-forward-%d" % os.getpid(), ""
+    if RUNS in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].replace("\\", "/") and fgit(root, "stash", "push", "-m", tag, "--", RUNS)[0] == 0:
+        sha = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%H %gs")[1].splitlines() if l.endswith(tag)), "")
+    code, said = fgit(root, "merge", "--ff-only", "-q", "origin/" + base)
+    if sha:
+        if fgit(root, "stash", "apply", sha)[0]:
+            fgit(root, "checkout", "-q", "--", RUNS)
+            said += " (the lane record %s stays in stash entry %s)" % (RUNS, sha[:12])
+        else:
+            drop = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%gd %gs")[1].splitlines() if l.endswith(tag)), "")
+            drop and fgit(root, "stash", "drop", "-q", drop)
+    return code, said
+
+
 def refresh(common, base="main"):
     """One line when the main checkout moved or could not, else ''. `common` is the repo's git common dir."""
     common = os.path.abspath(common)
@@ -92,7 +113,7 @@ def refresh(common, base="main"):
         return ""
     if ahead not in ("", "0"):
         return "CHECKOUT NOT FAST-FORWARDED: %s has %s commits origin/%s lacks and is %s behind; merge or push by hand" % (base, ahead, base, behind)
-    code, said = fgit(root, "merge", "--ff-only", "-q", "origin/" + base)
+    code, said = fast_forward(root, base)
     if code:
         return "CHECKOUT NOT FAST-FORWARDED: %s commits behind origin/%s; git refused (%s)" % (behind, base, said.splitlines()[0][:80] if said else "no reason")
     return "CHECKOUT FAST-FORWARDED %s by %s commits to %s" % (base, behind, fgit(root, "rev-parse", "--short", "HEAD")[1])
@@ -237,6 +258,72 @@ def cmd_send(args):
     return code
 
 
+def run(args, cwd=None):
+    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+
+
+def wiki_only(top, old, new):
+    """True when NEW descends from OLD (the head the pr lane passed) and every commit between only adds or edits .md pages
+    in the base branch's wiki folder (wiki_dir from origin/<base>'s config: the branch can't widen it), no SKILL.md."""
+    if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
+        return False
+    head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
+    shown = run(["git", "show", "%s:.loop/config.json" % (head or "origin/main")], cwd=top)
+    try:
+        folder = (json.loads(shown.stdout).get("wiki_dir") if shown.returncode == 0 else None) or "docs/wiki"
+    except (ValueError, AttributeError):
+        folder = "docs/wiki"
+    done = run(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)  # a move shows its source
+    rows = [(line.split("\t")[0].split(), line.split("\t")[1:]) for line in done.stdout.split("\n") if line]
+    return not done.returncode and bool(rows) and all(
+        len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
+        and p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md"
+        for m, p in rows)
+
+
+def apply(slug, branch):
+    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree: restamp marks a page
+    only while its reviewed text still holds, so a wording change stays refused. The pushed commit moves the head by wiki
+    pages only, which merge.py accepts."""
+    top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
+    tree = tempfile.mkdtemp(prefix="restamp-")
+    if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
+        return 0
+    try:
+        with open(os.path.join(tree, ".loop", "config.json")) as handle:
+            config = json.load(handle)
+        base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
+        docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
+        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
+        said = pages and run([sys.executable, os.path.join(docs, "docfresh.py"), "restamp", slug] + pages, tree).stdout.strip()
+        if said and run(["git", "add", "-A", "--", folder], tree).returncode == 0:
+            run(["git", "commit", "-q", "-m", "Wiki: re-stamp pages for %s" % slug], tree)
+            pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
+            print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
+    except (OSError, ValueError):
+        pass
+    finally:
+        run(["git", "worktree", "remove", "--force", tree], top)
+    return 0
+
+
+def cmd_forward(args):
+    """merge.py / wiki.py: move this main checkout to origin/BASE (exit 0 when it moved)."""
+    line = refresh(fgit(os.getcwd(), "rev-parse", "--path-format=absolute", "--git-common-dir")[1], args.base)
+    print(line)
+    return 0 if "FAST-FORWARDED" in line else 1
+
+
+def cmd_wiki_only(args):
+    """merge.py: exit 0 when NEW follows OLD by wiki page commits only."""
+    return 0 if wiki_only(os.getcwd(), args.old, args.new) else 1
+
+
+def cmd_apply(args):
+    """merge.py: re-stamp the pages stale on origin/BRANCH (#3867) and push the commit."""
+    return apply(args.slug, args.branch)
+
+
 def main():
     sys.stdout.reconfigure(line_buffering=True)  # a loop that waits must show each pass at once, even into a file
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -253,8 +340,15 @@ def main():
     item.add_argument("--source", default="owner", choices=["owner", "auto"])
     item = sub.add_parser("claim")
     item.add_argument("--id", default="")
+    sub.add_parser("forward").add_argument("base")
+    item = sub.add_parser("wiki-only")
+    item.add_argument("old")
+    item.add_argument("new")
+    item = sub.add_parser("apply")
+    item.add_argument("slug")
+    item.add_argument("branch")
     args = parser.parse_args()
-    return globals()["cmd_" + args.command](args)
+    return globals()["cmd_" + args.command.replace("-", "_")](args)
 
 
 if __name__ == "__main__":
