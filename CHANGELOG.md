@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.28.74 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.73 - 2026-11-15
 
 - Merge remote-tracking branch 'origin/main' into loop/package-green
