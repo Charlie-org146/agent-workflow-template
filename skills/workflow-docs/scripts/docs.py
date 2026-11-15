@@ -18,7 +18,7 @@ usage: docs.py <command> [options]
   restore                      revert the last publish, if nothing came after it
   automation                   each routine's live state here: a workflow's newest run, a launch agent loaded or not
 
-With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/template.md), the page
+With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the page
 format (FORMAT lines) and that the generated Tests page matches a fresh render.
 
 Publish never deletes a page, and refuses to replace a page without this tool's marker unless you name it with --adopt.

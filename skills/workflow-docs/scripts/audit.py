@@ -3,7 +3,7 @@
 
 usage: docs.py audit [--base REF] [--dry-run]
 
-It checks the pages against the template sheet (references/template.md), the code (stale pages), the tests (Tests
+It checks the pages against the template sheet (references/commands.md), the code (stale pages), the tests (Tests
 tables, rows not Given/When/Then, Reviewed requirements with no or a stale test) and the required docs (a release note
 per tag). It fixes the mechanical trouble (Tests tables and page) and prints the rest as REWRITE lines. It never deletes
 a page or changes a criterion's wording. --dry-run only says what it would fix. Exit 0 only when nothing is left.

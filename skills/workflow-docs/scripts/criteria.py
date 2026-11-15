@@ -15,7 +15,7 @@ usage: criteria.py <command> [options]
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
                                README blocks alone (a lane uses it: it must never rewrite a page it only measures)
 
-A feature page is a short PRD (references/template.md): a Review line, then Problem, Requirements,
+A feature page is a short PRD (references/commands.md): a Review line, then Problem, Requirements,
 Non-goals, Success metrics and Tests. Requirements hold up to criteria_max lines (default CRITERIA_MAX_DEFAULT,
 .loop/config.json). A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text', with '  - '
 sub-bullets under it that are not requirements; a Reviewed line ends with <!-- reviewed HASH -->, seal_of its text and

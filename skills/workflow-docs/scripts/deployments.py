@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The optional Deployments section of a feature page (DOC-14): a Page table and/or a Delivery table, nothing else.
-template.md's rules block names the section, headers and Access words, and each column's rule. Pure: lines in, FORMAT
+commands.md's rules block names the section, headers and Access words, and each column's rule. Pure: lines in, FORMAT
 findings out (pageformat.bad's shape); a secret-bearing value is never echoed: links read <link>, addresses <address>.
 The live-link and promoted-build check runs in the deploying repo. criteria.py's page rules (rules, criteria_max, SHEET)
 sit at the end, moved here unchanged.
@@ -88,7 +88,7 @@ def deployments(page, name, lines, page_cols=PAGE_COLS, delivery_cols=DELIVERY_C
 
 # The page rules of criteria.py, moved here unchanged; criteria.py imports them back.
 CRITERIA_MAX_DEFAULT = 10
-SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "template.md")
+SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")
 
 
 def has_runbook(books, page, routine):
@@ -217,7 +217,7 @@ def rules():
                 "page_cols": listed("deployments_page", ", ".join(PAGE_COLS)),
                 "delivery_cols": listed("deployments_delivery", ", ".join(DELIVERY_COLS))}
     except (OSError, AttributeError, KeyError, ValueError):
-        sys.exit("REFUSED: the rules block of skills/workflow-docs/references/template.md is missing or broken.")
+        sys.exit("REFUSED: the rules block of skills/workflow-docs/references/commands.md is missing or broken.")
 
 
 def criteria_max(root):

@@ -360,7 +360,7 @@ def carries(name, skill, text, *places):
 
 def format_gaps(root, cfg, g, steps):
     """Format changes, judged only when the template carries them."""
-    if not carries("usage-kept", "workflow-docs", "usage_section", "references/template.md"):
+    if not carries("usage-kept", "workflow-docs", "usage_section", "references/commands.md"):
         for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
             if re.search(r"^## Usage\s*$", read(page), re.M):
                 g("MIG_USAGE", os.path.basename(page), "still has a Usage section", "delete the section, then " + tool("workflow-docs", "docs.py", "audit"))
