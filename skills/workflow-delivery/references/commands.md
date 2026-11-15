@@ -395,7 +395,7 @@ later one (result, depth, verdicts), never tries or tokens, and refuses while th
 Every push and GitHub write in delivery, release and monitoring runs `private.py` first: `goal.py pr` (the branch, the
 title, the body), a finding's push (kept local on a hit: `FINDING_LOCAL`, shown under Issues), `wiki.py`, the release
 steps and `merge.py`. The list is outside the repo, `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one regular
-expression per line, case-insensitive, `#` lines are comments:
+expression per line, case-insensitive, `#` lines are comments, and a line may start with `@public` or `@repos=a,b` to apply only to public repos or the named ones:
 
 ```text
 # names that never ship

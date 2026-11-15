@@ -5,7 +5,8 @@ plus a private repo's commit statuses.
 usage: private.py where | check | scan [--base REF]
        private.py visibility | required | statuses --head SHA --ok|--fail [--base B]
 
-The list: `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one case-blind regex per line, `#` comments."""
+The list: `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one case-blind regex per line, `#` comments;
+`@public REGEX` or `@repos=a,b REGEX` applies only to public repos or the named ones."""
 import importlib
 import json
 import os
@@ -44,6 +45,14 @@ def source():
     return (given, "$LOOP_PRIVATE_NAMES") if given else (os.path.expanduser(DEFAULT), DEFAULT)
 
 
+def in_scope(scope):
+    try:
+        top = git(".", "rev-parse", "--show-toplevel").strip()
+    except RuntimeError:
+        top = "."
+    return repo_is_private(top) is not True if scope == "public" else os.path.basename(top) in scope[6:].split(",")
+
+
 def patterns():
     path, shown = source()
     if not os.path.exists(path):
@@ -60,6 +69,10 @@ def patterns():
         text = line.strip()
         if not text or text.startswith("#"):
             continue
+        if text.startswith("@"):
+            scope, _, text = text[1:].partition(" ")
+            if not in_scope(scope):
+                continue
         try:
             found.append((number, re.compile(text, re.I)))
         except re.error:

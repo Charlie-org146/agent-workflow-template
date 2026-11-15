@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=21bfadde N=9f4c33da M=3d0857c8 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=df8ad57d N=9f4c33da M=3d0857c8 U=03828777 -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -44,8 +44,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7884b325 R=21bfadde N=9f4c33da M=3d08
   - Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting.
   - A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits.
   - A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit.
-- DEL-9: **Reviewed 2026-11-10** Nothing private ships <!-- reviewed ad7ed0f0 -->
+- DEL-9: **Reviewed 2026-11-15** Nothing private ships <!-- reviewed e53156c1 -->
   - Every commit and pull request passes the private-name scan before it is pushed.
+  - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo.
 - DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
   - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen.
   - A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows.

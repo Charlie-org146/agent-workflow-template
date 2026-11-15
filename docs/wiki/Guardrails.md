@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109e571 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109e571 U=03828777 -->
 
 ## Problem
 
@@ -26,10 +26,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=a0fae74d N=e6bf17f7 M=5109
   - A goal past `time_budget_minutes` starts no new step, and the setting is in the settings reference with its default (Delivery, new).
   - A goal past `token_budget` starts no new step, whether its steps run in a session or headless (Delivery, DEL-8 for showing it on the board; new for steps run in a session: today only headless goals are refused).
   - A goal with no token count records "unknown" and the board shows "tokens unread", never 0, so an unread count is never mistaken for an unspent budget (Delivery, new).
-- GRD-3: **Reviewed 2026-11-13** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed 61ef99d4 -->
+- GRD-3: **Reviewed 2026-11-15** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed eecc70d8 -->
   - Private-name scan on every commit and push: DEL-9.
   - A commit or push that skips the repo's hooks (a no-verify flag, an empty hooks path) is refused by the loop's own commands and flagged by health (Delivery, new).
   - Where the scanned names live: SET-8 (SET-2 for the private layer).
+  - A private-name line may be scoped with `@public` or `@repos=a,b`, so a private repo can hold a name a public one must never show; an unscoped line applies everywhere (Delivery, DEL-9).
 - GRD-4: **Reviewed 2026-11-13** A worker writes only its own goal's work, never shared loop state or its own limits <!-- reviewed 2267af49 -->
   - A worker can't widen its own goal's touches, resume itself or change its own budget; only the operation session can (Delivery, new: today a role check, not a boundary).
   - A worker changes shared loop state only for its own goal and only through the goal's commands (`goal.py step`, `record` and `pr`, `sessions.py bind` and `report`); the queue, other goals' run records and the session pool's other sessions are the operation session's to change (Monitoring, new: today the commands scope a worker to its own slug, and nothing stops a hand edit).

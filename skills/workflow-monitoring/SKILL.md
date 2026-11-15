@@ -148,3 +148,4 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-monitoring reply-check FILE` | `python3 scripts/reply_hook.py check FILE` |
 | `/workflow-monitoring reply-status` | `python3 scripts/reply_hook.py status` |
 | `/workflow-monitoring fill-pool ID...` | `python3 scripts/pool.py add ID...` |
+| `/workflow-monitoring adopt [OWNER/NAME ...]` | `python3 scripts/board.py repos adopt [--recent N] [--into DIR] [OWNER/NAME ...]` |
