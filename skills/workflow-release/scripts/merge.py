@@ -240,7 +240,7 @@ def advance(top, cfg, state, again=False):
               % (slug, url, slug))
         return None
     state["release_tries"] = state.get("release_tries", 0) + 1
-    autorelease.status_held(state, url, number)
+    autorelease.status_held(state, url, number, seen)
     why = "a review is required" if seen.get("reviewDecision") in REVIEW else "it is %s, %s" % (
         status or "unreadable", seen.get("mergeStateStatus") or said or "no reason given")
     autorelease.fail(state, "the release PR %s (#%s) can't merge: %s; it needs the owner to approve and merge it. Fix: "
