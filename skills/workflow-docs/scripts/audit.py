@@ -208,7 +208,7 @@ def owned(root, rel, body, rule):
 
 
 def relock(root, slug="", only=()):
-    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page in only stale by code alone (#3867)."""
+    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page in only stale by code alone."""
     rule, done = cr.rules(), []
     for rel in cr.pages(root):
         if only and os.path.basename(rel)[:-3] not in only:
