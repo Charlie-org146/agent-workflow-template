@@ -46,8 +46,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `step_limit` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
 | `goal_lane_minutes` | Minutes a goal's regression lane may take before health warns and its LANE line says over. | set "goal_lane_minutes" in .loop/config.json | `10` | default |
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. | set "goal_levels" in .loop/config.json | `land` | default |
-| `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | default |
-| `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. | set "automation" in .loop/config.json | `[]` | default |
+| `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `mac` |
+| `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |
 | `topics` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
 | `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `120` | default |
@@ -86,7 +86,7 @@ Health and regression, then each `automation` entry in `.loop/config.json`; to a
 
 | Routine | What it does | State | Cadence | Runs on | Last run | Owed by you |
 |---|---|---|---|---|---|---|
-| [health](https://github.com/jcl2018/agent-workflow-template/wiki/Health#health-round) | Checks the repo and files each finding. | on | every 4 hours | this Mac's local schedule | docs.py automation | none |
-| [regression](https://github.com/jcl2018/agent-workflow-template/wiki/Regression#regression-round) | Runs every regression row, files each failure. | on | every 4 hours | GitHub Actions (regression.yml) | docs.py automation | none |
-| digest email | Mails one digest per health round. | on | cron `with each health round` | this Mac's local schedule | docs.py automation | set the digest address and keys in the schedule's mail.env on the Mac (yours, outside git) |
+| [health](https://github.com/jcl2018/agent-workflow-template/wiki/Health#health-round) | Checks the repo, files findings. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| [regression](https://github.com/jcl2018/agent-workflow-template/wiki/Regression#regression-round) | Runs the regression rows. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| digest email | Mails the round's digest. | on (declared) | cron `with each health round` | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
 <!-- automation:end -->
