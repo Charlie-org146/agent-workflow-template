@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 skills/workflow-health/scripts/automation.py:*)",
+      "Bash(python3 skills/workflow-health/scripts/health.py:*)",
+      "Bash(gh auth status)",
+      "Bash(gh api:*)",
+      "Bash(gh issue:*)",
+      "Read(~/.workflow-loop/**)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+      "Bash(python3 skills/workflow-regression/scripts/regression.py run:*)"
+    ]
+  }
+}
