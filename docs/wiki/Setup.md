@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 -->
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -34,10 +34,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
   - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo.
 - SET-10: **Reviewed 2026-11-10** The right format for every agent <!-- reviewed 06345b05 -->
   - The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way.
-- SET-11: **Reviewed 2026-11-13** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 3d61b462 -->
+- SET-11: **Reviewed 2026-11-15** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 82510048 -->
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC.
   - Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent.
   - Comes from [#1408](https://github.com/jcl2018/agent-workflow-template/issues/1408), with the Windows crashes in [#1395](https://github.com/jcl2018/agent-workflow-template/issues/1395), [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) and [#1397](https://github.com/jcl2018/agent-workflow-template/issues/1397).
+  - Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12.
 - SET-12: **Reviewed 2026-11-13** Adopt all my repos in one pass <!-- reviewed e8a784e2 -->
   - From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version.
   - It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version.
@@ -63,10 +64,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
   - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten.
 - SET-8: **Reviewed 2026-11-10** Private stays private <!-- reviewed 22a16ae7 -->
   - Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one.
-- SET-15: **Reviewed 2026-11-13** One private-name list that fits every repo <!-- reviewed 3f8e2427 -->
+- SET-15: **Reviewed 2026-11-15** One private-name list that fits every repo <!-- reviewed eef2ccdb -->
   - When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits.
   - A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show.
   - Comes from [#1411](https://github.com/jcl2018/agent-workflow-template/issues/1411).
+  - The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`).
 - SET-17: **Reviewed 2026-11-13** The Backlog milestones exist after adoption <!-- reviewed e4d6023c -->
   - Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing.
 
@@ -127,8 +129,12 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
 | - | requirement | SET-9 | no passing test | not enforced |
 | [agents-wire](Tests#t-agents-wire) | requirement | SET-10 | Given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing. | PASS 2026-11-12 |
 | [adoption-golden](Tests#t-adoption-golden) | requirement | SET-11 | Given the golden first adoption, when its fixture and SET-11 are read, then the fixture holds steps 1 to 8 in order, each with a check, golden result and fix, no machine path or account, and SET-11 names it and its first-mismatch stop. | PASS 2026-11-13 |
+| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | SET-11 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
+| [adopt-replay-strict](Tests#t-adopt-replay-strict) | requirement | SET-11 | Given a machine that differs from the golden first adoption, when the replay runs, then it stops at the first mismatch naming what differs and never passes a step it cannot observe (the live check-in, step 8, is reported as not observed). | not run |
+| [adopt-many-one-pass](Tests#t-adopt-many-one-pass) | requirement | SET-12 | Given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version. | not run |
 | - | requirement | SET-12 | no passing test | not enforced |
 | - | requirement | SET-13 | no passing test | not enforced |
+| [adopt-connectors-probed](Tests#t-adopt-connectors-probed) | requirement | SET-14 | Given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled. | not run |
 | - | requirement | SET-14 | no passing test | not enforced |
 | [migration-clean](Tests#t-migration-clean) | requirement | SET-16 | Given a clean private repo and a clean public repo, both recorded mac with the task registered, when migration-check runs, then each prints MIGRATION OK and exits 0. | not run |
 | [migration-gaps-pr](Tests#t-migration-gaps-pr) | requirement | SET-16 | Given a clean toy repo, when each kind of pull-request-closable gap is made (version, settings, entries, stale START.md, bookkeeping files, workflow files, land row, blocks, Runbook, stale page), then migration-check names it by code with a Fix line, and with regression off it names no regression gap. | not run |
@@ -144,6 +150,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
 | [migration-queue](Tests#t-migration-queue) | requirement | SET-16 | Given followed repos app, app.v2 and app-api all behind the template, when the operation session's pass runs, then each gets exactly one migrate-<repo> goal line, a second or concurrent pass adds none, a finished goal for this version is an Issues line, an older one allows a version-suffixed slug, and a repo on another branch or with a modified queue file is skipped with its reason. | not run |
 | [migration-mac-kept](Tests#t-migration-mac-kept) | requirement | SET-16 | Given a public repo recorded regression_runs mac, when setup re-runs and the tick runs, then mac is kept, no DRIFT line prints and only origin/<base> is fetched. | not run |
 | [migration-v1](Tests#t-migration-v1) | requirement | SET-16 | Given a toy repo missing a feature the template carries (Usage dropped, .loop/health-rules.json, routine Runbook pointers, hooks once, a node or python the repo asks for), when migration-check runs, then it names each with its code and fix, or an OWNER STEP with the exact install command, and exits 1 only for a gap; with everything present it exits 0. | not run |
+| [adopt-stamps-version](Tests#t-adopt-stamps-version) | requirement | SET-16 | Given a repo set up from an installed package, when setup finishes, then its config holds the installed template_version. | not run |
 | - | requirement | SET-16 | no passing test | not enforced |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-3 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-3 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-12 |
@@ -163,6 +170,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=003227cb N=9c385754 M=471a
 | [set8-local-setting-refused](Tests#t-set8-local-setting-refused) | requirement | SET-8 | Given a private-home key in the config the adoption would commit, when setup runs, then it refuses naming the key and the line, never the value, and writes nothing. | not run |
 | [set8-private-value-refused](Tests#t-set8-private-value-refused) | requirement | SET-8 | Given a home path or a local setting value on a line the adoption adds, when setup runs, then it refuses naming file and line and never the value, while text the repo already had, a short value and a template default pass. | not run |
 | [set8-health](Tests#t-set8-health) | requirement | SET-8 | Given a repo with the private-name hooks installed or removed, when health runs its hooks rule, then the row appears in the Security and privacy group with its PASS or WARN text, and a wrong group, which prints no hooks row, fails the row. | PASS 2026-11-12 |
+| [private-names-scoped](Tests#t-private-names-scoped) | requirement | SET-15 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | not run |
 | - | requirement | SET-15 | no passing test | not enforced |
 | [backlog-milestones-made](Tests#t-backlog-milestones-made) | requirement | SET-17 | Given a repo with feature pages Calc and Zed, when the Backlog milestones are made with --live, then Backlog: Calc, Backlog: Zed and Backlog: Other exist, a dry run writes none and a second run makes none. | not run |
 | [backlog-setup-makes](Tests#t-backlog-setup-makes) | requirement | SET-17 | Given setup's issue filing, when it runs on a GitHub repo, then it makes the Backlog milestones with --live before it files health issues, and --no-issues makes none. | not run |
