@@ -60,7 +60,7 @@ try:
             break
     if page and os.path.isfile(os.path.join(tree, path)):
         with open(os.path.join(tree, path), "a", encoding="utf-8", newline="") as handle:
-            handle.write("\n")
+            handle.write("\nTOUCHED = 1\n")  # real code: a blank line or comment no longer stales a page (#3122)
         git("commit", "-qam", "touch a mapped path", cwd=tree)
         wiki.rerender(tree, {})
         check("a stale hand-written page (%s) still refuses after rerender" % page, any(l.startswith("STALE " + page) for l in stale(tree)))

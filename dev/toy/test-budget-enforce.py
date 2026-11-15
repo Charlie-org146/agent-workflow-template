@@ -72,15 +72,15 @@ spend.add_tokens(state, "idea", "400")
 spend.add_tokens(state, "idea", "100")
 check(state["tokens"] == {"idea": 500} and fit.spent_tokens(state) == 500, "a session worker's counts add up per step")
 
-# 3. merge rounds: the 4th merge-main-and-rerun round is refused and the goal waits
+# 3. merge rounds: the 9th merge-main-and-rerun round is refused and the goal waits
 saved = []
 fake = SimpleNamespace(config=lambda: {}, save=lambda st, note=None: saved.append(note), no=lambda text: (_ for _ in ()).throw(SystemExit("REFUSED: " + text)))
 state = {"slug": "g"}
-check([refused(spend.round_stop, fake, state, "merged") for _ in range(3)] == ["", "", ""] and state["merge_rounds"] == 3, "three merge rounds are allowed and counted")
+check([refused(spend.round_stop, fake, state, "merged") for _ in range(8)] == [""] * 8 and state["merge_rounds"] == 8, "eight merge rounds are allowed and counted")
 spend.round_stop(fake, state, "current")
-check(state["merge_rounds"] == 3, "a pr that merged nothing is not a round")
+check(state["merge_rounds"] == 8, "a pr that merged nothing is not a round")
 said = refused(spend.round_stop, fake, state, "conflict")
-check("MERGE_ROUNDS" in said and state["status"] == "waiting" and "MERGE_ROUNDS" in state["waiting"]["ask"] and state["merge_rounds"] == 0, "the 4th round is refused, the goal waits for the owner and the count starts again")
+check("MERGE_ROUNDS" in said and state["status"] == "waiting" and "MERGE_ROUNDS" in state["waiting"]["ask"] and state["merge_rounds"] == 0, "the 9th round is refused, the goal waits for the owner and the count starts again")
 fake.config = lambda: {"max_merge_rounds": 1}
 state = {"slug": "g"}
 refused(spend.round_stop, fake, state, "merged")
@@ -109,7 +109,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     os.makedirs(os.path.join(tmp, ".loop"))
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
         json.dump({"max_active_goals": 1}, handle)
-    for slug, extra in (("a", {}), ("b", {"waiting": {"ask": "merge round 4 would pass max_merge_rounds (3) (MERGE_ROUNDS)"}})):
+    for slug, extra in (("a", {}), ("b", {"waiting": {"ask": "merge round 9 would pass max_merge_rounds (8) (MERGE_ROUNDS)"}})):
         with open(os.path.join(loop, "runs", slug + ".json"), "w") as handle:
             json.dump(dict({"slug": slug, "status": "running"}, **extra), handle)
     rows = cost.limit_rows(tmp)
@@ -151,7 +151,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
 
 # 7. every setting is in the settings table with its default, and this repo's config carries them
 table = {name: default for name, home, default, _ in settings.TABLE}
-check(table.get("time_budget_minutes") == 240 and table.get("max_merge_rounds") == 3 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 4,
+check(table.get("time_budget_minutes") == 240 and table.get("max_merge_rounds") == 8 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 4,
       "the settings table lists time_budget_minutes, max_merge_rounds, max_active_goals and plan_pause_percent with their defaults")
 with open(os.path.join(root, ".loop", "config.json")) as handle:
     live = json.load(handle)

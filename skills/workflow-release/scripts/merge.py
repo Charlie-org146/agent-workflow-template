@@ -73,23 +73,7 @@ def reach(top, paths):
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
-def wiki_only(top, cfg, old, new):
-    """True when NEW descends from OLD (the pr lane's head) and every commit between only edits .md pages in the base's
-    wiki folder (wiki_dir from origin/<base>'s config), no SKILL.md."""
-    if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
-        return False
-    head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
-    shown = run(["git", "show", "%s:.loop/config.json" % (head or "origin/main")], cwd=top)
-    try:
-        folder = (json.loads(shown.stdout).get("wiki_dir") if shown.returncode == 0 else None) or "docs/wiki"
-    except (ValueError, AttributeError):
-        folder = "docs/wiki"
-    done = run(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)  # a move shows its source
-    rows = [(a.split(), b) for a, *b in (line.split("\t") for line in done.stdout.split("\n") if line)]
-    return not done.returncode and bool(rows) and all(
-        len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
-        and p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md"
-        for m, p in rows)
+OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
 
 
 def base_moved(state, cfg, top):
@@ -283,7 +267,9 @@ def main():
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
     if pods:
         pods.refuse(state)
-        pods.merge_lock(os.path.abspath(common))  # one merge per repo
+        pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), slug)  # an earlier pr lane holds the slot
+        pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
+    wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())  # #3867
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known, new = info.get("state", ""), info.get("headRefOid")
@@ -299,7 +285,7 @@ def main():
         if known != "OPEN":
             sys.exit("REFUSED: the pull request %s is %s, not open." % (state["pr"], known or "unknown"))
         tested = state.get("pr_head")
-        if tested and new and new != tested and wiki_only(top, cfg, tested, new):
+        if tested and new and new != tested and run([sys.executable, OPERATE, "wiki-only", tested, new], top).returncode == 0:
             print("NOTE: the pull request head moved only by wiki page commits (wiki.py prepare); merging %s" % new[:12])
             tested = new
         if tested and new and new != tested:

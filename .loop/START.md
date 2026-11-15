@@ -79,7 +79,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `judge_setup` | none | No longer read: kept so old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
-| `max_merge_rounds` | 3 | Merge rounds goal.py pr may take before the goal waits. |
+| `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before the goal waits. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
