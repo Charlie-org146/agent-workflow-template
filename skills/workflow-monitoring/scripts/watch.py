@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Govern many goals from one session. That session only assigns, watches and reports; workers build.
+"""Govern many goals from one session: it assigns, watches and reports; workers build.
 
 usage: watch.py <command> [options]
 
   go "GOAL" --done LINE [--done LINE] [--touches A,B] [--depends-on A,B] [--slug S] [--release ask]
-      queue a goal and give it a worker session in its own worktree (sessions.py), or a background process when no
-      session can be reached; the worker reports back
+      queue a goal and give it a worker session in its own worktree, or a background process when none can be reached
   watch [--max N] [--once] [--interval S]
-      start queued goals whose dependencies are merged (up to parallel); mend if allowed; print what waits. An unreadable
-      session pool starts nothing
+      start queued goals whose dependencies are merged (up to parallel); mend if allowed; print what waits
   resume SLUG
       relaunch a failed or stopped goal as a worker
 
@@ -16,7 +14,6 @@ All take --skill-dir DIR, the skills folder.
 Run state lives in <git common dir>/loop/. It never merges.
 """
 import argparse
-import datetime
 import hashlib
 import json
 import os
@@ -29,12 +26,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import replan as lim  # noqa: E402
 import proctree  # noqa: E402
+from worker import now  # noqa: E402
 try:
-    import sessions  # noqa: E402  worker sessions in the app; without it, background processes
-except ImportError:
+    import sessions  # noqa: E402
+except ImportError:  # without it, background processes
     sessions = None
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -57,7 +54,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- One or more numbered steps a person can follow, each with an Expect: line. Every release needs this. -->
+<!-- Numbered steps a person can follow, each with an Expect: line. -->
 """
 
 GO_PROMPT = """Use the workflow-delivery skill to run this goal in this git worktree, on branch {branch}:
@@ -66,9 +63,9 @@ go "{goal}" {done}
 
 Slug: {slug}. Touches: {touches}.
 {where}
-Step 1 (Freeze) is already done for you: .loop/goals/{slug}.md is committed with the frozen done lines and the run
-record exists. Do not run goal.py new and never edit the done lines. Start at step 2, the idea step, and use goal.py
-and flow.py with the slug {slug} for every step. Work only in this worktree.
+Step 1 (Freeze) is done: .loop/goals/{slug}.md is committed with the frozen done lines and the run record exists.
+Never run goal.py new or edit the done lines. Start at step 2, the idea step, using goal.py and flow.py with slug {slug}.
+Work only in this worktree.
 
 When a done line is proven, run `python3 {worker} met {slug} N` for its number N.
 A message from the operation session prints when you run goal.py: treat it as the owner's answer or follow-up.
@@ -85,7 +82,7 @@ def flow_set():
     try:
         with open(os.path.expanduser(os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")) as handle:
             spec = json.load(handle)
-            steps = dict(spec.get("suite") or {}, **(spec.get("steps") or {}))  # as goal.py and flow.py merge them
+            steps = dict(spec.get("suite") or {}, **(spec.get("steps") or {}))
     except (OSError, ValueError, AttributeError, TypeError):
         return False
     return all(steps.get(step) for step in FLOW)
@@ -96,10 +93,6 @@ def git(*args, cwd=None, check=True):
     if check and done.returncode:
         sys.exit("REFUSED: git %s: %s" % (" ".join(args), done.stderr.strip()))
     return done.stdout.strip() if done.returncode == 0 else ""
-
-
-def now():
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def common():
@@ -149,14 +142,8 @@ def save(state, note=None):
 
 
 def runs():
-    found = []
-    folder = loop_dir("runs")
-    for name in sorted(os.listdir(folder)):
-        if name.endswith(".json"):
-            state = load(name[:-5])
-            if isinstance(state, dict) and state.get("slug") and not graph.foreign(state):  # another pod's goals are not this pod's to watch
-                found.append(state)
-    return found
+    found = [load(name[:-5]) for name in sorted(os.listdir(loop_dir("runs"))) if name.endswith(".json")]
+    return [state for state in found if isinstance(state, dict) and state.get("slug") and not graph.foreign(state)]
 
 
 def parse_queue():
@@ -182,7 +169,7 @@ def alive(pid):
     if not pid:
         return False
     try:
-        if hasattr(os, "WNOHANG") and os.waitpid(pid, os.WNOHANG)[0] == pid:  # no zombies on Windows
+        if hasattr(os, "WNOHANG") and os.waitpid(pid, os.WNOHANG)[0] == pid:
             return False
     except ChildProcessError:
         pass
@@ -193,7 +180,7 @@ def alive(pid):
     except ProcessLookupError:
         return False
     except PermissionError:
-        return True
+        pass
     return True
 
 
@@ -211,35 +198,27 @@ def refresh():
         if state.get("status") == "running" and state.get("pid") and not alive(state.get("pid")):
             fresh = load(state["slug"])
             if fresh and fresh.get("status") == "running" and fresh.get("pid") == state.get("pid"):
-                fresh["status"] = "failed"
-                fresh["finding"] = log_tail(state["slug"])
-                fresh["report"] = {"status": "failed", "pr": fresh.get("pr", ""), "at": now(),
-                                   "text": "worker %s ended without reporting" % fresh["slug"]}
+                fresh.update(status="failed", finding=log_tail(state["slug"]), report={
+                    "status": "failed", "pr": fresh.get("pr", ""), "at": now(), "text": "worker %s ended without reporting" % fresh["slug"]})
                 save(fresh, "failed: worker pid %s ended without finishing" % state.get("pid"))
 
 
-def risky(paths, cfg):
-    return [path for path in paths if any(re.search(pattern, path) for pattern in cfg.get("risky_paths", []))]
-
-
 def where(skill_dir):
-    if not skill_dir:
-        return "Find the workflow-delivery skill by name."
-    return "The skills are in %s (workflow-delivery/SKILL.md, workflow-delivery/scripts/goal.py)." % os.path.abspath(skill_dir)
+    return "The skills are in %s (workflow-delivery/SKILL.md, workflow-delivery/scripts/goal.py)." % os.path.abspath(skill_dir) if skill_dir else "Find the workflow-delivery skill by name."
 
 
-MERGE = ("this repo has auto_merge on, so run its release step yourself, merge.py {slug}: it brings the docs up to date, "
+MERGE = ("this repo has auto_merge on, so run its release step yourself, merge.py {slug}: it updates the docs, "
          "merges, bumps the version and writes the release note. Never end with the pull request waiting.")
 
 
 def release_text(state):
-    if config().get("auto_merge") is True and state.get("release") != "ask":  # an ask holds across a resume (#812)
+    if config().get("auto_merge") is True and state.get("release") != "ask":
         return MERGE.format(slug=state["slug"])
     return ASK.format(slug=state["slug"]) if state.get("release") == "ask" else LEAVE
 
 
-def worker_cmd():
-    return os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "worker.py")
+def beside(name):
+    return os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), name)
 
 
 def launch(state, prompt, cfg):
@@ -247,26 +226,21 @@ def launch(state, prompt, cfg):
     if not command:
         sys.exit("REFUSED: no agent_command in .loop/config.json.")
     env = dict(os.environ, LOOP_BATCH="1", LOOP_ROLE="worker")
-    if os.path.exists(worker_cmd()):
-        command = [sys.executable, worker_cmd(), "loop", state["slug"], "--"] + command
-    log = open(os.path.join(loop_dir("logs"), state["slug"] + ".log"), "a")
-    try:
-        child = subprocess.Popen(command + [prompt], cwd=state["worktree"], stdout=log, stderr=subprocess.STDOUT,
-                                 stdin=subprocess.DEVNULL, env=env, start_new_session=True)
-    except OSError as error:
-        log.close()
-        state["status"] = "failed"
-        state["finding"] = "could not launch the agent: %s" % error
-        save(state, "failed: " + state["finding"])
-        return
-    log.close()
-    state["pid"] = child.pid
-    state["status"] = "running"
+    if os.path.exists(beside("worker.py")):
+        command = [sys.executable, beside("worker.py"), "loop", state["slug"], "--"] + command
+    with open(os.path.join(loop_dir("logs"), state["slug"] + ".log"), "a") as log:
+        try:
+            child = subprocess.Popen(command + [prompt], cwd=state["worktree"], stdout=log, stderr=subprocess.STDOUT,
+                                     stdin=subprocess.DEVNULL, env=env, start_new_session=True)
+        except OSError as error:
+            state.update(status="failed", finding="could not launch the agent: %s" % error)
+            save(state, "failed: " + state["finding"])
+            return
+    state.update(pid=child.pid, status="running")
     save(state, "launched agent pid %d" % child.pid)
 
 
 def known_rules():
-    """The format rules a goal's first step starts under, from workflow-delivery's guards.py (a CLI, not an import)."""
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "guards.py")
     done = subprocess.run([sys.executable, tool, "known"], capture_output=True, text=True)
     try:
@@ -287,10 +261,7 @@ def freeze(goal, cfg):
              "waits_on": goal["depends"], "rules_at": {"idea": known_rules()}}
     graph.stamp(state)
     save(state, "queued")
-    if git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch, check=False):
-        git("worktree", "add", tree, branch)
-    else:
-        git("worktree", "add", "-b", branch, tree, base)
+    git("worktree", "add", *([tree, branch] if git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch, check=False) else ["-b", branch, tree, base]))
     path = os.path.join(tree, ".loop", "goals", slug + ".md")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as handle:
@@ -306,7 +277,7 @@ def freeze(goal, cfg):
 def go_prompt(state, goal, skill_dir):
     done = " ".join('--done "%s"' % line.replace('"', "'") for line in goal["done"])
     return GO_PROMPT.format(
-        branch=state["branch"], goal=state["goal"].replace('"', "'"), done=done, slug=state["slug"], worker=worker_cmd(),
+        branch=state["branch"], goal=state["goal"].replace('"', "'"), done=done, slug=state["slug"], worker=beside("worker.py"),
         where=where(skill_dir), touches=", ".join(state["touches"]) or "not declared", release=release_text(state))
 
 
@@ -329,50 +300,44 @@ def limit_of(args, cfg):
 
 def start_round(args, cfg):
     if sessions:
-        sessions.HUNG.clear()  # a session tool that hung last round gets another chance
+        sessions.HUNG.clear()
     begun, held = plan(limit_of(args, cfg))
-    stop = begun and (lim.plan_pause(cfg) or lim.memory_hold(cfg))  # plan or memory used up
+    stop = begun and (lim.plan_pause(cfg) or lim.memory_hold(cfg))
     if stop:
         begun, held = [], held + [(goal, stop) for goal in begun]
     for goal in list(begun):
         now_taken = taken()
-        if now_taken is None or goal["slug"] in now_taken:  # the pool broke, or a session took it since plan
+        if now_taken is None or goal["slug"] in now_taken:
             begun.remove(goal)
             continue
         try:
             state = freeze(goal, cfg)
         except SystemExit as error:
             state = load(goal["slug"]) or {"slug": goal["slug"], "log": []}
-            state["status"] = "failed"
-            state["finding"] = str(error)
+            state.update(status="failed", finding=str(error))
             save(state, "failed to start: %s" % error)
             continue
         prompt = go_prompt(state, goal, args.skill_dir)
         try:
             handed = sessions and sessions.assign(state, prompt, cfg)
-        except sessions.PoolUnreadable as error:  # unknown ownership: never a background worker
+        except sessions.PoolUnreadable as error:
             state.update(status="failed", finding=graph.pool_fix(error))
             save(state, "not started")
             continue
         if handed:
             continue
-        if graph.app_only(cfg):  # workers: app: no process; the goal stays queued until a session is bound
+        if graph.app_only(cfg):
             state["worker"], state["worker_why"] = "app", "workers: app; bind an app session: sessions.py bind %s ID" % state["slug"]
             save(state, "no app session took it; waiting for sessions.py bind (workers: app)")
         else:
-            launch(state, prompt, cfg)  # no session could be started or reached: the board says background
+            launch(state, prompt, cfg)
     return begun, held
 
 
-def mend_helper():
-    return os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "mend.py")
-
-
 def keep_moving(cfg, skill_dir):
-    """Mending lives in mend.py beside this file. It reports PENDING while a goal waits."""
     if not (cfg.get("mend") or cfg.get("resume_on_limit")):
         return False
-    helper = mend_helper()
+    helper = beside("mend.py")
     if not os.path.exists(helper):
         print("NOTE: mend.py isn't beside watch.py, so nothing was mended.")
         return False
@@ -389,11 +354,9 @@ def known():
 
 
 def slug_of(goal):
-    words = re.findall(r"[a-z0-9]+", goal.lower())[:6]
-    base = "-".join(words)[:40].strip("-") or "goal"
-    taken = known()
-    slug, count = base, 1
-    while slug in taken:
+    base = "-".join(re.findall(r"[a-z0-9]+", goal.lower())[:6])[:40].strip("-") or "goal"
+    used, slug, count = known(), base, 1
+    while slug in used:
         count += 1
         slug = "%s-%d" % (base, count)
     return slug
@@ -414,15 +377,8 @@ def cmd_go(args):
     unknown = [x for x in depends if x not in known()]
     if unknown:
         sys.exit("REFUSED: depends-on %s is not a goal in the queue or the runs." % ", ".join(unknown))
-    parts = ["slug: " + slug]
-    if args.touches:
-        parts.append("touches: " + args.touches)
-    if depends:
-        parts.append("depends-on: " + ", ".join(depends))
-    if args.release:
-        parts.append("release: " + args.release)
-    parts.append("goal: " + " ".join(args.goal.split()))
-    parts += ["done: " + " ".join(line.split()) for line in args.done]
+    parts = ["slug: " + slug] + ["%s: %s" % kv for kv in (("touches", args.touches), ("depends-on", ", ".join(depends)), ("release", args.release)) if kv[1]]
+    parts += ["goal: " + " ".join(args.goal.split())] + ["done: " + " ".join(line.split()) for line in args.done]
     path = os.path.join(root(), ".loop", "queue.md")
     held = open(path).read() if os.path.exists(path) else ""
     with open(path, "a") as handle:
@@ -457,15 +413,14 @@ def cmd_watch(args):
     interval = args.interval or float(cfg.get("watch_interval", 20))
     while True:
         found, why = pool()
-        if found is None:  # unknown ownership: no mend, start or assign this pass; dead pids and questions still show
-            refresh()
+        refresh()
+        if found is None:  # unknown ownership: no mend, start or assign this pass
             tell(seen, told)
             print(graph.pool_fix(why), flush=True)
             if args.once:
                 break
             time.sleep(interval)
             continue
-        refresh()
         pending = keep_moving(cfg, args.skill_dir)
         begun, _ = start_round(args, cfg)
         tell(seen, told)
@@ -486,10 +441,10 @@ def cmd_watch(args):
 def cmd_resume(args):
     graph.refuse(load(args.slug) or {})
     refresh()
-    if not os.path.exists(mend_helper()):
+    if not os.path.exists(beside("mend.py")):
         sys.exit("REFUSED: resume needs mend.py beside watch.py.")
     flags = ["--skill-dir", args.skill_dir] if args.skill_dir else []
-    return subprocess.run([sys.executable, mend_helper(), "--resume", args.slug] + flags).returncode
+    return subprocess.run([sys.executable, beside("mend.py"), "--resume", args.slug] + flags).returncode
 
 
 def main():

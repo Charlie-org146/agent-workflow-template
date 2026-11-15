@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, review depth, budget, and the owner's `goal.py set`
-settings (the sidecar `<runs>/<slug>.extra.json`, merged over the run record by `view`). Small: at most 3 done lines, no
-`github:` touch, at most one code area (a path's first two components; docs/, .loop/, dev/toy/, tests and root files are none).
-Also here, to keep the package under its file cap: the operation's `set` and `queue`, what `new`, `record` and `pr` keep, the
-pull request body, and the defect-test check (`fit.py owed SLUG`: refs a goal fixes that lack a defect row seen failing, E-10)."""
+settings (the sidecar `<runs>/<slug>.extra.json`, merged by `view`). Small: at most 3 done lines, no `github:` touch, one code
+area. Also: `set`, `queue`, what `new`, `record` and `pr` keep, the pull request body, and `fit.py owed SLUG` (E-10)."""
 import importlib.util
 import json
 import os
@@ -12,7 +10,6 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 STEPS = ("idea", "plan", "review", "qa", "ship")
@@ -104,26 +101,27 @@ def spent_tokens(run):
 
 
 def tokens_text(run):
-    """'1,234 tokens', or 'tokens unread' when no count was recorded (never 0)."""
     value = run.get("tokens") if isinstance(run.get("tokens"), dict) else {}
     return "%s tokens" % format(spent_tokens(run), ",") if any(isinstance(n, int) and n for n in value.values()) else "tokens unread"
 
 
 def active_minutes(state, at=None):
-    """Active step time in whole minutes (#3878): board_log's held-time rule, loaded by path; 0 when it won't load."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "board_log.py")
     try:
-        sys.path.insert(0, os.path.dirname(path))
-        spec = importlib.util.spec_from_file_location("fit_board_log", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module.active_minutes(state, at)
+        return monitor("board_log", True).active_minutes(state, at)
     except Exception:
         return 0
 
 
+def monitor(name, paths=False):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", name + ".py")
+    paths and sys.path.insert(0, os.path.dirname(path))
+    spec = importlib.util.spec_from_file_location("fit_" + name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def budget_stop(slug, state, runs, cfg, at=None):
-    """Past its active-time or token budget a goal starts no new step; only goal.py set raises it."""
     held, source = budget(view(state, runs), cfg)
     for name, spent in (("minutes", active_minutes(state, at)), ("tokens", spent_tokens(state))):
         if held[name] and spent >= held[name]:
@@ -170,7 +168,7 @@ SET_AFTER_RECORD = "SET_AFTER_RECORD"
 
 
 def cmd_set(g, args):
-    import guards  # noqa: E401 - lazily: they import fit
+    import guards  # noqa: E401
     guards.operation_only(g, "set", args.slug)
     state = g.load(args.slug)
     if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None):
@@ -220,7 +218,6 @@ def cmd_queue(g, args):
 
 
 def cmd_adopt(g, args):
-    """Run record for a goal another machine pushed: idea to review done there; qa, ship and pr run here."""
     slug, branch = args.slug, "loop/" + args.slug
     old, note = g.state_path(slug), ""
     if not g.SLUG.match(slug):
@@ -287,7 +284,6 @@ def frozen_fields(g, args, lines, touches):
 
 
 def pr_open(g, state, base, info, body):
-    """Push the branch, then the open pull request's url (created when none is open)."""
     for wait in (2, 5, 0):
         pushed = g.run(["git", "push", "-u", "origin", state["branch"]])
         if not pushed.returncode:
@@ -304,7 +300,7 @@ def pr_open(g, state, base, info, body):
 
 
 def pr_text(g, state):
-    import guards, private, role  # noqa: E401 - lazily: they import fit
+    import guards, private, role  # noqa: E401
     base, cfg = g.base_ref(state), g.config()
     body = pr_body(g.read(g.goal_file(state["slug"])), view(state, g.state_dir()), cfg, role.setting_of(cfg),
                           "", regen_warnings(g.root(), base))
@@ -355,7 +351,7 @@ def pr_body(goal_text, seen, cfg, setting, scan_note, warnings, base_note=""):
     held, source = budget(seen, cfg)
     parts = ["%dm" % held["minutes"] if held["minutes"] else "", "%s tokens" % format(held["tokens"], ",") if held["tokens"] else ""]
     body = goal_text + "\n## Result\n\nSkill flow:" + "".join(step_line(step, seen) for step in STEPS) + "\n"
-    body += seen.get("pr_lane", "")  # the lane's results (lanekit.record)
+    body += seen.get("pr_lane", "")
     body += "\nReview depth: %s (%s).\n" % (depth, why)
     body += "Budget: %s (%s); spent: %s.\n" % (", ".join(p for p in parts if p) or "none set", source, tokens_text(seen))
     body += scan_note + "\n"
@@ -403,18 +399,15 @@ def main_here(g, args):
              "%s origin/main, then run goal.py new there" % (args.slug, os.path.join(common, "loop", "worktrees", args.slug).replace(os.sep, "/")))
 
 
-def owed(root, text):  # the defect-test check lives in workflow-monitoring's pool.py (size budget); no check without it
+def owed(root, text):
     try:
-        spec = importlib.util.spec_from_file_location("pool_owed", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "pool.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        mod = monitor("pool")
     except Exception:
         return []
     return mod.pr_owed(None, root, text)
 
 
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) == 3 and sys.argv[1] == "owed":
         top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
         try:
