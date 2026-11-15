@@ -12,3 +12,6 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-merge-unblock.py ffconflict`. Expect: two PASS lines (never unmerged; origin's file and the named stash).
+2. Run `python3 dev/toy/test-merge-unblock.py ff`. Expect: three PASS lines, the clean path still works.
