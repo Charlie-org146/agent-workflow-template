@@ -235,7 +235,7 @@ def relock(root):
     return done
 
 
-from prdsync import sync  # noqa: E402,F401  (docs.py sync: moved to prdsync.py)
+from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
 
 
 # AUT-9: each routine declares what it may do

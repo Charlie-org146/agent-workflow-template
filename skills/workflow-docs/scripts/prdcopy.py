@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""The repo's copy of an external PRD (DOC-17): `.loop/prd/PAGE.md` holds the last agreed version in the repo's own layout, and every
-check reads it, never the source. normalise() brings a source's layout to the repo's; block() is the part of the wiki page generated
-from the copy (Problem, Requirements, Non-goals, Success metrics between prd:begin and prd:end); read() gives a page's PRD text, the
-copy when there is one; link_page() is the docs check of a page that has a source (moved here from deployments.py). Pure text in and
-out, plus the one file read in copy_of. Imports are lazy: criteria.py and deployments.py import this module."""
+"""The repo's copy of an external PRD (DOC-17), and docs.py sync. `.loop/prd/PAGE.md` holds the last agreed version in the repo's
+layout and every check reads it, never the source; normalise() brings a source's layout to the repo's, block() is the part of the wiki
+page generated from the copy (the four PRD sections between prd:begin and prd:end), link_page() is the docs check of a page that has
+a source, and sync() compares the source with the copy and what both last agreed on: a requirement added or changed on one side is a
+DELTA, one changed on both is a CONFLICT, neither is ever overwritten, and --accept PAGE:ID=repo|source writes one side over the
+other. The source is read only where a reader can reach it (prd.read_link), else `not connected`. Imports are lazy: criteria.py and
+deployments.py import this module."""
 import os
 import re
 
@@ -180,3 +182,157 @@ def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
     if "tests" in on:
         found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], criteria.table(root, ids, linked))] if x]
     return found
+
+
+def texts(lines):
+    """{id: plain text} of requirement lines (marks and sub-bullets left out), the way both sides are compared."""
+    from entry import requirements
+    return requirements("\n".join(lines))
+
+
+def blocks_of(lines):
+    """{id: [line and its sub-bullets]} of Requirements lines."""
+    out, last = {}, None
+    for line in lines:
+        found = re.match(r"^- ([A-Z]{2,5}-\d+): ", line)
+        if found:
+            last = out.setdefault(found.group(1), [line])
+        elif last is not None and line[:1].isspace() and line.strip():
+            last.append(line.rstrip())
+        else:
+            last = None
+    return out
+
+
+def mark_of(line):
+    """The review mark of a requirement line (`Reviewed 2026-11-10` or `Unreviewed`), or empty."""
+    found = re.match(r"^- [A-Z]{2,5}-\d+: \*\*(.*?)\*\* ", line)
+    return found.group(1) if found else ""
+
+
+def write(path, text, agreed):
+    """The copy (LF) and its baseline: `ID<TAB>sha8` of each agreed text."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    for name, body in ((path, text), (path[:-3] + ".base", "".join("%s\t%s\n" % item for item in agreed.items() if item[1]))):
+        with open(name, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(body)
+
+
+def sync(root, dry=False, accept=(), opened=False):
+    import counting
+    import prd
+    from criteria import sha
+    from entry import req_key
+    from prd import out as post
+    from render import mirror_of
+    held = counting.ledger(root)
+    if opened:
+        print("".join("%s %s %s (review: %s)\n" % ("CONFLICT" if v[0] == "both sides" else "DELTA", k.replace(":", ": "),
+                                                    "both sides changed" if v[0] == "both sides" else v[0] + " changed", v[1]) for k, v in held.items()), end="")
+        return 0
+    listed = [(p, s) for p, s in sorted(counting.sources(root).items()) if s.startswith(("url:", "mcp:")) and re.fullmatch(r"\w[\w-]*", p)]
+    if not listed:
+        print("NO EXTERNAL PRDS: no url: or mcp: source in .loop/docs.tsv")
+    same = new = away = 0
+    for page, source in listed:
+        body, why = prd.read_link(source)
+        if body is None:
+            print("not connected: %s (%s): %s" % (page, source, why))
+            away += 1
+            continue
+        parts = normalise(body)
+        want_blocks = blocks_of(parts["Requirements"])
+        want, path = texts(parts["Requirements"]), path_of(root, page)
+        _, mine, agreed = mirror_of(path)
+        if not want or not mine:
+            print("SKIPPED %s: %s" % (page, "no ids in the source" if not want else "its copy is not sync's own"))
+            continue
+        if not os.path.exists(path):
+            if not dry:
+                write(path, compose(parts, source), {i: sha(t) for i, t in want.items()})
+                print("SYNCED %s: %d requirement(s) from %s" % (page, len(want), source))
+            continue
+        with open(path, encoding="utf-8") as handle:
+            copy = handle.read().replace("\r\n", "\n")
+        if "\n## Requirements" not in copy:
+            print("SKIPPED %s: its copy is from before the repo's layout; delete .loop/prd/%s.md and .base, then sync again" % (page, page))
+            continue
+        have = texts(split(copy).get("Requirements", []))
+        for item in (a for a in accept if not dry and a.split(":")[0] == page):
+            ident, _, side = item.partition(":")[2].partition("=")
+            r, s = have.get(ident), want.get(ident)
+            if r == s or side not in ("repo", "source"):
+                print("NO DELTA %s: %s" % (page, ident))
+                continue
+            keep = r if side == "repo" else s
+            ok, why = post("LOOP_PRD_WRITER", source, "replace" if r else "remove", ident, input=r or "") if side == "repo" else (True, "")
+            if not ok:
+                print("not connected: %s (%s): %s" % (page, source, why))
+                continue
+            if side == "source":
+                copy = set_item(copy, ident, want_blocks.get(ident))
+            for side_of in (want, have):
+                if keep:
+                    side_of[ident] = keep
+                else:
+                    side_of.pop(ident, None)
+            agreed[ident] = sha(keep) or ""
+            write(path, copy, {i: h for i, h in agreed.items() if h})
+            row = held.pop("%s:%s" % (page, ident), None)
+            if row:
+                post("LOOP_GH", "issue", "close", row[1], "--comment", "Accepted: %s." % side)
+            print("ACCEPTED %s: %s, the %s's text" % (page, ident, side))
+        for name in ("Problem", "Non-goals", "Success metrics"):
+            if parts[name] and parts[name] != split(copy).get(name):
+                print("NOTE %s: its %s differs in the source; the copy keeps the agreed text (edit .loop/prd/%s.md to change it)" % (page, name, page))
+        found, marks = [], {}
+        mine_blocks = blocks_of(split(copy).get("Requirements", []))
+        for ident in sorted(set(have) | set(want), key=req_key):
+            r, s, b = have.get(ident), want.get(ident), agreed.get(ident) or None
+            if r != s:
+                found.append((ident, "both sides" if (sha(r) != b) == (sha(s) != b) else "the repo" if sha(r) != b else "the source", r, s))
+            elif r is not None and ident in want_blocks and mark_of(mine_blocks[ident][0]) != mark_of(want_blocks[ident][0]) and not dry:
+                marks[ident] = mark_of(want_blocks[ident][0])  # same text: the review mark follows the source
+        for ident, mark in marks.items():
+            first = re.sub(r"^(- [A-Z]{2,5}-\d+: )(?:\*\*.*?\*\* )?", lambda hit: "%s**%s** " % (hit.group(1), mark), mine_blocks[ident][0])
+            copy = set_item(copy, ident, [first] + mine_blocks[ident][1:])
+        if marks:
+            write(path, copy, {i: h for i, h in agreed.items() if h})
+            print("MARKED %s: %s follow the source's review marks" % (page, ", ".join(marks)))
+        same, new = same + (not found), new + len(found)
+        for ident, side, r, s in found:
+            print("%s %s: %s %s (repo: %s | source: %s)" % ("CONFLICT" if side == "both sides" else "DELTA", page, ident,
+                  "both sides changed" if side == "both sides" else side + " changed", (r or "-")[:160], (s or "-")[:160]))
+        if dry:
+            continue
+        for key in [k for k in held if k.startswith(page + ":") and k.split(":")[1] not in [f[0] for f in found]]:
+            post("LOOP_GH", "issue", "close", held.pop(key)[1], "--comment", "Resolved.")
+        for ident, side, r, s in found:
+            key, text = "%s:%s" % (page, ident), "%s in %s %s: %s.\nRepo copy: %s\nSource: %s\nAccept one: docs.py sync --accept %s:%s=repo|source" % (
+                "Conflict" if side == "both sides" else "Delta", page, ident, "both sides changed" if side == "both sides" else side + " changed",
+                r or "-", s or "-", page, ident)
+            row = held.get(key) or [side, "", "0", ""]
+            if row[1] and row[3] != sha(text):
+                post("LOOP_GH", "issue", "comment", row[1], "--body", text)
+                row[2] = "0"
+            elif not row[1]:
+                for stone in (["--milestone", page], []):
+                    ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (
+                        "CONFLICT" if side == "both sides" else "DELTA", page, ident, "both sides changed" if side == "both sides" else side + " changed"),
+                        "--body", text, *stone)
+                    if ok:
+                        break
+                if not ok:
+                    print("not connected: %s %s (gh): %s" % (page, ident, made[:100]))
+                    away += 1
+                    continue
+                row[1] = made.split("\n")[-1]
+            if row[2] != "1":
+                ok, why = post("LOOP_PRD_WRITER", source, "comment", input=text)
+                row[2] = "1" if ok else "0"
+                print("POSTED %s %s: %s%s" % (page, ident, row[1], "" if ok else " (not connected to %s: %s)" % (source, why[:80])))
+            held[key] = [side, row[1], row[2], sha(text)]
+    if not dry:
+        counting.ledger(root, held)
+    print("SYNC: %d in step, %d with a delta, %d not connected" % (same, new, away))
+    return 1 if dry and new else 0
