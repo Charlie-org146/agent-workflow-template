@@ -60,7 +60,7 @@ def pending(top, cfg, fix=False, head="HEAD"):
         tree = tree if run(["git", "worktree", "add", "-q", "--detach", tree, head], top).returncode == 0 else top
     try:
         lines = release.docs_trouble(tree, base, whole=True)
-        done = run([sys.executable, DOCS, "check", "--own"], tree)  # a page stale from a commit this goal's diff does not touch is main's own
+        done = run([sys.executable, DOCS, "check", "--own", head if tree == top else "HEAD"], tree)  # a page stale from a commit this goal's diff does not touch is main's own
     finally:
         tree != top and run(["git", "worktree", "remove", "--force", tree], top)
     other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
