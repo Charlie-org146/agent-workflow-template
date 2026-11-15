@@ -1014,12 +1014,12 @@
 | <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | not run | - | local | 2026-11-12 |
 | <a id="t-win-posix-health-helpers"></a>win-posix-health-helpers | requirement | done line win-posix-rest:1 | not run | - | local | 2026-11-12 |
 | <a id="t-body-file-windows"></a>body-file-windows | defect | [#2879](https://github.com/jcl2018/agent-workflow-template/issues/2879) closed (2026-11-12) | not run | - | local | 2026-11-12 |
-| <a id="t-docs-block-split"></a>docs-block-split | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-12 |
+| <a id="t-docs-block-split"></a>docs-block-split | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) closed (2026-11-15) | FAIL | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-12 |
 | <a id="t-settings-render-tables"></a>settings-render-tables | requirement | done line settings-render-windows:1 | not run | - | local | 2026-11-12 |
 | <a id="t-settings-render-fresh"></a>settings-render-fresh | requirement | done line settings-render-windows:1 | FAIL | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
-| <a id="t-health-listing-filtered"></a>health-listing-filtered | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-12 |
-| <a id="t-health-listing-paged"></a>health-listing-paged | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-12 |
-| <a id="t-health-listing-page-fails"></a>health-listing-page-fails | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-12 |
+| <a id="t-health-listing-filtered"></a>health-listing-filtered | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) closed (2026-11-15) | not run | - | local | 2026-11-12 |
+| <a id="t-health-listing-paged"></a>health-listing-paged | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) closed (2026-11-15) | not run | - | local | 2026-11-12 |
+| <a id="t-health-listing-page-fails"></a>health-listing-page-fails | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) closed (2026-11-15) | not run | - | local | 2026-11-12 |
 | <a id="t-migration-fix-sched-task"></a>migration-fix-sched-task | defect | [#3780](https://github.com/jcl2018/agent-workflow-template/issues/3780) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-migration-fix-mac-no-yml"></a>migration-fix-mac-no-yml | defect | [#3780](https://github.com/jcl2018/agent-workflow-template/issues/3780) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-stale-net-diff-revert"></a>stale-net-diff-revert | requirement | done line stale-net-diff:1 | not run | - | local | 2026-11-13 |
