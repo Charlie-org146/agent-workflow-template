@@ -593,7 +593,7 @@
 | <a id="t-roadmap-finished-not-queued"></a>roadmap-finished-not-queued | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-roadmap-paths-scrubbed"></a>roadmap-paths-scrubbed | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-roadmap-odd-input-ok"></a>roadmap-odd-input-ok | requirement | MON-4 | not run | - | local | 2026-11-15 |
-| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | not run | - | local | no |
+| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | not run | - | local | 2026-11-15 |
 
 ## Regression
 
@@ -836,7 +836,7 @@
 | <a id="t-go-app-holds-goal"></a>go-app-holds-goal | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-go-background-default"></a>go-background-default | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-pr-statuses-only-lane-3840"></a>pr-statuses-only-lane-3840 | defect | [#3840](https://github.com/jcl2018/agent-workflow-template/issues/3840) closed (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
-| <a id="t-config-memory-key-once"></a>config-memory-key-once | requirement | SET-2 | not run | - | local | no |
+| <a id="t-config-memory-key-once"></a>config-memory-key-once | requirement | SET-2 | not run | - | local | 2026-11-15 |
 
 ## Other
 
