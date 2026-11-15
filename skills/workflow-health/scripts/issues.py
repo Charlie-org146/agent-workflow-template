@@ -6,6 +6,7 @@ an issue's marker key and evidence hash (key_of, legacy, evidence_of, covering),
 findings per feature, closed in a batch only with the owner's words. Read-only apart from close, which needs --yes.
 """
 import datetime
+import glob
 import hashlib
 import json
 import os

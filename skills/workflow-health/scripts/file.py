@@ -18,6 +18,7 @@ write path; file carries it out for the named groups (and --feature) only.
 - Markers from before the twelve groups (criteria:, cost:, size:...:limit) are found and moved to the new key.
 It runs gh and nothing else, never edits a tracked page, and stops before any write when gh can't list the issues.
 """
+import glob
 import hashlib
 import json
 import os
@@ -289,3 +290,56 @@ def apply(acts, root, groups):
             if act["kind"] == "reopen" and act.get("unclose") and not done.returncode:  # the owner's close no longer holds
                 run(["issue", "edit", act["number"], "--remove-label", "health:closed"], root)
         print(("FAILED %s: %s" % (words(act), done.stderr.strip()[:160])) if done.returncode else "DONE " + words(act))
+
+
+def number(config, key, default):
+    value = config.get(key)
+    return value if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 else default
+
+
+def limit_row(state, subject, rule, detail, fix=""):
+    return {"state": state, "family": "cost", "subject": subject, "rule": rule, "detail": detail, "fix": fix}
+
+
+def limit_rows(root):
+    """GRD-2: WARN rows for the live goals past max_merge_rounds, for more live goals than max_active_goals, and for weekly plan
+    usage (pool.py usage N, kept in the git common dir) above plan_pause_percent. Each limit that is 0 is off."""
+    try:
+        with open(os.path.join(root, ".loop", "config.json")) as handle:
+            config = json.load(handle)
+        done = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True)
+        loop = os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip() or ".git")), "loop")
+    except (OSError, ValueError):
+        return []
+    rows, live, rounds = [], 0, number(config, "max_merge_rounds", 3)
+    for path in glob.glob(os.path.join(loop, "runs", "*.json")):
+        try:
+            with open(path) as handle:
+                state = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(state, dict) or state.get("status") in ("done", "merged", "retired", "failed", "stopped"):
+            continue
+        live += 1
+        if rounds and "MERGE_ROUNDS" in str((state.get("waiting") or {}).get("ask", "")):
+            rows.append(limit_row("WARN", state.get("slug") or os.path.basename(path)[:-5], "rounds", "waits after more than %d merge-main-and-rerun rounds" % rounds,
+                            "land it when main is quiet, or raise max_merge_rounds, then goal.py answer"))
+    try:
+        with open(os.path.join(loop, "memory-waits.log")) as handle:
+            waits = len(handle.read().splitlines())
+        if waits and number(config, "min_free_memory_gb", 4):
+            rows.append(limit_row("WARN", "memory", "waits", "%d lane wait(s) for free memory (min_free_memory_gb %s)" % (waits, config.get("min_free_memory_gb", 4)), "close sessions to free memory, or lower min_free_memory_gb"))
+    except OSError:
+        pass
+    active = number(config, "max_active_goals", 20)
+    if active and live > active:
+        rows.append(limit_row("WARN", "goals", "active", "%d goals live, over max_active_goals %d" % (live, active), "finish or stop goals, or raise max_active_goals"))
+    try:
+        with open(os.path.join(loop, "plan-usage.json")) as handle:
+            used = float(json.load(handle)["percent"])
+        pause = number(config, "plan_pause_percent", 80)
+        if pause and used > pause:
+            rows.append(limit_row("WARN", "plan", "usage", "weekly plan usage %g%%, over plan_pause_percent %d%%; no new goal starts" % (used, pause), "wait for the plan to reset, or raise plan_pause_percent"))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return rows

@@ -47,14 +47,15 @@ def top_of():
     return top if os.path.exists(os.path.join(top, ".loop", "docs.tsv")) else None
 
 
-def pending(top, cfg, fix=False):
+def pending(top, cfg, fix=False, head="HEAD"):
     """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first."""
     base = base_of(top, cfg)
     if fix:
         release.docs_trouble(top, base, True)  # mend the goal's own mechanical trouble, scoped to its commits
     lines = release.docs_trouble(top, base, whole=True)
     # a page stale from a commit this goal's diff does not touch is main's own: a finding, not a refusal (the --own scope)
-    done = run([sys.executable, DOCS, "check", "--own"], top)
+    head != "HEAD" and run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch, not this checkout's HEAD
+    done = run([sys.executable, DOCS, "check", "--own", head], top)
     other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
     kept = [l for l in lines if not (l.startswith("REWRITE ") and l.split()[1].rstrip(":") in other and ": STALE " in l)]
     for l in lines:
@@ -311,6 +312,30 @@ def cmd_batch(args):
     return code
 
 
+def where(script, base=None):
+    """The release runs from the main checkout (fast-forwarded to origin/<base>) or the installed skills, never from a path
+    in the repo's own goal worktrees, where a goal could loosen the check that judges it, nor from a checkout behind its
+    base (issue 4020). A script outside this repo (installed skills, a toy's repo) is not checked."""
+    here = os.path.dirname(os.path.realpath(script))
+    common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=here, check=False)
+    mine = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
+    norm = lambda path: os.path.normcase(os.path.realpath(path))
+    if not common or not mine or norm(common) != norm(mine):
+        return
+    main = os.path.dirname(norm(common))
+    if norm(here).startswith(os.path.join(norm(common), "loop", "worktrees") + os.sep):
+        sys.exit("REFUSED (RUN_FROM_WORKTREE): %s is inside a goal worktree, where a goal could change the check that judges it. "
+                 "Fix: run it from the main checkout %s, fast-forwarded to origin, or from the installed skills." % (script, main))
+    base = base or "main"
+    if release.run(["git", "fetch", "-q", "origin", base], cwd=here).returncode:
+        return  # the base check reports a fetch it cannot make
+    behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
+    if behind.isdigit() and int(behind):
+        sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
+                 "rules. Fix: git -C %s merge --ff-only origin/%s, then run it again." % (
+                     main, behind, "" if behind == "1" else "s", base, main, base))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -328,6 +353,7 @@ def main():
     item.set_defaults(func=cmd_batch, slug="")
     args = parser.parse_args()
     args.slug and release.state_path(args.slug)
+    args.command == "publish" and where(__file__)
     return args.func(args)
 
 

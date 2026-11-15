@@ -237,6 +237,7 @@ lane-pass-reused	PASS	2026-11-11
 lane-ports-tmpdir	PASS	2026-11-11	
 lane-start-mark-once	PASS	2026-11-11	
 lane-walk-skips-node-modules	PASS	2026-11-14	
+lanes-abs-not-walked	PASS	2026-11-14	
 lanes-affected	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-always	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-check	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -282,6 +283,7 @@ merge-base-undiffable	PASS	2026-11-11
 merge-base-unrecorded	PASS	2026-11-11	
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-11	
+merge-refuses-worktree	PASS	2026-11-14	
 merge-wiki-head	PASS	2026-11-11	
 merge-wiki-rename-refused	PASS	2026-11-11	
 merge-wiki-skill-refused	PASS	2026-11-11	
@@ -290,6 +292,7 @@ milestone-links	PASS	2026-11-12
 milestone-rows-seen-red	PASS	2026-11-12	
 milestone-wording-unreviewed	PASS	2026-11-12	
 milestones-once	PASS	2026-11-12	
+mon-stray-runs	PASS	2026-11-14	
 mon10-replan	PASS	2026-11-10	
 mon11-full-auto	PASS	2026-11-10	
 mon12-pool	PASS	2026-11-10	

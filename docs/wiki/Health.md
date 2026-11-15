@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-13** <!-- prd P=b4d391e0 R=e469ca09 N=e89b4f3b M=39cf9800 U=03828777 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=1dfe4d3f N=e89b4f3b M=39cf9800 U=03828777 -->
 
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
@@ -24,7 +24,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=b4d391e0 R=e469ca09 N=e89b4f3b M=39cf
 ## Requirements
 
 ### Functional
-- HLT-2: **Reviewed 2026-11-13** The rules <!-- reviewed 4008d2ac -->
+- HLT-2: **Reviewed 2026-11-14** The rules <!-- reviewed b86d328c -->
   - Health checks exactly these groups, each with the angle its tests take:
   - Requirements (my angle: is every promise I approved proven?): every Reviewed requirement has a test seen failing and passing now; done lines have tests; none stays not enforced over 7 days.
   - Traceability (an auditor's angle: can I follow any work end to end?): requirement to test to last run; issue to feature; pull request to goal to done lines; release to the issues it fixed.
@@ -41,6 +41,7 @@ Review: **Reviewed 2026-11-13** <!-- prd P=b4d391e0 R=e469ca09 N=e89b4f3b M=39cf
   - Mine (my private angle): rules I add in a private setting.
   - At most 12 groups plus Mine; adding one means retiring one or raising the cap on purpose.
   - An owed proof (`.loop/regression-owed.tsv`) is not a seen-red failure; it warns once it is older than 7 days and never fails.
+  - The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`).
 - HLT-3: **Reviewed 2026-11-10** Formal report <!-- reviewed a5cc0046 -->
   - A header listing every group it ran (and any skipped), then each group with every rule marked pass, warn, fail or unread with its fix, then one verdict. A rule that can't read its data is never shown as passing.
 - HLT-4: **Reviewed 2026-11-13** Findings become issues tagged with their group, and their feature when feature_labels is on <!-- reviewed 283dffa7 -->

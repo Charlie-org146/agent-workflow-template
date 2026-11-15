@@ -34,8 +34,35 @@ One line each, where the roadmap didn't say.
 
 - 2026-11-13, where a PRD lives and Home's topics: each feature's PRD has one source, `page` (the default), `url:<link>` or `mcp:<server>:<resource>` (Notion through its connector is one), set in the optional third column of `.loop/docs.tsv`; a page whose PRD lives elsewhere shows `PRD: <source>` plus its generated Runbook, Deployments and Tests sections, and agents read the PRD only from that source and never copy its text into the repo, because a copy drifts from the document the owner edits. The docs check reads the source fresh and reports UNREAD, never a pass, when it cannot (a reader command in `LOOP_PRD_READER` reaches an MCP connector). Home gets a Topic column from the `topics` setting (default below), grouping the rows. DOC-1, DOC-2 and DOC-4 are Reviewed, so their wording is proposed (waiting on owner un-review); the code and the generated Home already follow the proposal. The lock for a PRD at a source is not enforced in code yet: the check reads its requirement ids but does not compare a reviewed version or date.
 
+## Waiting on owner un-review (budget-enforce pages, 2026-11-14)
+
+Five wiki pages show STALE because budget-enforce's commits touch their scripts, and every unreviewed region of them is generated, so clearing it takes a real, reviewed edit. Verdict per page, from what the commits change for that feature. Nothing below is on a page; the four requirements are Reviewed and stay as they are until the owner un-reviews them.
+
+- Delivery, DEL-8 (Budgeted): behavior, add one sub-bullet: "A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit."
+- Health, HLT-2 (The rules, Performance): behavior, add one sub-bullet: "The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`)."
+- Monitoring, MON-12 (Session pool): behavior, add one sub-bullet: "A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds."
+- Regression, REG-7 (Fast in the loop): behavior, add one sub-bullet: "A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped."
+- Setup, SET-2 (Layered settings): no new behavior, no text change. The five settings (`time_budget_minutes`, `max_merge_rounds`, `max_active_goals`, `plan_pause_percent`, `min_free_memory_gb`) are settings with a default and a one-line explanation, which SET-2 already requires. The code moves for the size caps (limits.py, spend.py, memory.py) are covered by the requirements above and add no behavior. The page needs a re-stamp only.
+
+Sentence for the owner: "Un-review DEL-8 on Delivery, HLT-2 on Health, MON-12 on Monitoring and REG-7 on Regression, apply the four sub-bullets drafted under 'budget-enforce pages' in DECISIONS.md exactly as written, then review Delivery, Health, Monitoring, Regression and Setup again (Setup needs only the re-stamp, SET-2 covers its settings)."
+
+Applied 2026-11-14 on the owner's approval, owner-words records o7 (DEL-8, HLT-2, MON-12, REG-7 un-reviewed, sub-bullets added as drafted, re-reviewed) and o10 (Delivery, Health, Monitoring, Regression and Setup reviewed again; Setup is a re-stamp with no text change).
+
 ## Waiting on owner un-review
 
+Proposed wording for the budget-enforce goal (limits in `.loop/config.json` stop new work). DEL-8 and GRD-2 are Reviewed, so the owner un-reviews them to apply this; nothing on the pages changed.
+
+- DEL-8, first bullet: "Each goal has a time and token budget (`time_budget_minutes`, `token_budget`; only the operation's `goal.py set` raises one), going over shows on the board, and a goal over either starts no new step."
+- GRD-2, replace the three "new" bullets (time budget, token budget, unknown tokens) with:
+  - "A goal past `time_budget_minutes`, counted from its freeze, starts no new step: `goal.py step`, `goal.py pr` and `flow.py` refuse with one line naming `goal.py set --budget-minutes N --why ...`, which only the operation session runs (Delivery)."
+  - "A goal past `token_budget` starts no new step, whether its steps run in a session or headless. A session worker passes its tokens to `goal.py record --tokens N`; a count it cannot read is `unknown`, which records nothing, so the board shows \"tokens unread\", never 0 (Delivery)."
+  - "`goal.py pr` merges the base and reruns the lane at most `max_merge_rounds` times (default 3). A further round is refused and the goal waits under Needs you; `goal.py answer` starts the count again (Delivery)."
+  - "The operation starts no new goal while `max_active_goals` goals are live (default 20; `parallel` still applies, the smaller wins) or while weekly plan usage is above `plan_pause_percent` (default 80; the operation records it with `pool.py usage N`, a reading older than 12 hours or never recorded pauses nothing). The check-in says which limit holds (Monitoring)."
+  - "A lane about to run rows, and a new goal, start only while free memory is at least `min_free_memory_gb` (default 4; Windows: free virtual memory, macOS and Linux: available memory); a lane already running is never stopped, a waiting lane gives up at four times its time limit, and the check-in names the hold and any lane that waited (Regression, Monitoring)."
+  - "Health's Performance group warns for each limit exceeded, lanes that waited for memory included: a goal waiting on merge rounds, live goals over `max_active_goals`, plan usage over `plan_pause_percent`, and the existing time and token budgets."
+- Settings (SET-2), new rows in the settings table: `time_budget_minutes` (default 120 for new repos), `max_merge_rounds` (3), `max_active_goals` (20), `plan_pause_percent` (80), `min_free_memory_gb` (4); this repo's `.loop/config.json` carries the last three.
+
+What the code does not do: `merge.py` is unchanged (it sends a moved base back to `goal.py pr`, which refuses the 4th round); the time budget counts wall time from the freeze, waiting for the owner included; plan usage reaches the scripts only through `pool.py usage N` because the app's usage is not readable from a script.
 Drafted by health-v1; none of it is applied until the owner un-reviews the requirement and approves the wording. Apply after merging origin/main (drop-usage and backlog-milestones touch the same page first).
 
 - HLT-2 Hygiene: replace "no idle worker sessions" with "no idle worker sessions beyond the pool size (MON-12)".
