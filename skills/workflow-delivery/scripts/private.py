@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""The private-name scan: nothing private ships (DEL-9); every push or GitHub write runs it, and setup's git hooks run it as
-`hook staged | message FILE | push`. Also a private repo's commit statuses.
+"""The private-name scan (DEL-9), run on every push or GitHub write and by setup's hooks (`hook staged | message FILE | push`),
+plus a private repo's commit statuses.
 
-usage: private.py where | check | scan [--base REF]    the worker check, the list, the scan from REF (default origin/<base>)
-       private.py visibility | required | statuses --head SHA --ok|--fail [--base B]   the private-repo statuses
+usage: private.py where | check | scan [--base REF]
+       private.py visibility | required | statuses --head SHA --ok|--fail [--base B]
 
-The list: `$LOOP_PRIVATE_NAMES` (a file path) or `~/.workflow-loop/private-names`, one regex per line, matched without
-case; `#` starts a comment. No file: nothing checked. Only comments: off. A broken file: every scan refuses.
-"""
+The list: `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one case-blind regex per line, `#` comments."""
 import importlib
 import json
 import os
@@ -23,56 +21,14 @@ LOCAL_PATH = re.compile(r"(?<![\w/.:~])/(?:Users|home|private|var|tmp|mnt|opt|sr
 HOME_DIR = re.compile(r"(?:file://)?(?:/(?:Users|home)/|[A-Za-z]:[\\/]Users[\\/])[^\\/\s)]+")
 
 
+def mend(*args):
+    import lanekit
+    return lanekit.mend(*args)
+
+
 def plain(text):
     text = HOME_DIR.sub("/mnt/u", text)
     return LOCAL_PATH.sub(lambda m: m.group(0).split("/")[-1] if m.group(0).count("/") > 2 else "~", text)
-
-
-def mend(git, files, base):
-    """Resolve a merge that conflicts only in generated files (tsv rows union, Tests.md re-rendered); else False."""
-    import tempfile
-    top, tsv = git("rev-parse", "--show-toplevel").stdout.strip(), (".loop/regression.tsv", ".loop/regression-runs.tsv")
-    page = lambda f: os.path.basename(f) == "Tests.md" and os.path.dirname(f).endswith("wiki")
-    criteria = os.path.join(HERE, "..", "..", "workflow-docs", "scripts", "criteria.py")
-    if not files or not all(f in tsv or page(f) for f in files):
-        return False
-    if any(page(f) for f in files) and not (os.path.exists(top + "/.loop/docs.tsv") and os.path.exists(criteria)):
-        return False
-    for f in files:
-        s = [git("show", ":%d:%s" % (n, f)) for n in (1, 2, 3)]
-        if s[1].returncode or s[2].returncode:
-            return False
-        if f not in tsv:
-            git("checkout", "--theirs", "--", f)
-            continue
-        with tempfile.TemporaryDirectory() as tmp:
-            for n, r in zip("abc", (s[1], s[0], s[2])):
-                open(tmp + "/" + n, "w").write(r.stdout if not r.returncode else "")
-            union = subprocess.run(["git", "merge-file", "-p", "--union"] + [tmp + "/" + n for n in "abc"],
-                                   capture_output=True, text=True).stdout
-        rows = lambda t: {l.split("\t")[0]: l for l in t.splitlines() if l and l[0] != "#"}
-        b, o, t = rows(s[0].stdout if not s[0].returncode else ""), rows(s[1].stdout), rows(s[2].stdout)
-        if any(k not in o or k not in t for k in b):
-            return False
-        out, at = [], {}
-        for line in union.splitlines():
-            k = line.split("\t")[0]
-            if line[0:1] == "#" or not line or k not in at:
-                at[k] = len(out)
-                out.append(line)
-            elif line != out[at[k]]:
-                if f != tsv[1] or line.split("\t")[2:3] == out[at[k]].split("\t")[2:3]:
-                    return False
-                out[at[k]] = max(line, out[at[k]], key=lambda l: l.split("\t")[2:3])
-        open(top + "/" + f, "w").write("\n".join(out) + "\n")
-    if any(page(f) for f in files):
-        if subprocess.run([sys.executable, criteria, "render", "--tables"], cwd=top, capture_output=True).returncode:
-            return False
-        git("add", "-u")
-    if git("add", "--", *files).returncode or git("commit", "--no-edit", "-q").returncode:
-        return False
-    print("MENDED %s: rows unioned, Tests.md taken from %s and re-rendered" % (", ".join(files), base))
-    return True
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))

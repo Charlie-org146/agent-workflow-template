@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The goal dependency graph: which queued goals wait on which, and which may start. Shared by watch, monitor and board.
 
-A queue line may carry `depends: a, b` or `depends-on: a, b` (both spellings mean the same). A goal waits only on goals it depends on, and only until they are merged;
-sharing files is never a reason to wait (the later goal merges the base before its pull request). The only other limit
-is `parallel` in .loop/config.json (0 or unset: unlimited). A goal a worker session was handed before it was frozen
-(a busy entry in the session pool with no run yet) holds a slot too, and is never started a second time. Imported, not run.
+A queue line may carry `depends: a, b` or `depends-on: a, b`. A goal waits only on goals it depends on, until they are merged;
+sharing files is never a reason to wait. The only other limit is `parallel` in .loop/config.json (0 or unset: unlimited).
+A goal a worker session was handed before it was frozen (a busy pool entry with no run yet) holds a slot too, and is never
+started a second time. Imported, not run.
 """
 import atexit
 import datetime
@@ -77,9 +77,6 @@ def unmet(goal, records, queued):
 
 
 def read_pool(path):
-    """The session pool as (entries, ""), or (None, reason) when it can't be trusted: unreadable, not JSON or not an
-    object. An entry that isn't an object, or a busy entry without a valid goal, is left out and kept in LAST_BAD
-    (pool.quarantine moves it to a side file). A missing file is an empty pool."""
     try:
         with open(path) as handle:
             found = json.load(handle)
@@ -108,8 +105,6 @@ def assigned(pool):
         if item.get("state") == "busy":
             taken.setdefault(item["slug"], dict(item, id=sid))
     return taken
-
-
 
 
 def parallel_of(cfg):
@@ -141,9 +136,6 @@ def memory_room():
 
 
 def rank(needs, edges, live):
-    """MON-19: (lines, tags). needs are owner items opening with a goal key; edges maps each goal key to the keys it waits on;
-    live holds the keys with a goal underway. Each line ends with what it holds up, the goal and everything behind it,
-    with the count, and whether it is on the critical path to the next release, or says it blocks nothing. Most goals first."""
     rows = []
     for i, text in enumerate(needs):
         key = re.split(r"[ :]", text, 1)[0]
@@ -162,9 +154,6 @@ def rank(needs, edges, live):
 
 
 def ready(goals, records, limit, taken=None, why=""):
-    """Split queued goals into (start, held). held is [(goal, reason)]; start never exceeds the free worker slots (limit 0: no limit).
-    taken (from assigned) adds one slot per goal a session holds with no run yet, and holds that goal: its session freezes it.
-    With why set and taken None (the pool can't be read), nothing starts: every goal is held with the fix."""
     if taken is None and why:
         return [], [(goal, pool_fix(why)) for goal in goals]
     queued = {goal["slug"] for goal in goals}
@@ -188,7 +177,6 @@ def ready(goals, records, limit, taken=None, why=""):
             start.append(goal)
             used += 1
     return start, held
-
 
 
 def clock(at):
@@ -222,16 +210,15 @@ def flow(nodes):
     return ["flow (arrow = must finish before):"] + ["%s --> %s" % (label(dep), ", ".join(label(s) for s in waiting[dep])) for dep in sorted(waiting)]
 
 
-# One goal's state, decided once for every reader (issue 113), so held, freezing, silent and slot-holding mean the same
-# everywhere. Imported, not run.
+# One goal's state, decided once for every reader (issue 113). Imported, not run.
 #   classify(run, taken, at, cfg)  running, waiting, failed, stopped, held, silent, done, merged, retired or queued
 #   holds_slot(run, taken)         a live goal uses a worker slot: a pid, or a busy pool entry (issue 112)
-#   held(run, taken)               running with no worker: the pool is known, no busy session names it, no pid
+#   held(run, taken)               running with no worker: pool known, no busy session names it, no pid
 #   freezing(taken, on_disk)       pool entries handed a goal that has no run record yet
 #   silent_for(run, at)            seconds since the worker last spoke, or None
-#   stamp_held(runs, taken, at, folder) / with_held(runs, folder)  when each goal first read held, in <loop>/held.json
-# The pool is the busy map from graph.assigned (None when unreadable: then nothing is called held).
-# `silent_minutes` in .loop/config.json (default 30) is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
+#   stamp_held / with_held         when each goal first read held, in <loop>/held.json
+# `taken` is graph.assigned (None when unreadable: nothing is called held). `silent_minutes` in config (default 30)
+# is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
 
 def parse_at(text):
     """A recorded time as an aware UTC datetime (naive counts as UTC), or None."""
@@ -254,8 +241,6 @@ def silent_limit(cfg=None):
         return max(1, int((cfg or {}).get("silent_minutes") or 30)) * 60
     except (TypeError, ValueError):
         return 1800
-
-
 
 
 def held(run, taken):
@@ -360,9 +345,7 @@ def load_run(slug):
         return {}
 
 
-# Pods (MON-15) and the merge lock (MON-15): the one place every skill asks. goal.py and merge.py load this file by path
-# and carry on without it when workflow-monitoring isn't installed. Imported, not run.
-#
+# Pods and the merge lock (MON-15): goal.py and merge.py load this file by path and carry on without it. Imported, not run.
 #   pod_id()        $LOOP_POD_ID, else the operation session's own id ($CLAUDE_SESSION_ID); "" in a worker or with neither
 #   stamp(state)    record the caller's pod on a goal that has none; a goal with no pod belongs to no one
 #   foreign(state)  the owning pod's id when it is not the caller's (a worker never counts), else ""
@@ -400,9 +383,6 @@ def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.p
 
 
 def merge_lock(common):
-    """Take <git common dir>/loop/merge.lock (created exclusively, holding the pid), waiting while its holder is alive and
-    its file younger than LOOP_MERGE_LOCK_SECONDS (default 1800); a dead or older holder is replaced by one atomic rename,
-    so two waiters never both take it. Released at exit if still ours."""
     path, told = os.path.join(common, "loop", "merge.lock"), False
     os.makedirs(os.path.dirname(path), exist_ok=True)
     while True:

@@ -7,19 +7,17 @@ usage: goal.py <command> <slug> [options]
   queue SLUG --goal TEXT --done LINE [--touches A,B] [--depends-on A,B]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
-  pr SLUG  merge the latest base, push, open the PR
-Goal steps (step, record, pr) refuse outside a worker.
+  pr SLUG
+step, record and pr refuse outside a worker.
   wait SLUG --ask TEXT --words W [--words W]
-  answer SLUG                 a waiting goal goes on
-  finding SLUG TEXT   stops a live goal; a done or merged one is only noted
-  resume SLUG --why T [--by W]    the operation revives a stopped session goal
-  touches SLUG --add PATH --why T the operation widens a goal's touches
+  answer SLUG
+  finding SLUG TEXT
+  resume SLUG --why T [--by W]
+  touches SLUG --add PATH --why T
   set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] --why T
   show SLUG
-A refusal that changes nothing uses no try (exit 2, guards.py).
 """
 import argparse
-import datetime
 import hashlib
 import importlib.util
 import json
@@ -36,7 +34,7 @@ from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
 
 ME = sys.modules[__name__]
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
-try:  # pods (MON-15): workflow-monitoring's graph.py, loaded by path
+try:
     _spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(SKILLS, "workflow-monitoring", "scripts", "graph.py"))
     pods = importlib.util.module_from_spec(_spec)
     _spec.loader.exec_module(pods)
@@ -74,8 +72,7 @@ def write(path, text, mode="w"):
         handle.write(text)
 
 
-def now():
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+now = guards.now
 
 
 def state_dir():
@@ -144,11 +141,9 @@ def goal_file(slug):
 
 def done_lines(slug):
     try:
-        text = read(goal_file(slug))
+        return guards.done_lines(ME, root(), slug)
     except OSError:
         no("no goal file for %s here. Fix: run this from the goal's worktree." % slug)
-    part = text.split("## Done lines", 1)[-1].split("\n## ", 1)[0]
-    return [line.strip() for line in part.splitlines() if re.match(r"\s*\d+\. ", line)]
 
 
 def done_sha(lines):
@@ -181,21 +176,18 @@ def failed_try(state, why, step="build", fix="fix it, then run the step again"):
     guards.failed_try(ME, state, why, step, fix)
 
 
-def cmd_wait(args):
-    return guards.cmd_wait(ME, args)
-
-
-def cmd_answer(args):
-    return guards.cmd_answer(ME, args)
+cmd_wait = lambda args: guards.cmd_wait(ME, args)
+cmd_answer = lambda args: guards.cmd_answer(ME, args)
+cmd_adopt = lambda args: fit.cmd_adopt(ME, args)
+cmd_queue = lambda args: fit.cmd_queue(ME, args)
+cmd_set = lambda args: fit.cmd_set(ME, args)
+cmd_touches = lambda args: guards.cmd_touches(ME, args)
 
 
 def valid(args):
-    if not SLUG.match(args.slug):
-        no("bad slug. Fix: lowercase letters, digits and dashes.")
-    if not args.done:
-        no("no done lines. Fix: give at least one --done.")
-    if not flow_set():
-        no(NO_FLOW)
+    SLUG.match(args.slug) or no("bad slug. Fix: lowercase letters, digits and dashes.")
+    args.done or no("no done lines. Fix: give at least one --done.")
+    flow_set() or no(NO_FLOW)
 
 
 def cmd_new(args):
@@ -234,18 +226,6 @@ def cmd_new(args):
     return 0
 
 
-def cmd_adopt(args):
-    return fit.cmd_adopt(ME, args)
-
-
-def cmd_queue(args):
-    return fit.cmd_queue(ME, args)
-
-
-def cmd_set(args):
-    return fit.cmd_set(ME, args)
-
-
 def cmd_step(args):
     state = load(args.slug)
     fit.budget_stop(args.slug, state, state_dir(), config())
@@ -260,6 +240,10 @@ def cmd_step(args):
 def next_step(state):
     left = [step for step in FLOW if step not in state.get("flow", {})]
     return "flow.py %s %s" % (state["slug"], left[0]) if left else "pr"
+
+
+def nxt(args, state):
+    return "NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state)
 
 
 def cmd_record(args):
@@ -281,7 +265,7 @@ def cmd_record(args):
     result, why = (found[-1][0].lower(), found[-1][1].strip()) if found else ("", "")
     pending = guards.pending_items(text)
     session = args.in_session or state.get("worker") == "session"
-    if not result and not pending and session:  # flow.py's session route
+    if not result and not pending and session:
         guards.refuse_no_try(state, "the %s reply has no STEP line" % args.step, "end the reply with the DEPTH line and a "
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
@@ -291,14 +275,14 @@ def cmd_record(args):
         for line in skipped:
             state.setdefault("log", []).append("%s rule %s" % (now(), line))
         if ask:
-            state["status"], state["waiting"] = "waiting", {"ask": ask[:600], "words": ["go on " + args.slug, "stop " + args.slug]}
+            guards.hold(state, ask[:600])
             save(state, "%s waits for the owner (no try used): %s" % (args.step, ask[:200]))
             print("WAITING %s (no try used): %s" % (args.slug, ask))
             return 0
         if refusal:
             guards.refuse_no_try(state, refusal[0], refusal[1], refusal[2], save)
     os.remove(ran)
-    if result in ("done", "skipped") or pending or result == "pending":
+    if ok or pending or result == "pending":
         guards.clear_refusals(state)
     if ok or auto:
         fit.keep(ME, state, args.step, text)
@@ -310,13 +294,12 @@ def cmd_record(args):
         guards.advance(ME, state)
         save(state, "%s auto-approved: %s" % (args.step, took[:300]))
         print("AUTO-APPROVED %s %s: %s" % (args.slug, args.step, took))
-        print("NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state))
+        print(nxt(args, state))
         return 0
     if pending or result == "pending":
         state["flow"][args.step] = "pending"
         ask = "%s left this for you: %s" % (args.step, "; ".join(pending) or why or "see its reply")
-        state["status"], state["waiting"] = "waiting", {"ask": ask[:600], "words": ["go on " + args.slug,
-                                                                                     "stop " + args.slug]}
+        guards.hold(state, ask[:600])
         save(state, "%s pending: %s" % (args.step, ask[:200]))
         print("WAITING %s: %s" % (args.slug, ask))
         return 0
@@ -327,16 +310,16 @@ def cmd_record(args):
         save(state, "%s %s" % (args.step, state["flow"][args.step]))
         print("RECORDED %s %s" % (args.step, state["flow"][args.step]))
         tool = os.path.join(SKILLS, "workflow-health", "scripts", "milestone.py")
-        if args.step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):  # DEL-14: FILE lines
-            print(subprocess.run([sys.executable, tool, "leftovers", reply, "--goal", args.slug, "--live"], capture_output=True, text=True).stdout.strip())
-        print("NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state))
+        if args.step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):
+            print(run([sys.executable, tool, "leftovers", reply, "--goal", args.slug, "--live"]).stdout.strip())
+        print(nxt(args, state))
         return 0
     failed_try(state, "%s %s" % (args.step, "failed: " + why[:200] if result else "gave no STEP line"), args.step,
                "fix the cause, then run flow.py %s %s again" % (args.slug, args.step))
     return 1
 
 
-def queue(op, *args):  # #3877: pool.py
+def queue(op, *args):
     return pods.pr_queue(op, state_dir(), *args) if pods else ""
 
 
@@ -349,7 +332,7 @@ def cmd_pr(args):
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
     if ahead := queue("turn", args.slug):
-        waited or save(state, "waiting: pr queue, behind " + ahead)  # held time: the budget counts none of it (#3878)
+        waited or save(state, "waiting: pr queue, behind " + ahead)
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")
@@ -384,15 +367,13 @@ def cmd_pr(args):
         return fit.pr_fail(ME, state, head, line, ids)
     role.record(state, base)
     known = run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
-    info = json.loads(known.stdout) if known.returncode == 0 else {}
+    info = json.loads(known.stdout) if not known.returncode else {}
     body = fit.pr_text(ME, state)
     state["step"] = "pr"
     save(state, "pr")
     url = fit.pr_open(ME, state, base, info, body)
-    state["pr"] = url
-    state["statuses"] = "ok" if private.pr_result(root(), base, git("rev-parse", "HEAD"), state["branch"], True) else "failed"
-    state["step"] = "release"
-    state["status"] = "done"
+    state.update(pr=url, statuses="ok" if private.pr_result(root(), base, git("rev-parse", "HEAD"), state["branch"], True) else "failed")
+    state.update(step="release", status="done")
     save(state, "pull request " + url)
     print("PR " + url)
     print("NEXT: " + ("workflow-release merges it: merge.py %s" % args.slug if config().get("auto_merge") is True and state.get("release") != "ask"
@@ -412,10 +393,6 @@ def cmd_finding(args):
 def cmd_resume(args):
     pods and pods.refuse(load(args.slug) or {})
     return guards.cmd_resume(ME, args)
-
-
-def cmd_touches(args):
-    return guards.cmd_touches(ME, args)
 
 
 def cmd_show(args):
@@ -457,16 +434,10 @@ def main():
     return args.func(args)
 
 
-def add_tokens(state, step, given):
-    """A worker's tokens for a step (GRD-2); unknown adds nothing."""
-    if str(given).isdigit():
-        held = state.get("tokens") if isinstance(state.get("tokens"), dict) else {}
-        old = held.get(step) if isinstance(held.get(step), int) else 0
-        state["tokens"] = dict(held, **{step: int(given) + old})
+add_tokens = guards.add_tokens
 
 
 def round_stop(g, state, what):
-    """A merge or conflict is one round; past max_merge_rounds (default 3) the goal waits (GRD-2)."""
     limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
     limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 3
     if what not in ("merged", "conflict"):
@@ -475,7 +446,7 @@ def round_stop(g, state, what):
     state["merge_rounds"] = 0 if over else count
     ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
     if over:
-        state["status"], state["waiting"] = "waiting", {"ask": ask, "words": ["go on " + state["slug"], "stop " + state["slug"]]}
+        guards.hold(state, ask)
     g.save(state, ask if over else None)
     if over:
         g.no(ask)
