@@ -11,12 +11,6 @@
       "Bash(gh run:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)"
-    ],
-    "deny": [
-      "Bash(git push:*)",
-      "Bash(gh pr merge:*)",
-      "Bash(gh release:*)",
-      "Bash(python3 skills/workflow-regression/scripts/regression.py run:*)"
     ]
   }
 }

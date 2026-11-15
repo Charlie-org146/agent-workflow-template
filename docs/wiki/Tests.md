@@ -62,6 +62,7 @@
 | <a id="t-perms-write-keeps"></a>perms-write-keeps | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-repo-ok"></a>perms-repo-ok | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-settings-tracked"></a>perms-settings-tracked | requirement | AUT-9 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-perms-no-repo-deny"></a>perms-no-repo-deny | requirement | AUT-9 | not run | - | local | 2026-11-15 |
 
 ## Delivery
 
@@ -571,6 +572,10 @@
 | <a id="t-roadmap-priority-empty"></a>roadmap-priority-empty | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-roadmap-unreviewed-listed"></a>roadmap-unreviewed-listed | requirement | MON-4 | not run | - | local | 2026-11-15 |
 | <a id="t-roadmap-todos-apart"></a>roadmap-todos-apart | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-hand-backlog-once"></a>roadmap-hand-backlog-once | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-finished-not-queued"></a>roadmap-finished-not-queued | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-paths-scrubbed"></a>roadmap-paths-scrubbed | requirement | MON-4 | not run | - | local | 2026-11-15 |
+| <a id="t-roadmap-odd-input-ok"></a>roadmap-odd-input-ok | requirement | MON-4 | not run | - | local | 2026-11-15 |
 
 ## Regression
 

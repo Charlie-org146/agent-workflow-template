@@ -211,19 +211,23 @@ def cmd_roadmap(args):
     except (OSError, ValueError) as error:
         sys.exit("REFUSED: cannot read docs/ROADMAP.md or the issues file: %s. Fix: run from the repo and pass a JSON list." % error)
     if not args.issues:
-        done = subprocess.run(["gh", "issue", "list", "--state", "open", "--limit", "1000", "--json", "number,title,labels,milestone"], capture_output=True, text=True, cwd=top)
-        if done.returncode:
-            sys.exit("REFUSED: gh issue list failed: %s" % done.stderr.strip()[:200])
-        raw = json.loads(done.stdout or "[]")
+        try:
+            done = subprocess.run(["gh", "issue", "list", "--state", "open", "--limit", "1000", "--json", "number,title,labels,milestone"], capture_output=True, text=True, cwd=top)
+            raw = None if done.returncode else json.loads(done.stdout or "[]")
+        except (OSError, ValueError):
+            raw = None
+        if raw is None:
+            sys.exit("REFUSED: gh issue list failed. Fix: run gh auth status, or pass --issues FILE.")
     names = lambda x: x.get("name") if isinstance(x, dict) else x
+    raw = [i for i in raw if isinstance(i, dict) and isinstance(i.get("number"), int) and isinstance(i.get("title"), str)] if isinstance(raw, list) else []
     issues = {i["number"]: (i["title"], [names(l) for l in i.get("labels") or []], (i["milestone"].get("title") if isinstance(i.get("milestone"), dict) else i.get("milestone")) or "") for i in raw}
     states = {}
     for name in os.listdir(loop_dir("runs")):
         record = load(name[:-5]) if name.endswith(".json") and "." not in name[:-5] else None
-        if isinstance(record, dict) and record.get("slug"):
+        if isinstance(record, dict) and isinstance(record.get("slug"), str):
             states[record["slug"]] = record
     flying = {s: str(r.get("goal", "")) for s, r in states.items() if r.get("status") in ("running", "waiting") and r.get("goal")}
-    queued = {f.get("slug"): f.get("goal", "") for f in (fields(l) for l in read_queue() if l.startswith("- slug:")) if f.get("slug") not in flying}
+    queued = {f.get("slug"): f.get("goal", "") for f in (fields(l) for l in read_queue() if l.startswith("- slug:")) if f.get("slug") not in flying and states.get(f.get("slug"), {"status": "queued"}).get("status") == "queued"}
     hit = lambda ref, goals: any(ref == s or (ref[0] == "#" and re.search(ref + r"(?!\d)", t)) for s, t in goals.items())
     status = lambda ref: "in flight" if hit(ref, flying) else "queued" if hit(ref, queued) else "open"
     rows, hand = {g: [] for g in GROUPS}, set()
@@ -237,7 +241,7 @@ def cmd_roadmap(args):
             number = int(ref[1:]) if ref.startswith("#") and ref[1:].isdigit() else 0
             if number:
                 hand.add(number)
-            if (number and number in issues) or (not number and states.get(ref, {}).get("status") not in ("done", "merged")):
+            if (number and number in issues and not issues[number][2].startswith("Backlog") and not issues[number][0].startswith("To-do:")) or (not number and states.get(ref, {}).get("status") not in ("done", "merged")):
                 rows[group].append((cells[0], cells[1], cells[2], status(ref), ""))
     after, todos = {}, []
     for number, (title, labels, stone) in sorted(issues.items()):
@@ -269,8 +273,9 @@ def cmd_roadmap(args):
     for stone in sorted(after):
         out += ["### " + stone, ""] + table(("Issue", "Outcome", "Priority"), after[stone])
     out += ["## Rollout", ""] + section(source, "Rollout").strip().splitlines() + [""]
-    text = "\n".join(out).rstrip("\n") + "\n"
+    text = re.sub(r"(?:[A-Za-z]:[\\/]+Users[\\/]|/Users/|/home/)[^\s,;)`]*", "~", "\n".join(out).rstrip("\n") + "\n")
     if args.out:
+        os.makedirs(os.path.dirname(os.path.join(top, args.out)), exist_ok=True)
         with open(os.path.join(top, args.out), "w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
         print("WROTE %s: %d open issues, %d goals in flight" % (args.out, len(issues), len(flying)))
