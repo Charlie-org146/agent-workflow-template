@@ -163,7 +163,7 @@ The owner decided 2026-11-13: "remove the usage section, because you cannot say 
 Drafted 2026-11-13 by the drop-usage goal. Main's recent code changes left three Reviewed pages stale, and Usage edits no longer touch pages. One real, accurate sub-bullet each, none applied until the owner un-reviews the named requirement and page and approves the wording; the code and tests it describes are already on main.
 
 - Automation (#3848, suite-shard), AUT-2, add this sub-bullet after the last one: The CI suite runs in eight shards with one combined summary: each row is given the time left, the suite-time line counts the rows skipped for time (the unrun rows), and a newer run on the same ref cancels the older.
-- Guardrails (#3860, backlog-milestones' `criteria_max` 16 to 17), GRD-9, add this sub-bullet after the last one: A page's requirement cap, `criteria_max` (17 in this repo), is read by health's Size group, so a page too large to review shows as a finding.
+- Guardrails (#3860, backlog-milestones' `criteria_max` 16 to 17), GRD-9, add this sub-bullet after the last one: A page's requirement cap, `criteria_max` (19 in this repo), is read by health's Size group, so a page too large to review shows as a finding.
 - Monitoring (#3861, the reply hook and the check-in dependency code), MON-14, add this sub-bullet after the last one: The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
 
 Applied 2026-11-13 on the owner's three approvals typed in the drop-usage session: AUT-2, GRD-9 and MON-14 and their pages were un-reviewed, given the sub-bullets above, and reviewed again.
@@ -272,6 +272,23 @@ Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the
 ## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
 Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
 
+## Waiting on owner un-review (blockers-first)
+
+The owner asked 2026-11-14: "can you add a small requirement for the printout in the monitoring session? It's like right now you just tell me what do I need to do, but you should make it more clear like what is blocking the whole process so I can know the priorities." Built by the blockers-first goal (the check-in's Needs you ranking, and the Stop hook that enforces it). The Monitoring page is Reviewed, so the requirement below is not applied until the owner un-reviews the page and approves the wording. The goal's rows are tied to MON-5 until then.
+
+- Monitoring, new requirement after MON-18 (pool-12's, the next free ID is MON-19): **MON-19: Blockers first.** Each item under Needs you says what it holds up, so the owner sees the priorities.
+  - An item names the goals, merges or release it holds up, with the count of goals behind it, and says whether it is on the critical path to the next release; an item that holds nothing says "blocks nothing".
+  - Items are sorted with the one holding up the most goals first, and the Dependencies graph marks the owner item on each chain.
+  - The Stop hook refuses a check-in whose Needs you items do not say what they hold up.
+
+The owner types two sentences (the session that relays them runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Monitoring page so MON-19 can be added."
+2. Review, after the goal has added it: "Review the Monitoring page and MON-19 again."
+
+Applied 2026-11-14 (blockers-first): the owner's words, recorded as o11 in owner-words.tsv, un-reviewed the Monitoring page; MON-19 was added exactly as drafted above, the goal's row moved from MON-5 to MON-19, and the page and MON-19 are reviewed again with the same words.
+
+The cap: MON-19 makes the Monitoring page 18 requirements, so `criteria_max` goes from 17 to 18 in this goal, as backlog-milestones did from 16 to 17.
 ## Applied 2026-11-14 (settings-in-spec)
 
 The owner approved both sentences ("Yes, for one, and then start two.", owner-words records o8 for Automation and AUT-9, o9 for Monitoring and MON-18; the warn at 16 of 20 sends stands). AUT-9 and MON-18 are on the pages as drafted below, both pages and both requirements reviewed again with those records, and `criteria_max` is 18 in `.loop/config.json` (Monitoring now holds 18 requirements). The owner's words: "I actually want it to be consolidated in the specification instead of like a custom rule or something", and, for both the routines' settings and the operation session not ending: "Yeah, both like the service settings and also the settings regarding that you end, that the operation session won't just end." Both are new requirements (the ids follow machine-status's MON-16, MON-17 and GRD-12). Adding a requirement changes its page, so each page was un-reviewed and reviewed again.
@@ -290,6 +307,7 @@ The sync pointer, added as DOC-1's last sub-bullet:
 
 Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
 
+The cap again: MON-18 (settings-in-spec) and MON-19 together make the Monitoring page 19 requirements, so `criteria_max` goes from 18 to 19, on the owner's approval of both requirements.
 ## Waiting on owner un-review (ext-two-way)
 
 Drafted by the ext-two-way goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: Documentation, Health and Monitoring are Reviewed, and the goal's changes to docs.py and audit.py, health.py and board.py make each of the three pages stale, which merge.py refuses.

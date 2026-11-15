@@ -99,7 +99,7 @@ Any command that would build, plan or run a goal step from this session (`build`
 `worker · <goal>`, sent the goal; it holds a `parallel` slot), `bind SLUG ID [--force] [--cwd DIR]` (a session started with the app's tools; before the goal is frozen it records the handoff, shown as freezing; it prints the WORKER command and the WORKTREE, and refuses a folder outside it), `free SLUG` (give back a stopped session's goal and slot),
 `list`, `send` (operate.py send uses it) and `report SLUG --step S | --status merged|failed|waiting [--pr URL | --ask Q] [--hold]` (a done goal stays done). States and messages: `references/commands.md`.
 
-Batches of goals go through `scripts/batch.py` (`add`, `start`, `status`). `start` begins one worker for each goal:
+Batches of goals go through `scripts/batch.py` (`add`, `start`, `status`, `roadmap`). `start` begins one worker for each goal:
 `scripts/worker.py loop SLUG` runs the goal's agent in its own worktree, with `LOOP_ROLE=worker`, to the end. When the
 agent ends, the worker sends its result back as a prompt message in the run record's `report` (`merged`, `failed` or
 `waiting`, with the pull request), which the board shows; each change of step or status is in `reports` as it happens.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The private-name scan: nothing private ships (DEL-9); every push or GitHub write runs it, and setup's git hooks run it as
-`hook staged | message FILE | push`.
+`hook staged | message FILE | push`. Also a private repo's commit statuses.
 
 usage: private.py where | check | scan [--base REF]    worker check, list, scan from REF (default origin/<base>)
        private.py visibility | required | statuses --head SHA --ok|--fail [--base B]   private-repo statuses
@@ -20,7 +20,7 @@ import time
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 LOCAL_PATH = re.compile(r"(?<![\w/.:~])/(?:Users|home|private|var|tmp|mnt|opt|srv|root|etc|usr|Volumes)(?:/[\w.@+-]+)+")
-HOME_DIR = re.compile(r"(?:file://)?/(?:Users|home)/[^/\s]+")
+HOME_DIR = re.compile(r"(?:file://)?(?:/(?:Users|home)/|[A-Za-z]:[\\/]Users[\\/])[^\\/\s)]+")
 
 
 def plain(text):
@@ -29,7 +29,6 @@ def plain(text):
 
 
 def mend(git, files, base):
-    """Mend a merge that conflicts only in generated files; else False."""
     import tempfile
     top, tsv = git("rev-parse", "--show-toplevel").stdout.strip(), (".loop/regression.tsv", ".loop/regression-runs.tsv")
     page = lambda f: os.path.basename(f) == "Tests.md" and os.path.dirname(f).endswith("wiki")
@@ -205,12 +204,12 @@ def scan(top, base, texts=None, head="HEAD", items=None):
 def refusal(result, base="the base branch", pushed=False):
     if result["state"] == "broken":
         return ("the private-name list or scan is broken: %s; nothing was pushed" % result["note"],
-                "repair the list (private.py check names the line), then run the command again", PRIVATE_LIST)
+                "repair the list (private.py check names the line), then rerun", PRIVATE_LIST)
     if result["state"] != "hit":
         return None
     shown = "; ".join(result["hits"][:8]) + (" and %d more" % (len(result["hits"]) - 8) if len(result["hits"]) > 8 else "")
     if pushed:
-        fix = ("the branch is already on origin: the owner decides how to rewrite it; for a false positive, edit that line of the list")
+        fix = "already on origin: the owner decides how to rewrite it; for a false positive, edit that line of the list"
     else:
         fix = ("squash so no commit keeps the text: git reset --soft $(git merge-base HEAD %s) && git commit -m "
                "\"<goal>\"; for a false positive, edit that line of the list" % base)
@@ -250,7 +249,7 @@ def worker_push(lines):
         if parts[2] != "refs/heads/loop/" + slug or not parts[1].strip("0"):
             return ("a worker session for goal %s may push only loop/%s (the worktree folder must equal the "
                     "goal slug), not %s; nothing was pushed" % (slug, slug, parts[2] if parts[1].strip("0") else "a deletion of " + parts[2]),
-                    "push your own branch (goal.py pr %s); only the operation session publishes to main (merge.py)" % slug, WORKER_PUSH)
+                    "push your own branch (goal.py pr %s); only the operation session merges to main" % slug, WORKER_PUSH)
     return None
 
 
@@ -358,6 +357,7 @@ def pr_result(top, base, head, branch, ok):
     got = repo_is_private(top) and required_checks(top, base)
     if not got:
         return print("STATUSES none: public or unreadable") or True
+    got = (__import__("lane").lane_checks(top, got[0]), got[1])
     for name in got[1] + ADVICE:
         print("BLOCKS: %s cannot be satisfied by a status; remove it from the ruleset (BLOCKS)" % name)
     there = subprocess.run(["git", "ls-remote", "origin", "refs/heads/" + branch], cwd=top, capture_output=True, text=True).stdout.split()
