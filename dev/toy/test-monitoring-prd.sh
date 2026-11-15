@@ -126,7 +126,7 @@ case_mon8() {
   fresh; run quiet31 'worker="session"' 'updated="-31"' 'session={"id":"s1","name":"worker · quiet31"}'
   run quiet29 'worker="session"' 'updated="-29"' 'session={"id":"s2","name":"worker · quiet29"}'
   pool '{"s1": {"slug": "quiet31", "state": "busy"}, "s2": {"slug": "quiet29", "state": "busy"}}'
-  out=$(python3 "$S/checkin.py" 2>&1)
+  out=$(LOOP_PROCS="goal.py quiet31 flow.py quiet29" python3 "$S/checkin.py" 2>&1)  # both goals have a process: #4359's STALLED needs none
   check "MON-8: a worker silent 31 minutes shows under Needs you" 'echo "$out" | sed -n "/^Needs you/,/^Coming up/p" | grep -q "quiet31: its worker has sent nothing"'
   check "MON-8: a worker silent 29 minutes does not" '! echo "$out" | sed -n "/^Needs you/,/^Coming up/p" | grep -q "quiet29"'
   check "MON-8: the live board names it too" 'python3 "$S/live_board.py" | grep -q "quiet31: its session"'

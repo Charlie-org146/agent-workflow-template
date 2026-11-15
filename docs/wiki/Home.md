@@ -54,7 +54,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `max_merge_rounds` | Merge rounds goal.py pr may take before the goal waits. | set "max_merge_rounds" in .loop/config.json | `3` | default |
 | `max_active_goals` | Goals live at once (or parallel, if smaller); 0 is none. | set "max_active_goals" in .loop/config.json | `20` | default |
 | `plan_pause_percent` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
-| `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `4` | **overridden:** `3.5` |
+| `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `4` | **overridden:** `3.0` |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
 | `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
 | `prep_budget_minutes` | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
