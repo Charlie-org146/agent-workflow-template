@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.28.70 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.69 - 2026-11-15
 
 - scripts-a: trim delivery and monitoring scripts under 19,000 bytes
