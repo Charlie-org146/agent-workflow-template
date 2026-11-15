@@ -281,6 +281,7 @@
 | <a id="t-home-topic-live"></a>home-topic-live | requirement | DOC-4 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-launchctl-missing-unknown"></a>launchctl-missing-unknown | requirement | DOC-15 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-perms-docs-check"></a>perms-docs-check | requirement | DOC-16 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | DOC-17 | not run | - | local | 2026-11-13 |
 | <a id="t-merge-main-own-finding"></a>merge-main-own-finding | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-criteria-in-references"></a>skill-criteria-in-references | requirement | DOC-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-doc1-sync-pointer"></a>doc1-sync-pointer | requirement | DOC-1 | not run | - | local | 2026-11-14 |
@@ -291,16 +292,24 @@
 | <a id="t-skill-lines-docs-1403"></a>skill-lines-docs-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-tests-links-workflow-3839"></a>tests-links-workflow-3839 | defect | [#3839](https://github.com/jcl2018/agent-workflow-template/issues/3839) open (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-lane-rows-judge-own-diff"></a>lane-rows-judge-own-diff | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) closed (2026-11-14) | not run | - | local | 2026-11-14 |
-
-## External PRDs
-
-| Test | Kind | Guards | Result | Date | Run | Seen failing |
-|---|---|---|---|---|---|---|
-| <a id="t-sync-drift-rewrites"></a>sync-drift-rewrites | requirement | EXT-1 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | EXT-1 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | EXT-3 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | EXT-2 | not run | - | local | 2026-11-13 |
-| <a id="t-sync-source-readonly"></a>sync-source-readonly | requirement | EXT-2 | not run | - | local | 2026-11-13 |
+| <a id="t-sync-first-adopts"></a>sync-first-adopts | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-repo-delta"></a>sync-repo-delta | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-source-delta"></a>sync-source-delta | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-both-sides"></a>sync-both-sides | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-delta-no-overwrite"></a>sync-delta-no-overwrite | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-delta-posted"></a>sync-delta-posted | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-posts-once"></a>sync-posts-once | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-source"></a>sync-accept-source | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-repo"></a>sync-accept-repo | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-agree-after-accept"></a>sync-agree-after-accept | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-open-lists"></a>sync-open-lists | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-health-delta"></a>sync-health-delta | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-board-delta"></a>sync-board-delta | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-no-writer-posted"></a>sync-no-writer-posted | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-accept-no-writer"></a>sync-accept-no-writer | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-no-gh"></a>sync-no-gh | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 
 ## Guardrails
 

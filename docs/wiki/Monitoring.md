@@ -21,8 +21,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=41bfc9ae R=a662584b N=9967b317 M=0fde
 - MON-2: **Reviewed 2026-11-08** Live communication. Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up. Background processes are used only when the app can't start or reach a session, and the board says so. <!-- reviewed 53b98768 -->
   - Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up.
   - Background processes are used only when the app can't start or reach a session, and the board says so.
-- MON-3: **Reviewed 2026-11-13** Live board <!-- reviewed 9b9ea4c3 -->
+- MON-3: **Reviewed 2026-11-14** Live board <!-- reviewed 6daf930a -->
   - Report, dashboard and the artifact show the live board in the one fixed layout MON-4 lists; this requirement owns the board, and a check-in never prints it.
+  - The board lists each open PRD delta of a page that opted in to syncing as waiting on the owner, with its issue and the words to accept either side; a page with no external source never shows one.
 - MON-4: **Reviewed 2026-11-13** Live board layout <!-- reviewed bd9028c8 -->
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.

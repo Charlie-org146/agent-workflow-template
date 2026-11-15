@@ -311,6 +311,24 @@ def write(root):
     return (["FIXED " + ENTRY] if changed else []) + ["FIXED " + n for n in names]
 
 
+REQ = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+|\|\s*)?\**([A-Z]{2,5}-\d+)\**\s*[:|.–—-]*\s*(.*)$")
+
+
+def req_key(ident):
+    prefix, _, number = ident.partition("-")
+    return prefix, int(number)
+
+
+def requirements(body):
+    """{id: text} of an external PRD: each top-level bullet, numbered item or table row that starts with an id."""
+    found = {}
+    for line in body.replace("\r\n", "\n").split("\n"):
+        match = REQ.match(line)
+        if match and match.group(1) not in found:
+            text = re.sub(r"\*\*(?:Un)?[Rr]eviewed[^*]*\*\*|<!--.*?-->|\*\*|`|\|", " ", match.group(2))
+            found[match.group(1)] = " ".join(text.split())
+    return found
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("render", "write", "check", "block", "lag"))
