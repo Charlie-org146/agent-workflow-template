@@ -348,3 +348,12 @@ The owner types one sentence in the operation session:
 After it, the goal edits the five lines as drafted and the owner's review follows with the same words. Until the owner's words are in, adoption cannot merge.
 
 Applied 2026-11-14 with the owner's typed words "Do your recommendations." (records o25 and o26): the five sub-bullets above were added to Guardrails GRD-3, Delivery DEL-9, Setup SET-11 and SET-15 and Monitoring MON-13, and those pages and IDs were reviewed again.
+
+## Applied 2026-11-15 (offline-prd-copy)
+
+The owner chose option C for external PRDs: "a template fix first, then two-way sync with an agreed copy in the repo, the wiki unchanged, and conflicts brought to you", and answered "Yes" (records o37 to un-review and o38 to review, covering Documentation and DOC-17). The goal added two sub-bullets to DOC-17 and changed nothing else in reviewed text:
+
+- "The repo's copy is the PRD every check reads: the docs check and audit, health, the regression rows and publish read `.loop/prd/PAGE.md` and never the source, so no lane, CI run or health check needs the external document or a reader, and a page with a copy raises no LINK or UNREAD for want of one. The wiki page still shows Problem, Requirements, Non-goals and Success metrics, as a block generated from the copy."
+- "`docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten."
+
+Documentation and DOC-17 were reviewed again with record o38.

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=c6988ad6 N=8441e908 M=885f85c3 U=03828777 -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -71,11 +71,13 @@ Review: **Reviewed 2026-11-14** <!-- prd P=7303c1e7 R=21af172d N=8441e908 M=885f
   - The code that renders the blocks stays readable and under health's size warning: `counting.py` holds the Automation block code and `render.py` the rest, so the text a config renders is the same wherever the code sits (issue 1402).
   - Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git.
 
-- DOC-17: **Reviewed 2026-11-14** A PRD kept outside the repo stays in step through reviewed deltas <!-- reviewed de3acdb8 -->
+- DOC-17: **Reviewed 2026-11-15** A PRD kept outside the repo stays in step through reviewed deltas <!-- reviewed 6092b947 -->
   - Either side can change a requirement: an agent's goal in the repo's copy, `.loop/prd/PAGE.md`, or people in the external document. A feature's PRD source is `url:<link>` or `mcp:<server>:<resource>`, the first `docs.py sync` adopts it, and syncing is opt-in per PRD: a page with no such source is never visited and raises no signal.
   - A difference is a delta, never a silent overwrite: `docs.py sync` compares both sides with what they last agreed on, and each difference is a DELTA naming the page, the id, which side changed (the repo, the source or both) and both texts. Sync never overwrites either side on its own, `--dry-run` only reports and exits 1, and a hand-written file at the copy's path is left as it is.
   - A delta is reviewed, then both sides agree: each delta is posted once as a GitHub issue on the feature's milestone and once as a comment on the Notion page, and stays open until someone accepts one side's text. `docs.py sync --accept PAGE:ID=repo|source` writes only the accepted text to the other side, Notion included, closes the delta and leaves every other requirement as it was. Health and the check-in show each open delta as an inconsistency, only for a page that opted in.
   - A missing connector never breaks the loop: a source, gh or writer that sync cannot reach prints `not connected`, changes nothing and exits 0, and the delta stays open; a source with no requirement ids keeps the repo's copy instead of emptying it.
+  - The repo's copy is the PRD every check reads: the docs check and audit, health, the regression rows and publish read `.loop/prd/PAGE.md` and never the source, so no lane, CI run or health check needs the external document or a reader, and a page with a copy raises no LINK or UNREAD for want of one. The wiki page still shows Problem, Requirements, Non-goals and Success metrics, as a block generated from the copy.
+  - `docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
