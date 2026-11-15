@@ -33,7 +33,7 @@ def fresh(tmp):
 
 
 calls = []
-runs.gh = lambda *args, **kw: calls.append(args)
+runs.gh = lambda *args, **kw: calls.append(args)  # returns None: counts as success
 with tempfile.TemporaryDirectory() as tmp:
     fresh(tmp)
     with contextlib.redirect_stdout(io.StringIO()):

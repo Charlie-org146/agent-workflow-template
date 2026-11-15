@@ -319,8 +319,8 @@ def owed_clear(root, row_id, live=False):
         with open(os.path.join(root, ".loop", OWED), "w", newline="\n") as out:
             out.write("".join("\t".join(c) + "\n" for c in held.values()))
         if mine[3] and live:  # the other machine's to-do is done: close it (#3907)
-            gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
-            print("OWED CLEARED %s: closed %s" % (row_id, mine[3]))
+            done = gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
+            print("OWED CLEARED %s: %s" % (row_id, "closed " + mine[3] if getattr(done, "returncode", 0) == 0 else "could not close %s: close it by hand" % mine[3]))
         else:
             print("OWED CLEARED %s: close its issue" % row_id)
 
