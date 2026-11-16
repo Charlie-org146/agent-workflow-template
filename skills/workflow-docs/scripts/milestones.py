@@ -168,3 +168,24 @@ def sync(root, args):
     if agreed != start or not os.path.exists(path):
         put(path, source, agreed, {t: sha(x) for t, x in agreed.items()})
     return 0
+
+
+ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
+
+
+def howto_items(name, text, feature):
+    """DOC-19 (#4657, called by deployments.howto): the How-to-use page holds one item '- ID: how it is delivered' for each
+    functional requirement of its feature page, and none for an ID that page lacks."""
+    have, top, sub = {}, "", ""
+    for line in feature.splitlines():
+        top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
+        hit = re.match(r"^- ([A-Z]{2,5}-\d+):", line)
+        if hit and top == "Requirements":
+            have[hit.group(1)] = sub
+    items = {m.group(1) for m in map(ITEM.match, text.splitlines()) if m}
+    out = []
+    for kind, ids, fix in (("no item for the functional requirement", sorted(k for k, v in have.items() if v == "Functional" and k not in items),
+                            "add '- ID: how it is delivered' under 'How to reach or run it'"),
+                           ("an item for an ID its feature page lacks:", sorted(items - set(have)), "remove it or fix the ID")):
+        out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
+    return out
