@@ -18,6 +18,7 @@ case=$1
 no() { echo "$case: $1"; exit 1; }
 d=$(mktemp -d); trap 'rm -rf "$d"' EXIT
 export HOME="$d/home"  # no private flow file: only the built-in scans run
+export USERPROFILE="$HOME"
 copy() { mkdir -p "$1"; (cd "$here" && cp -R skills listing.json README.md LICENSE VERSION CHANGELOG.md "$1/"); }
 verdict() { # tree: its sorted FAIL lines, run under an ASCII locale (no UTF-8 mode, no locale coercion)
   PYTHONUTF8=0 PYTHONCOERCECLOCALE=0 LC_ALL=C LANG=C python3 "$here/dev/package.py" --root "$1" --out "$1.zip" 2>&1 | grep -E "^FAIL|Error" | sort; }

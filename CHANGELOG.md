@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.28.93 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.92 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.91 - 2026-11-15
 
 - List apply, forward and wiki-only; toy and row keep every command listed

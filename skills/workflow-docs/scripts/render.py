@@ -92,25 +92,29 @@ def render(args):
         text = read(os.path.join(root, rel))
         parts = cr.sections(text)
         url = link_of(text, counting.sources(root).get(slug, ""))
-        if url:  # link form: ids come from the linked PRD, read now
-            import prd
-            body, _ = prd.read_link(url)
+        base = text
+        if url:  # link form: ids come from the copy in .loop/prd (else the linked PRD, read now); the PRD block is refreshed from the copy
+            import prdcopy
+            body, _ = prdcopy.read(root, slug, url)
             if body is None or not parts or parts[-1][0] != "Tests":
                 continue
             ids = [x for n, ls in cr.sections(body) if n == rules["sections"][1] for x in idsof(ls)]
+            top, mid, rest = text.partition("\n## Tests")
+            base = prdcopy.with_block(top, body) + mid + rest if prdcopy.copy_of(root, slug) else text
         else:
             if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"])] != rules["sections"] or parts[-1][0] != "Tests":
                 continue  # a Runbook after Tests would be cut off: leave it to the check
             ids = idsof(dict(parts)[rules["sections"][1]])
-        out.append((rel, text, text.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
-    if out:
-        rel = os.path.join(cr.folder_of(root), "Tests.md")
-        out.append((rel, read(os.path.join(root, rel)), tests_page(root)))
-    for rel, text, fresh in out:
-        if fresh != text:
-            stale.append(rel)
-            if not args.check:
-                put(os.path.join(root, rel), fresh)
+        out.append((rel, text, base.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
+    for step in (0, 1):  # the pages first: the Tests page is then built from what they now say
+        if step and out:
+            rel = os.path.join(cr.folder_of(root), "Tests.md")
+            out = [(rel, read(os.path.join(root, rel)), tests_page(root))]
+        for rel, text, fresh in out:
+            if fresh != text:
+                stale.append(rel)
+                if not args.check:
+                    put(os.path.join(root, rel), fresh)
     for rel in stale:
         print("%s %s" % ("STALE" if args.check else "WROTE", rel))
     if not stale:

@@ -16,6 +16,7 @@ want() { [ "$part" = all ] || [ "$part" = "$1" ]; }
 D="$here/skills/workflow-delivery/scripts"
 goal="python3 $D/goal.py"; F="python3 $D/flow.py"
 export HOME="$T/home" FAKE_AGENT="$T/fake" FAKE_GH_DIR="$T/gh"; mkdir -p "$HOME" "$FAKE_AGENT"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

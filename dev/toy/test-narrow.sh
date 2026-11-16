@@ -11,6 +11,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 [ -n "${1:-}" ] || toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1

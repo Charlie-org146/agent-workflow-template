@@ -26,7 +26,7 @@ run_it = lambda name: not cases or name in cases
 py = sys.executable
 failed = []
 ENV = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.invalid",
-           GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.invalid", LOOP_HEALTH=os.devnull, HOME=tempfile.gettempdir())
+           GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.invalid", LOOP_HEALTH=os.devnull, HOME=tempfile.gettempdir(), USERPROFILE=tempfile.gettempdir())
 
 
 def check(ok, text):

@@ -8,6 +8,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 T=$(mktemp -d); toy_on_exit 'rm -rf "$T"'; bad=0
 export HOME="$T/home"; mkdir -p "$HOME"; export LOOP_FLOW="$T/none.json"
+export USERPROFILE="$HOME"
 pkg() { # a small package whose one script is $1
   rm -rf "$T/p"; mkdir -p "$T/p/skills/demo/scripts"
   printf -- '---\nname: demo\ndescription: a demo skill\n---\n# demo\n' > "$T/p/skills/demo/SKILL.md"

@@ -28,6 +28,7 @@ while [ $# -gt 0 ]; do case "$1" in --dir) T=$2; shift 2;; *) cases+=("$1"); shi
 T=${T:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"; [ -n "${KEEP:-}" ] || toy_on_exit 'rm -rf "$T"'
 S="$here/skills/workflow-monitoring/scripts"
 export HOME="$T/home" LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

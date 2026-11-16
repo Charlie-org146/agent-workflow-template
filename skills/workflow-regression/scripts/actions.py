@@ -307,8 +307,8 @@ def render(cron, levels="nightly"):
     if bad:
         sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
     body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
-    with open(os.path.join(HERE, "rowtail.py")) as handle:
-        tail = "\n".join(("          " + line).rstrip() for line in handle.read().rstrip("\n").split("\n"))
+    with open(os.path.join(HERE, "runs.py")) as handle:
+        tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
     schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
     return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
         .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \

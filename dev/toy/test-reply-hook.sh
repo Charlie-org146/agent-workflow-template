@@ -11,6 +11,7 @@ T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 H="$here/skills/workflow-monitoring/scripts/reply_hook.py"
 SETUP="$here/skills/workflow-setup/scripts/setup.py"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
 fails=0
 ok() { echo "PASS: $1"; }

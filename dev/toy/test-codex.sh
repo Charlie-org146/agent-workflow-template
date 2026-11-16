@@ -19,6 +19,7 @@ want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 export CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"  # codex keeps its own sign-in there; HOME below is the toy's, with no private settings
 T=$(mktemp -d); toy_on_exit 'chmod -R u+w "$T" 2>/dev/null; rm -rf "$T"'
 export HOME="$T/home" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 fails=0; live_skip=""; home_skip=""
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

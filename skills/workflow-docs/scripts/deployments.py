@@ -280,44 +280,7 @@ def link_of(text, listed=""):
     return found if found is None or found.startswith(("url:", "mcp:")) else "url:" + found
 
 
-def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
-    """Trouble for a link-form page, as (kind, page, detail). Ids come from the linked PRD, read fresh and never copied
-    here; an unreadable link is UNREAD, never a pass, and its ids count as unknown."""
-    import criteria
-    import render
-    found, mine = [], [x for x in (rule["runbook"], rule["deploy"], "Tests") if x]
-    shown = link_of(text)
-    if shown != link:
-        found.append(("FORMAT", page, "DOC-1 the 'PRD: <source>' line must show where the PRD lives (got %s, docs.tsv says %s). "
-                      "Fix: write 'PRD: %s' under the title" % (shown or "no line", link, link)))
-    have = [name for name, _ in parts]
-    if have != [x for x in mine if x in have] or "Tests" not in have:
-        found.append(("SECTIONS", page, "have %s, want only %s, in that order, after the 'PRD: <link>' line. Fix: move the PRD "
-                      "text to the linked document" % (", ".join(have) or "none", ", ".join(mine))))
-        return found
-    import prd
-    body, why = prd.read_link(link)
-    if body is None:
-        return [("UNREAD", page, "the linked PRD %s cannot be read (%s). Fix: make the link readable here; its ids and the "
-                 "Tests table stay unchecked, so this is not a pass" % (link, why))]
-    ids = []
-    for name, lines in criteria.sections(body):
-        if name == rule["sections"][1]:
-            for line, match, _ in criteria.blocks(lines):
-                if match and match.group(1) in seen:
-                    found.append(("DUPLICATE", page, "%s is also in %s" % (match.group(1), seen[match.group(1)])))
-                elif match:
-                    seen[match.group(1)] = page
-                    ids.append((match.group(1), match.group(4)))
-    if not ids:
-        found.append(("CRITERION", page, "the linked PRD has no '- ID: **Unreviewed** text' line under %s" % rule["sections"][1]))
-    if "deployments" in on and rule["deploy"] in numbered:
-        found += deployments(page, rule["deploy"], numbered[rule["deploy"]][1], rule["page_cols"], rule["delivery_cols"], rule["access"])
-    if "runbook" in on and rule["runbook"] in numbered:
-        found += pf.runbook(page, rule["runbook"], numbered[rule["runbook"]][1], rule["fields"])
-    if "tests" in on:
-        found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], criteria.table(root, ids, linked))] if x]
-    return found
+from prdcopy import link_page  # noqa: E402,F401  (moved: the docs check of a page that has a source reads its copy)
 
 
 UNREAD = set()  # link-form pages whose link could not be read in this run

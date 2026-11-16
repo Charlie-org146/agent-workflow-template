@@ -10,6 +10,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 # timeline API (a stub gh answers it)
 set -u
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 fails=0
 ok() { echo "PASS: $1"; }
