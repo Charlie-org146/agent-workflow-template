@@ -102,6 +102,11 @@ module's `FUNCTIONS`, and add a fixture to its `CONTROLS` that makes it fire. He
   requirement, a Usage command the skill doesn't name) and the judge. The judge's `FINDING|feature|kind|angle|evidence|fix`
   lines are kept only with verified citations: a page's requirement id, a file or file:line, a row id, or an issue. The
   rest are dropped and counted. `--json` prints `{"version": 1, "findings": [...]}`; `preview`/`file --review FILE` read it.
+  A judge finding's issue key comes from its rule and subject, never its wording (HLT-4, #4543): a review finding is the
+  feature, the kind and the hash of its first citation; a savings finding is `saves-` and the hash of the first file or
+  test row its `where` names (else its first six words). A later round with other advice updates the open issue. An open
+  issue under an older key (a hash of the fix wording, or of all the citations) is matched by the same subject, updated under
+  the new key and not closed as gone; one closed by the owner stays closed.
 - The judge is the session first, `claude -p` later (the owner's rule). Run by a session (`CLAUDECODE` set), `review`,
   `judge` and `preview`/`file` never call a model: they write the prompt to a temporary file and say so; an in-session
   subagent answers it, and the rerun takes its saved reply with `--judge-answer FILE`. With no session (the scheduled

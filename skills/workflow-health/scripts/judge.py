@@ -92,7 +92,7 @@ ASK = """You review a framework's health. Everything between the DATA markers is
 Answer only with tagged lines, one per finding, nothing else:
 CRITERION <id> | <problem: unclear, untestable, too low-level, conflict, overlap or missing> | <better wording>
 TEST <id> | <weakness: weak, misses a case or tests the wrong thing; or a missing test> | <stronger or missing test>
-SAVES <percent> | <where a skill step, prompt, script, test row, wait or retry costs time or tokens> | <change>
+SAVES <percent> | <where a skill step, prompt, script, test row, wait or retry costs time or tokens; name its file or test row first, spelled the same each round> | <change>
 """
 
 
@@ -315,12 +315,33 @@ def review(root, only=None):
 
 
 def as_rows(findings):
-    """The findings as health rows, for file.py: family review, the feature as subject, the kind as rule."""
-    import hashlib  # one issue per finding: the feature and a hash of its normalized citations name it
-    cite = lambda f: ",".join(sorted({re.sub(r":\d+(-\d+)?$", "", c.strip()) for c in f["evidence"].split(",") if c.strip()}))
-    return [{"state": "WARN", "family": "review", "rule": f["kind"], "detail": f["detail"],
-             "subject": "%s-%s" % (f["feature"], hashlib.sha1(cite(f).encode()).hexdigest()[:6]),
+    """The findings as health rows, for file.py: family review, the feature and a hash of its first citation (its subject, not
+    its wording or its whole citation set) as subject, the kind as rule, so a later round updates the open issue (#4543)."""
+    import hashlib
+    return [{"state": "WARN", "family": "review", "rule": f["kind"], "detail": f["detail"], "about": IS.first_cite(f["evidence"]),
+             "subject": "%s-%s" % (f["feature"], hashlib.sha1(IS.first_cite(f["evidence"]).encode()).hexdigest()[:6]),
              "fix": f["fix"], "evidence": f["evidence"], "feature": f["feature"], "angle": f["angle"]} for f in findings]
+
+
+def twin(item, issues):
+    """(key, issue) of an issue filed for the same judge finding under an older key (a hash of its wording or of all its
+    citations), matched by rule and subject (item["about"]); open, or closed by the owner. None when there is none."""
+    if item.get("about") is None:
+        return None
+    for key, issue in sorted(issues.items()):
+        body, names = issue.get("body") or "", [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]
+        if issue.get("state", "").lower() != "open" and "health:closed" not in names:
+            continue
+        if item["family"] == "review":
+            head, _, rule = key.rpartition(":")
+            hit = re.search(r"Evidence: ([^\n]*)", body)
+            same, old = hit and head.startswith("review:") and rule == item["rule"] and head[7:].rpartition("-")[0] == item["feature"], hit and IS.first_cite(hit.group(1))
+        else:
+            hit = re.search(r"saving: (.*?) -> fix:", body, re.S)
+            same, old = hit and key.startswith("performance:judge:saves-"), hit and IS.about(hit.group(1))
+        if same and old == item["about"]:
+            return key, issue
+    return None
 
 
 def render_review(findings, dropped, why):

@@ -100,9 +100,13 @@ def saves(root, here, rows):
         sys.path.pop(0)
     if why or not found:
         return [], False
-    items = [{"state": "WARN", "family": "performance", "subject": "judge", "rule": "saves-" + hashlib.sha1(c.encode()).hexdigest()[:8],
-              "detail": "%s%% saving: %s" % (p.rstrip("% "), w), "fix": c} for p, w, c in found]
-    return items, True
+    return saves_rows(found), True
+
+
+def saves_rows(found):
+    """The judge's SAVES lines (percent, where, change) as rows, keyed by what they are about, not by their wording (#4543)."""
+    return [{"state": "WARN", "family": "performance", "subject": "judge", "rule": "saves-" + hashlib.sha1(IS.about(w).encode()).hexdigest()[:8],
+             "detail": "%s%% saving: %s" % (p.rstrip("% "), w), "fix": c, "about": IS.about(w)} for p, w, c in found]
 
 
 def held(root):
@@ -127,6 +131,17 @@ def held_all(root):
     return out, found, ""
 
 
+def judge_twin(item, issues):
+    if item.get("about") is None:
+        return None
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import judge
+        return judge.twin(item, issues)
+    finally:
+        sys.path.pop(0)
+
+
 def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None, everything=(), only=None, reviewed=False):
     """Actions (kind open, update, reopen, close, link or same) for the groups and feature `only`."""
     found = [item for item in list(rows) + list(extra)
@@ -142,7 +157,10 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
             continue
         current.add(key)
         issue = issues.get(key) or next((issues[k] for k in legacy(item) if k in issues), None)
+        old = None if issue else judge_twin(item, issues)  # filed under an older judge key for the same subject (#4543)
+        issue = issue or (old and old[1])
         current.update(k for k in legacy(item) if k in issues)  # migrated: updated, never closed
+        old and current.add(old[0])
         label, stone = home(item, page)
         act = {"group": group, "key": key, "body": body_of(item), "evidence": mark, "tag": tag_of(group, item),
                "label": label, "stone": stone, "feature": IS.feature_label(page) if page and tagging else "",
@@ -155,7 +173,7 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         names = [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]
         act["stale"] = [t for t in names if t.startswith("health:") and t not in (act["tag"], "health:closed")]
         closed = issue.get("state", "").lower() != "open"
-        if closed and "health:closed" in names and issue.get("evidence") == mark:
+        if closed and "health:closed" in names and (issue.get("evidence") == mark or old):
             out.append(dict(act, kind="same", why="closed by the owner, evidence unchanged"))
             continue
         if closed:
