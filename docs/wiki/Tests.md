@@ -830,6 +830,7 @@
 | <a id="t-config-lane-unparseable"></a>config-lane-unparseable | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-config-lane-duplicate-same"></a>config-lane-duplicate-same | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-rowtail-block-in-workflow"></a>rowtail-block-in-workflow | requirement | REG-5 | not run | - | local | 2026-11-15 |
+| <a id="t-ci-summary-fail-output"></a>ci-summary-fail-output | requirement | REG-3 | not run | - | local | 2026-11-16 |
 
 ## Setup
 

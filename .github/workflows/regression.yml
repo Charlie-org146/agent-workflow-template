@@ -59,12 +59,12 @@ jobs:
         if: steps.routine.outputs.on == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          REGRESSION_RESULTS: ${{ runner.temp }}/regression-results.tsv  # the runner's own file, in no row's environment
-          SUITE_TIME_FILE: ${{ runner.temp }}/suite-time.tsv  # for health
-          REGRESSION_TARGET: ${{ inputs.target }}  # by hand; checked below, never in a shell line
+          REGRESSION_RESULTS: ${{ runner.temp }}/regression-results.tsv
+          SUITE_TIME_FILE: ${{ runner.temp }}/suite-time.tsv
+          REGRESSION_TARGET: ${{ inputs.target }}
           REGRESSION_CLEANUP: ${{ inputs.cleanup }}
-          REGRESSION_LEVELS: "nightly"  # the schedule and v* tags run ci_levels
-          REGRESSION_SHARD: "${{ matrix.shard }}/8"  # this job runs one wanted row in 8
+          REGRESSION_LEVELS: "nightly"
+          REGRESSION_SHARD: "${{ matrix.shard }}/8"
         run: |
           here=$(mktemp -d)  # what each row guards, read before any row runs
           cat > "$here/tests.py" <<'TESTS_PY_EOF'
@@ -438,8 +438,8 @@ jobs:
               sys.exit(1)
           def wanted(row):
               return row[0] == TARGET if TARGET not in ("land", "nightly") else row[1] in ("land", TARGET)
-          def gh(*args, body=None):  # a text goes in a file, not the command line (Windows caps it)
-              if args[0] != "api" and "--live" not in sys.argv[1:]:  # a token alone writes nothing (GRD-5)
+          def gh(*args, body=None):
+              if args[0] != "api" and "--live" not in sys.argv[1:]:
                   print("WOULD gh " + " ".join(args)[:70])
                   return subprocess.CompletedProcess(args, 0, "", "")
               with tempfile.TemporaryDirectory() as tmp:
@@ -455,7 +455,7 @@ jobs:
               return value if value > 0 else default
           ROW_SECONDS, JOB_SECONDS = seconds("REGRESSION_ROW_SECONDS", 900), seconds("REGRESSION_JOB_SECONDS", (30 - 2) * 60)
           ROW_ENV = {k: v for k, v in os.environ.items() if k not in ('GH_TOKEN', 'GITHUB_TOKEN', 'GITHUB_STEP_SUMMARY', 'GITHUB_ENV', 'GITHUB_OUTPUT', 'GITHUB_PATH', 'GITHUB_STATE', 'REGRESSION_RESULTS', 'REGRESSION_MAP', 'RUNNER_TEMP', 'SUITE_TIME_FILE', 'REGRESSION_SHARD', 'REGRESSION_LEVELS', 'REGRESSION_TARGET', 'REGRESSION_CLEANUP')}
-          def run(command, limit):  # own group, output to a file; limit: seconds this row may take
+          def run(command, limit):
               with tempfile.TemporaryFile("w+", errors="replace") as log:
                   child = subprocess.Popen(command, shell=True, stdout=log, stderr=subprocess.STDOUT, env=ROW_ENV,
                                            start_new_session=True)
@@ -488,7 +488,7 @@ jobs:
           gh("label", "create", "defect", "--description", "A test that guards it is failing")
           guards = {cells[1]: cells for cells in rows(os.environ.get("REGRESSION_MAP") or os.devnull) if len(cells) > 4}
           out = gh("api", "--paginate", "repos/{owner}/{repo}/issues?state=open&labels=regression&per_page=100", "--jq",
-                   '.[] | select(.pull_request == null) | {number, state: "OPEN", body, labels}')  # gh issue list stops at 1000
+                   '.[] | select(.pull_request == null) | {number, state: "OPEN", body, labels}')
           issues = [json.loads(line) for line in out.stdout.splitlines() if line] if out.returncode == 0 else None
           if issues is None:
               print("NOTE: can't read issues, so none changed: " + out.stderr.strip()[:200])
@@ -569,6 +569,9 @@ jobs:
                                 "Closed: a skipped row files no issue.")
               elif row[0] not in known and code != 77:  # 77: cannot run here (SKIPPED)
                   red.append(row[0])
+                  text = shown(lambda c: run(c, ROW_SECONDS), row[2], code, said)
+                  with open(os.environ.get("GITHUB_STEP_SUMMARY") or os.devnull, "a") as handle:
+                      handle.write("#### FAIL %s\n```\n%s\n```\n" % (row[0], "\n".join(text.splitlines()[-20:])))
                   if issues is None:
                       continue
                   cells = guards.get(row[0]) or [""] * 5
@@ -576,7 +579,7 @@ jobs:
                   mark = "<!-- loop-regression %s placed= -->" % row[0]
                   about = "- Feature: %s\n- Guards: %s\n- Checks: %s\n\n" % (cells[0] or "-", cells[3] or "-", cells[4] or "-")
                   body = "%s\nThe row `%s` %s.\n\n%s```\n%s\n```\n" % (mark, row[0], "fails", about,
-                                                                 shown(lambda c: run(c, ROW_SECONDS), row[2], code, said))
+                                                                 text)
                   if not hit:
                       make = ["issue", "create", "--title", "Regression: " + row[0], "--label", "regression", "--label", "defect"]
                       made = gh(*make, *(["--label", label] if label else []), body=body)
