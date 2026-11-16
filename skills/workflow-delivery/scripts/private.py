@@ -329,6 +329,20 @@ def pr_result(top, base, head, branch, ok):
     return done
 
 
+def cannot(top, base):
+    """A refusal (why, fix, code) when a private repo's base branch requires a check no local status can satisfy (#4537), else None."""
+    got = repo_is_private(top) and required_checks(top, base)
+    if not got or not got[0]:
+        return None
+    import importlib.util as u
+    spec = u.spec_from_file_location("tests", os.path.join(importlib.import_module("lane").REG, "tests.py"))
+    tests = u.module_from_spec(spec)
+    spec.loader.exec_module(tests)
+    no = tests.classify(top, got[0])[2]
+    return ("the base branch requires %s, and no local status can satisfy %s" % (", ".join(no), "it" if len(no) == 1 else "them"),
+            "run the job in Actions, or remove it from the ruleset", "PR_CHECKS") if no else None
+
+
 def main():
     args = sys.argv[1:]
     if args[:1] == ["hook"]:
