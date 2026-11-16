@@ -391,3 +391,11 @@ Health judge findings were re-filed under a new key each round (#4543: 29 issues
 - A savings finding's rule was a hash of its fix wording; a review finding's subject was a hash of all its citations. Now the savings rule hashes `issues.about(where)` (the first file or test row the finding names, else its first six words) and a review subject hashes its first citation, so reworded advice on the same subject updates the open issue. The judge prompt asks for the file or row first, spelled the same each round.
 - An open issue under an old key is found by `judge.twin` from the subject in its body, updated under the new key, never closed as gone; one closed by the owner (health:closed) stays closed.
 - Cost: two findings on one subject in one round now share an issue (the planner already keeps one issue per key); a judge that names a different first file for the same advice still files again.
+
+## Applied 2026-11-16 (apply-rerender)
+
+Goals bounced off the pr lane because generated Settings and Automation blocks and Tests tables went stale on their branch while main or the template moved (#4632).
+
+- `operate.py apply` runs `audit.py rerender BASE` before its re-stamp: `criteria.py render` in the branch checkout, then each file is kept only if (1) the branch added no line to its generated part that the fresh render lacks (judged against the merge-base) and (2) the render touched nothing outside that part. A hand edit inside a block fails (1), so the file is put back and stays STALE: the negative control.
+- `operate.py wiki-only` also accepts README.md when only its generated blocks changed, so merge.py takes the pushed commit like a wiki page commit.
+- Cost: a branch whose own commit changed a block line that main has since reworded is left stale (its added line is not in the fresh render); the worker re-renders, as today.

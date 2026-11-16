@@ -371,6 +371,10 @@
 | <a id="t-home-stale-clears"></a>home-stale-clears | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-stale-control"></a>home-stale-control | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-kept-config"></a>home-kept-config | requirement | DOC-15 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-blocks"></a>apply-rerender-blocks | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-hand-edit"></a>apply-rerender-hand-edit | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-accepted"></a>apply-rerender-accepted | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-tables"></a>apply-rerender-tables | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 
 ## Guardrails
 
