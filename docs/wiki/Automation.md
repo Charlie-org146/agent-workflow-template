@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
 Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=6efeb669 N=e081872e M=4670eeeb U=03828777 --> <!-- kept v1-go-no-go@dd0a21a4 -->
 
+How to use: [How-to-use-Automation](How-to-use-Automation)
+
 ## Problem
 - Things break between my sessions, and I only find out when I next open one; the important checks should run on their own.
 - Every few hours I want the full regression suite and the health check to run, and every problem they find to become an issue tagged with its group, and with its feature when feature_labels is on.

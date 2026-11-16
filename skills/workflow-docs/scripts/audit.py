@@ -233,6 +233,15 @@ def relock(root, slug="", only=()):
             with open(join(root, rel), "w") as handle:
                 handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
             done.append(os.path.basename(rel)[:-3])
+    for page in only if slug else ():  # DOC-18: a How-to-use page has no Review line; its text still holds when it is as committed, and a kept marker re-stamps it
+        rel, feature = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):]
+        held = page.startswith(docs.deployments.HOWTO) and feature in docs.read_map(root) and os.path.isfile(join(root, rel))
+        if held and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
+            with open(join(root, rel)) as handle:
+                text = re.sub(r"\n*<!-- kept [^>]* -->\s*\Z", "", handle.read()).rstrip("\n")
+            with open(join(root, rel), "w") as handle:
+                handle.write("%s\n\n<!-- kept %s@%s -->\n" % (text, slug, cr.git("rev-parse", "--short", "HEAD").strip()))
+            done.append(page)
     if done:
         log = join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop")
         os.makedirs(log, exist_ok=True)
