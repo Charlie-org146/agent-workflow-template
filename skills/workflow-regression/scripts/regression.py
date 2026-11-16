@@ -303,8 +303,8 @@ def cmd_run(args):
                    results + [{"id": key, "state": "LEFT", "seconds": 0} for key in cut],
                    head, datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                    fresh=bool(args.reuse and why), base=tiers.BASE)
-    cannot = [item["id"] for item in results if item.get("notrun")]
-    never = [key for key in runs.unproven(root, picked, SEEN) if key not in cannot]
+    cannot = [item["id"] for item in results if item["state"] == "SKIPPED"]
+    never = [key for key in runs.unproven(root, picked, SEEN) if key not in [i["id"] for i in results if i.get("notrun")]]
     if cannot:
         slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
         notrun.todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")), runs.gh)

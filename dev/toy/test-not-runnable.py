@@ -38,9 +38,12 @@ MISSING = "echo 'pnpm: command not found' >&2; exit 1"
 POSIX = "echo \"ModuleNotFoundError: No module named 'fcntl'\" >&2; exit 1"
 REAL = "echo 'AssertionError: 1 != 2' >&2; exit 1"
 GOOD = "exit 0"
+SKIP = "exit 77"
 
 # Done 1
-check(notrun.unrunnable(127, "") and notrun.unrunnable(1, "pnpm: command not found"), "exit 127 and a missing tool are not runnable")
+check(notrun.unrunnable(1, "pnpm: command not found") and notrun.unrunnable(127, "sh: node: not found"), "a missing node or pnpm is not runnable")
+check(not notrun.unrunnable(127, "") and not notrun.unrunnable(1, "./scripts/typo.sh: command not found"),
+      "negative control: a typo in a row's own command is a failure")
 check(notrun.unrunnable(1, "ModuleNotFoundError: No module named 'fcntl'"), "a POSIX-only import is not runnable")
 check(not notrun.unrunnable(1, "AssertionError: 1 != 2") and not notrun.unrunnable(0, "command not found"),
       "a real failure, and a pass that merely prints the words, are not 'not runnable'")
@@ -83,10 +86,10 @@ def lane_exit(rows):
         return done.returncode, done.stdout + done.stderr
 
 
-code, said = lane_exit([("good", GOOD), ("pnpm", MISSING)])
-check(code == 0 and "NOTRUNNABLE 1: pnpm" in said, "only a not-runnable row left: the run exits 0 and names it (%s)" % code)
+code, said = lane_exit([("good", GOOD), ("pnpm", MISSING), ("skip", SKIP)])
+check(code == 0 and "NOTRUNNABLE 2: pnpm, skip" in said, "only a not-runnable row left: the run exits 0 and names it (%s)" % code)
 code, said = lane_exit([("good", GOOD), ("pnpm", MISSING), ("real", REAL)])
-check(code == 1 and "NOTRUNNABLE 1" in said, "negative control: a real failure beside it still exits 1")
+check(code == 1 and "NOTRUNNABLE" in said, "negative control: a real failure beside it still exits 1")
 
 # Done 3
 calls = []

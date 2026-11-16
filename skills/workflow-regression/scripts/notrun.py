@@ -1,20 +1,21 @@
 """A lane row this machine cannot run (GRD-11, #4492): told apart from a real failure, and one other-machine to-do per goal.
 
-unrunnable(code, text): exit 127, or output saying a tool or a POSIX-only module is missing (`pnpm: command not found`,
-`No module named 'fcntl'`). todo(root, slug, ids, live): the to-do issue on the rows' feature milestone, once per goal.
+unrunnable(code, text): a failing row whose output names a missing tool (node, pnpm, npm, npx, yarn) or a POSIX-only module
+(`pnpm: command not found`, `No module named 'fcntl'`). Exit 77 is a skip already (runs.SKIP_CODE). todo(root, slug, ids, live): the to-do issue on the rows' feature milestone, once per goal.
 """
 import glob
 import json
 import os
 import re
 
-MISSING = re.compile(r"command not found|: not found|is not recognized as an internal|No module named '(fcntl|termios|pwd|grp|resource)'"
-                     r"|spawn (node|pnpm|npm) ENOENT")
+TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
+MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
+                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
 LABEL = "other-machine"
 
 
 def unrunnable(code, text):
-    return code == 127 or bool(code and MISSING.search(text or ""))
+    return bool(code and MISSING.search(text or ""))
 
 
 def milestone(root, ids):
