@@ -166,6 +166,8 @@ def finalize(base, held, name):
         lanekit.prep_hit(base, name, held, plan, wait, part)
     elif rc == 124:
         line += "\n" + lanekit.timeout_line(text, deadline(held)[1], held)
+    elif rc == lanekit.EXIT_ENV:
+        line += "\n" + lanekit.env_line(notes)
     elif rc == lanekit.EXIT_WAIT:
         line += "\nLANE_BUG: the lane's child stopped waiting for a slot (exit 4), which a lane never does; %s." % NOTHING
     elif rc and fit.off_rows(text):

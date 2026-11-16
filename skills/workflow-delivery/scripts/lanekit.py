@@ -135,6 +135,11 @@ def timeout_line(text, why, held):
             "command again, or raise the flow file \"limit\" (else step_limit)." % why)
 
 
+def env_line(notes):
+    """A lane that gave up waiting for memory (its MEMORY_WAIT note), or one whose rows mostly could not start (LANE_ENV): the machine's fault."""
+    return notes if "MEMORY_WAIT" in notes else "LANE_ENV: most rows could not start (low memory); rerun when memory allows"
+
+
 def budget_note(text, base, name):
     cut = re.findall(r"^BUDGET (\d+) min: .*?LEFT \d+ to the scheduled full suite: (.*)$", text, re.M)
     if not cut:

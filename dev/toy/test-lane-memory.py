@@ -14,8 +14,10 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 sys.path.insert(0, os.path.join(root, "skills", "workflow-delivery", "scripts"))
 sys.dont_write_bytecode = True
 import guards  # noqa: E402
+import lanekit  # noqa: E402
 
 failed = []
+NL = chr(10)
 
 
 def check(ok, text):
@@ -50,4 +52,9 @@ check(charged("regression lane failed: LANE_FAIL a, b (log x)") == (1, 0), "nega
 check(charged("qa failed: the tests are red; see lane x: MEMORY_WAIT: not really") == (1, 0), "negative control: words that only mention MEMORY_WAIT cost a try")
 state = {"slug": "g", "tries": 0, "env": 10}
 check(charged(LINE, state) == (1, 10), "the eleventh wait counts, so a machine that never frees memory still stops the goal")
+note = "MEMORY_WAIT: waited 600s for memory (3.0 GB free, min_free_memory_gb 3.5); nothing ran, no try used. Fix: run the same command again when memory frees"
+for what, text in (("a memory wait", lanekit.env_line(note)), ("a mostly-ENV lane", lanekit.env_line(""))):
+    line = "LANE pr AFFECTED 0/0 in 600s" + NL + text
+    check(charged("regression lane failed: " + line.splitlines()[-1][:200]) == (0, 1), "the lane line of %s, as pr_fail turns it into the try reason, is not counted" % what)
+check(lanekit.EXIT_ENV == 6 and lanekit.env_line(note) == note, "the lane reports the MEMORY_WAIT note as it was written")
 sys.exit(1 if failed else 0)
