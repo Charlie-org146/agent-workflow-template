@@ -310,7 +310,7 @@ def lane_part(slug):
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
-    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows) if rows else ""
+    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows[:300] + ["... %d more" % (len(rows) - 300)] * (len(rows) > 300)) if rows else ""
     return "\n### Regression lane\n\n%s%s\n" % (line, folded) if line else ""
 
 
