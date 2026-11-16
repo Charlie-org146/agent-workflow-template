@@ -255,20 +255,30 @@ def eta_minutes(seen):
 
 
 def eta_spent(run, at=None):
-    return int(sum(bs.flow_seconds(run, at or datetime.datetime.now(datetime.timezone.utc)).values()) // 60)
+    return bs.active_minutes(run, at)
+
+
+def eta_open(seen):
+    """Pre-flight items (#4535) still unanswered; the ETA clock starts when none is."""
+    done = (seen.get("preflight_answers") or {}).get("answers") or {}
+    return [i for i in (seen.get("preflight") or {}).get("items") or [] if i.get("id") not in done]
+
+
+def eta_start(seen):
+    return (seen.get("preflight_answers") or {}).get("spent") or 0  # active minutes when the last pre-flight item was answered
 
 
 def eta_over(seen, spent):
-    """The goal has spent its ETA and the owner has not chosen ship now."""
+    """The goal has spent its ETA (counted from its pre-flight answers) and the owner has not chosen ship now."""
     held = eta_minutes(seen)
-    return bool(held) and spent >= held and (seen.get("eta_choice") or {}).get("choice") != "ship"
+    return bool(held) and not eta_open(seen) and spent - eta_start(seen) >= held and (seen.get("eta_choice") or {}).get("choice") != "ship"
 
 
 def eta_text(seen, at):
     """The check-in's ETA cell: a clock time, passed, or none."""
-    held = eta_minutes(seen)
-    left = held - eta_spent(seen, at)
-    return "no ETA" if not held else "ETA passed" if left <= 0 else "ETA " + (at + datetime.timedelta(minutes=left)).astimezone().strftime("%H:%M")
+    held, n = eta_minutes(seen), len(eta_open(seen))
+    left = held - eta_spent(seen, at) + eta_start(seen)
+    return "no ETA" if not held else "ETA after your answers (%d open)" % n if n else "ETA passed" if left <= 0 else "ETA " + (at + datetime.timedelta(minutes=left)).astimezone().strftime("%H:%M")
 
 
 def eta_wait(state, spent, save):

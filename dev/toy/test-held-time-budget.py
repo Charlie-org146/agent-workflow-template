@@ -69,7 +69,7 @@ def stopped(state, at, cfg=cfg):
 
 state, at = run(*FIVE, (20, "waiting: pr queue, behind other"), (20 + 772, "pr queue: its turn"), (20 + 772, "pr"))
 check("a goal held 772 minutes but active 20 is not stopped at a 300 minute budget", stopped(state, at) == "")
-real = [(0, "frozen 1 done lines")] + [(60 * i, "%s done" % s) for i, s in enumerate(("idea", "plan", "build", "review", "qa", "ship"), 1)]
+real = [(0, "frozen 1 done lines")] + [(60 * i - d, ("start %s" if w == "start" else "%s done") % s) for i, s in enumerate(("idea", "plan", "build", "review", "qa", "ship"), 1) for w, d in (("start", 60), ("done", 0))]  # each step starts, then ends an hour later
 state, at = run(*real)
 said = stopped(state, at)
 check("a goal that truly runs 360 minutes of steps is stopped at 300 (REFUSED, BUDGET_MINUTES)", "360 minutes spent, at the minute budget of 300" in said and "BUDGET_MINUTES" in said)

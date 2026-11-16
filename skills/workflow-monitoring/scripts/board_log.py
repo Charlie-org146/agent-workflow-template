@@ -98,7 +98,9 @@ def holding(entry, paused):
 
 # An entry that says the goal waits on someone else: the pr queue (goal.py pr), an owner question (a step that waits for or
 # is pending on the owner, a refusal that asks, a waiting entry). The gap after it is held time (#3878).
-WAIT = re.compile(r"waiting\b|[a-z]+ waits for the owner|[a-z]+ pending: |refused \(no try used\)")
+WAIT = re.compile(r"waiting\b|[a-z]+ waits for the owner|[a-z]+ pending: |refused \(no try used\)|session report: .*\b(?:waiting|paused)\b")
+# After these a step or the pr lane runs; after any other entry a silent session is idle and is not charged past the idle limit (#4534).
+RUNS = re.compile(r"start [a-z]+\b|pr queue: its turn|at pr: joining the queue")
 
 
 def waiting(entry):
@@ -124,33 +126,44 @@ def lost_lanes(log):
     return drop
 
 
-def flow_seconds(run, at, held=None):
+def flow_seconds(run, at, held=None, limit=None):
     """Time per step with one rule for past and live runs: a gap before an entry naming a step counts toward that step;
     any other gap counts toward the step in force (the last one named, or the next after a finished one). A gap after a
     stopped or failed entry, or one that waits (see waiting), is a pause and counts nothing, and so is every gap while a hold or free pause is in
     force (see holding). The time since the last entry counts while running, unless the goal is held: held is True or
-    False when the session pool says so, and None when it is unknown, when a pause in force at the last entry stops it."""
+    False when the session pool says so, and None when it is unknown, when a pause in force at the last entry stops it. With
+    limit (seconds), a gap or the time since the last entry counts at most limit unless a step or the pr lane was running (RUNS)."""
     found, force, paused, log = {}, None, False, run.get("log") or []
     lost = lost_lanes(log)  # a pr lane lost to a moved base is held time (#4261)
+    cap = lambda entry, secs: min(secs, limit) if limit and not RUNS.match((str(entry).split(" ", 1) + [""])[1]) else secs
     for index, (before, entry) in enumerate(zip(log, log[1:]), 1):
         a, b, word = stamp(before), stamp(entry), named(entry)
         paused = holding(before, paused)
         pause = paused or waiting(before) or (str(before).split(" ", 2) + ["", ""])[1].rstrip(":") in ("stopped", "failed")
         step = word if word in STEPS and not re.search(r"\bstep [a-z]+, running", str(entry)) else force
         if a and b and step in STEPS and not pause and index not in lost:
-            found[step] = found.get(step, 0) + max(0, (b - a).total_seconds())
+            found[step] = found.get(step, 0) + cap(before, max(0, (b - a).total_seconds()))
         force = after(entry) or force
     last = stamp(log[-1]) if log else None
     step = run.get("step") if run.get("step") in STEPS else force
     idle = bool(log) and waiting(log[-1]) or (held if held is not None else bool(log) and holding(log[-1], paused))
     if run.get("status") == "running" and step in STEPS and last and not idle:
-        found[step] = found.get(step, 0) + max(0, (at - last).total_seconds())
+        found[step] = found.get(step, 0) + cap(log[-1], max(0, (at - last).total_seconds()))
     return found
 
 
-def active_minutes(run, at=None):
-    """Whole minutes of active step time: flow_seconds summed, up to now when at is not given (the budget gate, #3878)."""
-    return int(sum(flow_seconds(run, at or datetime.datetime.now(datetime.timezone.utc)).values()) // 60)
+def active_minutes(run, at=None, cfg=None):
+    """Whole minutes charged to a goal's budget: flow_seconds summed, up to now when at is not given, with a session silent past
+    the idle limit (graph.silent_limit) charged no more until its next entry (#3878, #4534)."""
+    return int(sum(flow_seconds(run, at or datetime.datetime.now(datetime.timezone.utc), limit=graph.silent_limit(cfg)).values()) // 60)
+
+
+def wall_minutes(run, at=None):
+    """Whole minutes from a goal's first log entry to now (a live goal) or to its last entry, held and idle time included."""
+    log = run.get("log") or []
+    start, end = (stamp(log[0]), stamp(log[-1])) if log else (None, None)
+    end = (at or datetime.datetime.now(datetime.timezone.utc)) if run.get("status") in ("running", "waiting") else end
+    return int(max(0, (end - start).total_seconds()) // 60) if start and end else 0
 
 
 def goal_file(run, root):
