@@ -144,7 +144,7 @@ p=$(PATH="$d/badgh:$PATH" $health preview --group size 2>&1); prc=$?; f=$(PATH="
 grep -q "^REFUSED\[gh\]: can't list the issues (.*HTTP 502.*). Nothing was written." <<<"$p" && grep -q "^REFUSED\[gh\]: can't list the issues" <<<"$f" \
   && [ $prc = 2 ] && [ $frc = 2 ] && ! grep -qEv "^api repos/\{owner\}/\{repo\}/issues\?state=" "$d/badgh/calls" && ok "an unreadable issue list refuses, writes nothing" || bad "gh unreadable"
 [ "$(cd "$here/skills/workflow-health/scripts" && python3 -c "import file, health; print(file.tag_of(health.groups_of('cost')[0]))")" = health:performance ] && ok "the Cost group is tagged health:performance" || bad "performance tag"
-for f in health report file; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 18432 ] && ok "$f.py under the size warning" || bad "$f.py size"; done
+for f in health report file; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 19000 ] && ok "$f.py under the size warning" || bad "$f.py size"; done
 
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

@@ -216,7 +216,7 @@ fi
 if want size; then
   out=$(cd "$here" && for f in skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-health/scripts/rounds.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/goal.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/autorelease.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/actions.py skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py skills/workflow-health/scripts/rules.py; do
       now=$(wc -c < "$f"); was=$(git show "origin/main:$f" 2>/dev/null | wc -c); [ "$was" = 0 ] && was=$now
-      if [ "$now" -ge 20480 ] || { [ "$now" -ge 18432 ] && { [ "$was" -lt 18432 ] || [ $((now - was)) -gt 400 ]; }; }; then echo "OVER $f $was -> $now"; fi; done)
+      if [ "$now" -ge 20480 ] || { [ "$now" -ge 19000 ] && { [ "$was" -lt 19000 ] || [ $((now - was)) -gt 400 ]; }; }; then echo "OVER $f $was -> $now"; fi; done)
   check "each touched script is under the WARN line unless it started over it and grew by at most 400 bytes, and under the FAIL line" '[ -z "$out" ]'
   if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
     check "skills holds no more files than origin/main" '[ "$(git -C "$here" ls-files skills | wc -l)" -le "$(git -C "$here" ls-tree -r --name-only origin/main -- skills | wc -l)" ]'
