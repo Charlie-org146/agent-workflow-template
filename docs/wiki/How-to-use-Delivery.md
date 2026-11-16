@@ -29,4 +29,4 @@ Say these to the agent in the operation session; each feature page has the exact
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept how-to-use-docs@13e8853e -->
+<!-- kept how-to-use-docs@80ac1484 -->
