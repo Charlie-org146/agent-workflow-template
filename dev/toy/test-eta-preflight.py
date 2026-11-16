@@ -150,6 +150,9 @@ check(len(auto.eta_open(seen)) == 1 and auto.eta_text(seen, at) == "ETA after yo
 check("ETA_NO_RECORD" in run_set(preflight="recommended", owner_record="o1"), "a record answers once")
 check(run_set(preflight="recommended", owner_record="o2") == "", "the take-all word answers every item left")
 seen = fit.view(read("p"), g.state_dir())
+words("p", "p", "p", "p")
+check("no open pre-flight item" in run_set(preflight="recommended", owner_record="o3") and fit.view(read("p"), g.state_dir())["preflight_answers"]["spent"] == seen["preflight_answers"]["spent"],
+      "negative control: answering again when nothing is open is refused and the ETA clock stays where it started")
 check(auto.eta_open(seen) == [] and seen["preflight_answers"]["answers"] == {"plan": "approve ahead", "budget": "keep"}, "every item is answered with its recommendation")
 check(fit.plan_ahead(read("p"), g.state_dir(), "plan") and not fit.plan_ahead(read("p"), g.state_dir(), "build") and not fit.plan_ahead(dict(run, slug="x"), g.state_dir(), "plan"),
       "goal.py record auto-approves a pending plan only after the owner answered plan=approve ahead (negative controls: another step, no answer)")

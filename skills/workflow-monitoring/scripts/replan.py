@@ -296,9 +296,10 @@ def api_quota(top):
     try:
         if os.environ.get("LOOP_API_QUOTA") is not None:
             return int(os.environ["LOOP_API_QUOTA"])
-        url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=top, capture_output=True, text=True).stdout
+        if "github.com" not in subprocess.run(["git", "remote", "get-url", "origin"], cwd=top, capture_output=True, text=True).stdout:
+            return None
         out = subprocess.run(["gh", "api", "rate_limit", "--jq", ".resources.core.remaining"], cwd=top, capture_output=True, text=True, timeout=20)
-        return int(out.stdout.strip()) if "github.com" in url and out.returncode == 0 else None
+        return int(out.stdout.strip()) if out.returncode == 0 else None
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
 
@@ -347,8 +348,10 @@ def preflight_lines(seen):
 def preflight_answer(g, args, state, why):
     """goal.py set --preflight recommended|ID=ANSWER,...: owner words in, the answers into the sidecar; the ETA clock starts at the last one."""
     import auto
-    rid, seen = auto.eta_record(g, args.owner_record, args.slug, "a pre-flight answer"), g.fit.view(state, g.state_dir())
+    seen = g.fit.view(state, g.state_dir())
     left, have = auto.eta_open(seen), dict((seen.get("preflight_answers") or {}).get("answers") or {})
+    left or g.no("%s has no open pre-flight item; nothing changed." % args.slug)
+    rid = auto.eta_record(g, args.owner_record, args.slug, "a pre-flight answer")
     for part in [] if args.preflight == "recommended" else args.preflight.split(","):
         key, _, value = part.partition("=")
         item = next((i for i in left if i["id"] == key.strip()), None)
