@@ -35,7 +35,7 @@ GROUPS = (
     ("hygiene", "Hygiene", "a janitor's angle: is anything left lying around?",
      ("findings", "waiting", "branches", "eta-missing", "eta-extended", "eta-overrun", "worktrees", "local-branches", "idle-sessions")),
     ("adoption", "Adoption", "another repo's angle: would this work installed fresh?",
-     ("config", "checks-run-tests", "template-version", "scheduled", "no-fit", "agent-tools", "prompt-pointer", "migration", "milestones", "matrix")),
+     ("config", "checks-run-tests", "template-version", "scheduled", "machine", "no-fit", "agent-tools", "prompt-pointer", "migration", "milestones", "matrix")),
     ("controls", "Controls", "the checker's own angle: can each rule fire?", ()),
 )
 MINE = ("mine", "Mine", "my private angle", ())
