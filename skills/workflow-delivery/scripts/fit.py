@@ -123,7 +123,7 @@ def monitor(name, paths=False):
 def budget_stop(slug, state, runs, cfg, at=None, save=None):
     seen = view(state, runs)
     held, source = budget(seen, cfg)
-    if seen.get("eta"):
+    if seen.get("eta") or seen.get("eta_extend"):
         auto, spent = monitor("auto", True), active_minutes(state, at)
         if auto.eta_over(seen, spent):
             save and auto.eta_wait(state, spent, save)

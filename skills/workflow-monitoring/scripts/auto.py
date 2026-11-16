@@ -251,7 +251,7 @@ def eta_seen(root, run):
 def eta_minutes(seen):
     eta = seen.get("eta") if isinstance(seen.get("eta"), dict) else {}
     more = [e.get("by") for e in seen.get("eta_extend") or [] if isinstance(e, dict)]
-    return eta["minutes"] + sum(n for n in more if isinstance(n, int)) if isinstance(eta.get("minutes"), int) else 0
+    return (eta["minutes"] if isinstance(eta.get("minutes"), int) else 0) + sum(n for n in more if isinstance(n, int))
 
 
 def eta_spent(run, at=None):

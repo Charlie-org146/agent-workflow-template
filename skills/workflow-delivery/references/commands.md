@@ -386,6 +386,7 @@ python3 scripts/goal.py set my-goal --eta-choice ship --owner-record o62 --why "
 python3 scripts/goal.py set my-goal --eta-choice defer --owner-record o63 --why "owner: next release"
 ```
 
+A goal frozen before ETAs existed gets one the same way: `--eta-extend N` with a record sets its ETA to N minutes.
 The record must exist in `owner-words.tsv`, cover the goal's slug and never have been used before by any goal's extension,
 choice or budget raise (`ETA_NO_RECORD`); nothing changes on a refusal. Extensions and the choice live in the sidecar; the
 frozen ETA is never edited. Health warns on a live goal with no ETA, fails on an extension with no covering record and fails

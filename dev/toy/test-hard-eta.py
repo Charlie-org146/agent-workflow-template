@@ -142,6 +142,13 @@ check(run_set(budget_minutes=480, owner_record="o3") == "" and fit.view(read(her
 check(run_set(budget_minutes=300) == "" and "ETA_NO_RECORD" in run_set(budget_minutes=600, owner_record="o3"), "a record that raised a budget stays used after a later lowering")
 check("not both" in run_set(eta_extend=5, eta_choice="ship", owner_record="o1"), "an extension and a choice together are refused")
 
+record(here, "old", {"status": "running", "step": "build", "log": [ago(90) + " start build"]})
+words(here, "x", "x", "x", "x", "x", "x", "old")
+check(refused(fit.budget_stop, "old", read(here, "old"), runs, {}) == "", "a goal frozen before ETAs existed is not stopped")
+check(refused(fit.cmd_set, g, SimpleNamespace(**dict(args, slug="old", eta_extend=60, owner_record="o7"))) == "", "an owner record gives such a goal an ETA")
+check(auto.eta_minutes(fit.view(read(here, "old"), runs)) == 60 and refused(fit.budget_stop, "old", read(here, "old"), runs, {}) == "", "inside that ETA it runs on")
+check("ETA_PAST" in refused(fit.budget_stop, "old", dict(read(here, "old"), log=[ago(120) + " start build"]), runs, {}), "past that ETA it is stopped like any other")
+
 # 4. ship now and defer
 record(here, "s", running(90, flow={"idea": "done", "plan": "done"}))
 words(here, "s", "s")
