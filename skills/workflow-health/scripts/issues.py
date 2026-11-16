@@ -138,6 +138,22 @@ def evidence_of(item):
     return hashlib.sha1(("%s|%s" % (key_of(item), cites)).encode()).hexdigest()[:8]
 
 
+FILE = re.compile(r"[\w./-]+\.(?:py|sh|md|json|tsv|ya?ml)\b")
+ROW = re.compile(r"\b[a-z]+(?:-[a-z0-9]+)+\b")
+
+
+def about(where):
+    """What a judge savings finding is about: the first file or test row it names, else its first six words; never its advice."""
+    low = where.lower()
+    hit = FILE.search(low) or ROW.search(low)
+    return hit.group() if hit else " ".join(low.split()[:6])
+
+
+def first_cite(evidence):
+    """A review finding's first citation without its line numbers: its subject."""
+    return re.sub(r":\d+(-\d+)?$", "", (str(evidence).split(",") + [""])[0].strip())
+
+
 def title_of(stone):
     """A milestone's title from gh's {"title": ...}, issues.fetch's plain title, or nothing."""
     return (stone.get("title") if isinstance(stone, dict) else stone) or ""

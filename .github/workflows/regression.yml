@@ -456,15 +456,16 @@ jobs:
           ROW_SECONDS, JOB_SECONDS = seconds("REGRESSION_ROW_SECONDS", 900), seconds("REGRESSION_JOB_SECONDS", (30 - 2) * 60)
           ROW_ENV = {k: v for k, v in os.environ.items() if k not in ('GH_TOKEN', 'GITHUB_TOKEN', 'GITHUB_STEP_SUMMARY', 'GITHUB_ENV', 'GITHUB_OUTPUT', 'GITHUB_PATH', 'GITHUB_STATE', 'REGRESSION_RESULTS', 'REGRESSION_MAP', 'RUNNER_TEMP', 'SUITE_TIME_FILE', 'REGRESSION_SHARD', 'REGRESSION_LEVELS', 'REGRESSION_TARGET', 'REGRESSION_CLEANUP')}
           def run(command, limit):
+              skip = os.path.join(tempfile.gettempdir(), "skip%d" % os.getpid())
               with tempfile.TemporaryFile("w+", errors="replace") as log:
-                  child = subprocess.Popen(command, shell=True, stdout=log, stderr=subprocess.STDOUT, env=ROW_ENV,
+                  child = subprocess.Popen(command, shell=True, stdout=log, stderr=subprocess.STDOUT, env=dict(ROW_ENV, TOY_SKIP_FILE=skip),
                                            start_new_session=True)
                   timed_out = False
                   try:
                       child.wait(timeout=limit)
                   except subprocess.TimeoutExpired:
                       timed_out = True
-                      try:  # so a hang names itself
+                      try:
                           ps = subprocess.run(["ps", "-o", "pid,ppid,stat,wchan:20,args", "-s", str(child.pid)], capture_output=True, text=True)
                           log.write("\nprocesses at the timeout:\n" + ps.stdout)
                       except OSError:
@@ -473,13 +474,16 @@ jobs:
                       os.killpg(child.pid, 9)
                   except OSError:
                       pass
-                  except AttributeError:  # Windows: no process groups, taskkill takes the tree
+                  except AttributeError:
                       subprocess.run(["taskkill", "/T", "/F", "/PID", str(child.pid)], capture_output=True)
                   child.wait()
                   log.seek(0)
                   out = log.read()
               if timed_out:
                   return 124, out + "\ntimed out after %d s" % limit
+              if child.returncode and os.path.exists(skip):
+                  os.remove(skip)
+                  return 77, out
               return child.returncode, out
           def result(name, state):
               with open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a") as handle:
@@ -567,11 +571,13 @@ jobs:
                           dupes[0] -= 1
                           write("close skipped #%d" % item["number"], "issue", "close", str(item["number"]), "--comment",
                                 "Closed: a skipped row files no issue.")
-              elif row[0] not in known and code != 77:  # 77: cannot run here (SKIPPED)
+              elif row[0] not in known and code != 77:
                   red.append(row[0])
                   text = shown(lambda c: run(c, ROW_SECONDS), row[2], code, said)
+                  note = "#### FAIL %s\n```\n%s\n```" % (row[0], "\n".join(text.splitlines()[-20:]))
+                  print(note)
                   with open(os.environ.get("GITHUB_STEP_SUMMARY") or os.devnull, "a") as handle:
-                      handle.write("#### FAIL %s\n```\n%s\n```\n" % (row[0], "\n".join(text.splitlines()[-20:])))
+                      handle.write(note + "\n")
                   if issues is None:
                       continue
                   cells = guards.get(row[0]) or [""] * 5
