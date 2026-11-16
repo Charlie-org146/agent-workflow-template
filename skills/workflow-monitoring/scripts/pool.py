@@ -259,6 +259,14 @@ def pr_order(runs, keep=""):
     return sorted(line)
 
 
+def pr_join(g, state):
+    """A goal that asks for its pr turn is at pr, whatever its run record last said (a silent worker, a try lost to main
+    moving): saved before it joins, so pr_order keeps its ticket (#4523)."""
+    if state.get("step") not in ("checks", "pr"):
+        state["step"] = "pr"
+        g.save(state, "at pr: joining the queue")
+
+
 def pr_turn(runs, slug):
     """Join the repo's queue; "" when it is slug's turn, else the goal ahead: only an earlier goal whose touches overlap its
     own (a path equal or nested; none overlaps all) holds it (DEL-15). No readable ticket never counts as first."""
