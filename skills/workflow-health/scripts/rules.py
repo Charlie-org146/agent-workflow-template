@@ -1,32 +1,34 @@
-"""Freshness, Tests and Adoption rules (report.py). Read-only; dates are days, so two runs on one day print the same lines.
+"""Freshness, Tests and Adoption rules (report.py). Read-only; dates are days, so one day's runs print the same lines.
 
-  nightly           the newest recorded nightly run is older than a day (WARN; INFO when no nightly row exists)
+  nightly           the newest recorded nightly run is older than a day (WARN; INFO with no nightly row)
   unreleased        commits after the newest v* tag, the oldest over 3 days old (WARN; INFO with no tag)
-  finding-age       an open health issue older than 30 days (WARN; INFO when gh is not available here)
-  skipped           a row recorded SKIPPED for over 7 days (WARN), from .loop/regression-runs.tsv
-  network           a land row whose command reaches the network: curl, wget, http:// or https:// (WARN; fakegh is fine)
+  finding-age       an open health issue older than 30 days (WARN; INFO without gh)
+  skipped           a row recorded SKIPPED for over 7 days (WARN)
+  network           a land row whose command reaches the network: curl, wget or http(s):// (WARN; fakegh is fine)
   config            .loop/config.json does not parse, or has no base (FAIL)
   checks-run-tests  the regression workflow exists but no land row does (WARN)
-  template-version  VERSION is not the newest CHANGELOG heading (WARN; INFO when either is missing); or the repo's template_version
-                    is missing or older than the installed template (WARN: run the migrate goal)
+  template-version  VERSION is not the newest CHANGELOG heading (WARN), or template_version is missing or older (WARN: migrate)
   scheduled         the regression or health workflow is missing, or has no schedule (WARN)
   machine           a gap machine.py check lists
   no-fit            an open [adoption] line in .loop/findings.md, written by setup: one WARN row each (report.py)
   agent-tools       agent_command (or the flow file's command) grants its agent no tools (WARN) (report.py)
   prompt-pointer    a scheduled-task prompt holds more than the Runbook pointer (WARN)
-  milestones        a GitHub repo lacks a standing Backlog milestone, one per feature page and Other (WARN; INFO when gh can't list them)
+  milestones        a GitHub repo lacks a standing Backlog milestone, one per feature page and Other (WARN; INFO without a list)
 Security and privacy, Size, Performance check-time and Hygiene idle-sessions rules (also read-only):
   private                tracked files matching a leak pattern (leak_patterns in the private flow file): FAIL with
                          file:line and the pattern's number only, never the matched text; INFO with no pattern set
-  scan-hook              no commit scan hook (core.hooksPath or hooks/pre-commit): WARN; INFO in CI, where it can't be
+  scan-hook              no commit scan hook (core.hooksPath or hooks/pre-commit): WARN; INFO in CI
   workflow-permissions   a workflow with no top-level permissions: (WARN)
   skill-lines            a SKILL.md of 150 lines or more (FAIL)
   requirements-per-page  a page with more requirements than criteria_max (default 6) (FAIL)
   check-time             the check, up to its Performance group, past 60 seconds (WARN; no number on a pass)
-  idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no session pool)
+  idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no pool)
+  eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-14): a live goal with no ETA (WARN); an extension with no
+                         covering owner record, or a goal a step past its ETA not waiting for the owner (FAIL)
 """
 import datetime
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -39,7 +41,7 @@ import report as _report
 from defects import LINE, behind, pages, row, setting, table
 
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No prompt may block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -154,8 +156,7 @@ def template_version(root):
 
 
 def scheduled(root):
-    """The regression workflow must be scheduled unless regression_runs is mac (read from the config: no gh call); a leftover
-    health.yml is a WARN, as health runs on the Mac now."""
+    """The regression workflow must be scheduled unless regression_runs is mac; a leftover health.yml is a WARN."""
     out, flows = [], os.path.join(root, ".github", "workflows")
     try:
         mac = json.load(open(os.path.join(root, ".loop", "config.json"))).get("regression_runs") == "mac"
@@ -164,15 +165,15 @@ def scheduled(root):
     text = open(os.path.join(flows, "regression.yml")).read() if os.path.exists(os.path.join(flows, "regression.yml")) else ""
     if "schedule:" not in text and not mac:
         out.append(row("WARN", "adoption", "regression.yml", "scheduled", "missing" if not text else "has no schedule",
-                       "write it (workflow-regression workflow); setup records regression_runs, mac for a private repo", "regression.yml"))
+                       "write it (workflow-regression workflow); setup records regression_runs", "regression.yml"))
     if os.path.exists(os.path.join(flows, "health.yml")):
-        out.append(row("WARN", "adoption", "health.yml", "scheduled", "has no job: health runs on the Mac now",
+        out.append(row("WARN", "adoption", "health.yml", "scheduled", "has no job: health runs on the Mac",
                        "git rm .github/workflows/health.yml", "health.yml"))
     return out
 
 
 def no_fit(root):
-    """no-fit: each open `- [adoption] <kind>: <subjects>. Fix: <fix>` line of .loop/findings.md (setup writes them) is one WARN row."""
+    """no-fit: each open `- [adoption] <kind>: <subjects>. Fix: <fix>` line of .loop/findings.md is one WARN row."""
     try:
         text = open(os.path.join(root, ".loop", "findings.md")).read()
     except OSError:
@@ -186,7 +187,7 @@ POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Run
 
 
 def prompt_pointer(root):
-    """prompt-pointer: WARN for each installed scheduled-task prompt (a routine's runs: claude:TASK or mac:LABEL) holding a line other than the Runbook pointer."""
+    """prompt-pointer: WARN for each scheduled-task prompt (a routine's runs: claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -207,9 +208,8 @@ def prompt_pointer(root):
 
 
 def milestones(root):
-    """milestones: a WARN for each standing "Backlog: <Feature>" milestone, and "Backlog: Other", a GitHub repo lacks (DOC-10, SET-17).
-    A repo with no GitHub origin has nothing to check; a list gh can't give is one INFO row. LOOP_BACKLOG_MILESTONES (a JSON list of
-    titles) stands in for gh in the control."""
+    """milestones: a WARN for each standing "Backlog: <Feature>" milestone (and Other) a GitHub repo lacks (DOC-10, SET-17). No
+    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES (JSON titles) stands in for gh."""
     if "github.com" not in (git_raw(root, "remote", "get-url", "origin") or ""):
         return []
     import milestone
@@ -359,9 +359,29 @@ def idle_sessions(root):
     return out
 
 
+ETA = ("eta-missing", "eta-extended", "eta-overrun")
+
+
+def eta(root, name):
+    """One rule's rows from workflow-monitoring's auto.eta_rows."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "workflow-monitoring", "scripts", "auto.py")
+    if not os.path.exists(path):
+        return [row("UNREAD", "hygiene", "eta", name, "workflow-monitoring is not installed beside this skill")]
+    sys.path.insert(0, os.path.dirname(path))
+    try:
+        spec = importlib.util.spec_from_file_location("health_eta", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return [row(level, "hygiene", text.split()[0], name, text, "goal.py set --eta-extend or --eta-choice with an owner record")
+            for rule, level, text in module.eta_rows(root) if rule == name]
+
+
 GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permissions": workflow_permissions,
              "skill-lines": skill_lines, "requirements-per-page": requirements_per_page, "check-time": check_time,
              "idle-sessions": idle_sessions}
 
 
+GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA})
 FUNCTIONS.update(GUARD_FUNCTIONS)

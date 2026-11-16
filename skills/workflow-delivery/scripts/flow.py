@@ -4,13 +4,12 @@
 usage: flow.py SLUG STEP [--note TEXT] [--wait SECONDS] [--limit SECONDS]
 
 STEP is idea, plan, build, review, qa, ship, pr or release. A private file, ~/.workflow-loop/flow.json (or $LOOP_FLOW),
-names a default suite under "suite" and, under "steps", a skill for any one step that overrides it. It also names
-the skill for each step, the command that runs them, the environment that makes them run unattended, and a probe that proves it.
-The repo never names those skills. Each call waits a short while and prints RUNNING (run the same command again) or
-NEXT (the goal.py line that records the step). Nothing here approves, merges or pushes. It refuses outside a worker (LOOP_ROLE=worker), and prints what the operation
-session sent the worker. In a worker session (the run's worker is "session") it starts no agent:
-it prints IN SESSION with the skill to invoke in that session and the reply path, and once the reply is there, NEXT.
-The tokens an agent used are read from its JSON output (input + output + cache-creation, no cache reads) and recorded against the step.
+names a default suite under "suite" and, under "steps", a skill for any one step. It also names the command that runs
+them, the environment that makes them run unattended, and a probe that proves it. Each call waits a short while and
+prints RUNNING (run the same command again) or NEXT (the goal.py line that records the step). Nothing here approves,
+merges or pushes. It refuses outside a worker (LOOP_ROLE=worker) and prints what the operation session sent the worker.
+In a worker session (the run's worker is "session") it starts no agent: it prints IN SESSION with the skill to invoke
+and the reply path, then NEXT. A step's first call past the goal's ETA or budget is refused.
 """
 import argparse
 import json
@@ -296,6 +295,8 @@ def main():
     runnable(flow(), headless)
     base = os.path.join(runs, "%s.%s" % (args.slug, args.step))
     reply, job = base + ".txt", base + ".job"
+    if args.step in fit.STEPS and not os.path.exists(base + ".asked") and not os.path.exists(job):
+        fit.budget_stop(args.slug, state, runs, repo_config(), save=fit.run_saver(runs))
     if args.step in fit.STEPS:
         role.recorded_gate(args, runs, job)
     if args.step in ("qa", "ship") and not os.path.exists(job) and not os.path.exists(base + ".asked"):

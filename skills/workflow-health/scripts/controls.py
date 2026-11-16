@@ -19,14 +19,15 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(sys.argv[0]))
-GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "health-control",
-           "GIT_AUTHOR_EMAIL": "health-control@example.invalid", "GIT_COMMITTER_NAME": "health-control",
-           "GIT_COMMITTER_EMAIL": "health-control@example.invalid", "GIT_TERMINAL_PROMPT": "0"}
+GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"}
+for who in ("AUTHOR", "COMMITTER"):
+    GIT_ENV.update({"GIT_%s_NAME" % who: "health-control", "GIT_%s_EMAIL" % who: "health-control@example.invalid"})
 OLD = "2026-01-01T00:00:00Z"
+TSV = "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n"
 
 
 class Leaked(Exception):
-    """A row showed planted private text."""
+    pass
 
 
 def clear_cache():
@@ -36,7 +37,7 @@ def clear_cache():
 
 
 class Unbuilt(Exception):
-    """A fixture could not be built."""
+    pass
 
 
 def env(extra=None):
@@ -64,7 +65,7 @@ def write(root, rel, text):
 def repo(root, config=None):
     git(root, "init", "-q", "-b", "main")
     write(root, ".loop/config.json", json.dumps(dict({"base": "main", "wiki_dir": "docs/wiki"}, **(config or {}))))
-    write(root, ".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n")
+    write(root, ".loop/regression.tsv", TSV)
     write(root, "README.md", "toy\n")
     commit(root, "toy")
 
@@ -159,7 +160,7 @@ def f_worktrees(root):
 def f_prompt_pointer(root):
     repo(root)
     write(root, ".loop/config.json", '{"base": "main", "automation": [{"name": "digest", "runs": "claude:t1"}]}')
-    write(root, "tasks/t1/SKILL.md", "---" + "\n" + "name: t1" + "\n" + "---" + "\n" + "Run the digest steps: 1. fetch, 2. mail." + "\n")
+    write(root, "tasks/t1/SKILL.md", "---\nname: t1\n---\nRun the digest steps: 1. fetch, 2. mail.\n")
     os.environ["LOOP_SCHEDULED_TASKS_DIR"] = os.path.join(root, "tasks")
 
 
@@ -180,13 +181,13 @@ def f_local_branches(root):
 
 def f_proof(root):
     repo(root)
-    write(root, ".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n"
+    write(root, ".loop/regression.tsv", TSV +
           "d1\tdraft\techo write a test\t-\t-\ta draft\tcriterion\t\n")
 
 
 def f_seen_red(root):
     repo(root)
-    write(root, ".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n"
+    write(root, ".loop/regression.tsv", TSV +
           "r1\tland\ttrue\t-\t-\tnever red\tcriterion\t\n")
 
 
@@ -283,7 +284,7 @@ def f_private(root):
 
 def f_scan_hook(root):
     repo(root)
-    os.environ.pop("CI", None); os.environ.pop("GITHUB_ACTIONS", None)
+    [os.environ.pop(key, None) for key in ("CI", "GITHUB_ACTIONS")]
 
 
 def f_workflow_permissions(root):
@@ -309,11 +310,18 @@ def f_check_time(root):
 def f_idle_sessions(root):
     repo(root)
     run_record(root, "gone", {"status": "done"})
-    with open(os.path.join(root, ".git", "loop", "session-pool.json"), "w") as handle:
-        json.dump({"s1": {"name": "worker · gone", "slug": "gone", "state": "busy"}}, handle)
+    write(root, ".git/loop/session-pool.json", json.dumps({"s1": {"name": "worker · gone", "slug": "gone", "state": "busy"}}))
 
 
-# rule -> (group, rule_of label, fixture); the rule modules add theirs
+def f_eta(rule):
+    def fixture(root):
+        repo(root)
+        run_record(root, "x", {"status": "running", "step": "idea", "log": [OLD + " start idea"], "eta": rule != "eta-missing" and {"minutes": 30}})
+        rule == "eta-extended" and write(root, ".git/loop/runs/x.extra.json", '{"set": {"eta_extend": [{"by": 5}]}}')
+    return fixture
+
+
+# rule -> (group, label, fixture)
 CONTROLS = {
     "scripts": ("size", "scripts", f_size),
     "rows": ("requirements", "rows", f_criteria_rows),
@@ -348,6 +356,7 @@ CONTROLS = {
     "check-time": ("performance", "check-time", f_check_time),
     "idle-sessions": ("hygiene", "idle-sessions", f_idle_sessions),
 }
+CONTROLS.update({name: ("hygiene", name, f_eta(name)) for name in ("eta-missing", "eta-extended", "eta-overrun")})
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     CONTROLS.update(importlib.import_module("defects").CONTROLS)

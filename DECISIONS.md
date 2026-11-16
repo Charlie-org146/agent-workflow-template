@@ -357,3 +357,12 @@ The owner chose option C for external PRDs: "a template fix first, then two-way 
 - "`docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten."
 
 Documentation and DOC-17 were reviewed again with record o38.
+
+## Applied 2026-11-15 (hard-eta)
+
+Owner record o52 (2026-11-15): "I want to make the ETA a hard criteria in the 1.1 so that it doesn't keep delaying. I want to add this guardrail." (#4512)
+
+- Guardrails was un-reviewed and re-reviewed with o52 (the page only). Main then added its own GRD-13 (test caps), so the ETA requirement is GRD-14; the owner said "Review both" (record o58) and Guardrails, GRD-13 and GRD-14 were reviewed with it.
+- The ETA is the estimate model's high end for the goal's size plus 25 percent (5-minute steps, at least 30), or the time budget with no estimate; it counts active minutes like the time budget. The margin is a constant, not a setting.
+- Past it a goal waits under Needs you (kind owner) for ship now, extend once or defer; only `goal.py set --eta-extend|--eta-choice` with an unused owner-words record covering the goal moves it, and raising a time or token budget needs one too.
+- Not done, left for later: counting fix rounds against the ETA and the release goal's clock-time ETA (#4512 items 3 and 4).
