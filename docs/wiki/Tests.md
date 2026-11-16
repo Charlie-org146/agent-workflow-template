@@ -942,6 +942,11 @@
 | <a id="t-set13-hooks-once-bullet"></a>set13-hooks-once-bullet | requirement | SET-13 | not run | - | local | 2026-11-15 |
 | <a id="t-review-hold-setting-listed"></a>review-hold-setting-listed | requirement | SET-2 | not run | - | local | 2026-11-15 |
 | <a id="t-test-caps-settings"></a>test-caps-settings | requirement | SET-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-private-checks-classify"></a>private-checks-classify | requirement | SET-1 | not run | - | local | 2026-11-16 |
+| <a id="t-private-checks-run-local"></a>private-checks-run-local | requirement | SET-1 | not run | - | local | 2026-11-16 |
+| <a id="t-private-checks-fail-not-green"></a>private-checks-fail-not-green | requirement | SET-1 | not run | - | local | 2026-11-16 |
+| <a id="t-private-checks-stop"></a>private-checks-stop | requirement | SET-1 | not run | - | local | 2026-11-16 |
+| <a id="t-private-checks-control"></a>private-checks-control | requirement | SET-1 | not run | - | local | 2026-11-16 |
 
 ## Other
 
