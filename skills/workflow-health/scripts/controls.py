@@ -5,10 +5,9 @@ usage: controls.py run RULE [--keep]   run one control and print its result (--k
 
 health.py passes its rule functions to run(): every control builds a throwaway git repo in a private temporary folder
 with the one file or record that breaks its rule, and calls the real rule on it. It fires only when that rule reports a
-WARN or FAIL row of its own group and rule (report.py's rule_of), never an UNREAD row or a sibling rule's. A rule whose
-control stays green cannot fire. Git runs with no inherited GIT_DIR, no global or system config and a fixed identity,
-so the real repo is never touched. Rows carry no temporary path or time, so two runs print the same lines. run()
-imports nothing from health.py; only the run command line loads it.
+WARN or FAIL row of its own group and rule, never an UNREAD row or a sibling rule's. A rule whose control stays green
+cannot fire. Git runs with no inherited GIT_DIR, no global or system config and a fixed identity. Rows carry no
+temporary path or time. run() imports nothing from health.py.
 """
 import hashlib
 import importlib
@@ -143,7 +142,13 @@ def f_test_time(root):
     os.makedirs(folder, exist_ok=True)
     rows = {"r%d" % n: {"status": "PASS", "seconds": 400, "commit": "x"} for n in range(3)}
     with open(os.path.join(folder, "main-%s.json" % hashlib.sha1(b"main").hexdigest()[:8]), "w") as handle:
-        json.dump({"at": OLD, "rows": rows}, handle)
+        json.dump({"at": OLD, "total_seconds": 1200, "rows": rows}, handle)
+
+
+def f_caps(root):
+    f_test_time(root)
+    write(root, ".loop/config.json", '{"base": "main", "max_regression_rows": 2, "max_suite_seconds": 100}')
+    commit(root, "caps")
 
 
 def f_worktrees(root):
@@ -322,6 +327,7 @@ CONTROLS = {
     "branches": ("hygiene", "branches", f_branches),
     "cost": ("performance", "cost", f_cost),
     "test-time": ("performance", "test-time", f_test_time),
+    "rows-cap": ("performance", "rows-cap", f_caps), "suite-cap": ("performance", "suite-cap", f_caps),
     "worktrees": ("hygiene", "worktrees", f_worktrees),
     "local-branches": ("hygiene", "local-branches", f_local_branches),
     "hooks": ("security", "hooks", f_hooks),

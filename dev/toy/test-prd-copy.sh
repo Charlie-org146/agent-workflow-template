@@ -17,7 +17,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH  # a toy test never re
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-export HOME=$(mktemp -d); export USERPROFILE="$HOME"  # setup.py writes the private settings under HOME
+export HOME=$(mktemp -d) USERPROFILE=$(mktemp -d)  # setup.py writes the private settings under HOME
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1

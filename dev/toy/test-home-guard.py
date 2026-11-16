@@ -51,12 +51,17 @@ with tempfile.TemporaryDirectory() as tmp:
     code, said = toy(tmp, "flow.sh", 'case "$LOOP_FLOW" in "$TOY_REAL_WL"*|"") exit 3;; esac; [ "$LOOP_HEALTH" != "" ] || exit 4')
     check("the harness points LOOP_FLOW and LOOP_HEALTH at temp paths", code == 0, said)
 
+def unpaired(text):
+    return bool(re.search(r"(?<![A-Za-z_])HOME[=\"]|\"HOME\"|'HOME'|\bHOME=", text)) and "USERPROFILE" not in text
+
+
+check("control: a toy text that sets HOME alone is found", unpaired("export HOME=/tmp/x"), "", "isolate")
+check("control: a toy text that sets HOME and USERPROFILE is not", not unpaired("export HOME=/tmp/x USERPROFILE=/tmp/x"), "", "isolate")
 bad = []
 for path in sorted(glob.glob(os.path.join(root, "dev", "toy", "test-*"))):
     if not path.endswith((".sh", ".py")) or path.endswith("test-home-guard.py"):
         continue
-    text = open(path, encoding="utf-8", errors="replace").read()
-    if re.search(r"(?<![A-Za-z_])HOME[=\"]|\"HOME\"|'HOME'|\bHOME=", text) and "USERPROFILE" not in text:
+    if unpaired(open(path, encoding="utf-8", errors="replace").read()):
         bad.append(os.path.basename(path))
 check("every toy that sets HOME also sets USERPROFILE (Python's expanduser reads it on Windows)", not bad, ", ".join(bad), "isolate")
 sys.exit(1 if fails else 0)

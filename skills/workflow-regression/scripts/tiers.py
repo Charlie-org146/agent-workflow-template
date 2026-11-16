@@ -197,11 +197,13 @@ def hit(root, row, path, at, cache, memo):
         return lanes.reads_table(root, row["command"], cache)
     if path == KNOWN:
         return lanes.table(root, at, "regression-known.tsv", memo).get(row["id"]) != memo["known"].get(row["id"])
+    if path == narrow.CONFIG:
+        return narrow.config_hit(root, at, row["command"], cache)
     return lanes.touches(root, row["command"], path, cache)
 
 
 def reason(root, row, old, ok, base, cache, memo):
-    """Why this row runs, or '' (failure rerun, new row, reaches <file>, root runner)."""
+    """Why this row runs, or ''."""
     if ok and old["rows"].get(row["id"], {}).get("status") == "FAIL":
         return "failure rerun"
     if ok and old["rows"].get(row["id"], {}).get("status") == "SKIPPED":
@@ -255,7 +257,7 @@ def picks(root, picked, paths, old, ok, cache, memo):
 
 
 def rank(because):
-    """Run order (#531): a new or changed row, a rerun, a row that reaches a changed file, then the root runners and the picks."""
+    """Run order (#531): new or changed rows, reruns, rows that reach a changed file, then root runners and picks."""
     return 0 if because.startswith("new row") else 1 if because.startswith(("failure", "skipped")) else 3 if because.startswith(
         ("root runner", "names")) else 2
 

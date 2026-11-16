@@ -331,10 +331,10 @@ def named_in(root, rel, path, cache):
     return cache[key]
 
 
-def names_any(root, command, paths, cache):
+def names_any(root, command, paths, cache, skip=""):
     """Whether a row's command, or a file it reaches, names one of paths (a file gone from the tree can't be mapped by reach)."""
     deps, _ = closure(root, command, cache)
-    files = [p for p in deps if not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
+    files = [p for p in deps if p.replace("\\", "/") != skip and not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
     for path in paths:
         if narrow.names(command, path) or any(named_in(root, p, path, cache) for p in files):
             return True
@@ -371,6 +371,8 @@ def plan(root, selected, record, current_tsv, current_known):
                     or reads_table(root, row["command"], cache)
             elif path == ".loop/regression-known.tsv":
                 stale = table(root, prior["commit"], "regression-known.tsv", memo).get(rid) != current_known.get(rid)
+            elif path == narrow.CONFIG:
+                stale = stale or narrow.config_hit(root, prior["commit"], row["command"], cache)
             elif touches(root, row["command"], path, cache):
                 stale = True
             elif not no_effect(path) and not any(hits(path, closure(root, other["command"], cache)[0]) for other in selected):
