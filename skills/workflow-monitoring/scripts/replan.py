@@ -5,24 +5,18 @@ usage: replan.py [plan]       re-read every goal's progress, log what changed an
        replan.py since ISO    print the changes logged after a time (the check-in lists those since the last one)
 
 What it does, and only this:
-- starts: watch starts every goal whose dependencies are merged, up to the slot limit; each start it finds is logged
-  with its reason (dependencies met, a slot free), so no ready goal sits idle without a line saying why;
-- merges: two queued goals (not started) with the same PRD (`prd:` on their queue lines, first word) and overlapping
-  `touches:` are proposed merged; goals missing either field are never proposed;
-- splits: a queued or running goal that two or more queued goals wait on, whose queue line names `parts:`, is
-  proposed split so the named part can start first;
-- merge line: goals done with an open pull request are ordered critical path first (the most goals waiting on them,
-  then the longest time left behind them); advisory, shown in the check-in, merge.py is not changed.
-It never stops, restarts or edits a goal, and never applies a merge or a split: the owner does, with board.py retire
-and a new queue line. Each change goes once into <git common dir>/loop/replan.log as `<time> <kind> <slugs>: <reason>`;
-a proposal already logged with the same reason is not logged or shown again.
+- starts: each goal watch starts (dependencies merged, a slot free) is logged with its reason, so no ready goal sits idle unexplained;
+- merges: queued goals with the same PRD (first word of `prd:`) and overlapping `touches:` are proposed merged (a goal missing either is never proposed);
+- splits: a goal that two or more queued goals wait on, whose queue line names `parts:`, is proposed split so that part can start first;
+- merge line: done goals with an open pull request, critical path first (most goals waiting, then longest time left); advisory.
+It never stops, restarts or edits a goal or applies a merge or split: the owner does, with board.py retire and a new queue line.
+Each change goes once into <git common dir>/loop/replan.log as `<time> <kind> <slugs>: <reason>`; a repeat is not logged or shown again.
 """
 import argparse
 import atexit
 import datetime
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -30,17 +24,10 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import auto  # noqa: E402
+from auto import loop_dir, top as root  # noqa: E402,F401
 import sessions as se  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
-
-
-def root():
-    return bs.git("rev-parse", "--show-toplevel")
-
-
-def loop_dir(top):
-    common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=top, capture_output=True, text=True).stdout.strip()
-    return os.path.join(os.path.abspath(os.path.join(top, common)), "loop")
 
 
 def runs(folder):
@@ -108,10 +95,6 @@ def proposals(lines, records):
     return out
 
 
-def log_path(folder):
-    return os.path.join(folder, "replan.log")
-
-
 def plan(top=None, at=None):
     """Log this pass's new changes; return them as lines."""
     top = top or root()
@@ -131,7 +114,7 @@ def plan(top=None, at=None):
             new.append("%s %s %s: %s" % (at.strftime("%Y-%m-%dT%H:%M:%SZ"), kind, slugs, reason))
     if new:
         os.makedirs(folder, exist_ok=True)
-        with open(log_path(folder), "a") as handle:
+        with open(os.path.join(folder, "replan.log"), "a") as handle:
             handle.write("\n".join(new) + "\n")
         tmp = seen_path + ".%d.tmp" % os.getpid()
         with open(tmp, "w") as handle:
@@ -147,11 +130,7 @@ def open_proposals(top):
 
 
 def since(top, stamp):
-    try:
-        with open(log_path(loop_dir(top))) as handle:
-            return [line.rstrip("\n") for line in handle if line[:20] > stamp]
-    except OSError:
-        return []
+    return auto.since(top, stamp, "replan.log")
 
 
 def main():
@@ -161,12 +140,8 @@ def main():
     item = sub.add_parser("since")
     item.add_argument("stamp")
     args = parser.parse_args()
-    if getattr(args, "stamp", None) is not None and not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", args.stamp):
-        sys.exit("REFUSED: %r is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % args.stamp)
-    if args.cmd == "since":
-        lines = since(root(), args.stamp)
-    else:
-        lines = plan()
+    args.cmd == "since" and bs.timed(args.stamp)
+    lines = since(root(), args.stamp) if args.cmd == "since" else plan()
     print("\n".join(lines) if lines else "REPLAN: no change")
     return 0
 
@@ -339,7 +314,6 @@ def preflight_new(top, cfg, minutes, touches):
 
 def preflight_lines(seen):
     """One Needs-you line per goal with open pre-flight items: each item, its options and recommendation, and the take-all word."""
-    import auto
     return ["%s pre-flight, %d open (blocks nothing until its ETA starts): %s; answer \"recommended\" to take every recommendation, or one answer per item" % (
         run["slug"], len(left), "; ".join("%s: %s [%s; recommended: %s]" % (i["id"], i["ask"], " / ".join(i["options"]), i["recommend"]) for i in left))
         for run in seen for left in [auto.eta_open(run)] if left]
@@ -347,7 +321,6 @@ def preflight_lines(seen):
 
 def preflight_answer(g, args, state, why):
     """goal.py set --preflight recommended|ID=ANSWER,...: owner words in, the answers into the sidecar; the ETA clock starts at the last one."""
-    import auto
     seen = g.fit.view(state, g.state_dir())
     left, have = auto.eta_open(seen), dict((seen.get("preflight_answers") or {}).get("answers") or {})
     left or g.no("%s has no open pre-flight item; nothing changed." % args.slug)
@@ -360,7 +333,7 @@ def preflight_answer(g, args, state, why):
         have[item["id"]] = value.strip()
     args.preflight == "recommended" and have.update({i["id"]: i["recommend"] for i in left})
     done = not [i for i in left if i["id"] not in have]
-    g.guards.add_set(g.state_dir(), args.slug, "preflight_answers", {"answers": have, "record": rid, "spent": auto.eta_spent(state) if done else 0},
+    g.guards.add_set(g.state_dir(), args.slug, "preflight_answers", {"answers": have, "record": rid, "spent": bs.active_minutes(state) if done else 0},
                      "set pre-flight answers (record %s): %s" % (rid, why))
 
 

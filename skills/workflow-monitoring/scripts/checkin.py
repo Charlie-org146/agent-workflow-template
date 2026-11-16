@@ -4,16 +4,14 @@ prints only for `report`, `dashboard` and "where do things stand".
 
 usage: checkin.py [--since ISO]
 
-  headline        one line: goals running, waiting on you or queued, and the session pool
-  All sessions    one table row per live goal: session, repo, purpose, status, progress, time left and ETA, latest
-  Re-plan         what replan.py changed since the last check-in, with its reason (MON-10)
-  Auto-answered   what auto.py answered or sent since the last check-in, with the words that revert it (MON-11)
-  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' graph; a `repo/slug`
-                  in depends-on is listed under `Between repos`; only live goals and goals merged since the
-                  last check-in (one [x] line, then gone) are listed
-  Needs you       numbered: questions with their options and the recommended answer, stuck goals by cause, workers
-                  silent past silent_minutes (MON-8; STALLED: nothing runs for it), the pool ask
-                  (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
+  headline        goals running, waiting on you or queued, and the session pool
+  All sessions    one row per live goal: session, repo, purpose, status, progress, time left and ETA, latest
+  Re-plan         what replan.py changed since the last check-in (MON-10)
+  Auto-answered   what auto.py answered since the last check-in, with the words that revert it (MON-11)
+  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14); `repo/slug` in depends-on goes under
+                  `Between repos`; live goals and goals merged since the last check-in
+  Needs you       numbered: questions with options and a recommendation, stuck goals, workers silent past
+                  silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
   Coming up       each goal's next expected step and what the owner will need to do
 
 --since defaults to the last check-in in <git common dir>/loop/checkin.json. Read-only.
@@ -51,8 +49,12 @@ def shown(run):
     return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
 
 
-def mood(run, state):
-    return "held" if state == "silent" and run.get("step") == "pr" else state
+def quoted(words):
+    return " / ".join('"%s"' % w for w in words)
+
+
+def last_at(root):
+    return (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at")
 
 
 def gather(root, at, stamp=None):
@@ -61,7 +63,7 @@ def gather(root, at, stamp=None):
     found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
     taken = graph.assigned(found)
     landed = board_lines.states(runs, root, graph.merged)
-    states = {r["slug"]: "merged" if landed.get(r["slug"]) == "MERGED" else mood(r, graph.classify(r, taken, at, cfg)) for r in runs}
+    states = {r["slug"]: "merged" if landed.get(r["slug"]) == "MERGED" else "held" if (s := graph.classify(r, taken, at, cfg)) == "silent" and r.get("step") == "pr" else s for r in runs}
     since = graph.parse_at(stamp)
     new = lambda r: states[r["slug"]] == "merged" and bool(since) and (graph.parse_at(r.get("updated")) or since) > since
     live = [r for r in runs if (states[r["slug"]] != "retired" and (states[r["slug"]] != "merged" or new(r))) and shown(r)]
@@ -69,33 +71,30 @@ def gather(root, at, stamp=None):
     for r in live:
         if graph.foreign(r):
             count, last, _ = away.get(graph.foreign(r), (0, None, ""))
-            spoke = graph.last_spoke(r)
-            away[graph.foreign(r)] = (count + 1, max([t for t in (last, spoke) if t] or [None]) if (last or spoke) else None, r.get("machine") or "")
+            away[graph.foreign(r)] = (count + 1, max([t for t in (last, graph.last_spoke(r)) if t] or [None]), r.get("machine") or "")
     live = [r for r in live if not graph.foreign(r)]
     return dict(away=away, name=os.path.basename(root), root=root, cfg=cfg, folder=folder, runs=runs, found=found, why=why, taken=taken,
                 states=states, live=live, queue=bs.queued(root, runs))
 
 
 def grouped(blocks, at=None, tags=None):
-    out, edges, marks = [], [], {}
-    for name, items in blocks:
-        marks[name] = {item["slug"]: item.get("mark") for item in items}
+    out, edges, marks = [], [], {name: {item["slug"]: item.get("mark") for item in items} for name, items in blocks}
+    key = lambda item: (item.get("release") or "no release", item.get("feature") or "no feature")
     every = {}
     for _, items in blocks:
         for item in items:
-            every.setdefault(item.get("release") or "no release", []).append(item)
+            every.setdefault(key(item)[0], []).append(item)
     for name, items in blocks:
         local = [dict(item, depends=[d for d in item.get("depends") or [] if "/" not in d]) for item in items]
         out += ["== %s ==" % (name if len(name) <= 54 else name[:51] + "...")]
         out += board_lines.render(local)[:-2] if items else ["- (none)"]
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
-        for release in sorted({item.get("release") or "no release" for item in items}):
+        for release in sorted({key(item)[0] for item in items}):
             out += ["-- %s --" % bs.release_header(release, every[release], at)]
-            for feature in sorted({item.get("feature") or "no feature" for item in items if (item.get("release") or "no release") == release}):
+            for feature in sorted({key(item)[1] for item in items if key(item)[0] == release}):
                 out += ["  %s:" % feature]
-                out += ["    " + goal_line(item) for item in items
-                        if (item.get("release") or "no release") == release and (item.get("feature") or "no feature") == feature]
+                out += ["    " + goal_line(item) for item in items if key(item) == (release, feature)]
         left = [item["left"] for item in items if item.get("left")]
         out += ["expected finish %s (about %s)" % ((at + datetime.timedelta(seconds=max(left))).astimezone().strftime("%H:%M"), board_page.span(max(left)))] if left and at else []
         edges += [(name, item["slug"], dep.partition("/")[0], dep.partition("/")[2]) for item in items
@@ -109,40 +108,39 @@ def grouped(blocks, at=None, tags=None):
     return [row for line in out for row in (textwrap.wrap(line, board_lines.WIDTH, subsequent_indent="    ") or [""])]
 
 
+def others(followed, root, at, stamp, broken=None):
+    """The pod's other repos, gathered; one that can't be read is skipped, or added to `broken`."""
+    out = []
+    for name, path, _ in followed:
+        if os.path.realpath(path) != os.path.realpath(root):
+            try:
+                out.append(gather(path, at, stamp))
+            except Exception as error:
+                broken is None or broken.append((name, lb.plain(type(error).__name__, 40)))
+    return out
+
+
 def expected(root=None, at=None):
     root = bs.git("rev-parse", "--show-toplevel", cwd=root or None) or root
     at = at or datetime.datetime.now(datetime.timezone.utc)
-    stamp = (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at")
-    pod, here = [gather(root, at, stamp)], os.getcwd()
+    stamp, here = last_at(root), os.getcwd()
     os.chdir(root)
     try:
         followed = bd.followed()
     finally:
         os.chdir(here)
-    for name, path, _ in followed:
-        if os.path.realpath(path) != os.path.realpath(root):
-            try:
-                pod.append(gather(path, at, stamp))
-            except Exception:
-                continue
-    return [(g["name"], item["slug"]) for g in pod for item in g["live"] + g["queue"]]
+    return [(g["name"], item["slug"]) for g in [gather(root, at, stamp)] + others(followed, root, at, stamp) for item in g["live"] + g["queue"]]
 
 
 def render(root=None, at=None, stamp=None):
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
-    stamp = stamp or (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at") or "0000"
+    stamp = stamp or last_at(root) or "0000"
     mine = gather(root, at, stamp)
     folder, cfg, runs, found, why, taken, states, live, queue = (mine[k] for k in (
         "folder", "cfg", "runs", "found", "why", "taken", "states", "live", "queue"))
-    others, broken = [], []
-    for name, path, _ in bd.followed():
-        if os.path.realpath(path) != os.path.realpath(root):
-            try:
-                others.append(gather(path, at, stamp))
-            except Exception as error:
-                broken.append((name, lb.plain(type(error).__name__, 40)))
-    pod = [mine] + others
+    broken = []
+    pod = [mine] + others(bd.followed(), root, at, stamp, broken)
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
     counts = lambda *names: sum(g["states"][r["slug"]] in names for g in pod for r in g["live"] if not graph.foreign(r))
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
@@ -174,35 +172,32 @@ def render(root=None, at=None, stamp=None):
         out += ["", "Auto-answered (full auto):"]
         for line in decided[-8:]:
             parts = [p.strip() for p in line.split(" | ")]
-            if len(parts) >= 6 and parts[2] == "AUTO":
-                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>"' % (parts[1], parts[3][:60], parts[4], parts[1]))
-            elif len(parts) >= 6:
-                out.append("- %s waits for you: %s" % (parts[1], parts[5]))
+            if len(parts) >= 6:
+                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>"' % (parts[1], parts[3][:60], parts[4], parts[1]) if parts[2] == "AUTO"
+                           else "- %s waits for you: %s" % (parts[1], parts[5]))
     blocks = []
     for g in pod:
-        items = [dict(slug=r["slug"], mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge",
-                      depends=[d for d in r.get("waits_on") or []], owner=graph.foreign(r),
-                      left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at), machine=r.get("machine") or graph.machine_name(),
-                      release=release_of(g["root"], r["slug"]), feature=feature_of(g["root"], r.get("goal"))) for r in g["live"]]
-        blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"], machine=graph.machine_name(),
-                                                release=release_of(g["root"], q["slug"]), feature=feature_of(g["root"], q.get("goal")))
-                                           for q in g["queue"]]))
+        item = lambda r, **kw: dict(slug=r["slug"], machine=r.get("machine") or graph.machine_name(), release=release_of(g["root"], r["slug"]),
+                                    feature=feature_of(g["root"], r.get("goal")), **kw)
+        items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
+                      owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at)) for r in g["live"]]
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"]) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
     needs, readonly = [], []
+    owned = lambda prefix, run: "- %s%s asks (owned by %s, read-only here)" % (prefix, run["slug"], graph.foreign(run))
     for run in live:
         state, ask = states[run["slug"]], run.get("waiting") or {}
         run.get("review_wait") and needs.append("%s: merge waiting on review; review.py record %s" % (run["slug"], run["slug"]))
         if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
             needs.append(line)
         elif graph.foreign(run):
-            readonly += ["- %s asks (owned by %s, read-only here)" % (run["slug"], graph.foreign(run))] * (state == "waiting")
+            readonly += [owned("", run)] * (state == "waiting")
         elif state == "waiting":
             words = ask.get("words") or ["go on " + run["slug"]]
             rec = ask.get("recommend") or words[0]
-            needs.append("%s asks: %s; options: %s; recommended: %s" % (run["slug"], lb.plain(ask.get("ask"), 160),
-                                                                       " / ".join('"%s"' % w for w in words), rec))
+            needs.append("%s asks: %s; options: %s; recommended: %s" % (run["slug"], lb.plain(ask.get("ask"), 160), quoted(words), rec))
         elif state == "silent":
             needs.append("%s: its worker has sent nothing for %dm; look at its session" % (
                 run["slug"], graph.silent_for(run, at) // 60))
@@ -211,10 +206,8 @@ def render(root=None, at=None, stamp=None):
     needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live])
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
-    if ready and replan.plan_pause(cfg):
-        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.plan_pause(cfg)))
-    if ready and replan.memory_hold(cfg):
-        needs.append("%d ready goal(s) wait: %s" % (len(ready), replan.memory_hold(cfg)))
+    for hold in ready and (replan.plan_pause(cfg), replan.memory_hold(cfg)):
+        hold and needs.append("%d ready goal(s) wait: %s" % (len(ready), hold))
     waited = replan.memory_waits(folder)
     if waited:
         needs.append("%d lane wait(s) for memory in the last hour; the last: %s" % (len(waited), waited[-1][21:140]))
@@ -233,20 +226,19 @@ def render(root=None, at=None, stamp=None):
                 old["slug"], item.get("name") or sid, old["slug"]))
     if os.path.exists(os.path.join(folder, "session-pool.bad.json")):
         needs.append("malformed session-pool entries were set aside in session-pool.bad.json; look and delete it")
-    if os.path.exists(os.path.join(root, ".loop", "config.json")) and bs.read_json(os.path.join(root, ".loop", "config.json")) is None:
+    cfg_path = os.path.join(root, ".loop", "config.json")
+    if os.path.exists(cfg_path) and bs.read_json(cfg_path) is None:
         needs.append(".loop/config.json can't be read, so every setting is at its default; fix the JSON (python3 -m json.tool)")
     _, fails, cause = govern_hook.health(os.path.dirname(folder))
     if fails:
         needs.append("the govern hook let %d call(s) through on an error (last: %s); fix it, then check govern-hook.log"
                      % (fails, lb.plain(cause, 80)))
-    for g in others:
+    for g in pod[1:]:
         for run in g["live"]:
             ask = run.get("waiting") or {}
-            if graph.foreign(run) and g["states"][run["slug"]] == "waiting":
-                readonly.append("- %s/%s asks (owned by %s, read-only here)" % (g["name"], run["slug"], graph.foreign(run)))
-            elif g["states"][run["slug"]] == "waiting" and not graph.foreign(run):
-                needs.append("%s/%s asks: %s; options: %s" % (g["name"], run["slug"], lb.plain(ask.get("ask"), 160),
-                                                              " / ".join('"%s"' % w for w in ask.get("words") or ["go on"])))
+            if g["states"][run["slug"]] == "waiting":
+                readonly.append(owned(g["name"] + "/", run)) if graph.foreign(run) else needs.append("%s/%s asks: %s; options: %s" % (
+                    g["name"], run["slug"], lb.plain(ask.get("ask"), 160), quoted(ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
     operation, asks = unattended.lines()
     needs += asks
@@ -280,10 +272,14 @@ HEAD = re.compile(r"^[\s>#*_`-]*([A-Za-z ]+?)[\s:*_`]*(?:\(\d+\))?\s*$")
 NEXT = ("needs you", "coming up")
 
 
+def head(line):
+    return (HEAD.match(line) or [None, ""])[1].strip().lower()
+
+
 def body(text):
     lines, start = str(text or "").splitlines(), None
     for i, line in enumerate(lines):
-        name = (HEAD.match(line) or [None, ""])[1].strip().lower()
+        name = head(line)
         if start is None and name == "dependencies":
             start = i + 1
         elif start is not None and name in NEXT:
@@ -303,7 +299,7 @@ def blocks(section):
 def unranked(text):
     items, inside = [], False
     for line in str(text or "").splitlines():
-        name = (HEAD.match(line) or [None, ""])[1].strip().lower()
+        name = head(line)
         inside = name == "needs you" or (inside and name != "coming up")
         if inside and re.match(r"\s*\d+\.\s", line):
             items.append(line)
@@ -322,20 +318,15 @@ def missing(text, cwd=None):
     if section is None:
         return []
     parts = blocks(section)
-    found = []
-    for repo, slug in expected(cwd or None):
-        where = parts.get(repo if len(repo) <= 54 else repo[:51] + "...", parts.get("") if len(parts) == 1 else "")
-        if not re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(slug), where or ""):
-            found.append("%s/%s" % (repo, slug))
-    return found
+    return ["%s/%s" % (repo, slug) for repo, slug in expected(cwd or None)
+            if not re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(slug), parts.get(repo if len(repo) <= 54 else repo[:51] + "...", parts.get("") if len(parts) == 1 else "") or "")]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--since", default="")
     args = parser.parse_args()
-    if args.since and not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", args.since):
-        sys.exit("REFUSED: --since %r is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % args.since)
+    args.since and bs.timed(args.since, "--since %r")
     print("\n".join(render(stamp=args.since or None)))
     return 0
 

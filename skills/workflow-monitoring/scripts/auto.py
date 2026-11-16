@@ -5,18 +5,15 @@ usage: auto.py pass [--dry-run]  decide each waiting goal's new question once (o
        auto.py since ISO       the decisions logged after a time (the check-in lists those since the last one)
        auto.py decide-text     read a question on stdin, print AUTO or WAITS with why (for tests and by hand)
 
-`full_auto` in .loop/config.json (on by default) is read at each decision. Only the operation session answers: a worker's
+`full_auto` in .loop/config.json (on by default) is read at each decision. Only the operation session answers; a worker's
 `sessions.py report --status waiting --ask Q --words W ... --recommend W --kind K` just records the question. A decision
-is answered only when all of these hold, else it waits under Needs you with its reason (logged once per question):
-- its kind is `routine` (destructive, money, security, owner, a missing or an unknown kind all wait);
+is answered only when all hold, else it waits under Needs you with its reason (logged once per question):
+- its kind is `routine` (destructive, money, security, owner, a missing or unknown kind all wait);
 - it names a recommended answer that is one of its words;
-- no risky word (WORDS below: delete, publish, merge, token, secret ...; whole words, case ignored) appears in the
-  question or the answer, nor a path matching `risky_paths`;
-- the owner hasn't answered that goal before: an owner answer on the goal sends every later question to the owner
-  (answers.jsonl, source owner), so full auto never answers over the owner's word.
-An answer goes through `operate.py send SLUG WORDS --source auto`, as an owner answer does; the worker runs goal.py answer
-as usual. Each decision is appended to <git common dir>/loop/auto.log as `time | slug | AUTO|WAITS | question | answer |
-reason`; the run's waiting.auto marks it decided. The check-in lists each auto answer with the words that revert it.
+- no risky word (WORDS below, whole words) appears in the question or answer, nor a path matching `risky_paths`;
+- the owner hasn't answered that goal before (answers.jsonl, source owner): full auto never answers over the owner's word.
+An answer goes through `operate.py send SLUG WORDS --source auto`. Each decision is appended to <git common dir>/loop/auto.log
+as `time | slug | AUTO|WAITS | question | answer | reason`; the check-in lists each auto answer with the words that revert it.
 """
 import argparse
 import datetime
@@ -57,6 +54,10 @@ def loop_dir(root):
 def config(root):
     found = bs.read_json(os.path.join(root, ".loop", "config.json"))
     return found if isinstance(found, dict) else {}
+
+
+def stamp():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def key_of(text):
@@ -118,34 +119,33 @@ def decide_all(root=None, now=None, dry=False):
     """One pass: each waiting goal's newest question decided once. Returns the log lines written (dry: would write)."""
     root = root or top()
     folder, cfg = loop_dir(root), config(root)
-    at = now or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    out = []
-    runs_dir = os.path.join(folder, "runs")
+    at, out, runs_dir = now or stamp(), [], os.path.join(folder, "runs")
     for name in sorted(os.listdir(runs_dir)) if os.path.isdir(runs_dir) else []:
         path = os.path.join(runs_dir, name)
         run = bs.read_json(path) if name.endswith(".json") else None
         if not isinstance(run, dict) or run.get("status") != "waiting" or not isinstance(run.get("waiting"), dict):
             continue
         waiting = run["waiting"]
-        if waiting.get("auto") or graph.foreign(run):  # a pod never answers another pod's question
+        if waiting.get("auto") or graph.foreign(run):
             continue
         reason = why_not(waiting, cfg, owner_answered(folder, run.get("slug")))
         if reason == "full_auto is off":
-            continue  # re-read at the next decision; nothing is marked, so turning it on later still answers
+            continue  # nothing is marked: turning it on later still answers
         if dry:
             out.append("WOULD %s %s: %s" % ("WAIT" if reason else "ANSWER", run["slug"], reason or waiting["recommend"]))
             continue
+        say = lambda verdict, answer, why: out.append(log(folder, run["slug"], verdict, waiting, answer, why, at))
         if reason:
-            out.append(log(folder, run["slug"], "WAITS", waiting, "", reason, at))
+            say("WAITS", "", reason)
             waiting["auto"] = {"verdict": "waits", "why": reason, "at": at}
         else:
             words = waiting["recommend"]
             sent = subprocess.run([sys.executable, os.path.join(HERE, "operate.py"), "send", run["slug"], words, "--source", "auto"],
                                   cwd=root, capture_output=True, text=True)
             if sent.returncode:
-                out.append(log(folder, run["slug"], "WAITS", waiting, "", "the answer could not be sent", at))
-                continue  # not marked: the next pass tries again
-            out.append(log(folder, run["slug"], "AUTO", waiting, words, "routine, recommended", at))
+                say("WAITS", "", "the answer could not be sent")
+                continue
+            say("AUTO", words, "routine, recommended")
             waiting["auto"] = {"verdict": "answered", "words": words, "at": at}
         fresh = bs.read_json(path)
         if isinstance(fresh, dict) and fresh.get("status") == "waiting" and key_of((fresh.get("waiting") or {}).get("ask")) == key_of(waiting.get("ask")):
@@ -157,9 +157,9 @@ def decide_all(root=None, now=None, dry=False):
     return out
 
 
-def since(root, stamp):
+def since(root, stamp, name="auto.log"):
     try:
-        with open(os.path.join(loop_dir(root), "auto.log")) as handle:
+        with open(os.path.join(loop_dir(root), name)) as handle:
             return [line.rstrip("\n") for line in handle if line[:20] > stamp]
     except OSError:
         return []
@@ -177,8 +177,7 @@ def main():
     item.add_argument("--recommend", default="")
     item.add_argument("--words", action="append", default=[])
     args = parser.parse_args()
-    if getattr(args, "stamp", None) is not None and not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", args.stamp):
-        sys.exit("REFUSED: %r is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % args.stamp)
+    args.cmd == "since" and bs.timed(args.stamp)
     if args.cmd == "decide-text":
         reason = why_not({"ask": sys.stdin.read(), "kind": args.kind, "recommend": args.recommend,
                           "words": args.words or [args.recommend]}, config(top() or "."))
@@ -190,12 +189,20 @@ def main():
 
 
 # The owner's messages (sessions.py owner-words TEXT --ids A,B): one line each in <git common dir>/loop/owner-words.tsv:
-# id (o1, ...), UTC time, the operation session's id, the text as JSON, the IDs or pages it covers. A worker is refused.
+# id (o1, ...), UTC time, the operation session's id, the text as JSON, the IDs or pages it covers.
 
 
-def owner_words_path():
-    top = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
-    return os.path.join(os.path.abspath(top), "loop", "owner-words.tsv")
+def owner_words_path(root="."):
+    return os.path.join(loop_dir(root), "owner-words.tsv")
+
+
+def owner_rows(root="."):
+    """The owner-words records as [id, time, session, text, covers] rows."""
+    try:
+        with open(owner_words_path(root), encoding="utf-8") as handle:
+            return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]
+    except OSError:
+        return []
 
 
 def owner_words_add(text, ids):
@@ -211,29 +218,27 @@ def owner_words_add(text, ids):
     if os.path.exists(where):
         with open(where, encoding="utf-8") as handle:
             count = sum(1 for line in handle if line.strip())
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     with open(where, "a", encoding="utf-8") as handle:
-        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, stamp, os.environ.get("LOOP_OPERATION_SESSION") or "operation",
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, stamp(), os.environ.get("LOOP_OPERATION_SESSION") or "operation",
                                               json.dumps(text, ensure_ascii=False), ",".join(ids)))
     print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
     return 0
 
 
-# --- the hard ETA (GRD-14, o52): active minutes a goal may run, recorded at freeze. Past it nothing starts and the goal
-# waits under Needs you: ship now, extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
+# --- the hard ETA (GRD-14, o52): active minutes a goal may run, set at freeze. Past it the goal waits under Needs you: ship now,
+# extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
 
 ETA_FLOOR = 30
 
 
 def eta_margin(cfg):
-    """The ETA margin over the estimate as a factor: eta_margin_percent (0 to 300, default 25; anything else reads as 25)."""
+    """The ETA margin as a factor: eta_margin_percent (0 to 300; anything else reads as the default 25)."""
     value = (cfg or {}).get("eta_margin_percent", 25)
     return 1 + (value if isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= 300 else 25) / 100
 
 
 def eta_new(root, slug, done, touches, budget, cfg=None):
-    """{minutes, estimate, basis}: the model's high end for a goal of this size plus 25%, up to 5 minutes (30 at least);
-    the time budget when it has no estimate."""
+    """{minutes, estimate, basis}: the model's high end plus the margin (30 minutes at least), else the time budget."""
     names = glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))
     runs = [r for r in map(bs.read_json, names) if isinstance(r, dict) and r.get("slug")]
     try:
@@ -260,12 +265,8 @@ def eta_minutes(seen):
     return (eta["minutes"] if isinstance(eta.get("minutes"), int) else 0) + sum(n for n in more if isinstance(n, int))
 
 
-def eta_spent(run, at=None):
-    return bs.active_minutes(run, at)
-
-
 def eta_open(seen):
-    """Pre-flight items (#4535) still unanswered; the ETA clock starts when none is."""
+    """Pre-flight items (#4535) still unanswered; the ETA starts when none is."""
     done = (seen.get("preflight_answers") or {}).get("answers") or {}
     return [i for i in (seen.get("preflight") or {}).get("items") or [] if i.get("id") not in done]
 
@@ -275,13 +276,13 @@ def eta_start(seen):
 
 
 def eta_left(seen, at):
-    """Seconds of hard ETA a goal has left (0 once passed); None with no ETA or while its pre-flight is open (the ETA has not started)."""
+    """Seconds of hard ETA left (0 once passed); None with no ETA or while its pre-flight is open."""
     held = eta_minutes(seen)
-    return None if not held or eta_open(seen) else max(0, held - eta_spent(seen, at) + eta_start(seen)) * 60
+    return None if not held or eta_open(seen) else max(0, held - bs.active_minutes(seen, at) + eta_start(seen)) * 60
 
 
 def eta_over(seen, spent):
-    """The goal has spent its ETA (counted from its pre-flight answers) and the owner has not chosen ship now."""
+    """The goal has spent its ETA and the owner has not chosen ship now."""
     held = eta_minutes(seen)
     return bool(held) and not eta_open(seen) and spent - eta_start(seen) >= held and (seen.get("eta_choice") or {}).get("choice") != "ship"
 
@@ -289,7 +290,7 @@ def eta_over(seen, spent):
 def eta_text(seen, at):
     """The check-in's ETA cell: a clock time, passed, or none."""
     held, n = eta_minutes(seen), len(eta_open(seen))
-    left = held - eta_spent(seen, at) + eta_start(seen)
+    left = held - bs.active_minutes(seen, at) + eta_start(seen)
     return "no ETA" if not held else "ETA after your answers (%d open)" % n if n else "ETA passed" if left <= 0 else "ETA " + (at + datetime.timedelta(minutes=left)).astimezone().strftime("%H:%M")
 
 
@@ -311,12 +312,7 @@ def eta_record(g, rid, slug, what):
     fix = "the operation session runs sessions.py owner-words TEXT --ids %s, then repeats this with --owner-record ID" % slug
     if not rid:
         g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
-    try:
-        with open(owner_words_path(), encoding="utf-8") as handle:
-            rows = [line.rstrip("\n").split("\t") for line in handle]
-    except OSError:
-        rows = []
-    found = [r for r in rows if len(r) == 5 and r[0] == rid]
+    found = [r for r in owner_rows() if r[0] == rid]
     if not found or slug not in found[-1][4].split(","):
         g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
     for path in glob.glob(os.path.join(g.state_dir(), "*.extra.json")):
@@ -328,8 +324,7 @@ def eta_record(g, rid, slug, what):
 def eta_set(g, args, state, why):
     """goal.py set --eta-extend N or --eta-choice ship|defer, with --owner-record."""
     slug, runs, rid = args.slug, g.state_dir(), eta_record(g, args.owner_record, args.slug, "an ETA change")
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    note = {"record": rid, "at": stamp, "why": why}
+    note = {"record": rid, "at": stamp(), "why": why}
     if args.eta_extend:
         if args.eta_extend < 1:
             g.no("--eta-extend wants a whole number of minutes above 0.")
@@ -349,15 +344,9 @@ def eta_set(g, args, state, why):
 
 
 def eta_rows(root, at=None):
-    """(rule, level, text): eta-missing (WARN), eta-extended (FAIL: no covering record), eta-overrun (FAIL: a step past
-    its ETA and not waiting for the owner). Read-only."""
-    at, out, covers = at or datetime.datetime.now(datetime.timezone.utc), [], {}
-    try:
-        with open(os.path.join(loop_dir(root), "owner-words.tsv"), encoding="utf-8") as handle:
-            covers = {r[0]: r[4].split(",") for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5}
-    except OSError:
-        pass
-    grace = (config(root).get("step_budget_minutes") or 30)
+    """(rule, level, text): eta-missing (WARN), eta-extended (FAIL: no covering record), eta-overrun (FAIL: past its ETA, not waiting)."""
+    at, out = at or datetime.datetime.now(datetime.timezone.utc), []
+    covers, grace = {r[0]: r[4].split(",") for r in owner_rows(root)}, config(root).get("step_budget_minutes") or 30
     for path in sorted(glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))):
         run = bs.read_json(path)
         if not isinstance(run, dict) or not run.get("slug"):
@@ -371,7 +360,7 @@ def eta_rows(root, at=None):
             continue
         if not eta_minutes(seen):
             out.append(("eta-missing", "WARN", "%s has no ETA" % slug))
-        elif eta_over(seen, eta_spent(seen, at) - grace) and not (run.get("waiting") or {}).get("eta"):
+        elif eta_over(seen, bs.active_minutes(seen, at) - grace) and not (run.get("waiting") or {}).get("eta"):
             out.append(("eta-overrun", "FAIL", "%s is past its ETA and not waiting under Needs you" % slug))
     return out
 
