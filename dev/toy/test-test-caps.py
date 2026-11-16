@@ -73,8 +73,7 @@ refused = goal(3, table(4))
 check("a goal that adds a row to a repo at its cap is refused with the numbers",
       refused is not None and refused[2] == "TEST_CAPS" and "4 rows, max_regression_rows is 3" in refused[0] and "adds 1 rows net" in refused[0])
 check("a goal that removes as many rows as it adds passes", goal(3, table(3, 1)) is None)
-merged = table(4, 2) + "rX	land	true
-"  # drops r0 and r1, adds rX: net -1, still over the cap
+merged = table(4, 2) + "rX\tland\ttrue\n"  # drops r0 and r1, adds rX: net -1, still over the cap
 check("a goal that merges two rows into one, while over the cap, passes", goal(6, merged) is None)
 check("a goal that only consolidates passes even though the repo is over the cap", goal(5, table(4)) is None)
 check("a goal that stays at or under the cap passes", goal(2, table(3)) is None)
