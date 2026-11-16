@@ -37,6 +37,7 @@ import pool as pl  # noqa: E402
 import replan  # noqa: E402
 import unattended  # noqa: E402
 import board_page  # noqa: E402
+from board_status import feature_of, goal_line, release_of  # noqa: E402,F401
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
         "silent": "silent", "done": "awaiting merge", "queued": "queued"}
@@ -67,9 +68,9 @@ def gather(root, at, stamp=None):
     away = {}
     for r in live:
         if graph.foreign(r):
-            count, last = away.get(graph.foreign(r), (0, None))
+            count, last, _ = away.get(graph.foreign(r), (0, None, ""))
             spoke = graph.last_spoke(r)
-            away[graph.foreign(r)] = (count + 1, max([t for t in (last, spoke) if t] or [None]) if (last or spoke) else None)
+            away[graph.foreign(r)] = (count + 1, max([t for t in (last, spoke) if t] or [None]) if (last or spoke) else None, r.get("machine") or "")
     live = [r for r in live if not graph.foreign(r)]
     return dict(away=away, name=os.path.basename(root), root=root, cfg=cfg, folder=folder, runs=runs, found=found, why=why, taken=taken,
                 states=states, live=live, queue=bs.queued(root, runs))
@@ -79,13 +80,22 @@ def grouped(blocks, at=None, tags=None):
     out, edges, marks = [], [], {}
     for name, items in blocks:
         marks[name] = {item["slug"]: item.get("mark") for item in items}
+    every = {}
+    for _, items in blocks:
+        for item in items:
+            every.setdefault(item.get("release") or "no release", []).append(item)
     for name, items in blocks:
         local = [dict(item, depends=[d for d in item.get("depends") or [] if "/" not in d]) for item in items]
         out += ["== %s ==" % (name if len(name) <= 54 else name[:51] + "...")]
         out += board_lines.render(local)[:-2] if items else ["- (none)"]
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
-        out += ["%s ~%s left" % (item["slug"], board_page.span(item["left"])) for item in items if item.get("left")]
+        for release in sorted({item.get("release") or "no release" for item in items}):
+            out += ["-- %s --" % bs.release_header(release, every[release], at)]
+            for feature in sorted({item.get("feature") or "no feature" for item in items if (item.get("release") or "no release") == release}):
+                out += ["  %s:" % feature]
+                out += ["    " + goal_line(item) for item in items
+                        if (item.get("release") or "no release") == release and (item.get("feature") or "no feature") == feature]
         left = [item["left"] for item in items if item.get("left")]
         out += ["expected finish %s (about %s)" % ((at + datetime.timedelta(seconds=max(left))).astimezone().strftime("%H:%M"), board_page.span(max(left)))] if left and at else []
         edges += [(name, item["slug"], dep.partition("/")[0], dep.partition("/")[2]) for item in items
@@ -140,8 +150,9 @@ def render(root=None, at=None, stamp=None):
                                                             counts("waiting", "failed", "stopped"), sum(len(g["queue"]) for g in pod), pool_line),
            bs.machine_line(cfg)]
     for g in pod:
-        out += ["%s: %d goal%s, last activity %s" % (name, n, "" if n == 1 else "s", last.astimezone().strftime("%H:%M") if last else "unknown")
-                for name, (n, last) in sorted(g["away"].items())]
+        out += ["%s%s: %d goal%s, last activity %s" % (name, " (%s)" % machine if machine else "", n, "" if n == 1 else "s",
+                                                      last.astimezone().strftime("%H:%M") if last else "unknown")
+                for name, (n, last, machine) in sorted(g["away"].items())]
     out += ["",
            "All sessions", "| session | repo | for | status | progress | left | latest |", "|---|---|---|---|---|---|---|"]
     for g in pod:
@@ -149,7 +160,7 @@ def render(root=None, at=None, stamp=None):
             step = lb.current(run)
             left = bs.left_time(run, g["runs"], at)
             out.append("| %s | %s | %s | %s | %s %d/8 | %s | %s |" % (
-                cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(run.get("goal"), 40), MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
+                cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(bs.intro(run.get("goal"), run["slug"]), 70), MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
                 lb.FLOW[step], step + 1, "?" if left is None else board_page.span(left), cell(lb.latest_report(run) or run.get("next"), 60)))
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
@@ -171,8 +182,11 @@ def render(root=None, at=None, stamp=None):
     for g in pod:
         items = [dict(slug=r["slug"], mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge",
                       depends=[d for d in r.get("waits_on") or []], owner=graph.foreign(r),
-                      left=bs.left_time(r, g["runs"], at)) for r in g["live"]]
-        blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"]) for q in g["queue"]]))
+                      left=bs.left_time(r, g["runs"], at), machine=r.get("machine") or graph.machine_name(),
+                      release=release_of(g["root"], r["slug"]), feature=feature_of(g["root"], r.get("goal"))) for r in g["live"]]
+        blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"], machine=graph.machine_name(),
+                                                release=release_of(g["root"], q["slug"]), feature=feature_of(g["root"], q.get("goal")))
+                                           for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
