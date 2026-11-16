@@ -46,7 +46,8 @@ answer SLUG
 finding SLUG TEXT
 resume SLUG --why TEXT [--by WHO]
 touches SLUG --add PATH --why TEXT
-set SLUG [--depth full|condensed] [--bump minor|major] [--budget-minutes N] [--budget-tokens N] --why TEXT
+set SLUG [--depth full|condensed] [--bump minor|major] [--budget-minutes N] [--budget-tokens N] [--eta-extend N]
+        [--eta-choice ship|defer] [--owner-record ID] --why TEXT
 show SLUG
 ```
 
@@ -364,6 +365,32 @@ python3 scripts/goal.py set my-goal --budget-minutes 180 --budget-tokens 5000000
 |---|---|
 | `--budget-minutes` | `time_budget_minutes` (active step time only: time held in the pr queue, on a hold, on an owner answer or after a stop counts nothing) |
 | `--budget-tokens` | `token_budget` |
+| `--eta-extend` | adds N active minutes to the goal's ETA (needs `--owner-record`) |
+| `--eta-choice` | `ship` records the steps left as skipped so the pull request goes on; `defer` retires the goal for the next release (needs `--owner-record`) |
+
+Raising a budget (a larger number, or 0, which means none) needs `--owner-record ID` too; lowering one does not.
+
+### Hard ETA (GRD-13, owner o52)
+
+`new` records an ETA in the run record (`eta: {minutes, estimate, basis}`) and as an `- ETA:` line in the goal file: the live
+board's estimate for a goal of that size (its high end) plus 25 percent, rounded up to 5 minutes and at least 30, or the time
+budget when the model has no estimate. It counts active step time, the clock the time budget uses. A goal that has spent its
+ETA starts no new step (`flow.py` on a step's first call, `goal.py step`, `goal.py pr`): the call is refused with `ETA_PAST`
+and the goal waits (`waiting.eta`, kind `owner`, so full auto never answers) with three choices under Needs you: `ship SLUG
+now`, `extend SLUG by N minutes` or `defer SLUG`. The step it is on may finish. The operation session enacts the owner's choice:
+
+```bash
+python3 scripts/sessions.py owner-words "extend it by an hour" --ids my-goal      # prints OWNER-WORDS o61
+python3 scripts/goal.py set my-goal --eta-extend 60 --owner-record o61 --why "owner: one hour more"
+python3 scripts/goal.py set my-goal --eta-choice ship --owner-record o62 --why "owner: ship what is done"
+python3 scripts/goal.py set my-goal --eta-choice defer --owner-record o63 --why "owner: next release"
+```
+
+The record must exist in `owner-words.tsv`, cover the goal's slug and never have been used before by any goal's extension,
+choice or budget raise (`ETA_NO_RECORD`); nothing changes on a refusal. Extensions and the choice live in the sidecar; the
+frozen ETA is never edited. Health warns on a live goal with no ETA, fails on an extension with no covering record and fails
+on a goal a step past its ETA that is not waiting for the owner's choice (workflow-health: `eta-missing`, `eta-extended`,
+`eta-overrun`).
 
 ### Release bump (DEL-5)
 
