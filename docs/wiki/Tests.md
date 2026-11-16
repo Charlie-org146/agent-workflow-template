@@ -369,6 +369,7 @@
 | <a id="t-doc18-howto-skeleton"></a>doc18-howto-skeleton | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc18-review-link-line"></a>doc18-review-link-line | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc18-runbook-on-howto"></a>doc18-runbook-on-howto | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-howto-restamp"></a>doc18-howto-restamp | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 
 ## Guardrails
 
