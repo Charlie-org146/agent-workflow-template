@@ -28,12 +28,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - DOC-3: **Reviewed 2026-11-08** Tests follow on their own <!-- reviewed 2e9e1c3f -->
   - Once I review a PRD, the loop writes Given/When/Then scenarios and tests for each requirement, links each to a regression row, and keeps them in step when a requirement changes.
   - I never write or manage tests.
-- DOC-4: **Reviewed 2026-11-13** Home is one table <!-- reviewed b837a911 -->
-  - Home holds one table with four columns: Feature, What it does, How to use (a link to the README section), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
+- DOC-4: **Unreviewed** Home is one table
+  - Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
   - Below the table Home carries only the generated Settings and Automation sections (DOC-15); nothing else is on Home.
-- DOC-5: **Reviewed 2026-11-10** The front door is natural language <!-- reviewed 885694d1 -->
-  - Every feature has a README "How to use" table: what I say to the agent, and what happens.
-  - The table holds plain phrases, with no command syntax.
+- DOC-5: **Unreviewed** The front door links each feature's How-to-use page
+  - The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages.
+  - A README section kept for a feature is one row that links its page, with a plain phrase and no command syntax.
 - DOC-6: **Reviewed 2026-11-13** Each skill's commands are documented in its command reference <!-- reviewed bb317f4a -->
   - Each skill's SKILL.md Command map names every command, and its references/commands.md gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code.
 - DOC-7: **Reviewed 2026-11-10** Requirements are bullets <!-- reviewed 7de6dae3 -->
@@ -86,10 +86,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - The page is `docs/wiki/How-to-use-<Feature>.md`, titled "# How to use <Feature>", with these sections in order, leaving out any that do not apply: What it's for, How to reach or run it, URLs and deployments, Automations and schedules, Runbooks, Links (the PRD page and "Backlog: <Feature>"). The feature page links it in one line in its head, between its title and its first section: "How to use: [How-to-use-<Feature>](How-to-use-<Feature>)", and nothing else may sit there. A routine's runbook may sit under "Runbooks" on this page instead of the PRD.
   - `docs.py check` reports a feature page with no How-to-use page, one off that skeleton, or a feature page that does not link it (a page whose PRD is a link needs no link line); a How-to-use page has no `.loop/docs.tsv` row of its own and is mapped to its feature's paths, so it goes stale and publishes with it, and `audit.py restamp` re-stamps a stale one whose text is as committed; one whose feature has no page is an orphan, reported unmapped.
   - The README keeps a short start for each feature, a link to its How-to-use page and a few things to say; the full list of things to say and any URLs, deployments and schedules live on the How-to-use page.
-- DOC-19: **Unreviewed** Each How-to-use page has one item per functional requirement, saying how it is delivered
+- DOC-19: **Unreviewed** Each How-to-use page has one item per functional requirement and types every delivered row
   - An item is a line `- ID: how it is delivered` anywhere on the How-to-use page, naming the requirement and showing its delivery: a command and its printout, an example, a file or page it produces, or another stated form; items for non-functional requirements are allowed, not required.
   - `docs.py check` fails a feature's How-to-use page that has no item for one of its page's functional requirement IDs, or an item naming an ID that page lacks; each failure names the IDs, and a page whose PRD is a link is not checked.
   - On a How-to-use page, Runbooks hold plain "When X, do Y" steps; the DOC-16 routine shape applies only to a routine the repo schedules on that page.
+  - A How-to-use page's "What's delivered" table (Component, Kind, What it is, How a user uses it) names exactly one Kind per row: Site/URL, Skill, Command, API/file contract, Scheduled routine, Deployment, Message/channel or Playbook. The page carries that Kind's block under "How to reach or run it" as "### Kind: Component" with these fields: Site/URL (URLs, Served by, Check, Deploy), Skill (Say, Command), Command (Command, Dry run, Reads, Writes, Exit codes), API/file contract (Path, Fields, Example, Writer, Reader), Deployment (Target, Deploy, Rollback, Check), Message/channel (Trigger, Recipients, Subject, Resend), Playbook (Steps, Templates, Stop rules); a Scheduled routine's DOC-16 runbook sits under Runbooks or on the feature page.
+  - `docs.py check` fails, naming the page and the missing piece, a row with no Kind or an unknown one, a block missing a field or with no row, an address in a block, and a feature page that names a command (a script and its subcommand, in backticks) its How-to-use page does not list.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
