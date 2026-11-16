@@ -182,7 +182,7 @@ def render(root=None, at=None, stamp=None):
     for g in pod:
         items = [dict(slug=r["slug"], mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge",
                       depends=[d for d in r.get("waits_on") or []], owner=graph.foreign(r),
-                      left=bs.left_time(r, g["runs"], at), machine=r.get("machine") or graph.machine_name(),
+                      left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at), machine=r.get("machine") or graph.machine_name(),
                       release=release_of(g["root"], r["slug"]), feature=feature_of(g["root"], r.get("goal"))) for r in g["live"]]
         blocks.append((g["name"], items + [dict(slug=q["slug"], mark="queued", depends=q["depends"], machine=graph.machine_name(),
                                                 release=release_of(g["root"], q["slug"]), feature=feature_of(g["root"], q.get("goal")))
