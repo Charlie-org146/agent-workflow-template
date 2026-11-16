@@ -1,4 +1,4 @@
-"""Freshness, Tests and Adoption rules (report.py). Read-only; dates are days, so two runs on one day print the same lines.
+"""Freshness, Tests and Adoption rules (report.py). Read-only; dates are days, so one day's runs print the same lines.
 
   nightly           the newest recorded nightly run is older than a day (WARN; INFO with no nightly row)
   unreleased        commits after the newest v* tag, the oldest over 3 days old (WARN; INFO with no tag)
@@ -12,18 +12,18 @@
   no-fit            an open [adoption] line in .loop/findings.md, written by setup: one WARN row each (report.py)
   agent-tools       agent_command (or the flow file's command) grants its agent no tools (WARN) (report.py)
   prompt-pointer    a scheduled-task prompt holds more than the Runbook pointer (WARN)
-  milestones        a GitHub repo lacks a standing Backlog milestone, one per feature page and Other (WARN; INFO when gh can't list them)
+  milestones        a GitHub repo lacks a standing Backlog milestone, one per feature page and Other (WARN; INFO without a list)
 Security and privacy, Size, Performance check-time and Hygiene idle-sessions rules (also read-only):
   private                tracked files matching a leak pattern (leak_patterns in the private flow file): FAIL with
                          file:line and the pattern's number only, never the matched text; INFO with no pattern set
-  scan-hook              no commit scan hook (core.hooksPath or hooks/pre-commit): WARN; INFO in CI, where it can't be
+  scan-hook              no commit scan hook (core.hooksPath or hooks/pre-commit): WARN; INFO in CI
   workflow-permissions   a workflow with no top-level permissions: (WARN)
   skill-lines            a SKILL.md of 150 lines or more (FAIL)
   requirements-per-page  a page with more requirements than criteria_max (default 6) (FAIL)
   check-time             the check, up to its Performance group, past 60 seconds (WARN; no number on a pass)
-  idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no session pool)
+  idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no pool)
   eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-13): a live goal with no ETA (WARN); an extension with no
-                         covering owner-words record (FAIL); a goal a step past its ETA not waiting for the owner (FAIL)
+                         covering owner record, or a goal a step past its ETA not waiting for the owner (FAIL)
 """
 import datetime
 import glob
@@ -40,7 +40,7 @@ import report as _report
 from defects import LINE, behind, pages, row, setting, table
 
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No prompt may block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -353,7 +353,7 @@ def eta(root, name):
     """One rule's rows from workflow-monitoring's auto.eta_rows."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "workflow-monitoring", "scripts", "auto.py")
     if not os.path.exists(path):
-        return []
+        return [row("UNREAD", "hygiene", "eta", name, "workflow-monitoring is not installed beside this skill")]
     sys.path.insert(0, os.path.dirname(path))
     try:
         spec = importlib.util.spec_from_file_location("health_eta", path)
@@ -361,7 +361,7 @@ def eta(root, name):
         spec.loader.exec_module(module)
     finally:
         sys.path.pop(0)
-    return [row(level, "hygiene", text.split()[0], name, text, "goal.py set --eta-extend or --eta-choice, with an owner-words record")
+    return [row(level, "hygiene", text.split()[0], name, text, "goal.py set --eta-extend or --eta-choice with an owner record")
             for rule, level, text in module.eta_rows(root) if rule == name]
 
 
