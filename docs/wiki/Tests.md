@@ -379,6 +379,10 @@
 | <a id="t-home-stale-clears"></a>home-stale-clears | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-stale-control"></a>home-stale-control | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-kept-config"></a>home-kept-config | requirement | DOC-15 | not run | - | local | 2026-11-16 |
+| <a id="t-stale-code-page-reviewed"></a>stale-code-page-reviewed | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-stale-code-page-unreviewed"></a>stale-code-page-unreviewed | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-stale-code-page-wording"></a>stale-code-page-wording | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-stale-code-page-scope"></a>stale-code-page-scope | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 
 ## Guardrails
 

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-16** <!-- prd P=7303c1e7 R=2d514968 N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=7303c1e7 R=2d514968 N=8441e908 M=885f85c3 U=03828777 --> <!-- kept stale-code-page@b2496335 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -164,6 +164,10 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [worker-cannot-write-owner-words](Tests#t-worker-cannot-write-owner-words) | requirement | DOC-2 | Given a worker role, when it tries to record the owner's words, then it is refused and nothing is written, while the operation role can record them. | not run |
 | [owner-record-ids-only](Tests#t-owner-record-ids-only) | requirement | DOC-2 | Given a recorded owner message, when a worker names an ID it does not list or uses it twice for one command, then it is refused with nothing changed. | not run |
 | [page-relock](Tests#t-page-relock) | requirement | DOC-2 | Given two branches that each changed a different reviewed line on one page, when they merge, then the page relocks with no new owner words, and a page with an unreviewed line stays LOCKED. | PASS 2026-11-14 |
+| [stale-code-page-reviewed](Tests#t-stale-code-page-reviewed) | requirement | DOC-2 | Given a Reviewed page that only the goal's own mapped code staled, when the lane prep runs, then the page is re-stamped in its commit before the rows run and docs check is clean. | not run |
+| [stale-code-page-unreviewed](Tests#t-stale-code-page-unreviewed) | requirement | DOC-2 | Given an Unreviewed page that only the goal's own mapped code staled, when the lane prep runs, then it carries a kept marker and is fresh before the rows run. | not run |
+| [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
+| [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
 | [untested-listed](Tests#t-untested-listed) | requirement | DOC-3 | Given a Reviewed criterion with no test or a test that no longer matches, when the check runs, then it is listed. | PASS 2026-11-12 |
 | [prd-scenarios](Tests#t-prd-scenarios) | requirement | DOC-3 | Given regression rows linked to a requirement, when the Tests are rendered, then each row is a Given/When/Then scenario with its test, result and date, and a plain description is flagged. | PASS 2026-11-10 |
 | [prd-untested](Tests#t-prd-untested) | requirement | DOC-3 | Given a PRD the owner reviewed whose requirement has no test, when the docs audit runs, then it lists that requirement as UNTESTED. | PASS 2026-11-10 |
