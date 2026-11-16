@@ -42,7 +42,7 @@ def git(repo, *args, check=True):
     done = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True)
     if check and done.returncode:
         sys.exit("REFUSED: git %s: %s" % (" ".join(args), done.stderr.strip()))
-    return done.stdout.strip() if done.returncode == 0 else ""
+    return "" if done.returncode else done.stdout.strip()
 
 
 def base_branch(repo):
@@ -144,8 +144,8 @@ def adopt(args, repo):
     note = None if args.dry_run else sync.Txn.recover(repo)
     if note:
         print(note)
-    if note and "HALF_UNDONE" in note:
-        return 4
+        if "HALF_UNDONE" in note:
+            return 4
     bad = survey.precheck(repo, args.branch)
     if bad:
         print(bad)
@@ -168,14 +168,12 @@ def adopt(args, repo):
     print(survey.found_line(found, config))
     print("NOTE: un-reviewing a locked requirement needs the owner's own sentence, not a relayed letter or an agent (OWNER_WORDS)")
     files = git(repo, "ls-files").splitlines()
-    for note in survey.checks(repo, files)[1] + survey.version_habit(repo, files)[1]:
-        print("NOTE: " + note)
+    print("".join("NOTE: %s\n" % n for n in survey.checks(repo, files)[1] + survey.version_habit(repo, files)[1]), end="")
     for cmd in old.get("checks", []):
         if survey.runs_tests(repo, files, cmd):
             print("NOTE: %s finds no test files" % cmd)
     start, why = (None, "skipped for --bare") if args.bare else measure(repo)
-    start_line = "HEALTH START: " + (next(l for l in start if l.startswith("HEALTH:"))[8:] if start else "not measured (%s)" % why)
-    print(start_line)
+    print(start_line := "HEALTH START: " + (next(l for l in start if l.startswith("HEALTH:"))[8:] if start else "not measured (%s)" % why))
     acts = seed.decide(repo, config, found)
     if args.bare:
         acts = [a for a in acts if a[3] in ("config", "file")]
@@ -184,7 +182,8 @@ def adopt(args, repo):
     for verb, path, note, _ in acts:
         print(("%s: %s" % (verb, note)) if verb in ("GAP", "GUARD") else "%s: %s%s" % (verb, path, " (%s)" % note if note else ""))
     print("\n".join(lines), end="\n" if lines else "")
-    if not (args.bare or args.no_git_hooks or os.environ.get("LOOP_NO_GIT_HOOKS") == "1"):
+    hooks = not (args.bare or args.no_git_hooks or os.environ.get("LOOP_NO_GIT_HOOKS") == "1")
+    if hooks:
         print("hooks: pre-commit, commit-msg and pre-push (the private-name scan, written to the git hooks folder after the commit)")
     bare = None if args.bare else bare_agent(config["agent_command"])
     if bare:
@@ -225,7 +224,7 @@ def adopt(args, repo):
             if git(repo, "branch", "--show-current") != args.branch:
                 made = git(repo, "rev-parse", "--verify", "--quiet", args.branch, check=False)
                 git(repo, "checkout", "-q", "-B" if made else "-b", args.branch, *["HEAD"] * bool(made))
-            os.makedirs(os.path.dirname(os.path.join(repo, ".loop", "config.json")), exist_ok=True)
+            os.makedirs(os.path.join(repo, ".loop"), exist_ok=True)
             with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
                 handle.write(json.dumps(agents.stored(config, old), indent=2) + "\n")
             seed.apply(repo, config, found, [a for a in acts if a[3] != "agents"])
@@ -264,7 +263,7 @@ def adopt(args, repo):
                             "(SETUP_UNEXPECTED)" % (type(error).__name__, os.path.relpath(trace, repo)))
         shutil.rmtree(tx.dir, ignore_errors=True)
         post = git(repo, "rev-parse", "--short", "HEAD")
-    if not (args.bare or args.no_git_hooks or os.environ.get("LOOP_NO_GIT_HOOKS") == "1"):
+    if hooks:
         update.step("git hooks", "python3 setup.py --git-hooks", lambda: seed.git_hooks(repo, adopting=True), failed)
     update.step("private settings", "python3 settings.py fill-private", fill_private, failed)
     if post and not args.bare:
@@ -274,8 +273,7 @@ def adopt(args, repo):
         print("NEXT: review the branch, then merge it into %s" % config["base"])
     if args.bare:
         return 0
-    end, why = measure(repo)
-    return 3 if verdict(end, why, failed) and args.strict else 0
+    return 3 if verdict(*measure(repo), failed) and args.strict else 0
 
 
 def fill_private():
