@@ -156,6 +156,14 @@ def front(root, names):
     return out
 
 
+def home_fresh(root, names):
+    """True when Home needs no rewrite: its generated blocks match a fresh render and it passes DOC-4 (#4608)."""
+    folder, rel = os.path.join(root, cr.folder_of(root)), os.path.join(cr.folder_of(root), "Home.md")
+    text = read(os.path.join(root, rel))
+    return text is not None and not [x for x in refresh(root, True) if x[0] == rel] and not pf.home(
+        text, names, {n[:-3] for n in os.listdir(folder) if n.endswith(".md")}, read(os.path.join(root, "README.md")) or "", repo_of(root, text), topics_of(root))
+
+
 def test_slug(name):
     return re.sub(r"[^a-z0-9-]", "-", name.lower())
 

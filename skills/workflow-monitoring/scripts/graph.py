@@ -358,9 +358,15 @@ def pod_id():
     return re.sub(r"[^A-Za-z0-9_.-]", "", os.environ.get("LOOP_POD_ID") or os.environ.get("CLAUDE_SESSION_ID") or "")[:64]
 
 
+def machine_name():
+    """pc or mac: the machine this pod runs on (LOOP_MACHINE_NAME overrides it, for tests)."""
+    return os.environ.get("LOOP_MACHINE_NAME") or ("mac" if sys.platform == "darwin" else "pc")
+
+
 def stamp(state):
     if pod_id() and not state.get("pod"):
         state["pod"] = pod_id()
+        state.setdefault("machine", machine_name())
 
 
 def foreign(state):
@@ -380,7 +386,7 @@ def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.p
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     import pool
     import replan
-    return getattr(replan if op in ("hold", "free", "before", "wait") else pool, "pr_" + op)(*args)
+    return getattr(replan if op in ("hold", "free", "before", "wait", "preflight") else pool, "pr_" + op)(*args)
 
 
 def merge_lock(common):

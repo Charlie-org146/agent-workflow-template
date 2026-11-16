@@ -82,6 +82,10 @@ ci-levels-setting	PASS	2026-11-10
 ci-summary	PASS	2026-11-12	
 ci-target-input	PASS	2026-11-10	
 config-holds-topics	PASS	2026-11-14	
+config-lane-duplicate-key	PASS	2026-11-15	
+config-lane-duplicate-same	PASS	2026-11-15	
+config-lane-key-change	PASS	2026-11-15	
+config-lane-unparseable	PASS	2026-11-15	
 cost-time-warn	PASS	2026-11-12	
 cost-unread-tokens	PASS	2026-11-12	
 criteria-max-config	PASS	2026-11-12	
@@ -89,6 +93,7 @@ criteria-max-setting	PASS	2026-11-12
 criteria-no-scripts	PASS	2026-11-12	
 cut-draft	PASS	2026-11-09	
 cut-needs-verify	PASS	2026-11-12	
+defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-categories	FAIL	2026-11-12	
 defect-flow-steps	PASS	2026-11-12	
 defect-health	PASS	2026-11-12	
@@ -220,7 +225,7 @@ hlt8-triage	PASS	2026-11-10
 hlt9-evidence-or-nothing	PASS	2026-11-10	
 home-guard-catches-leak	PASS	2026-11-15	
 home-header-both	PASS	2026-11-14	
-home-topic-column	PASS	2026-11-14	
+home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
 issue-129-docs-published	PASS	2026-11-12	
 issue-129-wiki-first-page	PASS	2026-11-12	
@@ -305,6 +310,7 @@ merge-wiki-head	PASS	2026-11-11
 merge-wiki-rename-refused	PASS	2026-11-11	
 merge-wiki-skill-refused	PASS	2026-11-11	
 merged-frees-175	PASS	2026-11-10	
+migration-v1	PASS	2026-11-16		5a2a40293510
 milestone-links	PASS	2026-11-12	
 milestone-rows-seen-red	PASS	2026-11-12	
 milestone-wording-unreviewed	PASS	2026-11-12	
@@ -314,10 +320,15 @@ mon10-replan	PASS	2026-11-10
 mon11-full-auto	PASS	2026-11-10	
 mon12-pool	PASS	2026-11-10	
 mon13-two-layers	PASS	2026-11-12	
+mon14-checkin-goal-lines	PASS	2026-11-16	
+mon14-release-eta	PASS	2026-11-16	
 mon14-repo-blocks	PASS	2026-11-12	
 mon15-merge-lock	PASS	2026-11-12	
 mon15-pod-owner	PASS	2026-11-12	
+mon16-checkin-grouped	PASS	2026-11-16	
 mon4-checkin-no-board	PASS	2026-11-10	
+mon5-checkin-machine-line	PASS	2026-11-16	
+mon5-for-cell-sentence	PASS	2026-11-16	
 mon6-merged-frees	PASS	2026-11-10	
 mon7-govern-blocks	PASS	2026-11-10	
 mon8-silent-30	PASS	2026-11-10	
@@ -347,7 +358,7 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
-package-gate-head	FAIL	2026-11-14	
+package-gate-head	FAIL	2026-11-16	
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
@@ -427,7 +438,7 @@ reply-hook-blocks	PASS	2026-11-10
 reply-hook-checkin-123	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 reply-hook-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 reply-hook-install	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-reply-hook-mon5-wording	PASS	2026-11-13	
+reply-hook-mon5-wording	PASS	2026-11-16	
 reply-hook-off	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 reply-hook-scope	PASS	2026-11-10	
 repo-full-suite-limit	PASS	2026-11-11	
@@ -441,7 +452,7 @@ restamp-marks-3867	PASS	2026-11-15
 restamp-wording-locked-3867	PASS	2026-11-15	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	FAIL	2026-11-15	
+review-findings-skill-lines	FAIL	2026-11-16	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -483,7 +494,7 @@ settings-publish-refresh	PASS	2026-11-12
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-15	
+settings-render-fresh	FAIL	2026-11-16	
 settings-stale	PASS	2026-11-12	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
@@ -537,6 +548,12 @@ summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 template-sheet	PASS	2026-11-12	
+test-caps-consolidate-allowed	PASS	2026-11-16	
+test-caps-controls	PASS	2026-11-16	
+test-caps-health	PASS	2026-11-16	
+test-caps-own-cap	PASS	2026-11-16	
+test-caps-qa-refused	PASS	2026-11-16	
+test-caps-settings	PASS	2026-11-16	
 tests-last-run	PASS	2026-11-12	
 tests-links-workflow-3839	PASS	2026-11-14	
 tests-not-enforced	PASS	2026-11-12	

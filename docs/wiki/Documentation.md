@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f85c3 U=03828777 --> <!-- kept v1-go-no-go@c61340c0 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f85c3 U=03828777 --> <!-- kept audit-cd-path@9ddb17ce -->
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -162,9 +162,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f
 | [prd-scenarios](Tests#t-prd-scenarios) | requirement | DOC-3 | Given regression rows linked to a requirement, when the Tests are rendered, then each row is a Given/When/Then scenario with its test, result and date, and a plain description is flagged. | PASS 2026-11-10 |
 | [prd-untested](Tests#t-prd-untested) | requirement | DOC-3 | Given a PRD the owner reviewed whose requirement has no test, when the docs audit runs, then it lists that requirement as UNTESTED. | PASS 2026-11-10 |
 | [format-home](Tests#t-format-home) | requirement | DOC-4 | Given a Home page with a line outside its Features table, when the docs check runs, then it fails naming Home, Features and DOC-4. | PASS 2026-11-10 |
-| [home-topic-column](Tests#t-home-topic-column) | requirement | DOC-4 | Given a topics setting, when Home is rendered, then it leads with a Topic column grouping the features and a wrong Topic cell fails the check. | PASS 2026-11-14 |
+| [home-topic-column](Tests#t-home-topic-column) | requirement | DOC-4 | Given a topics setting, when Home is rendered, then it leads with a Topic column grouping the features and a wrong Topic cell fails the check. | PASS 2026-11-16 FLAKY |
 | [home-header-both](Tests#t-home-header-both) | requirement | DOC-4 | Given Home with or without a Topic column, when the docs check runs, then both headers are accepted, and the Topic cell is checked only when the topics setting is set. | PASS 2026-11-14 |
 | [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-4 | Given this repo's topics setting, when Home is read, then its table leads with a Topic column. | PASS 2026-11-14 |
+| [home-stale-clears](Tests#t-home-stale-clears) | requirement | DOC-4 | Given a generated Home that docs.tsv maps to README.md and .loop/config.json, when a goal changes one of them and Home's fresh render is unchanged, then docs check reports no STALE Home and DOC-4 still passes it. | not run |
+| [home-stale-control](Tests#t-home-stale-control) | requirement | DOC-4 | Given a Home that differs from its fresh render, when a mapped path changes, then docs check still reports it STALE until it is re-rendered. | not run |
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-5 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
 | [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
@@ -207,6 +209,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f
 | [blocks-setup-clean](Tests#t-blocks-setup-clean) | requirement | DOC-15 | Given setup with criteria on, when it adopts a repo, then the README and Home blocks are in the adoption commit and the tree is clean. | PASS 2026-11-12 |
 | [automation-links-runbook](Tests#t-automation-links-runbook) | requirement | DOC-15 | Given routines with a Runbook, when the Automation block is generated, then each routine's name links to its page's Runbook. | not run |
 | [launchctl-missing-unknown](Tests#t-launchctl-missing-unknown) | requirement | DOC-15 | Given a host with no launchctl and no gh, when docs.py automation runs, then it reports each routine's state as unknown and exits 0. | PASS 2026-11-14 |
+| [home-kept-config](Tests#t-home-kept-config) | requirement | DOC-15 | Given a .loop/config.json value kept on one machine with skip-worktree, when the generated blocks are rendered, then the value reaches no committed page, while an ordinary config value does. | not run |
 | [sync-not-connected](Tests#t-sync-not-connected) | requirement | DOC-17 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
 | [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | DOC-17 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | not run |
 | [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | DOC-17 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | not run |

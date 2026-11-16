@@ -62,7 +62,6 @@ def path(root):
 
 
 def read(root):
-    """Return {id: [id, status, date, run, flaky]}; missing cells read as ""."""
     try:
         with open(path(root)) as handle:
             rows = [line.rstrip("\n").split("\t") for line in handle if line.strip() and line[0] != "#"]
@@ -72,13 +71,11 @@ def read(root):
 
 
 def where(sha=None):
-    """The run cell: the Actions run URL in CI, else empty."""
     parts = [os.environ.get(key, "") for key in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")]
     return "%s/%s/actions/runs/%s" % tuple(parts) if all(parts) else ""
 
 
 def write(root, results, date, sha):
-    """Merge results ([{"id", "state", "flaky"?}]) into the file; nothing is written when results is empty."""
     if not results:
         return
     ran, run = read(root), where(sha)
@@ -92,7 +89,6 @@ def write(root, results, date, sha):
 
 
 def gh(*args, body=None):
-    """gh; a body= text goes in a temp file as --body-file (Windows caps the command line)."""
     if body is not None:
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
             f.write(body)
@@ -120,7 +116,6 @@ def read_issues():
 
 
 def sync_issues(results, live, day):
-    """One issue per failing row, keyed by a marker in its body."""
     issues = []
     if live:
         gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
@@ -174,7 +169,6 @@ FLOOR, DEFAULT = 15, 15
 
 
 def minutes(cfg, key, default=DEFAULT):
-    """The setting in minutes; exits when it is not a whole number of at least 15."""
     value = cfg.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
         sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
@@ -183,7 +177,6 @@ def minutes(cfg, key, default=DEFAULT):
 
 
 def budget(root):
-    """Seconds the loop's test run may take."""
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
             cfg = json.load(handle)
@@ -193,7 +186,6 @@ def budget(root):
 
 
 def fit(todo, est, limit):
-    """(rows that fit, rows left) of todo, in tier order, within limit."""
     keep, left, used = [], [], 0.0
     for key in todo:
         if used + est.get(key, 0) <= limit:
@@ -205,7 +197,6 @@ def fit(todo, est, limit):
 
 
 def execute(root, picked, todo, est, limit, timeout, expected, reuse):
-    """Run the rows of todo within limit seconds (None: no limit). Returns (results, left ids)."""
     keep, left = fit(todo, est, limit) if limit else (todo, [])
     by, results, start = {row["id"]: row for row in picked}, [], time.time()
     for key in keep:
@@ -224,9 +215,11 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
+        cannot = state == "FAIL" and unrunnable(code, text)
+        state = "SKIPPED" if cannot else state
         if code == 0 and key in expected:
             print("FIXED %s: remove it from the known list" % key)
-        print("%s %s%s" % (state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
+        print("%s %s%s" % ("NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
@@ -234,7 +227,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
-                        "pid": pid, "rc": code, "signal": signal})
+                        "pid": pid, "rc": code, "signal": signal, "notrun": cannot})
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (
@@ -263,7 +256,6 @@ def done_lines(path):
 
 
 def criteria_ids(root):
-    """Requirement ids under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
     try:
         with open(path_of(root, "config.json")) as handle:
             folder = json.load(handle).get("wiki_dir") or "docs/wiki"
@@ -349,7 +341,6 @@ def owed_clear(root, row_id, live=False):
 
 
 def unproven(root, rows, seen):
-    """ids never seen failing and not owed; a PENDING line each for the owed."""
     held, out = owed_read(root), []
     for row in rows:
         mine = held.get(row["id"])
@@ -360,29 +351,41 @@ def unproven(root, rows, seen):
     return out
 
 
-def owed_issue(root, row_id, runner, live):
+TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
+MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
+                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
+
+
+def unrunnable(code, text):
+    return bool(code and MISSING.search(text or ""))
+
+
+def owed_issue(root, key, ids, title, text, live, word="owed"):
     stone = ""
     for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
-        text = open(page, encoding="utf-8").read()
-        found = re.search(r"^Milestone:\s*\S*/milestone/(\d+)", text, re.M)
-        if found and "(Tests#t-%s)" % row_id in text:
+        body = open(page, encoding="utf-8").read()
+        found = re.search(r"^Milestone:\s*\S*/milestone/(\d+)", body, re.M)
+        if found and any("(Tests#t-%s)" % one in body for one in ids):
             stone = found.group(1)
             break
     if not live:
-        print("WOULD open a to-do issue (milestone %s) for %s" % (stone or "none", row_id))
+        print("WOULD open a to-do issue (milestone %s) for %s" % (stone or "none", key))
         return ""
-    mark = "<!-- loop-owed %s -->" % row_id
+    mark = "<!-- loop-%s %s -->" % (word, key)
     listed = gh("issue", "list", "--label", OWED_LABEL, "--state", "open", "--limit", str(ISSUE_LIMIT), "--json", "url,body")
     for item in [] if listed.returncode else json.loads(listed.stdout or "[]"):
         if mark in item.get("body", ""):
             return item["url"]
-    title = gh("api", "repos/{owner}/{repo}/milestones/" + stone, "--jq", ".title").stdout.strip() if stone else ""
+    name = gh("api", "repos/{owner}/{repo}/milestones/" + stone, "--jq", ".title").stdout.strip() if stone else ""
     gh("label", "create", OWED_LABEL, "--force", "--description", "A step only another machine can do")
-    body = "%s\nRow `%s` skips here: its red proof is owed from %s. There run `regression.py red %s --off-platform --runner %s --commit SHA`, " \
-           "then close this. It never blocks a goal or release.\n" % (mark, row_id, runner, row_id, runner)
-    made = gh("issue", "create", "--title", "To do on %s: prove %s fails" % (runner, row_id), "--label", OWED_LABEL,
-              *(("--milestone", title) if title else ()), body=body)
+    made = gh("issue", "create", "--title", title, "--label", OWED_LABEL, *(("--milestone", name) if name else ()), body=mark + "\n" + text)
     return made.stdout.strip().splitlines()[-1] if made.returncode == 0 and made.stdout.strip() else ""
+
+
+def notrun_todo(root, slug, ids, live):
+    return owed_issue(root, slug, ids, "To do on another machine: run %d rows of %s" % (len(ids), slug),
+                      "Goal `%s`: run these rows with `regression.py run ID`, then close this. It never blocks the goal.\n\n%s\n" % (
+                          slug, "\n".join("- `%s`" % one for one in ids)), live, "notrun")
 
 
 def owed_record(root, args, today, read_rows):
@@ -395,7 +398,9 @@ def owed_record(root, args, today, read_rows):
     if re.match(r"\d{4}-\d{2}-\d{2}$", rows[row_id]["seen_red"]):
         sys.exit("REFUSED: %s is already seen failing, so nothing is owed." % row_id)
     if row_id not in owed_read(root):
-        issue = owed_issue(root, row_id, runner, live)
+        issue = owed_issue(root, row_id, [row_id], "To do on %s: prove %s fails" % (runner, row_id),
+                           "Row `%s` skips here: red proof owed from %s. There run `regression.py red %s --off-platform --runner %s --commit SHA`, "
+                           "then close this. It never blocks.\n" % (row_id, runner, row_id, runner), live)
         with open(os.path.join(root, ".loop", OWED), "a", newline="\n") as out:
             out.write("\t".join((row_id, today(), runner, issue)) + "\n")
         print("OWED %s: red proof owed on %s (to-do %s). The goal goes on." % (row_id, runner, issue or "not opened"))

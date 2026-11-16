@@ -46,7 +46,8 @@ answer SLUG
 finding SLUG TEXT
 resume SLUG --why TEXT [--by WHO]
 touches SLUG --add PATH --why TEXT
-set SLUG [--depth full|condensed] [--bump minor|major] [--budget-minutes N] [--budget-tokens N] --why TEXT
+set SLUG [--depth full|condensed] [--bump minor|major] [--budget-minutes N] [--budget-tokens N] [--eta-extend N]
+        [--eta-choice ship|defer] [--preflight recommended|ID=ANSWER,...] [--owner-record ID] --why TEXT
 show SLUG
 ```
 
@@ -364,6 +365,52 @@ python3 scripts/goal.py set my-goal --budget-minutes 180 --budget-tokens 5000000
 |---|---|
 | `--budget-minutes` | `time_budget_minutes` (active step time only: time held in the pr queue, on a hold, on an owner answer or after a stop counts nothing) |
 | `--budget-tokens` | `token_budget` |
+| `--eta-extend` | adds N active minutes to the goal's ETA (needs `--owner-record`) |
+| `--eta-choice` | `ship` records the steps left as skipped so the pull request goes on; `defer` retires the goal for the next release (needs `--owner-record`) |
+| `--preflight` | the owner's answers to the goal's pre-flight list: `recommended` takes every recommendation, or `ID=ANSWER,...` one per item (needs `--owner-record`) |
+
+Raising a budget (a larger number, or 0, which means none) needs `--owner-record ID` too; lowering one does not.
+
+### Hard ETA (GRD-14, owner o52)
+
+`new` records an ETA in the run record (`eta: {minutes, estimate, basis}`) and as an `- ETA:` line in the goal file: the live
+board's estimate for a goal of that size (its high end) plus 25 percent, rounded up to 5 minutes and at least 30, or the time
+budget when the model has no estimate. It counts active step time, the clock the time budget uses. A goal that has spent its
+ETA starts no new step (`flow.py` on a step's first call, `goal.py step`, `goal.py pr`): the call is refused with `ETA_PAST`
+and the goal waits (`waiting.eta`, kind `owner`, so full auto never answers) with three choices under Needs you: `ship SLUG
+now`, `extend SLUG by N minutes` or `defer SLUG`. The step it is on may finish. The operation session enacts the owner's choice:
+
+```bash
+python3 scripts/sessions.py owner-words "extend it by an hour" --ids my-goal      # prints OWNER-WORDS o61
+python3 scripts/goal.py set my-goal --eta-extend 60 --owner-record o61 --why "owner: one hour more"
+python3 scripts/goal.py set my-goal --eta-choice ship --owner-record o62 --why "owner: ship what is done"
+python3 scripts/goal.py set my-goal --eta-choice defer --owner-record o63 --why "owner: next release"
+```
+
+### Pre-flight (#4535)
+
+`new` also records `preflight: {items}` in the run record: each owner input the goal can foresee, with its options and a
+recommendation. Always listed: `plan` (the plan step ends pending and waits unless `auto_approve` is on; the answer `approve ahead`
+lets it take the recommended answers) and `budget` (the time budget; held and waiting time may count toward it). Listed only when a
+dry run would refuse: `memory` (`min_free_memory_gb` above the free memory), `private` (the private-name list against the file names
+the goal touches, the wiki pages every pr re-renders and the repo's name, redacted) and `quota` (GitHub API requests left under 50).
+The check-in puts a goal's open items in one Needs-you line with the word `recommended`; the goal's ETA reads `ETA after your answers
+(N open)`, never trips while an item is open, and counts from the last answer:
+
+```bash
+python3 scripts/goal.py set my-goal --preflight recommended --owner-record o64 --why "owner: take every recommendation"
+python3 scripts/goal.py set my-goal --preflight "budget=keep" --owner-record o65 --why "owner: keep the budget"
+```
+
+Before the pr queue join, `goal.py pr` runs the `memory` and `private` dry runs again: a refusal the list did not have is logged on the
+run as `missed_preflight` (with why it was not foreseen) and in its log, and printed as `MISSED PRE-FLIGHT`.
+
+A goal frozen before ETAs existed gets one the same way: `--eta-extend N` with a record sets its ETA to N minutes.
+The record must exist in `owner-words.tsv`, cover the goal's slug and never have been used before by any goal's extension,
+choice or budget raise (`ETA_NO_RECORD`); nothing changes on a refusal. Extensions and the choice live in the sidecar; the
+frozen ETA is never edited. Health warns on a live goal with no ETA, fails on an extension with no covering record and fails
+on a goal a step past its ETA that is not waiting for the owner's choice (workflow-health: `eta-missing`, `eta-extended`,
+`eta-overrun`).
 
 ### Release bump (DEL-5)
 
@@ -379,6 +426,15 @@ spending limit: no new step starts at or over it (`BUDGET_TOKENS`). The time bud
 nothing stops. Tokens add up across attempts of a step (failed tries and `--again` count). The live board prints one line
 per running or held goal: `budget: 35m of 120m, 0.4M of 3.0M tokens`, `budget: 12m of 90m` (one half set), `budget: none
 set`, with `, OVER time` or `, OVER tokens` appended when spent.
+
+### What the minute budget charges (DEL-8, MON-4, #4534)
+
+`time_budget_minutes` and the ETA count minutes a step or the pr lane is running. Never charged: a wait (`goal.py wait`, or a
+session report that says waiting or paused), a hold, a wait in the pr queue, a lane lost to a moved base, and a session
+that sent nothing for longer than the idle limit (`silent_minutes`, 30; `LOOP_SESSION_QUIET` seconds) with no step running:
+after a finished step, a report or an answer it is charged at most that limit until its next entry. A step between
+`start X` and its end is charged in full. A worker that builds quietly for longer sends `sessions.py report` as a heartbeat.
+`goal.py show` prints `minutes`: `charged` (what the budget gate reads) and `wall` (first log entry to now).
 
 ### Resume (DEL-7)
 

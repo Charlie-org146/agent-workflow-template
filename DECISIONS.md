@@ -357,3 +357,29 @@ The owner chose option C for external PRDs: "a template fix first, then two-way 
 - "`docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten."
 
 Documentation and DOC-17 were reviewed again with record o38.
+
+## Applied 2026-11-15 (hard-eta)
+
+Owner record o52 (2026-11-15): "I want to make the ETA a hard criteria in the 1.1 so that it doesn't keep delaying. I want to add this guardrail." (#4512)
+
+- Guardrails was un-reviewed and re-reviewed with o52 (the page only). Main then added its own GRD-13 (test caps), so the ETA requirement is GRD-14; the owner said "Review both" (record o58) and Guardrails, GRD-13 and GRD-14 were reviewed with it.
+- The ETA is the estimate model's high end for the goal's size plus 25 percent (5-minute steps, at least 30), or the time budget with no estimate; it counts active minutes like the time budget. The margin is a constant, not a setting.
+- Past it a goal waits under Needs you (kind owner) for ship now, extend once or defer; only `goal.py set --eta-extend|--eta-choice` with an unused owner-words record covering the goal moves it, and raising a time or token budget needs one too.
+- Not done, left for later: counting fix rounds against the ETA and the release goal's clock-time ETA (#4512 items 3 and 4).
+
+## Applied 2026-11-16 (home-stale)
+
+A generated Home that docs.tsv maps to code stayed STALE and blocked merge (#4608).
+
+- `docs.py problems()` skips the staleness count for Home when `render.home_fresh` says it needs no rewrite: its generated blocks match a fresh render and it passes DOC-4. A DOC-4 Home holds only generated text, so a changed mapped path leaves nothing to restate; a Home unlike its render still fails.
+- `counting.config_of` reads a skip-worktree `.loop/config.json` as committed at HEAD, so a value kept on one machine never reaches a rendered Settings or Automation block (wiki.py prepare and criteria.py render).
+- Chosen over a kept stamp on Home (the issue's second option): no new text on Home and no restamp step to forget.
+
+## Applied 2026-11-16 (held-time-charge)
+
+A goal's minute budget charged time it spent held or idle (#4534; #3878 covered only some shapes).
+
+- A session report that says waiting or paused now pauses the clock like `goal.py wait` (the waiting words matched only an entry that began with them, so `session report: ... waiting` and `paused for PC memory` leaked 417 minutes).
+- `board_log.active_minutes` takes the idle limit (`silent_minutes`, default 30 min; `LOOP_SESSION_QUIET` overrides): after an entry that is not the start of a step or the pr lane, a gap or the time to now is charged at most that limit. The estimate model's `flow_seconds` is unchanged, so history and estimates read as before; the budget gate and the ETA read the capped charge.
+- Cost: a worker that builds silently for more than the limit is charged only the limit; it sends `sessions.py report` as a heartbeat. Chosen over exempting build, which would leave goals idle in build charged all night.
+- `goal.py show` adds `minutes: {charged, wall}`. Existing records are not changed; the owner decides budgets.
