@@ -384,6 +384,9 @@
 | <a id="t-apply-rerender-accepted"></a>apply-rerender-accepted | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-tables"></a>apply-rerender-tables | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-howto"></a>apply-rerender-howto | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-doc19-item-missing"></a>doc19-item-missing | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc19-item-unknown"></a>doc19-item-unknown | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc19-runbook-plain"></a>doc19-runbook-plain | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 
 ## Guardrails
 

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-16** <!-- prd P=7303c1e7 R=2d514968 N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Unreviewed**
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -86,6 +86,10 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - The page is `docs/wiki/How-to-use-<Feature>.md`, titled "# How to use <Feature>", with these sections in order, leaving out any that do not apply: What it's for, How to reach or run it, URLs and deployments, Automations and schedules, Runbooks, Links (the PRD page and "Backlog: <Feature>"). The feature page links it in one line in its head, between its title and its first section: "How to use: [How-to-use-<Feature>](How-to-use-<Feature>)", and nothing else may sit there. A routine's runbook may sit under "Runbooks" on this page instead of the PRD.
   - `docs.py check` reports a feature page with no How-to-use page, one off that skeleton, or a feature page that does not link it (a page whose PRD is a link needs no link line); a How-to-use page has no `.loop/docs.tsv` row of its own and is mapped to its feature's paths, so it goes stale and publishes with it, and `audit.py restamp` re-stamps a stale one whose text is as committed; one whose feature has no page is an orphan, reported unmapped.
   - The README keeps a short start for each feature, a link to its How-to-use page and a few things to say; the full list of things to say and any URLs, deployments and schedules live on the How-to-use page.
+- DOC-19: **Unreviewed** Each How-to-use page has one item per functional requirement, saying how it is delivered
+  - An item is a line `- ID: how it is delivered` anywhere on the How-to-use page, naming the requirement and showing its delivery: a command and its printout, an example, a file or page it produces, or another stated form; items for non-functional requirements are allowed, not required.
+  - `docs.py check` fails a feature's How-to-use page that has no item for one of its page's functional requirement IDs, or an item naming an ID that page lacks; each failure names the IDs, and a page whose PRD is a link is not checked.
+  - On a How-to-use page, Runbooks hold plain "When X, do Y" steps; the DOC-16 routine shape applies only to a routine the repo schedules on that page.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
@@ -271,6 +275,9 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc18-review-link-line](Tests#t-doc18-review-link-line) | requirement | DOC-18 | Given a PRD page head, when it holds the one How-to-use link line anywhere, then it is allowed, and a different extra line, a second link line or a link to another page is refused. | PASS 2026-11-16 |
 | [doc18-runbook-on-howto](Tests#t-doc18-runbook-on-howto) | requirement | DOC-18 | Given a routine whose runbook is on the feature's How-to-use page, when docs check runs, then the routine is not owed a runbook on the PRD, and one with a runbook on neither page is. | PASS 2026-11-16 |
 | [doc18-howto-restamp](Tests#t-doc18-howto-restamp) | requirement | DOC-18 | Given a stale How-to-use page whose text is as committed, when audit restamp runs for it, then it is re-stamped and no longer stale, and a page whose text changed or whose feature has no page stays refused. | PASS 2026-11-16 |
+| [doc19-item-missing](Tests#t-doc19-item-missing) | requirement | DOC-19 | Given a feature page with three functional requirements and a How-to-use page with items for two, when docs check runs, then it fails naming the missing ID, and with all three items it passes. | PASS 2026-11-16 |
+| [doc19-item-unknown](Tests#t-doc19-item-unknown) | requirement | DOC-19 | Given a How-to-use page with an item for an ID its feature page lacks, when docs check runs, then it fails naming that ID; an item for a non-functional requirement is allowed. | PASS 2026-11-16 |
+| [doc19-runbook-plain](Tests#t-doc19-runbook-plain) | requirement | DOC-19 | Given a How-to-use page with plain 'When X, do Y' runbook steps and no scheduled routine, when docs check runs, then it passes, and a page whose scheduled routine lacks the DOC-16 fields still fails. | PASS 2026-11-16 |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
