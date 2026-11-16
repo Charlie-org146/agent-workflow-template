@@ -245,7 +245,7 @@ $role lane-wait nolane qa >"$T/o.out" 2>"$T/o.err"; rc=$?
 check "status lines go to stdout and the exit code says what happened (3: no lane)" '[ $rc = 3 ] && grep -q "^NO LANE" "$T/o.out" && [ ! -s "$T/o.err" ]'
 
 # Value: protects=lanekit.py's copies of the slots.py pieces lane.py uses stay the same code; fails_when=a copied
-# function (lanekit.COPIED) or EXIT_WAIT, EXIT_STALE, POLL differs from slots.py, or a name in COPIED is missing;
+# function (lanekit.COPIED) or EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL differs from slots.py, or a name in COPIED is missing;
 # why_new=a skill may not import another's scripts, so delivery keeps copies that could drift; seam=none; no_claim=behaviour
 out=$(python3 - "$S/lanekit.py" "$R/slots.py" <<'PY'
 import ast, sys
@@ -265,7 +265,7 @@ kit, kitnames, tree = parts(sys.argv[1])
 slots, slotnames, _ = parts(sys.argv[2])
 copied = ast.literal_eval(next(n.value for n in tree.body if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "COPIED"))
 drift = [name for name in copied if name not in kit or kit[name] != slots.get(name)]
-drift += [k for k in ("EXIT_WAIT", "EXIT_STALE", "POLL") if k not in kitnames or kitnames[k] != slotnames.get(k)]
+drift += [k for k in ("EXIT_WAIT", "EXIT_STALE", "EXIT_ENV", "POLL") if k not in kitnames or kitnames[k] != slotnames.get(k)]
 for name in ("flow_file", "lane_limit", "lanes_dir", "last_change", "port_base", "rows_line", "timeout_line", "time_limit"):
     if name not in copied:
         drift.append("%s not in COPIED" % name)

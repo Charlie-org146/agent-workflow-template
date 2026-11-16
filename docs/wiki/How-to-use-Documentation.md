@@ -33,4 +33,4 @@ Say these to the agent in the operation session; each feature page has the exact
 - PRD page: [Documentation](Documentation)
 - Backlog: [Backlog: Documentation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept docs-import-render@3822d1e8 -->
+<!-- kept apply-rerender@1c7b68f6 -->

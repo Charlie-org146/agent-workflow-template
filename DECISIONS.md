@@ -392,6 +392,12 @@ Health judge findings were re-filed under a new key each round (#4543: 29 issues
 - An open issue under an old key is found by `judge.twin` from the subject in its body, updated under the new key, never closed as gone; one closed by the owner (health:closed) stays closed.
 - Cost: two findings on one subject in one round now share an issue (the planner already keeps one issue per key); a judge that names a different first file for the same advice still files again.
 
+## lane-memory review notes
+
+- An ENV row (Windows start failure) is a SKIPPED row with an env flag. A lane up to half ENV exits 0 and names the ENV rows in its "not runnable here" count; more than half exits 6 (EXIT_ENV), which is not a counted try (cap 10 per goal, then it counts).
+- Seen, not changed: whether the real `bash -c` path passes 0xC0000142 through unchanged (the issue's logs show the full code, so it does); an ENV row overwrites an earlier FAIL in regression-runs.tsv until the rerun (a NOTRUN row did the same); `env_line` returns the whole note file, which ends with the MEMORY_WAIT text today.
+- `affected` selects fewer rows for README.md (five, reached only through files inside `.git`). On the main checkout it fell from 1149 MB and 833 s to 124 MB and 35 s.
+
 ## Applied 2026-11-16 (apply-rerender)
 
 Goals bounced off the pr lane because generated Settings and Automation blocks and Tests tables went stale on their branch while main or the template moved (#4632).
