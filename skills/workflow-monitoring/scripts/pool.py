@@ -76,7 +76,7 @@ def need(found, cfg, ready):
     """(K, declined): sessions to create now: every missing one (pool_size - total) when free sessions are fewer than ready goals."""
     free, _, total = counts(found)
     k = max(size_of(cfg) - total, 0) if free < ready else 0
-    if k and graph.memory_room() == 0:  # under min_free_memory_gb of free commit memory no session is created: nothing starts
+    if k and graph.memory_room() == 0:  # under min_free_memory_gb: no session is created
         k = 0
     side = se.read(side_path(), {})
     declined = side.get("declined")
@@ -146,7 +146,7 @@ def remove_tree(slug, state):
     common = os.path.realpath(os.path.join(se.base(), ".."))
     listed = subprocess.run(["git", "worktree", "list", "--porcelain"], capture_output=True, text=True).stdout.splitlines()
     main = next((line[9:] for line in listed if line.startswith("worktree ")), "")
-    if main and os.path.isdir(main):  # every git call runs from the main checkout: the worker may be standing in the tree
+    if main and os.path.isdir(main):  # the worker may stand in the tree
         os.chdir(main)
     if tree and os.path.isdir(tree) and os.path.realpath(tree).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
         done = subprocess.run(["git", "worktree", "remove", tree], capture_output=True, text=True)
@@ -157,7 +157,7 @@ def remove_tree(slug, state):
         try:
             subprocess.run(["git", "fetch", "-q", "origin"], capture_output=True, timeout=60)
         except (OSError, subprocess.SubprocessError):
-            pass  # an offline fetch: decide on the origin we have
+            pass  # offline
         base = "origin/" + base if se.git("rev-parse", "--verify", "--quiet", "origin/" + base) else base
         inside = subprocess.run(["git", "merge-base", "--is-ancestor", "refs/heads/" + branch, base], capture_output=True).returncode == 0
         done = subprocess.run(["git", "branch", "-D", branch], capture_output=True, text=True) if inside else None

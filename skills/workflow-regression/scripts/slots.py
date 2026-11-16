@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Lane slots and row-file locks. Imported by regression.py and lanes_cli.py; not a command. workflow-delivery's
-lanekit.py holds exact copies of the pieces its lane.py uses (lanekit.COPIED, and EXIT_WAIT, EXIT_STALE, POLL), and
+lanekit.py holds exact copies of the pieces its lane.py uses (lanekit.COPIED, and EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL), and
 dev/toy/test-lane-control.sh fails when a copy differs from the function here: change both together.
 
 The pool: `lane_limit` slots per machine (flow file, default 2, 0 is unlimited; LOOP_LANE_LIMIT overrides it) in
@@ -51,7 +51,7 @@ except ImportError:  # native Windows: msvcrt byte-range locks under flock's nam
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
-EXIT_WAIT, EXIT_STALE, POLL = 4, 5, 2.0
+EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL = 4, 5, 6, 2.0
 
 
 def note(line):
