@@ -109,6 +109,11 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
     # 1. a template reword leaves the branch's Settings block stale; apply re-renders it
     def code():
         with open(os.path.join(repo, "engine", "core.py"), "a", newline="\n") as handle:
+            handle.write("# a goal's change\n")
+
+
+    def real_code():
+        with open(os.path.join(repo, "engine", "core.py"), "a", newline="\n") as handle:
             handle.write("\n\ndef extra():\n    return 2\n")  # real code: a comment-only change stales no page
 
     branch("one", code)
@@ -135,5 +140,21 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
     stale = stale_on("three")
     before, after, said = applied("three")
     check(not stale or (before != after and "RERENDERED" in said and "Tests" in said), "a branch with a new regression row and no render gets its Tests tables re-rendered (%s)" % said.strip()[:80])
+
+    # 4. a How-to-use page made stale only by its feature's code is re-stamped by the same apply run
+    git("switch", "-q", "main", cwd=repo)
+    page = "# How to use Engine\n\n## What it's for\n\nThe calculator engine.\n\n## How to reach or run it\n\nSay what you want to the agent.\n\n## Links\n\n- PRD page: [Engine](Engine)\n"
+    write(repo, "docs/wiki/How-to-use-Engine.md", "<!-- workflow-docs -->\n" + page)
+    engine = text(repo, "docs/wiki/Engine.md").replace(chr(13) + chr(10), chr(10))
+    write(repo, "docs/wiki/Engine.md", engine.replace("# Engine\n", "# Engine\n\nHow to use: [How-to-use-Engine](How-to-use-Engine)\n", 1))
+    git("add", "-A", cwd=repo)
+    git("commit", "-qm", "A How-to-use page for Engine", cwd=repo)
+    git("push", "-q", "origin", "main", cwd=repo)
+    branch("four", real_code)
+    check(any("How-to-use-Engine" in l for l in stale_on("four")), "the branch is STALE on How-to-use-Engine through the feature's code")
+    before, after, said = applied("four")
+    check(before != after and "RESTAMPED How-to-use-Engine" in said, "the same apply run re-stamps the How-to-use page (%s)" % said.strip()[:80])
+    check(not any("How-to-use-Engine" in l for l in stale_on("four")), "the How-to-use page is no longer STALE on the new head")
+    check(run(sys.executable, OPERATE, "wiki-only", before, after, cwd=repo).returncode == 0, "merge.py accepts the head that carries the How-to-use re-stamp")
 
 sys.exit(1 if failed else 0)

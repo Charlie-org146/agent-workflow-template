@@ -382,6 +382,7 @@
 | <a id="t-apply-rerender-hand-edit"></a>apply-rerender-hand-edit | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-accepted"></a>apply-rerender-accepted | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-tables"></a>apply-rerender-tables | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-howto"></a>apply-rerender-howto | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 
 ## Guardrails
 
@@ -1170,3 +1171,5 @@
 | <a id="t-lane-closure-posix-same"></a>lane-closure-posix-same | defect | [#4457](https://github.com/jcl2018/agent-workflow-template/issues/4457) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-done-judge-stable-keys-1"></a>done-judge-stable-keys-1 | workflow | done line judge-stable-keys:1 | not run | - | local | no |
 | <a id="t-done-judge-stable-keys-2"></a>done-judge-stable-keys-2 | workflow | done line judge-stable-keys:2 | not run | - | local | no |
+| <a id="t-done-apply-rerender-1"></a>done-apply-rerender-1 | workflow | done line apply-rerender:1 | not run | - | local | no |
+| <a id="t-done-apply-rerender-2"></a>done-apply-rerender-2 | workflow | done line apply-rerender:2 | not run | - | local | no |
