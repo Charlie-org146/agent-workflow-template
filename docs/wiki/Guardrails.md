@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109e571 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
+Review: **Unreviewed**
 
 ## Problem
 
@@ -63,6 +63,11 @@ Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109
   - Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
 - GRD-12: **Reviewed 2026-11-14** The machine's status is read every round, and no goal starts under the memory floor. <!-- reviewed 0b68aa9f -->
   - Each check-in reads free RAM, free commit memory, CPU and the number of claude and node processes (Monitoring, MON-16). A goal starts only while free commit memory is at or above `min_free_memory_gb` (default 3.5, in `.loop/config.json`; 0 turns the floor off). The pool creates no session and the board holds every ready goal as "memory low" until memory frees up. A figure that can't be read never blocks a start.
+- GRD-13: **Unreviewed** A goal's ETA is a hard limit: past it no step starts, and the owner chooses ship now, extend once or defer (owner o52)
+  - Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal.
+  - A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release.
+  - goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot.
+  - Health warns on a live goal with no ETA, fails on an ETA extended without a record, and fails on a goal past its ETA that is not under Needs you; each rule has a negative control.
 
 ### Non-functional
 
