@@ -12,4 +12,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps a person can follow, each with an Expect: line. -->
+1. Run `python3 dev/toy/test-lane-dll-init.py`.
+   Expect: ten PASS lines, including "a row that could not start once, then passes, is PASS after one rerun" and "a row that dies twice is ENV (not run), never FAIL"; exit 0.
+2. In that output, read the negative-control line for a real FAIL.
+   Expect: "PASS: negative control: a real FAIL beside three dying rows still exits 1 (1)".
+3. Run `python3 dev/toy/test-lane-env.py`.
+   Expect: lane-memory's ENV checks still pass (nine PASS lines, exit 0).
