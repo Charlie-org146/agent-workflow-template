@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 """Ask whether a finished goal is released, then cut a draft GitHub release or leave it unreleased.
 
-usage: release.py <command> <slug> [options]
+usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-  ask SLUG    show the docs and verify steps, then ask cut or leave; a batch answers leave by itself
-  leave SLUG  keep the work unreleased; changes nothing versioned
-  cut SLUG [--bump patch|minor|major] [--user]
-              refuse without verify steps, with stale docs or an unmet criterion; else bump the version,
-              write the changelog, commit, push, create a DRAFT release for you to publish.
-  show SLUG   print the goal's release field
-
-A batch goal never cuts unless --user is given (the human's own message said to cut). With "release_auto": true in
-.loop/config.json, a batch ask reads the diff and cuts a patch DRAFT by itself, or the goal's own bump (goal.py set SLUG
---bump); only docs, tests or .loop leave. cut scans for private names before its push (PRIVATE_NAME). It never
-publishes, never pushes a tag, never merges.
+ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps,
+with stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT.
+A batch goal cuts only with --user (the human's own message). Criteria rows that are known, exit 77 or recorded PASS are
+skipped and rows stop running after 900 s. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
 """
 import argparse
 import datetime
@@ -22,9 +15,10 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# a prompt from git or gh must fail, not block
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -34,8 +28,8 @@ ASK = "Cut a release or leave it unreleased?"
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
 
 
-def run(args, cwd=None):
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+def run(args, cwd=None, env=None):
+    return subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
 
 
 def git(*args, cwd=None, check=True):
@@ -150,10 +144,10 @@ def auto_need(top, state):
     if stop:
         sys.exit("REFUSED: %s. Fix: %s (%s)" % stop)
     part = fit.view(state, os.path.dirname(state_path(state["slug"]))).get("bump")
-    part = part if part in ("minor", "major") else None  # the owner's bump wins (issue 3787)
+    part = part if part in ("minor", "major") else None
     if not code and not part:
         need = ("leave", "only docs, tests or .loop changed")
-    else:  # patch unless the owner set a bump; a removal or BREAKING is only named (issue 170)
+    else:
         why = ["the goal's bump, set with goal.py set" if part else "a code change: patch by default"]
         gone = [p for k, p in code if k == "D"]
         why += ["removes %s" % ", ".join(gone[:3])] * bool(gone)
@@ -217,7 +211,6 @@ def doc_rows(top):
 
 
 def docs_trouble(top, base, fix=False, whole=False):
-    """The docs audit's findings; [] when in step. whole: every page docs.py check calls stale, list only."""
     if not doc_rows(top):
         return []
     done = run([sys.executable, DOCS, "audit", "--base", "" if whole else base] + ([] if fix and not whole else ["--dry-run"]), top)
@@ -226,12 +219,23 @@ def docs_trouble(top, base, fix=False, whole=False):
     return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))] * bool(done.returncode)
 
 
+def fails(command, top):
+    flag = os.path.join(tempfile.gettempdir(), "skip%d" % os.getpid())
+    code = run(["sh", "-c", command], top, dict(os.environ, TOY_SKIP_FILE=flag)).returncode
+    return code not in (0, 77) and not (os.path.exists(flag) and not os.remove(flag))
+
+
 def criteria_trouble(top, cfg):
     try:
         rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
     except OSError:
         rows = []
-    out = []
+    out, skip, stop = [], set(), time.time() + 900
+    for name, ok in (("regression-known.tsv", ""), ("regression-runs.tsv", "PASS")):
+        try:
+            skip |= {l.split("	")[0] for l in open(os.path.join(top, ".loop", name)) if l[0] != "#" and ok in l.split("	")[1:2] + [""]}
+        except OSError:
+            pass
     for page in doc_rows(top):
         try:
             part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(top, cfg.get("wiki_dir") or "docs/wiki", page + ".md")).read()), maxsplit=1) + [""])[1].split("\n## ")[0]
@@ -241,7 +245,7 @@ def criteria_trouble(top, cfg):
             found = [r for r in rows if key in (r[0], r[3])]
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
-                if row[1] == "draft" or (row[1] != "covered" and run(["sh", "-c", row[2]], cwd=top).returncode):
+                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and fails(row[2], top)):
                     out.append("%s (row %s is a draft or failing)" % (key, row[0]))
     return out
 
@@ -336,7 +340,7 @@ def cmd_cut(args):
             run(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=cwd).returncode == 0:
         sys.exit("REFUSED: tag %s already exists. Fix: pick another --bump or set the version by hand." % tag)
     import wiki  # wiki imports release
-    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)  # REG-6: each fixed issue with its test
+    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)
     day = now()[:10]
     old = open(cpath).read() if os.path.exists(cpath) else ""
     files, message, before = [version_file, "CHANGELOG.md"], "Release " + tag, git("rev-parse", "HEAD", cwd=cwd)
