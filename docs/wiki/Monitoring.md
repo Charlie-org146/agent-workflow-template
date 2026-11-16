@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept pr-queue-step@ed40e011 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept eta-preflight@cf83d0be -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -207,6 +207,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [budget-fair-base-moved](Tests#t-budget-fair-base-moved) | requirement | MON-4 | Given five pr lanes that each end BASE_MOVED (a refused merge, or main moved), when the time budget is read, then none of that lane time is charged: only the 30 minutes of steps count, and neither a 60 minute budget nor a 400 minute one with 24 lost lanes is stopped (#4261). | PASS 2026-11-15 |
 | [budget-fair-failed-stays](Tests#t-budget-fair-failed-stays) | requirement | MON-4 | Given a pr lane that really failed, when the time budget is read, then its time is still charged. | PASS 2026-11-15 |
 | [budget-fair-held-time](Tests#t-budget-fair-held-time) | requirement | MON-4 | Given a goal held in the pr queue, on a hold, on an owner answer or after a stop, when the time budget is read, then that time is never charged, and a goal that truly runs past its budget is still stopped (#3878). | PASS 2026-11-15 |
+| [held-charge-pauses](Tests#t-held-charge-pauses) | requirement | MON-4 | Given a goal that runs 30 minutes, is paused 300 minutes (goal.py wait, or a session report that says waiting or paused) and runs 20 more, when the minute budget is read through fit.budget_stop, then it is charged 50, and the same goal running 350 minutes with no pause is charged 350 and stopped by a smaller budget. | not run |
 | [no-change-quiet](Tests#t-no-change-quiet) | requirement | MON-5 | Given a board field the old board lacked or gh not answering, when boards are compared, then it counts as no change. | PASS 2026-11-09 |
 | [operate-wakes-on-report](Tests#t-operate-wakes-on-report) | requirement | MON-5 | Given a worker's report, when it arrives before the cadence, then operate wakes and every pass prints the full board. | PASS 2026-11-09 |
 | [live-board-no-oneline](Tests#t-live-board-no-oneline) | requirement | MON-5 | Given an unchanged pass, when the operation session checks in, then the full check-in is printed again and there is no one-line mode. | PASS 2026-11-12 |
