@@ -366,6 +366,9 @@
 | <a id="t-prd-copy-no-source"></a>prd-copy-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-old-layout"></a>prd-copy-old-layout | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-notion-shape"></a>prd-copy-notion-shape | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-home-stale-clears"></a>home-stale-clears | requirement | DOC-4 | not run | - | local | 2026-11-16 |
+| <a id="t-home-stale-control"></a>home-stale-control | requirement | DOC-4 | not run | - | local | 2026-11-16 |
+| <a id="t-home-kept-config"></a>home-kept-config | requirement | DOC-15 | not run | - | local | 2026-11-16 |
 
 ## Guardrails
 
@@ -1130,3 +1133,5 @@
 | <a id="t-pr-queue-step-toy"></a>pr-queue-step-toy | requirement | done line pr-queue-step:2 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-preflight-asked"></a>eta-preflight-asked | requirement | done line eta-preflight:1 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-preflight-missed"></a>eta-preflight-missed | requirement | done line eta-preflight:2 | not run | - | local | 2026-11-16 |
+| <a id="t-done-home-stale-1"></a>done-home-stale-1 | workflow | done line home-stale:1 | not run | - | local | no |
+| <a id="t-done-home-stale-2"></a>done-home-stale-2 | workflow | done line home-stale:2 | not run | - | local | no |
