@@ -3,13 +3,12 @@
 
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
-health.py passes its rule functions to run(): every control builds a throwaway git repo in a private temporary folder,
-the one file or record that breaks its rule, and calls the real rule on it. The control fires only when that rule
-reports a WARN or FAIL row of its own group and rule (report.py's rule_of), never an UNREAD row or a sibling rule's.
-A rule whose control stays green is reported as a rule that cannot fire. Git runs with no inherited GIT_DIR, no global
-or system config and a fixed identity, so no hook, signing or setting applies and the real repo is never touched.
-Rows carry no temporary path and no time, so two runs print the same lines. run() imports nothing from health.py;
-only the run command line loads it, for its rule functions.
+health.py passes its rule functions to run(): every control builds a throwaway git repo in a private temporary folder
+with the one file or record that breaks its rule, and calls the real rule on it. It fires only when that rule reports a
+WARN or FAIL row of its own group and rule (report.py's rule_of), never an UNREAD row or a sibling rule's. A rule whose
+control stays green cannot fire. Git runs with no inherited GIT_DIR, no global or system config and a fixed identity,
+so the real repo is never touched. Rows carry no temporary path or time, so two runs print the same lines. run()
+imports nothing from health.py; only the run command line loads it.
 """
 import hashlib
 import importlib
@@ -28,7 +27,7 @@ OLD = "2026-01-01T00:00:00Z"
 
 
 class Leaked(Exception):
-    """A row showed text a control planted as private."""
+    """A row showed planted private text."""
 
 
 def clear_cache():
@@ -38,7 +37,7 @@ def clear_cache():
 
 
 class Unbuilt(Exception):
-    """A fixture could not be built: the command, its exit code and the last line it printed on stderr."""
+    """A fixture could not be built."""
 
 
 def env(extra=None):
@@ -64,7 +63,6 @@ def write(root, rel, text):
 
 
 def repo(root, config=None):
-    """A repo on main with one commit, a .loop/config.json and an empty regression table."""
     git(root, "init", "-q", "-b", "main")
     write(root, ".loop/config.json", json.dumps(dict({"base": "main", "wiki_dir": "docs/wiki"}, **(config or {}))))
     write(root, ".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n")
@@ -88,7 +86,6 @@ def run_record(root, slug, state):
         json.dump(dict({"slug": slug}, **state), handle)
 
 
-# Each fixture builds the smallest repo that must make its rule fire.
 def f_size(root):
     repo(root)
     write(root, "skills/x/scripts/big.py", "# pad\n" * 3600)
@@ -102,7 +99,7 @@ def f_criteria_rows(root):
 def f_criteria_done(root):
     repo(root)
     write(root, ".loop/goals/old.md", "# Old\n\n## Done lines\n\nFrozen.\n\n1. Calc adds.\n\n## Design\n")
-    write(root, ".git/loop/runs/old.json", '{"status": "running"}')  # done lines count while the goal runs
+    write(root, ".git/loop/runs/old.json", '{"status": "running"}')
 
 
 def f_defect_tests(root):
@@ -145,7 +142,7 @@ def f_test_time(root):
     folder = os.path.join(root, ".git", "loop", "tests")
     os.makedirs(folder, exist_ok=True)
     rows = {"r%d" % n: {"status": "PASS", "seconds": 400, "commit": "x"} for n in range(3)}
-    with open(os.path.join(folder, "main-%s.json" % hashlib.sha1(b"main").hexdigest()[:8]), "w") as handle:  # main's own
+    with open(os.path.join(folder, "main-%s.json" % hashlib.sha1(b"main").hexdigest()[:8]), "w") as handle:
         json.dump({"at": OLD, "rows": rows}, handle)
 
 
@@ -162,7 +159,6 @@ def f_prompt_pointer(root):
 
 
 def f_hooks(root):
-    """A repo with no hooks; the environment makes it fire on Actions and never read the real HOME or list."""
     repo(root)
     folder = os.path.dirname(root)
     write(folder, "list", "# a control\nzq-control\n")
@@ -304,7 +300,7 @@ def f_idle_sessions(root):
         json.dump({"s1": {"name": "worker · gone", "slug": "gone", "state": "busy"}}, handle)
 
 
-# rule name in groups.RULES -> (group, the rule groups.rule_of gives its rows, fixture); the rule modules add theirs
+# rule -> (group, rule_of label, fixture); the rule modules add theirs
 CONTROLS = {
     "scripts": ("size", "scripts", f_size),
     "rows": ("requirements", "rows", f_criteria_rows),
@@ -338,15 +334,14 @@ CONTROLS = {
     "check-time": ("performance", "check-time", f_check_time),
     "idle-sessions": ("hygiene", "idle-sessions", f_idle_sessions),
 }
-for _module in ("defects",):
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    try:
-        CONTROLS.update(importlib.import_module(_module).CONTROLS)
-    except ImportError:
-        pass
-    finally:
-        sys.path.pop(0)
-LEAK = "PLANTED-SECRET"  # the private rule's control plants this text; no row may show it
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    CONTROLS.update(importlib.import_module("defects").CONTROLS)
+except ImportError:
+    pass
+finally:
+    sys.path.pop(0)
+LEAK = "PLANTED-SECRET"
 
 
 def label(item, here):
@@ -365,12 +360,11 @@ def row(state, rule, detail, fix=""):
 
 
 def one(rule, function, here, keep=False):
-    """(row, kept path or ''): run one control through the real rule function."""
     group, wanted, fixture = CONTROLS[rule]
     folder = tempfile.mkdtemp(prefix="health-control-")
     root = os.path.join(folder, "repo")
     os.makedirs(root)
-    saved = {k: os.environ.pop(k) for k in list(os.environ) if k.startswith("GIT_")}  # all restored in finally
+    saved = {k: os.environ.pop(k) for k in list(os.environ) if k.startswith("GIT_")}
     kept = {k: os.environ.get(k) for k in ("LOOP_FLOW", "LOOP_HEALTH_GH_FIXTURE", "LOOP_HEALTH_T0", "CI", "GITHUB_ACTIONS", "LOOP_HEALTH_HOOKS", "HOME", "LOOP_PRIVATE_NAMES", "LOOP_SCHEDULED_TASKS_DIR")}
     os.environ.pop("LOOP_HEALTH_GH_FIXTURE", None)
     os.environ.pop("LOOP_HEALTH_T0", None)
@@ -394,7 +388,7 @@ def one(rule, function, here, keep=False):
     except Unbuilt as error:
         result = row("UNREAD", rule, "the control could not build its fixture: %s" % str(error).replace(os.path.realpath(folder), "<fixture>").replace(folder, "<fixture>"),
                      "run: python3 controls.py run %s --keep" % rule)
-    except Exception as error:  # one broken control is UNREAD, never a crash of the whole check
+    except Exception as error:
         result = row("UNREAD", rule, "the control stopped with %s" % type(error).__name__, "run: python3 controls.py run %s --keep" % rule)
     finally:
         for key in GIT_ENV:
@@ -413,13 +407,12 @@ def one(rule, function, here, keep=False):
 
 
 def run(rules, here):
-    """One controls row per rule, in the order of rules (a dict: rule name -> function(root) -> rows)."""
     return [one(rule, function, here)[0] for rule, function in rules.items()]
 
 
 def repo_control(root, rule):
-    """The Controls row for one repo rule (.loop/health-rules.json): its break runs on a private copy of the repo's files,
-    tracked and new, then its command runs there, and it must exit 1 or 2. The real repo is never touched."""
+    """The Controls row for one repo rule: its break runs on a private copy of the repo's files, then its command
+    runs there and must exit 1 or 2."""
     name, folder = rule["name"], tempfile.mkdtemp(prefix="health-control-")
     copy, fix = os.path.join(folder, "repo"), "fix the rule's break in .loop/health-rules.json"
     try:
@@ -444,13 +437,12 @@ def repo_control(root, rule):
 
 
 def repo_controls(root):
-    """One Controls row per repo rule (.loop/health-rules.json)."""
     import enforce
     return [repo_control(root, rule) for rule in enforce.repo_load(root)[0]]
 
 
 def refuse_repo():
-    """Exit 2 before any report when a repo rule has no break, no known group or no name of its own."""
+    """Exit 2 when a repo rule has no break, known group or name of its own."""
     import enforce
     top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     problems = enforce.repo_load(top.stdout.strip())[2] if not top.returncode else []
@@ -464,7 +456,7 @@ def missing(names):
 
 
 def refuse(names):
-    """Exit 2 before any report when a rule has no negative control."""
+    """Exit 2 when a rule has no negative control."""
     gap = missing(names)
     if gap:
         print("REFUSED: rule %s has no negative control. Fix: add CONTROLS[\"%s\"] in controls.py" % (", ".join(gap), gap[0]))

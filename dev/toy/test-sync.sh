@@ -22,6 +22,7 @@ case "$only" in  # an unknown part would run nothing and still say ALL PASS
 esac
 T=$(mktemp -d); toy_on_exit 'rm -rf "$T"'
 export HOME="$T/home" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }

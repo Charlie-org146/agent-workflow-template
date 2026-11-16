@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 """Ask whether a finished goal is released, then cut a draft GitHub release or leave it unreleased.
 
-usage: release.py <command> <slug> [options]
+usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-  ask SLUG    show the docs and verify steps, then ask cut or leave; a batch answers leave by itself
-  leave SLUG  keep the work unreleased; changes nothing versioned
-  cut SLUG [--bump patch|minor|major] [--user]
-              refuse without verify steps, with stale docs or an unmet criterion; bump the version,
-              write the changelog, commit, push, create a DRAFT release. You publish it.
-  show SLUG   print the goal's release field
-
-A batch goal never cuts unless --user is given, and --user means the human's own message said to cut.
-With "release_auto": true in .loop/config.json, a batch ask reads the diff and cuts a patch DRAFT by itself (no
---user), or the goal's own bump set with goal.py set SLUG --bump; only docs, tests or .loop leave.
-cut scans for private names before its push (PRIVATE_NAME). It never publishes, never pushes a tag, never merges.
+ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps,
+with stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT.
+A batch goal cuts only with --user (the human's own message). Criteria rows that are known, exit 77 or recorded PASS are
+skipped and rows stop running after 900 s. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
 """
 import argparse
 import datetime
@@ -23,9 +16,9 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -35,8 +28,8 @@ ASK = "Cut a release or leave it unreleased?"
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
 
 
-def run(args, cwd=None):
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+def run(args, cwd=None, env=None):
+    return subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
 
 
 def git(*args, cwd=None, check=True):
@@ -53,9 +46,9 @@ def now():
 def state_path(slug):
     if not re.match(r"^[a-z0-9][a-z0-9-]{0,50}$", slug):
         sys.exit("REFUSED: bad slug. Fix: lowercase letters, digits and dashes.")
-    common = os.path.abspath(git("rev-parse", "--git-common-dir"))
-    os.makedirs(os.path.join(common, "loop", "runs"), exist_ok=True)
-    return os.path.join(common, "loop", "runs", slug + ".json")
+    runs = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop", "runs")
+    os.makedirs(runs, exist_ok=True)
+    return os.path.join(runs, slug + ".json")
 
 
 def load(slug):
@@ -87,6 +80,11 @@ def finished(state):
                  % (state["slug"], state.get("status")))
 
 
+def toplevel(state):
+    tree = state.get("worktree") or ""
+    return git("rev-parse", "--show-toplevel", cwd=tree if os.path.isdir(tree) else None)
+
+
 def do_leave(state, by):
     state.update(release="leave", status="done", step="release", waiting=None)
     save(state, "release leave, answered by " + by)
@@ -99,8 +97,7 @@ def cmd_ask(args):
     if state.get("release") not in ("cut", "leave") and state.get("status") != "done":
         sys.exit("REFUSED: %s is %s, not done. Fix: finish it with workflow-delivery." % (args.slug, state.get("status")))
     finished(state)
-    tree = state.get("worktree") or ""
-    top = git("rev-parse", "--show-toplevel", cwd=tree if os.path.isdir(tree) else None)
+    top = toplevel(state)
     if state.get("batch") and state.get("release") != "ask":
         need = auto_need(top, state) if auto_on(top) else None
         if need is None:
@@ -114,23 +111,17 @@ def cmd_ask(args):
             print(stop, "\nThe owner decides.")
             state = load(args.slug)
     words = ["cut " + args.slug, "leave " + args.slug]
-    state["status"] = "waiting"
-    state["step"] = "release"
-    state["release"] = "ask"
-    state["waiting"] = {"ask": ASK, "words": words}
+    state.update(status="waiting", step="release", release="ask", waiting={"ask": ASK, "words": words})
     save(state, "waiting: " + ASK)
     print("WAITING %s: %s" % (args.slug, ASK))
     print("PR: %s" % state.get("pr"))
     cfg = read_config(top)
     base = base_of(top, cfg)
-    for line in docs_lines(top, cfg, base):
-        print(line)
+    print("\n".join(docs_lines(top, cfg, base)))
     for line in docs_trouble(top, base, whole=True):
         print("DOCS, which cut will refuse: " + line)
     print("How to verify:\n%s" % (verify_steps(top, args.slug) or "NONE YET, which cut will refuse."))
-    print("Type exactly one of:")
-    for word in words:
-        print("  " + word)
+    print("Type exactly one of:\n  " + "\n  ".join(words))
     return 0
 
 
@@ -153,10 +144,10 @@ def auto_need(top, state):
     if stop:
         sys.exit("REFUSED: %s. Fix: %s (%s)" % stop)
     part = fit.view(state, os.path.dirname(state_path(state["slug"]))).get("bump")
-    part = part if part in ("minor", "major") else None  # the owner's recorded bump wins on any goal (issue 3787)
+    part = part if part in ("minor", "major") else None
     if not code and not part:
         need = ("leave", "only docs, tests or .loop changed")
-    else:  # patch unless the owner set the goal's bump; a removal or BREAKING is only named (issue 170)
+    else:
         why = ["the goal's bump, set with goal.py set" if part else "a code change: patch by default"]
         gone = [p for k, p in code if k == "D"]
         why += ["removes %s" % ", ".join(gone[:3])] * bool(gone)
@@ -220,14 +211,18 @@ def doc_rows(top):
 
 
 def docs_trouble(top, base, fix=False, whole=False):
-    """The docs audit's findings; [] when the docs are in step. whole: every page docs.py check calls stale, list only."""
     if not doc_rows(top):
         return []
     done = run([sys.executable, DOCS, "audit", "--base", "" if whole else base] + ([] if fix and not whole else ["--dry-run"]), top)
-    lines = [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))]
     if done.returncode and not done.stdout.strip():
         return ["the docs audit failed: " + (done.stderr.strip().splitlines() or ["no output"])[-1]]
-    return lines * bool(done.returncode)
+    return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))] * bool(done.returncode)
+
+
+def fails(command, top):
+    flag = os.path.join(tempfile.gettempdir(), "skip%d" % os.getpid())
+    code = run(["sh", "-c", command], top, dict(os.environ, TOY_SKIP_FILE=flag)).returncode
+    return code not in (0, 77) and not (os.path.exists(flag) and not os.remove(flag))
 
 
 def criteria_trouble(top, cfg):
@@ -235,7 +230,12 @@ def criteria_trouble(top, cfg):
         rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
     except OSError:
         rows = []
-    out = []
+    out, skip, stop = [], set(), time.time() + 900
+    for name, ok in (("regression-known.tsv", ""), ("regression-runs.tsv", "PASS")):
+        try:
+            skip |= {l.split("	")[0] for l in open(os.path.join(top, ".loop", name)) if l[0] != "#" and ok in l.split("	")[1:2] + [""]}
+        except OSError:
+            pass
     for page in doc_rows(top):
         try:
             part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(top, cfg.get("wiki_dir") or "docs/wiki", page + ".md")).read()), maxsplit=1) + [""])[1].split("\n## ")[0]
@@ -245,7 +245,7 @@ def criteria_trouble(top, cfg):
             found = [r for r in rows if key in (r[0], r[3])]
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
-                if row[1] == "draft" or (row[1] != "covered" and run(["sh", "-c", row[2]], cwd=top).returncode):
+                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and fails(row[2], top)):
                     out.append("%s (row %s is a draft or failing)" % (key, row[0]))
     return out
 
@@ -266,8 +266,7 @@ def docs_lines(top, cfg, base):
     out = git("diff", "--name-only", base + "...HEAD", "--", cfg.get("wiki_dir") or "docs/wiki", cwd=top, check=False)
     changed = [os.path.basename(name)[:-3] for name in out.splitlines() if name.endswith(".md")]
     link = wiki_link(top)
-    lines = ["Documentation changed: %s." % (", ".join(changed) if changed else "none")]
-    return lines + (["Wiki: " + link] if link else [])
+    return ["Documentation changed: %s." % (", ".join(changed) or "none")] + (["Wiki: " + link] if link else [])
 
 
 def subjects(base, cwd):
@@ -311,8 +310,7 @@ def cmd_cut(args):
                  "own message says \"cut %s\", then pass --user." % (slug, slug))
     finished(state)
     branch = state.get("branch") or "loop/" + slug
-    tree = state.get("worktree") or ""
-    cwd = git("rev-parse", "--show-toplevel", cwd=tree if os.path.isdir(tree) else os.getcwd())
+    cwd = toplevel(state)
     current = git("branch", "--show-current", cwd=cwd)
     if current != branch:
         sys.exit("REFUSED: %s is on branch %r, not %s. Fix: switch to %s first." % (cwd, current, branch, branch))
@@ -335,17 +333,14 @@ def cmd_cut(args):
     if os.path.isabs(version_file) or ".." in version_file.split("/"):
         sys.exit("REFUSED: version_file must be a path inside the repo.")
     vpath, cpath = os.path.join(cwd, version_file), os.path.join(cwd, "CHANGELOG.md")
-    if os.path.exists(vpath):
-        old_version = open(vpath).read().strip()
-        version = bump(old_version, args.bump)
-    else:
-        old_version, version = "none", "0.1.0"
+    old_version = open(vpath).read().strip() if os.path.exists(vpath) else "none"
+    version = bump(old_version, args.bump) if os.path.exists(vpath) else "0.1.0"
     tag = "v" + version
     if run(["git", "rev-parse", "--verify", "--quiet", "refs/tags/" + tag], cwd=cwd).returncode == 0 or \
             run(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=cwd).returncode == 0:
         sys.exit("REFUSED: tag %s already exists. Fix: pick another --bump or set the version by hand." % tag)
-    import wiki  # here, not on top: wiki imports release
-    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)  # REG-6: each fixed issue with its test
+    import wiki  # wiki imports release
+    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)
     day = now()[:10]
     old = open(cpath).read() if os.path.exists(cpath) else ""
     files, message, before = [version_file, "CHANGELOG.md"], "Release " + tag, git("rev-parse", "HEAD", cwd=cwd)
@@ -367,16 +362,8 @@ def cmd_cut(args):
     if pushed.returncode:
         restore(cwd, files, before, message)
         sys.exit("REFUSED: push failed, release undone: " + pushed.stderr.strip()[:300])
-    notes = tempfile.NamedTemporaryFile("w", suffix=".md", prefix="release-notes-", delete=False)
-    with notes:
-        notes.write(text)
-    try:
-        made = run(["gh", "release", "create", tag, "--draft", "--title", tag, "--notes-file", notes.name,
-                    "--target", branch], cwd=cwd)
-    except OSError as error:
-        made = subprocess.CompletedProcess([], 1, "", str(error))
-    finally:
-        os.remove(notes.name)
+    made = autorelease.sh_text(["gh", "release", "create", tag, "--draft", "--title", tag, "--target", branch], text,
+                               "--notes-file", cwd)
     if made.returncode:
         restore(cwd, files, before, message)
         lease = run(["git", "push", "--force-with-lease=%s:%s" % (branch, git("rev-parse", "origin/" + branch, cwd=cwd, check=False)),

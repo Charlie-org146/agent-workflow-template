@@ -3,7 +3,7 @@
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
-# reads: skills/workflow-docs/references/template.md skills/workflow-health/scripts/judge.py
+# reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the page format (DOC-4..DOC-10): for each rule a bad page fails naming the page, section and rule and a good
@@ -15,6 +15,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
@@ -254,10 +255,10 @@ PY
 
 echo "== the format key in the rules block chooses the checks"
 mkdir -p "$d/sk"; cp -R "$here/skills" "$d/sk/"; sk="python3 $d/sk/skills/workflow-docs/scripts/docs.py"
-sed -i.bak 's/^format: .*/format: home, frontdoor, usage, bullets, tests/' "$d/sk/skills/workflow-docs/references/template.md"
+sed -i.bak 's/^format: .*/format: home, frontdoor, usage, bullets, tests/' "$d/sk/skills/workflow-docs/references/commands.md"
 edit $P "- I want the median of my numbers" "- Owners want the median of their numbers"
 $docs check | grep -q "Problem: DOC-8" && ! $sk check | grep -q "Problem: DOC-8" && ok "the format key without problem turns DOC-8 off" || bad "format key"; reset
-sed -i.bak 's/^format: .*/format: home, nosuch/' "$d/sk/skills/workflow-docs/references/template.md"
+sed -i.bak 's/^format: .*/format: home, nosuch/' "$d/sk/skills/workflow-docs/references/commands.md"
 $sk check 2>&1 | grep -q "REFUSED: the rules block" && ok "an unknown name in the format key refuses" || bad "format unknown"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

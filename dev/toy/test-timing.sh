@@ -11,6 +11,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 fails=0
 ok() { echo "PASS: $1"; }

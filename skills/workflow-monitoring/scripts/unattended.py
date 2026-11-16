@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
-"""MON-18: what the operation session needs in order to keep running unattended.
+"""MON-18: what the operation session needs to keep running unattended.
 
 usage: unattended.py sends [add TO | reset | status]       cross-session sends since the owner's last message
        unattended.py loop [created [--days N] | status]    the check-in loop's expiry (7 days by default)
        unattended.py standing add TEXT [--scope merge] [--goals A,B|all] | check SLUG | revoke ID
        unattended.py selfcheck                             what is missing before an unattended run
 
-The records live in <git common dir>/loop/ (sends.json, checkin-loop.json, standing.tsv).
-  sends       the app pauses cross-session messages after 20 sends with no owner message: sessions.py send logs each one,
-              the operation session logs its own message-tool sends with `sends add`, an owner message is `sends reset`;
-              from 16 the status carries a WARNING
-  loop        `loop status` says RECREATE inside the last 24 hours and EXPIRED after the end: the operation session
-              re-creates its check-in loop itself, then runs `loop created`
-  standing    one instruction replaces a go per merge; only the operation session adds one (a worker is refused), and a
-              worker at pr runs `standing check SLUG`: STANDING <id> means go on without another go
-  selfcheck   MISSING permission mode (defaultMode default or plan holds cross-session messages for approval), MISSING
-              routine rules (audit.py permissions check, workflow-docs), MISSING main checkout behind origin; CHECK lines are
-              what could not be read; SELFCHECK OK or exit 1
+Records: <git common dir>/loop/.
+  sends       the app pauses sends after 20 with no owner message; from 16 status warns
+  loop        `loop status` says RECREATE in the last 24 hours and EXPIRED after the end; then `loop created`
+  standing    replaces a go per merge; only the operation session adds one; a worker at pr runs `standing check SLUG`
+  selfcheck   MISSING permission mode, routine rules, main checkout behind origin; else SELFCHECK OK
 """
 import argparse
 import datetime
@@ -28,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 CAP, WARN_AT, LOOP_DAYS = 20, 16, 7
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -66,7 +61,6 @@ def save(path, data):
 
 
 def sent(to=""):
-    """Log one send; never raises, so a send does not fail on the log."""
     try:
         if not common():
             return
@@ -99,7 +93,6 @@ def loop_status():
 
 
 def lines():
-    """(the Operation line for Coming up, the Needs-you items) the check-in prints."""
     if not common():
         return "", []
     try:
@@ -119,7 +112,6 @@ def standing_path():
 
 
 def standing_rows():
-    """(id, stamp, scope, goals, text, revoked) per record."""
     try:
         with open(standing_path(), encoding="utf-8") as handle:
             return [(row + [""] * 6)[:6] for row in (line.rstrip("\n").split("\t") for line in handle) if len(row) >= 5]
@@ -225,7 +217,6 @@ def symlinks():
 
 
 def prerequisites():
-    """SET-11: what this machine needs before setup writes anything, each gap with its exact fix."""
     gh = shutil.which("gh")
     signed = bool(gh) and subprocess.run([gh, "auth", "status"], capture_output=True).returncode == 0
     return [need("git", shutil.which("git"), "install git"), need("python3", sys.version_info >= (3, 8), "install Python 3.8 or newer"),
@@ -246,8 +237,7 @@ def followed():
 
 
 def connectors():
-    """SET-14: each connector a followed repo's PRDs name, probed read-only ($LOOP_CONNECTOR_PROBE KIND: exit 0 connected, 3 needs
-    sign-in, else missing). Never attaches or enables one."""
+    """SET-14: the connectors a followed repo's PRDs name, probed read-only."""
     probe, found = os.environ.get("LOOP_CONNECTOR_PROBE", "").split(), []
     for path in followed():
         pages = glob.glob(os.path.join(path, "docs", "wiki", "*.md"))
@@ -262,7 +252,6 @@ def connectors():
 
 
 def observed(step):
-    """(ok, what this machine shows) for one golden step; steps 1 to 7 can be read from here."""
     repos, gaps = followed(), [x for x in (prerequisites() if step == 1 else connectors() if step == 6 else []) if x[0] == "M"]
     if step in (1, 6):
         return not gaps, "; ".join(gaps) or "no gap"
@@ -284,7 +273,7 @@ def observed(step):
         old = [os.path.basename(p) for p in repos if not held(p) or (version and held(p) != version)]
         return bool(repos) and not old, "installed %s; unknown or older: %s" % (version or "none (a checkout)", ", ".join(old) or "none")
     if step == 5:
-        top = os.path.dirname(os.path.dirname(common())) if common() else "."  # the operation repo: the main checkout
+        top = os.path.dirname(os.path.dirname(common())) if common() else "."
         try:
             with open(os.path.join(top, ".claude", "settings.local.json"), encoding="utf-8") as handle:
                 text = handle.read()
@@ -300,8 +289,7 @@ def observed(step):
 
 
 def replay(golden):
-    """SET-11: walk the golden first adoption (dev/toy/adoption-golden.tsv), stop at the first mismatch with what differs and the
-    step's fix; a looser result never passes."""
+    """SET-11: walk dev/toy/adoption-golden.tsv; stop at the first mismatch."""
     try:
         with open(golden, encoding="utf-8") as handle:
             steps = [x.rstrip("\n").split("\t") for x in handle if x.strip() and x[0] != "#"]
@@ -319,15 +307,13 @@ def replay(golden):
 
 
 def template_version(dest):
-    """A repo's template_version on its newest setup or update branch, else in its working tree."""
     refs = run("for-each-ref", "--sort=-committerdate", "--format=%(refname:short)", "refs/heads/workflow-setup", "refs/heads/workflow-update-*", cwd=dest)[1]
     shown = run("show", "%s:.loop/config.json" % refs.split("\n")[0], cwd=dest)[1] if refs else ""
     return (json.loads(shown) if shown else load(os.path.join(dest, ".loop", "config.json"), {})).get("template_version") or "unknown"
 
 
 def adopt(args):
-    """SET-12: --recent N lists my GitHub repos by last push; names are cloned into one folder, followed, set up or updated, each
-    ending with its template_version. No branch is merged."""
+    """SET-12: --recent N lists my repos by last push; named ones are set up."""
     gh = os.environ.get("LOOP_GH", "gh").split()
     if args.recent:
         done = subprocess.run(gh + ["repo", "list", "--limit", str(args.recent), "--json", "nameWithOwner,isPrivate,pushedAt", "--jq",

@@ -29,6 +29,9 @@ toy_skip() { echo "SKIP: $*"; [ -z "${TOY_SKIP_FILE:-}" ] || echo skip > "$TOY_S
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) grep -q "^# windows: ok" "$0" || toy_skip "$(basename "$0") is not marked '# windows: ok'";; esac
 export LOOP_NO_GIT_HOOKS=1  # a toy never installs git hooks into its repos (the guard-enforce test unsets it)
 export LOOP_NO_HEALTH=1 LOOP_NO_ISSUES=1  # setup's two health runs and its issue filing are off in a toy; the setup-adopt rows that test them unset these
+# The machine is made up too: the goal start decisions (parallel, the pool, memory holds) read free memory (MON-16), which on a loaded
+# runner or a small PC drops under the floor and stops every start; a toy that tests memory sets its own LOOP_MACHINE (#4375).
+export LOOP_MACHINE="${LOOP_MACHINE:-64,64,10,0,0}"
 _toy_reap_on=1
 _toy_reap_py="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/reap.py"
 _toy_reap_label=$(basename "$0")
@@ -45,6 +48,11 @@ toy_on_exit() { _toy_reap_cbs="${_toy_reap_cbs}${1}
 _toy_sched=$(mktemp -d); toy_on_exit 'rm -rf "$_toy_sched"'
 export LOOP_REPO_VISIBILITY=public  # a toy repo is public unless a test unsets this and uses the fake gh
 export LOOP_SCHEDULE_PROGRAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/skills/workflow-health/scripts/automation.py"  # install is not refused in a worktree
+# Nor does the flow or health file: the owner's ~/.workflow-loop is never read or written. A guard snapshots it now and fails the
+# test at exit when anything there changed (issue 4393); a test of the default location unsets these and sets HOME and USERPROFILE.
+export LOOP_FLOW="$_toy_sched/flow.json" LOOP_HEALTH="$_toy_sched/health.json"
+_toy_guard="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/homeguard.py"
+_toy_wl=$(mktemp); python3 "$_toy_guard" snap "$_toy_wl" 2>/dev/null || true
 export LOOP_SCHEDULE_HOME="$_toy_sched/schedule" LOOP_AGENTS_DIR="$_toy_sched/agents" LOOP_LAUNCHCTL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/fakegh/launchctl"
 toy_list() { python3 "$_toy_reap_py" list "$1=$2"; }
 toy_reap() { python3 "$_toy_reap_py" reap "$1=$2" --label "$_toy_reap_label"; }
@@ -59,6 +67,8 @@ _toy_reap_exit() {
   done <<EOF_TOY_REAP
 $_toy_reap_cbs
 EOF_TOY_REAP
+  [ ! -s "$_toy_wl" ] || python3 "$_toy_guard" diff "$_toy_wl" || { [ "$rc" != 0 ] || rc=1; }
+  rm -f "$_toy_wl"
   toy_reap TOY_REAP_ID "$TOY_REAP_ID" >/dev/null || { [ "$rc" != 0 ] || rc=1; }
   exit "$rc"
 }

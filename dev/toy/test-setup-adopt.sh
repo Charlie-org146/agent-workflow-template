@@ -13,6 +13,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 d=$(mktemp -d); toy_on_exit 'chmod -R u+w "$d" 2>/dev/null; rm -rf "$d"'
 export HOME="$d/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 printf '# a toy: no private names\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
 no() { echo "FAIL ${only:-setup-adopt}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
@@ -25,10 +26,14 @@ mk() { # mk NAME: a toy repo with a code folder and a test, at $d/NAME/repo
   mkdir -p engine; printf 'def run():\n    return 1\n' > engine/core.py
   git add -A; git commit -qm "Code folder"
 }
-state() { # a hash of the tree, the index, the branches, the stash and the home folder
+state() { # a hash of the tree, the index, the branches, the stash and the home folder (not gh's own state: the CLI writes its device-id there on a first run)
   (cd "$1" && { git rev-parse HEAD; git branch -a; git stash list; git write-tree; git status --porcelain=v2 --untracked-files=all
     find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; } | shasum
-   find "$HOME" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum) | tr -d ' \n-'
+   find "$HOME" -path "$HOME/.local/state/gh" -prune -o -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum) | tr -d ' \n-'
+}
+snap() { # the same facts as state, as text, so a failure can show what changed
+  (cd "$1" && { git rev-parse HEAD; git branch -a; git stash list; git write-tree; git status --porcelain=v2 --untracked-files=all
+    find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; }; find "$HOME" -path "$HOME/.local/state/gh" -prune -o -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null)
 }
 tracked() { git ls-tree -r --name-only "$1"; }
 
@@ -177,11 +182,11 @@ fi
 # SET-8 a local setting in the committed config is refused, nothing written.
 if want set8-local-setting-refused; then
   mk ls; mkdir -p .loop; printf '{"base": "main", "allowed_tools": ["qz-secret-tool"]}\n' > .loop/config.json
-  before=$(state "$d/ls/repo")
+  before=$(state "$d/ls/repo"); snap "$d/ls/repo" > "$d/before.snap"
   out=$($setup 2>&1); rc=$?
   [ $rc = 1 ] && echo "$out" | grep -q 'REFUSED: .*\.loop/config.json:[0-9]* holds the local setting allowed_tools.*SETUP_PRIVATE_VALUE' || no "not refused: rc=$rc $(echo "$out" | tail -3)"
   echo "$out" | grep -q 'qz-secret-tool' && no "the refusal prints the value"
-  [ "$(state "$d/ls/repo")" = "$before" ] || no "the refusal left something written"
+  [ "$(state "$d/ls/repo")" = "$before" ] || { snap "$d/ls/repo" | diff "$d/before.snap" - | head -12; no "the refusal left something written"; }
   echo "PASS set8-local-setting-refused: a private-home key in the config is refused by name, nothing written"
 fi
 

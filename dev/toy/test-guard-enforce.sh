@@ -14,6 +14,7 @@ want() { case "$section" in all|"$1") return 0 ;; set8) case $1 in hooks|more|se
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 TOKEN=zq-guardtest-token
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_EDITOR=true GIT_TERMINAL_PROMPT=0; : > "$GIT_CONFIG_GLOBAL"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
 printf '# a fake private list for a toy test\n%s\n' "$TOKEN" > "$T/list"
@@ -161,7 +162,7 @@ r "LOOP_PRIVATE_NAMES=$T/emptyre git -C $T/s10 commit -m x"
 check "a pattern that matches the empty string (or ordinary text) is a broken list, not a flag on every line" '[ $rc != 0 ] && has "PRIVATE_LIST" && has "line 1 matches ordinary text"'
 r "LOOP_PRIVATE_NAMES=$T/optout git -C $T/s10 commit -m x"
 check "a comment-only list is off on purpose and the commit goes through" '[ $rc = 0 ]'
-r "env -u LOOP_PRIVATE_NAMES HOME=$T/nohome git -C $T/s10 commit --allow-empty -m y"
+r "env -u LOOP_PRIVATE_NAMES HOME=$T/nohome USERPROFILE=$T/nohome git -C $T/s10 commit --allow-empty -m y"
 check "no list at all passes the commit silently" '[ $rc = 0 ]'
 
 echo "== SET-8: health reports the hooks"
@@ -178,7 +179,7 @@ r "cd $T/s9 && $HEALTH check --group security"
 check "a stub whose private.py moved is a stale WARN before it blocks a commit" 'has "pre-commit: stale"'
 mk s11; inst s11; r "cd $T/s11 && LOOP_PRIVATE_NAMES=$T/badre $HEALTH check --group security"
 check "a broken list is a WARN that names the way to see the line, never the pattern" 'has "WARN security hooks hooks: the private-name list is broken" && ! has "$TOKEN"'
-r "cd $T/s11 && env -u LOOP_PRIVATE_NAMES HOME=$T/nohome $HEALTH check --group security"
+r "cd $T/s11 && env -u LOOP_PRIVATE_NAMES HOME=$T/nohome USERPROFILE=$T/nohome $HEALTH check --group security"
 check "no list is not a health finding (the board lists it)" 'has "^PASS security hooks hooks: the private-name hooks are installed"'
 mkdir -p "$T/old/skills"; cp -R "$here/skills/." "$T/old/skills/"; printf 'import sys\nsys.exit(2)\n' > "$T/old/skills/workflow-setup/scripts/setup.py"
 r "cd $T/s11 && python3 $T/old/skills/workflow-health/scripts/health.py check --group security"

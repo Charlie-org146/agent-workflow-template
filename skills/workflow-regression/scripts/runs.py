@@ -1,24 +1,17 @@
 """Read and write .loop/regression-runs.tsv: each row's last run as id, status, date, run, flaky.
 
-run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else
-empty, so same-day runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's
-result flipped on (tiers.py flaky_apply, REG-9); status stays the raw PASS or FAIL. The per-result evidence (commit, clean, host,
-python) lives in the branch's lane record in the git common dir, never here: a commit cell would differ on every
-branch and turn each same-day merge of this file into a conflict. Files from before the run or flaky column still
-read, with those cells empty. A line carries the 5th cell only while it is set, so the upgrade changes no other line
-and an unflagged line is the same as before. A row not rerun keeps its cells, and a result with no flaky field (a dirty
-tree) keeps the row's flaky cell.
+run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day
+runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's result flipped on (tiers.py
+flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
+record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
 
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in
-its body. Dry-run (WOULD lines) unless live; live, it creates, labels, reopens, comments on and closes issues with gh.
-The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
+It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body.
+Dry-run (WOULD lines) unless live. The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
 
-The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (the loop's qa, ship
-and pull-request lanes) never goes past test_budget_minutes in .loop/config.json (default 15, floor 15). Rows run in
-tier order (the rows a change affects first) while their estimated seconds fit, a row still running at the budget is
-stopped, and every row not run is left to the scheduled full suite and listed. A left row is recorded as LEFT, so a
-later lane on the same content doesn't rerun it.
-The row and page readers of regression.py (chosen, clean, criteria_ids and others) sit at the end, moved here unchanged.
+The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (qa, ship and pull-request lanes)
+never goes past test_budget_minutes in .loop/config.json (default 15, floor 15); rows run in tier order while their estimated
+seconds fit, a row still running at the budget is stopped, and the rest are listed and recorded LEFT for the scheduled full suite.
+regression.py's row and page readers sit at the end.
 """
 import datetime
 import glob
@@ -32,19 +25,38 @@ import time
 
 import actions
 import lanes
-import rowtail
 
-# No terminal, no waiting: a prompt from gh must fail, not block.
+# A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 NAME = "regression-runs.tsv"
 HEADER = "# id\tstatus\tdate\trun\tflaky\n"
-ISSUE_LIMIT = 1000  # gh issue list returns at most this many: a full list may be cut off
-SKIP_CODE = 77  # a row exits 77 when it cannot run on this machine (no Codex): SKIPPED, never PASS, never FAIL
-LABELS = ("regression", "defect")  # the tool's own label, and the defect label every failing row's issue carries
+ISSUE_LIMIT = 1000
+SKIP_CODE = 77
+LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
+
+# rowtail:begin (actions.py copies this block into the workflow)
+LAST = 40  # output lines an issue carries (defect 3789)
+QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")  # `| grep -q PATTERN` hides its stream
+
+
+def again(command):
+    """The command with each `| grep -q PATTERN` made `| cat`, or None when it has none."""
+    loud = QUIET.sub("| cat", command)
+    return loud if loud != command else None
+
+
+def shown(run, command, code, text):
+    """A failing row's last LAST lines, never empty; a row that printed nothing runs once more with its quiet stage loud (run is
+    the caller's (code, text) runner)."""
+    if not text.strip() and again(command):
+        text = run(again(command))[1]
+    lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
+    return "\n".join(lines).replace("`" * 3, "'" * 3) or "(the row printed nothing; it exited %s)" % code
+# rowtail:end
 
 
 def path(root):
@@ -62,7 +74,7 @@ def read(root):
 
 
 def where(sha=None):
-    """The run cell: the Actions run URL in CI, else empty (sha is unused, kept for callers)."""
+    """The run cell: the Actions run URL in CI, else empty."""
     parts = [os.environ.get(key, "") for key in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")]
     return "%s/%s/actions/runs/%s" % tuple(parts) if all(parts) else ""
 
@@ -82,7 +94,7 @@ def write(root, results, date, sha):
 
 
 def gh(*args, body=None):
-    """gh; a long text (body=) goes in a temp file as --body-file, never on the command line (Windows caps it)."""
+    """gh; a body= text goes in a temp file as --body-file (Windows caps the command line)."""
     if body is not None:
         with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
             f.write(body)
@@ -106,7 +118,7 @@ def sync_issues(results, live, day):
             print("NOTE: can't read issues, so none changed: " + out.stderr.strip()[:200])
             return
         issues = json.loads(out.stdout or "[]")
-        if len(issues) >= ISSUE_LIMIT:  # an older issue may be missing, so a row would open a duplicate: file nothing
+        if len(issues) >= ISSUE_LIMIT:
             print("NOTE: the issue list may be cut off at %d, so none changed" % ISSUE_LIMIT)
             return
     for item in results:
@@ -114,12 +126,12 @@ def sync_issues(results, live, day):
         hits = sorted((issue for issue in issues if re.search(r"<!-- loop-regression %s(?: placed=\S*)? -->" % re.escape(item["id"]), issue.get("body", ""))),
                       key=lambda issue: issue["number"])
         opened = [issue for issue in hits if issue.get("state") == "OPEN"]
-        hit = opened[0] if opened else hits[-1] if hits else None  # the oldest open issue is the row's one, else the newest closed
+        hit = opened[0] if opened else hits[-1] if hits else None
         number = str(hit["number"]) if hit else ""
         if item["state"] == "FAIL":
             line = "Failing on %s." % day
             body = "%s\nThe row `%s` fails.\n\n```\n%s\n```\n" % (mark, item["id"], item["tail"])
-            for extra in opened[1:] if live else []:  # a newer open copy closes as a duplicate of the oldest
+            for extra in opened[1:] if live else []:
                 gh("issue", "close", str(extra["number"]), "--comment", "Duplicate of #%s, kept for row %s." % (hit["number"], item["id"]))
                 print("CLOSED duplicate issue %s" % extra["number"])
             if not live:
@@ -150,7 +162,7 @@ FLOOR, DEFAULT = 15, 15
 
 
 def minutes(cfg, key, default=DEFAULT):
-    """The setting in minutes; exits with a fix line when it is not a whole number of at least 15."""
+    """The setting in minutes; exits when it is not a whole number of at least 15."""
     value = cfg.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
         sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
@@ -169,7 +181,7 @@ def budget(root):
 
 
 def fit(todo, est, limit):
-    """(rows that fit, rows left): todo in tier order, each kept while the estimated total stays within limit."""
+    """(rows that fit, rows left) of todo, in tier order, within limit."""
     keep, left, used = [], [], 0.0
     for key in todo:
         if used + est.get(key, 0) <= limit:
@@ -191,23 +203,23 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             continue
         cap = timeout if remaining is None else min(timeout, remaining)
         began = time.time()
-        skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))  # a test that cannot run here writes it
+        skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))
         code, text, pid, signal = lanes.run_row(by[key]["command"], root, dict(actions.row_env(), TOY_SKIP_FILE=skip), cap)
-        if code and os.path.exists(skip):  # a pipe in the row hides the test's own exit 77
+        if code and os.path.exists(skip):
             os.remove(skip)
             code = SKIP_CODE
-        if code == 124 and cap < timeout:  # stopped by the budget, not by its own limit: it didn't fail, it wasn't finished
+        if code == 124 and cap < timeout:
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
         if code == 0 and key in expected:
             print("FIXED %s: remove it from the known list" % key)
         print("%s %s%s" % (state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
-        if signal and state != "PASS":  # workflow-regression/references/commands.md
+        if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
-        tail = rowtail.shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
-        if state == "FAIL" and reuse:  # the lane shows the row's text, a `| grep -q` stage made loud (#3911), never a bare FAIL
+        tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
+        if state == "FAIL" and reuse:
             print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal})
@@ -218,7 +230,6 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     return results, left
 
 
-# regression.py's row and page readers, moved here unchanged (size); regression.py imports them back.
 def today():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
@@ -240,7 +251,7 @@ def done_lines(path):
 
 
 def criteria_ids(root):
-    """Requirement ids written under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
+    """Requirement ids under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
     try:
         with open(path_of(root, "config.json")) as handle:
             folder = json.load(handle).get("wiki_dir") or "docs/wiki"
@@ -275,8 +286,8 @@ def lines_of(root, name):
         if os.path.exists(path_of(root, name)) else {}
 
 
-# regression.py red --off-platform (REG-10): a red result proven on another runner, with the runner and commit named.
-OFF_WINDOWS = re.compile(r"\b(win(dows)?(32|64)?|msys\d*|mingw\d*|cygwin)\b|\b(msys|mingw)\w*", re.I)  # a Windows machine can only skip a bash row
+# regression.py red --off-platform (REG-10)
+OFF_WINDOWS = re.compile(r"\b(win(dows)?(32|64)?|msys\d*|mingw\d*|cygwin)\b|\b(msys|mingw)\w*", re.I)
 OFF_SHA = re.compile(r"^[0-9a-f]{7,40}$")
 
 
@@ -303,7 +314,7 @@ def off_record(root, row_id, runner, commit, today, read_rows, edit_rows):
     return 0
 
 
-OWED, OWED_LABEL = "regression-owed.tsv", "other-machine"  # red --owed: id, date, runner, issue; a proof another machine owes never blocks
+OWED, OWED_LABEL = "regression-owed.tsv", "other-machine"
 
 
 def owed_read(root):
@@ -318,7 +329,7 @@ def owed_clear(root, row_id, live=False):
     if mine:
         with open(os.path.join(root, ".loop", OWED), "w", newline="\n") as out:
             out.write("".join("\t".join(c) + "\n" for c in held.values()))
-        if mine[3] and live:  # the other machine's to-do is done: close it (#3907)
+        if mine[3] and live:
             done = gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
             print("OWED CLEARED %s: %s" % (row_id, "closed " + mine[3] if getattr(done, "returncode", 0) == 0 else "could not close %s: close it by hand" % mine[3]))
         else:

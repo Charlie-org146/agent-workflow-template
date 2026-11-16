@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""The health rule for defect tests: every closed issue or finding needs a regression row of category defect.
+"""The defect-test rule: every closed issue or finding needs a regression row of category defect.
 
-A closed issue or finding is one a merged goal says it fixed ("fixes #35", "fixes finding:SLUG" in .loop/goals/*.md),
-or a line of .loop/findings.md marked [closed]. A defect row links it: its link holds the issue's URL or finding:SLUG.
-Reads files only: health check makes no gh call.
-It also holds the Traceability and Consistency rules (report.py) and the page reader the other rule modules share (read-only):
+Closed: a merged goal says it fixed it ("fixes #35", "fixes finding:SLUG" in .loop/goals/*.md), or a line of
+.loop/findings.md is marked [closed]. A defect row's link holds the issue URL or finding:SLUG. Reads files only (no gh call).
+Also holds the Traceability and Consistency rules (report.py) and the shared page reader (read-only):
   row-requirement  a regression row whose goal names no requirement on any page and is not a done line slug:N (FAIL)
   ids-unique       a requirement id defined on two pages (FAIL)
-  refs             a page naming an id of a known prefix (HLT-12 when HLT ids exist) that no page defines (FAIL)
+  refs             a page naming an id of a known prefix that no page defines (FAIL)
   usage-readme     a /workflow-<skill> <verb> in the README that no skill's Command map names (WARN)
-  migration        the migration-check engine (migration_gaps, below) as WARN rows: setup.py migration-check prints the same gaps
-Each rule's negative control is in CONTROLS (controls.py runs it). Rows carry an evidence field of stable citations.
+  migration        migration_gaps (below) as WARN rows, the same gaps setup.py migration-check prints
+Each rule's negative control is in CONTROLS (controls.py runs it).
 """
 import glob
 import importlib
@@ -20,6 +19,7 @@ import re
 import subprocess
 import sys
 import traceback
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 VERB = r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)\s+"
@@ -35,7 +35,7 @@ def read(path):
 
 
 def closed(root):
-    """Ref -> where it was closed: '#N' for an issue, 'finding:SLUG' for a finding."""
+    """Ref ('#N' or 'finding:SLUG') -> closing goal."""
     found = {}
     for path in sorted(glob.glob(os.path.join(root, ".loop", "goals", "*.md"))):
         if path.endswith(".design.md"):
@@ -50,14 +50,12 @@ def closed(root):
 
 
 def guarded(root):
-    """The links of the defect rows, as one text."""
     cells = [line.rstrip("\n").split("\t") + [""] * 8 for line in read(os.path.join(root, ".loop", "regression.tsv")).splitlines()
              if line.strip() and line[0] != "#"]
     return " ".join(c[7] for c in cells if c[6] == "defect")
 
 
 def missing(root):
-    """(ref, source) for each closed issue or finding no defect row links."""
     links = guarded(root)
     out = []
     for ref, source in closed(root).items():
@@ -73,12 +71,8 @@ COMMAND = re.compile(r"/workflow-[a-z]+ [a-z][a-z-]*")
 
 
 def setting(root, key, default):
-    """A positive whole number set in .loop/config.json (a threshold a repo tunes), else the default."""
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            value = json.load(handle)[key]
-    except (OSError, ValueError, KeyError, TypeError):
-        return default
+    """A positive int from .loop/config.json, else the default."""
+    value = (config_of(root) or {}).get(key)
     return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else default
 
 
@@ -88,16 +82,10 @@ def row(state, family, subject, rule, detail, fix="", evidence=""):
 
 
 def wiki(root):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            folder = json.load(handle).get("wiki_dir") or "docs/wiki"
-    except (OSError, ValueError, AttributeError):
-        folder = "docs/wiki"
-    return os.path.join(root, folder)
+    return os.path.join(root, (config_of(root) or {}).get("wiki_dir") or "docs/wiki")
 
 
 def pages(root):
-    """{page name: text} of the wiki pages."""
     out = {}
     for path in sorted(glob.glob(os.path.join(wiki(root), "*.md"))):
         with open(path, errors="replace") as handle:
@@ -106,7 +94,6 @@ def pages(root):
 
 
 def defined(root):
-    """{requirement id: [pages that define it]}."""
     out = {}
     for name, text in pages(root).items():
         for key in LINE.findall(text):
@@ -115,7 +102,6 @@ def defined(root):
 
 
 def table(root):
-    """Regression rows as dicts (id, level, command, goal, ...)."""
     names = ("id", "level", "command", "goal", "seen_red", "description", "category", "link")
     try:
         with open(os.path.join(root, ".loop", "regression.tsv")) as handle:
@@ -165,7 +151,7 @@ def usage_readme(root):
             readme = handle.read()
     except OSError:
         return []
-    held = ""  # the commands each skill's Command map names (Usage sections are gone)
+    held = ""
     for doc in glob.glob(os.path.join(root, "skills", "workflow-*", "SKILL.md")):
         with open(doc, errors="replace") as handle:
             held += section(handle.read(), "Command map") + "\n"
@@ -174,16 +160,15 @@ def usage_readme(root):
             for command in sorted(set(COMMAND.findall(readme))) if held.strip() and command not in held]
 
 
-# --- migration-check: one engine for `setup.py migration-check` (main) and health's migration rule. It writes nothing.
+# --- migration-check: one engine for `setup.py migration-check` (main) and health's migration rule; writes nothing.
 SKILLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-STATE = ("MIG_HOOKS", "MIG_ROUTINES", "MIG_TASK", "MIG_WIKI_ORPHAN", "MIG_WIKI_STALE", "MIG_WIKI_UNREADABLE")  # close on the Mac or in the wiki, after the merge
-CLASSES = ("MIG_VERSION", "MIG_FILES", "MIG_SETTINGS", "MIG_BLOCKS", "MIG_AUTOMATION", "MIG_RUNBOOK", "MIG_FORMAT", "MIG_CHECKS") + STATE
-PROTOCOLS = "https:ssh:git:file"  # the only transports the wiki clone may use: an ext:: origin runs nothing
+STATE = ("MIG_HOOKS", "MIG_ROUTINES", "MIG_TASK", "MIG_WIKI_ORPHAN", "MIG_WIKI_STALE", "MIG_WIKI_UNREADABLE")
+PROTOCOLS = "https:ssh:git:file"  # wiki clone transports; ext:: runs nothing
 SEMVER = re.compile(r"\d+\.\d+\.\d+")
 
 
 def mod(skill, name):
-    """A module of a sibling skill, imported with its folder on the path for the import only."""
+    """A sibling skill's module."""
     where = os.path.join(SKILLS, skill, "scripts")
     sys.path.insert(0, where)
     try:
@@ -193,13 +178,13 @@ def mod(skill, name):
 
 
 def clean(text):
-    """One redaction for everything printed: no user:password@, no token or key value in a query, no control character."""
+    """Redact user:password@, token/key values and control characters."""
     text = re.sub(r"//[^/\s@]*@", "//", str(text))
     return re.sub(r"[\x00-\x1f\x7f]", " ", re.sub(r"(?i)\b((?:access_)?token|key)=[^&\s]+", r"\1=<x>", text))
 
 
 def tool(skill, script, *args):
-    return "python3 <%s>/scripts/%s %s" % (skill, script, " ".join(args)) if args else "python3 <%s>/scripts/%s" % (skill, script)
+    return "python3 <%s>/scripts/%s" % (skill, script) + (" " + " ".join(args) if args else "")
 
 
 def config_of(root):
@@ -220,19 +205,20 @@ def installed():
 
 def gaps_version(root, cfg, g, info):
     want, held = installed(), cfg.get("template_version")
+    stamp = "run the migrate goal (update.py --apply stamps it)"
     info["held"], info["want"] = held if isinstance(held, str) and SEMVER.fullmatch(held) else "none", "v" + want if want else "none (a checkout)"
     if not want or os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep):
-        return  # a checkout that holds the skills has no installed version to be behind
+        return
     if "template_version" not in cfg:
-        g("MIG_VERSION", "template_version", "none is set (read as 0.0.0), the template is at v%s" % want, "run the migrate goal (update.py --apply stamps it)")
+        g("MIG_VERSION", "template_version", "none is set (read as 0.0.0), the template is at v%s" % want, stamp)
     elif not (isinstance(held, str) and SEMVER.fullmatch(held)):
-        g("MIG_VERSION", "template_version", "unparseable %s (read as 0.0.0), the template is at v%s" % (clean(repr(held))[:24], want), "run the migrate goal (update.py --apply stamps it)")
+        g("MIG_VERSION", "template_version", "unparseable %s (read as 0.0.0), the template is at v%s" % (clean(repr(held))[:24], want), stamp)
     elif mod("workflow-docs", "entry").version_key(held) < mod("workflow-docs", "entry").version_key(want):
         g("MIG_VERSION", "template_version", "v%s is behind the template at v%s" % (held, want), "run the migrate goal (update.py --apply)")
 
 
 def behind(root):
-    """MIG_VERSION as one WARN row for rules.template_version (the migration rule skips that code): none or older than the template."""
+    """MIG_VERSION as WARN rows for rules.template_version (the migration rule skips that code)."""
     found = []
     try:
         gaps_version(root, config_of(root) or {}, lambda *item: found.append(item), {})
@@ -271,8 +257,7 @@ def gaps_blocks(root, cfg, g):
 
 
 def migration_gaps(root, online=True, pr=False, info=None):
-    """[(code, subject, what, fix)] for the repo at root. pr: only the gaps a pull request can close. online: also read the published
-    wiki (one bounded clone). info is filled with what the run checked and what it could not."""
+    """[(code, subject, what, fix)] for the repo. pr: only PR-closable gaps. online: also clone the published wiki. info records what ran."""
     info = {} if info is None else info
     info.update(skipped=[], notes=[], steps=[], held="none", want="unknown", platform=sys.platform, off={"health": False, "regression": False})
     found, g = [], lambda *item: found.append(item)
@@ -304,9 +289,8 @@ def migration_gaps(root, online=True, pr=False, info=None):
 
 
 def lines(root, gaps, info, pr, offline):
-    """The output of `migration-check`, one string per line: GAP lines, NOT CHECKED, CHECKED, DOCS, then the verdict."""
     out = ["GAP %s %s: %s. Fix: %s" % (code, clean(subject), clean(what), clean(fix)) for code, subject, what, fix in gaps]
-    skipped = ["branch protection (no gh read)"] + (["the pull-request check, none exists in mac mode"] if config_of(root) and (config_of(root) or {}).get("regression_runs") == "mac" else []) + info["skipped"] + info["notes"]
+    skipped = ["branch protection (no gh read)"] + (["the pull-request check, none exists in mac mode"] if (config_of(root) or {}).get("regression_runs") == "mac" else []) + info["skipped"] + info["notes"]
     out += [x for x in skipped if x.startswith("SKIP ")]
     out += mod("workflow-health", "issues").step_lines(info)
     out.append("NOT CHECKED: " + "; ".join(x for x in skipped if not x.startswith("SKIP ")))
@@ -320,7 +304,7 @@ def lines(root, gaps, info, pr, offline):
 
 
 def main(argv):
-    """setup.py migration-check [--repo DIR] [--pr] [--offline]: exit 0 only with no gap, 1 for gaps, 2 usage, 4 could not run."""
+    """setup.py migration-check [--repo DIR] [--pr] [--offline]: exit 0 no gap, 1 gaps, 2 usage, 4 could not run."""
     import argparse
     parser = argparse.ArgumentParser(prog="setup.py migration-check", description="List every gap between a repo and the current template, each with its fix; writes nothing.")
     parser.add_argument("--repo", default=".", help="the repo to check (default: the current directory)")
@@ -351,7 +335,7 @@ def main(argv):
 
 
 def migration(root):
-    """The health rule: each gap but MIG_VERSION (the template-version row says it once) is a WARN row; the wiki rows are grouped."""
+    """The health rule: each gap but MIG_VERSION is a WARN row; wiki rows are grouped."""
     online, info = os.environ.get("LOOP_MIGRATION_ONLINE") == "1", {}
     mode = "online" if online else "offline"
     try:
@@ -359,6 +343,7 @@ def migration(root):
     except Exception as error:
         return [row("INFO", "adoption", "migration", "migration", "could not run (%s) [%s]" % (clean(type(error).__name__), mode))]
     out, wiki = [], {}
+    note = lambda text: row("INFO", "adoption", "migration", "migration", text)
     for code, subject, what, fix in gaps:
         if code.startswith("MIG_WIKI") and code != "MIG_WIKI_UNREADABLE":
             wiki.setdefault(code, []).append(subject)
@@ -367,8 +352,8 @@ def migration(root):
     for code, names in sorted(wiki.items()):
         shown = ", ".join(clean(n) for n in names[:20]) + (" and %d more" % (len(names) - 20) if len(names) > 20 else "")
         out.append(row("WARN", "adoption", code, "migration", "%s [%s]" % (shown, mode), "run the check for each page's fix (setup.py migration-check)", code))
-    out += [row("INFO", "adoption", "migration", "migration", "not checked here: %s [%s]" % (clean(item), mode)) for item in info["skipped"] if "state codes" not in item and not item.startswith("SKIP ")]
-    out += [row("INFO", "adoption", "migration", "migration", "%s [%s]" % (clean(item), mode)) for item in info["skipped"] if item.startswith("SKIP ")]
+    out += [note("not checked here: %s [%s]" % (clean(item), mode)) for item in info["skipped"] if "state codes" not in item and not item.startswith("SKIP ")]
+    out += [note("%s [%s]" % (clean(item), mode)) for item in info["skipped"] if item.startswith("SKIP ")]
     out += mod("workflow-health", "issues").step_rows(info, mode, row)
     return out
 
@@ -377,35 +362,36 @@ FUNCTIONS = {"row-requirement": row_requirement, "ids-unique": ids_unique,
              "refs": refs, "usage-readme": usage_readme, "migration": migration}
 
 
-def _c():
+def _c(root):
     import controls
+    controls.repo(root)
     return controls
 
 
 def f_row_requirement(root):
-    c = _c(); c.repo(root)
+    c = _c(root)
     c.write(root, ".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\nr1\tland\ttrue\tZZZ-9\n")
 
 
 def f_ids_unique(root):
-    c = _c(); c.repo(root)
+    c = _c(root)
     for name in ("One", "Two"):
         c.write(root, "docs/wiki/%s.md" % name, "# %s\n\n## Requirements\n\n- AB-1: **Unreviewed** x.\n" % name)
 
 
 def f_refs(root):
-    c = _c(); c.repo(root)
+    c = _c(root)
     c.write(root, "docs/wiki/One.md", "# One\n\n## Requirements\n\n- AB-1: **Unreviewed** see AB-9.\n")
 
 
 def f_usage_readme(root):
-    c = _c(); c.repo(root)
+    c = _c(root)
     c.write(root, "README.md", "Run /workflow-toy frob to frob.\n")
     c.write(root, "skills/workflow-toy/SKILL.md", "# Toy\n\n## Command map\n\n| Ask | Runs |\n|---|---|\n| `/workflow-toy other` | `python3 scripts/x.py` |\n")
 
 
 def f_migration(root):
-    c = _c(); c.repo(root)
+    c = _c(root)
     c.write(root, ".loop/config.json", json.dumps({"base": "main", "wiki_dir": "docs/wiki", "legacy_toy_key": 1}))
 
 

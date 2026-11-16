@@ -14,6 +14,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
 unset _LOOP_LANE_LABEL _LOOP_LANE_HELD _LOOP_LANE_STARTED _LOOP_LANE_QUEUED _LOOP_LANE_NOTE LOOP_LANE_LIMIT LANES_WIDE
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 [ -n "${1:-}" ] || toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
@@ -122,6 +123,9 @@ sys.path.insert(0, sys.argv[1]); import lane
 lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 0)
 held = json.load(open(sys.argv[2] + "/t4.qa-lane.job"))
 print("LIMIT %d %s" % (held["limit"], held.get("source")))
+for _ in range(600):  # let the lane end: its run goes on in this repo, and the next case sets up while it plans (#4373)
+    if lane.lane(sys.argv[2], "t4", "qa", lane.flow_spec(), json.load(open(".loop/config.json")), 1)[0] != "running":
+        break
 PY
 echo '{"limit": 600}' > "$LOOP_FLOW"
 out=$(cat "$d/t4.out")

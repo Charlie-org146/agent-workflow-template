@@ -1,5 +1,168 @@
 # Changelog
 
+## v1.0.0 - 2026-11-16
+
+First stable release. Goals merged since v0.28.72: guard-fixes, package-green, budget-fair, start-from-head, adoption, queue-hygiene, dead-loop-alert, sweep-health, health-leftovers, scripts-b, memory-floor-3, audit-head-docs, regression-fix, review-hold, merge-unblock, checkin-tidy, ff-stash-fix, scripts-c, milestone-sync, listing-commands, home-leak, offline-prd-copy, and v1-go-no-go (CI drift fixes: GIT_TERMINAL_PROMPT=0 in every script that starts processes, a regenerated regression.yml, release.py cut skipping known, exit-77, skip-flagged and already-PASS rows).
+
+### Known red
+
+Rows still red, filed for v1.1:
+
+- #4493: about 70 toys have # reads: headers that lanes_cli.py check rejects.
+- #4494: CI health FAIL, traceability #405 and #815 closed with no defect test.
+- #4495: CI-only rows with unknown cause: stale-found, publish-refused-stale, no-token-dry-run, stale-page-row, no-token-would, landed-left-alone.
+- #4497: package at the 99-file cap while package-headroom-held and package-rows-tracked want 98.
+
+The release check was cut short at the owner's request (o52). Its weak spots are in #4508: release.py cut counts a criteria pass per row, not per commit, and rows over its 900-second budget were not rerun or reported.
+
+### How to verify
+
+1. Run `python3 dev/package.py`. Expect: PASS with 99 files and a ZIP for v1.0.0.
+2. Run `python3 skills/workflow-health/scripts/health.py check`. Expect: HEALTH green with 0 fail.
+
+## v0.28.93 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.92 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.91 - 2026-11-15
+
+- List apply, forward and wiki-only; toy and row keep every command listed
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.90 - 2026-11-15
+
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Documentation: DOC-17 sub-bullet for milestone sync (owner records o31, o32)
+- milestone-sync: milestones.py, the docs.py sync hook and its toy
+- milestone-sync: Tests rows on the Documentation page, command reference
+- milestone-sync: review fixes (reopen, dropped source, utf-8 helper) and tests
+- milestone-sync: Tests rows for the review fixes
+- Merge origin/main into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/milestone-sync
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.89 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.88 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.87 - 2026-11-15
+
+- check-in: only live goals and goals merged since the last check-in are required; a merged PR closes a done run
+- board.py retire --pr: a merged pull request closes a running record; toy and row
+- Lane: re-render the Tests tables
+- Monitoring: MON-5 and MON-14 say finished goals leave the check-in (owner-records o35, o36)
+- Merge origin/main into checkin-tidy
+- Merge origin/main into checkin-tidy
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- regression.tsv: drop a stray merge marker
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/checkin-tidy
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.86 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.85 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.84 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.83 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.82 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.81 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.80 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v0.28.79 - 2026-11-15
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v0.28.78 - 2026-11-15
 
 - No code changes

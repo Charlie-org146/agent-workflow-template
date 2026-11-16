@@ -2,7 +2,7 @@
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/entry.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
-# reads: skills/workflow-docs/references/template.md skills/workflow-health/scripts/judge.py
+# reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the Settings and Automation blocks on Home and the README: one overridden setting shows exactly that one marked, the
@@ -14,6 +14,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1

@@ -12,6 +12,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_PRIVATE_NAMES LOOP_BATCH LOO
 here=$(cd "$(dirname "$0")/../.." && pwd); case=${1:-all}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
 S="$here/skills/workflow-delivery/scripts"

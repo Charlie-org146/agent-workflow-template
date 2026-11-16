@@ -61,7 +61,7 @@ not fail. `docs.py audit` rewrites a stale entry point and stale blocks itself.
 no later commit to the page has it in its history. Merge commits don't count, so a page gives the same answer before and
 after a merge. Only a commit that changes the page clears `STALE`.
 
-With `"criteria": true` in the config, every feature page is a short PRD (`references/template.md` holds the rules and
+With `"criteria": true` in the config, every feature page is a short PRD (`references/commands.md` holds the rules and
 an example page): the Review line, then Problem, Requirements, Non-goals, Success metrics, an
 optional Deployments (DOC-14: a Page table and/or a Delivery table for what the feature ships) and Tests, in that order
 and nothing else. Requirements are the owner's lines (`- DEL-1: **Unreviewed** text`, up to
@@ -257,7 +257,7 @@ Detail the skill's SKILL.md points to, kept word for word so no instruction is l
 Lines: `SECTIONS` (wrong, extra or out-of-order sections, or text before the first one), `REVIEW`, `PROBLEM`,
 `NONGOALS`, `METRICS`, `CRITERION`, `CAP`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
 
-Since the docs format (DOC-4..DOC-10), the shapes in `references/template.md` win over items 2, 3, 4 and 6 above: Problem
+Since the docs format (DOC-4..DOC-10), the shapes in `references/commands.md` win over items 2, 3, 4 and 6 above: Problem
 is 1 to `problem_lines` first-person bullets,
 Requirements sit under `### Functional` and `### Non-functional` with `  - ` sub-bullets, and Tests is one table
 linking the generated Tests page. Their refusals are `FORMAT <Page>:<line>: <Section>: DOC-n ...` lines, and a
@@ -309,7 +309,7 @@ This reverts the last publish. It refuses if the wiki has changed since.
 
 ### audit
 
-The one command. It checks every page against `references/template.md` (the page rules live in its `rules` block, so
+The one command. It checks every page against `references/commands.md` (the page rules live in its `rules` block, so
 nothing else holds a number), the code (stale pages), the tests (Tests tables) and the required docs (a release note per tag; a milestone is
 optional and free form, never required). It fixes the mechanical (`FIXED`: Tests tables), lists wording for a person to write as `REWRITE`, and lists each Reviewed criterion with no
 test, or whose tests no longer match, as `UNTESTED` (also saved to `untested.tsv` under `.git/loop`, for the loop to
@@ -364,13 +364,15 @@ The wiki Home page also carries a Settings section (each setting's meaning, how 
 
 - `/workflow-docs milestone new TITLE | move ISSUE TITLE` — Optional, for planning by version: `new` makes a free-form milestone such as v1.0 and `move` puts an issue on an existing one (or `none` clears it; a title that doesn't exist is refused). Prints `CREATED <title>`, `EXISTS <title>` or `WOULD create milestone <title> (dry run; add --live)`; running it again creates nothing. Refuses (exit 1) `REFUSED: no milestone <title> (issue <n> unchanged). Fix: milestone.py new <title> --live` and `REFUSED: no GitHub token, nothing created. ...`. `milestone backlog` makes every missing `Backlog: <Feature>` milestone (one per feature page) and `Backlog: Other`, renaming an old `Backlog` milestone to `Backlog: Other` first. Setup runs it on adoption, and `milestone leftovers FILE` files the `FILE` lines of a ship reply. No check ever runs `new` or `move`.
 
-- `/workflow-docs sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]` — For each feature whose PRD source in `.loop/docs.tsv` is `url:<link>` or `mcp:<server>:<resource>`, reads the PRD (`LOOP_PRD_READER` or the fetched link) and compares it with the repo's copy, `.loop/prd/PAGE.md`, against what both last agreed on (`.loop/prd/PAGE.base`: `ID<TAB>sha8`). The first sync adopts the source (`SYNCED`). After that each difference is `DELTA PAGE: ID the repo|the source|both sides changed (repo: ... | source: ...)` and neither side is overwritten; the loop ends with `SYNC: N in step, N with a delta, N not connected` and exits 0 (`--dry-run` posts and writes nothing and exits 1 with a delta). Each new delta is posted once as a GitHub issue on the page's milestone and once as a comment on the external page: `gh` is `LOOP_GH` (default `gh`) and the comment goes through `LOOP_PRD_WRITER`, a command run as `WRITER SOURCE comment|replace ID|remove ID` with the text on stdin, which an agent's Notion connector sets; the posted deltas are kept in `<git common dir>/loop/deltas.tsv`. `--accept PAGE:ID=source` writes the source's text into the repo copy, `=repo` writes the repo's text into the document through the writer, for that id only, and closes the issue (`ACCEPTED`). `--open` lists the open deltas from the ledger with no network call; health reports each as a FAIL docs row and the check-in's board as waiting on the owner. A source, gh or writer that can't be reached prints `not connected` and changes nothing; a source with no ids prints `EMPTY` and keeps the copy; a file at the copy's path that sync did not write (it opens with `<!-- prd-sync: owned -->`) prints `SKIPPED`. Pages whose source is `page` are not visited.
+- `/workflow-docs sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]` — For each feature whose PRD source in `.loop/docs.tsv` is `url:<link>` or `mcp:<server>:<resource>`, reads the PRD (`LOOP_PRD_READER` or the fetched link) and compares it with the repo's copy, `.loop/prd/PAGE.md`, against what both last agreed on (`.loop/prd/PAGE.base`: `ID<TAB>sha8`). The first sync adopts the source (`SYNCED`): its layout is brought to the repo's first (`NL-1 Functional: (Reviewed 2026-11-10) text`, or Notion's `**NL-1** Functional: (Reviewed 2026-11-10)` over a `Functional: text` sub-bullet, becomes `- NL-1: **Reviewed 2026-11-10** Functional: text`; html tags become markdown; a heading starting `New requirements` adds to Requirements; Source, Runbook and Deployments are left out) and the whole PRD, Problem, Requirements, Non-goals and Success metrics, is kept as the copy. Every check, the audit, health and the rows read that copy and never the source, so a page with a copy needs no reader to pass; `render` shows the four sections on the page as a block between `<!-- prd:begin -->` and `<!-- prd:end -->`, and the check says `STALE` when the block differs from the copy. A page with no source is never visited and gets no block. After the first sync each difference is `DELTA PAGE: ID the repo|the source changed (repo: ... | source: ...)`, or `CONFLICT PAGE: ID both sides changed (...)` when both sides changed it, and neither side is overwritten; a requirement added on one side is a delta too, and the source's review mark follows when the text agrees (`MARKED`); the loop ends with `SYNC: N in step, N with a delta, N not connected` and exits 0 (`--dry-run` posts and writes nothing and exits 1 with a delta). Each new delta is posted once as a GitHub issue on the page's milestone and once as a comment on the external page: `gh` is `LOOP_GH` (default `gh`) and the comment goes through `LOOP_PRD_WRITER`, a command run as `WRITER SOURCE comment|replace ID|remove ID` (`replace` sets the requirement, or adds it) with the text on stdin, which an agent's Notion connector sets; the posted deltas are kept in `<git common dir>/loop/deltas.tsv`. `--accept PAGE:ID=source` writes the source's text into the repo copy, `=repo` writes the repo's text into the document through the writer, for that id only, and closes the issue (`ACCEPTED`). `--open` lists the open deltas from the ledger with no network call; health reports each as a FAIL docs row and the check-in's board as waiting on the owner. A source, gh or writer that can't be reached prints `not connected` and changes nothing; a source with no ids prints `EMPTY` and keeps the copy; a file at the copy's path that sync did not write (it opens with `<!-- prd-sync: owned -->`) prints `SKIPPED`. Pages whose source is `page` are not visited.
+
+- `/workflow-docs sync --accept milestones:TITLE=repo|source` — The same command also keeps a repo's GitHub milestones in step with an external Milestones page (DOC-17), opt-in: only a repo whose `.loop/config.json` sets `milestones_source` to a `url:<link>` or `mcp:<server>:<resource>` source is visited (read like a PRD source, `LOOP_PRD_READER`); with none, nothing is read, printed or called. A milestone is its title and `state | due` (`open | due 2026-12-01`, `closed | no due`): on the page a line `- TITLE: state | due` each (split on the last `: `), on GitHub from `gh api repos/{owner}/{repo}/milestones` (`LOOP_GH`). Both sides are compared with what they last agreed on, `.loop/milestones.md` (and its `.base`): a change on one side is `DELTA milestones: TITLE the repo|the source changed (repo: ... | source: ...)`, a milestone that differs on both is `CONFLICT milestones: TITLE both sides changed (...)`, and neither side is overwritten; a closed milestone missing from the page is the same as absent. Each delta is posted once as a GitHub issue and once as a comment on the page (`LOOP_PRD_WRITER`), kept in the same ledger as the PRD deltas under `milestones:TITLE`, so `--open`, health and the check-in show it. `--accept milestones:TITLE=source` creates, edits or closes the GitHub milestone (one only on the repo is closed), `=repo` has the writer `replace TITLE` (adding the line when absent) or `remove TITLE` on the page, with the text `state | due` on stdin; the title is split from the side on the last `=`. A side that can't be reached prints `not connected`, changes nothing and exits 0.
 
 ## criteria: the PRD page
 
 With `"criteria": true` in `.loop/config.json`, every feature page (each page in `.loop/docs.tsv` but Home, which is
 free-form, and a guide: a how-to page with the line `<!-- workflow-docs guide -->` under the marker, kept fresh but
-with no PRD, Home row or README section, and not stale on a `.loop/config.json` change) is a short PRD and `check` enforces it, from the rules block of `references/template.md`:
+with no PRD, Home row or README section, and not stale on a `.loop/config.json` change) is a short PRD and `check` enforces it, from the rules block of `references/commands.md`:
 
 the title, `Milestone:` and `Review:` lines, then `## Problem`, `## Requirements` (up to
 `criteria_max` lines like `- DEL-3: **Unreviewed** what must hold`; take the next free id from `criteria PAGE`, never
@@ -411,3 +413,145 @@ when it cannot. The `topics` setting adds a Topic column to Home and `render` gr
 the repo's copy of an external PRD, `.loop/prd/PAGE.md`, and the document the same: either side may change a requirement, each
 difference is a `DELTA` (never a silent overwrite) posted as an issue and a comment, and `--accept` writes the accepted side to the other.
 It is opt-in per PRD: a page takes part only once its `.loop/docs.tsv` row has a `url:` or `mcp:` source in the third column, and every other page is never visited.
+
+## Feature page template
+
+The one definition of a feature page: a short PRD. `criteria.py`, `prd.py` and `docs.py audit` read the `rules` block
+below, so changing a rule here changes the check; nothing else holds these numbers. A missing or broken block makes
+them refuse.
+
+```rules
+sections: Problem, Requirements, Non-goals, Success metrics, Tests
+problem_lines: 3
+metrics_lines: 3
+runbook_section: Runbook
+runbook_fields: Serves, Schedule, Steps, Full run, Output, Never, Check
+deployments_section: Deployments
+deployments_page: Page, Link, Access, Shows, Live build
+deployments_delivery: Delivery, Channel, Recipients, What's sent, Status
+deployments_access: public, sign-in
+review_line: Review
+scenario: Given ..., when ..., then ...
+milestone_line: Milestone
+problem_banned: script, function, regex, json, tsv, stdout
+requirement_groups: Functional, Non-functional
+format: home, frontdoor, usage, bullets, problem, tests, deployments, runbook
+```
+
+### Layout
+
+The first line is `<!-- workflow-docs -->`, then `# <Feature>`, then an optional free-form `Milestone: <url>` line (a
+milestone is never required), then the PRD review line, then the sections in the order of `sections`, and nothing else. The
+optional `runbook_section` goes between Problem and Requirements, and the optional `deployments_section` between Success
+metrics and Tests. `format` lists which shape checks (DOC-4..DOC-9 and DOC-14) run,
+default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (got <value>). Fix: <how>`.
+
+- **Review line**: `Review: **Unreviewed**`, or `Review: **Reviewed YYYY-MM-DD** <!-- prd P=… R=… N=… M=… U=… -->`
+  written by `criteria.py review PAGE --user`: one 8-hex fingerprint each for Problem, Requirements, Non-goals, Success
+  metrics (Usage was dropped on 2026-11-13; a trailing `U=` is still read, never reported). Only the owner reviews a PRD. While it is Reviewed, a change to Problem, Requirements, Non-goals
+  or Success metrics fails the check (`LOCKED`). Requirement stamps are not part of the fingerprints; sub-bullets are.
+- **Problem** (`problem`, DOC-8): 1 to `problem_lines` bullets (`- `), the user's problem in their words, at least one
+  in the first person (I, my, me). No backticks, no path (`/x/`), no file extension (`.py`, `.sh`, `.json`, `.tsv`,
+  `.md`) and no word from `problem_banned` (whole word, any case).
+- **Usage** is gone (the owner, 2026-11-13): a page with a `## Usage` section fails with `USAGE`. A feature has no API, so the commands are in each skill's `## Command map` and `references/commands.md`, and the README's "How to use" table is the front door.
+- **Runbook** (optional, `runbook`, DOC-16): for a feature that owns a scheduled or on-demand routine, what an agent
+  given only "run routine X" must read first. One `### <routine>` subsection per routine (lowercase letters, digits and
+  hyphens), each holding every field of `runbook_fields` as ``- **Field:** text`` (indented lines continue it), each
+  5 characters or more, nothing else: **Serves** (the PRD requirement ids it serves, each an id some page defines), **Schedule**, **Steps** (the
+  exact command or steps), **Full run** (what a full run is: live sources and real output, never a dry run or a fixture
+  on a scheduled run), **Output** (the one output and where it goes; it may end with `Deployments row: NAME`, and the check verifies that row exists in the page's Deployments tables), **Never** (the forbidden shortcuts) and **Check**
+  (how to tell the run was real). A routine listed in `.loop/routines.tsv` (`routine<TAB>page`, optional) must have its
+  `### routine` runbook on its page. Not part of the PRD fingerprints: an agent corrects a runbook as it learns.
+- **Requirements** (`bullets`, DOC-7): grouped under exactly the `requirement_groups` headings, in order:
+  `### Functional` (what it does), then `### Non-functional` (qualities and limits: privacy, safety, reliability,
+  performance, size and time limits), with nothing before the first. A group with no requirement holds the single line
+  `None`. Up to the repo's limit (`criteria_max` in `.loop/config.json`, default 10) counted over both groups, one
+  line each, `- ID: **Unreviewed** text` or `- ID: **Reviewed DATE** text`, and under each at least one sub-bullet:
+  exactly two spaces, `  - `, each one checkable behavior. An Unreviewed line
+  is a title of at most 20 words; a Reviewed line's wording is locked (DOC-2), and its stamp covers the line only, never
+  its sub-bullets. Words are whitespace tokens after `[text](url)` becomes text and backticks are stripped. An orphan
+  or deeper-nested sub-bullet is always refused. No script names.
+- **Non-goals**: at least one line: what the feature deliberately won't do.
+- **Success metrics**: one to `metrics_lines` lines: how we know it works, each measurable.
+- **Deployments** (optional, `deployments`, DOC-14): for a feature that ships something people open or receive. Only
+  tables and blank lines: at most one Page table `| Page | Link | Access | Shows | Live build |` (`deployments_page`) and
+  at most one Delivery table `| Delivery | Channel | Recipients | What's sent | Status |` (`deployments_delivery`), each
+  with its separator row and at least one row, headers exact after trimming spaces. Page rows: Page and Shows filled,
+  Link a full `https://` URL, Access one of `deployments_access` (public, sign-in), Live build the 7 to 40 hex sha in
+  the page's build.txt, in backticks. Delivery rows: every cell filled, and Recipients a group name, never an email
+  address. A `|` inside a cell is written `\|`. Not part of the PRD fingerprints: it changes with each deploy. The
+  live-link and promoted-build check runs in the deploying repo for now.
+- **Tests** (`tests`, DOC-9): made by `criteria.py render`, never by hand: one table
+  `| Test | Kind | Guards | Checks | Last result |`. Test links the row's entry on the full Tests page,
+  `[row](Tests#t-<slug>)` (the row id lower-cased, anything but `a-z0-9-` turned into `-`; two rows sharing a slug are
+  refused). Kind is requirement, workflow or defect; Guards is the requirement's ID, or the defect's issue link and state; Checks
+  is the row's `scenario`; Last result is its last result and date. A requirement with no passing row gets a row whose
+  Last result is `not enforced`. Workflow rows, then defect rows, follow in the same table.
+
+### Home, the README front door and the full Tests page
+
+- **Home** (`home`, DOC-4): the marker, `# <repo>`, `## Features` and one table
+  `| Feature | What it does | How to use | Milestone |`, nothing else, with one row per feature page. Feature is
+  `[Page](Page)`; How to use is `[README](https://github.com/OWNER/REPO#how-to-use-<feature>)`, an anchor of the README's
+  `### How to use <Feature>` heading; Milestone is optional: empty, a link such as `…/milestone/N`, or free text, never checked.
+  Home may also hold the generated `## Settings` and `## Automation` blocks, each between `<!-- settings:begin -->`/`end` (or `automation`) markers; the check skips them and holds them to a fresh render instead.
+- **README** (`frontdoor`, DOC-5): `## How to use`, then one `### How to use <Feature>` per feature page, each with at most
+  one intro line and a table `| You say | What happens |`. A You-say cell is a quoted phrase the owner says: no
+  backticks, and no `/`, `python` or `bash` at its start.
+- **Tests page** (DOC-10): `docs/wiki/Tests.md`, generated by `criteria.py render` and never mapped in `.loop/docs.tsv`:
+  the marker, `# Tests`, then per feature `## <Feature>` and a table
+  `| Test | Kind | Guards | Result | Date | Run | Seen failing |` whose first cell holds `<a id="t-<slug>"></a>` and the
+  row id. Run links the run that recorded the result (the runs file's fourth column: a URL, or a commit), else `local`.
+  The check reports `STALE Tests` when it differs from a fresh render.
+
+### Scenario lines
+
+A regression row's description is one scenario: `Given <context>, when <action>, then <outcome>.` A description in
+another form still renders, marked `(not yet Given/When/Then)`, and `docs.py audit` lists it as `SCENARIO` until it is
+rewritten.
+
+### Example
+
+```markdown
+<!-- workflow-docs -->
+# Billing
+
+Milestone: https://github.com/owner/repo/milestone/9
+
+Review: **Unreviewed**
+
+## Problem
+
+- I run paid repos, and I can't charge every card once a month without doing it by hand.
+
+## Requirements
+
+### Functional
+
+- BIL-1: **Unreviewed** A due card is charged once.
+  - A card due today is charged once, however often billing runs.
+  - A failed charge is retried the next day.
+
+### Non-functional
+
+None
+
+## Non-goals
+
+- No refunds; a person handles those.
+
+## Success metrics
+
+- No card is charged twice in a month.
+
+## Tests
+
+| Test | Kind | Guards | Checks | Last result |
+|---|---|---|---|---|
+| [bil-once](Tests#t-bil-once) | requirement | BIL-1 | Given a card due today, when billing runs twice, then it is charged once. | PASS 2026-11-08 |
+```
+
+### Required docs
+
+- A milestone is optional and free form; no page needs a `Milestone:` line and no `Backlog` milestone is needed.
+- Every released version has a release note: a GitHub release for its tag, or its section in `CHANGELOG.md`.

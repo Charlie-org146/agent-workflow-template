@@ -9,6 +9,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" || exit 1
 export LOOP_FLOW="$d/flow.json"
@@ -231,9 +232,9 @@ rm -f BROKEN ci-block.py
 #   seam=none; no_claim=that GitHub Actions accepts the file (no live run)
 python3 - "$here" <<'PY' && ok "the committed regression workflow matches what actions.py writes" || bad "the committed regression workflow is stale"
 import json, sys
-sys.path.insert(0, sys.argv[1] + "/skills/workflow-regression/scripts"); import actions
+sys.path.insert(0, sys.argv[1] + "/skills/workflow-regression/scripts"); import actions, lanes_cli
 cron = json.load(open(sys.argv[1] + "/.loop/config.json")).get("regression_cron") or "17 */4 * * *"
-assert actions.render(cron) == open(sys.argv[1] + "/.github/workflows/regression.yml").read()
+assert actions.render(cron) + lanes_cli.MATRIX_JOB == open(sys.argv[1] + "/.github/workflows/regression.yml").read()
 PY
 grep -q 'cron: "17 \*/4 \* \* \*"' .github/workflows/regression.yml && ok "default schedule written" || bad "default cron"
 python3 - <<'PY'

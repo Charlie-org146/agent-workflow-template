@@ -14,6 +14,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION
 export HOME=$(mktemp -d) PATH="$here/dev/toy/fakegh:$PATH"
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 export FAKE_GH_DIR="$d/gh"; mkdir -p "$FAKE_GH_DIR"
 fails=0

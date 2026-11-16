@@ -9,6 +9,7 @@ unset LOOP_BATCH
 here=$(cd "$(dirname "$0")/../.." && pwd); id=${1:?usage: test-rows.sh ID}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 "$here/dev/toy/make.sh" "$d/toy" >/dev/null || exit 1
 export LOOP_FLOW="$d/toy/flow.json"
