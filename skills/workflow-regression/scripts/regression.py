@@ -43,7 +43,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, lanes, lanes_cli, notrun, runs, slots, tiers  # noqa: E401,E402
+import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
@@ -307,7 +307,7 @@ def cmd_run(args):
     never = [key for key in runs.unproven(root, picked, SEEN) if key not in [i["id"] for i in results if i.get("notrun")]]
     if cannot:
         slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
-        notrun.todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")), runs.gh)
+        runs.notrun_todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
     for key in never:
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))

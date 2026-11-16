@@ -347,7 +347,7 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
-package-gate-head	FAIL	2026-11-14	
+package-gate-head	FAIL	2026-11-16	
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
@@ -441,7 +441,7 @@ restamp-marks-3867	PASS	2026-11-15
 restamp-wording-locked-3867	PASS	2026-11-15	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	FAIL	2026-11-15	
+review-findings-skill-lines	FAIL	2026-11-16	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -483,7 +483,7 @@ settings-publish-refresh	PASS	2026-11-12
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-15	
+settings-render-fresh	FAIL	2026-11-16	
 settings-stale	PASS	2026-11-12	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	

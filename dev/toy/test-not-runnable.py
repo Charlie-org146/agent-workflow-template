@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-regression/scripts/notrun.py skills/workflow-regression/scripts/runs.py
+# reads: skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/runs.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-delivery/scripts/role.py
 """not-runnable (#4492, GRD-11): a lane row this machine cannot run is told apart from a real failure.
 
@@ -21,7 +21,6 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 for sub in ("workflow-regression", "workflow-delivery"):
     sys.path.insert(0, os.path.join(root, "skills", sub, "scripts"))
 sys.dont_write_bytecode = True
-import notrun  # noqa: E402
 import role  # noqa: E402
 import runs  # noqa: E402
 
@@ -41,11 +40,11 @@ GOOD = "exit 0"
 SKIP = "exit 77"
 
 # Done 1
-check(notrun.unrunnable(1, "pnpm: command not found") and notrun.unrunnable(127, "sh: node: not found"), "a missing node or pnpm is not runnable")
-check(not notrun.unrunnable(127, "") and not notrun.unrunnable(1, "./scripts/typo.sh: command not found"),
+check(runs.unrunnable(1, "pnpm: command not found") and runs.unrunnable(127, "sh: node: not found"), "a missing node or pnpm is not runnable")
+check(not runs.unrunnable(127, "") and not runs.unrunnable(1, "./scripts/typo.sh: command not found"),
       "negative control: a typo in a row's own command is a failure")
-check(notrun.unrunnable(1, "ModuleNotFoundError: No module named 'fcntl'"), "a POSIX-only import is not runnable")
-check(not notrun.unrunnable(1, "AssertionError: 1 != 2") and not notrun.unrunnable(0, "command not found"),
+check(runs.unrunnable(1, "ModuleNotFoundError: No module named 'fcntl'"), "a POSIX-only import is not runnable")
+check(not runs.unrunnable(1, "AssertionError: 1 != 2") and not runs.unrunnable(0, "command not found"),
       "a real failure, and a pass that merely prints the words, are not 'not runnable'")
 with tempfile.TemporaryDirectory() as tmp:
     picked = [{"id": k, "command": c} for k, c in (("good", GOOD), ("pnpm", MISSING), ("posix", POSIX), ("real", REAL))]
@@ -107,9 +106,10 @@ with tempfile.TemporaryDirectory() as tmp, contextlib.redirect_stdout(io.StringI
     os.makedirs(os.path.join(tmp, "docs", "wiki"))
     with open(os.path.join(tmp, "docs", "wiki", "P.md"), "w") as handle:
         handle.write("Milestone: https://example.invalid/o/r/milestone/7\n[a](Tests#t-a) [b](Tests#t-b)\n")
-    check(notrun.todo(tmp, "g", ["a", "b"], False, gh) == "" and not calls, "a dry run files nothing")
-    first = notrun.todo(tmp, "g", ["a", "b"], True, gh)
-    second = notrun.todo(tmp, "g", ["a", "b"], True, gh)
+    runs.gh = gh
+    check(runs.notrun_todo(tmp, "g", ["a", "b"], False) == "" and not calls, "a dry run files nothing")
+    first = runs.notrun_todo(tmp, "g", ["a", "b"], True)
+    second = runs.notrun_todo(tmp, "g", ["a", "b"], True)
 made = [c for c in calls if c[0][:2] == ("issue", "create")]
 check(first and second == first and len(made) == 1, "one to-do per goal: the second call files none")
 check(made and "- `a`" in made[0][1] and "- `b`" in made[0][1] and "other-machine" in made[0][0], "it lists the rows and carries the other-machine label")
