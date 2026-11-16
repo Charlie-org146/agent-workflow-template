@@ -383,3 +383,11 @@ A goal's minute budget charged time it spent held or idle (#4534; #3878 covered 
 - `board_log.active_minutes` takes the idle limit (`silent_minutes`, default 30 min; `LOOP_SESSION_QUIET` overrides): after an entry that is not the start of a step or the pr lane, a gap or the time to now is charged at most that limit. The estimate model's `flow_seconds` is unchanged, so history and estimates read as before; the budget gate and the ETA read the capped charge.
 - Cost: a worker that builds silently for more than the limit is charged only the limit; it sends `sessions.py report` as a heartbeat. Chosen over exempting build, which would leave goals idle in build charged all night.
 - `goal.py show` adds `minutes: {charged, wall}`. Existing records are not changed; the owner decides budgets.
+
+## Applied 2026-11-16 (judge-stable-keys)
+
+Health judge findings were re-filed under a new key each round (#4543: 29 issues from 4 rounds, 20 closed as duplicates under owner record o61).
+
+- A savings finding's rule was a hash of its fix wording; a review finding's subject was a hash of all its citations. Now the savings rule hashes `issues.about(where)` (the first file or test row the finding names, else its first six words) and a review subject hashes its first citation, so reworded advice on the same subject updates the open issue. The judge prompt asks for the file or row first, spelled the same each round.
+- An open issue under an old key is found by `judge.twin` from the subject in its body, updated under the new key, never closed as gone; one closed by the owner (health:closed) stays closed.
+- Cost: two findings on one subject in one round now share an issue (the planner already keeps one issue per key); a judge that names a different first file for the same advice still files again.
