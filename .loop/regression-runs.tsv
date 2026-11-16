@@ -468,7 +468,7 @@ runs-upgrade	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-url	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 same-lines	PASS	2026-11-12	
 schedule-setting	PASS	2026-11-12	
-scripts-a-delivery-under-19000	PASS	2026-11-15	
+scripts-a-delivery-under-19000	PASS	2026-11-16	
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
 scripts-no-hang	PASS	2026-11-12	
