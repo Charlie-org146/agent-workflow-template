@@ -211,8 +211,11 @@ def cmd_set(g, args):
             held["tokens"] = max(0, args.budget_tokens)
         if any(was[k] and (not held[k] or held[k] > was[k]) for k in was):
             held["record"] = monitor("auto", True).eta_record(g, args.owner_record, args.slug, "raising a budget")
+        elif (view(state, runs).get("budget") or {}).get("record"):
+            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps the record that raised it: used once
         guards.add_set(runs, args.slug, "budget", held, "set budget %dm, %d tokens: %s" % (held["minutes"], held["tokens"], why))
     if args.eta_extend or args.eta_choice:
+        args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
         monitor("auto", True).eta_set(g, args, state, why)
     print("SET %s: %s" % (args.slug, ", ".join(
         "%s=%s" % (k, v) for k, v in sidecar(runs, args.slug).items())))

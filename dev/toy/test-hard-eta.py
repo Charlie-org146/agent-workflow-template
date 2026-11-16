@@ -139,6 +139,9 @@ check(refused(fit.budget_stop, "g", state, runs, {}) == "", "inside the extended
 words(here, "g", "g", "g")
 check(run_set(budget_minutes=480, owner_record="o3") == "" and fit.view(read(here, "g"), runs)["budget"]["record"] == "o3", "a budget raise with a record is accepted and keeps it")
 
+check(run_set(budget_minutes=300) == "" and "ETA_NO_RECORD" in run_set(budget_minutes=600, owner_record="o3"), "a record that raised a budget stays used after a later lowering")
+check("not both" in run_set(eta_extend=5, eta_choice="ship", owner_record="o1"), "an extension and a choice together are refused")
+
 # 4. ship now and defer
 record(here, "s", running(90, flow={"idea": "done", "plan": "done"}))
 words(here, "s", "s")
