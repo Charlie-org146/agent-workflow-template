@@ -201,7 +201,7 @@ def hit(root, row, path, at, cache, memo):
 
 
 def reason(root, row, old, ok, base, cache, memo):
-    """F4 closure rows: why this row runs, or '' (failure rerun, new row, reaches <file>, root runner)."""
+    """Why this row runs, or '' (failure rerun, new row, reaches <file>, root runner)."""
     if ok and old["rows"].get(row["id"], {}).get("status") == "FAIL":
         return "failure rerun"
     if ok and old["rows"].get(row["id"], {}).get("status") == "SKIPPED":
@@ -210,6 +210,9 @@ def reason(root, row, old, ok, base, cache, memo):
     if lanes.table(root, at, "regression.tsv", memo).get(row["id"]) != memo["tsv"].get(row["id"]):
         return "new row"
     found = next((p for p in paths if hit(root, row, p, at, cache, memo)), None)
+    prior = ok and old["rows"].get(row["id"])  # DEL-15: main-only rows are reused
+    if found and prior and ancestor(root, prior["commit"], memo) and not any(hit(root, row, p, base, cache, memo) for p in changed(root, base, memo)):
+        return ""
     if found:
         return "reaches " + found
     if paths and lanes.closure(root, row["command"], cache)[1]:
@@ -218,7 +221,7 @@ def reason(root, row, old, ok, base, cache, memo):
 
 
 def quiet(path, gone):
-    """Paths the unmapped rule ignores: deleted ones (listed apart), the loop's tables and files no row reads."""
+    """Paths the unmapped rule ignores: deleted ones, the loop's tables and files no row reads."""
     return path in gone or path in (lanes.TABLE, KNOWN) or path.startswith(lanes.BOOKKEEPING) or any(
         path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
 
@@ -251,6 +254,12 @@ def picks(root, picked, paths, old, ok, cache, memo):
     return found
 
 
+def rank(because):
+    """Run order (#531): a new or changed row, a rerun, a row that reaches a changed file, then the root runners and the picks."""
+    return 0 if because.startswith("new row") else 1 if because.startswith(("failure", "skipped")) else 3 if because.startswith(
+        ("root runner", "names")) else 2
+
+
 def plan(root, picked, record):
     """(to run ids in tier order, reused ids, usable record or None, why no plan or ''); prints its plan lines."""
     global BASE
@@ -271,7 +280,7 @@ def plan(root, picked, record):
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
     todo = [row["id"] for row in picked if why[row["id"]]]
-    todo.sort(key=lambda rid: why[rid].startswith(("root runner", "names")))  # the goal's own rows first, the picks after
+    todo.sort(key=lambda rid: rank(why[rid]))  # the goal's own new and changed rows first, then reruns, reaches, the picks last
     reused = [rid for rid in why if ok and rid in old["rows"] and not why[rid]]
     print("\n".join(lines)) if lines else None
     summary(picked, todo, why, len(loose) + len(gone), (full, text), old if ok else None)
@@ -285,7 +294,7 @@ def plan(root, picked, record):
 
 
 def summary(picked, todo, why, count, full, old):
-    """The kind line (FULL (<reason>), REUSED or AFFECTED), one SELECTED line per row and the ROWS line (DX-12, DX-20)."""
+    """The kind line (FULL, REUSED or AFFECTED), one SELECTED line per row and the ROWS line."""
     if full[0]:
         print("FULL (%s): %s" % full)
     elif not todo and old:
@@ -304,7 +313,7 @@ def summary(picked, todo, why, count, full, old):
 def suite_time(root, args, head, results, day):
     """REG-7 (S14, S25): only the plain full run `regression.py run nightly` (no row id, --reuse, --tier or --kind)
     appends `<sha> TAB full TAB <seconds> TAB <date>` to <git common dir>/loop/suite-times.tsv, outside the worktree so
-    it never dirties a lane, and prints SUITE_TIME; health's cost.py reads the newest line."""
+    it never dirties a lane, and prints SUITE_TIME; health's milestone.py reads the newest line."""
     if args.target != "nightly" or args.reuse or args.tier or args.kind or not results:
         return
     seconds = int(round(sum(item["seconds"] for item in results)))

@@ -6,12 +6,6 @@
     "--model=sonnet",
     "--allowedTools=Bash,Read,Write,Edit,Skill"
   ],
-  "judge_command": [
-    "claude",
-    "-p",
-    "--tools",
-    ""
-  ],
   "parallel": 0,
   "risky_paths": [
     "^\\.github/",
@@ -24,8 +18,9 @@
   "pr_bumps_version": false,
   "mend": true,
   "resume_on_limit": false,
+  "workers": "app",
   "criteria": true,
-  "criteria_max": 16,
+  "criteria_max": 19,
   "auto_approve": true,
   "auto_merge": true,
   "regression_cron": "off",
@@ -34,7 +29,7 @@
   "judge_setup": "",
   "digest_owner": "",
   "routines": [],
-  "time_budget_minutes": 120,
+  "time_budget_minutes": 240,
   "token_budget": 3000000,
   "review_depth": "full",
   "_help": {
@@ -44,6 +39,7 @@
   "full_auto": true,
   "pool_size": 20,
   "silent_minutes": 30,
+  "min_free_memory_gb": 3.0,
   "govern_hook": true,
   "digest_mail": "cloudflare",
   "test_budget_minutes": 15,
@@ -69,5 +65,48 @@
   "reply_hook": true,
   "feature_labels": false,
   "template_version": "0.27.29",
-  "regression_runs": ""
+  "regression_runs": "actions",
+  "max_merge_rounds": 8,
+  "max_active_goals": 20,
+  "plan_pause_percent": 80,
+  "health_script_bytes": 20480,
+  "health_skill_lines": 150,
+  "topics": {
+    "Build loop": [
+      "Delivery",
+      "Monitoring"
+    ],
+    "Quality": [
+      "Regression",
+      "Health",
+      "Guardrails"
+    ],
+    "Operations": [
+      "Automation",
+      "Setup"
+    ],
+    "Docs": [
+      "Documentation"
+    ]
+  },
+  "automation": [
+    {
+      "name": "health",
+      "does": "Checks the repo, files findings.",
+      "cadence": "47 */4 * * *",
+      "runs": "mac:agent-workflow-template-health-regression"
+    },
+    {
+      "name": "regression",
+      "does": "Runs the regression rows.",
+      "cadence": "17 */4 * * *",
+      "runs": "mac:agent-workflow-template-health-regression"
+    },
+    {
+      "name": "digest email",
+      "does": "Mails the round's digest.",
+      "cadence": "with each health round",
+      "runs": "mac:agent-workflow-template-health-regression"
+    }
+  ]
 }

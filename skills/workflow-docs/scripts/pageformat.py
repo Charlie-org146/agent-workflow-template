@@ -9,22 +9,31 @@ after `[text](url)` becomes text and backticks are stripped; one sentence means 
 import os
 import re
 
-GENERATED = {"Tests"}  # pages render writes; never mapped to paths, never a feature page
-GUIDE = "<!-- workflow-docs guide -->"  # a line marking a guide page: mapped and kept fresh, but not a feature page
+GENERATED = {"Tests"}  # pages render writes: never mapped, never a feature page
+GUIDE = "<!-- workflow-docs guide -->"  # marks a guide page: mapped and kept fresh, not a feature page
 CHECKS = ("home", "frontdoor", "usage", "bullets", "problem", "tests", "deployments", "runbook")  # deployments: deployments.py
 BANNED = "script, function, regex, json, tsv, stdout"
 MARKER = "<!-- workflow-docs -->"
 HOME = ("Feature", "What it does", "How to use", "Milestone")
+OTHER = "Other"  # the topic of a feature none lists
+
+
+def topic_of(name, topics):
+    """The topic that lists this page; OTHER when none does."""
+    return next((topic for topic, pages in topics.items() if name in pages), OTHER)
+
+
+def topic_order(topics):
+    return list(topics) + [OTHER]
 FRONT = ("You say", "What happens")
 RULE = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
 PATH = re.compile(r"(?<![\w/])/[\w.-]+/")
 EXT = re.compile(r"\.(py|sh|json|tsv|md)\b")
 ME = re.compile(r"\b(I|[Mm]y|[Mm]e)\b")
-ENTRY = re.compile(r"^- `([^`]+)` — (\S.*)$")
 
 
 def is_guide(text):
-    """Whether a page's text marks it a guide (a how-to page, not a feature): no PRD contract, no Home row."""
+    """Whether a page's text marks it a guide: no PRD contract, no Home row."""
     return GUIDE in (text or "").splitlines()
 
 
@@ -46,7 +55,7 @@ def sentences(text):
 
 
 def slug(text):
-    """GitHub's heading anchor: lower case, punctuation dropped, spaces to dashes."""
+    """GitHub's heading anchor."""
     return re.sub(r"[^\w\- ]", "", text.strip().lower()).replace(" ", "-")
 
 
@@ -57,7 +66,7 @@ def owner_repo(text):
 
 
 def parts(text):
-    """[(name, line number, [(number, line)])] for the head ('') and each level-2 section outside fences."""
+    """[(name, line number, [(number, line)])] for the head ('') and each level-2 section, outside fences."""
     out, fenced = [("", 1, [])], False
     for number, line in enumerate(text.splitlines(), 1):
         fenced = fenced != line.startswith("```")
@@ -77,7 +86,7 @@ def table(header, rows):
 
 
 def tables(numbered):
-    """[(line, header cells, [(line, cells)])] per run of '|' lines, and the other lines."""
+    """[(line, header cells, [(line, cells)])] per run of '|' lines, plus the other lines."""
     found, other, last = [], [], None
     for number, line in numbered:
         if line.startswith("|"):
@@ -101,16 +110,16 @@ def anchors(readme):
 
 
 def unblocked(text):
-    """text with the generated Settings, Automation and template blocks (render.py) blanked, line numbers kept: they
-    are held to a fresh render instead of the page format."""
+    """text with the generated Settings, Automation and template blocks (render.py) blanked, line numbers kept."""
     return re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
 
 
-def home(text, features, existing, readme, repo):
-    """DOC-4: the marker, '# title', '## Features' and one table HOME, one row per feature page, nothing else."""
-    out, seen, keys = [], [], anchors(readme)
-    text = unblocked(text)
-    lines = list(enumerate(text.splitlines(), 1))
+def home(text, features, existing, readme, repo, topics=None):
+    """DOC-4: the marker, '# title', '## Features' and one table HOME, a row per feature page, nothing else. With
+    topics (the `topics` setting) the table may lead with a Topic column, its rows grouped by topic; the header
+    without Topic is accepted too, so a repo adopts the column on setting it."""
+    out, seen, keys, last = [], [], anchors(readme), -1
+    lines = list(enumerate(unblocked(text).splitlines(), 1))
     body = [(n, x) for n, x in lines if x.strip() and x.strip() != MARKER]
     found, other = tables([(n, x) for n, x in lines if not x.startswith(("# ", "## Features")) and x.strip() != MARKER])
     if not body or not body[0][1].startswith("# ") or "## Features" not in [x.strip() for _, x in body]:
@@ -118,11 +127,15 @@ def home(text, features, existing, readme, repo):
                        "write '# <repo>', then '## Features', then the features table"))
     for number, line in other:
         out.append(bad("Home", number, "Features", 4, "a line outside the features table", short(line), "move it to the README or a feature page"))
-    if len(found) != 1 or tuple(found[0][1]) != HOME:
-        return out + [bad("Home", found[0][0] if found else 1, "Features", 4, "one table with the header | %s |" % " | ".join(HOME),
+    with_topic = len(found) == 1 and tuple(found[0][1]) == ("Topic",) + HOME
+    want_head = ("Topic",) + HOME if with_topic else HOME
+    topics = topics if with_topic else None
+    if len(found) != 1 or tuple(found[0][1]) != want_head:
+        return out + [bad("Home", found[0][0] if found else 1, "Features", 4, "one table with the header | %s |" % " | ".join(want_head),
                           "%d tables%s" % (len(found), ", header " + short(" | ".join(found[0][1])) if found else ""),
                           "use exactly that header, in one table")]
     for number, row in found[0][2]:
+        topic, row = (row[0], row[1:]) if with_topic and len(row) == 5 else (None, row)
         page = re.match(r"^\[([^\]]+)\]\(([^)]+)\)$", row[0]) if len(row) == 4 else None
         if not page or page.group(1) != page.group(2) or page.group(1) not in existing:
             out.append(bad("Home", number, "Features", 4, "the Feature cell links an existing page as [X](X)", short(row[0]),
@@ -130,6 +143,12 @@ def home(text, features, existing, readme, repo):
             continue
         name = page.group(1)
         seen.append(name)
+        if topics:
+            order, held = topic_order(topics), topic_of(name, topics)
+            if topic != held or order.index(held) < last:
+                out.append(bad("Home", number, "Features", 4, "the Topic cell names the page's topic and rows are grouped by topic",
+                               short(topic or ""), "write %s here and keep each topic's rows together, in the order of the topics setting" % held))
+            last = max(last, order.index(held)) if held in order else last
         if name not in features:
             out.append(bad("Home", number, "Features", 4, "a row for a page that is not a feature page", name, "remove the row"))
         link = re.match(r"^\[[^\]]+\]\(https://github\.com/([\w.-]+/[\w.-]+)#([\w-]+)\)$", row[2])
@@ -138,15 +157,16 @@ def home(text, features, existing, readme, repo):
             out.append(bad("Home", number, "Features", 4, "How to use links the README's '### %s' section" % heading_of(name),
                            short(row[2]), "link [README](https://github.com/%s#%s) and add that README heading" % (repo or "OWNER/REPO", want)))
     for name in features:
-        if seen.count(name) != 1:
-            out.append(bad("Home", found[0][0], "Features", 4, "one row per feature page", "%d rows for %s" % (seen.count(name), name),
+        count = seen.count(name)
+        if count != 1:
+            out.append(bad("Home", found[0][0], "Features", 4, "one row per feature page", "%d rows for %s" % (count, name),
                            "give %s exactly one row" % name))
     return out
 
 
 def frontdoor(readme, features):
-    """DOC-5: '## How to use' holds one '### How to use <Feature>' per feature page, each an intro line and a FRONT
-    table of quoted phrases."""
+    """DOC-5: '## How to use' holds one '### How to use <Feature>' per feature page: an intro line and a FRONT table
+    of quoted phrases."""
     held = [(n, lines) for name, n, lines in parts(unblocked(readme)) if name == "How to use"]
     if not held:
         return [bad("README", 1, "How to use", 5, "the README has a '## How to use' section", "none",
@@ -159,13 +179,14 @@ def frontdoor(readme, features):
         else:
             groups[-1][2].append((number, line))
     names = [name for name, _, _ in groups[1:]]
-    for page in features:
-        if names.count(heading_of(page)) != 1:
-            out.append(bad("README", start, "How to use", 5, "one '### %s' section" % heading_of(page),
-                           "%d" % names.count(heading_of(page)), "add it, with a | You say | What happens | table"))
+    wanted = [heading_of(p) for p in features]
+    for want in wanted:
+        if names.count(want) != 1:
+            out.append(bad("README", start, "How to use", 5, "one '### %s' section" % want,
+                           "%d" % names.count(want), "add it, with a | You say | What happens | table"))
     for name, number, body in groups:
         found, other = tables(body)
-        if name and name not in [heading_of(p) for p in features]:
+        if name and name not in wanted:
             out.append(bad("README", number, "How to use", 5, "a section named for a feature page", short(name),
                            "name it '### How to use <Feature>'"))
         for at, line in other[1:]:
@@ -184,49 +205,13 @@ def frontdoor(readme, features):
     return out
 
 
-def known(syntax, maps, own):
-    """Whether a Usage heading's command is in a Command map: a '/skill verb' in that skill's, else its first word
-    (or the routine after python3/bash) in one of the page's skills' maps (either column)."""
-    ask = re.match(r"/([\w-]+)\s+([\w-]+)", syntax)
-    if ask:
-        return bool(re.search(r"`/%s %s[ `]" % (re.escape(ask.group(1)), re.escape(ask.group(2))), maps.get(ask.group(1), "")))
-    tokens = syntax.split()
-    if not tokens:  # backticks holding only spaces name no command
-        return False
-    word = tokens[1] if tokens[0] in ("python3", "python", "bash", "sh") and len(tokens) > 1 else tokens[0]
-    word = word.rsplit("/", 1)[-1]
-    texts = [maps[k] for k in own if k in maps] or list(maps.values())
-    return any(re.search(r"(?<![\w.-])%s(?![\w.-])" % re.escape(word), text) for text in texts)
-
-
-def usage(page, name, lines, maps, own):
-    """DOC-6: one '- `syntax` — what it does' bullet per command, nothing else but blank lines. Each names what it
-    prints (a backticked output after the dash, or 'prints'/'ends with'), and its command is in its skill's Command map."""
-    out = []
-    for number, line in lines:
-        if not line.strip():
-            continue
-        head = ENTRY.match(line)
-        if not head:
-            out.append(bad(page, number, name, 6, "only '- `syntax` — what it does' entries, one per command", short(line),
-                           "write it as one entry, or remove it"))
-            continue
-        if not known(head.group(1), maps, own):
-            out.append(bad(page, number, name, 6, "the command is in its skill's Command map", short(head.group(1)),
-                           "use a command from the skill's ## Command map"))
-        if "`" not in head.group(2) and not re.search(r"\b(prints|ends with)\b", head.group(2), re.I):
-            out.append(bad(page, number, name, 6, "each entry says what it prints", short(head.group(1)),
-                           "add what it prints on success, in backticks"))
-    return out
-
-
 FIELD = re.compile(r"^- \*\*([A-Z][A-Za-z ]*):\*\*\s*(.*)$")
 ROUTINE = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
 def runbook(page, name, lines, fields):
-    """DOC-16: one '### routine' subsection per routine, each holding every field as '- **Field:** text' (indented lines
-    continue it) and nothing else. Pure: lines in, FORMAT findings out."""
+    """DOC-16: one '### routine' subsection per routine, each holding every field as '- **Field:** text' (indented
+    lines continue it), nothing else. Pure: lines in, FORMAT findings out."""
     out, subs, cur, titles = [], [], None, set()
     for number, line in lines:
         if not line.strip():
@@ -240,11 +225,11 @@ def runbook(page, name, lines, fields):
         elif cur is None:
             out.append(bad(page, number, name, 16, "a '### <routine>' heading before any field", short(line), "start each routine with '### <name>'"))
         elif FIELD.match(line):
-            head = FIELD.match(line)
-            if head.group(1) in cur[2]:
-                out.append(bad(page, number, name, 16, "each field once under %s" % cur[1], "'%s' again" % head.group(1), "merge the two lines"))
-            cur[2][head.group(1)] = cur[2].get(head.group(1), "") + head.group(2)
-            cur[3] = head.group(1)
+            key, text = FIELD.match(line).groups()
+            if key in cur[2]:
+                out.append(bad(page, number, name, 16, "each field once under %s" % cur[1], "'%s' again" % key, "merge the two lines"))
+            cur[2][key] = cur[2].get(key, "") + text
+            cur[3] = key
         elif line[:1].isspace() and cur[3]:
             cur[2][cur[3]] += " " + line.strip()
         else:
@@ -264,14 +249,36 @@ def runbook(page, name, lines, fields):
     return out
 
 
+ROW_NAMED = re.compile(r"Deployments row:\s*`?([^`;,.)\n]+?)`?\s*(?=[;,.)]|$)")
+
+
+def linked(page, name, runbook, deploy):
+    """DOC-16: a routine's Output may name the Deployments row it produces ('Deployments row: NAME'); that row, the
+    first cell of a Deployments table row, must exist. Pure: (number, line) pairs in, FORMAT findings out."""
+    rows = {c.strip().strip("`") for _, line in deploy for c in line.split("|")[1:2] if line.lstrip().startswith("|")}
+    out, text = [], ""
+    for number, line in runbook + [(0, "")]:  # the sentinel flushes the last Output
+        if line.startswith("- **Output:**"):
+            text, at = line, number
+        elif text and line[:1].isspace():
+            text += " " + line.strip()
+        elif text:
+            for named in map(str.strip, ROW_NAMED.findall(text)):
+                if named not in rows:
+                    out.append(bad(page, at, name, 16, "the Deployments row the Output names exists", short(named),
+                                   "name a row of the Deployments tables, or drop the Deployments row clause"))
+            text = ""
+    return out
+
+
 GROUPS = ["Functional", "Non-functional"]
 
 
 def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
     """DOC-7: Requirements is '### Functional' then '### Non-functional', each holding requirement lines with their
     '  - ' sub-bullets, or the single line 'None'. An orphan or deeper sub-bullet is always refused; with strict, the
-    groups are checked, each requirement has at least one sub-bullet, and an Unreviewed line
-    is at most 20 words (a Reviewed one is locked by DOC-2)."""
+    groups are checked, each requirement has a sub-bullet, and an Unreviewed line is at most 20 words (Reviewed
+    is locked by DOC-2)."""
     out, held, groups = [], [], []
     say = lambda number, what, got, fix: out.append(bad(page, number, name, 7, what, short(got), fix))
     for number, line in lines:
@@ -279,7 +286,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
             continue
         if line.startswith("### "):
             groups.append([number, line[4:].strip(), 0, 0])
-            held.append((number, None, []))  # a heading ends the requirement above
+            held.append((number, None, []))  # ends the requirement above
         elif line.startswith("  - ") and held and held[-1][1]:
             held[-1][2].append((number, line[4:]))
         elif line.startswith("  - ") or line[:1].isspace():
@@ -311,8 +318,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
 
 
 def problem(page, name, lines, most, banned):
-    """DOC-8: 1 to `most` bullets, one in the first person, with no code: no backticks, paths, file extensions or
-    banned words."""
+    """DOC-8: 1 to `most` bullets, one in the first person, no code (backticks, paths, extensions, banned words)."""
     out, said = [], [(n, x) for n, x in lines if x.strip()]
     first = said[0][0] if said else 1
     for number, line in said:

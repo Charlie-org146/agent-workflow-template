@@ -114,20 +114,7 @@ two files and reports the error. Report it too. Don't retry with other flags.
 - Never edit `VERSION` or `CHANGELOG.md` by hand to get around a refusal.
 
 ## Refusals
-
-Each refusal says `REFUSED:` and a fix. Common ones:
-
-| Refusal | Fix |
-|---|---|
-| Checks have not passed | Finish the goal with `workflow-delivery` |
-| No complete steps under `## Verify by hand` | Give every numbered step an `Expect:` line, and commit it |
-| Pages are stale | Update them with `workflow-docs`, commit, and run the release again |
-| A batch goal, no `--user` | Wait for the human's own `cut <slug>` |
-| On the wrong branch | Switch to `loop/<slug>` in the goal's worktree |
-| Uncommitted changes | Commit or set them aside |
-| Tag already exists | Ask the user which version to use |
-
-`release.py show <slug>` prints the `release` field, and the version and draft URL after a cut.
+Every refusal and its fix is in [references/commands.md](references/commands.md).
 
 ## Rules
 
@@ -139,11 +126,13 @@ Each refusal says `REFUSED:` and a fix. Common ones:
 
 ## Command map
 
-Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. Wiki Usage lines use the left column.
+Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. The README's How to use tables start from these asks.
 
 | Ask | Runs |
 |---|---|
 | `/workflow-release merge SLUG` | `python3 scripts/merge.py SLUG` |
+| `/workflow-release batch` | `python3 scripts/wiki.py batch plan` |
+| `/workflow-release review SLUG` | `python3 scripts/review.py record SLUG` |
 | `/workflow-release ask SLUG` | `python3 scripts/release.py ask SLUG` |
 | `/workflow-release cut SLUG` | `python3 scripts/release.py cut SLUG` |
 | `/workflow-release leave SLUG` | `python3 scripts/release.py leave SLUG` |

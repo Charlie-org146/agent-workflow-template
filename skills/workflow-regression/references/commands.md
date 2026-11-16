@@ -11,6 +11,8 @@ add <id> --level <level> --command "<command>" [--goal <criterion>|<slug>:<n>] [
 sync [--write]
 criteria
 red <id> --break "<command>"
+red <id> --owed --runner <name> [--live]
+red <id> --off-platform --runner <name> --commit <sha>
 run [land|nightly|<id>] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
 workflow
 ```
@@ -35,6 +37,10 @@ workflow
   counts as never, in `sync`, `run`, the wiki Tests lines and delivery's defect-test check.
 - `run` prints `PASS`, `FAIL`, `KNOWN`, `FIXED` or `UNPROVEN` (blocks). Known failures sit in
   `.loop/regression-known.tsv`. It keeps one issue per failing row; without a token it only prints `WOULD` lines.
+- `python3 dev/toy/matrix-smoke.py [--agent claude-app|claude-cli|codex|ci] [--only STEP] [--no-record]` runs the smoke set (package, adopt a toy repo
+  from it, freeze a goal, run its qa lane, health check, a routine's Runbook pointer, a goal relayed between two pods under the merge lock) and
+  appends its dated line to `.loop/matrix-runs.tsv`, which health's `matrix` rule reads. The written `regression.yml` also carries a `matrix-smoke`
+  job that runs it on Linux as `ci` and keeps the record as an artifact.
 - `workflow` writes `.github/workflows/regression.yml` (on `regression_cron`, every 4 hours by default, or only by hand
   when it is `off`, which a scheduled run reads first and then writes nothing; on `v*` tags and by hand, which still run). A failing row's issue is
   labelled `regression` and `defect`, names the feature and requirement the row guards, and, with the `feature_labels` setting on, carries that feature's
@@ -173,7 +179,7 @@ order, then `Other` for rows that guard none. Each test shows its name, kind (`r
 (the requirement's ID and words, or the issue or pull request link with its recorded state and date, or the finding),
 what it checks, when it runs (`both`, `nightly`, `by a person`), its last result and date, and when it was seen failing.
 Plain output has one `FEATURE <name>` line per group; `--markdown` gives one table per feature; `--tsv` gives one line
-per test for scripts. The wiki Tests lines, the health report and the GitHub run summary all use this format.
+per test for scripts. The wiki Tests lines, the health report and the GitHub run summary all use this format. For a feature page whose PRD lives at a link, the requirement ids come from that PRD.
 
 `summary --results FILE --took S` writes the GitHub run summary from a run's results (`id<TAB>state` lines, states
 `PASS`, `FAIL`, `SKIPPED`, `KNOWN`); a malformed file or run time is refused with the line to fix. `issues --write`
@@ -244,7 +250,7 @@ only; bash reads are covered by the static rules above.
 
 ## Goal tier
 
-A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when
+A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 4 after four times the lane's time limit.
 the record's merge-base with the base branch is the current one (else from the merge-base, plus what a base merge
 brought in) and runs the rows a change reaches, new or edited rows, root runners and the record's failures; it takes a
 lane slot only when it has no plan to follow (FULL, no merge-base). It stays within `test_budget_minutes`: rows run in tier
@@ -404,3 +410,26 @@ GitHub's merge queue and "require branches to be up to date" make merges atomic 
 own base check for repos without them, and the window between its check and the merge is closed only by those
 settings. Actions concurrency groups already keep one regression run at a time in CI. Running AFFECTED lanes in CI
 was left out: CI runs the full suite only (REG-4).
+
+## Exact command entries (moved from the retired Usage section on the Automation page)
+
+- `/workflow-regression workflow` — Writes the scheduled regression workflow on `regression_cron` (five cron fields, or `off` for by-hand and release-tag runs only), for a public repo only: a private repo's regression runs on the Mac, so it prints `NOT WRITTEN: this repo is private; its regression runs on the Mac (local schedule)` and writes nothing (the Regression page has the whole entry). Prints `WROTE <repo>/.github/workflows/regression.yml`. Refuses (exit 1) `REFUSED: regression_cron is not five cron fields. ...` and `REFUSED: <path> exists, and this tool didn't write it. Fix: merge by hand.` Its run is split over eight parallel jobs and ends in one combined summary, and a newer run on the same ref cancels the one it supersedes; it keeps one open issue a row, files none for a row skipped for time and stops writing at a rate-limit reply; a run by hand with `cleanup` set closes the backlog of duplicate, skipped-only and removed-row issues, paced, until it prints `CLEANUP closed 0 issues`. A scheduled row that exits 77 (cannot run on this runner, such as the live Codex row) is recorded `SKIPPED` and opens no issue. The one local task per repo is named `<repo>-health-regression` (health and the full regression, every 4 hours or sooner); a repo recorded `regression_runs: mac`, public or private, runs its regression there and has no `regression.yml`, and `setup.py migration-check` names a missing, misnamed or slower task. A row that runs past its time limit has the processes then running (pid, parent, state, wait channel, command) written at the end of its log before it is killed, so a hang names what it is stuck on.
+
+## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
+
+- `/workflow-regression add ID --level land --command "cmd" --goal DEL-1` — Adds or replaces a regression row. Prints `ROW <id> <level>: <command>`. Refuses (exit 1) `REFUSED: bad id. Fix: letters, digits, dots, dashes.`, `REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.` and `REFUSED: a row can't hold a tab or new line. Fix: use a script.` The workflow's summary job text lives in `slots.py`. A failing row's issue body carries its last 40 output lines, in the workflow as on a Mac. Every skill holds the same `proctree.py` copy.
+
+## workflow
+
+```bash
+python3 scripts/regression.py workflow
+```
+
+Writes `.github/workflows/regression.yml`: rows run on `regression_cron` (4-hourly by default; `off` drops the schedule), on
+`v*` tags and by hand; each failing row's issue is labeled `regression` and `defect`, names what it guards and, with `feature_labels` on, carries its `feature:<Page>` label (no milestone is read, made or set); a failed write fails the step (`FILE_FAILED`). It refuses to replace a workflow it didn't write. The job has 90 minutes. Each row runs in its own process group
+with a 15-minute limit, and starts only if that full limit still fits the job's time; a row that doesn't fit is
+skipped, reported `SKIPPED`, and fails with an issue. Each row's result is saved as it ends, and a last step that
+always runs writes the run summary: one header with totals and the run time, then one table per feature (`tests.py
+summary`); if that fails, the plain results still reach the summary. Rows (here too, under `regression.py run`) run with no GitHub token and none of the
+runner's own files (`GITHUB_STEP_SUMMARY`, `GITHUB_ENV`, `GITHUB_OUTPUT`, `GITHUB_PATH`, `GITHUB_STATE`) in their
+environment, so no row inherits the real summary (this stops accidents, not a hostile row), and the checkout keeps no token in its git config.

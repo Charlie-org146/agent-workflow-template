@@ -46,7 +46,7 @@ python3 scripts/docs.py check [--base <ref>]
 | `MISSING` | A mapped page has no file | Write it, or remove its row |
 | `UNWRITTEN` | The page still has its placeholder, or almost no text | Write it |
 | `UNMAPPED` | A page has no row in `.loop/docs.tsv` (the generated `Tests` page never needs one) | Run `add` |
-| `FORMAT` | With `"criteria": true`, a page breaks a shape rule of `references/template.md` (DOC-4 Home, DOC-5 README front door, DOC-6 Usage, DOC-7 Requirements, DOC-8 Problem, DOC-9 Tests), printed as `FORMAT <Page>:<line>: <Section>: DOC-n <what> (got <value>). Fix: <how>`; the sheet's `format` key picks the rules | Do what the Fix says |
+| `FORMAT` | With `"criteria": true`, a page breaks a shape rule of `references/commands.md` (DOC-4 Home, DOC-5 README front door, DOC-6 command reference, DOC-7 Requirements, DOC-8 Problem, DOC-9 Tests), printed as `FORMAT <Page>:<line>: <Section>: DOC-n <what> (got <value>). Fix: <how>`; the sheet's `format` key picks the rules | Do what the Fix says |
 | `STALE Tests` | The generated `docs/wiki/Tests.md` differs from a fresh render; the line names the first difference | Run `/workflow-docs render` |
 | `STALE Settings`, `STALE Automation`, `STALE README line` | With `"criteria": true`, the generated Settings and Automation blocks (on Home and in the README, between `<!-- settings:begin -->` markers) or the README's template-repo line differ from a fresh render of `settings.py reference`, `.loop/config.json` and the workflow files; the setting is marked overridden only when its value differs from the default | Run `/workflow-docs render`; `publish` refreshes them too. A block with no markers is left alone until setup inserts it (`python3 scripts/render.py blocks`) |
 | `COUNT` | The README, a wiki page or a top-level doc in `skills/` states a count of skills, feature pages, or a feature page's criteria or tests that the repo doesn't match; all but skills need `"criteria": true`. A feature page's tests count includes its defect tests. One word may sit between number and noun only if it means all of them ("eight workflow-ready skills"); "N defect tests" is checked against the defect tests. Skipped: the word "one", a limit ("up to 6"), a part or label ("two delivery skills"), fenced and indented code and comments as Markdown renders them, a line naming one of the page's own criteria, the criteria and tests counts on a line naming another page's criterion, and a line marked `<!-- not-a-count -->`; a code fence that never closes is itself a `COUNT` line. Wrapped lines are read as one paragraph. `publish` refuses only on wiki pages | Correct the number |
@@ -55,49 +55,16 @@ Exit 0 prints `DOCS OK`. `NO PAGES` and exit 1 mean `.loop/docs.tsv` has no rows
 count only changes since that point. `cut` counts from the goal's base the same way. `publish` has no `--base`: it
 counts every commit.
 
-## `automation` registry
-
-The Automation block lists health, regression and each `automation` entry of `.loop/config.json`; `python3 scripts/docs.py automation` prints each one's live state. Entry fields: `references/commands.md` (The automation registry).
-
 ## `audit`
 
 ```bash
 python3 scripts/docs.py audit [--base <ref>] [--dry-run]
 ```
 
-The one command: it checks every page against `references/template.md`, the code, the tests and the required docs, fixes the mechanical (`FIXED`: Tests tables), and lists wording for a person as `REWRITE` and Reviewed criteria with no test as `UNTESTED`. Exit 0 only when nothing is left. It never deletes a page or edits a criterion. Details: `references/commands.md` (audit).
+The one command: it checks every page against `references/commands.md`, the code, the tests and the required docs, fixes the mechanical (`FIXED`: Tests tables), and lists wording for a person as `REWRITE` and Reviewed criteria with no test as `UNTESTED`. Exit 0 only when nothing is left. It never deletes a page or edits a criterion. Details: `references/commands.md` (audit).
 
 ## `criteria`: the PRD page
-
-With `"criteria": true` in `.loop/config.json`, every feature page (each page in `.loop/docs.tsv` but Home, which is
-free-form, and a guide: a how-to page with the line `<!-- workflow-docs guide -->` under the marker, kept fresh but
-with no PRD, Home row or README section, and not stale on a `.loop/config.json` change) is a short PRD and `check` enforces it, from the rules block of `references/template.md`:
-
-the title, `Milestone:` and `Review:` lines, then `## Problem`, `## Usage` (optional), `## Requirements` (up to
-`criteria_max` lines like `- DEL-3: **Unreviewed** what must hold`; take the next free id from `criteria PAGE`, never
-reuse or renumber one), `## Non-goals`, `## Success metrics` and `## Tests`, which only `criteria.py render` writes.
-The full list, and the lines `check` prints: `references/commands.md` (The PRD page).
-
-**The PRD is the owner's.** Only the owner reviews it, and only when their own words say so (`--user`):
-
-```bash
-python3 scripts/criteria.py review <PAGE|ID> [...] --user [--date YYYY-MM-DD]
-python3 scripts/criteria.py unreview <PAGE|ID> [...] --user
-python3 scripts/criteria.py render [--check]
-```
-
-Run from a session with no terminal, `review` and `unreview` refuse `--user` unless `LOOP_OWNER_WORDS` holds the
-owner's own message that said to, quoted exactly; each change is logged with those words in `.git/loop/reviews.tsv`.
-
-An argument like `DEL-3` is a requirement; any other is a page. Every argument is checked before anything is written.
-`review PAGE` locks the PRD: after it, an edit shows as `LOCKED` or `CHANGED`; `references/commands.md` (Review
-locks) has the rules and how the owner edits a reviewed requirement. Never review or unreview on a goal's own initiative.
-
-**Tests follow on their own.** Write each new regression row's description as one scenario,
-`Given <context>, when <action>, then <outcome>.`; what `audit`, `sync` and `cut` do with them: `references/commands.md`.
-
-**New and old pages.** `python3 scripts/prd.py new NAME "<idea>" --paths A,B` drafts a new feature's PRD and
-`prd.py convert --write` turns old Summary/Criteria pages into PRD pages; what each leaves to do: `references/commands.md`.
+The full rules for `criteria` are in [references/commands.md](references/commands.md).
 
 ## `publish`
 
@@ -114,11 +81,8 @@ python3 scripts/docs.py publish
 - It refuses to replace a wiki page it didn't write. `--adopt <page>` replaces one. Use that only when the user named
   that page.
 
-Tell the user the `PUBLISHED` link and the pages it changed.
-
-## `restore`
-
-This reverts the last publish. It refuses if the wiki has changed since.
+Tell the user the `PUBLISHED` link and the pages it changed. `restore` reverts the last publish, and the `automation`
+registry fills the Automation block: both in `references/commands.md`.
 
 ## Rules
 
@@ -130,7 +94,7 @@ This reverts the last publish. It refuses if the wiki has changed since.
 
 ## Command map
 
-Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. Wiki Usage lines use the left column.
+Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. The README's How to use tables and the exact syntax in `references/commands.md` start from these asks.
 
 | Ask | Runs |
 |---|---|
@@ -141,9 +105,12 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-docs unreview PAGE\|ID` | `python3 scripts/criteria.py unreview PAGE\|ID --user` |
 | `/workflow-docs prd NAME "<idea>" --paths A,B` | `python3 scripts/prd.py new NAME "<idea>" --paths A,B` |
 | `/workflow-docs convert` | `python3 scripts/prd.py convert --write` |
+| `/workflow-docs relock` | `python3 scripts/docs.py audit --relock` |
 | `/workflow-docs render` | `python3 scripts/criteria.py render` |
 | `/workflow-docs automation` | `python3 scripts/docs.py automation` |
-| `/workflow-docs entry` | `python3 scripts/entry.py write` (`check`, `render`, `block`) |
+| `/workflow-docs prompts` | `python3 scripts/docs.py prompts` |
+| `/workflow-docs entry` | `python3 scripts/entry.py write` (`check`, `render`, `block`, `lag [--new SLUG]` the version line) |
 | `/workflow-docs publish` | `python3 scripts/docs.py publish` |
+| `/workflow-docs sync [--dry-run]` | `python3 scripts/docs.py sync [--dry-run] [--accept PAGE:ID=repo\|source] [--accept milestones:TITLE=repo\|source] [--open]` |
 | `/workflow-docs restore` | `python3 scripts/docs.py restore` |
-| `/workflow-docs milestone new TITLE \| move ISSUE TITLE` | `python3 scripts/milestone.py new TITLE` or `move ISSUE TITLE` (optional, free form) |
+| `/workflow-docs milestone new TITLE \| move ISSUE TITLE \| backlog` | `python3 scripts/milestone.py new TITLE`, `move ISSUE TITLE` (free form) or `backlog` (the standing Backlog milestones) |

@@ -12,7 +12,7 @@ Moved from the wiki page, which is now only a summary, criteria and tests.
 Freeze, then idea, plan, build, review, qa, ship, pull request and release. Review is the only gate. Each step can be mapped to a skill in the private flow file, under `suite` (the default) or `steps` (an override for one step). The chart
 under `go` shows it.
 
-A step mapped to `built-in` runs delivery's own routine, from the built-in flow at the end of this file, instead of a skill, so the
+A step mapped to `built-in` runs delivery's own routine, from the section in this file, `## The built-in flow`, instead of a skill, so the
 package runs with no suite of your own; setup fills a never-configured suite with `built-in` (the private flow file is
 machine-wide, so one setup run makes goals runnable in every repo on that machine). A named skill needs the flow's
 probe; a headless step needs its `command`; an in-session step needs neither. The first `flow.py` call checks every
@@ -23,7 +23,7 @@ mapped step for the mode it will run in and refuses with the whole list before a
 | `FLOW_UNRUNNABLE` | a mapped step can't run in this mode: a named skill with no probe, or a headless step with no command | add `probe` and `command` to the flow file, or map those steps to `built-in` |
 | `FLOW_SECTION_MISSING` | `references/commands.md` has no section for a built-in step | reinstall workflow-delivery |
 
-A goal whose change makes `.loop/START.md` or a marked agent block stale (a PRD page's Usage, a setting) runs
+A goal whose change makes `.loop/START.md` or a marked agent block stale (a PRD page's Problem, a setting) runs
 `docs.py audit` (or `entry.py write`) in build and commits the result. A merge conflict in `.loop/START.md` or in a
 marked block is resolved by taking either side, running `entry.py write`, and committing.
 
@@ -362,7 +362,7 @@ python3 scripts/goal.py set my-goal --budget-minutes 180 --budget-tokens 5000000
 
 | Flag | Repo setting it overrides for one goal |
 |---|---|
-| `--budget-minutes` | `time_budget_minutes` |
+| `--budget-minutes` | `time_budget_minutes` (active step time only: time held in the pr queue, on a hold, on an owner answer or after a stop counts nothing) |
 | `--budget-tokens` | `token_budget` |
 
 ### Release bump (DEL-5)
@@ -395,7 +395,7 @@ later one (result, depth, verdicts), never tries or tokens, and refuses while th
 Every push and GitHub write in delivery, release and monitoring runs `private.py` first: `goal.py pr` (the branch, the
 title, the body), a finding's push (kept local on a hit: `FINDING_LOCAL`, shown under Issues), `wiki.py`, the release
 steps and `merge.py`. The list is outside the repo, `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one regular
-expression per line, case-insensitive, `#` lines are comments:
+expression per line, case-insensitive, `#` lines are comments, and a line may start with `@public` or `@repos=a,b` to apply only to public repos or the named ones:
 
 ```text
 # names that never ship
@@ -489,7 +489,7 @@ tokens, no cache reads); report a step it didn't run with `goal.py step <slug> <
 
 ### The regression lane
 
-**The regression lane.** The full suite runs once per goal, in qa. Before your qa skill starts, `flow.py qa` runs the
+**The regression lane.** The loop runs only the affected rows, once per goal, in qa, within `test_budget_minutes`; the full suite runs on the schedule. Before your qa skill starts, `flow.py qa` runs the
 lane, `python3 <workflow-regression>/scripts/regression.py run land --reuse`, in the background (`RUNNING` until it
 ends). It runs through your flow file's `test_record` prefix when you set one (a receipt recorder, so your ship skill's
 own check of recorded test runs can reuse it), and tests the committed HEAD only: an unclean tree fails it (`LANE_DIRTY`).
@@ -547,4 +547,14 @@ machine doesn't have, end with STEP: skipped and say what was missing.
 ## ship
 Check the branch is ready for a pull request: the version and changelog follow the repo's habit, the docs that
 describe the changed paths are updated, and the tree is clean. Commit what is missing. Don't push and don't open the
-pull request: delivery does that.
+pull request: delivery does that. File what you found and did not fix, one line each, in your reply:
+`FILE defect <Feature>: text` for a break of a Reviewed requirement outside this goal's touches, `FILE backlog <Feature>: text` for an
+improvement, idea or saving (`Other` when no feature fits). A break inside the touches is fixed, not filed. Record files them once.
+
+## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
+
+- Every skill holds the same `proctree.py` copy, which also holds the lane and goal helpers.
+
+- `flow.py SLUG STEP` — Runs one step (idea, plan, review, qa, ship); a review or ship step stops at `step_budget_minutes` (default 30, never under 15), is recorded done with what it left and the goal goes on. In a worker session prints `IN SESSION` and the skill to run. Prints `RUNNING` until it ends. A step mapped to `built-in` takes its routine from `references/commands.md`, under The built-in flow. A step not yet started is refused past the goal's time or token budget (the same BUDGET_MINUTES and BUDGET_TOKENS lines as `goal.py step`); polling a running step or recording a finished one is never refused.
+
+- `goal.py record SLUG STEP --in-session` — Records a finished step. Refuses a reply with no `DEPTH:` line, and a qa step with no passing lane on HEAD (`LANE_MISSING`). A `PENDING:` line that says none, nothing, n/a or nothing at all asks nothing and never makes the goal wait; a real item still waits for the owner, including one written on the line under a bare `PENDING:` heading. Goal steps (`step`, `record`, `pr`) refuse outside a worker session. A recorded ship reply's `FILE defect|backlog <Feature>: text` lines are filed once each as issues, a defect on no milestone and a backlog item on `Backlog: <Feature>` (`Backlog: Other` when no page matches), and printed as `FILED`, `SAME` or `NOTE`; an email address or the home folder in a line skips it. `--tokens N` adds the session's tokens for the step; `unknown` or nothing records nothing, so the goal reads tokens unread, never 0. A goal past `time_budget_minutes` (counted from its freeze) or `token_budget` starts no new step: `goal.py step`, `goal.py pr` and `flow.py` refuse with one line (BUDGET_MINUTES, BUDGET_TOKENS) until the operation raises it with `goal.py set --budget-minutes|--budget-tokens N --why ...`. `goal.py pr` merges the base and reruns the lane at most `max_merge_rounds` times (default 3); a further round is refused (MERGE_ROUNDS), the goal waits under Needs you, and `goal.py answer` starts the count again.

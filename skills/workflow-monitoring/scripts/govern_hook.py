@@ -8,7 +8,8 @@ usage: govern_hook.py          the PreToolUse hook: reads the hook's JSON on std
 Which session: the operation session only, known by its id in <git common dir>/loop/operation.id (`operate.py claim`
 adds its session and keeps the others: several independent operation sessions may run at once) or by the reply hook's record that the session ran
 `operate.py run`. A session whose folder is a goal worktree is a worker and is never checked, nor is any other repo.
-What it blocks there: Edit, Write and NotebookEdit; and each Bash segment (split on && || ; | and new lines, with
+What it blocks there: Edit, Write and NotebookEdit on a path inside a followed repo (this one, its worktrees, or one in
+~/.workflow-loop/repos), so the session's own notes and other files outside every repo pass (issue 2850); and each Bash segment (split on && || ; | and new lines, with
 `env X=Y`, `bash -c` and `sh -c` bodies read once more) that runs git, after any -C, -c, --git-dir or --work-tree
 options, with commit, push, merge, rebase, reset, cherry-pick, revert, am or pull (a `pull --ff-only` passes, issue 495). Each segment is judged alone, so
 `merge.py X && git push` is blocked. The merge and post-merge steps (merge.py, release.py, autorelease.py, wiki.py,
@@ -161,21 +162,66 @@ def log(common, text):
         pass
 
 
+def followed_roots(top, common):
+    """Real paths of every followed repo: this checkout, its git common dir's parent and worktrees, and each repo listed in
+    ~/.workflow-loop/repos (the board's list)."""
+    roots = [top, os.path.dirname(common) if os.path.basename(common) == ".git" else common]
+    try:
+        with open(os.path.expanduser("~/.workflow-loop/repos")) as handle:
+            roots += [line.strip() for line in handle if line.strip()]
+    except OSError:
+        pass
+    return [os.path.normcase(os.path.realpath(r)) for r in roots if r]
+
+
+def in_followed(given, cwd, top, common):
+    """True when an edit tool's target path is inside a followed repo. A path it can't read counts as inside."""
+    target = str(given.get("file_path") or given.get("notebook_path") or given.get("path") or "")
+    if not target:
+        return True
+    target = os.path.normcase(os.path.realpath(os.path.join(cwd, os.path.expanduser(target))))
+    return any(target == r or target.startswith(r.rstrip(os.sep) + os.sep) for r in followed_roots(top, common))
+
+
+def stray(payload):
+    """The refusal for a pool worker session's `git commit` run in the main checkout (the governing checkout takes no commit,
+    GRD-4), or ''. Only a plain commit: a command with a cd or -C may be aimed at the worker's own worktree."""
+    command = str((payload.get("tool_input") or {}).get("command") or "")
+    if payload.get("tool_name") != "Bash" or "commit" not in command or re.search(r"(^|[\s;&|])cd\s|\s-C\s|--git-dir|--work-tree", command):
+        return ""
+    where = reply_hook.repo_of(str(payload.get("cwd") or ""))
+    if not where or verdict(command) != "git commit" or os.path.realpath(where[0]) != os.path.realpath(os.path.dirname(where[1])):
+        return ""
+    try:
+        with open(os.path.join(where[1], "loop", "session-pool.json")) as handle:
+            pool = json.load(handle)
+    except (OSError, ValueError):
+        return ""
+    if str(payload.get("session_id") or "") not in pool or str(where[2].get("govern_hook", True)).strip().lower() in ("false", "0", "off", "no"):
+        return ""
+    log(where[1], "blocked worker commit in the main checkout")
+    return "git commit is refused here: this is the main checkout, which takes no commit (GRD-4). Fix: commit in the goal's worktree (git -C .git/loop/worktrees/SLUG commit)"
+
+
 def decide(payload):
     """The deny reason for one tool call, or '' to let it run."""
+    if os.environ.get("LOOP_GOVERN_HOOK") != "0" and (said := stray(payload)):
+        return said
     cwd = os.path.realpath(str(payload.get("cwd") or ""))
     if os.environ.get("LOOP_GOVERN_HOOK") == "0" or os.environ.get("LOOP_ROLE") == "worker" or "%sloop%sworktrees%s" % (os.sep, os.sep, os.sep) in cwd:
         return ""  # a worker, cheaply, before any git call: the hook runs on every tool call
     where = reply_hook.repo_of(str(payload.get("cwd") or ""))
     if not where or str(where[2].get("govern_hook", True)).strip().lower() in ("false", "0", "off", "no"):
         return ""
-    _, common, _ = where
+    top, common, _ = where
     try:
         claim(payload, common)
         if not is_operation(payload, common):
             return ""
         tool, given = payload.get("tool_name"), payload.get("tool_input") or {}
         if tool in EDITS:
+            if not in_followed(given, str(payload.get("cwd") or ""), top, common):
+                return ""  # a file outside every followed repo, such as the agent's memory notes (issue 2850)
             log(common, "blocked %s %s" % (tool, os.path.basename(str(given.get("file_path", "")))))
             return "%s is refused here: %s" % (tool, FIX)
         if tool == "Bash":

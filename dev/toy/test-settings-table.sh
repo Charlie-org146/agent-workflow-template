@@ -2,7 +2,7 @@
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/entry.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
-# reads: skills/workflow-docs/references/template.md skills/workflow-health/scripts/judge.py
+# reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the Settings and Automation blocks on Home and the README: one overridden setting shows exactly that one marked, the
@@ -14,6 +14,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
@@ -60,12 +61,12 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['parallel']
 $docs publish --dry-run >/dev/null 2>&1
 grep -q 'overridden:\*\* `7`' $H && ok "publish refreshes the block before it copies the pages" || bad "publish left the block stale"
 a=$(sed -n '/automation:begin/,/automation:end/p' $H)
-grep -q '^| health | .* | off | every 4 hours | not deployed | docs.py automation | run workflow-setup to write .github/workflows/health.yml |' <<<"$a" && ok "Automation says on, the cadence in words, not deployed and the step owed when the workflow file is missing" || bad "automation health row: $(grep '^| health' <<<"$a")"
+grep -q "^| health | .* | on | every 4 hours | this Mac's local schedule | docs.py automation | none |" <<<"$a" && ok "Automation says on, the cadence in words, the Mac's local schedule and nothing owed, with no health workflow" || bad "automation health row: $(grep '^| health' <<<"$a")"
 mkdir -p .github/workflows; : > .github/workflows/health.yml
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['health_cron'] = '30 6 * * *'; c['automation'] = [{'name': 'money brief', 'does': 'Mails a daily money brief.', 'cadence': '0 7 * * *', 'runs': 'mac:com.example.brief'}]; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 $cri render >/dev/null 2>&1
 a=$(sed -n '/automation:begin/,/automation:end/p' $H)
-grep -q '^| health | .* | on | daily at 06:30 | GitHub Actions (health.yml) | docs.py automation | none |' <<<"$a" && grep -q '^| money brief | Mails a daily money brief. | on (declared) | daily at 07:00 | this Mac (launch agent com.example.brief) | docs.py automation |' <<<"$a" && ok "Automation reads a daily cron in words, where it runs from the workflow file, and a routine added as one config entry" || bad "automation rows: $a"
+grep -q '^| health | .* | on | daily at 06:30 | this Mac.s local schedule | docs.py automation | none |' <<<"$a" && grep -q '^| money brief | Mails a daily money brief. | on (declared) | daily at 07:00 | this Mac (launch agent com.example.brief) | docs.py automation |' <<<"$a" && ok "Automation reads a daily cron in words, where it runs from the workflow file, and a routine added as one config entry" || bad "automation rows: $a"
 $docs automation 2>&1 | grep -q '^money brief: not loaded$' && ok "docs.py automation reports a launch agent entry as not loaded when it is not" || bad "live status: $($docs automation 2>&1)"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['health_cron'] = 'off'; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 $cri render >/dev/null 2>&1

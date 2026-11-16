@@ -3,28 +3,32 @@
 
 usage: docs.py audit [--base REF] [--dry-run]
 
-It checks the pages against the template sheet (references/template.md), the code (stale pages), the tests (the Tests
-Tests, rows not
-written as Given/When/Then, and which Reviewed requirements have no test or tests that no longer match), and the required docs (a release note per tag; a
-milestone is optional and never checked). It fixes the mechanical trouble itself (the
-Tests tables and the full Tests page) and prints the rest as REWRITE lines for a person or agent. It never
-deletes a page and never changes a criterion's wording. --dry-run only says what it would fix. Exit 0 only when
-nothing is left. UNTESTED lines are written to untested.tsv (id, reason) in the repo's .git/loop folder for the loop to queue goals from, and
-do not fail the audit. It runs git and gh, and nothing else.
+It checks the pages against the template sheet (references/commands.md), the code (stale pages), the tests (Tests
+tables, rows not Given/When/Then, Reviewed requirements with no or a stale test) and a release note per tag. It fixes the
+mechanical trouble and prints the rest as REWRITE lines; it never deletes a page or changes a criterion's wording.
+--dry-run only says what it would fix. Exit 0 only when nothing is left. UNTESTED lines go to .git/loop/untested.tsv.
 """
 import argparse
 import contextlib
 import io
+import json
 import os
 import re
 import subprocess
 import sys
+from os.path import join
 
-import criteria
+import counting
+import criteria as cr
 import docs
 import entry
+import prd
+from criteria import put, sha
+from entry import req_key, requirements
+from prd import out as post
+from render import mirror_of
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal: a git or gh prompt must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -33,14 +37,14 @@ REWRITE = {"CAP", "SCRIPT", "STALE", "UNWRITTEN", "PROBLEM", "SECTIONS", "CRITER
 
 
 def release_trouble(root):
-    """A tag with neither a CHANGELOG section nor a GitHub release has no release note."""
+    """A tag with no CHANGELOG section or GitHub release."""
     try:
-        with open(os.path.join(root, "CHANGELOG.md")) as handle:
+        with open(join(root, "CHANGELOG.md")) as handle:
             notes = handle.read()
     except OSError:
         notes = ""
     out = []
-    for tag in criteria.git("tag", "-l", "v*", check=False).split():
+    for tag in cr.git("tag", "-l", "v*", check=False).split():
         if not re.search(r"^## \[?%s\b" % re.escape(tag), notes, re.M):
             have = subprocess.run(["gh", "release", "view", tag], cwd=root, capture_output=True, text=True)
             if have.returncode:
@@ -49,82 +53,249 @@ def release_trouble(root):
 
 
 def scenarios(root):
-    """A row shown on a page whose description is not one Given/When/Then scenario."""
-    shown = {name for names in list(criteria.test_rows(root)[0].values()) + list(criteria.defect_rows(root).values()) for name in names}
+    """A shown row not written as Given/When/Then."""
+    shown = {name for names in list(cr.test_rows(root)[0].values()) + list(cr.defect_rows(root).values()) for name in names}
     return [("SCENARIO", "regression", "row %s: '%s' is not 'Given ..., when ..., then ...'. Fix: rewrite its description "
-             "(column 6 of .loop/regression.tsv) as one scenario" % (row[0], row[5][:60])) for row in criteria.tsv(root, "regression.tsv")
-            if row[0] in shown and not criteria.SCENARIO.match(row[5])]
+             "(column 6 of .loop/regression.tsv) as one scenario" % (row[0], row[5][:60])) for row in cr.tsv(root, "regression.tsv")
+            if row[0] in shown and not cr.SCENARIO.match(row[5])]
 
 
 def untested(root):
-    """(id, reason) for each Reviewed requirement (its own line, or its page's PRD) with no test, or none that passed
-    since its wording appeared."""
-    linked, _ = criteria.test_rows(root)
-    rows = {row[0]: row for row in criteria.tsv(root, "regression.tsv")}
-    ran = {row[0]: row[2] for row in criteria.tsv(root, "regression-runs.tsv") if row[1] == "PASS"}
+    """(id, reason) per Reviewed requirement with no test, or none passed since its wording appeared."""
+    linked, _ = cr.test_rows(root)
+    rows = {row[0]: row for row in cr.tsv(root, "regression.tsv")}
+    ran = {row[0]: row[2] for row in cr.tsv(root, "regression-runs.tsv") if row[1] == "PASS"}
     out = []
-    for rel in criteria.pages(root):
-        with open(os.path.join(root, rel)) as handle:
+    for rel in cr.pages(root):
+        with open(join(root, rel)) as handle:
             lines = handle.read().splitlines()
         signed = any(line.startswith("Review: **Reviewed ") for line in lines)
-        for match in filter(None, (criteria.LINE.match(line) for line in lines)):
+        for match in filter(None, (cr.LINE.match(line) for line in lines)):
             key, text = match.group(1), match.group(4)
             if match.group(2) == "Unreviewed" and not signed:
                 continue
             if not linked.get(key):
                 out.append((key, "no test"))
                 continue
-            since = subprocess.run(["git", "log", "-1", "--format=%cs", "-S" + text, "--", rel], cwd=root,
-                                   capture_output=True, text=True).stdout.strip()
-            gone = [name for name in linked[key] if any(not os.path.exists(os.path.join(root, f))
-                    for f in criteria.SCRIPT_FILE.findall(rows[name][2]))]
+            since = own_git(root, "log", "-1", "--format=%cs", "-S" + text, "--", rel) or ""
+            gone = [name for name in linked[key] if any(not os.path.exists(join(root, f))
+                    for f in cr.SCRIPT_FILE.findall(rows[name][2]))]
             if gone or not any(ran.get(name, "") >= since for name in linked[key]):
                 out.append((key, "test no longer matches"))
     return out
 
 
 def render(check):
-    """Re-render the Tests tables (or only list the stale ones when check is true), as page paths."""
+    """Re-render the Tests tables (check: list stale ones), as paths."""
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        criteria.cmd_render(argparse.Namespace(check=check))
+        cr.cmd_render(argparse.Namespace(check=check))
     return [line.split(" ", 1)[1] for line in out.getvalue().splitlines() if line.startswith(("STALE ", "WROTE "))]
 
 
 def audit(root, base, dry):
-    fix = not dry
-    would = []
+    would, crit = [], bool(docs.config(root).get("criteria"))
     if not docs.read_map(root):
         print("NO PAGES: run add first")
         return 1
-    if config_criteria(root):
-        would += ["%s: re-render the Tests table" % name for name in render(not fix)]
-    found = []
-    # The entry point and a stale agent block are generated: rewriting them is mechanical (a missing block needs agents.py).
+    if crit:
+        would += ["%s: re-render the Tests table" % name for name in render(dry)]
+    # The entry point and stale agent blocks are generated; a missing block needs agents.py.
     stale = [path for kind, path, why in entry.problems(root) if path == entry.ENTRY and kind in ("STALE", "MISSING") or
              kind == "STALE" and path in entry.agent_files(docs.config(root)) and "ENTRY_MARKER" not in why]
-    if stale and fix:
+    if stale and not dry:
         entry.write(root)
     would += ["%s: regenerate it (entry.py write)" % path for path in stale]
     for line in would:
         print("%s %s" % ("WOULD FIX" if dry else "FIXED", line))
-    found += docs.problems(root, base) + docs.contract(root) + docs.counts(root) + release_trouble(root)
-    found = [item for item in found if item[0] != "CHANGED"]  # Usage drift waits on the owner, not on a goal
-    found += scenarios(root) if config_criteria(root) else []
+    found = [x for x in docs.problems(root, base) + docs.contract(root) + docs.counts(root) + release_trouble(root) if x[0] != "CHANGED"]
+    found += scenarios(root) if crit else []
     if dry:
-        found = [item for item in found if item[0] != "TESTS" and item[:2] != ("STALE", "Tests")]  # render fixes these
+        found = [item for item in found if item[0] != "TESTS" and item[:2] != ("STALE", "Tests")]
     for kind, page, detail in found:
         print("%s %s: %s" % ("REWRITE" if kind in REWRITE else kind, page, "%s %s" % (kind, detail) if kind in REWRITE else detail))
-    todo = untested(root) if config_criteria(root) else []
+    todo = untested(root) if crit else []
     for key, why in todo:
         print("UNTESTED %s: %s" % (key, why))
-    if fix:
-        with open(os.path.join(os.path.dirname(docs.state_file()), "untested.tsv"), "w") as handle:
+    if not dry:
+        with open(join(os.path.dirname(docs.state_file()), "untested.tsv"), "w") as handle:
             handle.writelines("%s\t%s\n" % item for item in todo)
     left = len(found) + (len(would) if dry else 0)
     print("DOCS OK: %d pages" % len(docs.read_map(root)) if not left else "DOCS: %d to do" % left)
     return 1 if left else 0
 
 
-def config_criteria(root):
-    return bool(docs.config(root).get("criteria"))
+# check --own: a stale page the goal's diff doesn't touch is a FINDING.
+
+
+def own_git(root, *args):
+    out = subprocess.run(["git"] + list(args), cwd=root, capture_output=True, text=True)
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def own_base(root, name):
+    for ref in ("origin/" + name, name):
+        if own_git(root, "rev-parse", "--verify", "-q", ref + "^{commit}"):
+            return ref
+    return None
+
+
+def own_touched(root, ref, paths, head="HEAD"):
+    """True when the goal's diff (merge-base of ref, to head) touches a path."""
+    out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
+    return out is None or bool(out)  # no answer: the goal's own
+
+
+def own_split(root, found, notes, rows, name="main", head="HEAD"):
+    """(found, notes) with STALE lines of untouched pages moved to notes as FINDING. head: the goal's branch."""
+    ref = own_base(root, name)
+    if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
+        return found, notes  # no base, or on the base branch
+    keep, moved = [], []
+    for item in found:
+        if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
+            moved.append(("FINDING", "STALE " + item[1], item[2] + " (not touched by this goal; main's own, left for health)"))
+        else:
+            keep.append(item)
+    return keep, notes + moved
+
+
+def probe(cmd):
+    """The finished command, or None if the program is missing."""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True)
+    except OSError:
+        return None
+
+
+def live(root):
+    for e in counting.entries(root):
+        kind, _, target = str(e.get("runs", "")).partition(":")
+        if kind == "github":
+            done = probe(["gh", "run", "list", "--workflow", target, "--limit", "1", "--json", "conclusion,createdAt",
+                          "-q", ".[0] | \"\\(.conclusion) \\(.createdAt)\""])
+            said = "unknown: gh is not installed here" if done is None else done.returncode == 0 and done.stdout.strip() or "no run found or gh unavailable"
+        elif kind == "mac":
+            done = probe(["launchctl", "list", target])
+            said = "unknown: launchctl is not available on this host" if done is None else "loaded" if done.returncode == 0 else "not loaded"
+        elif kind == "local":
+            said = "runs on this Mac's local schedule, not in GitHub Actions"
+        else:
+            said = "a Claude scheduled task is checked in the Claude app"
+        print("%s: %s" % (e["name"], said))
+    return 0
+
+
+def owned(root, rel, body, rule):
+    """True when every requirement line is owner-reviewed (seal holds; main's own line or logged id) and none of main's
+    was dropped; else the page stays LOCKED."""
+    name = rule["sections"][1]
+    shown = cr.git("show", "origin/main:" + rel, check=False)
+    main = [(line, tuple(below), m.group(1)) for line, m, below in cr.blocks(dict(cr.sections(shown)).get(name) or []) if m]
+    try:
+        with open(join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop", "reviews.tsv")) as handle:
+            logged = {key for row in handle for item in row.split("\t")[2:3] for key in item.split(",") if row.split("\t")[1:2] == ["review"]}
+    except OSError:
+        logged = set()
+    have = set()
+    for line, m, below in cr.blocks(body.get(name) or []):
+        if not m or m.group(2) == "Unreviewed" or m.group(5) != cr.seal_of(m.group(4), below):
+            return False
+        if (line, tuple(below), m.group(1)) not in main and m.group(1) not in logged:
+            return False
+        have.add(m.group(1))
+    return {key for _, _, key in main} <= have
+
+
+def relock(root, slug="", only=()):
+    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page in only stale by code alone."""
+    rule, done = cr.rules(), []
+    for rel in cr.pages(root):
+        if only and os.path.basename(rel)[:-3] not in only:
+            continue
+        with open(join(root, rel)) as handle:
+            text = handle.read()
+        line, why = prd.review_of(text, rule)
+        match = prd.REVIEW.match(line or "")
+        parts = cr.sections(text)
+        if why or not match or not match.group(2):
+            continue
+        now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
+        moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
+        if (moved == ["R"] and owned(root, rel.replace(os.sep, "/"), dict(parts), rule)) or (slug and not moved):
+            kept = " <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip()) if slug else ""
+            with open(join(root, rel), "w") as handle:
+                handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
+            done.append(os.path.basename(rel)[:-3])
+    if done:
+        log = join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop")
+        os.makedirs(log, exist_ok=True)
+        with open(join(log, "reviews.tsv"), "a") as handle:
+            handle.write("%s\t%s\t%s\t%s\n" % (cr.datetime.datetime.now(cr.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "restamp" if slug else "relock", ",".join(done), slug + ": mapped code only" if slug else "auto-relock: all lines owner-reviewed"))
+    return done
+
+
+from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
+
+
+# AUT-9: each routine declares what it may do
+PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
+allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
+
+
+def perm_write(root, dry):
+    table, bad = counting.perm_declared(root)
+    if bad:
+        print("\n".join(bad))
+        return 1
+    path = join(root, ".claude", "settings.json")
+    data = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as handle:
+                data = json.load(handle)
+        except (OSError, ValueError) as error:
+            print("REFUSED: .claude/settings.json is not readable JSON (%s). Nothing was written. Fix: repair it." % error)
+            return 1
+    if not isinstance(data, dict) or not isinstance(data.get("permissions", {}), dict):
+        print("REFUSED: .claude/settings.json has no permissions object I can extend. Nothing was written.")
+        return 1
+    block, added = data.setdefault("permissions", {}), 0
+    for kind, rule, _ in (row for mine in table.values() for row in mine):
+        held = block.setdefault(kind, [])
+        if not isinstance(held, list):
+            print("REFUSED: .claude/settings.json permissions.%s is not a list. Nothing was written." % kind)
+            return 1
+        if rule not in held:
+            held.append(rule)
+            added += 1
+    if dry or not added:
+        print("PERMISSIONS %s: %d rule(s) to add" % ("DRY RUN" if dry else "CURRENT", added))
+        return 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+    print("PERMISSIONS WRITTEN: %d rule(s) in .claude/settings.json" % added)
+    return 0
+
+
+def perm_main(argv):
+    parser = argparse.ArgumentParser(prog="audit.py permissions", description=PERM_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("command", choices=("write", "check"))
+    parser.add_argument("--repo", default="")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    root = counting.perm_root_of(args.repo)
+    if args.command == "write":
+        return perm_write(root, args.dry_run)
+    findings = entry.perm_check(root)
+    print("\n".join(findings) if findings else "PERMISSIONS OK")
+    return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["restamp"] and len(sys.argv) > 3:
+        print("".join("RESTAMPED %s\n" % page for page in relock(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
+        sys.exit(0)
+    sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)

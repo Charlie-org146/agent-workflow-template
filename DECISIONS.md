@@ -14,3 +14,346 @@ One line each, where the roadmap didn't say.
 - Delivery is a wrapper around the owner's own skill suite: one flow, no levels, no judge of its own. A private flow file names the skills, and a probe must prove their unattended mode before any step runs, so a ship skill never runs by a person's rules.
 - Nothing a skill leaves for the owner is approved by an agent. It waits under Waiting on you, and `pr` waits for it.
 - POCs are deleted: the suite's idea skill covers trying an idea. `workflow-release` stays, as the owner's place for routines before a release.
+- 2026-11-12, regression time: the loop runs only the affected rows within `test_budget_minutes`; the full suite runs on the schedule, because a full suite in every goal outgrows the budget. Fixed `workflow-delivery` SKILL.md and its commands.md; REG-7 stands, DEL-6 reworded.
+- 2026-11-12, one owner per artifact: MON-3 owns the live board (report, dashboard, artifact) and MON-4 holds its layout; MON-5 owns the check-in reply and never prints the board, because two layouts for one artifact drifted apart. Third layout removed in the proposed MON-3, MON-4, MON-5 wording (Reviewed, waiting on owner un-review).
+- 2026-11-12, GitHub writes need `--live`: a token alone never writes; the scheduled workflows pass `--live`, because the safer default is a preview. Reworded GRD-5 and HLT-4; REG-5 and AUT-5 are Reviewed, so their wording is proposed (waiting on owner un-review); defect #2614 filed for the code, which still writes on a token alone.
+- 2026-11-12, Guardrails is an index: it points to the owning ids (DEL-8, REG-7, DEL-9, SET-8, MON-7, MON-8) and restates none of their text, because two copies of a rule disagree. Reworded GRD-1 and the overlapping bullets of GRD-2, GRD-3, GRD-4, GRD-8.
+- 2026-11-12, unknown tokens: a goal with no token count records "unknown" and the board shows "tokens unread", never 0, because 0 reads as an unspent budget. Reworded GRD-2; defect #2615 filed for the code.
+- 2026-11-12, review depth and release: condensed review happens only when `review_depth: condensed` (the default stays full); release merges and publishes with `auto_merge` on and makes a draft without it, because DEL-6 and DEL-5 promised what the settings don't do. DEL-5 and DEL-6 are Reviewed, so their wording is proposed (waiting on owner un-review).
+- 2026-11-12, generated sections and Usage: the generated Deployments, Runbook, Settings and Automation sections are allowed on their pages, the Regression metric uses REG-7's 15-minute floor, and Usage carries no module or refactor notes, because DOC-1, DOC-4, DOC-14 and DOC-15 contradicted each other and DOC-6 says Usage lists commands. Reworded DOC-4; DOC-1 is Reviewed, so its wording is proposed (waiting on owner un-review); Usage cleaned on Documentation, Regression and Monitoring.
+- 2026-11-12, feature labels: `feature_labels` stays false by default, and the requirements say "when feature_labels is on", because the code tags a feature only then. Reworded HLT-4, AUT-2, AUT-3.
+- 2026-11-12, one budget name: the setting is `test_budget_minutes` everywhere, because `test_budget_seconds` does not exist. Fixed workflow-health commands.md and the HLT-6 row descriptions; HLT-2 names no setting and stands.
+- 2026-11-12, Monitoring non-goal: "does not merge" becomes "never merges unless auto_merge is on", because MON-7 and MON-15 let the post-merge step merge. The Monitoring page is Reviewed, so the Non-goals wording is proposed (waiting on owner un-review).
+- Review findings (2026-11-12), health runs on the Mac only: Automation Usage no longer documents a health workflow, `workflow --check` or the Actions mail job; `/workflow-health workflow` reads as removed (exit 2), `mail send` runs as the last step of the Mac tick and `mail test` is run by hand, both reading the schedule's `mail.env`. `health_cron` is `off`, an every-N-hours shape or fixed hours (the form `local install` accepts), because the code refuses any other. Setup's entry no longer lists `health.yml` or `mail-test.yml`, because setup writes neither. The sentence win-posix-rest added to the removed `--check` entry (the tick code runs on native Windows) goes with that entry; the Health page's `local tick` entry is where the tick is described.
+- Review findings (2026-11-12), private repos: the regression workflow entry says `NOT WRITTEN` for a private repo, because the code writes it for a public repo only. AUT-2 no longer says "no check ever blocks a private repo's merge": the pull request lane posts commit statuses for the ruleset's required checks, and a failing lane posts failure, so it holds that merge; AUT-2's affected-tests bullet points to REG-4 and AUT-1's missed-run bullet drops "regression before health", which the tick does not do for a private repo. All three are Unreviewed.
+- Review findings (2026-11-12), rows name their requirement: the rows that already prove the Mac tick (`ls-private-tick`, `ls-public-tick`, `ls-missed-run`) now guard AUT-1, and the status rows (`st-pass`, `st-fail-never-success`) guard AUT-2. Guardrails rows for what is built now guard GRD-2 (`del8-step-stops`, `reg7-budget-leaves`) and GRD-3 (`del9-pr-refuses`, `del9-hooks`), because only `stop-tree-step-limit` named a GRD id; each owner keeps its other rows, and the rest of the guardrails (GRD-4 among them: today a role check, not a boundary) stay "not enforced" until built.
+- Review findings (2026-11-12), GRD-4: a worker changes shared loop state for its own goal through the goal's commands (`goal.py`, `sessions.py bind` and `report`), and only the operation session changes the queue, other goals' records and the pool's other sessions, because workers run `goal.py record` and `pr` and bind themselves. Guardrails Usage points to Health for the check entry and no longer names a template version.
+- Review findings (2026-11-12), DEL-2: it is on the Delivery page (the Delivery requirements were cut off in the review's prompt after DEL-5), so no requirement changes; DEL-2 moved up to follow DEL-1 so a cut-off page still shows it, with its text and review unchanged. DEL-5's draft-step wording stays the spec-decisions proposal below.
+- Review findings (2026-11-12), Usage is current behaviour: the refactor history is out of the Delivery `record` and `pr` entries and the Setup and Health install entries (rollback internals, lock details, script-size notes, a repeated walk-through).
+- Review findings (2026-11-12), `workflow-delivery` SKILL.md goes under 150 lines by trimming repeated prose, not rules.
+
+- 2026-11-13, where a PRD lives and Home's topics: each feature's PRD has one source, `page` (the default), `url:<link>` or `mcp:<server>:<resource>` (Notion through its connector is one), set in the optional third column of `.loop/docs.tsv`; a page whose PRD lives elsewhere shows `PRD: <source>` plus its generated Runbook, Deployments and Tests sections, and agents read the PRD only from that source and never copy its text into the repo, because a copy drifts from the document the owner edits. The docs check reads the source fresh and reports UNREAD, never a pass, when it cannot (a reader command in `LOOP_PRD_READER` reaches an MCP connector). Home gets a Topic column from the `topics` setting (default below), grouping the rows. DOC-1, DOC-2 and DOC-4 are Reviewed, so their wording is proposed (waiting on owner un-review); the code and the generated Home already follow the proposal. The lock for a PRD at a source is not enforced in code yet: the check reads its requirement ids but does not compare a reviewed version or date.
+
+## Waiting on owner un-review (budget-enforce pages, 2026-11-14)
+
+Five wiki pages show STALE because budget-enforce's commits touch their scripts, and every unreviewed region of them is generated, so clearing it takes a real, reviewed edit. Verdict per page, from what the commits change for that feature. Nothing below is on a page; the four requirements are Reviewed and stay as they are until the owner un-reviews them.
+
+- Delivery, DEL-8 (Budgeted): behavior, add one sub-bullet: "A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a fourth merge-and-rerun round is refused (`max_merge_rounds`, default 3): the goal waits under Needs you, and only the operation session raises a limit."
+- Health, HLT-2 (The rules, Performance): behavior, add one sub-bullet: "The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`)."
+- Monitoring, MON-12 (Session pool): behavior, add one sub-bullet: "A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds."
+- Regression, REG-7 (Fast in the loop): behavior, add one sub-bullet: "A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped."
+- Setup, SET-2 (Layered settings): no new behavior, no text change. The five settings (`time_budget_minutes`, `max_merge_rounds`, `max_active_goals`, `plan_pause_percent`, `min_free_memory_gb`) are settings with a default and a one-line explanation, which SET-2 already requires. The code moves for the size caps (limits.py, spend.py, memory.py) are covered by the requirements above and add no behavior. The page needs a re-stamp only.
+
+Sentence for the owner: "Un-review DEL-8 on Delivery, HLT-2 on Health, MON-12 on Monitoring and REG-7 on Regression, apply the four sub-bullets drafted under 'budget-enforce pages' in DECISIONS.md exactly as written, then review Delivery, Health, Monitoring, Regression and Setup again (Setup needs only the re-stamp, SET-2 covers its settings)."
+
+Applied 2026-11-14 on the owner's approval, owner-words records o7 (DEL-8, HLT-2, MON-12, REG-7 un-reviewed, sub-bullets added as drafted, re-reviewed) and o10 (Delivery, Health, Monitoring, Regression and Setup reviewed again; Setup is a re-stamp with no text change).
+
+## Waiting on owner un-review
+
+Proposed wording for the budget-enforce goal (limits in `.loop/config.json` stop new work). DEL-8 and GRD-2 are Reviewed, so the owner un-reviews them to apply this; nothing on the pages changed.
+
+- DEL-8, first bullet: "Each goal has a time and token budget (`time_budget_minutes`, `token_budget`; only the operation's `goal.py set` raises one), going over shows on the board, and a goal over either starts no new step."
+- GRD-2, replace the three "new" bullets (time budget, token budget, unknown tokens) with:
+  - "A goal past `time_budget_minutes`, counted from its freeze, starts no new step: `goal.py step`, `goal.py pr` and `flow.py` refuse with one line naming `goal.py set --budget-minutes N --why ...`, which only the operation session runs (Delivery)."
+  - "A goal past `token_budget` starts no new step, whether its steps run in a session or headless. A session worker passes its tokens to `goal.py record --tokens N`; a count it cannot read is `unknown`, which records nothing, so the board shows \"tokens unread\", never 0 (Delivery)."
+  - "`goal.py pr` merges the base and reruns the lane at most `max_merge_rounds` times (default 3). A further round is refused and the goal waits under Needs you; `goal.py answer` starts the count again (Delivery)."
+  - "The operation starts no new goal while `max_active_goals` goals are live (default 20; `parallel` still applies, the smaller wins) or while weekly plan usage is above `plan_pause_percent` (default 80; the operation records it with `pool.py usage N`, a reading older than 12 hours or never recorded pauses nothing). The check-in says which limit holds (Monitoring)."
+  - "A lane about to run rows, and a new goal, start only while free memory is at least `min_free_memory_gb` (default 4; Windows: free virtual memory, macOS and Linux: available memory); a lane already running is never stopped, a waiting lane gives up at four times its time limit, and the check-in names the hold and any lane that waited (Regression, Monitoring)."
+  - "Health's Performance group warns for each limit exceeded, lanes that waited for memory included: a goal waiting on merge rounds, live goals over `max_active_goals`, plan usage over `plan_pause_percent`, and the existing time and token budgets."
+- Settings (SET-2), new rows in the settings table: `time_budget_minutes` (default 120 for new repos), `max_merge_rounds` (3), `max_active_goals` (20), `plan_pause_percent` (80), `min_free_memory_gb` (4); this repo's `.loop/config.json` carries the last three.
+
+What the code does not do: `merge.py` is unchanged (it sends a moved base back to `goal.py pr`, which refuses the 4th round); the time budget counts wall time from the freeze, waiting for the owner included; plan usage reaches the scripts only through `pool.py usage N` because the app's usage is not readable from a script.
+Drafted by health-v1; none of it is applied until the owner un-reviews the requirement and approves the wording. Apply after merging origin/main (drop-usage and backlog-milestones touch the same page first).
+
+- HLT-2 Hygiene: replace "no idle worker sessions" with "no idle worker sessions beyond the pool size (MON-12)".
+- HLT-2 Performance: replace "the health check within its limit" with "the health round within AUT-7's budget".
+- HLT-7 (Fast check): delete the requirement and its bullet ("The rule check without controls finishes in under 60 seconds."). The round is bounded by AUT-7's budget, so health needs no separate limit; its test (test-health-time.sh) and rows go with it.
+- HLT-4: add a last bullet on top of backlog-milestones' HLT-4: "A drift finding that breaks a Reviewed requirement is a defect issue; any other drift finding is backlog."
+- HLT-2 Traceability: no wording change needed (its bullet does not mention defect tests; REG-6 owns that rule). Built: a closed issue labelled `health` is exempt from the defect-test rule, and `backlog` too once that label exists on closed issues the listing reads; a closed bug and a closed `finding:` still need a defect row.
+- HLT-9: replace the bullet with "Every review finding names its feature and cites its evidence: a file and line, or a test row. A requirement ID or an issue link may be added but never stands alone. A finding without that evidence is dropped, and nothing is filed twice."
+- HLT-2 cap: replace "At most 12 groups plus Mine; adding one means retiring one or raising the cap on purpose." with "At most 12 groups plus Mine; adding one means retiring one or raising the cap on purpose. A repo's own rules (HLT-10) are not groups and do not count against the cap."
+- HLT-10 (new, next free id; code is built later by health-repo-rules, not by health-v1) "Repo rules": "A repo extends health with its own rules in a committed file, `.loop/health-rules.json`. Each rule names its group (one of the twelve, or `repo`), its feature, the command that runs it (exit 0 pass, 2 warn, 1 fail; any other code is unread), its fix, and a break command that proves it can fail (the Controls group runs it). A repo may set a default rule's threshold (for example the script size cap), or turn a default rule off only with a written reason, which the report shows. Mine stays the owner's private, machine-level rules."
+- HLT-8 (as built): "close a batch" also covers one finding by its number (`triage --close --issue N`).
+
+Drafted 2026-11-13 by the automation-routines goal; nothing below is on the pages (AUT-1, AUT-2, AUT-3, AUT-4 and AUT-8 are Reviewed). The code and the Runbook-pointer prompt already work (`docs.py prompts`, health's `prompt-pointer`, the docs check for a routine in the config's `automation` list with a `page`). The owner reviews each wording and un-reviews the requirement to apply it.
+
+- Decision: health-round and regression-round are only the first, built-in routines. Any repo adds its own (a digest, a site deploy) with one entry in the config's `automation` list (`name`, `does`, `cadence`, `runs`, `page`, optional `routine`). It gets a row in the Automation block, a required Runbook on its page, a generated one-line prompt and its output in the digest. A routine's scheduled prompt is never more than a pointer to its Runbook in the repo, because steps copied into a prompt drift between machines.
+- AUT-1 (replace its first bullet): "Health and regression are the built-in routines: Health runs on my Mac for every repo, Regression in GitHub Actions for a public repo and on my Mac for a private one. A repo adds its own routines (a digest, a site deploy) with one entry in its config, and each runs where its entry says, with the same schedule, on/off and last-run treatment."
+- AUT-2 (add two bullets): "Its scheduled prompt is the one-line pointer to the Regression page's regression-round Runbook (AUT-8), never the steps." and "A failing test's issue holds that test's last 40 output lines, never an empty block (REG-5)."
+- AUT-3 (add one bullet): "Its scheduled prompt is the one-line pointer to the Health page's health-round Runbook (AUT-8), never the steps; the Adoption group warns when any installed routine prompt holds more than the pointer."
+- AUT-4 (replace its first bullet): "After each round, one email goes to the address I set: what each routine that ran did and its results (the built-in routines and the repo's own), then the new, still-open and fixed issues grouped by feature, each with its link and the request to give the agent to fix it."
+- AUT-8 (replace both bullets): "Each routine, built-in or the repo's own, is listed in the registry with the feature page that owns it (health-round on Health and regression-round on Regression in `.loop/routines.tsv`; a repo's own routine by the `page` of its `automation` entry), and that page's Runbook section says what a full run is, the one output, the forbidden shortcuts and how to check the run was real; the docs check fails a routine with no Runbook." and "A routine's scheduled prompt (a Claude scheduled task, a launch agent or an Actions job) is one line generated from the registry by `docs.py prompts`: In <repo>, fast-forward to origin/main, then read <wiki_dir>/<Page>.md's Runbook section <routine> and follow it exactly. No steps live in the prompt or the session, so any agent on any machine runs the same round; health warns when an installed prompt holds more. A scheduled run never sends a dry run, a fixture or a test mail in place of the real output."
+
+Proposed wording from the prd-link-topics goal, not yet on the pages (DOC-1, DOC-2 and DOC-4 are Reviewed; the owner un-reviews each, approves or edits the words below, and reviews the page again).
+
+- DOC-1 (replace the last bullet): "Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections." stays, and add a bullet: "A feature's PRD source is `page` (the PRD is on the page, the default), `url:<link>` or `mcp:<server>:<resource>`, set per feature in `.loop/docs.tsv`. A page whose PRD is at a link or an MCP document holds its title, its Milestone line, a `PRD: <source>` line and only the generated Runbook, Deployments and Tests sections; agents read the PRD only from that source and never copy its text into the repo, its requirement ids still drive the Tests tables and health, and the docs check reports UNREAD, never a pass, when the source cannot be read."
+- DOC-2 (add a bullet): "When the PRD is at a link or an MCP document, I review it there; the review and its lock apply to that document's version or date (recorded when I review it), a change to it after my review shows under Needs you until I review it again, and an agent never edits the document to clear that."
+- DOC-4 (replace the bullets): "Home holds one table with the columns Feature, What it does, How to use (a link to the README section) and Milestone (optional: empty, or a link to the free-form milestone the feature is planned on). When the `topics` setting lists topics, the table leads with a Topic column and its rows are grouped by topic, in the order of the setting, with a feature no topic lists under Other. The default topics are Build loop: Delivery, Monitoring; Quality: Regression, Health, Guardrails; Operations: Automation, Setup; Docs: Documentation. Below the table Home carries only the generated Settings and Automation sections (DOC-15); nothing else is on Home."
+
+## Applied 2026-11-12 (owner sitting)
+
+The owner un-reviewed these requirements and approved the wording below; it is now on the pages, and the pages were reviewed again in the same sitting.
+
+- REG-5 (decision 3): "One labeled issue per failing test, updated while it fails and closed when it passes; known failures don't block; it only previews unless `--live` is given, and the scheduled workflows pass `--live`."
+- AUT-5 (decision 3): "Each routine can be turned off or rescheduled in one setting. It writes to GitHub only with `--live` (the scheduled workflows pass it), and without the secrets it needs a routine runs but writes nothing and says what is missing."
+- DEL-5 (decision 6): "Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page is stale, runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you."
+- DEL-6 (decision 6): "Plan and review run at full depth by default (`review_depth: full`); a condensed plan and review happens only when `review_depth: condensed`, and I can override it per goal. Tests never shrink: every goal runs its test lane, the affected rows within the test budget (REG-7)."
+- DOC-1 (decision 7): replace "Nothing else goes on the page." with "Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections."
+- MON-3 (decision 2): "Live board: report, dashboard and the artifact show the live board in the one fixed layout MON-4 lists; this requirement owns the board, and a check-in never prints it."
+- MON-4 (decision 2): title "Live board layout"; keep its bullets, and change the last to "Check-ins don't print this board; MON-5 owns the check-in reply."
+- MON-5 (decision 2): replace "and prints the full board every time" with "and each check-in prints only its reply layout, never the board"; the title and the layout list stay.
+- Monitoring Non-goals (decision 10): "It never merges unless auto_merge is on (MON-7, MON-15); the delivery loop merges and releases."
+- 2026-11-13, migration-v1: `migration-check` and health's Adoption group share one derived checklist, so a template feature can't be silently dropped on a new machine. Settings (the table), the Mac task and routines, and the guardrails are read from the installed template; the format changes are judged only when the installed template carries them (no Usage section `MIG_USAGE`, `.loop/health-rules.json` `MIG_RULES`, one-line Runbook routine prompts `MIG_ROUTINES`), so an older template is never failed for a feature it cannot write; the reply and govern hooks must be installed once each (`MIG_HOOKS`, a duplicate is a gap). What only the owner can do prints as `OWNER STEP <kind> <name>: <exact instruction>` (gh sign-in `gh auth login --web`, the hooks, approving the Backlog milestones, the platform smoke cell) and never fails the check; a deliberate off setting prints `ADAPTED`. Exit 0 only with no gap. No new file: the package is already over its file cap, so the code is in `enforce.py` and `defects.py`.
+- 2026-11-13, migration-v1, proposed wording for SET-16 (Reviewed, waiting on owner un-review): add "The check also judges the format changes the template carries, and prints each thing only the owner can do as OWNER STEP with its exact instruction; it exits 0 only when every item is installed, adapted or an owner step." SET-11 (Unreviewed): add "the adoption checklist is the same list migration-check prints."
+- 2026-11-13, migration-v1, reconciled with the landed format goals: the Backlog check is an owner step (`milestone.py backlog --live`) printed on every run, because whether the milestones exist is a GitHub read the offline check does not make; routine prompts reuse health's `prompt-pointer` rule (`MIG_ROUTINES`, a state code); `health-rules.json` and Usage stay gated on the template carrying them, because those goals have not landed. The smoke cell is a regression row named `smoke-<platform>`. Connector checks (SET-14) are not in this goal.
+
+## Waiting on owner un-review (2026-11-13)
+
+Titles are locked on Reviewed requirements. #410: MON-1, MON-2, MON-13, MON-14 and MON-15 put a whole sentence in the title, against DOC-7's short-title format. Proposed: each gets a short title, and its sentence moves under it as a sub-bullet word for word. Nothing is applied until the owner un-reviews them.
+
+- MON-1: "Roles, start and planning". Sub-bullet: the current text after the title, from "One command starts the operation session" on.
+- MON-2: "Live communication". Sub-bullet: the current text after the title, from "Operation and workers talk through session messages" on.
+- MON-13: "Two layers per pod". Sub-bullet: "One operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently."
+- MON-14: "Dependency map grouped by repo". Sub-bullet: "The check-in dependency map has one block per repo headed by the repo's name, with cross-repo dependencies drawn between blocks."
+- MON-15: "Pods coordinate through shared state". Sub-bullet: the current text after the title, from "every goal records its owning pod" on.
+
+## Waiting on owner un-review
+
+Drafts for the morning. Nothing below is on a page yet: the Setup page is Reviewed, so its wording changes only after you un-review it.
+
+- 2026-11-13, matrix-smoke: **proven across agents and machines.** Proposed as a new Setup requirement, SET-18 (Non-functional, Unreviewed until you review it); the alternative is a sentence each in SET-3 (a package that works on every machine) and SET-6 (adoption is proven).
+  - Draft SET-18: "The template is proven on each agent and machine. One smoke set (package, adopt a toy repo from the package, freeze a goal, run its qa lane, health check, one routine from its Runbook pointer, a goal relayed between two pods under the merge lock) runs the same on Claude Code (app session and CLI), Codex and CI, on Windows, macOS and Linux. Each run appends one dated line (agent, OS, machine, commit, result) to `.loop/matrix-runs.tsv`; health's Adoption group reads it: a cell with no passing smoke in 7 days reads \"not proven\" (WARN), and a V1-required cell with none (Claude Code on Windows, Claude Code on macOS, CI on Linux) is a FAIL."
+  - Draft Usage entry for the Setup page: "`python3 dev/toy/matrix-smoke.py [--agent claude-app|claude-cli|codex|ci] [--only STEP] [--no-record]` — Runs the smoke set on this machine and appends its dated line to `.loop/matrix-runs.tsv`; the regression workflow's `matrix-smoke` job runs it on Linux as `ci`."
+  - Why a smoke set and not the whole suite: the suite takes hours on Windows and most of its rows skip there by design (a toy test not marked `# windows: ok` exits 77); the smoke set is short and runs the same on every machine, so a cell reads proven or not on the same evidence everywhere.
+  - Decisions taken in the build, each easy to change: (1) the rule is off until `.loop/matrix-runs.tsv` exists, so a repo that never ran a smoke is not failed for it; (2) one Claude Code pass on a machine proves both the app and CLI cells of the V1 requirement, and the other of the two reads WARN only where it is not itself V1-required; (3) the Linux CI job uploads the record as an artifact, and the line reaches the repo only when a person or a goal commits it, because a workflow that pushes to main is a guardrail change that is yours to make; (4) the `runbook` step resolves a routine's Runbook pointer and checks its Steps line names something to run, and never starts the live routine, because a scheduled routine writes issues and mail; (5) until `dev/package.py` passes its own rules (it refuses on main today: 103 files over 100, `fit.py` and `lane.py` over 20 KB, `render.py` not running alone), the package step falls back to a plain ZIP of `skills/` and prints a WARN saying so.
+Proposed wording for the backlog-milestones goal (2026-11-13, the owner approved the design in the operation session). Each Reviewed requirement below stays as it is until the owner un-reviews it and types the approval sentence. DEL-14 and SET-17 are new requirements: adding one to a Reviewed page changes its review lock (LOCKED, and Setup would pass criteria_max), so they go onto the Delivery and Setup pages in the same sitting, and until then their rows guard the goal's done line (`backlog-milestones:1`). The code in this goal already behaves as the wording below says, so it merges after the owner approves it.
+
+- Backlog milestones (design): every filing has one home. Regression files only regression defects, as today. A defect is something broken against a Reviewed requirement; a backlog item is an improvement, idea, drift, weak test, size or saving. Defects are issues labelled `defect`; backlog items are issues labelled `backlog` on the milestone "Backlog: <Feature>" (one per feature page), or "Backlog: Other" when nothing fits. Backlog never blocks a release; an open defect with no goal and no owner OK does (that release check, the board counts and the per-feature triage counts are follow-up goals in workflow-release and workflow-monitoring, outside this goal's touches).
+- DOC-10 (title): "One Tests page, every release noted, a backlog milestone per feature"
+- DOC-10 (third bullet, replaces "A milestone is optional and free form, used to plan by version (for example v1.0); nothing requires a feature page, issue or pull request to have one, and no check fails or warns for lacking one."): "Every feature page has one standing milestone, "Backlog: <Feature>", and "Backlog: Other" holds what fits no feature; a version milestone such as v1.0 stays optional and free form. Nothing requires an issue or a pull request to have a milestone, and a backlog item never blocks a release."
+- HLT-4 (first bullet, replaces "Each finding, from a rule or from the review, is one GitHub issue tagged with its group or kind and, when feature_labels is on (it is off by default), the feature it is about; it sits on a milestone only when I put it there."): "Each finding, from a rule or from the review, is one GitHub issue tagged with its group or kind and, when feature_labels is on (it is off by default), the feature it is about. A FAIL (except a performance one) and a review conflict is a defect, labelled `defect`, on no milestone; every other finding (a WARN, a size, performance, drift, weak-test or saving finding, a review gap, an unread rule) is a backlog item, labelled `backlog`, on its feature's milestone "Backlog: <Feature>", or on "Backlog: Other" when it fits no feature. An issue I move to another milestone stays there."
+- DOC-10 (fourth bullet, new): "An existing milestone named "Backlog" is renamed "Backlog: Other", and the feature milestones that hold goals and pull requests (Delivery, Documentation, ...) are kept as they are." (`milestone.py backlog --live` does the rename once, only when "Backlog" exists and "Backlog: Other" does not.)
+- DEL-14 (new, Unreviewed): "Leftover findings are filed by kind at ship". Body: "When a goal ships, each finding it did not fix is filed once. A break of a Reviewed requirement inside the goal's touches is fixed in place; outside them it is an open issue labelled `defect`. An improvement, idea or saving is an issue labelled `backlog` on its feature's milestone "Backlog: <Feature>" ("Backlog: Other" when it fits no feature). Filing writes to GitHub only with `--live`, which the goal passes after ship is recorded, and a finding already filed is not filed again."
+- SET-17 (new, Unreviewed): "The Backlog milestones exist after adoption". Body: "Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing."
+
+## Waiting on owner un-review (graph-times)
+
+The check-in dependency map (checkin.py) showed a flat list of goal ids with no times and no arrows, and listed stray, stopped and left goals. MON-14 is Reviewed, so the added wording is proposed and stays here until the owner un-reviews it.
+
+- MON-14 (new sub-bullet): "Each goal shows its expected time left from past runs, each repo block ends with its expected finish, and each wait is drawn as an arrow."
+- MON-14 (new sub-bullet): "The map lists only live goals: a record with no goal or status, a stopped goal and a goal left with release: leave are not drawn, and a worker held at pr reads holding, not stuck."
+
+## Waiting on owner un-review (drop-usage)
+
+The owner decided 2026-11-13: "remove the usage section, because you cannot say each feature has an API; we already have the README and How to use, and natural language will find the right way to run it." Feature pages lose Usage. Exact replacement text below; none is applied until the owner un-reviews each requirement and approves the wording. The wording sits alongside backlog-milestones' changes to DOC-10 and HLT-4 and touches neither.
+
+- DOC-1, bullet 1, replace with: One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section.
+- DOC-1, bullet 2: unchanged.
+- DOC-2, bullet 1, replace with: I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that.
+- DOC-2, bullet 3, delete (the Usage clause). Bullet 2 is unchanged.
+- DOC-6, rename "Usage is an API reference" to "Each skill's commands are documented in its command reference", replace both bullets with: Each skill's SKILL.md Command map names every command, and its references/commands.md gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code. Reason: the owner dropped Usage because a feature has no API, but the exact syntax, output and refusals are still promises the repo makes and tests prove (the usage-* rows move to the command reference); deleting the requirement would leave them with no owner.
+- DOC-5: unchanged. The README's "How to use" tables stay the front door.
+- DOC-10 and DOC-15: do not mention Usage; unchanged.
+- Documentation Problem, last bullet, replace with: I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me. (It names Usage; Problem is locked, so this needs the same un-review.)
+- HLT-2, Consistency bullet, replace "a command named the same in Usage and the README" with: a command named the same in its skill's command reference and the README.
+- HLT-2, Docs bullet, replace "Usage matches the real commands and output" with: each skill's command reference matches the real commands and output.
+
+## Waiting on owner un-review (stale pages: #3848, #3860, #3861)
+
+Drafted 2026-11-13 by the drop-usage goal. Main's recent code changes left three Reviewed pages stale, and Usage edits no longer touch pages. One real, accurate sub-bullet each, none applied until the owner un-reviews the named requirement and page and approves the wording; the code and tests it describes are already on main.
+
+- Automation (#3848, suite-shard), AUT-2, add this sub-bullet after the last one: The CI suite runs in eight shards with one combined summary: each row is given the time left, the suite-time line counts the rows skipped for time (the unrun rows), and a newer run on the same ref cancels the older.
+- Guardrails (#3860, backlog-milestones' `criteria_max` 16 to 17), GRD-9, add this sub-bullet after the last one: A page's requirement cap, `criteria_max` (19 in this repo), is read by health's Size group, so a page too large to review shows as a finding.
+- Monitoring (#3861, the reply hook and the check-in dependency code), MON-14, add this sub-bullet after the last one: The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
+
+Applied 2026-11-13 on the owner's three approvals typed in the drop-usage session: AUT-2, GRD-9 and MON-14 and their pages were un-reviewed, given the sub-bullets above, and reviewed again.
+
+## Waiting on owner un-review (Documentation stale)
+
+Drafted 2026-11-13 by the wiki-catchup session (#3875, closed as not a bug). Main's Documentation page is STALE: 081de7bf and d861e9c6 changed what the Automation table says about health, and no page text describes that. A Tests-intro line cannot hold it (Tests is generated, DOC-9), and a net-zero add-then-revert correctly does not clear a page (#3790). Nothing is applied until the owner un-reviews and approves the wording; `docs.py publish` stays refused, and the GitHub wiki stays behind, until then. The wider design question, mapped code changes needing a page edit that has no place to go, is #3867.
+
+- DOC-15, add this sub-bullet after the last one: Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git.
+
+The owner types two sentences in the operation session (it runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Documentation page and DOC-15 so the local-schedule sub-bullet can be added."
+2. Review, after the goal has added it: "Review the Documentation page and DOC-15 again."
+
+## Waiting on owner un-review (fast-merge-queue, DEL-15)
+
+Drafted 2026-11-13 by the fast-merge-queue goal (applied: DEL-15 on the Delivery page. Main moved the Monitoring and Regression requirements in the meantime, so the goal's rows for the parallel queue and the main-moved rerun are tied to MON-15 and REG-7 and show in those pages' Tests tables; their sub-bullets were dropped to keep main's reviewed text). The code, toys and rows are on the branch; none of the page text below is applied until the owner un-reviews and approves the wording. Adding DEL-15 changes the Delivery page's review lock, and the code changes leave Delivery, Monitoring and Regression stale, with no place on a reviewed page for a sentence other than a requirement's sub-bullets.
+
+- Delivery, new requirement after DEL-14: "DEL-15: Fast merge queue. PRs merge one after another, but each waits only as long as needed." with these sub-bullets:
+  - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
+  - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
+  - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
+
+The owner types two sentences (the session that relays them runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Delivery, Monitoring and Regression pages, and MON-15 and REG-7, so DEL-15 and the fast-merge-queue sub-bullets can be added."
+2. Review, after the goal has added them: "Review the Delivery, Monitoring and Regression pages, and DEL-15, MON-15 and REG-7 again."
+## Waiting on owner un-review (machine-local)
+
+The owner decided 2026-11-13: "some tasks in this session should only rely on things on this session, right? This machine. There are other machines proof and other things. They can be added like to do some milestones, but shouldn't be related." Built by the machine-local goal (`regression.py red ID --owed --runner R`, health WARN after 7 days, the check-in's off-machine to-do lines). Guardrails is Reviewed, so the requirement below is not applied until the owner un-reviews Guardrails and approves the wording.
+
+- Guardrails, add after GRD-10: **GRD-11: A goal depends only on what its own machine can do.** A step only another machine can do (a red proof on another platform, a smoke cell, a Mac-only check) is filed as a to-do issue on the feature's milestone and never blocks the goal, its merge or the release.
+  - A row whose red proof needs another platform is recorded owed (Regression, `red ID --owed --runner R`): it reads PENDING, opens one to-do issue labelled `other-machine` on the row's feature milestone, and its goal merges.
+  - Health warns on an owed proof older than 7 days and never fails on it (Health, Tests).
+  - The check-in lists owed off-machine items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
+- Regression, REG-10, add this sub-bullet: A row whose red proof needs another machine can be recorded owed (`red ID --owed --runner R`): it reads PENDING instead of UNPROVEN, one to-do issue labelled `other-machine` opens on the row's feature milestone, and neither the goal's pr lane nor the release waits for it. A real red proof clears it.
+- Health, Tests group rule on seen-red, add this sub-bullet: an owed proof (`.loop/regression-owed.tsv`) is not a seen-red failure; it warns once it is older than 7 days and never fails.
+- Monitoring, MON-5 (check-in), add this sub-bullet: The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
+- Pages stale from this goal's code until the owner re-stamps them: Regression, Health, Monitoring (and Home, Documentation from the DECISIONS edit).
+
+The owner types two sentences in the operation session:
+
+1. Un-review: "Un-review the Guardrails, Regression, Health and Monitoring pages and the requirements GRD-11 (new), REG-10, HLT-2 and MON-5 so the machine-local wording can be added."
+2. Review, after the goal has added it: "Review the Guardrails, Regression, Health and Monitoring pages, GRD-11, REG-10, HLT-2 and MON-5 again."
+
+Progress 2026-11-13: the owner typed sentence 1 in the machine-local session; the pages and REG-10, HLT-2, MON-5 were un-reviewed, GRD-11 was added (Unreviewed) and the sub-bullets above were written into the pages. Applied: the owner typed sentence 2 and the pages and requirements were reviewed again.
+
+## Waiting on owner un-review (machine-status)
+
+Applied 2026-11-14 on owner-words records o1 (un-review) and o3 (review, the owner's full sentence): Guardrails and Monitoring un-reviewed, GRD-12, MON-16 and MON-17 added as drafted below, then reviewed again.
+
+The owner approved the machine-status goal 2026-11-13: each check-in shows this machine's status, goals start only above a memory floor, a stale main checkout is fixed by a worker, a queued goal is not silent, and a check-in lists only this machine's goals (one line for another pod). Built by the machine-status goal. Guardrails and Monitoring are Reviewed, so nothing below is applied until the owner un-reviews them and approves the wording.
+
+- Guardrails, add after GRD-11: **GRD-12: The machine's status is read every round, and no goal starts under the memory floor.** Each check-in reads free RAM, free commit memory, CPU and the number of claude and node processes (Monitoring, MON-16). A goal starts only while free commit memory is at or above `min_free_memory_gb` (default 3.5, in `.loop/config.json`; 0 turns the floor off). The pool creates no session and the board holds every ready goal as "memory low" until memory frees up. A figure that can't be read never blocks a start.
+- Monitoring, add after MON-15: **MON-16: Fill every free slot at once; speed comes before tokens, within the guardrails.** When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
+- Monitoring, add after MON-16: **MON-17: A check-in lists only this machine's goals.** Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod.
+
+The owner types two sentences in the operation session:
+
+1. Un-review: "Un-review the Guardrails and Monitoring pages so GRD-12, MON-16 and MON-17 can be added."
+2. Review, after the goal has added them: "Review the Guardrails and Monitoring pages, GRD-12, MON-16 and MON-17 again."
+
+## Waiting on owner un-review (health-on-windows)
+
+Drafted 2026-11-14 by the health-on-windows goal; nothing below is on the pages (AUT-1, AUT-3 and AUT-6 are Reviewed). The code already works: `automation.py local register` writes the registry on any platform (no launch agent), `LOOP_MAIL_ENV` names the mail file, and a mail.env on Windows is not refused as MAIL_ENV_MODE (Windows has no mode bits to check). The owner's always-on machine is the Mac or a Windows PC, and the owner's own scheduler runs `automation.py local tick --scheduled`.
+
+- AUT-1 (replace its first bullet): "Health runs on my always-on machine (the Mac through its launch agent, or a Windows PC through its own scheduled task) for every repo. Regression runs in GitHub Actions for a public repo and on that machine for a private one."
+- AUT-1 (replace its third bullet): "A routine missed while that machine is asleep or off runs once at the next tick, and the digest says it was missed."
+- AUT-3 (replace its first bullet): "Health never runs in GitHub Actions: it runs on my always-on machine on the schedule (every 4 hours by default), after the latest finished regression run, with all its rule groups; its report names that run with its commit and age, or says none finished, and says when health last ran."
+- AUT-3 (replace its second bullet's "on the Mac"): "The repo review always runs, using my own login on that machine, with no API key secret; when the login has expired or can't be reached, the report says which and the next round tries again."
+- AUT-6 (add one bullet): "The mail file is `mail.env` in the schedule home, or the file `LOOP_MAIL_ENV` names (a shared file on a synced folder); on a machine with file modes a mail.env others can read sends nothing, and on Windows, which has no modes, that check is skipped."
+
+The owner types two sentences in the operation session:
+
+1. Un-review: "Un-review the Automation page and the requirements AUT-1, AUT-3 and AUT-6 so the always-on machine wording can be added."
+2. Review, after the goal has added it: "Review the Automation page, AUT-1, AUT-3 and AUT-6 again."
+- Review note (health-on-windows): `local status` still prints the plist and launchctl checks as FIX on Windows (informational); `register` does not refuse a worktree path as install does, so schedule the tick from the main checkout or the installed skills. Windows `tick` relies on `tasklist` and `taskkill`, which the toy does not exercise.
+
+
+## Waiting on owner un-review (owner-relay)
+
+Drafted by the owner-relay goal, 2026-11-13. These change reviewed requirements, so they wait for the owner's own typed words: un-review DOC-2 and MON-11, approve or change the wording, then the pages are edited and reviewed again. Until then `criteria.py ... --owner-record` exists but DOC-2 still says only the owner, in their own words.
+
+- DOC-2 (the PRD is mine): replace "only I can do that." with "only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message." and add the bullet "A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words."
+- MON-11 (full auto mode): replace its first bullet with "A setting, on by default. When it is on, the operation session applies each routine recommendation without asking, logs the question, the answer and why, and lists them in the next check-in; only the decisions in the next bullet and those that need my own words wait under Needs you." and add the bullet "When a decision needs my words, I answer in the operation session, which records my message verbatim with the IDs it covers (sessions.py owner-words) for the workers to use."
+
+Applied 2026-11-14 on owner-words record o2 (the operation session's owner-words.tsv): the Automation page and AUT-1, AUT-3 and AUT-6 were un-reviewed, the five drafted bullets above were added exactly as written, and the page and the three requirements were reviewed again.
+
+## Waiting on owner un-review (merge-stale-own)
+
+Drafted by the merge-stale-own goal, 2026-11-14 (#3941). merge.py's wiki check now refuses only for a page the goal's own diff made stale (the scope of `docs.py check --own`); a page left stale by another goal's commit is printed as a `FINDING` and left for health. Two locked lines of the Delivery page now read stricter than that, so they wait for the owner's own typed words. Until then the page keeps its old wording, which is only more cautious than the behaviour.
+
+- Delivery, DEL-5 (Release), in its second sub-bullet: replace "refuses to merge while a page is stale" with "refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it)".
+- Delivery, Success metrics: replace "No goal merges while a wiki page is stale." with "No goal merges while a wiki page its own diff made stale is still stale."
+- Not locked, done by the goal: the `wiki-unmapped-stale` row's description now says a page no touched path maps to is a finding, not a refusal.
+
+The owner types one sentence in the operation session:
+
+"Un-review the Delivery page, the requirement DEL-5 and the Delivery success metric so the merge-stale-own wording in DECISIONS.md can be added; then review the Delivery page and DEL-5 again."
+
+After it, the goal (or the operation session) edits the two lines as drafted, and the owner's review follows with the same words. Until the owner's words are in, merge.py runs for merge-stale-own only on the operation session's turn.
+
+Applied 2026-11-14 on owner-words record o5 (the sentence above, recorded by the operation session): the Delivery page and DEL-5 were un-reviewed, DEL-5's second sub-bullet and the Delivery success metric were reworded exactly as drafted, and the Delivery page and DEL-5 were reviewed again, all with `--owner-record o5`.
+
+## fast-merge-queue: Delivery page and DEL-15 re-reviewed (2026-11-14)
+Owner words (record o6, owner-relay, authorized by the owner in the fast-merge-queue session): "Un-review the Delivery page and DEL-15 for fast-merge-queue, then review the Delivery page and DEL-15 again with main's text and DEL-15 as merged." Done with no wording changes after the merge of origin/main.
+
+## Waiting on owner un-review (blockers-first)
+
+The owner asked 2026-11-14: "can you add a small requirement for the printout in the monitoring session? It's like right now you just tell me what do I need to do, but you should make it more clear like what is blocking the whole process so I can know the priorities." Built by the blockers-first goal (the check-in's Needs you ranking, and the Stop hook that enforces it). The Monitoring page is Reviewed, so the requirement below is not applied until the owner un-reviews the page and approves the wording. The goal's rows are tied to MON-5 until then.
+
+- Monitoring, new requirement after MON-18 (pool-12's, the next free ID is MON-19): **MON-19: Blockers first.** Each item under Needs you says what it holds up, so the owner sees the priorities.
+  - An item names the goals, merges or release it holds up, with the count of goals behind it, and says whether it is on the critical path to the next release; an item that holds nothing says "blocks nothing".
+  - Items are sorted with the one holding up the most goals first, and the Dependencies graph marks the owner item on each chain.
+  - The Stop hook refuses a check-in whose Needs you items do not say what they hold up.
+
+The owner types two sentences (the session that relays them runs `criteria.py unreview` and `review` with those words in `LOOP_OWNER_WORDS`):
+
+1. Un-review: "Un-review the Monitoring page so MON-19 can be added."
+2. Review, after the goal has added it: "Review the Monitoring page and MON-19 again."
+
+Applied 2026-11-14 (blockers-first): the owner's words, recorded as o11 in owner-words.tsv, un-reviewed the Monitoring page; MON-19 was added exactly as drafted above, the goal's row moved from MON-5 to MON-19, and the page and MON-19 are reviewed again with the same words.
+
+The cap: MON-19 makes the Monitoring page 18 requirements, so `criteria_max` goes from 17 to 18 in this goal, as backlog-milestones did from 16 to 17.
+## Applied 2026-11-14 (settings-in-spec)
+
+The owner approved both sentences ("Yes, for one, and then start two.", owner-words records o8 for Automation and AUT-9, o9 for Monitoring and MON-18; the warn at 16 of 20 sends stands). AUT-9 and MON-18 are on the pages as drafted below, both pages and both requirements reviewed again with those records, and `criteria_max` is 18 in `.loop/config.json` (Monitoring now holds 18 requirements). The owner's words: "I actually want it to be consolidated in the specification instead of like a custom rule or something", and, for both the routines' settings and the operation session not ending: "Yeah, both like the service settings and also the settings regarding that you end, that the operation session won't just end." Both are new requirements (the ids follow machine-status's MON-16, MON-17 and GRD-12). Adding a requirement changes its page, so each page was un-reviewed and reviewed again.
+
+- AUT-9 (new, Automation page): "Every routine declares what it may do, in its repo." Bullets: "Each routine in the registry has rows in `.loop/permissions.tsv` (routine, allow or deny, rule, why): the commands, file paths and sites its Runbook needs, and the denies its Never field states. The repo owns its list; the template owns the rule, the command that writes it and the check."; "Setup writes the rows into the repo's committed project settings (`.claude/settings.json`, keeping every other rule), so a scheduled run on a fresh machine stops at no approval prompt for what its Runbook says it does; nothing private is written there."; "The docs check fails a routine with no rows, a row missing from the project settings, a command or site the Runbook names that no allow row covers, and an allow that a deny contradicts."
+- MON-18 (new, Monitoring page): "The operation session keeps running unattended." Bullets: "One standing instruction to merge, recorded once by the operation session for named goals or all, replaces a go per merge; a worker at pr reads it and does not wait for another."; "The check-in says how many cross-session sends are left before the app's cap of 20 without an owner message; from 16 sent it asks the owner for any message, which resets the count."; "The check-in loop is re-created before its 7 days run out; the check-in says when."; "Every worker accepts an owner-words record the operation session names, per the Delivery rule, and does not ask the owner again; a record covers only its listed ids."; "On start the operation session runs a self-check and lists what is missing, each with its fix: a permission mode that holds cross-session messages for approval, a routine whose rules are not written or do not cover its Runbook (AUT-9), and the main checkout behind origin/main (MON-16)."
+- Applied: `criteria_max` 17 to 18 in `.loop/config.json`, because Monitoring then holds 18 requirements (Setup stays at 17 and gets none; its part is the command in AUT-9).
+- Owner sentences, one per page: Automation: "Un-review the Automation page so AUT-9 can be added as drafted in DECISIONS.md, then review the Automation page and AUT-9 again." Monitoring: "Un-review the Monitoring page so MON-18 can be added as drafted in DECISIONS.md and criteria_max raised to 18, then review the Monitoring page and MON-18 again."
+
+## wiki-current: DOC-1 sync pointer and Regression re-stamp (2026-11-14)
+Owner words (records o13 and o14, recorded by the operation session): "Un-review the Documentation page and DOC-1 so the sync pointer in DECISIONS.md can be added, and un-review the Regression page; then review both again, Regression with REG-1 as it stands."
+
+The sync pointer, added as DOC-1's last sub-bullet:
+
+- A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
+
+Regression is un-reviewed and reviewed again with no text change: external-sync's tests.py commit and fast-merge-queue's tiers.py commit staled it, and the page is still true (REG-1 `tests-own-folder`).
+
+The cap again: MON-18 (settings-in-spec) and MON-19 together make the Monitoring page 19 requirements, so `criteria_max` goes from 18 to 19, on the owner's approval of both requirements.
+## Waiting on owner un-review (ext-two-way)
+
+Drafted by the ext-two-way goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: Documentation, Health and Monitoring are Reviewed, and the goal's changes to docs.py and audit.py, health.py and board.py make each of the three pages stale, which merge.py refuses.
+
+- Documentation, DOC-1 (PRD template), a new last sub-bullet next to the sync pointer wiki-current added: "A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and External PRDs (EXT-1 to EXT-4) owns how that sync works."
+- Health, HLT-2 (The rules), a new last sub-bullet: "A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one."
+- Monitoring, MON-3 (Live board), a new last sub-bullet: "The board lists each open PRD delta of a page that opted in to syncing as waiting on the owner, with its issue and the words to accept either side; a page with no external source never shows one."
+
+The owner types one sentence in the operation session:
+
+"Un-review the Documentation page and DOC-1, the Health page and HLT-2, and the Monitoring page and MON-3, so the opt-in sync sub-bullets in DECISIONS.md can be added; then review those three pages and requirements again."
+
+After it, the goal edits the three lines as drafted and the owner's review follows with the same words. Until the owner's words are in, ext-two-way cannot merge.
+
+Applied 2026-11-14 on owner-words record o15 (the sentence above, recorded by the operation session after the owner's "Yes, I want to do both."): the Documentation, Health and Monitoring pages and DOC-1, HLT-2 and MON-3 were un-reviewed, the three sub-bullets were added exactly as drafted, and the three pages and requirements were reviewed again, all with `--owner-record o15` (record o16 was not needed).
+
+Applied 2026-11-14 on owner-words record o17 (the owner's "Yes, let's do your thing.", recorded by the operation session): after merging origin/main, main's Performance sub-bullet and the opt-in sync sub-bullet both stand on HLT-2 (main's first). The Health page and HLT-2 were un-reviewed and reviewed again with both sub-bullets exactly as they are, with `--owner-record o17` (record o18 was not needed).
+
+## ext-two-way: External PRDs folded into Documentation as DOC-17 (2026-11-14)
+Owner words (record o20, with o21 for the page, recorded by the operation session after the owner's "Yes, apply A."): the External-PRDs page is folded into Documentation. It becomes DOC-17, "A PRD kept outside the repo stays in step through reviewed deltas", with EXT-1 to EXT-4 as its four sub-bullets in order (EXT-4's title is now "a missing connector never breaks the loop"); External-PRDs' Problem and non-goals were trimmed into Documentation's sections, its success metrics into Documentation's third, the page left `docs/wiki`, `.loop/docs.tsv`, the topics setting and Home, its README rows moved into "How to use Documentation", and every sync regression row is tied to DOC-17. DOC-1's sync pointer now ends "DOC-17 owns how that sync works". The HLT-2 and MON-3 sub-bullets did not name External PRDs and are unchanged. Documentation is at 17 requirements, its cap. Reviewed with `--owner-record o20` (DOC-1, DOC-17) and `--owner-record o21` (the page).
+
+Guardrails re-stamped (ext-two-way, 2026-11-14): removing External-PRDs from the topics setting in `.loop/config.json` made the Reviewed Guardrails page stale although its text is still true (GRD-1 `config-holds-topics`). Un-reviewed with owner record o22 and reviewed again with o23, with no text change.
+
+## Waiting on owner un-review (adoption)
+
+Drafted by the adoption goal, 2026-11-14. These change reviewed requirements, so they wait for the owner's own typed words: the goal's changes to `.loop/config.json`, `setup.py`, `unattended.py`, `board.py` and `private.py` make the Guardrails, Setup, Monitoring and Delivery pages stale, which merge.py refuses.
+
+- Guardrails, GRD-3, a new last sub-bullet: "A private-name line may be scoped with `@public` or `@repos=a,b`, so a private repo can hold a name a public one must never show; an unscoped line applies everywhere (Delivery, DEL-9)."
+- Delivery, DEL-9, a new last sub-bullet: "The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo."
+- Setup, SET-11, a new last sub-bullet: "Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12."
+- Setup, SET-15, a new last sub-bullet: "The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`)."
+- Monitoring, MON-13, a new last sub-bullet: "`board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12)."
+
+The owner types one sentence in the operation session:
+
+"Un-review the Guardrails page and GRD-3, the Delivery page and DEL-9, the Setup page with SET-11 and SET-15, and the Monitoring page and MON-13, so the adoption sub-bullets in DECISIONS.md can be added; then review those pages and requirements again."
+
+After it, the goal edits the five lines as drafted and the owner's review follows with the same words. Until the owner's words are in, adoption cannot merge.
+
+Applied 2026-11-14 with the owner's typed words "Do your recommendations." (records o25 and o26): the five sub-bullets above were added to Guardrails GRD-3, Delivery DEL-9, Setup SET-11 and SET-15 and Monitoring MON-13, and those pages and IDs were reviewed again.
+
+## Applied 2026-11-15 (offline-prd-copy)
+
+The owner chose option C for external PRDs: "a template fix first, then two-way sync with an agreed copy in the repo, the wiki unchanged, and conflicts brought to you", and answered "Yes" (records o37 to un-review and o38 to review, covering Documentation and DOC-17). The goal added two sub-bullets to DOC-17 and changed nothing else in reviewed text:
+
+- "The repo's copy is the PRD every check reads: the docs check and audit, health, the regression rows and publish read `.loop/prd/PAGE.md` and never the source, so no lane, CI run or health check needs the external document or a reader, and a page with a copy raises no LINK or UNREAD for want of one. The wiki page still shows Problem, Requirements, Non-goals and Success metrics, as a block generated from the copy."
+- "`docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten."
+
+Documentation and DOC-17 were reviewed again with record o38.

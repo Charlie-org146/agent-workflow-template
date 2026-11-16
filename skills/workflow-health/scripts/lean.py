@@ -1,17 +1,16 @@
 """Hygiene rules that keep the repo lean: test time, stale loop worktrees, stale local branches, git hooks. Used by health.py.
 
-test-time reads the land lane record (regression.py's per-branch record under the git common folder's loop/tests/):
-the current branch's, else the newest one with a readable `at`. It counts only rows that are land rows in the current
-.loop/regression.tsv, and warns when their total is over test_budget_minutes (.loop/config.json, default 15, floor 15),
-naming the slowest rows and scripts. It also warns when the newest full (non --reuse) run took over 30 minutes, and lists
-each step or test run of a goal that hit its time budget with what it left (budget_hits in the run records).
-worktrees lists loop worktrees (the git common folder's loop/worktrees/) that no live run names; local-branches lists
-branches with no upstream (or a gone one), checked out nowhere, not merged into the base and older than
-stale_branch_days (default 14). Each gets its removal command, shell-quoted; nothing is ever removed here. These rows
-hold machine-local paths and names, so file.py never files them.
+test-time reads regression.py's per-branch land lane record (loop/tests/ in the git common folder): this branch's, else the
+newest with a readable `at`. It counts only land rows of the current .loop/regression.tsv and warns when their total is
+over test_budget_minutes (.loop/config.json, default 15, floor 15), naming the slowest rows and scripts. It also warns
+when the newest full (non --reuse) run took over 30 minutes, and lists each goal step or test run that hit its time
+budget with what it left (budget_hits in the run records).
+worktrees lists loop worktrees that no live run names; local-branches lists branches with no upstream (or a gone one),
+checked out nowhere, not merged into the base and older than stale_branch_days (default 14). Each gets its shell-quoted
+removal command; nothing is removed. These rows hold machine-local paths, so file.py never files them.
 hooks (DEL-9, SET-8) runs `setup.py --git-hooks --check --json` and WARNs when a private-name hook is missing, foreign
-(no call to private.py) or calls a script that is gone, or when the list is broken; no list is not a finding (the board
-lists it). Skipped on GitHub Actions unless LOOP_HEALTH_HOOKS=1. Any other answer is one WARN to update the skills.
+(no call to private.py) or calls a gone script, or when the list is broken; no list is not a finding. Skipped on GitHub
+Actions unless LOOP_HEALTH_HOOKS=1. Any other answer is one WARN to update the skills.
 """
 import glob
 import hashlib
@@ -24,13 +23,15 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git must fail, not block.
+from defects import SKILLS, clean, mod, read, table, tool
+
+# No prompts: git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
-TEST_BUDGET = 15  # minutes: the loop's test budget (default and floor)
-SUITE_LIMIT = 30  # minutes: the scheduled full suite
+TEST_BUDGET = 15  # minutes: default and floor
+SUITE_LIMIT = 30  # minutes
 STALE_DAYS = 14
 SHOWN = 5
 LIVE = ("queued", "running", "waiting", "failed", "stopped")
@@ -50,12 +51,16 @@ def common(root):
     return os.path.realpath(os.path.join(root, git(root, "rev-parse", "--git-common-dir")[1].strip() or ".git"))
 
 
-def config(root):
+def load(path):
     try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            data = json.load(handle)
+        with open(path) as handle:
+            return json.load(handle)
     except (OSError, ValueError):
-        return {}
+        return None
+
+
+def config(root):
+    data = load(os.path.join(root, ".loop", "config.json"))
     return data if isinstance(data, dict) else {}
 
 
@@ -65,7 +70,6 @@ def setting(root, key, default):
 
 
 def land_rows(root):
-    """{row id: the toy script it runs} for the land rows of the current regression.tsv."""
     out = {}
     try:
         with open(os.path.join(root, ".loop", "regression.tsv")) as handle:
@@ -77,6 +81,15 @@ def land_rows(root):
     except OSError:
         pass
     return out
+
+
+def land_seconds(root, record):
+    land = land_rows(root)
+    return {key: float(item.get("seconds") or 0) for key, item in record["rows"].items() if key in land}
+
+
+def top(totals, count):
+    return sorted(totals.items(), key=lambda pair: (-pair[1], pair[0]))[:count]
 
 
 def number(value):
@@ -91,18 +104,13 @@ def readable(data):
 
 
 def lane_record(root):
-    """(record, mine, why): the current branch's lane record (named as regression.py names it), else the newest
-    readable one (mine False). A damaged record of this branch is why, never read."""
+    """(record, mine, why): this branch's lane record, else the newest readable one (mine False)."""
     folder = os.path.join(common(root), "loop", "tests")
     branch = git(root, "symbolic-ref", "--quiet", "--short", "HEAD")[1].strip()
     own = "%s-%s.json" % (re.sub(r"[^A-Za-z0-9._-]", "_", branch), hashlib.sha1(branch.encode()).hexdigest()[:8]) if branch else ""
     found = []
     for path in sorted(glob.glob(os.path.join(folder, "*.json"))):
-        try:
-            with open(path) as handle:
-                data = json.load(handle)
-        except (OSError, ValueError):
-            data = None
+        data = load(path)
         if not readable(data):
             if os.path.basename(path) == own:
                 return None, True, "this branch's lane record cannot be read: %s" % os.path.basename(path)
@@ -120,14 +128,9 @@ def budget_minutes(root):
 
 
 def suite_rows(root):
-    """A WARN when the newest recorded full run (a record whose command has no --reuse) took over 30 minutes."""
     full = []
     for path in glob.glob(os.path.join(common(root), "loop", "tests", "*.json")):
-        try:
-            with open(path) as handle:
-                data = json.load(handle)
-        except (OSError, ValueError):
-            continue
+        data = load(path)
         if readable(data) and "--reuse" not in str(data.get("command")) and number(data.get("total_seconds")):
             full.append((str(data["at"]), data["total_seconds"]))
     if not full or max(full)[1] <= SUITE_LIMIT * 60:
@@ -136,8 +139,18 @@ def suite_rows(root):
                 "move the slowest rows to nightly in .loop/regression.tsv, or split them")]
 
 
+def unrun_rows(root):
+    try:
+        with open(os.path.join(common(root), "loop", "suite-times.tsv")) as handle:
+            full = [line.rstrip("\n").split("\t") for line in handle if "\tfull\t" in line]
+    except OSError:
+        return []
+    left = int(full[-1][4]) if full and len(full[-1]) > 4 and full[-1][4].isdigit() else 0
+    return [row("WARN", "lane", "unrun-rows", "the full suite left %d rows unrun" % left,
+                "add a shard or move the slowest rows to nightly")] if left else []
+
+
 def hit_rows(root):
-    """One INFO row per step or test run that hit its budget, with what it left."""
     found = []
     for state in runs(root):
         if state.get("status") == "merged" or state.get("release") in LANDED:
@@ -151,7 +164,7 @@ def hit_rows(root):
 
 
 def test_rows(root):
-    return lane_rows(root) + suite_rows(root) + hit_rows(root)
+    return lane_rows(root) + suite_rows(root) + unrun_rows(root) + hit_rows(root)
 
 
 def lane_rows(root):
@@ -160,7 +173,7 @@ def lane_rows(root):
         return [row("UNREAD" if mine else "INFO", "lane", "test-time", why, "run regression.py run land --reuse")]
     whose = "" if mine else " (from another branch's record, %s)" % why
     land = land_rows(root)
-    seconds = {key: float(item.get("seconds") or 0) for key, item in record["rows"].items() if key in land}
+    seconds = land_seconds(root, record)
     total = sum(seconds.values())
     minutes = budget_minutes(root)
     if minutes is None:
@@ -169,11 +182,11 @@ def lane_rows(root):
     if total <= minutes * 60:
         return [row("PASS" if mine else "INFO", "lane", "test-time",
                     "the land lane takes %d s, within test_budget_minutes=%d%s" % (total, minutes, whose))]
-    slow = sorted(seconds.items(), key=lambda pair: (-pair[1], pair[0]))[:SHOWN]
+    slow = top(seconds, SHOWN)
     scripts = {}
     for key, value in seconds.items():
         scripts[land[key]] = scripts.get(land[key], 0) + value
-    worst = sorted(scripts.items(), key=lambda pair: (-pair[1], pair[0]))[:3]
+    worst = top(scripts, 3)
     return [row("WARN" if mine else "INFO", "lane", "test-time", "the land lane takes %d s, over test_budget_minutes=%d in .loop/config.json; "
                 "slowest rows: %s; slowest scripts: %s%s" % (
                     total, minutes, ", ".join("%s %ds" % pair for pair in slow), ", ".join("%s %ds" % pair for pair in worst), whose),
@@ -181,14 +194,10 @@ def lane_rows(root):
 
 
 def runs(root, bad=None):
-    """Every run record as a dict; the names of unreadable ones go in bad."""
+    """Every run record as a dict; unreadable names go in bad."""
     out = []
     for path in sorted(glob.glob(os.path.join(common(root), "loop", "runs", "*.json"))):
-        try:
-            with open(path) as handle:
-                state = json.load(handle)
-        except (OSError, ValueError):
-            state = None
+        state = load(path)
         if isinstance(state, dict):
             out.append(dict(state, slug=state.get("slug") or os.path.basename(path)[:-5]))
         elif bad is not None:
@@ -197,7 +206,6 @@ def runs(root, bad=None):
 
 
 def blind(rule, root):
-    """An UNREAD row when a run record cannot be read: its goal's worktree or branch could look stale."""
     bad = []
     runs(root, bad)
     return [row("UNREAD", rule, rule, "run record %s cannot be read, so a live goal may look stale" % ", ".join(bad[:3]),
@@ -205,7 +213,7 @@ def blind(rule, root):
 
 
 def runs_by_tree(root):
-    """realpath of a run's worktree (its own field, else loop/worktrees/<slug>) -> its runs."""
+    """realpath of a run's worktree -> its runs."""
     out, folder = {}, os.path.join(common(root), "loop", "worktrees")
     for state in runs(root):
         tree = state.get("worktree") or os.path.join(folder, state["slug"])
@@ -218,7 +226,7 @@ def live(runs):
 
 
 def summary(rule, items, noun):
-    """One WARN per kind: the count, the first SHOWN items with their commands, then how many more."""
+    """One WARN per kind: count, first SHOWN items, the rest counted."""
     if not items:
         return [row("PASS", rule, rule, "no stale %s" % noun)]
     shown = "; ".join("%s (%s): %s" % (name, why, command) for name, why, command in items[:SHOWN])
@@ -281,7 +289,7 @@ def branch_rows(root):
             continue
         merged = git(root, "merge-base", "--is-ancestor", name, base)[0]
         if merged == 0:
-            continue  # merged: the branches rule names it
+            continue
         if merged != 1:
             return [row("UNREAD", "local-branches", "local-branches", "cannot tell whether %s is merged" % name, "")]
         only = git(root, "rev-list", "--count", name, "--not", "--remotes")[1].strip() or "0"
@@ -291,7 +299,7 @@ def branch_rows(root):
 
 
 def srow(*args):
-    return dict(row(*args), family="security")  # reported in Security and privacy
+    return dict(row(*args), family="security")
 
 
 def hook_rows(root):
@@ -314,19 +322,65 @@ def hook_rows(root):
                 "installed skills")] if found else [srow("PASS", "hooks", "hooks", "the private-name hooks are installed")]
 
 
-def rows(root):
-    return test_rows(root) + worktree_rows(root) + branch_rows(root)
-
-
 def facts(root):
-    """Judge input lines: the land lane's total and its slowest rows."""
     record, _, why = lane_record(root)
-    why = why if record is None else ""
     if record is None:
         return ["land lane: " + why]
-    land = land_rows(root)
-    seconds = {key: float(item.get("seconds") or 0) for key, item in record["rows"].items() if key in land}
-    slow = sorted(seconds.items(), key=lambda pair: (-pair[1], pair[0]))[:10]
+    seconds = land_seconds(root, record)
+    slow = top(seconds, 10)
     return ["land lane: %d rows, %d s (budget %d s); slowest: %s" % (
         len(seconds), sum(seconds.values()), (budget_minutes(root) or TEST_BUDGET) * 60,
         ", ".join("%s %ds" % pair for pair in slow))]
+
+
+def carries(name, skill, text, *places):
+    """True when the installed template names the feature."""
+    if os.environ.get("LOOP_TEST") == "1" and "LOOP_TEMPLATE_HAS" in os.environ:
+        return name in os.environ["LOOP_TEMPLATE_HAS"].split(",")
+    for place in places or ("scripts/*.py", "references/*.md"):
+        for path in glob.glob(os.path.join(SKILLS, skill, place)):
+            if os.path.basename(path) not in ("enforce.py", "lean.py", "issues.py") and text in read(path):
+                return True
+    return False
+
+
+def format_gaps(root, cfg, g, steps):
+    """Format changes, judged only when the template carries them."""
+    if not carries("usage-kept", "workflow-docs", "usage_section", "references/commands.md"):
+        for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
+            if re.search(r"^## Usage\s*$", read(page), re.M):
+                g("MIG_USAGE", os.path.basename(page), "still has a Usage section", "delete the section, then " + tool("workflow-docs", "docs.py", "audit"))
+    if carries("health-rules", "workflow-health", "health-rules.json") and not os.path.exists(os.path.join(root, ".loop", "health-rules.json")):
+        g("MIG_RULES", ".loop/health-rules.json", "missing", "run workflow-setup (setup.py), which writes it")
+    if carries("backlog", "workflow-health", "Backlog", "scripts/milestone.py"):
+        steps.append(("milestones", "Backlog", "approve the Backlog milestones, then run " + tool("workflow-health", "milestone.py", "backlog --live")))
+
+
+def hook_entries(node, name):
+    """How many hook entries run the script `name` (its command names it twice, so the text can't be counted; #4345)."""
+    if isinstance(node, dict):
+        return (name in str(node.get("command", ""))) + sum(hook_entries(v, name) for v in node.values())
+    return sum(hook_entries(v, name) for v in node) if isinstance(node, list) else 0
+
+
+def hook_gaps(root, g, steps):
+    if carries("prompt-pointer", "workflow-health", "def prompt_pointer", "scripts/rules.py", "scripts/report.py"):
+        for r in mod("workflow-health", "rules").prompt_pointer(root):
+            g("MIG_ROUTINES", clean(r["subject"]), clean(r["detail"]), clean(r["fix"]))
+    text = read(os.path.join(root, ".claude", "settings.local.json"))
+    for name in ("reply_hook.py", "govern_hook.py"):
+        try:
+            count = hook_entries(json.loads(text), name)
+        except ValueError:
+            count = text.count(name)
+        if count > 1:
+            g("MIG_HOOKS", name, "is installed %d times" % count, "remove the duplicate entry")
+        elif not count:
+            steps.append(("hook", name, "in the operation repo run " + tool("workflow-setup", "setup.py", "--reply-hook") + " (both hooks)"))
+
+
+def v1(root, cfg, g, info, pr):
+    format_gaps(root, cfg, g, info["steps"])
+    if not pr:
+        hook_gaps(root, g, info["steps"])
+        mod("workflow-health", "issues").owner_steps(root, info["steps"])

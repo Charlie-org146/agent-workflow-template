@@ -2,10 +2,6 @@
 """Plan and write the rest of an adoption: feature pages, criteria, regression rows and workflow.
 
 usage: seed.py [--repo DIR]     (setup.py imports this; run alone it prints the plan)
-
-Every decision is add (new file), convert (an existing page gets the marker and the missing sections, words untouched), skip
-(already done) or no fit (left alone). GAP and GUARD name what setup cannot fix. The sibling docs and regression scripts own
-the file formats; this runs git and nothing else.
 """
 import argparse
 import importlib.util
@@ -19,7 +15,6 @@ import sys
 import agents
 import survey
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -29,10 +24,8 @@ PLACEHOLDER = "Write this page from what is really in the repo."
 
 
 MARK = "workflow-loop-hook"
-# hook -> the `private.py hook` lines its stub runs, in order; the pre-push stub reads git's ref lines once and feeds each line
 GUARD = {"pre-commit": ["staged"], "commit-msg": ['message "$1"'], "pre-push": ["push"]}
 STUB = """#!/bin/sh
-# %(mark)s: %(name)s (python3 '%(setup)s' --git-hooks writes it; --git-hooks --remove takes it out)
 P='%(py)s' S='%(priv)s' U='%(setup)s'
 fix() { echo "%(name)s hook: $1. Fix: python3 '$U' --git-hooks (to skip once, git's own --no-verify is yours to decide)" >&2; exit 1; }
 [ -x "$P" ] || P=$(command -v python3) || fix "python3 is not on PATH, so the private-name scan cannot run"
@@ -83,7 +76,7 @@ def list_state(priv):
 
 
 def show(repo, as_json):
-    """--git-hooks --check: the list and each hook, as text or schema-1 JSON. Exit 1 when a hook or the list needs a fix."""
+    """--git-hooks --check."""
     folder, custom = hooks_dir(repo)
     word, line = list_state(sibling("workflow-delivery", "private.py"))
     states = {name: hook_state(os.path.join(folder, name)) for name in GUARD}
@@ -98,7 +91,6 @@ def show(repo, as_json):
 
 
 def git_hooks(repo, remove=False, adopting=False):
-    """Install (or remove) the stubs in the git common dir's hooks. A refusal is exit 1, or a NOTE when adopting."""
     priv, setup = sibling("workflow-delivery", "private.py"), os.path.join(HERE, "setup.py")
     folder, custom = hooks_dir(repo)
     py = shutil.which("python3") or ""
@@ -129,7 +121,7 @@ def git_hooks(repo, remove=False, adopting=False):
             if ours:
                 os.remove(path)
             print("HOOK %s: %s" % (name, "removed" if ours else "not installed" if not text else "kept, it is not the stub setup writes"))
-        elif text and not ours:  # the owner's own hook, or a stub the owner edited: never overwritten
+        elif text and not ours:
             bad += state != "installed"
             print("HOOK %s: %s" % (name, "already calls the scan" if state == "installed" else
                                    "left alone, it is not ours. Add: python3 '%s' hook %s" % (priv, GUARD[name][0])))
@@ -146,16 +138,16 @@ def sibling(skill, script):
     return path if os.path.exists(path) else None
 
 
-prefixes, pick, summary_of, mapping = survey.prefixes, survey.pick, survey.summary_of, survey.mapping  # moved to survey.py (file size)
+prefixes, pick, summary_of, mapping = survey.prefixes, survey.pick, survey.summary_of, survey.mapping
 
 
 def decide(repo, config, found):
     """The plan: a list of (verb, path, note, action) with action None for skip and no fit."""
     acts, wiki = [], found["wiki"]
     seen, old = out(repo, "workflow-delivery", "private.py", "visibility"), survey.read(repo, ".loop/config.json")  # one live answer
-    kept = json.loads(old or "{}").get("regression_runs")  # recorded as regression_runs; unreadable is never taken as public
-    if {"private": "mac", "public": "actions"}.get(seen) or kept:
-        config["regression_runs"] = {"private": "mac", "public": "actions"}.get(seen) or kept
+    kept, live = json.loads(old or "{}").get("regression_runs"), {"private": "mac", "public": "actions"}.get(seen)  # mac stays, public or not
+    if live or kept:
+        config["regression_runs"] = "mac" if kept == "mac" else live or kept
     else:
         config.pop("regression_runs", None)
     if old is None or json.loads(old) != agents.stored(config, json.loads(old)):
@@ -195,7 +187,7 @@ def decide(repo, config, found):
             acts.append(("add", ".github/workflows/regression.yml", "regression run on " + config.get("regression_cron", ""), "workflow"))
     else:
         acts.append(("no fit", ".loop/regression.tsv", "no check command found, so no test row can be seeded", None))
-    try:  # the schedule's registry, outside the repo (workflows.py)
+    try:
         with open(os.path.join(os.environ.get("LOOP_SCHEDULE_HOME") or os.path.expanduser("~/.workflow-loop/schedule"), "repos.json")) as handle:
             listed = [e["path"] for e in json.load(handle)["repos"].values()]
     except (OSError, ValueError, KeyError):
@@ -256,7 +248,7 @@ def put(repo, path, text):
 
 
 def apply(repo, config, found, acts):
-    """Write what decide() planned. Returns the paths to commit. FORCED lists planned paths an ignore rule still keeps out."""
+    """Write what decide() planned."""
     touched, wiki = [], found["wiki"]
     used = prefixes(repo, found)
     rows, pf = [], agents.docs_format()
@@ -281,7 +273,7 @@ def apply(repo, config, found, acts):
             name = action[1]
             full = os.path.join(repo, path)
             if (survey.read(repo, path) or "").startswith(survey.MARKER):
-                continue  # already adopted on the setup branch
+                continue
             os.makedirs(os.path.dirname(full), exist_ok=True)
             tag = pick(name, used)
             criterion = "- %s-1: **Unreviewed** The repo checks pass with the %s change in.\n  - %s" % (tag, name, PLACEHOLDER)
@@ -293,7 +285,6 @@ def apply(repo, config, found, acts):
                 title, _, problem = text.partition("\n")
                 if not title.startswith("# "):
                     title, problem = "# " + name, text
-            # one PRD page writer, owned by workflow-docs
             tool(repo, "workflow-docs", "prd.py", "skeleton", path, "--title", title, "--problem", problem.strip() or PLACEHOLDER,
                  "--requirement", criterion)
         touched.append(path)
@@ -314,10 +305,10 @@ def apply(repo, config, found, acts):
             tool(repo, "workflow-regression", "regression.py", "workflow")
     if any(a[3] == "local" for a in acts):
         tool(repo, "workflow-health", "automation.py", "local", "install")
-    tool(repo, "workflow-docs", "render.py", "blocks")  # setup inserts the Settings and Automation blocks; a render only refreshes them
+    tool(repo, "workflow-docs", "render.py", "blocks")
     tool(repo, "workflow-docs", "criteria.py", "render")
     paths = [a[1] for a in acts if a[3] and a[0] in ("add", "convert")] + [".loop/config.json"]
-    left = survey.blocked(repo, paths)  # still kept out after the exception lines: staged with -f, and a gap
+    left = survey.blocked(repo, paths)
     FORCED[:] = [p for p, _, _ in left]
     for p, line, src in left:
         print("GAP: %s ignores %s. Fix: add %s to that file" % (src, p, line))

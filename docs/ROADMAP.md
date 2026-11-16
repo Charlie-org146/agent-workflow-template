@@ -1,5 +1,78 @@
 # Roadmap
 
+## v1.0.0
+
+This is the source of the Roadmap wiki page: `python3 skills/workflow-monitoring/scripts/batch.py roadmap --out docs/wiki/Roadmap.md`
+rebuilds the page from these tables, the open issues (gh) and the run records. v1.0.0 is done when every open issue that is not on a
+Backlog milestone is closed (owner, 2026-11-14). Each row is `| #issue or `goal` | outcome | what it blocks |`: the command adds the status
+and an empty Priority column, drops a closed issue, and puts every other open non-Backlog issue in the group its label names (size, regression,
+defect, adoption), else under Open defects. Backlog-milestone issues are never listed here: the page lists them apart as "after v1.0".
+Off-machine to-dos ("To-do:" issues) are listed and do not block.
+
+### Size caps
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+
+### Windows-safe
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #2871 | A Windows-safe check runs on every merge, so a POSIX-only call cannot return | Windows support |
+| #3919 | test-pods.sh passes on Linux: script budget caps and two merge-lock checks fixed | Linux CI green |
+
+### Regression trust
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #531 | A goal's new rows run after a base merge, not late (lane tiers) | the suite is trustworthy |
+
+### Open defects
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #3876 | One stale page on main no longer fails every goal's pr lane | every merge |
+| #3870 | merge.py stops telling the owner to gh pr merge a release PR that required checks block | merges |
+| #3878 | Held time no longer counts against a goal's time budget | parked goals |
+| #3840 | goal.py pr posts only the statuses its lane really ran | honest checks |
+| #3841 | goal.py pr no longer copies a home-folder path into a PR body | privacy |
+| #3862 | monitor.py report skips a JSON in loop/runs that is not a record | the report |
+| #3839 | render.py takes the regression workflow name from config, not a hardcoded regression.yml | other repos |
+| #3468 | goal.py new --here refuses the checkout the installed skills point to | workers |
+| #3122 | A comments-only code change no longer marks a page stale | owner re-reviews |
+
+### Adoption
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #2877 | Adoption stamps the template version, so a repo never reads "template version unknown" | the rollout |
+| #1408 | Setup lists a prerequisite checklist with fixes and replays the first adoption strictly | SET-11 proof |
+| #1409 | The operation session adopts several GitHub repos in one pass | the rollout |
+| #1410 | Setup probes the MCP connectors each followed repo's PRDs need | the rollout |
+| #1411 | Private-name patterns are scoped per repo | the rollout |
+
+### Unreviewed requirements
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #2874 | Setup says up front that un-reviewing a locked requirement needs the owner's own sentence | owner review |
+
+### Package rules
+
+| Issue or goal | Outcome | Blocks |
+|---|---|---|
+| #3800 | dev/package.py passes on main: 99 files at most, every script under 20 KB and standalone | the Agensi listing |
+| `package-under-cap` | The package stays under the file and script caps | the Agensi listing |
+
+## Rollout
+
+After v1.0.0, four repos move onto the template, in parallel, each as its own goal:
+
+- `migrate-thermis`: Thermis follows the template at v1.0.0.
+- `migrate-steward`: Steward follows the template at v1.0.0.
+- `migrate-portfolio`: Portfolio follows the template at v1.0.0.
+- `migrate-skillset`: Skillset follows the template at v1.0.0.
+
 ## How it runs
 
 One session governs, and the others build. Start every goal with `/workflow-monitoring go`, then run

@@ -12,6 +12,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_O
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d) PATH="$here/dev/toy/fakegh:$PATH"
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 export FAKE_GH_DIR="$d/gh"; mkdir -p "$FAKE_GH_DIR"
 unset LOOP_PRIVATE_NAMES
@@ -25,6 +26,7 @@ log="$FAKE_GH_DIR/statuses.log"
 git init -q --bare -b main "$d/origin.git"
 git clone -q "$d/origin.git" "$d/repo" 2>/dev/null; cd "$d/repo"
 git config user.email t@example.test; git config user.name Toy
+mkdir -p .github/workflows; printf 'jobs:\n  lane-a:\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n  lane-b:\n    name: lane-b\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n' > .github/workflows/lane.yml
 mkdir -p .loop src; printf 'a\n' > src/a.txt; printf '{"base": "main", "auto_merge": true}\n' > .loop/config.json
 git add -A; git commit -qm base; git push -q origin main
 base=$(git rev-parse HEAD)

@@ -21,6 +21,7 @@ M="$here/skills/workflow-monitoring/scripts"; D="$here/skills/workflow-delivery/
 W="python3 $M/watch.py"; OP="python3 $M/operate.py"; BO="python3 $M/board.py"; BA="python3 $M/batch.py"
 goal="env LOOP_ROLE=worker python3 $D/goal.py"; F="env LOOP_ROLE=worker python3 $D/flow.py"
 export HOME="$T/home" FAKE_AGENT="$T/fake" FAKE_GH_DIR="$T/gh" GOAL="$D/goal.py"; mkdir -p "$HOME" "$FAKE_AGENT"
+export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -174,7 +175,7 @@ check "the operation checkout never ran a goal step" '[ "$(cut -d" " -f2 "$FAKE_
 
 echo "== the latest base is merged before the pull request"
 git switch -q main
-flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; $goal check "$1" >/dev/null; done; }
+flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 >/dev/null; $goal record "$1" "$2" --file "$C/loop/runs/$1.$2.txt"; }
 $goal new s1 --here --goal "S1" --done "s1" >/dev/null; echo s1 > s1.txt; git add s1.txt; git commit -qm s1
 FAKE_SKILL_OUT='used 4,200 tokens\nDEPTH: full\nSTEP: done' step s1 idea >/dev/null
@@ -188,10 +189,10 @@ out=$($goal pr s1 2>&1); echo "$out" | sed 's/^/  /'
 check "a clean merge goes on, costing no try" 'grep -q "^MERGED origin/main into the branch" <<<"$out" && grep -q "^PR " <<<"$out" && [ "$(field s1 tries)" = 0 ] && [ -e n1.txt ]'
 git switch -q loop/s2
 out=$($goal pr s2 2>&1); echo "$out" | sed 's/^/  /'
-check "a real conflict costs a try, names the files and leaves the tree clean" 'grep -q "^TRY 1 OF 3 FAILED: merging main conflicts in: calc.py" <<<"$out" && [ "$(field s2 tries)" = 1 ] && [ ! -e "$(git rev-parse --git-dir)/MERGE_HEAD" ] && [ -z "$(git status --porcelain --untracked-files=no)" ]'
-git merge -q -X theirs --no-edit origin/main >/dev/null 2>&1; $goal check s2 >/dev/null
+check "a real conflict is a try lost to main moving: not counted, and the tree stays clean" 'grep -q "^TRY NOT COUNTED (main moved: 1 of 5; .*calc.py" <<<"$out" && [ "$(field s2 tries)" = 0 ] && [ ! -e "$(git rev-parse --git-dir)/MERGE_HEAD" ] && [ -z "$(git status --porcelain --untracked-files=no)" ]'
+git merge -q -X theirs --no-edit origin/main >/dev/null 2>&1
 out=$($goal pr s2 2>&1)
-check "once the conflict is merged by hand it goes on without another try" 'grep -q "^PR " <<<"$out" && [ "$(field s2 tries)" = 1 ]'
+check "once the conflict is merged by hand it goes on, with no try counted" 'grep -q "^PR " <<<"$out" && [ "$(field s2 tries)" = 0 ]'
 git switch -q main
 
 echo "== sizes"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/ skills/workflow-health/scripts/ skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/actions.py dev/toy/fakegh/ .loop/docs.tsv skills/workflow-setup/scripts/seed.py
+# reads: skills/ skills/workflow-health/scripts/ skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py dev/toy/fakegh/ .loop/docs.tsv skills/workflow-setup/scripts/seed.py
 # Test the round's mail, feature grouping and round cost with a stub gh, a local Cloudflare stub and a local SMTP stub.
 # usage: test-automation-email.sh GROUP   (mail secrets retry mailtest digest rounds file regression, or all)
 # Exits 0 only when every case in the group passes, so each regression row runs one group.
@@ -23,6 +23,7 @@ cat > "$G/gh" <<'PYGH'
 """A stub gh: logs calls, serves issues, comments, milestones and runs from $STUB, and applies writes to them."""
 import json, os, re, sys
 d, a = os.environ["STUB"], sys.argv[1:]
+if "--body-file" in a: i = a.index("--body-file"); a[i:i + 2] = ["--body", open(a[i + 1]).read()]  # a text in a file reads as --body TEXT
 open(os.path.join(d, "calls.log"), "a").write(" ".join(a) + "\n")
 def load(name, default):
     try:
@@ -540,7 +541,7 @@ PY
 fi
 
 if want file; then
-  echo "== file: findings tagged with their group, no milestone placed or made, the feature tag behind its switch"
+  echo "== file: findings tagged with their group and kind, on their Backlog milestone, the feature tag behind its switch"
   export FAKE_GH_DIR="$G/fake"; mkdir -p "$FAKE_GH_DIR"; F=$here/dev/toy/fakegh
   printf 'Automation\tskills/workflow-health/scripts/automation.py,.github/workflows\nHealth\tskills/workflow-health\nOld\tskills/old\n' > .loop/docs.tsv
   # the fake gh first on PATH, a token that cannot work and a host that cannot resolve: the real gh could change nothing
@@ -552,16 +553,16 @@ issues, why = file.held('$r'); acts = file.plan(rows, issues, ['size'], root='$r
   f0=$fail; cfg '{}'; : > "$FAKE_GH_DIR/issues.json"; rm -f "$FAKE_GH_DIR/calls.log" "$FAKE_GH_DIR/labels.json"
   out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
   [ -s "$FAKE_GH_DIR/calls.log" ] && ok "the fake gh saw every call (calls.log exists)" || bad "FAIL milestone-freeform:file: calls.log absent, real gh may have run. Fix: put dev/toy/fakegh first on PATH"
-  python3 - "$FAKE_GH_DIR/issues.json" <<'PY' && ok "a finding is filed with health and health:size only, on no milestone, with an empty placed=" || bad "tagging"
+  python3 - "$FAKE_GH_DIR/issues.json" <<'PY' && ok "a finding is filed with health, health:size and backlog, on its Backlog milestone, with an empty placed=" || bad "tagging"
 import json, sys
 i = {x["title"].split()[2]: x for x in json.load(open(sys.argv[1]))}
-for path in ("skills/workflow-health/scripts/automation.py", "skills/nowhere/x.py"):
+for path, home in (("skills/workflow-health/scripts/automation.py", "Backlog: Automation"), ("skills/nowhere/x.py", "Backlog: Other")):
     x = i[path]
-    assert not x["milestone"], x
-    assert sorted(l["name"] for l in x["labels"]) == ["health", "health:size"], x["labels"]
+    assert x["milestone"]["title"] == home, x
+    assert sorted(l["name"] for l in x["labels"]) == ["backlog", "health", "health:size"], x["labels"]
     assert " placed= -->" in x["body"], x["body"]
 PY
-  ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ! grep -q "feature:" "$FAKE_GH_DIR/calls.log" && ok "no milestone or feature label call is made while feature_labels is off" || bad "calls: $(cat "$FAKE_GH_DIR/calls.log")"
+  grep -q -- "--milestone Backlog: Automation" "$FAKE_GH_DIR/calls.log" && grep -q -- "--milestone Backlog: Other" "$FAKE_GH_DIR/calls.log" && ! grep -q "feature:" "$FAKE_GH_DIR/calls.log" && ok "the Backlog milestones are set and no feature label call is made while feature_labels is off" || bad "calls: $(cat "$FAKE_GH_DIR/calls.log")"
   out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
   [ "$(nissues)" = 2 ] && grep -q "^SAME" <<<"$out" && ok "a second run duplicates no open issue" || bad "duplicate"
   python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
@@ -604,9 +605,9 @@ print('parsed')" ) > "$G/old.out" 2>&1
 import json, sys
 i = {x["title"].split()[2]: x for x in json.load(open(sys.argv[1]))}
 assert "feature:Automation" in [l["name"] for l in i["skills/workflow-health/scripts/automation.py"]["labels"]]
-assert [l["name"] for l in i["skills/nowhere/x.py"]["labels"]] == ["health", "health:size"]
+assert sorted(l["name"] for l in i["skills/nowhere/x.py"]["labels"]) == ["backlog", "health", "health:size"]
 assert "feature:Automation" in json.load(open(sys.argv[2])) and "feature:Old" not in json.load(open(sys.argv[2]))
-assert not any(x["milestone"] for x in i.values())
+assert all((x["milestone"] or {}).get("title", "").startswith("Backlog: ") for x in i.values())
 PY
   python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
 import json, sys
@@ -628,11 +629,11 @@ PY
   : > "$FAKE_GH_DIR/issues.json"; (cd "$S" && PATH="$F:$PATH" GH_TOKEN=invalid GH_HOST=localhost.invalid python3 -B -c "
 import file, subprocess
 real, seen = file.run, []
-def run(args, root):
+def run(args, root, body=None):
     seen.append(args)
     if args[:2] == ['issue', 'create']:
         return subprocess.CompletedProcess(args, 127, '', str(subprocess.TimeoutExpired(['gh'] + args, 120)) + ' label')
-    return real(args, root)
+    return real(args, root, body)
 file.run = run
 row = dict(state='WARN', family='size', subject='skills/workflow-health/scripts/rounds.py', rule='limit', detail='big', fix='')
 acts = file.plan([row], {}, ['size'], root='$r'); file.apply(acts, '$r', ['size'])
@@ -673,6 +674,8 @@ PY
 [ -n "${STUB_ISSUE_FAIL:-}" ] && [ "$1 $2" = "issue create" ] && { echo "$*" >> "$STUB/calls.log"; echo "HTTP 502" >&2; exit 1; }
 [ -n "${STUB_LABEL_FAIL:-}" ] && [ "$1 $2" = "label create" ] && [[ "$3" == feature:* ]] && { echo "$*" >> "$STUB/calls.log"; echo "could not create label" >&2; exit 1; }
 [ -n "${STUB_ISSUE_LABEL_FAIL:-}" ] && [ "$1 $2" = "issue create" ] && [[ "$*" == *"--label feature:"* ]] && { echo "$*" >> "$STUB/calls.log"; echo "could not add label" >&2; exit 1; }
+[ -n "${STUB_WARN:-}" ] && [ "$1 $2" = "issue comment" ] && { echo "$*" >> "$STUB/calls.log"; echo "warning: approaching secondary rate limit" >&2; exit 0; }
+[ -n "${STUB_RATE:-}" ] && [ "$1 $2" = "issue close" ] && { echo "$*" >> "$STUB/calls.log"; echo "HTTP 403: API rate limit exceeded" >&2; exit 1; }
 exec "$STUB/gh.real" "$@"
 SH
   mv "$G/gh" "$G/gh.real"; mv "$G/ghwrap" "$G/gh"; chmod +x "$G/gh"
@@ -703,7 +706,62 @@ SH
   printf '[{"number": 41, "state": "OPEN", "body": "<!-- loop-regression red placed=Alpha -->", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
   out=$(rows)
   grep -q "^issue edit 41 --add-label feature:Alpha" "$G/calls.log" && ok "a repeat run adds the feature label to an open issue that lacks it" || bad "backfill: $(cat "$G/calls.log")"
-  cfg '{}'; printf '[]\n' > "$G/regression.json"
+  cfg '{}'
+  # one open issue a row: the oldest is kept and commented on, newer open duplicates close naming it (issue flood)
+  printf '[{"number": 43, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]},
+ {"number": 41, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]},
+ {"number": 42, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
+  out=$(rows)
+  grep -q "^issue comment 41 " "$G/calls.log" && grep -q "^issue close 42 --comment Duplicate of #41" "$G/calls.log" \
+    && grep -q "^issue close 43 --comment Duplicate of #41" "$G/calls.log" && ! grep -q "^issue comment 4[23] \|^issue create --title Regression: red" "$G/calls.log" \
+    && ok "a row with three open issues keeps the oldest and closes the newer two as its duplicates" || bad "duplicates: $(cat "$G/calls.log")"
+  python3 -c 'import json; print(json.dumps([{"number": n, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]} for n in range(100, 160)]))' > "$G/regression.json"
+  out=$(rows)
+  [ "$(grep -c "^issue close .* --comment Duplicate of #100" "$G/calls.log")" = 20 ] \
+    && ok "at most 20 duplicates close in a normal run, under GitHub's per-minute write limit; the rest close later" || bad "cap: $(grep -c '^issue close' "$G/calls.log")"
+  out=$(STUB_RATE=1 rows)
+  [ "$(grep -c '^issue close' "$G/calls.log")" = 1 ] && ok "a normal run that meets the rate limit stops its closes too" || bad "normal rate limit: $(grep -c '^issue close' "$G/calls.log")"
+  # a row that did not run (out of job time) files nothing; an issue that only said it was skipped closes
+  printf '[{"number": 51, "state": "OPEN", "body": "<!-- loop-regression red placed= -->\\nThe row `red` was skipped.\\n", "labels": [{"name": "defect"}]},
+ {"number": 52, "state": "OPEN", "body": "<!-- loop-regression blue placed= -->\\nThe row `blue` fails.\\n", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
+  out=$(REGRESSION_JOB_SECONDS=1 REGRESSION_ROW_SECONDS=5 rows)
+  grep -q "^SKIPPED red" <<<"$out" && grep -q "^issue close 51 " "$G/calls.log" && ! grep -q "^issue close 52\|^issue comment\|^issue create" "$G/calls.log" \
+    && ok "a skipped row files no issue, its skipped-only issue closes, and a real failure's issue stays open" || bad "skipped: $out $(cat "$G/calls.log")"
+  # the one-time cleanup dispatch: no row runs; skipped-only issues and duplicates close (beyond the normal 20), paced
+  python3 -c 'import json; print(json.dumps([{"number": n, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]} for n in range(200, 270)] + [{"number": 300, "state": "OPEN", "body": "<!-- loop-regression blue placed= -->\nThe row `blue` was skipped.\n", "labels": [{"name": "defect"}]}]))' > "$G/regression.json"
+  out=$(REGRESSION_CLEANUP=true REGRESSION_PACE=0 rows); rc=$?
+  [ $rc = 0 ] && [ "$(grep -c "^issue close .* --comment Duplicate of #200" "$G/calls.log")" = 69 ] && grep -q "^issue close 300 " "$G/calls.log" \
+    && grep -q "^CLEANUP closed 70 issues" <<<"$out" && ! grep -q "^issue create\|^issue comment" "$G/calls.log" \
+    && ok "the cleanup dispatch runs no row and closes every duplicate and skipped-only issue, past the normal cap of 20" || bad "cleanup: $rc $out"
+  printf '[{"number": 401, "state": "OPEN", "body": "<!-- loop-regression gone placed= -->", "labels": []},
+ {"number": 402, "state": "OPEN", "body": "no marker", "labels": []}]\n' > "$G/regression.json"
+  out=$(REGRESSION_CLEANUP=true REGRESSION_PACE=0 rows)
+  grep -q "^issue close 401 --comment Closed: row removed from the regression table." "$G/calls.log" && ! grep -q "^issue close 402" "$G/calls.log" \
+    && ok "the cleanup closes an issue whose row left the table, and leaves an issue with no row marker alone" || bad "removed: $(cat "$G/calls.log")"
+  out=$(STUB_RATE=1 REGRESSION_CLEANUP=true REGRESSION_PACE=0 rows)
+  [ "$(grep -c '^issue close' "$G/calls.log")" = 1 ] && grep -q "stopped: rate limit" <<<"$out" \
+    && ok "a cleanup that meets GitHub's rate limit stops writing at once and says so" || bad "rate limit: $(grep -c '^issue close' "$G/calls.log") $out"
+  # a skipped-only issue is matched by its own second line, never by text quoted in a failure's output; an open issue
+  # that is not skipped-only is kept over one that is; a failing row's skipped-only issue is rewritten as a failure
+  printf '[{"number": 5, "state": "OPEN", "body": "<!-- loop-regression red placed= -->\\nThe row `red` was skipped.\\n", "labels": [{"name": "defect"}]},
+ {"number": 9, "state": "OPEN", "body": "<!-- loop-regression red placed= -->\\nThe row `red` fails.\\n", "labels": [{"name": "defect"}]},
+ {"number": 7, "state": "OPEN", "body": "<!-- loop-regression blue placed= -->\\nThe row `blue` fails.\\n\\n```\\nThe row `blue` was skipped.\\n```\\n", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
+  out=$(rows)
+  grep -q "^issue close 9 --comment Duplicate of #5" "$G/calls.log" && grep -q "^issue comment 5 " "$G/calls.log" && grep -q "^issue edit 5 --body" "$G/calls.log" && ! grep -q "^issue close 5" "$G/calls.log" \
+    && ok "the oldest issue is kept even when skipped-only (rewritten as the failure); the newer one closes as its duplicate" || bad "keeper: $(cat "$G/calls.log")"
+  out=$(REGRESSION_JOB_SECONDS=1 REGRESSION_ROW_SECONDS=5 rows)
+  ! grep -q "^issue close 7" "$G/calls.log" && ok "a failure whose output quotes 'was skipped' is not closed as skipped-only" || bad "quoted: $(cat "$G/calls.log")"
+  printf '[{"number": 5, "state": "OPEN", "body": "<!-- loop-regression red placed= -->\\nThe row `red` was skipped.\\n", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
+  out=$(rows)
+  grep -q "^issue edit 5 --body <!-- loop-regression red placed= -->" "$G/calls.log" && grep -q "^issue comment 5 " "$G/calls.log" \
+    && ok "a failing row's only issue, once skipped-only, is rewritten as a failure so a skipped run won't close it" || bad "rewrite: $(cat "$G/calls.log")"
+  # a call that succeeds with a rate-limit warning on stderr does not stop the run's writes
+  printf '[{"number": 1, "state": "OPEN", "body": "<!-- loop-regression red placed= -->", "labels": [{"name": "defect"}]},
+ {"number": 2, "state": "CLOSED", "body": "<!-- loop-regression blue placed= -->", "labels": [{"name": "defect"}]}]\n' > "$G/regression.json"
+  out=$(STUB_WARN=1 rows)
+  grep -q "^issue reopen 2" "$G/calls.log" && grep -q "^issue comment 2 " "$G/calls.log" \
+    && ok "a write that succeeds with a rate-limit warning does not halt the rest" || bad "warn: $(cat "$G/calls.log")"
+  printf '[]\n' > "$G/regression.json"
   W=$here/.github/workflows/regression.yml
   grep -q 'cron: "17 \*/4 \* \* \*"' "$W" && grep -q 'tags: \["v\*"\]' "$W" && grep -q "issues: write" "$W" && ! grep -qi "milestone" "$W" \
     && ok "the full suite runs every 4 hours by default and on every release tag, with issue write access, and no milestone code" || bad "schedule"

@@ -6,6 +6,7 @@ set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" || exit 1
 export LOOP_FLOW="$d/flow.json"
@@ -78,7 +79,7 @@ out=$($health preview); echo "$out"
 grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size\]" <<<"$out" \
   && grep -q "^WOULD open issue 'health: requirements REL-1 rows' \[health:requirements\]" <<<"$out" \
   && grep -q "^WOULD open issue 'health: docs Ghost missing' \[health:docs\]" <<<"$out" \
-  && grep -q "\[health:hygiene\]" <<<"$out" && ! grep -q "\[health:criteria\]" <<<"$out" && ! grep -qi "milestone\|backlog" <<<"$out" && ok "each issue it would open shows with its tag and no milestone" || bad "preview lines"
+  && grep -q "\[health:hygiene\]" <<<"$out" && ! grep -q "\[health:criteria\]" <<<"$out" && grep -q "as backlog on Backlog: " <<<"$out" && ok "each issue it would open shows with its tag and where it goes" || bad "preview lines"
 [ "$(writes)" = "$before" ] && [ ! -f "$FAKE_GH_DIR/issues.json" ] && ok "preview made no write call" || bad "preview wrote"
 GH_TOKEN=x $health preview >/dev/null; [ "$(writes)" = "$before" ] && ok "a token does not make preview write" || bad "token"
 # Value: protects=the old run --live (cron, habit) now only previews and writes nothing; fails_when=run is pointed back at
@@ -89,13 +90,13 @@ out=$($health file 2>&1); rc=$?; grep -q "^REFUSED\[file\]: file needs --group" 
 echo "== file --group writes only the named groups"
 $health file --group docs >/dev/null
 [ "$(count health:docs OPEN)" = 1 ] && [ "$(count health)" = 1 ] && ok "file --group docs opened only the docs issue" || bad "docs only"
-$health file --group size | tee "$d/out" ; python3 - <<'PYEND' && ok "size issue: tagged health:size, on no milestone" || bad "size issue"
+$health file --group size | tee "$d/out" ; python3 - <<'PYEND' && ok "size issue: tagged health:size and backlog, on its Backlog milestone" || bad "size issue"
 import json, os
 issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
 size = [i for i in issues if "size:" in i["body"]]
-assert len(size) == 1 and not size[0]["milestone"]
+assert len(size) == 1 and size[0]["milestone"]["title"].startswith("Backlog: "), size[0]["milestone"]
 names = [l["name"] for l in size[0]["labels"]]
-assert "health:size" in names and "health" in names and "health:docs" not in names, names
+assert "health:size" in names and "health" in names and "backlog" in names and "health:docs" not in names, names
 assert len(issues) == 2
 PYEND
 grep -q "^DONE open issue" "$d/out" && ! grep -q "docs\|hygiene\|criteria" "$d/out" && ok "filing size printed only size work" || bad "size output"
@@ -141,7 +142,7 @@ grep -q "PRIVATE-OUTPUT" "$FAKE_GH_DIR/issues.json" && bad "mine output filed" |
 mkdir -p "$d/badgh"; printf '#!/bin/bash\necho "$*" >> "%s/badgh/calls"\necho "HTTP 502" >&2; exit 1\n' "$d" > "$d/badgh/gh"; chmod +x "$d/badgh/gh"
 p=$(PATH="$d/badgh:$PATH" $health preview --group size 2>&1); prc=$?; f=$(PATH="$d/badgh:$PATH" $health file --group size 2>&1); frc=$?
 grep -q "^REFUSED\[gh\]: can't list the issues (.*HTTP 502.*). Nothing was written." <<<"$p" && grep -q "^REFUSED\[gh\]: can't list the issues" <<<"$f" \
-  && [ $prc = 2 ] && [ $frc = 2 ] && ! grep -qEv "^api --paginate --slurp repos/\{owner\}/\{repo\}/issues" "$d/badgh/calls" && ok "an unreadable issue list refuses, writes nothing" || bad "gh unreadable"
+  && [ $prc = 2 ] && [ $frc = 2 ] && ! grep -qEv "^api repos/\{owner\}/\{repo\}/issues\?state=" "$d/badgh/calls" && ok "an unreadable issue list refuses, writes nothing" || bad "gh unreadable"
 [ "$(cd "$here/skills/workflow-health/scripts" && python3 -c "import file, health; print(file.tag_of(health.groups_of('cost')[0]))")" = health:performance ] && ok "the Cost group is tagged health:performance" || bad "performance tag"
 for f in health report file; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 18432 ] && ok "$f.py under the size warning" || bad "$f.py size"; done
 

@@ -11,6 +11,7 @@ T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 H="$here/skills/workflow-monitoring/scripts/reply_hook.py"
 SETUP="$here/skills/workflow-setup/scripts/setup.py"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
 fails=0
 ok() { echo "PASS: $1"; }
@@ -35,13 +36,14 @@ good = """Two goals moved; one needs you.
 
 ## Dependencies
 ```
+== toy ==
 [>] alpha
  |
 [ ] beta
 ```
 
 ## Needs you
-1. Release alpha? Options: cut, leave. Recommended: leave.
+1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]
 
 ## Coming up
 - about 18:10: alpha opens its pull request
@@ -51,18 +53,18 @@ replies = {
     "good": good,
     "noboard": "Two goals moved. I'll check again in 30 minutes.",
     "nosection": good.replace("## Dependencies\n", ""),
-    "order": good.replace("## Needs you\n1. Release alpha? Options: cut, leave. Recommended: leave.\n\n", "") +
+    "order": good.replace("## Needs you\n1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n\n", "") +
              "\n## Needs you\n1. Release alpha?\n",
     "noheadline": good.replace("Two goals moved; one needs you.\n\n", ""),
     "twoheadlines": "Status report.\n" + good,
-    "emptyneeds": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave.\n", "We will see.\n"),
-    "nothing": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave.\n", "Nothing needs you.\n"),
+    "emptyneeds": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "We will see.\n"),
+    "nothing": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "Nothing needs you.\n"),
     "bold": good.replace("## All sessions", "**All sessions:**", 1),
     "cased": good.replace("## All sessions", "## All Sessions").replace("## Needs you", "## Needs you (1)").replace(
         "1. Release alpha?", "- Q1. Release alpha?"),
     "fenced": good.replace("## Coming up\n", "```\nComing up\n```\n"),
     "onefence": good.replace("[ ] beta\n```\n", "[ ] beta\n```\n```a -> b```\n"),
-    "clock": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave.\n", "- 10:30 standup\n"),
+    "clock": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "- 10:30 standup\n"),
 }
 for name, text in replies.items():
     open(os.path.join(F, name + ".txt"), "w").write(text)

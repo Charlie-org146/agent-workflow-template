@@ -15,6 +15,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH GH_TOKEN GITHUB_TOKEN
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells never depend on the runner
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"; [ -n "${1:-}" ] || toy_on_exit 'rm -rf "$d"'
 toy_on_exit 'rm -rf "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1

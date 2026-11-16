@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
-"""The release step's wiki half: bring the goal's pages up to date before the merge, publish them after it.
+"""The release step's wiki half: bring the goal's pages up to date before the merge, publish after it.
 
 usage: wiki.py <command> SLUG
+       wiki.py batch plan|run [--size N] [--merge]   verify 3-4 ready pull requests with disjoint touches together (DEL-15)
 
-  prepare SLUG [--commit]   list every wiki page docs.py check calls stale or missing, mapped to a touched path or not (exit 1);
-                            with --commit, first commit edited pages in the wiki folder on the goal's branch, and when
-                            nothing is stale push the branch. The agent rewrites the pages; this only checks.
+  prepare SLUG [--commit]   list every wiki page docs.py check calls stale or missing (exit 1); with --commit, first commit
+                            edited pages on the goal's branch, and push it when nothing is stale.
   publish SLUG              after the merge: run docs.py publish from a clean checkout of origin/<base>; on a refusal
                             record `wiki_error` (page and reason) on the goal, which shows under Issues.
 
-Both scan for private names first: prepare --commit scans the branch before its push; publish scans every page in the
-wiki folder and publishes nothing on a hit (wiki_error names the page and line). A GitHub wiki with no first page can't
-be cloned: the error says to create the first page in the repo's Wiki tab, then run merge.py SLUG again (issue 129).
+Both scan for private names first: prepare --commit scans the branch before its push; publish scans every wiki page and
+publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the Wiki tab
+and run merge.py again. A repo without .loop/docs.tsv has no wiki: both do nothing.
 
-A repo without .loop/docs.tsv has no wiki: both commands do nothing. It runs git and docs.py, and nothing else.
-
-It also holds the release notes' proof lines (REG-6), fixes_lines: one "Fixes #N: test ROW, seen failing DATE, passing"
-line per issue fixed since the previous v* tag, from workflow-regression's tests.py fixes. Called by release.py (cut) and
-autorelease.py. A missing tests.py gives "Fixes: unknown (workflow-regression not installed)"; a failing one gives
-"Fixes: not listed (<first line>). Note: ...": a report never fails a release. workflow-regression/references/commands.md.
+Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
+(REG-6), from tests.py fixes; a missing or failing tests.py gives "Fixes: unknown/not listed", never a failure.
 """
 import argparse
+import glob
+import json
 import os
 import shutil
 import subprocess
@@ -32,7 +30,10 @@ import release
 from release import base_of, git, load, read_config, run, save
 
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # release.py sets the rest on import
+OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
+CRITERIA = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts",
+                                         "criteria.py"))
 TESTS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-regression",
                                       "scripts", "tests.py"))
 
@@ -42,12 +43,44 @@ def top_of():
     return top if os.path.exists(os.path.join(top, ".loop", "docs.tsv")) else None
 
 
-def pending(top, cfg, fix=False):
-    """What the docs audit still finds for the goal, one line each. fix lets it mend the mechanical trouble first."""
+def own_entry(tree, lines):
+    """START.md and the agent blocks come from the head's own entry.py (#4340)."""
+    script = os.path.join(tree, "skills", "workflow-docs", "scripts", "entry.py")
+    if not os.path.exists(script):
+        return lines
+    said = run([sys.executable, script, "check", "--repo", tree], tree).stdout.splitlines()
+    bad = [l.split()[1].rstrip(":") for l in said if "ENTRY_STALE" in l or "no entry point" in l]
+    return [l for l in lines if not l.endswith("(entry.py write)")] + ["WOULD FIX %s: regenerate it (entry.py write)" % x for x in bad]
+
+
+def pending(top, cfg, fix=False, head="HEAD"):
+    """What the docs audit still finds for the goal, one line each; fix mends the mechanical trouble first. A head other than
+    HEAD is audited from its own tree and docs scripts (a temporary worktree), not this checkout's (#4208)."""
     base = base_of(top, cfg)
     if fix:
-        release.docs_trouble(top, base, True)  # mend the goal's own mechanical trouble, scoped to its commits
-    return release.docs_trouble(top, base, whole=True)
+        release.docs_trouble(top, base, True)  # mend the goal's mechanical trouble
+    tree = top
+    if head != "HEAD":
+        run(["git", "fetch", "-q", "origin", head.split("/", 1)[1]], top)  # the goal's branch
+        tree = tempfile.mkdtemp(prefix="pending-")
+        tree = tree if run(["git", "worktree", "add", "-q", "--detach", tree, head], top).returncode == 0 else top
+    docs = os.path.join(tree, "skills", "workflow-docs", "scripts", "docs.py")
+    saved, docs = release.DOCS, docs if tree != top and os.path.exists(docs) else DOCS
+    try:
+        release.DOCS = docs
+        lines = release.docs_trouble(tree, base, whole=True)
+        lines = own_entry(tree, lines) if tree != top else lines
+        done = run([sys.executable, docs, "check", "--own", head if tree == top else "HEAD"], tree)  # main's own stale page
+    finally:
+        release.DOCS = saved
+        tree != top and run(["git", "worktree", "remove", "--force", tree], top)
+    other = {l.split()[2].rstrip(":") for l in done.stdout.splitlines() if l.startswith("FINDING STALE ")}
+    kept = [l for l in lines if not (l.startswith("REWRITE ") and l.split()[1].rstrip(":") in other and ": STALE " in l)]
+    for l in lines:
+        if l not in kept:
+            page, why = l[len("REWRITE "):].split(": STALE ", 1)
+            print("FINDING STALE %s: %s (not touched by this goal; left for health)" % (page, why))
+    return kept
 
 
 def commit(top, cfg, slug):
@@ -87,6 +120,25 @@ def cmd_prepare(args):
     return 0
 
 
+def rerender(tree, cfg):
+    """Re-render the generated Tests tables in the publish tree and commit them (DOC-11), so generated staleness never blocks
+    the publish. Returns the pages it changed; a failed render is printed, not fatal."""
+    done = run([sys.executable, CRITERIA, "render", "--tables"], cwd=tree)
+    if done.returncode:
+        print("RENDER FAILED: " + ((done.stderr or done.stdout).strip().splitlines() or ["exit %d" % done.returncode])[0][:200])
+        return []
+    folder = cfg.get("wiki_dir") or "docs/wiki"
+    changed = [l[3:].strip().replace("\\", "/") for l in run(["git", "status", "--porcelain", "--", folder], cwd=tree).stdout.splitlines()]
+    if not changed:
+        return []
+    git("add", "--", folder, cwd=tree)
+    git("-c", "user.name=workflow-loop", "-c", "user.email=loop@localhost", "commit", "-m", "Wiki: re-render generated tables",
+        "--", folder, cwd=tree)
+    pages = [os.path.basename(path)[:-3] for path in changed if path.endswith(".md")]
+    print("RERENDERED " + ", ".join(pages))
+    return pages
+
+
 def publish(top, cfg, slug):
     """Publish from origin/<base>. Returns the error text, or '' when the wiki is current or published."""
     base = cfg.get("base", "main")
@@ -97,6 +149,7 @@ def publish(top, cfg, slug):
     try:
         if run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + base], cwd=top).returncode:
             return "could not check out origin/%s" % base
+        rerender(tree, cfg)
         folder = os.path.join(tree, cfg.get("wiki_dir") or "docs/wiki")
         texts = {}
         for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
@@ -169,6 +222,136 @@ def fixes_lines(top, start=None):
     return [line for line in done.stdout.splitlines() if line.startswith("Fixes #")]
 
 
+# Batch merge (DEL-15): ready goals with disjoint touches are verified together on one tree and merged in one go.
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def loop_dir():
+    done = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True)
+    return os.path.join(os.path.abspath(done.stdout.strip() or ".git"), "loop")
+
+
+def ready(runs):
+    """[(slug, touches)] of the goals ready to merge, oldest record first."""
+    found = []
+    for path in sorted(glob.glob(os.path.join(runs, "*.json"))):
+        try:
+            with open(path) as handle:
+                state = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        if isinstance(state, dict) and state.get("status") == "done" and state.get("pr") and not state.get("merged") \
+                and not (state.get("hold_at") or state.get("held_at")) and state.get("release") != "ask":
+            found.append((state.get("slug") or os.path.basename(path)[:-5], [str(t).strip("/") for t in state.get("touches") or []]))
+    return found
+
+
+def overlap(mine, theirs):
+    """Same rule as the pr queue: any two paths equal or nested; no touches overlaps everything."""
+    return not mine or not theirs or any(a == b or a.startswith(b + "/") or b.startswith(a + "/") for a in mine for b in theirs)
+
+
+def group(goals, size=3):
+    """Batches of at most `size` (at most 4) goals whose touches overlap none of their batch-mates', in order."""
+    size, batches = max(1, min(int(size), 4)), []
+    for slug, touches in goals:
+        for batch in batches:
+            if len(batch) < size and not any(overlap(touches, t) for _, t in batch):
+                batch.append((slug, touches))
+                break
+        else:
+            batches.append([(slug, touches)])
+    return batches
+
+
+def culprits(slugs, passes):
+    """The goals that make `passes(slugs)` fail: [] when it passes; one slug when a goal fails alone; 'a+b' for halves that
+    each pass but fail together. About 2*log2(n) more checks for a batch of n."""
+    if passes(slugs):
+        return []
+    if len(slugs) == 1:
+        return list(slugs)
+    mid = len(slugs) // 2
+    found = culprits(slugs[:mid], passes) + culprits(slugs[mid:], passes)
+    return found or ["+".join(slugs)]  # each half passes alone: the failure is between them
+
+
+def check_tree(base, slugs, command, states):
+    """Merge the goals' branches into a temporary tree from origin/<base> and run the check there; True when it passes."""
+    temp = tempfile.mkdtemp(prefix="batch-")
+    tree = os.path.join(temp, "tree")
+    try:
+        if subprocess.run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + base], capture_output=True).returncode:
+            return False
+        for slug in slugs:
+            branch = states[slug].get("branch") or "loop/" + slug
+            merged = subprocess.run(["git", "-C", tree, "-c", "user.name=batch", "-c", "user.email=batch@localhost", "merge", "--no-edit",
+                                     "origin/" + branch], capture_output=True)
+            if merged.returncode:
+                return False
+        return subprocess.run(command, cwd=tree, shell=isinstance(command, str)).returncode == 0
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", tree], capture_output=True)
+
+
+def cmd_batch(args):
+    runs = os.path.join(loop_dir(), "runs")
+    goals = ready(runs)
+    batches = group(goals, args.size)
+    if not batches:
+        print("NO BATCH: no goal is ready to merge")
+        return 0
+    for number, batch in enumerate(batches, 1):
+        print("BATCH %d: %s" % (number, ", ".join(slug for slug, _ in batch)))
+    if args.action == "plan":
+        return 0
+    states = {}
+    for slug, _ in goals:
+        with open(os.path.join(runs, slug + ".json")) as handle:
+            states[slug] = json.load(handle)
+    top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
+    cfg = read_config(top)
+    base = cfg.get("base", "main")
+    command = cfg.get("batch_check") or [sys.executable, os.path.join(HERE, "..", "..", "workflow-regression", "scripts", "regression.py"), "run"]
+    code = 0
+    for number, batch in enumerate(batches, 1):
+        slugs = [slug for slug, _ in batch]
+        bad = culprits(slugs, lambda part: check_tree(base, part, command, states))
+        for name in bad:
+            print("CULPRIT %s: batch %d fails with it" % (name, number))
+            code = 1
+        good = [slug for slug in slugs if slug not in "+".join(bad).split("+")]
+        print("BATCH %d %s: %s" % (number, "PASSES" if not bad else "SPLIT", ", ".join(good) or "nothing passes"))
+        for slug in good if args.merge else []:
+            done = subprocess.run([sys.executable, os.path.join(HERE, "merge.py"), slug])
+            code = code or done.returncode
+    return code
+
+
+def where(script, base=None):
+    """The release runs from the main checkout (fast-forwarded to origin/<base>) or the installed skills, never from a goal
+    worktree, where a goal could loosen the check that judges it, nor from a checkout behind its base (issue 4020)."""
+    here = os.path.dirname(os.path.realpath(script))
+    common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=here, check=False)
+    mine = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
+    norm = lambda path: os.path.normcase(os.path.realpath(path))
+    if not common or not mine or norm(common) != norm(mine):
+        return
+    main = os.path.dirname(norm(common))
+    if norm(here).startswith(os.path.join(norm(common), "loop", "worktrees") + os.sep):
+        sys.exit("REFUSED (RUN_FROM_WORKTREE): %s is inside a goal worktree, where a goal could change the check that judges it. "
+                 "Fix: run it from the main checkout %s, fast-forwarded to origin, or from the installed skills." % (script, main))
+    base = base or "main"
+    if release.run(["git", "fetch", "-q", "origin", base], cwd=here).returncode:
+        return  # the base check reports a fetch it cannot make
+    behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
+    if behind.isdigit() and int(behind):
+        went = not run([sys.executable, OPERATE, "forward", base], main).returncode  # moved here; the running code is old, so it still stops
+        sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
+                 "rules. %s: git -C %s merge --ff-only origin/%s, then run it again." % (
+                     main, behind, "" if behind == "1" else "s", base, "Done now" if went else "Fix", main, base))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -179,8 +362,14 @@ def main():
     item = sub.add_parser("publish")
     item.add_argument("slug")
     item.set_defaults(func=cmd_publish)
+    item = sub.add_parser("batch")
+    item.add_argument("action", choices=["plan", "run"])
+    item.add_argument("--size", type=int, default=3)
+    item.add_argument("--merge", action="store_true")
+    item.set_defaults(func=cmd_batch, slug="")
     args = parser.parse_args()
-    release.state_path(args.slug)
+    args.slug and release.state_path(args.slug)
+    args.command == "publish" and where(__file__)
     return args.func(args)
 
 

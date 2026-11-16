@@ -52,3 +52,25 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - release-draft-wording-no-wiki: the release skill still describes a draft when auto_merge is off while DEL-5 says there is no draft step, and the first-page wiki message does not cover a repo with no GitHub wiki (issue #129, reopened by this triage)
 - lane-plan-cache-proof: add a regression row proving lane planning stays under 60 s at load 20 with an unchanged row set; the loop/lane-plan-cache goal carries it (issue #710)
 - guard-enforce-red: Failed 3 tries. Last: merging main conflicts in: docs/wiki/Tests.md
+- spec-decisions: Failed 3 tries. Last: merging main conflicts in: docs/wiki/Documentation.md, docs/wiki/Regression.md
+- settings-render-windows: Failed 3 tries. Last: regression lane failed: LANE_DIRTY at start: .loop/regression-issues.tsv. Fix: commit or remove them; the lane committed and pushed nothing.
+- govern-hook-notes: Failed 3 tries. Last: merging main conflicts in: .loop/regression-runs.tsv, docs/wiki/Tests.md
+- capture-row-output: Failed 4 tries. Last: merging main conflicts in: .loop/regression-issues.tsv
+- budget-enforce: Failed 3 tries. Last: merging main conflicts in: .loop/regression.tsv, DECISIONS.md
+- health-v1: Failed 3 tries. Last: merging main conflicts in: .loop/regression.tsv, DECISIONS.md, docs/wiki/Health.md, docs/wiki/Tests.md
+- health-v1: Failed 4 tries. Last: merging main conflicts in: .loop/regression.tsv, DECISIONS.md, docs/wiki/Health.md, docs/wiki/Tests.md
+- doc-fixes-v1: Failed 3 tries. Last: regression lane failed: capture-row-ci
+- doc-fixes-v1: Failed 4 tries. Last: regression lane failed: capture-row-ci
+- drop-usage: Failed 3 tries. Last: merging main conflicts in: .loop/START.md, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Health.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Setup.md, skills/design-guide.md
+- drop-usage: Failed 4 tries. Last: merging main conflicts in: .loop/START.md, .loop/findings.md, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Health.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Setup.md, skills/design-guide.md
+- package-under-cap: done line over-scoped by the operation session
+- package-under-cap: done line over-scoped by the operation session
+- drop-usage: Failed 5 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh
+- matrix-smoke: Failed 3 tries. Last: regression lane failed: settings-render-fresh
+- matrix-smoke: Failed 4 tries. Last: regression lane failed: package-caps-held, package-headroom-held
+- regression-issues-trust: Failed 4 tries. Last: regression lane failed: package-caps-held, package-headroom-held
+- health-repo-rules: Failed 3 tries. Last: regression lane failed: LANE_DIRTY at start: .loop/START.md, README.md. Fix: commit or remove them; the lane committed and pushed nothing.
+- health-repo-rules: Failed 4 tries. Last: regression lane failed: review-findings-skill-lines, settings-render-fresh
+- roadmap-wiki: paused by the operation session: permissions-committed goes first; resume roadmap-wiki after it merges (build and review done, review reply pending)
+- adoption: Failed 3 tries. Last: regression lane failed: LANE_PREP_BUDGET: the pr lane used its 25-minute preparation budget before any row ran: planning ran long (prep 1s, planning 1498s, slot wait 0s; the three share one budget); slots held by: none; no r
+- milestone-sync: Failed 3 tries. Last: regression lane failed: LANE_TIMEOUT: past its time limit of 99s (flow file limit); the lane was killed, rows partly ran, nothing committed or pushed. Fix: run the same command again, or raise the flow file "limit" (else ste

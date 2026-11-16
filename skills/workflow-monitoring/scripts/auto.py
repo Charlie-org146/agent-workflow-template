@@ -44,6 +44,8 @@ WORDS = ["delet", "remov", "drop", "dropp", "rm", "wip", "truncat", "discard", "
          "migrat", "schema", "auth", "authenticat", "authoriz", "secur", "security", "rebas", "amend", "squash", "eras",
          "destroy", "uninstall", "kill", "unlink", "rmdir", "removal", "revert", "rewrit", "rewritten"]
 RISKY = re.compile(r"\b(?:%s)%s\b|reset\s+--hard|git\s+clean" % ("|".join(WORDS), END), re.I)
+# A PENDING line that asks for the owner's words (a reviewed page or requirement change, a criteria_max raise) is never full auto's to answer (#4287).
+OWNER_WORDS = re.compile(r"owner[- ]words|criteria_max|\b(?:un|re)-?review|reviewed\s+(?:page|requirement|prd)|\b(?-i:[A-Z]{2,5})-\d+\b[^.?]{0,60}\b(?:sub-?bullet|wording)", re.I)
 
 
 def top():
@@ -91,6 +93,8 @@ def why_not(waiting, cfg, answered=False):
     if not rec or rec not in (waiting.get("words") or []):
         return "no recommended answer among its words"
     said = " ".join([str(waiting.get("ask") or ""), rec])
+    if OWNER_WORDS.search(said):
+        return "it asks for owner words"
     hit = RISKY.search(said)
     if hit:
         return "it mentions %s" % hit.group(0).lower()
@@ -185,6 +189,37 @@ def main():
         return 0
     lines = since(top(), args.stamp) if args.cmd == "since" else decide_all(dry=args.dry_run)
     print("\n".join(lines) if lines else "AUTO: nothing to decide")
+    return 0
+
+
+# The owner's own messages, recorded for workers (sessions.py owner-words TEXT --ids A,B): one line per message in
+# <git common dir>/loop/owner-words.tsv, tab separated: id (o1, o2, ...), UTC time, the operation session's id, the exact
+# text as a JSON string, and the IDs or pages it covers. Only the operation role writes it; a worker is refused.
+
+
+def owner_words_path():
+    top = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+    return os.path.join(os.path.abspath(top), "loop", "owner-words.tsv")
+
+
+def owner_words_add(text, ids):
+    """Append the message and print OWNER-WORDS <id> <ids>; refuse a worker, an empty message or no ids."""
+    if os.environ.get("LOOP_ROLE") == "worker":
+        sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
+    ids = [item.strip() for item in ids.split(",") if item.strip()]
+    if not text.strip() or not ids:
+        sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
+    where = owner_words_path()
+    os.makedirs(os.path.dirname(where), exist_ok=True)
+    count = 0
+    if os.path.exists(where):
+        with open(where, encoding="utf-8") as handle:
+            count = sum(1 for line in handle if line.strip())
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with open(where, "a", encoding="utf-8") as handle:
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, stamp, os.environ.get("LOOP_OPERATION_SESSION") or "operation",
+                                              json.dumps(text, ensure_ascii=False), ",".join(ids)))
+    print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
     return 0
 
 

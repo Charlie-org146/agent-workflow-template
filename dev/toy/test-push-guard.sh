@@ -1,6 +1,7 @@
 #!/bin/bash
 # reads: skills/
 # reads: skills/workflow-delivery/scripts/private.py skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-delivery/references/commands.md
+# reads: skills/
 # The worker push guard: a goal worker's git push may only update refs/heads/loop/<its slug>. Runs real pushes under the
 # real pre-push hook (installed by setup --git-hooks) from a goal worktree under <common>/loop/worktrees/, and from the
 # main checkout. A mistake guard, not enforcement (--no-verify skips it).
@@ -13,6 +14,7 @@ group=${1:-all}; case "$group" in all|refuse|allow|where) shift 2>/dev/null ;; *
 want() { [ "$group" = all ] || [ "$group" = "$1" ]; }
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 export HOME="$T/home"; mkdir -p "$HOME"
+export USERPROFILE="$HOME"
 export GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_EDITOR=true GIT_TERMINAL_PROMPT=0; : > "$GIT_CONFIG_GLOBAL"
 export LOOP_PRIVATE_NAMES="$T/none"; printf '# comments only\n' > "$T/none"
 cp -R "$here/skills" "$T/skills"

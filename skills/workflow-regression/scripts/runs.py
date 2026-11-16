@@ -1,24 +1,17 @@
 """Read and write .loop/regression-runs.tsv: each row's last run as id, status, date, run, flaky.
 
-run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else
-empty, so same-day runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's
-result flipped on (tiers.py flaky_apply, REG-9); status stays the raw PASS or FAIL. The per-result evidence (commit, clean, host,
-python) lives in the branch's lane record in the git common dir, never here: a commit cell would differ on every
-branch and turn each same-day merge of this file into a conflict. Files from before the run or flaky column still
-read, with those cells empty. A line carries the 5th cell only while it is set, so the upgrade changes no other line
-and an unflagged line is the same as before. A row not rerun keeps its cells, and a result with no flaky field (a dirty
-tree) keeps the row's flaky cell.
+run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day
+runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's result flipped on (tiers.py
+flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
+record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
 
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in
-its body. Dry-run (WOULD lines) unless live; live, it creates, labels, reopens, comments on and closes issues with gh.
-The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
+It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body.
+Dry-run (WOULD lines) unless live. The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
 
-The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (the loop's qa, ship
-and pull-request lanes) never goes past test_budget_minutes in .loop/config.json (default 15, floor 15). Rows run in
-tier order (the rows a change affects first) while their estimated seconds fit, a row still running at the budget is
-stopped, and every row not run is left to the scheduled full suite and listed. A left row is recorded as LEFT, so a
-later lane on the same content doesn't rerun it.
-The row and page readers of regression.py (chosen, clean, criteria_ids and others) sit at the end, moved here unchanged.
+The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (qa, ship and pull-request lanes)
+never goes past test_budget_minutes in .loop/config.json (default 15, floor 15); rows run in tier order while their estimated
+seconds fit, a row still running at the budget is stopped, and the rest are listed and recorded LEFT for the scheduled full suite.
+regression.py's row and page readers sit at the end.
 """
 import datetime
 import glob
@@ -33,16 +26,37 @@ import time
 import actions
 import lanes
 
-# No terminal, no waiting: a prompt from gh must fail, not block.
+# A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 NAME = "regression-runs.tsv"
 HEADER = "# id\tstatus\tdate\trun\tflaky\n"
-SKIP_CODE = 77  # a row exits 77 when it cannot run on this machine (no Codex): SKIPPED, never PASS, never FAIL
-LABELS = ("regression", "defect")  # the tool's own label, and the defect label every failing row's issue carries
+ISSUE_LIMIT = 1000
+SKIP_CODE = 77
+LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
+
+# rowtail:begin (actions.py copies this block into the workflow)
+LAST = 40  # output lines an issue carries (defect 3789)
+QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")  # `| grep -q PATTERN` hides its stream
+
+
+def again(command):
+    """The command with each `| grep -q PATTERN` made `| cat`, or None when it has none."""
+    loud = QUIET.sub("| cat", command)
+    return loud if loud != command else None
+
+
+def shown(run, command, code, text):
+    """A failing row's last LAST lines, never empty; a row that printed nothing runs once more with its quiet stage loud (run is
+    the caller's (code, text) runner)."""
+    if not text.strip() and again(command):
+        text = run(again(command))[1]
+    lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
+    return "\n".join(lines).replace("`" * 3, "'" * 3) or "(the row printed nothing; it exited %s)" % code
+# rowtail:end
 
 
 def path(root):
@@ -60,7 +74,7 @@ def read(root):
 
 
 def where(sha=None):
-    """The run cell: the Actions run URL in CI, else empty (sha is unused, kept for callers)."""
+    """The run cell: the Actions run URL in CI, else empty."""
     parts = [os.environ.get(key, "") for key in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")]
     return "%s/%s/actions/runs/%s" % tuple(parts) if all(parts) else ""
 
@@ -79,8 +93,17 @@ def write(root, results, date, sha):
         handle.write(HEADER + "".join("\t".join(ran[key][:4 + bool(ran[key][4])]) + "\n" for key in sorted(ran)))
 
 
-def gh(*args):
-    return subprocess.run(["gh"] + list(args), capture_output=True, text=True)
+def gh(*args, body=None):
+    """gh; a body= text goes in a temp file as --body-file (Windows caps the command line)."""
+    if body is not None:
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
+            f.write(body)
+        args += ("--body-file", f.name)
+    try:
+        return subprocess.run(["gh"] + list(args), capture_output=True, text=True)
+    finally:
+        if body is not None:
+            os.remove(f.name)
 
 
 def sync_issues(results, live, day):
@@ -89,24 +112,32 @@ def sync_issues(results, live, day):
     if live:
         gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
         gh("label", "create", "defect", "--description", "A test that guards it is failing")
-        out = gh("issue", "list", "--label", "regression", "--state", "all", "--limit", "200",
+        out = gh("issue", "list", "--label", "regression", "--state", "all", "--limit", str(ISSUE_LIMIT),
                  "--json", "number,state,body,comments,labels")
         if out.returncode:
             print("NOTE: can't read issues, so none changed: " + out.stderr.strip()[:200])
             return
         issues = json.loads(out.stdout or "[]")
+        if len(issues) >= ISSUE_LIMIT:
+            print("NOTE: the issue list may be cut off at %d, so none changed" % ISSUE_LIMIT)
+            return
     for item in results:
         mark = MARK % item["id"]
-        hits = [issue for issue in issues if re.search(r"<!-- loop-regression %s(?: placed=\S*)? -->" % re.escape(item["id"]), issue.get("body", ""))]
-        hit = next((issue for issue in hits if issue.get("state") == "OPEN"), hits[0] if hits else None)
+        hits = sorted((issue for issue in issues if re.search(r"<!-- loop-regression %s(?: placed=\S*)? -->" % re.escape(item["id"]), issue.get("body", ""))),
+                      key=lambda issue: issue["number"])
+        opened = [issue for issue in hits if issue.get("state") == "OPEN"]
+        hit = opened[0] if opened else hits[-1] if hits else None
         number = str(hit["number"]) if hit else ""
         if item["state"] == "FAIL":
             line = "Failing on %s." % day
             body = "%s\nThe row `%s` fails.\n\n```\n%s\n```\n" % (mark, item["id"], item["tail"])
+            for extra in opened[1:] if live else []:
+                gh("issue", "close", str(extra["number"]), "--comment", "Duplicate of #%s, kept for row %s." % (hit["number"], item["id"]))
+                print("CLOSED duplicate issue %s" % extra["number"])
             if not live:
                 print("WOULD open or update the issue for " + item["id"])
             elif not hit:
-                gh("issue", "create", "--title", "Regression: " + item["id"], *("--label=" + n for n in LABELS), "--body", body)
+                gh("issue", "create", "--title", "Regression: " + item["id"], *("--label=" + n for n in LABELS), body=body)
                 print("OPENED issue for " + item["id"])
             else:
                 if "defect" not in [x.get("name") for x in hit.get("labels") or []]:
@@ -116,7 +147,7 @@ def sync_issues(results, live, day):
                     print("REOPENED issue %s" % number)
                 said = [note.get("body", "") for note in hit.get("comments") or []]
                 if line not in said:
-                    gh("issue", "comment", number, "--body", line)
+                    gh("issue", "comment", number, body=line)
                     print("UPDATED issue %s" % number)
         elif item["state"] == "PASS" and not live:
             print("WOULD close any open issue for " + item["id"])
@@ -131,7 +162,7 @@ FLOOR, DEFAULT = 15, 15
 
 
 def minutes(cfg, key, default=DEFAULT):
-    """The setting in minutes; exits with a fix line when it is not a whole number of at least 15."""
+    """The setting in minutes; exits when it is not a whole number of at least 15."""
     value = cfg.get(key, default)
     if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
         sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
@@ -150,7 +181,7 @@ def budget(root):
 
 
 def fit(todo, est, limit):
-    """(rows that fit, rows left): todo in tier order, each kept while the estimated total stays within limit."""
+    """(rows that fit, rows left) of todo, in tier order, within limit."""
     keep, left, used = [], [], 0.0
     for key in todo:
         if used + est.get(key, 0) <= limit:
@@ -172,23 +203,25 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             continue
         cap = timeout if remaining is None else min(timeout, remaining)
         began = time.time()
-        skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))  # a test that cannot run here writes it
+        skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))
         code, text, pid, signal = lanes.run_row(by[key]["command"], root, dict(actions.row_env(), TOY_SKIP_FILE=skip), cap)
-        if code and os.path.exists(skip):  # a pipe in the row hides the test's own exit 77
+        if code and os.path.exists(skip):
             os.remove(skip)
             code = SKIP_CODE
-        if code == 124 and cap < timeout:  # stopped by the budget, not by its own limit: it didn't fail, it wasn't finished
+        if code == 124 and cap < timeout:
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
         if code == 0 and key in expected:
             print("FIXED %s: remove it from the known list" % key)
         print("%s %s%s" % (state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
-        if signal and state != "PASS":  # workflow-regression/references/commands.md
+        if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
+        env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
+        tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
         if state == "FAIL" and reuse:
-            print("\n".join("    " + line for line in text.rstrip().splitlines()[-20:]), file=sys.stderr)
-        results.append({"id": key, "state": state, "tail": text[-1500:], "seconds": round(time.time() - began, 1),
+            print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
+        results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal})
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
@@ -197,7 +230,6 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     return results, left
 
 
-# regression.py's row and page readers, moved here unchanged (size); regression.py imports them back.
 def today():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
@@ -219,7 +251,7 @@ def done_lines(path):
 
 
 def criteria_ids(root):
-    """Requirement ids written under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
+    """Requirement ids under ## Requirements (or the old ## Criteria) in the wiki pages, outside code fences."""
     try:
         with open(path_of(root, "config.json")) as handle:
             folder = json.load(handle).get("wiki_dir") or "docs/wiki"
@@ -252,3 +284,107 @@ def chosen(rows, target):
 def lines_of(root, name):
     return {line.split("\t")[0]: line.rstrip("\n") for line in open(path_of(root, name)) if line.strip() and line[0] != "#"} \
         if os.path.exists(path_of(root, name)) else {}
+
+
+# regression.py red --off-platform (REG-10)
+OFF_WINDOWS = re.compile(r"\b(win(dows)?(32|64)?|msys\d*|mingw\d*|cygwin)\b|\b(msys|mingw)\w*", re.I)
+OFF_SHA = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+def off_record(root, row_id, runner, commit, today, read_rows, edit_rows):
+    if row_id not in read_rows(root):
+        sys.exit("REFUSED: no row %s. Fix: add it first." % row_id)
+    runner = (runner or "").strip()
+    if not runner or "\t" in runner or "\n" in runner:
+        sys.exit("REFUSED: --runner names the machine that saw the row fail (linux-ci, a Linux session). Fix: pass --runner NAME.")
+    if OFF_WINDOWS.search(runner):
+        sys.exit("REFUSED: runner %s is Windows, where these rows only skip (exit 77) and a skip never sets seen red. "
+                 "Fix: prove it red on a Linux or Mac runner." % runner)
+    if not OFF_SHA.match(commit or "") or subprocess.run(["git", "cat-file", "-e", commit + "^{commit}"], cwd=root,
+                                                     capture_output=True).returncode:
+        sys.exit("REFUSED: %s is not a commit in this repo. Fix: git fetch, and pass the commit the red run used." % commit)
+    day = today()
+    edit_rows(root, lambda current: current[row_id].update(seen_red=day))
+    path = os.path.join(root, ".loop", "regression-red.tsv")
+    kept = [line for line in (open(path).read().splitlines() if os.path.exists(path) else []) if line and line.split("\t")[0] != row_id]
+    with open(path, "w", newline="\n") as out:
+        out.write("\n".join(kept + ["\t".join((row_id, day, runner, commit))]) + "\n")
+    print("SEEN RED %s on %s (proved on %s at %s)" % (row_id, day, runner, commit))
+    owed_clear(root, row_id)
+    return 0
+
+
+OWED, OWED_LABEL = "regression-owed.tsv", "other-machine"
+
+
+def owed_read(root):
+    file = os.path.join(root, ".loop", OWED)
+    cells = [(line.rstrip("\n").split("\t") + [""] * 4)[:4] for line in (open(file) if os.path.exists(file) else []) if line.strip()]
+    return {c[0]: c for c in cells}
+
+
+def owed_clear(root, row_id, live=False):
+    held = owed_read(root)
+    mine = held.pop(row_id, None)
+    if mine:
+        with open(os.path.join(root, ".loop", OWED), "w", newline="\n") as out:
+            out.write("".join("\t".join(c) + "\n" for c in held.values()))
+        if mine[3] and live:
+            done = gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
+            print("OWED CLEARED %s: %s" % (row_id, "closed " + mine[3] if getattr(done, "returncode", 0) == 0 else "could not close %s: close it by hand" % mine[3]))
+        else:
+            print("OWED CLEARED %s: close its issue" % row_id)
+
+
+def unproven(root, rows, seen):
+    """ids never seen failing and not owed; a PENDING line each for the owed."""
+    held, out = owed_read(root), []
+    for row in rows:
+        mine = held.get(row["id"])
+        if mine and not seen.match(row["seen_red"]):
+            print("PENDING %s: red proof owed on %s since %s (to-do %s); never blocks" % (row["id"], mine[2], mine[1], mine[3] or "-"))
+        elif not seen.match(row["seen_red"]):
+            out.append(row["id"])
+    return out
+
+
+def owed_issue(root, row_id, runner, live):
+    stone = ""
+    for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
+        text = open(page, encoding="utf-8").read()
+        found = re.search(r"^Milestone:\s*\S*/milestone/(\d+)", text, re.M)
+        if found and "(Tests#t-%s)" % row_id in text:
+            stone = found.group(1)
+            break
+    if not live:
+        print("WOULD open a to-do issue (milestone %s) for %s" % (stone or "none", row_id))
+        return ""
+    mark = "<!-- loop-owed %s -->" % row_id
+    listed = gh("issue", "list", "--label", OWED_LABEL, "--state", "open", "--limit", str(ISSUE_LIMIT), "--json", "url,body")
+    for item in [] if listed.returncode else json.loads(listed.stdout or "[]"):
+        if mark in item.get("body", ""):
+            return item["url"]
+    title = gh("api", "repos/{owner}/{repo}/milestones/" + stone, "--jq", ".title").stdout.strip() if stone else ""
+    gh("label", "create", OWED_LABEL, "--force", "--description", "A step only another machine can do")
+    body = "%s\nRow `%s` skips here: its red proof is owed from %s. There run `regression.py red %s --off-platform --runner %s --commit SHA`, " \
+           "then close this. It never blocks a goal or release.\n" % (mark, row_id, runner, row_id, runner)
+    made = gh("issue", "create", "--title", "To do on %s: prove %s fails" % (runner, row_id), "--label", OWED_LABEL,
+              *(("--milestone", title) if title else ()), body=body)
+    return made.stdout.strip().splitlines()[-1] if made.returncode == 0 and made.stdout.strip() else ""
+
+
+def owed_record(root, args, today, read_rows):
+    rows, runner, row_id = read_rows(root), (args.runner or "").strip(), args.id
+    live = args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"))
+    if row_id not in rows:
+        sys.exit("REFUSED: no row %s. Fix: add it first." % row_id)
+    if not runner or "\t" in runner or "\n" in runner:
+        sys.exit("REFUSED: --runner names the machine that owes the proof. Fix: pass --runner NAME.")
+    if re.match(r"\d{4}-\d{2}-\d{2}$", rows[row_id]["seen_red"]):
+        sys.exit("REFUSED: %s is already seen failing, so nothing is owed." % row_id)
+    if row_id not in owed_read(root):
+        issue = owed_issue(root, row_id, runner, live)
+        with open(os.path.join(root, ".loop", OWED), "a", newline="\n") as out:
+            out.write("\t".join((row_id, today(), runner, issue)) + "\n")
+        print("OWED %s: red proof owed on %s (to-do %s). The goal goes on." % (row_id, runner, issue or "not opened"))
+    return 0

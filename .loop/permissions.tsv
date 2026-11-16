@@ -1,0 +1,11 @@
+# routine	allow|deny	rule	why
+health-round	allow	Bash(python3 skills/workflow-health/scripts/automation.py:*)	the round: local tick, status, register
+health-round	allow	Bash(python3 skills/workflow-health/scripts/health.py:*)	check, file and judge by hand when the tick stops
+health-round	allow	Bash(gh auth status)	the tick's first probe
+health-round	allow	Bash(gh api:*)	reads the repo's issues and runs
+health-round	allow	Bash(gh issue:*)	files and updates the round's issues, with --live
+health-round	allow	Read(~/.workflow-loop/**)	the schedule home: records, mail.env, last run
+regression-round	allow	Bash(gh workflow run:*)	starts the regression workflow
+regression-round	allow	Bash(gh run:*)	watches and reads the run summary
+regression-round	allow	Bash(gh issue list:*)	checks one open issue per failing row
+regression-round	allow	Bash(gh issue view:*)	reads a failing row's issue

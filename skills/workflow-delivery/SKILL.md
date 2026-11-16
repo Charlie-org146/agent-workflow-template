@@ -12,14 +12,12 @@ first.
 Delivery is a wrapper around your own skill suite: you bring the skills that shape an idea, plan it, review it, test it
 and ship it. A private file outside the repo, `~/.workflow-loop/flow.json`, names them, the command that runs them, the
 environment that puts them in their own unattended mode, and a probe that proves it. Setup fills it with `built-in`
-steps (`references/commands.md`, The built-in flow), so it runs standalone; with no flow file, every command refuses. `loop-files.md`.
-
-The operation session is for governance only: it assigns and watches, and never runs `go` itself.
+steps (`references/commands.md` (The built-in flow)), so it runs standalone; with no flow file, every command refuses. `loop-files.md`.
 
 ## `go "<goal>" --done "<line>" ... [--touches "<file,file>"]`
 
-**One session governs, and the others build.** In an interactive session, don't build the goal yourself. Hand it to
-`workflow-monitoring`, then watch:
+**One session governs, and the others build.** In an interactive session, don't build the goal yourself (the operation
+session assigns and watches, and never runs `go`). Hand it to `workflow-monitoring`, then watch:
 
 ```bash
 python3 <workflow-monitoring>/scripts/watch.py go "<goal>" --done "<line>" --touches "<file,file>"
@@ -64,7 +62,9 @@ Run it again until it stops printing `RUNNING`: a step can take many minutes. Th
 
 - `RECORDED`: the step is done, or skipped with a reason (a test step with no browser, say). Go on to what `NEXT` says.
 - `WAITING`: the step left a decision only the owner can make. Stop. It shows under Waiting on you. After the answer,
-  run `goal.py answer <slug>`, then run the step again with `--note "<the owner's answer>"`.
+  run `goal.py answer <slug>`, then run the step again with `--note "<the owner's answer>"`. If the decision is a review
+  or un-review and `.git/loop/owner-words.tsv` holds a record for it, written only by the operation session, that record
+  is the owner's words: use `criteria.py ... --user --owner-record ID` and don't ask for them again.
 - `TRY n OF 3 FAILED`: fix the cause, then run the step again.
 - `REFUSED (no try used)`: a format slip (no DEPTH or STEP line, say). Fix the reply as `NEXT` says and record again.
 
@@ -75,8 +75,8 @@ or follow-up. How steps report tokens (and how to report a step `flow.py` didn't
 The idea step writes the design and the plan step reviews it into a plan, both in your skills' own files. Commit
 anything they put in the worktree.
 
-**The regression lane.** The full suite runs once per goal, in qa: `flow.py qa` runs it on the committed HEAD before
-your skill starts, and `flow.py ship` and `goal.py pr` reuse it (`REUSED`). `references/commands.md` (The regression
+**The regression lane.** The loop runs only the affected rows, once per goal, in qa, within `test_budget_minutes`: `flow.py qa` runs
+them on the committed HEAD before your skill starts, and `flow.py ship` and `goal.py pr` reuse them (`REUSED`). The full suite runs on the schedule. `references/commands.md` (The regression
 lane) has its rules: the `test_record` prefix, `LANE_DIRTY`, `LANE_MISSING` and the failed-try exception.
 
 ### 3. Build
@@ -84,18 +84,16 @@ lane) has its rules: the `test_record` prefix, `LANE_DIRTY`, `LANE_MISSING` and 
 Run `goal.py step <slug> build`. Make the change the plan describes, add tests for each done line, and commit.
 
 Then fill in `## Verify by hand` in the goal file, and commit it: the steps a person follows to see the change work with
-their own eyes. A release refuses without at least one.
+their own eyes, not what the tests already prove. A release refuses without at least one.
 
 ```markdown
 1. Run `python3 calc.py median 1 2 3`.
    Expect: it prints 2.
 ```
 
-Write what they can see, not what the tests already prove.
-
 ### 4. Pull request
 
-Run `goal.py pr <slug>`. It first merges the latest base branch, and only a real conflict costs a try (it aborts the
+Run `goal.py pr <slug>`. Goals at pr take turns per repo (one at a time, in order: a later goal prints `WAITING pr queue` and merges nothing; run `pr` again). It first merges the latest base branch; a conflict, or a lane that fails while the base moved, is a try lost to main moving: it is not counted against `max_tries` but against `max_moved` (default 5, then it counts). On a conflict it aborts the
 merge: merge the base yourself, commit, and run `pr` again; a conflict only in Tests.md or the regression tsv files is
 mended and merged, `MENDED`, and a lane that ends with no exit status, LANE_DIED, reruns free up to 3 times). It refuses until every flow step is done or skipped, and
 while the issue or finding the goal fixes ("fixes #N", "fixes finding:SLUG") has no defect test: a regression row of
@@ -140,7 +138,7 @@ Then stop. In a monitored run, `report` shows it. After the answer, run `goal.py
 
 ## Command map
 
-Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. Wiki Usage lines use the left column.
+Asking the agent for one of these runs exactly the routine beside it, from the skill's folder. The README's How to use tables start from these asks.
 
 | Ask | Runs |
 |---|---|

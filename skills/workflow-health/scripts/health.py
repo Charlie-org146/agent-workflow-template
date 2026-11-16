@@ -5,14 +5,14 @@ usage: health.py check [--json] [--group NAME[,NAME]] [--skip NAME[,NAME]]
        health.py review [--feature NAME] [--json]          (judge.py; judge and suggest are aliases)
        health.py preview [--group NAME[,NAME]] [--feature NAME] [--review FILE]
        health.py file --group NAME[,NAME] [--feature NAME] [--review FILE]
-       health.py triage [--feature NAME] [--close --kind K --why WORDS [--older DAYS] [--yes] [--max N]]
+       health.py triage [--feature NAME] [--close (--kind K | --issue N ...) --why WORDS [--older DAYS] [--yes] [--max N]]
 
-check prints the formal report (report.py): the twelve groups of report.py, each under a heading with its angle, every
-rule marked pass, warn, fail or unread with its fix, then one verdict, HEALTH: green or not green. Only FAIL and UNREAD
-turn it red (exit 1). Every rule has a negative control (controls.py); a rule with none makes health.py refuse (exit 2).
+check prints the formal report (report.py): the twelve groups, each under a heading with its angle, every rule marked
+pass, warn, fail or unread with its fix, then one verdict, HEALTH: green or not green. Only FAIL and UNREAD turn it red
+(exit 1). Every rule has a negative control (controls.py); a rule with none makes health.py refuse (exit 2).
 preview lists what file would do and writes nothing; file writes GitHub issues tagged with each finding's group
-(file.py, issues.py); triage lists and closes them in batches (issues.py). Rules live here and in defects.py
-and rules.py; --json prints the rows.
+(file.py, issues.py); triage lists and closes them in batches (issues.py). Rules live here, in defects.py and
+rules.py; --json prints the rows.
 """
 import argparse
 import datetime
@@ -25,7 +25,7 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No prompts: git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -33,8 +33,12 @@ if not sys.stdin or not sys.stdin.isatty():
 HERE = os.path.dirname(os.path.abspath(sys.argv[0]))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
+    from defects import setting
+except ImportError:  # lone health.py
+    setting = lambda root, key, default: default
+try:
     import report as G  # noqa: E402
-except ImportError:  # a lone health.py: only the rules it holds itself, in four groups, no angles
+except ImportError:  # lone health.py: its own rules only
     class G:
         RULES_OF = {"size": ("scripts",), "requirements": ("rows", "proof", "done"), "docs": ("docs-check",),
                     "hygiene": ("findings", "waiting", "branches"), "mine": (), "controls": ()}
@@ -44,14 +48,13 @@ except ImportError:  # a lone health.py: only the rules it holds itself, in four
         ALIASES = {"criteria": "requirements", "cost": "performance"}
 
 LIMIT = 20 * 1024
-WARN_AT = LIMIT * 9 // 10
 FINDINGS_WARN = 5
 WAITING_HOURS = 24
-RULES = G.RULES  # every rule of the twelve groups; each needs a negative control
+RULES = G.RULES
 FAMILY = {name: name for name in G.ORDER}
 ORDER = G.ORDER
 NAMES = list(G.ORDER) + sorted(G.ALIASES)
-T0 = [float(os.environ.get("LOOP_HEALTH_T0") or 0) or None]  # check-time's start (set in cmd_check)
+T0 = [float(os.environ.get("LOOP_HEALTH_T0") or 0) or None]
 
 
 def run(args, cwd):
@@ -72,19 +75,22 @@ def sibling(skill, script):
 
 def size_rows(root):
     rows, good = [], 0
+    limit = setting(root, "health_script_bytes", LIMIT)
     for path in sorted(glob.glob(os.path.join(root, "skills", "*", "scripts", "*.*"))):
         if not path.endswith((".py", ".sh")):
             continue
-        size, name = os.path.getsize(path), os.path.relpath(path, root)
-        if size > LIMIT:
-            rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, LIMIT), "split it into modules"))
-        elif size >= WARN_AT:
-            rows.append(row("WARN", "size", name, "scripts", "%d bytes, %d%% of %d" % (size, size * 100 // LIMIT, LIMIT),
+        with open(path, "rb") as handle:  # LF bytes
+            size = len(handle.read().replace(b"\r\n", b"\n"))
+        name = os.path.relpath(path, root)
+        if size > limit:
+            rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, limit), "split it into modules"))
+        elif size >= limit * 9 // 10:
+            rows.append(row("WARN", "size", name, "scripts", "%d bytes, %d%% of %d" % (size, size * 100 // limit, limit),
                             "trim or split before it passes the limit"))
         else:
             good += 1
     if not rows:
-        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts under %d bytes" % (good, WARN_AT)))
+        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts under %d bytes" % (good, limit * 9 // 10)))
     return rows
 
 
@@ -103,6 +109,11 @@ def criteria_rows(root):
             loose += 1
         elif gap and "criterion has no regression row" in gap.group(2):
             rows.append(sibling_module("enforce").row(root, gap.group(1), row))
+        elif line.startswith("PENDING "):  # owed elsewhere: WARN past a week
+            old = re.search(r"owed on (.+?) since (\d{4}-\d{2}-\d{2})", line)
+            if old and (datetime.date.today() - datetime.date.fromisoformat(old.group(2))).days > 7:
+                rows.append(row("WARN", "tests", line.split()[1].rstrip(":"), "owed-proof", "proof owed on %s since %s" % old.groups(),
+                                "regression.py red ID --off-platform"))
         elif line.startswith(("DRAFT ", "UNPROVEN ")):
             word, key = line.split()[:2]
             rows.append(row("FAIL", "requirements", key.rstrip(":"), "proof", "a draft row: no command or level yet",
@@ -132,7 +143,7 @@ def docs_rows(root):
     for line in lines:
         kind, _, rest = line.partition(" ")
         page, _, detail = rest.partition(": ")
-        if kind == "CAP":  # the requirement limit belongs to Size requirements-per-page
+        if kind == "CAP":
             continue
         rows.append(row("WARN" if kind == "STALE" else "FAIL", "docs", page, kind.lower(), detail[:120],
                         "update the page with workflow-docs"))
@@ -143,8 +154,16 @@ def defect_rows(root):
     defects = sibling_module("defects")
     if not defects:
         return [row("UNREAD", "traceability", "defects", "defect-tests", "defects.py is not installed beside health.py")]
+    gone = exempt(root, [ref for ref, _ in defects.missing(root)])
     return [row("FAIL", "traceability", ref, "defect-tests", "closed by %s with no defect test" % source,
-                "regression.py add --category defect --link ...") for ref, source in defects.missing(root)]
+                "regression.py add --category defect --link ...") for ref, source in defects.missing(root) if ref not in gone]
+
+
+def exempt(root, refs):
+    """The #N refs among `refs` that are health or backlog issues."""
+    tracker = sibling_module("issues") if any(r[0] == "#" for r in refs) else None
+    found = tracker.fetch(root, "held")[0] if tracker else None
+    return {"#%d" % i["number"] for i in found or [] if {"health", "backlog"} & set(i.get("labels") or [])} & set(refs)
 
 
 def hours_old(stamp):
@@ -187,7 +206,7 @@ def hygiene_rows(root):
             if line.startswith("  ") and name.startswith("loop/"):
                 rows.append(row("WARN", "hygiene", name, "branch", "already merged into %s" % base,
                                 "worker.py cleanup"))
-    return rows  # lean.py's test-time, worktrees and local-branches are rules of their own (rule_functions)
+    return rows
 
 
 def sibling_module(name):
@@ -201,19 +220,24 @@ def sibling_module(name):
 
 
 def docs_check(root):
-    """docs.py's check."""
-    return docs_rows(root)
+    """docs.py's check plus each open delta (docs.py sync --open)."""
+    script, rows = sibling("workflow-docs", "docs.py"), docs_rows(root)
+    for line in run([sys.executable, script, "sync", "--open"], root).stdout.splitlines() if script else []:
+        page, _, detail = line[6:].partition(": ")
+        if line.startswith("DELTA "):
+            rows.append(row("FAIL", "docs", page, "delta", detail[:120], "review it: docs.py sync --accept %s:ID=repo|source" % page))
+    return rows
 
 
 def hard_unread(item):
-    """An UNREAD row that means its function didn't run."""
+    """An UNREAD row: its function didn't run."""
     return item["state"] == "UNREAD"
 
 
 def rule_functions():
-    """Each rule -> the function that checks it (and that its control calls)."""
+    """Each rule -> the function that checks it."""
     lean, extra = sibling_module("lean"), {}
-    for name in ("defects", "rules"):
+    for name in ("defects", "rules", "report"):
         module = sibling_module(name)
         extra.update(module.FUNCTIONS if module else {})
     found = {"scripts": size_rows, "rows": criteria_rows, "proof": criteria_rows, "done": criteria_rows,
@@ -225,11 +249,11 @@ def rule_functions():
     return {name: found[name] for name in RULES if name in found}
 
 
-MOVED = {"criteria": "requirements", "cost": "performance"}  # older family names some modules still return
+MOVED = {"criteria": "requirements", "cost": "performance"}
 
 
 def placed(item):
-    """A row with its family set to its rule's group (lean's test-time row reports in Performance)."""
+    """A row with its family set to its rule's group."""
     family = MOVED.get(item["family"], item["family"])
     if item["rule"] in G.GROUP_OF and family not in ("mine", "controls"):
         family = G.GROUP_OF[item["rule"]]
@@ -240,7 +264,7 @@ def controls_rows(root):
     controls = sibling_module("controls")
     if controls is None:
         return [row("UNREAD", "controls", "controls.py", "control", "controls.py is missing")]
-    return controls.run({name: (lambda root, fn=fn: [placed(i) for i in fn(root)]) for name, fn in rule_functions().items()}, HERE)
+    return controls.run({name: (lambda root, fn=fn: [placed(i) for i in fn(root)]) for name, fn in rule_functions().items()}, HERE) + controls.repo_controls(root)
 
 
 def mine_rows(root):
@@ -249,16 +273,17 @@ def mine_rows(root):
 
 
 def cost_rows(root):
-    cost = sibling_module("cost")
-    return (cost.cost_rows(root, HERE) + cost.timing_rows(root)) if cost else \
-        [row("UNREAD", "cost", "cost.py", "cost", "cost.py is missing")]  # timing_rows: REG-7
+    cost = sibling_module("milestone")
+    limits = sibling_module("file")
+    return (cost.cost_rows(root, HERE) + limits.limit_rows(root) + cost.timing_rows(root)) if cost and limits else \
+        [row("UNREAD", "cost", "milestone.py", "cost", "milestone.py or file.py is missing")]
 
 
 def gather(root, family, ran_rules=None):
-    """The rows of the groups asked (all when None), each rule function run once. A function that raises gives UNREAD
-    rows for its rules; ran_rules (a set) collects the rules whose function ran."""
+    """Rows of the groups asked (all when None), each rule function run once; one that raises gives UNREAD rows;
+    ran_rules (a set) collects the rules that ran."""
     asked = family or ORDER
-    T0[0] = T0[0] or time.time()  # check-time measures every command that gathers (check, judge, preview, file)
+    T0[0] = T0[0] or time.time()
     funcs, done, rows = rule_functions(), {}, []
     for name in asked:
         if name == "mine":
@@ -278,31 +303,32 @@ def gather(root, family, ran_rules=None):
             if fn not in done:
                 try:
                     done[fn] = [placed(item) for item in fn(root)]
-                except Exception as error:  # a broken rule is unread, never a pass
+                except Exception as error:
                     done[fn] = [row("UNREAD", name, rule, rule, "%s: %s" % (type(error).__name__, str(error)[:100]))]
-            if ran_rules is not None and not any(hard_unread(i) for i in done[fn]):  # a shared source unread: none ran
+            if ran_rules is not None and not any(hard_unread(i) for i in done[fn]):
                 ran_rules.add(rule)
     for got in done.values():
         rows += [item for item in got if item["family"] in asked]
-    return rows
+    mine = sibling_module("enforce")
+    return mine.repo_merge(root, rows, asked) if mine else rows
 
 
 def groups_of(text):
-    """Group names from a --group value (performance is cost), or None for all."""
+    """Group names from a --group value, or None for all."""
     names = [G.ALIASES.get(n.strip(), n.strip()) for n in (text or "").split(",") if n.strip()]
     bad = [n for n in names if n not in FAMILY]
     if bad:
         print("REFUSED[group]: unknown group %s. Groups: %s." % (", ".join(bad), ", ".join(NAMES)))
         sys.exit(2)
-    return list(dict.fromkeys(names)) or None  # a repeated name (cost,performance) runs once
+    return list(dict.fromkeys(names)) or None
 
 
 def report(rows, asked=None, ran_rules=None):
-    """The formal report from report.py; a lone health.py prints the bare rows and a verdict."""
+    """The formal report; a lone health.py prints bare rows and a verdict."""
     formal = sibling_module("report")
     if formal:
         built = formal.build(rows, asked, ran_rules)
-        return built[:4] + (built[6],)  # the rows the report shows, so --json rows agree with its counts
+        return built[:4] + (built[6],)
     counts = {state: sum(1 for item in rows if item["state"] == state) for state in ("PASS", "WARN", "FAIL", "UNREAD")}
     green = not counts["FAIL"] and not counts["UNREAD"]
     verdict = "HEALTH: %s (%d pass, %d warn, %d fail, %d unread)" % ("green" if green else "not green", *counts.values())
@@ -336,13 +362,13 @@ def cmd_check(args):
 
 
 def with_tests(text, root):
-    """The report with the test list just before its verdict, so the verdict stays the last line."""
+    """The report with the test list before its verdict."""
     last = len(text) - 1 if text and text[-1].startswith("HEALTH:") else len(text)
     return text[:last] + tests_block(root) + text[last:]
 
 
 def tests_block(root):
-    """Every test in workflow-regression's one format, grouped by feature, before the verdict; read-only."""
+    """Every test in workflow-regression's format, by feature; read-only."""
     script = sibling("workflow-regression", "tests.py")
     done = run([sys.executable, script, "list", "--root", root], root) if script else None
     if not done or done.returncode:
@@ -360,12 +386,13 @@ def main():
     item.add_argument("--group", "--family", dest="group", help="one of: " + ", ".join(NAMES))
     item.add_argument("--skip", default="", help="groups to leave out")
     item.set_defaults(func=cmd_check)
-    if commands:  # a lone health.py has check only
+    if commands:
         commands.add(sub, sys.modules[__name__])
     args = parser.parse_args()
     return args.func(args)
 
 if __name__ == "__main__":
     _controls = sibling_module("controls")
-    _controls and _controls.refuse(RULES)  # a new rule must come with its negative control (exit 2)
+    _controls and _controls.refuse(RULES)
+    _controls and _controls.refuse_repo()
     sys.exit(main())

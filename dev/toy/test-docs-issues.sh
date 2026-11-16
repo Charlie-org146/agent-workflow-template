@@ -2,7 +2,7 @@
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
-# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/references/template.md
+# reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/references/commands.md
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the docs fixes for four issues: a guide page skips the PRD contract (125), the audit takes a page's own
@@ -15,6 +15,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
 export LOOP_FLOW="$d/flow.json" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" PYTHONDONTWRITEBYTECODE=1
@@ -73,10 +74,6 @@ Review: **Unreviewed**
 ## Problem
 
 - I want the median of my numbers without working it out by hand.
-
-## Usage
-
-- `/toy median LIST` — Works out the median and prints it (`MEDIAN 2`). Refuses an empty list (exit 1, `REFUSED: no numbers`).
 
 ## Requirements
 

@@ -18,16 +18,19 @@ and a new queue line. Each change goes once into <git common dir>/loop/replan.lo
 a proposal already logged with the same reason is not logged or shown again.
 """
 import argparse
+import atexit
 import datetime
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import sessions as se  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 
@@ -166,6 +169,124 @@ def main():
         lines = plan()
     print("\n".join(lines) if lines else "REPLAN: no change")
     return 0
+
+
+
+# The goal limits (GRD-2): max_active_goals, plan_pause_percent and min_free_memory_gb decide whether a new goal starts.
+# pool.py usage PERCENT records the plan usage; watch.py and checkin.py read the rest. A limit set to 0 is off.
+
+
+def number(cfg, key, default):
+    """A whole number setting; unset gives the default, 0 turns the limit off, anything unreadable gives the default."""
+    value = cfg.get(key, default)
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else default
+
+
+def active_limit(cfg):
+    """Goals live at once: the smaller of `parallel` and `max_active_goals` (default 20); 0 means no limit."""
+    caps = [n for n in (graph.parallel_of(cfg), number(cfg, "max_active_goals", 20)) if n]
+    return min(caps) if caps else 0
+
+
+def plan_usage():
+    """The account's weekly plan usage in percent, as the operation session recorded it (`pool.py usage N`) in the last 12 hours, else None."""
+    try:
+        held = se.read(os.path.join(se.base(), "plan-usage.json"), {})
+        age = time.time() - graph.parse_at(held["at"]).timestamp()
+        return float(held["percent"]) if 0 <= age < 43200 else None
+    except (KeyError, TypeError, ValueError, AttributeError, OSError):
+        return None
+
+
+def plan_pause(cfg):
+    """Why no new goal starts, or '': weekly plan usage above plan_pause_percent (default 80, 0 turns it off). Unread usage never pauses."""
+    limit, used = number(cfg, "plan_pause_percent", 80), plan_usage()
+    return "plan usage %g%% is above plan_pause_percent %d%%; no new goal starts until it falls (PLAN_PAUSE)" % (used, limit) if limit and used is not None and used > limit else ""
+
+
+def memory_hold(cfg):
+    """Why no new goal starts, or '': free memory (workflow-regression's memory.free_gb, loaded by path) below min_free_memory_gb (default 4, 0 is off)."""
+    need = cfg.get("min_free_memory_gb", 4)
+    if isinstance(need, bool) or not isinstance(need, (int, float)) or need <= 0:
+        return ""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("memory", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-regression", "scripts", "lanes_cli.py"))
+        memory = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(memory)
+        free = memory.free_gb()
+    except Exception:
+        return ""
+    return "free memory %.1f GB is below min_free_memory_gb %g; no new goal starts (LOW_MEMORY)" % (free, need) if free is not None and free < need else ""
+
+
+def memory_waits(root_loop, hours=1):
+    """The lane waits for memory logged by the last `hours` (<git common dir>/loop/memory-waits.log), newest last."""
+    try:
+        with open(os.path.join(root_loop, "memory-waits.log")) as handle:
+            lines = handle.read().splitlines()
+    except OSError:
+        return []
+    cut = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 3600 * hours))
+    return [line for line in lines if line[:20] >= cut]
+
+
+def cmd_usage(args, cfg):
+    se.write(os.path.join(se.base(), "plan-usage.json"), {"percent": args.percent, "at": graph.iso(datetime.datetime.now(datetime.timezone.utc))})
+    print("PLAN USAGE %g%% recorded: %s" % (args.percent, plan_pause(cfg) or "no pause"))
+    return 0
+
+
+# The merge slot (GRD-2): a goal whose pr lane has started holds it until it merges or fails, so the merge.py of a goal that
+# started its lane later waits for it. graph.pr_queue(op, runs, slug) forwards hold, free and before here.
+def folder(runs):
+    return os.path.join(os.path.dirname(runs), "pr-slots")
+
+
+def pr_hold(runs, slug):
+    """Take the slot at the lane's start (the first start time stays) and keep it fresh on each call."""
+    path = os.path.join(folder(runs), slug)
+    os.makedirs(folder(runs), exist_ok=True)
+    if not os.path.exists(path):
+        with open(path, "w") as handle:
+            handle.write(str(time.time_ns()))
+    os.utime(path)
+
+
+def pr_free(runs, slug):
+    try:
+        os.unlink(os.path.join(folder(runs), slug))
+    except OSError:
+        pass
+
+
+def pr_before(runs, slug):
+    """The other goal that holds the slot and started its lane before slug's, else "". A holder silent for
+    LOOP_MERGE_LOCK_SECONDS (1800) is dropped; a goal with no slot of its own waits for none."""
+    limit, held = int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800), []
+    try:
+        for name in os.listdir(folder(runs)):
+            path = os.path.join(folder(runs), name)
+            if time.time() - os.path.getmtime(path) > limit:
+                os.unlink(path)
+            else:
+                held.append((int(open(path).read()), name))
+    except (OSError, ValueError):
+        pass
+    mine = dict((n, j) for j, n in held).get(slug)
+    return min([(j, n) for j, n in held if n != slug and j < mine] or [(0, "")])[1] if mine else ""
+
+
+def pr_wait(runs, slug):
+    """merge.py: wait while another goal's pr lane that started first holds the slot, keeping this goal's own fresh, and give
+    the slot back when merge.py ends."""
+    atexit.register(lambda: pr_free(runs, slug))
+    told = ""
+    while ahead := pr_before(runs, slug):
+        told == ahead or print("WAITING: %s's pr lane started first and holds the merge slot; waiting for it to merge or fail" % ahead)
+        told = ahead
+        pr_hold(runs, slug)
+        time.sleep(float(os.environ.get("LOOP_SLOT_POLL") or 20))
 
 
 if __name__ == "__main__":

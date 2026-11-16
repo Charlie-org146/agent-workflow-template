@@ -35,17 +35,18 @@ GROUPS = (
     ("hygiene", "Hygiene", "a janitor's angle: is anything left lying around?",
      ("findings", "waiting", "branches", "worktrees", "local-branches", "idle-sessions")),
     ("adoption", "Adoption", "another repo's angle: would this work installed fresh?",
-     ("config", "checks-run-tests", "template-version", "scheduled", "machine", "no-fit", "agent-tools")),
+     ("config", "checks-run-tests", "template-version", "scheduled", "machine", "no-fit", "agent-tools", "prompt-pointer", "migration", "milestones", "matrix")),
     ("controls", "Controls", "the checker's own angle: can each rule fire?", ()),
 )
 MINE = ("mine", "Mine", "my private angle", ())
+REPO = ("repo", "Repo", "this repo's own angle", ())  # .loop/health-rules.json: a repo's own rules, beside the twelve
 MAX_GROUPS = 12
 assert len(GROUPS) == MAX_GROUPS, "exactly %d groups: retire one before adding another" % MAX_GROUPS
 
-ORDER = tuple(g[0] for g in GROUPS[:-1]) + ("mine", "controls")  # Mine reports just before Controls
-TITLE = {g[0]: g[1] for g in GROUPS + (MINE,)}
-ANGLE = {g[0]: g[2] for g in GROUPS + (MINE,)}
-RULES_OF = {g[0]: g[3] for g in GROUPS + (MINE,)}
+ORDER = tuple(g[0] for g in GROUPS[:-1]) + ("repo", "mine", "controls")  # Repo, then Mine, report just before Controls
+TITLE = {g[0]: g[1] for g in GROUPS + (MINE, REPO)}
+ANGLE = {g[0]: g[2] for g in GROUPS + (MINE, REPO)}
+RULES_OF = {g[0]: g[3] for g in GROUPS + (MINE, REPO)}
 GROUP_OF = {rule: g[0] for g in GROUPS for rule in g[3]}
 RULES = tuple(rule for g in GROUPS for rule in g[3])  # every rule; each needs a negative control (controls.py)
 ALIASES = {"criteria": "requirements", "cost": "performance"}  # older --group names, kept for one release
@@ -54,16 +55,40 @@ LABELS = {"sync": "rows", "done-lines": "done", "open": "findings", "run": "wait
           "branch": "branches", "time": "cost", "tokens": "cost", "limit": "scripts"}
 
 
-def no_fit(root):
-    """no-fit: each open `- [adoption] <kind>: <subjects>. Fix: <fix>` line of .loop/findings.md (setup writes them) is one WARN row."""
+MATRIX_DAYS = 7
+MATRIX_V1 = (("Claude Code on Windows", (("claude-app", "windows"), ("claude-cli", "windows"))),  # label, cells any of which proves it
+             ("Claude Code on macOS", (("claude-app", "macos"), ("claude-cli", "macos"))),
+             ("CI on Linux", (("ci", "linux"),)))
+
+
+def matrix(root):
+    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv (dev/toy/matrix-smoke.py) within 7 days; no file,
+    no rows. Never ran: WARN pending. No pass in time: WARN not proven, FAIL for a V1-required cell."""
     from defects import row
+    from rules import days_since
     try:
-        text = open(os.path.join(root, ".loop", "findings.md")).read()
+        lines = [l.rstrip("\n").split("\t") for l in open(os.path.join(root, ".loop", "matrix-runs.tsv")) if l.strip() and not l.startswith("#")]
     except OSError:
         return []
-    found = [(re.match(r"^- \[adoption\] ([\w-]+): (.+?)\. Fix: (.+?)\s*$", l), l) for l in text.splitlines()]
-    return [row("WARN", "adoption", m.group(1), "no-fit", "did not fit when adopted: " + m.group(2), m.group(3), m.group(2))
-            for m, line in found if m and not line.rstrip().endswith("[closed]")]
+    last, ok = {}, set()  # cell -> newest (date, result); cells with a pass in time
+    for c in (c for c in lines if len(c) >= 6 and days_since(c[0]) is not None):
+        last[c[1], c[2]] = max(last.get((c[1], c[2]), ("", "")), (c[0], c[5]))
+        if c[5] == "pass" and days_since(c[0]) <= MATRIX_DAYS:
+            ok.add((c[1], c[2]))
+    v1 = {c for _, cells in MATRIX_V1 for c in cells}
+    out = []
+    for label, cells, bad in [(l, cs, "FAIL") for l, cs in MATRIX_V1] + [
+            ("%s on %s" % (a, o), ((a, o),), "WARN") for a in ("claude-app", "claude-cli", "codex") for o in ("windows", "macos", "linux") if (a, o) not in v1]:
+        seen = sorted(last[c] for c in cells if c in last)
+        if not ok.intersection(cells):
+            out.append(row(bad if seen else "WARN", "adoption", label, "matrix",
+                           "not proven: last run %s %s, no pass in %d days" % (*seen[-1], MATRIX_DAYS) if seen else "pending: no run recorded",
+                           "run dev/toy/matrix-smoke.py on that machine, or the matrix job in CI", ".loop/matrix-runs.tsv"))
+    return out
+
+
+FUNCTIONS = {"matrix": matrix}  # health.py reads this like the other rule modules
+
 
 
 def bare_agent(command):
@@ -143,6 +168,8 @@ def groups(rows, asked):
     ran, skipped = [], []
     for name in ORDER:
         mine = [item for item in rows if item["family"] == name]
+        if name == "repo" and all(item["state"] == "INFO" for item in mine):
+            continue  # no repo rules: the header and headings read as they did before the repo layer
         if asked and name not in asked:
             skipped.append((name, "not asked"))
         elif name == "mine" and mine and all(item["state"] == "INFO" for item in mine):
@@ -155,7 +182,7 @@ def groups(rows, asked):
 def build(rows, asked=None, ran_rules=None):
     """(lines, counts, green, verdict, ran, skipped, rows) for the fixed template."""
     ran, skipped = groups(rows, asked)
-    rows = complete(rows, [name for name in ran if name != "mine"], ran_rules)
+    rows = complete(rows, [name for name in ran if name not in ("mine", "repo")], ran_rules)
     counts = {state: sum(1 for item in rows if item["state"] == state) for state in ("PASS", "WARN", "FAIL", "UNREAD")}
     green = not counts["FAIL"] and not counts["UNREAD"]
     verdict = "HEALTH: %s (%d pass, %d warn, %d fail, %d unread)" % (
@@ -235,7 +262,8 @@ def plan_for(h, root, asked, with_judge, only=None, saved=None):
     issues, everything, why = filing.held_all(root)
     if issues is None:
         refuse("gh", "can't list the issues (%s). Nothing was written." % why)
-    return filing, filing.plan(rows, issues, groups, extra, judged, root, ran, everything, only), groups
+    return filing, filing.plan(rows, issues, groups, extra, judged, root, ran, everything, only,
+                               bool(saved) and bool(h.sibling_module("judge").answered(saved))), groups
 
 
 def cmd_preview(h, args):
@@ -264,9 +292,9 @@ def cmd_triage(h, args):
     triage = h.sibling_module("issues") or refuse("triage", "issues.py is not installed beside health.py")
     root = h.repo_root()
     if args.close:
-        if not args.kind:
-            refuse("kind", "close needs --kind (a group such as docs, or review-gap)")
-        return triage.close(root, args.kind, args.why, args.feature, args.older, args.yes, args.max)
+        if not args.kind and not args.issue:
+            refuse("kind", "close needs --kind (a group such as docs, or review-gap) or --issue N")
+        return triage.close(root, args.kind, args.why, args.feature, args.older, args.yes, args.max, tuple(args.issue))
     return triage.listing(root, args.feature)
 
 
@@ -305,6 +333,7 @@ def add(sub, h):
     item.add_argument("--feature")
     item.add_argument("--close", action="store_true")
     item.add_argument("--kind")
+    item.add_argument("--issue", type=int, action="append", default=[], help="close only this issue number (repeatable)")
     item.add_argument("--why", default="")
     item.add_argument("--older", type=int, default=0)
     item.add_argument("--yes", action="store_true")

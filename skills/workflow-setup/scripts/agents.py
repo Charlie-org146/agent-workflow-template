@@ -2,13 +2,6 @@
 """Wire the same workflow skills into each agent's entry file, so Claude Code and Codex run the same loop the same way.
 
 usage: agents.py wire [--repo DIR] [--dry-run]
-
-Writes one marked block (between <!-- workflow-loop --> and <!-- /workflow-loop -->) into each file the repo setting
-agent_files names (default CLAUDE.md and AGENTS.md; [] turns wiring off): it creates a missing file, replaces only the
-block in a file that holds one, and appends the block to a file that has none. Text outside the block is never touched;
-line endings and a byte-order mark are kept as found; a file linked to another is wired once. The block itself comes
-from the sibling workflow-docs skill (entry.py block): read .loop/START.md first, the installed skills and how to ask for
-their commands. --dry-run prints what it would write and writes nothing. It never commits: setup and update stage it.
 """
 import argparse
 import importlib.util
@@ -23,7 +16,6 @@ ENTRY = os.path.join(os.path.dirname(os.path.dirname(HERE)), "workflow-docs", "s
 OPEN, CLOSE = "<!-- workflow-loop -->", "<!-- /workflow-loop -->"
 BOM = "\ufeff"
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -142,8 +134,10 @@ def apply(repo):
         print("WARN: entry.py write failed (exit %s); .loop/START.md may be stale. Fix: run docs.py audit" % code, file=sys.stderr)
     for line in wire(repo)[1]:
         print(line, file=sys.stderr if line.startswith("REFUSED") else sys.stdout)
-    root = os.path.realpath(repo)
-    return [p for p in [os.path.join(".loop", "START.md")] + targets(repo)
+    root, render = os.path.realpath(repo), os.path.join(os.path.dirname(ENTRY), "render.py")
+    done = subprocess.run([sys.executable, render, "blocks"], cwd=repo, capture_output=True, text=True) if os.path.isfile(render) else None
+    wrote = [x.split()[1] for x in done.stdout.splitlines() if x.startswith("WROTE ")] if done else []
+    return [p for p in [os.path.join(".loop", "START.md")] + targets(repo) + wrote
             if os.path.exists(os.path.join(repo, p)) and inside(root, os.path.realpath(os.path.join(repo, p)))]
 
 
@@ -159,6 +153,40 @@ def sibling(skill, script):
     return path if os.path.exists(path) else None
 
 
+BUILT = (("health", "Checks the repo, files findings.", "health_cron"), ("regression", "Runs the regression rows.", "regression_cron"),
+         ("digest email", "Mails the round's digest.", ""))
+
+
+def fill_automation(held, repo):
+    """held's automation list plus the three built-in routines on the repo's one Mac task."""
+    out, path = held.get("automation"), sibling("workflow-health", "workflows.py")
+    if not isinstance(out, list) or not path:
+        return out
+    sys.path.insert(0, os.path.dirname(path))
+    try:
+        workflows = importlib.import_module("workflows")
+    finally:
+        sys.path.pop(0)
+    for name, does, key in BUILT:
+        if not any(isinstance(e, dict) and e.get("name") == name for e in out):
+            out = out + [dict(name=name, does=does, cadence=str(held[key]) if key else "with each health round",
+                              runs="mac:" + workflows.task_name(repo), **({"enabled": False} if not key and held.get("digest_mail") == "off" else {}))]
+    return out
+
+
+def migration_check(argv):
+    """setup.py migration-check."""
+    path = sibling("workflow-health", "defects.py")
+    if not path:
+        sys.stderr.write("REFUSED: workflow-health is not installed beside workflow-setup; nothing was changed. Fix: install the "
+                         "workflow-health skill from the same release, then rerun\n")
+        return 4
+    spec = importlib.util.spec_from_file_location("defects", path)
+    sys.modules["defects"] = module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.main(argv)
+
+
 def refuse(what, fix):
     sys.stderr.write("REFUSED: %s. Fix: %s\n" % (what, fix))
     return 1
@@ -170,7 +198,6 @@ HOOKS = {"reply_hook.py": ("Stop", None, "it checks only the operation session's
 
 
 def reply_hook(repo, remove, name="reply_hook.py"):
-    """Add (or with remove, take out) one operation-session hook (HOOKS) in the repo's machine-local Claude settings."""
     event, matcher, what = HOOKS[name]
     script = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring",
                                            "scripts", name))
@@ -200,7 +227,7 @@ def reply_hook(repo, remove, name="reply_hook.py"):
         return refuse("%s has hooks in a shape this can't edit safely; nothing was written" % path,
                       'make "hooks" an object whose "%s" is a list of {"hooks": [...]} groups' % event)
     command = "if [ -f '%s' ]; then python3 '%s'; fi" % (script, script)
-    mine = lambda h: isinstance(h, dict) and "/%s'" % name in str(h.get("command", ""))
+    mine = lambda h: isinstance(h, dict) and "/%s'" % name in str(h.get("command", "")).replace("\\", "/")
     had = [h for g in stops for h in g.get("hooks", []) if mine(h)]
     if remove and not had:
         print("HOOK: not installed%s" % ("" if name == "reply_hook.py" else " (%s)" % name))
@@ -208,7 +235,7 @@ def reply_hook(repo, remove, name="reply_hook.py"):
     if not remove and [h.get("command") for h in had] == [command]:
         print("HOOK: already installed%s" % ("" if name == "reply_hook.py" else " (%s)" % name))
         return 0
-    kept = []  # every other group and hook as it was; a group left empty only by taking ours out goes
+    kept = []
     for group in stops:
         rest = [h for h in group.get("hooks", []) if not mine(h)]
         if rest or not any(mine(h) for h in group.get("hooks", [])):
@@ -263,8 +290,7 @@ def kinds_of(acts):
 
 
 def update_findings(text, kinds):
-    """The findings text with this tool's [adoption] lines set to kinds: a line is rewritten when its subjects change and dropped
-    when none are left; any other line, or one the owner marked [closed], stays."""
+    """The findings text with this tool's [adoption] lines set to kinds."""
     line = lambda k: "- [adoption] %s: %s. Fix: %s" % (k, ", ".join(sorted(set(kinds[k]))), FIXES[k])
     out, seen = [], set()
     for row in text.split("\n"):
@@ -281,7 +307,7 @@ def update_findings(text, kinds):
 
 
 def ignore_lines(blocked):
-    """Exception lines for what the repo's own ignore file blocks: (path, line, source) from survey.ignored; one *.tsv line a folder."""
+    """Exception lines for what the repo's own ignore file blocks."""
     own = [(p, l) for p, l, src in blocked if os.path.basename(src) == ".gitignore" and not os.path.isabs(src) and not src.startswith(".git/")]
     return list(dict.fromkeys("!%s/*.tsv" % os.path.dirname(p) if l.endswith(".tsv") and "/" in p else l for p, l in own))
 
@@ -314,7 +340,7 @@ def home_page(repo, names, pf):
 
 
 def readme_with(text, names, pf):
-    """The README with a '### How to use <Feature>' section (DOC-5) added for each page that lacks one; its words kept."""
+    """The README with a '### How to use <Feature>' section (DOC-5) added for each page that lacks one."""
     block = "\n\n".join("### %s\n\nAsk for %s in plain words.\n\n%s" % (pf.heading_of(n), n, "\n".join(pf.table(pf.FRONT, [['"Show me %s"' % n.lower(), PLACEHOLDER]])))
                          for n in names if pf.heading_of(n) not in text)
     if not block:

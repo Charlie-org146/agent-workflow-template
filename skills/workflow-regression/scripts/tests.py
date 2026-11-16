@@ -60,6 +60,31 @@ def cell(text, raw=False):
     return text if raw else text.replace("|", "\\|")
 
 
+def linked_prd(root, page, text):
+    """The linked PRD's text for a link-form page (its docs.tsv source or 'PRD:' line), read through workflow-docs beside
+    this skill; '' when the page is not link-form or the source cannot be read (its ids are then unknown)."""
+    try:
+        with open(os.path.join(root, ".loop", "prd", page + ".md"), encoding="utf-8") as handle:  # the repo's copy, when sync made one (DOC-17)
+            copy = handle.read()
+        if "\n## Requirements" in copy:
+            return copy
+    except OSError:
+        pass
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("prd_reader", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "deployments.py"))
+        if os.path.dirname(spec.origin) not in sys.path:
+            sys.path.insert(0, os.path.dirname(spec.origin))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        with open(os.path.join(root, ".loop", "docs.tsv")) as handle:  # the optional third column is the page's PRD source
+            cols = {x.split("\t")[0]: x.rstrip("\n").split("\t") for x in handle if x.strip() and x[0] != "#"}
+        source = mod.link_of(text, (cols.get(page, []) + ["", "", ""])[2].strip())
+        return (importlib.import_module("prd").read_link(source)[0] or "") if source else ""
+    except Exception:  # an unreadable source leaves its ids unknown; the docs check names it UNREAD
+        return ""
+
+
 def features(root):
     """(page titles in page order, {requirement id: (title, words)}); an id on two pages stays with the first."""
     try:
@@ -74,6 +99,8 @@ def features(root):
         head = re.search(r"^# (.+)$", text, re.M)
         title = head.group(1).strip() if head else os.path.basename(name)[:-3]
         part = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", text, maxsplit=1)
+        if len(part) < 2:  # a link-form page: its requirements are in the linked PRD
+            part = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", "\n" + linked_prd(root, os.path.basename(name)[:-3], text), maxsplit=1)
         if len(part) < 2:
             continue
         titles.append(title)
@@ -294,3 +321,15 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def lane_checks(top, contexts):
+    """The required checks whose workflow job only runs regression.py get a status (#3840); the others print BLOCKS."""
+    jobs, flows = [], os.path.join(top, ".github", "workflows")
+    for name in os.listdir(flows) if os.path.isdir(flows) else []:
+        jobs += re.findall(r"^  ([\w-]+):\n((?:    .*\n|\n)*)", open(os.path.join(flows, name), errors="replace").read() + "\n", re.M)
+    ok = [c for c in contexts for j, b in jobs if c in (j, *re.findall(r"^    name:\s*(.+?)\s*$", b, re.M)) and re.search(r"run:", b)
+          and all("regression.py" in r for r in re.findall(r"run:\s*(.+)", b)) and not re.search(r"uses:\s*(?!actions/)", b)]
+    for c in set(contexts) - set(ok):
+        print("BLOCKS: %s is a check the lane does not run, so it posts no status for it (BLOCKS)" % c)
+    return ok

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Post one digest comment per round, and run the local schedule that makes the rounds.
 
-usage: automation.py local install [--load] | uninstall | status [--json] | plist | tick [--scheduled] [--dry-run] [--repo P]
+usage: automation.py local install [--load] | register | uninstall | status [--json] | plist | tick [--scheduled] [--dry-run] [--repo P]
                                          the one launch agent on this Mac (workflows.py); install registers this repo and writes
                                          the agent, printing the launchctl line that loads it (--load runs it); the tick runs
                                          health with the judge for every repo and the full regression for a private repo
@@ -75,6 +75,8 @@ def cmd_local(args):
         return workflows.tick(args.scheduled, args.dry_run, args.repo)
     if args.action == "status":
         return local_status(args.json)
+    if args.action == "register":
+        return rounds.register_repo(workflows, args.root, config(args.root))
     if args.action == "plist":
         print(workflows.agent_text(workflows.load()), end="")
         return 0
@@ -228,7 +230,7 @@ def cmd_digest(args):
             print("DIGEST: gh couldn't read the digest comments, so nothing was posted.")
             return 1
         if earlier:  # an earlier attempt posted it but couldn't save the body: repair, never post twice
-            gh("issue", "edit", str(number), "--body", INTRO + rounds.marker(run_id, earlier["state"]["open"]))
+            gh("issue", "edit", str(number), body=INTRO + rounds.marker(run_id, earlier["state"]["open"]))
             print("DIGEST: already posted for run %s; state repaired (DIGEST_REPAIRED)" % run_id)
             return 0
     login, note = owner_of(args, cfg) if live else (args.owner or cfg.get("digest_owner") or "", "")
@@ -251,21 +253,21 @@ def cmd_digest(args):
         return 0
     if number is None:
         gh("label", "create", "automation", "--description", "The Automation digest")  # an existing one keeps its colour
-        made = gh("issue", "create", "--title", TITLE, "--label", "automation", "--body",
-                  INTRO + "<!-- automation-digest open= run=none -->")  # no milestone; its state only once its comment is posted
+        made = gh("issue", "create", "--title", TITLE, "--label", "automation",
+                  body=INTRO + "<!-- automation-digest open= run=none -->")  # no milestone; its state only once its comment is posted
         number = (re.findall(r"/issues/(\d+)", made.stdout) or [None])[-1]
         if made.returncode or not number:
             print("DIGEST: couldn't create the digest issue: %s" % (made.stderr.strip()[:200] or "no issue number"))
             return 1
         if gh("issue", "pin", number).returncode:
             print("WARNING: couldn't pin issue #%s (a repo pins at most three); the digest still posts there." % number)
-    posted = gh("issue", "comment", str(number), "--body", comment)
+    posted = gh("issue", "comment", str(number), body=comment)
     if posted.returncode:
         print("DIGEST: couldn't comment on #%s: %s" % (number, posted.stderr.strip()[:200]))
         return 1
     if run_id == "local" and state and state["run"].isdigit():  # a local digest keeps the last Actions run on the issue
         marker = rounds.marker(state["run"], {n: now_open[n][1] for n in now_open})
-    if gh("issue", "edit", str(number), "--body", INTRO + marker).returncode:  # the state the next round compares with
+    if gh("issue", "edit", str(number), body=INTRO + marker).returncode:  # the state the next round compares with
         print("DIGEST: posted on #%s, but couldn't save its state; a rerun repairs it from the comment" % number)
         return 1
     print("DIGEST: posted on #%s (%d open)" % (number, len(now_open)))
@@ -279,7 +281,7 @@ def main():
     item.add_argument("--check", action="store_true")
     item.set_defaults(func=cmd_workflow)
     item = sub.add_parser("local")
-    item.add_argument("action", choices=("install", "uninstall", "status", "plist", "tick"))
+    item.add_argument("action", choices=("install", "register", "uninstall", "status", "plist", "tick"))
     item.add_argument("--load", action="store_true")
     item.add_argument("--json", action="store_true")
     item.add_argument("--scheduled", action="store_true")

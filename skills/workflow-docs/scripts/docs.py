@@ -5,19 +5,21 @@ usage: docs.py <command> [options]
 
   survey                       show the wiki's pages and this repo's page map
   add PAGE --paths A,B         add a page and the paths it describes
-  check [--base REF]           list missing, stale, unmapped and unwritten pages, counts the repo doesn't match, and
-                               broken criteria; exit 1 if any
+  check [--base REF] [--own]   list missing, stale, unmapped and unwritten pages, counts the repo doesn't match, and
+                               broken criteria; exit 1 if any. --own: a stale page this branch's diff doesn't touch is
+                               a FINDING line, not a failure (the pr lane's rows use it)
   audit [--base REF] [--dry-run]
                                the one command: check every required doc, fix what is mechanical, list wording to rewrite
   criteria PAGE                print the requirement format and the next free id for a page
   publish [--dry-run] [--adopt PAGE]
                                copy the pages to the wiki, commit and push
+  sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]
+                               report each difference between an external PRD and .loop/prd/PAGE.md as a DELTA, post it for review, write an accepted side
   restore                      revert the last publish, if nothing came after it
   automation                   each routine's live state here: a workflow's newest run, a launch agent loaded or not
 
-With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/template.md).
-It also enforces the page format (pageformat.py, FORMAT lines) and that the generated Tests page matches a fresh render.
-criteria.py reviews requirements and PRDs and renders Tests; prd.py drafts and converts pages; counting.py reads counts.
+With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the page
+format (FORMAT lines) and that the generated Tests page matches a fresh render.
 
 Publish never deletes a page, and refuses to replace a page without this tool's marker unless you name it with --adopt.
 It runs git and nothing else.
@@ -35,9 +37,10 @@ import counting
 import criteria
 import entry
 import pageformat
-from counting import map_path, read_map, write_map  # noqa: F401
+import deployments
+from deployments import slurp
+from counting import map_path, read_map, sources, write_map  # noqa: F401
 
-# No terminal, no waiting.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GIT_EDITOR="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -60,7 +63,7 @@ def git(*args, cwd=None, check=True):
 
 
 def identity(cwd):
-    """git -c options giving a commit an author where none is configured, as on a CI runner; a real identity is kept."""
+    """git -c options giving a commit an author where none is configured (CI); a real identity is kept."""
     if git("config", "user.email", cwd=cwd, check=False):
         return []
     return ["-c", "user.name=workflow-docs", "-c", "user.email=workflow-docs@users.noreply.github.com"]
@@ -83,6 +86,10 @@ def wiki_dir(root):
     if os.path.isabs(name) or ".." in name.split("/"):
         sys.exit("REFUSED: wiki_dir must be a path inside the repo.")
     return name
+
+
+def page_file(root, page):
+    return os.path.join(root, wiki_dir(root), page + ".md")
 
 
 def wiki_url(root):
@@ -109,6 +116,12 @@ def state_file():
     return os.path.join(path, "wiki.json")
 
 
+def push(wiki, note=""):
+    pushed = run(["git", "push", "origin", "HEAD"], cwd=wiki)
+    if pushed.returncode:
+        sys.exit("REFUSED: wiki push failed%s: %s" % (note, pushed.stderr.strip()[:300]))
+
+
 def cmd_survey(_args):
     root = top()
     url = wiki_url(root)
@@ -120,8 +133,7 @@ def cmd_survey(_args):
         else:
             for name in sorted(os.listdir(temp + "/w")):
                 if name.endswith(".md"):
-                    with open(os.path.join(temp, "w", name)) as handle:
-                        ours = handle.read().startswith(MARKER)
+                    ours = slurp(os.path.join(temp, "w", name)).startswith(MARKER)
                     print("WIKI %s %s" % ("ours" if ours else "other", name[:-3]))
     finally:
         shutil.rmtree(temp, ignore_errors=True)
@@ -151,32 +163,38 @@ def cmd_add(args):
     return 0
 
 
+def netless(root, judged, mine):
+    """True when the paths read the same at HEAD as at the newest commit already judged: commits that add then revert a
+    change stale no page (issue 3771)."""
+    tip = git("rev-list", "--no-walk=sorted", "-n1", *judged, cwd=root, check=False)
+    return bool(tip) and not git("diff", "--name-only", tip, "HEAD", "--", *mine, cwd=root, check=False)
+
+
 def problems(root, base):
-    """Each page's trouble, as (kind, page, detail)."""
+    """Each page's trouble as (kind, page, detail)."""
     found = []
     rows = read_map(root)
     folder = wiki_dir(root)
     merged = from_base(root, base)
     for page, paths in sorted(rows.items()):
         if page in pageformat.GENERATED:
-            continue  # checked against a fresh render below
+            continue
         rel = "%s/%s.md" % (folder, page)
         full = os.path.join(root, rel)
         if not os.path.exists(full):
             found.append(("MISSING", page, rel))
             continue
-        with open(full) as handle:
-            text = handle.read()
-        if PLACEHOLDER in text or len(text.replace(MARKER, "").split()) < 10:
+        text = slurp(full)
+        if PLACEHOLDER in text or (len(text.replace(MARKER, "").split()) < 10 and not deployments.linked(root, page, text)):
             found.append(("UNWRITTEN", page, rel))
         seen = git("rev-list", "--no-merges", "HEAD", "--", rel, cwd=root, check=False).split()
         if not seen:
             continue
-        skip = ["^" + sha for sha in seen + [base] + merged if sha]  # merges add nothing
-        mine = paths + [":(exclude).loop/config.json"] * pageformat.is_guide(text)  # a guide isn't about settings values
-        changed = counting.real(root, git("log", "--no-merges", "--full-history", "--format=%h %s", "HEAD", *skip, "--", *mine,
-                                          cwd=root).splitlines(), mine)  # block-only commits say nothing
-        if changed:
+        judged = [sha for sha in seen + [base] + merged if sha]
+        mine = paths + [":(exclude).loop/config.json"] * pageformat.is_guide(text)
+        changed = counting.real(root, git("log", "--no-merges", "--full-history", "--format=%h %s", "HEAD", *["^" + sha for sha in judged], "--", *mine,
+                                          cwd=root).splitlines(), mine)
+        if changed and not netless(root, judged, mine):
             found.append(("STALE", page, "%d commits since the page: %s" % (len(changed), changed[0][:70])))
     held = os.path.join(root, folder)
     if os.path.isdir(held):
@@ -190,13 +208,13 @@ def problems(root, base):
 
 
 def from_base(root, base):
-    """With a base, the base-branch commits merged into this branch since it, as parents to skip: they were judged in
-    their own goal, so only what the branch itself changed can stale its pages."""
+    """With a base, the base-branch commits merged in since it, as parents to skip: judged in their own goal, so only the
+    branch's own changes stale its pages."""
     if not base:
         return []
     name = config(root).get("base") or "main"
     tips = [t for t in ("origin/" + name,) if git("rev-parse", "--verify", "--quiet", t, cwd=root, check=False)
-            and run(["git", "merge-base", "--is-ancestor", "HEAD", t], cwd=root).returncode]  # not on the base branch itself
+            and run(["git", "merge-base", "--is-ancestor", "HEAD", t], cwd=root).returncode]
     out = []
     for line in git("rev-list", "--merges", "--first-parent", "--parents", "HEAD", "^" + base, cwd=root, check=False).splitlines():
         for parent in line.split()[2:]:
@@ -207,32 +225,31 @@ def from_base(root, base):
 
 def guide(root, page):
     try:
-        with open(os.path.join(root, wiki_dir(root), page + ".md")) as handle:
-            return pageformat.is_guide(handle.read())
+        return pageformat.is_guide(slurp(page_file(root, page)))
     except OSError:
         return False
 
 
 def guarded(root, page):
-    """The first requirement or Review line on a page, shortened; '' when it has none."""
-    with open(os.path.join(root, wiki_dir(root), page + ".md")) as handle:
-        hit = next((x for x in handle.read().splitlines() if criteria.LINE.match(x) or x.startswith("Review: ")), "")
+    """The page's first requirement or Review line, shortened; '' when none."""
+    hit = next((x for x in slurp(page_file(root, page)).splitlines()
+                if criteria.LINE.match(x) or x.startswith("Review: ")), "")
     return pageformat.short(hit) if hit else ""
 
 
 def feature_pages(root):
-    """The mapped pages that exist, other than Home, guides and the generated ones."""
+    """The existing mapped pages other than Home, guides and the generated ones."""
     return [page for page in sorted(read_map(root)) if PAGE.match(page) and page != "Home" and page not in pageformat.GENERATED
-            and os.path.exists(os.path.join(root, wiki_dir(root), page + ".md")) and not guide(root, page)]
+            and os.path.exists(page_file(root, page)) and not guide(root, page)]
 
 
 def counts(root):
-    """Numbers the docs state that the repo can check, as (COUNT, file, detail) rows (counting.py)."""
+    """Numbers the docs state that the repo can check, as (COUNT, file, detail) rows."""
     return counting.counts(root, wiki_dir(root), read_map(root), config(root).get("criteria"))
 
 
 def contract(root):
-    """Criteria contract trouble, as (kind, page, detail). Off unless config sets "criteria": true."""
+    """Criteria contract trouble as (kind, page, detail); off unless config has "criteria": true."""
     if not config(root).get("criteria"):
         return []
     import render
@@ -254,8 +271,7 @@ def cmd_criteria(args):
         sys.exit("REFUSED: %s has no criteria. Fix: use a page listed in .loop/docs.tsv, not Home." % args.page)
     held = ""
     if os.path.exists(os.path.join(folder, args.page + ".md")):
-        with open(os.path.join(folder, args.page + ".md")) as handle:
-            held = handle.read()
+        held = slurp(os.path.join(folder, args.page + ".md"))
     own = re.findall(r"^- ([A-Z]{2,5})-\d+: ", held, re.M)
     prefix = PREFIXES.get(args.page) or (own[0] if own else re.sub(r"[^A-Z]", "", args.page.upper())[:3].ljust(2, "X"))
     used = [0]
@@ -275,8 +291,14 @@ def cmd_check(args):
         print("NO PAGES: run add first")
         return 1
     point = entry.problems(root)
-    notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]  # said, never a failure
+    notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]
     found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    from entry import perm_check
+    for line in perm_check(root):
+        (notes if line.startswith("NOTE") else found).append(("PERMISSIONS", "permissions.tsv", line))
+    if args.own:
+        import audit
+        found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main", args.own)
     for kind, page, detail in found + notes:
         print("%s %s: %s" % (kind, page, detail))
     if found:
@@ -287,6 +309,10 @@ def cmd_check(args):
 
 def cmd_audit(args):
     import audit
+    if args.relock:
+        done = audit.relock(top())
+        print("RELOCKED " + (", ".join(done) or "nothing"))
+        return 0
     return audit.audit(top(), args.base, args.dry_run)
 
 
@@ -297,8 +323,8 @@ def cmd_publish(args):
         sys.exit("REFUSED: no pages. Fix: run add first.")
     if config(root).get("criteria"):
         import render
-        render.refresh(root)  # the Settings and Automation blocks are written fresh, so the wiki gets them
-    found = problems(root, None) + [c for c in contract(root) if c[0] != "CHANGED"]  # Usage drift waits on the owner
+        render.refresh(root)
+    found = problems(root, None) + [c for c in contract(root) if c[0] != "CHANGED"]
     found += [c for c in counts(root) if c[1].startswith(wiki_dir(root) + "/")]
     if found:
         for kind, page, detail in found:
@@ -313,15 +339,13 @@ def cmd_publish(args):
         changed = []
         made = [name for name in pageformat.GENERATED if os.path.exists(os.path.join(root, wiki_dir(root), name + ".md"))]
         for page in sorted(set(rows) | set(made)):
-            with open(os.path.join(root, wiki_dir(root), page + ".md")) as handle:
-                text = handle.read()
+            text = slurp(page_file(root, page))
             if not text.startswith(MARKER):
                 sys.exit("REFUSED: %s lost its marker. Fix: restore the first line %s." % (page, MARKER))
             target = os.path.join(wiki, page + ".md")
             old = None
             if os.path.exists(target):
-                with open(target) as handle:
-                    old = handle.read()
+                old = slurp(target)
                 if not old.startswith(MARKER) and page not in args.adopt:
                     sys.exit("REFUSED: the wiki already has %s, and this tool didn't write it. Nothing was published. "
                              "Fix: rename your page, or pass --adopt %s to replace it." % (page, page))
@@ -338,9 +362,7 @@ def cmd_publish(args):
         git("add", "--", *[page + ".md" for page in changed], cwd=wiki)
         head = git("rev-parse", "--short", "HEAD", cwd=root)
         git(*identity(wiki), "commit", "-m", "Docs from %s: %s" % (head, ", ".join(changed)), cwd=wiki)
-        pushed = run(["git", "push", "origin", "HEAD"], cwd=wiki)
-        if pushed.returncode:
-            sys.exit("REFUSED: wiki push failed, nothing changed: " + pushed.stderr.strip()[:300])
+        push(wiki, ", nothing changed")
         after = git("rev-parse", "HEAD", cwd=wiki)
         with open(state_file(), "w") as handle:
             json.dump({"before": before, "after": after, "url": url, "pages": changed}, handle)
@@ -351,7 +373,25 @@ def cmd_publish(args):
 
 
 def cmd_automation(_args):
-    return counting.live(top())
+    import audit
+    return audit.live(top())
+
+
+def cmd_prompts(_args):
+    """One line per routine: the whole prompt its scheduler holds, a pointer to its Runbook."""
+    root = top()
+    parts = re.sub(r"(\.git)?/*$", "", git("remote", "get-url", "origin", cwd=root, check=False)).replace(":", "/").split("/")
+    repo = "/".join(parts[-2:]) if len(parts) > 1 else os.path.basename(root)
+    lines = deployments.prompts(root, repo, wiki_dir(root))
+    for routine, text in lines:
+        print("PROMPT %s: %s" % (routine, text))
+    print("PROMPTS: %d routine(s)" % len(lines))
+    return 0
+
+
+def cmd_sync(args):
+    import audit, milestones
+    return milestones.sync(top(), args) | audit.sync(top(), args.dry_run, args.accept, args.open)
 
 
 def cmd_restore(_args):
@@ -367,9 +407,7 @@ def cmd_restore(_args):
         if git("rev-parse", "HEAD", cwd=wiki) != held["after"]:
             sys.exit("REFUSED: the wiki changed after the last publish, so nothing was reverted.")
         git(*identity(wiki), "revert", "--no-edit", held["after"], cwd=wiki)
-        pushed = run(["git", "push", "origin", "HEAD"], cwd=wiki)
-        if pushed.returncode:
-            sys.exit("REFUSED: wiki push failed: " + pushed.stderr.strip()[:300])
+        push(wiki)
     finally:
         shutil.rmtree(temp, ignore_errors=True)
     os.remove(state_file())
@@ -380,27 +418,21 @@ def cmd_restore(_args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("survey").set_defaults(func=cmd_survey)
-    item = sub.add_parser("add")
-    item.add_argument("page")
-    item.add_argument("--paths", required=True)
-    item.set_defaults(func=cmd_add)
-    item = sub.add_parser("check")
-    item.add_argument("--base", default="")
-    item.set_defaults(func=cmd_check)
-    item = sub.add_parser("audit")
-    item.add_argument("--base", default="")
-    item.add_argument("--dry-run", action="store_true")
-    item.set_defaults(func=cmd_audit)
-    item = sub.add_parser("criteria")
-    item.add_argument("page")
-    item.set_defaults(func=cmd_criteria)
-    item = sub.add_parser("publish")
-    item.add_argument("--dry-run", action="store_true")
-    item.add_argument("--adopt", action="append", default=[])
-    item.set_defaults(func=cmd_publish)
-    sub.add_parser("restore").set_defaults(func=cmd_restore)
-    sub.add_parser("automation").set_defaults(func=cmd_automation)
+    flag = {"action": "store_true"}
+    for name, func, *opts in (
+            ("survey", cmd_survey),
+            ("add", cmd_add, ("page",), ("--paths", {"required": True})),
+            ("check", cmd_check, ("--base", {"default": ""}), ("--own", {"nargs": "?", "const": "HEAD"})),
+            ("audit", cmd_audit, ("--base", {"default": ""}), ("--dry-run", flag), ("--relock", flag)),
+            ("criteria", cmd_criteria, ("page",)),
+            ("publish", cmd_publish, ("--dry-run", flag), ("--adopt", {"action": "append", "default": []})),
+            ("sync", cmd_sync, ("--dry-run", flag), ("--accept", {"action": "append", "default": [], "metavar": "PAGE:ID=repo|source"}),
+             ("--open", flag)),
+            ("restore", cmd_restore), ("automation", cmd_automation), ("prompts", cmd_prompts)):
+        item = sub.add_parser(name)
+        for arg, *kw in opts:
+            item.add_argument(arg, **(kw[0] if kw else {}))
+        item.set_defaults(func=func)
     args = parser.parse_args()
     return args.func(args)
 

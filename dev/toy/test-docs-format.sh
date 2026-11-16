@@ -3,7 +3,7 @@
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
-# reads: skills/workflow-docs/references/template.md skills/workflow-health/scripts/judge.py
+# reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the page format (DOC-4..DOC-10): for each rule a bad page fails naming the page, section and rule and a good
@@ -15,6 +15,7 @@ unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)  # setup.py writes the private settings under HOME
+export USERPROFILE="$HOME"
 export LOOP_OWNER_WORDS='"review it" (the toy owner)'  # review --user with no terminal needs the owner's words
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
@@ -76,10 +77,6 @@ Review: **Unreviewed**
 
 - I want the median of my numbers without working it out by hand.
 
-## Usage
-
-- `/toy median LIST` — Works out the median and prints it (`MEDIAN 2`). Refuses an empty list (exit 1, `REFUSED: no numbers`).
-
 ## Requirements
 
 ### Functional
@@ -137,14 +134,13 @@ edit README.md "Say these to the agent:" "Say these to the agent:
 And a second intro line."; has "^FORMAT README:[0-9]*: How to use: DOC-5 only one intro line per section" && ok "DOC-5 a second intro line fails" || bad "front intro"; reset
 check | grep -q "^FORMAT README" && bad "good README" || ok "DOC-5 a front door of quoted phrases passes"
 
-echo "== DOC-6 Usage"
-edit $P " and prints it (\`MEDIAN 2\`). Refuses an empty list (exit 1, \`REFUSED: no numbers\`)." "."; has "^FORMAT Delivery:[0-9]*: Usage: DOC-6 each entry says what it prints" && ok "DOC-6 a Usage entry that says nothing printed fails naming the page, Usage and DOC-6" || bad "usage prints"; reset
-edit $P "Refuses an empty list" "Refuses an empty list
-It works out the median"; has "^FORMAT Delivery:[0-9]*: Usage: DOC-6 only .- .syntax. — what it does. entries" && ok "DOC-6 a prose line in Usage fails" || bad "usage prose"; reset
-edit $P '- `/toy median LIST`' '- `/toy mode LIST`'; has "^FORMAT Delivery:[0-9]*: Usage: DOC-6 the command is in its skill's Command map (got '/toy mode LIST')" && ok "DOC-6 a command missing from the Command map fails" || bad "usage map"; reset
-edit $P '- `/toy median LIST`' '- `calc.py median LIST`'; check | grep -q "^FORMAT Delivery:[0-9]*: Usage" && bad "usage routine" || ok "DOC-6 a routine named in the Command map passes"; reset
-check | grep -q "^FORMAT Delivery:[0-9]*: Usage" && bad "good usage" || ok "DOC-6 Usage of API entries passes"
-edit $P '- `/toy median LIST`' '- `   `'; out=$(check); grep -q "^FORMAT Delivery:[0-9]*: Usage: DOC-6 the command is in its skill's Command map" <<<"$out" && ! grep -q Traceback <<<"$out" && ok "DOC-6 a Usage entry whose backticks hold only spaces fails without a crash" || bad "usage blank: $out"; reset
+echo "== DOC-6 each skill's commands are in its command reference; a Usage section is gone"
+edit $P "## Requirements" "## Usage
+
+- \`/toy median LIST\` — Prints \`MEDIAN 2\`.
+
+## Requirements"; check | grep -q "^USAGE Delivery: has a Usage section" && ok "DOC-6 a Usage section fails with USAGE" || bad "usage section"; reset
+check | grep -q "^USAGE" && bad "good page has no Usage" || ok "DOC-6 a page with no Usage section passes"
 
 echo "== DOC-7 Requirements: sub-bullets"
 edit $P "  - The median of the numbers given is printed.
@@ -259,10 +255,10 @@ PY
 
 echo "== the format key in the rules block chooses the checks"
 mkdir -p "$d/sk"; cp -R "$here/skills" "$d/sk/"; sk="python3 $d/sk/skills/workflow-docs/scripts/docs.py"
-sed -i.bak 's/^format: .*/format: home, frontdoor, usage, bullets, tests/' "$d/sk/skills/workflow-docs/references/template.md"
+sed -i.bak 's/^format: .*/format: home, frontdoor, usage, bullets, tests/' "$d/sk/skills/workflow-docs/references/commands.md"
 edit $P "- I want the median of my numbers" "- Owners want the median of their numbers"
 $docs check | grep -q "Problem: DOC-8" && ! $sk check | grep -q "Problem: DOC-8" && ok "the format key without problem turns DOC-8 off" || bad "format key"; reset
-sed -i.bak 's/^format: .*/format: home, nosuch/' "$d/sk/skills/workflow-docs/references/template.md"
+sed -i.bak 's/^format: .*/format: home, nosuch/' "$d/sk/skills/workflow-docs/references/commands.md"
 $sk check 2>&1 | grep -q "REFUSED: the rules block" && ok "an unknown name in the format key refuses" || bad "format unknown"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

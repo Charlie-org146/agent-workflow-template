@@ -5,30 +5,33 @@
 usage: pool.py <command> [options]
 
   status              pool: F free, B busy, T total (target N)
-  need                how many sessions to create now (K) and the one action that does it; K is 0 unless the pool runs
-                      low (fewer free sessions than ready goals), then K = pool_size - total (every missing session)
+  need                how many sessions to create now (K); K is 0 unless the pool runs low (fewer free sessions
+                      than ready goals), then K = pool_size - total
   add ID [ID ...]     register sessions the operation session just created with the app, as free (POOLED)
   decline             the owner said "no pool": hide the ask until K grows past today's K (cleared once K is 0)
+  usage PERCENT       record the account's weekly plan usage (the operation session reads it from the app); above plan_pause_percent no goal starts
   return SLUG         a goal ended: its sessions go back to the pool, or are marked archive when the total is above
-                      pool_size (the check-in tells the operation session to archive them with the app); a merged
-                      goal's worktree and loop/SLUG branch are removed (a dirty worktree is kept and named)
+                      pool_size; a merged goal's worktree and loop/SLUG branch are removed (a dirty worktree is kept)
 
-Only the desktop app can create, rename or archive a session, so this script records and asks; the operation session
-acts. The pool file is <git common dir>/loop/session-pool.json (sessions.py owns its lock). A malformed entry is set
-aside in session-pool.bad.json and named under Issues; the rest of the pool keeps working (issue 122).
-Attempt identity (issue 114): each bind raises the run's `attempt`; a report that names an older attempt is recorded but
-not applied (attempt_ok). A freed session keeps who it was freed from in `history`, so a reuse never loses it.
+Only the desktop app can create, rename or archive a session, so this script records and asks. The pool file is
+<git common dir>/loop/session-pool.json (sessions.py owns its lock). A malformed entry is set aside in
+session-pool.bad.json (issue 122). Each bind raises the run's `attempt`; a report naming an older one is recorded but not
+applied (issue 114). A freed session keeps who it was in `history`.
 """
 import argparse
+import datetime
 import json
 import os
+import re
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import board_lines as prs  # noqa: E402  (its pull request lookups)
 import sessions as se  # noqa: E402
+import replan as lim  # noqa: E402  (the goal limits, GRD-2)
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 DEFAULT_SIZE = 20
@@ -58,7 +61,7 @@ def status_line(found, cfg):
 
 
 def board_line(found, root):
-    """The pool line under the live board's Running goals; '' if it can't be built (the board never fails for it)."""
+    """The pool line under the live board's Running goals; '' if it can't be built."""
     try:
         return status_line(found, se.read(os.path.join(root, ".loop", "config.json"), {}))
     except Exception:
@@ -70,10 +73,11 @@ def side_path():
 
 
 def need(found, cfg, ready):
-    """(K, declined): K sessions to create now. The pool runs low when free sessions are fewer than ready goals; then
-    every missing session (pool_size - total) is created in one step. K never takes the total past pool_size."""
+    """(K, declined): sessions to create now: every missing one (pool_size - total) when free sessions are fewer than ready goals."""
     free, _, total = counts(found)
     k = max(size_of(cfg) - total, 0) if free < ready else 0
+    if k and graph.memory_room() == 0:  # under min_free_memory_gb of free commit memory no session is created: nothing starts
+        k = 0
     side = se.read(side_path(), {})
     declined = side.get("declined")
     if k == 0 and declined is not None:
@@ -84,7 +88,7 @@ def need(found, cfg, ready):
 
 
 def ask_lines(found, cfg, ready):
-    """The Needs you lines for the pool: the fill ask, or a ready goal's wait when the pool is full or declined."""
+    """The Needs you lines for the pool: the fill ask, or a ready goal's wait when it is full or declined."""
     k, declined = need(found, cfg, ready)
     free, busy, total = counts(found)
     if k and not declined:
@@ -107,8 +111,7 @@ def attempt_ok(state, attempt):
 
 
 def stale(state, args):
-    """sessions.py report's guards: refuse a --recommend that isn't one of --words; record, not apply, a report from an
-    older attempt. True when the report is fully handled here."""
+    """sessions.py report's guards: refuse a --recommend not in --words; record, not apply, an older attempt's report. True when handled."""
     if args.attempt not in (None, "") and not str(args.attempt).isdigit():
         sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
     if args.recommend and args.recommend not in args.words:
@@ -233,6 +236,128 @@ def cmd_return(args):
     return 0
 
 
+# The pr queue (#3877): goal.py pr asks here; a try lost to main moving has its own cap. graph.pr_queue(op, ...) forwards here.
+def pr_order(runs, keep=""):
+    """The one queue every goal reads, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue. A ticket holds the
+    first-join time; <slug>.beat is the heartbeat a retry touches (#3922). A goal (but keep) no longer running or waiting,
+    not at the pr step, merged, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped, ticket and beat."""
+    folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        path = os.path.join(folder, name)
+        try:
+            if "." in name:
+                continue
+            joined, age = int(open(path).read()), time.time() - os.path.getmtime(path + ".beat" if os.path.exists(path + ".beat") else path)
+            if name != keep and (age > limit or (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE
+                                 or run.get("step") not in ("checks", "pr") or run.get("release") in ("merged", "cut")):
+                for gone in (path, path + ".beat"):
+                    os.path.exists(gone) and os.unlink(gone)
+                continue
+            line.append((joined, name, int(age)))
+        except (OSError, ValueError):
+            continue
+    return sorted(line)
+
+
+def pr_turn(runs, slug):
+    """Join the repo's queue; "" when it is slug's turn, else the goal ahead: only an earlier goal whose touches overlap its
+    own (a path equal or nested; none overlaps all) holds it (DEL-15). No readable ticket never counts as first."""
+    folder = os.path.join(os.path.dirname(runs), "pr-queue")
+    os.makedirs(folder, exist_ok=True)
+    mine = os.path.join(folder, slug)
+    if not os.path.exists(mine):  # whole or not at all: write a temp file, then link it into place (the first ask wins)
+        tmp = "%s.%d.tmp" % (mine, os.getpid())
+        with open(tmp, "w") as handle:
+            handle.write(str(time.time_ns()))
+        try:
+            os.link(tmp, mine)
+        except OSError:
+            pass
+        os.unlink(tmp)
+    with open(mine + ".beat", "a"):
+        os.utime(mine + ".beat")
+    line = pr_order(runs, slug)
+    at = dict((n, j) for j, n, _ in line).get(slug)
+    if at is None:
+        return line[0][1] if line else "the queue"
+
+    def paths(n):
+        return [str(t).strip("/") for t in se.read(os.path.join(runs, n + ".json"), {}).get("touches") or []]
+    ours = paths(slug)
+    ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
+        x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in paths(n)))]
+    return min(ahead)[1] if ahead else ""
+
+
+def pr_ahead(runs, base):
+    """True when origin/<base> holds commits this branch lacks: main moved since the last merge of it."""
+    subprocess.run(["git", "fetch", "origin", base], capture_output=True)
+    return subprocess.run(["git", "merge-base", "--is-ancestor", "origin/" + base, "HEAD"], capture_output=True).returncode != 0
+
+
+def pr_moved(runs, g, state, why, fix):
+    """A try lost to main moving counts in state["moved"], capped by max_moved (default 5), not in tries; past it, a try."""
+    state["moved"] = state.get("moved", 0) + 1
+    most = int(g.config().get("max_moved") or 5)
+    if state["moved"] > most:
+        g.failed_try(state, why, "build", fix)
+        return True
+    state["step"] = "build"
+    g.save(state, "main moved, try not counted (%d of %d)" % (state["moved"], most))
+    print("TRY NOT COUNTED (main moved: %d of %d; past %d it counts): %s\nNEXT: %s" % (state["moved"], most, most, why, fix))
+    return True
+
+
+# The goal's defect-test check (E-10): fit.owed calls pr_owed.
+VERB = r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)\s+"
+SEEN = re.compile(r"\d{4}-\d{2}-\d{2}$")  # seen_red counts only as a date
+FIXES = re.compile(VERB + r"(?:issue\s+)?#(\d+)|" + VERB + r"finding:([a-z0-9][a-z0-9-]*)", re.I)
+
+
+def _rows(root):
+    try:
+        with open(os.path.join(root, ".loop", "regression.tsv")) as handle:
+            cells = [line.rstrip("\n").split("\t") + [""] * 8 for line in handle if line.strip() and line[0] != "#"]
+    except OSError:
+        return []
+    return [(c[0], c[2], c[4], c[7]) for c in cells if c[6] == "defect"]
+
+
+def _has(link, ref):
+    return re.search(r"(?:issues/|#)%s\b" % re.escape(ref), link) if ref.isdigit() else re.search(r"finding:%s(?![\w-])" % re.escape(ref), link)
+
+
+def _before(root):
+    try:
+        with open(os.path.join(root, ".loop", "config.json")) as handle:
+            base = json.load(handle).get("base") or "main"
+    except (OSError, ValueError):
+        base = "main"
+    git = lambda *a: subprocess.run(("git",) + a, cwd=root, capture_output=True, text=True, env=dict(os.environ, LC_ALL="C"))
+    found = next((x for x in (git("merge-base", "HEAD", ref).stdout.strip() for ref in ("origin/" + base, base)) if x), "")
+    shown = git("show", found + ":.loop/regression.tsv") if found else None
+    if not shown or shown.returncode and "exists on disk" not in shown.stderr and "does not exist" not in shown.stderr:
+        return None
+    return {c[0]: (c + [""] * 5)[4] for c in (line.split("\t") for line in shown.stdout.splitlines()) if c[0][:1] not in ("", "#")}
+
+
+def pr_owed(runs, root, text):
+    owe, old = [], _before(root)
+    for number, finding in FIXES.findall(text):
+        ref = number or finding.lower()
+        if not any(SEEN.match(seen) and _has(link, ref) and (old is None or old.get(name) != seen)
+                   and subprocess.run(command, shell=True, cwd=root, capture_output=True).returncode == 0
+                   for name, command, seen, link in _rows(root)):
+            owe.append(("#" if number else "finding ") + ref)
+    return owe
+
+
+def cmd_pr_list(args):
+    for number, (joined, name, age) in enumerate(pr_order(os.path.join(se.base(), "runs")), 1):
+        print("%d %s joined=%d heartbeat=%ds ago" % (number, name, joined, age))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -244,9 +369,12 @@ def main():
     item.add_argument("ids", nargs="+")
     item = sub.add_parser("return")
     item.add_argument("slug")
+    sub.add_parser("pr_turn").add_argument("--list", action="store_true", required=True, help="print the pr queue in its one order")
+    item = sub.add_parser("usage")
+    item.add_argument("percent", type=float)
     args = parser.parse_args()
     try:
-        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return}[args.cmd](args)
+        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
     except se.PoolUnreadable as error:
         sys.exit("REFUSED: " + graph.pool_fix(error))
 

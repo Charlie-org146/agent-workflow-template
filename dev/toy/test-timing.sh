@@ -1,6 +1,6 @@
 #!/bin/bash
-# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/cost.py
-# reads: skills/workflow-health/scripts/cost.py skills/workflow-health/scripts/report.py
+# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/milestone.py
+# reads: skills/workflow-health/scripts/milestone.py skills/workflow-health/scripts/report.py
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # REG-7: health warns when a goal's lane took over goal_lane_minutes or the newest full suite over its 30-minute limit,
@@ -11,6 +11,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION
 export HOME=$(mktemp -d)
+export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 fails=0
 ok() { echo "PASS: $1"; }

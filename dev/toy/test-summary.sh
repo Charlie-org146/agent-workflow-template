@@ -16,7 +16,7 @@ block() {  # the workflow's inline run block, as the regression run would execut
   python3 - <<'PY'
 import re
 text = open(".github/workflows/regression.yml").read()
-block = re.search(r"python3 - <<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
+block = re.search(r"python3 - (?:--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
 open("ci-block.py", "w").write("\n".join(line[10:] for line in block.split("\n")))
 PY
 }
@@ -30,7 +30,7 @@ printf 'known-row\tland\tfalse\t-\t2026-01-01\tA failure the repo expects.\tcrit
 printf 'known-row\texpected\n' > .loop/regression-known.tsv
 $reg workflow >/dev/null && block
 : > summary.md; : > env.txt; : > out.txt
-GITHUB_STEP_SUMMARY="$r/summary.md" GITHUB_ENV="$r/env.txt" GITHUB_OUTPUT="$r/out.txt" REGRESSION_RESULTS="$r/results.tsv" python3 ci-block.py >/dev/null 2>&1
+GITHUB_STEP_SUMMARY="$r/summary.md" GITHUB_ENV="$r/env.txt" GITHUB_OUTPUT="$r/out.txt" REGRESSION_RESULTS="$r/results.tsv" python3 ci-block.py --live >/dev/null 2>&1
 grep -q "^real	PASS$" results.tsv && grep -q "^leak	PASS$" results.tsv && ! grep -q FIXTURE-LEAK summary.md env.txt out.txt results.tsv \
   && ok "a row cannot write into the run summary, env or outputs" || bad "a row wrote into the run summary, env or outputs"
 grep -q "^known-row	KNOWN$" results.tsv && ok "a known failure is recorded KNOWN" || bad "known row state"
@@ -84,18 +84,19 @@ PATH="$g/down:$PATH" $tests issues --write >/dev/null && grep -q "issues/7	open	
 $reg workflow >/dev/null
 python3 - <<'PY'
 t = open(".github/workflows/regression.yml").read()
-blk = t.split("- name: Write the run summary, one table per feature", 1)[1].split("run: |\n", 1)[1]
+blk = t.split("- name: Write one run summary, one table per feature", 1)[1].split("run: |\n", 1)[1]
 open("step.sh", "w").write("\n".join(l[10:] for l in blk.rstrip("\n").split("\n")) + "\n")
 PY
-printf '# started %s\na1\tPASS\nb1\tFAIL\n' "$(date +%s)" > run.tsv; : > sum.md
-RUNNER_TEMP="$r" REGRESSION_RESULTS="$r/run.tsv" GITHUB_STEP_SUMMARY="$r/sum.md" PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
+mkdir -p "$r/shards/results-0"; run="$r/shards/results-0/regression-results.tsv"
+printf '# started %s\na1\tPASS\nb1\tFAIL\n' "$(date +%s)" > "$run"; : > sum.md
+RUNNER_TEMP="$r" GITHUB_STEP_SUMMARY="$r/sum.md" SHARDS=4 PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
 grep -q '^## Regression: 1 passed, 1 failed, 0 known, 0 skipped of 2, in 0m 0' sum.md && grep -q '^### Alpha' sum.md && grep -q '^### Beta' sum.md \
   && ok "the workflow's summary step writes the grouped summary" || bad "workflow summary step"
-printf 'a1\tMAYBE\n' > run.tsv; : > sum.md
-RUNNER_TEMP="$r" REGRESSION_RESULTS="$r/run.tsv" GITHUB_STEP_SUMMARY="$r/sum.md" PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
+printf 'a1\tMAYBE\n' > "$run"; : > sum.md
+RUNNER_TEMP="$r" GITHUB_STEP_SUMMARY="$r/sum.md" SHARDS=4 PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
 grep -q "could not be written" sum.md && grep -qxF '| a1 | MAYBE |' sum.md && ok "when the grouped summary fails, the plain results still reach the summary" || bad "summary fallback"
-rm run.tsv; : > sum.md
-RUNNER_TEMP="$r" REGRESSION_RESULTS="$r/run.tsv" GITHUB_STEP_SUMMARY="$r/sum.md" PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
+rm -f "$run"; : > sum.md
+RUNNER_TEMP="$r" GITHUB_STEP_SUMMARY="$r/sum.md" SHARDS=4 PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
 grep -q "could not be written" sum.md && ok "with no results file at all, the summary still says so" || bad "summary with no results"
 c=$(mktemp -d); cp -R "$here/skills" "$c/"; echo '# ${{ github.token }}' >> "$c/skills/workflow-regression/scripts/tests.py"
 python3 -B -c "import sys; sys.path.insert(0, '$c/skills/workflow-regression/scripts'); import actions; actions.render('17 */4 * * *')" 2>err.txt; rc=$?
