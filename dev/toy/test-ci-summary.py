@@ -28,6 +28,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     os.makedirs(os.path.join(tmp, ".loop"))
     long_out = "python3 -c \"print(chr(10).join('line%d' % i for i in range(1, 31))); raise SystemExit(1)\""
     rows = ["bad\tnightly\t%s\tX-1" % long_out, "quiet\tnightly\techo hidden | grep -q nomatch\tX-2", "good\tnightly\techo passoutput\tX-3"]
+    rows.append("skipped	nightly	python3 -c \"import os; open(os.environ['TOY_SKIP_FILE'], 'w').write('x'); raise SystemExit(77)\" | grep -q nomatch	X-4")
     with open(os.path.join(tmp, ".loop", "regression.tsv"), "w", newline="\n") as handle:
         handle.write("# id\tlevel\tcommand\n" + "\n".join(rows) + "\n")
     open(os.path.join(tmp, ".loop", "regression-known.tsv"), "w").close()
@@ -40,5 +41,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     check("#### FAIL bad" in said and "line30" in said and "line11" in said, "the failing row is named with its last lines")
     check("line10\n" not in said and "line1\n" not in said, "only the last 20 lines are kept")
     check("#### FAIL quiet" in said and "hidden" in said, "a failing row that hides its output with grep -q shows it")
+    results = open(env["REGRESSION_RESULTS"]).read()
+    check("skipped	SKIPPED" in results and "FAIL skipped" not in said, "a row whose toy wrote TOY_SKIP_FILE behind a pipe is SKIPPED, not FAIL")
     check("good" not in said and "passoutput" not in said, "the passing row's name and output stay out")
 sys.exit(1 if failed else 0)
