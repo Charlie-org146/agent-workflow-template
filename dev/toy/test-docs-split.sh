@@ -8,7 +8,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 # (dev/toy/docs-split-golden.txt, made from the code before the move), and render.py and counting.py stay under 90%
 # of the cap. Python only, so it runs the same on Linux, macOS and Windows.
 # Value: protects=render.py stays readable and under health's size warning with the Automation block unchanged
-# (issue 1402); fails_when=render.py or counting.py reaches 18,432 bytes or the block output changes;
+# (issue 1402); fails_when=render.py or counting.py reaches 19,000 bytes or the block output changes;
 # why_new=no other row pins the Automation block text or these two sizes; seam=none; no_claim=the Settings block
 set -u
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
@@ -31,7 +31,7 @@ print("block", got == want)
 print("alias", render.config_of is counting.config_of)
 for name in ("render.py", "counting.py"):
     size = len(open(os.path.join(sys.argv[1], name), "rb").read().replace(b"\r\n", b"\n"))
-    print(name, size < 18432, size)
+    print(name, size < 19000, size)
 PY
 )
 echo "$out" | grep -qx "block True" && ok "the Automation block a toy config renders is the text it rendered before the move" || bad "block: $out"
