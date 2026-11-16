@@ -7,7 +7,7 @@ Keeps the wiki and README in one enforced format (feature pages are PRDs with no
 
 ## How to reach or run it
 
-Say these to the agent in the operation session; each feature page has the exact commands.
+Say these to the agent in the operation session; each feature page has the exact commands. A feature's routine runbooks may be written on its How-to-use page, under Runbooks, instead of on its PRD page; the docs check finds them there.
 
 | You say | What happens |
 |---|---|
@@ -27,10 +27,6 @@ Say these to the agent in the operation session; each feature page has the exact
 - Wiki: [Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/Documentation)
 - Milestone: [Documentation](https://github.com/jcl2018/agent-workflow-template/milestone/3)
 - Releases: https://github.com/jcl2018/agent-workflow-template/releases
-
-## Runbooks
-
-A routine's runbook may be written here, under this heading, instead of on the feature page; the docs check then finds it there.
 
 ## Links
 
