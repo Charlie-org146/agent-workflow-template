@@ -13,19 +13,20 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `parallel` | `0` | Workers running at once; 0 means unlimited. |
 | `cadence` | `30` | Minutes between check-ins of the operation session, 1 to 60, or off. |
 | `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged as auto-approved. |
-| `auto_merge` | `false` | true lets the release step merge a goal's pull request and publish its release. |
+| `auto_merge` | `false` | true lets the release step merge a goal's pull request and publish. |
+| `review_hold` | `false` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
 | `pr_bumps_version` | `false` | true moves the last number of the version file once on a goal's branch. |
 | `version_file` | `VERSION` | The file that holds the version; a release bumps it and writes the changelog. |
 | `routines` | `[]` | Commands the release step runs on the base branch before it merges. |
-| `regression_cron` | `17 */4 * * *` | Five cron fields: when the full regression runs (Actions for a public repo, each Mac tick for a private one); off is off. |
+| `regression_cron` | `17 */4 * * *` | Five cron fields: when the full regression runs; off is off. |
 | `health_cron` | `47 */4 * * *` | Five cron fields: when health, the judge and its digest run on the Mac; off is off. |
 | `judge_env` | `ANTHROPIC_API_KEY` | No longer read. |
 | `judge_setup` | `(empty)` | No longer read: kept so old configs stay valid. |
-| `digest_owner` | `(empty)` | Who the digest comment mentions; empty means the repo owner (an organisation notifies no one). |
-| `digest_mail` | `cloudflare` | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. |
-| `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp sends through (with DIGEST_SMTP_USER and DIGEST_SMTP_PASSWORD secrets). |
+| `digest_owner` | `(empty)` | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). |
+| `digest_mail` | `cloudflare` | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
+| `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp sends through (with the DIGEST_SMTP_* secrets). |
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
-| `review_depth` | `full` | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
+| `review_depth` | `full` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `criteria` | `true` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `criteria_max` | `10` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
@@ -33,20 +34,23 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `step_limit` | `0` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. |
 | `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
-| `regression_runs` | `(empty)` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. |
-| `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. |
-| `topics` | `{}` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
+| `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. |
+| `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
+| `topics` | `{}` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. |
 | `ci_levels` | `nightly` | Target of the scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before the goal waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |
 | `plan_pause_percent` | `80` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
 | `min_free_memory_gb` | `4` | Free GB below which no lane or goal starts; 0 off. |
+| `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. |
 | `token_budget` | `0` | Tokens a goal may spend before no new step starts; 0 means none. |
-| `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. |
-| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. |
-| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes with what it has done. |
-| `stale_branch_days` | `14` | Days a local branch on no remote may sit before health lists it with its removal command. |
+| `max_regression_rows` | `1200` | Most rows the regression table may hold; a goal adding rows past it is refused at qa. |
+| `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. |
+| `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; rows past it wait for the full suite. |
+| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row, 15 or more; a lane past it stops. |
+| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes what it has. |
+| `stale_branch_days` | `14` | Days a local branch on no remote may sit before health lists it. |
 | `mend` | `false` | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | `120` | Seconds a failed goal waits before a mender starts. |
 | `max_tries` | `3` | Failed tries a goal gets before it stops and files a finding. |
@@ -57,13 +61,13 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `template_repo` | `(empty)` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
 | `reply_hook` | `true` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `govern_hook` | `true` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
-| `full_auto` | `true` | true lets the operation session answer a worker's routine decision with its recommended option, logged; risky ones wait. |
-| `pool_size` | `20` | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |
-| `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides it. |
+| `full_auto` | `true` | true lets the operation session answer a worker's routine decision with its recommended option; risky ones wait. |
+| `pool_size` | `20` | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. |
+| `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
 | `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | `150` | SKILL.md line cap health fails. |
-| `feature_labels` | `false` | true tags each health and regression issue feature:<Page> and creates the label. |
-| `workers` | `(empty)` | app: app sessions only; no background process starts, and a goal no session took waits for sessions.py bind. |
+| `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
+| `workers` | `(empty)` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. |
 
 ## Private settings
 
