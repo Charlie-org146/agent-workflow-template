@@ -129,7 +129,7 @@ def sync_issues(results, live, day):
         if issues is None:
             print("NOTE: can't read issues, so none changed: " + err.strip()[:200])
             return
-        if len(issues) >= ISSUE_LIMIT:
+        if len(issues) >= ISSUE_LIMIT and "comments" in issues[0]:  # REST pages are never cut off
             print("NOTE: the issue list may be cut off at %d, so none changed" % ISSUE_LIMIT)
             return
     for item in results:
