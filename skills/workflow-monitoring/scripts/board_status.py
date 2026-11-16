@@ -260,8 +260,8 @@ def release_header(release, items, at):
     """The release milestone's header (MON-14): its release ETA, the latest expected finish among its goals, and counts. A started goal's
     hard ETA (GRD-14) counts in place of its estimate; the header says how many goals each way, and nothing when none has a hard ETA."""
     import datetime
-    hard = [i["hard"] for i in items if i.get("hard") is not None]
-    left = hard + [i["left"] for i in items if i.get("left") and i.get("hard") is None]
+    hard = [i["hard"] for i in items if i.get("hard") is not None and i.get("mark") not in ("merged", "awaiting merge")]
+    left = hard + [i["left"] for i in items if i.get("left") and (i.get("hard") is None or i.get("mark") in ("merged", "awaiting merge"))]
     new = sum(i.get("mark") == "queued" for i in items)
     if not left or not at:
         return "%s release ETA unknown (%d not started)" % (release, new)

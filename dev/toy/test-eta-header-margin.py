@@ -101,6 +101,13 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
           preflight={"items": [{"id": "plan", "ask": "x", "options": ["a"], "recommend": "a"}]})
     check(seconds("hardgoal")[0] is None and "hard ETA" not in header(), "negative control: a goal whose ETA waits for its pre-flight answers counts by estimate")
 
+    write("hardgoal")
+    with open(os.path.join(top, ".loop", "queue.md"), "a") as handle:
+        handle.write("- slug: donegoal | goal: Done goal | done: x\n")
+    write("donegoal", status="done", step="pr", eta={"minutes": 900, "estimate": 700, "basis": "estimate"})
+    unused = seconds("donegoal")[0]
+    check(unused and unused > 40000 and "hard ETA" not in header() and "~" + clock(unused) not in header(),"negative control: a finished goal's unused hard ETA does not move the release header: %s" % header())
+
     # Done 2: the margin is a repo setting; 40 percent moves a goal's hard ETA, the default gives today's value
     rows = {row[0]: row for row in settings.TABLE}
     check("eta_margin_percent" in rows and rows["eta_margin_percent"][2] == 25 and "ETA" in rows["eta_margin_percent"][3], "the settings table lists eta_margin_percent with its default of 25")
