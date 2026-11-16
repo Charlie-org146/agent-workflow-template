@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.25 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.24 - 2026-11-16
 
 - docs: import render with a plain import, no __import__ (#4652)
