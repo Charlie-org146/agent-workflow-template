@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget and the owner's `goal.py set`
-settings, plus `queue`, the pull request body and `fit.py owed SLUG` (E-10)."""
+"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, `goal.py set`, `queue`, the PR body and `fit.py owed`."""
 import importlib.util
 import json
 import os
@@ -303,7 +302,7 @@ def pr_text(g, state):
     body = pr_body(g.read(g.goal_file(state["slug"])), view(state, g.state_dir()), cfg, role.setting_of(cfg),
                           "", regen_warnings(g.root(), base))
     found = private.scan(g.root(), base, {"pr-title": state["goal"][:70], "pr-body": body})
-    stop = private.refusal(found, base)
+    stop = private.refusal(found, base) or private.cannot(g.root(), base)
     if stop:
         guards.refuse_no_try(state, stop[0], stop[1], stop[2], g.save)
     if found["state"] == "none":
