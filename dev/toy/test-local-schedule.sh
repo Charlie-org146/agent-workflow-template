@@ -208,7 +208,7 @@ PY
   sleep 30 & holder=$!; echo $holder > "$LOOP_SCHEDULE_HOME/$key.lock/pid"
   out=$(tick "$r" 2>&1); check "a second tick during the first skips with locked by pid" 'grep -q "SKIPPED $key (locked by pid $holder)" <<<"$out"'
   kill $holder; wait $holder 2>/dev/null; out=$(tick "$r" --dry-run 2>&1)
-  export FAKE_GH_OFFLINE=1; out=$(tick "$r" 2>&1); check "a stale lock whose pid is dead is taken over" '! grep -q "locked by pid" <<<"$out" && grep -q "SKIPPED $key (gh auth status failed)" <<<"$out" && [ ! -d "$LOOP_SCHEDULE_HOME/$key.lock" ]'
+  export FAKE_GH_OFFLINE=1; out=$(tick "$r" 2>&1); check "a stale lock whose pid is dead is reclaimed" '! grep -q "locked by pid" <<<"$out" && grep -q "SKIPPED $key (gh auth status failed)" <<<"$out" && [ ! -d "$LOOP_SCHEDULE_HOME/$key.lock" ]'
 fi
 if want nothing; then fresh; export FAKE_GH_PRIVATE=false; r=$(toyrepo nt "$(cfgj actions)"); install "$r" >/dev/null; tick "$r" >/dev/null 2>&1; ( cd "$r" && python3 "$A" local status >/dev/null )
   check "install, status and a tick leave the repo clean and put no temp home path or token in any file of it" '[ -s "$LOOP_SCHEDULE_HOME/repos.json" ] && [ -s "$LOOP_SCHEDULE_HOME/log/tick.log" ] && [ -z "$(cd "$r" && git status --porcelain)" ] && ! grep -rIl -e "$HOME" -e "gh[pousr]_" -e "sk-ant-" "$r" --exclude-dir=.git'

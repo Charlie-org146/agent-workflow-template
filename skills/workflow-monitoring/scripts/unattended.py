@@ -6,8 +6,8 @@ usage: unattended.py sends [add TO | reset | status]       cross-session sends s
        unattended.py standing add TEXT [--scope merge] [--goals A,B|all] | check SLUG | revoke ID
        unattended.py selfcheck                             what is missing before an unattended run
 
-Records: <git common dir>/loop/ (sends.json, checkin-loop.json, standing.tsv).
-  sends       the app pauses cross-session messages after 20 sends with no owner message; from 16 the status warns
+Records: <git common dir>/loop/.
+  sends       the app pauses sends after 20 with no owner message; from 16 status warns
   loop        `loop status` says RECREATE in the last 24 hours and EXPIRED after the end; then `loop created`
   standing    replaces a go per merge; only the operation session adds one; a worker at pr runs `standing check SLUG`
   selfcheck   MISSING permission mode, routine rules, main checkout behind origin; else SELFCHECK OK
@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 CAP, WARN_AT, LOOP_DAYS = 20, 16, 7
 HERE = os.path.dirname(os.path.abspath(__file__))

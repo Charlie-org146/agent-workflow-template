@@ -16,6 +16,8 @@ import subprocess
 import tempfile
 import zlib
 
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # a child that asks for a password fails instead of waiting
+
 if os.name == "nt":
     import ctypes
 
