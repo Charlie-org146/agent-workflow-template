@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept merge-unblock@4bcf6ff3 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept ci-fail-causes@8da535a5 -->
 
 ## Problem
 - I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it.
