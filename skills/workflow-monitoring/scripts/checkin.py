@@ -208,6 +208,7 @@ def render(root=None, at=None, stamp=None):
                 run["slug"], graph.silent_for(run, at) // 60))
         elif state == "held":
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
+    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live])
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
     if ready and replan.plan_pause(cfg):
