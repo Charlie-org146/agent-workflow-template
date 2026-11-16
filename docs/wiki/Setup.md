@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
 Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
 
+How to use: [How-to-use-Setup](How-to-use-Setup)
+
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
 - Adopting a repo should never block: it should look at what is there, borrow what fits, learn from a repo I've already set up, and list what doesn't fit instead of refusing.

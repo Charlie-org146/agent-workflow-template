@@ -3,7 +3,9 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f85c3 U=03828777 --> <!-- kept audit-cd-path@9ddb17ce -->
+Review: **Unreviewed**
+
+How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
@@ -80,6 +82,10 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f
   - The repo's copy is the PRD every check reads: the docs check and audit, health, the regression rows and publish read `.loop/prd/PAGE.md` and never the source, so no lane, CI run or health check needs the external document or a reader, and a page with a copy raises no LINK or UNREAD for want of one. The wiki page still shows Problem, Requirements, Non-goals and Success metrics, as a block generated from the copy.
   - `docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten.
   - A repo can keep its GitHub milestones in step with an external Milestones page the same way, opt-in by setting `milestones_source` (a `url:` or `mcp:` source) in `.loop/config.json`: `docs.py sync` compares each milestone by its title, state and due date with what both sides last agreed on, an addition or change on either side is a delta reviewed and accepted with `docs.py sync --accept milestones:TITLE=repo|source`, a milestone that differs on both sides is reported as a conflict and never overwritten, and a repo with no `milestones_source` is never visited and raises no signal.
+- DOC-18: **Unreviewed** Every feature page has a How-to-use page for its users
+  - The page is `docs/wiki/How-to-use-<Feature>.md`, titled "# How to use <Feature>", with these sections in order, leaving out any that do not apply: What it's for, How to reach or run it, URLs and deployments, Automations and schedules, Runbooks, Links (the PRD page and "Backlog: <Feature>"). The feature page links it in one line under its Review line: "How to use: [How-to-use-<Feature>](How-to-use-<Feature>)".
+  - `docs.py check` reports a feature page with no How-to-use page, one off that skeleton, or a feature page that does not link it; a How-to-use page has no `.loop/docs.tsv` row of its own and is mapped to its feature's paths, so it goes stale and publishes with it; one whose feature has no page is an orphan, reported unmapped.
+  - The README keeps a short start for each feature, a link to its How-to-use page and a few things to say; the full list of things to say and any URLs, deployments and schedules live on the How-to-use page.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
@@ -250,6 +256,10 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7303c1e7 R=5d418f3a N=8441e908 M=885f
 | [prd-copy-old-layout](Tests#t-prd-copy-old-layout) | requirement | DOC-17 | Given a copy written before the repo's layout, when docs.py sync runs, then it skips the page naming the fix and leaves the copy as it was. | not run |
 | [prd-copy-notion-shape](Tests#t-prd-copy-notion-shape) | requirement | DOC-17 | Given an external PRD exported the way Notion writes it (html tags, a bold id over a first sub-bullet, the mark after the kind, a New requirements heading with a note), when docs.py sync adopts it, then the copy holds ordinary markdown requirement lines and none of its Source, Milestone, Review, Runbook or Deployments lines. | not run |
 | - | requirement | DOC-17 | no passing test | not enforced |
+| [doc18-howto-missing](Tests#t-doc18-howto-missing) | requirement | DOC-18 | Given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes. | PASS 2026-11-16 |
+| [doc18-howto-mapped](Tests#t-doc18-howto-mapped) | requirement | DOC-18 | Given a How-to-use page with no .loop/docs.tsv row, when docs check maps pages, then it is mapped to its feature's paths and is not reported unmapped. | PASS 2026-11-16 |
+| [doc18-howto-orphan](Tests#t-doc18-howto-orphan) | requirement | DOC-18 | Given a How-to-use page whose feature has no PRD page, when docs check runs, then the page is reported unmapped as an orphan. | PASS 2026-11-16 |
+| [doc18-howto-skeleton](Tests#t-doc18-howto-skeleton) | requirement | DOC-18 | Given a How-to-use page with a wrong title, a section off the skeleton or sections out of order, or a feature page that does not link it, when docs check runs, then each is reported. | PASS 2026-11-16 |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |

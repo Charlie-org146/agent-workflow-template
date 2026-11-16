@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
 Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=ab141a29 N=e6bf17f7 M=5109e571 U=03828777 -->
 
+How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
+
 ## Problem
 
 - My  guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on.

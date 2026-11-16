@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
 Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept cut-pass-left@0ae34904 -->
 
+How to use: [How-to-use-Regression](How-to-use-Regression)
+
 ## Problem
 - I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it.
 - Running every test on every change is too slow, but skipping tests lets breakage slip through; I need fast checks in the loop and the full suite somewhere I can see it, like GitHub Actions.

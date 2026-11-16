@@ -362,6 +362,10 @@
 | <a id="t-prd-copy-no-source"></a>prd-copy-no-source | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-old-layout"></a>prd-copy-old-layout | requirement | DOC-17 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-notion-shape"></a>prd-copy-notion-shape | requirement | DOC-17 | not run | - | local | 2026-11-15 |
+| <a id="t-doc18-howto-missing"></a>doc18-howto-missing | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-howto-mapped"></a>doc18-howto-mapped | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-howto-orphan"></a>doc18-howto-orphan | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-howto-skeleton"></a>doc18-howto-skeleton | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 
 ## Guardrails
 

@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
 Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept v1-go-no-go@dd0a21a4 -->
 
+How to use: [How-to-use-Health](How-to-use-Health)
+
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
 - I want a reviewer that reads everything (every PRD page, the README, milestones, open issues, tests and code) and tells me per feature what conflicts, what's missing and what's slow, alongside fixed checks that give the same answer every time.
