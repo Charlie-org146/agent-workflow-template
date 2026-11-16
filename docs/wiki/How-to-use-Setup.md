@@ -23,6 +23,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Update this repo to the newest template" | The skills update, and this repo's new settings, entry point and agent files land on an update branch for you to merge; your own values and pages are kept. |
 | "Send my skill fix back to the template" | It drafts one issue with the diff and no repo name, and files it once you say so. |
 | "Wire the skills into CLAUDE.md and AGENTS.md" | Both files get the same block pointing every new session at `.loop/START.md`; your own text is kept. |
+| "Set up a second machine" | `machine.py` in the clone lists the skill links, hooks, private-names file, mailer, check-in and scheduled tasks it would install; `apply` installs them and prints the owner checklist. |
 
 Each requirement and how it is delivered:
 

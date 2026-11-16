@@ -47,9 +47,10 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Documentation | https://github.com/jcl2018/agent-workflow-template/milestone/3 | I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / relock / render / automation / prompts / entry / publish / sync / restore / milestone / `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | Guardrails | https://github.com/jcl2018/agent-workflow-template/milestone/11 | My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on. | none |
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
+| Machines | https://github.com/jcl2018/agent-workflow-template/milestone/23 | A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / adopt |
 | Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / adopt |
 | Regression | https://github.com/jcl2018/agent-workflow-template/milestone/7 | I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it. | `/workflow-regression`: add / red / run / sync / workflow / list / issues |
-| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / prerequisites / replay / connectors / agents / migration-check |
+| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / prerequisites / replay / connectors / machine / agents / migration-check |
 
 ## Settings table
 
@@ -78,6 +79,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
 | `judge_setup` | none | No longer read: kept so old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
+| `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
 | `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before the goal waits. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
@@ -107,7 +109,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. |
 | `time_budget_minutes` | 240 | Active minutes before no new step starts; 0 is none. |
 | `token_budget` | 3000000 | Tokens a goal may spend before no new step starts; 0 means none. |
-| `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
+| `topics` | {"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. |
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |

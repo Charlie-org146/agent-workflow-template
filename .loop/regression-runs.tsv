@@ -156,13 +156,16 @@ docs-count-other-id-issue-107	PASS	2026-11-12
 docs-count-word-gap-issue-104	PASS	2026-11-12	
 docs-counts-issue-39	PASS	2026-11-12	
 docs-guide-page-issue-125	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+docs-import-rows-pass	PASS	2026-11-16	
 docs-locked-hint-issue-133	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-merged-base-issue-156	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-milestone-line-issue-130	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+docs-no-plain-dunder-import	PASS	2026-11-16	
 docs-only	PASS	2026-11-09	
 docs-scripts-import-by-name	PASS	2026-11-15	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
+entry-adopt	SKIPPED	2026-11-16	
 entry-stale	PASS	2026-11-12	
 estimates-shown	PASS	2026-11-12	
 every-row-described	FAIL	2026-11-15	
@@ -312,6 +315,9 @@ local-row-env	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lock-in-report	PASS	2026-11-12	
 ls-plist	FAIL	2026-11-13	
 mac-rows-skip-77	PASS	2026-11-13	
+machine-caps	PASS	2026-11-16	
+machine-done-12	PASS	2026-11-16	
+machine-setting-listed	PASS	2026-11-16	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -377,6 +383,7 @@ package-hang-no-skills-file	PASS	2026-11-12
 package-hang-slot	PASS	2026-11-12	
 package-hang-stdin	PASS	2026-11-12	
 package-headroom-held	FAIL	2026-11-15	
+package-passes	SKIPPED	2026-11-16	
 package-rows-tracked	FAIL	2026-11-15	
 page-relock	PASS	2026-11-14	
 page-shape	PASS	2026-11-12	
@@ -412,6 +419,7 @@ prd-audit-ignores-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da
 prd-convert	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-lock-four	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-new	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+prd-no-dunder-import-3800	PASS	2026-11-16	
 prd-nongoals-metrics	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-readers	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-repo-green	PASS	2026-11-10	
@@ -560,6 +568,9 @@ summary-refuses	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+sync-default-source	SKIPPED	2026-11-16	
+sync-propose	SKIPPED	2026-11-16	
+sync-template-redirect	SKIPPED	2026-11-16	
 template-sheet	PASS	2026-11-12	
 test-caps-consolidate-allowed	PASS	2026-11-16	
 test-caps-controls	PASS	2026-11-16	

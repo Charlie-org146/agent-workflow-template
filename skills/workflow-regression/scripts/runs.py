@@ -33,6 +33,7 @@ HEADER = "# id\tstatus\tdate\trun\tflaky\n"
 ISSUE_LIMIT = 1000
 WAITS = (0, 5, 20)  # seconds before each of three tries
 SKIP_CODE = 77
+START_CODES = (3221225794, 3221225495, 3221225773)  # Windows: DLL init failed, no memory, commit limit
 LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
 
@@ -215,11 +216,12 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
-        cannot = state == "FAIL" and unrunnable(code, text)
+        nostart = state == "FAIL" and code in START_CODES
+        cannot = state == "FAIL" and (nostart or unrunnable(code, text))
         state = "SKIPPED" if cannot else state
         if code == 0 and key in expected:
             print("FIXED %s: remove it from the known list" % key)
-        print("%s %s%s" % ("NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
+        print("%s %s%s" % ("ENV" if nostart else "NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else " (exit %d: could not start; rerun when memory allows)" % code if nostart else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
@@ -227,7 +229,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
-                        "pid": pid, "rc": code, "signal": signal, "notrun": cannot})
+                        "pid": pid, "rc": code, "signal": signal, "notrun": cannot, "env": nostart})
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (
