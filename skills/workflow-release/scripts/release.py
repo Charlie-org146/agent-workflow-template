@@ -1,19 +1,12 @@
 #!/usr/bin/env python3
 """Ask whether a finished goal is released, then cut a draft GitHub release or leave it unreleased.
 
-usage: release.py <command> <slug> [options]
+usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-  ask SLUG    show the docs and verify steps, then ask cut or leave; a batch answers leave by itself
-  leave SLUG  keep the work unreleased; changes nothing versioned
-  cut SLUG [--bump patch|minor|major] [--user]
-              refuse without verify steps, with stale docs or an unmet criterion; else bump the version,
-              write the changelog, commit, push, create a DRAFT release for you to publish.
-  show SLUG   print the goal's release field
-
-A batch goal never cuts unless --user is given (the human's own message said to cut). With "release_auto": true in
-.loop/config.json, a batch ask reads the diff and cuts a patch DRAFT by itself, or the goal's own bump (goal.py set SLUG
---bump); only docs, tests or .loop leave. cut scans for private names before its push (PRIVATE_NAME). It never
-publishes, never pushes a tag, never merges.
+ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps,
+with stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT.
+A batch goal cuts only with --user (the human's own message). Criteria rows that are known, exit 77 or recorded PASS are
+skipped and rows stop running after 900 s. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
 """
 import argparse
 import datetime
@@ -22,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -34,8 +28,8 @@ ASK = "Cut a release or leave it unreleased?"
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
 
 
-def run(args, cwd=None):
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+def run(args, cwd=None, env=None):
+    return subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
 
 
 def git(*args, cwd=None, check=True):
@@ -225,6 +219,12 @@ def docs_trouble(top, base, fix=False, whole=False):
     return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))] * bool(done.returncode)
 
 
+def fails(command, top):
+    flag = os.path.join(tempfile.gettempdir(), "skip%d" % os.getpid())
+    code = run(["sh", "-c", command], top, dict(os.environ, TOY_SKIP_FILE=flag)).returncode
+    return code not in (0, 77) and not (os.path.exists(flag) and not os.remove(flag))
+
+
 def criteria_trouble(top, cfg):
     try:
         rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
@@ -245,7 +245,7 @@ def criteria_trouble(top, cfg):
             found = [r for r in rows if key in (r[0], r[3])]
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
-                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and run(["sh", "-c", row[2]], cwd=top).returncode not in (0, 77)):
+                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and fails(row[2], top)):
                     out.append("%s (row %s is a draft or failing)" % (key, row[0]))
     return out
 

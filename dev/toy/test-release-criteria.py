@@ -35,6 +35,7 @@ def trouble(command, known="", runs=""):
 
 check(trouble("exit 1") != [], "control: a failing row is a trouble")
 check(trouble("exit 1", known="row1\tfails on this PC\n") == [], "a row in regression-known.tsv is not a failure")
+check(trouble('echo skip > "$TOY_SKIP_FILE"; exit 1') == [], "a row whose toy wrote TOY_SKIP_FILE is skipped, not a failure (a pipe hides exit 77)")
 check(trouble("exit 77") == [], "a row that exits 77 is skipped, not a failure")
 check(trouble("exit 1", runs="row1\tPASS\t2026-11-15\t\t\n") == [], "a row already recorded PASS is not run again")
 check(trouble("exit 1", runs="row1\tFAIL\t2026-11-15\t\t\n") != [], "control: a row recorded FAIL still runs and fails")
