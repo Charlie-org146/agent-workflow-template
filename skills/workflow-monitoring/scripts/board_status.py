@@ -30,6 +30,12 @@ from board_model import (CANDIDATES, CELLS, LABELS, MIN_BACKTEST, MODEL, SIMILAR
 ASKING = ("waiting", "failed", "stopped")
 
 
+def timed(text, what="%r"):
+    """Exit unless text is a time, YYYY-MM-DDTHH:MM:SSZ or any front part of it (`what` words the refusal)."""
+    if not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", text):
+        sys.exit("REFUSED: %s is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % (what % text))
+
+
 def seconds_by_step(run, at):
     """Time each step took, by the board's held-time rule (board_log.flow_seconds): time held in the pr queue, on a hold, on
     an owner answer or after a stop counts nothing, so a budget counts only active step time (#3878)."""
