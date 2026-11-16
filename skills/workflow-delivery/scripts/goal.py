@@ -14,7 +14,8 @@ step, record and pr refuse outside a worker.
   finding SLUG TEXT
   resume SLUG --why T [--by W]
   touches SLUG --add PATH --why T
-  set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] --why T
+  set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] [--eta-extend N] [--eta-choice ship|defer]
+          [--owner-record ID] --why T   (a raise or an ETA move needs a record)
   show SLUG
 """
 import argparse
@@ -212,7 +213,7 @@ def cmd_new(args):
     path = goal_file(args.slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=args.slug,
-                                touches=", ".join(touches) or "not declared", done="\n".join(lines)))
+                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
     git("add", path)
     git("commit", "-m", "Goal: %s" % args.slug, "--", path)
     state = {"slug": args.slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
@@ -230,7 +231,7 @@ def cmd_new(args):
 
 def cmd_step(args):
     state = load(args.slug)
-    fit.budget_stop(args.slug, state, state_dir(), config())
+    fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
     if args.tokens:
         state["tokens"] = dict(state.get("tokens") or {}, **{args.name: args.tokens})
@@ -328,18 +329,19 @@ def queue(op, *args):
 
 def cmd_pr(args):
     state, base = held(args.slug), config()["base"]
-    fit.budget_stop(args.slug, state, state_dir(), config())
+    fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     guards.waiting_gate(ME, state)
     left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+    pods and pods.pr_queue("join", ME, state)  # pool.pr_join takes (g, state): no runs folder
     if ahead := queue("turn", args.slug):
         waited or save(state, "waiting: pr queue, behind " + ahead)
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")
-    queue("hold", args.slug)  # the lane starts: this goal holds the merge slot until it merges or fails
+    queue("hold", args.slug)  # the lane starts: the goal holds the slot
     what, detail = role.sync(base)
     if what == "merged":
         state = held(args.slug)
@@ -387,22 +389,14 @@ def cmd_pr(args):
     return 5 * (state["statuses"] == "failed")
 
 
-def cmd_finding(args):
-    state = load(args.slug)
-    if state.get("status") in ("done", "merged"):
-        return guards.note_finding(state_dir(), state, args.text)
-    fail_stop(state, args.text)
+cmd_finding = lambda args: guards.cmd_finding(ME, args)
+cmd_show = lambda args: fit.cmd_show(ME, args)
 
 
 def cmd_resume(args):
     pods and pods.refuse(load(args.slug) or {})
     return guards.cmd_resume(ME, args)
 
-
-def cmd_show(args):
-    state = load(args.slug)
-    state["resume_at"] = fit.resume_at(state, guards.moved_since_plan(ME, state))
-    print(json.dumps(state, indent=2))
     return 0
 
 
@@ -428,7 +422,8 @@ def main():
     add("resume", cmd_resume, ("--why", {"required": True}), ("--by", {"default": "operation session"}))
     add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
     add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),
-        ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--why", {"required": True}))
+        ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--eta-extend", {"type": int}),
+        ("--eta-choice", {"choices": ("ship", "defer")}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
     for name, func in (("pr", cmd_pr), ("answer", cmd_answer), ("show", cmd_show)):
         add(name, func)
     args = parser.parse_args()

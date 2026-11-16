@@ -113,6 +113,7 @@ TEMPLATE = """# {goal}
 
 - Slug: {slug}
 - Touches: {touches}
+- ETA: {eta}
 
 ## Done lines
 

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept checkin-view@1446c75a -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept pr-queue-step@ed40e011 -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -222,6 +222,7 @@ Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde
 | [mon5-merged-pr-retires](Tests#t-mon5-merged-pr-retires) | requirement | MON-5 | Given a running record whose pull request merged, when it is retired with --pr, then it closes for good; with no merged pull request it is still refused. | not run |
 | [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | MON-5 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
 | [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | MON-5 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
+| [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | MON-5 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, GRD-14). | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
