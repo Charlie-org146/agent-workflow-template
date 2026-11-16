@@ -441,22 +441,22 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `routines` | Commands the release step runs on the base branch before it merges. | set "routines" in .loop/config.json | `[]` | default |
 | `regression_cron` | Five cron fields: when the full regression runs (Actions if public, each Mac tick if private); off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | default |
 | `health_cron` | Five cron fields: when health, the judge and its digest run on the Mac; off is off. | set "health_cron" in .loop/config.json | `47 */4 * * *` | default |
-| `machine_setup` | This repo's own machine setup items (allow rule, routine, secret, connector), applied by machine.py only where adopted. | set "machine_setup" in .loop/config.json | `[]` | default |
+| `machine_setup` | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. | set "machine_setup" in .loop/config.json | `[]` | default |
 | `judge_env` | No longer read. | set "judge_env" in .loop/config.json | `ANTHROPIC_API_KEY` | default |
 | `judge_setup` | No longer read: kept so old configs stay valid. | set "judge_setup" in .loop/config.json | `(empty)` | default |
-| `digest_owner` | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). | set "digest_owner" in .loop/config.json | `(empty)` | default |
-| `digest_mail` | How the round's digest is mailed: cloudflare (Email Service), smtp, or off; the keys live only in Actions secrets. | set "digest_mail" in .loop/config.json | `cloudflare` | default |
-| `smtp_host` | The SMTP server digest_mail smtp sends through (with DIGEST_SMTP_USER and DIGEST_SMTP_PASSWORD secrets). | set "smtp_host" in .loop/config.json | `smtp.gmail.com` | default |
+| `digest_owner` | Who the digest mentions; empty means the repo owner. | set "digest_owner" in .loop/config.json | `(empty)` | default |
+| `digest_mail` | How the digest is mailed: cloudflare (Email Service), smtp, or off; keys live only in Actions secrets. | set "digest_mail" in .loop/config.json | `cloudflare` | default |
+| `smtp_host` | The SMTP server digest_mail smtp sends through (with the DIGEST_SMTP_ secrets). | set "smtp_host" in .loop/config.json | `smtp.gmail.com` | default |
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
-| `review_depth` | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
+| `review_depth` | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows less. | set "review_depth" in .loop/config.json | `full` | default |
 | `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
-| `criteria_max` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `19` |
+| `criteria_max` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `19` |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
-| `goal_lane_minutes` | Minutes a goal's regression lane may take before health warns and its LANE line says over. | set "goal_lane_minutes" in .loop/config.json | `10` | default |
+| `goal_lane_minutes` | Minutes a goal's regression lane may take before health warns. | set "goal_lane_minutes" in .loop/config.json | `10` | default |
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. | set "goal_levels" in .loop/config.json | `land` | default |
-| `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
+| `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo); setup records it from visibility and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |
 | `topics` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
@@ -466,7 +466,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `plan_pause_percent` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
 | `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `4` | **overridden:** `3.0` |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
-| `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; rows past it are left to the scheduled full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
+| `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; rows past it wait for the scheduled full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
 | `prep_budget_minutes` | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
 | `step_budget_minutes` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes with what it has done. | set "step_budget_minutes" in .loop/config.json | `30` | default |
 | `stale_branch_days` | Days a local branch on no remote may sit before health lists it with its removal command. | set "stale_branch_days" in .loop/config.json | `14` | default |
