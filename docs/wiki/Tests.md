@@ -411,6 +411,15 @@
 | <a id="t-grd2-pr-lane-holds-merge-slot"></a>grd2-pr-lane-holds-merge-slot | requirement | GRD-2 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-grd4-worker-commit-main-refused"></a>grd4-worker-commit-main-refused | requirement | GRD-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-config-memory-key-once"></a>config-memory-key-once | requirement | GRD-12 | not run | - | local | 2026-11-15 |
+| <a id="t-eta-freeze"></a>eta-freeze | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-gate"></a>eta-gate | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-needs-you"></a>eta-needs-you | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-owner-record"></a>eta-owner-record | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-ship-defer"></a>eta-ship-defer | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-checkin"></a>eta-checkin | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-missing"></a>eta-health-missing | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-extended"></a>eta-health-extended | requirement | GRD-13 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-overrun"></a>eta-health-overrun | requirement | GRD-13 | not run | - | local | 2026-11-16 |
 
 ## Health
 
@@ -1078,3 +1087,6 @@
 | <a id="t-defect-3854-long-pr-body"></a>defect-3854-long-pr-body | defect | [#3854](https://github.com/jcl2018/agent-workflow-template/issues/3854) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-defect-3939-lane-skips-node-modules"></a>defect-3939-lane-skips-node-modules | defect | [#3939](https://github.com/jcl2018/agent-workflow-template/issues/3939) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-listing-names-every-command"></a>listing-names-every-command | requirement | done line package-cap-3:1 | not run | - | local | 2026-11-15 |
+| <a id="t-done-hard-eta-1"></a>done-hard-eta-1 | workflow | done line hard-eta:1 | not run | - | local | no |
+| <a id="t-done-hard-eta-2"></a>done-hard-eta-2 | workflow | done line hard-eta:2 | not run | - | local | no |
+| <a id="t-done-hard-eta-3"></a>done-hard-eta-3 | workflow | done line hard-eta:3 | not run | - | local | no |
