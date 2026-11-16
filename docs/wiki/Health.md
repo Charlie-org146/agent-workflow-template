@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept v1-go-no-go@dd0a21a4 -->
+Review: **Unreviewed**
 
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
@@ -24,7 +24,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 ## Requirements
 
 ### Functional
-- HLT-2: **Reviewed 2026-11-14** The rules <!-- reviewed 34766f65 -->
+- HLT-2: **Reviewed 2026-11-16** The rules <!-- reviewed ab84a4d0 -->
   - Health checks exactly these groups, each with the angle its tests take:
   - Requirements (my angle: is every promise I approved proven?): every Reviewed requirement has a test seen failing and passing now; done lines have tests; none stays not enforced over 7 days.
   - Traceability (an auditor's angle: can I follow any work end to end?): requirement to test to last run; issue to feature; pull request to goal to done lines; release to the issues it fixed.
@@ -34,7 +34,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
   - Tests (a skeptic's angle: do the tests prove anything?): every row seen failing once; no flaky rows; no row skipped over 7 days; slowest rows named; no test touches the network.
   - Performance (my clock's and my wallet's angle: is it fast and cheap enough?): goal runs and the full suite within their time limits; goals within their time and token budgets; the health check within its limit.
   - Security and privacy (a leak's angle: can anything private escape?): no private names, paths, emails or keys in tracked files; secrets only in the environment or secrets; the commit scan hook installed; workflows with least permissions.
-  - Size (a maintainer's angle: can someone still read this?): scripts under 20 KB with a warning from 90%; SKILL.md under 150 lines; requirements per page within the limit.
+  - Size (a maintainer's angle: can someone still read this?): scripts under 20 KB with a warning over 19,000 bytes; SKILL.md under 150 lines; requirements per page within the limit.
   - Hygiene (a janitor's angle: is anything left lying around?): open findings within the cap; no wait on me over 24 hours; no merged or stale branches or worktrees; no idle worker sessions.
   - Adoption (another repo's angle: would this work installed fresh?): config valid; every check runs at least one test; template version current; the local schedule installed and, for a public repo, the regression workflow present and firing.
   - Controls (the checker's own angle: can each rule fire?): every rule has a negative control run against a deliberately broken copy.
