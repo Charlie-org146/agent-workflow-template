@@ -1,16 +1,13 @@
-"""Hygiene rules that keep the repo lean: test time, stale loop worktrees, stale local branches, git hooks. Used by health.py.
+"""Hygiene rules that keep the repo lean, used by health.py.
 
-test-time reads regression.py's per-branch land lane record (loop/tests/ in the git common folder): this branch's, else the
-newest with a readable `at`. It counts only land rows of the current .loop/regression.tsv and warns when their total is
-over test_budget_minutes (.loop/config.json, default 15, floor 15), naming the slowest rows and scripts. It also warns
-when the newest full (non --reuse) run took over 30 minutes, and lists each goal step or test run that hit its time
-budget with what it left (budget_hits in the run records).
-worktrees lists loop worktrees that no live run names; local-branches lists branches with no upstream (or a gone one),
-checked out nowhere, not merged into the base and older than stale_branch_days (default 14). Each gets its shell-quoted
-removal command; nothing is removed. These rows hold machine-local paths, so file.py never files them.
-hooks (DEL-9, SET-8) runs `setup.py --git-hooks --check --json` and WARNs when a private-name hook is missing, foreign
-(no call to private.py) or calls a gone script, or when the list is broken; no list is not a finding. Skipped on GitHub
-Actions unless LOOP_HEALTH_HOOKS=1. Any other answer is one WARN to update the skills.
+test-time: the land rows' lane time (this branch's loop/tests record in the git common folder, else the newest readable one)
+against test_budget_minutes (default and floor 15), naming the slowest rows and scripts; goal steps that hit their budget.
+rows-cap, suite-cap: the table's rows and the slowest full (non --reuse) run recorded here against max_regression_rows
+(default 1200) and max_suite_seconds (default 1900): WARN from 90%, FAIL over; a cap of 0 is off.
+worktrees, local-branches: loop worktrees no live run names, and branches with no upstream, checked out nowhere, unmerged and
+older than stale_branch_days (default 14), each with its removal command; nothing is removed; file.py never files them.
+hooks (DEL-9, SET-8): `setup.py --git-hooks --check --json` WARNs on a missing, foreign or gone private-name hook; skipped on
+GitHub Actions unless LOOP_HEALTH_HOOKS=1.
 """
 import glob
 import hashlib
@@ -31,7 +28,6 @@ if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 TEST_BUDGET = 15  # minutes: default and floor
-SUITE_LIMIT = 30  # minutes
 STALE_DAYS = 14
 SHOWN = 5
 LIVE = ("queued", "running", "waiting", "failed", "stopped")
@@ -127,16 +123,25 @@ def budget_minutes(root):
     return value if isinstance(value, int) and not isinstance(value, bool) and value >= TEST_BUDGET else None
 
 
-def suite_rows(root):
-    full = []
-    for path in glob.glob(os.path.join(common(root), "loop", "tests", "*.json")):
-        data = load(path)
-        if readable(data) and "--reuse" not in str(data.get("command")) and number(data.get("total_seconds")):
-            full.append((str(data["at"]), data["total_seconds"]))
-    if not full or max(full)[1] <= SUITE_LIMIT * 60:
+def cap(root, rule, value, key, default, unit):
+    """One row: value against the repo's cap (WARN from 90%, FAIL over); nothing when there is no value or the cap is 0."""
+    limit = config(root).get(key, default)
+    if not value or not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
         return []
-    return [row("WARN", "lane", "test-time", "the full suite took %d s, over %d minutes" % (max(full)[1], SUITE_LIMIT),
-                "move the slowest rows to nightly in .loop/regression.tsv, or split them")]
+    state = "FAIL" if value > limit else "WARN" if value * 10 >= limit * 9 else "PASS"
+    found = row(state, key, rule, "%d %s of %d (%d%%)" % (value, unit, limit, 100 * value // limit),
+                "merge or drop rows that test the same thing, or the owner raises %s in .loop/config.json" % key)
+    return [dict(found, family="performance")]
+
+
+def rows_cap(root):
+    return cap(root, "rows-cap", len(table(root)), "max_regression_rows", 1200, "rows")
+
+
+def suite_cap(root):
+    full = [data["total_seconds"] for path in glob.glob(os.path.join(common(root), "loop", "tests", "*.json"))
+            for data in [load(path)] if readable(data) and "--reuse" not in str(data.get("command")) and number(data.get("total_seconds"))]
+    return cap(root, "suite-cap", int(max(full, default=0)), "max_suite_seconds", 1900, "s")
 
 
 def unrun_rows(root):
@@ -164,7 +169,7 @@ def hit_rows(root):
 
 
 def test_rows(root):
-    return lane_rows(root) + suite_rows(root) + unrun_rows(root) + hit_rows(root)
+    return lane_rows(root) + unrun_rows(root) + hit_rows(root)
 
 
 def lane_rows(root):

@@ -244,7 +244,7 @@ def rule_functions():
              "seen-red": criteria_rows, "defect-tests": defect_rows, "docs-check": docs_check, "findings": hygiene_rows,
              "waiting": hygiene_rows, "branches": hygiene_rows, "cost": cost_rows}
     if lean:
-        found.update({"test-time": lean.test_rows, "worktrees": lean.worktree_rows, "local-branches": lean.branch_rows, "hooks": lean.hook_rows})
+        found.update({"test-time": lean.test_rows, "rows-cap": lean.rows_cap, "suite-cap": lean.suite_cap, "worktrees": lean.worktree_rows, "local-branches": lean.branch_rows, "hooks": lean.hook_rows})
     found.update(extra)
     return {name: found[name] for name in RULES if name in found}
 
