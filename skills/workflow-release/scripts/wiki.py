@@ -70,7 +70,7 @@ def pending(top, cfg, fix=False, head="HEAD"):
         release.DOCS = docs
         lines = release.docs_trouble(tree, base, whole=True)
         lines = own_entry(tree, lines) if tree != top else lines
-        done = run([sys.executable, docs, "check", "--own", head if tree == top else "HEAD"], tree)  # main's own stale page
+        done = run([sys.executable, docs, "check", "--own", head if tree == top else "HEAD"], tree)
     finally:
         release.DOCS = saved
         tree != top and run(["git", "worktree", "remove", "--force", tree], top)
@@ -121,8 +121,7 @@ def cmd_prepare(args):
 
 
 def rerender(tree, cfg):
-    """Re-render the generated Tests tables in the publish tree and commit them (DOC-11), so generated staleness never blocks
-    the publish. Returns the pages it changed; a failed render is printed, not fatal."""
+    """Re-render the generated Tests tables in the publish tree and commit them (DOC-11); returns the pages changed."""
     done = run([sys.executable, CRITERIA, "render", "--tables"], cwd=tree)
     if done.returncode:
         print("RENDER FAILED: " + ((done.stderr or done.stdout).strip().splitlines() or ["exit %d" % done.returncode])[0][:200])
@@ -187,7 +186,7 @@ def cmd_publish(args):
     if error:
         state["wiki_error"] = error
         report, note = state.get("report"), ""
-        if not isinstance(report, dict):  # a goal reset leaves report null; a hand edit can leave anything
+        if not isinstance(report, dict):
             note = "" if report is None else "(the stored report was a %s and was reset) " % type(report).__name__
             report = state["report"] = {}
         report["text"] = ("%s %sWiki not published: %s" % (str(report.get("text") or ""), note, error)).strip()[:600]
@@ -222,7 +221,6 @@ def fixes_lines(top, start=None):
     return [line for line in done.stdout.splitlines() if line.startswith("Fixes #")]
 
 
-# Batch merge (DEL-15): ready goals with disjoint touches are verified together on one tree and merged in one go.
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -346,7 +344,7 @@ def where(script, base=None):
         return  # the base check reports a fetch it cannot make
     behind = release.git("rev-list", "--count", "HEAD..origin/" + base, cwd=here, check=False)
     if behind.isdigit() and int(behind):
-        went = not run([sys.executable, OPERATE, "forward", base], main).returncode  # moved here; the running code is old, so it still stops
+        went = not run([sys.executable, OPERATE, "forward", base], main).returncode
         sys.exit("REFUSED (CHECKOUT_BEHIND): this checkout %s is %s commit%s behind origin/%s, so it would judge the goal by old "
                  "rules. %s: git -C %s merge --ff-only origin/%s, then run it again." % (
                      main, behind, "" if behind == "1" else "s", base, "Done now" if went else "Fix", main, base))
