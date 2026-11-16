@@ -5,6 +5,8 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
 Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept ci-fail-causes@118bb491 -->
 
+How to use: [How-to-use-Regression](How-to-use-Regression)
+
 ## Problem
 - I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it.
 - Running every test on every change is too slow, but skipping tests lets breakage slip through; I need fast checks in the loop and the full suite somewhere I can see it, like GitHub Actions.
@@ -205,7 +207,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1
 | [reg7-unrun-warn-lean](Tests#t-reg7-unrun-warn-lean) | requirement | REG-7 | Given a full-suite record whose unrun column is above 0, when the hygiene group reads it, then it WARNs with the count. | not run |
 | [rerun-both-touched](Tests#t-rerun-both-touched) | requirement | REG-7 | Given a goal rerun after main moved, when the lane plans, then it runs only the rows touched by both the goal's diff and main's new commits. | not run |
 | [lane-walk-skips-node-modules](Tests#t-lane-walk-skips-node-modules) | requirement | REG-7 | Given a worktree whose folder holds a large node_modules and a __pycache__, when the lane plans and walks it, then neither folder is entered and the real files are unchanged. | PASS 2026-11-14 |
-| [lane-ports-tmpdir](Tests#t-lane-ports-tmpdir) | requirement | REG-8 | Given two lanes running at once, when their rows run, then each has its own leased port base and TMPDIR, and with all leases held a lane says so. | PASS 2026-11-11 |
+| [lane-ports-tmpdir](Tests#t-lane-ports-tmpdir) | requirement | REG-8 | Given two lanes running at once, when their rows run, then each has its own leased port base and TMPDIR, and with all leases held a lane says so. | PASS 2026-11-16 FLAKY |
 | [lane-messages-table](Tests#t-lane-messages-table) | requirement | REG-8 | Given every message code a lane, the runner or merge.py prints, when the reference is read, then each code has a row with its exit and what to do. | PASS 2026-11-11 |
 | [goal-levels-nightly](Tests#t-goal-levels-nightly) | requirement | REG-8 | Given goal_levels nightly, when a goal lane plans, then it selects the nightly rows a change reaches as well as land rows. | PASS 2026-11-11 |
 | [lane-tmpdir-outside-repo](Tests#t-lane-tmpdir-outside-repo) | requirement | REG-8 | Given a test that refuses to write inside a git checkout, when it runs under the lane, then it passes, because the lane's TMPDIR is outside any checkout (issue 814). | not run |

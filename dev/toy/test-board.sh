@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-monitoring/SKILL.md skills/workflow-monitoring/references/operation.md
+# reads: skills/workflow-monitoring/SKILL.md skills/workflow-monitoring/references/commands.md
 # reads: skills/workflow-monitoring/scripts/board.py skills/workflow-monitoring/scripts/board_page.py
 # reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-setup/scripts/setup.py
 # reads: skills/workflow-monitoring/scripts/
@@ -232,18 +232,18 @@ $B board --at $AT --out "$T/q" >/dev/null
 python3 -c "import json,sys;r={x['slug']:x for x in json.load(open(sys.argv[1]))['runs']};assert r['nopid']['quiet']=='yes'" "$T/q/board.json" && ok "a quiet goal with no pid shows quiet" || bad "no pid quiet"
 rm "$R/nopid.json"
 # repo checks
-op="$here/skills/workflow-monitoring/references/operation.md"
+op="$here/skills/workflow-monitoring/references/commands.md"
 # the test was wrong: "one chat line" and "6 lines" were retired on purpose with the reply hook's five-part layout (commit 5ece58d); the guide is right
-for k in "watch.py watch --once" "latest report" "board.py board" "board_page.py" "main project folder" "Artifact" "NEXT_DELAY" "Never answer a gate" "exact words" "information" "merge only when told" "never archive"; do has "$op" "$k" "operation.md: $k"; done
+for k in "watch.py watch --once" "latest report" "board.py board" "board_page.py" "main project folder" "Artifact" "NEXT_DELAY" "Never answer a gate" "exact words" "information" "merge only when told" "never archive"; do has "$op" "$k" "commands.md: $k"; done
 # The reply layout the reply hook enforces must be named inside step 5 (the lines from "5. Reply to the owner" to "6. Wait"), not just somewhere in the guide.
 step5() { sed -n '/^5\. Reply to the owner/,/^6\. Wait/p' "$1"; }
 for k in "All sessions" "Dependencies" "Needs you" "Coming up" "reply hook"; do
-  step5 "$op" | grep -qiF -- "$k" && ok "operation.md step 5: $k" || bad "operation.md step 5 lacks '$k' in $op: restore the word in step 5, or retire the key with a comment naming the commit"
+  step5 "$op" | grep -qiF -- "$k" && ok "commands.md step 5: $k" || bad "commands.md step 5 lacks '$k' in $op: restore the word in step 5, or retire the key with a comment naming the commit"
 done
 ctl=$(mktemp); sed '/^5\. Reply to the owner/,/^6\. Wait/d' "$op" > "$ctl"
 [ -z "$(step5 "$ctl" | grep -iF -- "All sessions")" ] && ok "control: a guide without step 5 fails the step-5 keys" || bad "control: the step-5 check passes a guide without step 5"
 rm -f "$ctl"
-has "$here/skills/workflow-monitoring/SKILL.md" "references/operation.md" "SKILL.md links operation.md"
+has "$here/skills/workflow-monitoring/SKILL.md" "references/commands.md" "SKILL.md links the operation guide"
 # room: board.py and board_page.py keep the 19,000-byte room line (set when watch.py and board.py were made smaller, commit 5d11a93).
 # watch.py grew past it through reviewed work, so it has two stages: WARN above the room line, FAIL at the script cap, which comes from dev/package.py (MAX_SCRIPT), not a typed number.
 cap=$(python3 - "$here/dev/package.py" <<'PY'
