@@ -353,6 +353,7 @@ def howto(root, folder, features):
         order = [PARTS.index(h) for h in heads if h in PARTS]
         if len(order) != len(heads) or order != sorted(set(order)):
             found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
-        if "How to use: [%s](%s)" % (name, name) not in slurp(os.path.join(root, folder, page + ".md")).splitlines():
+        feature = slurp(os.path.join(root, folder, page + ".md"))
+        if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
     return found

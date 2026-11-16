@@ -35,6 +35,7 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria']
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median LIST` | `python3 scripts/calc.py median LIST` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
+printf '<!-- workflow-docs -->\n# How to use Delivery\n\n## What it'"'"'s for\n\nIt prints the median of the numbers given.\n\n## Links\n\n- PRD page: [Delivery](Delivery)\n' > docs/wiki/How-to-use-Delivery.md
 fails=0; day=$(date -u +%F)
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -108,7 +109,9 @@ $reg add del-2a --level land --command "true" --goal DEL-2 --describe "Given a s
 $reg run del-1a >/dev/null 2>&1; $reg run del-2a >/dev/null 2>&1
 $cri render >/dev/null
 git add -A; git commit -qm "Toy pages in the format" >/dev/null
-reset() { git checkout -q -- .; git clean -qfd docs .loop >/dev/null; }
+howto() { printf '<!-- workflow-docs -->\n# How to use Delivery\n\n## What it'"'"'s for\n\nIt prints the median of the numbers given.\n\n## Links\n\n- PRD page: [Delivery](Delivery)\n' > docs/wiki/How-to-use-Delivery.md
+  grep -q '^PRD: ' $P || grep -q '^How to use:' $P || python3 -c "import sys; p = sys.argv[1]; t = open(p).read(); open(p, 'w').write(t.replace('\n## Problem', '\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem', 1))" $P; }
+reset() { git checkout -q -- .; git clean -qfd docs .loop >/dev/null; howto; }
 has() { check | grep -q "$1"; }
 
 
