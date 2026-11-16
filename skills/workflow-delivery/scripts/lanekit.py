@@ -313,6 +313,8 @@ def prep(top, cfg, log):
     if done.returncode:
         first = (done.stderr or done.stdout).strip().splitlines()[-1:] or ["exit %d" % done.returncode]
         return None, "LANE_PREP_FAILED: criteria.py render failed: %s. Fix: run it by hand; %s." % (first[0][:200], NOTHING)
+    slug = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip().split("/", 1)[-1]  # DOC-2: a page stale only by this goal's code is re-stamped before the rows run
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(criteria), "audit.py"), "restamp-own", slug], cwd=top, capture_output=True, text=True, timeout=300)
     paths = [p for p in dirty() if is_page(p, cfg)]
     if git("status", "--porcelain", "--", ".loop/regression-runs.tsv").stdout.strip():
         paths.append(".loop/regression-runs.tsv")

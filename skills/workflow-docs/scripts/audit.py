@@ -224,7 +224,13 @@ def relock(root, slug="", only=()):
         line, why = prd.review_of(text, rule)
         match = prd.REVIEW.match(line or "")
         parts = cr.sections(text)
-        if why or not match or not match.group(2):
+        if why or not match:
+            continue
+        if not match.group(2):  # Unreviewed: no stamp to refresh; a kept marker says its text still holds (as for a How-to-use page)
+            if slug and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
+                with open(join(root, rel), "w") as handle:
+                    handle.write(prd.set_review(text, "Review: **Unreviewed** <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip())))
+                done.append(os.path.basename(rel)[:-3])
             continue
         now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
         moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
@@ -248,6 +254,13 @@ def relock(root, slug="", only=()):
         with open(join(log, "reviews.tsv"), "a") as handle:
             handle.write("%s\t%s\t%s\t%s\n" % (cr.datetime.datetime.now(cr.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "restamp" if slug else "relock", ",".join(done), slug + ": mapped code only" if slug else "auto-relock: all lines owner-reviewed"))
     return done
+
+
+def restamp_own(root, slug):
+    """DOC-2: relock the pages docs.py check --own calls STALE for this goal; a page whose reviewed text moved stays stale."""
+    base = "origin/" + (docs.config(root).get("base") or "main")
+    seen = subprocess.run([sys.executable, join(os.path.dirname(os.path.abspath(__file__)), "docs.py"), "check", "--own", base], cwd=root, capture_output=True, text=True).stdout
+    return relock(root, slug, {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and len(l.split()) > 1})
 
 
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
@@ -312,5 +325,8 @@ def perm_main(argv):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["restamp"] and len(sys.argv) > 3:
         print("".join("RESTAMPED %s\n" % page for page in relock(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
+        sys.exit(0)
+    if sys.argv[1:2] == ["restamp-own"] and len(sys.argv) > 2:
+        print("".join("RESTAMPED %s\n" % page for page in restamp_own(os.getcwd(), sys.argv[2])), end="")
         sys.exit(0)
     sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)
