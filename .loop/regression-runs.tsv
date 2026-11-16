@@ -386,6 +386,8 @@ pods-lock	PASS	2026-11-12
 pods-owner	PASS	2026-11-12	
 pool-edges-122	PASS	2026-11-10	
 pr-body-by-file	PASS	2026-11-13	
+pr-body-cap-large	PASS	2026-11-16	
+pr-body-cap-small	PASS	2026-11-16	
 pr-body-criterion	PASS	2026-11-12	
 pr-body-no-checks	PASS	2026-11-12	
 pr-body-no-home-3841	PASS	2026-11-14	
