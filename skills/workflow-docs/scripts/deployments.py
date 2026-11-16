@@ -92,7 +92,7 @@ SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "referenc
 
 
 def howto_book(root, folder, page, name):
-    """The Runbook (or Runbooks) section's lines on the feature's How-to-use page: where a routine's runbook may live instead of the PRD (DOC-16, DOC-18)."""
+    """The Runbook(s) section's lines on the feature's How-to-use page: where a routine's runbook may live (DOC-16, DOC-18)."""
     try:
         text = slurp(os.path.join(root, folder, HOWTO + page + ".md"))
     except OSError:
@@ -330,7 +330,7 @@ PARTS = ("What it's for", "How to reach or run it", "URLs and deployments", "Aut
 
 
 def mapped(root, rows, folder):
-    """rows plus each existing How-to-use-<Feature> page, mapped to its feature's paths: it has no docs.tsv row of its own (#4542)."""
+    """rows plus each How-to-use-<Feature> page, mapped to its feature's paths (it has no docs.tsv row, #4542)."""
     out = dict(rows)
     for page, paths in rows.items():
         if page != "Home" and page not in pf.GENERATED and os.path.isfile(os.path.join(root, folder, HOWTO + page + ".md")):
@@ -339,7 +339,7 @@ def mapped(root, rows, folder):
 
 
 def howto(root, folder, features):
-    """DOC-18 trouble as (kind, page, detail): a feature with no How-to-use page, one off the skeleton, or a feature page that doesn't link it."""
+    """DOC-18 trouble as (kind, page, detail): no How-to-use page, one off the skeleton, or a feature page that doesn't link it."""
     found = []
     for page in features:
         name, path = HOWTO + page, os.path.join(root, folder, HOWTO + page + ".md")
