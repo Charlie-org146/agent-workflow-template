@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.1 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.0 - 2026-11-16
 
 First stable release. Goals merged since v0.28.72: guard-fixes, package-green, budget-fair, start-from-head, adoption, queue-hygiene, dead-loop-alert, sweep-health, health-leftovers, scripts-b, memory-floor-3, audit-head-docs, regression-fix, review-hold, merge-unblock, checkin-tidy, ff-stash-fix, scripts-c, milestone-sync, listing-commands, home-leak, offline-prd-copy, and v1-go-no-go (CI drift fixes: GIT_TERMINAL_PROMPT=0 in every script that starts processes, a regenerated regression.yml, release.py cut skipping known, exit-77, skip-flagged and already-PASS rows).
