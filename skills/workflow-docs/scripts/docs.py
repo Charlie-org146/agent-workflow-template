@@ -187,6 +187,8 @@ def problems(root, base):
         text = slurp(full)
         if PLACEHOLDER in text or (len(text.replace(MARKER, "").split()) < 10 and not deployments.linked(root, page, text)):
             found.append(("UNWRITTEN", page, rel))
+        if page == "Home" and __import__("render").home_fresh(root, feature_pages(root)):
+            continue  # a DOC-4 Home holds only generated text: fresh, a changed mapped path leaves nothing to restate (#4608)
         seen = git("rev-list", "--no-merges", "HEAD", "--", rel, cwd=root, check=False).split()
         if not seen:
             continue
