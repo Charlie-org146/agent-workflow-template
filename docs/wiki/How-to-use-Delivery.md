@@ -17,6 +17,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "What needs me?" | You get the questions waiting on you, each with a recommended answer. |
 | "Approve it" / "a" | The decision is recorded with your words and the goal carries on. |
 | "Merge it" | A ready pull request is merged and released. |
+| (a lane says MEMORY_WAIT or LANE_ENV) | The machine was short of memory, not the goal: no try is spent, so run the same command again when memory frees. |
 
 ## URLs and deployments
 
