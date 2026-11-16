@@ -122,7 +122,6 @@ Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1
 | [one-format-everywhere](Tests#t-one-format-everywhere) | requirement | REG-2 | Given requirement, workflow and defect rows across two features with a reopened defect issue, when tests.py summary, the wiki Tests tables and health's TESTS block show them, then each prints the same grouped lines. | PASS 2026-11-10 |
 | [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-3 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-12 |
 | [local-row-env](Tests#t-local-row-env) | requirement | REG-3 | Given a local run with GH_TOKEN and a run summary file set, when a row runs, then it sees neither. | PASS 2026-11-10 |
-| [ci-block-skip-file](Tests#t-ci-block-skip-file) | requirement | REG-3 | Given a row whose toy skips itself and writes TOY_SKIP_FILE behind a pipe, when the CI block runs it, then the row is SKIPPED, not FAIL. | not run |
 | [lanes-reuse](Tests#t-lanes-reuse) | requirement | REG-4 | Given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. | PASS 2026-11-10 |
 | [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run. | PASS 2026-11-10 |
 | [lanes-failing](Tests#t-lanes-failing) | requirement | REG-4 | Given a run with a failing test, when a later run happens, then it is never reused. | PASS 2026-11-10 |
