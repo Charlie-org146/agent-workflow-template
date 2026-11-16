@@ -39,6 +39,7 @@ Each requirement and how it is delivered:
 - DOC-15: Home and the README show how the repo is set up and what runs by itself. Example, from the settings-overridden test: given a toy repo with one overridden setting, when render runs, then Home's Settings table marks exactly that one overridden with its value.
 - DOC-17: A PRD kept outside the repo stays in step through reviewed deltas. Example, from the sync-not-connected test: given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0.
 - DOC-18: Every feature page has a How-to-use page for its users. Example, from the doc18-howto-missing test: given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes.
+- DOC-19: Each How-to-use page has one item per functional requirement, saying how it is delivered. Example, from the doc19-item-missing test: given a feature page with three functional requirements and a How-to-use page with items for two, when docs check runs, then it fails naming the missing ID, and with all three items it passes.
 
 ## URLs and deployments
 
