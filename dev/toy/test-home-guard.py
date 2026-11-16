@@ -42,6 +42,9 @@ with tempfile.TemporaryDirectory() as tmp:
     open(os.path.join(tmp, "wl", "flow.json"), "w").write('{"limit": 600}')
     code, said = toy(tmp, "adds.sh", 'echo x > "$TOY_REAL_WL/new.json"')
     check("a toy that adds a file there fails with a LEAK line", code != 0 and "LEAK" in said and "new.json" in said, said)
+    os.makedirs(os.path.join(tmp, "wl", "lanes"), exist_ok=True)
+    code, said = toy(tmp, "lanes.sh", 'echo x > "$TOY_REAL_WL/lanes/ticket-1.tmp"')
+    check("another lane's tickets under lanes/ are not a leak", code == 0 and "LEAK" not in said, said)
     code, said = toy(tmp, "flow.sh", 'case "$LOOP_FLOW" in "$TOY_REAL_WL"*|"") exit 3;; esac; [ "$LOOP_HEALTH" != "" ] || exit 4')
     check("the harness points LOOP_FLOW and LOOP_HEALTH at temp paths", code == 0, said)
 
