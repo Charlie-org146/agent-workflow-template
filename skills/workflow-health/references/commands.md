@@ -56,6 +56,9 @@ unchanged repo print the same lines.
 | | `branches` | a `loop/` branch already merged (WARN) |
 | | `worktrees`, `local-branches` | loop worktrees no live goal names, local branches on no remote older than `stale_branch_days`, with the commands that remove them (WARN; shown, never filed, never run) |
 | | `idle-sessions` | a busy worker session whose goal has ended (WARN; shown, never filed) |
+| | `eta-missing` | a live goal with no ETA (WARN; shown, never filed) |
+| | `eta-extended` | a goal's ETA extended without an owner-words record that covers it (FAIL; shown, never filed) |
+| | `eta-overrun` | a goal a step past its ETA that is not waiting under Needs you for the owner's choice (FAIL; shown, never filed) |
 | Adoption (would this work installed fresh?) | `config` | `.loop/config.json` doesn't parse or has no base (FAIL) |
 | | `checks-run-tests` | the regression workflow exists but no land row does (WARN) |
 | | `template-version` | VERSION isn't the newest CHANGELOG heading (WARN) |

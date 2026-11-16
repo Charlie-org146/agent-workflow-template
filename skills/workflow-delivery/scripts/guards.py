@@ -261,6 +261,13 @@ def failed_try(g, state, why, step, fix):
     print("NEXT: " + fix)
 
 
+def cmd_finding(g, args):
+    state = g.load(args.slug)
+    if state.get("status") in ("done", "merged"):
+        return note_finding(g.state_dir(), state, args.text)
+    fail_stop(g, state, args.text)
+
+
 def cmd_wait(g, args):
     state = g.load(args.slug)
     state["status"] = "waiting"
