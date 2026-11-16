@@ -69,11 +69,12 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1).
   - A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4).
   - Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9).
-- GRD-14: **Reviewed 2026-11-16** A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer <!-- reviewed 878b9f67 -->
+- GRD-14: **Reviewed 2026-11-16** A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer <!-- reviewed 43180cea -->
   - Owner o52 (2026-11-15): the ETA is a hard criterion so goals stop sliding. Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal.
   - A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release.
   - goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot.
   - Health warns on a live goal with no ETA, fails on an ETA extended without a record, and fails on a goal past its ETA that is not under Needs you; each rule has a negative control.
+  - Pre-flight: when a goal is frozen, every owner decision it can foresee goes on one Needs you line, each with its options and a recommendation. Until you answer, the ETA reads "after your answers", and the hard ETA counts from your answers. At the pull-request step, a refusal the freeze list didn't foresee (the private-name scan, the memory floor) is logged as a missed pre-flight item.
 
 ### Non-functional
 
