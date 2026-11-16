@@ -12,6 +12,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-docs", "scripts"))
 import deployments  # noqa: E402
 import docs  # noqa: E402
+import prd  # noqa: E402
 
 failed = []
 
@@ -76,4 +77,25 @@ with tempfile.TemporaryDirectory() as tmp:
     put(root, "How-to-use-A", GOOD)
     put(root, "A", PAGE.replace("How to use: [How-to-use-A](How-to-use-A)\n\n", ""))
     check(any("doesn't link" in d for _, _, d in deployments.howto(root, folder, ["A"])), "negative control: a feature page that does not link its How-to-use page is reported")
+    # case 1 (REVIEW rule): exactly one link line is allowed in the page head
+    rule, link = {"milestone": "Milestone", "review": "Review"}, "How to use: [How-to-use-A](How-to-use-A)"
+    head = lambda *lines: chr(10).join(["<!-- workflow-docs -->", "# A", ""] + [x for line in lines for x in (line, "")] + ["## Problem"])
+    base = ["Milestone: https://x/1", "Review: **Unreviewed**"]
+    check(prd.review_of(head(link, *base), rule)[1] is None, "the link line between the title and the Milestone line is allowed")
+    check(prd.review_of(head(*base, link), rule)[1] is None, "the link line after the Review line is allowed")
+    check(prd.review_of(head(base[0], link, base[1]), rule)[1] is None, "the link line between the Milestone and Review lines is allowed")
+    check(prd.review_of(head("Notes: other", *base), rule)[1] is not None, "negative control: a different extra line between the title and Milestone is refused")
+    check(prd.review_of(head(*base, "Notes: other"), rule)[1] is not None, "negative control: a different extra line after the Review line is refused")
+    check(prd.review_of(head(link, link, *base), rule)[1] is not None, "negative control: a second link line is refused")
+    check(prd.review_of(head("How to use: [A](B)", *base), rule)[1] is not None, "negative control: a link line to another page is refused")
+
+    # case 2 (DOC-16): a routine's runbook may sit on the feature's How-to-use page instead of its PRD
+    with open(os.path.join(root, ".loop", "routines.tsv"), "w") as handle:
+        handle.write("r" + chr(9) + "A" + chr(10))
+    put(root, "How-to-use-A", GOOD + chr(10) + "## Runbooks" + chr(10) + chr(10) + "### r" + chr(10) + chr(10) + "- **Runs:** daily" + chr(10))
+    book = deployments.howto_book(root, folder, "A", "Runbook")
+    check(deployments.owed(root, {"A": book}, "Runbook") == [], "a routine whose runbook is on the How-to-use page is not owed")
+    check(any("'### r' runbook" in x[2] for x in deployments.owed(root, {"A": []}, "Runbook")), "negative control: a routine with a runbook on neither page is owed")
+    put(root, "How-to-use-A", GOOD)
+    check(deployments.howto_book(root, folder, "A", "Runbook") == [], "a How-to-use page with no Runbooks section gives no runbook")
 sys.exit(1 if failed else 0)

@@ -213,7 +213,7 @@ def contract(root, names, seen):
             have = [name for name in have if name != rule["usage"]]
         numbered = {name: (start, lines) for name, start, lines in pf.parts(text)}
         link = link_of(text, counting.sources(root).get(page, ""))
-        books[page] = numbered.get(rule["runbook"], (0, []))[1]
+        books[page] = numbered.get(rule["runbook"], (0, []))[1] or deployments.howto_book(root, folder_of(root), page, rule["runbook"])
         if link:
             got = link_page(root, page, text, link, parts, numbered, rule, seen, linked, set(on))
             unread, found = unread or any(x[0] == "UNREAD" for x in got), found + got
@@ -260,6 +260,8 @@ def contract(root, names, seen):
         if "runbook" in on and rule["runbook"] in numbered:
             found += pf.runbook(page, rule["runbook"], books[page], rule["fields"])
             found += pf.linked(page, rule["runbook"], books[page], numbered.get(rule["deploy"], (0, []))[1])
+        elif "runbook" in on and books[page]:
+            found += pf.runbook("How-to-use-" + page, rule["runbook"], books[page], rule["fields"])
         if "problem" in on:
             found += pf.problem(page, head[0], numbered[head[0]][1], rule["problem_lines"], rule["banned"])
         if "tests" in on:

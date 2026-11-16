@@ -91,6 +91,15 @@ CRITERIA_MAX_DEFAULT = 10
 SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")
 
 
+def howto_book(root, folder, page, name):
+    """The Runbook (or Runbooks) section's lines on the feature's How-to-use page: where a routine's runbook may live instead of the PRD (DOC-16, DOC-18)."""
+    try:
+        text = slurp(os.path.join(root, folder, HOWTO + page + ".md"))
+    except OSError:
+        return []
+    return next((lines for n, _, lines in pf.parts(text) if n in (name, name + "s")), [])
+
+
 def has_runbook(books, page, routine):
     return any(line.rstrip() == "### " + routine for _, line in books[page])
 

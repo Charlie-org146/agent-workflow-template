@@ -136,6 +136,8 @@ doc18-howto-mapped	PASS	2026-11-16
 doc18-howto-missing	PASS	2026-11-16	
 doc18-howto-orphan	PASS	2026-11-16	
 doc18-howto-skeleton	PASS	2026-11-16	
+doc18-review-link-line	PASS	2026-11-16	
+doc18-runbook-on-howto	PASS	2026-11-16	
 docs-audit	PASS	2026-11-12	
 docs-block-split	FAIL	2026-11-15	
 docs-check-same	PASS	2026-11-12	
