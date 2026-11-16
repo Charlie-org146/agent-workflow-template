@@ -182,6 +182,7 @@
 | <a id="t-audit-head-judges-own-docs"></a>audit-head-judges-own-docs | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-ff-stash-conflict-never-unmerged"></a>ff-stash-conflict-never-unmerged | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-release-criteria-known-skip"></a>release-criteria-known-skip | requirement | DEL-5 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-budget-raise"></a>eta-budget-raise | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
@@ -487,6 +488,7 @@
 | <a id="t-sweep-health-record"></a>sweep-health-record | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-file-close-no-crash"></a>file-close-no-crash | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4379-health-key-posix"></a>defect-4379-health-key-posix | defect | [#4379](https://github.com/jcl2018/agent-workflow-template/issues/4379) closed (2026-11-15) | not run | - | local | 2026-11-15 |
+| <a id="t-eta-health-rules"></a>eta-health-rules | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 
 ## Monitoring
 
@@ -679,6 +681,7 @@
 | <a id="t-mon17-this-pod-only"></a>mon17-this-pod-only | requirement | MON-17 | not run | - | local | 2026-11-15 |
 | <a id="t-review-board-shows-wait"></a>review-board-shows-wait | requirement | MON-3 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4375-toys-fake-machine"></a>defect-4375-toys-fake-machine | defect | [#4375](https://github.com/jcl2018/agent-workflow-template/issues/4375) closed (2026-11-15) | not run | - | local | 2026-11-15 |
+| <a id="t-eta-checkin-table"></a>eta-checkin-table | requirement | MON-5 | not run | - | local | 2026-11-16 |
 
 ## Regression
 
