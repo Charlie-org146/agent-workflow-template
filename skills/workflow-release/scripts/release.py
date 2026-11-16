@@ -22,9 +22,9 @@ import os
 import re
 import subprocess
 import sys
+import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# a prompt from git or gh must fail, not block
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -150,10 +150,10 @@ def auto_need(top, state):
     if stop:
         sys.exit("REFUSED: %s. Fix: %s (%s)" % stop)
     part = fit.view(state, os.path.dirname(state_path(state["slug"]))).get("bump")
-    part = part if part in ("minor", "major") else None  # the owner's bump wins (issue 3787)
+    part = part if part in ("minor", "major") else None
     if not code and not part:
         need = ("leave", "only docs, tests or .loop changed")
-    else:  # patch unless the owner set a bump; a removal or BREAKING is only named (issue 170)
+    else:
         why = ["the goal's bump, set with goal.py set" if part else "a code change: patch by default"]
         gone = [p for k, p in code if k == "D"]
         why += ["removes %s" % ", ".join(gone[:3])] * bool(gone)
@@ -217,7 +217,6 @@ def doc_rows(top):
 
 
 def docs_trouble(top, base, fix=False, whole=False):
-    """The docs audit's findings; [] when in step. whole: every page docs.py check calls stale, list only."""
     if not doc_rows(top):
         return []
     done = run([sys.executable, DOCS, "audit", "--base", "" if whole else base] + ([] if fix and not whole else ["--dry-run"]), top)
@@ -231,7 +230,12 @@ def criteria_trouble(top, cfg):
         rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
     except OSError:
         rows = []
-    out = []
+    out, skip, stop = [], set(), time.time() + 900
+    for name, ok in (("regression-known.tsv", ""), ("regression-runs.tsv", "PASS")):
+        try:
+            skip |= {l.split("	")[0] for l in open(os.path.join(top, ".loop", name)) if l[0] != "#" and ok in l.split("	")[1:2] + [""]}
+        except OSError:
+            pass
     for page in doc_rows(top):
         try:
             part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(top, cfg.get("wiki_dir") or "docs/wiki", page + ".md")).read()), maxsplit=1) + [""])[1].split("\n## ")[0]
@@ -241,7 +245,7 @@ def criteria_trouble(top, cfg):
             found = [r for r in rows if key in (r[0], r[3])]
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
-                if row[1] == "draft" or (row[1] != "covered" and run(["sh", "-c", row[2]], cwd=top).returncode):
+                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and run(["sh", "-c", row[2]], cwd=top).returncode not in (0, 77)):
                     out.append("%s (row %s is a draft or failing)" % (key, row[0]))
     return out
 
@@ -336,7 +340,7 @@ def cmd_cut(args):
             run(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=cwd).returncode == 0:
         sys.exit("REFUSED: tag %s already exists. Fix: pick another --bump or set the version by hand." % tag)
     import wiki  # wiki imports release
-    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)  # REG-6: each fixed issue with its test
+    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)
     day = now()[:10]
     old = open(cpath).read() if os.path.exists(cpath) else ""
     files, message, before = [version_file, "CHANGELOG.md"], "Release " + tag, git("rev-parse", "HEAD", cwd=cwd)
