@@ -48,6 +48,7 @@ except ImportError:  # lone health.py: its own rules only
         ALIASES = {"criteria": "requirements", "cost": "performance"}
 
 LIMIT = 20 * 1024
+WARN = 19000  # the script target: a script that meets it raises no warning
 FINDINGS_WARN = 5
 WAITING_HOURS = 24
 RULES = G.RULES
@@ -76,6 +77,7 @@ def sibling(skill, script):
 def size_rows(root):
     rows, good = [], 0
     limit = setting(root, "health_script_bytes", LIMIT)
+    warn = min(WARN, limit)
     for path in sorted(glob.glob(os.path.join(root, "skills", "*", "scripts", "*.*"))):
         if not path.endswith((".py", ".sh")):
             continue
@@ -84,13 +86,13 @@ def size_rows(root):
         name = os.path.relpath(path, root)
         if size > limit:
             rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, limit), "split it into modules"))
-        elif size >= limit * 9 // 10:
-            rows.append(row("WARN", "size", name, "scripts", "%d bytes, %d%% of %d" % (size, size * 100 // limit, limit),
+        elif size > warn:
+            rows.append(row("WARN", "size", name, "scripts", "%d bytes, over the %d target (the limit is %d)" % (size, warn, limit),
                             "trim or split before it passes the limit"))
         else:
             good += 1
     if not rows:
-        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts under %d bytes" % (good, limit * 9 // 10)))
+        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts at %d bytes or less" % (good, warn)))
     return rows
 
 

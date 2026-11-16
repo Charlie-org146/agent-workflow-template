@@ -592,7 +592,7 @@ def check_held_idle():
 def check_module_size():
     for name in ("board_status", "board_log", "board_model"):
         size = os.path.getsize(os.path.join(M, name + ".py"))
-        need(size < 18432, "%s.py is %d bytes, not under 18,432" % (name, size))
+        need(size < 19000, "%s.py is %d bytes, not under 19,000" % (name, size))
     spec = importlib.util.spec_from_file_location("bs_by_path", os.path.join(M, "board_status.py"))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

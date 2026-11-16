@@ -98,7 +98,7 @@ check(isinstance(eta.get("minutes"), int) and eta["minutes"] >= 30 and eta["minu
 check(eta["minutes"] == 240 and "time budget" in eta["basis"], "with no finished goals to estimate from, the ETA is the time budget")
 check("- ETA: %d active minutes" % eta["minutes"] in proctree.TEMPLATE.format(goal="g", slug="x", touches="t", eta=fit.eta_line(fields), done="1. one"),
       "the goal file holds an ETA line next to its done lines")
-check(auto.ETA_MARGIN == 1.25, "the margin over the estimate is 25 percent")
+check(auto.eta_margin({}) == 1.25, "the margin over the estimate is 25 percent")
 
 # 2. the gate: past the ETA nothing starts, the goal waits under Needs you with three choices
 record(here, "g", running(90))

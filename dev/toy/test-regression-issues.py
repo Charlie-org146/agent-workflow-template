@@ -38,7 +38,7 @@ class FakeGh:
     """The few gh calls the two writers make, on a list of issues kept in memory. Every call is kept in self.calls."""
 
     def __init__(self, issues):
-        self.issues, self.calls = issues, []
+        self.issues, self.calls, self.down = issues, [], set()
 
     def writes(self):
         return [c for c in self.calls if c[:2] in (["issue", "create"], ["issue", "edit"], ["issue", "comment"], ["issue", "close"],
@@ -53,7 +53,14 @@ class FakeGh:
         args = list(argv[1:])
         self.calls.append(args)
         out = ""
-        if args[:1] == ["api"]:  # the CI block's paged read of the open regression issues, as gh --jq gives it
+        kind = "rest" if args[:1] == ["api"] and "state=all" in args[2] else "graphql" if args[:2] == ["issue", "list"] else ""
+        if kind in self.down:  # a gateway timeout, as GitHub gave on the issue list
+            return subprocess.CompletedProcess(argv, 1, "", "HTTP 504: 504 Gateway Timeout")
+        if kind == "rest":  # the local writer's fallback: every issue as gh --jq gives it, with no comments
+            out = NL.join(json.dumps({k: i[k] for k in ("number", "state", "body", "labels")}) for i in self.issues)
+        elif args[:1] == ["api"] and args[1].endswith("/comments"):  # one issue's comment bodies, a line each
+            out = NL.join(c["body"] for i in self.issues if "issues/%d/" % i["number"] in args[1] for c in i["comments"])
+        elif args[:1] == ["api"]:  # the CI block's paged read of the open regression issues, as gh --jq gives it
             out = NL.join(json.dumps({"number": i["number"], "state": "OPEN", "body": i["body"], "labels": i["labels"]})
                           for i in self.issues if i["state"] == "OPEN")
         elif args[:2] == ["issue", "list"]:  # the local writer: newest first, at most --limit
@@ -71,7 +78,8 @@ class FakeGh:
         elif args[:2] == ["issue", "comment"]:
             for i in self.issues:
                 if str(i["number"]) == args[2]:
-                    i["comments"].append({"body": "x"})
+                    with open(args[args.index("--body-file") + 1], encoding="utf-8") as f:
+                        i["comments"].append({"body": f.read()})
         return subprocess.CompletedProcess(argv, 0, out, "")
 
 
@@ -165,6 +173,21 @@ check("WOULD open or update the issue for red" in out and not gh.writes(),
       "regression.py run: a token but no --live writes no issue (writes: %s; %s)" % (gh.writes()[:2], out.strip()[-100:]))
 out = regression_run(gh, "--live")
 check(any(c[:2] == ["issue", "create"] for c in gh.writes()), "regression.py run --live opens the failing row's issue (%s)" % out.strip()[-100:])
+runs.WAITS = (0, 0, 0)
+gh = FakeGh([issue(3700, "red", True), issue(2596, "red", True), issue(3119, "red", True)])
+gh.down = {"graphql"}
+local(gh, "FAIL")
+local(gh, "FAIL")
+check(gh.open_for("red") == [2596] and not [c for c in gh.writes() if c[:2] == ["issue", "create"]]
+      and len([c for c in gh.calls if c[:2] == ["issue", "comment"]]) == 1,
+      "the local run: with the GraphQL list timing out it reads the REST pages, keeps one open issue and comments once (open: %s)" % gh.open_for("red"))
+local(gh, "PASS")
+check(gh.open_for("red") == [], "the local run: on the REST fallback a passing row closes its open issue (open: %s)" % gh.open_for("red"))
+gh = FakeGh([issue(2596, "red", True)])
+gh.down = {"graphql", "rest"}
+local(gh, "PASS")
+check(gh.open_for("red") == [2596] and not [c for c in gh.writes() if c[0] == "issue"],
+      "the local run: with both reads timing out it changes no issue (writes: %s)" % gh.writes()[:2])
 if not failed:
     print("PASS: each failing row keeps one open issue and no issue is written without --live")
 sys.exit(1 if failed else 0)
