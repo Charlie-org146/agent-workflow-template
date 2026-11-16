@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109e571 U=03828777 --> <!-- kept merge-unblock@5121db9e -->
+Review: **Unreviewed**
 
 ## Problem
 
@@ -63,6 +63,10 @@ Review: **Reviewed 2026-11-15** <!-- prd P=506dd70a R=30b73ae7 N=e6bf17f7 M=5109
   - Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
 - GRD-12: **Reviewed 2026-11-14** The machine's status is read every round, and no goal starts under the memory floor. <!-- reviewed 0b68aa9f -->
   - Each check-in reads free RAM, free commit memory, CPU and the number of claude and node processes (Monitoring, MON-16). A goal starts only while free commit memory is at or above `min_free_memory_gb` (default 3.5, in `.loop/config.json`; 0 turns the floor off). The pool creates no session and the board holds every ready goal as "memory low" until memory frees up. A figure that can't be read never blocks a start.
+- GRD-13: **Unreviewed** Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51)
+  - `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1).
+  - A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4).
+  - Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9).
 
 ### Non-functional
 
