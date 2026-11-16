@@ -222,10 +222,16 @@ def owner_words_add(text, ids):
 # --- the hard ETA (GRD-14, o52): active minutes a goal may run, recorded at freeze. Past it nothing starts and the goal
 # waits under Needs you: ship now, extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
 
-ETA_MARGIN, ETA_FLOOR = 1.25, 30
+ETA_FLOOR = 30
 
 
-def eta_new(root, slug, done, touches, budget):
+def eta_margin(cfg):
+    """The ETA margin over the estimate as a factor: eta_margin_percent (0 to 300, default 25; anything else reads as 25)."""
+    value = (cfg or {}).get("eta_margin_percent", 25)
+    return 1 + (value if isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= 300 else 25) / 100
+
+
+def eta_new(root, slug, done, touches, budget, cfg=None):
     """{minutes, estimate, basis}: the model's high end for a goal of this size plus 25%, up to 5 minutes (30 at least);
     the time budget when it has no estimate."""
     names = glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))
@@ -237,9 +243,9 @@ def eta_new(root, slug, done, touches, budget):
         found = None
     if not found or not found[2]:
         return {"minutes": budget or 240, "estimate": 0, "basis": "no estimate yet, so the time budget"}
-    high = int(found[2] // 60)
-    return {"minutes": max(ETA_FLOOR, -(-int(high * ETA_MARGIN) // 5) * 5), "estimate": high,
-            "basis": "estimate %dm plus a 25%% margin%s" % (high, ", rough" if found[3] else "")}
+    high, margin = int(found[2] // 60), eta_margin(cfg)
+    return {"minutes": max(ETA_FLOOR, -(-int(high * margin) // 5) * 5), "estimate": high,
+            "basis": "estimate %dm plus a %d%% margin%s" % (high, round((margin - 1) * 100), ", rough" if found[3] else "")}
 
 
 def eta_seen(root, run):
@@ -266,6 +272,12 @@ def eta_open(seen):
 
 def eta_start(seen):
     return (seen.get("preflight_answers") or {}).get("spent") or 0  # active minutes when the last pre-flight item was answered
+
+
+def eta_left(seen, at):
+    """Seconds of hard ETA a goal has left (0 once passed); None with no ETA or while its pre-flight is open (the ETA has not started)."""
+    held = eta_minutes(seen)
+    return None if not held or eta_open(seen) else max(0, held - eta_spent(seen, at) + eta_start(seen)) * 60
 
 
 def eta_over(seen, spent):
