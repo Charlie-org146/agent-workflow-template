@@ -52,7 +52,7 @@ REG = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "sc
 NOTHING = "the lane committed and pushed nothing"
 BOOKKEEPING = (".loop/regression-runs.tsv", ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
 FILES = (".loop/regression-issues.tsv", ".loop/regression-runs.tsv")
-EXIT_WAIT, EXIT_STALE, POLL = 4, 5, 2.0
+EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL = 4, 5, 6, 2.0
 EXIT_PREP = 125
 TERMINAL = ("pass", "fail")
 COPIED = ('flow_file', '_flow', 'time_limit', 'lanes_dir', 'check', '_open', 'port_base', 'last_change', 'lane_limit', 'timeout_line', 'rows_line')
@@ -133,6 +133,11 @@ def timeout_line(text, why, held):
     """The LANE_TIMEOUT line."""
     return ("LANE_TIMEOUT: %s; the lane was killed, rows partly ran, nothing committed or pushed. Fix: run the same "
             "command again, or raise the flow file \"limit\" (else step_limit)." % why)
+
+
+def env_line(notes):
+    """A lane that gave up waiting for memory (its MEMORY_WAIT note), or one whose rows mostly could not start (LANE_ENV): the machine's fault."""
+    return notes if "MEMORY_WAIT" in notes else "LANE_ENV: most rows could not start (low memory); rerun when memory allows"
 
 
 def budget_note(text, base, name):

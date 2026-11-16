@@ -26,6 +26,7 @@ PLACEHOLDER = "Write this page from what is really in the repo."
 MARK = "workflow-loop-hook"
 GUARD = {"pre-commit": ["staged"], "commit-msg": ['message "$1"'], "pre-push": ["push"]}
 STUB = """#!/bin/sh
+# %(mark)s
 P='%(py)s' S='%(priv)s' U='%(setup)s'
 fix() { echo "%(name)s hook: $1. Fix: python3 '$U' --git-hooks (to skip once, git's own --no-verify is yours to decide)" >&2; exit 1; }
 [ -x "$P" ] || P=$(command -v python3) || fix "python3 is not on PATH, so the private-name scan cannot run"

@@ -35,6 +35,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. |
+| `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. |
 | `ci_levels` | `nightly` | Target of the scheduled and tag regression runs: nightly (every row) or land. |

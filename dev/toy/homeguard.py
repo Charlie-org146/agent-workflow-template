@@ -23,7 +23,7 @@ def folder():
 def scan(top):
     found = {}
     for here, _dirs, names in os.walk(top):
-        _dirs[:] = [d for d in _dirs if d != "__pycache__"]  # compiled caches that any other session's run adds, not state
+        _dirs[:] = [d for d in _dirs if d != "__pycache__" and not (here == top and d in ("lanes", "schedule"))]  # caches, lane tickets and the schedule's own log and registry that other sessions' runs write, not state
         for name in names:
             path = os.path.join(here, name)
             try:

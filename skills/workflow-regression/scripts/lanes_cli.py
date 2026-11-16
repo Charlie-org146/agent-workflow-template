@@ -331,7 +331,7 @@ def free_gb():
 def wait_memory(root):
     """A lane about to run rows waits while free memory is below min_free_memory_gb (default 4, 0 is off); a lane already running is
     never stopped. Each wait is logged in <git common dir>/loop/memory-waits.log for the check-in and health; past 4x the lane's
-    time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 4."""
+    time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 4)
     except (OSError, ValueError, AttributeError):
@@ -354,8 +354,8 @@ def wait_memory(root):
             except OSError:
                 pass
         if time.time() - began > cap:
-            _slots().note("LANE_WAIT_TIMEOUT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran. Fix: free memory, or lower min_free_memory_gb" % (time.time() - began, free, need))
-            sys.exit(_slots().EXIT_WAIT)
+            _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
+            sys.exit(_slots().EXIT_ENV)
         time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
 
 if __name__ == "__main__":

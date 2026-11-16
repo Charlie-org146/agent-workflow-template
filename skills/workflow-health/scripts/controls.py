@@ -259,6 +259,14 @@ def f_scheduled(root):
     write(root, ".github/workflows/health.yml", "name: health\n")
 
 
+def f_machine(root):
+    repo(root)
+    home = os.path.join(root, "home")
+    os.makedirs(os.path.join(home, ".claude", "skills", "workflow-health"))
+    os.environ["HOME"] = os.environ["USERPROFILE"] = home
+    os.environ.pop("CI", None)
+
+
 def f_milestones(root):
     repo(root)
     write(root, ".loop/docs.tsv", "A\tsrc\n")
@@ -327,7 +335,7 @@ CONTROLS = {
     "branches": ("hygiene", "branches", f_branches),
     "cost": ("performance", "cost", f_cost),
     "test-time": ("performance", "test-time", f_test_time),
-    "rows-cap": ("performance", "rows-cap", f_caps), "suite-cap": ("performance", "suite-cap", f_caps),
+    "rows-cap": ("performance", "rows-cap", f_caps), "suite-cap": ("performance", "suite-cap", f_caps),
     "worktrees": ("hygiene", "worktrees", f_worktrees),
     "local-branches": ("hygiene", "local-branches", f_local_branches),
     "hooks": ("security", "hooks", f_hooks),
@@ -339,7 +347,7 @@ CONTROLS = {
     "network": ("tests", "network", f_network), "config": ("adoption", "config", f_config),
     "checks-run-tests": ("adoption", "checks-run-tests", f_checks_run_tests),
     "template-version": ("adoption", "template-version", f_template_version),
-    "scheduled": ("adoption", "scheduled", f_scheduled), "milestones": ("adoption", "milestones", f_milestones),
+    "scheduled": ("adoption", "scheduled", f_scheduled), "machine": ("adoption", "machine", f_machine), "milestones": ("adoption", "milestones", f_milestones),
     "prompt-pointer": ("adoption", "prompt-pointer", f_prompt_pointer),
     "private": ("security", "private", f_private), "scan-hook": ("security", "scan-hook", f_scan_hook),
     "workflow-permissions": ("security", "workflow-permissions", f_workflow_permissions),

@@ -185,7 +185,7 @@ def references(root, text, folder, wide=True, memo=None):
         found.add("skills/%s/" % name)
     for raw in PATH.findall(text):
         raw = raw.rstrip(".")
-        for cand in {raw, os.path.normpath(os.path.join(folder, raw))}:
+        for cand in {raw, os.path.normpath(os.path.join(folder, raw)).replace("\\", "/")}:
             if cand.startswith("/"):
                 continue
             if cand.split("/")[0] == ".git":
@@ -223,7 +223,7 @@ def walk(root, prefix, cache=None):
         return cache["walk", prefix]
     found = []
     for here, dirs, names in os.walk(os.path.join(root, prefix)):
-        dirs[:] = [d for d in dirs if d not in ("node_modules", "__pycache__")]
+        dirs[:] = [d for d in dirs if d not in ("node_modules", "__pycache__", ".git")]
         found += [os.path.relpath(os.path.join(here, n), root) for n in names]
     return found if cache is None else cache.setdefault(("walk", prefix), found)
 
