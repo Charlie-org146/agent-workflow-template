@@ -183,6 +183,9 @@
 | <a id="t-ff-stash-conflict-never-unmerged"></a>ff-stash-conflict-never-unmerged | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-release-criteria-known-skip"></a>release-criteria-known-skip | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-test-caps-qa-refused"></a>test-caps-qa-refused | requirement | DEL-8 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-cut-pass-current-commit"></a>cut-pass-current-commit | requirement | DEL-5 | not run | - | local | 2026-11-16 |
+| <a id="t-cut-left-listed"></a>cut-left-listed | requirement | DEL-5 | not run | - | local | 2026-11-16 |
+| <a id="t-cut-left-none"></a>cut-left-none | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
