@@ -135,6 +135,7 @@ digest-no-milestone	PASS	2026-11-12
 doc18-howto-mapped	PASS	2026-11-16	
 doc18-howto-missing	PASS	2026-11-16	
 doc18-howto-orphan	PASS	2026-11-16	
+doc18-howto-restamp	PASS	2026-11-16	
 doc18-howto-skeleton	PASS	2026-11-16	
 doc18-review-link-line	PASS	2026-11-16	
 doc18-runbook-on-howto	PASS	2026-11-16	

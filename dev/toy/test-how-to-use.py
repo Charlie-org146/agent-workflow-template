@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-docs", "sc
 import deployments  # noqa: E402
 import docs  # noqa: E402
 import prd  # noqa: E402
+import audit  # noqa: E402
 
 failed = []
 
@@ -98,4 +99,33 @@ with tempfile.TemporaryDirectory() as tmp:
     check(any("'### r' runbook" in x[2] for x in deployments.owed(root, {"A": []}, "Runbook")), "negative control: a routine with a runbook on neither page is owed")
     put(root, "How-to-use-A", GOOD)
     check(deployments.howto_book(root, folder, "A", "Runbook") == [], "a How-to-use page with no Runbooks section gives no runbook")
+# the re-stamp (DOC-18): a stale How-to-use page whose text is as committed is cleared, one whose text changed stays refused
+with tempfile.TemporaryDirectory() as tmp:
+    root = os.path.join(tmp, "repo")
+    os.makedirs(os.path.join(root, ".loop"))
+    os.makedirs(os.path.join(root, "docs", "wiki"))
+    os.makedirs(os.path.join(root, "src"))
+    run = lambda *a: subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + list(a), cwd=root, check=True, capture_output=True)
+    subprocess.run(["git", "init", "-q", "-b", "main", root], check=True)
+    for name, text in ((".loop/config.json", "{}"), (".loop/docs.tsv", "A" + chr(9) + "src" + chr(10)), ("docs/wiki/A.md", PAGE), ("docs/wiki/How-to-use-A.md", GOOD),
+                       ("docs/wiki/How-to-use-Ghost.md", GOOD), ("src/a.py", "x = 1" + chr(10))):
+        with open(os.path.join(root, name), "w") as handle:
+            handle.write(text)
+    run("add", "-A")
+    run("commit", "-q", "-m", "pages")
+    with open(os.path.join(root, "src", "a.py"), "w") as handle:
+        handle.write("x = 2" + chr(10))
+    run("commit", "-q", "-am", "code change")
+    here = os.getcwd()
+    os.chdir(root)
+    check(any(k == "STALE" and p == "How-to-use-A" for k, p, _ in docs.problems(root, None)), "a code change after the page makes its How-to-use page stale")
+    check(audit.relock(root, "slug", ["How-to-use-Ghost"]) == [], "negative control: a How-to-use page whose feature has no page is not re-stamped")
+    with open(os.path.join(root, "docs", "wiki", "How-to-use-A.md"), "a") as handle:
+        handle.write(chr(10) + "A changed line." + chr(10))
+    check(audit.relock(root, "slug", ["How-to-use-A"]) == [], "negative control: a How-to-use page whose text changed since its commit stays refused")
+    run("checkout", "--", "docs/wiki/How-to-use-A.md")
+    check(audit.relock(root, "slug", ["How-to-use-A"]) == ["How-to-use-A"], "a stale How-to-use page whose text is as committed is re-stamped")
+    run("commit", "-q", "-am", "restamp")
+    check(not any(k == "STALE" and p == "How-to-use-A" for k, p, _ in docs.problems(root, None)), "after the re-stamp commit the page is no longer stale")
+    os.chdir(here)
 sys.exit(1 if failed else 0)
