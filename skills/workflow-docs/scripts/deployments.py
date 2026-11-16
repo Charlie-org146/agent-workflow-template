@@ -314,3 +314,36 @@ def regroup(text, topics):
     rows.sort(key=lambda r: (order.index(pf.topic_of(name(r), topics)), name(r)))
     table = pf.table(("Topic",) + pf.HOME, [[pf.topic_of(name(r), topics)] + r for r in rows])
     return "\n".join(lines[:start] + table + lines[end:])
+
+
+HOWTO = "How-to-use-"
+PARTS = ("What it's for", "How to reach or run it", "URLs and deployments", "Automations and schedules", "Runbooks", "Links")
+
+
+def mapped(root, rows, folder):
+    """rows plus each existing How-to-use-<Feature> page, mapped to its feature's paths: it has no docs.tsv row of its own (#4542)."""
+    out = dict(rows)
+    for page, paths in rows.items():
+        if page != "Home" and page not in pf.GENERATED and os.path.isfile(os.path.join(root, folder, HOWTO + page + ".md")):
+            out.setdefault(HOWTO + page, paths)
+    return out
+
+
+def howto(root, folder, features):
+    """DOC-18 trouble as (kind, page, detail): a feature with no How-to-use page, one off the skeleton, or a feature page that doesn't link it."""
+    found = []
+    for page in features:
+        name, path = HOWTO + page, os.path.join(root, folder, HOWTO + page + ".md")
+        if not os.path.isfile(path):
+            found.append(("HOWTO", page, "DOC-18 the feature has no How-to-use page. Fix: write %s/%s.md with the sections %s" % (folder, name, ", ".join(PARTS))))
+            continue
+        lines = [x.strip() for x in slurp(path).splitlines() if x.strip()]
+        heads = [x[3:] for x in lines if x.startswith("## ")]
+        if "# " + pf.heading_of(page) not in lines:
+            found.append(("HOWTO", name, "DOC-18 the title is '# %s'. Fix: use that title" % pf.heading_of(page)))
+        order = [PARTS.index(h) for h in heads if h in PARTS]
+        if len(order) != len(heads) or order != sorted(set(order)):
+            found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
+        if "How to use: [%s](%s)" % (name, name) not in slurp(os.path.join(root, folder, page + ".md")).splitlines():
+            found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
+    return found

@@ -87,7 +87,7 @@ def review_of(text, rule):
     at += starts(at, "# ")
     at += starts(at, rule["milestone"] + ":")
     line = seq[at] if starts(at, rule["review"] + ":") else None
-    rest = seq[at + bool(line):]
+    rest = [x for x in seq[at + bool(line):] if not x.startswith("How to use: [")]  # the link to the feature's How-to-use page (DOC-18)
     if line is None:
         if any(item.startswith(rule["review"] + ":") for item in seq):
             return None, ("REVIEW", "the Review line must come right after the title or the Milestone line. Fix: move it there")
