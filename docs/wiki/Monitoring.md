@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept v1-go-no-go@dd0a21a4 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept checkin-view@1446c75a -->
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -28,13 +28,13 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-15** Cadence and reply format <!-- reviewed 480ea269 -->
+- MON-5: **Reviewed 2026-11-16** Cadence and reply format <!-- reviewed aefc4745 -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
-  - Every check-in reply has the same layout: one headline line;
-  - All sessions, one table of every session across my repos with what it is for, its status, progress, time left, tokens left and latest report;
-  - Dependencies, a drawn graph marking what is running, holding, queued or stuck;
+  - Every check-in reply has the same layout: one headline line, then a Machine line (free RAM, free commit memory, CPU, claude and node counts);
+  - All sessions, one table of every session across my repos with what it is doing (a short plain sentence of under about 12 words from its goal's first line, then its slug and issue in brackets), its status, progress, time left, tokens left and latest report;
+  - Dependencies, a drawn graph marking what is running, holding, queued or stuck, with each goal's status marker, expected time left and machine (pc or mac);
   - Needs you, each question numbered with its options and a recommended answer, or Nothing needs you; and last, Coming up, the next expected events and what I will need to do.
-  - A hook that setup installs blocks a reply that doesn't follow this layout, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
+  - A hook that setup installs blocks a reply that doesn't follow this layout, or has no Machine line, or has a Dependencies goal with no status marker, time or machine, or an All sessions row whose "for" cell is only a slug or issue number, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
   - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
   - A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good.
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
@@ -61,20 +61,22 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde
   - A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs.
   - `board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12).
 
-- MON-14: **Reviewed 2026-11-15** Dependency map grouped by repo <!-- reviewed 9adcf143 -->
-  - The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks.
-  - Each goal shows its expected time left from past runs, each repo block ends with its expected finish, and each wait is drawn as an arrow.
+- MON-14: **Reviewed 2026-11-16** Dependency map grouped by repo <!-- reviewed a376c5a4 -->
+  - The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks; inside every repo's block, in the operation repo and every other repo, goals are grouped by release milestone and then by feature, a goal with none under "no release" or "no feature".
+  - Each goal shows its status marker, its expected time left from past runs and the machine that runs it (pc or mac, from its pod record); each repo block ends with its expected finish, and each wait is drawn as an arrow.
+  - A repo owned by another pod is one line marked with that pod's machine, from its last report.
   - The map lists only live goals: a record with no goal or status, a stopped goal and a goal left with release: leave are not drawn, and a worker held at pr reads holding, not stuck.
   - The check requires only live goals: running, holding, queued, waiting on the owner, or merged since the previous check-in; a goal merged before the previous check-in is never required.
   - Each repo prints as `== name ==` within 60 characters, then a `Between repos` list for `repo/slug` dependencies, then the legend once.
-  - The reply hook flags a check-in whose Dependencies section leaves out a goal on the board.
+  - Each release milestone's header starts with its expected release time, the latest expected finish among its goals, and its count of goals not started, for example "v1.1 release ETA tomorrow ~20:00 (11 goals, 6 not started)"; a release with nothing started reads "release ETA unknown (N not started)".
+  - The reply hook flags a check-in whose Dependencies section leaves out a goal on the board, or a release header with no release ETA, or shows a goal with no status marker, time or machine, or a repo block whose goals are not under a release and a feature.
 
 - MON-15: **Reviewed 2026-11-12** Pods coordinate through shared state, not messages: every goal records its owning pod and only that pod starts, answers, merges or resumes it; other pods show it read-only as owned by that pod; merges into one repo's main are serialized across pods by a short lock <!-- reviewed 9f4be548 -->
   - The pod id is `LOOP_POD_ID`, else the operation session's own id; a goal with no recorded pod belongs to no one. Another pod's attempt prints one `REFUSED: goal <slug> is owned by pod <id>. Fix: ...` line, exit 2, and changes nothing.
   - `merge.py` takes `<git common dir>/loop/merge.lock` for the whole merge step; a dead holder or one older than 30 minutes is replaced.
   - A pod's watch, auto-answers and mending skip other pods' goals, and its check-in lists their questions as read-only.
-- MON-16: **Reviewed 2026-11-14** Fill every free slot at once; speed comes before tokens, within the guardrails. <!-- reviewed 01b9c4fe -->
-  - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
+- MON-16: **Reviewed 2026-11-16** Fill every free slot at once; speed comes before tokens, within the guardrails. <!-- reviewed 7479a5ca -->
+  - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line, always printed first, shows free RAM, free commit memory, CPU and the claude and node counts, and says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent.
 - MON-17: **Reviewed 2026-11-14** A check-in lists only this machine's goals. <!-- reviewed d4cc2e30 -->
   - Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod.
 - MON-18: **Reviewed 2026-11-14** The operation session keeps running unattended. <!-- reviewed a7a95ff4 -->
@@ -213,12 +215,14 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde
 | [reply-hook-guard](Tests#t-reply-hook-guard) | requirement | MON-5 | Given a reply blocked twice in a row or a broken hook input, when the session stops again, then the hook lets it through and logs it instead of looping. | PASS 2026-11-10 |
 | [reply-hook-install](Tests#t-reply-hook-install) | requirement | MON-5 | Given a repo, when setup --reply-hook runs, then the Stop hook is merged into its machine-local Claude settings, which git ignores, and a second run changes nothing. | PASS 2026-11-10 |
 | [reply-hook-all](Tests#t-reply-hook-all) | requirement | MON-5 | Given the reply hook's toy suite, when it runs, then every check passes. | PASS 2026-11-10 |
-| [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | MON-5 | Given the Monitoring PRD, when MON-5 is read, then it carries the check-in reply layout the hook enforces. | PASS 2026-11-13 |
+| [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | MON-5 | Given the Monitoring PRD, when MON-5 is read, then it carries the check-in reply layout the hook enforces. | PASS 2026-11-16 |
 | [checkin-passes-hook](Tests#t-checkin-passes-hook) | requirement | MON-5 | Given the check-in operate.py prints, when the reply hook checks it, then it passes the layout. | PASS 2026-11-10 |
 | [machine-local-checkin](Tests#t-machine-local-checkin) | requirement | MON-5 | Given proofs owed to another machine, when the check-in is written, then they are listed under Coming up as off-machine to-dos, not as blockers. | not run |
 | [mon5-pr-merged-closes](Tests#t-mon5-pr-merged-closes) | requirement | MON-5 | Given a done run whose pull request merged on GitHub before the last check-in, when the check-in prints, then the goal is gone from the graph and the check. | not run |
 | [mon5-merged-pr-retires](Tests#t-mon5-merged-pr-retires) | requirement | MON-5 | Given a running record whose pull request merged, when it is retired with --pr, then it closes for good; with no merged pull request it is still refused. | not run |
 | [machine-guide-monitoring](Tests#t-machine-guide-monitoring) | requirement | MON-5 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held-line conventions, and the check-in routine file is only a pointer to it. | not run |
+| [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | MON-5 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
+| [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | MON-5 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
@@ -235,6 +239,8 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde
 | [mon14-map-times](Tests#t-mon14-map-times) | requirement | MON-14 | Given live goals with past runs to estimate from, when the check-in draws Dependencies, then each goal shows its time left. | not run |
 | [mon14-merged-since-once](Tests#t-mon14-merged-since-once) | requirement | MON-14 | Given a goal merged since the previous check-in, when the check-in draws Dependencies, then it is listed once as [x]. | not run |
 | [mon14-merged-before-dropped](Tests#t-mon14-merged-before-dropped) | requirement | MON-14 | Given a goal merged before the previous check-in, when the check-in draws and checks Dependencies, then it is neither drawn nor required. | not run |
+| [mon14-checkin-goal-lines](Tests#t-mon14-checkin-goal-lines) | requirement | MON-14 | Given a Dependencies goal with no status marker, time left or machine, when the reply hook checks the check-in, then it flags the goal by name. | PASS 2026-11-16 |
+| [mon14-release-eta](Tests#t-mon14-release-eta) | requirement | MON-14 | Given a check-in whose release header has no release ETA, when the reply hook checks it, then it flags it, and a header with the ETA and its counts passes. | PASS 2026-11-16 |
 | [mon15-pod-owner](Tests#t-mon15-pod-owner) | requirement | MON-15 | Given another pod's goal, when a pod acts on it, then it is refused naming the owner and shown owned by that pod. | PASS 2026-11-12 |
 | [mon15-merge-lock](Tests#t-mon15-merge-lock) | requirement | MON-15 | Given two pods merging into one main, when they run together, then the lock serializes them. | PASS 2026-11-12 |
 | [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | MON-15 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |
@@ -245,7 +251,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=41bfc9ae R=5964b3fa N=9967b317 M=0fde
 | [mon16-machine-line](Tests#t-mon16-machine-line) | requirement | MON-16 | Given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows. | not run |
 | [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | MON-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
 | [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | MON-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
-| - | requirement | MON-16 | no passing test | not enforced |
+| [mon16-checkin-grouped](Tests#t-mon16-checkin-grouped) | requirement | MON-16 | Given a check-in, when it prints, then the Machine line follows the headline and each repo block is grouped by release milestone, then feature, with each goal's marker, time left and machine. | PASS 2026-11-16 |
 | [mon17-this-pod-only](Tests#t-mon17-this-pod-only) | requirement | MON-17 | Given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line. | not run |
 | - | requirement | MON-17 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |

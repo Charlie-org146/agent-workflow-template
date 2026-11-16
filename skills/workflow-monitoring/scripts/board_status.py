@@ -215,6 +215,94 @@ def machine_line(cfg):
         else "%d goal start%s" % (room, "" if room == 1 else "s"))
 
 
+def release_of(root, slug):
+    """The release a goal is planned for: its '## Batch: NAME' heading in .loop/queue.md (v1-0-1 reads v1.0.1), else 'no release'."""
+    name = ""
+    try:
+        for line in open(os.path.join(root, ".loop", "queue.md"), encoding="utf-8"):
+            head = re.match(r"^## Batch: (\S+)\s*$", line)
+            name = head.group(1) if head else name
+            if name and re.search(r"slug: %s\b" % re.escape(slug), line):
+                return re.sub(r"^(v?\d+)-(\d+)(?:-(\d+))?$", lambda m: ".".join(g for g in m.groups() if g), name)
+    except OSError:
+        pass
+    return "no release"
+
+
+def feature_of(root, text):
+    """The feature page a goal is for: the page that defines the first requirement ID its goal line names, else 'no feature'."""
+    prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]
+    try:
+        for path in sorted(os.listdir(os.path.join(root, "docs", "wiki"))):
+            if prefix and path.endswith(".md") and re.search(r"^\s*- %s-\d+:" % prefix, open(os.path.join(root, "docs", "wiki", path), encoding="utf-8").read(), re.M):
+                return path[:-3].replace("-", " ")
+    except OSError:
+        pass
+    return "no feature"
+
+
+def goal_line(item):
+    """One goal: its status marker, expected time left and the machine that runs it."""
+    import board_lines  # noqa: E402  (board_lines imports this module)
+    left = item.get("left")
+    return "[%s] %s ~%s left %s" % (board_lines.MARKS.get(item.get("mark"), " "), item["slug"],
+                                    board_page.span(left) if left else "?", item.get("machine") or graph.machine_name())
+
+
+def intro(goal, slug):
+    """The All sessions 'for' cell (MON-5): the goal's first clause in at most 12 words, then (slug, #issue)."""
+    first = re.split(r"[.;:,]", re.sub(r"\s*\([^)]*\)", "", str(goal or "")))[0]
+    issue = re.findall(r"#\d+", str(goal or ""))[:1]
+    return "%s (%s)" % (" ".join(first.split()[:12])[:56].rstrip() or slug, ", ".join([slug] + issue))
+
+
+def release_header(release, items, at):
+    """The release milestone's header (MON-14): its release ETA, the latest expected finish among its goals, and counts."""
+    import datetime
+    left = [i["left"] for i in items if i.get("left")]
+    new = sum(i.get("mark") == "queued" for i in items)
+    if not left or not at:
+        return "%s release ETA unknown (%d not started)" % (release, new)
+    end = (at + datetime.timedelta(seconds=max(left))).astimezone()
+    days = (end.date() - at.astimezone().date()).days
+    day = "today" if days <= 0 else "tomorrow" if days == 1 else end.strftime("%a %d %b")
+    return "%s release ETA %s ~%s (%d goals, %d not started)" % (release, day, end.strftime("%H:%M"), len(items), new)
+
+
+def check_view(text, cwd):
+    """MON-5, MON-14: the check-in has a Machine line, and every Dependencies goal a status marker, a time and a machine."""
+    lines = str(text or "").splitlines()
+    first = next((i for i, l in enumerate(lines) if re.sub(r"[^a-z ]", "", l.lower()).strip() == "all sessions"), len(lines))
+    found = [] if any(l.strip().startswith("Machine:") for l in lines[:first]) else ["no Machine line before All sessions (MON-5)"]
+    try:
+        import checkin
+        section = checkin.body(text)
+        flat_ = " ".join((section or "").split())
+        bare_ = [slug for _, slug in checkin.expected(cwd or None)]
+    except Exception:
+        return found
+    if section is None:
+        return found
+    flat_blocks, name = {}, ""
+    for row in section.splitlines():
+        name = row.strip() if re.match(r"^\s*==\s*\S.*\S\s*==\s*$", row) else name
+        flat_blocks.setdefault(name, []).append(row)
+    loose = [n for n, rows in flat_blocks.items() if n and any(re.search(r"\[.\] ", r) for r in rows)
+             and not (any(re.match(r"^\s*-- .+ --\s*$", r) for r in rows) and any(re.match(r"^\s+\S.*:\s*$", r) for r in rows))]
+    bare_rows = [r for rows in flat_blocks.values() for r in rows]
+    heads = [r for r in bare_rows if re.match(r"^\s*-- ", r)]
+    found += ["a release header has no release ETA (MON-14)"] * (len(heads) > sum("release ETA" in r for r in heads))
+    head = next((r for r in lines if r.lstrip().startswith("| session")), "")
+    col = [c.strip() for c in head.strip().strip("|").split("|")].index("for") if " for " in head else -1
+    thin = [r for r in lines if col >= 0 and r.lstrip().startswith("| ") and not r.lstrip().startswith(("| session", "|---"))
+            and len(r.strip().strip("|").split("|")) > col and not re.search(r"[A-Za-z]{2,}\s+[A-Za-z]{2,}", re.sub(r"\([^)]*\)", "", r.strip().strip("|").split("|")[col]))]
+    found += ["All sessions row %s has no plain-language sentence in its for cell (MON-5)" % ", ".join(r.split("|")[1].strip() for r in thin)] * bool(thin)
+    found += ["repo block %s has goals not grouped under a release and a feature (MON-14)" % ", ".join(loose)] * bool(loose)
+    gaps = [s for s in bare_ if re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(s), flat_)
+            and not re.search(r"\[.\] %s ~\S+ left (pc|mac)" % re.escape(s), flat_)]
+    return found + ["Dependencies goal %s has no status marker, time or machine (MON-14)" % ", ".join(gaps)] * bool(gaps)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--html", action="store_true")
