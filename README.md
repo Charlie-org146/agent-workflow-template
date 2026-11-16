@@ -111,7 +111,6 @@ Say these to the agent:
 | "Fill in any missing settings" | Missing repo settings are added with their defaults; your own values are kept. |
 | "Check this machine before setting up" | One checklist of git, python3, gh installed and signed in, real symlinks and the platform, each gap with its exact fix; a setup run prints it first and is never blocked by it. |
 | "Replay the first adoption against the golden run" | The eight golden steps are compared with what this machine shows and it stops at the first mismatch, saying what differs; the live check-in step is reported as not observed, never passed. |
-| "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints MACHINE OK; works on Mac and Windows (see `/workflow-setup machine`). |
 | "Which connectors do my repos need?" | Each connector a followed repo's PRDs name is listed as connected, needs sign-in or missing, and nothing is enabled for you. |
 | "Install the reply hook" | Operation-session replies that don't follow the check-in layout are blocked, saying what is missing. |
 | "Is there a newer template version?" | It shows what the newest release brings and which skill files you changed here; nothing is written. |
@@ -130,6 +129,16 @@ Say these to the agent:
 | "Turn off the scheduled health run" | Scheduled health runs write nothing and say the routine is off; you can still start one by hand. |
 | "Post the automation digest" | One comment on the pinned digest issue lists what ran, the new, still-open and fixed issues, and a request per open issue. |
 | "Write the scheduled regression run again" | The regression workflow is rewritten from the current config, so its schedule matches. |
+
+### How to use Machines
+
+Say these to the agent:
+
+| You say | What happens |
+|---|---|
+| "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints MACHINE OK; it works on a Mac and on Windows (see `/workflow-setup machine`). |
+| "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
+| "Record that I registered a task" | `machine.py record-task NAME MODE` notes the permission mode you chose in the app; a missing or prompting mode is a gap. |
 
 ### How to use Guardrails
 
@@ -449,7 +458,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. | set "goal_levels" in .loop/config.json | `land` | default |
 | `regression_runs` | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs: github:FILE, mac:LABEL or claude:TASK}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |
-| `topics` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup"], "Docs": ["Documentation"]}` |
+| `topics` | Home's Topic column: {topic: [feature pages]}; grouped in this order, unlisted pages under Other, empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
 | `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `240` | default |
 | `max_merge_rounds` | Merge rounds goal.py pr may take before the goal waits. | set "max_merge_rounds" in .loop/config.json | `8` | default |

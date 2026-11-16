@@ -1,8 +1,8 @@
 #!/bin/bash
 # windows: ok
-# reads: skills/workflow-setup/scripts/machine.py docs/wiki/Setup.md README.md
+# reads: skills/workflow-setup/scripts/machine.py docs/wiki/Machines.md README.md
 # reads: skills/workflow-monitoring/references/operation.md skills/workflow-regression/scripts/actions.py
-# Proves the machine setup (SET-18): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
+# Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
 set -u
@@ -87,16 +87,16 @@ fi
 if want machine-new-machine-docs; then
   grep -q 'New machine, in order' "$here/skills/workflow-setup/SKILL.md" || no "setup's command list has no New machine steps"
   grep -q 'New machine, in order' "$here/README.md" || no "README does not carry the New machine steps"
-  for id in SET-18; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Setup.md" || no "$id is not listed Unreviewed"; done
+  for id in MCH-1; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Machines.md" || no "$id is not listed Unreviewed"; done
   echo "PASS: Setup has a New machine section linked from the README and the new requirements are Unreviewed"
 fi
 
-# done 6: each machine row is listed in the Setup Tests table.
+# done 6: each machine row is listed in the Machines Tests table.
 if want machine-rows-listed; then
   for row in machine-apply-installs machine-check-gaps machine-operation-guide machine-no-private machine-new-machine-docs machine-windows machine-task-layout machine-no-prompt-mode machine-custom-items machine-mailer machine-caps; do
-    grep -qF "[$row](Tests#t-$row)" "$here/docs/wiki/Setup.md" || no "row $row is not in the Setup Tests table"; done
+    grep -qF "[$row](Tests#t-$row)" "$here/docs/wiki/Machines.md" || no "row $row is not in the Machines Tests table"; done
   for n in 1 2 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
-  echo "PASS: every machine row is listed in the Setup Tests table"
+  echo "PASS: every machine row is listed in the Machines Tests table"
 fi
 
 # done 7: a Windows-shaped home passes beside the Mac one.
@@ -188,6 +188,14 @@ if want machine-hook-state; then
   out=$(python3 "$d/clone/skills/workflow-setup/scripts/setup.py" --git-hooks --check --repo "$r" 2>&1)
   for hook in pre-commit commit-msg pre-push; do echo "$out" | grep -q "^hook $hook: installed" || no "the $hook hook setup wrote is not read back as installed"; done
   echo "PASS: the hooks setup writes are read back as installed"
+fi
+
+# health's Adoption group lists each gap machine.py check names (HLT-2): a WARN row with the fix.
+if want machine-health-rule; then
+  mk hr; r="$d/hr/repo"; h="$d/hhr"; mkdir -p "$h/.claude/skills/workflow-health"
+  out=$(cd "$r" && HOME="$h" USERPROFILE="$h" CI= python3 "$d/clone/skills/workflow-health/scripts/health.py" check --group adoption 2>&1)
+  echo "$out" | grep -q '^WARN adoption .* machine' || no "health's Adoption group did not list a machine gap"
+  echo "PASS: health's Adoption group lists the machine gaps"
 fi
 
 # done 12: machine.py is under the script cap and the only new file under skills/.

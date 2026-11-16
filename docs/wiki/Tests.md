@@ -477,6 +477,25 @@
 | <a id="t-sweep-health-record"></a>sweep-health-record | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-file-close-no-crash"></a>file-close-no-crash | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4379-health-key-posix"></a>defect-4379-health-key-posix | defect | [#4379](https://github.com/jcl2018/agent-workflow-template/issues/4379) closed (2026-11-15) | not run | - | local | 2026-11-15 |
+| <a id="t-machine-health-rule"></a>machine-health-rule | requirement | HLT-2 | not run | - | local | no |
+
+## Machines
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-private"></a>machine-no-private | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-windows"></a>machine-windows | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-task-layout"></a>machine-task-layout | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-custom-items"></a>machine-custom-items | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) state unknown | not run | - | local | 2026-11-16 |
 
 ## Monitoring
 
@@ -669,6 +688,7 @@
 | <a id="t-mon17-this-pod-only"></a>mon17-this-pod-only | requirement | MON-17 | not run | - | local | 2026-11-15 |
 | <a id="t-review-board-shows-wait"></a>review-board-shows-wait | requirement | MON-3 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4375-toys-fake-machine"></a>defect-4375-toys-fake-machine | defect | [#4375](https://github.com/jcl2018/agent-workflow-template/issues/4375) closed (2026-11-15) | not run | - | local | 2026-11-15 |
+| <a id="t-machine-guide-monitoring"></a>machine-guide-monitoring | requirement | MON-5 | not run | - | local | no |
 
 ## Regression
 
@@ -898,18 +918,6 @@
 | <a id="t-setup-tsv-guard-127"></a>setup-tsv-guard-127 | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-set8-health"></a>set8-health | requirement | SET-8 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-adoption-golden"></a>adoption-golden | requirement | SET-11 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-12 |
-| <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-no-private"></a>machine-no-private | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-windows"></a>machine-windows | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-task-layout"></a>machine-task-layout | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-custom-items"></a>machine-custom-items | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-mailer"></a>machine-mailer | requirement | SET-18 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-caps"></a>machine-caps | requirement | SET-18 | not run | - | local | 2026-11-12 |
 | <a id="t-set13-hooks-once"></a>set13-hooks-once | defect | [#2880](https://github.com/jcl2018/agent-workflow-template/issues/2880) closed (2026-11-12) | not run | - | local | 2026-11-13 |
 | <a id="t-package-gate-head"></a>package-gate-head | requirement | SET-3 | FAIL | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-backlog-milestones-made"></a>backlog-milestones-made | requirement | SET-17 | not run | - | local | 2026-11-13 |
@@ -940,7 +948,6 @@
 | <a id="t-hook-count"></a>hook-count | defect | 4345 | not run | - | local | 2026-11-15 |
 | <a id="t-set13-hooks-once-bullet"></a>set13-hooks-once-bullet | requirement | SET-13 | not run | - | local | 2026-11-15 |
 | <a id="t-review-hold-setting-listed"></a>review-hold-setting-listed | requirement | SET-2 | not run | - | local | 2026-11-15 |
-| <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) state unknown | not run | - | local | 2026-11-16 |
 
 ## Other
 
