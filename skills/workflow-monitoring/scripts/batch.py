@@ -284,6 +284,61 @@ def cmd_roadmap(args):
     return 0
 
 
+# --- goal.py queue and adopt (moved from fit.py to make room) ---
+
+
+def cmd_queue(g, args):
+    g.valid(args)
+    if any("|" in text for text in [args.goal, args.touches] + args.done):
+        g.no("no | in a queue line.")
+    path = os.path.join(g.root(), ".loop", "queue.md")
+    held = g.read(path) if os.path.exists(path) else ""
+    if os.path.exists(g.state_path(args.slug)) or "- slug: %s |" % args.slug in held:
+        g.no("%s already exists. Fix: pick a new slug." % args.slug)
+    parts = ["slug: " + args.slug]
+    if args.touches:
+        parts.append("touches: " + args.touches)
+    if args.depends_on:
+        parts.append("depends-on: " + args.depends_on)
+    parts.append("goal: " + " ".join(args.goal.split()))
+    parts += ["done: " + " ".join(line.split()) for line in args.done]
+    g.write(path, ("" if held.endswith("\n") or not held else "\n") + "- " + " | ".join(parts) + "\n", "a")
+    print("QUEUED %s in .loop/queue.md" % args.slug)
+    return 0
+
+
+def cmd_adopt(g, args):
+    slug, branch = args.slug, "loop/" + args.slug
+    old, note = g.state_path(slug), ""
+    if not g.SLUG.match(slug):
+        g.no("bad slug.")
+    if os.path.exists(old):
+        was = json.loads(g.read(old))
+        if was.get("status") != "running" or was.get("pid") or was.get("flow"):
+            g.no("%s has a live, started or finished run record here." % slug)
+        g.SEEN[slug], note = json.dumps(was), "; replaced a stale record: running, no pid, no steps"
+    if g.git("branch", "--show-current") != branch:
+        g.no("not on %s. Fix: run this in its worktree." % branch)
+    if g.run(["git", "fetch", "origin", branch]).returncode or g.run(["git", "merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD"]).returncode:
+        g.no("%s is not on origin, or this worktree lacks its commits. Fix: push, then fetch." % branch)
+    sha, lines, text = g.git("rev-parse", "--short", "FETCH_HEAD"), g.done_lines(slug), g.read(g.goal_file(slug))
+    seen = g.run(["gh", "pr", "view", branch, "--json", "url,state"])
+    info = json.loads(seen.stdout) if seen.returncode == 0 else {}
+    if not lines or info.get("state") != "OPEN":
+        g.no("%s needs done lines and an open pull request." % slug)
+    found = re.search(r"^- Touches: (.*)$", text, re.M)
+    touches = [t.strip() for t in found.group(1).split(",") if t.strip() != "not declared"] if found else []
+    args.goal = text.splitlines()[0].lstrip("# ")
+    state = dict(slug=slug, goal=args.goal, status="running", step="qa", tries=0, branch=branch, worktree=g.root(), touches=touches,
+                 pid=None, pr=info["url"], batch=False, done_sha=g.done_sha(lines), release="", waiting=None, finding="", log=[],
+                 flow={s: "done on another machine: " + sha for s in g.FLOW[:3]}, **g.fit.frozen_fields(g, args, lines, touches))
+    g.guards.stamp(state, "qa")
+    g.pods and g.pods.stamp(state)
+    g.save(state, "adopted from origin/%s @ %s (%s)%s" % (branch, sha, info["url"], note))
+    print("ADOPTED %s at qa from origin/%s @ %s%s; qa, ship and pr run here" % (slug, branch, sha, note))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
