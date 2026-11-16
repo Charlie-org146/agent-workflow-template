@@ -397,3 +397,8 @@ Health judge findings were re-filed under a new key each round (#4543: 29 issues
 - An ENV row (Windows start failure) is a SKIPPED row with an env flag. A lane up to half ENV exits 0 and names the ENV rows in its "not runnable here" count; more than half exits 6 (EXIT_ENV), which is not a counted try (cap 10 per goal, then it counts).
 - Seen, not changed: whether the real `bash -c` path passes 0xC0000142 through unchanged (the issue's logs show the full code, so it does); an ENV row overwrites an earlier FAIL in regression-runs.tsv until the rerun (a NOTRUN row did the same); `env_line` returns the whole note file, which ends with the MEMORY_WAIT text today.
 - `affected` selects fewer rows for README.md (five, reached only through files inside `.git`). On the main checkout it fell from 1149 MB and 833 s to 124 MB and 35 s.
+
+## stale-code-page review notes
+
+- The lane prep (lanekit.prep) now re-stamps the pages `docs.py check --own HEAD` calls stale, only on a `loop/` branch, with the branch's slug; a Reviewed page whose reviewed text still matches its stamp gets a refreshed stamp and a kept marker, an Unreviewed page a kept marker while the page is as committed. A moved wording stays stale. A failed prep commit undoes the re-stamps it made so the rerun is not blocked.
+- An independent review found that passing the base ref to `--own` re-stamped main's own stale pages; fixed (it is `HEAD`), with a toy case and a row. operate.py apply still passes `origin/BASE` to `--own`, so it also re-stamps every stale page (a possible follow-up).
