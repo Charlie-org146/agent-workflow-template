@@ -374,3 +374,12 @@ A generated Home that docs.tsv maps to code stayed STALE and blocked merge (#460
 - `docs.py problems()` skips the staleness count for Home when `render.home_fresh` says it needs no rewrite: its generated blocks match a fresh render and it passes DOC-4. A DOC-4 Home holds only generated text, so a changed mapped path leaves nothing to restate; a Home unlike its render still fails.
 - `counting.config_of` reads a skip-worktree `.loop/config.json` as committed at HEAD, so a value kept on one machine never reaches a rendered Settings or Automation block (wiki.py prepare and criteria.py render).
 - Chosen over a kept stamp on Home (the issue's second option): no new text on Home and no restamp step to forget.
+
+## Applied 2026-11-16 (held-time-charge)
+
+A goal's minute budget charged time it spent held or idle (#4534; #3878 covered only some shapes).
+
+- A session report that says waiting or paused now pauses the clock like `goal.py wait` (the waiting words matched only an entry that began with them, so `session report: ... waiting` and `paused for PC memory` leaked 417 minutes).
+- `board_log.active_minutes` takes the idle limit (`silent_minutes`, default 30 min; `LOOP_SESSION_QUIET` overrides): after an entry that is not the start of a step or the pr lane, a gap or the time to now is charged at most that limit. The estimate model's `flow_seconds` is unchanged, so history and estimates read as before; the budget gate and the ETA read the capped charge.
+- Cost: a worker that builds silently for more than the limit is charged only the limit; it sends `sessions.py report` as a heartbeat. Chosen over exempting build, which would leave goals idle in build charged all night.
+- `goal.py show` adds `minutes: {charged, wall}`. Existing records are not changed; the owner decides budgets.
