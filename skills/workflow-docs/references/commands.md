@@ -39,6 +39,7 @@ render [--check]                rewrite each page's Tests from the regression ro
 prd NAME "<idea>" --paths A,B   draft a new feature's PRD, Unreviewed, and map it
 convert                         turn old Summary/Criteria pages into PRD pages (prd.py convert previews, --write writes)
 relock                         re-stamp a reviewed page whose lock moved only because of owner-reviewed requirement lines (docs.py audit --relock; logs auto-relock in reviews.tsv)
+restamp-own SLUG               audit.py restamp-own: the lane prep re-stamps the pages docs.py check --own calls stale only because the goal's mapped code changed (a Reviewed page whose text still matches its stamp, or an Unreviewed page with a kept marker); a page whose wording changed stays stale
 publish [--dry-run] [--adopt PAGE]   copy the pages to the GitHub wiki, commit and push
 restore                         revert the last publish, if nothing came after it
 ```
