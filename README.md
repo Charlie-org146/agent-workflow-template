@@ -205,7 +205,7 @@ the workers, updates the board and prints the full live board on the cadence (30
 A goal merges the latest base branch before its pull request and reruns its checks if that changed anything; only a real
 conflict costs it a try. Goal steps refuse outside a worker.
 
-The pieces it runs, if you want them by hand, are asked in plain words (see `skills/workflow-monitoring/references/operation.md`):
+The pieces it runs, if you want them by hand, are asked in plain words (see `skills/workflow-monitoring/references/commands.md`):
 
 ```text
 "update the board and print what changed"

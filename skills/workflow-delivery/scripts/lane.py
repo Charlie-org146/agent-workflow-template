@@ -67,14 +67,18 @@ def deadline(held):
         return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
     if held.get("prep_by"):  # before the first row the preparation budget rules
         return held["prep_by"], "past its preparation budget"
+    at = held["started"]
     if os.path.exists(held["rc"] + ".queued"):
-        return max(held["started"], lanekit.last_change(held.get("pool") or lanekit.lanes_dir())) + 4 * held["limit"], \
-            "queued or planning past %ds" % (4 * held["limit"])
-    return held["started"] + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
+        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
+    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
 
 
 def live(held):
     return not os.path.exists(held["rc"]) and time.time() < deadline(held)[0] + 60 and alive(held["pid"], held.get("pstart", ""))
+
+
+def rev(*args):
+    return git("rev-parse", *args).stdout.strip()
 
 
 def job_of(runs, slug, name):
@@ -130,7 +134,7 @@ def finalize(base, held, name):
     ran, reused = len(re.findall(r"^(?:PASS|FAIL|KNOWN) ", text, re.M)), re.findall(r"\((\d+) reused\)", text)
     took = (ended or now) - (began or held["started"])
     line = "LANE %s %s %d/%d in %ds" % (name, kind, ran, ran + int((reused or [0])[0]), took)
-    cfg = read_json(os.path.join(git("rev-parse", "--show-toplevel").stdout.strip(), ".loop", "config.json")) or {}
+    cfg = read_json(os.path.join(rev("--show-toplevel"), ".loop", "config.json")) or {}
     limit = cfg.get("goal_lane_minutes")
     limit = limit if isinstance(limit, (int, float)) and not isinstance(limit, bool) and limit > 0 else 10
     if not kind.startswith("FULL") and took > limit * 60:
@@ -181,7 +185,7 @@ def finalize(base, held, name):
 
 def lane(runs, slug, name, spec, cfg, wait=90):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
-    head = git("rev-parse", "HEAD").stdout.strip()
+    head = rev("HEAD")
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:
         stop(base, held)
@@ -194,15 +198,15 @@ def lane(runs, slug, name, spec, cfg, wait=90):
             stop(other_base, other_held)
         elif live(other_held):
             return "running", running_line(other_held, other), []
-    if held and not live(held) and not os.path.exists(held["rc"]) and not fresh(held):
-        if time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
-            stop(base, held)
-            held = None
+    if held and not live(held) and not os.path.exists(held["rc"]) and not fresh(held) \
+            and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
+        stop(base, held)
+        held = None
     done = read_json(base + ".last") or {}
     if not held and done.get("head") == head and done.get("state") == "pass" and not dirty():
         return "pass", done.get("line", ""), []
     if not held:
-        top = git("rev-parse", "--show-toplevel").stdout.strip()
+        top = rev("--show-toplevel")
         began_prep = time.time()
         line, refusal = prep(top, cfg, base + ".txt")
         if refusal:
@@ -212,7 +216,7 @@ def lane(runs, slug, name, spec, cfg, wait=90):
             cut = {"budget": budget_s, "prep_s": spent, "override": override}
             lanekit.prep_hit(base, name, cut, 0, 0, "preparing the Tests tables")
             return "fail", lanekit.cut_line(name, cut, 0, 0, "preparing the Tests tables"), []
-        head = git("rev-parse", "HEAD").stdout.strip()
+        head = rev("HEAD")
         prefix = [os.path.expanduser(part) for part in spec.get("test_record") or []]
         if prefix and not (shutil.which(prefix[0]) or os.path.isfile(prefix[0])):
             return "fail", "LANE_RECORDER: the flow file's test_record command %s isn't on this machine. Fix: install it " \
@@ -263,7 +267,7 @@ def lane(runs, slug, name, spec, cfg, wait=90):
 
 def lane_status(runs, slug, name):
     """(state, line): running, pass, fail or none; finalizes, never spawns."""
-    head = git("rev-parse", "HEAD").stdout.strip()
+    head = rev("HEAD")
     base, held = job_of(runs, slug, name)
     if held and held.get("head") == head:
         if live(held):
@@ -359,7 +363,7 @@ def main(argv):
         if argv[0] == "lane-wait":
             timeout = float(argv[argv.index("--timeout") + 1]) if "--timeout" in argv else None
             return wait_for(runs, argv[1], argv[2], timeout)
-        cfg = json.load(open(os.path.join(git("rev-parse", "--show-toplevel").stdout.strip(), ".loop", "config.json")))
+        cfg = json.load(open(os.path.join(rev("--show-toplevel"), ".loop", "config.json")))
         status, line, _ = lane(runs, argv[1], argv[2], flow_spec(), cfg)
         print(line, file=sys.stderr if status == "fail" else sys.stdout)
         return 0 if status != "fail" else 1
