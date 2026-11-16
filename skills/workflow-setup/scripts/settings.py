@@ -55,6 +55,7 @@ TABLE = [
     ("max_active_goals", REPO, 20, "Goals live at once (or parallel, if smaller); 0 is none."),
     ("plan_pause_percent", REPO, 80, "Weekly plan % above which no goal starts (pool.py usage N); 0 is off."),
     ("min_free_memory_gb", REPO, 4, "Free GB below which no lane or goal starts; 0 off."),
+    ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen."),
     ("token_budget", REPO, 0, "Tokens a goal may spend before no new step starts; 0 means none."),
     ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; a goal adding rows past it is refused at qa."),
     ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa."),
