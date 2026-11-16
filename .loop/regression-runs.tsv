@@ -309,6 +309,7 @@ merge-wiki-head	PASS	2026-11-11
 merge-wiki-rename-refused	PASS	2026-11-11	
 merge-wiki-skill-refused	PASS	2026-11-11	
 merged-frees-175	PASS	2026-11-10	
+migration-v1	PASS	2026-11-16		5a2a40293510
 milestone-links	PASS	2026-11-12	
 milestone-rows-seen-red	PASS	2026-11-12	
 milestone-wording-unreviewed	PASS	2026-11-12	
