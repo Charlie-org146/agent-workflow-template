@@ -5,7 +5,7 @@ prints only for `report`, `dashboard` and "where do things stand".
 usage: checkin.py [--since ISO]
 
   headline        one line: goals running, waiting on you or queued, and the session pool
-  All sessions    one table row per live goal: session, repo, purpose, status, progress, time left, latest
+  All sessions    one table row per live goal: session, repo, purpose, status, progress, time left and ETA, latest
   Re-plan         what replan.py changed since the last check-in, with its reason (MON-10)
   Auto-answered   what auto.py answered or sent since the last check-in, with the words that revert it (MON-11)
   Dependencies    one block per repo of the pod, headed `== name ==` (MON-14), each board_lines' graph; a `repo/slug`
@@ -150,7 +150,7 @@ def render(root=None, at=None, stamp=None):
             left = bs.left_time(run, g["runs"], at)
             out.append("| %s | %s | %s | %s | %s %d/8 | %s | %s |" % (
                 cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(run.get("goal"), 40), MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
-                lb.FLOW[step], step + 1, "?" if left is None else board_page.span(left), cell(lb.latest_report(run) or run.get("next"), 60)))
+                lb.FLOW[step], step + 1, ("?" if left is None else board_page.span(left)) + ", " + auto.eta_text(auto.eta_seen(g["root"], run), at), cell(lb.latest_report(run) or run.get("next"), 60)))
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
     changes = replan.since(root, stamp)

@@ -5,25 +5,22 @@ usage: auto.py pass [--dry-run]  decide each waiting goal's new question once (o
        auto.py since ISO       the decisions logged after a time (the check-in lists those since the last one)
        auto.py decide-text     read a question on stdin, print AUTO or WAITS with why (for tests and by hand)
 
-`full_auto` in .loop/config.json, on by default, is read at each decision: turning it off applies at the next one.
-Only the operation session answers: a worker's `sessions.py report --status waiting --ask Q --words W ... --recommend W
---kind K` just records the question. A decision is answered only when all of these hold, else it waits under Needs
-you with its reason (logged once per question):
+`full_auto` in .loop/config.json (on by default) is read at each decision. Only the operation session answers: a worker's
+`sessions.py report --status waiting --ask Q --words W ... --recommend W --kind K` just records the question. A decision
+is answered only when all of these hold, else it waits under Needs you with its reason (logged once per question):
 - its kind is `routine` (destructive, money, security, owner, a missing or an unknown kind all wait);
 - it names a recommended answer that is one of its words;
-- no risky word appears in the question or the answer (whole words with their endings, case ignored: delete, remove,
-  drop, rm, wipe, truncate, discard, reset --hard, git clean, force, overwrite, rename, publish, release, deploy,
-  merge, push, pay, purchase, billing, cost, spend, money, permission, access, token, secret, credential, password, key,
-  license, migration, schema, auth, security), nor a path matching `risky_paths`;
+- no risky word (WORDS below: delete, publish, merge, token, secret ...; whole words, case ignored) appears in the
+  question or the answer, nor a path matching `risky_paths`;
 - the owner hasn't answered that goal before: an owner answer on the goal sends every later question to the owner
   (answers.jsonl, source owner), so full auto never answers over the owner's word.
-An answer goes through `operate.py send SLUG WORDS --source auto` (the inbox and the session message, as an owner answer
-does); the worker runs goal.py answer as usual. Each decision is appended to <git common dir>/loop/auto.log as
-`time | slug | AUTO|WAITS | question | answer | reason`; the run's waiting.auto marks it decided. The check-in lists
-each auto answer with the words that revert it: `operate.py send SLUG "<other words>"` before the worker moves on.
+An answer goes through `operate.py send SLUG WORDS --source auto`, as an owner answer does; the worker runs goal.py answer
+as usual. Each decision is appended to <git common dir>/loop/auto.log as `time | slug | AUTO|WAITS | question | answer |
+reason`; the run's waiting.auto marks it decided. The check-in lists each auto answer with the words that revert it.
 """
 import argparse
 import datetime
+import glob
 import json
 import os
 import re
@@ -44,7 +41,7 @@ WORDS = ["delet", "remov", "drop", "dropp", "rm", "wip", "truncat", "discard", "
          "migrat", "schema", "auth", "authenticat", "authoriz", "secur", "security", "rebas", "amend", "squash", "eras",
          "destroy", "uninstall", "kill", "unlink", "rmdir", "removal", "revert", "rewrit", "rewritten"]
 RISKY = re.compile(r"\b(?:%s)%s\b|reset\s+--hard|git\s+clean" % ("|".join(WORDS), END), re.I)
-# A PENDING line that asks for the owner's words (a reviewed page or requirement change, a criteria_max raise) is never full auto's to answer (#4287).
+# A PENDING line that asks for the owner's words (a reviewed change, a criteria_max raise) is never full auto's (#4287).
 OWNER_WORDS = re.compile(r"owner[- ]words|criteria_max|\b(?:un|re)-?review|reviewed\s+(?:page|requirement|prd)|\b(?-i:[A-Z]{2,5})-\d+\b[^.?]{0,60}\b(?:sub-?bullet|wording)", re.I)
 
 
@@ -192,9 +189,8 @@ def main():
     return 0
 
 
-# The owner's own messages, recorded for workers (sessions.py owner-words TEXT --ids A,B): one line per message in
-# <git common dir>/loop/owner-words.tsv, tab separated: id (o1, o2, ...), UTC time, the operation session's id, the exact
-# text as a JSON string, and the IDs or pages it covers. Only the operation role writes it; a worker is refused.
+# The owner's messages (sessions.py owner-words TEXT --ids A,B): one line each in <git common dir>/loop/owner-words.tsv:
+# id (o1, ...), UTC time, the operation session's id, the text as JSON, the IDs or pages it covers. A worker is refused.
 
 
 def owner_words_path():
@@ -221,6 +217,141 @@ def owner_words_add(text, ids):
                                               json.dumps(text, ensure_ascii=False), ",".join(ids)))
     print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
     return 0
+
+
+# --- the hard ETA (GRD-13, o52): active minutes a goal may run, recorded at freeze. Past it nothing starts and the goal
+# waits under Needs you: ship now, extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
+
+ETA_MARGIN, ETA_FLOOR = 1.25, 30
+
+
+def eta_new(root, slug, done, touches, budget):
+    """{minutes, estimate, basis}: the model's high end for a goal of this size plus 25%, up to 5 minutes (30 at least);
+    the time budget when it has no estimate."""
+    names = glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))
+    runs = [r for r in map(bs.read_json, names) if isinstance(r, dict) and r.get("slug")]
+    try:
+        found = bs.estimate_full({"slug": slug, "status": "queued", "done": done, "touches": touches}, runs,
+                                 datetime.datetime.now(datetime.timezone.utc), root)
+    except Exception:
+        found = None
+    if not found or not found[2]:
+        return {"minutes": budget or 240, "estimate": 0, "basis": "no estimate yet, so the time budget"}
+    high = int(found[2] // 60)
+    return {"minutes": max(ETA_FLOOR, -(-int(high * ETA_MARGIN) // 5) * 5), "estimate": high,
+            "basis": "estimate %dm plus a 25%% margin%s" % (high, ", rough" if found[3] else "")}
+
+
+def eta_seen(root, run):
+    """The run record with the sidecar settings (eta_extend, eta_choice) over it."""
+    extra = bs.read_json(os.path.join(loop_dir(root), "runs", "%s.extra.json" % run["slug"])) or {}
+    return dict(run, **(extra.get("set") if isinstance(extra.get("set"), dict) else {}))
+
+
+def eta_minutes(seen):
+    eta = seen.get("eta") if isinstance(seen.get("eta"), dict) else {}
+    more = [e.get("by") for e in seen.get("eta_extend") or [] if isinstance(e, dict)]
+    return eta["minutes"] + sum(n for n in more if isinstance(n, int)) if isinstance(eta.get("minutes"), int) else 0
+
+
+def eta_spent(run, at=None):
+    return int(sum(bs.flow_seconds(run, at or datetime.datetime.now(datetime.timezone.utc)).values()) // 60)
+
+
+def eta_over(seen, spent):
+    """The goal has spent its ETA and the owner has not chosen ship now."""
+    held = eta_minutes(seen)
+    return bool(held) and spent >= held and (seen.get("eta_choice") or {}).get("choice") != "ship"
+
+
+def eta_text(seen, at):
+    """The check-in's ETA cell: a clock time, passed, or none."""
+    held = eta_minutes(seen)
+    left = held - eta_spent(seen, at)
+    return "no ETA" if not held else "ETA passed" if left <= 0 else "ETA " + (at + datetime.timedelta(minutes=left)).astimezone().strftime("%H:%M")
+
+
+def eta_wait(state, spent, save):
+    """Put a goal past its ETA under Needs you (kind owner: never auto-answered)."""
+    slug = state["slug"]
+    if (state.get("waiting") or {}).get("eta"):
+        return
+    words = [w % slug for w in ("ship %s now", "extend %s by N minutes", "defer %s")]
+    state["status"] = "waiting"
+    state["waiting"] = {"ask": "%s is past its ETA (%dm of %dm): ship now, extend once by an amount "
+                               "in your words, or move it to the next release" % (slug, spent, eta_minutes(state)),
+                        "words": words, "recommend": words[0], "kind": "owner", "eta": True}
+    save(state, "past its ETA: waiting for the owner's choice")
+
+
+def eta_record(g, rid, slug, what):
+    """The record's id, or refuse: none, not covering the goal, or used before."""
+    fix = "the operation session runs sessions.py owner-words TEXT --ids %s, then repeats this with --owner-record ID" % slug
+    if not rid:
+        g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
+    try:
+        with open(owner_words_path(), encoding="utf-8") as handle:
+            rows = [line.rstrip("\n").split("\t") for line in handle]
+    except OSError:
+        rows = []
+    found = [r for r in rows if len(r) == 5 and r[0] == rid]
+    if not found or slug not in found[-1][4].split(","):
+        g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
+    for path in glob.glob(os.path.join(g.state_dir(), "*.extra.json")):
+        if '"record": "%s"' % rid in open(path, encoding="utf-8").read():
+            g.no("owner-words record %s was already used. Fix: %s (ETA_NO_RECORD)" % (rid, fix))
+    return rid
+
+
+def eta_set(g, args, state, why):
+    """goal.py set --eta-extend N or --eta-choice ship|defer, with --owner-record."""
+    slug, runs, rid = args.slug, g.state_dir(), eta_record(g, args.owner_record, args.slug, "an ETA change")
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    note = {"record": rid, "at": stamp, "why": why}
+    if args.eta_extend:
+        if args.eta_extend < 1:
+            g.no("--eta-extend wants a whole number of minutes above 0.")
+        more = (g.fit.view(state, runs).get("eta_extend") or []) + [dict(note, by=args.eta_extend)]
+        g.guards.add_set(runs, slug, "eta_extend", more, "set eta +%dm (record %s): %s" % (args.eta_extend, rid, why))
+    else:
+        g.guards.add_set(runs, slug, "eta_choice", dict(note, choice=args.eta_choice), "set eta choice %s (record %s): %s" % (args.eta_choice, rid, why))
+    if args.eta_choice == "ship":
+        for step in g.fit.STEPS:
+            if not g.fit.recorded(state, step):
+                state.setdefault("flow", {})[step] = "skipped: past its ETA, the owner chose ship now (record %s)" % rid
+    if args.eta_choice == "defer":
+        state["status"], state["retired"] = "retired", {"reason": "past its ETA, the owner moved it to the next release (record %s)" % rid}
+    elif (state.get("waiting") or {}).get("eta"):
+        state["status"], state["waiting"] = "running", None
+    g.save(state, "eta %s (record %s): %s" % (args.eta_choice or "extended by %dm" % args.eta_extend, rid, why))
+
+
+def eta_rows(root, at=None):
+    """(rule, level, text): eta-missing (WARN), eta-extended (FAIL: no covering record), eta-overrun (FAIL: a step past
+    its ETA and not waiting for the owner). Read-only."""
+    at, out, covers = at or datetime.datetime.now(datetime.timezone.utc), [], {}
+    try:
+        with open(os.path.join(loop_dir(root), "owner-words.tsv"), encoding="utf-8") as handle:
+            covers = {r[0]: r[4].split(",") for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5}
+    except OSError:
+        pass
+    grace = (config(root).get("step_budget_minutes") or 30)
+    for path in sorted(glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))):
+        run = bs.read_json(path)
+        if not isinstance(run, dict) or not run.get("slug"):
+            continue
+        seen, slug = eta_seen(root, run), run["slug"]
+        for e in seen.get("eta_extend") or []:
+            if not isinstance(e, dict) or slug not in covers.get(e.get("record"), []):
+                out.append(("eta-extended", "FAIL", "%s has an ETA extended with no covering owner-words record" % slug))
+                break
+        if run.get("status") not in ("running", "waiting", "failed", "stopped"):
+            continue
+        if not eta_minutes(seen):
+            out.append(("eta-missing", "WARN", "%s has no ETA" % slug))
+        elif eta_over(seen, eta_spent(seen, at) - grace) and not (run.get("waiting") or {}).get("eta"):
+            out.append(("eta-overrun", "FAIL", "%s is past its ETA and not waiting under Needs you" % slug))
+    return out
 
 
 if __name__ == "__main__":
