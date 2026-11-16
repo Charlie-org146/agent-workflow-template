@@ -7,7 +7,9 @@
 
 Calls the real functions: fit.budget_stop / add_tokens / round_stop (delivery), limits.active_limit / plan_pause / cmd_usage
 (monitoring), cost.limit_rows (health) and the settings table, in throwaway repos. No model, no network."""
+import contextlib
 import datetime
+import io
 import json
 import os
 import subprocess
@@ -127,13 +129,15 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     os.environ["LOOP_FREE_GB"] = "9"
     check(memory.free_gb() == 9.0 and refused(memory.wait_memory, tmp) == "", "a lane starts at once when free memory is above min_free_memory_gb (default 4)")
     os.environ["LOOP_FREE_GB"] = "1.5"
+    said = io.StringIO()
     try:
-        memory.wait_memory(tmp)
+        with contextlib.redirect_stderr(said):
+            memory.wait_memory(tmp)
         code = None
     except SystemExit as stop:
         code = stop.code
     log = os.path.join(tmp, ".git", "loop", "memory-waits.log")
-    check(code == slots.EXIT_WAIT, "a lane below min_free_memory_gb waits, then gives up with exit 4 rather than running")
+    check(code == slots.EXIT_ENV and "MEMORY_WAIT: waited" in said.getvalue(), "a lane below min_free_memory_gb waits, then gives up with exit 6 (a memory wait, not a lost try) rather than running")
     check(os.path.exists(log) and "LANE_MEMORY: 1.5 GB free" in open(log).read(), "the wait is logged for the check-in and health")
     with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
         json.dump({"min_free_memory_gb": 0}, handle)
