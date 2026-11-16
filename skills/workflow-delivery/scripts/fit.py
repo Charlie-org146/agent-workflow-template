@@ -272,6 +272,11 @@ def frozen_fields(g, args, lines, touches):
             "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
 
 
+def plan_ahead(state, runs, step):
+    """The owner answered the pre-flight plan item 'approve ahead' (#4535): a pending plan takes the recommended answers."""
+    return step == "plan" and view(state, runs).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"
+
+
 def eta_line(fields):
     eta = fields.get("eta") or {}
     return "%d active minutes (%s)" % (eta.get("minutes", 0), eta.get("basis", "none"))

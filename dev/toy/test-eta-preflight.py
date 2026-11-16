@@ -151,6 +151,8 @@ check("ETA_NO_RECORD" in run_set(preflight="recommended", owner_record="o1"), "a
 check(run_set(preflight="recommended", owner_record="o2") == "", "the take-all word answers every item left")
 seen = fit.view(read("p"), g.state_dir())
 check(auto.eta_open(seen) == [] and seen["preflight_answers"]["answers"] == {"plan": "approve ahead", "budget": "keep"}, "every item is answered with its recommendation")
+check(fit.plan_ahead(read("p"), g.state_dir(), "plan") and not fit.plan_ahead(read("p"), g.state_dir(), "build") and not fit.plan_ahead(run, g.state_dir(), "plan"),
+      "goal.py record auto-approves a pending plan only after the owner answered plan=approve ahead (negative controls: another step, no answer)")
 check(auto.eta_start(seen) >= 90 and auto.eta_text(seen, at).startswith("ETA ") and "after" not in auto.eta_text(seen, at),
       "the ETA has a clock time again: its clock started at the answers (the goal had run 90 minutes before)")
 check(not auto.eta_over(seen, 100) and auto.eta_over(seen, 90 + 61), "past the ETA is counted from the answers, not from the start")
