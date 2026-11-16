@@ -228,8 +228,10 @@ jobs:
               elif row[0] not in known and code != 77:  # 77: cannot run here (SKIPPED)
                   red.append(row[0])
                   text = shown(lambda c: run(c, ROW_SECONDS), row[2], code, said)
+                  note = "#### FAIL %s\n```\n%s\n```" % (row[0], "\n".join(text.splitlines()[-20:]))
+                  print(note)
                   with open(os.environ.get("GITHUB_STEP_SUMMARY") or os.devnull, "a") as handle:
-                      handle.write("#### FAIL %s\n```\n%s\n```\n" % (row[0], "\n".join(text.splitlines()[-20:])))
+                      handle.write(note + "\n")
                   if issues is None:
                       continue
                   cells = guards.get(row[0]) or [""] * 5
