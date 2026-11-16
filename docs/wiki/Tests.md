@@ -949,6 +949,7 @@
 | <a id="t-hook-count"></a>hook-count | defect | 4345 | not run | - | local | 2026-11-15 |
 | <a id="t-set13-hooks-once-bullet"></a>set13-hooks-once-bullet | requirement | SET-13 | not run | - | local | 2026-11-15 |
 | <a id="t-review-hold-setting-listed"></a>review-hold-setting-listed | requirement | SET-2 | not run | - | local | 2026-11-15 |
+| <a id="t-machine-setting-listed"></a>machine-setting-listed | requirement | SET-2 | not run | - | local | no |
 
 ## Other
 

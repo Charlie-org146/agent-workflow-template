@@ -1,6 +1,6 @@
 #!/bin/bash
 # windows: ok
-# reads: skills/workflow-setup/scripts/machine.py docs/wiki/Machines.md README.md
+# reads: dev/machine.py docs/wiki/Machines.md README.md
 # reads: skills/workflow-monitoring/references/operation.md skills/workflow-regression/scripts/actions.py
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
@@ -12,8 +12,8 @@ d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 no() { echo "FAIL ${only:-machine}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 printf '# a toy: no private names\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
-mkdir -p "$d/clone"; cp -R "$here/skills" "$d/clone/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
-M="python3 $d/clone/skills/workflow-setup/scripts/machine.py"
+mkdir -p "$d/clone/dev"; cp -R "$here/skills" "$d/clone/"; cp "$here/dev/machine.py" "$d/clone/dev/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
+M="python3 $d/clone/dev/machine.py"
 mk() { "$here/dev/toy/make.sh" "$d/$1" >/dev/null || no "make.sh failed"; git -C "$d/$1/repo" remote set-url origin "https://example.test/o/$1-repo.git"; }
 sums() { find "$1" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum | tr -d ' -'; }
 ready() { # ready HOME REPO [flags]: apply, record both modes, add the owner's two mail files
@@ -166,7 +166,7 @@ fi
 
 # done 11: the mailer reads only the local files, prints no secret and names no other recipient.
 if want machine-mailer; then
-  mk m; h="$d/hm"; ready "$h" "$d/m/repo" || no "ready failed"; S="$h/.workflow-loop/routines/send-mail.py"; export HOME="$h" USERPROFILE="$h"
+  mk m; h="$d/hm"; ready "$h" "$d/m/repo" || no "ready failed"; S="$h/.workflow-loop/routines/send-mail.py"; oldhome=$HOME; oldprof=${USERPROFILE:-}; export HOME="$h" USERPROFILE="$h"
   python3 "$S" --to someone@example.test --subject s --body-file /dev/null 2>&1 | grep -q 'unrecognized arguments' || no "the mailer accepts a recipient option"
   printf 'SMTP_USER=toy\nSMTP_PASSWORD=toy-pass-0000\nSMTP_HOST=127.0.0.1\nSMTP_PORT=1\n' > "$h/.workflow-loop/mail.env"
   out=$(python3 "$S" --check 2>&1); echo "$out" | grep -q '^ERROR' || no "a failed login was not an ERROR line"
@@ -180,6 +180,7 @@ if want machine-mailer; then
   python3 "$S" --subject s --body-file "$h/.workflow-loop/mail.env" 2>&1 | grep -q 'holds a secret' || no "the secrets file was accepted as a body"
   rm -f "$h/.workflow-loop/mail.env"; python3 "$S" --check 2>&1 | grep -q '^ERROR' || no "a missing secrets file was not an ERROR line"
   echo "PASS: the mailer reads only the local files, prints no secret and names no other recipient"
+  export HOME="$oldhome"; [ -n "$oldprof" ] && export USERPROFILE="$oldprof" || unset USERPROFILE
 fi
 
 # defect: the hooks setup writes are read back as its own (the hook mark was dropped from the stub, so health called them foreign).
@@ -198,14 +199,14 @@ if want machine-health-rule; then
   echo "PASS: health's Adoption group lists the machine gaps"
 fi
 
-# done 12: machine.py is under the script cap and the only new file under skills/.
+# done 12: machine.py is under the script cap and adds no file to the package (it lives in dev/).
 if want machine-caps; then
-  [ "$(wc -c < "$here/skills/workflow-setup/scripts/machine.py")" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
+  [ "$(wc -c < "$here/dev/machine.py")" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
   for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(wc -c < "$here/$f")" -lt 20480 ] || no "$f is over the script cap"; done
   if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
-    new=$(git -C "$here" diff --name-only --diff-filter=A "$(git -C "$here" merge-base HEAD origin/main)" -- skills | grep -v machine.py | wc -l | tr -d ' ')
-    [ "$new" = 0 ] || no "more than one new file under skills/"
+    new=$(git -C "$here" diff --name-only --diff-filter=A "$(git -C "$here" merge-base HEAD origin/main)" -- skills | wc -l | tr -d ' ')
+    [ "$new" = 0 ] || no "a new file under skills/"
   fi
-  echo "PASS: machine.py and every script stay under the byte cap and machine.py is the only new skills/ file"
+  echo "PASS: machine.py and every script stay under the byte cap and the package gains no file"
 fi
 exit 0

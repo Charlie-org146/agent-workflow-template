@@ -223,7 +223,7 @@ def milestones(root):
 
 def machine(root):
     """machine: each gap workflow-setup's machine.py check lists, one WARN with its fix."""
-    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-setup", "scripts", "machine.py")
+    tool = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "dev", "machine.py")
     if os.environ.get("CI") or not os.path.isdir(os.path.expanduser("~/.claude/skills/workflow-health")) or not os.path.exists(tool):
         return []
     try:

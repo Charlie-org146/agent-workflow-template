@@ -10,7 +10,7 @@ usage: machine.py [plan|apply|check] [--repo DIR] [--platform mac|windows] [--ho
   record-task         notes that you registered task NAME in the app with permission mode MODE (the app's own
                       setting is the truth)
 A value (secret, owner address, home path) is never written: a text that holds one is refused.
-Windows: py -3 skills\\workflow-setup\\scripts\\machine.py (the same verbs; Windows forms are marked unverified).
+Windows: py -3 dev\\machine.py (the same verbs; Windows forms are marked unverified).
 """
 import argparse
 import hashlib
@@ -22,10 +22,9 @@ import subprocess
 import sys
 
 sys.dont_write_bytecode = True  # check writes nothing: no __pycache__ beside the scripts it imports
-HERE = os.path.dirname(os.path.realpath(__file__))
-SK = os.path.dirname(os.path.dirname(HERE))  # the skills folder, in a clone or installed
-CLONE = os.path.dirname(SK)
-sys.path.insert(0, HERE)
+CLONE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # this file lives in the clone's dev/
+SK = os.path.join(CLONE, "skills")
+sys.path.insert(0, os.path.join(SK, "workflow-setup", "scripts"))
 import seed  # noqa: E402
 NO_PROMPT = ("bypass",)  # permission modes that never stop to ask
 MODEL = "claude-sonnet-5-5"
