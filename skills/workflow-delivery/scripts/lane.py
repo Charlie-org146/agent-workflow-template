@@ -146,7 +146,7 @@ def finalize(base, held, name):
         line += "; " + ", ".join("%s killed by %s (pid %s)" % k for k in killed)
     if began and began - held["started"] >= 1:
         line += " (queued %ds)" % (began - held["started"])
-    cannot = re.findall(r"^(?:NOTRUN|SKIPPED) (\S+)", text, re.M)
+    cannot = re.findall(r"^(?:NOTRUN|SKIPPED|ENV) (\S+)", text, re.M)
     if cannot and not rc:
         line += "; %d pass; %d not runnable here (%s)" % (ran + int((reused or [0])[0]), len(cannot), ", ".join(cannot[:5]))
     line += lanekit.before_rows(held, plan, wait) + lanekit.rows_line(text, ran, out)
@@ -166,6 +166,8 @@ def finalize(base, held, name):
         lanekit.prep_hit(base, name, held, plan, wait, part)
     elif rc == 124:
         line += "\n" + lanekit.timeout_line(text, deadline(held)[1], held)
+    elif rc == lanekit.EXIT_ENV:
+        line += "\n" + lanekit.env_line(notes)
     elif rc == lanekit.EXIT_WAIT:
         line += "\nLANE_BUG: the lane's child stopped waiting for a slot (exit 4), which a lane never does; %s." % NOTHING
     elif rc and fit.off_rows(text):
