@@ -162,6 +162,12 @@ words(here, "s", "x", "x", "x", "d")
 check(refused(fit.cmd_set, g, SimpleNamespace(**dict(args, slug="d", eta_choice="defer", owner_record="o5"))) == "", "defer is accepted with a record")
 check(read(here, "d")["status"] == "retired" and "next release" in read(here, "d")["retired"]["reason"], "defer retires the goal for the next release")
 
+# goal.py pr joins the pr queue with the goal and its state (v1.0.10 passed the runs folder too and every pr crashed)
+record(here, "q", running(5))
+g.pods.pr_queue("join", g, g.load("q"))
+check(read(here, "q")["step"] == "pr", "goal.py pr joins the queue with the goal and its state")
+check('pods and pods.pr_queue("join", ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py")).read(), "goal.py calls the join without the runs folder")
+
 # 5. the check-in shows the ETA; health reads the three rules
 at = datetime.datetime.now(datetime.timezone.utc)
 check(auto.eta_text(running(10), at).startswith("ETA ") and auto.eta_text(running(90), at) == "ETA passed" and auto.eta_text({}, at) == "no ETA",
