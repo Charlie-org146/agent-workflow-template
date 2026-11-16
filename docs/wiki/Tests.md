@@ -367,6 +367,8 @@
 | <a id="t-doc18-howto-mapped"></a>doc18-howto-mapped | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc18-howto-orphan"></a>doc18-howto-orphan | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc18-howto-skeleton"></a>doc18-howto-skeleton | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-review-link-line"></a>doc18-review-link-line | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-doc18-runbook-on-howto"></a>doc18-runbook-on-howto | requirement | DOC-18 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 
 ## Guardrails
 

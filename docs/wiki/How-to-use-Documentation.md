@@ -28,6 +28,10 @@ Say these to the agent in the operation session; each feature page has the exact
 - Milestone: [Documentation](https://github.com/jcl2018/agent-workflow-template/milestone/3)
 - Releases: https://github.com/jcl2018/agent-workflow-template/releases
 
+## Runbooks
+
+A routine's runbook may be written here, under this heading, instead of on the feature page; the docs check then finds it there.
+
 ## Links
 
 - PRD page: [Documentation](Documentation)
