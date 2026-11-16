@@ -119,12 +119,30 @@ def monitor(name, paths=False):
     return module
 
 
-def budget_stop(slug, state, runs, cfg, at=None):
-    held, source = budget(view(state, runs), cfg)
+def budget_stop(slug, state, runs, cfg, at=None, save=None):
+    seen = view(state, runs)
+    held, source = budget(seen, cfg)
+    if seen.get("eta") or seen.get("eta_extend"):
+        auto, spent = monitor("auto", True), active_minutes(state, at)
+        if auto.eta_over(seen, spent):
+            save and auto.eta_wait(state, spent, save)
+            sys.exit("REFUSED: %dm spent, past the ETA of %dm; no new step starts and the goal waits for the owner: ship now, extend "
+                     "once, or defer. Fix: the operation session runs goal.py set %s --eta-choice ship|defer or --eta-extend N, "
+                     "with --owner-record ID (ETA_PAST)" % (spent, auto.eta_minutes(seen), slug))
     for name, spent in (("minutes", active_minutes(state, at)), ("tokens", spent_tokens(state))):
         if held[name] and spent >= held[name]:
             sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                      "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
+
+
+def run_saver(runs):
+    def save(state, note):
+        state.setdefault("log", []).append("%s %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), note))
+        path = os.path.join(runs, state["slug"] + ".json")
+        with open(path + ".tmp", "w") as handle:
+            json.dump(state, handle, indent=2)
+        os.replace(path + ".tmp", path)
+    return save
 
 
 def recorded(state, step):
@@ -169,8 +187,8 @@ def cmd_set(g, args):
     import guards
     guards.operation_only(g, "set", args.slug)
     state = g.load(args.slug)
-    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None):
-        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes or --budget-tokens")
+    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None or args.eta_extend or args.eta_choice):
+        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes, --budget-tokens, --eta-extend or --eta-choice")
     why = " ".join(args.why.split())
     if args.depth and any(recorded(state, s) for s in ("plan", "review")):
         done = [s for s in ("review", "plan") if recorded(state, s)][-1]
@@ -185,66 +203,36 @@ def cmd_set(g, args):
         guards.add_set(runs, args.slug, "bump", args.bump, "set bump %s: %s" % (args.bump, why))
     if args.budget_minutes is not None or args.budget_tokens is not None:
         held, _ = budget(view(state, runs), g.config())
+        was = dict(held)
         if args.budget_minutes is not None:
             held["minutes"] = max(0, args.budget_minutes)
         if args.budget_tokens is not None:
             held["tokens"] = max(0, args.budget_tokens)
+        if any(was[k] and (not held[k] or held[k] > was[k]) for k in was):
+            held["record"] = monitor("auto", True).eta_record(g, args.owner_record, args.slug, "raising a budget")
+        elif (view(state, runs).get("budget") or {}).get("record"):
+            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps the record that raised it: used once
         guards.add_set(runs, args.slug, "budget", held, "set budget %dm, %d tokens: %s" % (held["minutes"], held["tokens"], why))
+    if args.eta_extend or args.eta_choice:
+        args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
+        monitor("auto", True).eta_set(g, args, state, why)
     print("SET %s: %s" % (args.slug, ", ".join(
         "%s=%s" % (k, v) for k, v in sidecar(runs, args.slug).items())))
     return 0
 
 
 def cmd_queue(g, args):
-    g.valid(args)
-    if any("|" in text for text in [args.goal, args.touches] + args.done):
-        g.no("no | in a queue line.")
-    path = os.path.join(g.root(), ".loop", "queue.md")
-    held = g.read(path) if os.path.exists(path) else ""
-    if os.path.exists(g.state_path(args.slug)) or "- slug: %s |" % args.slug in held:
-        g.no("%s already exists. Fix: pick a new slug." % args.slug)
-    parts = ["slug: " + args.slug]
-    if args.touches:
-        parts.append("touches: " + args.touches)
-    if args.depends_on:
-        parts.append("depends-on: " + args.depends_on)
-    parts.append("goal: " + " ".join(args.goal.split()))
-    parts += ["done: " + " ".join(line.split()) for line in args.done]
-    g.write(path, ("" if held.endswith("\n") or not held else "\n") + "- " + " | ".join(parts) + "\n", "a")
-    print("QUEUED %s in .loop/queue.md" % args.slug)
-    return 0
+    return monitor("batch").cmd_queue(g, args)
 
 
 def cmd_adopt(g, args):
-    slug, branch = args.slug, "loop/" + args.slug
-    old, note = g.state_path(slug), ""
-    if not g.SLUG.match(slug):
-        g.no("bad slug.")
-    if os.path.exists(old):
-        was = json.loads(g.read(old))
-        if was.get("status") != "running" or was.get("pid") or was.get("flow"):
-            g.no("%s has a live, started or finished run record here." % slug)
-        g.SEEN[slug], note = json.dumps(was), "; replaced a stale record: running, no pid, no steps"
-    if g.git("branch", "--show-current") != branch:
-        g.no("not on %s. Fix: run this in its worktree." % branch)
-    if g.run(["git", "fetch", "origin", branch]).returncode or g.run(["git", "merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD"]).returncode:
-        g.no("%s is not on origin, or this worktree lacks its commits. Fix: push, then fetch." % branch)
-    sha, lines, text = g.git("rev-parse", "--short", "FETCH_HEAD"), g.done_lines(slug), g.read(g.goal_file(slug))
-    seen = g.run(["gh", "pr", "view", branch, "--json", "url,state"])
-    info = json.loads(seen.stdout) if seen.returncode == 0 else {}
-    if not lines or info.get("state") != "OPEN":
-        g.no("%s needs done lines and an open pull request." % slug)
-    found = re.search(r"^- Touches: (.*)$", text, re.M)
-    touches = [t.strip() for t in found.group(1).split(",") if t.strip() != "not declared"] if found else []
-    args.goal = text.splitlines()[0].lstrip("# ")
-    state = dict(slug=slug, goal=args.goal, status="running", step="qa", tries=0, branch=branch, worktree=g.root(), touches=touches,
-                 pid=None, pr=info["url"], batch=False, done_sha=g.done_sha(lines), release="", waiting=None, finding="", log=[],
-                 flow={s: "done on another machine: " + sha for s in g.FLOW[:3]}, **frozen_fields(g, args, lines, touches))
-    g.guards.stamp(state, "qa")
-    g.pods and g.pods.stamp(state)
-    g.save(state, "adopted from origin/%s @ %s (%s)%s" % (branch, sha, info["url"], note))
-    print("ADOPTED %s at qa from origin/%s @ %s%s; qa, ship and pr run here" % (slug, branch, sha, note))
-    return 0
+    return monitor("batch").cmd_adopt(g, args)
+
+
+def cmd_show(g, args):
+    state = g.load(args.slug)
+    state["resume_at"] = resume_at(state, g.guards.moved_since_plan(g, state))
+    print(json.dumps(state, indent=2))
 
 
 def keep(g, state, step, text):
@@ -277,7 +265,14 @@ def frozen_fields(g, args, lines, touches):
     if says_bump(args.goal):
         print("WARN: the goal text says %s; the operation records it with goal.py set %s --bump %s --why ..." % (
             says_bump(args.goal), args.slug, says_bump(args.goal)))
-    return {"size": size_of(lines, touches, g.root()), "budget": budget_of(g.config())}
+    held = budget_of(g.config())
+    return {"size": size_of(lines, touches, g.root()), "budget": held,
+            "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"])}
+
+
+def eta_line(fields):
+    eta = fields.get("eta") or {}
+    return "%d active minutes (%s)" % (eta.get("minutes", 0), eta.get("basis", "none"))
 
 
 def pr_open(g, state, base, info, body):
