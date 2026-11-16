@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept eta-header-margin@44c69078 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept trim-scripts-98@73215da8 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -111,7 +111,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-5 | Given a package with a script over 20,480 bytes, more than 99 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
 | [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | DEL-5 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
-| [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | DEL-5 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
+| [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | DEL-5 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-16 |
 | [del5-merge-forwards-checkout](Tests#t-del5-merge-forwards-checkout) | requirement | DEL-5 | Given a main checkout behind origin with a dirty lane record, when merge.py fast-forwards it, then the record is stashed and put back; any other change keeps the checkout as it is. | PASS 2026-11-15 |
 | [start-from-head-passes-4340](Tests#t-start-from-head-passes-4340) | requirement | DEL-5 | Given a pull request that adds a skill command and carries the START.md its own skills render, when merge.py's wiki.pending audits it, then START.md is not reported. | not run |
 | [start-from-head-refuses-4340](Tests#t-start-from-head-refuses-4340) | requirement | DEL-5 | Given a pull request whose START.md is stale for its own skills, when merge.py's wiki.pending audits it, then it still reports START.md (#4340). | not run |
