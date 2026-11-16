@@ -265,6 +265,7 @@ def cmd_record(args):
     text = read(reply)
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b[ :.-]*(.*)$", text, re.M | re.I)
     result, why = (found[-1][0].lower(), found[-1][1].strip()) if found else ("", "")
+    why = why if why or args.step not in ("qa", "ship") else role.lane_note(state_dir(), args.slug, args.step)
     pending = guards.pending_items(text)
     session = args.in_session or state.get("worker") == "session"
     if not result and not pending and session:

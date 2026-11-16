@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.0.3 - 2026-11-16
+
+- Set USERPROFILE beside HOME in test-prd-copy.sh; give the scan controls
+- Merge remote-tracking branch 'origin/main' into loop/toys-userprofile
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.2 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.1 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.0 - 2026-11-16
+
+First stable release. Goals merged since v0.28.72: guard-fixes, package-green, budget-fair, start-from-head, adoption, queue-hygiene, dead-loop-alert, sweep-health, health-leftovers, scripts-b, memory-floor-3, audit-head-docs, regression-fix, review-hold, merge-unblock, checkin-tidy, ff-stash-fix, scripts-c, milestone-sync, listing-commands, home-leak, offline-prd-copy, and v1-go-no-go (CI drift fixes: GIT_TERMINAL_PROMPT=0 in every script that starts processes, a regenerated regression.yml, release.py cut skipping known, exit-77, skip-flagged and already-PASS rows).
+
+### Known red
+
+Rows still red, filed for v1.1:
+
+- #4493: about 70 toys have # reads: headers that lanes_cli.py check rejects.
+- #4494: CI health FAIL, traceability #405 and #815 closed with no defect test.
+- #4495: CI-only rows with unknown cause: stale-found, publish-refused-stale, no-token-dry-run, stale-page-row, no-token-would, landed-left-alone.
+- #4497: package at the 99-file cap while package-headroom-held and package-rows-tracked want 98.
+
+The release check was cut short at the owner's request (o52). Its weak spots are in #4508: release.py cut counts a criteria pass per row, not per commit, and rows over its 900-second budget were not rerun or reported.
+
+### How to verify
+
+1. Run `python3 dev/package.py`. Expect: PASS with 99 files and a ZIP for v1.0.0.
+2. Run `python3 skills/workflow-health/scripts/health.py check`. Expect: HEALTH green with 0 fail.
+
 ## v0.28.93 - 2026-11-15
 
 - No code changes

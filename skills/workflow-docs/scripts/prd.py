@@ -31,6 +31,8 @@ import urllib.request
 
 import criteria
 
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
+
 MARKER = "<!-- workflow-docs -->"
 PLACEHOLDER = "Write this page from what is really in the repo."
 REVIEW = re.compile(r"^Review: \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\*"
@@ -122,7 +124,7 @@ def trouble(root, page, text, parts, rule):
     moved = [key for key in KEYS[:4] if was[key] != now[key]]
     rel = "%s/%s.md" % (criteria.folder_of(root), page)
     if moved == ["R"] and importlib.import_module("audit").owned(root, rel, dict(parts), rule):
-        moved = []  # another goal's reviewed line moved the lock: relock re-stamps it
+        moved = []
     if moved:
         found.append(("LOCKED", page, "the reviewed PRD changed in %s (reviewed lock %s, now %s). Fix: git log -p -- %s to "
                       "find the reviewed text and restore it, or the owner runs /workflow-docs unreview %s --user (and "
