@@ -183,6 +183,7 @@
 | <a id="t-ff-stash-conflict-never-unmerged"></a>ff-stash-conflict-never-unmerged | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-release-criteria-known-skip"></a>release-criteria-known-skip | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-budget-raise"></a>eta-budget-raise | requirement | DEL-8 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-legacy-goal"></a>eta-legacy-goal | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
