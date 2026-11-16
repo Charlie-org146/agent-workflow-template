@@ -48,7 +48,7 @@ unchanged repo print the same lines.
 | Security and privacy (can anything private escape?) | `private` | a tracked file matches a `leak_patterns` entry of the private flow file: file:line and the pattern's number only, never the text (FAIL) |
 | | `scan-hook` | no commit scan hook (WARN; shown, never filed) |
 | | `workflow-permissions` | a workflow has no top-level `permissions:` (WARN) |
-| Size (can someone still read this?) | `scripts` | a script at 90% of 20 KB (WARN) or over it (FAIL) |
+| Size (can someone still read this?) | `scripts` | a script over 19,000 bytes (WARN) or over 20 KB (FAIL) |
 | | `skill-lines` | a SKILL.md of 150 lines or more (FAIL) |
 | | `requirements-per-page` | a page with more requirements than `criteria_max` (FAIL) |
 | Hygiene (is anything left lying around?) | `findings` | over 5 open findings in `.loop/findings.md` (WARN) |

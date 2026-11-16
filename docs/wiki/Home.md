@@ -56,6 +56,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `max_active_goals` | Goals live at once (or parallel, if smaller); 0 is none. | set "max_active_goals" in .loop/config.json | `20` | default |
 | `plan_pause_percent` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
 | `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `4` | **overridden:** `3.0` |
+| `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. | set "eta_margin_percent" in .loop/config.json | `25` | default |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
 | `max_regression_rows` | Most rows the regression table may hold; a goal adding rows past it is refused at qa. | set "max_regression_rows" in .loop/config.json | `1200` | default |
 | `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. | set "max_suite_seconds" in .loop/config.json | `1900` | default |
