@@ -881,7 +881,7 @@
 | <a id="t-set8-setup-commit"></a>set8-setup-commit | requirement | SET-8 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-11 |
 | <a id="t-size-139"></a>size-139 | defect | [#139](https://github.com/jcl2018/agent-workflow-template/issues/139) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-10 |
 | <a id="t-size-140"></a>size-140 | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) open (2026-11-14) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-10 |
-| <a id="t-size-141"></a>size-141 | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/141) closed (2026-11-15) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-11 |
+| <a id="t-size-141"></a>size-141 | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/141) open (2026-11-15) | failing (issue reopened) 2026-11-16 | - | local | 2026-11-11 |
 | <a id="t-codex-ro-home"></a>codex-ro-home | requirement | SET-3 | not run | - | local | 2026-11-12 |
 | <a id="t-codex-pods-collide"></a>codex-pods-collide | requirement | SET-3 | not run | - | local | 2026-11-12 |
 | <a id="t-codex-skip-77"></a>codex-skip-77 | requirement | SET-3 | not run | - | local | 2026-11-12 |
@@ -989,7 +989,7 @@
 | <a id="t-lane-control-all"></a>lane-control-all | requirement | done line lane-control:1 | not run | - | local | 2026-11-10 |
 | <a id="t-operate-wait-99"></a>operate-wait-99 | defect | [#99](https://github.com/jcl2018/agent-workflow-template/issues/99) closed (2026-11-11) | not run | - | local | 2026-11-10 |
 | <a id="t-operate-10-under-load"></a>operate-10-under-load | requirement | done line lane-control:6 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-11 |
-| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) open (2026-11-15) | failing (issue reopened) 2026-11-15 | - | local | 2026-11-10 |
+| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) closed (2026-11-15) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-lanes-trace-hook-173"></a>lanes-trace-hook-173 | defect | [#173](https://github.com/jcl2018/agent-workflow-template/issues/173) closed (2026-11-14) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-narrow-root-172"></a>narrow-root-172 | defect | [#172](https://github.com/jcl2018/agent-workflow-template/issues/172) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-repo-narrow-178"></a>repo-narrow-178 | defect | [#178](https://github.com/jcl2018/agent-workflow-template/issues/178) closed (2026-11-12) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
@@ -1091,5 +1091,7 @@
 | <a id="t-not-runnable-lane"></a>not-runnable-lane | requirement | done line qa-not-runnable:1 | not run | - | local | 2026-11-16 |
 | <a id="t-not-runnable-qa"></a>not-runnable-qa | requirement | done line qa-not-runnable:2 | not run | - | local | 2026-11-16 |
 | <a id="t-not-runnable-todo"></a>not-runnable-todo | requirement | done line qa-not-runnable:3 | not run | - | local | 2026-11-16 |
+| <a id="t-ci-summary-fail-output"></a>ci-summary-fail-output | requirement | done line ci-fail-output:1 | not run | - | local | 2026-11-16 |
+| <a id="t-ci-summary-passing-left-out"></a>ci-summary-passing-left-out | requirement | done line ci-fail-output:2 | not run | - | local | 2026-11-16 |
 | <a id="t-audit-cd-path-found"></a>audit-cd-path-found | requirement | done line audit-cd-path:1 | not run | - | local | 2026-11-16 |
 | <a id="t-audit-cd-path-toy"></a>audit-cd-path-toy | requirement | done line audit-cd-path:2 | not run | - | local | 2026-11-16 |
