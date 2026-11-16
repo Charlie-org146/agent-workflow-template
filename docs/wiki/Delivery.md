@@ -67,7 +67,6 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d08
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.
 - A goal that fails three tries stops and says why.
-- A lane that gave up waiting for memory, or whose rows mostly could not start (Windows process-start codes), is the machine's fault: it says MEMORY_WAIT or LANE_ENV and spends no try (up to ten per goal, then it counts).
 - No goal merges while a wiki page its own diff made stale is still stale.
 
 ## Tests
