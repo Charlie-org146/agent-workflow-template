@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Reviewed 2026-11-16** <!-- prd P=7303c1e7 R=2d514968 N=8441e908 M=885f85c3 U=03828777 -->
+Review: **Unreviewed**
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -100,7 +100,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - It never writes or reviews the owner's PRD for them: only the owner marks a PRD or a requirement Reviewed.
 - It keeps docs only in the repo's wiki folder and its GitHub wiki, nowhere else.
 - It never writes to an external document without an accepted delta, and never chooses which PRDs opt in: the owner sets a page's PRD source.
-- Syncing milestones, the README or Google Docs from an external source: left for later goals.
+- Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is DOC-17.)
 
 ## Success metrics
 - The docs check prints DOCS OK on the main branch after every merge.
@@ -294,3 +294,4 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [skill-lines-docs-1403](Tests#t-skill-lines-docs-1403) | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 1403). | not run |
 | [docs-milestone-line-issue-130](Tests#t-docs-milestone-line-issue-130) | defect | [#130](https://github.com/jcl2018/agent-workflow-template/issues/130) closed (2026-11-11) | Given a page whose Milestone line names a milestone with another title, when the audit runs, then it reports no missing milestone. | PASS 2026-11-10 |
 | [tests-links-workflow-3839](Tests#t-tests-links-workflow-3839) | defect | [#3839](https://github.com/jcl2018/agent-workflow-template/issues/3839) closed (2026-11-14) | Given an automation entry that runs the regression routine from another workflow file, when the Tests page is rendered, then its CI links name that file, and regression.yml only when none is set (issue 3839). | PASS 2026-11-14 |
+| [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) state unknown | Given the Documentation page, when DOC-17 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
