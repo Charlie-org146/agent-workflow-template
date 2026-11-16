@@ -374,7 +374,7 @@ Raising a budget (a larger number, or 0, which means none) needs `--owner-record
 ### Hard ETA (GRD-14, owner o52)
 
 `new` records an ETA in the run record (`eta: {minutes, estimate, basis}`) and as an `- ETA:` line in the goal file: the live
-board's estimate for a goal of that size (its high end) plus 25 percent, rounded up to 5 minutes and at least 30, or the time
+board's estimate for a goal of that size (its high end) plus the margin (`eta_margin_percent`, default 25), rounded up to 5 minutes and at least 30, or the time
 budget when the model has no estimate. It counts active step time, the clock the time budget uses. A goal that has spent its
 ETA starts no new step (`flow.py` on a step's first call, `goal.py step`, `goal.py pr`): the call is refused with `ETA_PAST`
 and the goal waits (`waiting.eta`, kind `owner`, so full auto never answers) with three choices under Needs you: `ship SLUG
@@ -386,6 +386,9 @@ python3 scripts/goal.py set my-goal --eta-extend 60 --owner-record o61 --why "ow
 python3 scripts/goal.py set my-goal --eta-choice ship --owner-record o62 --why "owner: ship what is done"
 python3 scripts/goal.py set my-goal --eta-choice defer --owner-record o63 --why "owner: next release"
 ```
+
+The check-in's release header takes the latest of its started goals' hard ETAs (a goal with no ETA, or whose pre-flight is still open, counts by its
+estimate) and says `hard ETA for N, estimate for M`; a release with no hard ETA reads as before. The margin is read when a goal is frozen.
 
 ### Pre-flight (#4535)
 

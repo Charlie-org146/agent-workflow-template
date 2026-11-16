@@ -424,6 +424,8 @@
 | <a id="t-grd2-pr-lane-holds-merge-slot"></a>grd2-pr-lane-holds-merge-slot | requirement | GRD-2 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-grd4-worker-commit-main-refused"></a>grd4-worker-commit-main-refused | requirement | GRD-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-config-memory-key-once"></a>config-memory-key-once | requirement | GRD-12 | not run | - | local | 2026-11-15 |
+| <a id="t-issues-rest-fallback"></a>issues-rest-fallback | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) open (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-issues-both-down-nochange"></a>issues-both-down-nochange | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) open (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-test-caps-consolidate-allowed"></a>test-caps-consolidate-allowed | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-test-caps-own-cap"></a>test-caps-own-cap | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-eta-freeze"></a>eta-freeze | requirement | GRD-14 | not run | - | local | 2026-11-16 |
@@ -1140,5 +1142,7 @@
 | <a id="t-eta-preflight-missed"></a>eta-preflight-missed | requirement | done line eta-preflight:2 | not run | - | local | 2026-11-16 |
 | <a id="t-done-home-stale-1"></a>done-home-stale-1 | workflow | done line home-stale:1 | not run | - | local | no |
 | <a id="t-done-home-stale-2"></a>done-home-stale-2 | workflow | done line home-stale:2 | not run | - | local | no |
+| <a id="t-eta-header-margin-header"></a>eta-header-margin-header | requirement | done line eta-header-margin:1 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-header-margin-setting"></a>eta-header-margin-setting | requirement | done line eta-header-margin:2 | not run | - | local | 2026-11-16 |
 | <a id="t-done-held-time-charge-1"></a>done-held-time-charge-1 | workflow | done line held-time-charge:1 | not run | - | local | no |
 | <a id="t-done-held-time-charge-2"></a>done-held-time-charge-2 | workflow | done line held-time-charge:2 | not run | - | local | no |
