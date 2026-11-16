@@ -79,9 +79,14 @@ def head(text):
     return list(itertools.takewhile(lambda line: not line.startswith("## "), text.replace("\r\n", "\n").split("\n")))
 
 
+LINK = re.compile(r"^How to use: \[(How-to-use-[\w-]+)\]\(\1\)$")
+
+
 def review_of(text, rule):
     """(review line or None, trouble or None) from the page head."""
     seq = [line.strip() for line in head(text) if line.strip()]
+    link = next((i for i, x in enumerate(seq) if LINK.match(x)), None)  # DOC-18: one link to the feature's How-to-use page, anywhere in the head
+    seq = seq[:link] + seq[link + 1:] if link is not None else seq
     starts = lambda n, pre: n < len(seq) and seq[n].startswith(pre)  # noqa: E731
     at = 1 if seq[:1] == [MARKER] else 0
     at += starts(at, "# ")
