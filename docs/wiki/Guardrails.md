@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=ab141a29 N=e6bf17f7 M=5109e571 U=03828777 -->
 
 ## Problem
 
@@ -141,5 +141,7 @@ None
 | - | requirement | GRD-11 | no passing test | not enforced |
 | [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
 | - | requirement | GRD-12 | no passing test | not enforced |
+| [test-caps-consolidate-allowed](Tests#t-test-caps-consolidate-allowed) | requirement | GRD-13 | Given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed. | PASS 2026-11-16 |
+| [test-caps-own-cap](Tests#t-test-caps-own-cap) | requirement | GRD-13 | Given a goal that raises max_regression_rows in its own config, when qa checks the caps, then it reads the base branch's cap and still refuses; the owner raising the cap on the base lets the goal pass. | PASS 2026-11-16 |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
