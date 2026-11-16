@@ -183,10 +183,13 @@
 | <a id="t-ff-stash-conflict-never-unmerged"></a>ff-stash-conflict-never-unmerged | requirement | DEL-5 | not run | - | local | 2026-11-15 |
 | <a id="t-release-criteria-known-skip"></a>release-criteria-known-skip | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-test-caps-qa-refused"></a>test-caps-qa-refused | requirement | DEL-8 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-eta-budget-raise"></a>eta-budget-raise | requirement | DEL-8 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-legacy-goal"></a>eta-legacy-goal | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-cut-pass-current-commit"></a>cut-pass-current-commit | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-cut-left-listed"></a>cut-left-listed | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-cut-left-none"></a>cut-left-none | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-private-checks-stop"></a>private-checks-stop | requirement | DEL-4 | not run | - | local | 2026-11-16 |
+| <a id="t-pr-joins-queue"></a>pr-joins-queue | requirement | DEL-15 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
@@ -425,6 +428,15 @@
 | <a id="t-config-memory-key-once"></a>config-memory-key-once | requirement | GRD-12 | not run | - | local | 2026-11-15 |
 | <a id="t-test-caps-consolidate-allowed"></a>test-caps-consolidate-allowed | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-test-caps-own-cap"></a>test-caps-own-cap | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-eta-freeze"></a>eta-freeze | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-gate"></a>eta-gate | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-needs-you"></a>eta-needs-you | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-owner-record"></a>eta-owner-record | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-ship-defer"></a>eta-ship-defer | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-checkin"></a>eta-checkin | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-missing"></a>eta-health-missing | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-extended"></a>eta-health-extended | requirement | GRD-14 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-overrun"></a>eta-health-overrun | requirement | GRD-14 | not run | - | local | 2026-11-16 |
 
 ## Health
 
@@ -494,6 +506,7 @@
 | <a id="t-defect-4379-health-key-posix"></a>defect-4379-health-key-posix | defect | [#4379](https://github.com/jcl2018/agent-workflow-template/issues/4379) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-test-caps-health"></a>test-caps-health | requirement | HLT-2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-test-caps-controls"></a>test-caps-controls | requirement | HLT-2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-eta-health-rules"></a>eta-health-rules | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 
 ## Monitoring
 
@@ -691,6 +704,7 @@
 | <a id="t-mon16-checkin-grouped"></a>mon16-checkin-grouped | requirement | MON-16 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-15 |
 | <a id="t-mon14-release-eta"></a>mon14-release-eta | requirement | MON-14 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-mon5-for-cell-sentence"></a>mon5-for-cell-sentence | requirement | MON-5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-eta-checkin-table"></a>eta-checkin-table | requirement | MON-5 | not run | - | local | 2026-11-16 |
 
 ## Regression
 
@@ -1116,5 +1130,8 @@
 | <a id="t-ci-summary-passing-left-out"></a>ci-summary-passing-left-out | requirement | done line ci-fail-output:2 | not run | - | local | 2026-11-16 |
 | <a id="t-audit-cd-path-found"></a>audit-cd-path-found | requirement | done line audit-cd-path:1 | not run | - | local | 2026-11-16 |
 | <a id="t-audit-cd-path-toy"></a>audit-cd-path-toy | requirement | done line audit-cd-path:2 | not run | - | local | 2026-11-16 |
+| <a id="t-done-hard-eta-1"></a>done-hard-eta-1 | workflow | done line hard-eta:1 | not run | - | local | no |
+| <a id="t-done-hard-eta-2"></a>done-hard-eta-2 | workflow | done line hard-eta:2 | not run | - | local | no |
+| <a id="t-done-hard-eta-3"></a>done-hard-eta-3 | workflow | done line hard-eta:3 | not run | - | local | no |
 | <a id="t-pr-queue-keeps-place"></a>pr-queue-keeps-place | requirement | done line pr-queue-step:1 | not run | - | local | 2026-11-16 |
 | <a id="t-pr-queue-step-toy"></a>pr-queue-step-toy | requirement | done line pr-queue-step:2 | not run | - | local | 2026-11-16 |
