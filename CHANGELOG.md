@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.0.10 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.9 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.8 - 2026-11-16
+
+- Check-in: Machine line, release ETA and feature grouping for every repo, goal lines, plain for cell; design, plan and regression rows
+- Monitoring: MON-5, MON-14, MON-16 show the machine, grouping, release ETA and for cell (owner records o44, o45, o54, o55, o56)
+- Merge origin/main into checkin-view (regression rows both kept, Tests tables re-rendered)
+- Drop the duplicate listing row left by the merge
+- Merge origin/main into checkin-view
+- Merge remote-tracking branch 'origin/main' into loop/checkin-view
+- Merge remote-tracking branch 'origin/main' into loop/checkin-view
+- Lane: re-render the Tests tables
+- Wiki: re-stamp pages for checkin-view
+- Fixes #4496: test defect-4496-checkin-goal-lines, seen failing 2026-11-16, passing
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.7 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.6 - 2026-11-16
 
 - CI summary keeps each failing row's last 20 lines (#4516)

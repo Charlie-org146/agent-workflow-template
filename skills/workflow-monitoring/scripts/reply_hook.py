@@ -316,6 +316,12 @@ def problems(text):
     return found
 
 
+def shown(text, cwd):
+    """MON-5, MON-14: Machine line, release headers, goal lines and the for cell; the checks live in board_status."""
+    import board_status
+    return board_status.check_view(text, cwd)
+
+
 def left_out(text, cwd):
     try:
         import checkin
@@ -378,7 +384,7 @@ def decide(payload, session, common):
         return None
     found = None if isinstance(payload.get("last_assistant_message"), str) else entries(path, TAIL)[0] if path else []
     text = final_reply(payload, found or [])
-    wrong = problems(text) + left_out(text, payload.get("cwd")) if text is not None else []
+    wrong = problems(text) + left_out(text, payload.get("cwd")) + shown(text, payload.get("cwd")) if text is not None else []
     try:
         counted = payload.get("stop_hook_active") and time.time() - os.path.getmtime(base + ".count") < 900
         count = int(open(base + ".count").read().strip() or 0) if counted else 0
@@ -426,7 +432,7 @@ def main(argv):
         except OSError as error:
             print("REFUSED: cannot read %s (%s). Fix: name a readable file, or - for stdin." % (argv[1], error.strerror))
             return 2
-        wrong = problems(text) + left_out(text, os.getcwd())
+        wrong = problems(text) + left_out(text, os.getcwd()) + shown(text, os.getcwd())
         for line in wrong:
             print(line)
         return 1 if wrong else 0

@@ -3,23 +3,15 @@
 
 usage: tests.py <command> [--root DIR]
 
-  list [--markdown|--tsv] [--kind K]  every test from the recorded runs, one group per feature; --kind requirement,
-                                    workflow or defect lists only that kind
-  summary --results FILE --took S   a GitHub run summary: one header with totals and the run time, then one table per
-                                    feature, from that run's results file (id<TAB>state lines; # lines are skipped)
-  issues [--write]                  read each defect test's issue or pull request state with gh; --write records them in
-                                    .loop/regression-issues.tsv (link, state, date, reopened_at) for the wiki and the
-                                    health report; a defect row whose open issue was reopened shows "failing (issue
-                                    reopened)" until the issue closes or a run on a later day passes
-  fixes --since REF                 one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since REF: a
-                                    defect row added, or whose seen-failing date was set, since REF, that links the
-                                    issue and passes in .loop/regression-runs.tsv (REG-6); the release notes list them
+  list [--markdown|--tsv] [--kind K]  every test from the recorded runs, one group per feature; --kind picks one kind
+  summary --results FILE --took S   a GitHub run summary: totals, the run time, then one table per feature
+  issues [--write]                  each defect test's issue or pull request state, by gh; --write records them in
+                                    .loop/regression-issues.tsv for the wiki and the health report
+  fixes --since REF                 one "Fixes #N: test ROW ..." line per issue fixed since REF (REG-6)
 
-A feature is the wiki page that holds the requirement a row guards (its goal, or its id); a row that guards none is in
-Other. Each test shows: test, kind (requirement, workflow or defect), what it guards (the requirement's ID and words, or the
-issue's link and state), what it checks, when it runs, its last result and date (then FLAKY when that result flipped on
-one clean commit, REG-9), and when it was seen failing.
-Stdlib only and self-contained: the regression workflow carries a copy of this file.
+A feature is the wiki page that holds the requirement a row guards; a row that guards none is in Other. Each test shows its
+kind, what it guards, what it checks, when it runs, its last result (FLAKY when it flipped on one clean commit, REG-9) and
+when it was seen failing. Stdlib only and self-contained: the regression workflow carries a copy of this file.
 """
 import argparse
 import datetime
@@ -55,14 +47,13 @@ def tsv(root, name):
 
 
 def cell(text, raw=False):
-    """One table cell: whitespace runs (newlines too) collapsed, and | escaped so it can't split a column (kept for --tsv)."""
+    """One table cell: whitespace collapsed, | escaped."""
     text = " ".join(str(text).split()) or "-"
     return text if raw else text.replace("|", "\\|")
 
 
 def linked_prd(root, page, text):
-    """The linked PRD's text for a link-form page (its docs.tsv source or 'PRD:' line), read through workflow-docs beside
-    this skill; '' when the page is not link-form or the source cannot be read (its ids are then unknown)."""
+    """The linked PRD's text for a link-form page, read through workflow-docs beside this skill; '' when there is none."""
     try:
         with open(os.path.join(root, ".loop", "prd", page + ".md"), encoding="utf-8") as handle:  # the repo's copy, when sync made one (DOC-17)
             copy = handle.read()
@@ -116,7 +107,7 @@ def key_of(row):
 
 
 def issues_of(root):
-    """{link: (state, date, reopened_at)}; reopened_at is the newest reopen time GitHub's timeline gave, or empty."""
+    """{link: (state, date, reopened_at)}."""
     return {row[0]: (row[1], row[2] if len(row) > 2 else "", row[3] if len(row) > 3 else "")
             for row in tsv(root, "regression-issues.tsv") if len(row) > 1}
 
@@ -139,8 +130,7 @@ def guard(row, found, issues, markdown):
 
 
 def fields(row, found, ran, issues, markdown=False, raw=False):
-    """The one fixed format for one row (all 8 columns of regression.tsv): test, kind, guards, checks, runs, last
-    result and date, seen failing."""
+    """The one fixed format for one row: test, kind, guards, checks, runs, last result and date, seen failing."""
     status, day, flag = (tuple(ran.get(row[0], ("not run", ""))) + ("",))[:3]  # a caller's (status, date) has no flag
     known = issues.get(row[7], ()) if row[6] == "defect" else ()
     if len(known) > 2 and known[2] and known[0] == "open" and not (status == "PASS" and day > known[2][:10]):
@@ -151,8 +141,7 @@ def fields(row, found, ran, issues, markdown=False, raw=False):
 
 
 def entries(root, results=None, markdown=False, raw=False):
-    """[(feature, [fields])] in page order, then Other; rows in file order, draft rows left out. With results, only
-    the rows that run reported, each with that run's state."""
+    """[(feature, [fields])] in page order, then Other; draft rows left out; with results, only the rows that ran."""
     titles, found = features(root)
     ran = {row[0]: ((row + [""] * 5)[1:3] + [" FLAKY" if (row + [""] * 5)[4] else ""]) for row in tsv(root, "regression-runs.tsv")
            if len(row) > 1}  # REG-9: a 5th cell (the commit a result flipped on) adds FLAKY after the raw result
@@ -233,7 +222,7 @@ def gh(*args):
 
 
 def reopened(link):
-    """The newest time the issue's GitHub timeline says it was reopened, or "" (REG-6: sampled states miss a reopen)."""
+    """The newest time the issue was reopened, or "" (REG-6)."""
     parts = re.match(r"^https?://[^/]+/([^/]+)/([^/]+)/issues/(\d+)$", link)
     if not parts:
         return ""
@@ -323,13 +312,55 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-def lane_checks(top, contexts):
-    """The required checks whose workflow job only runs regression.py get a status (#3840); the others print BLOCKS."""
+def steps(body):
+    """The `run:` commands of one job body (a `run: |` block read to its last indented line)."""
+    out, lines = [], body.split("\n")
+    for n, line in enumerate(lines):
+        found = re.match(r"(\s*)(?:- )?run:[ \t]*(.*)$", line)
+        if found:
+            cmd = found.group(2) if not re.match(r"[|>][-+]?$", found.group(2)) else ""
+            indent = len(found.group(1)) + (2 if "- run" in line else 0)
+            for more in lines[n + 1:]:
+                if more.strip() and len(more) - len(more.lstrip()) <= indent:
+                    break
+                cmd += "\n" + more.strip()
+            out.append(cmd.strip())
+    return out
+
+
+def classify(top, contexts):
+    """(regression, local, cannot): jobs that only run regression.py (#3840), jobs of plain `run:` steps the pr step can run here (no third-party action, secret or matrix), and the rest."""
     jobs, flows = [], os.path.join(top, ".github", "workflows")
     for name in os.listdir(flows) if os.path.isdir(flows) else []:
         jobs += re.findall(r"^  ([\w-]+):\n((?:    .*\n|\n)*)", open(os.path.join(flows, name), errors="replace").read() + "\n", re.M)
-    ok = [c for c in contexts for j, b in jobs if c in (j, *re.findall(r"^    name:\s*(.+?)\s*$", b, re.M)) and re.search(r"run:", b)
-          and all("regression.py" in r for r in re.findall(r"run:\s*(.+)", b)) and not re.search(r"uses:\s*(?!actions/)", b)]
-    for c in set(contexts) - set(ok):
-        print("BLOCKS: %s is a check the lane does not run, so it posts no status for it (BLOCKS)" % c)
+    reg, loc, no = [], {}, []
+    for c in contexts:
+        body = next((b for j, b in jobs if c in (j, *re.findall(r"^    name:\s*(.+?)\s*$", b, re.M))), "")
+        run = steps(body)
+        if not run or re.search(r"uses:\s*(?!actions/)\S|secrets\.|matrix", body):
+            no.append(c)
+        elif all("regression.py" in r for r in run):
+            reg.append(c)
+        else:
+            loc[c] = run
+    return reg, loc, no
+
+
+def lane_checks(top, contexts):
+    """The required checks the pr step posts a status for: regression-only jobs (#3840) and plain jobs whose steps pass here (#4537)."""
+    reg, loc, no = classify(top, contexts)
+    ok = list(reg)
+    for c, run in loc.items():
+        for cmd in run:
+            try:
+                bad = subprocess.run(["sh", "-c", cmd], cwd=top, capture_output=True, timeout=900).returncode
+            except (OSError, subprocess.TimeoutExpired):
+                bad = 1
+            if bad:
+                print("BLOCKS: %s fails run here: %s (BLOCKS)" % (c, cmd.splitlines()[0][:80]))
+                break
+        else:
+            ok.append(c)
+    for c in no:
+        print("BLOCKS: %s cannot be run here (a third-party action, secret or matrix), so no status posts (BLOCKS)" % c)
     return ok
