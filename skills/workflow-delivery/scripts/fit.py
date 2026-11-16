@@ -187,8 +187,8 @@ def cmd_set(g, args):
     import guards
     guards.operation_only(g, "set", args.slug)
     state = g.load(args.slug)
-    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None or args.eta_extend or args.eta_choice):
-        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes, --budget-tokens, --eta-extend or --eta-choice")
+    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None or args.eta_extend or args.eta_choice or args.preflight):
+        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes, --budget-tokens, --eta-extend, --eta-choice or --preflight")
     why = " ".join(args.why.split())
     if args.depth and any(recorded(state, s) for s in ("plan", "review")):
         done = [s for s in ("review", "plan") if recorded(state, s)][-1]
@@ -216,6 +216,7 @@ def cmd_set(g, args):
     if args.eta_extend or args.eta_choice:
         args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
         monitor("auto", True).eta_set(g, args, state, why)
+    args.preflight and monitor("replan", True).preflight_answer(g, args, state, why)
     print("SET %s: %s" % (args.slug, ", ".join(
         "%s=%s" % (k, v) for k, v in sidecar(runs, args.slug).items())))
     return 0
@@ -267,7 +268,13 @@ def frozen_fields(g, args, lines, touches):
             says_bump(args.goal), args.slug, says_bump(args.goal)))
     held = budget_of(g.config())
     return {"size": size_of(lines, touches, g.root()), "budget": held,
-            "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"])}
+            "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"]),
+            "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
+
+
+def plan_ahead(state, runs, step):
+    """The owner answered the pre-flight plan item 'approve ahead' (#4535): a pending plan takes the recommended answers."""
+    return step == "plan" and view(state, runs).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"
 
 
 def eta_line(fields):
