@@ -142,6 +142,9 @@ def finalize(base, held, name):
         line += "; " + ", ".join("%s killed by %s (pid %s)" % k for k in killed)
     if began and began - held["started"] >= 1:
         line += " (queued %ds)" % (began - held["started"])
+    cannot = re.findall(r"^NOTRUN (\S+)", text, re.M)
+    if cannot and not rc:
+        line += "; %d pass; %d not runnable here (%s)" % (ran + int((reused or [0])[0]), len(cannot), ", ".join(cannot[:5]))
     line += lanekit.before_rows(held, plan, wait) + lanekit.rows_line(text, ran, out)
     status, made = "fail", generated(cfg)
     after = [p for p in dirty() if p not in made]

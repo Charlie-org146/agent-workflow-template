@@ -43,7 +43,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, lanes, lanes_cli, notrun, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
@@ -303,7 +303,11 @@ def cmd_run(args):
                    results + [{"id": key, "state": "LEFT", "seconds": 0} for key in cut],
                    head, datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                    fresh=bool(args.reuse and why), base=tiers.BASE)
-    never = runs.unproven(root, picked, SEEN)
+    cannot = [item["id"] for item in results if item.get("notrun")]
+    never = [key for key in runs.unproven(root, picked, SEEN) if key not in cannot]
+    if cannot:
+        slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
+        notrun.todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")), runs.gh)
     for key in never:
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))
@@ -316,6 +320,8 @@ def cmd_run(args):
         passed, " (%d reused)" % len(reused) if args.reuse else "",
         sum(item["state"] == "KNOWN" for item in results) + kept.count("KNOWN"), len(failed), len(never),
         ", %d skipped" % sum(item["state"] == "SKIPPED" for item in results) if any(item["state"] == "SKIPPED" for item in results) else ""))
+    if cannot:
+        print("NOTRUNNABLE %d: %s" % (len(cannot), ", ".join(cannot)))
     return 1 if failed or never else 0
 
 

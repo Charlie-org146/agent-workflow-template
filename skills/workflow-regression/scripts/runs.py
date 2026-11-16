@@ -25,6 +25,7 @@ import time
 
 import actions
 import lanes
+import notrun
 
 # A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -212,9 +213,11 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
+        cannot = state == "FAIL" and notrun.unrunnable(code, text)
+        state = "SKIPPED" if cannot else state
         if code == 0 and key in expected:
             print("FIXED %s: remove it from the known list" % key)
-        print("%s %s%s" % (state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
+        print("%s %s%s" % ("NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
@@ -222,7 +225,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
-                        "pid": pid, "rc": code, "signal": signal})
+                        "pid": pid, "rc": code, "signal": signal, "notrun": cannot})
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (
@@ -349,13 +352,7 @@ def unproven(root, rows, seen):
 
 
 def owed_issue(root, row_id, runner, live):
-    stone = ""
-    for page in sorted(glob.glob(os.path.join(root, "docs", "wiki", "*.md"))):
-        text = open(page, encoding="utf-8").read()
-        found = re.search(r"^Milestone:\s*\S*/milestone/(\d+)", text, re.M)
-        if found and "(Tests#t-%s)" % row_id in text:
-            stone = found.group(1)
-            break
+    stone = notrun.milestone(root, [row_id])
     if not live:
         print("WOULD open a to-do issue (milestone %s) for %s" % (stone or "none", row_id))
         return ""
