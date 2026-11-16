@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept pr-queue-step@6490e290 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept eta-preflight@cf83d0be -->
 
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
@@ -153,6 +153,8 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d08
 | [test-caps-qa-refused](Tests#t-test-caps-qa-refused) | requirement | DEL-8 | Given a repo at max_regression_rows, when a goal adds a row, then qa refuses it with the row counts and the cap (TEST_CAPS); with the suite over max_suite_seconds it refuses with the seconds (owner record o51). | PASS 2026-11-16 |
 | [eta-budget-raise](Tests#t-eta-budget-raise) | requirement | DEL-8 | Given goal.py set raising a goal's time or token budget, when no unused owner-words record covers the goal, then it is refused and nothing changes; with one it is accepted and keeps the record, and lowering a budget needs none (hard ETA, GRD-14). | not run |
 | [eta-legacy-goal](Tests#t-eta-legacy-goal) | requirement | DEL-8 | Given a goal frozen before ETAs existed, when the owner gives it an ETA with an unused owner-words record, then it runs inside that ETA and is stopped past it like any other goal. | not run |
+| [held-charge-idle](Tests#t-held-charge-idle) | requirement | DEL-8 | Given a session silent past the idle limit with no step running, when the minute budget is read through fit.budget_stop, then it is charged no more than the limit until its next step starts, while a step that is running is charged in full. | not run |
+| [held-charge-show](Tests#t-held-charge-show) | requirement | DEL-8 | Given a goal with idle time, when goal.py show prints it, then it shows the charged minutes and the wall minutes. | not run |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
 | [del9-scan-sites](Tests#t-del9-scan-sites) | requirement | DEL-9 | Given the delivery, release and monitoring scripts, when any function pushes or writes to GitHub, then it calls the private-name scan first. | not run |
 | [del9-lane-part-no-path](Tests#t-del9-lane-part-no-path) | requirement | DEL-9 | Given a lane record whose LANE line ends with a local log path, when the pull request body's lane part is built, then it keeps the LANE line, the before-rows parts and the rows and drops the log path, so the private-name scan does not refuse every pull request from a machine whose home folder is on the list. | not run |

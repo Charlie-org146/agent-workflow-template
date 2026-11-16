@@ -50,7 +50,7 @@ def ago(minutes):
 
 
 def goal(minutes, **more):
-    return dict({"slug": "g", "status": "running", "step": "qa", "log": [ago(minutes) + " frozen 1 done lines"]}, **more)
+    return dict({"slug": "g", "status": "running", "step": "qa", "log": [ago(minutes) + " frozen 1 done lines", ago(minutes) + " start qa"]}, **more)
 
 
 # 1. time and token budgets (GRD-2): a goal past either starts no new step
