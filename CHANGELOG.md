@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.7 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.6 - 2026-11-16
+
+- CI summary keeps each failing row's last 20 lines (#4516)
+- Two rows for the CI summary goal
+- Re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-output
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-output
+- role.py: cap the PR body's row list at 300 lines so a change that selects every row can open its PR
+- Wiki: re-stamp pages for ci-fail-output
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.5 - 2026-11-16
 
 - No code changes
