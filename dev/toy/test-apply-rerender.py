@@ -109,7 +109,7 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
     # 1. a template reword leaves the branch's Settings block stale; apply re-renders it
     def code():
         with open(os.path.join(repo, "engine", "core.py"), "a", newline="\n") as handle:
-            handle.write("# a goal's change\n")
+            handle.write("\n\ndef extra():\n    return 2\n")  # real code: a comment-only change stales no page
 
     branch("one", code)
     check(any("Settings" in l for l in stale_on("one")), "the branch is STALE on its Settings block before apply")
