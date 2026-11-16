@@ -21,6 +21,7 @@ import docs  # noqa: E402
 import lanekit  # noqa: E402
 import prd  # noqa: E402
 
+TAB, NL = chr(9), chr(10)
 fails = 0
 repo = ""
 
@@ -102,4 +103,31 @@ was = stale()
 out, why = lane_prep()
 review = [l for l in open(os.path.join(repo, "docs/wiki/A.md")).read().splitlines() if l.startswith("Review")]
 check("negative control: a page whose reviewed wording changed is stale and the prep does not re-stamp it (%s)" % review, was == ["A"] and "kept my-goal" not in review[0])
+# a page that only main's code staled is not the goal's: it is left alone, and so is every page when the lane runs on main
+def two_pages():
+    build(reviewed("Readers need a page that says what a.py does today."))
+    git("switch", "-q", "main")
+    write(".loop/docs.tsv", TAB.join(("A", "a.py")) + NL + TAB.join(("B", "b.py")) + NL)
+    write("b.py", NL.join(("def other():", "    return 1", "")))
+    write("docs/wiki/B.md", reviewed("Readers need a page that says what b.py does today.").replace("# A", "# B"))
+    commit("page B and its code, on main")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    write("b.py", NL.join(("def other():", "    return 2", "")))
+    commit("main changes b.py")
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    git("switch", "-q", "loop/my-goal")
+    git("merge", "-q", "--no-edit", "main")
+
+
+two_pages()
+before = [p for k, p, _ in docs.problems(repo, "") if k == "STALE"]
+out, why = lane_prep()
+text_b = open(os.path.join(repo, "docs/wiki/B.md")).read()
+check("a page that only main's code staled stays stale and unmarked (before %s)" % before, "B" in before and "kept my-goal" not in text_b)
+check("the goal's own page A was re-stamped beside it", "kept my-goal" in open(os.path.join(repo, "docs/wiki/A.md")).read())
+two_pages()
+git("switch", "-q", "main")
+git("merge", "-q", "--no-edit", "loop/my-goal")
+out, why = lane_prep()
+check("a lane on the base branch re-stamps nothing", "kept" not in open(os.path.join(repo, "docs/wiki/A.md")).read() + open(os.path.join(repo, "docs/wiki/B.md")).read())
 sys.exit(1 if fails else 0)

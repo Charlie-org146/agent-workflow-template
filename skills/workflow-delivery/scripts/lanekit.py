@@ -313,8 +313,12 @@ def prep(top, cfg, log):
     if done.returncode:
         first = (done.stderr or done.stdout).strip().splitlines()[-1:] or ["exit %d" % done.returncode]
         return None, "LANE_PREP_FAILED: criteria.py render failed: %s. Fix: run it by hand; %s." % (first[0][:200], NOTHING)
-    slug = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip().split("/", 1)[-1]  # DOC-2: a page stale only by this goal's code is re-stamped before the rows run
-    subprocess.run([sys.executable, os.path.join(os.path.dirname(criteria), "audit.py"), "restamp-own", slug], cwd=top, capture_output=True, text=True, timeout=300)
+    branch = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()  # DOC-2: a page stale only by this goal's code is re-stamped before the rows run
+    if branch.startswith("loop/"):
+        try:
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(criteria), "audit.py"), "restamp-own", branch[5:]], cwd=top, capture_output=True, text=True, timeout=300)
+        except subprocess.TimeoutExpired:
+            git("checkout", "-q", "--", *[p for p in dirty() if is_page(p, cfg) and not tests_only(p)])
     paths = [p for p in dirty() if is_page(p, cfg)]
     if git("status", "--porcelain", "--", ".loop/regression-runs.tsv").stdout.strip():
         paths.append(".loop/regression-runs.tsv")
@@ -337,6 +341,7 @@ def prep(top, cfg, log):
         with open(log, "a") as handle:
             handle.write("prep commit: %s\n%s\n" % (" ".join(paths), err or out or ""))
         git("reset", "-q", "--", *paths)
+        git("checkout", "-q", "--", *[p for p in paths if is_page(p, cfg) and not tests_only(p)])  # a re-stamp this prep made, not an edit of anyone's
         return None, ("LANE_PREP_FAILED: git commit failed: %s (full output: %s); the prep paths are unstaged and left "
                       "modified, nothing committed or pushed. Fix: make the commit pass (see the log), then run role.py lane "
                       "SLUG NAME again." % ((why or ["no message"])[0][:200], log))

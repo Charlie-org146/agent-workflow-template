@@ -258,8 +258,7 @@ def relock(root, slug="", only=()):
 
 def restamp_own(root, slug):
     """DOC-2: relock the pages docs.py check --own calls STALE for this goal; a page whose reviewed text moved stays stale."""
-    base = "origin/" + (docs.config(root).get("base") or "main")
-    seen = subprocess.run([sys.executable, join(os.path.dirname(os.path.abspath(__file__)), "docs.py"), "check", "--own", base], cwd=root, capture_output=True, text=True).stdout
+    seen = subprocess.run([sys.executable, join(os.path.dirname(os.path.abspath(__file__)), "docs.py"), "check", "--own", "HEAD"], cwd=root, capture_output=True, text=True).stdout
     return relock(root, slug, {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and len(l.split()) > 1})
 
 
