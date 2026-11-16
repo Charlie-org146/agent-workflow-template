@@ -1086,4 +1086,4 @@
 | <a id="t-not-runnable-qa"></a>not-runnable-qa | requirement | done line qa-not-runnable:2 | not run | - | local | 2026-11-16 |
 | <a id="t-not-runnable-todo"></a>not-runnable-todo | requirement | done line qa-not-runnable:3 | not run | - | local | 2026-11-16 |
 | <a id="t-ci-summary-fail-output"></a>ci-summary-fail-output | requirement | done line ci-fail-output:1 | not run | - | local | 2026-11-16 |
-| <a id="t-ci-summary-passing-left-out"></a>ci-summary-passing-left-out | requirement | done line ci-fail-output:2 | not run | - | local | no |
+| <a id="t-ci-summary-passing-left-out"></a>ci-summary-passing-left-out | requirement | done line ci-fail-output:2 | not run | - | local | 2026-11-16 |
