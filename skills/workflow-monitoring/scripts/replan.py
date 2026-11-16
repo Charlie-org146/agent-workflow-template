@@ -289,5 +289,91 @@ def pr_wait(runs, slug):
         time.sleep(float(os.environ.get("LOOP_SLOT_POLL") or 20))
 
 
+# ---- pre-flight (#4535): the owner inputs a goal can foresee are asked once, at freeze; its hard ETA starts at the answers.
+# The record holds {"items": [{id, ask, options, recommend}]}; answers sit in the owner-only sidecar (preflight_answers).
+def api_quota(top):
+    """GitHub REST requests left, None when unknown or no GitHub remote (LOOP_API_QUOTA stands in for gh in tests)."""
+    try:
+        if os.environ.get("LOOP_API_QUOTA") is not None:
+            return int(os.environ["LOOP_API_QUOTA"])
+        if "github.com" not in subprocess.run(["git", "remote", "get-url", "origin"], cwd=top, capture_output=True, text=True).stdout:
+            return None
+        out = subprocess.run(["gh", "api", "rate_limit", "--jq", ".resources.core.remaining"], cwd=top, capture_output=True, text=True, timeout=20)
+        return int(out.stdout.strip()) if out.returncode == 0 else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def private_hits(top, touches):
+    """What the private-name list would refuse in the names a goal touches, the pages every pr re-renders and the repo's own
+    name (redacted by the scan), or the list's own break; [] when clean, absent or unreadable."""
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("pf_private", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py"))
+        private = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(private)
+        paths = [t for t in touches if not str(t).startswith("github:")] + ["docs/wiki"]
+        listed = subprocess.run(["git", "ls-files", "--"] + paths, cwd=top, capture_output=True, text=True).stdout.split()
+        found = private.scan(top, None, texts={n: n for n in sorted(set(listed + [os.path.basename(top)]))})
+        return found["hits"] if found["state"] == "hit" else [found["note"]] if found["state"] == "broken" else []
+    except Exception:
+        return []
+
+
+def dry_items(top, cfg, touches):
+    """The guards a goal can run before its push, as pre-flight items; only a dry run that would refuse gives one."""
+    items, why, hits, left = [], memory_hold(cfg), private_hits(top, touches), api_quota(top)
+    why and items.append({"id": "memory", "ask": why, "options": ["lower min_free_memory_gb to the free memory", "keep the floor"], "recommend": "lower min_free_memory_gb to the free memory"})
+    hits and items.append({"id": "private", "ask": "the private-name list would refuse: " + "; ".join(hits[:4]), "options": ["edit the list line", "rename the file"], "recommend": "edit the list line"})
+    left is not None and left < 50 and items.append({"id": "quota", "ask": "the GitHub API quota is %d requests; pr steps stall at 0" % left, "options": ["wait for the reset", "go on with local steps"], "recommend": "go on with local steps"})
+    return items
+
+
+def preflight_new(top, cfg, minutes, touches):
+    """The freeze list: plan approval (when auto_approve is off), the time budget, then the dry runs that would refuse."""
+    items = []
+    cfg.get("auto_approve") is not True and items.append({"id": "plan", "ask": "the plan step ends pending and waits for your approval (auto_approve is off)", "options": ["approve ahead", "approve when asked"], "recommend": "approve ahead"})
+    items.append({"id": "budget", "ask": "its time budget is %d minutes; held and waiting time may count toward it" % minutes, "options": ["keep", "raise"], "recommend": "keep"})
+    return {"items": items + dry_items(top, cfg, touches)}
+
+
+def preflight_lines(seen):
+    """One Needs-you line per goal with open pre-flight items: each item, its options and recommendation, and the take-all word."""
+    import auto
+    return ["%s pre-flight, %d open (blocks nothing until its ETA starts): %s; answer \"recommended\" to take every recommendation, or one answer per item" % (
+        run["slug"], len(left), "; ".join("%s: %s [%s; recommended: %s]" % (i["id"], i["ask"], " / ".join(i["options"]), i["recommend"]) for i in left))
+        for run in seen for left in [auto.eta_open(run)] if left]
+
+
+def preflight_answer(g, args, state, why):
+    """goal.py set --preflight recommended|ID=ANSWER,...: owner words in, the answers into the sidecar; the ETA clock starts at the last one."""
+    import auto
+    seen = g.fit.view(state, g.state_dir())
+    left, have = auto.eta_open(seen), dict((seen.get("preflight_answers") or {}).get("answers") or {})
+    left or g.no("%s has no open pre-flight item; nothing changed." % args.slug)
+    rid = auto.eta_record(g, args.owner_record, args.slug, "a pre-flight answer")
+    for part in [] if args.preflight == "recommended" else args.preflight.split(","):
+        key, _, value = part.partition("=")
+        item = next((i for i in left if i["id"] == key.strip()), None)
+        if not item or value.strip() not in item["options"]:
+            g.no("%r is not an open item with that answer. Fix: %s" % (part, "; ".join("%s=%s" % (i["id"], "|".join(i["options"])) for i in left) or "none are open"))
+        have[item["id"]] = value.strip()
+    args.preflight == "recommended" and have.update({i["id"]: i["recommend"] for i in left})
+    done = not [i for i in left if i["id"] not in have]
+    g.guards.add_set(g.state_dir(), args.slug, "preflight_answers", {"answers": have, "record": rid, "spent": auto.eta_spent(state) if done else 0},
+                     "set pre-flight answers (record %s): %s" % (rid, why))
+
+
+def pr_preflight(runs, g, state):
+    """Before the pr step the dry runs go again; a refusal that was not on the freeze list is logged as a missed pre-flight item."""
+    listed = {i["id"] for i in (state.get("preflight") or {}).get("items") or []} | {m["id"] for m in state.get("missed_preflight") or []}
+    for item in dry_items(g.root(), g.config(), state.get("touches") or []):
+        if item["id"] not in listed:
+            state.setdefault("missed_preflight", []).append({"id": item["id"], "found": item["ask"][:200], "at": graph.iso(datetime.datetime.now(datetime.timezone.utc)),
+                                                             "why": "not on the freeze list: it appeared after the goal was frozen and was found at the pr step"})
+            g.save(state, "missed pre-flight item %s: %s" % (item["id"], item["ask"][:160]))
+            print("MISSED PRE-FLIGHT %s: %s" % (item["id"], item["ask"][:200]))
+
+
 if __name__ == "__main__":
     sys.exit(main())
