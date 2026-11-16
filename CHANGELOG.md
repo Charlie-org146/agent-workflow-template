@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.0.24 - 2026-11-16
+
+- docs: import render with a plain import, no __import__ (#4652)
+- docs-import-render: render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/docs-import-render
+- Wiki: re-stamp pages for docs-import-render
+- Merge origin/main into loop/docs-import-render
+- Wiki: re-stamp pages for docs-import-render
+- Documentation: reviewed on the owner's words (o75)
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.23 - 2026-11-16
 
 - No code changes

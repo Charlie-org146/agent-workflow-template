@@ -36,6 +36,7 @@ import tempfile
 import counting
 import criteria
 import entry
+import render
 import pageformat
 import deployments
 from deployments import slurp
@@ -187,7 +188,7 @@ def problems(root, base):
         text = slurp(full)
         if PLACEHOLDER in text or (len(text.replace(MARKER, "").split()) < 10 and not deployments.linked(root, page, text)):
             found.append(("UNWRITTEN", page, rel))
-        if page == "Home" and __import__("render").home_fresh(root, feature_pages(root)):
+        if page == "Home" and render.home_fresh(root, feature_pages(root)):
             continue  # a DOC-4 Home holds only generated text: fresh, a changed mapped path leaves nothing to restate (#4608)
         seen = git("rev-list", "--no-merges", "HEAD", "--", rel, cwd=root, check=False).split()
         if not seen:
@@ -204,7 +205,6 @@ def problems(root, base):
             if name.endswith(".md") and name[:-3] not in rows and name[:-3] not in pageformat.GENERATED:
                 found.append(("UNMAPPED", name[:-3], "not in .loop/docs.tsv" + (" (a How-to-use page whose feature has no page: an orphan)" if name.startswith(deployments.HOWTO) else "")))
     if config(root).get("criteria"):
-        import render
         found += render.stale_blocks(root) + (render.generated(root) if feature_pages(root) else [])
     return found
 
@@ -254,7 +254,6 @@ def contract(root):
     """Criteria contract trouble as (kind, page, detail); off unless config has "criteria": true."""
     if not config(root).get("criteria"):
         return []
-    import render
     found, names = [], feature_pages(root)
     for page in sorted(read_map(root)):
         if not PAGE.match(page):
@@ -324,7 +323,6 @@ def cmd_publish(args):
     if not read_map(root):
         sys.exit("REFUSED: no pages. Fix: run add first.")
     if config(root).get("criteria"):
-        import render
         render.refresh(root)
     found = problems(root, None) + [c for c in contract(root) if c[0] != "CHANGED"]
     found += [c for c in counts(root) if c[1].startswith(wiki_dir(root) + "/")]
