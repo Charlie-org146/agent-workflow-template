@@ -528,7 +528,7 @@
 | <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-custom-items"></a>machine-custom-items | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) state unknown | not run | - | local | 2026-11-16 |
 
 ## Monitoring
@@ -1129,7 +1129,7 @@
 | <a id="t-machine-done-9"></a>machine-done-9 | requirement | done line operator-setup:9 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-10"></a>machine-done-10 | requirement | done line operator-setup:10 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-11"></a>machine-done-11 | requirement | done line operator-setup:11 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-12"></a>machine-done-12 | requirement | done line operator-setup:12 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-12"></a>machine-done-12 | requirement | done line operator-setup:12 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-review-findings-wording"></a>review-findings-wording | requirement | done line review-findings:1 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | FAIL | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |
