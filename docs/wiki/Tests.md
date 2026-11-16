@@ -477,7 +477,7 @@
 | <a id="t-sweep-health-record"></a>sweep-health-record | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-file-close-no-crash"></a>file-close-no-crash | requirement | HLT-4 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4379-health-key-posix"></a>defect-4379-health-key-posix | defect | [#4379](https://github.com/jcl2018/agent-workflow-template/issues/4379) closed (2026-11-15) | not run | - | local | 2026-11-15 |
-| <a id="t-machine-health-rule"></a>machine-health-rule | requirement | HLT-2 | not run | - | local | no |
+| <a id="t-machine-health-rule"></a>machine-health-rule | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 
 ## Machines
 
@@ -688,7 +688,7 @@
 | <a id="t-mon17-this-pod-only"></a>mon17-this-pod-only | requirement | MON-17 | not run | - | local | 2026-11-15 |
 | <a id="t-review-board-shows-wait"></a>review-board-shows-wait | requirement | MON-3 | not run | - | local | 2026-11-15 |
 | <a id="t-defect-4375-toys-fake-machine"></a>defect-4375-toys-fake-machine | defect | [#4375](https://github.com/jcl2018/agent-workflow-template/issues/4375) closed (2026-11-15) | not run | - | local | 2026-11-15 |
-| <a id="t-machine-guide-monitoring"></a>machine-guide-monitoring | requirement | MON-5 | not run | - | local | no |
+| <a id="t-machine-guide-monitoring"></a>machine-guide-monitoring | requirement | MON-5 | not run | - | local | 2026-11-16 |
 
 ## Regression
 
