@@ -45,6 +45,9 @@ with tempfile.TemporaryDirectory() as tmp:
     os.makedirs(os.path.join(tmp, "wl", "lanes"), exist_ok=True)
     code, said = toy(tmp, "lanes.sh", 'echo x > "$TOY_REAL_WL/lanes/ticket-1.tmp"')
     check("another lane's tickets under lanes/ are not a leak", code == 0 and "LEAK" not in said, said)
+    os.makedirs(os.path.join(tmp, "wl", "schedule"), exist_ok=True)
+    code, said = toy(tmp, "sched.sh", 'echo x > "$TOY_REAL_WL/schedule/repos.json"')
+    check("the scheduler's own files under schedule/ are not a leak", code == 0 and "LEAK" not in said, said)
     code, said = toy(tmp, "flow.sh", 'case "$LOOP_FLOW" in "$TOY_REAL_WL"*|"") exit 3;; esac; [ "$LOOP_HEALTH" != "" ] || exit 4')
     check("the harness points LOOP_FLOW and LOOP_HEALTH at temp paths", code == 0, said)
 
