@@ -211,6 +211,16 @@ import lanekit  # noqa: E402
 from lanekit import FILES, REG, generated  # noqa: E402
 
 
+def lane_note(runs, slug, step):
+    """'N pass; M not runnable here' from the step's lane line (GRD-11), or ''."""
+    try:
+        line = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, step)))).get("line", "")
+    except (OSError, ValueError):
+        return ""
+    found = re.search(r"\d+ pass; \d+ not runnable here", line)
+    return found.group(0) if found else ""
+
+
 def need_lane(runs, slug, reply, step="qa"):
     text = open(reply).read() if os.path.isfile(reply) else ""
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
