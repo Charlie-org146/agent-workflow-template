@@ -103,9 +103,9 @@ def tokens_text(run):
     return "%s tokens" % format(spent_tokens(run), ",") if any(isinstance(n, int) and n for n in value.values()) else "tokens unread"
 
 
-def active_minutes(state, at=None):
+def active_minutes(state, at=None, cfg=None):
     try:
-        return monitor("board_log", True).active_minutes(state, at)
+        return monitor("board_log", True).active_minutes(state, at, cfg)
     except Exception:
         return 0
 
@@ -123,13 +123,13 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
     seen = view(state, runs)
     held, source = budget(seen, cfg)
     if seen.get("eta") or seen.get("eta_extend"):
-        auto, spent = monitor("auto", True), active_minutes(state, at)
+        auto, spent = monitor("auto", True), active_minutes(state, at, cfg)
         if auto.eta_over(seen, spent):
             save and auto.eta_wait(state, spent, save)
             sys.exit("REFUSED: %dm spent, past the ETA of %dm; no new step starts and the goal waits for the owner: ship now, extend "
                      "once, or defer. Fix: the operation session runs goal.py set %s --eta-choice ship|defer or --eta-extend N, "
                      "with --owner-record ID (ETA_PAST)" % (spent, auto.eta_minutes(seen), slug))
-    for name, spent in (("minutes", active_minutes(state, at)), ("tokens", spent_tokens(state))):
+    for name, spent in (("minutes", active_minutes(state, at, cfg)),("tokens", spent_tokens(state))):
         if held[name] and spent >= held[name]:
             sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                      "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
@@ -187,8 +187,8 @@ def cmd_set(g, args):
     import guards
     guards.operation_only(g, "set", args.slug)
     state = g.load(args.slug)
-    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None or args.eta_extend or args.eta_choice):
-        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes, --budget-tokens, --eta-extend or --eta-choice")
+    if not (args.depth or args.bump or args.budget_minutes is not None or args.budget_tokens is not None or args.eta_extend or args.eta_choice or args.preflight):
+        g.no("nothing to set. Fix: give --depth, --bump, --budget-minutes, --budget-tokens, --eta-extend, --eta-choice or --preflight")
     why = " ".join(args.why.split())
     if args.depth and any(recorded(state, s) for s in ("plan", "review")):
         done = [s for s in ("review", "plan") if recorded(state, s)][-1]
@@ -216,6 +216,7 @@ def cmd_set(g, args):
     if args.eta_extend or args.eta_choice:
         args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
         monitor("auto", True).eta_set(g, args, state, why)
+    args.preflight and monitor("replan", True).preflight_answer(g, args, state, why)
     print("SET %s: %s" % (args.slug, ", ".join(
         "%s=%s" % (k, v) for k, v in sidecar(runs, args.slug).items())))
     return 0
@@ -232,6 +233,7 @@ def cmd_adopt(g, args):
 def cmd_show(g, args):
     state = g.load(args.slug)
     state["resume_at"] = resume_at(state, g.guards.moved_since_plan(g, state))
+    state["minutes"] = {"charged": active_minutes(state, None, g.config()), "wall": monitor("board_log", True).wall_minutes(state)}
     print(json.dumps(state, indent=2))
 
 
@@ -267,7 +269,13 @@ def frozen_fields(g, args, lines, touches):
             says_bump(args.goal), args.slug, says_bump(args.goal)))
     held = budget_of(g.config())
     return {"size": size_of(lines, touches, g.root()), "budget": held,
-            "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"])}
+            "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"]),
+            "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
+
+
+def plan_ahead(state, runs, step):
+    """The owner answered the pre-flight plan item 'approve ahead' (#4535): a pending plan takes the recommended answers."""
+    return step == "plan" and view(state, runs).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"
 
 
 def eta_line(fields):

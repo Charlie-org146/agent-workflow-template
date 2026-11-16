@@ -276,7 +276,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
-    auto, ok = wait and cfg.get("auto_approve") is True, result in ("done", "skipped")
+    auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -339,6 +339,7 @@ def cmd_pr(args):
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+    queue("preflight", ME, state)
     pods and pods.pr_queue("join", ME, state)  # pool.pr_join takes (g, state): no runs folder
     if ahead := queue("turn", slug):
         waited or save(state, "waiting: pr queue, behind " + ahead)
@@ -427,7 +428,7 @@ def main():
     add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
     add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),
         ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--eta-extend", {"type": int}),
-        ("--eta-choice", {"choices": ("ship", "defer")}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
+        ("--eta-choice", {"choices": ("ship", "defer")}), ("--preflight", {"default": ""}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
     for name, func in (("pr", cmd_pr), ("answer", cmd_answer), ("show", cmd_show)):
         add(name, func)
     args = parser.parse_args()

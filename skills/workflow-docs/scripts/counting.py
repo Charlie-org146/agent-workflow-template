@@ -235,9 +235,12 @@ def cadence(cron):
 
 
 def config_of(root):
+    """.loop/config.json as a dict; a copy marked skip-worktree (a value kept on this machine) reads as committed at HEAD, so
+    generated pages never carry it (#4608)."""
     try:
+        kept = git(root, "ls-files", "-v", "--", ".loop/config.json").stdout.startswith("S")
         with open(os.path.join(root, ".loop", "config.json")) as fh:
-            held = json.load(fh)
+            held = json.loads(git(root, "show", "HEAD:.loop/config.json").stdout if kept else fh.read())
         return held if isinstance(held, dict) else {}
     except (OSError, ValueError):
         return {}
