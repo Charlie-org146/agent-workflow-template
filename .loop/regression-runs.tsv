@@ -351,7 +351,7 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
-package-gate-head	FAIL	2026-11-14	
+package-gate-head	FAIL	2026-11-16	
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
@@ -487,7 +487,7 @@ settings-publish-refresh	PASS	2026-11-12
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-15	
+settings-render-fresh	FAIL	2026-11-16	
 settings-stale	PASS	2026-11-12	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
@@ -541,6 +541,12 @@ summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 template-sheet	PASS	2026-11-12	
+test-caps-consolidate-allowed	PASS	2026-11-16	
+test-caps-controls	PASS	2026-11-16	
+test-caps-health	PASS	2026-11-16	
+test-caps-own-cap	PASS	2026-11-16	
+test-caps-qa-refused	PASS	2026-11-16	
+test-caps-settings	PASS	2026-11-16	
 tests-last-run	PASS	2026-11-12	
 tests-links-workflow-3839	PASS	2026-11-14	
 tests-not-enforced	PASS	2026-11-12	

@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import json
+import glob
 import datetime
 
 
@@ -211,6 +212,16 @@ import lanekit  # noqa: E402
 from lanekit import FILES, REG, generated  # noqa: E402
 
 
+def lane_note(runs, slug, step):
+    """'N pass; M not runnable here' from the step's lane line (GRD-11), or ''."""
+    try:
+        line = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, step)))).get("line", "")
+    except (OSError, ValueError):
+        return ""
+    found = re.search(r"\d+ pass; \d+ not runnable here", line)
+    return found.group(0) if found else ""
+
+
 def need_lane(runs, slug, reply, step="qa"):
     text = open(reply).read() if os.path.isfile(reply) else ""
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
@@ -229,8 +240,32 @@ def need_lane(runs, slug, reply, step="qa"):
         return ("HEAD moved since the %s lane passed (lane on %s, HEAD %s)" % (step, ok[:12], head[:12]),
                 fix + " (reruns only the rows the change can affect)",
                 "HEAD_MOVED")
-    return None
+    return over_caps() if step == "qa" else None
 
+
+def over_caps():
+    """A refusal when the repo is over a test cap and this goal adds rows net (the base branch's caps; removing or merging as many always passes)."""
+    top = git("rev-parse", "--show-toplevel").stdout.strip()
+    at = "origin/" + (json.loads(git("show", "HEAD:.loop/config.json").stdout or "{}").get("base") or "main")
+
+    def ids(text):
+        return {x.split("\t")[0] for x in text.splitlines() if "\t" in x and x[0] != "#"}
+    try:
+        now = ids(open(os.path.join(top, ".loop", "regression.tsv")).read())
+        cfg = json.loads(git("show", at + ":.loop/config.json").stdout)
+    except (OSError, ValueError):
+        return None
+    old = ids(git("show", at + ":.loop/regression.tsv").stdout)
+    net = len(now - old) - len(old - now)
+    tests = os.path.join(git("rev-parse", "--git-common-dir").stdout.strip(), "loop", "tests", "*.json")
+    secs = max([d.get("total_seconds") or 0 for d in (json.load(open(f)) for f in glob.glob(tests)) if "--reuse" not in str(d.get("command"))] + [0])
+    over = [text for have, key, default, text in ((len(now), "max_regression_rows", 1200, "%d rows, max_regression_rows is %d"),
+                                                  (secs, "max_suite_seconds", 1900, "the full suite takes %d s, max_suite_seconds is %d"))
+            if 0 < cfg.get(key, default) < have for text in [text % (have, cfg.get(key, default))]]
+    if net > 0 and over:
+        return ("over the test caps (%s) and this goal adds %d rows net (+%d, -%d)" % ("; ".join(over), net, len(now - old), len(old - now)),
+                "remove or merge at least %d rows, or the owner raises the cap in their own words" % net, "TEST_CAPS")
+    return None
 
 
 def git_out(*args):
@@ -275,7 +310,7 @@ def lane_part(slug):
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
-    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows) if rows else ""
+    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows[:300] + ["... %d more" % (len(rows) - 300)] * (len(rows) > 300)) if rows else ""
     return "\n### Regression lane\n\n%s%s\n" % (line, folded) if line else ""
 
 

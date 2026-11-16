@@ -3,7 +3,7 @@
 # reads: skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/guards.py
 # reads: skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/proctree.py
 # reads: skills/workflow-health/scripts/rules.py skills/workflow-health/scripts/controls.py skills/workflow-health/scripts/report.py
-"""GRD-13: a goal's ETA is a hard limit (owner o52). Calls the real functions in throwaway repos: no model, no network.
+"""GRD-14: a goal's ETA is a hard limit (owner o52). Calls the real functions in throwaway repos: no model, no network.
 
 1. Freeze records the ETA (the estimate plus a margin) and the goal file shows it.
 2. Past the ETA no step starts, the goal waits under Needs you with three choices, and full auto never answers it.

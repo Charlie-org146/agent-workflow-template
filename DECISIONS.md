@@ -362,7 +362,7 @@ Documentation and DOC-17 were reviewed again with record o38.
 
 Owner record o52 (2026-11-15): "I want to make the ETA a hard criteria in the 1.1 so that it doesn't keep delaying. I want to add this guardrail." (#4512)
 
-- Guardrails was un-reviewed and re-reviewed with o52 (the page only); GRD-13 is new and Unreviewed, for the owner to review.
+- Guardrails was un-reviewed and re-reviewed with o52 (the page only); GRD-14 is new and Unreviewed, for the owner to review.
 - The ETA is the estimate model's high end for the goal's size plus 25 percent (5-minute steps, at least 30), or the time budget with no estimate; it counts active minutes like the time budget. The margin is a constant, not a setting.
 - Past it a goal waits under Needs you (kind owner) for ship now, extend once or defer; only `goal.py set --eta-extend|--eta-choice` with an unused owner-words record covering the goal moves it, and raising a time or token budget needs one too.
 - Not done, left for later: counting fix rounds against the ETA and the release goal's clock-time ETA (#4512 items 3 and 4).

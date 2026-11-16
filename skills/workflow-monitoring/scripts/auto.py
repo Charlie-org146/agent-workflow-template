@@ -219,7 +219,7 @@ def owner_words_add(text, ids):
     return 0
 
 
-# --- the hard ETA (GRD-13, o52): active minutes a goal may run, recorded at freeze. Past it nothing starts and the goal
+# --- the hard ETA (GRD-14, o52): active minutes a goal may run, recorded at freeze. Past it nothing starts and the goal
 # waits under Needs you: ship now, extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
 
 ETA_MARGIN, ETA_FLOOR = 1.25, 30

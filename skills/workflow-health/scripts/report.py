@@ -28,7 +28,7 @@ GROUPS = (
     ("freshness", "Freshness", "my angle when I come back: is anything out of date?", ("nightly", "unreleased", "finding-age")),
     ("tests", "Tests", "a skeptic's angle: do the tests prove anything?", ("seen-red", "skipped", "network")),
     ("performance", "Performance", "my clock's and my wallet's angle: is it fast and cheap enough?",
-     ("cost", "test-time", "check-time")),
+     ("cost", "test-time", "rows-cap", "suite-cap", "check-time")),
     ("security", "Security and privacy", "a leak's angle: can anything private escape?",
      ("private", "scan-hook", "hooks", "workflow-permissions")),
     ("size", "Size", "a maintainer's angle: can someone still read this?", ("scripts", "skill-lines", "requirements-per-page")),

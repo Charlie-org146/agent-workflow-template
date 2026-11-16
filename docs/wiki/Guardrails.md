@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=e017dd33 N=e6bf17f7 M=5109e571 U=03828777 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=ab141a29 N=e6bf17f7 M=5109e571 U=03828777 -->
 
 ## Problem
 
@@ -63,7 +63,11 @@ Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=e017dd33 N=e6bf17f7 M=5109
   - Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
 - GRD-12: **Reviewed 2026-11-14** The machine's status is read every round, and no goal starts under the memory floor. <!-- reviewed 0b68aa9f -->
   - Each check-in reads free RAM, free commit memory, CPU and the number of claude and node processes (Monitoring, MON-16). A goal starts only while free commit memory is at or above `min_free_memory_gb` (default 3.5, in `.loop/config.json`; 0 turns the floor off). The pool creates no session and the board holds every ready goal as "memory low" until memory frees up. A figure that can't be read never blocks a start.
-- GRD-13: **Unreviewed** A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer
+- GRD-13: **Unreviewed** Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51)
+  - `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1).
+  - A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4).
+  - Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9).
+- GRD-14: **Unreviewed** A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer
   - Owner o52 (2026-11-15): the ETA is a hard criterion so goals stop sliding. Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal.
   - A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release.
   - goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot.
@@ -142,15 +146,17 @@ None
 | - | requirement | GRD-11 | no passing test | not enforced |
 | [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
 | - | requirement | GRD-12 | no passing test | not enforced |
-| [eta-freeze](Tests#t-eta-freeze) | requirement | GRD-13 | Given a goal being frozen, when its fields and goal file are built, then they hold a hard ETA in whole minutes (at least 30) with its basis, and the goal file has an ETA line next to the done lines. | not run |
-| [eta-gate](Tests#t-eta-gate) | requirement | GRD-13 | Given a goal that has spent its ETA, when a step or pr is asked for, then it is refused with one line naming goal.py set and an owner record, and a goal inside its ETA starts its step. | not run |
-| [eta-needs-you](Tests#t-eta-needs-you) | requirement | GRD-13 | Given a goal past its ETA, when the refusal is recorded, then the goal waits with three choices (ship now, extend, defer) as an owner question that full auto never answers, so the check-in lists it under Needs you. | not run |
-| [eta-owner-record](Tests#t-eta-owner-record) | requirement | GRD-13 | Given goal.py set with an ETA extension or a budget raise, when no owner-words record covers the goal or the record was used before, then it is refused and nothing changes; with a fresh covering record it is accepted. | not run |
-| [eta-ship-defer](Tests#t-eta-ship-defer) | requirement | GRD-13 | Given a goal past its ETA and an owner record, when the owner chooses ship now or defer, then ship now records the steps left as skipped and lets the pull request go on, and defer retires the goal for the next release. | not run |
-| [eta-checkin](Tests#t-eta-checkin) | requirement | GRD-13 | Given goals with and without an ETA, when the check-in builds its All sessions table, then each goal's cell shows its ETA clock time, ETA passed, or no ETA. | not run |
-| [eta-health-missing](Tests#t-eta-health-missing) | requirement | GRD-13 | Given a live goal with no ETA, when health runs, then it warns (eta-missing), and the rule's negative control fires. | not run |
-| [eta-health-extended](Tests#t-eta-health-extended) | requirement | GRD-13 | Given an ETA extension whose owner-words record is missing or does not cover the goal, when health runs, then it fails (eta-extended), and the rule's negative control fires. | not run |
-| [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | GRD-13 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
-| - | requirement | GRD-13 | no passing test | not enforced |
+| [test-caps-consolidate-allowed](Tests#t-test-caps-consolidate-allowed) | requirement | GRD-13 | Given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed. | PASS 2026-11-16 |
+| [test-caps-own-cap](Tests#t-test-caps-own-cap) | requirement | GRD-13 | Given a goal that raises max_regression_rows in its own config, when qa checks the caps, then it reads the base branch's cap and still refuses; the owner raising the cap on the base lets the goal pass. | PASS 2026-11-16 |
+| [eta-freeze](Tests#t-eta-freeze) | requirement | GRD-14 | Given a goal being frozen, when its fields and goal file are built, then they hold a hard ETA in whole minutes (at least 30) with its basis, and the goal file has an ETA line next to the done lines. | not run |
+| [eta-gate](Tests#t-eta-gate) | requirement | GRD-14 | Given a goal that has spent its ETA, when a step or pr is asked for, then it is refused with one line naming goal.py set and an owner record, and a goal inside its ETA starts its step. | not run |
+| [eta-needs-you](Tests#t-eta-needs-you) | requirement | GRD-14 | Given a goal past its ETA, when the refusal is recorded, then the goal waits with three choices (ship now, extend, defer) as an owner question that full auto never answers, so the check-in lists it under Needs you. | not run |
+| [eta-owner-record](Tests#t-eta-owner-record) | requirement | GRD-14 | Given goal.py set with an ETA extension or a budget raise, when no owner-words record covers the goal or the record was used before, then it is refused and nothing changes; with a fresh covering record it is accepted. | not run |
+| [eta-ship-defer](Tests#t-eta-ship-defer) | requirement | GRD-14 | Given a goal past its ETA and an owner record, when the owner chooses ship now or defer, then ship now records the steps left as skipped and lets the pull request go on, and defer retires the goal for the next release. | not run |
+| [eta-checkin](Tests#t-eta-checkin) | requirement | GRD-14 | Given goals with and without an ETA, when the check-in builds its All sessions table, then each goal's cell shows its ETA clock time, ETA passed, or no ETA. | not run |
+| [eta-health-missing](Tests#t-eta-health-missing) | requirement | GRD-14 | Given a live goal with no ETA, when health runs, then it warns (eta-missing), and the rule's negative control fires. | not run |
+| [eta-health-extended](Tests#t-eta-health-extended) | requirement | GRD-14 | Given an ETA extension whose owner-words record is missing or does not cover the goal, when health runs, then it fails (eta-extended), and the rule's negative control fires. | not run |
+| [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | GRD-14 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
+| - | requirement | GRD-14 | no passing test | not enforced |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |

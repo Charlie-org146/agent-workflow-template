@@ -42,6 +42,8 @@ unchanged repo print the same lines.
 | | `network` | a land row's command reaches the network: curl, wget, http(s):// (WARN) |
 | Performance (is it fast and cheap enough?) | `cost` | a finished goal over `time_budget_minutes` or `token_budget` (WARN); goals that recorded no tokens are left out |
 | | `test-time` | the land lane over `test_budget_minutes`, naming its slowest rows (WARN; shown, never filed) |
+| | `rows-cap` | the regression table's rows against `max_regression_rows` (default 1200): WARN from 90%, FAIL over; 0 is off (GRD-13) |
+| | `suite-cap` | the slowest full (non `--reuse`) run recorded here against `max_suite_seconds` (default 1900): WARN from 90%, FAIL over; shown, never filed (GRD-13) |
 | | `check-time` | the check, up to this group, past 60 seconds (WARN; shown, never filed) |
 | Security and privacy (can anything private escape?) | `private` | a tracked file matches a `leak_patterns` entry of the private flow file: file:line and the pattern's number only, never the text (FAIL) |
 | | `scan-hook` | no commit scan hook (WARN; shown, never filed) |

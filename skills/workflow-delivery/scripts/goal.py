@@ -15,7 +15,7 @@ step, record and pr refuse outside a worker.
   resume SLUG --why T [--by W]
   touches SLUG --add PATH --why T
   set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] [--eta-extend N] [--eta-choice ship|defer]
-          [--owner-record ID] --why T   (a raise or an ETA move needs an owner record)
+          [--owner-record ID] --why T   (a raise or an ETA move needs a record)
   show SLUG
 """
 import argparse
@@ -266,6 +266,7 @@ def cmd_record(args):
     text = read(reply)
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b[ :.-]*(.*)$", text, re.M | re.I)
     result, why = (found[-1][0].lower(), found[-1][1].strip()) if found else ("", "")
+    why = why if why or args.step not in ("qa", "ship") else role.lane_note(state_dir(), args.slug, args.step)
     pending = guards.pending_items(text)
     session = args.in_session or state.get("worker") == "session"
     if not result and not pending and session:
@@ -339,7 +340,7 @@ def cmd_pr(args):
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")
-    queue("hold", args.slug)  # the lane starts: the goal holds the merge slot
+    queue("hold", args.slug)  # the lane starts: the goal holds the slot
     what, detail = role.sync(base)
     if what == "merged":
         state = held(args.slug)

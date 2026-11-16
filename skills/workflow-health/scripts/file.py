@@ -41,7 +41,7 @@ GROUPS = tuple(g for g in G.ORDER if g != "controls") + ("review",)
 DEFAULT = tuple(g for g in G.ORDER if g not in ("mine", "controls"))  # a preview with no group names these
 BAD = ("WARN", "FAIL", "UNREAD")
 # Shown, never filed: local state, the controls, the check's own clock.
-REPORT_ONLY = ("test-time", "worktrees", "local-branches", "idle-sessions", "eta-missing", "eta-extended", "eta-overrun", "scan-hook", "hooks", "check-time", "control",
+REPORT_ONLY = ("test-time", "suite-cap", "worktrees", "local-branches", "idle-sessions", "eta-missing", "eta-extended", "eta-overrun", "scan-hook", "hooks", "check-time", "control",
                "finding-age")  # finding-age would feed itself
 
 

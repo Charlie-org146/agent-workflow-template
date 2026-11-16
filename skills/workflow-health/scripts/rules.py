@@ -22,7 +22,7 @@ Security and privacy, Size, Performance check-time and Hygiene idle-sessions rul
   requirements-per-page  a page with more requirements than criteria_max (default 6) (FAIL)
   check-time             the check, up to its Performance group, past 60 seconds (WARN; no number on a pass)
   idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no pool)
-  eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-13): a live goal with no ETA (WARN); an extension with no
+  eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-14): a live goal with no ETA (WARN); an extension with no
                          covering owner record, or a goal a step past its ETA not waiting for the owner (FAIL)
 """
 import datetime

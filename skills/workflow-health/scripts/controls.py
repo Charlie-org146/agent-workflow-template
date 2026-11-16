@@ -4,10 +4,10 @@
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
 health.py passes its rule functions to run(): every control builds a throwaway git repo in a private temporary folder
-with the one file or record that breaks its rule, and calls the real rule on it. It fires only on a WARN or FAIL row of
-its own group and rule (report.py's rule_of), never an UNREAD row or a sibling's. A rule whose control stays green
-cannot fire. Git runs with no inherited GIT_DIR or config and a fixed identity, so the real repo is never touched. Rows
-carry no temporary path or time. run() imports nothing from health.py; only the run command line loads it.
+with the one file or record that breaks its rule, and calls the real rule on it. It fires only when that rule reports a
+WARN or FAIL row of its own group and rule, never an UNREAD row or a sibling rule's. A rule whose control stays green
+cannot fire. Git runs with no inherited GIT_DIR, no global or system config and a fixed identity. Rows carry no
+temporary path or time. run() imports nothing from health.py.
 """
 import hashlib
 import importlib
@@ -19,15 +19,15 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(sys.argv[0]))
-GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "health-control",
-           "GIT_AUTHOR_EMAIL": "health-control@example.invalid", "GIT_COMMITTER_NAME": "health-control",
-           "GIT_COMMITTER_EMAIL": "health-control@example.invalid", "GIT_TERMINAL_PROMPT": "0"}
+GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"}
+for who in ("AUTHOR", "COMMITTER"):
+    GIT_ENV.update({"GIT_%s_NAME" % who: "health-control", "GIT_%s_EMAIL" % who: "health-control@example.invalid"})
 OLD = "2026-01-01T00:00:00Z"
 TSV = "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n"
 
 
 class Leaked(Exception):
-    """A row showed planted private text."""
+    pass
 
 
 def clear_cache():
@@ -37,7 +37,7 @@ def clear_cache():
 
 
 class Unbuilt(Exception):
-    """A fixture could not be built."""
+    pass
 
 
 def env(extra=None):
@@ -143,7 +143,13 @@ def f_test_time(root):
     os.makedirs(folder, exist_ok=True)
     rows = {"r%d" % n: {"status": "PASS", "seconds": 400, "commit": "x"} for n in range(3)}
     with open(os.path.join(folder, "main-%s.json" % hashlib.sha1(b"main").hexdigest()[:8]), "w") as handle:
-        json.dump({"at": OLD, "rows": rows}, handle)
+        json.dump({"at": OLD, "total_seconds": 1200, "rows": rows}, handle)
+
+
+def f_caps(root):
+    f_test_time(root)
+    write(root, ".loop/config.json", '{"base": "main", "max_regression_rows": 2, "max_suite_seconds": 100}')
+    commit(root, "caps")
 
 
 def f_worktrees(root):
@@ -303,7 +309,7 @@ def f_eta(rule):
     def fixture(root):
         repo(root)
         run_record(root, "x", {"status": "running", "step": "idea", "log": [OLD + " start idea"], "eta": rule != "eta-missing" and {"minutes": 30}})
-        rule == "eta-extended" and write(root, ".git/loop/runs/x.extra.json", json.dumps({"set": {"eta_extend": [{"by": 5, "record": "o9"}]}}))
+        rule == "eta-extended" and write(root, ".git/loop/runs/x.extra.json", '{"set": {"eta_extend": [{"by": 5}]}}')
     return fixture
 
 
@@ -321,6 +327,7 @@ CONTROLS = {
     "branches": ("hygiene", "branches", f_branches),
     "cost": ("performance", "cost", f_cost),
     "test-time": ("performance", "test-time", f_test_time),
+    "rows-cap": ("performance", "rows-cap", f_caps), "suite-cap": ("performance", "suite-cap", f_caps),
     "worktrees": ("hygiene", "worktrees", f_worktrees),
     "local-branches": ("hygiene", "local-branches", f_local_branches),
     "hooks": ("security", "hooks", f_hooks),

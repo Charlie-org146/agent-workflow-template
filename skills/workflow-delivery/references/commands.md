@@ -370,7 +370,7 @@ python3 scripts/goal.py set my-goal --budget-minutes 180 --budget-tokens 5000000
 
 Raising a budget (a larger number, or 0, which means none) needs `--owner-record ID` too; lowering one does not.
 
-### Hard ETA (GRD-13, owner o52)
+### Hard ETA (GRD-14, owner o52)
 
 `new` records an ETA in the run record (`eta: {minutes, estimate, basis}`) and as an `- ETA:` line in the goal file: the live
 board's estimate for a goal of that size (its high end) plus 25 percent, rounded up to 5 minutes and at least 30, or the time
