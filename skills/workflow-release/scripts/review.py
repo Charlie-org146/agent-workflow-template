@@ -9,10 +9,13 @@ the operation role records: LOOP_ROLE=worker, or a path inside a goal worktree, 
 Until a review of the current head is recorded merge.py refuses with REVIEW_HOLD; the goal stays done and `review_wait`
 puts "merge waiting on review" on the board and in the check-in. It runs git and gh and nothing else.
 """
+import glob
 import json
 import os
+import re
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import release  # noqa: E402
@@ -68,6 +71,60 @@ def main():
     if sys.argv[1:2] != ["record"] or len(sys.argv) != 3:
         sys.exit(__doc__)
     return record(sys.argv[2])
+
+
+def proven(top):
+    """Row ids with a PASS on the current commit in any lane record of this repo (loop/tests/*.json in the git common folder).
+    regression-runs.tsv holds no commit, so a PASS there is not trusted: a row that passed on an older commit runs again."""
+    head = release.git("rev-parse", "HEAD", cwd=top, check=False)
+    common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top, check=False)
+    found = set()
+    for path in glob.glob(os.path.join(common, "loop", "tests", "*.json")):
+        try:
+            rows = json.load(open(path)).get("rows") or {}
+        except (OSError, ValueError, AttributeError):
+            continue
+        found |= {key for key, item in rows.items() if isinstance(item, dict) and item.get("status") == "PASS" and item.get("commit") == head}
+    return found
+
+
+def left_text(left):
+    """The LEFT section of the cut's output and release notes: the count and the ids, or '' when nothing was left."""
+    return "\n## LEFT\n\nLEFT %d rows were not run before the cut's stop: %s\n" % (len(left), ", ".join(left)) if left else ""
+
+
+def criteria(top, cfg, doc_rows, fails):
+    """(unmet, left): requirements with no passing row, and the rows the cut did not run before its stop (900 seconds, or
+    LOOP_CUT_SECONDS). A row is skipped when it is known failing or has a PASS on the current commit; the rest run until the stop."""
+    seconds = float(os.environ.get("LOOP_CUT_SECONDS") or 900)
+    try:
+        rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
+    except OSError:
+        rows = []
+    out, left, stop, skip = [], [], time.time() + seconds, proven(top)
+    try:
+        skip |= {line.split("\t")[0] for line in open(os.path.join(top, ".loop", "regression-known.tsv")) if line[0] != "#"}
+    except OSError:
+        pass
+    for page in doc_rows(top):
+        try:
+            part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(
+                top, cfg.get("wiki_dir") or "docs/wiki", page + ".md")).read()), maxsplit=1) + [""])[1].split("\n## ")[0]
+        except OSError:
+            continue
+        for key in re.findall(r"^- ([A-Z]{2,5}-\d+): \S", part, re.M):
+            found = [r for r in rows if key in (r[0], r[3])]
+            out += ["%s (no regression row)" % key] * (not found)
+            for row in found:
+                if row[1] == "covered" or row[0] in skip:
+                    continue
+                if row[1] != "draft" and time.time() >= stop:
+                    left.append(row[0])
+                elif row[1] == "draft" or fails(row[2], top):
+                    out.append("%s (row %s is a draft or failing)" % (key, row[0]))
+                else:
+                    skip.add(row[0])
+    return out, left
 
 
 if __name__ == "__main__":

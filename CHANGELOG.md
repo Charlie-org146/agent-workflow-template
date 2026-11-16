@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.7 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.6 - 2026-11-16
 
 - CI summary keeps each failing row's last 20 lines (#4516)
