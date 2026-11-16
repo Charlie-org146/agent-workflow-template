@@ -202,8 +202,8 @@ fi
 
 # done 12: machine.py is under the script cap and adds no file to the package (it lives in dev/).
 if want machine-caps; then
-  [ "$(wc -c < "$here/dev/machine.py")" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
-  for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(wc -c < "$here/$f")" -lt 20480 ] || no "$f is over the script cap"; done
+  [ "$(tr -d '\015' < "$here/dev/machine.py" | wc -c)" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
+  for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(tr -d '\015' < "$here/$f" | wc -c)" -lt 20480 ] || no "$f is over the script cap"; done
   if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
     new=$(git -C "$here" diff --name-only --diff-filter=A "$(git -C "$here" merge-base HEAD origin/main)" -- skills | wc -l | tr -d ' ')
     [ "$new" = 0 ] || no "a new file under skills/"
