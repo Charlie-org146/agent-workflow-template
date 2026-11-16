@@ -14,6 +14,7 @@ import deployments  # noqa: E402
 import docs  # noqa: E402
 import prd  # noqa: E402
 import audit  # noqa: E402
+import criteria  # noqa: E402
 
 failed = []
 
@@ -128,4 +129,40 @@ with tempfile.TemporaryDirectory() as tmp:
     run("commit", "-q", "-am", "restamp")
     check(not any(k == "STALE" and p == "How-to-use-A" for k, p, _ in docs.problems(root, None)), "after the re-stamp commit the page is no longer stale")
     os.chdir(here)
+# DOC-19 (#4657): one item per functional requirement; #4666: the DOC-16 routine shape only for a scheduled routine
+with tempfile.TemporaryDirectory() as tmp:
+    root = os.path.join(tmp, "repo")
+    subprocess.run(["git", "init", "-q", "-b", "main", root], check=True)
+    os.makedirs(os.path.join(root, ".loop"))
+    os.makedirs(os.path.join(root, "docs", "wiki"))
+    for name, text in ((".loop/config.json", "{}"), (".loop/docs.tsv", "A" + chr(9) + "src" + chr(10))):
+        with open(os.path.join(root, name), "w") as handle:
+            handle.write(text)
+    folder = docs.wiki_dir(root)
+    nl = chr(10)
+    feature = nl.join(["<!-- workflow-docs -->", "# A", "", "How to use: [How-to-use-A](How-to-use-A)", "", "## Requirements", "", "### Functional", "",
+                       "- AB-1: **Unreviewed** First thing", "- AB-2: **Unreviewed** Second thing", "- AB-3: **Unreviewed** Third thing", "",
+                       "### Non-functional", "", "- AB-4: **Unreviewed** Fast enough", ""])
+    put(root, "A", feature)
+    base = GOOD.replace("## Links", "## How to reach or run it") if False else GOOD
+    three = nl.join(["- AB-1: Run `a one` and read its printout.", "- AB-2: Open the page it writes.", "- AB-3: Say it to the agent."])
+    two = nl.join(["- AB-1: Run `a one` and read its printout.", "- AB-2: Open the page it writes."])
+    put(root, "How-to-use-A", GOOD + nl + two + nl)
+    got = deployments.howto(root, folder, ["A"])
+    check(len(got) == 1 and "AB-3" in got[0][2] and "AB-1" not in got[0][2], "negative control: a missing functional requirement item is reported by its ID")
+    put(root, "How-to-use-A", GOOD + nl + three + nl)
+    check(deployments.howto(root, folder, ["A"]) == [], "a How-to-use page with an item for each functional requirement passes")
+    put(root, "How-to-use-A", GOOD + nl + three + nl + "- AB-4: Measured by the speed test." + nl)
+    check(deployments.howto(root, folder, ["A"]) == [], "an item for a non-functional requirement is allowed, not required")
+    put(root, "How-to-use-A", GOOD + nl + three + nl + "- AB-9: Nothing says this." + nl)
+    got = deployments.howto(root, folder, ["A"])
+    check(len(got) == 1 and "AB-9" in got[0][2] and "lacks" in got[0][2], "negative control: an item for an ID the feature page lacks is reported")
+    # #4666
+    rule = criteria.rules()
+    step = ["- When it is stuck, run `a fix`.", "- When it is late, wait."]
+    book = [(n, x) for n, x in enumerate(step, 1)]
+    check(deployments.howto_runbook(root, "A", rule, book) == [], "a How-to-use page with plain 'When X, do Y' steps and no scheduled routine passes")
+    with open(os.path.join(root, ".loop", "routines.tsv"), "w") as handle:
+        handle.write("r" + chr(9) + "A" + nl)
+    check(deployments.howto_runbook(root, "A", rule, book) != [], "negative control: a scheduled routine on the page still needs the DOC-16 shape")
 sys.exit(1 if failed else 0)
