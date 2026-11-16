@@ -226,28 +226,8 @@ def fails(command, top):
 
 
 def criteria_trouble(top, cfg):
-    try:
-        rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
-    except OSError:
-        rows = []
-    out, skip, stop = [], set(), time.time() + 900
-    for name, ok in (("regression-known.tsv", ""), ("regression-runs.tsv", "PASS")):
-        try:
-            skip |= {l.split("	")[0] for l in open(os.path.join(top, ".loop", name)) if l[0] != "#" and ok in l.split("	")[1:2] + [""]}
-        except OSError:
-            pass
-    for page in doc_rows(top):
-        try:
-            part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(top, cfg.get("wiki_dir") or "docs/wiki", page + ".md")).read()), maxsplit=1) + [""])[1].split("\n## ")[0]
-        except OSError:
-            continue
-        for key in re.findall(r"^- ([A-Z]{2,5}-\d+): \S", part, re.M):
-            found = [r for r in rows if key in (r[0], r[3])]
-            out += ["%s (no regression row)" % key] * (not found)
-            for row in found:
-                if row[1] == "draft" or (row[1] != "covered" and row[0] not in skip and time.time() < stop and fails(row[2], top)):
-                    out.append("%s (row %s is a draft or failing)" % (key, row[0]))
-    return out
+    import review  # review imports release
+    return review.criteria(top, cfg, doc_rows, fails)
 
 
 def wiki_link(top):
@@ -326,9 +306,11 @@ def cmd_cut(args):
     if trouble:
         sys.exit("REFUSED: the docs audit found trouble:\n%s\nFix: run docs.py audit (workflow-docs), commit, and run "
                  "the release again." % "\n".join(trouble))
-    unmet = criteria_trouble(cwd, cfg)
+    unmet, left = criteria_trouble(cwd, cfg)
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
+    import review  # review imports release
+    print(review.left_text(left).strip() or "LEFT 0 rows: every row ran or had a PASS on this commit")
     version_file = cfg.get("version_file") or "VERSION"
     if os.path.isabs(version_file) or ".." in version_file.split("/"):
         sys.exit("REFUSED: version_file must be a path inside the repo.")
@@ -352,7 +334,7 @@ def cmd_cut(args):
         restore(cwd, files, before, message)
         sys.exit("REFUSED: could not commit the release files.")
     text = "\n".join("- " + item for item in bullets) + "\n\n## How to verify\n\n%s\n\n## Documentation\n\n%s\n\nPull request: %s\n" % (
-        steps, "\n\n".join(docs_lines(cwd, cfg, base)), state.get("pr", ""))
+        steps, "\n\n".join(docs_lines(cwd, cfg, base)), state.get("pr", "")) + review.left_text(left)
     import autorelease
     stop = autorelease.private_check(cwd, base, {"release notes": text}, bool(git("ls-remote", "origin", branch, cwd=cwd, check=False)))
     if stop:
