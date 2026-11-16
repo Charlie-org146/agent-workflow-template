@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import board_page  # noqa: E402
 # board_log sets the no-prompt guard (GIT_TERMINAL_PROMPT and the rest) before any git or gh process starts.
-from board_log import (COMMON, FLOW, HOLD, STEPS, UNHOLD, after, current, flow_seconds, git, goal_file,  # noqa: E402,F401
+from board_log import (COMMON, FLOW, HOLD, STEPS, UNHOLD, active_minutes, after, current, flow_seconds, git, goal_file,  # noqa: E402,F401
                        holding, named, read_json, size_of, stamp)
 from board_model import (CANDIDATES, CELLS, LABELS, MIN_BACKTEST, MODEL, SIMILAR, STALL, STALL_FLOOR,  # noqa: E402,F401
                          STEP_UP, TILT, History, accuracy_text, backtest, base, blend_cell, cached, chosen, envelope,

@@ -255,7 +255,7 @@ def eta_minutes(seen):
 
 
 def eta_spent(run, at=None):
-    return int(sum(bs.flow_seconds(run, at or datetime.datetime.now(datetime.timezone.utc)).values()) // 60)
+    return bs.active_minutes(run, at)
 
 
 def eta_open(seen):
