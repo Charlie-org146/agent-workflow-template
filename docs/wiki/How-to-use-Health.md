@@ -16,6 +16,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "What would you file?" | Each issue it would open, update, close or reopen is listed; nothing is written. |
 | "File the docs findings" | Only that group's findings become issues, each tagged with its group. |
 | "Judge the repo" | The report, plus suggestions on requirement wording, test strength and speed, with ranked next steps; the verdict doesn't change. |
+| "Is this machine set up like my other one?" | The Adoption group's machine rule runs `machine.py check` and lists each gap as one WARN with its one-line fix. |
 
 ## URLs and deployments
 

@@ -246,7 +246,13 @@ def fail_stop(g, state, text):
 
 def failed_try(g, state, why, step, fix):
     why = private.plain(why)
-    if re.search(r"^(regression lane failed|\w+ failed: regression lane): LANE_DIED:", why) and state.get("free", 0) < 3:
+    head = r"^(regression lane failed|\w+ failed: regression lane): "
+    if re.search(head + r"(MEMORY_WAIT|LANE_ENV):", why) and state.get("env", 0) < 10:  # the machine's fault, never the goal's
+        state["env"], state["step"] = state.get("env", 0) + 1, step
+        g.save(state, "machine out of memory, not counted (%d of 10)" % state["env"])
+        print("TRY NOT COUNTED (machine, wait %d of 10)\nNEXT: run the same command again when memory frees" % state["env"])
+        return
+    if re.search(head + r"LANE_DIED:", why) and state.get("free", 0) < 3:
         state["free"], state["step"] = state.get("free", 0) + 1, step
         g.save(state, "lane died, not counted (%d of 3)" % state["free"])
         print("TRY NOT COUNTED (free rerun %d of 3; the next death counts)\nNEXT: run the same command again" % state["free"])
