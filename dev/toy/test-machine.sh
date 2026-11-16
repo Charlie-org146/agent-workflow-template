@@ -59,6 +59,7 @@ fi
 if want machine-operation-guide; then
   g="$here/skills/workflow-monitoring/references/operation.md"
   for s in "Check-in prompt" "Full-auto rules" "Decision log" "Held lines"; do grep -q "^#.*$s" "$g" || no "operation.md has no section $s"; done
+  grep -q "time left and ETA" "$g" || no "operation.md check-in layout has no time left and ETA"
   mk c; h="$d/hc"; ready "$h" "$d/c/repo" || no "ready failed"
   [ "$(wc -l < "$h/.workflow-loop/routines/operation-checkin.md")" -le 3 ] || no "the check-in routine file is more than a pointer"
   printf 'one\ntwo\nthree\nfour\n' > "$h/.workflow-loop/routines/operation-checkin.md"
