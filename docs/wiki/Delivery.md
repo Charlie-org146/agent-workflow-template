@@ -166,9 +166,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [review-worker-refused](Tests#t-review-worker-refused) | requirement | DEL-13 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
 | [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | DEL-13 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
 | - | requirement | DEL-13 | no passing test | not enforced |
-| [backlog-leftovers-filed](Tests#t-backlog-leftovers-filed) | requirement | DEL-14 | Given a ship reply with FILE defect and FILE backlog lines, when the goal records ship with --live, then a defect is filed on no milestone, backlog items on Backlog: <Feature> or Backlog: Other, and a line holding an email is skipped. | not run |
+| [backlog-leftovers-filed](Tests#t-backlog-leftovers-filed) | requirement | DEL-14 | Given a ship reply with FILE defect and FILE backlog lines, when the goal records ship with --live, then a defect is filed on no milestone, backlog items on Backlog: <Feature> or Backlog: Other, and a line holding an email is skipped. | PASS 2026-11-16 FLAKY |
 | [backlog-leftovers-once](Tests#t-backlog-leftovers-once) | requirement | DEL-14 | Given leftovers already filed, when ship is recorded again, then nothing is filed twice. | not run |
-| - | requirement | DEL-14 | no passing test | not enforced |
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | DEL-15 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | DEL-15 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | DEL-15 | no passing test | not enforced |
