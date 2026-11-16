@@ -192,6 +192,7 @@
 | <a id="t-pr-joins-queue"></a>pr-joins-queue | requirement | DEL-15 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-idle"></a>held-charge-idle | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
+| <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
@@ -875,7 +876,6 @@
 | <a id="t-private-checks-classify"></a>private-checks-classify | requirement | REG-4 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-env-states"></a>lane-env-states | requirement | REG-7 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-env-exit"></a>lane-env-exit | requirement | REG-7 | not run | - | local | 2026-11-16 |
-| <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | REG-7 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-walk-skips-git"></a>lane-walk-skips-git | requirement | REG-7 | not run | - | local | 2026-11-16 |
 
 ## Setup
