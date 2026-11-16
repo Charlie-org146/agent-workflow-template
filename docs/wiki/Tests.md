@@ -830,7 +830,6 @@
 | <a id="t-config-lane-unparseable"></a>config-lane-unparseable | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-config-lane-duplicate-same"></a>config-lane-duplicate-same | requirement | REG-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-rowtail-block-in-workflow"></a>rowtail-block-in-workflow | requirement | REG-5 | not run | - | local | 2026-11-15 |
-| <a id="t-ci-summary-fail-output"></a>ci-summary-fail-output | requirement | REG-3 | not run | - | local | 2026-11-16 |
 
 ## Setup
 
@@ -1086,3 +1085,5 @@
 | <a id="t-not-runnable-lane"></a>not-runnable-lane | requirement | done line qa-not-runnable:1 | not run | - | local | 2026-11-16 |
 | <a id="t-not-runnable-qa"></a>not-runnable-qa | requirement | done line qa-not-runnable:2 | not run | - | local | 2026-11-16 |
 | <a id="t-not-runnable-todo"></a>not-runnable-todo | requirement | done line qa-not-runnable:3 | not run | - | local | 2026-11-16 |
+| <a id="t-ci-summary-fail-output"></a>ci-summary-fail-output | requirement | done line ci-fail-output:1 | not run | - | local | 2026-11-16 |
+| <a id="t-ci-summary-passing-left-out"></a>ci-summary-passing-left-out | requirement | done line ci-fail-output:2 | not run | - | local | no |
