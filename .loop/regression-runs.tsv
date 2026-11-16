@@ -145,7 +145,7 @@ docs-count-other-id-issue-107	PASS	2026-11-12
 docs-count-word-gap-issue-104	PASS	2026-11-12	
 docs-counts-issue-39	PASS	2026-11-12	
 docs-guide-page-issue-125	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-docs-import-rows-pass	FAIL	2026-11-16	
+docs-import-rows-pass	PASS	2026-11-16	
 docs-locked-hint-issue-133	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-merged-base-issue-156	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 docs-milestone-line-issue-130	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
