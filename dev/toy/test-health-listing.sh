@@ -65,7 +65,7 @@ with contextlib.redirect_stdout(buf):
 print("triage", rc, "DRY RUN: 30 would close" in buf.getvalue())
 for name in ("issues.py",):
     size = len(open(os.path.join(sys.argv[1], name), "rb").read().replace(b"\r\n", b"\n"))
-    print(name, size < 18432, size)
+    print(name, size < 19000, size)
 PY
 )
 echo "$out" | grep -qx "health 30 1 True" && ok "triage reads the open health issues from one filtered page" || bad "health: $out"

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept v1-go-no-go@dd0a21a4 -->
+Review: **Unreviewed**
 
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
@@ -24,7 +24,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 ## Requirements
 
 ### Functional
-- HLT-2: **Reviewed 2026-11-14** The rules <!-- reviewed 34766f65 -->
+- HLT-2: **Reviewed 2026-11-16** The rules <!-- reviewed ab84a4d0 -->
   - Health checks exactly these groups, each with the angle its tests take:
   - Requirements (my angle: is every promise I approved proven?): every Reviewed requirement has a test seen failing and passing now; done lines have tests; none stays not enforced over 7 days.
   - Traceability (an auditor's angle: can I follow any work end to end?): requirement to test to last run; issue to feature; pull request to goal to done lines; release to the issues it fixed.
@@ -34,7 +34,7 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
   - Tests (a skeptic's angle: do the tests prove anything?): every row seen failing once; no flaky rows; no row skipped over 7 days; slowest rows named; no test touches the network.
   - Performance (my clock's and my wallet's angle: is it fast and cheap enough?): goal runs and the full suite within their time limits; goals within their time and token budgets; the health check within its limit.
   - Security and privacy (a leak's angle: can anything private escape?): no private names, paths, emails or keys in tracked files; secrets only in the environment or secrets; the commit scan hook installed; workflows with least permissions.
-  - Size (a maintainer's angle: can someone still read this?): scripts under 20 KB with a warning from 90%; SKILL.md under 150 lines; requirements per page within the limit.
+  - Size (a maintainer's angle: can someone still read this?): scripts under 20 KB with a warning over 19,000 bytes; SKILL.md under 150 lines; requirements per page within the limit.
   - Hygiene (a janitor's angle: is anything left lying around?): open findings within the cap; no wait on me over 24 hours; no merged or stale branches or worktrees; no idle worker sessions.
   - Adoption (another repo's angle: would this work installed fresh?): config valid; every check runs at least one test; template version current; the local schedule installed and, for a public repo, the regression workflow present and firing.
   - Controls (the checker's own angle: can each rule fire?): every rule has a negative control run against a deliberately broken copy.
@@ -107,6 +107,9 @@ Review: **Reviewed 2026-11-14** <!-- prd P=b4d391e0 R=715b1d9f N=e89b4f3b M=39cf
 | [test-caps-health](Tests#t-test-caps-health) | requirement | HLT-2 | Given a table under, near and over max_regression_rows, when health runs, then it passes under 90%, warns from 90% and fails over the cap; a cap of 0 turns the rule off. | PASS 2026-11-16 |
 | [test-caps-controls](Tests#t-test-caps-controls) | requirement | HLT-2 | Given a fixture over each cap, when the rows-cap and suite-cap controls run, then each rule fires (a negative control for each, GRD-9). | PASS 2026-11-16 |
 | [eta-health-rules](Tests#t-eta-health-rules) | requirement | HLT-2 | Given the hard ETA's three health rules (eta-missing, eta-extended, eta-overrun), when health lists its rules and controls, then each rule is there with a negative control that fires (hard ETA, GRD-14); the rules read workflow-monitoring beside health and say UNREAD without it. | not run |
+| [size-warn-band](Tests#t-size-warn-band) | requirement | HLT-2 | Given a script of 18,900 bytes, when health's size rule runs, then it raises no warning: the warning sits at the 19,000-byte target, not at 90% of the 20 KB limit (#4370, #4560). | not run |
+| [size-warn-over](Tests#t-size-warn-over) | requirement | HLT-2 | Given a script of 19,100 bytes, when health's size rule runs, then it warns, and a script over the 20,480-byte limit still fails (#4370, #4560). | not run |
+| [size-warn-control](Tests#t-size-warn-control) | requirement | HLT-2 | Given scripts in the old warning band, 18,432 to 19,000 bytes, when health's size rule runs, then nothing is raised (negative control, #4370, #4560). | not run |
 | [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-12 |
 | [report-header](Tests#t-report-header) | requirement | HLT-3 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
 | [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |
