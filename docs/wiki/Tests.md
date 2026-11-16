@@ -898,6 +898,18 @@
 | <a id="t-setup-tsv-guard-127"></a>setup-tsv-guard-127 | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-set8-health"></a>set8-health | requirement | SET-8 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-adoption-golden"></a>adoption-golden | requirement | SET-11 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-12 |
+| <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-private"></a>machine-no-private | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-windows"></a>machine-windows | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-task-layout"></a>machine-task-layout | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-custom-items"></a>machine-custom-items | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-mailer"></a>machine-mailer | requirement | SET-18 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-caps"></a>machine-caps | requirement | SET-18 | not run | - | local | 2026-11-12 |
 | <a id="t-set13-hooks-once"></a>set13-hooks-once | defect | [#2880](https://github.com/jcl2018/agent-workflow-template/issues/2880) closed (2026-11-12) | not run | - | local | 2026-11-13 |
 | <a id="t-package-gate-head"></a>package-gate-head | requirement | SET-3 | FAIL | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-backlog-milestones-made"></a>backlog-milestones-made | requirement | SET-17 | not run | - | local | 2026-11-13 |
@@ -1047,6 +1059,18 @@
 | <a id="t-flow-stale-pid-safe"></a>flow-stale-pid-safe | requirement | done line lane-died:1 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-1"></a>machine-done-1 | requirement | done line operator-setup:1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-2"></a>machine-done-2 | requirement | done line operator-setup:2 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-3"></a>machine-done-3 | requirement | done line operator-setup:3 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-4"></a>machine-done-4 | requirement | done line operator-setup:4 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-6"></a>machine-done-6 | requirement | done line operator-setup:6 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-7"></a>machine-done-7 | requirement | done line operator-setup:7 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-8"></a>machine-done-8 | requirement | done line operator-setup:8 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-9"></a>machine-done-9 | requirement | done line operator-setup:9 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-10"></a>machine-done-10 | requirement | done line operator-setup:10 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-11"></a>machine-done-11 | requirement | done line operator-setup:11 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-12"></a>machine-done-12 | requirement | done line operator-setup:12 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-wording"></a>review-findings-wording | requirement | done line review-findings:1 | not run | - | local | 2026-11-12 |
 | <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | FAIL | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |

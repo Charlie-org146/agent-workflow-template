@@ -7,8 +7,8 @@ usage: machine.py [plan|apply|check] [--repo DIR] [--platform mac|windows] [--ho
   apply               installs the skill links, hooks, private-names file, mailer and one scheduled task per repo
                       (<repo>-health-regression, every 4 hours) plus the repo's own machine_setup items
   check               lists each gap as "GAP item: what -> run: fix"; writes nothing; exit 0 only with no gap
-  record-task         records that you registered task NAME in the app with permission mode MODE (a note to
-                      yourself: the app's own setting is the truth, and check only reminds you of it)
+  record-task         notes that you registered task NAME in the app with permission mode MODE (the app's own
+                      setting is the truth)
 A value (secret, owner address, home path) is never written: a text that holds one is refused.
 Windows: py -3 skills\\workflow-setup\\scripts\\machine.py (the same verbs; Windows forms are marked unverified).
 """
@@ -60,9 +60,12 @@ class Ctx:
         if self.name and self.state["repos"].get(self.name, self.repo) != self.repo:  # two repos called alike keep two tasks
             self.name += "-" + hashlib.sha1(self.repo.encode()).hexdigest()[:4]
 
-    def show(self, path):
+    def show(self, path):  # ~/... under this home or the home the process runs as
         path = os.path.realpath(path)
-        return "~" + path[len(self.home):].replace(os.sep, "/") if inside(path, self.home) else path.replace("\\", "/")
+        for home in (self.home, os.path.realpath(os.path.expanduser("~"))):
+            if inside(path, home):
+                return "~" + path[len(home):].replace(os.sep, "/")
+        return path.replace("\\", "/")
 
     def save(self):
         os.makedirs(self.loop, exist_ok=True)
@@ -190,10 +193,10 @@ def custom(repo):
 
 def doubled(c):
     try:
-        listed = [e["path"] for e in json.load(open(os.path.join(c.loop, "schedule", "repos.json")))["repos"].values()]
+        listed = [os.path.normcase(os.path.realpath(e["path"])) for e in json.load(open(os.path.join(c.loop, "schedule", "repos.json")))["repos"].values()]
     except (OSError, ValueError, KeyError):
         return False
-    return os.path.realpath(c.repo) in listed
+    return os.path.normcase(os.path.realpath(c.repo)) in listed
 
 
 def hooks_gap(c):

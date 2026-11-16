@@ -28,7 +28,7 @@ Feature pages live in `docs/wiki`, one PRD page per feature with numbered requir
 
 ## Regression
 
-Every requirement and every fixed defect has a regression row in `.loop/regression.tsv`, seen failing before its fix. The land lane runs once per goal, in qa, within 15 minutes (the budget; rows past it are left to the scheduled run), after at most 25 minutes of preparing, planning and waiting for a slot before its first row; the scheduled run is `17 */4 * * *`.
+Every requirement and every fixed defect has a regression row in `.loop/regression.tsv`, seen failing before its fix. The land lane runs once per goal, in qa, within 15 minutes (the budget; rows past it are left to the scheduled run), after at most 25 minutes of preparing, planning and waiting for a slot before its first row; the scheduled run is `off`.
 
 ## Health
 
@@ -49,7 +49,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / adopt |
 | Regression | https://github.com/jcl2018/agent-workflow-template/milestone/7 | I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it. | `/workflow-regression`: add / red / run / sync / workflow / list / issues |
-| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / prerequisites / replay / connectors / agents / migration-check |
+| Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / prerequisites / replay / connectors / machine / agents / migration-check |
 
 ## Settings table
 
@@ -89,7 +89,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `pool_size` | 20 | Idle worker sessions the session pool keeps; when it runs low the operation session asks you to create the missing ones. |
 | `pr_bumps_version` | false | true moves the last number of the version file once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row (preparing, planning, waiting), 15 or more; a lane past it stops. |
-| `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs (Actions for a public repo, each Mac tick for a private one); off is off. |
+| `regression_cron` | off | Five cron fields: when the full regression runs (Actions for a public repo, each Mac tick for a private one); off is off. |
 | `regression_runs` | actions | Where the full regression runs: actions (a public repo) or mac (with each Mac tick: a private repo); setup records it from the repo's visibility and keeps a recorded mac. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `resume_on_limit` | false | true lets watch resume a goal that hit a usage limit. |

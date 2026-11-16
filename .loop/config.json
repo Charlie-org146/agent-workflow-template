@@ -23,7 +23,7 @@
   "criteria_max": 19,
   "auto_approve": true,
   "auto_merge": true,
-  "regression_cron": "off",
+  "regression_cron": "17 */4 * * *",
   "health_cron": "47 */4 * * *",
   "judge_env": "ANTHROPIC_API_KEY",
   "judge_setup": "",

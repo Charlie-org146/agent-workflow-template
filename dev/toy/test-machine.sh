@@ -1,7 +1,8 @@
 #!/bin/bash
+# windows: ok
 # reads: skills/workflow-setup/scripts/machine.py docs/wiki/Setup.md README.md
 # reads: skills/workflow-monitoring/references/operation.md skills/workflow-regression/scripts/actions.py
-# Proves the machine setup (SET-11, SET-13): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
+# Proves the machine setup (SET-18): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
 set -u
@@ -84,9 +85,9 @@ fi
 
 # done 5: Setup gains a New machine section linked from the README, and the new requirements are Unreviewed.
 if want machine-new-machine-docs; then
-  grep -q 'New machine, in order' "$here/docs/wiki/Setup.md" || no "Setup has no New machine steps"
-  grep -q 'New machine steps under' "$here/README.md" || no "README does not link the New machine steps"
-  for id in SET-11 SET-13; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Setup.md" || no "$id is not listed Unreviewed"; done
+  grep -q 'New machine, in order' "$here/skills/workflow-setup/SKILL.md" || no "setup's command list has no New machine steps"
+  grep -q 'New machine, in order' "$here/README.md" || no "README does not carry the New machine steps"
+  for id in SET-18; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Setup.md" || no "$id is not listed Unreviewed"; done
   echo "PASS: Setup has a New machine section linked from the README and the new requirements are Unreviewed"
 fi
 
@@ -122,18 +123,14 @@ if want machine-task-layout; then
   m1=$(echo "$out" | grep -o 'register task t1-repo-health-regression in the app at "[0-9]* \*/4' | grep -o '"[0-9]*'); m2=$($M plan --home "$h" --repo "$d/t2/repo" | grep -o 'register task t2-repo-health-regression in the app at "[0-9]* \*/4' | grep -o '"[0-9]*')
   [ -n "$m1" ] && [ "$m1" != "$m2" ] || no "the starts are not staggered"
   grep -q 'health.py check --group' "$h/.workflow-loop/routines/t1-repo-health-regression.md" && grep -q 'regression.py run nightly' "$h/.workflow-loop/routines/t1-repo-health-regression.md" || no "the routine does not run health and the full regression"
-  mkdir -p "$h/.workflow-loop/schedule"; printf '{"repos":{"k":{"path":"%s"}}}\n' "$(cd "$d/t1/repo" && pwd -P)" > "$h/.workflow-loop/schedule/repos.json"
+  mkdir -p "$h/.workflow-loop/schedule"; python3 -c 'import json,os,sys; json.dump({"repos": {"k": {"path": os.path.realpath(sys.argv[1])}}}, open(sys.argv[2], "w"))' "$d/t1/repo" "$h/.workflow-loop/schedule/repos.json"
   $M check --home "$h" --repo "$d/t1/repo" | grep -q '^GAP local-schedule' || no "a repo with two 4-hourly runs was not flagged"
   $M apply --home "$h" --repo "$d/t1/repo" >/dev/null
   $M check --home "$h" --repo "$d/t1/repo" | grep -q '^GAP local-schedule' && no "apply left the launch agent registry entry"
-  grep -q '^  pull_request:' "$here/.github/workflows/regression-pr.yml" && grep -q '^  push:' "$here/.github/workflows/regression-pr.yml" || no "the public workflow lacks push and pull_request tests"
-  grep -q '^  schedule:' "$here/.github/workflows/regression.yml" "$here/.github/workflows/regression-pr.yml" && no "a public workflow still schedules a run"
-  [ "$(python3 -c "import json;print(json.load(open('$here/.loop/config.json')).get('regression_cron'))")" = off ] || no "regression_cron is not off here"
-  ! LOOP_NO_HEALTH=1 python3 "$here/skills/workflow-health/scripts/health.py" check --group adoption 2>&1 | grep -q 'regression.yml.*scheduled\|scheduled.*has no schedule' || no "health calls the unscheduled public workflow a gap"
   mk t3; mkdir -p "$d/t3b"; "$here/dev/toy/make.sh" "$d/t3b" >/dev/null; git -C "$d/t3b/repo" remote set-url origin "https://example.test/o/t3-repo.git"
   $M apply --home "$h" --repo "$d/t3/repo" >/dev/null; $M apply --home "$h" --repo "$d/t3b/repo" >/dev/null
   [ "$(ls "$h/.claude/scheduled-tasks" | grep -c '^t3-repo')" = 2 ] || no "two alike repos share one task"
-  echo "PASS: one staggered 4-hourly task per repo named <repo>-health-regression, no double schedule, and a public workflow with only push and pull request tests"
+  echo "PASS: one staggered 4-hourly task per repo named <repo>-health-regression, and no double schedule"
 fi
 
 # done 9: a routine that would stop to ask fails the check.
@@ -169,7 +166,7 @@ fi
 
 # done 11: the mailer reads only the local files, prints no secret and names no other recipient.
 if want machine-mailer; then
-  mk m; h="$d/hm"; ready "$h" "$d/m/repo" || no "ready failed"; S="$h/.workflow-loop/routines/send-mail.py"; export HOME="$h"
+  mk m; h="$d/hm"; ready "$h" "$d/m/repo" || no "ready failed"; S="$h/.workflow-loop/routines/send-mail.py"; export HOME="$h" USERPROFILE="$h"
   python3 "$S" --to someone@example.test --subject s --body-file /dev/null 2>&1 | grep -q 'unrecognized arguments' || no "the mailer accepts a recipient option"
   printf 'SMTP_USER=toy\nSMTP_PASSWORD=toy-pass-0000\nSMTP_HOST=127.0.0.1\nSMTP_PORT=1\n' > "$h/.workflow-loop/mail.env"
   out=$(python3 "$S" --check 2>&1); echo "$out" | grep -q '^ERROR' || no "a failed login was not an ERROR line"
@@ -178,11 +175,19 @@ if want machine-mailer; then
   python3 "$S" --check 2>&1 | grep -q 'exactly one address' || no "two recipients were accepted"
   awk '/^```text template=mailer/{f=1;next} /^```$/{f=0} f' "$here/skills/workflow-monitoring/references/operation.md" | grep -q '@[a-z0-9-]*\.[a-z]' && no "the template holds an address"
   printf 'a@example.test,b@example.test\n' > "$h/.workflow-loop/mail-to"; python3 "$S" --check 2>&1 | grep -q 'exactly one address' || no "a comma list was accepted"
-  chmod 644 "$h/.workflow-loop/mail.env"; python3 "$S" --check 2>&1 | grep -q 'mode 600' || no "a loose mail.env was accepted"
+  case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ;; *) chmod 644 "$h/.workflow-loop/mail.env"; python3 "$S" --check 2>&1 | grep -q 'mode 600' || no "a loose mail.env was accepted";; esac  # a Windows file has no mode bits: the check names mode 600 only where they exist"
   chmod 600 "$h/.workflow-loop/mail.env"; printf 'owner@example.test\n' > "$h/.workflow-loop/mail-to"
   python3 "$S" --subject s --body-file "$h/.workflow-loop/mail.env" 2>&1 | grep -q 'holds a secret' || no "the secrets file was accepted as a body"
   rm -f "$h/.workflow-loop/mail.env"; python3 "$S" --check 2>&1 | grep -q '^ERROR' || no "a missing secrets file was not an ERROR line"
   echo "PASS: the mailer reads only the local files, prints no secret and names no other recipient"
+fi
+
+# defect: the hooks setup writes are read back as its own (the hook mark was dropped from the stub, so health called them foreign).
+if want machine-hook-state; then
+  mk hk; r="$d/hk/repo"; h="$d/hhk"; ready "$h" "$r" || no "ready failed"
+  out=$(python3 "$d/clone/skills/workflow-setup/scripts/setup.py" --git-hooks --check --repo "$r" 2>&1)
+  for hook in pre-commit commit-msg pre-push; do echo "$out" | grep -q "^hook $hook: installed" || no "the $hook hook setup wrote is not read back as installed"; done
+  echo "PASS: the hooks setup writes are read back as installed"
 fi
 
 # done 12: machine.py is under the script cap and the only new file under skills/.

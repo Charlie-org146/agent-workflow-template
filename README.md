@@ -111,6 +111,7 @@ Say these to the agent:
 | "Fill in any missing settings" | Missing repo settings are added with their defaults; your own values are kept. |
 | "Check this machine before setting up" | One checklist of git, python3, gh installed and signed in, real symlinks and the platform, each gap with its exact fix; a setup run prints it first and is never blocked by it. |
 | "Replay the first adoption against the golden run" | The eight golden steps are compared with what this machine shows and it stops at the first mismatch, saying what differs; the live check-in step is reported as not observed, never passed. |
+| "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints MACHINE OK; works on Mac and Windows (see `/workflow-setup machine`). |
 | "Which connectors do my repos need?" | Each connector a followed repo's PRDs name is listed as connected, needs sign-in or missing, and nothing is enabled for you. |
 | "Install the reply hook" | Operation-session replies that don't follow the check-in layout are blocked, saying what is missing. |
 | "Is there a newer template version?" | It shows what the newest release brings and which skill files you changed here; nothing is written. |
@@ -429,8 +430,9 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `pr_bumps_version` | true moves the last number of the version file once on a goal's branch. | set "pr_bumps_version" in .loop/config.json | `false` | default |
 | `version_file` | The file that holds the version; a release bumps it and writes the changelog. | set "version_file" in .loop/config.json | `VERSION` | default |
 | `routines` | Commands the release step runs on the base branch before it merges. | set "routines" in .loop/config.json | `[]` | default |
-| `regression_cron` | Five cron fields: when the full regression runs (Actions if public, each Mac tick if private); off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | default |
+| `regression_cron` | Five cron fields: when the full regression runs (Actions if public, each Mac tick if private); off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | **overridden:** `off` |
 | `health_cron` | Five cron fields: when health, the judge and its digest run on the Mac; off is off. | set "health_cron" in .loop/config.json | `47 */4 * * *` | default |
+| `machine_setup` | This repo's own machine setup items (allow rule, routine, secret, connector), applied by machine.py only where adopted. | set "machine_setup" in .loop/config.json | `[]` | default |
 | `judge_env` | No longer read. | set "judge_env" in .loop/config.json | `ANTHROPIC_API_KEY` | default |
 | `judge_setup` | No longer read: kept so old configs stay valid. | set "judge_setup" in .loop/config.json | `(empty)` | default |
 | `digest_owner` | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). | set "digest_owner" in .loop/config.json | `(empty)` | default |
