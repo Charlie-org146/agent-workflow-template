@@ -17,6 +17,15 @@ Say these to the agent in the operation session; each feature page has the exact
 | "File the docs findings" | Only that group's findings become issues, each tagged with its group. |
 | "Judge the repo" | The report, plus suggestions on requirement wording, test strength and speed, with ranked next steps; the verdict doesn't change. |
 
+Each requirement and how it is delivered:
+
+- HLT-2: The rules. Example, from the size-fail test: given a script over 20 KB, when health runs, then it is a FAIL with a fix.
+- HLT-3: Formal report. Example, from the unread-not-green test: given a health rule that cannot be read, when health runs, then it is never shown green.
+- HLT-4: Findings become issues tagged with their group, and their feature when feature_labels is on. Example, from the no-token-would test: given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing.
+- HLT-5: Repo review. Example, from the judge-section-format test: given the judge, when it runs, then it prints its three reviews in a section marked as suggestions.
+- HLT-6: Health keeps itself honest and the repo lean. Example, from the hlt6-controls-fire test: given every health rule, when health check runs its controls, then each rule's negative control makes it fire.
+- HLT-8: Triage. Example, from the hlt8-triage test: given open health findings, when triage runs, then it lists them per feature by kind, count and age, and a closed batch carries the owner's words and is not refiled until its evidence changes.
+
 ## URLs and deployments
 
 - Wiki: [Health](https://github.com/jcl2018/agent-workflow-template/wiki/Health)
