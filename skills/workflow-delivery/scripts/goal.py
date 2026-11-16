@@ -14,7 +14,7 @@ step, record and pr refuse outside a worker.
   finding SLUG TEXT
   resume SLUG --why T [--by W]
   touches SLUG --add PATH --why T
-  set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] [--eta-extend N] [--eta-choice ship|defer]
+  set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] [--eta-extend N] [--eta-choice ship|defer] [--preflight recommended|ID=ANSWER]
           [--owner-record ID] --why T   (a raise or an ETA move needs a record)
   show SLUG
 """
@@ -273,7 +273,8 @@ def cmd_record(args):
         guards.refuse_no_try(state, "the %s reply has no STEP line" % args.step, "end the reply with the DEPTH line and a "
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
-    auto, ok = (pending or result == "pending") and cfg.get("auto_approve") is True, result in ("done", "skipped")
+    ahead = fit.view(state, state_dir()).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"  # pre-flight (#4535)
+    auto, ok = (pending or result == "pending") and (cfg.get("auto_approve") is True or ahead and args.step == "plan"), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, args.step, text, cfg, result)
         for line in skipped:
@@ -335,6 +336,7 @@ def cmd_pr(args):
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+    queue("preflight", ME, state)  # the dry runs again: a refusal not on the freeze list is a missed pre-flight item
     pods and pods.pr_queue("join", ME, state)  # pool.pr_join takes (g, state): no runs folder
     if ahead := queue("turn", args.slug):
         waited or save(state, "waiting: pr queue, behind " + ahead)
@@ -423,7 +425,7 @@ def main():
     add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
     add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),
         ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--eta-extend", {"type": int}),
-        ("--eta-choice", {"choices": ("ship", "defer")}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
+        ("--eta-choice", {"choices": ("ship", "defer")}), ("--preflight", {"default": ""}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
     for name, func in (("pr", cmd_pr), ("answer", cmd_answer), ("show", cmd_show)):
         add(name, func)
     args = parser.parse_args()

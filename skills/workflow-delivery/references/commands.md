@@ -47,7 +47,7 @@ finding SLUG TEXT
 resume SLUG --why TEXT [--by WHO]
 touches SLUG --add PATH --why TEXT
 set SLUG [--depth full|condensed] [--bump minor|major] [--budget-minutes N] [--budget-tokens N] [--eta-extend N]
-        [--eta-choice ship|defer] [--owner-record ID] --why TEXT
+        [--eta-choice ship|defer] [--preflight recommended|ID=ANSWER,...] [--owner-record ID] --why TEXT
 show SLUG
 ```
 
@@ -367,6 +367,7 @@ python3 scripts/goal.py set my-goal --budget-minutes 180 --budget-tokens 5000000
 | `--budget-tokens` | `token_budget` |
 | `--eta-extend` | adds N active minutes to the goal's ETA (needs `--owner-record`) |
 | `--eta-choice` | `ship` records the steps left as skipped so the pull request goes on; `defer` retires the goal for the next release (needs `--owner-record`) |
+| `--preflight` | the owner's answers to the goal's pre-flight list: `recommended` takes every recommendation, or `ID=ANSWER,...` one per item (needs `--owner-record`) |
 
 Raising a budget (a larger number, or 0, which means none) needs `--owner-record ID` too; lowering one does not.
 
@@ -385,6 +386,24 @@ python3 scripts/goal.py set my-goal --eta-extend 60 --owner-record o61 --why "ow
 python3 scripts/goal.py set my-goal --eta-choice ship --owner-record o62 --why "owner: ship what is done"
 python3 scripts/goal.py set my-goal --eta-choice defer --owner-record o63 --why "owner: next release"
 ```
+
+### Pre-flight (#4535)
+
+`new` also records `preflight: {items}` in the run record: each owner input the goal can foresee, with its options and a
+recommendation. Always listed: `plan` (the plan step ends pending and waits unless `auto_approve` is on; the answer `approve ahead`
+lets it take the recommended answers) and `budget` (the time budget; held and waiting time may count toward it). Listed only when a
+dry run would refuse: `memory` (`min_free_memory_gb` above the free memory), `private` (the private-name list against the file names
+the goal touches, the wiki pages every pr re-renders and the repo's name, redacted) and `quota` (GitHub API requests left under 50).
+The check-in puts a goal's open items in one Needs-you line with the word `recommended`; the goal's ETA reads `ETA after your answers
+(N open)`, never trips while an item is open, and counts from the last answer:
+
+```bash
+python3 scripts/goal.py set my-goal --preflight recommended --owner-record o64 --why "owner: take every recommendation"
+python3 scripts/goal.py set my-goal --preflight "budget=keep" --owner-record o65 --why "owner: keep the budget"
+```
+
+Before the pr queue join, `goal.py pr` runs the `memory` and `private` dry runs again: a refusal the list did not have is logged on the
+run as `missed_preflight` (with why it was not foreseen) and in its log, and printed as `MISSED PRE-FLIGHT`.
 
 A goal frozen before ETAs existed gets one the same way: `--eta-extend N` with a record sets its ETA to N minutes.
 The record must exist in `owner-words.tsv`, cover the goal's slug and never have been used before by any goal's extension,
