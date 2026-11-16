@@ -15,6 +15,10 @@ Say these to the agent; each feature page has the exact commands.
 | "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
 | "Record that I registered a task" | `machine.py record-task NAME MODE` notes the permission mode you chose in the app; a missing or prompting mode is a gap. |
 
+Each requirement and how it is delivered:
+
+- MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
+
 ## URLs and deployments
 
 - Wiki: [Machines](https://github.com/jcl2018/agent-workflow-template/wiki/Machines)
