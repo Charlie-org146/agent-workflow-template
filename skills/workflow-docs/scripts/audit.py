@@ -60,6 +60,13 @@ def scenarios(root):
             if row[0] in shown and not cr.SCENARIO.match(row[5])]
 
 
+def missing(root, command):
+    """Whether a script the row's command names is gone; after `cd DIR &&` its path is read from DIR (#4502)."""
+    cd = re.match(r"\s*cd\s+(\S+)\s*(?:&&|;)", command)
+    base = cd.group(1) if cd and os.path.isdir(join(root, cd.group(1))) else ""
+    return any(not os.path.exists(join(root, base, f)) for f in cr.SCRIPT_FILE.findall(command))
+
+
 def untested(root):
     """(id, reason) per Reviewed requirement with no test, or none passed since its wording appeared."""
     linked, _ = cr.test_rows(root)
@@ -78,8 +85,7 @@ def untested(root):
                 out.append((key, "no test"))
                 continue
             since = own_git(root, "log", "-1", "--format=%cs", "-S" + text, "--", rel) or ""
-            gone = [name for name in linked[key] if any(not os.path.exists(join(root, f))
-                    for f in cr.SCRIPT_FILE.findall(rows[name][2]))]
+            gone = [name for name in linked[key] if missing(root, rows[name][2])]
             if gone or not any(ran.get(name, "") >= since for name in linked[key]):
                 out.append((key, "test no longer matches"))
     return out
