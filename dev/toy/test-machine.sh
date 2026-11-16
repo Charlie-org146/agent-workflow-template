@@ -1,7 +1,7 @@
 #!/bin/bash
 # windows: ok
 # reads: dev/machine.py docs/wiki/Machines.md README.md
-# reads: skills/workflow-monitoring/references/operation.md skills/workflow-regression/scripts/actions.py
+# reads: skills/workflow-monitoring/references/commands.md skills/workflow-regression/scripts/actions.py
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
@@ -12,7 +12,7 @@ d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 no() { echo "FAIL ${only:-machine}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 printf '# a toy: no private names\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
-mkdir -p "$d/clone/dev"; cp -R "$here/skills" "$d/clone/"; cp "$here/dev/machine.py" "$d/clone/dev/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
+mkdir -p "$d/clone/dev"; cp -R "$here/skills" "$d/clone/"; cp "$here/dev/machine.py" "$here/dev/machine-templates.md" "$d/clone/dev/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
 M="python3 $d/clone/dev/machine.py"
 mk() { "$here/dev/toy/make.sh" "$d/$1" >/dev/null || no "make.sh failed"; git -C "$d/$1/repo" remote set-url origin "https://example.test/o/$1-repo.git"; }
 sums() { find "$1" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum | tr -d ' -'; }
@@ -57,14 +57,15 @@ fi
 
 # done 3: the operation guide carries the conventions; the check-in routine file is only a pointer.
 if want machine-operation-guide; then
-  g="$here/skills/workflow-monitoring/references/operation.md"
-  for s in "Check-in prompt" "Full-auto rules" "Decision log" "Held lines"; do grep -q "^#.*$s" "$g" || no "operation.md has no section $s"; done
-  grep -q "time left and ETA" "$g" || no "operation.md check-in layout has no time left and ETA"
+  g="$here/skills/workflow-monitoring/references/commands.md"; t="$here/dev/machine-templates.md"
+  for s in "Operation session" "Check-in, re-plan, full auto"; do grep -q "^#.*$s" "$g" || no "commands.md has no section $s"; done
+  for s in mailer health-regression checkin; do grep -q "^\`\`\`text template=$s" "$t" || no "machine-templates.md has no $s template"; done
+  grep -q "time left and ETA" "$g" || no "commands.md check-in layout has no time left and ETA"
   mk c; h="$d/hc"; ready "$h" "$d/c/repo" || no "ready failed"
   [ "$(wc -l < "$h/.workflow-loop/routines/operation-checkin.md")" -le 3 ] || no "the check-in routine file is more than a pointer"
   printf 'one\ntwo\nthree\nfour\n' > "$h/.workflow-loop/routines/operation-checkin.md"
   $M check --home "$h" --repo "$d/c/repo" | grep -q '^GAP check-in' || no "a bloated check-in file was not flagged"
-  echo "PASS: the operation guide holds the check-in layout, full-auto rules, decision log and held lines, and the prompt is a pointer"
+  echo "PASS: the operation guide holds the check-in layout and full-auto rules, the templates are in place, and the prompt is a pointer"
 fi
 
 # done 4: setup refuses to write a private value; the refusal names the line and kind, never the value.
@@ -174,7 +175,7 @@ if want machine-mailer; then
   echo "$out" | grep -q 'toy-pass-0000\|owner@example' && no "the mailer printed a secret or the address"
   printf 'a@example.test b@example.test\n' > "$h/.workflow-loop/mail-to"
   python3 "$S" --check 2>&1 | grep -q 'exactly one address' || no "two recipients were accepted"
-  awk '/^```text template=mailer/{f=1;next} /^```$/{f=0} f' "$here/skills/workflow-monitoring/references/operation.md" | grep -q '@[a-z0-9-]*\.[a-z]' && no "the template holds an address"
+  awk '/^```text template=mailer/{f=1;next} /^```$/{f=0} f' "$here/dev/machine-templates.md" | grep -q '@[a-z0-9-]*\.[a-z]' && no "the template holds an address"
   printf 'a@example.test,b@example.test\n' > "$h/.workflow-loop/mail-to"; python3 "$S" --check 2>&1 | grep -q 'exactly one address' || no "a comma list was accepted"
   case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) ;; *) chmod 644 "$h/.workflow-loop/mail.env"; python3 "$S" --check 2>&1 | grep -q 'mode 600' || no "a loose mail.env was accepted";; esac  # a Windows file has no mode bits: the check names mode 600 only where they exist"
   chmod 600 "$h/.workflow-loop/mail.env"; printf 'owner@example.test\n' > "$h/.workflow-loop/mail-to"

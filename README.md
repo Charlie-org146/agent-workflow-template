@@ -32,103 +32,66 @@ Say these to the agent in the operation session. Each feature's wiki page has th
 
 ### How to use Delivery
 
-Say these to the agent:
+Full guide: [How to use Delivery](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Delivery). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Start a goal to add caching, done when the cache test passes" | The goal is drafted with its done lines and shown back to you to confirm. |
 | "Go" | The goal is frozen and a worker session starts it right away. |
-| "Queue it" | The goal waits in line and starts when its dependencies merge. |
-| "What needs me?" | You get the questions waiting on you, each with a recommended answer. |
-| "Approve it" / "a" | The decision is recorded with your words and the goal carries on. |
-| "Merge it" | A ready pull request is merged and released. |
 
 ### How to use Monitoring
 
-Say these to the agent:
+Full guide: [How to use Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Monitoring). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Adopt my recent GitHub repos" | Your repos are listed by last push, private ones included; the ones you choose are cloned into one folder, followed and set up or updated, each ending with its template version. |
 | "Run the operation session" | Every ready goal gets its own worker session, and the full live board prints now and at each check-in, or sooner when a worker reports. |
-| "Start a goal to add result caching, done when repeat searches are served from the cache" | The goal is queued and starts in its own worker as soon as a slot is free. |
-| "Where do things stand?" | You get the live board: Issues first, then running goals with progress and time left, queued goals, dependencies and one finish time. |
-| "Tell the caching worker to keep the old cache format" | Your answer reaches that worker session as a message. |
-| "Resume the failed caching goal" | A failed or stopped goal gets a new worker; any other goal is refused. |
-| "Clean up merged branches, list them first" | You see the merged goal branches that would go; once you say so, they are deleted locally. |
 
 ### How to use Documentation
 
-Say these to the agent:
+Full guide: [How to use Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Documentation). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Check the docs" | Every stale, missing, unmapped or unwritten page is listed with what is wrong, or you hear that the docs are clean. |
 | "Audit the docs and fix what you can" | Mechanical fixes such as the Tests tables are made, and the wording left to rewrite is listed. |
-| "Draft a feature page for billing: charge cards once a month" | A new Unreviewed feature page is drafted and mapped, with a list of what is left to write. |
-| "I've reviewed the Delivery page" | The page is marked Reviewed with today's date, and its Problem, Requirements, Non-goals and Success metrics lock. |
-| "Publish the wiki" | Pages are copied to the GitHub wiki; it refuses while a page still has problems. |
-| "Undo the last publish" | The last publish is reverted, unless the wiki changed since. |
-| "Keep the repo's copy of the Thermis PRD in step with Notion" | Syncing is opt-in per PRD. The owner sets that page's PRD source, the third column of its `.loop/docs.tsv` row, to `url:<link>` or `mcp:<server>:<resource>`; the sync then adopts it into the repo's copy, and after that either side can change a requirement. A page with no source stays in the repo and raises no signal. |
-| "Has the Notion PRD changed?" | A dry run lists each difference as a DELTA with the page, the id, which side changed and both texts, writes nothing, and says not connected when no connector is set. |
-| "Use the Notion text for TH-2" | The sync writes only that requirement into the repo's copy and closes the delta's issue; saying "Keep the repo's text for TH-2" instead writes the repo's text to Notion through the connector. Every other requirement is left as it was. |
-| "What is out of step?" | Health and the check-in list each open delta, with its issue, as an inconsistency until one side's text is accepted. |
 
 ### How to use Regression
 
-Say these to the agent:
+Full guide: [How to use Regression](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Regression). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Run the land tests" | Every land test runs; each failing test gets one GitHub issue, and a test that passes again closes its issue. |
 | "Add a test for DEL-1 that runs the delivery toy suite" | A test row is added and tied to that requirement. |
-| "Prove the cache test can fail" | The test runs against deliberately broken code, and is marked seen failing or flagged as proving nothing. |
-| "What's untested?" | Requirements with no test, draft tests and tests never seen failing are listed. |
-| "List every test" | Every test, grouped by feature, with its kind, what it guards, what it checks and its last result. |
-| "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. |
 
 ### How to use Health
 
-Say these to the agent:
+Full guide: [How to use Health](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Health). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "How healthy is this repo?" | You get the formal report: every rule by group, each problem with its fix, the tests, and one verdict. |
 | "Check only the docs health" | The same report for that one group. |
-| "What would you file?" | Each issue it would open, update, close or reopen is listed; nothing is written. |
-| "File the docs findings" | Only that group's findings become issues, each tagged with its group. |
-| "Judge the repo" | The report, plus suggestions on requirement wording, test strength and speed, with ranked next steps; the verdict doesn't change. |
 
 ### How to use Setup
 
-Say these to the agent:
+Full guide: [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Set up this repo" | It shows what it found and would add, then writes it on a setup branch for you to review and merge. |
 | "Show me what setup would do first" | Every file it would add or convert is listed; nothing is written. |
-| "Show me every setting" | Each repo and private setting, with its default and a one-line explanation. |
-| "Fill in any missing settings" | Missing repo settings are added with their defaults; your own values are kept. |
-| "Check this machine before setting up" | One checklist of git, python3, gh installed and signed in, real symlinks and the platform, each gap with its exact fix; a setup run prints it first and is never blocked by it. |
-| "Replay the first adoption against the golden run" | The eight golden steps are compared with what this machine shows and it stops at the first mismatch, saying what differs; the live check-in step is reported as not observed, never passed. |
-| "Which connectors do my repos need?" | Each connector a followed repo's PRDs name is listed as connected, needs sign-in or missing, and nothing is enabled for you. |
-| "Install the reply hook" | Operation-session replies that don't follow the check-in layout are blocked, saying what is missing. |
-| "Is there a newer template version?" | It shows what the newest release brings and which skill files you changed here; nothing is written. |
-| "Update this repo to the newest template" | The skills update, and this repo's new settings, entry point and agent files land on an update branch for you to merge; your own values and pages are kept. |
-| "Send my skill fix back to the template" | It drafts one issue with the diff and no repo name, and files it once you say so. |
-| "Wire the skills into CLAUDE.md and AGENTS.md" | Both files get the same block pointing every new session at `.loop/START.md`; your own text is kept. |
 
 ### How to use Automation
 
-Say these to the agent:
+Full guide: [How to use Automation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Automation). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Set up the scheduled routines" | The regression workflow is written to run every 4 hours in GitHub Actions (public repo), for you to merge; health runs every 4 hours on your Mac, never in Actions. |
 | "Run health every 12 hours instead" | `health_cron` changes in `.loop/config.json` and your Mac's next round follows it; no workflow is written. |
-| "Turn off the scheduled health run" | Scheduled health runs write nothing and say the routine is off; you can still start one by hand. |
-| "Post the automation digest" | One comment on the pinned digest issue lists what ran, the new, still-open and fixed issues, and a request per open issue. |
-| "Write the scheduled regression run again" | The regression workflow is rewritten from the current config, so its schedule matches. |
 
 ### How to use Machines
 
@@ -142,14 +105,12 @@ Say these to the agent:
 
 ### How to use Guardrails
 
-Say these to the agent:
+Full guide: [How to use Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Guardrails). A few of the things you can say:
 
 | You say | What happens |
 |---|---|
 | "Show me every guardrail" | You get the Guardrails page: each guardrail with what it protects against, the feature that owns it, its setting, and whether its Tests row says it is enforced. |
 | "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes, goal_lane_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
-| "Check the budgets" | Health's performance group runs: it warns on any of the last 10 finished goals over its time or token budget, a goal's test lane over goal_lane_minutes, and a full suite over 30 minutes. |
-| "Which guardrails aren't enforced yet?" | Each guardrail whose Tests row reads not enforced is listed with the feature that owns the missing part. |
 
 ## What it aims to be
 
@@ -215,7 +176,7 @@ the workers, updates the board and prints the full live board on the cadence (30
 A goal merges the latest base branch before its pull request and reruns its checks if that changed anything; only a real
 conflict costs it a try. Goal steps refuse outside a worker.
 
-The pieces it runs, if you want them by hand, are asked in plain words (see `skills/workflow-monitoring/references/operation.md`):
+The pieces it runs, if you want them by hand, are asked in plain words (see `skills/workflow-monitoring/references/commands.md`):
 
 ```text
 "update the board and print what changed"

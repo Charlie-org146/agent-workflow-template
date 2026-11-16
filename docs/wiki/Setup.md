@@ -3,7 +3,9 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept eta-header-margin@44c69078 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept trim-scripts-98@73215da8 -->
+
+How to use: [How-to-use-Setup](How-to-use-Setup)
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -156,7 +158,7 @@ Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a
 | [migration-blocks-inserted](Tests#t-migration-blocks-inserted) | requirement | SET-16 | Given a repo adopted before the Settings and Automation blocks existed, when update --apply runs, then its README and Home hold both blocks and the README line, its config holds template_version and the three routines, and the repo is no longer behind. | not run |
 | [migration-queue](Tests#t-migration-queue) | requirement | SET-16 | Given followed repos app, app.v2 and app-api all behind the template, when the operation session's pass runs, then each gets exactly one migrate-<repo> goal line, a second or concurrent pass adds none, a finished goal for this version is an Issues line, an older one allows a version-suffixed slug, and a repo on another branch or with a modified queue file is skipped with its reason. | not run |
 | [migration-mac-kept](Tests#t-migration-mac-kept) | requirement | SET-16 | Given a public repo recorded regression_runs mac, when setup re-runs and the tick runs, then mac is kept, no DRIFT line prints and only origin/<base> is fetched. | not run |
-| [migration-v1](Tests#t-migration-v1) | requirement | SET-16 | Given a toy repo missing a feature the template carries (Usage dropped, .loop/health-rules.json, routine Runbook pointers, hooks once, a node or python the repo asks for), when migration-check runs, then it names each with its code and fix, or an OWNER STEP with the exact install command, and exits 1 only for a gap; with everything present it exits 0. | PASS 2026-11-16 FLAKY |
+| [migration-v1](Tests#t-migration-v1) | requirement | SET-16 | Given a toy repo missing a feature the template carries (Usage dropped, .loop/health-rules.json, routine Runbook pointers, hooks once, a node or python the repo asks for), when migration-check runs, then it names each with its code and fix, or an OWNER STEP with the exact install command, and exits 1 only for a gap; with everything present it exits 0. | PASS 2026-11-16 |
 | [adopt-stamps-version](Tests#t-adopt-stamps-version) | requirement | SET-16 | Given a repo set up from an installed package, when setup finishes, then its config holds the installed template_version. | not run |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-3 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-3 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-12 |

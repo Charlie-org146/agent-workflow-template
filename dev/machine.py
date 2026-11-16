@@ -145,7 +145,7 @@ def put(c, label, path, text, mode=None):
 
 
 def template(name):
-    found = re.search(r"^```text template=%s\n(.*?)^```$" % name, read(os.path.join(SK, "workflow-monitoring", "references", "operation.md")) or "", re.M | re.S)
+    found = re.search(r"^```text template=%s\n(.*?)^```$" % name, read(os.path.join(CLONE, "dev", "machine-templates.md")) or "", re.M | re.S)
     return found.group(1) if found else None
 
 
@@ -175,7 +175,7 @@ def routine(c, name, repo, body, what):
         return
     text = body
     for key, value in (("name", name), ("repo", repo), ("path", c.show(c.state["repos"].get(repo) or c.repo or "")), ("py", c.py),
-                       ("scripts", c.show(SK)), ("guide", c.show(os.path.join(SK, "workflow-monitoring", "references", "operation.md")))):
+                       ("scripts", c.show(SK)), ("guide", c.show(os.path.join(SK, "workflow-monitoring", "references", "commands.md")))):
         text = text.replace("{%s}" % key, value)  # plain replacement: a repo's own routine text may hold braces
     task = "---\nmodel: %s\nname: %s\ndescription: %s\n---\n\nRead ~/.workflow-loop/routines/%s.md and follow it exactly. It is the full prompt for this run (a REAL run, never a demo). If that file is missing, stop and report \"routine file missing\".\n" % (MODEL, name, what, name)
     if put(c, name, os.path.join(c.routines, name + ".md"), text):
@@ -327,7 +327,7 @@ def gaps(c, its):
         if not os.path.exists(os.path.join(c.loop, mail)):
             out.append("GAP %s: the owner-only mail file is missing -> run: see checklist step 1" % mail)
     pointer = read(os.path.join(c.routines, "operation-checkin.md"))
-    if pointer is not None and (len(pointer.splitlines()) > 3 or "operation.md" not in pointer):
+    if pointer is not None and (len(pointer.splitlines()) > 3 or "commands.md" not in pointer):
         out.append("GAP check-in: the routine file holds more than a pointer -> run: delete it, then machine.py apply")
     return out
 

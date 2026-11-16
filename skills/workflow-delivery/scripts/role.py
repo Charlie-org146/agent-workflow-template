@@ -22,11 +22,7 @@ def guard(name, slug=None):
         return
     state = {}
     if slug and re.match(r"^[a-z0-9][a-z0-9-]{0,50}$", slug):
-        try:
-            with open(os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir").stdout.strip()), "loop", "runs", slug + ".json")) as handle:
-                state = json.load(handle)
-        except (OSError, ValueError):
-            state = {}
+        state = goal_state(os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir").stdout.strip()), "loop", "runs"), slug)
     state = state if isinstance(state, dict) else {}
     session = (state.get("session") or {}) if state.get("worker") == "session" else {}
     if session.get("id"):
@@ -80,6 +76,17 @@ def git(*args):
     return subprocess.run(["git"] + list(args), capture_output=True, text=True)
 
 
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def save(path, state):
+    temp = path + ".%d.tmp" % os.getpid()
+    with open(temp, "w") as handle:
+        json.dump(state, handle, indent=2)
+    os.replace(temp, path)
+
+
 def sync(base):
     """Merge the latest base into this branch: (current|merged|conflict|dirty, detail). A conflict is aborted."""
     git("fetch", "origin", base)
@@ -90,13 +97,12 @@ def sync(base):
     if done.returncode == 0:
         return "merged", ref
     files = git("diff", "--name-only", "--diff-filter=U").stdout.split()
+    why = " ".join((done.stderr or done.stdout).split())[:200]
     import private
     if files and private.mend(git, files, ref):
         return "merged", ref
     git("merge", "--abort")
-    if not files:
-        return "dirty", " ".join((done.stderr or done.stdout).split())[:200]
-    return "conflict", ", ".join(files) or " ".join((done.stderr or done.stdout).split())[:200]
+    return ("conflict", ", ".join(files)) if files else ("dirty", why)
 
 
 def goal_state(runs, slug):
@@ -129,11 +135,8 @@ def recorded_gate(args, runs, job):
             path = os.path.join(runs, "%s.%s%s" % (args.slug, step, end))
             if os.path.exists(path):
                 os.remove(path)
-    state.setdefault("log", []).append("%s rerun %s on purpose: cleared %s" % (
-        datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), args.step, ", ".join(cleared)))
-    with open(record + ".%d.tmp" % os.getpid(), "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(record + ".%d.tmp" % os.getpid(), record)
+    state.setdefault("log", []).append("%s rerun %s on purpose: cleared %s" % (now(), args.step, ", ".join(cleared)))
+    save(record, state)
     print("AGAIN %s: cleared %s" % (args.step, ", ".join(cleared)))
 
 
@@ -153,12 +156,9 @@ def begin(record, step):
     state["budget_hits"] = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == "step")]
     import guards
     guards.stamp(state, step)
-    state["updated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    state["updated"] = now()
     state.setdefault("log", []).append("%s start %s" % (state["updated"], step))
-    temp = record + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, record)
+    save(record, state)
 
 
 DEPTH = re.compile(r"^[ \t*_]*DEPTH:\s*(full|condensed)[ \t*_.]*$", re.M | re.I)
@@ -224,7 +224,7 @@ def lane_note(runs, slug, step):
 
 def need_lane(runs, slug, reply, step="qa"):
     text = open(reply).read() if os.path.isfile(reply) else ""
-    found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
+    found = STEP.findall(text)
     import guards
     if found and found[-1].lower() == "failed" and not guards.pending_items(text):
         return None
@@ -269,7 +269,7 @@ def over_caps():
 
 
 def git_out(*args):
-    done = subprocess.run(["git"] + list(args), capture_output=True, text=True)
+    done = git(*args)
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
@@ -315,10 +315,12 @@ def lane_part(slug):
 
 
 def undo(top, paths):
-    subprocess.run(["git", "reset", "-q", "--"] + paths, cwd=top, capture_output=True)
+    def run(*args):
+        return subprocess.run(["git"] + list(args), cwd=top, capture_output=True).returncode
+    run("reset", "-q", "--", *paths)
     for path in paths:
-        if subprocess.run(["git", "cat-file", "-e", "HEAD:" + path], cwd=top, capture_output=True).returncode == 0:
-            subprocess.run(["git", "checkout", "-q", "HEAD", "--", path], cwd=top, capture_output=True)
+        if run("cat-file", "-e", "HEAD:" + path) == 0:
+            run("checkout", "-q", "HEAD", "--", path)
 
 
 def record(state, base):
