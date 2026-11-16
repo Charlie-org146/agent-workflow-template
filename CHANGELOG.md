@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.5 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.4 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.3 - 2026-11-16
 
 - Set USERPROFILE beside HOME in test-prd-copy.sh; give the scan controls
