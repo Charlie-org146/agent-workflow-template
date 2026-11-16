@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.0.19 - 2026-11-16
+
+- The CI block also prints a failing row's last lines to the job log, which can be read without a login
+- Wiki: re-stamp pages for ci-fail-causes
+- The CI block reads TOY_SKIP_FILE like the lane: a toy that skips itself behind a pipe is SKIPPED, not FAIL
+- ci-block-skip-file guards ci-fail-causes:2
+- Cause groups for the full run (#4516) with a row that keeps them complete
+- Merge origin/main into loop/ci-fail-causes
+- listing-names-every-command is a criterion row again (main re-added it as defect with no link)
+- Wiki: re-stamp pages for ci-fail-causes
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-causes
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-causes
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-causes
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-causes
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-fail-causes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.18 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.17 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.16 - 2026-11-16
 
 - No code changes

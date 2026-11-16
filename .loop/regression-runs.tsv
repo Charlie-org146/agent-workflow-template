@@ -1,5 +1,6 @@
 # id	status	date	run	flaky
-adopt-record-qa	PASS	2026-11-16		b8a343107016
+adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
+adopt-replaces-stale	PASS	2026-11-16		d56985620a6e
 adopt-set-1	FAIL	2026-11-12	
 adopt-set-2	FAIL	2026-11-12	
 adopt-set-3	FAIL	2026-11-12	

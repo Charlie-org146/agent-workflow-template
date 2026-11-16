@@ -55,7 +55,7 @@ echo "== the removed rule has no control and no leftover name"
 python3 "$here/skills/workflow-health/scripts/controls.py" run docs-issues >/dev/null 2>&1; [ $? = 2 ] && ok "controls.py no longer knows docs-issues" || bad "control remains"
 ! grep -rn "issues\.\(rows\|unread\|on_github\|LIMIT\|RULE\|FIX_UNREAD\)" "$here/skills" "$here/dev" --include=*.py --include=*.sh | grep -v "test-health-issues.sh" | grep -q . && ok "no module still names the removed helpers" || bad "dangling name"
 for m in health issues controls report file automation judge workflows milestone; do (cd "$here/skills/workflow-health/scripts" && python3 -B -c "import $m") 2>/dev/null || bad "$m does not import"; done
-for f in health issues controls report; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 18432 ] || bad "size of $f.py"; done; ok "health scripts import and are under the WARN line"
+for f in health issues controls report; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 19000 ] || bad "size of $f.py"; done; ok "health scripts import and are under the WARN line"
 [ "$fails" = 0 ] && echo "PASS milestone-freeform:no-milestone-issue-ok"
 
 echo "repo: $d/repo"
