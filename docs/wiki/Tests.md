@@ -510,6 +510,7 @@
 | <a id="t-size-warn-band"></a>size-warn-band | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 | <a id="t-size-warn-over"></a>size-warn-over | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 | <a id="t-size-warn-control"></a>size-warn-control | requirement | HLT-2 | not run | - | local | 2026-11-16 |
+| <a id="t-trim-monitoring-4-size"></a>trim-monitoring-4-size | requirement | HLT-2 | not run | - | local | 2026-11-16 |
 
 ## Monitoring
 
