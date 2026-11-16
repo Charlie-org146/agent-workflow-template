@@ -250,7 +250,14 @@ def wide_closure(root, command, cache):
 
 
 def closure(root, command, cache):
-    """(deps, always) for a row command: narrow when a file it names has a header, else wide."""
+    """(deps, always) for a row command, every dep with forward slashes: narrow when a file it names has a header, else wide."""
+    deps, always = raw_closure(root, command, cache)
+    cache["closure", command] = {d.replace("\\", "/") for d in deps}, always
+    return cache["closure", command]
+
+
+def raw_closure(root, command, cache):
+    """What closure reads: the deps as the narrow and wide walks name them."""
     if ("closure", command) in cache:
         return cache["closure", command]
     found, whole = references(root, command, "", wide=False)
@@ -291,6 +298,7 @@ def hits(path, deps):
 def touches(root, command, path, cache):
     """Whether a change to path can affect a row (shared by plan() and affected())."""
     deps, _ = closure(root, command, cache)
+    path = path.replace("\\", "/")
     if any(path == n or (n.endswith("/") and path.startswith(n)) for n in NO_EFFECT):
         return hits(path, named(root, command, cache))
     return hits(path, deps)
