@@ -1,6 +1,6 @@
 # id	status	date	run	flaky
 adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
-adopt-replaces-stale	PASS	2026-11-16		d56985620a6e
+adopt-replaces-stale	PASS	2026-11-16		81436ab36362
 adopt-set-1	FAIL	2026-11-12	
 adopt-set-2	FAIL	2026-11-12	
 adopt-set-3	FAIL	2026-11-12	
@@ -403,6 +403,8 @@ pods-lock	PASS	2026-11-12
 pods-owner	PASS	2026-11-12	
 pool-edges-122	PASS	2026-11-10	
 pr-body-by-file	PASS	2026-11-13	
+pr-body-cap-large	PASS	2026-11-16	
+pr-body-cap-small	PASS	2026-11-16	
 pr-body-criterion	PASS	2026-11-12	
 pr-body-no-checks	PASS	2026-11-12	
 pr-body-no-home-3841	PASS	2026-11-14	

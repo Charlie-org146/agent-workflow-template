@@ -1207,5 +1207,7 @@
 | <a id="t-lane-closure-posix-same"></a>lane-closure-posix-same | defect | [#4457](https://github.com/jcl2018/agent-workflow-template/issues/4457) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-done-judge-stable-keys-1"></a>done-judge-stable-keys-1 | workflow | done line judge-stable-keys:1 | not run | - | local | no |
 | <a id="t-done-judge-stable-keys-2"></a>done-judge-stable-keys-2 | workflow | done line judge-stable-keys:2 | not run | - | local | no |
+| <a id="t-pr-body-cap-large"></a>pr-body-cap-large | requirement | done line pr-body-cap:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-pr-body-cap-small"></a>pr-body-cap-small | requirement | done line pr-body-cap:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-no-plain-dunder-import"></a>docs-no-plain-dunder-import | requirement | done line docs-import-render:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-import-rows-pass"></a>docs-import-rows-pass | requirement | done line docs-import-render:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
