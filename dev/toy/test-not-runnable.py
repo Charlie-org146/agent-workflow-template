@@ -74,6 +74,8 @@ def lane_exit(rows):
                                         capture_output=True, text=True)
         git("init", "-q", "-b", "main")
         os.makedirs(os.path.join(tmp, ".loop"))
+        with open(os.path.join(tmp, ".loop", "config.json"), "w") as handle:
+            handle.write('{"min_free_memory_gb": 0}')  # the lane waits for free memory otherwise, and this is no lane
         with open(os.path.join(tmp, ".loop", "regression.tsv"), "w", newline="\n") as handle:
             handle.write("# id\tlevel\tcommand\tgoal\tseen_red\tdescribe\tcategory\tlink\n")
             for key, command in rows:

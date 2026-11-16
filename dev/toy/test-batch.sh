@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/SKILL.md skills/workflow-monitoring/SKILL.md
-# reads: skills/workflow-monitoring/references/operation.md skills/workflow-monitoring/scripts/batch.py
+# reads: skills/workflow-monitoring/references/commands.md skills/workflow-monitoring/scripts/batch.py
 # reads: skills/workflow-monitoring/scripts/board.py skills/workflow-setup/scripts/setup.py
 # Proves batch.py with a stand-in agent. No model is called. usage: test-batch.sh [DIR]
 # The governing session only adds and starts; every goal runs in its own process, in its own worktree.
@@ -72,7 +72,7 @@ python3 "$T/lone/batch.py" start solo > "$T/lone/out" 2>&1
 check "batch.py alone says how to start goal lines" 'grep -q "NEXT: run watch.py watch --once" "$T/lone/out"'
 
 echo "== text and sizes"
-for f in skills/workflow-monitoring/references/operation.md skills/workflow-monitoring/SKILL.md skills/workflow-delivery/SKILL.md; do
+for f in skills/workflow-monitoring/references/commands.md skills/workflow-monitoring/SKILL.md skills/workflow-delivery/SKILL.md; do
   check "$f says the operation session governs only" 'grep -qiE "governance only|one session governs" "$here/$f" && grep -qiE "runs neither|never runs" "$here/$f"'
 done
 check "the test runs as a regression row" 'grep -q "test-batch.sh" "$here/.loop/regression.tsv"'
