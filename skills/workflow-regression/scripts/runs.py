@@ -5,13 +5,10 @@ runs on two branches write identical lines and merge cleanly. flaky is empty, or
 flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
 record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
 
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body.
-Dry-run (WOULD lines) unless live. The GitHub Actions run keeps its own copy of this logic inside regression.yml (actions.py).
-
-The time budget of an in-loop test run lives here too (budget, fit, execute): a run with --reuse (qa, ship and pull-request lanes)
-never goes past test_budget_minutes in .loop/config.json (default 15, floor 15); rows run in tier order while their estimated
-seconds fit, a row still running at the budget is stopped, and the rest are listed and recorded LEFT for the scheduled full suite.
-regression.py's row and page readers sit at the end.
+It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body,
+dry-run (WOULD lines) unless live; actions.py keeps the CI copy. The time budget of an in-loop test run lives here too (budget, fit,
+execute): a --reuse run (qa, ship and pull-request lanes) stops at test_budget_minutes (default 15, floor 15), runs rows in tier
+order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite. regression.py's readers sit at the end.
 """
 import datetime
 import glob
@@ -34,6 +31,7 @@ if not sys.stdin or not sys.stdin.isatty():
 NAME = "regression-runs.tsv"
 HEADER = "# id\tstatus\tdate\trun\tflaky\n"
 ISSUE_LIMIT = 1000
+WAITS = (0, 5, 20)  # seconds before each of three tries
 SKIP_CODE = 77
 LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
@@ -102,18 +100,31 @@ def gh(*args, body=None):
             os.remove(f.name)
 
 
+def read_issues():
+    """(issues, ""): the GraphQL list, else REST pages of 100 without comments; (None, error) when both fail."""
+    rest = ("api", "--paginate", "repos/{owner}/{repo}/issues?state=all&labels=regression&per_page=100", "--jq",
+            ".[] | select(.pull_request == null) | {number, state: (.state | ascii_upcase), body, labels}")
+    for args in (("issue", "list", "--label", "regression", "--state", "all", "--limit", str(ISSUE_LIMIT),
+                  "--json", "number,state,body,comments,labels"), rest):
+        for wait in WAITS:
+            time.sleep(wait)
+            out = gh(*args)
+            if not out.returncode:
+                text = out.stdout
+                return ([json.loads(x) for x in text.splitlines() if x] if args is rest else json.loads(text or "[]")), ""
+    return None, out.stderr
+
+
 def sync_issues(results, live, day):
     issues = []
     if live:
         gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
         gh("label", "create", "defect", "--description", "A test that guards it is failing")
-        out = gh("issue", "list", "--label", "regression", "--state", "all", "--limit", str(ISSUE_LIMIT),
-                 "--json", "number,state,body,comments,labels")
-        if out.returncode:
-            print("NOTE: can't read issues, so none changed: " + out.stderr.strip()[:200])
+        issues, err = read_issues()
+        if issues is None:
+            print("NOTE: can't read issues, so none changed: " + err.strip()[:200])
             return
-        issues = json.loads(out.stdout or "[]")
-        if len(issues) >= ISSUE_LIMIT:
+        if len(issues) >= ISSUE_LIMIT and "comments" in issues[0]:  # REST pages are never cut off
             print("NOTE: the issue list may be cut off at %d, so none changed" % ISSUE_LIMIT)
             return
     for item in results:
@@ -140,7 +151,8 @@ def sync_issues(results, live, day):
                 if hit.get("state") != "OPEN":
                     gh("issue", "reopen", number)
                     print("REOPENED issue %s" % number)
-                said = [note.get("body", "") for note in hit.get("comments") or []]
+                said = ([n.get("body", "") for n in hit["comments"]] if "comments" in hit
+                        else gh("api", "repos/{owner}/{repo}/issues/%s/comments" % number, "--jq", ".[].body").stdout.splitlines())
                 if line not in said:
                     gh("issue", "comment", number, body=line)
                     print("UPDATED issue %s" % number)
