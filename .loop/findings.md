@@ -74,3 +74,4 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - roadmap-wiki: paused by the operation session: permissions-committed goes first; resume roadmap-wiki after it merges (build and review done, review reply pending)
 - adoption: Failed 3 tries. Last: regression lane failed: LANE_PREP_BUDGET: the pr lane used its 25-minute preparation budget before any row ran: planning ran long (prep 1s, planning 1498s, slot wait 0s; the three share one budget); slots held by: none; no r
 - milestone-sync: Failed 3 tries. Last: regression lane failed: LANE_TIMEOUT: past its time limit of 99s (flow file limit); the lane was killed, rows partly ran, nothing committed or pushed. Fix: run the same command again, or raise the flow file "limit" (else ste
+- how-to-use-docs: Failed 3 tries (+1 free reruns). Last: regression lane failed: migration-v1
