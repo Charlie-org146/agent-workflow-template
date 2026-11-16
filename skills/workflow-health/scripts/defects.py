@@ -19,6 +19,7 @@ import re
 import subprocess
 import sys
 import traceback
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 VERB = r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)\s+"

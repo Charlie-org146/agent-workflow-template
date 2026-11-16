@@ -16,6 +16,7 @@ import tempfile
 import time
 
 import rounds
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 LABEL = "com.workflow-loop.schedule"
 GROUPS = "requirements,traceability,consistency,docs,freshness,tests,performance,security,size,hygiene,adoption"
