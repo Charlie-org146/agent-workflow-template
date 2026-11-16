@@ -5,28 +5,26 @@ usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
                                 add or replace a row. L is land, nightly, draft or covered;
-                                TEXT says in plain words what the test checks; C is criterion (default), workflow (an
-                                end-to-end run of a whole flow on a toy repo) or defect, and a defect row needs L, the
+                                TEXT says what the test checks; C is criterion (default), workflow (an
+                                end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
                                 issue URL or finding:SLUG it keeps fixed
-  sync [--write]                list done lines and criteria with no row, rows with no description, rows never seen
-                                failing; --write drafts rows (a criterion's row has its id as id or goal)
+  sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows (a criterion's row has its id as id or goal)
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
   red ID --owed --runner R [--live]
-                                machine R owes the proof: a to-do issue on the row's milestone; the goal goes on (PENDING)
+                                machine R owes the proof: a to-do issue on its milestone; the goal goes on (PENDING)
   red ID --off-platform --runner R --commit SHA
                                 a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it
-                                (runs.py). A Windows runner is refused; a skip never sets seen red
+                                (runs.py). A Windows runner is refused; a skip sets no seen red
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
-                                run the rows (of one kind), then open, update or close one issue per failing row;
+                                run rows (of one kind), then keep one issue per failing row;
                                 --tier goal plans a goal lane (tiers.py); a plain run nightly records its time (SUITE_TIME)
   workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, on pull_request and push); a private repo's regression runs on the Mac: nothing
+                                a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records its rows' last status and
-date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
-Issues dry-run unless you pass --live; a token in the environment writes nothing. It runs git, gh and your test
+Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
+Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test
 commands, and nothing else.
 """
 import argparse
@@ -303,7 +301,8 @@ def cmd_run(args):
                    results + [{"id": key, "state": "LEFT", "seconds": 0} for key in cut],
                    head, datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                    fresh=bool(args.reuse and why), base=tiers.BASE)
-    cannot = [item["id"] for item in results if item["state"] == "SKIPPED"]
+    cannot = [item["id"] for item in results if item["state"] == "SKIPPED" and not item.get("env")]
+    env = [item["id"] for item in results if item.get("env")]
     never = [key for key in runs.unproven(root, picked, SEEN) if key not in [i["id"] for i in results if i.get("notrun")]]
     if cannot:
         slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
@@ -322,7 +321,9 @@ def cmd_run(args):
         ", %d skipped" % sum(item["state"] == "SKIPPED" for item in results) if any(item["state"] == "SKIPPED" for item in results) else ""))
     if cannot:
         print("NOTRUNNABLE %d: %s" % (len(cannot), ", ".join(cannot)))
-    return 1 if failed or never else 0
+    if env:
+        print("ENV %d of %d rows could not start: rerun when memory allows" % (len(env), len(results)))
+    return 1 if failed or never else slots.EXIT_ENV if len(env) * 2 > len(results) else 0
 
 
 def cmd_workflow(args):
