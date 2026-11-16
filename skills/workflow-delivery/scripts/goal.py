@@ -335,7 +335,7 @@ def cmd_pr(args):
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), args.slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
-    queue("join", ME, state)
+    pods and pods.pr_queue("join", ME, state)  # pool.pr_join takes (g, state): no runs folder
     if ahead := queue("turn", args.slug):
         waited or save(state, "waiting: pr queue, behind " + ahead)
         print("WAITING pr queue: %s first; run pr again" % ahead)
