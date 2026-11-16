@@ -65,9 +65,9 @@ check("a 400 minute budget is not stopped by 24 lost lanes", stopped(*run(*lanes
 check("`main moved, try not counted` is a lost lane as well", minutes(*STEPS, (45, "main moved, try not counted (1 of 5)")) == 30)
 check("a lane that opens a pull request and merges still counts", minutes(*STEPS, (45, "pr"), (47, "merged https://x/pull/1 (auto_merge)")) == 47)
 check("a lane that really failed (try N failed) stays charged", minutes(*STEPS, (45, "try 1 failed: regression lane failed: x")) == 45)
-check("steps that ran before a refusal stay charged", minutes((0, "frozen 1 done lines"), (50, "build done"), (52, "merge refused (exit 2): run goal.py pr, then merge.py again")) == 50)
-check("a goal that truly runs past its budget is still stopped, lost lanes or not", "minutes spent" in stopped(*run(*lanes(5), (200, "stopped: x"), (200, "start qa"), (400, "qa done")), 300))
-real = [(0, "frozen 1 done lines")] + [(60 * i, "%s done" % s) for i, s in enumerate(("idea", "plan", "build", "review", "qa", "ship"), 1)]
+check("steps that ran before a refusal stay charged", minutes((0, "frozen 1 done lines"), (0, "start build"), (50, "build done"), (52, "merge refused (exit 2): run goal.py pr, then merge.py again")) == 50)
+check("a goal that truly runs past its budget is still stopped, lost lanes or not", "minutes spent" in stopped(*run(*lanes(5), (118, "start qa"), (200, "stopped: x"), (200, "start qa"), (400, "qa done")), 300))
+real = [(0, "frozen 1 done lines")] + [(60 * i - d, ("start %s" if w == "start" else "%s done") % s) for i, s in enumerate(("idea", "plan", "build", "review", "qa", "ship"), 1) for w, d in (("start", 60), ("done", 0))]  # each step starts, then ends an hour later
 check("a goal that truly runs 360 minutes of steps is stopped at 300", "360 minutes spent" in stopped(*run(*real), 300))
 check("lost_lanes names the refusals and the pr lane before each", board_log.lost_lanes([m for m in ("t pr", "t merge refused (exit 2): x", "t try 1 failed", "t main moved, try not counted (1 of 5)")]) == {0, 1, 3})
 sys.exit(1 if fails else 0)

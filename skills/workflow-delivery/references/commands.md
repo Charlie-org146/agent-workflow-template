@@ -430,6 +430,15 @@ nothing stops. Tokens add up across attempts of a step (failed tries and `--agai
 per running or held goal: `budget: 35m of 120m, 0.4M of 3.0M tokens`, `budget: 12m of 90m` (one half set), `budget: none
 set`, with `, OVER time` or `, OVER tokens` appended when spent.
 
+### What the minute budget charges (DEL-8, MON-4, #4534)
+
+`time_budget_minutes` and the ETA count minutes a step or the pr lane is running. Never charged: a wait (`goal.py wait`, or a
+session report that says waiting or paused), a hold, a wait in the pr queue, a lane lost to a moved base, and a session
+that sent nothing for longer than the idle limit (`silent_minutes`, 30; `LOOP_SESSION_QUIET` seconds) with no step running:
+after a finished step, a report or an answer it is charged at most that limit until its next entry. A step between
+`start X` and its end is charged in full. A worker that builds quietly for longer sends `sessions.py report` as a heartbeat.
+`goal.py show` prints `minutes`: `charged` (what the budget gate reads) and `wall` (first log entry to now).
+
 ### Resume (DEL-7)
 
 A stopped or crashed goal goes on from its last recorded step, never from the start. A killed background step leaves its

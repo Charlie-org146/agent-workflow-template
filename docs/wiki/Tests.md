@@ -190,6 +190,8 @@
 | <a id="t-cut-left-none"></a>cut-left-none | requirement | DEL-5 | not run | - | local | 2026-11-16 |
 | <a id="t-private-checks-stop"></a>private-checks-stop | requirement | DEL-4 | not run | - | local | 2026-11-16 |
 | <a id="t-pr-joins-queue"></a>pr-joins-queue | requirement | DEL-15 | not run | - | local | 2026-11-16 |
+| <a id="t-held-charge-idle"></a>held-charge-idle | requirement | DEL-8 | not run | - | local | 2026-11-16 |
+| <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 
 ## Documentation
 
@@ -701,6 +703,7 @@
 | <a id="t-mon14-release-eta"></a>mon14-release-eta | requirement | MON-14 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-mon5-for-cell-sentence"></a>mon5-for-cell-sentence | requirement | MON-5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-eta-checkin-table"></a>eta-checkin-table | requirement | MON-5 | not run | - | local | 2026-11-16 |
+| <a id="t-held-charge-pauses"></a>held-charge-pauses | requirement | MON-4 | not run | - | local | 2026-11-16 |
 
 ## Regression
 
@@ -1137,3 +1140,5 @@
 | <a id="t-done-home-stale-2"></a>done-home-stale-2 | workflow | done line home-stale:2 | not run | - | local | no |
 | <a id="t-eta-header-margin-header"></a>eta-header-margin-header | requirement | done line eta-header-margin:1 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-header-margin-setting"></a>eta-header-margin-setting | requirement | done line eta-header-margin:2 | not run | - | local | 2026-11-16 |
+| <a id="t-done-held-time-charge-1"></a>done-held-time-charge-1 | workflow | done line held-time-charge:1 | not run | - | local | no |
+| <a id="t-done-held-time-charge-2"></a>done-held-time-charge-2 | workflow | done line held-time-charge:2 | not run | - | local | no |
