@@ -572,6 +572,8 @@ tiers-rows-summary	PASS	2026-11-10
 tiers-unmapped-qa-pr	PASS	2026-11-10	
 topics-in-reference	PASS	2026-11-13	
 toy-no-leftovers	PASS	2026-11-12	
+trim-package-98	PASS	2026-11-16	
+trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
 unproven-blocks	PASS	2026-11-12	
 unread-closes-none	PASS	2026-11-12	
