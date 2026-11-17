@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept agent-routing@7847b455 -->
+Review: **Unreviewed** <!-- kept row-cap-1300@69b48c98 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -239,7 +239,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | DOC-17 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
 | [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | DOC-17 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
 | [sync-owns-only](Tests#t-sync-owns-only) | requirement | DOC-17 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
-| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta, when docs.py sync runs, then it posts one GitHub issue on the feature's milestone and one comment on the external page. | not run |
+| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
 | [sync-posts-once](Tests#t-sync-posts-once) | requirement | DOC-17 | Given a delta already posted, when docs.py sync runs again, then it posts nothing more. | not run |
 | [sync-accept-source](Tests#t-sync-accept-source) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=source runs, then the source's text is written to the repo copy for that id only and the issue is closed. | not run |
 | [sync-accept-repo](Tests#t-sync-accept-repo) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=repo runs, then the repo's text is written to the external document through the writer for that id only and the issue is closed. | not run |
