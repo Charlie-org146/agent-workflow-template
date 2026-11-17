@@ -257,7 +257,7 @@ if want("feature") or want("queued"):
                                                            "done": ["a", "b"], "touches": ["skills/workflow-monitoring"], "updated": stamp(3800), "log": ["%s %s" % (stamp(s), t) for s, t in hist]})
             write(os.path.join(root, ".loop", "queue.md"), "- slug: later | touches: skills/workflow-monitoring | goal: Later (DEL-1) | done: one | done: two\n")
             text = "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="0000"))
-            row = next((x for x in text.splitlines() if "[ ] later" in x), "")
+            row = next((x for x in text.splitlines() if "[ ] later ~" in x), "")
             check(row and "~?" not in row, "a queued goal shows an estimated time from its size, not ~? (%s)" % row.strip())
             write(os.path.join(root, ".loop", "queue.md"), "- slug: other | goal: Other (DEL-1) | done: one\n")
             os.remove(os.path.join(loop, "runs", "hist.json"))
