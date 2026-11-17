@@ -1262,3 +1262,4 @@
 | <a id="t-checkin-nonutf8-procs-4810"></a>checkin-nonutf8-procs-4810 | defect | [#4810](https://github.com/jcl2018/agent-workflow-template/issues/4810) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-changelog-bracket-no-gh"></a>changelog-bracket-no-gh | requirement | done line changelog-v:1 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-changelog-no-heading-gh"></a>changelog-no-heading-gh | requirement | done line changelog-v:2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) state unknown | not run | - | local | 2026-11-17 |
