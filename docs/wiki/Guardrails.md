@@ -28,6 +28,8 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - A goal past `time_budget_minutes` starts no new step, and the setting is in the settings reference with its default (Delivery, new).
   - A goal past `token_budget` starts no new step, whether its steps run in a session or headless (Delivery, DEL-8 for showing it on the board; new for steps run in a session: today only headless goals are refused).
   - A goal with no token count records "unknown" and the board shows "tokens unread", never 0, so an unread count is never mistaken for an unspent budget (Delivery, new).
+  - Each worker step's tokens are read from its session transcript when it is recorded (input, cache reads, cache writes, output, calls, model and the largest context), kept in the run record and listed by `goal.py show`; `token_budget` counts the fresh part (input, cache writes and output, not cache reads) of those measured tokens, plus what the step in progress has spent so far (Delivery, token-diet).
+  - A loop script's output is cut to 2,000 characters, the first half and the last half with a line naming the file that keeps the whole text, so a long result does not fill a session's context; the step prompt a worker must read whole is not cut (Delivery, token-diet).
 - GRD-3: **Reviewed 2026-11-15** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed eecc70d8 -->
   - Private-name scan on every commit and push: DEL-9.
   - A commit or push that skips the repo's hooks (a no-verify flag, an empty hooks path) is refused by the loop's own commands and flagged by health (Delivery, new).
