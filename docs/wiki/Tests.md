@@ -914,6 +914,8 @@
 | <a id="t-lane-env-states"></a>lane-env-states | requirement | REG-7 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-env-exit"></a>lane-env-exit | requirement | REG-7 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-walk-skips-git"></a>lane-walk-skips-git | requirement | REG-7 | not run | - | local | 2026-11-16 |
+| <a id="t-toys-no-leak-schedule"></a>toys-no-leak-schedule | requirement | REG-1 | not run | - | local | 2026-11-17 |
+| <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-1 | not run | - | local | 2026-11-17 |
 
 ## Setup
 
@@ -1218,3 +1220,5 @@
 | <a id="t-pr-body-cap-small"></a>pr-body-cap-small | requirement | done line pr-body-cap:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-no-plain-dunder-import"></a>docs-no-plain-dunder-import | requirement | done line docs-import-render:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-import-rows-pass"></a>docs-import-rows-pass | requirement | done line docs-import-render:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-done-toys-no-leak-1"></a>done-toys-no-leak-1 | workflow | done line toys-no-leak:1 | not run | - | local | no |
+| <a id="t-done-toys-no-leak-2"></a>done-toys-no-leak-2 | workflow | done line toys-no-leak:2 | not run | - | local | no |
