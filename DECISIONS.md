@@ -402,3 +402,10 @@ Health judge findings were re-filed under a new key each round (#4543: 29 issues
 
 - The lane prep (lanekit.prep) now re-stamps the pages `docs.py check --own HEAD` calls stale, only on a `loop/` branch, with the branch's slug; a Reviewed page whose reviewed text still matches its stamp gets a refreshed stamp and a kept marker, an Unreviewed page a kept marker while the page is as committed. A moved wording stays stale. A failed prep commit undoes the re-stamps it made so the rerun is not blocked.
 - An independent review found that passing the base ref to `--own` re-stamped main's own stale pages; fixed (it is `HEAD`), with a toy case and a row. operate.py apply still passes `origin/BASE` to `--own`, so it also re-stamps every stale page (a possible follow-up).
+## Applied 2026-11-16 (apply-rerender)
+
+Goals bounced off the pr lane because generated Settings and Automation blocks and Tests tables went stale on their branch while main or the template moved (#4632).
+
+- `operate.py apply` runs `audit.py rerender BASE` before its re-stamp: `criteria.py render` in the branch checkout, then each file is kept only if (1) the branch added no line to its generated part that the fresh render lacks (judged against the merge-base) and (2) the render touched nothing outside that part. A hand edit inside a block fails (1), so the file is put back and stays STALE: the negative control.
+- `operate.py wiki-only` also accepts README.md when only its generated blocks changed, so merge.py takes the pushed commit like a wiki page commit.
+- Cost: a branch whose own commit changed a block line that main has since reworded is left stale (its added line is not in the fresh render); the worker re-renders, as today.
