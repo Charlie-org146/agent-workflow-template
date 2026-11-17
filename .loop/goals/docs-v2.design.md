@@ -18,7 +18,7 @@ docs stand alone: no history links, no other-repo names, no machine paths, a who
   is a box `[Kind: Component | where it runs]`, a `Legend:` line is required, a box with no row or a row with no box is named.
 - `milestones.stands_alone(page, lines)`: outside a Deployments table, a URL fails unless it is this repo's own milestone,
   releases or wiki page (navigation, not history); an issue, pull, commit, Actions link, any other host or repo, an
-  `owner/repo#N` reference or a machine path (`C:\Users`, `/Users/`, `/home/`) fails naming the page and line. The generated
+  `owner/repo#N` reference or a machine path (a Windows or Unix home folder) fails naming the page and line. The generated
   Tests page cites CI evidence and is exempt. Issue numbers stay as plain text; issue links lose their link.
 - Home: a `## System diagram` section (one fenced diagram: operation session, workers, steps, staging/production, machines,
   routines, with legend and guard marks) between the features table and the generated blocks; `pageformat.home` allows it, and
