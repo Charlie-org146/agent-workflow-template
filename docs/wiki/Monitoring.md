@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept checkin-zh-cn-crash@3d9b8e33 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept docs-sync-milestone@4d705e3d -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
