@@ -66,7 +66,7 @@ def about(root, item, cache):
     return IS.feature_of(root, item, cache)
 
 
-def rows_of(rows, root, numbers):
+def rows_of(rows, root, numbers, only=None):
 
     """[(feature, group, rule, severity, finding, issue)] sorted by feature (Other last), group order, severity."""
     cache, out, quiet = {}, [], report_only()
@@ -78,6 +78,8 @@ def rows_of(rows, root, numbers):
             page = about(root, item, cache)
         except Exception:  # an unreadable page map never breaks the report
             page = None
+        if only and page != only:
+            continue
         rule = G.rule_of(item)
         finding = "details stay local" if item["family"] == "mine" else "%s: %s" % (item.get("subject"), item.get("detail"))
         keys = [IS.key_of(item)] + IS.legacy(item)
@@ -88,8 +90,8 @@ def rows_of(rows, root, numbers):
     return [one for _, one in sorted(out, key=lambda pair: pair[0])]
 
 
-def lines(rows, root, numbers):
-    table = rows_of(rows, root, numbers)
+def lines(rows, root, numbers, only=None):
+    table = rows_of(rows, root, numbers, only)
     if not table:
         return ["FINDINGS: none"]
     return ["FINDINGS (%d)" % len(table), ""] + list(HEAD) + ["| %s |" % " | ".join(cell(c) for c in one) for one in table] + [""]
@@ -100,27 +102,44 @@ def insert(text, rows, root):
     return text[:2] + [""] + lines(rows, root, filed(root)) + text[2:]
 
 
-def show(rows, root):
-    """After file: the same table, naming the issues it just opened."""
-    print("\n".join([""] + lines(rows, root, filed(root, fresh=True))))
+def show(rows, root, only=None):
+    """After file: the same table (only `only`'s rows with --feature), naming the issues it just opened."""
+    print("\n".join([""] + lines(rows, root, filed(root, fresh=True), only)))
+
+
+
+def tables(text):
+    """Every findings table in a saved report: [(its FINDINGS line, [row lines])]."""
+    found, lines_in = [], text.splitlines()
+    for n, line in enumerate(lines_in):
+        if line.startswith("FINDINGS"):
+            rows = []
+            for row in lines_in[n + 1:]:
+                if row.startswith("|"):
+                    rows.append(row)
+                elif row.strip() or rows:
+                    break
+            found.append((line, rows[2:]))
+    return found
 
 
 def from_report(text, most=MAX_ROWS):
-    """The last findings table in a saved report, its first `most` rows and a line naming the rest, or []."""
-    lines_in, start = text.splitlines(), None
-    for n, line in enumerate(lines_in):
-        if line.startswith("FINDINGS"):
-            start = n
-    if start is None:
+    """check's findings table from a saved report (the first: every group, UNREAD rows included), each row's Issue cell
+    taken from a later table (file's, naming the issues it just filed) when that names one; its first `most` rows and a
+    line naming the rest, or []."""
+    found = tables(text)
+    if not found:
         return []
-    out = [lines_in[start]]
-    for line in lines_in[start + 1:]:
-        if not (line.startswith("|") or not line.strip()) or (out[-1].startswith("|") and not line.strip()):
-            break
-        out.append(line)
-    rows = [line for line in out if line.startswith("|")][2:]
-    out = out[:len(out) - len(rows)] + rows[:most] if rows else out
-    while out and not out[-1].strip():
-        out.pop()
-    return out + (["", "%d more findings: run health.py check" % (len(rows) - most)] if len(rows) > most else [])
-
+    head, rows = found[0]
+    later = {}
+    for _, more in found[1:]:
+        for row in more:
+            body, _, issue = row.rstrip(" |").rpartition(" | ")
+            if issue.startswith("#"):
+                later[body] = issue
+    out = []
+    for row in rows:
+        body, _, issue = row.rstrip(" |").rpartition(" | ")
+        out.append("%s | %s |" % (body, later.get(body, issue)))
+    shown = [head] + (["", HEAD[0], HEAD[1]] + out[:most] if out else [])
+    return shown + (["", "%d more findings: run health.py check" % (len(out) - most)] if len(out) > most else [])

@@ -286,7 +286,8 @@ def cmd_file(h, args):
     filing, acts, groups = plan_for(h, root, asked if asked else [], bool(asked) and "performance" in asked, args.feature, args.review)
     filing.apply(filing.only_open(acts) if args.open_only else acts, root, groups)
     tab = h.sibling_module("table")
-    tab and tab.show(filing.ROWS, root)
+    tab and tab.show(filing.ROWS, root, args.feature)
+
     return 0
 
 

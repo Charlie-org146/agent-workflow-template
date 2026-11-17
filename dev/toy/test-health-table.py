@@ -128,6 +128,7 @@ with tempfile.TemporaryDirectory() as tmp:
         check(all(len(c) == 6 and c[5] for c in cells), "every row has all six cells")
 
     if only != "--table":
+        before = run_script(repo, "health.py", "check", "--group", groups)  # the tick: check, then file, one report
         calls.clear()
         filed = run_script(repo, "health.py", "file", "--group", "size,docs")
         print(filed)
@@ -140,12 +141,19 @@ with tempfile.TemporaryDirectory() as tmp:
         cells = [[c.strip() for c in r.strip("|").split(" | ")] for r in rows_of(filed)]
         check(cells and all(re.fullmatch(r"#\d+", c[5]) for c in cells if c[1] in ("Size", "Docs")), "file's table names the issue it filed for each finding")
         report = os.path.join(tmp, "report.txt")
-        write(report, filed)
+        write(report, before + "\n" + filed)
         os.environ["HEALTH_REPORT"] = report
         digest = run_script(repo, "automation.py", "digest")
         os.environ.pop("HEALTH_REPORT")
         print(digest)
-        check("### Findings" in digest.splitlines() and rows_of(digest) == rows_of(filed), "the digest shows the same table")
+        split = lambda r: r.rstrip(" |").rpartition(" | ")[::2]  # noqa: E731  (row without its Issue cell, the Issue cell)
+        issue = dict(split(r) for r in rows_of(filed))
+        want = ["%s | %s |" % (split(r)[0], issue.get(split(r)[0], split(r)[1])) for r in rows_of(before)]
+        check("### Findings" in digest.splitlines() and rows_of(digest) == want and len(want) > len(rows_of(filed))
+              and any(r.endswith("| not filed |") and "| Requirements |" in r for r in want),
+              "the digest shows the same table: check's, every group kept, with the issues file just filed")
+
+
     os.chdir(here)
 subprocess.run = real_run
 if not failed:
