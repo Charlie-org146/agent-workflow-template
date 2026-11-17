@@ -7,13 +7,14 @@ set -u
 group=${1:-all}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 S=$here/skills/workflow-health/scripts
 mail="python3 -B $S/mail.py"; auto="python3 -B $S/automation.py"
 unset GH_TOKEN GITHUB_TOKEN GITHUB_ACTIONS GITHUB_STEP_SUMMARY DIGEST_RUN DIGEST_MAIL_API DIGEST_SMTP_TEST_PORT MAIL_ADDR_SET MAIL_CF_SET MAIL_SMTP_SET
 unset DIGEST_TO DIGEST_FROM CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_EMAIL_TOKEN DIGEST_SMTP_USER DIGEST_SMTP_PASSWORD
-pass=0; fail=0
+pass=0; fail=0; failed=""
 ok() { echo "PASS: $1"; pass=$((pass + 1)); }
-bad() { echo "FAIL: $1"; fail=$((fail + 1)); }
+bad() { echo "FAIL: $1"; fail=$((fail + 1)); failed="$failed$1; "; }
 want() { [ "$group" = all ] || [ "$group" = "$1" ]; }
 ADDR=owner.fixture@example.test; TOKEN=cf-token-fixture-7Q2; SMTPPW=app-password-fixture-9
 
@@ -62,6 +63,10 @@ elif a[:2] == ["repo", "view"]:
     print("toy-owner")
 elif a[0] == "api" and a[1].startswith("users/"):
     print("User")
+elif a[0] == "api" and "--paginate" in a and any("/issues?" in x and "labels=" in x for x in a):  # open issues, one JSON object per line
+    fail("STUB_LIST_FAIL")
+    for i in load(re.search(r"labels=([^&]+)", next(x for x in a if "/issues?" in x)).group(1) + ".json", []):
+        print(json.dumps(i))
 elif a[0] == "api" and "PATCH" in a and os.environ.get("STUB_ISSUE_PATCH_FAIL") and "/issues/comments/" not in " ".join(a):
     sys.stderr.write("HTTP 502\n"); sys.exit(1)
 elif a[0] == "api" and "PATCH" in a and "/issues/comments/" in " ".join(a):
@@ -777,5 +782,6 @@ SH
   [ "$fail" = "$f0" ] && echo "PASS milestone-freeform:aut-email-regression"
 fi
 
+[ -z "$failed" ] || echo "FAILED CHECKS: $failed"
 echo "== $pass passed, $fail failed"
 [ $fail = 0 ] && [ $pass -gt 0 ]
