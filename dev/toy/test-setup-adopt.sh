@@ -108,8 +108,8 @@ mine = [i for i in issues if 'no-fit' in i['title']]
 assert len(mine) == 1, [i['title'] for i in issues]
 assert 'health:adoption' in [l['name'] for l in mine[0]['labels']], mine[0]['labels']" || no "no issue tagged adoption for the findings line"
   export FAKE_GH_DIR="$d/gh-nf2"; mkdir -p "$FAKE_GH_DIR"
-  w=$(python3 "$here/skills/workflow-health/scripts/health.py" preview --group adoption 2>&1 | grep -c '^WOULD')
-  [ "$w" = "$n" ] || no "filed $n issues, preview says $w"
+  w=$(python3 "$here/skills/workflow-health/scripts/health.py" preview --group adoption 2>&1 | grep '^WOULD open issue' | grep -vc 'Backlog: .* milestones')  # the fresh gh dir has no milestones yet; setup made them in the first run
+  [ "$w" = "$n" ] || no "filed $n issues, preview says $w; filed: $(python3 -c "import json,os;print('|'.join(i['title'][:60] for i in json.load(open(os.environ['FAKE_GH_DIR'].replace('nf2','nf')+'/issues.json'))))")"
   export FAKE_GH_DIR="$d/gh-nf"
   before=$(grep -c 'issue create' "$FAKE_GH_DIR/calls.log")
   out=$($setup 2>&1); echo "$out" | grep -q 'NO CHANGE' || no "second run: $(echo "$out" | tail -3)"
