@@ -214,7 +214,7 @@ def owned(root, rel, body, rule):
 
 
 def relock(root, slug="", only=()):
-    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page in only stale by code alone."""
+    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page stale by code alone."""
     rule, done = cr.rules(), []
     for rel in cr.pages(root):
         if only and os.path.basename(rel)[:-3] not in only:
@@ -224,7 +224,13 @@ def relock(root, slug="", only=()):
         line, why = prd.review_of(text, rule)
         match = prd.REVIEW.match(line or "")
         parts = cr.sections(text)
-        if why or not match or not match.group(2):
+        if why or not match:
+            continue
+        if not match.group(2):  # Unreviewed: a kept marker says the text still holds
+            if slug and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
+                with open(join(root, rel), "w") as handle:
+                    handle.write(prd.set_review(text, "Review: **Unreviewed** <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip())))
+                done.append(os.path.basename(rel)[:-3])
             continue
         now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
         moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
@@ -233,7 +239,7 @@ def relock(root, slug="", only=()):
             with open(join(root, rel), "w") as handle:
                 handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
             done.append(os.path.basename(rel)[:-3])
-    for page in only if slug else ():  # DOC-18: a How-to-use page has no Review line; its text still holds when it is as committed, and a kept marker re-stamps it
+    for page in only if slug else ():  # DOC-18: a How-to-use page has no Review line; a kept marker re-stamps it
         rel, feature = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):]
         held = page.startswith(docs.deployments.HOWTO) and feature in docs.read_map(root) and os.path.isfile(join(root, rel))
         if held and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
@@ -248,6 +254,12 @@ def relock(root, slug="", only=()):
         with open(join(log, "reviews.tsv"), "a") as handle:
             handle.write("%s\t%s\t%s\t%s\n" % (cr.datetime.datetime.now(cr.datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "restamp" if slug else "relock", ",".join(done), slug + ": mapped code only" if slug else "auto-relock: all lines owner-reviewed"))
     return done
+
+
+def restamp_own(root, slug, _=()):
+    """DOC-2: relock the pages check --own calls STALE for this goal."""
+    seen = subprocess.run([sys.executable, join(os.path.dirname(__file__), "docs.py"), "check", "--own", "HEAD"], cwd=root, capture_output=True, text=True).stdout
+    return relock(root, slug, {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]})
 
 
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
@@ -355,7 +367,7 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["rerender"] and len(sys.argv) > 2:
         print("".join("RERENDERED %s\n" % rel for rel in rerender(os.getcwd(), sys.argv[2])), end="")
         sys.exit(0)
-    if sys.argv[1:2] == ["restamp"] and len(sys.argv) > 3:
-        print("".join("RESTAMPED %s\n" % page for page in relock(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
+    if sys.argv[1:2] in (["restamp"], ["restamp-own"]) and len(sys.argv) > 3 - (sys.argv[1] == "restamp-own"):
+        print("".join("RESTAMPED %s\n" % p for p in (restamp_own if sys.argv[1] == "restamp-own" else relock)(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
         sys.exit(0)
     sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)
