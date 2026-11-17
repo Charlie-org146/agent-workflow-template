@@ -114,6 +114,8 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 - The check-in prints in the same format every time, at least every 30 minutes by default.
 - With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
 
+Notification subprocesses disable Git and GitHub terminal prompts, matching the unattended delivery commands.
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
