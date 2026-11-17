@@ -148,7 +148,9 @@ edit $H "## Features" "Welcome to the toy.
 
 ## Features"; has "^FORMAT Home:[0-9]*: Features: DOC-4 a line outside the features table (got 'Welcome to the toy.')" && ok "DOC-4 a Home line outside the table fails naming Home, Features and DOC-4" || bad "home stray"; reset
 edit $H "What it does" "Description"; has "^FORMAT Home:[0-9]*: Features: DOC-4 one table with the header" && ok "DOC-4 a Home table with other columns fails" || bad "home header"; reset
-edit $H "#how-to-use-delivery" "#how-to-use-nothing"; has "^FORMAT Home:[0-9]*: Features: DOC-4 How to use links the README's '### How to use Delivery' section" && ok "DOC-4 a How to use link to no README anchor fails" || bad "home anchor"; reset
+edit $H "#how-to-use-delivery" "#how-to-use-nothing"; has "^FORMAT Home:[0-9]*: Features: DOC-4 How to use links the page How-to-use-Delivery" && ok "DOC-4 a How to use link to no README anchor fails" || bad "home anchor"; reset
+edit README.md "### How to use Delivery" ""; edit $H "https://github.com/toy/repo#how-to-use-delivery" "https://github.com/toy/repo/wiki/How-to-use-Delivery"; out=$(check); ! grep -q "DOC-4" <<<"$out" && ok "DOC-4 a Home that links the How-to-use page passes with a links-only README (DOC-18)" || bad "home links-only: $out"; reset
+edit README.md "### How to use Delivery" ""; has "^FORMAT Home:[0-9]*: Features: DOC-4 How to use links the page How-to-use-Delivery.*the README needs no '### How to use Delivery' heading" && ok "DOC-4 a Home that links a README heading the links-only README lacks fails, naming the page link" || bad "home links-only control"; reset
 hm=1; for cell in "soon" "v1.0" " " "https://github.com/toy/repo/milestone/1"; do edit $H "https://github.com/toy/repo/milestone/1" "$cell"; has "FORMAT Home" && hm=0; reset; done
 [ "$hm" = 1 ] && ok "DOC-4 a Home Milestone cell may be free text, v1.0, empty or a link" || bad "home milestone"
 [ "$hm" = 1 ] && echo "PASS milestone-freeform:home-milestone-optional"
