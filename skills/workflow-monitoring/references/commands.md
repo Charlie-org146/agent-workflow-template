@@ -680,7 +680,8 @@ To pass the loop to a new session, run `board.py handoff` and give it the path.
   with the standing rule record and listed in the next check-in with how to revert it. A safety class (CLASSES:
   destructive, money, security, private data, steward merge), kinds destructive, money, security or an unknown one, an ETA
   choice, a risky path or a goal with an `always-ask:SLUG` (or `*`) owner-words record wait under Needs you. The standing
-  record un-reviews any page for a worker and covers a budget raise for a goal full auto answered; it never stamps a review
+  record un-reviews any page for a worker and covers a budget raise for a goal full auto answered and an all-recommended pre-flight answer (`goal.py set SLUG
+  --preflight recommended --owner-record RULE`, no item in a safety class); it never stamps a review
   or moves an ETA. Health fails an auto answer in a safety class (`auto-safety`) or without a record (`auto-record`).
   `auto.py pass --dry-run` shows what it would do.
 - **Session pool (MON-12, MON-6).** `pool.py status` prints free, busy and total against `pool_size` (default 20). When

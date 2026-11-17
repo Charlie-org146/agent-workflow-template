@@ -52,6 +52,9 @@ def ask(where, slug, text, kind="routine", eta=False):
         json.dump({"slug": slug, "goal": "g", "status": "waiting", "step": "build", "waiting": waiting}, handle)
 
 
+RULE_ID = "full-auto-rule"
+
+
 def words(where, text, ids):
     path = os.path.join(loop(where), "owner-words.tsv")
     count = sum(1 for _ in open(path)) if os.path.exists(path) else 0
@@ -105,6 +108,11 @@ w = repo("norule")
 ask(w, "n1", "Which helper name should the toy use?")
 auto.decide_all(w)
 check(waits(w, "n1") and "no standing owner rule" in log(w), "with no standing owner rule recorded, full auto waits")
+
+# 2b. the rule recorded later answers the question that waited for it
+words(w, "take every recommendation unless it is a safety question", RULE_ID)
+auto.decide_all(w)
+check(answered(w, "n1"), "a question that waited for the rule is answered once the rule is recorded")
 
 # 3. every safety class waits, whatever the kind; kinds, the ETA choice and an always-ask goal wait
 w = repo("safety")
@@ -186,6 +194,19 @@ ask(w, "g1", "Raise the token budget from 3000000 to 4000000 for this goal?", "o
 auto.decide_all(w)
 check(record("g1", "raising a budget") == rid and record("g1", "raising a budget") == rid, "after full auto answered it the budget raise may cite the record again")
 check(record("g1", "an ETA change") == "REFUSED", "an ETA move never accepts the standing record")
+
+# 5b. pre-flight: the recommended answer rides the standing record when no item is a safety class
+check(record("g9", "the recommended pre-flight answer") == rid and record("g9", "the recommended pre-flight answer") == rid,
+      "the recommended pre-flight answer may cite the standing record again and again")
+check(record("g9", "a pre-flight answer") == "REFUSED", "a chosen pre-flight answer needs the goal's own record")
+items = {"plan": ("the plan step ends pending and waits for your approval (auto_approve is off)", "approve ahead"),
+         "budget": ("its time budget is 240 minutes; held and waiting time may count toward it", "keep"),
+         "memory": ("memory is under the floor", "lower min_free_memory_gb to the free memory"),
+         "quota": ("the GitHub API quota is 10 requests; pr steps stall at 0", "go on with local steps")}
+check(all(auto.why_not({"ask": a, "words": [r], "recommend": r, "kind": "owner"}, {}) == "" for a, r in items.values()),
+      "the plan, budget, memory and quota pre-flight items are answered with their recommendation")
+check(auto.why_not({"ask": "the private-name list would refuse: x.py", "words": ["edit the list line"], "recommend": "edit the list line", "kind": "owner"}, {}) != "",
+      "the private-name pre-flight item waits for the owner")
 
 # 6. health: an AUTO line that hits a safety class, or carries no rule record, fails; the clean log is clean
 clean = auto.auto_rows(w)

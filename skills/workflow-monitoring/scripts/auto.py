@@ -36,7 +36,7 @@ def cls(stems):  # whole words with an ending (delete, deleted); "~" is a space
 CLASSES = {"destructive": cls("delet remov drop dropp rm wip truncat discard forc overwrit overwritten renam rebas amend squash eras destroy uninstall kill unlink rmdir revert rewrit rewritten publish releas deploy deployment migrat schema reset~--hard git~clean"),
            "money": cls("pay payment purchas billing invoice money credits? card~on~file subscription buy bill paid price"),
            "security": cls("secret credential password passphrase api[~_-]?key ssh[~_-]?key private~key signing~key (?:api|access|auth|bearer)~token permission allowlist allow~rule sandbox auth authenticat authoriz secur licens access~control"),
-           "private data": cls("private~name private~list private~data dropbox mail e-?mail inbox smtp"),
+           "private data": cls("private[~-]name private[~-]list private[~-]data dropbox mail e-?mail inbox smtp"),
            "steward merge": cls("steward merg\\w*(?:\\W+\\w+){0,3}\\W+(?:pull~request|PR|main)")}
 
 
@@ -297,7 +297,7 @@ def eta_record(g, rid, slug, what):
     if not rid:
         g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
     found = [r for r in owner_rows() if r[0] == rid]
-    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and any(" | %s | AUTO | " % slug in x for x in since(top(), "")):
+    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and (what.startswith("the recommended") or any(" | %s | AUTO | " % slug in x for x in since(top(), ""))):
         return rid  # the standing rule, for a goal full auto answered: reusable (never an ETA move)
     if not found or slug not in found[-1][4].split(","):
         g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
