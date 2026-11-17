@@ -77,6 +77,8 @@ budget-fair-held-time	PASS	2026-11-15
 builtin-flow	PASS	2026-11-12	
 cap-default-10	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 capture-row-ci	FAIL	2026-11-13	
+changelog-bracket-no-gh	PASS	2026-11-17	
+changelog-no-heading-gh	PASS	2026-11-17	
 check-writes-nothing	PASS	2026-11-12	
 checkin-passes-hook	PASS	2026-11-10	
 ci-bad-target	PASS	2026-11-10	
@@ -205,10 +207,12 @@ guards-touches-finding	PASS	2026-11-12
 guards-worker-role	PASS	2026-11-10	
 guards-worktree	PASS	2026-11-10	
 guide-marker-refused	PASS	2026-11-10	
+health-feature-always	PASS	2026-11-17	
+health-findings-table	PASS	2026-11-17	
 health-group-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 health-lists-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 health-mail-env-named	PASS	2026-11-14	
-health-mail-env-windows	PASS	2026-11-14	
+health-mail-env-windows	PASS	2026-11-17	
 health-not-enforced-fail	PASS	2026-11-10	
 health-not-enforced-warn	PASS	2026-11-10	
 health-register-no-launchd	PASS	2026-11-14	
@@ -369,8 +373,8 @@ needs-you-stuck	PASS	2026-11-12
 never-merges	PASS	2026-11-09	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
-no-done-line-refused	PASS	2026-11-12	
-no-flow-refused	PASS	2026-11-12	
+no-done-line-refused	PASS	2026-11-17	
+no-flow-refused	PASS	2026-11-17	
 no-line-in-governor	PASS	2026-11-12	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-12	
@@ -403,7 +407,8 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-12	
+pending-waits	PASS	2026-11-17	
+perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-12	
@@ -455,7 +460,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
-refuse-replace	PASS	2026-11-12	
+refuse-replace	PASS	2026-11-17	
 refused-unmet	PASS	2026-11-12	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
@@ -557,6 +562,7 @@ stale-merge-order	PASS	2026-11-12
 stale-own-finding	PASS	2026-11-15	
 stale-own-main-reported	PASS	2026-11-15	
 stale-page-row	PASS	2026-11-12	
+stalled-no-process-4359	PASS	2026-11-17	
 starts-at-idea	PASS	2026-11-09	
 state-shared-113	PASS	2026-11-10	
 status-graph-board	PASS	2026-11-12	

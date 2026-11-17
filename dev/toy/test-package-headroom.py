@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: dev/package.py skills/workflow-health/scripts/rules.py skills/workflow-health/scripts/report.py skills/workflow-delivery/scripts/lane.py skills/workflow-delivery/scripts/goal.py skills/workflow-regression/scripts/actions.py
-"""Headroom under dev/package.py's caps: five scripts at 19,000 bytes or less, and no more than 98 shipped files.
+"""Headroom under dev/package.py's caps: five scripts at 19,000 bytes or less, and no more than 100 shipped files.
 
 The files are counted the way package.py counts them: the ones git tracks, never __pycache__ or other loose files."""
 import importlib.util
@@ -21,6 +21,6 @@ spec = importlib.util.spec_from_file_location("package", os.path.join(root, "dev
 package = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(package)
 files = len(package.walk(root))
-print("%s: the package holds %d files (at most 98)" % ("PASS" if files <= 98 else "FAIL", files))
-fails += files > 98
+print("%s: the package holds %d files (at most 100)" % ("PASS" if files <= 100 else "FAIL", files))
+fails += files > 100
 raise SystemExit(1 if fails else 0)

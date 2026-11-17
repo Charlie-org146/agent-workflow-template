@@ -173,7 +173,6 @@ def covering(item, issues):
 
 
 NO_FEATURE = "No feature"
-FEATURE_LABELS_DEFAULT = False  # the feature_labels setting (workflow-setup settings.py): off until the owner turns it on
 ID = re.compile(r"^[A-Z]{2,5}-\d+[a-z]?$")
 
 
@@ -209,16 +208,6 @@ def feature_label(page):
     """The label that tags an issue with its feature: feature: plus the page name, without commas, newlines or control
     characters, cut on code points at 42 (GitHub allows 50 in all). The one helper for writing and reading it."""
     return "feature:" + "".join(c for c in page if c != "," and c.isprintable())[:42]
-
-
-def feature_labels_on(root):
-    """The feature_labels setting of .loop/config.json: only when true does any code create or apply a feature label."""
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            value = json.load(handle).get("feature_labels", FEATURE_LABELS_DEFAULT)
-    except (OSError, ValueError, AttributeError):
-        value = FEATURE_LABELS_DEFAULT
-    return value is True
 
 
 def feature_group(issue, pages):
@@ -263,6 +252,36 @@ def feature_of(root, item, cache=None):
         if page:
             return page
     return None
+
+
+MARK = re.compile(r"<!-- loop-health (.+?)(?: evidence=\w+)?(?: placed=\S*)? -->")
+
+
+def filed(root, fresh=False, read=True):
+    """{marker key: number} of the open health issues, for the findings table's Issue column (report.findings), or None
+    when not read (read=False: only a list already cached; controls clear it); fresh drops it, after file opened some."""
+    if fresh:
+        CACHE.pop((root, "health"), None)
+        CACHE.pop((root, "held"), None)
+    found = (fetch(root, "health") if read or fresh else CACHE.get((root, "health"), (None, "")))[0]
+    if found is None:
+        return None
+    out = {}
+    for issue in sorted(found, key=lambda one: one["number"]):
+        match = MARK.search(issue.get("body") or "")
+        if match and is_health(issue):
+            out.setdefault(posix(match.group(1)), issue["number"])
+    return out
+
+
+def about(root, item, cache):
+    """feature_of, but a finding about an issue (#N, finding-age) takes its feature from the health list check read."""
+    subject = str(item.get("subject") or "").strip()
+    if subject[:1] == "#" and subject[1:].isdigit():
+        pages, held = cache.setdefault("pages", features(root)), CACHE.get((root, "health"), (None, ""))[0] or []
+        page = next((feature_group(i, pages) for i in held if str(i.get("number")) == subject[1:]), NO_FEATURE)
+        return None if page == NO_FEATURE else page
+    return feature_of(root, item, cache)
 
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.

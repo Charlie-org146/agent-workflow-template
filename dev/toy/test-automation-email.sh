@@ -7,13 +7,14 @@ set -u
 group=${1:-all}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 S=$here/skills/workflow-health/scripts
 mail="python3 -B $S/mail.py"; auto="python3 -B $S/automation.py"
 unset GH_TOKEN GITHUB_TOKEN GITHUB_ACTIONS GITHUB_STEP_SUMMARY DIGEST_RUN DIGEST_MAIL_API DIGEST_SMTP_TEST_PORT MAIL_ADDR_SET MAIL_CF_SET MAIL_SMTP_SET
 unset DIGEST_TO DIGEST_FROM CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_EMAIL_TOKEN DIGEST_SMTP_USER DIGEST_SMTP_PASSWORD
-pass=0; fail=0
+pass=0; fail=0; failed=""
 ok() { echo "PASS: $1"; pass=$((pass + 1)); }
-bad() { echo "FAIL: $1"; fail=$((fail + 1)); }
+bad() { echo "FAIL: $1"; fail=$((fail + 1)); failed="$failed$1; "; }
 want() { [ "$group" = all ] || [ "$group" = "$1" ]; }
 ADDR=owner.fixture@example.test; TOKEN=cf-token-fixture-7Q2; SMTPPW=app-password-fixture-9
 
@@ -62,6 +63,10 @@ elif a[:2] == ["repo", "view"]:
     print("toy-owner")
 elif a[0] == "api" and a[1].startswith("users/"):
     print("User")
+elif a[0] == "api" and "--paginate" in a and any("/issues?" in x and "labels=" in x for x in a):  # open issues, one JSON object per line
+    fail("STUB_LIST_FAIL")
+    for i in load(re.search(r"labels=([^&]+)", next(x for x in a if "/issues?" in x)).group(1) + ".json", []):
+        print(json.dumps(i))
 elif a[0] == "api" and "PATCH" in a and os.environ.get("STUB_ISSUE_PATCH_FAIL") and "/issues/comments/" not in " ".join(a):
     sys.stderr.write("HTTP 502\n"); sys.exit(1)
 elif a[0] == "api" and "PATCH" in a and "/issues/comments/" in " ".join(a):
@@ -444,10 +449,10 @@ if want digest; then
 import sys
 c = sys.argv[1]
 heads = [l for l in c.splitlines() if l.startswith("### ")]
-assert heads == ["### Automation", "### No feature"], heads
+assert heads == ["### Automation", "### Other"], heads
 auto = c.split("### Automation")[1].split("###")[0]
 assert "**New** (1): [#12]" in auto and '- [#12](https://github.com/o/r/issues/12): `/workflow-delivery go "Fix #12"` (milestone Automation)' in auto
-nof = c.split("### No feature")[1]
+nof = c.split("### Other")[1]
 assert "**New** (1): [#14]" in nof and "**Still open** (1): [#9]" in nof and "**Fixed** (1): #5" in nof
 assert "(milestone Ops, team: A)" in nof and c.count("Ops, team: A") == 1 and "No milestone" not in c
 PY
@@ -482,8 +487,9 @@ PY
 import sys; sys.path.insert(0, '$S'); import automation, rounds as mail_render
 c, _ = automation.compose('', '', [], {3: ('u3', 99), 4: ('u4', 0), 5: ('u5', 10)}, {}, '7', {10: 'Automation'}, None, ('Automation',))
 heads = [l for l in c.splitlines() if l.startswith('### ')]
-assert heads == ['### Automation', '### No feature'], heads
-assert '**New** (2): [#3](u3), [#4](u4)' in c.split('### No feature')[1]
+assert heads == ['### Automation', '### Other'], heads
+assert '**New** (2): [#3](u3), [#4](u4)' in c.split('### Other')[1]
+
 c, _ = automation.compose('', '', [('health', 'a | b')], {}, {}, '7', {})
 page = mail_render.to_html(c)
 assert '<td>a | b</td>' in page, page
@@ -559,10 +565,10 @@ i = {x["title"].split()[2]: x for x in json.load(open(sys.argv[1]))}
 for path, home in (("skills/workflow-health/scripts/automation.py", "Backlog: Automation"), ("skills/nowhere/x.py", "Backlog: Other")):
     x = i[path]
     assert x["milestone"]["title"] == home, x
-    assert sorted(l["name"] for l in x["labels"]) == ["backlog", "health", "health:size"], x["labels"]
+    assert sorted(l["name"] for l in x["labels"]) == ["backlog", "feature:" + home[9:], "health", "health:size"], x["labels"]
     assert " placed= -->" in x["body"], x["body"]
 PY
-  grep -q -- "--milestone Backlog: Automation" "$FAKE_GH_DIR/calls.log" && grep -q -- "--milestone Backlog: Other" "$FAKE_GH_DIR/calls.log" && ! grep -q "feature:" "$FAKE_GH_DIR/calls.log" && ok "the Backlog milestones are set and no feature label call is made while feature_labels is off" || bad "calls: $(cat "$FAKE_GH_DIR/calls.log")"
+  grep -q -- "--milestone Backlog: Automation" "$FAKE_GH_DIR/calls.log" && grep -q -- "--milestone Backlog: Other" "$FAKE_GH_DIR/calls.log" && grep -q -- "--label feature:Automation" "$FAKE_GH_DIR/calls.log" && grep -q -- "--label feature:Other" "$FAKE_GH_DIR/calls.log" && ok "the Backlog milestones are set and each issue is tagged with its feature, Other when none, while feature_labels is off" || bad "calls: $(cat "$FAKE_GH_DIR/calls.log")"
   out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
   [ "$(nissues)" = 2 ] && grep -q "^SAME" <<<"$out" && ok "a second run duplicates no open issue" || bad "duplicate"
   python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
@@ -601,11 +607,11 @@ print('parsed')" ) > "$G/old.out" 2>&1
   # the feature tag, switch on
   cfg '{"feature_labels": true}'; : > "$FAKE_GH_DIR/issues.json"; rm -f "$FAKE_GH_DIR/labels.json"; : > "$FAKE_GH_DIR/calls.log"
   out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
-  python3 - "$FAKE_GH_DIR/issues.json" "$FAKE_GH_DIR/labels.json" <<'PY' && grep -q "^label create feature:Automation --description Filed by health.py file --force" "$FAKE_GH_DIR/calls.log" && ok "with feature_labels on a finding about a feature is tagged feature:<Page>, made first, and one about none is not" || bad "labels on: $out"
+  python3 - "$FAKE_GH_DIR/issues.json" "$FAKE_GH_DIR/labels.json" <<'PY' && grep -q "^label create feature:Automation --description Filed by health.py file --force" "$FAKE_GH_DIR/calls.log" && ok "with feature_labels on a finding about a feature is tagged feature:<Page>, made first, and one about none feature:Other" || bad "labels on: $out"
 import json, sys
 i = {x["title"].split()[2]: x for x in json.load(open(sys.argv[1]))}
 assert "feature:Automation" in [l["name"] for l in i["skills/workflow-health/scripts/automation.py"]["labels"]]
-assert sorted(l["name"] for l in i["skills/nowhere/x.py"]["labels"]) == ["backlog", "health", "health:size"]
+assert sorted(l["name"] for l in i["skills/nowhere/x.py"]["labels"]) == ["backlog", "feature:Other", "health", "health:size"]
 assert "feature:Automation" in json.load(open(sys.argv[2])) and "feature:Old" not in json.load(open(sys.argv[2]))
 assert all((x["milestone"] or {}).get("title", "").startswith("Backlog: ") for x in i.values())
 PY
@@ -619,7 +625,7 @@ PY
   : > "$FAKE_GH_DIR/calls.log"; out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
   grep -q "^DONE update #1 .*feature:Automation" <<<"$out" && grep -q -- "--add-label feature:Automation" "$FAKE_GH_DIR/calls.log" && ok "a repeat run backfills a missing feature label on an old issue" || bad "backfill: $out"
   cfg '{}'; : > "$FAKE_GH_DIR/calls.log"; out=$(fl skills/workflow-health/scripts/automation.py skills/nowhere/x.py)
-  ! grep -q "feature:" "$FAKE_GH_DIR/calls.log" && grep -q "^SAME" <<<"$out" && ok "with the switch off again nothing touches the feature label" || bad "off again: $out"
+  grep -q "^label create feature:Automation" "$FAKE_GH_DIR/calls.log" && grep -q "^SAME" <<<"$out" && ok "with the switch off again the feature label stays: health always tags" || bad "off again: $out"
   cfg '{"feature_labels": true}'; : > "$FAKE_GH_DIR/issues.json"; rm -f "$FAKE_GH_DIR/labels.json"
   out=$(FAKE_GH_LABEL_FAIL=feature: fl skills/workflow-health/scripts/automation.py)
   grep -q "^FAILED label feature:Automation" <<<"$out" && [ "$(nissues)" = 1 ] && ! grep -q "feature:" "$FAKE_GH_DIR/issues.json" && ok "a feature label that can't be made still files the issue, without it" || bad "label create fails: $out"
@@ -776,5 +782,6 @@ SH
   [ "$fail" = "$f0" ] && echo "PASS milestone-freeform:aut-email-regression"
 fi
 
+[ -z "$failed" ] || echo "FAILED CHECKS: $failed"
 echo "== $pass passed, $fail failed"
 [ $fail = 0 ] && [ $pass -gt 0 ]
