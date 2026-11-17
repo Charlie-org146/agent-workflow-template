@@ -83,7 +83,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.
-- `setup.py desk check` prints DESK OK only when every setup step that needs a desk is done and a phone-only session can start a goal; the steps are owned by the Machines page (MCH-4).
 
 ## Tests
 
