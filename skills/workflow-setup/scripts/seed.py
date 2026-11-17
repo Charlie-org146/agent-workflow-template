@@ -145,8 +145,8 @@ prefixes, pick, summary_of, mapping = survey.prefixes, survey.pick, survey.summa
 def decide(repo, config, found):
     """The plan: a list of (verb, path, note, action) with action None for skip and no fit."""
     acts, wiki = [], found["wiki"]
-    seen, old = out(repo, "workflow-delivery", "private.py", "visibility"), survey.read(repo, ".loop/config.json")  # one live answer
-    kept, live = json.loads(old or "{}").get("regression_runs"), {"private": "mac", "public": "actions"}.get(seen)  # mac stays, public or not
+    seen, old = out(repo, "workflow-delivery", "private.py", "visibility"), survey.read(repo, ".loop/config.json")
+    kept, live = json.loads(old or "{}").get("regression_runs"), {"private": "mac", "public": "actions"}.get(seen)
     if live or kept:
         config["regression_runs"] = "mac" if kept == "mac" else live or kept
     else:
@@ -193,7 +193,7 @@ def decide(repo, config, found):
             listed = [e["path"] for e in json.load(handle)["repos"].values()]
     except (OSError, ValueError, KeyError):
         listed = []
-    if sibling("workflow-health", "automation.py") and os.path.realpath(repo) not in listed:
+    if sibling("workflow-health", "automation.py") and os.path.realpath(repo) not in listed and (os.environ.get("LOOP_SCHEDULE_PLATFORM") or sys.platform) == "darwin":
         acts.append(("add", "local schedule", "launch agent file and registry entry outside the repo; you load it by hand", "local"))
     for line in out(repo, "workflow-delivery", "private.py", "required", "--base", config["base"]).splitlines() if seen == "private" else []:
         if line.startswith("BLOCKS: "):
