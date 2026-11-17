@@ -13,4 +13,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-affected-deleted.py`.
+   Expect: four PASS lines, including "a deleted real file reaches the rows that name it and the root runner (['tb', 'tc'])" and "negative control: a deleted VERSION (NO_EFFECT) still reaches no row ([])"; exit 0.
+2. Open the pull request's `affected` check (regression-pr.yml) on GitHub, or the next full regression run.
+   Expect: the 7 rows from #4554 (affected-quiet-release, merge-wiki-head, merge-wiki-rename-refused, merge-wiki-skill-refused, pass3-symlink-page, merge-reach-fail-closed, merge-base-undiffable) are PASS.
