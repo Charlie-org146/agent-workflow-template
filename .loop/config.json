@@ -109,5 +109,6 @@
       "cadence": "with each health round",
       "runs": "mac:agent-workflow-template-health-regression"
     }
-  ]
+  ],
+  "max_regression_rows": 1300
 }
