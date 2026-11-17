@@ -14,3 +14,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Open the regression workflow's runs on GitHub (Actions, regression) and open the first full run on main after this merges.
+   Expect: depth-on-board, depth-in-pr-body, depth-reference, aut-defect-issue, aut-old-issue-relabel, aut-email-regression, hlt4-feature-milestones, live-board-leftouts, automation-live, milestone-rows-seen-red, reg7-suite-time and health-mail-env-windows all show PASS in the run summary.
+2. On a machine with no `~/.workflow-loop` folder, run `python3 skills/workflow-setup/scripts/settings.py fill-private --file /tmp/flow.json`.
+   Expect: it prints FILLED and creates `~/.workflow-loop/repos`, with no traceback.
+
