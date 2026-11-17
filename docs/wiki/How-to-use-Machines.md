@@ -36,9 +36,9 @@ Each requirement and how it is delivered:
 - MCH-3: Backup and restore are commands. Example, from the machine-backup-restore test: given a set-up home, when backup and restore run, then restorable state moves to a new home and no secret or private-names list is copied.
 - MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
 
-- MCH-2: Goals move between machines, with one owner and one merge order. Example, from the machines-handover test: given a goal whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved.
-- MCH-3: One email stream, answered by reply. Example, from the mailbox-reply-owner test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
-- MCH-4: Phone-first: starting a worker never needs the desktop app. Example, from the desk-check-ok test: given every desk step done, when desk check runs, then it prints DESK OK.
+- MCH-4: Goals move between machines, with one owner and one merge order. Example, from the machines-handover test: given a goal whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved.
+- MCH-5: One email stream, answered by reply. Example, from the mailbox-two-mails test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
+- MCH-6: Phone-first: starting a worker never needs the desktop app. Example, from the desk-lists test: given every desk step done, when desk check runs, then it prints DESK OK.
 
 ### Command: machines.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/machines.py handover SLUG --to MACHINE | take SLUG | snapshot [--publish] | turn`
