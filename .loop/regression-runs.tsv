@@ -516,9 +516,11 @@ settings-overridden	PASS	2026-11-12
 settings-publish-refresh	PASS	2026-11-12	
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
+settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
 settings-render-fresh	FAIL	2026-11-16	
 settings-stale	PASS	2026-11-12	
+settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
