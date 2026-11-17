@@ -14,6 +14,17 @@ Lists every guardrail the template has or needs, each with what it protects agai
 | `sessions.py bind` | Command | Binds a frozen goal to its worker session and prints the WORKER command. | `python3 skills/workflow-monitoring/scripts/sessions.py bind SLUG ID`. |
 | `.loop/config.json` | API/file contract | The guardrail settings the loop reads: budgets, silence limits and the page criteria cap. | Ask for "Show me every setting"; edit a value in the file to change a guardrail. |
 
+### System diagram
+
+```text
+[API/file contract: .loop/config.json | the repo] --budgets and silence limits--> [Command: goal.py step | the worker's worktree]
+[Command: sessions.py bind | the operation session] --binds the goal to its worker session--> [Command: goal.py step | the worker's worktree]
+[Command: goal.py step | the worker's worktree] --refuses--> (refused: a guard says stop)
+[Command: goal.py step | the worker's worktree] --its run record, TOKENS first--> [Command: goal.py show | the worker's worktree]
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

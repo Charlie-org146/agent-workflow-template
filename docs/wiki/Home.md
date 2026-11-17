@@ -15,6 +15,37 @@
 | Operations | [Setup](Setup) | Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, keeps it in step with the template, adopts several repos in one pass through `board.py repos adopt`, and lists, with the exact instruction, what the owner must still do on a new machine. | [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup) | [Setup](https://github.com/jcl2018/agent-workflow-template/milestone/9) |
 | Docs | [Documentation](Documentation) | Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section; each feature's How-to-use page, with a short start in the README's How to use tables and each skill's command reference, covers usage), and publishes them on every release; the README's Automation rows follow the Automation requirements and show health on the Mac's local schedule; a PRD the owner opts in, at a `url:` or `mcp:` source, is kept as a copy in the repo, `.loop/prd/PAGE.md`, which every check reads and the page shows as a generated block, and `docs.py sync` keeps it in step with the source, showing every difference as a delta and a change on both sides as a conflict (DOC-17). | [How to use Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Documentation) | [Documentation](https://github.com/jcl2018/agent-workflow-template/milestone/3) |
 
+<!-- diagram:begin -->
+## System diagram
+
+The whole loop on one page: each part, where it runs, and the flows between them. Each feature's own diagram is on its How-to-use page.
+
+```text
+ THE OWNER (any machine)
+   | says a goal in one sentence, answers what waits on them, reviews pull requests
+   v
+ [OPERATION SESSION | the PC or the Mac, governs and never builds]
+   | assigns one goal each          ^ every step's result, every question
+   v                                |
+ [WORKER SESSIONS | each in its own worktree, one goal each]
+   freeze -> idea -> plan -> build -> review -> qa -> ship -> pull request -> release
+   |  guard: a step that fails 3 times stops and files a finding      |
+   |  guard: a Reviewed requirement is never edited without the owner |
+   v                                                                  v
+ [STAGING | planned: a staging branch and release candidates]  -> [PRODUCTION | main and its tagged release]
+   (the owner promotes; planned, not built)                          |
+                                                                     v
+                                                  [GITHUB WIKI | published pages, never a page it did not write]
+
+ [MACHINES | the PC and the Mac, each set up from a git clone and one command]
+   run the operation session, the workers and the scheduled routines
+ [SCHEDULED ROUTINES | the always-on machine and GitHub Actions]
+   health round --> issues and a digest mail ; regression round --> one issue per failing row
+
+Legend: [box] a part and where it runs; --> or v a flow of work; "guard" a rule that refuses; planned = not built yet.
+```
+<!-- diagram:end -->
+
 <!-- settings:begin -->
 ## Settings
 

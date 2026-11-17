@@ -13,6 +13,16 @@ Turns any repo into a ready workspace for any agent without ever blocking, judge
 | `setup.py` | Command | Surveys a repo and writes its `.loop/` config on a branch. | `python3 skills/workflow-setup/scripts/setup.py`. |
 | `unattended.py` | Command | Checks what an unattended run needs, replays the golden adoption and lists connectors. | `python3 skills/workflow-monitoring/scripts/unattended.py prerequisites`. |
 
+### System diagram
+
+```text
+[Skill: workflow-setup | the agent session] --surveys the repo--> [Command: setup.py | the repo checkout]
+[Command: setup.py | the repo checkout] --writes it--> (.loop/ config on a branch)
+[Command: unattended.py | the repo checkout] --checks what an unattended run needs--> (connector and prerequisite list)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

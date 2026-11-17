@@ -479,7 +479,7 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
   tables and blank lines: at most one Page table `| Page | Link | Access | Shows | Live build |` (`deployments_page`) and
   at most one Delivery table `| Delivery | Channel | Recipients | What's sent | Status |` (`deployments_delivery`), each
   with its separator row and at least one row, headers exact after trimming spaces. Page rows: Page and Shows filled,
-  Link a full `https://` URL, Access one of `deployments_access` (public, sign-in), Live build the 7 to 40 hex sha in
+  Link a full secure link (the https scheme), Access one of `deployments_access` (public, sign-in), Live build the 7 to 40 hex sha in
   the page's build.txt, in backticks. Delivery rows: every cell filled, and Recipients a group name, never an email
   address. A `|` inside a cell is written `\|`. Not part of the PRD fingerprints: it changes with each deploy. The
   live-link and promoted-build check runs in the deploying repo for now.
@@ -494,7 +494,7 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
 
 - **Home** (`home`, DOC-4): the marker, `# <repo>`, `## Features` and one table
   `| Feature | What it does | How to use | Milestone |`, nothing else, with one row per feature page. Feature is
-  `[Page](Page)`; How to use is `[README](https://github.com/OWNER/REPO#how-to-use-<feature>)`, an anchor of the README's
+  `[Page](Page)`; How to use is `[README](<this repo's link>#how-to-use-<feature>)`, an anchor of the README's
   `### How to use <Feature>` heading; Milestone is optional: empty, a link such as `…/milestone/N`, or free text, never checked.
   Home may also hold the generated `## Settings` and `## Automation` blocks, each between `<!-- settings:begin -->`/`end` (or `automation`) markers; the check skips them and holds them to a fresh render instead.
 - **README** (`frontdoor`, DOC-5): `## How to use`, then one `### How to use <Feature>` per feature page, each with at most
@@ -518,7 +518,7 @@ rewritten.
 <!-- workflow-docs -->
 # Billing
 
-Milestone: https://github.com/owner/repo/milestone/9
+Milestone: <this repo's link>/milestone/9
 
 Review: **Unreviewed**
 

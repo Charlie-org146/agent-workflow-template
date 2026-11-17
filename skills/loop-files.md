@@ -146,7 +146,7 @@ loop/runs/<slug>.qa-lane.*, ship-lane.*, pr-lane.*   a goal's regression lanes: 
 {
   "slug": "add-median", "goal": "Add median()",
   "status": "running", "step": "build", "tries": 0, "branch": "loop/add-median", "worktree": "/path",
-  "touches": ["calc.py"], "pid": 123, "pr": "https://github.com/o/r/pull/1", "batch": true,
+  "touches": ["calc.py"], "pid": 123, "pr": "<pull request link>", "batch": true,
   "done_sha": "<sha256 of the done lines>", "release": "ask",
   "flow": {"idea": "done", "plan": "done", "review": "done", "qa": "skipped: no browser", "ship": "done"},
   "waiting": {"ask": "Cut a release or leave it unreleased?", "words": ["cut add-median", "leave add-median"]},

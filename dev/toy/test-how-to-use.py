@@ -32,9 +32,31 @@ GOOD = """<!-- workflow-docs -->
 
 It does a thing for its users, in one plain sentence here.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `a.py` | Command | Does a thing. | Run it. |
+
+### System diagram
+
+```text
+[Command: a.py | the repo checkout] --writes--> (a file)
+
+Legend: a box is Kind, Component and where it runs.
+```
+
 ## How to reach or run it
 
 Say "run it" to the agent.
+
+### Command: a.py
+
+- **Command:** `python3 a.py go`
+- **Dry run:** none
+- **Reads:** its input
+- **Writes:** nothing
+- **Exit codes:** 0 done
 
 ## Links
 
