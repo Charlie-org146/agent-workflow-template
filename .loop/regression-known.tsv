@@ -20,23 +20,15 @@ del8-session-tokens	not built: only headless goals are refused past token_budget
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
-no-flow-refused	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-pending-waits	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-stale-found	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-publish-refused-stale	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-no-token-dry-run	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-cut-needs-verify	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-refused-unmet	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-stale-page-row	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-no-token-would	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-worker-per-goal	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-worker-reports	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
-no-prompts	fails on main v1.0.42; notify.py starts processes without the guard (DEL-10), seen inside a Claude session on the Mac
-wiki-release	fails on main v1.0.42 (test-wiki.sh: goal did not reach a pull request) inside a Claude session on the Mac
-tests-table-columns	fails on main v1.0.42 (test-criteria.sh: conforming page), seen on the Mac
-tests-row-shape	fails on main v1.0.42 (test-criteria.sh: rendered table), seen on the Mac
+stale-found	red on main (in-session flow.py path, see #4852)
+publish-refused-stale	red on main (in-session flow.py path, see #4852)
 auto-release	red on main
 trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
 package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
+no-token-dry-run	red on main (scheduled regression 2026-11-17)
+refused-unmet	red on main (scheduled regression 2026-11-17)
+stale-page-row	red on main (scheduled regression 2026-11-17)
+no-token-would	red on main (scheduled regression 2026-11-17)
+no-prompts	red on main (scheduled regression 2026-11-17)
