@@ -13,4 +13,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Open the regression run of this branch linked on issue #4553 and find the 14 rows it names.
+   Expect: each shows PASS except lanes-trace, whose remaining cause (the suite-wide trace exceeds the 900 s CI row limit, #4153) is written on #4553.
+2. On a Mac or Linux shell in this repo, run `bash dev/toy/test-setup-adopt.sh setup-refusal-writes-120`.
+   Expect: it ends with PASS lines and no "something stayed written"; no `.git/index.lock` is left in its temp repos.
