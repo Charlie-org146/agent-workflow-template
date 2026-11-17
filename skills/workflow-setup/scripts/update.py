@@ -11,6 +11,7 @@ import io
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -95,6 +96,14 @@ def guard_staged(repo, paths):
     return out
 
 
+def stop(proc, sig):
+    """Send sig to proc's process group; a group that already ended is fine."""
+    try:
+        os.killpg(proc.pid, sig)  # posix-only branch
+    except ProcessLookupError:
+        pass
+
+
 def commit(repo, message, files):
     """(exit code, output) of git commit for exactly these files, in its own process group."""
     proc = subprocess.Popen(["git", "-C", repo, "commit", "--allow-empty", "-m", message, "--"] + files, stdout=subprocess.PIPE,
@@ -102,8 +111,14 @@ def commit(repo, message, files):
     try:
         out = proc.communicate()[0]
     except BaseException:
-        kill = ["taskkill", "/T", "/F", "/PID", str(proc.pid)]
-        subprocess.run(kill, capture_output=True) if os.name == "nt" else os.killpg(proc.pid, 9)  # posix-only branch
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        else:  # posix-only branch: TERM first, so git removes its index.lock before it exits (a KILL leaves it behind)
+            stop(proc, signal.SIGTERM)  # posix-only branch
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                stop(proc, signal.SIGKILL)  # posix-only branch
         proc.wait()
         raise
     return proc.returncode, out
