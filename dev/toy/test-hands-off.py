@@ -80,6 +80,7 @@ if want("fallback"):
         watch.launch = lambda s, prompt, c: launches.append(s["slug"])
         watch.sessions.assign = lambda s, prompt, c: False  # a scheduled or Remote Control turn: no session can start
         watch.sessions.HUNG.clear()
+        watch.lim.plan_pause = watch.lim.memory_hold = lambda cfg: ""  # this machine's memory must not decide the test
         Args.background = background
         watch.start_round(Args, cfg)
         return launches
