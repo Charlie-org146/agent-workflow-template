@@ -14,3 +14,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps a person can follow, each with an Expect: line. -->
+
+1. In a clone of this repo, run `python3 skills/workflow-health/scripts/health.py check`.
+   Expect: right after the `groups run:` line, a `FINDINGS (N)` line and one table with the columns Feature, Group, Rule, Severity, Finding and Issue; every Feature cell is a wiki page name or Other, sorted by feature with Other last.
+2. Run `python3 skills/workflow-health/scripts/health.py preview --group size` with `feature_labels` false in `.loop/config.json`.
+   Expect: every WOULD line's tags include `feature:<Page>` or `feature:Other`.
+3. After the next scheduled health round, open the pinned Automation digest issue's newest comment.
+   Expect: a `### Findings` section with the same table, each issue number a link, and the per-feature sections titled by page or Other (never "No feature").
