@@ -154,7 +154,7 @@ def table(top, name):
 
 
 def waivers(top, kind):
-    """{subject: detail} of release-waivers.tsv rows (kind, subject, detail, record) whose owner-words record names the subject."""
+    """{subject: detail} of release-waivers.tsv rows whose owner-words record names the subject."""
     said = {r[0]: (r[3] + r[4]).lower() for r in table(top, "owner-words.tsv")}
     return {r[1]: r[2] for r in table(top, "release-waivers.tsv") if r[0] == kind and r[2] and r[1].lower().lstrip("#") in said.get(r[3], "-")}
 
@@ -168,7 +168,6 @@ def gh_json(*args):
 
 
 def check_reviews(work, cfg):
-    """REL-4: every requirement on a feature page must be Reviewed by the owner."""
     out, counts = [], {}
     for page in release.doc_rows(work):
         try:
@@ -185,18 +184,20 @@ def run_in(work, script, *args):
     path = os.path.join(work, "skills", script)
     try:
         return subprocess.run([sys.executable, path] + list(args), cwd=work, capture_output=True, text=True,
-                              timeout=int(os.environ.get("LOOP_GATE_SECONDS") or 3600)).stdout if os.path.exists(path) else ""
+                              timeout=int(os.environ.get("LOOP_GATE_SECONDS") or 14400)).stdout if os.path.exists(path) else ""
     except subprocess.TimeoutExpired:
         return ""
 
 
 def check_suite(work, red):
-    """REL-3: the full suite; a FAIL, NOTRUN, ENV or KNOWN row refuses unless a red waiver names its issue."""
-    rows = re.findall(r"^(PASS|FAIL|KNOWN|NOTRUN|ENV) (\S+)", run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly"), re.M)
-    tally = {k: sum(s == k for s, _ in rows) for k in ("PASS", "FAIL", "KNOWN", "NOTRUN", "ENV")}
+    """REL-3: a FAIL, NOTRUN, ENV, KNOWN or budget-LEFT row refuses unless a red waiver names its issue."""
+    text = run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly")
+    rows = re.findall(r"^(PASS|FAIL|KNOWN|NOTRUN|ENV) (\S+)", text, re.M)
+    rows += [("LEFT", "budget-left")] * bool(re.search(r"^BUDGET .*LEFT [1-9]", text, re.M))
+    tally = {k: sum(s == k for s, _ in rows) for k in ("PASS", "FAIL", "KNOWN", "NOTRUN", "ENV", "LEFT")}
     if not rows:
         return [("suite", "the suite did not run", ["suite"])], tally
-    return [("suite", "row %s is %s and no owner waiver names an issue" % (r, s), [r]) for s, r in rows if s != "PASS" and r not in red], tally
+    return [("suite", "row %s is %s with no owner waiver naming an issue" % (r, s), [r]) for s, r in rows if s != "PASS" and r not in red], tally
 
 
 def check_health(work):
@@ -206,7 +207,7 @@ def check_health(work):
 
 
 def gate_refusals(top, cfg, ver, ref, suite=True):
-    """([(check, subject, keys)], facts): the five checks on ref in a throwaway worktree, saved to loop/gate/vX.json."""
+    """([(check, subject, keys)], facts): the five checks on ref, saved to loop/gate/vX.json."""
     work, moved, base = tempfile.mkdtemp(prefix="gate-"), waivers(top, "moved"), release.base_of(top, cfg)
     got = gh_json("issue", "list", "--milestone", "v%d.0" % ver, "--state", "open")
     out = [("issues", "#%d %s" % (i["number"], i["title"][:60]), ["#%d" % i["number"]]) for i in got or [] if "#%d" % i["number"] not in moved]
@@ -263,7 +264,6 @@ def email(top, subject, text):
 
 
 def state_report(top, ver, tag, sha, facts):
-    """REL-6: review state, tests, health, closed issues and changes since the last major."""
     prior = ([t for t in release.git("tag", "--list", "v*.0.0", "--sort=-v:refname", cwd=top, check=False).split() if t != tag] or [""])[0]
     closed = gh_json("issue", "list", "--milestone", "v%d.0" % ver, "--state", "closed") or []
     reqs = ["- %s: %d Reviewed, %d Unreviewed" % (p, c[0], c[1]) for p, c in sorted(facts.get("reqs", {}).items())]
@@ -302,7 +302,7 @@ def promote(top, cfg, ver, rec, ref):
 
 
 def revert(top, cfg, ver):
-    """REL-7: a pull request that puts main's tree back on release/vX; main is never pushed."""
+    """REL-7: a pull request putting main's tree back on release/vX."""
     rel, base = "release/v%d" % ver, cfg.get("base", "main")
     release.run(["git", "fetch", "-q", "origin", rel, base], cwd=top)
     snap = next((n for n in ("origin/" + rel, rel) if OK([n], top)), "")

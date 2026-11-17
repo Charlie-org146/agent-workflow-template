@@ -954,8 +954,6 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
-| <a id="t-rel-page-held"></a>rel-page-held | requirement | REL-1 | not run | - | local | 2026-11-17 |
-| <a id="t-rel-sizes-held"></a>rel-sizes-held | requirement | REL-6 | not run | - | local | 2026-11-17 |
 
 ## Setup
 

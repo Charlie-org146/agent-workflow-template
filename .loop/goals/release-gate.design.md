@@ -53,3 +53,4 @@ are all settled, nothing but gate fixes enters after the rc is cut, and a snapsh
 - Which pages are "the milestone's features": every page in docs.tsv that holds requirements (stricter, simplest).
 - Mail secrets live in Actions only, so promote from a PC prints EMAIL not sent unless the secrets are in the environment.
 - release-channels' promote of minors and patches is untouched; its promote should call `review.gate_refusals()` for a major.
+- A suite over `max_suite_seconds` (main records 9,419 s against 1,900): the gate does not fail on time, because the cap has its own refusal (role.py qa, health Performance); it waits up to four hours (`LOOP_GATE_SECONDS`, default 14,400) and refuses when the run was stopped by a budget with rows left, since unrun rows prove nothing. No owner decision needed for that; the row cap (8 net new rows for REL-1..8, one row per requirement) does need one.

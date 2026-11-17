@@ -6,7 +6,7 @@ writes the state report and mails it; a cut rc freezes the merge; `revert` opens
 bumps a major; the Release page holds REL-1 to REL-8, Unreviewed; the scripts stay under their size caps.
 
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
-process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major|page|sizes]  (one leg: only its checks decide the exit)"""
+process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major]  (one leg: only its checks decide the exit)"""
 import contextlib
 import io
 import json
@@ -167,6 +167,9 @@ waive(("red", "stale-row", "#9", "o2"), ("red", "broken-row", "#9", "o404"))
 code, said = gate()
 check("a row waived with an issue and an owner record does not refuse; one without a record does", "row stale-row" not in said and "row broken-row" in said, said, "rows")
 waive()
+SUITE[:] = ["PASS a", "BUDGET 15 min: ran 1 of 9 rows; LEFT 8 to the scheduled full suite: x, y"]
+code, said = gate()
+check("a suite stopped by its time budget with rows left refuses: rows that did not run prove nothing", code == 1 and "(suite): row budget-left is LEFT" in said, said, "rows")
 SUITE[:] = []
 code, said = gate()
 check("a suite that did not run refuses", code == 1 and "(suite): the suite did not run" in said, said, "rows")
@@ -312,7 +315,7 @@ check("release.bump still bumps a minor and a patch", release.bump("1.0.54", "mi
 # 7. the page (REL-1 to REL-8) and the sizes
 text = open(os.path.join(root, "docs", "wiki", "Release.md"), encoding="utf-8").read() if os.path.exists(os.path.join(root, "docs", "wiki", "Release.md")) else ""
 ids = re.findall(r"^- (REL-\d+): \*\*(Unreviewed|Reviewed[^*]*)\*\*", text, re.M)
-check("the Release page holds REL-1 to REL-8, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 9)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "page")
+check("the Release page holds REL-1 to REL-8, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 9)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "major")
 over = []
 for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:
@@ -321,7 +324,7 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
             cap = 19495 if name == "checkin.py" else 19000
             if size > cap and name in ("review.py", "merge.py", "release.py", "checkin.py"):
                 over.append("%s %d" % (name, size))
-check("review.py, merge.py and release.py stay under 19,000 bytes, and checkin.py at or under 19,495", not over, ", ".join(over), "sizes")
+check("review.py, merge.py and release.py stay under 19,000 bytes, and checkin.py at or under 19,495", not over, ", ".join(over), "major")
 added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
-check("no file is added to the shipped package", not added.strip(), added, "sizes")
+check("no file is added to the shipped package", not added.strip(), added, "major")
 sys.exit(1 if fails else 0)

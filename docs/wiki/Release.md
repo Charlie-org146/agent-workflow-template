@@ -24,6 +24,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
 - REL-3: **Unreviewed** The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue
   - The gate runs the whole nightly suite on a checkout of the candidate, not the goal lane.
   - A row that fails, could not run or is on the known-red list refuses, naming the row, unless a `red` waiver gives its issue and its owner record names the row; a suite that did not run refuses.
+  - A suite that runs past `max_suite_seconds` is not itself a refusal (health reports that cap); the gate waits up to four hours (`LOOP_GATE_SECONDS`), and a run a time budget stopped with rows left refuses, since rows that did not run prove nothing.
 - REL-4: **Unreviewed** Health passes, every requirement is Reviewed by the owner, and no wiki page is stale
   - The gate runs the health check on the candidate and refuses unless it prints `HEALTH: green`.
   - It refuses each requirement on a feature page that is still Unreviewed, naming the requirement and its page, and each page the docs audit calls stale.
@@ -60,7 +61,6 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [rel-major-refused](Tests#t-rel-major-refused) | requirement | REL-1 | Given a goal whose release would bump a major, when release.py bumps the version, then it refuses naming review.py promote; a minor and a patch still bump. | not run |
-| [rel-page-held](Tests#t-rel-page-held) | requirement | REL-1 | Given the Release wiki page, when it is read, then it holds REL-1 to REL-8, all Unreviewed. | not run |
 | - | requirement | REL-1 | no passing test | not enforced |
 | [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | REL-2 | Given a milestone with an open issue the owner has not moved by name, when review.py gate runs, then it refuses naming the issue; an issue with a waiver whose owner record names it does not refuse. | not run |
 | - | requirement | REL-2 | no passing test | not enforced |
@@ -71,7 +71,6 @@ None
 | [rel-freeze-refuses](Tests#t-rel-freeze-refuses) | requirement | REL-5 | Given a cut release candidate for a major, when a goal that names no recorded gate failure merges, then merge.py refuses with frozen for vX.0.0 and merges nothing; a goal naming one, or a release already tagged, goes on. | not run |
 | - | requirement | REL-5 | no passing test | not enforced |
 | [rel-promote-snapshot](Tests#t-rel-promote-snapshot) | requirement | REL-6 | Given a release candidate with every gate check green and an owner record naming the version, when promote runs, then it tags vX.0.0, keeps release/vX, moves main, publishes the state report and mails it; a refused gate makes no tag, branch or release. | not run |
-| [rel-sizes-held](Tests#t-rel-sizes-held) | requirement | REL-6 | Given the release scripts, when their sizes are read, then review.py, merge.py and release.py are under 19,000 bytes, checkin.py is at or under 19,495 and no file is added to the shipped package. | not run |
 | - | requirement | REL-6 | no passing test | not enforced |
 | [rel-revert-pr](Tests#t-rel-revert-pr) | requirement | REL-7 | Given release/vX, when revert vX runs, then a branch with the snapshot's tree on top of main is pushed and a pull request to main is opened, and main itself is never pushed. | not run |
 | - | requirement | REL-7 | no passing test | not enforced |
