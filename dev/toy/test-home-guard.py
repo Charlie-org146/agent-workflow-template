@@ -68,7 +68,9 @@ with tempfile.TemporaryDirectory() as tmp:
     code, said = toy(tmp, "reg-other.sh", 'printf \'{"repos": {"real": {"path": "/srv/work/real"}}}\' > "$TOY_REAL_WL/schedule/repos.json"; cp "$TOY_REAL_WL/schedule/repos.json" "$TOY_REAL_WL/schedule/repos.json.bak-2026-11-17"')
     check("another session's change to the registry (a real repo, a backup) is not a leak (#4760)", code == 0 and "LEAK" not in said, said)
     open(reg, "w").write('{"repos": {}}')
-    code, said = toy(tmp, "reg-toy.sh", 'd=$(mktemp -d); printf \'{"repos": {"fixture": {"path": "%s"}}}\' "$d" > "$TOY_REAL_WL/schedule/repos.json"')
+    # Keep the fixture under Python's temp root: macOS mktemp can ignore a lane's TMPDIR.
+    # TemporaryDirectory owns both the fixture and its deliberately leaked registration.
+    code, said = toy(tmp, "reg-toy.sh", 'd="$TOY_REAL_WL/../fixture"; mkdir -p "$d"; printf \'{"repos": {"fixture": {"path": "%s"}}}\' "$d" > "$TOY_REAL_WL/schedule/repos.json"')
     check("a toy that registers a fixture repo in the temp folder fails with a LEAK line (#4760)", code != 0 and "LEAK" in said and "schedule/repos.json#fixture" in said, said)
     open(reg, "w").write('{"repos": {}}')
     # skills-main: another session moves the checkout (clean afterwards); a toy leaves a modified or an untracked file
