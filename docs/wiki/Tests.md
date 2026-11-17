@@ -396,6 +396,29 @@
 | <a id="t-doc19-command-listed"></a>doc19-command-listed | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc19-readme-links"></a>doc19-readme-links | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-doc19-diagram-passes"></a>doc19-diagram-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-missing"></a>doc19-diagram-missing | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-row-box"></a>doc19-diagram-row-box | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-extra-box"></a>doc19-diagram-extra-box | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-legend"></a>doc19-diagram-legend | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-where"></a>doc19-diagram-where | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-own-links"></a>doc19-alone-own-links | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-issue"></a>doc19-alone-issue | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-ci"></a>doc19-alone-ci | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-host"></a>doc19-alone-host | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-other-repo"></a>doc19-alone-other-repo | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-foreign-ref"></a>doc19-alone-foreign-ref | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-path"></a>doc19-alone-path | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-unix-path"></a>doc19-alone-unix-path | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-exempt"></a>doc19-alone-exempt | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-files"></a>doc19-alone-files | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-ok"></a>doc4-home-diagram-ok | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-missing"></a>doc4-home-diagram-missing | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-part"></a>doc4-home-diagram-part | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-unread"></a>doc4-home-diagram-unread | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-skill-schedule-unlisted"></a>doc19-skill-schedule-unlisted | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-skill-schedule-listed"></a>doc19-skill-schedule-listed | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | no |
 
 ## Guardrails
 
@@ -1270,3 +1293,9 @@
 | <a id="t-health-auto-rules"></a>health-auto-rules | requirement | done line full-auto-all:3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) open (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-done-docs-v2-1"></a>done-docs-v2-1 | workflow | done line docs-v2:1 | not run | - | local | no |
+| <a id="t-done-docs-v2-2"></a>done-docs-v2-2 | workflow | done line docs-v2:2 | not run | - | local | no |
+| <a id="t-done-docs-v2-3"></a>done-docs-v2-3 | workflow | done line docs-v2:3 | not run | - | local | no |
+| <a id="t-done-docs-v2-4"></a>done-docs-v2-4 | workflow | done line docs-v2:4 | not run | - | local | no |
+| <a id="t-done-docs-v2-5"></a>done-docs-v2-5 | workflow | done line docs-v2:5 | not run | - | local | no |
+| <a id="t-done-docs-v2-6"></a>done-docs-v2-6 | workflow | done line docs-v2:6 | not run | - | local | no |
