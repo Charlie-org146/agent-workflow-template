@@ -193,6 +193,11 @@
 | <a id="t-held-charge-idle"></a>held-charge-idle | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
+| <a id="t-agent-routing-build-codex"></a>agent-routing-build-codex | requirement | DEL-16 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-review-heavy"></a>agent-routing-review-heavy | requirement | DEL-16 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-record-both"></a>agent-routing-record-both | requirement | DEL-16 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-fallback"></a>agent-routing-fallback | requirement | DEL-16 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-new-profile"></a>agent-routing-new-profile | requirement | DEL-16 | not run | - | local | 2026-11-17 |
 
 ## Documentation
 
