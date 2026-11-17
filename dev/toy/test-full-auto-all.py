@@ -122,7 +122,12 @@ classes = {"destructive-delete": "Delete the old worktree directory?", "destruct
            "money-billing": "Raise the billing limit for the account?", "security-key": "Print the API key into the log?",
            "security-perm": "Add an allow rule to the permissions list?", "security-sandbox": "Turn the sandbox off for this run?",
            "private-names": "Add the private name to the names list?", "private-mail": "Send the digest to the Dropbox folder?",
-           "merge-steward": "Merge the steward's pull request now?"}
+           "merge-steward": "Merge the steward's pull request now?",
+           "token-rotate": "Rotate the token?", "write-access": "Grant write access to the repo?", "security-word": "Enable the security setting change?",
+           "authorization": "Update the authorization header?", "close-pr": "Close PR #12 from another contributor?",
+           "reset-branch": "Reset the branch to origin/main?", "unpublish": "Unpublish the package?", "purge": "Purge the cache?",
+           "cleanup": "Clean up old worktrees?", "charge": "Charge the card?", "gmail": "Read the user's Gmail?",
+           "records": "Store customer records in the db?", "eta-text": "Extend the ETA by 30 minutes?", "merge-pr": "Merge pull request #7 now?"}
 for slug, text in classes.items():
     ask(w, slug, text, "owner" if slug.endswith(("delete", "key", "names")) else "routine")
 for kind in ("destructive", "money", "security"):
@@ -198,17 +203,24 @@ check(record("g1", "an ETA change") == "REFUSED", "an ETA move never accepts the
 # 5b. pre-flight: the recommended answer rides the standing record when no item is a safety class
 check(record("g9", "the recommended pre-flight answer") == rid and record("g9", "the recommended pre-flight answer") == rid,
       "the recommended pre-flight answer may cite the standing record again and again")
-check(record("g9", "a pre-flight answer") == "REFUSED", "a chosen pre-flight answer needs the goal's own record")
+check(record("g1", "a pre-flight answer") == "REFUSED", "a chosen pre-flight answer needs the goal's own record, even after an auto answer")
+ask(w, "g2", "Which helper name should the toy use?", "routine")
+auto.decide_all(w)
+check(record("g2", "raising a budget") == "REFUSED", "a budget raise needs an auto answer about a budget, not any auto answer")
 items = {"plan": ("the plan step ends pending and waits for your approval (auto_approve is off)", "approve ahead"),
          "budget": ("its time budget is 240 minutes; held and waiting time may count toward it", "keep"),
          "memory": ("memory is under the floor", "lower min_free_memory_gb to the free memory"),
          "quota": ("the GitHub API quota is 10 requests; pr steps stall at 0", "go on with local steps")}
 check(all(auto.why_not({"ask": a, "words": [r], "recommend": r, "kind": "owner"}, {}) == "" for a, r in items.values()),
       "the plan, budget, memory and quota pre-flight items are answered with their recommendation")
+check(auto.why_not({"ask": "Merge main into the branch?", "words": ["yes"], "recommend": "yes", "kind": "routine"}, {}) == "",
+      "merging main into the goal's branch is routine and answered")
 check(auto.why_not({"ask": "the private-name list would refuse: x.py", "words": ["edit the list line"], "recommend": "edit the list line", "kind": "owner"}, {}) != "",
       "the private-name pre-flight item waits for the owner")
 
 # 6. health: an AUTO line that hits a safety class, or carries no rule record, fails; the clean log is clean
+with open(os.path.join(loop(w), "auto.log"), "a") as handle:
+    handle.write("2026-11-16T00:00:00Z | old | AUTO | which name? | yes | routine, recommended\n")
 clean = auto.auto_rows(w)
 check(not clean, "health is clean over the log full auto wrote")
 with open(os.path.join(loop(w), "auto.log"), "a") as handle:

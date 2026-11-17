@@ -33,11 +33,11 @@ def cls(stems):  # whole words with an ending (delete, deleted); "~" is a space
     return re.compile(r"\b(?:%s)(?:e|es|ed|ing|s|ion|ions|al|als)?\b" % "|".join(stems.split()).replace("~", " "), re.I)
 
 
-CLASSES = {"destructive": cls("delet remov drop dropp rm wip truncat discard forc overwrit overwritten renam rebas amend squash eras destroy uninstall kill unlink rmdir revert rewrit rewritten publish releas deploy deployment migrat schema reset~--hard git~clean"),
-           "money": cls("pay payment purchas billing invoice money credits? card~on~file subscription buy bill paid price"),
-           "security": cls("secret credential password passphrase api[~_-]?key ssh[~_-]?key private~key signing~key (?:api|access|auth|bearer)~token permission allowlist allow~rule sandbox auth authenticat authoriz secur licens access~control"),
-           "private data": cls("private[~-]name private[~-]list private[~-]data dropbox mail e-?mail inbox smtp"),
-           "steward merge": cls("steward merg\\w*(?:\\W+\\w+){0,3}\\W+(?:pull~request|PR|main)")}
+CLASSES = {"destructive": cls("delet remov drop dropp rm wip truncat discard clos cancel purg unpublish reset clean~up forc overwrit overwritten renam rebas amend squash eras destroy uninstall kill unlink rmdir revert rewrit rewritten publish releas deploy deployment migrat schema reset~--hard git~clean"),
+           "money": cls("pay payment purchas billing invoice money credits? card~on~file subscription buy bill paid price charg dollar usd cost~(?:money|\\$)"),
+           "security": cls("secret credential password passphrase api[~_-]?key ssh[~_-]?key private~key signing~key (?:api|access|auth|bearer)~token permission allowlist allow~rule sandbox auth authenticat\\w* authoriz\\w* secur\\w* licens access~control (?:write|admin|root)~access grant rotat"),
+           "private data": cls("private[~-]name private[~-]list private[~-]data private[~-]repos? dropbox mail gmail e-?mail inbox smtp (?:customer|personal|private)~records?"),
+           "steward merge": cls("steward merg\\w*(?:\\W+\\w+){0,3}\\W+(?:pull~request|PR|\\#\\d+)")}
 
 
 def top():
@@ -81,7 +81,7 @@ def why_not(waiting, cfg, ask_always=False):
         return "unknown kind %s" % kind
     if kind in ("destructive", "money", "security"):
         return "a %s decision is the owner's" % kind
-    if waiting.get("eta") or ask_always:
+    if waiting.get("eta") or ask_always or re.search(r"\bETA\b", str(waiting.get("ask"))):
         return "an ETA choice or an always-ask goal is the owner's"
     if not rec or rec not in (waiting.get("words") or []):
         return "no recommended answer"
@@ -199,10 +199,11 @@ def owner_rows(root="."):
 
 def auto_rows(root):
     """(rule, FAIL, text): auto-record (an AUTO line without an existing standing record), auto-safety (an AUTO line in a safety class)."""
-    out, rules = [], {r[0] for r in owner_rows(root) if RULE in r[4].split(",")}
+    out, rules = [], {r[0]: r[1] for r in owner_rows(root) if RULE in r[4].split(",")}
+    first = min(rules.values(), default="")  # AUTO lines from before the rule existed are history
     for p in (map(str.strip, x.split(" | ")) for x in since(root, "")):
         p = list(p)
-        if len(p) > 5 and p[2] == "AUTO":
+        if len(p) > 5 and p[2] == "AUTO" and p[0] >= first:
             found = re.search(r"owner rule (o\d+)", p[5])
             found and found.group(1) in rules or out.append(("auto-record", "FAIL", "%s has an auto answer with no standing owner rule record" % p[1]))
             hit = next((n for n, x in CLASSES.items() if x.search(p[3] + " " + p[4])), "")
@@ -297,7 +298,7 @@ def eta_record(g, rid, slug, what):
     if not rid:
         g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
     found = [r for r in owner_rows() if r[0] == rid]
-    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and (what.startswith("the recommended") or any(" | %s | AUTO | " % slug in x for x in since(top(), ""))):
+    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and (what.startswith("the recommended") or what == "raising a budget" and any(" | %s | AUTO | " % slug in x and "budget" in x for x in since(top(), ""))):
         return rid  # the standing rule, for a goal full auto answered: reusable (never an ETA move)
     if not found or slug not in found[-1][4].split(","):
         g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
