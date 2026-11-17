@@ -24,6 +24,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Start a goal to add result caching, done when repeat searches are served from the cache" | The goal is queued and starts in its own worker as soon as a slot is free. |
 | "Where do things stand?" | You get the live board: Issues first, then running goals with progress and time left, queued goals, dependencies and one finish time. |
 | "Tell the caching worker to keep the old cache format" | Your answer reaches that worker session as a message. |
+| "How much did the operation session spend?" | `<git common dir>/loop/op-tokens.tsv` holds one row per check-in with its context and the tokens spent under scheduled, peer, human and hook-retry. A scheduled check-in with nothing new is skipped by a prompt hook and logged in `quiet.log`. |
 | "Resume the failed caching goal" | A failed or stopped goal gets a new worker; any other goal is refused. |
 | "Clean up merged branches, list them first" | You see the merged goal branches that would go; once you say so, they are deleted locally. |
 

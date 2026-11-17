@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept changelog-v@de7955d4 -->
+Review: **Unreviewed** <!-- kept token-diet@99e95b20 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -30,7 +30,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-17** Cadence and reply format <!-- reviewed 33136bdd -->
+- MON-5: **Unreviewed** Cadence and reply format
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line, then a Machine line (free RAM, free commit memory, CPU, claude and node counts);
   - All sessions, one table of every session across my repos with what it is doing (a short plain sentence of under about 12 words from its goal's first line, then its slug and issue in brackets), its status, progress, time left, tokens left and latest report;
@@ -40,6 +40,9 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
   - A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good.
   - When notification is on for this machine (a private setting, off by default), each check-in mails me once per new event through the health round's mailer: a new Needs you item, a goal that stopped or passed its ETA, and a goal merged and released; each mail names the goal and what I must do, a repeat sends nothing, and the address lives only in mail.env outside the repo.
+  - Only a scheduled check-in, or my asking for one (check-in, status, report, board, where do things stand), must be answered in this layout; a reply to a peer message or any other talk is 1 to 3 lines and the hook does not check it, and a turn the hook cannot read is checked as before.
+  - A scheduled check-in whose check-in, apart from its Machine line and numbers, is the same as the last full one skips the model turn: a prompt hook blocks it with one line, at most two hours in a row, and any error lets the prompt through.
+  - Each check-in adds one row to `op-tokens.tsv`: the time, the operation session, its context, and the tokens it spent since the last row under each trigger (scheduled, peer, human, hook-retry).
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).

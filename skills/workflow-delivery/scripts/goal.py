@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lanekit, guards, fit, private  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
-from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
+from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
 
 ME = sys.modules[__name__]
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
@@ -235,7 +235,7 @@ def cmd_step(args):
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
     if args.tokens:
-        state["tokens"] = dict(state.get("tokens") or {}, **{args.name: args.tokens})
+        fit.tokens().add(state, args.name, args.tokens)
     save(state, args.name + (": " + args.note if args.note else ""))
     print("STEP %s %s" % (args.slug, args.name))
     return 0
@@ -254,7 +254,7 @@ def cmd_record(args):
     slug, step = args.slug, args.step
     state = held(slug)
     guards.waiting_gate(ME, state)
-    add_tokens(state, step, args.tokens)
+    add_tokens(state, step, args.tokens, True)
     ran = os.path.join(state_dir(), "%s.%s.ran" % (slug, step))
     if args.in_session:
         args.file = role.session_reply(state, slug, step, args.file, state_dir(), FLOW)
@@ -406,6 +406,7 @@ def cmd_resume(args):
 
 
 def main():
+    outcap("goal.py")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     def add(name, func, *options):

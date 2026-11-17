@@ -3,6 +3,7 @@
 only merges and the post-merge steps change the repo.
 
 usage: govern_hook.py          the PreToolUse hook: reads the hook's JSON on stdin, prints a deny decision or nothing
+                               (a UserPromptSubmit payload goes to the quiet check-in hook, C3, below)
        govern_hook.py check    read a Bash command on stdin, print BLOCK with why, or PASS (tests and by hand)
 
 Which session: the operation session only, known by its id in <git common dir>/loop/operation.id (`operate.py claim`
@@ -17,12 +18,20 @@ pool.py return, worker.py cleanup) run their own git inside their own process an
 tool use; command substitution and shell writes such as `sed -i` are outside it.
 `govern_hook: false` in .loop/config.json, or LOOP_GOVERN_HOOK=0, turns it off, read at each call. Any error lets the
 call through and logs one line in <git common dir>/loop/govern-hook.log. setup.py --govern-hook installs it.
+
+The quiet check-in hook (C3, token-diet), for the operation session only and only for a scheduled prompt (proctree.classify): it renders
+the check-in (checkin.render), drops the Machine line and every number, and compares it with what the last full check-in showed
+(checkin.py keeps it with remember()). The same, and that check-in under QUIET_MINUTES (120) old, blocks the prompt with one line: no
+model turn runs. Anything else, an error included, lets the prompt through. `reply_hook: false` or LOOP_REPLY_HOOK=0 turns it off with
+the reply hook; skips are logged in <common>/loop/quiet.log. setup.py --reply-hook installs it on the prompt event.
 """
+import hashlib
 import json
 import os
 import re
 import shlex
 import sys
+import time
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -246,6 +255,73 @@ def health(common):
     return sum(" blocked " in line for line in lines), len(fails), fails[-1].split(" fail-open ", 1)[1] if fails else ""
 
 
+QUIET_MINUTES = 120
+
+
+def signature(text):
+    """The check-in without its clock: no Machine line, no digits, so only a word that changed counts."""
+    kept = [line for line in str(text).splitlines() if not line.startswith("Machine:")]
+    return hashlib.sha1(re.sub(r"\d+", "#", "\n".join(kept)).encode("utf-8", "replace")).hexdigest()
+
+
+def quiet_path(folder):
+    return os.path.join(folder, "loop", "quiet.json")
+
+
+def remember(folder, text, now=None):
+    __import__("reply_hook").write(quiet_path(folder), json.dumps({"sig": signature(text), "at": now or time.time()}))
+
+
+def held(folder):
+    try:
+        with open(quiet_path(folder), encoding="utf-8") as handle:
+            found = json.load(handle)
+        return str(found.get("sig", "")), float(found.get("at", 0))
+    except (OSError, ValueError, AttributeError, TypeError):
+        return "", 0.0
+
+
+def quiet_decide(payload, text=None, now=None):
+    """The block decision for a prompt, or None."""
+    import proctree
+    import reply_hook as rh
+    session = str(payload.get("session_id") or "")
+    if os.environ.get("LOOP_REPLY_HOOK") == "0" or not rh.SESSION.match(session):
+        return None
+    where = rh.repo_of(str(payload.get("cwd") or ""))
+    if not where or rh.off(where[2]) or session not in rh.claimed(where[1]) or proctree.classify(payload.get("prompt")) != "scheduled":
+        return None
+    top, folder, _ = where
+    if text is None:
+        import checkin
+        text = "\n".join(checkin.render(top))
+    sig, at = held(folder)
+    now = now or time.time()
+    if not sig or sig != signature(text) or now - at >= QUIET_MINUTES * 60:
+        return None
+    os.makedirs(os.path.join(folder, "loop"), exist_ok=True)
+    with open(os.path.join(folder, "loop", "quiet.log"), "a", encoding="utf-8") as handle:
+        handle.write("%s skipped %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), session))
+    return {"decision": "block", "reason": "No change since the last check-in at %s (checkin.py): model turn skipped. The next full "
+            "check-in comes when something changes, or at the latest %d minutes after the last one." % (
+                time.strftime("%H:%M", time.localtime(at)), QUIET_MINUTES)}
+
+
+def quiet_hook(payload):
+    out = None
+    try:
+        out = quiet_decide(payload) if isinstance(payload, dict) else None
+    except Exception as error:  # never stand between the owner and the session
+        try:
+            import reply_hook as rh
+            where = rh.repo_of(str((payload or {}).get("cwd") or ""))
+            where and rh.log(where[1], "quiet fail-open: %s: %s" % (type(error).__name__, error))
+        except Exception:
+            pass
+    out and print(json.dumps(out))
+    return 0
+
+
 def main(argv):
     if argv[1:2] == ["check"]:
         found = verdict(sys.stdin.read())
@@ -255,6 +331,8 @@ def main(argv):
         payload = json.load(sys.stdin)
     except (ValueError, OSError):
         return 0
+    if isinstance(payload, dict) and payload.get("hook_event_name") == "UserPromptSubmit":
+        return quiet_hook(payload)  # C3: the same script, wired to the prompt event by setup.py --reply-hook
     reason = decide(payload if isinstance(payload, dict) else {})
     if reason:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",

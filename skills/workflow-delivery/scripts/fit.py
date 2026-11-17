@@ -89,18 +89,24 @@ def budget(seen, cfg):
     return budget_of(cfg), "the repo settings"
 
 
-def spent_tokens(run):
+def tokens():
+    """The token functions, which live in proctree.py (one identical copy in each skill)."""
+    import proctree
+    return proctree
+
+
+def spent_tokens(run, live=False):
+    """Fresh tokens (input + cache writes + output) a goal spent, from its measured steps, plus the open window if asked."""
     value = run.get("tokens") if isinstance(run.get("tokens"), dict) else {}
-    steps = [n for key, n in value.items() if key != "total" and isinstance(n, int) and not isinstance(n, bool)]
-    if steps:
-        return sum(steps)
+    tok = tokens()
+    steps = [tok.fresh(n) for key, n in value.items() if key != "total"]
     total = value.get("total")
-    return total if isinstance(total, int) else 0
+    return (sum(steps) if any(steps) else total if isinstance(total, int) else 0) + (tok.live(run) if live else 0)
 
 
 def tokens_text(run):
     value = run.get("tokens") if isinstance(run.get("tokens"), dict) else {}
-    return "%s tokens" % format(spent_tokens(run), ",") if any(isinstance(n, int) and n for n in value.values()) else "tokens unread"
+    return "%s tokens" % format(spent_tokens(run), ",") if any(tokens().fresh(n) for n in value.values()) else "tokens unread"
 
 
 def active_minutes(state, at=None, cfg=None):
@@ -129,7 +135,7 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
             sys.exit("REFUSED: %dm spent, past the ETA of %dm; no new step starts and the goal waits for the owner: ship now, extend "
                      "once, or defer. Fix: the operation session runs goal.py set %s --eta-choice ship|defer or --eta-extend N, "
                      "with --owner-record ID (ETA_PAST)" % (spent, auto.eta_minutes(seen), slug))
-    for name, spent in (("minutes", active_minutes(state, at, cfg)),("tokens", spent_tokens(state))):
+    for name, spent in (("minutes", active_minutes(state, at, cfg)),("tokens", spent_tokens(state, bool(held["tokens"])))):
         if held[name] and spent >= held[name]:
             sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                      "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
@@ -234,6 +240,11 @@ def cmd_show(g, args):
     state = g.load(args.slug)
     state["resume_at"] = resume_at(state, g.guards.moved_since_plan(g, state))
     state["minutes"] = {"charged": active_minutes(state, None, g.config()), "wall": monitor("board_log", True).wall_minutes(state)}
+    for step, held in (state.get("tokens") or {}).items():  # first, so the output cap never cuts them
+        if isinstance(held, dict):
+            print("TOKENS %s: %s, %s calls, %s, peak context %s" % (step, ", ".join("%s %s" % (k, format(int(held.get(k) or 0), ",")) for k in (
+                "input", "cache_read", "cache_write", "output", "reported") if held.get(k)), held.get("calls", 0), held.get("model") or "?",
+                format(int(held.get("peak") or 0), ",")))
     print(json.dumps(state, indent=2))
 
 
@@ -322,10 +333,10 @@ def verdicts(text):
 
 def step_line(step, seen):
     flow = seen.get("flow") or {}
-    tokens = (seen.get("tokens") or {}).get(step)
+    spent = tokens().fresh((seen.get("tokens") or {}).get(step))
     line = "\n- %s: %s" % (step, flow.get(step, "not run"))
-    if isinstance(tokens, int) and tokens:
-        line += " (%s tokens)" % format(tokens, ",")
+    if spent:
+        line += " (%s tokens)" % format(spent, ",")
     for item in ((seen.get("verdicts") or {}).get(step) or []):
         line += "\n  - verdict: " + item
     return line
