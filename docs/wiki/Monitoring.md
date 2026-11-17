@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept changelog-v@c1154547 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept checkin-zh-cn-crash@3d9b8e33 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -281,8 +281,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | MON-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
 | [mon8-silent-30](Tests#t-mon8-silent-30) | requirement | MON-8 | Given a worker with no report for 31 minutes, when the operation session checks in, then it shows under Needs you; at 29 minutes it does not. | PASS 2026-11-10 |
 | [mon8-silent-worker](Tests#t-mon8-silent-worker) | requirement | MON-8 | Given a running worker whose last report is 31 minutes old, when the check-in is built, then Needs you names it and a worker that reported 5 minutes ago is not named. | not run |
-| [stalled-no-process-4359](Tests#t-stalled-no-process-4359) | requirement | MON-8 | Given a live goal whose log has not moved for silent_minutes and no goal.py, flow.py or lane process for it, when the check-in is built, then Needs you says STALLED, since when, and which worker to restart. | not run |
-| [stalled-process-quiet-4359](Tests#t-stalled-process-quiet-4359) | requirement | MON-8 | Given a quiet goal with a process running for it, when the check-in is built, then it is not STALLED. | not run |
+| [stalled-no-process-4359](Tests#t-stalled-no-process-4359) | requirement | MON-8 | Given a live goal whose log has not moved for silent_minutes and no goal.py, flow.py or lane process for it, when the check-in is built, then Needs you says STALLED, since when, and which worker to restart. Also, given a quiet goal with a process running for it, then it is not STALLED. | PASS 2026-11-17 |
 | [mon9-board-fast](Tests#t-mon9-board-fast) | requirement | MON-9 | Given 12 goals with pull requests and a slow GitHub, when the board is built, then it takes under 10 seconds. | PASS 2026-11-10 |
 | [operate-toy-no-check](Tests#t-operate-toy-no-check) | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | Given test-operate.sh, when it is read, then it no longer calls the removed goal.py check command. | PASS 2026-11-13 |
 | [runs-skips-non-dict](Tests#t-runs-skips-non-dict) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given a list or string JSON file in the runs folder, when watch reads the goals, then it skips it and keeps the real goals. | not run |

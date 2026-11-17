@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.0.43 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.42 - 2026-11-17
+
+- setup: add no paths when nothing changed; git rejects a bare -- pathspec (#4553)
+- setup: plan the local schedule only on macOS, where it can be installed (#4553)
+- ci-setup-rows: the package copy drops compiled files; two toys print what differs (#4553)
+- ci-setup-rows: no-fit toy lists the preview titles
+- ci-setup-rows: sync toy prints the differing keys
+- ci-setup-rows: the no-fit toy counts the preview's issues, not its milestone lines (#4553)
+- ci-setup-rows: the SET-4 toy leaves out automation, which the update fills with the built-in routines (#4553)
+- ci-setup-rows: the no-fit toy leaves the missing-milestone findings out of the preview count (#4553)
+- ci-setup-rows: SET-4 toy prints what the update changed
+- ci-setup-rows: the SET-4 toy lets the update re-render README's generated tables (#4553)
+- Merge remote-tracking branch 'origin/main' into loop/ci-setup-rows
+- ci-setup-rows: an interrupted adoption commit stops git with TERM first, so its index.lock goes with it on Linux (#4553)
+- ci-setup-rows: the two toy failure messages carry what differs, instead of stray lines split by a newline (#4553)
+- Wiki: update pages for ci-setup-rows
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-setup-rows
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-setup-rows
+- Wiki: update pages for ci-setup-rows
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+
+### How to verify
+
+1. Open the regression run of this branch linked on issue #4553 and find the 14 rows it names.
+   Expect: each shows PASS except lanes-trace, whose remaining cause (the suite-wide trace exceeds the 900 s CI row limit, #4153) is written on #4553.
+2. On a Mac or Linux shell in this repo, run `bash dev/toy/test-setup-adopt.sh setup-refusal-writes-120`.
+   Expect: it ends with PASS lines and no "something stayed written"; no `.git/index.lock` is left in its temp repos.
+
+## v1.0.41 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.40 - 2026-11-17
 
 - No code changes
