@@ -193,12 +193,6 @@
 | <a id="t-held-charge-idle"></a>held-charge-idle | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
-| <a id="t-agent-routing-build-codex"></a>agent-routing-build-codex | requirement | DEL-16 | not run | - | local | 2026-11-17 |
-| <a id="t-agent-routing-review-heavy"></a>agent-routing-review-heavy | requirement | DEL-16 | not run | - | local | 2026-11-17 |
-| <a id="t-agent-routing-record-both"></a>agent-routing-record-both | requirement | DEL-16 | not run | - | local | 2026-11-17 |
-| <a id="t-agent-routing-fallback"></a>agent-routing-fallback | requirement | DEL-16 | not run | - | local | 2026-11-17 |
-| <a id="t-agent-routing-new-profile"></a>agent-routing-new-profile | requirement | DEL-16 | not run | - | local | 2026-11-17 |
-| <a id="t-agent-routing-write-blocked"></a>agent-routing-write-blocked | requirement | DEL-16 | not run | - | local | no |
 
 ## Documentation
 
@@ -1259,3 +1253,9 @@
 | <a id="t-done-homeguard-skills-main-2"></a>done-homeguard-skills-main-2 | workflow | done line homeguard-skills-main:2 | not run | - | local | no |
 | <a id="t-affected-deleted-root-runner"></a>affected-deleted-root-runner | defect | [#4554](https://github.com/jcl2018/agent-workflow-template/issues/4554) open (2026-11-16) | not run | - | local | 2026-11-17 |
 | <a id="t-affected-no-effect-folder"></a>affected-no-effect-folder | defect | [#4554](https://github.com/jcl2018/agent-workflow-template/issues/4554) open (2026-11-16) | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-build-codex"></a>agent-routing-build-codex | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-review-heavy"></a>agent-routing-review-heavy | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-record-both"></a>agent-routing-record-both | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-fallback"></a>agent-routing-fallback | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-new-profile"></a>agent-routing-new-profile | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-write-blocked"></a>agent-routing-write-blocked | workflow | done line agent-routing:1 | not run | - | local | 2026-11-17 |
