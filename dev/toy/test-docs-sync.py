@@ -21,6 +21,15 @@ FAKE_GH = '''import json, os, sys
 open(os.environ["TOY_LOG"], "a").write(json.dumps(["gh"] + sys.argv[1:]) + "\\n")
 if os.environ.get("TOY_GH_FAIL"):
     sys.exit("gh: not logged in")
+if sys.argv[1] == "api" and "milestones" in " ".join(sys.argv):
+    held = os.environ["TOY_LOG"] + ".miles"
+    made = json.load(open(held)) if os.path.exists(held) else []
+    if "POST" in sys.argv:
+        made.append({"title": next(a for a in sys.argv if a.startswith("title=")).split("=", 1)[1], "state": "open", "number": 10 + len(made)})
+        json.dump(made, open(held, "w"))
+        print(json.dumps(made[-1]))
+    else:
+        print(json.dumps(json.loads(os.environ.get("TOY_MILES", "[]")) + made))
 if sys.argv[1:3] == ["issue", "create"]:
     n = sum(1 for x in open(os.environ["TOY_LOG"]) if '"issue", "create"' in x)
     print("https://example.test/issues/%d" % n)
@@ -80,7 +89,8 @@ with tempfile.TemporaryDirectory() as tmp:
     write(source, prd(("TH-1", "Reads the sensor every second"), ("TH-2", "Alerts above 80 degrees")))
     write(os.path.join(repo, ".loop", "docs.tsv"), "Sensor\tsrc\turl:%s\nDelivery\tsrc\tpage\nHub\tsrc\tmcp:notion:4178261590fd\n" % source.replace("\\", "/"))
     copy = os.path.join(repo, ".loop", "prd", "Sensor.md")
-    ENV = {"TOY_LOG": log, "LOOP_GH": "%s %s" % (sys.executable, os.path.join(tmp, "gh.py")),
+    ENV = {"TOY_LOG": log, "TOY_MILES": json.dumps([{"title": "Sensor", "state": "open", "number": 3}]),  # a bare-name milestone already exists
+            "LOOP_GH": "%s %s" % (sys.executable, os.path.join(tmp, "gh.py")),
            "LOOP_PRD_WRITER": "%s %s" % (sys.executable, os.path.join(tmp, "writer.py"))}
 
     def sync(*args, **extra):
@@ -108,9 +118,13 @@ with tempfile.TemporaryDirectory() as tmp:
     before = read(source), read(copy)
     code, out = sync()
     ok(code == 0 and "DELTA Sensor: TH-1 the repo changed" in out and (read(source), read(copy)) == before, "a delta overwrites neither side")
-    ok(len(calls(log, "issue", "create")) == 1 and "DELTA Sensor TH-1" in calls(log, "issue", "create")[0] and '"--milestone", "Sensor"' in calls(log, "issue", "create")[0]
-       and len(calls(log, "writer", "comment")) == 1 and "every two seconds" in calls(log, "writer", "comment")[0],
-       "a new delta is posted once as an issue on the page's milestone and once as a comment on the external page, with both texts")
+    ok(len(calls(log, "issue", "create")) == 1 and "DELTA Sensor TH-1" in calls(log, "issue", "create")[0] and len(calls(log, "writer", "comment")) == 1 and "every two seconds" in calls(log, "writer", "comment")[0],
+       "a new delta is posted once as an issue and once as a comment on the external page, with both texts")
+    ok('"--milestone", "Backlog: Sensor"' in calls(log, "issue", "create")[0] and len(calls(log, "POST", "title=Backlog: Sensor")) == 1
+       and read(log).index("title=Backlog: Sensor") < read(log).index('"issue", "create"'),
+       "a delta issue lands on the milestone Backlog: Sensor, created first when it is missing")
+    ok('"--milestone", "Sensor"' not in read(log) and "title=Sensor" not in read(log),
+       "a bare-name milestone is never used for a delta issue, even when it exists")
     code, out = sync()
     ok(len(calls(log, "issue", "create")) == 1 and len(calls(log, "writer", "comment")) == 1 and "POSTED" not in out, "a second sync posts nothing more")
 
@@ -118,6 +132,8 @@ with tempfile.TemporaryDirectory() as tmp:
     code, out = sync()
     ok("DELTA Sensor: TH-2 the source changed (repo: Alerts above 80 degrees | source: Alerts above 90 degrees)" in out and len(calls(log, "issue", "create")) == 2,
        "a requirement changed only in the external document is a DELTA naming the source, and is posted as its own issue")
+    ok(len(calls(log, "POST", "title=Backlog: Sensor")) == 1 and '"--milestone", "Backlog: Sensor"' in calls(log, "issue", "create")[1],
+       "a Backlog: Sensor milestone that exists is used again, not created twice")
     edit(source, "every second", "every three seconds")
     code, out = sync()
     ok("CONFLICT Sensor: TH-1 both sides changed" in out and len(calls(log, "issue", "comment")) == 1, "a requirement changed on both sides is a CONFLICT naming both texts, commented on its issue again")
