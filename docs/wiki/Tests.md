@@ -198,6 +198,7 @@
 | <a id="t-agent-routing-record-both"></a>agent-routing-record-both | requirement | DEL-16 | not run | - | local | 2026-11-17 |
 | <a id="t-agent-routing-fallback"></a>agent-routing-fallback | requirement | DEL-16 | not run | - | local | 2026-11-17 |
 | <a id="t-agent-routing-new-profile"></a>agent-routing-new-profile | requirement | DEL-16 | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing-write-blocked"></a>agent-routing-write-blocked | requirement | DEL-16 | not run | - | local | no |
 
 ## Documentation
 
