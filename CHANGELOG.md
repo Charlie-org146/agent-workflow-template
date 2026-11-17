@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.33 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.32 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.31 - 2026-11-17
 
 - settings-ref: regenerate the settings reference and START.md
