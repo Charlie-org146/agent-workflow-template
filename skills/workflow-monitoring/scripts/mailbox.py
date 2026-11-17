@@ -99,16 +99,17 @@ def budget_of(flow):
 
 
 def claim(folder, key, flow, cwd=None, release=False):
-    """Take one event and one send from the shared ledger; False when another machine mailed the event or the budget is spent."""
+    """Take one event and one send from the shared ledger: True when it is ours to mail, "sent" when another machine mailed the
+    event, "budget" when the budget is spent (the event stays unsent, so a later check-in tries again)."""
     for _ in range(4):
         data, token = ledger(folder, cwd)
         sent, times = data.setdefault("sent", {}), [t for t in data.get("times", []) if time.time() - t < 86400]
         if release:
             sent.pop(key, None)
         elif key in sent:
-            return False
+            return "sent"
         elif len(times) >= budget_of(flow):
-            return False
+            return "budget"
         else:
             sent[key], times = machines.me(), times + [time.time()]
         data["times"] = times
@@ -118,7 +119,7 @@ def claim(folder, key, flow, cwd=None, release=False):
         else:
             write_json(os.path.join(folder, "mail-ledger.json"), data)
             return True
-    return False
+    return "budget"
 
 
 def say(text):

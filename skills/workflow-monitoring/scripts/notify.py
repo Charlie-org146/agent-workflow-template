@@ -178,9 +178,10 @@ def cmd_send(args):
         return 0
     repo = os.path.basename(os.path.abspath(args.root))
     for key, kind, slug, action in new:
-        if not mailbox.claim(folder, key, flow_path(), args.root):  # one stream: the other machine mailed it, or the budget is spent
-            sent[key] = "covered"
-            say("not sent %s %s: the other machine mailed it, or the send budget is spent" % (kind, slug))
+        got = mailbox.claim(folder, key, flow_path(), args.root)
+        if got is not True:  # one stream: the other machine mailed it (done), or the budget is spent (tried again next time)
+            got == "sent" and sent.update({key: "covered"})
+            say("not sent %s %s: %s" % (kind, slug, "the other machine mailed it" if got == "sent" else "the send budget is spent"))
             continue
         sent[key] = "mailing"
         save(path, state)

@@ -147,8 +147,11 @@ with tempfile.TemporaryDirectory() as TMP:
     notify("pc", CHECKIN)
     check(len(POSTS) == 0, "the send budget is shared and counts the first machine's mails (budget 1, 3 already sent)")
     setting(20)
+    notify("pc", CHECKIN)
+    check(len(POSTS) == 2, "an event held by the budget goes out on a later check-in once the budget allows (%d)" % len(POSTS))
+    POSTS.clear()
     notify("mac", CHECKIN)
-    check(len(POSTS) == 2, "a raised budget lets the held events go out through the other machine (%d)" % len(POSTS))
+    check(not POSTS, "and the other machine then sends nothing for it")
 
 if FAILS:
     print("FAILED %d" % len(FAILS))
