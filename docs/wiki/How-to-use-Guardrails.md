@@ -5,6 +5,14 @@
 
 Lists every guardrail the template has or needs, each with what it protects against, its owner, its setting and the health check that must prove it is on, including the memory floor before a goal starts (owner records o1, o3).
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `goal.py step` | Command | Records a step of a goal's flow, and refuses when a guard says stop. | `python3 skills/workflow-delivery/scripts/goal.py step SLUG NAME`. |
+| `sessions.py bind` | Command | Binds a frozen goal to its worker session and prints the WORKER command. | `python3 skills/workflow-monitoring/scripts/sessions.py bind SLUG ID`. |
+| `.loop/config.json` | API/file contract | The guardrail settings the loop reads: budgets, silence limits and the page criteria cap. | Ask for "Show me every setting"; edit a value in the file to change a guardrail. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -33,6 +41,27 @@ Each requirement and how it is delivered:
 - GRD-12: The machine's status is read every round, and no goal starts under the memory floor. Example, from the config-memory-key-once test: given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it.
 - GRD-13: Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51). Example, from the test-caps-consolidate-allowed test: given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed.
 - GRD-14: A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer. Example, from the eta-freeze test: given a goal being frozen, when its fields and goal file are built, then they hold a hard ETA in whole minutes (at least 30) with its basis, and the goal file has an ETA line next to the done lines.
+
+### Command: goal.py step
+- **Command:** `python3 skills/workflow-delivery/scripts/goal.py step SLUG NAME [--note TEXT] [--tokens N]`
+- **Dry run:** none: it records the step.
+- **Reads:** the goal's run record and the budget settings in `.loop/config.json`.
+- **Writes:** the goal's run record.
+- **Exit codes:** 0 when the step is recorded; nonzero with a `REFUSED` line when a time, token or round budget is spent.
+
+### Command: sessions.py bind
+- **Command:** `python3 skills/workflow-monitoring/scripts/sessions.py bind SLUG ID` (or `self`)
+- **Dry run:** none: it records the binding.
+- **Reads:** the session pool and the goal's run record.
+- **Writes:** the goal's run record; it prints the `WORKER` command and the `WORKTREE`.
+- **Exit codes:** 0 when it prints `BOUND`; nonzero with a `REFUSED` line.
+
+### API/file contract: .loop/config.json
+- **Path:** `.loop/config.json`
+- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `goal_lane_minutes`, `silent_minutes` and `criteria_max`.
+- **Example:** `"criteria_max": 19` is this repo's cap on a page's requirements.
+- **Writer:** workflow-setup writes the defaults; the owner edits a value.
+- **Reader:** the guards, the lanes, docs check and health.
 
 ## URLs and deployments
 

@@ -104,11 +104,12 @@ def affected(root, rows, paths, cache):
         lanes.closure(root, row["command"], cache)
         if cache.get(("why", row["command"])):
             notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
-    for path in paths:
+    for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
         if not os.path.exists(os.path.join(root, path)) and not any(
                 path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
+            real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
             continue
         if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)

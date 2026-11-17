@@ -142,8 +142,12 @@ doc18-howto-restamp	PASS	2026-11-16
 doc18-howto-skeleton	PASS	2026-11-16	
 doc18-review-link-line	PASS	2026-11-16	
 doc18-runbook-on-howto	PASS	2026-11-16	
+doc19-command-listed	PASS	2026-11-16	
 doc19-item-missing	PASS	2026-11-16	
 doc19-item-unknown	PASS	2026-11-16	
+doc19-kind-fields	PASS	2026-11-16	
+doc19-kind-row	PASS	2026-11-16	
+doc19-readme-links	PASS	2026-11-16	
 doc19-runbook-plain	PASS	2026-11-16	
 docs-audit	PASS	2026-11-12	
 docs-block-split	FAIL	2026-11-16	
@@ -319,8 +323,12 @@ ls-plist	FAIL	2026-11-13
 mac-rows-skip-77	PASS	2026-11-13	
 machine-caps	PASS	2026-11-16	
 machine-done-12	PASS	2026-11-16	
+machine-done-5	PASS	2026-11-16	
+machine-done-7	PASS	2026-11-17		5f5595078446
+machine-new-machine-docs	PASS	2026-11-16	
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-setting-listed	PASS	2026-11-16	
+machine-task-layout	PASS	2026-11-17		c58079f2bd05
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -388,6 +396,7 @@ package-hang-stdin	PASS	2026-11-12
 package-headroom-held	FAIL	2026-11-15	
 package-passes	SKIPPED	2026-11-16	
 package-rows-tracked	FAIL	2026-11-15	
+package-win-parity-1397	PASS	2026-11-17	
 page-relock	PASS	2026-11-14	
 page-shape	PASS	2026-11-12	
 parallel-unlimited	PASS	2026-11-12	
@@ -478,7 +487,7 @@ restamp-marks-3867	PASS	2026-11-15
 restamp-wording-locked-3867	PASS	2026-11-15	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-12	
-review-findings-skill-lines	FAIL	2026-11-16	
+review-findings-skill-lines	PASS	2026-11-17	
 review-owner-only	PASS	2026-11-12	
 reviewed-lock	PASS	2026-11-12	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -521,7 +530,7 @@ settings-read-fresh	PASS	2026-11-12
 settings-reference	PASS	2026-11-12	
 settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-16	
+settings-render-fresh	FAIL	2026-11-17	
 settings-stale	PASS	2026-11-12	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	

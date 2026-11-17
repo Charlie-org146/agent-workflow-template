@@ -10,7 +10,7 @@ usage: operate.py <command> [options]
       (--board adds the live board and its changes). Then it waits the gap from `board.py cadence`,
       or less: a worker that reports (a run record changes) or a goal added to the queue starts the next pass at once.
       It stops when nothing is queued, running or waiting, or when the cadence is off. --once makes one pass.
-      Each pass also runs replan.py (MON-10) and auto.py pass (MON-11), and prints the check-in (checkin.py), not the
+      Each pass also runs replan.py (MON-10) and auto.py pass (MON-11), prints the check-in (checkin.py) and mails its new events (notify.py), not the
       live board: the board prints only for report, dashboard and "where do things stand" (MON-4; --board adds it).
   send SLUG TEXT [--source owner|auto]
       send a worker an answer or a follow-up (worker.py send); the worker's agent sees it the next time it runs goal.py.
@@ -166,7 +166,15 @@ def one_pass(top, common, args):
         code, said = script(name, *more, cwd=top)
         if code:
             print(graph.localize(said.strip()))
-    print(graph.localize(script("checkin.py", cwd=top)[1].rstrip()))
+    text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
+    print(text)
+    try:
+        with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
+            handle.write(text + chr(10))
+    except OSError:
+        pass
+    said = script("notify.py", "send", cwd=top)[1].strip()  # MON-5: mail each new event, if on here
+    said and print(said)
     script("board_page.py", "checkin", cwd=top)
     try:
         with open(board) as handle:

@@ -28,89 +28,17 @@ template keeps every gate until its owner turns one off.
 
 ## How to use
 
-Say these to the agent in the operation session. Each feature's wiki page has the exact commands.
+Each feature has its own How-to-use page, with what it delivers, how to reach or run it, its URLs and deployments, its schedules and its runbooks.
 
-### How to use Delivery
-
-Full guide: [How to use Delivery](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Delivery). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Start a goal to add caching, done when the cache test passes" | The goal is drafted with its done lines and shown back to you to confirm. |
-| "Go" | The goal is frozen and a worker session starts it right away. |
-
-### How to use Monitoring
-
-Full guide: [How to use Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Monitoring). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Adopt my recent GitHub repos" | Your repos are listed by last push, private ones included; the ones you choose are cloned into one folder, followed and set up or updated, each ending with its template version. |
-| "Run the operation session" | Every ready goal gets its own worker session, and the full live board prints now and at each check-in, or sooner when a worker reports. |
-
-### How to use Documentation
-
-Full guide: [How to use Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Documentation). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Check the docs" | Every stale, missing, unmapped or unwritten page is listed with what is wrong, or you hear that the docs are clean. |
-| "Audit the docs and fix what you can" | Mechanical fixes such as the Tests tables are made, and the wording left to rewrite is listed. |
-
-### How to use Regression
-
-Full guide: [How to use Regression](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Regression). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Run the land tests" | Every land test runs; each failing test gets one GitHub issue, and a test that passes again closes its issue. |
-| "Add a test for DEL-1 that runs the delivery toy suite" | A test row is added and tied to that requirement. |
-
-### How to use Health
-
-Full guide: [How to use Health](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Health). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "How healthy is this repo?" | You get the formal report: every rule by group, each problem with its fix, the tests, and one verdict. |
-| "Check only the docs health" | The same report for that one group. |
-
-### How to use Setup
-
-Full guide: [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Set up this repo" | It shows what it found and would add, then writes it on a setup branch for you to review and merge. |
-| "Show me what setup would do first" | Every file it would add or convert is listed; nothing is written. |
-
-### How to use Automation
-
-Full guide: [How to use Automation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Automation). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Set up the scheduled routines" | The regression workflow is written to run every 4 hours in GitHub Actions (public repo), for you to merge; health runs every 4 hours on your Mac, never in Actions. |
-| "Run health every 12 hours instead" | `health_cron` changes in `.loop/config.json` and your Mac's next round follows it; no workflow is written. |
-
-### How to use Machines
-
-Say these to the agent:
-
-| You say | What happens |
-|---|---|
-| "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints MACHINE OK; it works on a Mac and on Windows (see `/workflow-setup machine`). |
-| "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
-| "Record that I registered a task" | `machine.py record-task NAME MODE` notes the permission mode you chose in the app; a missing or prompting mode is a gap. |
-
-### How to use Guardrails
-
-Full guide: [How to use Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Guardrails). A few of the things you can say:
-
-| You say | What happens |
-|---|---|
-| "Show me every guardrail" | You get the Guardrails page: each guardrail with what it protects against, the feature that owns it, its setting, and whether its Tests row says it is enforced. |
-| "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes, goal_lane_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
+- [How to use Automation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Automation)
+- [How to use Delivery](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Delivery)
+- [How to use Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Documentation)
+- [How to use Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Guardrails)
+- [How to use Health](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Health)
+- [How to use Machines](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Machines)
+- [How to use Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Monitoring)
+- [How to use Regression](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Regression)
+- [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup)
 
 ## What it aims to be
 

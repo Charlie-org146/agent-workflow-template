@@ -355,6 +355,8 @@ def howto(root, folder, features):
         if not os.path.isfile(path):
             found.append(("HOWTO", page, "DOC-18 the feature has no How-to-use page. Fix: write %s/%s.md with the sections %s" % (folder, name, ", ".join(PARTS))))
             continue
+        if "Write this page from what is really in the repo." in slurp(path):
+            continue  # an unwritten stub: docs check reports it UNWRITTEN
         lines = [x.strip() for x in slurp(path).splitlines() if x.strip()]
         heads = [x[3:] for x in lines if x.startswith("## ")]
         if "# " + pf.heading_of(page) not in lines:
@@ -365,7 +367,9 @@ def howto(root, folder, features):
         feature = slurp(os.path.join(root, folder, page + ".md"))
         if not linked(root, page, feature):
             import milestones
-            found += milestones.howto_items(name, slurp(path), feature)
+            how, book = slurp(path), next((x for n, _, x in pf.parts(feature) if n == "Runbook"), [])
+            found += milestones.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
+            found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in milestones.unlisted(feature, how)]
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
     return found
