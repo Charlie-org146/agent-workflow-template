@@ -540,7 +540,7 @@
 | <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-no-private"></a>machine-no-private | requirement | MCH-1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-windows"></a>machine-windows | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-task-layout"></a>machine-task-layout | requirement | MCH-1 | not run | - | local | 2026-11-12 |
@@ -1144,7 +1144,7 @@
 | <a id="t-machine-done-2"></a>machine-done-2 | requirement | done line operator-setup:2 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-3"></a>machine-done-3 | requirement | done line operator-setup:3 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-4"></a>machine-done-4 | requirement | done line operator-setup:4 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-machine-done-6"></a>machine-done-6 | requirement | done line operator-setup:6 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-7"></a>machine-done-7 | requirement | done line operator-setup:7 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-8"></a>machine-done-8 | requirement | done line operator-setup:8 | not run | - | local | 2026-11-12 |

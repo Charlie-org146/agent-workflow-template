@@ -321,6 +321,8 @@ ls-plist	FAIL	2026-11-13
 mac-rows-skip-77	PASS	2026-11-13	
 machine-caps	PASS	2026-11-16	
 machine-done-12	PASS	2026-11-16	
+machine-done-5	PASS	2026-11-16	
+machine-new-machine-docs	PASS	2026-11-16	
 machine-setting-listed	PASS	2026-11-16	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
