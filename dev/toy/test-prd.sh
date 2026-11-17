@@ -32,8 +32,38 @@ mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median` | `python3 scripts/calc.py median` |\n| `/toy mean` | `python3 scripts/calc.py mean` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
 printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Sums up the numbers of the toy calculator. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://example.test/milestone/1 |\n' > docs/wiki/Home.md
-printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "What is the median of 1 2 3?" | The calculator prints it. |\n' >> README.md
-repo=$PWD; fails=0; day=$(date -u +%F)
+printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |\n' >> README.md
+repo=$PWD; mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
+<!-- workflow-docs -->
+# How to use Delivery
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+## How to reach or run it
+
+- DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
+- DEL-2: It answers within a second; run it on a short list.
+
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [Delivery](Delivery)
+HOWEOF
+fails=0; day=$(date -u +%F)
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 P=docs/wiki/Delivery.md
@@ -61,6 +91,8 @@ $1
 $MS
 
 Review: **Unreviewed**
+
+How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ## Problem
 
@@ -225,7 +257,7 @@ rm -f .loop/regression.tsv .loop/regression-runs.tsv; git checkout -q -- .
 echo "== 7. the requirement readers find the same IDs under either heading, outside fences"
 mkdir -p "$d/r/docs/wiki" "$d/r/.loop"; cp .loop/config.json "$d/r/.loop/"
 printf 'Alpha\tcalc.py\nBeta\tcalc.py\n' > "$d/r/.loop/docs.tsv"
-printf '<!-- workflow-docs -->\n# Alpha\n\nReview: **Unreviewed**\n\n## Problem\n\nAn example:\n\n```\n## Requirements\n- ZZZ-9: **Unreviewed** Not real.\n```\n\n## Requirements\n\n- ALP-1: **Unreviewed** One.\n- ALP-2: **Unreviewed** Two.\n\n## Non-goals\n\n- None.\n\n## Success metrics\n\n- Works.\n\n## Tests\n\n' > "$d/r/docs/wiki/Alpha.md"
+printf '<!-- workflow-docs -->\n# Alpha\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nAn example:\n\n```\n## Requirements\n- ZZZ-9: **Unreviewed** Not real.\n```\n\n## Requirements\n\n- ALP-1: **Unreviewed** One.\n- ALP-2: **Unreviewed** Two.\n\n## Non-goals\n\n- None.\n\n## Success metrics\n\n- Works.\n\n## Tests\n\n' > "$d/r/docs/wiki/Alpha.md"
 printf '<!-- workflow-docs -->\n# Beta\n\n## Summary\n\nOld page.\n\n## Criteria\n\n- BET-1: **Unreviewed** Old one.\n\n## Tests\n\n' > "$d/r/docs/wiki/Beta.md"
 ids=$(cd "$d/r" && python3 - "$here" <<'PY'
 import sys, os
@@ -281,9 +313,9 @@ $cri render >/dev/null; out=$(check)
 grep -q "^UNWRITTEN Delivery" <<<"$out" && ! grep -q "^SECTIONS" <<<"$out" && ok "a converted page is UNWRITTEN until its placeholder drafts are replaced" || bad "convert unwritten: $out"
 sed -i.bak 's/^- Write this page from what is really in the repo\./- A real draft line./' $P; rm $P.bak
 ! check | grep -v "^FORMAT" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
-printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
+printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write | grep -q "^Delivery completed$" && grep -q "^## Requirements$" $P && grep -q "^## Success metrics$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a half-converted page is completed" || bad "completed"
-printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P
+printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write >/dev/null; grep '^## ' $P | tr '\n' '~' | grep -q "^## Problem~## Requirements~## Non-goals~## Success metrics~## Tests~$" && ok "a missing Non-goals goes before Success metrics" || bad "non-goals order: $(grep '^## ' $P | tr '\n' ' ')"
 printf '## Summary\n\nNo title.\n\n## Criteria\n\n%s\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write >/dev/null; grep -q "^## Problem$" $P && grep -q "^No title.$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a page with no title keeps its first heading" || bad "no title: $(head -5 $P | tr '\n' ' ')"
