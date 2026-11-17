@@ -68,9 +68,9 @@ Off-machine to-dos ("To-do:" issues) are listed and do not block.
 
 After v1.0.0, four repos move onto the template, in parallel, each as its own goal:
 
-- `migrate-thermis`: Thermis follows the template at v1.0.0.
+- One of the owner's private repos follows the template at v1.0.0.
 - `migrate-steward`: Steward follows the template at v1.0.0.
-- `migrate-portfolio`: Portfolio follows the template at v1.0.0.
+- A second private repo follows the template at v1.0.0.
 - `migrate-skillset`: Skillset follows the template at v1.0.0.
 
 ## How it runs
