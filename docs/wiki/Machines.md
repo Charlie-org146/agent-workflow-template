@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/23
 
 How to use: [How-to-use-Machines](How-to-use-Machines)
 
-Review: **Unreviewed** <!-- kept row-cap-1300@69b48c98 -->
+Review: **Unreviewed** <!-- kept token-diet@87f17cbe -->
 
 ## Problem
 - A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer.
