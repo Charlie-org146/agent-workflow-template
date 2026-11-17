@@ -54,7 +54,20 @@ def filed(root, fresh=False):
     return out
 
 
+def about(root, item, cache):
+    """The page a finding is about. A finding about an issue (#N, as finding-age gives) takes that issue's feature from the
+    health list check already read, never a listing of every open issue."""
+    subject = str(item.get("subject") or "").strip()
+    if subject.startswith("#") and subject[1:].isdigit():
+        pages = cache.setdefault("pages", IS.features(root))
+        held = (IS.CACHE.get((root, "health")) or (None, ""))[0] or []
+        group = next((IS.feature_group(i, pages) for i in held if str(i.get("number")) == subject[1:]), IS.NO_FEATURE)
+        return None if group == IS.NO_FEATURE else group
+    return IS.feature_of(root, item, cache)
+
+
 def rows_of(rows, root, numbers):
+
     """[(feature, group, rule, severity, finding, issue)] sorted by feature (Other last), group order, severity."""
     cache, out, quiet = {}, [], report_only()
     order = {name: n for n, name in enumerate(G.ORDER)}
@@ -62,7 +75,7 @@ def rows_of(rows, root, numbers):
         if item.get("state") not in BAD:
             continue
         try:
-            page = IS.feature_of(root, item, cache)
+            page = about(root, item, cache)
         except Exception:  # an unreadable page map never breaks the report
             page = None
         rule = G.rule_of(item)
