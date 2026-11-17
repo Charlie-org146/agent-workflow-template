@@ -15,3 +15,8 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `grep -n "real_home" dev/toy/test-defect.sh`.
+   Expect: the first line exports a temporary HOME and USERPROFILE, and the `home-sandbox` case checks that HOME is not the real one.
+2. On Linux or macOS run `bash dev/toy/test-defect.sh home-sandbox`.
+   Expect: it exits 0 and prints nothing, and `~/.workflow-loop` is not touched.
