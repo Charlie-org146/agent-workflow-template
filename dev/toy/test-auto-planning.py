@@ -20,6 +20,7 @@ QUEUE = """# Queue
 - slug: mac-judge | touches: docs/wiki | goal: Run the judge on the Mac | done: it runs
 - slug: tiny | touches: README.md | goal: Fix the title | done: the title reads right
 - slug: big | depends-on: tiny | touches: skills/workflow-delivery/scripts,skills/workflow-monitoring/scripts,docs/wiki | goal: A large change | done: a | done: b | done: c | done: d
+- slug: claim | touches: README.md | goal: Shares a prefix with a claimed goal | done: x
 - slug: begun | touches: README.md | goal: Already has a run | done: x
 - slug: claimed | touches: README.md | goal: Already on a machine | done: x | machine: mac
 - slug: peered | touches: README.md | goal: In the peer's plan | done: x
@@ -99,7 +100,7 @@ with tempfile.TemporaryDirectory() as base:
         check(rows["tiny"][5] == "cheap" and rows["big"][5] == "heavy", "a small goal takes the cheap profile and a large one the heavy profile")
         NOW = '4'
         check(
-              all("LEFT OUT %s: already started" % slug in out for slug in ("begun", "claimed", "peered")) and "dated" not in out.split("LEFT OUT")[0],
+              all("LEFT OUT %s: already started" % slug in out for slug in ("begun", "claimed", "peered")) and " claim |" in out and "LEFT OUT claim:" not in out and "dated" not in out.split("LEFT OUT")[0],
               "goals with a run, a machine field or a place in the peer's plan are left out as already started")
         check(out.strip().splitlines()[-1].startswith("SEND to the other operation session:") and "ETA choices" in out,
               "the plan ends with the message for the other machine's operation session and leaves ETA choices to the owner")

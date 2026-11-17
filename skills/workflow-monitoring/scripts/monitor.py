@@ -340,7 +340,7 @@ def cmd_plan(args):
     raw = open(os.path.join(root(), ".loop", "queue.md"), encoding="utf-8").read()
     todo, left = [], []
     for goal in (g for g in parse_queue() if not g["release"]):
-        busy = goal["slug"] in seen or re.search(r"slug: %s\b[^\n]*\| machine:" % goal["slug"], raw)
+        busy = goal["slug"] in seen or re.search(r"slug: %s\s*\|[^\n]*\| machine:" % goal["slug"], raw)
         (left if busy else todo).append(goal)
     order = []
     while len(order) < len(todo):
