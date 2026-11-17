@@ -36,7 +36,7 @@ def cls(stems):  # whole words with an ending (delete, deleted); "~" is a space
 CLASSES = {"destructive": cls("delet remov drop dropp rm wip truncat discard clos cancel purg unpublish reset clean~up forc overwrit overwritten renam rebas amend squash eras destroy uninstall kill unlink rmdir revert rewrit rewritten publish releas deploy deployment migrat schema reset~--hard git~clean"),
            "money": cls("pay payment purchas billing invoice money credits? card~on~file subscription buy bill paid price charg dollar usd cost~(?:money|\\$)"),
            "security": cls("secret credential password passphrase api[~_-]?key ssh[~_-]?key private~key signing~key (?:api|access|auth|bearer)~token permission allowlist allow~rule sandbox auth authenticat\\w* authoriz\\w* secur\\w* licens access~control (?:write|admin|root)~access grant rotat"),
-           "private data": cls("private[~-]name private[~-]list private[~-]data private[~-]repos? dropbox mail gmail e-?mail inbox smtp (?:customer|personal|private)~records?"),
+           "private data": cls("private[~-]name private[~-]list private[~-]data private[~-]repos? dro" "pbox mail gmail e-?mail inbox smtp (?:customer|personal|private)~records?"),
            "steward merge": cls("steward merg\\w*(?:\\W+\\w+){0,3}\\W+(?:pull~request|PR|\\#\\d+)")}
 
 

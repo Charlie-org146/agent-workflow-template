@@ -16,7 +16,7 @@ unset LOOP_BATCH
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-cases="wording flow-steps categories defect-owed health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
+cases="home-sandbox wording flow-steps categories defect-owed health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
 if [ $# = 0 ]; then
   fails=0
   for c in $cases; do
@@ -27,6 +27,7 @@ if [ $# = 0 ]; then
 fi
 case=$1
 no() { echo "$case: $1"; exit 1; }
+real_home=$HOME; export HOME=$(mktemp -d); export USERPROFILE="$HOME"; toy_on_exit 'rm -rf "$HOME"'  # setup.py writes ~/.workflow-loop/repos: never the real HOME (#4859)
 d=${TOY_KEEP:-$(mktemp -d)}; [ -n "${TOY_KEEP:-}" ] || toy_on_exit 'rm -rf "$d"'
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"
 flow="python3 $here/skills/workflow-delivery/scripts/flow.py"
@@ -57,6 +58,11 @@ finish() { # finish SLUG TEXT: a goal whose flow is done, with a change committe
 }
 
 case "$case" in
+  home-sandbox) # #4859: setup.py writes ~/.workflow-loop under the toy's temp HOME, never the real one
+    toy
+    [ "$HOME" != "$real_home" ] || no "HOME is still the real HOME"
+    [ -f "$HOME/.workflow-loop/repos" ] || no "setup wrote nothing under the sandbox HOME"
+    ;;
   wording) # done lines 1 and 2: REG-1, REG-2 and DEL-1 carry the owner's words, Reviewed 2026-11-08, seals intact
     python3 - "$here" <<'PY' || no "the wording differs"
 import re, sys
