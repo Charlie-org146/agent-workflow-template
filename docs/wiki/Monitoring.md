@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept hotfix-4892@3cdb9c19 -->
+Review: **Unreviewed**
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -46,7 +46,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
-- MON-10: **Reviewed 2026-11-10** Re-plan at every check-in <!-- reviewed f6c13026 -->
+- MON-10: **Unreviewed** Re-plan at every check-in
   - At each check-in the operation session re-reads every goal's progress and re-plans the graph to finish soonest.
   - It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle.
   - It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first.
