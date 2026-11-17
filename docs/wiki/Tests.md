@@ -916,6 +916,8 @@
 | <a id="t-lane-walk-skips-git"></a>lane-walk-skips-git | requirement | REG-7 | not run | - | local | 2026-11-16 |
 | <a id="t-toys-no-leak-schedule"></a>toys-no-leak-schedule | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-1 | not run | - | local | 2026-11-17 |
+| <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
+| <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
 
 ## Setup
 
@@ -1226,3 +1228,5 @@
 | <a id="t-lane-dll-init-real-fail"></a>lane-dll-init-real-fail | requirement | done line lane-dll-init:2 | not run | - | local | 2026-11-16 |
 | <a id="t-settings-reference-fresh"></a>settings-reference-fresh | requirement | done line settings-ref:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-settings-start-fresh"></a>settings-start-fresh | requirement | done line settings-ref:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-done-homeguard-skills-main-1"></a>done-homeguard-skills-main-1 | workflow | done line homeguard-skills-main:1 | not run | - | local | no |
+| <a id="t-done-homeguard-skills-main-2"></a>done-homeguard-skills-main-2 | workflow | done line homeguard-skills-main:2 | not run | - | local | no |
