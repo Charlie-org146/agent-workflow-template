@@ -397,6 +397,8 @@
 | <a id="t-doc19-command-listed"></a>doc19-command-listed | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc19-readme-links"></a>doc19-readme-links | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-home-howto-linksonly"></a>home-howto-linksonly | requirement | DOC-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-home-howto-linksonly-control"></a>home-howto-linksonly-control | requirement | DOC-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 
 ## Guardrails
 
@@ -562,20 +564,8 @@
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | not run | - | local | 2026-11-16 |
-| <a id="t-machines-handover"></a>machines-handover | requirement | MCH-2 | not run | - | local | 2026-11-17 |
-| <a id="t-machines-no-double-start"></a>machines-no-double-start | requirement | MCH-2 | not run | - | local | 2026-11-17 |
-| <a id="t-machines-merge-turn"></a>machines-merge-turn | requirement | MCH-2 | not run | - | local | 2026-11-17 |
-| <a id="t-machines-snapshot-lines"></a>machines-snapshot-lines | requirement | MCH-2 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-two-mails"></a>mailbox-two-mails | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-options"></a>mailbox-options | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-one-stream"></a>mailbox-one-stream | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-budget-shared"></a>mailbox-budget-shared | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-reply-owner"></a>mailbox-reply-owner | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-mailbox-risky-words"></a>mailbox-risky-words | requirement | MCH-3 | not run | - | local | 2026-11-17 |
-| <a id="t-desk-lists"></a>desk-lists | requirement | MCH-4 | not run | - | local | 2026-11-17 |
-| <a id="t-desk-run-once"></a>desk-run-once | requirement | MCH-4 | not run | - | local | 2026-11-17 |
-| <a id="t-desk-check-ok"></a>desk-check-ok | requirement | MCH-4 | not run | - | local | 2026-11-17 |
-| <a id="t-phone-background-worker"></a>phone-background-worker | requirement | MCH-4 | not run | - | local | 2026-11-17 |
+| <a id="t-machine-operation-peer"></a>machine-operation-peer | requirement | MCH-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-machine-backup-restore"></a>machine-backup-restore | requirement | MCH-3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 
 ## Monitoring
 
@@ -1180,8 +1170,6 @@
 | <a id="t-flow-stale-pid-safe"></a>flow-stale-pid-safe | requirement | done line lane-died:1 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-1"></a>machine-done-1 | requirement | done line operator-setup:1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-2"></a>machine-done-2 | requirement | done line operator-setup:2 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-3"></a>machine-done-3 | requirement | done line operator-setup:3 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-4"></a>machine-done-4 | requirement | done line operator-setup:4 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |

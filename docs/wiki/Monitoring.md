@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept machine-email-phone@90c5af3c --> <!-- kept del-16@6a8c6a65 -->
+Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 

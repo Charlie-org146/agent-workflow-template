@@ -257,6 +257,8 @@ hlt8-triage	PASS	2026-11-10
 hlt9-evidence-or-nothing	PASS	2026-11-10	
 home-guard-catches-leak	PASS	2026-11-15	
 home-header-both	PASS	2026-11-14	
+home-howto-linksonly	PASS	2026-11-17	
+home-howto-linksonly-control	PASS	2026-11-17	
 home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
 hook-stub-mark-foreign	PASS	2026-11-17	
@@ -333,12 +335,14 @@ local-row-env	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lock-in-report	PASS	2026-11-12	
 ls-plist	FAIL	2026-11-13	
 mac-rows-skip-77	PASS	2026-11-13	
+machine-backup-restore	PASS	2026-11-17	
 machine-caps	PASS	2026-11-16	
 machine-done-12	PASS	2026-11-16	
 machine-done-5	PASS	2026-11-16	
 machine-done-7	PASS	2026-11-17		5f5595078446
 machine-new-machine-docs	PASS	2026-11-16	
 machine-no-private	PASS	2026-11-17		90197cb446bf
+machine-operation-peer	PASS	2026-11-17	
 machine-setting-listed	PASS	2026-11-16	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
 matrix-health-rule	PASS	2026-11-13	
