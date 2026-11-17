@@ -253,6 +253,48 @@ def relock(root, slug="", only=()):
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
 
 
+def regions(rel, text):
+    """(outside, inside) of a page's generated part: the README or Home blocks, the whole Tests page, a feature page's Tests section."""
+    name, text = os.path.basename(rel), text.replace(chr(13) + chr(10), chr(10))
+    if name in ("README.md", "Home.md"):
+        return counting.BLOCK.sub("", text), "".join(m.group(0) for m in counting.BLOCK.finditer(text))
+    if name == "Tests.md":
+        return "", text
+    head, sep, tail = text.partition("\n## Tests")
+    return head, sep + tail
+
+
+def rerender(root, base):
+    """DOC-19 (#4632): re-render the generated blocks and tables of a goal's branch that differ from a fresh render only because
+    something else moved (the template, main, a row). A file is kept only when the branch added no line to its generated part
+    that the fresh render lacks (a hand edit does) and the render touched nothing outside it; any other file is put back, still
+    STALE for the worker. Returns the files rewritten."""
+    folder = docs.wiki_dir(root)
+    files = [rel for rel in ["README.md"] + sorted("%s/%s" % (folder, n) for n in os.listdir(join(root, folder)) if n.endswith(".md"))
+             if os.path.isfile(join(root, rel))]
+    held = {}
+    for rel in files:
+        with open(join(root, rel), newline="") as handle:
+            held[rel] = handle.read()
+    subprocess.run([sys.executable, join(os.path.dirname(os.path.abspath(__file__)), "criteria.py"), "render"], cwd=root, capture_output=True)
+    shown = lambda ref: subprocess.run(["git", "show", ref], cwd=root, capture_output=True, text=True).stdout
+    mine = cr.git("merge-base", "HEAD", "origin/" + base, check=False)
+    kept = []
+    for rel, was in held.items():
+        with open(join(root, rel), newline="") as handle:
+            now = handle.read()
+        if now == was:
+            continue
+        (out_was, in_was), (out_now, in_now), (_, in_old) = regions(rel, was), regions(rel, now), regions(rel, shown("%s:%s" % (mine, rel)) if mine else "")
+        added = set(in_was.splitlines()) - set(in_old.splitlines()) - set(in_now.splitlines())
+        if out_was != out_now or any(line.strip() for line in added):
+            with open(join(root, rel), "w", newline="") as handle:
+                handle.write(was)
+        else:
+            kept.append(rel)
+    return kept
+
+
 # AUT-9: each routine declares what it may do
 PERM_DOC = r"""AUT-9: audit.py permissions write|check [--repo DIR] [--dry-run]: .loop/permissions.tsv rows (routine,
 allow|deny, Tool(spec), why) into .claude/settings.json; check prints UNDECLARED, NOT WRITTEN, UNCOVERED or CONFLICT."""
@@ -310,6 +352,9 @@ def perm_main(argv):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["rerender"] and len(sys.argv) > 2:
+        print("".join("RERENDERED %s\n" % rel for rel in rerender(os.getcwd(), sys.argv[2])), end="")
+        sys.exit(0)
     if sys.argv[1:2] == ["restamp"] and len(sys.argv) > 3:
         print("".join("RESTAMPED %s\n" % page for page in relock(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
         sys.exit(0)

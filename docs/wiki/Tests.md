@@ -379,6 +379,11 @@
 | <a id="t-home-stale-clears"></a>home-stale-clears | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-stale-control"></a>home-stale-control | requirement | DOC-4 | not run | - | local | 2026-11-16 |
 | <a id="t-home-kept-config"></a>home-kept-config | requirement | DOC-15 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-blocks"></a>apply-rerender-blocks | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-hand-edit"></a>apply-rerender-hand-edit | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-accepted"></a>apply-rerender-accepted | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-tables"></a>apply-rerender-tables | requirement | DOC-2 | not run | - | local | 2026-11-16 |
+| <a id="t-apply-rerender-howto"></a>apply-rerender-howto | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-doc19-item-missing"></a>doc19-item-missing | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc19-item-unknown"></a>doc19-item-unknown | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-doc19-runbook-plain"></a>doc19-runbook-plain | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
@@ -1067,7 +1072,7 @@
 | <a id="t-lane-control-all"></a>lane-control-all | requirement | done line lane-control:1 | not run | - | local | 2026-11-10 |
 | <a id="t-operate-wait-99"></a>operate-wait-99 | defect | [#99](https://github.com/jcl2018/agent-workflow-template/issues/99) closed (2026-11-11) | not run | - | local | 2026-11-10 |
 | <a id="t-operate-10-under-load"></a>operate-10-under-load | requirement | done line lane-control:6 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-11 |
-| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) open (2026-11-16) | failing (issue reopened) 2026-11-16 | - | local | 2026-11-10 |
+| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) closed (2026-11-16) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-lanes-trace-hook-173"></a>lanes-trace-hook-173 | defect | [#173](https://github.com/jcl2018/agent-workflow-template/issues/173) closed (2026-11-14) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-narrow-root-172"></a>narrow-root-172 | defect | [#172](https://github.com/jcl2018/agent-workflow-template/issues/172) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-repo-narrow-178"></a>repo-narrow-178 | defect | [#178](https://github.com/jcl2018/agent-workflow-template/issues/178) closed (2026-11-12) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
@@ -1207,9 +1212,15 @@
 | <a id="t-lane-closure-posix-same"></a>lane-closure-posix-same | defect | [#4457](https://github.com/jcl2018/agent-workflow-template/issues/4457) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-done-judge-stable-keys-1"></a>done-judge-stable-keys-1 | workflow | done line judge-stable-keys:1 | not run | - | local | no |
 | <a id="t-done-judge-stable-keys-2"></a>done-judge-stable-keys-2 | workflow | done line judge-stable-keys:2 | not run | - | local | no |
+| <a id="t-done-apply-rerender-1"></a>done-apply-rerender-1 | workflow | done line apply-rerender:1 | not run | - | local | no |
+| <a id="t-done-apply-rerender-2"></a>done-apply-rerender-2 | workflow | done line apply-rerender:2 | not run | - | local | no |
 | <a id="t-pr-body-cap-large"></a>pr-body-cap-large | requirement | done line pr-body-cap:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-pr-body-cap-small"></a>pr-body-cap-small | requirement | done line pr-body-cap:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-no-plain-dunder-import"></a>docs-no-plain-dunder-import | requirement | done line docs-import-render:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-docs-import-rows-pass"></a>docs-import-rows-pass | requirement | done line docs-import-render:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-hook-stub-mark-own"></a>hook-stub-mark-own | requirement | done line hook-stub-mark:1 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-16 |
 | <a id="t-hook-stub-mark-foreign"></a>hook-stub-mark-foreign | requirement | done line hook-stub-mark:2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-16 |
+| <a id="t-lane-dll-init-rerun"></a>lane-dll-init-rerun | requirement | done line lane-dll-init:1 | not run | - | local | 2026-11-16 |
+| <a id="t-lane-dll-init-real-fail"></a>lane-dll-init-real-fail | requirement | done line lane-dll-init:2 | not run | - | local | 2026-11-16 |
+| <a id="t-settings-reference-fresh"></a>settings-reference-fresh | requirement | done line settings-ref:2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-settings-start-fresh"></a>settings-start-fresh | requirement | done line settings-ref:1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
