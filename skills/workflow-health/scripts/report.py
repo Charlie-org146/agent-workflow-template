@@ -4,10 +4,10 @@ Groups: each has the angle its rules take, in report order, plus Mine. Every rul
 row's family is its group's slug and its rule label is the rule's name (older labels map through LABELS). Exactly twelve
 groups: adding one means retiring one or raising the cap on purpose.
 
-Report (pure formatting, no I/O; used by check, judge and review): a header naming every group run and any skipped, then each
-group in the fixed order under a heading that states its angle, with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix
-on each line that is not a pass), then one verdict. A rule that gave no row passes only when its function ran; a rule whose
-source could not be read, or whose function did not run, is UNREAD, never a pass (HLT-3).
+Report (pure formatting; check, judge, review): a header naming every group run and any skipped, the findings table
+(table.py), each group in the fixed order under its angle with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix on
+each non-pass), then one verdict. A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
+
 
 Commands (each takes the health module h): review, judge, preview, file and triage. Refusals print REFUSED[code] and exit 2:
 [group] an unknown group (health.py), [file] file with no group, [gh] the issues can't be listed (nothing is written), [review]
@@ -259,6 +259,7 @@ def plan_for(h, root, asked, with_judge, only=None, saved=None):
     judged, extra = False, []
     if with_judge and "performance" in groups:
         extra, judged = filing.saves(root, h.HERE, rows)
+    filing.ROWS = rows
     issues, everything, why = filing.held_all(root)
     if issues is None:
         refuse("gh", "can't list the issues (%s). Nothing was written." % why)
@@ -285,7 +286,10 @@ def cmd_file(h, args):
         refuse("file", "file needs --group NAME[,NAME] (one of %s) or --review FILE. Run preview first." % ", ".join(h.NAMES))
     filing, acts, groups = plan_for(h, root, asked if asked else [], bool(asked) and "performance" in asked, args.feature, args.review)
     filing.apply(filing.only_open(acts) if args.open_only else acts, root, groups)
+    tab = h.sibling_module("table")
+    tab and tab.show(filing.ROWS, root)
     return 0
+
 
 
 def cmd_triage(h, args):

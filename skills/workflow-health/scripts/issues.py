@@ -173,7 +173,6 @@ def covering(item, issues):
 
 
 NO_FEATURE = "No feature"
-FEATURE_LABELS_DEFAULT = False  # the feature_labels setting (workflow-setup settings.py): off until the owner turns it on
 ID = re.compile(r"^[A-Z]{2,5}-\d+[a-z]?$")
 
 
@@ -209,16 +208,6 @@ def feature_label(page):
     """The label that tags an issue with its feature: feature: plus the page name, without commas, newlines or control
     characters, cut on code points at 42 (GitHub allows 50 in all). The one helper for writing and reading it."""
     return "feature:" + "".join(c for c in page if c != "," and c.isprintable())[:42]
-
-
-def feature_labels_on(root):
-    """The feature_labels setting of .loop/config.json: only when true does any code create or apply a feature label."""
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            value = json.load(handle).get("feature_labels", FEATURE_LABELS_DEFAULT)
-    except (OSError, ValueError, AttributeError):
-        value = FEATURE_LABELS_DEFAULT
-    return value is True
 
 
 def feature_group(issue, pages):

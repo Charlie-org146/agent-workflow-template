@@ -5,8 +5,8 @@ write path; file carries it out for the named groups (and --feature) only.
 - Each issue is labelled health and health:<group> (review findings: health:review-<kind>), and is a defect (a FAIL except a
   performance one, a review conflict: labelled defect, no milestone) or a backlog item (labelled backlog, on its feature's
   milestone "Backlog: <Feature>", "Backlog: Other" when none, made first when missing). An issue the owner moved stays put.
-  With the feature_labels setting on (default off) it is also tagged feature:<Page> (issues.feature_label), made beforehand
-  with label create --force; if that fails the issue is filed without it and a FAILED label line says so.
+  It is always tagged feature:<Page>, or feature:Other when it fits no page (issues.feature_label), whatever feature_labels
+  says, made beforehand with label create --force; if that fails it is filed without it and a FAILED label line says so.
 - Its marker `<!-- loop-health KEY evidence=H placed= -->` names the finding and a hash of its stable evidence (placed= is
   always empty; older markers naming a milestone still parse). A repeat updates, a fix closes (only when that rule ran and
   read its data), a return reopens. A health:closed issue (closed by triage) stays closed while its evidence hash is unchanged.
@@ -147,7 +147,7 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
     found = [item for item in list(rows) + list(extra)
              if item["state"] in BAD and item["family"] in groups and item["rule"] not in REPORT_ONLY]
     cache, out, current = {}, [], set()
-    tagging = bool(root) and IS.feature_labels_on(root)
+    tagging = bool(root)
     for item in found:
         page = IS.feature_of(root, item, cache)
         if only and page != only:
@@ -163,7 +163,8 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         old and current.add(old[0])
         label, stone = home(item, page)
         act = {"group": group, "key": key, "body": body_of(item), "evidence": mark, "tag": tag_of(group, item),
-               "label": label, "stone": stone, "feature": IS.feature_label(page) if page and tagging else "",
+               "label": label, "stone": stone, "feature": IS.feature_label(page or "Other") if tagging else "",
+
                "title": "health: %s %s %s" % (group, IS.posix(item["subject"]), item["rule"])}
         if not issue:
             cover = covering(item, everything)

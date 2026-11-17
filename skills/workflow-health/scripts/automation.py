@@ -167,7 +167,19 @@ def listed(numbers, urls):
     return ", ".join("[#%d](%s)" % (n, urls[n][0]) if n in urls else "#%d" % n for n in sorted(numbers)) or "none"
 
 
-def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None, pages=()):
+def findings(path, now_open):
+    """The health report's last findings table (table.py), each open issue's #N made its link; [] without one."""
+    try:
+        import table
+        with open(path) as handle:
+            got = table.from_report(handle.read())
+    except (ImportError, OSError):
+        return []
+    link = lambda m: "[#%s](%s)" % (m.group(1), now_open[int(m.group(1))][0]) if int(m.group(1)) in now_open else m.group(0)  # noqa: E731
+    return ["### Findings", ""] + [re.sub(r"#(\d+)(?= \|$)", link, line) for line in got] + [""] if got else []
+
+
+def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None, pages=(), table=()):
     """The comment and its state marker. Issues are named by number and link only: a title is never copied into the
     request an owner pastes into an agent. Sections are features; a milestone title shows only as a suffix on a request."""
     titles, groups = titles or {}, groups or {}
@@ -182,11 +194,11 @@ def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None
         out += ["MISSED: no run for %d hours (Mac asleep or offline)" % gap, ""] * bool(prev and gap > float(os.environ.get("DIGEST_INTERVAL") or 24) + 1)
         out += [os.environ[k] for k in ("DIGEST_DRIFT", "DIGEST_JUDGE") if os.environ.get(k)] + [""] * bool(os.environ.get("DIGEST_DRIFT") or os.environ.get("DIGEST_JUDGE"))
     out += ["| Routine | Result |", "|---|---|"]
-    out += ["| %s | %s |" % (name, said.replace("|", "\\|")) for name, said in ran] + [""]
+    out += ["| %s | %s |" % (name, said.replace("|", "\\|")) for name, said in ran] + [""] + list(table)
     home = {n: groups.get(n) or (titles.get(now_open[n][1]) if titles.get(now_open[n][1]) in pages else NO_FEATURE) for n in now_open}
     home.update({n: titles.get(before[n]) if titles.get(before[n]) in pages else NO_FEATURE for n in fixed})
     for feature in sorted(set(home.values()), key=lambda f: (f == NO_FEATURE, f.lower())):  # features by name, then No feature
-        out += ["### %s" % feature, ""]
+        out += ["### %s" % ("Other" if feature == NO_FEATURE else feature), ""]
         pick = lambda pool: {n for n in pool if home[n] == feature}  # noqa: E731
         out += ["**New** (%d): %s" % (len(pick(new)), listed(pick(new), now_open)), "",
                 "**Still open** (%d): %s" % (len(pick(still)), listed(pick(still), now_open)), "",
@@ -243,7 +255,9 @@ def cmd_digest(args):
     if CUT:
         ran.append(("issues", "TRUNCATED: %s listed %d open issues, so the counts below may be cut off (TRUNCATED)" % (", ".join(CUT), ISSUE_LIMIT)))
     titles = (rounds.milestone_titles() if live else {}) or {}  # unreadable titles show nowhere: no note, no failure
-    comment, marker = compose(login, note, ran, now_open, before, run_id, titles, groups, pages)
+    comment, marker = compose(login, note, ran, now_open, before, run_id, titles, groups, pages,
+                              findings(os.environ.get("HEALTH_REPORT") or "", now_open or {}))
+
     if cost is not None:
         rounds.summary("## Round\n\n" + rounds.line(cost) + "\n")
         if cost.get("over"):
