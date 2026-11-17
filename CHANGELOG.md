@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.0.35 - 2026-11-17
+
+- Documentation: Non-goals no longer leaves milestone sync for later (owner o85); a test for it
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.34 - 2026-11-17
 
 - No code changes
