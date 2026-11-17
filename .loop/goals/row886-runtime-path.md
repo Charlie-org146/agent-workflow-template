@@ -14,3 +14,8 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `sed -n 886p .loop/regression.tsv | grep -c 'Users'`.
+   Expect: it prints 0.
+2. Run `sed -n 886p .loop/regression.tsv | cut -f3 > /tmp/c.sh; bash /tmp/c.sh; echo $?`.
+   Expect: it prints 0.
