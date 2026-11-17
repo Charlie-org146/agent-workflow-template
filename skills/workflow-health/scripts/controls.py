@@ -321,6 +321,11 @@ def f_eta(rule):
     return fixture
 
 
+def f_auto(root):
+    repo(root)
+    write(root, ".git/loop/auto.log", "2026-11-17T00:00:00Z | x | AUTO | delete the cache? | yes | routine, recommended\n")
+
+
 # rule -> (group, label, fixture)
 CONTROLS = {
     "scripts": ("size", "scripts", f_size),
@@ -357,6 +362,7 @@ CONTROLS = {
     "idle-sessions": ("hygiene", "idle-sessions", f_idle_sessions),
 }
 CONTROLS.update({name: ("hygiene", name, f_eta(name)) for name in ("eta-missing", "eta-extended", "eta-overrun")})
+CONTROLS.update({name: ("hygiene", name, f_auto) for name in ("auto-safety", "auto-record")})
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     CONTROLS.update(importlib.import_module("defects").CONTROLS)

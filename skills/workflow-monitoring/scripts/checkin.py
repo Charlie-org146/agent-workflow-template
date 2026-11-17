@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. The board
-prints only for `report`, `dashboard` and "where do things stand".
+"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks (the board
+prints only for `report`, `dashboard` and "where do things stand").
 
 usage: checkin.py [--since ISO]
 
   headline        goals running, waiting on you or queued, and the session pool
-  All sessions    one row per live goal: session, repo, purpose, status, progress, time left and ETA, latest
-  Re-plan         what replan.py changed since the last check-in (MON-10)
-  Auto-answered   what auto.py answered since the last check-in, with the words that revert it (MON-11)
+  All sessions    one row per live goal: session, repo, purpose, status, progress, time left, ETA, latest
+  Re-plan         what replan.py changed since the last one (MON-10)
+  Auto-answered   auto.py's answers since the last one, the rule and the revert words (MON-11)
   Dependencies    one block per repo of the pod, headed `== name ==` (MON-14); `repo/slug` in depends-on goes under
                   `Between repos`; live goals and goals merged since the last check-in
   Needs you       numbered: questions with options and a recommendation, stuck goals, workers silent past
                   silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
   Coming up       each goal's next expected step and what the owner will need to do
 
---since defaults to the last check-in in <git common dir>/loop/checkin.json. Changes nothing but one row it adds to
-<git common dir>/loop/op-tokens.tsv: the operation session's tokens since the last row, by trigger (proctree.op_append).
+--since defaults to the last check-in (<git common dir>/loop/checkin.json). Writes only one row to <git common dir>/loop/op-tokens.tsv:
+the operation session's tokens since the last row, by trigger (proctree.op_append).
 """
 import argparse
 import datetime
@@ -174,7 +174,7 @@ def render(root=None, at=None, stamp=None):
         for line in decided[-8:]:
             parts = [p.strip() for p in line.split(" | ")]
             if len(parts) >= 6:
-                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>"' % (parts[1], parts[3][:60], parts[4], parts[1]) if parts[2] == "AUTO"
+                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
     blocks = []
     for g in pod:

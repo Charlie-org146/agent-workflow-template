@@ -372,7 +372,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `template_repo` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. | set "template_repo" in .loop/config.json | `(empty)` | default |
 | `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
 | `govern_hook` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. | set "govern_hook" in .loop/config.json | `true` | default |
-| `full_auto` | true lets the operation session answer a worker's routine decision with its recommended option; risky ones wait. | set "full_auto" in .loop/config.json | `true` | default |
+| `full_auto` | true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait. | set "full_auto" in .loop/config.json | `true` | default |
 | `pool_size` | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. | set "pool_size" in .loop/config.json | `20` | default |
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
