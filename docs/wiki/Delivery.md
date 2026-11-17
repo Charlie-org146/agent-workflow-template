@@ -7,6 +7,8 @@ Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
+Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
+
 ## Problem
 - I have more changes to make than time to babysit them: I want to hand over one sentence and walk away.
 - Without a loop, a change stalls at whatever step I stopped watching: no review, no tests, no release.
@@ -74,10 +76,6 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - Every merged pull request carries its done lines, plan, verify steps and step results.
 - A goal that fails three tries stops and says why.
 - No goal merges while a wiki page its own diff made stale is still stale.
-
-## Regression behavior
-
-Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
 
 ## Tests
 

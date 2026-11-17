@@ -7,6 +7,8 @@ How to use: [How-to-use-Machines](How-to-use-Machines)
 
 Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
+The SMTP toy fixture assembles its credential values at runtime and checks that the mailer output never reveals them.
+
 ## Problem
 - A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer.
 - I said it for Windows too: "that command should capture windows" (owner, 2026-11-11), so every item has a Windows form, or is named in the checklist as not yet possible, never skipped silently.
@@ -36,10 +38,6 @@ None
 ## Success metrics
 - A fresh Mac or Windows home fails the machine check with each gap named, and the same home passes after `machine.py apply` and the owner steps.
 - One command line lists, for each repo adopted on the machine, the same items every other machine of mine has.
-
-## Regression behavior
-
-The SMTP toy fixture assembles its credential values at runtime and checks that the mailer output never reveals them.
 
 ## Tests
 
