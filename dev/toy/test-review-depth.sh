@@ -10,6 +10,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
@@ -157,6 +158,6 @@ s = json.load(open(sys.argv[1])); s["status"] = "running"; s.pop("pr", None); js
 PY
 $LB > "$d/board" 2>&1
 check "the live board shows each recorded step's depth and the setting" 'grep -A1 -x "    depth: idea full, plan full, review full, qa full, ship" "$d/board" | grep -qx "      full (setting full)"'
-[ -z "$(grep -x '      full (setting full)' "$d/board")" ] && { echo "--- what the live board printed:"; head -60 "$d/board"; echo "--- run record:"; cat "$C/loop/runs/full1.json"; }
+grep -qx '      full (setting full)' "$d/board" || { echo "board lines with depth:"; grep -n -B1 -A1 'depth' "$d/board" | head -12; } >> "$DIAG"
 
-[ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; echo "$fails FAILED"; exit 1; }
+[ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }

@@ -7,6 +7,7 @@ set -u
 group=${1:-all}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 S=$here/skills/workflow-health/scripts
 mail="python3 -B $S/mail.py"; auto="python3 -B $S/automation.py"
 unset GH_TOKEN GITHUB_TOKEN GITHUB_ACTIONS GITHUB_STEP_SUMMARY DIGEST_RUN DIGEST_MAIL_API DIGEST_SMTP_TEST_PORT MAIL_ADDR_SET MAIL_CF_SET MAIL_SMTP_SET

@@ -6,6 +6,7 @@ unset CLAUDECODE LOOP_JUDGE_ANSWER  # the judge is the session only where a test
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 auto="python3 -B $here/skills/workflow-health/scripts/automation.py"
 reg="python3 -B $here/skills/workflow-regression/scripts/regression.py"
 unset GH_TOKEN GITHUB_TOKEN GITHUB_ACTIONS GITHUB_STEP_SUMMARY GITHUB_OUTPUT DIGEST_RUN DIGEST_REPO_OWNER HEALTH_REPORT
@@ -154,11 +155,11 @@ PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash
 grep -q "^issue create --title Regression: red --label regression --label defect --body " "$G/calls.log" && grep -q "^- Feature: Alpha$" "$G/calls.log" \
   && grep -q "^- Guards: AAA-1: Alpha words.$" "$G/calls.log" && grep -q "^label create defect --description" "$G/calls.log" \
   && ! grep -q "^label create defect.*--force" "$G/calls.log" \
-  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || { bad "defect issue"; { echo "--- rows.sh output:"; tail -25 "$r/rows.out"; echo "--- gh calls:"; cat "$G/calls.log"; }; }
+  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || { bad "defect issue"; { echo "rows.sh output:"; tail -8 "$r/rows.out"; echo "gh calls:"; head -8 "$G/calls.log"; } >> "$DIAG"; }
 printf '[{"number": 31, "state": "OPEN", "body": "<!-- loop-regression red -->", "labels": [{"name": "regression"}]}]\n' > "$G/regression.json"; : > "$G/calls.log"
 PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >"$r/rows.out" 2>&1
 grep -q "^issue edit 31 --add-label defect" "$G/calls.log" && ! grep -q "^issue create" "$G/calls.log" \
-  && ok "an older failing-test issue gains the defect label" || { bad "old issue relabel"; { echo "--- rows.sh output:"; tail -25 "$r/rows.out"; echo "--- gh calls:"; cat "$G/calls.log"; }; }
+  && ok "an older failing-test issue gains the defect label" || { bad "old issue relabel"; { echo "relabel: rows.sh output:"; tail -6 "$r/rows.out"; echo "gh calls:"; head -6 "$G/calls.log"; } >> "$DIAG"; }
 : > "$G/calls.log"; PATH="$G:$PATH" STUB_LIST_FAIL=1 GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
 ! grep -q "^issue create\|^issue edit\|^issue comment" "$G/calls.log" && ok "when the issues can't be read the run changes no issue" || bad "issue list failure"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$G/fake"; mkdir -p "$FAKE_GH_DIR"
@@ -189,5 +190,6 @@ login, note = automation.owner_of(types.SimpleNamespace(owner=None), {"digest_ow
 assert login == "" and note.startswith("No owner"), (login, note)
 PY
 
+[ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }
 echo "== $pass passed, $fail failed"
 [ "$fail" = 0 ]

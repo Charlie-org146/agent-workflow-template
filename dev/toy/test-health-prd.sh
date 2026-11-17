@@ -10,6 +10,7 @@ unset CLAUDECODE LOOP_JUDGE_ANSWER  # the judge is the session only where a test
 unset GH_TOKEN GITHUB_TOKEN LOOP_HEALTH_GH_FIXTURE LOOP_HEALTH_T0 CI GITHUB_ACTIONS
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 d=${1:-$(mktemp -d)}; part=${2:-all}; rm -rf "${d:?}"; mkdir -p "$d"
 S="$here/skills/workflow-health/scripts"; H="python3 $S/health.py"
 export HOME="$d/home" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"; mkdir -p "$HOME" "$FAKE_GH_DIR"
@@ -17,7 +18,7 @@ export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; echo "${out:-}" | tail -12 | sed "s/^/    saw: /"; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; { echo "$1:"; echo "${out:-}" | tail -5; } >> "$DIAG"; fi; }
 want() { [ "$part" = all ] || [ "$part" = "$1" ]; }
 mkrepo() {  # a repo with one feature (Calc, skills/calc) and a near-limit script in it
   rm -rf "$d/repo"; mkdir -p "$d/repo"; cd "$d/repo" || exit 1
@@ -215,4 +216,4 @@ echo "== issue 159: the health docs describe today's commands"
 check "SKILL.md describes review, triage and filing, and the commands reference has no run chart" 'grep -q "review" "$here/skills/workflow-health/SKILL.md" && grep -q "triage" "$here/skills/workflow-health/SKILL.md" && ! grep -q "^#### .run." "$here/skills/workflow-health/references/commands.md" && ! grep -q "Read-only. Use when" "$here/skills/workflow-health/SKILL.md"'
 fi
 
-[ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
+[ "$fails" = 0 ] && echo "ALL PASS" || { [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }

@@ -13,6 +13,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 unset LOOP_ROLE
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 M="$here/skills/workflow-monitoring/scripts"
 export HOME="$T/home"; mkdir -p "$HOME"
@@ -21,7 +22,7 @@ export LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; echo "--- the board:"; sed -n 1,60p "$T/board" | sed "s/^/    | /"; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; { echo "$1: board lines matching the forbidden words:"; grep -nEi "merged|hist|closed|milestone|tokens|total|done lines|longest|Roadmap|Needs you|level [0-9]" "$T/board" | head -6; } >> "$DIAG"; fi; }
 "$here/dev/toy/make.sh" "$T" >/dev/null || exit 1
 cd "$T/repo" || exit 1
 echo 0.1.2 > VERSION
@@ -82,4 +83,4 @@ check "the board artifact page shows the same live board" '[ -n "$art" ] && grep
 check "the default cadence is 30 minutes" 'python3 "$M/board.py" cadence | grep -qx "CADENCE 30"'
 
 echo
-[ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
+[ "$fails" = 0 ] && echo "ALL PASS" || { [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }
