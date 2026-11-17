@@ -754,6 +754,7 @@
 | <a id="t-notify-no-address"></a>notify-no-address | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-setting-default"></a>notify-setting-default | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-operate-runs"></a>notify-operate-runs | requirement | MON-5 | not run | - | local | 2026-11-17 |
+| <a id="t-notify-one-mail-per-event"></a>notify-one-mail-per-event | requirement | MON-5 | not run | - | local | 2026-11-17 |
 
 ## Regression
 
