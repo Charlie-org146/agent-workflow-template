@@ -76,4 +76,4 @@ Each requirement and how it is delivered:
 - PRD page: [Monitoring](Monitoring)
 - Backlog: [Backlog: Monitoring](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept hotfix-4892@3cdb9c19 -->
+<!-- kept machine-email-phone@90c5af3c -->
