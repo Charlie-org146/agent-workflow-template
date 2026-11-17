@@ -13,3 +13,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-docs-format.sh 2>&1 | grep "DOC-4"`.
+   Expect: a PASS line for the links-only README (DOC-18) case and one for the negative control, and no FAIL line.
+2. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints DOCS OK with no DOC-4 line.
