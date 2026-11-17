@@ -98,6 +98,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-setup connectors` | `python3 ../workflow-monitoring/scripts/unattended.py connectors`: each connector a followed repo's PRDs name, as connected, needs sign-in or missing |
 | `/workflow-setup update --propose` | `python3 scripts/update.py --propose` (`--file-issue` files it) |
 | `/workflow-setup machine` | `python3 dev/machine.py` (from a clone of the template) (no verb is the dry run `plan`; `apply`, `check`, `record-task NAME MODE`; `--repo DIR`, `--platform mac\|windows`): a second Mac or Windows machine's setup, run from a git clone, see the wiki Setup page |
+| `/workflow-setup agents-detect` | `python3 ../workflow-delivery/scripts/routing.py detect` (`--write` puts the agent profiles in the private `~/.workflow-loop/agents.json`): which agents are installed and logged in; a missing one falls back to Claude (DEL-16) |
 | `/workflow-setup agents` | `python3 scripts/agents.py wire` (`--dry-run`, `--repo DIR`) |
 | `/workflow-setup migration-check` | `python3 scripts/setup.py migration-check` (`--repo DIR`, `--pr` only the gaps a pull request can close, `--offline` skips the published wiki): every gap to the current template with its fix, exit 0 only with none, 1 gaps, 2 usage, 4 could not run; writes nothing; needs workflow-health beside it |
 
