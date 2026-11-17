@@ -82,7 +82,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
 | `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
-| `workers` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
+| `workers` | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->
