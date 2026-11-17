@@ -413,3 +413,10 @@ No toy changes the real ~/.workflow-loop (#4555, #4683).
 - `reap.sh` points `LOOP_LANES_DIR` at a temp lane pool unless a toy names its own, so lane code in any toy no longer adds `lanes/port-0` or `lanes/counter.lock` to the runner's home (the four CI LEAK rows). The four rows are Linux-only (not marked windows: ok); `test-toys-no-leak.py` proves the mechanism on any machine with a fresh home judged in full.
 - `homeguard.py` still ignores `lanes/` (other lanes' tickets are legitimate) but judges `schedule/` except the scheduler's own `log/`, each repo's `health-report.txt` and `tree/`, so a toy writing the real registry or a new entry fails with a LEAK line (#4683). `TOY_GUARD_STRICT=1` judges a fresh home in full.
 - Cost: a real `repos.json` change by another session during a toy's run now reads as a leak; it is rare and the toy reruns.
+
+## Applied 2026-11-17 (homeguard-skills-main)
+
+The home guard reported a false LEAK when another session wrote ~/.workflow-loop/skills-main or the schedule registry during a toy run (#4760; doc-milestone-sync lost a PR try on machine-done-7).
+
+- The guard tells a toy's writes from another process's by what they are, not by hash: `skills-main` is judged by `git status` (another session's checkout leaves it clean; a toy leaves a modified or untracked file, caught), and the schedule registry only by entries that point into the system temp folder (a toy's fixture; another session registers real repos) or by a registry that no longer parses. `repos.json.bak-*` is not judged. Strict mode still hashes everything in a fresh home.
+- Cost: a toy that registers a real-looking path, or edits skills-main and commits, is not caught; the toys set their own HOME and the harness points the schedule at a temp folder, so neither is a path they take.
