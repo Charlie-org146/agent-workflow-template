@@ -65,6 +65,16 @@ def repo_side():
     return have, nums, None
 
 
+def backlog(page, held={}):
+    """DOC-17: the milestone "Backlog: PAGE" that a page's delta issues sit on, created when it is missing; "" when gh can neither
+    list nor make it. The bare page name is never used, even when a milestone of that name exists."""
+    title = "Backlog: " + page
+    if title not in held:
+        have = repo_side()[0]
+        held[title] = title if have is not None and (title in have or post("LOOP_GH", "api", "-X", "POST", API, "-f", "title=" + title)[0]) else ""
+    return held[title]
+
+
 def to_repo(title, number, text):
     """(ok, why) of making the repo's milestone `title` read `text`: created, or edited by its number."""
     state, _, due = text.partition(" | ")
