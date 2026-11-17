@@ -97,6 +97,7 @@ TABLE = [
     ("lane_limit", PRIVATE, 2, "Flow file: full regression lanes that may run at once on this machine; more wait their turn (0 is unlimited)."),
     ("rules", PRIVATE, [], "Health file: your own health rules, each {name, command, fix}."),
     ("repos", PRIVATE, [], "Followed repos: one path a line in the repos file, shown on the board."),
+    ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine."),
 ]
 FLOW_KEYS = ("command", "allowed_tools", "model", "suite", "steps", "overrides", "env", "probe", "probe_expect", "full_markers", "limit")
 DEPTHS = ("full", "condensed")
@@ -172,26 +173,25 @@ def private_path():
 
 
 def fill_private(path=None):
-    """Add each missing flow-file setting with its default and a one-line explanation."""
+    """Add each missing flow-file setting with its default and help line."""
     path = path or private_path()
     held = load(path)
     added = [k for k in FLOW_KEYS if k not in held]
     help_ = dict(held.get("_help") or {})
     new = dict(held)
-    for key, home, default, text in TABLE:
-        if key in FLOW_KEYS and key not in new:
-            new[key] = default
-        if key in FLOW_KEYS and key not in help_:
-            help_[key] = text.split(": ", 1)[-1]
+    for key, _, default, text in TABLE:
+        if key in FLOW_KEYS:
+            new.setdefault(key, default)
+            help_.setdefault(key, text.split(": ", 1)[-1])
     suite = new.get("suite")
-    if isinstance(suite, dict) and not any(suite.values()) and not new.get("steps"):  # never configured: the built-in flow
-        new["suite"] = dict((key, "built-in") for key in ("idea", "plan", "review", "qa", "ship"))
+    if isinstance(suite, dict) and not any(suite.values()) and not new.get("steps"):
+        new["suite"] = dict.fromkeys(("idea", "plan", "review", "qa", "ship"), "built-in")
         added.append("suite")
     new["_help"] = help_
     if new != held:
         write_json(path, new, 0o600)
     home = os.path.expanduser("~/.workflow-loop")
-    health = os.environ.get("LOOP_HEALTH") or os.path.join(home, "health.json")
+    health = health_path()
     if not os.path.exists(health):
         write_json(health, {"rules": []}, 0o600)
     repos = os.path.join(home, "repos")
@@ -207,7 +207,7 @@ def health_path():
 
 @functools.lru_cache(None)
 def names():
-    """The owner's private-name patterns (workflow-delivery's private.py reads the list)."""
+    """The owner's private-name patterns, from private.py."""
     try:
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py")
         spec = importlib.util.spec_from_file_location("private_names", path)
@@ -256,11 +256,11 @@ def show(repo, as_json):
 
 
 def fill_repo(path):
-    """Add each missing repo setting, with its default and _help line, to the config at path."""
+    """Add each missing repo setting, with its default and _help line."""
     held = load(path)
-    if "criteria_max" in held and (isinstance(held["criteria_max"], bool) or not isinstance(held["criteria_max"], int)
-                                   or not 1 <= held["criteria_max"] <= 50):
-        sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (held["criteria_max"], path))
+    most = held.get("criteria_max", 10)
+    if isinstance(most, bool) or not isinstance(most, int) or not 1 <= most <= 50:
+        sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (most, path))
     check_depth(held, path)
     added = [k for k in repo_defaults() if k not in held]
     merged = dict(held, **{k: v for k, v in repo_defaults().items() if k not in held})
@@ -278,12 +278,9 @@ def fill_repo(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    ref = sub.add_parser("reference")
-    ref.add_argument("--write", action="store_true")
-    fr = sub.add_parser("fill-repo")
-    fr.add_argument("--repo", default=".")
-    fp = sub.add_parser("fill-private")
-    fp.add_argument("--file", default="")
+    sub.add_parser("reference").add_argument("--write", action="store_true")
+    sub.add_parser("fill-repo").add_argument("--repo", default=".")
+    sub.add_parser("fill-private").add_argument("--file", default="")
     sh = sub.add_parser("show")
     sh.add_argument("--repo", default=".")
     sh.add_argument("--json", action="store_true")
@@ -297,12 +294,13 @@ def main():
             print("WROTE " + os.path.normpath(path))
         else:
             print(text, end="")
-    elif args.command == "show":
-        top = subprocess.run(["git", "-C", args.repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
-        show(top or args.repo, args.json)
+        return 0
+    if args.command != "fill-private":
+        top = subprocess.run(["git", "-C", args.repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or args.repo
+    if args.command == "show":
+        show(top, args.json)
     elif args.command == "fill-repo":
-        top = subprocess.run(["git", "-C", args.repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
-        path = os.path.join(top or args.repo, ".loop", "config.json")
+        path = os.path.join(top, ".loop", "config.json")
         print("FILLED %s: %s" % (path, ", ".join(fill_repo(path)) or "nothing missing"))
     else:
         added = fill_private(args.file or None)

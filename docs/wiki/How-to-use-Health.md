@@ -5,6 +5,16 @@
 
 Checks the repo with fixed rules and a full reviewer, and files every finding as an issue tagged with its group (and its feature, when feature_labels is on), a defect or a backlog item on its feature's Backlog milestone (an old Backlog milestone becomes Backlog: Other);.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `workflow-health` | Skill | Checks the repo against its own PRDs with fixed rules. | Say "How healthy is this repo?"; you get the formal report and one verdict. |
+| `health.py` | Command | Checks the repo with twelve fixed rule groups and prints one verdict. | `python3 skills/workflow-health/scripts/health.py check`. |
+| `automation.py` | Command | Posts the digest comment each round and installs the local schedule. | `python3 skills/workflow-health/scripts/automation.py digest`. |
+| `mail.py` | Command | Mails the owner the round's digest, at most once. | `python3 skills/workflow-health/scripts/mail.py send`. |
+| health-round | Scheduled routine | The scheduled health round on the always-on machine. | Its Runbook is on the [Health](Health) page; start a round by hand with `health.py check`. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -26,6 +36,31 @@ Each requirement and how it is delivered:
 - HLT-5: Repo review. Example, from the judge-section-format test: given the judge, when it runs, then it prints its three reviews in a section marked as suggestions.
 - HLT-6: Health keeps itself honest and the repo lean. Example, from the hlt6-controls-fire test: given every health rule, when health check runs its controls, then each rule's negative control makes it fire.
 - HLT-8: Triage. Example, from the hlt8-triage test: given open health findings, when triage runs, then it lists them per feature by kind, count and age, and a closed batch carries the owner's words and is not refiled until its evidence changes.
+
+### Skill: workflow-health
+- **Say:** "How healthy is this repo?"
+- **Command:** `/workflow-health check`
+
+### Command: health.py
+- **Command:** `python3 skills/workflow-health/scripts/health.py check [--group NAME]` (also `health.py review`, `health.py judge`, `health.py preview`, `health.py file`, `health.py triage`)
+- **Dry run:** `health.py check` writes no file and calls no model; `preview` lists the issues `file` would write and writes nothing.
+- **Reads:** the repo, its PRD pages, its tests and its issues.
+- **Writes:** `check` writes nothing; `file` and `triage` write and close GitHub issues.
+- **Exit codes:** 0 when the verdict is green; 1 when a rule is FAIL or UNREAD.
+
+### Command: automation.py
+- **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]`, or `skills/workflow-health/scripts/automation.py local status`, `local install` and `local tick --dry-run`
+- **Dry run:** `automation.py local tick --dry-run` shows what a tick would run.
+- **Reads:** the workflow files, `.loop/config.json` and the issues of the round.
+- **Writes:** one comment on the pinned digest issue; `local install` writes the launch agent.
+- **Exit codes:** 0 after it posts or prints; nonzero when an install is refused.
+
+### Command: mail.py
+- **Command:** `python3 skills/workflow-health/scripts/mail.py send`
+- **Dry run:** none: `mail.py test` sends one fixed test mail through the configured sender.
+- **Reads:** the digest comment and the sender's secrets, never printed.
+- **Writes:** the digest comment's marker (`mailing`, then `mailed`).
+- **Exit codes:** every outcome is one `MAIL:` line ending in a code; the codes are on the Automation page.
 
 ## URLs and deployments
 

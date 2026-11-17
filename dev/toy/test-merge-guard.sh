@@ -15,6 +15,8 @@ set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION
 export HOME=$(mktemp -d) PATH="$here/dev/toy/fakegh:$PATH"
 export USERPROFILE="$HOME"
+# the empty HOME hides any git identity, and a CI runner can't guess one: without these every commit here fails (#4554)
+export GIT_AUTHOR_NAME=Toy GIT_AUTHOR_EMAIL=t@example.test GIT_COMMITTER_NAME=Toy GIT_COMMITTER_EMAIL=t@example.test
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 export FAKE_GH_DIR="$d/gh"; mkdir -p "$FAKE_GH_DIR"
 fails=0

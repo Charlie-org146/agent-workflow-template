@@ -189,3 +189,101 @@ def howto_items(name, text, feature):
                            ("an item for an ID its feature page lacks:", sorted(items - set(have)), "remove it or fix the ID")):
         out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
     return out
+
+
+# --- How-to-use Kinds (DOC-19, #4677): every delivered row names a Kind, and the page carries that Kind's block ---
+KHEAD = "| Component | Kind | What it is | How a user uses it |"
+ROUTINE = "Scheduled routine"
+KINDS = {
+    "Site/URL": ["URLs", "Served by", "Check", "Deploy"],
+    "Skill": ["Say", "Command"],
+    "Command": ["Command", "Dry run", "Reads", "Writes", "Exit codes"],
+    "API/file contract": ["Path", "Fields", "Example", "Writer", "Reader"],
+    ROUTINE: [],  # its runbook fields are DOC-16's: pageformat.runbook checks them
+    "Deployment": ["Target", "Deploy", "Rollback", "Check"],
+    "Message/channel": ["Trigger", "Recipients", "Subject", "Resend"],
+    "Playbook": ["Steps", "Templates", "Stop rules"],
+}
+FIELD = re.compile(r"^- \*\*([A-Z][A-Za-z ]*):\*\*\s*(.*)$")
+ADDRESS = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
+
+
+def part(text, name):
+    """The lines under '## name', up to the next '## ' heading."""
+    head = "\n## %s\n" % name
+    return text.split(head, 1)[1].split("\n## ", 1)[0] if head in text else ""
+
+
+def blocks(body):
+    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
+    found, cur, last = {}, None, None
+    for line in body.splitlines():
+        if line.startswith("### "):
+            cur, last = line[4:].strip(), None
+            found[cur] = {}
+        elif cur is not None and FIELD.match(line):
+            last, text = FIELD.match(line).groups()
+            found[cur][last] = found[cur].get(last, "") + text
+        elif cur is not None and last and line[:1].isspace():
+            found[cur][last] += " " + line.strip()
+    return found
+
+
+def delivered(text):
+    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
+    block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
+    lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
+    out = []
+    for line in lines[2:]:
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        out.append((cells[0].replace("`", ""), cells[1] if len(cells) > 1 else "", len(cells)))
+    return (lines[0] if lines else ""), out
+
+
+def kinds(name, text, on_page=()):
+    """DOC-19: (kind, page, detail) for a How-to-use page's What's delivered table and the block each row needs. A Scheduled routine
+    row's runbook may sit under Runbooks here or on the feature page (on_page: its '### routine' names)."""
+    out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
+    header, table = delivered(text)
+    if header != KHEAD:
+        bad("the What's delivered header is '%s' (got '%s'). Fix: use that header" % (KHEAD, header))
+    if not table:
+        bad("What's delivered holds no row. Fix: add a row for each component, with its Kind")
+    reach, books_here = blocks(part(text, "How to reach or run it")), blocks(part(text, "Runbooks"))
+    wanted = set()
+    for component, kind, cells in table:
+        if cells != 4:
+            bad("row '%s' has %d cells, not 4" % (component, cells))
+        if kind not in KINDS:
+            bad("row '%s': Kind '%s' is not one of %s. Fix: name one Kind" % (component, kind, ", ".join(KINDS)))
+            continue
+        if kind == ROUTINE:
+            wanted.add(component)
+            found = books_here.get(component) if component in books_here else ({} if component in on_page else None)
+        else:
+            wanted.add("%s: %s" % (kind, component))
+            found = reach.get("%s: %s" % (kind, component))
+        if found is None:
+            bad("row '%s' (%s) has no block. Fix: add '### %s' under %s" % (component, kind, component if kind == ROUTINE else "%s: %s" % (kind, component),
+                                                                      "Runbooks" if kind == ROUTINE else "How to reach or run it"))
+            continue
+        for field in ([] if component in on_page else KINDS[kind]):
+            if len(found.get(field, "").strip()) < 3:
+                bad("block '%s' has no '%s' field of 3 characters or more. Fix: add '- **%s:** text' (write 'none' when there is none)" % (component, field, field))
+        if kind == "Skill" and not found.get("Command", "").lstrip().startswith("`/"):
+            bad("block '%s': a Skill's Command is its exact /command in backticks" % component)
+        if ADDRESS.search(" ".join(found.values())):
+            bad("block '%s' holds an address. Fix: name a role, not a person" % component)
+    for heading in list(reach) + list(books_here):
+        if heading not in wanted and heading != "When something goes wrong":
+            bad("block '%s' has no row in What's delivered. Fix: add its row or remove the block" % heading)
+    return out
+
+
+def unlisted(feature, how):
+    """DOC-19: the commands a feature page names in backticks (`script.py subcommand`, its Tests section and Milestone line aside) that its
+    How-to-use page does not hold."""
+    body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
+    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)}
+    return sorted(n for n in names if n not in how)

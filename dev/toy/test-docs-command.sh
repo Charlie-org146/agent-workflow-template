@@ -28,11 +28,41 @@ import json
 c = json.load(open(".loop/config.json")); c["criteria"] = True
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
+mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
+<!-- workflow-docs -->
+# How to use Delivery
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+## How to reach or run it
+
+- DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
+- DEL-2: It answers within a second; run it on a short list.
+
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [Delivery](Delivery)
+HOWEOF
 mkdir -p "$FAKE_GH_DIR"
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
 mkdir -p docs/wiki
 printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://example.test/milestone/1 |\n' > docs/wiki/Home.md
-printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "What is the median of 1 2 3?" | The calculator prints it. |\n' >> README.md
+printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |\n' >> README.md
 GOOD='### Functional
 
 - DEL-1: **Unreviewed** It prints a median.
@@ -42,7 +72,7 @@ GOOD='### Functional
 
 None'  # requirements in the DOC-7 shape
 page() {  # page PROBLEM REQUIREMENTS
-  printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\n## Problem\n\n%s\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- No other feature.\n\n## Success metrics\n\n- The toy run passes.\n\n## Tests\n\n' "$1" "$2" > docs/wiki/Delivery.md
+  printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\n%s\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- No other feature.\n\n## Success metrics\n\n- The toy run passes.\n\n## Tests\n\n' "$1" "$2" > docs/wiki/Delivery.md
 }
 page "The toy calculator, with enough words to count as a written page." "- DEL-1: **Unreviewed** It prints a median."
 git add -A; git commit -qm "Toy docs"

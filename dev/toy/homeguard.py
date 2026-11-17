@@ -12,6 +12,7 @@ reads files and never writes inside the folder; the snapshot goes to FILE.
 import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
 
@@ -20,11 +21,77 @@ def folder():
     return os.environ.get("TOY_REAL_WL") or os.path.expanduser("~/.workflow-loop")
 
 
-def scan(top):
+def other_runs(top, here, name=""):
+    """True for what other sessions' runs write in the owner's real folder, which a toy can't be judged on: compiled caches, the lane
+    tickets under lanes/, and the scheduler's own files under schedule/ (log/, each repo's health-report.txt and tree/). Anything else
+    under schedule/ (repos.json, a new entry) is state a toy must not touch (#4683). TOY_GUARD_STRICT judges a fresh home in full."""
+    rel = os.path.relpath(os.path.join(here, name), top).replace(os.sep, "/").split("/")
+    if "__pycache__" in rel:
+        return True
+    if os.environ.get("TOY_GUARD_STRICT"):
+        return False
+    return (rel[0] == "lanes" or rel[0] == "skills-main" or (rel[0] == "schedule" and (rel[1:2] == ["log"] or rel[2:3] == ["tree"] or rel[2:] == ["health-report.txt"]
+            or rel[1:2] and rel[1].startswith("repos.json"))))  # skills-main and the registry are judged by who wrote them, below (#4760)
+
+
+def temp_prefixes():
+    base = tempfile.gettempdir()
+    return {p.replace(os.sep, "/").lower().rstrip("/") + "/" for p in (base, os.path.realpath(base), "/tmp")}
+
+
+def in_temp(value):
+    """True when a JSON value holds a path under the system temp folder: a toy's fixture, never another session's real repo."""
+    if isinstance(value, str):
+        return value.replace(os.sep, "/").lower().startswith(tuple(temp_prefixes()))
+    if isinstance(value, dict):
+        return any(in_temp(v) for v in value.values())
+    return isinstance(value, list) and any(in_temp(v) for v in value)
+
+
+def registry(top):
+    """The schedule registry as other sessions leave it is not judged; an entry that points into the temp folder is a toy's, and so is a
+    registry that no longer parses. Returns {key: hash} of those only."""
+    path = os.path.join(top, "schedule", "repos.json")
+    try:
+        with open(path, "rb") as handle:
+            raw = handle.read()
+    except OSError:
+        return {}
+    try:
+        entries = json.loads(raw).get("repos") or {}
+        return {"schedule/repos.json#" + str(name): hashlib.sha256(json.dumps(entry, sort_keys=True).encode()).hexdigest()
+                for name, entry in entries.items() if in_temp(entry)}
+    except (ValueError, AttributeError):
+        return {"schedule/repos.json": hashlib.sha256(raw).hexdigest()}
+
+
+def skills_main(top):
+    """The installed template checkout is judged by git, not by file hashes: another session moves it (a checkout rewrites START.md and
+    config.json) and leaves it clean, while a toy that writes there leaves an untracked or modified file. Returns {key: hash} of
+    what git calls changed; a folder that is not a checkout is hashed whole."""
+    folder = os.path.join(top, "skills-main")
+    if not os.path.exists(os.path.join(folder, ".git")):
+        return {os.path.relpath(os.path.join(h, n), top).replace(os.sep, "/"): hashlib.sha256(open(os.path.join(h, n), "rb").read()).hexdigest()
+                for h, _d, ns in os.walk(folder) for n in ns if os.path.isfile(os.path.join(h, n)) and "__pycache__" not in h}
+    done = subprocess.run(["git", "status", "--porcelain=v1", "-uall"], cwd=folder, capture_output=True, text=True)
     found = {}
+    for line in done.stdout.splitlines():
+        name = line[3:].strip().strip('"')
+        try:
+            with open(os.path.join(folder, name), "rb") as handle:
+                found["skills-main/" + name] = line[:2] + hashlib.sha256(handle.read()).hexdigest()
+        except OSError:
+            found["skills-main/" + name] = line[:2]
+    return found
+
+
+def scan(top):
+    found = {} if os.environ.get("TOY_GUARD_STRICT") else dict(registry(top), **skills_main(top))
     for here, _dirs, names in os.walk(top):
-        _dirs[:] = [d for d in _dirs if d != "__pycache__" and not (here == top and d in ("lanes", "schedule"))]  # caches, lane tickets and the schedule's own log and registry that other sessions' runs write, not state
+        _dirs[:] = [d for d in _dirs if not other_runs(top, here, d)]
         for name in names:
+            if other_runs(top, here, name):
+                continue
             path = os.path.join(here, name)
             try:
                 with open(path, "rb") as handle:

@@ -261,7 +261,7 @@ def apply(repo, config, found, acts):
             full = os.path.join(repo, path)
             put(repo, path, agents.ignore_with(open(full, newline="").read() if os.path.exists(full) else "", action[1]))
         elif action == "readme" and pf:
-            put(repo, path, agents.readme_with(survey.read(repo, path) or "", names, pf))
+            put(repo, path, agents.readme_with(survey.read(repo, path) or "", names, pf, repo))
         elif isinstance(action, tuple) and action[0] == "home":
             if not pf:
                 print("SKIP: workflow-docs is not installed beside this skill, so Home is not written")
@@ -288,6 +288,10 @@ def apply(repo, config, found, acts):
                     title, problem = "# " + name, text
             tool(repo, "workflow-docs", "prd.py", "skeleton", path, "--title", title, "--problem", problem.strip() or PLACEHOLDER,
                  "--requirement", criterion)
+            how = os.path.join(os.path.dirname(path), "How-to-use-%s.md" % name)  # DOC-18: its page too, unwritten like the PRD page
+            if not survey.read(repo, how):
+                put(repo, how, "%s\n# How to use %s\n\n## What it's for\n\n%s\n" % (survey.MARKER, name.replace("-", " "), PLACEHOLDER))
+                touched.append(how)
         touched.append(path)
     if any(a[3] == "map" for a in acts):
         for name, paths in mapping(found).items():
