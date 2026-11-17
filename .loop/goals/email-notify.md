@@ -13,4 +13,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps a person can follow, each with an Expect: line. -->
+1. On this PC, run `python3 skills/workflow-monitoring/scripts/notify.py status`.
+   Expect: `NOTIFY: on on this machine; ...`, with mail.env `ready` once you have written `~/.workflow-loop/schedule/mail.env`.
+2. With mail.env written, let the operation session make two passes (`operate.py run --once`, twice).
+   Expect: the first prints `NOTIFY: baseline N events, nothing sent`; after a new Needs you item appears, the next pass prints `NOTIFY: sent needs you <goal>` and one mail arrives naming the goal and what to do.
+3. Run another pass with nothing new.
+   Expect: no `NOTIFY:` line and no new mail.
