@@ -16,7 +16,7 @@ import report as G  # noqa: E402
 OTHER = "Other"  # a finding that fits no feature page
 HEAD = ("| Feature | Group | Rule | Severity | Finding | Issue |", "|---|---|---|---|---|---|")
 BAD = ("FAIL", "UNREAD", "WARN")
-MAX_ROWS = 50  # the digest comment stays well under GitHub's size limit
+MAX_ROWS = 50  # rows the digest shows: its comment stays well under GitHub's size limit
 MARK = re.compile(r"<!-- loop-health (.+?)(?: evidence=\w+)?(?: placed=\S*)? -->")
 
 
@@ -79,9 +79,7 @@ def lines(rows, root, numbers):
     table = rows_of(rows, root, numbers)
     if not table:
         return ["FINDINGS: none"]
-    shown = ["| %s |" % " | ".join(cell(c) for c in one) for one in table[:MAX_ROWS]]
-    more = ["", "%d more findings: run health.py check" % (len(table) - MAX_ROWS)] if len(table) > MAX_ROWS else []
-    return ["FINDINGS (%d)" % len(table), ""] + list(HEAD) + shown + more + [""]
+    return ["FINDINGS (%d)" % len(table), ""] + list(HEAD) + ["| %s |" % " | ".join(cell(c) for c in one) for one in table] + [""]
 
 
 def insert(text, rows, root):
@@ -94,8 +92,8 @@ def show(rows, root):
     print("\n".join([""] + lines(rows, root, filed(root, fresh=True))))
 
 
-def from_report(text):
-    """The last findings table in a saved report: its lines from FINDINGS to the last row, or []."""
+def from_report(text, most=MAX_ROWS):
+    """The last findings table in a saved report, its first `most` rows and a line naming the rest, or []."""
     lines_in, start = text.splitlines(), None
     for n, line in enumerate(lines_in):
         if line.startswith("FINDINGS"):
@@ -104,12 +102,12 @@ def from_report(text):
         return []
     out = [lines_in[start]]
     for line in lines_in[start + 1:]:
-        if line.startswith("|") or not line.strip() or line.endswith("run health.py check"):
-            out.append(line)
-            if line.endswith("run health.py check"):
-                break
-        else:
+        if not (line.startswith("|") or not line.strip()) or (out[-1].startswith("|") and not line.strip()):
             break
+        out.append(line)
+    rows = [line for line in out if line.startswith("|")][2:]
+    out = out[:len(out) - len(rows)] + rows[:most] if rows else out
     while out and not out[-1].strip():
         out.pop()
-    return out
+    return out + (["", "%d more findings: run health.py check" % (len(rows) - most)] if len(rows) > most else [])
+
