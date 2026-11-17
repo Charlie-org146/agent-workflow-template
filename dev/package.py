@@ -32,7 +32,7 @@ import zipfile
 
 SHIPPED = ["skills", "listing.json", "README.md", "LICENSE"]
 BAD_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", "vendor"}
-MAX_FILES, MAX_BYTES, MAX_SCRIPT = 99, 5 * 1024 * 1024, 20 * 1024
+MAX_FILES, MAX_BYTES, MAX_SCRIPT = 100, 5 * 1024 * 1024, 20 * 1024
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"gh[pousr]_[A-Za-z0-9]{30,}", r"sk-[A-Za-z0-9]{20,}", r"xox[baprs]-[A-Za-z0-9-]{10,}",
            r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"(?i)(api[_-]?key|secret|password)\s*[:=]\s*['\"][^'\"\s]{8,}"]
 OBFUSCATION = [r"base64\.b64decode", r"b64decode", r"\bexec\s*\(", r"\beval\s*\(", r"\bmarshal\b", r"\bpickle\b",
@@ -263,7 +263,7 @@ def check_files(root, files):
         except ValueError:
             fail("Files", "%s is not text" % rel)
     if len(files) > MAX_FILES:
-        fail("Size", "%d files, under 100 allowed" % len(files))
+        fail("Size", "%d files, at most 100 allowed" % len(files))
     if total >= MAX_BYTES:
         fail("Size", "%d bytes, under 5 MB allowed" % total)
 

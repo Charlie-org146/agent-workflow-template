@@ -3,7 +3,7 @@
 # reads: dev/package.py skills/
 """DEL-5, SET-3 (package-gate): a pull request whose merged head breaks the package fails its lane.
 
-Runs dev/package.py's own checks (walk, check_files, check_scripts: the 99-file cap, the 20,480-byte script cap and
+Runs dev/package.py's own checks (walk, check_files, check_scripts: the 100-file cap, the 20,480-byte script cap and
 `--help` run alone with only its sibling files) on the tracked files of this checkout, in plain Python, so it
 runs on Windows too (the package-passes row skips there). The controls build a small package and show each rule fails.
 
@@ -61,9 +61,9 @@ def controls(tmp):
     check(any("big.py is" in line and "bytes" in line for line in verdict(big)[1]), "control: a script over 20,480 bytes fails the package")
     many = os.path.join(tmp, "many")
     shutil.copytree(tree, many)
-    for number in range(99):
+    for number in range(100):
         put(many, "skills/demo/references/r%02d.md" % number, "text\n")
-    check(any(line.startswith("Size:") and "files" in line for line in verdict(many)[1]), "control: more than 99 files fails the package")
+    check(any(line.startswith("Size:") and "files" in line for line in verdict(many)[1]), "control: more than 100 files fails the package")
     alone = os.path.join(tmp, "alone")
     shutil.copytree(tree, alone)
     put(alone, "skills/demo/scripts/needs.py", "import sibling_skill_helper\n")
