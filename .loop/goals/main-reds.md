@@ -1,0 +1,17 @@
+# main-reds: the unclaimed v2.0 issues that keep template main red are fixed in one goal (#4901 #4896 #4865 #4858 #4683 #4660 #4695 #4772 #4758; owner o22)
+
+- Slug: main-reds
+- Touches: not declared
+- ETA: 275 active minutes (estimate 219m plus a 25% margin, rough)
+
+## Done lines
+
+Frozen. A wrong done line needs a new goal.
+
+1. The rows named in #4901 (DEL-10, routing.py starting processes without the guard), #4896 (judge-key-old and the other two) and #4865 (consistency) pass on a clean checkout because their cause is fixed in code, and any of them listed in .loop/regression-known.tsv are removed from it.
+2. #4858, #4683 and #4772: the leak guard no longer flags routine logs written outside the test, the Home guard covers lanes/ and schedule/, and a signal during a commit hook rolls back while git still holds the index; each has a regression row that fails before the fix and passes after.
+3. #4660, #4695 and #4758: audit.py reads CHANGELOG headings with or without a leading v, docs.py sync files issues under the right milestone, and the toy SMTP credential no longer trips GitGuardian; each has a row.
+
+## Verify by hand
+
+<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
