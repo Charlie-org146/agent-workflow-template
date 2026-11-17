@@ -20,3 +20,4 @@ del8-session-tokens	not built: only headless goals are refused past token_budget
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
+trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
