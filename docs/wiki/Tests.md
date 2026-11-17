@@ -1278,4 +1278,4 @@
 | <a id="t-hands-off-feature"></a>hands-off-feature | requirement | done line hands-off-operation:6 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-queued"></a>hands-off-queued | requirement | done line hands-off-operation:7 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-size"></a>hands-off-size | requirement | done line hands-off-operation:8 | not run | - | local | 2026-11-17 |
-| <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) open (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) closed (2026-11-17) | not run | - | local | 2026-11-17 |
