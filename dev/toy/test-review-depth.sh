@@ -65,7 +65,8 @@ PY
 echo "== full is the default"
 base 'auto_approve=false'
 new full1
-for s in idea plan review qa ship; do step full1 $s >/dev/null; done
+for s in idea plan review qa ship; do step full1 $s > "$d/rec-full1-$s" 2>&1; done
+case "$(field full1 flow.ship)" in done*) ;; *) for s in qa ship; do echo "full1 $s: $(tail -3 "$d/rec-full1-$s" | cut -c1-220) | flow: $(tail -2 "$d/flow-full1-$s" | cut -c1-220)"; done >> "$DIAG";; esac
 check "with no setting change, every step records depth full" '[ "$(field full1 depth.review)" = full ] && [ "$(field full1 depth.idea)" = full ] && [ "$(field full1 flow.review)" = "done (depth full)" ]'
 python3 - "$here" <<'PY' > "$d/prompt"
 import sys; sys.path.insert(0, sys.argv[1] + "/skills/workflow-delivery/scripts")
