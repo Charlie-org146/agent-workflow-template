@@ -8,7 +8,6 @@ Report (pure formatting; check, judge, review): a header naming every group run 
 (table.py), each group in the fixed order under its angle with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix on
 each non-pass), then one verdict. A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
 
-
 Commands (each takes the health module h): review, judge, preview, file and triage. Refusals print REFUSED[code] and exit 2:
 [group] an unknown group (health.py), [file] file with no group, [gh] the issues can't be listed (nothing is written), [review]
 a --review FILE that isn't a saved review --json, [why] and [cap] from triage.
@@ -289,7 +288,6 @@ def cmd_file(h, args):
     tab = h.sibling_module("table")
     tab and tab.show(filing.ROWS, root)
     return 0
-
 
 
 def cmd_triage(h, args):

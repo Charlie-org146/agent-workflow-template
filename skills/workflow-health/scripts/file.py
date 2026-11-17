@@ -164,7 +164,6 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         label, stone = home(item, page)
         act = {"group": group, "key": key, "body": body_of(item), "evidence": mark, "tag": tag_of(group, item),
                "label": label, "stone": stone, "feature": IS.feature_label(page or "Other") if tagging else "",
-
                "title": "health: %s %s %s" % (group, IS.posix(item["subject"]), item["rule"])}
         if not issue:
             cover = covering(item, everything)

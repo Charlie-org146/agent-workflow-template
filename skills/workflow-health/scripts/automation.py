@@ -257,7 +257,6 @@ def cmd_digest(args):
     titles = (rounds.milestone_titles() if live else {}) or {}  # unreadable titles show nowhere: no note, no failure
     comment, marker = compose(login, note, ran, now_open, before, run_id, titles, groups, pages,
                               findings(os.environ.get("HEALTH_REPORT") or "", now_open or {}))
-
     if cost is not None:
         rounds.summary("## Round\n\n" + rounds.line(cost) + "\n")
         if cost.get("over"):

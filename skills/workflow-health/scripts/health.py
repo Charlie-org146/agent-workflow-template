@@ -362,7 +362,6 @@ def cmd_check(args):
         tab = sibling_module("table")
         text = tab.insert(text, rows, root) if tab else text
         print("\n".join(with_tests(text, root) if whole is None else text))
-
     return 0 if green else 1
 
 
