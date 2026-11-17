@@ -20,3 +20,14 @@ del8-session-tokens	not built: only headless goals are refused past token_budget
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
+no-flow-refused	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+pending-waits	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+stale-found	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+publish-refused-stale	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+no-token-dry-run	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+cut-needs-verify	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+refused-unmet	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+stale-page-row	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+no-token-would	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+worker-per-goal	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
+worker-reports	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
