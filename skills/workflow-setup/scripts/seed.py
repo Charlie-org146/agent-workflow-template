@@ -288,6 +288,10 @@ def apply(repo, config, found, acts):
                     title, problem = "# " + name, text
             tool(repo, "workflow-docs", "prd.py", "skeleton", path, "--title", title, "--problem", problem.strip() or PLACEHOLDER,
                  "--requirement", criterion)
+            how = os.path.join(os.path.dirname(path), "How-to-use-%s.md" % name)  # DOC-18: its page too, unwritten like the PRD page
+            if not survey.read(repo, how):
+                put(repo, how, "%s\n# How to use %s\n\n## What it's for\n\n%s\n" % (survey.MARKER, name.replace("-", " "), PLACEHOLDER))
+                touched.append(how)
         touched.append(path)
     if any(a[3] == "map" for a in acts):
         for name, paths in mapping(found).items():

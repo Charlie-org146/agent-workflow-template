@@ -355,6 +355,8 @@ def howto(root, folder, features):
         if not os.path.isfile(path):
             found.append(("HOWTO", page, "DOC-18 the feature has no How-to-use page. Fix: write %s/%s.md with the sections %s" % (folder, name, ", ".join(PARTS))))
             continue
+        if "Write this page from what is really in the repo." in slurp(path):
+            continue  # an unwritten stub: docs check reports it UNWRITTEN
         lines = [x.strip() for x in slurp(path).splitlines() if x.strip()]
         heads = [x[3:] for x in lines if x.startswith("## ")]
         if "# " + pf.heading_of(page) not in lines:
