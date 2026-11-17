@@ -22,3 +22,12 @@ Frozen. A wrong done line needs a new goal.
    Expect: the first record shows `moved` with no worker; the second prints `TAKEN SLUG: worker ...`; a second `take` is refused.
 3. With `notify_email` true and a fake or test mailer, run `python3 skills/workflow-monitoring/scripts/notify.py send` on a check-in with a new Needs-you item, then `mailbox.py reply QID "1 recommended"`.
    Expect: one mail with numbered options and a recommendation; the reply prints `RECORDED ... as the owner's words`.
+
+## Fixes and regression proof
+
+Fixes #4787: [machines-handover-4787](../../docs/wiki/Tests.md#t-machines-handover-4787); requirement MCH-4 uses machines-handover.
+Fixes #4785: [mailbox-two-mails-4785](../../docs/wiki/Tests.md#t-mailbox-two-mails-4785); requirement MCH-5 uses mailbox-two-mails.
+Fixes #4671: [mailbox-two-mails-4671](../../docs/wiki/Tests.md#t-mailbox-two-mails-4671); requirement MCH-5 uses mailbox-two-mails.
+Fixes #4805: [desk-lists-4805](../../docs/wiki/Tests.md#t-desk-lists-4805); requirement MCH-6 uses desk-lists.
+
+The fixtures retain all 39 assertions. Seven old notification rows are folded into notify-new-events, which runs the complete existing notification fixture. Seven retained requirement and defect rows replace them: zero net rows added. The 13 session-worker rows remain known red under #4921.
