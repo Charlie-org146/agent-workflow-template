@@ -16,8 +16,8 @@ Frozen. A wrong done line needs a new goal.
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
 1. Run `grep -n "DEL-16" docs/wiki/Delivery.md`.
    Expect: a line `- DEL-16: **Unreviewed** Each step runs on the agent the config picks` followed by three sub-bullets.
-2. Run `sed -n 5p docs/wiki/Delivery.md`.
-   Expect: it prints `Review: **Unreviewed**`.
+2. Run `grep -n "^Review:" docs/wiki/Delivery.md`.
+   Expect: it prints a line reading `Review: **Unreviewed**`.
 3. Run `python3 skills/workflow-docs/scripts/docs.py check`.
    Expect: it prints `DOCS OK`.
 4. Run `grep -n "DEL-16" .loop/regression.tsv`.
