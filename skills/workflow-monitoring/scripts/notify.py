@@ -27,6 +27,7 @@ sys.path.insert(0, HERE)
 import auto  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
+import mailbox  # noqa: E402
 
 HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
 SECRETS = ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAIL_TOKEN", "DIGEST_SMTP_USER", "DIGEST_SMTP_PASSWORD")
@@ -177,16 +178,21 @@ def cmd_send(args):
         return 0
     repo = os.path.basename(os.path.abspath(args.root))
     for key, kind, slug, action in new:
+        if not mailbox.claim(folder, key, flow_path(), args.root):  # one stream: the other machine mailed it, or the budget is spent
+            sent[key] = "covered"
+            say("not sent %s %s: the other machine mailed it, or the send budget is spent" % (kind, slug))
+            continue
         sent[key] = "mailing"
         save(path, state)
-        body = "%s\n\nRepo: %s. Event: %s.\n" % (action, repo, kind)
+        body = mailbox.compose(folder, key, kind, slug, action, repo)
         try:
-            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s)" % (kind, slug, repo), body, mail.rounds.to_html(body),
+            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key)), body, mail.rounds.to_html(body),
                                               (host, port, wait, api))
         except Exception as err:  # noqa: BLE001 - maybe mid-send: keep it marked, never send twice
             outcome, detail = "unknown", type(err).__name__
         if outcome == "refused":
             del sent[key]
+            mailbox.claim(folder, key, flow_path(), args.root, release=True)
             say("not sent %s %s: %s (MAIL_REFUSED)" % (kind, slug, detail))
         elif outcome == "unknown":
             say("%s %s may have been sent: %s; kept, so it is not sent twice (MAIL_UNKNOWN)" % (kind, slug, detail))

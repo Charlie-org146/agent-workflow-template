@@ -32,6 +32,7 @@ import board_lines  # noqa: E402
 import govern_hook  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
+import machines  # noqa: E402
 import pool as pl  # noqa: E402
 import replan  # noqa: E402
 import unattended  # noqa: E402
@@ -147,7 +148,7 @@ def render(root=None, at=None, stamp=None):
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
     out = ["%d running, %d waiting on you, %d queued; %s" % (counts("running", "held", "silent"),
                                                             counts("waiting", "failed", "stopped"), sum(len(g["queue"]) for g in pod), pool_line),
-           bs.machine_line(cfg)]
+           *machines.lines(root, cfg, bs.machine_line(cfg))]
     for g in pod:
         out += ["%s%s: %d goal%s, last activity %s" % (name, " (%s)" % machine if machine else "", n, "" if n == 1 else "s",
                                                       last.astimezone().strftime("%H:%M") if last else "unknown")

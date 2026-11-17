@@ -98,6 +98,8 @@ TABLE = [
     ("rules", PRIVATE, [], "Health file: your own health rules, each {name, command, fix}."),
     ("repos", PRIVATE, [], "Followed repos: one path a line in the repos file, shown on the board."),
     ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine."),
+    ("machine_sync", PRIVATE, False, "Flow file: true shares the merge turn, SNAPSHOT lines and mail ledger with your other machine through origin; per machine."),
+    ("notify_budget", PRIVATE, 20, "Flow file: most mails both machines send you in 24 hours, from one shared ledger; 0 sends none."),
 ]
 FLOW_KEYS = ("command", "allowed_tools", "model", "suite", "steps", "overrides", "env", "probe", "probe_expect", "full_markers", "limit")
 DEPTHS = ("full", "condensed")

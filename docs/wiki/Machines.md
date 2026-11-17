@@ -20,6 +20,17 @@ Review: **Unreviewed** <!-- kept full-auto-all@08ab9232 -->
   - No routine stops to ask: each task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing (a note you record, not the app's own setting).
   - Routine emails go through a local SMTP send script that reads its credentials only from a local secrets file, never prints them and sends only to the one configured owner address; nothing private is committed, and setup refuses a text with a secret, address or home path.
 
+- MCH-2: **Unreviewed** Goals move between machines, with one owner and one merge order
+  - Each goal has one owning machine. `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused.
+  - With the private setting `machine_sync` on (off by default, per machine), each repo has one merge order across machines: a goal takes a merge ticket on origin before its pr lane, and a second machine's goal waits for it (a holder silent for 30 minutes is dropped).
+  - SNAPSHOT is structured data a machine publishes to origin, and a check-in draws one Machine line per machine from it, not from message text; a moved goal shows once, under the machine that holds it. A peer's record is data, never the owner's approval.
+- MCH-3: **Unreviewed** One email stream: every update and question by mail, answered by reply
+  - Each new Needs-you item, stopped or late goal and merged release sends one mail (when `notify_email` is on) with numbered options and a recommendation, through one mailer and one send budget both machines share (`notify_budget` a day, default 20); a second machine never mails an event the first one did.
+  - A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words.
+- MCH-4: **Unreviewed** Phone-first: starting a worker never needs the desktop app
+  - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend.
+  - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works.
+
 ### Non-functional
 
 None
@@ -49,4 +60,21 @@ None
 | [machine-custom-items](Tests#t-machine-custom-items) | requirement | MCH-1 | Given a repo with allow, routine and secret custom items, when apply and check run, then they are applied, listed and checked, and a repo without items gets nothing. | not run |
 | [machine-mailer](Tests#t-machine-mailer) | requirement | MCH-1 | Given the mailer, when it runs, then it reads only the local files, prints no secret, sends only to the one configured address and refuses any other. | not run |
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
+| [machines-handover](Tests#t-machines-handover) | requirement | MCH-2 | Given a goal owned by one machine whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved with no worker. | not run |
+| [machines-no-double-start](Tests#t-machines-no-double-start) | requirement | MCH-2 | Given a goal already taken by the other machine, when it is taken again, then it is refused, so nothing runs twice. | not run |
+| [machines-merge-turn](Tests#t-machines-merge-turn) | requirement | MCH-2 | Given a goal holding the merge turn on one machine, when a goal on the other machine asks for its turn, then it waits for the first. | not run |
+| [machines-snapshot-lines](Tests#t-machines-snapshot-lines) | requirement | MCH-2 | Given both machines' published SNAPSHOTs, when a check-in is drawn, then it shows one Machine line for each machine, from the structured data. | not run |
+| - | requirement | MCH-2 | no passing test | not enforced |
+| [mailbox-two-mails](Tests#t-mailbox-two-mails) | requirement | MCH-3 | Given a new Needs-you item and a merged release, when notify runs, then each gives one mail. | not run |
+| [mailbox-options](Tests#t-mailbox-options) | requirement | MCH-3 | Given a Needs-you question, when it is mailed, then the mail lists numbered options and marks the recommendation. | not run |
+| [mailbox-one-stream](Tests#t-mailbox-one-stream) | requirement | MCH-3 | Given two machines sharing one ledger, when both see the same events, then only the first mails them. | not run |
+| [mailbox-budget-shared](Tests#t-mailbox-budget-shared) | requirement | MCH-3 | Given a send budget the first machine's mails used up, when the other machine runs, then it sends nothing. | not run |
+| [mailbox-reply-owner](Tests#t-mailbox-reply-owner) | requirement | MCH-3 | Given a mailed question, when the owner replies 1 recommended, then it is recorded as owner words with source owner and sent to the worker. | not run |
+| [mailbox-risky-words](Tests#t-mailbox-risky-words) | requirement | MCH-3 | Given a mailed question about deleting, when the reply is a bare number, then it is refused and nothing is recorded. | not run |
+| - | requirement | MCH-3 | no passing test | not enforced |
+| [desk-lists](Tests#t-desk-lists) | requirement | MCH-4 | Given a machine, when desk list runs, then every desk-only setup step is listed with its state. | not run |
+| [desk-run-once](Tests#t-desk-run-once) | requirement | MCH-4 | Given open desk steps, when desk run runs twice, then each step's instructions print once. | not run |
+| [desk-check-ok](Tests#t-desk-check-ok) | requirement | MCH-4 | Given every desk step done and an agent command, when desk check runs, then it prints DESK OK. | not run |
+| [phone-background-worker](Tests#t-phone-background-worker) | requirement | MCH-4 | Given no app session can start, when a worker starts, then a background worker starts through agent_command. | not run |
+| - | requirement | MCH-4 | no passing test | not enforced |
 | [machine-hook-state](Tests#t-machine-hook-state) | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | Given a repo whose hooks setup just wrote, when --git-hooks --check reads them back, then each reads installed, never foreign. | not run |

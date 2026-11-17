@@ -205,6 +205,18 @@ loosen permissions, edit done lines or change `agent_command`.
   `mail.py`, with the variables in the schedule's `mail.env`; sent keys stay in `<common>/loop/notified.json`, so a
   repeat sends nothing, and the first run records a baseline and sends none. Prints `NOTIFY:` lines only, never the
   address. `notify.py status` says whether it is on, whether mail.env is there, and how many events it has seen.
+- `mailbox.py reply QID TEXT | pending` (email-first, #4785): each mail `notify.py` sends carries numbered options, the
+  recommendation and a `Question id`; both machines share one ledger (`refs/loop/mail-ledger` on origin, else a local file)
+  and one send budget (`notify_budget`, default 20 in 24 hours). The operation session runs `reply` with the owner's reply it
+  read: "1", "1 recommended" or "approve" pick an option, the owner's own words are taken as written, and the answer goes
+  to the worker through `operate.py send --source owner` (no goal: `sessions.py owner-words`). A question about deleting,
+  money, security or private data refuses a bare number or approve (exit 2). Never reads mail or a secret.
+- `machines.py handover SLUG --to MACHINE | take SLUG | snapshot [--publish] | turn` (machine-coordination, #4787):
+  `handover` pushes `loop/SLUG`, copies the record to `refs/loop/handover/SLUG` and marks the old record `moved` with no
+  worker; `take` on the other machine fetches the branch into a worktree and binds a worker (an app session, else a
+  background worker through `agent_command`; `start_worker` is the one place to extend); a second `take` is refused. One merge
+  ticket (`refs/loop/pr-turn`) orders merges across machines, dropped after `LOOP_MERGE_LOCK_SECONDS` of silence. `snapshot` is
+  the structured SNAPSHOT a check-in draws its Machine lines from. With no origin every call is a quiet no-op.
 - `replan.py plan` logs new starts, merge and split proposals and the merge line, each once with its reason, in
   `<common>/loop/replan.log`; `replan.py since ISO` prints them. Never stops a goal; applies nothing.
 - `auto.py pass [--dry-run]` answers each waiting goal's recommended question once, whatever its kind (`full_auto`, o118), logs

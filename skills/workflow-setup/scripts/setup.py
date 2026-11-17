@@ -19,6 +19,7 @@ import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import agents  # noqa: E402
+import desk  # noqa: E402
 import seed  # noqa: E402
 import settings  # noqa: E402
 import survey  # noqa: E402
@@ -323,4 +324,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())
+    sys.exit(desk.main(sys.argv[2:]) if sys.argv[1:2] == ["desk"] else agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())
