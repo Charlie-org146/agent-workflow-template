@@ -92,7 +92,7 @@ SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "referenc
 
 
 def howto_book(root, folder, page, name):
-    """The Runbook(s) section's lines on the feature's How-to-use page: where a routine's runbook may live (DOC-16, DOC-18)."""
+    """The Runbook(s) section's lines on the feature's How-to-use page (DOC-16, DOC-18)."""
     try:
         text = slurp(os.path.join(root, folder, HOWTO + page + ".md"))
     except OSError:
@@ -101,7 +101,7 @@ def howto_book(root, folder, page, name):
 
 
 def howto_runbook(root, page, rule, book):
-    """#4666: a How-to-use page's Runbooks take the DOC-16 routine shape only for a routine the repo schedules on that page."""
+    """#4666: a How-to-use Runbook takes the DOC-16 shape only for a routine scheduled on that page."""
     try:
         pages = {row[1] for _, row in registry(root) if len(row) > 1}
     except OSError:
@@ -125,9 +125,8 @@ def registry(root):
 
 
 def owed(root, books, name):
-    """DOC-16: every routine in .loop/routines.tsv (`routine<TAB>page`, # lines are comments) and each own routine of the
-    config's `automation` list (custom) has its '### routine' runbook on its page. `books` maps each page to its Runbook
-    section's lines ([] when none). No file, no registry."""
+    """DOC-16: every routine in .loop/routines.tsv (`routine<TAB>page`) and each own routine of the config's `automation`
+    list (custom) has its '### routine' runbook on its page; `books` maps a page to its Runbook lines. No file, no registry."""
     out = []
     try:
         rows = registry(root)
@@ -153,8 +152,7 @@ POINTER = "In %s, fast-forward to origin/main, then read %s's Runbook section %s
 
 
 def custom(root):
-    """(routine, page, runs) per non-built-in `automation` entry of .loop/config.json: "page" owns its Runbook, "routine"
-    names the '### ' heading (default its name)."""
+    """(routine, page, runs) per non-built-in `automation` entry of .loop/config.json ("page" owns its Runbook)."""
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
             items = json.load(handle).get("automation")
@@ -252,9 +250,9 @@ def criteria_max(root):
     return value
 
 
-# --- the owner's recorded words (criteria.py review|unreview --owner-record ID): sessions.py owner-words writes the
-# record in the operation session, never a worker. It counts for its IDs or pages, once per command; reviews.tsv logs
-# it as "record ID: TEXT".
+# --- the owner's recorded words (criteria.py review|unreview --owner-record ID), written by the operation session, never a worker:
+# it counts for its IDs or pages once per command (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record (MON-11,
+# o118) counts for any page, any number of times, for unreview only (never for a review).
 
 def owner_rows(path):
     try:
@@ -265,18 +263,19 @@ def owner_rows(path):
 
 
 def owner_words(args, git):
-    """The record's text, or exit with nothing changed: no such record, an uncovered ID or page, or a record used."""
+    """The record's text, or exit with nothing changed: no such record, an uncovered ID or page, or a used record."""
     common = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop")
     found = [row for row in owner_rows(os.path.join(common, "owner-words.tsv")) if len(row) == 5 and row[0] == args.owner_record]
     if not found:
         sys.exit("REFUSED: no owner-words record %s. Nothing was changed. Fix: the operation session records the owner's "
                  "message with sessions.py owner-words." % args.owner_record)
     record = found[-1]
-    left = sorted(set(args.ids) - set(record[4].split(",")))
+    stand = args.command == "unreview" and "full-auto-rule" in record[4].split(",")
+    left = [] if stand else sorted(set(args.ids) - set(record[4].split(",")))
     if left:
         sys.exit("REFUSED: record %s does not cover %s (it covers %s). Nothing was changed." % (
             args.owner_record, ", ".join(left), record[4]))
-    for row in owner_rows(os.path.join(common, "reviews.tsv")):
+    for row in [] if stand else owner_rows(os.path.join(common, "reviews.tsv")):
         if len(row) > 3 and row[1] == args.command and row[3].startswith("record %s:" % args.owner_record):
             sys.exit("REFUSED: record %s was already used for %s. Nothing was changed. Fix: the operation session "
                      "records the owner's message again." % (args.owner_record, args.command))

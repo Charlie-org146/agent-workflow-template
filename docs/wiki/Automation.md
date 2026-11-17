@@ -99,7 +99,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [perms-not-written](Tests#t-perms-not-written) | requirement | AUT-9 | Given declared rows the project settings lack, when permissions.py check runs, then each is NOT WRITTEN and it exits 1. | not run |
 | [perms-uncovered](Tests#t-perms-uncovered) | requirement | AUT-9 | Given a Runbook that names a command and a site no allow row covers, when permissions.py check runs, then each is UNCOVERED. | not run |
 | [perms-conflict](Tests#t-perms-conflict) | requirement | AUT-9 | Given an allow rule that a deny rule covers, when permissions.py check runs, then it prints CONFLICT. | not run |
-| [perms-private-refused](Tests#t-perms-private-refused) | requirement | AUT-9 | Given a row holding a home path, when permissions.py write runs, then it is refused and no settings file is written. | not run |
+| [perms-private-refused](Tests#t-perms-private-refused) | requirement | AUT-9 | Given a row holding a home path, when permissions.py write runs, then it is refused and no settings file is written. | PASS 2026-11-17 |
 | [perms-write-keeps](Tests#t-perms-write-keeps) | requirement | AUT-9 | Given a settings file with other keys and rules, when permissions.py write runs, then they are all kept. | not run |
 | [perms-repo-ok](Tests#t-perms-repo-ok) | requirement | AUT-9 | Given this repo, when permissions.py check runs, then its routines are declared, written and covered. | not run |
 | [perms-settings-tracked](Tests#t-perms-settings-tracked) | requirement | AUT-9 | Given a fresh checkout, when the permissions check runs, then .claude/settings.json is in it, because it is tracked and not ignored. | PASS 2026-11-15 |

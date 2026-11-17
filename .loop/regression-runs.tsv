@@ -58,6 +58,7 @@ aut-secret-mapped	PASS	2026-11-12
 aut-secret-name	PASS	2026-11-12	
 aut-setup-health-only-with-skill	PASS	2026-11-12	
 auto-approved	PASS	2026-11-09	
+auto-owner-words-wait	PASS	2026-11-17	
 auto-release	PASS	2026-11-12	
 automation-cron-words	PASS	2026-11-12	
 automation-live	PASS	2026-11-12	
@@ -191,6 +192,12 @@ format-problem	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 format-tests-table	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 format-usage-api	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 frozen-done-lines	PASS	2026-11-09	
+full-auto-all-answers	PASS	2026-11-17	
+full-auto-no-new-file	PASS	2026-11-17	
+full-auto-record-carried	PASS	2026-11-17	
+full-auto-safety-control	PASS	2026-11-17	
+full-auto-safety-waits	PASS	2026-11-17	
+full-auto-standing-reuse	PASS	2026-11-17	
 full-goal-lane-timeout	PASS	2026-11-10	
 goal-levels-nightly	PASS	2026-11-11	
 grd2-merge-rounds-default-8	PASS	2026-11-15	
@@ -207,6 +214,7 @@ guards-touches-finding	PASS	2026-11-12
 guards-worker-role	PASS	2026-11-10	
 guards-worktree	PASS	2026-11-10	
 guide-marker-refused	PASS	2026-11-10	
+health-auto-rules	PASS	2026-11-17	
 health-feature-always	PASS	2026-11-17	
 health-findings-table	PASS	2026-11-17	
 health-group-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -373,8 +381,8 @@ needs-you-stuck	PASS	2026-11-12
 never-merges	PASS	2026-11-09	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
-no-done-line-refused	PASS	2026-11-12	
-no-flow-refused	PASS	2026-11-12	
+no-done-line-refused	PASS	2026-11-17	
+no-flow-refused	PASS	2026-11-17	
 no-line-in-governor	PASS	2026-11-12	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-12	
@@ -407,7 +415,8 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-12	
+pending-waits	PASS	2026-11-17	
+perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-12	
@@ -459,7 +468,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
-refuse-replace	PASS	2026-11-12	
+refuse-replace	PASS	2026-11-17	
 refused-unmet	PASS	2026-11-12	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	

@@ -240,8 +240,21 @@ def cmd_assign(args):
 
 
 def cmd_owner_words(args):
+    """Append the owner's message to owner-words.tsv, print OWNER-WORDS <id> <ids>; refuse a worker, no text or no ids."""
     import auto
-    return auto.owner_words_add(args.text, args.ids)
+    ids = [item.strip() for item in args.ids.split(",") if item.strip()]
+    if os.environ.get("LOOP_ROLE") == "worker":
+        sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
+    if not args.text.strip() or not ids:
+        sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
+    where = auto.owner_words_path()
+    os.makedirs(os.path.dirname(where), exist_ok=True)
+    count = len(auto.owner_rows())
+    with open(where, "a", encoding="utf-8") as handle:
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), os.environ.get("LOOP_OPERATION_SESSION") or "operation",
+                                              json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
+    print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
+    return 0
 
 
 def cmd_bind(args):
