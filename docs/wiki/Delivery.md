@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept release-gate@68c7e32b -->
+Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -60,6 +60,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
   - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
   - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
+- DEL-16: **Unreviewed** Each step runs on the agent the config picks
+  - A private config maps each step and each goal size to an agent profile (a command, a model and a cost per token): heavy work on Claude, cheap work on Codex or any other agent added as one more profile entry, with no code change.
+  - Setup asks which agents are installed and logged in and writes the profiles; an agent that is missing or logged out falls back to Claude with a one-line warning.
+  - Review stays on the heavy profile unless the config routes it by name; the run record names the agent, the model and the tokens of every step.
 
 ## Non-goals
 - It doesn't decide what to build.
@@ -172,6 +176,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | DEL-15 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | DEL-15 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | DEL-15 | no passing test | not enforced |
+| - | requirement | DEL-16 | no passing test | not enforced |
+| [agent-routing](Tests#t-agent-routing) | workflow | DEL-16 | Given a config that routes build to Codex and review to Claude, when a small goal runs, then build runs through the Codex command, review stays on Claude, the run record names both agents with their tokens, and a missing or write-blocked Codex falls back to Claude with one warning line. | not run |
 | [scripts-no-hang](Tests#t-scripts-no-hang) | defect | [#35](https://github.com/jcl2018/agent-workflow-template/issues/35) closed (2026-11-09) | Given a script with no terminal, when it needs a prompt, then it fails with an error instead of hanging. | PASS 2026-11-12 |
 | [guards-rule-start](Tests#t-guards-rule-start) | defect | [#147](https://github.com/jcl2018/agent-workflow-template/issues/147) closed (2026-11-11) | Given a reply-format rule added after a step started, when that step is recorded, then the rule doesn't bind it, and a step started after it is refused naming the rule and the release that added it. | PASS 2026-11-10 |
 | [guards-no-try](Tests#t-guards-no-try) | defect | [#148](https://github.com/jcl2018/agent-workflow-template/issues/148) closed (2026-11-11) | Given a record refused for format (no DEPTH or STEP line) or a wrong HEAD, when it is refused, then no try is used, the goal keeps running and the fix is printed. | PASS 2026-11-12 |
