@@ -33,3 +33,5 @@ worker-per-goal	fails on main; flow.py in_session path inside a Claude session; 
 worker-reports	fails on main; flow.py in_session path inside a Claude session; the PC lane marks it NOTRUNNABLE
 no-prompts	fails on main v1.0.42; notify.py starts processes without the guard (DEL-10), seen inside a Claude session on the Mac
 wiki-release	fails on main v1.0.42 (test-wiki.sh: goal did not reach a pull request) inside a Claude session on the Mac
+tests-table-columns	fails on main v1.0.42 (test-criteria.sh: conforming page), seen on the Mac
+tests-row-shape	fails on main v1.0.42 (test-criteria.sh: rendered table), seen on the Mac
