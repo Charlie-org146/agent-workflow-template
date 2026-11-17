@@ -45,7 +45,7 @@ def release_trouble(root):
         notes = ""
     out = []
     for tag in cr.git("tag", "-l", "v*", check=False).split():
-        if not re.search(r"^## \[?%s\b" % re.escape(tag), notes, re.M):
+        if not re.search(r"^##\s+\[?v?%s\b" % re.escape(tag[1:]), notes, re.M):  # with or without the v (#4660)
             have = subprocess.run(["gh", "release", "view", tag], cwd=root, capture_output=True, text=True)
             if have.returncode:
                 out.append(("RELEASE", tag, "has no release note. Fix: add its CHANGELOG section or a GitHub release"))

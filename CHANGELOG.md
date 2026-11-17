@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.47 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.46 - 2026-11-17
 
 - Raise max_regression_rows to 1300 (owner o118, o119)
