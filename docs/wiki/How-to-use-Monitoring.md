@@ -12,6 +12,7 @@ One session governs many goals at once and shows a live board of what's running 
 | `workflow-monitoring` | Skill | One session governs many goals and shows what is running and what needs you. | Say "Run the operation session" or "Where do things stand?". |
 | `board.py` | Command | The operation session's progress board and the list of repos it follows. | `python3 skills/workflow-monitoring/scripts/board.py repos list`. |
 | `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
+| `monitor.py plan` | Command | Plans the backlog into releases with an ETA, budget, machine and agent for each goal, and sends the owner one plan to approve. | `python3 skills/workflow-monitoring/scripts/monitor.py plan --check`, then `plan approve --owner-record ID`. |
 
 ## How to reach or run it
 
@@ -64,6 +65,13 @@ Each requirement and how it is delivered:
 - **Reads:** the run records, the queue, the session pool and the followed repos.
 - **Writes:** nothing.
 - **Exit codes:** 0 after it prints.
+
+### Command: monitor.py plan
+- **Command:** `python3 skills/workflow-monitoring/scripts/monitor.py plan [--machines pc=GB,mac=GB] [--peer-plan FILE] [--first-release vX.Y] [--check]`, then `plan approve --owner-record ID [SLUG key=value ...]`
+- **Dry run:** `plan` is the dry run: it prints the plan and starts nothing; only `plan approve` writes the queue.
+- **Reads:** the queue, the run records, the session pool, the settings, the other machine's plan file and `agents.json`.
+- **Writes:** `plan-round.json` under the git folder's `loop/`; `plan approve` also the release, machine and agent on each queue line.
+- **Exit codes:** 0 after it prints; non-zero when `plan approve` refuses (no pending plan, no owner-words record, unknown slug).
 
 ## URLs and deployments
 
