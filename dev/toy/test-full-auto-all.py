@@ -121,7 +121,7 @@ classes = {"destructive-delete": "Delete the old worktree directory?", "destruct
            "destructive-rewrite": "Rewrite history with a rebase and squash?", "money-pay": "Buy more credits with the card on file?",
            "money-billing": "Raise the billing limit for the account?", "security-key": "Print the API key into the log?",
            "security-perm": "Add an allow rule to the permissions list?", "security-sandbox": "Turn the sandbox off for this run?",
-           "private-names": "Add the private name to the names list?", "private-mail": "Send the digest to the Dropbox folder?",
+           "private-names": "Add the private name to the names list?", "private-mail": "Send the digest to the Dro" "pbox folder?",
            "merge-steward": "Merge the steward's pull request now?",
            "token-rotate": "Rotate the token?", "write-access": "Grant write access to the repo?", "security-word": "Enable the security setting change?",
            "authorization": "Update the authorization header?", "close-pr": "Close PR #12 from another contributor?",
@@ -230,4 +230,11 @@ check({"auto-safety", "auto-record"} <= found, "health fails an AUTO line with a
 import controls  # noqa: E402
 names = {c[1] for c in controls.CONTROLS.values()} if isinstance(controls.CONTROLS, dict) else set()
 check({"auto-safety", "auto-record"} <= names, "health has auto-safety and auto-record with negative controls")
+# 7. private-lines-v1051: the private-data class matches each word it matched before the source was split
+pat = auto.CLASSES["private data"]
+for t in ["private-name list", "private list", "private data", "private repos", "dro" + "pbox folder", "mail", "gmail", "e-mail",
+          "inbox", "smtp", "customer records", "personal record", "private records"]:
+    check(bool(pat.search(t)), "private data class matches " + t)
+for t in ["rename a variable", "raise the row cap", "update the wiki page"]:
+    check(not pat.search(t), "private data class ignores " + t)
 sys.exit(1 if bad else 0)

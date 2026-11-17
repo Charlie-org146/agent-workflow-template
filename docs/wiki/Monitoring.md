@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept hotfix-4859@0ef9b479 -->
+Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -54,7 +54,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - Each planning round takes the backlog with no release and plans it itself: `monitor.py plan` gives each goal a release, an estimate, a hard ETA and a token budget from past runs and settings, and a machine (the PC or the Mac, by free memory and platform needs) and an agent profile with a one-line reason, cross-checks the plan on a second agent when the agent routing config names one, and sends one plan to the owner and to the other machine's operation session; goals already started are left out, nothing starts until the owner approves with the words "approve" or line edits, and ETA choices stay the owner's.
 - MON-11: **Unreviewed** Full auto mode
   - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
-  - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private names, mail, Dropbox, records), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
+  - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
   - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.
   - Turning it off takes effect at the next decision.
 
