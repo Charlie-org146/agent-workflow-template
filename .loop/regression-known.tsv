@@ -23,3 +23,4 @@ package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script i
 trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
 package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
+package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892

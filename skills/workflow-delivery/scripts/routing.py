@@ -21,6 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import guards  # noqa: E402
+import proctree  # noqa: E402
 import role  # noqa: E402
 
 FILE = "~/.workflow-loop/agents.json"
@@ -187,14 +188,15 @@ def update(slug, step, item):
     role.save(record, state)
 
 
-def add_tokens(state, step, given):
+def add_tokens(state, step, given, measure=False):
     """guards.add_tokens, then name the agent that ran the step when no route did: the heavy profile, in this session."""
-    guards.add_tokens(state, step, given)
+    guards.add_tokens(state, step, given, measure)
     agents = state["agents"] = state.get("agents") if isinstance(state.get("agents"), dict) else {}
     held = (state.get("tokens") or {}).get(step)
     if step not in agents:
         agents[step] = entry("heavy", load()["profiles"]["heavy"])
-    if isinstance(held, int) and agents[step].get("tokens") is None:
+    held = proctree.fresh(held)
+    if held and agents[step].get("tokens") is None:
         agents[step]["tokens"] = held
 
 
