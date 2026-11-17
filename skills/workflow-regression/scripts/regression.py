@@ -222,10 +222,10 @@ def cmd_red(args):
     tree = os.path.join(temp, "tree")
     git("worktree", "add", "--detach", "--quiet", tree, "HEAD", cwd=root)
     try:
-        broke = subprocess.run(args.break_it, shell=True, cwd=tree, capture_output=True, text=True)
+        broke = subprocess.run(args.break_it, shell=True, cwd=tree, capture_output=True, encoding="utf-8", errors="replace")
         if broke.returncode:
             sys.exit("REFUSED: the break command failed: " + broke.stderr.strip()[:300])
-        done = subprocess.run(row["command"], shell=True, cwd=tree, capture_output=True, text=True, env=actions.row_env(),
+        done = subprocess.run(row["command"], shell=True, cwd=tree, capture_output=True, encoding="utf-8", errors="replace", env=actions.row_env(),
                               timeout=args.timeout)
     finally:
         run(["git", "worktree", "remove", "--force", tree], cwd=root)
