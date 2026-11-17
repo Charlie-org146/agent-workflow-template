@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.54 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+1. Run `python3 dev/toy/test-full-auto-all.py`.
+   Expect: 16 lines start with "PASS: private data class" and none start with FAIL.
+2. Stage docs/wiki/Monitoring.md, docs/ROADMAP.md and skills/workflow-monitoring/scripts/auto.py and commit.
+   Expect: the pre-commit private scan passes.
+
 ## v1.0.53 - 2026-11-17
 
 - No code changes
