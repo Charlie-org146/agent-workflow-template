@@ -18,3 +18,14 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 skills/workflow-docs/scripts/docs.py check` from the repo root.
+   Expect: it prints DOCS OK and no LINKS, HOME or HOWTO line.
+2. Open `docs/wiki/How-to-use-Health.md` and find its System diagram under What's delivered.
+   Expect: one box per row of the table, each saying where it runs, the flows between them and a Legend line.
+3. Delete one box from that diagram and run `docs.py check` again.
+   Expect: it fails naming that part (DOC-19); restore the box.
+4. Open `docs/wiki/Home.md`.
+   Expect: a System diagram under the features table shows the operation session, workers and steps, staging and production (planned), machines, routines, a legend and guard marks.
+5. Put an issue link into any wiki page outside its Tests section and run `docs.py check`.
+   Expect: a LINKS line names the page, the line and the link; remove the link.
