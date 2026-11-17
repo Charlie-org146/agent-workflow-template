@@ -193,6 +193,7 @@ def refuse(what, fix):
 
 
 HOOKS = {"reply_hook.py": ("Stop", None, "it checks only the operation session's reply layout"),
+         "optokens.py": ("UserPromptSubmit", None, "it skips the model turn of a scheduled check-in when nothing changed (off with reply_hook false)"),
          "govern_hook.py": ("PreToolUse", "Edit|Write|MultiEdit|NotebookEdit|Bash",
                             'it blocks edits and git commit/push/merge in the operation session; off: "govern_hook": false')}
 

@@ -7,13 +7,17 @@ start time (a reused pid reads differently), and proctree.alive(pid) on Windows.
 POSIX: kill is os.killpg, so the child's whole session goes; pstart is ps. Windows has no process group a signal
 reaches (and os.kill(pid, 0) there sends Ctrl+C, os.getuid and ps do not exist), so kill runs taskkill /T /F, which stops
 the child and every process it started, and alive and pstart ask the process itself. Either kill is quiet when gone.
-Also here, so each skill holds one identical copy: alive_since, tmp_for and rm_tmp (lane.py), FLOW, TEMPLATE and flow_set (goal.py).
+Also here, so each skill holds one identical copy: alive_since, tmp_for and rm_tmp (lane.py), FLOW, TEMPLATE and flow_set (goal.py),
+and outcap, outcap_free and Capped (the 2,000-character output cap goal.py, flow.py and sessions.py install, GRD-15).
 """
+import atexit
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+import time
 import zlib
 
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # a child that asks for a password fails instead of waiting
@@ -134,6 +138,61 @@ def flow_set():
     except (OSError, ValueError, AttributeError, TypeError):
         return False
     return all(steps.get(step) for step in FLOW)
+
+
+class Capped:
+    """stdout that keeps a script's first half and last half of anything over the cap (GRD-15, token-diet C10)."""
+
+    def __init__(self, real, name, limit):
+        self.real, self.name, self.limit, self.parts, self.sent, self.free = real, name, limit, [], 0, False
+
+    def write(self, text):
+        if self.free:
+            return self.real.write(text)
+        self.parts.append(text)
+        room = self.limit // 2 - self.sent
+        if room > 0:
+            self.real.write(text[:room])
+            self.sent += min(room, len(text))
+        return len(text)
+
+    def __getattr__(self, name):
+        return getattr(self.real, name)
+
+    def finish(self):
+        text = "".join(self.parts)
+        if len(text) <= self.limit:
+            return self.real.write(text[self.sent:])
+        try:
+            top = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True, timeout=10).stdout.strip()
+            where = os.path.join(os.path.realpath(top), "loop", "out") if top else os.path.join(tempfile.gettempdir(), "loop-out")
+            os.makedirs(where, exist_ok=True)
+            for old in os.listdir(where):
+                if time.time() - os.path.getmtime(os.path.join(where, old)) > 2 * 86400:
+                    os.remove(os.path.join(where, old))
+            path = os.path.join(where, "%s-%d.txt" % (os.path.basename(self.name), time.time()))
+            with open(path, "w", encoding="utf-8", errors="replace") as handle:
+                handle.write(text)
+        except (OSError, subprocess.SubprocessError):
+            path = "(could not be kept)"
+        tail = text[-(self.limit // 2):]
+        self.real.write("\n[... %d characters cut; the full output is in %s ...]\n%s" % (len(text) - self.sent - len(tail), path, tail))
+
+
+def outcap(name=None):
+    """Cap this script's stdout at 2,000 characters (LOOP_OUTPUT_CAP=N changes it, 0 turns it off); the full text is kept under
+    <git common dir>/loop/out/. Call once, first thing in main(); outcap_free() prints one block uncapped."""
+    given = os.environ.get("LOOP_OUTPUT_CAP", "")
+    limit = int(given) if given.isdigit() else 2000
+    if limit > 0 and not isinstance(sys.stdout, Capped):
+        sys.stdout = Capped(sys.stdout, name or sys.argv[0] or "script", limit)
+        atexit.register(sys.stdout.finish)
+
+
+def outcap_free(on):
+    """outcap_free(True) then print a block that must be read whole (a step's prompt); outcap_free(False) goes back to capping."""
+    if isinstance(sys.stdout, Capped):
+        sys.stdout.free = on
 
 
 if __name__ == "__main__":

@@ -356,6 +356,7 @@ def cmd_list(args):
 
 
 def main():
+    proctree.outcap("sessions.py")  # GRD-15: at most 2,000 characters of output
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
     item = sub.add_parser("assign")

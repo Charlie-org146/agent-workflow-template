@@ -42,9 +42,14 @@ def seconds_by_step(run, at):
     return flow_seconds(run, at)
 
 
+def fresh_tokens(n):
+    """A step's fresh tokens: an int, or a measure's input + cache writes + output (tokens.py)."""
+    return sum(int(n.get(k) or 0) for k in ("input", "cache_write", "output", "reported")) if isinstance(n, dict) else n if isinstance(n, int) else 0
+
+
 def tokens_by_step(run):
     value = run.get("tokens")
-    return {step: n for step, n in value.items() if step in STEPS and isinstance(n, int)} if isinstance(value, dict) else {}
+    return {step: fresh_tokens(n) for step, n in value.items() if step in STEPS and fresh_tokens(n)} if isinstance(value, dict) else {}
 
 
 def usual(runs, mine, step, pick):
