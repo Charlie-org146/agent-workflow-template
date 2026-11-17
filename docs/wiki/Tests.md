@@ -328,7 +328,7 @@
 | <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-delta-no-overwrite"></a>sync-delta-no-overwrite | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-owns-only"></a>sync-owns-only | requirement | DOC-17 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-delta-posted"></a>sync-delta-posted | requirement | DOC-17 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-delta-posted"></a>sync-delta-posted | requirement | DOC-17 | not run | - | local | 2026-11-17 |
 | <a id="t-sync-posts-once"></a>sync-posts-once | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-accept-source"></a>sync-accept-source | requirement | DOC-17 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-accept-repo"></a>sync-accept-repo | requirement | DOC-17 | not run | - | local | 2026-11-14 |
