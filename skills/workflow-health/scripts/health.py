@@ -359,8 +359,8 @@ def cmd_check(args):
     if args.json:
         print(json.dumps({"green": green, "counts": counts, "rows": rows, "verdict": verdict}, indent=2))
     else:
-        formal, tracker = sibling_module("report"), sibling_module("issues")
-        text = text[:2] + [""] + formal.findings(rows, root, tracker.filed(root)) + text[2:] if formal and tracker else text
+        rep, iss = sibling_module("report"), sibling_module("issues")
+        text = text[:2] + [""] + rep.findings(rows, root, iss.filed(root, 0, whole is None)) + text[2:] if rep and iss else text
         print("\n".join(with_tests(text, root) if whole is None else text))
     return 0 if green else 1
 

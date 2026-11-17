@@ -257,14 +257,13 @@ def feature_of(root, item, cache=None):
 MARK = re.compile(r"<!-- loop-health (.+?)(?: evidence=\w+)?(?: placed=\S*)? -->")
 
 
-def filed(root, fresh=False):
+def filed(root, fresh=False, read=True):
     """{marker key: number} of the open health issues, for the findings table's Issue column (report.findings), or None
-    when the list was not read; fresh reads it again, after file has opened issues."""
+    when not read (read=False: only a list already cached; controls clear it); fresh drops it, after file opened some."""
     if fresh:
         CACHE.pop((root, "health"), None)
         CACHE.pop((root, "held"), None)
-        fetch(root, "health")
-    found = CACHE.get((root, "health"), (None, ""))[0]
+    found = (fetch(root, "health") if read or fresh else CACHE.get((root, "health"), (None, "")))[0]
     if found is None:
         return None
     out = {}
