@@ -20,3 +20,5 @@ del8-session-tokens	not built: only headless goals are refused past token_budget
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
+stale-found	red on main (in-session flow.py path, see #4852)
+publish-refused-stale	red on main (in-session flow.py path, see #4852)
