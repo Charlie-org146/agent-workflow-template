@@ -174,7 +174,7 @@ def render(root=None, at=None, stamp=None):
         for line in decided[-8:]:
             parts = [p.strip() for p in line.split(" | ")]
             if len(parts) >= 6:
-                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>"' % (parts[1], parts[3][:60], parts[4], parts[1]) if parts[2] == "AUTO"
+                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
     blocks = []
     for g in pod:

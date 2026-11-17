@@ -167,23 +167,26 @@ case_mon11() {
   ask d1 "Pick one" destructive; ask n1 "Pick one" ""; ask k1 "Delete the old cache?" routine; ask o1 "Pick one again" routine
   ask m1 "Pick one" money; ask s1 "Pick one" security; ask w1 "Pick one" owner; ask x1 "Pick one" sideways
   python3 "$S/operate.py" send o1 "use b" >/dev/null 2>&1  # the owner answers o1 through the real path
+  printf 'o1\t2026-11-17T00:00:00Z\toperation\t"take every recommendation unless it is a safety question"\tfull-auto-rule\n' > "$L/owner-words.tsv"
   python3 "$S/auto.py" pass >/dev/null 2>&1
   check "MON-11: a routine decision is answered with its recommended option and logged" 'grep -q "| r1 | AUTO | which helper name? | use a |" "$L/auto.log"'
   check "MON-11: the answer reaches the worker's inbox" 'grep -q "use a" "$L/inbox/r1.txt"'
-  check "MON-11: money, security, owner and unknown kinds wait and send nothing" \
-    '( for g in m1 s1 w1 x1; do grep -q "| $g | WAITS |" "$L/auto.log" || exit 1; [ ! -s "$L/inbox/$g.txt" ] || exit 1; done )'
+  check "MON-11 (o118): an owner-kind and an unlabeled recommendation are answered with the standing rule record" \
+    'grep -q "| w1 | AUTO |.*owner rule o1" "$L/auto.log" && grep -q "| n1 | AUTO |.*owner rule o1" "$L/auto.log"'
+  check "MON-11: money, security and unknown kinds wait and send nothing" \
+    '( for g in m1 s1 x1; do grep -q "| $g | WAITS |" "$L/auto.log" || exit 1; [ ! -s "$L/inbox/$g.txt" ] || exit 1; done )'
   check "MON-11: keyboard is not a risky word" 'grep -q "| r2 | AUTO |" "$L/auto.log"'
-  check "MON-11: destructive, no kind and a risky word wait for the owner" \
-    'grep -q "| d1 | WAITS |.*destructive decision is the owner" "$L/auto.log" && grep -q "| n1 | WAITS |.*no kind given" "$L/auto.log" && grep -q "| k1 | WAITS |.*mentions delete" "$L/auto.log"'
-  check "MON-11: an owner answer sent with operate.py send is kept, and that goal goes to the owner" \
-    'grep -q "\"slug\": \"o1\".*\"source\": \"owner\"" "$L/answers.jsonl" && grep -q "| o1 | WAITS |.*owner has answered" "$L/auto.log"'
+  check "MON-11: a destructive kind and a safety-class word wait for the owner" \
+    'grep -q "| d1 | WAITS |.*destructive decision is the owner" "$L/auto.log" && grep -q "| k1 | WAITS |.*safety class destructive: delete" "$L/auto.log"'
+  check "MON-11: an owner answer sent with operate.py send is kept with its source" \
+    'grep -q "\"slug\": \"o1\".*\"source\": \"owner\"" "$L/answers.jsonl"'
   n=$(wc -l < "$L/auto.log"); python3 "$S/auto.py" pass >/dev/null 2>&1
   check "MON-11: each question is decided once" '[ "$(wc -l < "$L/auto.log")" -eq "$n" ]'
   ask r3 "Which name?" routine; cfg full_auto=false; python3 "$S/auto.py" pass >/dev/null 2>&1
   check "MON-11: full_auto off applies at the next decision" '! grep -q "| r3 |" "$L/auto.log"'
   cfg full_auto=true; python3 "$S/auto.py" pass >/dev/null 2>&1
   check "MON-11: turned back on, the same decision is answered" 'grep -q "| r3 | AUTO |" "$L/auto.log"'
-  check "MON-11: the check-in lists the auto answer with its revert" 'python3 "$S/checkin.py" --since 0000 | grep -q "r1: .* -> use a; revert"'
+  check "MON-11: the check-in lists the auto answer with its revert" 'python3 "$S/checkin.py" --since 0000 | grep -q "r1: .* -> use a; revert.*(rule o1)"'
 }
 
 case_mon12() {
