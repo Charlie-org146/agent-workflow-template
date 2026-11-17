@@ -313,7 +313,7 @@ def main():
     if args.govern_hook:
         return reply_hook(repo, args.remove, "govern_hook.py")
     if args.reply_hook:
-        return reply_hook(repo, args.remove) or reply_hook(repo, args.remove, "optokens.py") or (0 if args.remove else reply_hook(repo, False, "govern_hook.py"))
+        return reply_hook(repo, args.remove) or reply_hook(repo, args.remove, "quiet") or (0 if args.remove else reply_hook(repo, False, "govern_hook.py"))
     if args.no_health:
         os.environ["LOOP_NO_HEALTH"] = "1"
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "unattended.py")

@@ -12,7 +12,7 @@ All sessions (a table), Dependencies (a graph with an `== repo ==` block per rep
 
 Only a reply to a scheduled check-in, or to the owner asking for one (check-in, status, report, board, where do things
 stand), must have the layout; a reply to a peer message, a task notification or other talk is not checked, and should be
-1-3 lines (optokens.needs_layout; a turn it can't read is checked).
+1-3 lines (proctree.needs_layout; a turn it can't read is checked).
 
 Only the operation session is checked: one named in <common>/loop/operation.id, or whose latest signal is an unrefused
 'operate.py run|claim'. A worker (a flow step, 'goal.py step|record|pr', or a cwd in <common>/loop/worktrees/) is never
@@ -388,8 +388,8 @@ def decide(payload, session, common):
         return None
     tail = entries(path, TAIL)[0] if path and os.path.exists(path) else []
     try:  # C4: only a scheduled or asked-for check-in needs the layout; a peer message or other talk may answer in 1-3 lines
-        import optokens
-        if tail and not optokens.needs_layout(tail):
+        import proctree
+        if tail and not proctree.needs_layout(tail):
             return None
     except Exception as error:
         log(common, "layout-trigger unread %s: %s" % (session, error))

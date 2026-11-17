@@ -129,8 +129,8 @@ def clear_refusals(state):
 
 def add_tokens(state, step, given, measure=False):
     """A worker's tokens for a step (GRD-2, DEL-16): measured from its transcript when asked; unknown adds nothing."""
-    import tokens
-    tokens.add(state, step, given, measure)
+    import proctree
+    proctree.add(state, step, given, measure)
 
 
 def hold(state, ask):

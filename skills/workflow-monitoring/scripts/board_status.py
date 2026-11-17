@@ -43,7 +43,7 @@ def seconds_by_step(run, at):
 
 
 def fresh_tokens(n):
-    """A step's fresh tokens: an int, or a measure's input + cache writes + output (tokens.py)."""
+    """A step's fresh tokens: an int, or a measure's input + cache writes + output (proctree.py)."""
     return sum(int(n.get(k) or 0) for k in ("input", "cache_write", "output", "reported")) if isinstance(n, dict) else n if isinstance(n, int) else 0
 
 

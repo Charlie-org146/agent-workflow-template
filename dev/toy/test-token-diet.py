@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/tokens.py skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/proctree.py skills/workflow-monitoring/scripts/optokens.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/checkin.py
+# reads: skills/workflow-delivery/scripts/fit.py skills/workflow-delivery/scripts/proctree.py skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/checkin.py
 """token-diet (#4788): per-step tokens from a transcript, the operation session's token rows, the budget unit, a quiet check-in,
 the reply layout only for check-ins, and the 2,000-character output cap. Every check prints one PASS or FAIL line."""
 import io
@@ -17,9 +17,12 @@ DELIVERY = os.path.join(root, "skills", "workflow-delivery", "scripts")
 MONITORING = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 sys.path[:0] = [DELIVERY, MONITORING]
 import fit  # noqa: E402
-import optokens  # noqa: E402
+import govern_hook  # noqa: E402
+import proctree as tokens  # noqa: E402  (the token functions live in proctree.py)
 import reply_hook  # noqa: E402
-import tokens  # noqa: E402
+
+optokens = types.SimpleNamespace(append=tokens.op_append, needs_layout=tokens.needs_layout, common=tokens.common,
+                                 remember=govern_hook.remember, decide=govern_hook.quiet_decide)
 
 fails = 0
 

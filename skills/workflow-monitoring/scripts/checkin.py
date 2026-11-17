@@ -15,7 +15,7 @@ usage: checkin.py [--since ISO]
   Coming up       each goal's next expected step and what the owner will need to do
 
 --since defaults to the last check-in in <git common dir>/loop/checkin.json. Changes nothing but one row it adds to
-<git common dir>/loop/op-tokens.tsv: the operation session's tokens since the last row, by trigger (optokens.py).
+<git common dir>/loop/op-tokens.tsv: the operation session's tokens since the last row, by trigger (proctree.op_append).
 """
 import argparse
 import datetime
@@ -330,11 +330,12 @@ def main():
     args.since and bs.timed(args.since, "--since %r")
     lines = render(stamp=args.since or None)
     print("\n".join(lines))
-    try:  # an op-tokens.tsv row (optokens.py) and what the quiet hook compares with; never fail a check-in
-        import optokens
+    try:  # an op-tokens.tsv row (proctree.op_append) and what the quiet hook compares with; never fail a check-in
+        import govern_hook
+        import proctree
         top = bs.git("rev-parse", "--show-toplevel")
-        optokens.append(top)
-        optokens.remember(optokens.common(top), "\n".join(lines))
+        proctree.op_append(top)
+        govern_hook.remember(proctree.common(top), "\n".join(lines))
     except Exception:
         pass
     return 0

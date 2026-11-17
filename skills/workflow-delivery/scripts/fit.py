@@ -90,12 +90,9 @@ def budget(seen, cfg):
 
 
 def tokens():
-    """tokens.py beside this file (fit.py is also loaded by path from the monitoring scripts)."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tokens.py")
-    spec = importlib.util.spec_from_file_location("loop_tokens", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """The token functions, which live in proctree.py (one identical copy in each skill)."""
+    import proctree
+    return proctree
 
 
 def spent_tokens(run, live=False):
