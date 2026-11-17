@@ -36,19 +36,19 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
   - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo.
 - SET-10: **Reviewed 2026-11-10** The right format for every agent <!-- reviewed 06345b05 -->
   - The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way.
-- SET-11: **Unreviewed** Prerequisites first, then a strict replay of the first adoption
+- SET-11: **Reviewed 2026-11-17** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 71de4571 -->
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC.
   - Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent.
   - Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12.
-- SET-12: **Unreviewed** Adopt all my repos in one pass
+- SET-12: **Reviewed 2026-11-17** Adopt all my repos in one pass <!-- reviewed 46be35b0 -->
   - From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version.
   - It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version.
-- SET-13: **Unreviewed** Workers are app sessions I can see
+- SET-13: **Reviewed 2026-11-17** Workers are app sessions I can see <!-- reviewed ca8efc98 -->
   - When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control.
   - The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that.
   - Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses.
   - The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs.
-- SET-14: **Unreviewed** The connectors each repo needs are checked
+- SET-14: **Reviewed 2026-11-17** The connectors each repo needs are checked <!-- reviewed deab5634 -->
   - For each followed repo, setup reads which connectors its PRDs need (mail accounts, a calendar, a file store, a notification channel) and probes each with a read-only call.
   - It prints each as connected, needs sign-in or missing, with the fix, and names the owner-written files a repo needs that don't exist yet. It never attaches or enables a connector itself: I do, with the narrowest access.
 - SET-16: **Reviewed 2026-11-13** A repo is judged fully migrated by one command <!-- reviewed 66eb89ce -->
@@ -62,7 +62,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
   - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten.
 - SET-8: **Reviewed 2026-11-10** Private stays private <!-- reviewed 22a16ae7 -->
   - Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one.
-- SET-15: **Unreviewed** One private-name list that fits every repo
+- SET-15: **Reviewed 2026-11-17** One private-name list that fits every repo <!-- reviewed f12292ea -->
   - When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits.
   - A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show.
   - The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`).
