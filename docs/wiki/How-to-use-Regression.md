@@ -27,7 +27,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "What's untested?" | Requirements with no test, draft tests and tests never seen failing are listed. |
 | "List every test" | Every test, grouped by feature, with its kind, what it guards, what it checks and its last result. |
 | "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. |
-| (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes): it is not a failure, so rerun it when memory allows. |
+| (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes), even on the lane's one rerun of it: it is not a failure, so rerun it when memory allows. |
 
 Each requirement and how it is delivered:
 

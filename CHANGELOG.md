@@ -1,5 +1,74 @@
 # Changelog
 
+## v1.0.35 - 2026-11-17
+
+- Documentation: Non-goals no longer leaves milestone sync for later (owner o85); a test for it
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.34 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.33 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.32 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.31 - 2026-11-17
+
+- settings-ref: regenerate the settings reference and START.md
+- settings-ref: rows seen red, render the Tests tables
+- Wiki: re-stamp pages for settings-ref
+- Merge branch 'loop/settings-ref' of https://github.com/jcl2018/agent-workflow-template into loop/settings-ref
+- Merge origin/main into loop/settings-ref
+- Merge remote-tracking branch 'origin/main' into loop/settings-ref
+- Merge remote-tracking branch 'origin/main' into loop/settings-ref
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.30 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.29 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.28 - 2026-11-16
 
 - No code changes

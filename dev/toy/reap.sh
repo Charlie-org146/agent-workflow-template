@@ -51,6 +51,9 @@ export LOOP_SCHEDULE_PROGRAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
 # Nor does the flow or health file: the owner's ~/.workflow-loop is never read or written. A guard snapshots it now and fails the
 # test at exit when anything there changed (issue 4393); a test of the default location unsets these and sets HOME and USERPROFILE.
 export LOOP_FLOW="$_toy_sched/flow.json" LOOP_HEALTH="$_toy_sched/health.json"
+# Nor the lane pool: port leases and the ticket counter go to a temp lanes/ unless a toy names its own (#4555: the CI runner's home gained
+# lanes/port-0 and lanes/counter.lock from toys that ran lane code under the real HOME).
+export LOOP_LANES_DIR="${LOOP_LANES_DIR:-$_toy_sched/lanes}"
 _toy_guard="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/homeguard.py"
 _toy_wl=$(mktemp); python3 "$_toy_guard" snap "$_toy_wl" 2>/dev/null || true
 export LOOP_SCHEDULE_HOME="$_toy_sched/schedule" LOOP_AGENTS_DIR="$_toy_sched/agents" LOOP_LAUNCHCTL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/fakegh/launchctl"

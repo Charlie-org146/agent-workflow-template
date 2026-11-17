@@ -9,6 +9,7 @@ Never touches the real folder: TOY_REAL_WL points the guard at a throwaway one. 
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -45,9 +46,23 @@ with tempfile.TemporaryDirectory() as tmp:
     os.makedirs(os.path.join(tmp, "wl", "lanes"), exist_ok=True)
     code, said = toy(tmp, "lanes.sh", 'echo x > "$TOY_REAL_WL/lanes/ticket-1.tmp"')
     check("another lane's tickets under lanes/ are not a leak", code == 0 and "LEAK" not in said, said)
-    os.makedirs(os.path.join(tmp, "wl", "schedule"), exist_ok=True)
-    code, said = toy(tmp, "sched.sh", 'echo x > "$TOY_REAL_WL/schedule/repos.json"')
-    check("the scheduler's own files under schedule/ are not a leak", code == 0 and "LEAK" not in said, said)
+    os.makedirs(os.path.join(tmp, "wl", "schedule", "log"), exist_ok=True)
+    os.makedirs(os.path.join(tmp, "wl", "schedule", "repo", "tree"), exist_ok=True)
+    open(os.path.join(tmp, "wl", "schedule", "repos.json"), "w").write("[]")
+    code, said = toy(tmp, "sched.sh", 'echo x > "$TOY_REAL_WL/schedule/log/tick.log"; echo x > "$TOY_REAL_WL/schedule/repo/health-report.txt"; echo x > "$TOY_REAL_WL/schedule/repo/tree/f"')
+    check("the scheduler's own log, health reports and trees under schedule/ are not a leak", code == 0 and "LEAK" not in said, said)
+    code, said = toy(tmp, "sched-reg.sh", 'echo x > "$TOY_REAL_WL/schedule/repos.json"')
+    check("a toy that writes the real schedule/ registry fails with a LEAK line (#4683)", code != 0 and "LEAK" in said and "schedule/repos.json" in said, said)
+    open(os.path.join(tmp, "wl", "schedule", "repos.json"), "w").write("[]")
+    code, said = toy(tmp, "sched-new.sh", 'mkdir -p "$TOY_REAL_WL/schedule/toyrepo" && echo x > "$TOY_REAL_WL/schedule/toyrepo/entry.json"')
+    check("a toy that adds an entry under the real schedule/ fails with a LEAK line (#4683)", code != 0 and "LEAK" in said and "schedule/toyrepo" in said, said)
+    shutil.rmtree(os.path.join(tmp, "wl", "schedule", "toyrepo"), ignore_errors=True)
+    path = os.path.join(tmp, "strict.sh")
+    open(path, "w", newline="\n").write('#!/bin/bash\n# windows: ok\nhere="%s"\n. "$here/dev/toy/reap.sh"\necho x > "$TOY_REAL_WL/lanes/ticket-2.tmp"\n' % root.replace("\\", "/"))
+    done = subprocess.run(["bash", path], capture_output=True, text=True, env=dict(os.environ, TOY_REAL_WL=os.path.join(tmp, "wl"), TOY_GUARD_STRICT="1"))
+    check("strict mode judges lanes/ too, for a fresh home", done.returncode != 0 and "lanes/ticket-2.tmp" in done.stderr + done.stdout, done.stderr)
+    code, said = toy(tmp, "pool.sh", 'case "$LOOP_LANES_DIR" in "$TOY_REAL_WL"*|"") exit 3;; esac')
+    check("the harness points LOOP_LANES_DIR at a temp lane pool (#4555)", code == 0, said)
     code, said = toy(tmp, "flow.sh", 'case "$LOOP_FLOW" in "$TOY_REAL_WL"*|"") exit 3;; esac; [ "$LOOP_HEALTH" != "" ] || exit 4')
     check("the harness points LOOP_FLOW and LOOP_HEALTH at temp paths", code == 0, said)
 

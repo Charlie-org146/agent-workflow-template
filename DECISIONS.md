@@ -397,3 +397,19 @@ Health judge findings were re-filed under a new key each round (#4543: 29 issues
 - An ENV row (Windows start failure) is a SKIPPED row with an env flag. A lane up to half ENV exits 0 and names the ENV rows in its "not runnable here" count; more than half exits 6 (EXIT_ENV), which is not a counted try (cap 10 per goal, then it counts).
 - Seen, not changed: whether the real `bash -c` path passes 0xC0000142 through unchanged (the issue's logs show the full code, so it does); an ENV row overwrites an earlier FAIL in regression-runs.tsv until the rerun (a NOTRUN row did the same); `env_line` returns the whole note file, which ends with the MEMORY_WAIT text today.
 - `affected` selects fewer rows for README.md (five, reached only through files inside `.git`). On the main checkout it fell from 1149 MB and 833 s to 124 MB and 35 s.
+
+## Applied 2026-11-16 (apply-rerender)
+
+Goals bounced off the pr lane because generated Settings and Automation blocks and Tests tables went stale on their branch while main or the template moved (#4632).
+
+- `operate.py apply` runs `audit.py rerender BASE` before its re-stamp: `criteria.py render` in the branch checkout, then each file is kept only if (1) the branch added no line to its generated part that the fresh render lacks (judged against the merge-base) and (2) the render touched nothing outside that part. A hand edit inside a block fails (1), so the file is put back and stays STALE: the negative control.
+- `operate.py wiki-only` also accepts README.md when only its generated blocks changed, so merge.py takes the pushed commit like a wiki page commit.
+- Cost: a branch whose own commit changed a block line that main has since reworded is left stale (its added line is not in the fresh render); the worker re-renders, as today.
+
+## Applied 2026-11-17 (toys-no-leak)
+
+No toy changes the real ~/.workflow-loop (#4555, #4683).
+
+- `reap.sh` points `LOOP_LANES_DIR` at a temp lane pool unless a toy names its own, so lane code in any toy no longer adds `lanes/port-0` or `lanes/counter.lock` to the runner's home (the four CI LEAK rows). The four rows are Linux-only (not marked windows: ok); `test-toys-no-leak.py` proves the mechanism on any machine with a fresh home judged in full.
+- `homeguard.py` still ignores `lanes/` (other lanes' tickets are legitimate) but judges `schedule/` except the scheduler's own `log/`, each repo's `health-report.txt` and `tree/`, so a toy writing the real registry or a new entry fails with a LEAK line (#4683). `TOY_GUARD_STRICT=1` judges a fresh home in full.
+- Cost: a real `repos.json` change by another session during a toy's run now reads as a leak; it is rare and the toy reruns.
