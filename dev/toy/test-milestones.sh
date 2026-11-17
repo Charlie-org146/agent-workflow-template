@@ -3,7 +3,7 @@
 # reads: skills/workflow-health/scripts/milestone.py skills/workflow-setup/scripts/setup.py
 # reads: skills/workflow-health/scripts/
 # Test that milestones are optional and free form (owner commands, none per feature, none on a pull request or an issue
-# health files), the feature tag behind its switch, and that setup asks for none, on a toy repo with a fake gh. usage: test-milestones.sh [DIR]
+# health files), the feature tag always on, and that setup asks for none, on a toy repo with a fake gh. usage: test-milestones.sh [DIR]
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
@@ -110,7 +110,7 @@ rm -f "$FAKE_GH_DIR/issues.json"; f0=$fails; git switch -q main
 mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3400)" > skills/x/scripts/near.py
 git add -A; git commit -qm "A near-limit script"
 out=$($health preview --group size); echo "$out"
-grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size\]$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
+grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\]$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
   && ok "preview: only WOULD lines, nothing written" || bad "run dry"
 : > "$FAKE_GH_DIR/calls.log"; out=$($health file --group size); echo "$out"
 [ -s "$FAKE_GH_DIR/calls.log" ] || bad "FAIL milestone-freeform:health-file: calls.log absent, real gh may have run. Fix: put dev/toy/fakegh first on PATH"
@@ -120,7 +120,7 @@ issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
 assert len(issues) == 1 and not issues[0]["milestone"]
 assert re.search(r"<!-- loop-health size:skills/x/scripts/near.py:scripts evidence=[0-9a-f]{8} placed= -->", issues[0]["body"])
 PYEND
-grep -q -e "--label health --label health:size$" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog\|feature:" "$FAKE_GH_DIR/calls.log" && ok "labelled health and health:size only: no milestone made or set, no feature label while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
+grep -q -e "--label health --label health:size --label feature:Calc$" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
 out=$($health file --group size); echo "$out"
 grep -q "^SAME #1" <<<"$out" && [ "$(python3 -c "import json,os;print(len(json.load(open(os.environ['FAKE_GH_DIR']+'/issues.json'))))")" = 1 ] && ok "a repeat opens no second issue" || bad "duplicate"
 python3 -c "print('# pad\n' * 3500)" > skills/x/scripts/near.py; git commit -qam "Bigger"
@@ -149,17 +149,25 @@ issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
 assert len(issues) == 1 and issues[0]["milestone"]["title"] == "Sprint", issues
 PYEND
 
-echo "== the feature tag: off by default, on when feature_labels is true"
-: > "$FAKE_GH_DIR/calls.log"; out=$($health preview --group size); ! grep -q "feature:" <<<"$out" && ok "with the switch off a preview shows no feature tag" || bad "tag shown off"
+echo "== the feature tag: always on, whatever feature_labels says"
+grep -q '"name": "feature:Calc"' "$FAKE_GH_DIR/issues.json" && ok "with the switch off the issue carries its feature tag" || bad "tag off"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['feature_labels'] = True; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 out=$($health preview --group size); echo "$out"
-grep -q "^WOULD update #1 .*\[health:size, feature:Calc\]" <<<"$out" && ok "with the switch on a preview shows the feature tag for a finding about a page" || bad "tag shown on"
+! grep -q "^WOULD update #1" <<<"$out" && ok "turning the switch on changes nothing: the tag is already there" || bad "tag on: $out"
+python3 - <<'PYEND'
+import json, os
+p = os.environ["FAKE_GH_DIR"] + "/issues.json"; issues = json.load(open(p))
+for i in issues:
+    i["labels"] = [l for l in i["labels"] if not l["name"].startswith("feature:")]
+json.dump(issues, open(p, "w"))
+PYEND
 : > "$FAKE_GH_DIR/calls.log"; out=$($health file --group size); echo "$out"
 grep -q "^label create feature:Calc --description Filed by health.py file --force" "$FAKE_GH_DIR/calls.log" && grep -q -- "--add-label feature:Calc" "$FAKE_GH_DIR/calls.log" \
   && grep -q '"name": "feature:Calc"' "$FAKE_GH_DIR/issues.json" && ok "the label is made first, and a repeat run adds it to the old issue" || bad "backfill: $(cat "$FAKE_GH_DIR/calls.log")"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['feature_labels'] = False; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 : > "$FAKE_GH_DIR/calls.log"; out=$($health file --group size); echo "$out"
-! grep -q "feature:" "$FAKE_GH_DIR/calls.log" && ok "with the switch off again no feature label call is made" || bad "off again"
+grep -q "^label create feature:Calc" "$FAKE_GH_DIR/calls.log" && grep -q '"name": "feature:Calc"' "$FAKE_GH_DIR/issues.json" && ok "with the switch off again the feature label is still made and kept" || bad "off again"
+
 
 echo "== fixed closes, returning reopens"
 git rm -q skills/x/scripts/near.py; git commit -qm "Remove it"

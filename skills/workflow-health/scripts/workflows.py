@@ -1,6 +1,7 @@
-"""The local schedule: one user launch agent firing `tick`, a registry of repos outside every repo, and the tick: health and
-the judge for every repo, the full regression for a private repo, the digest, the mail. Nothing goes in a repo.
+"""The local schedule: one launch agent firing `tick`, a repo registry outside every repo, and the tick: health, file and
+the judge per repo, a private repo's full regression, the digest, the mail. Nothing goes in a repo.
 """
+
 import contextlib
 import datetime
 import hashlib
@@ -153,7 +154,7 @@ def agent_text(data):
 
 
 def write_agent(data):
-    """Write (or, for no repos, remove) the agent; True when it changed."""
+    """Write (or, no repos: remove) the agent; True if changed."""
     if not data["repos"]:
         launchctl("bootout", UID + "/" + LABEL)
         return os.path.exists(plist_path()) and not os.remove(plist_path())
@@ -242,7 +243,8 @@ REGRESSION_WAIT = 20 * 60
 
 
 def wait_regression(path, env, log, finish):
-    """Wait for the newest regression.yml run, never past `finish`."""
+    """Wait for the newest regression.yml run, up to `finish`."""
+
     began = time.time()
     while True:
         done = child(["gh", "run", "list", "--workflow", "regression.yml", "--limit", "1", "--json", "status"], path, env, 30, log)
@@ -263,7 +265,8 @@ def conf_of(root):
 
 
 def tick_repo(key, entry, begin, finish):
-    """True: every step ran; False: one did not; None: skipped."""
+    """True: all steps ran; False: one did not; None: skipped."""
+
     path, log, py, env = entry["path"], open(os.path.join(home(), "log", "tick.log"), "a"), sys.executable, dict(os.environ)
     say = lambda text: (print(text), log.write(text + "\n"))
     for argv, code, fix in ((["gh", "auth", "status"], "SCHEDULE_AUTH", "gh auth login"), (["gh", "api", "rate_limit"], "SCHEDULE_OFFLINE", "check the network")):
@@ -314,7 +317,10 @@ def tick_repo(key, entry, begin, finish):
         say(wait_regression(path, env, log, finish))
     got = step("health check", script("workflow-health", "health.py") + ["check"], extra={"LOOP_MIGRATION_ONLINE": "1"})
     open(report, "w").write(got[1] if got else "")
-    ok &= got is not None and step("health file", script("workflow-health", "health.py") + ["file", "--group", GROUPS]) is not None
+    got = got and step("health file", script("workflow-health", "health.py") + ["file", "--group", GROUPS])
+    open(report, "a").write(got[1] if got else "")
+    ok &= bool(got)
+
     got = step("judge", script("workflow-health", "health.py") + ["review"])
     entry["judge_skipped"] = entry.get("judge_skipped", 0) + 1 if got and "JUDGE UNAVAILABLE" in got[1] else 0
     say("JUDGE: " + ("skipped" if entry["judge_skipped"] else "ran" if got else "not run (cap reached)"))
