@@ -207,11 +207,12 @@ loosen permissions, edit done lines or change `agent_command`.
   address. `notify.py status` says whether it is on, whether mail.env is there, and how many events it has seen.
 - `replan.py plan` logs new starts, merge and split proposals and the merge line, each once with its reason, in
   `<common>/loop/replan.log`; `replan.py since ISO` prints them. Never stops a goal; applies nothing.
-- `auto.py pass [--dry-run]` answers each waiting goal's routine question once (`full_auto`), logs
+- `auto.py pass [--dry-run]` answers each waiting goal's recommended question once, whatever its kind (`full_auto`, o118), logs
   `time | slug | AUTO|WAITS | question | answer | reason` in `<common>/loop/auto.log`; `auto.py decide-text --kind K
   --recommend W` reads a question on stdin and prints AUTO or WAITS with why. Workers ask with `sessions.py report SLUG
   --status waiting --ask Q --words W ... --recommend W --kind routine|destructive|money|security|owner`; a `--recommend`
-  that isn't one of the words is refused.
+  that isn't one of the words is refused. The answer needs the standing rule record (`sessions.py owner-words TEXT --ids
+  full-auto-rule`, once per machine; none means every decision waits) and reads `WORDS (full auto, owner rule oN)`.
 - `pool.py status | need [--ready N] | add ID ... | decline [--ready N] | return SLUG`: the session pool (`pool_size`,
   default 20). `return` frees the goal's sessions (archive above `pool_size`) and, once GitHub says merged, removes the
   worktree (never forced) and the branch (only when its tip is in the base). Sample: `pool: 3 free, 2 busy, 5 total
@@ -674,10 +675,14 @@ To pass the loop to a new session, run `board.py handoff` and give it the path.
   goals with the same `prd:` and shared `touches:`, proposes splitting a goal two or more wait on when its queue line
   has `parts:`, and orders the merge line critical path first. It never stops or restarts a running goal and applies
   nothing; open proposals show at every check-in until the owner acts (`board.py retire` and a new queue line).
-- **Full auto (MON-11).** `full_auto` (on by default) lets `auto.py pass` answer a waiting worker's routine decision with
-  its recommended words through `operate.py send --source auto`, logged in `loop/auto.log` and listed in the next
-  check-in with how to revert it. Kinds destructive, money, security and owner, a missing kind, a risky word or path, or
-  a goal the owner has answered wait under Needs you. `auto.py pass --dry-run` shows what it would do.
+- **Full auto (MON-11).** `full_auto` (on by default) lets `auto.py pass` answer a waiting worker's decision of any kind
+  (routine, owner, none) with its recommended words through `operate.py send --source auto`, logged in `loop/auto.log`
+  with the standing rule record and listed in the next check-in with how to revert it. A safety class (CLASSES:
+  destructive, money, security, private data, steward merge), kinds destructive, money, security or an unknown one, an ETA
+  choice, a risky path or a goal with an `always-ask:SLUG` (or `*`) owner-words record wait under Needs you. The standing
+  record un-reviews any page for a worker and covers a budget raise for a goal full auto answered; it never stamps a review
+  or moves an ETA. Health fails an auto answer in a safety class (`auto-safety`) or without a record (`auto-record`).
+  `auto.py pass --dry-run` shows what it would do.
 - **Session pool (MON-12, MON-6).** `pool.py status` prints free, busy and total against `pool_size` (default 20). When
   free sessions are fewer than ready goals, the check-in asks to create every missing session: on "fill pool" the
   operation session creates them with the app in one step and runs `pool.py add ID ...`; "no pool" runs `pool.py
