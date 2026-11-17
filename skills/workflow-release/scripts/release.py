@@ -182,6 +182,8 @@ def read_config(top):
 
 
 def bump(version, part):
+    if part == "major":
+        sys.exit("REFUSED (MAJOR_GATE): a goal never bumps a major; a major ships only through review.py promote (REL-1).")
     if not VERSION.match(version):
         sys.exit("REFUSED: the version %r is not X.Y.Z or W.X.Y.Z. Fix: set it by hand." % version)
     numbers = [int(item) for item in version.split(".")]

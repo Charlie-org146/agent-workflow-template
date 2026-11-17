@@ -10,3 +10,4 @@ Monitoring	skills/workflow-monitoring,:(exclude)skills/workflow-monitoring/SKILL
 Regression	skills/workflow-regression,:(exclude)skills/workflow-regression/SKILL.md,:(exclude)skills/workflow-regression/references/commands.md,:(exclude)skills/workflow-regression/scripts/proctree.py
 Roadmap	docs/ROADMAP.md
 Setup	skills/workflow-setup,dev/install-local.sh,:(exclude)skills/workflow-setup/SKILL.md,:(exclude)skills/workflow-setup/references/commands.md
+Release	skills/workflow-release/scripts/review.py,dev/toy/test-release-gate.py
