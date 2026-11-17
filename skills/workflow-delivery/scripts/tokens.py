@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tokens measured from a session's own transcript (DEL-16): per step for a worker, per trigger for the operation session.
 
-usage: tokens.py [--session ID] [--since ISO] [--until ISO]    print the measure of one window as JSON (a debugging aid)
+usage: tokens.py [--id ID] [--since ISO] [--until ISO]    print the measure of one window as JSON (a debugging aid)
 
 A session's transcript is <projects>/<folder>/<session id>.jsonl (the id is CLAUDE_CODE_SESSION_ID; LOOP_TRANSCRIPT_DIR
 replaces <projects>, which is ~/.claude/projects). Each assistant line carries message.usage; one model call can span
@@ -137,11 +137,11 @@ def live(state):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--session", default="")
+    parser.add_argument("--id", default="")
     parser.add_argument("--since", default="")
     parser.add_argument("--until", default="")
     args = parser.parse_args()
-    path = transcript(args.session or None)
+    path = transcript(args.id or None)
     print(json.dumps(measure(path, args.since, args.until) if path else None))
     return 0
 
