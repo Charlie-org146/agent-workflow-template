@@ -7,8 +7,6 @@ Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
-Notification subprocesses disable Git and GitHub terminal prompts, matching the unattended delivery commands.
-
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
 - I want one session that only governs: it starts every ready goal in its own worker session, passes my answers along, and never builds anything itself.
@@ -114,7 +112,7 @@ Notification subprocesses disable Git and GitHub terminal prompts, matching the 
 ## Success metrics
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
-- With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
+- With full auto on, a run needs me only for the safety-class decisions MON-11 excludes. Notification subprocesses disable Git and GitHub terminal prompts, matching the unattended delivery commands.
 
 ## Tests
 

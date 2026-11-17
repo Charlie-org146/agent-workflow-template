@@ -7,8 +7,6 @@ Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
-Requirement consistency checks read canonical definitions from each PRD’s Requirements section; How-to references do not create duplicate definitions. Judge savings findings use a stable subject independently of issue feature resolution.
-
 ## Problem
 - My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs.
 - I want a reviewer that reads everything (every PRD page, the README, milestones, open issues, tests and code) and tells me per feature what conflicts, what's missing and what's slow, alongside fixed checks that give the same answer every time.
@@ -87,7 +85,7 @@ Requirement consistency checks read canonical definitions from each PRD’s Requ
 ## Success metrics
 - Two rule checks on an unchanged repo print the same lines.
 - After the first full review, every feature's findings are issues tagged with that feature, each with its evidence, and none is a duplicate.
-- The verdict is never green while a rule could not be read.
+- The verdict is never green while a rule could not be read. Requirement consistency checks read canonical definitions from each PRD’s Requirements section; How-to references do not create duplicate definitions. Judge savings findings use a stable subject independently of issue feature resolution.
 
 ## Tests
 
