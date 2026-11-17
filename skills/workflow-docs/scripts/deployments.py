@@ -100,6 +100,15 @@ def howto_book(root, folder, page, name):
     return next((lines for n, _, lines in pf.parts(text) if n in (name, name + "s")), [])
 
 
+def howto_runbook(root, page, rule, book):
+    """#4666: a How-to-use page's Runbooks take the DOC-16 routine shape only for a routine the repo schedules on that page."""
+    try:
+        pages = {row[1] for _, row in registry(root) if len(row) > 1}
+    except OSError:
+        pages = set()
+    return pf.runbook(HOWTO + page, rule["runbook"], book, rule["fields"]) if page in pages | {p for _, p, _ in custom(root)} else []
+
+
 def has_runbook(books, page, routine):
     return any(line.rstrip() == "### " + routine for _, line in books[page])
 
@@ -354,6 +363,9 @@ def howto(root, folder, features):
         if len(order) != len(heads) or order != sorted(set(order)):
             found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
         feature = slurp(os.path.join(root, folder, page + ".md"))
+        if not linked(root, page, feature):
+            import milestones
+            found += milestones.howto_items(name, slurp(path), feature)
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
     return found

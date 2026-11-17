@@ -25,6 +25,21 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Wire the skills into CLAUDE.md and AGENTS.md" | Both files get the same block pointing every new session at `.loop/START.md`; your own text is kept. |
 | "Set up a second machine" | `machine.py` in the clone lists the skill links, hooks, private-names file, mailer, check-in and scheduled tasks it would install; `apply` installs them and prints the owner checklist. |
 
+Each requirement and how it is delivered:
+
+- SET-1: One command adopts a repo. Example, from the adopt-set-1 test: given SET-1, when the toy adopt-and-update test runs, then it holds.
+- SET-2: Layered settings. Example, from the settings-reference test: given every repo and private setting, when the reference is read, then each is listed with its default and a one-line explanation.
+- SET-4: Updates flow both ways. Example, from the adopt-set-4 test: given SET-4, when the toy adopt-and-update test runs, then check shows the change, apply keeps the repo's data and lands the repo half on its branch.
+- SET-5: A self-describing workspace. Example, from the adopt-set-5 test: given SET-5, when the toy adopt test runs, then the design guide is installed and setup's .loop/START.md holds the opener and every part.
+- SET-6: Adoption is proven. Example, from the adopt-fixture-existing-checks test: given a repo whose config lists its own checks (pull request 83), when setup adopts it, then the written config keeps every check and the seeded row runs all of them.
+- SET-9: Learn from a repo already set up. Example, from the set9-from-borrows test: given an adopted repo as the model, when setup runs with --from, then it borrows the portable settings and page shape, holds auto_merge and reply_hook until --allow, keeps its own base and agent command, changes nothing on a second run and never writes to the model.
+- SET-10: The right format for every agent. Example, from the agents-wire test: given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing.
+- SET-11: Prerequisites first, then a strict replay of the first adoption. Example, from the adoption-golden test: given the golden first adoption, when its fixture and SET-11 are read, then the fixture holds steps 1 to 8 in order, each with a check, golden result and fix, no machine path or account, and SET-11 names it and its first-mismatch stop.
+- SET-12: Adopt all my repos in one pass. Example, from the adopt-many-one-pass test: given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version.
+- SET-13: Workers are app sessions I can see. Example, from the set13-hooks-once test: given a repo where setup.py --reply-hook and --govern-hook run repeatedly, even on a Windows path or over a file already holding two govern hooks, when settings.local.json is read, then it holds exactly one reply hook and one govern hook.
+- SET-14: The connectors each repo needs are checked. Example, from the adopt-connectors-probed test: given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled.
+- SET-16: A repo is judged fully migrated by one command. Example, from the migration-clean test: given a clean private repo and a clean public repo, both recorded mac with the task registered, when migration-check runs, then each prints MIGRATION OK and exits 0.
+
 ## URLs and deployments
 
 - Wiki: [Setup](https://github.com/jcl2018/agent-workflow-template/wiki/Setup)
