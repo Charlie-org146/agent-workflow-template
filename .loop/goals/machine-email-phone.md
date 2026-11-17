@@ -15,3 +15,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 skills/workflow-setup/scripts/setup.py desk run` from the repo.
+   Expect: each desk-only step prints once with how to do it, then `desk check` prints a GAP line per open step, and DESK OK after `desk done` for each.
+2. In two clones of one repo on two machines (both with `machine_sync` true in the flow file), run `python3 skills/workflow-monitoring/scripts/machines.py handover SLUG --to mac` on one, then `machines.py take SLUG` on the other.
+   Expect: the first record shows `moved` with no worker; the second prints `TAKEN SLUG: worker ...`; a second `take` is refused.
+3. With `notify_email` true and a fake or test mailer, run `python3 skills/workflow-monitoring/scripts/notify.py send` on a check-in with a new Needs-you item, then `mailbox.py reply QID "1 recommended"`.
+   Expect: one mail with numbered options and a recommendation; the reply prints `RECORDED ... as the owner's words`.
