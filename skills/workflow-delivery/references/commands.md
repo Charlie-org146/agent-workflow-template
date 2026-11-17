@@ -548,7 +548,7 @@ Detail the skill's SKILL.md points to, kept word for word so no instruction is l
 - `routing.py build SLUG` runs the build on its routed profile: Codex runs headless with the prompt on stdin (the goal, design and plan text inside it) and its changes are committed; a profile whose agent is missing or logged out prints one `AGENT_FALLBACK` line and leaves the build to the worker on Claude. A run that fails or changes no file prints `BUILD FAILED` with its fix, exit 1.
 - `routing.py resolve STEP [--size small|large]`, `routing.py detect [--write]` (which agents are installed and logged in; `--write` puts the profiles in the private file, small goals to cheap when Codex is ready) and `routing.py show SLUG`.
 - The run record gains `agents[step]` = profile, agent, model, tokens (input excluding cache reads, plus output), cost_usd, fallback and error; step tokens add into `tokens`, so `token_budget` counts every agent. Steps run in the worker session are noted as the heavy agent at `goal.py record`.
-- On Windows the Codex shim is `codex.cmd`, found through `shutil.which`. Codex must be able to write in the worktree: where its sandbox is read-only, the build fails and the worker builds it itself.
+- On Windows the Codex shim is `codex.cmd`, found through `shutil.which`. Codex only edits files in the worktree under its own sandbox; delivery commits, and the worker pushes and runs gh. Where its sandbox can't write (the Windows sandbox is off, or `.git` is read-only), the build prints one `AGENT_FALLBACK` line, the record keeps the reason and the worker builds it on Claude; full access is never switched on without the owner's OK.
 
 ### Step tokens
 

@@ -50,6 +50,9 @@ def brief(slug):
     return "\n".join(parts)
 
 
+WALLS = ("read-only sandbox", "blocked by policy")
+
+
 def path():
     return os.path.expanduser(os.environ.get("LOOP_AGENTS") or FILE)
 
@@ -213,6 +216,8 @@ def cmd_build(args):
     base += [prof["model_flag"], prof["model"]] if prof.get("model") and prof.get("model_flag") else []
     prompt = BUILD.format(files=brief(args.slug), slug=args.slug, branch=subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True).stdout.strip())
     stdin = prompt if prof.get("prompt") == "stdin" else None
+    git = lambda *a: subprocess.run(["git"] + list(a), cwd=top(), capture_output=True, text=True)
+    before = git("status", "--porcelain").stdout
     try:
         done = subprocess.run(base + ([] if stdin else [prompt]), cwd=top(), input=stdin, stdin=None if stdin else subprocess.DEVNULL,
                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=int(prof.get("limit") or 2700))
@@ -223,19 +228,25 @@ def cmd_build(args):
     text, spent = usage(prof, out)
     failed = bool(code or "STEP: failed" in text)
     item = entry(pick["profile"], prof, spent)
-    if failed:
-        item["error"] = " ".join((getattr(done, "stderr", "") or text).split())[-160:]
+    changed = git("status", "--porcelain").stdout != before
+    walled = not changed and any(mark in out + (getattr(done, "stderr", "") or "") for mark in WALLS)
+    if walled:
+        item["fallback"] = "%s can't write here: its sandbox is read-only" % pick["agent"]
+    elif failed or not changed:
+        item["error"] = " ".join((getattr(done, "stderr", "") or text or "it changed no file").split())[-160:]
     update(args.slug, "build", item)
     print("BUILD %s: ran on %s (%s), %s tokens" % (args.slug, pick["agent"], pick["model"], (spent["in"] + spent["out"]) if spent else "unread"))
-    if failed:
-        print("BUILD FAILED on %s: %s" % (pick["agent"], (done.stderr or text).strip()[-300:]))
+    if walled:
+        print("AGENT_FALLBACK build: %s; using %s (%s). Full access is never switched on without the owner's OK." % (
+            item["fallback"], load()["profiles"]["heavy"].get("agent"), "heavy"))
+        print("BUILD %s: build it yourself in this session" % args.slug)
+        return 0
+    if failed or not changed:
+        print("BUILD FAILED on %s: %s" % (pick["agent"], item["error"]))
         print("Fix: git status shows what it left; build it yourself in this session, or git checkout . to start over.")
         return 1
-    subprocess.run(["git", "add", "-A"], cwd=top(), capture_output=True)
-    if not subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=top()).returncode:
-        print("BUILD FAILED on %s: it changed no file. Fix: build it yourself in this session." % pick["agent"])
-        return 1
-    subprocess.run(["git", "commit", "-qm", "Build via %s: %s" % (pick["agent"], args.slug)], cwd=top(), capture_output=True)
+    git("add", "-A")
+    git("commit", "-qm", "Build via %s: %s" % (pick["agent"], args.slug))
     print("COMMITTED the %s build" % pick["agent"])
     print("NEXT: check the diff and the tests, fill in Verify by hand, then flow.py %s review" % args.slug)
     return 0

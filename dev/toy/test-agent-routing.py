@@ -120,6 +120,18 @@ with tempfile.TemporaryDirectory() as base:
     done = run("build", "g4")
     check(done.returncode == 1 and "changed no file" in done.stdout, "a routed build that changes no file fails and says so: " + done.stdout[-200:])
 
+    # A sandbox that can't write: Codex edits files under its sandbox and delivery commits; with no write sandbox the build
+    # falls back to Claude with one line, never to full access.
+    wall = r"import sys; sys.stdin.read(); sys.stderr.write('ERROR patch rejected: writing is blocked by read-only sandbox')"
+    conf({"local": {"agent": "open-model", "command": [sys.executable, "-c", wall], "output": "codex-jsonl", "prompt": "stdin"}},
+         {"steps": {"build": "local"}})
+    goal("g5", False)
+    done = run("build", "g5")
+    warns = [line for line in done.stdout.splitlines() if line.startswith("AGENT_FALLBACK")]
+    check(done.returncode == 0 and len(warns) == 1 and "sandbox is read-only" in warns[0] and "using claude" in warns[0],
+          "a write-blocked agent falls back to claude with one line: " + done.stdout[-250:])
+    check("sandbox is read-only" in record("g5")["agents"]["build"]["fallback"], "the record carries the write-blocked reason")
+
     # Detect reports each agent and --write keeps the file private and valid.
     conf({}, {})
     os.remove(agents_file)
