@@ -256,7 +256,7 @@ def email(top, subject, text):
         os.environ.update(notify.load_env()[0] or {})
         mail = notify.mailer()
         mode, host, port, wait, api = mail.settings(top)
-        done = mail.deliver(mode, mail.secrets(mode, False), subject, text, "<pre>%s</pre>" % text, (host, port, wait, api)) if mode != "off" else ("off",) * 2
+        done = mail.deliver(mode, mail.secrets(mode, False), subject, text, "<pre>%s</pre>" % text.replace("<", "&lt;"), (host, port, wait, api)) if mode != "off" else ("off",) * 2
         return "" if done[0] == "ok" else "%s: %s" % done[:2]
     except Exception as err:  # noqa: BLE001 - a mail failure never undoes a promotion
         return str(getattr(err, "text", err))[:200]
