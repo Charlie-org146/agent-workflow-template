@@ -167,16 +167,33 @@ def listed(numbers, urls):
     return ", ".join("[#%d](%s)" % (n, urls[n][0]) if n in urls else "#%d" % n for n in sorted(numbers)) or "none"
 
 
-def findings(path, now_open):
-    """The health report's last findings table (table.py), each open issue's #N made its link; [] without one."""
+def findings(path, now_open, most=50):
+    """check's findings table from the saved report (the first: every group), each Issue cell from a later table (file's,
+    naming what it just filed), #N linked when open; its first `most` rows and a line naming the rest; [] without one."""
     try:
-        import table
         with open(path) as handle:
-            got = table.from_report(handle.read())
-    except (ImportError, OSError):
+            text = handle.read().splitlines()
+    except OSError:
         return []
-    link = lambda m: "[#%s](%s)" % (m.group(1), now_open[int(m.group(1))][0]) if int(m.group(1)) in now_open else m.group(0)  # noqa: E731
-    return ["### Findings", ""] + [re.sub(r"#(\d+)(?= \|$)", link, line) for line in got] + [""] if got else []
+    found = []
+    for n, line in enumerate(text):
+        if line.startswith("FINDINGS"):
+            rows = []
+            for row in text[n + 1:]:
+                if row.startswith("|"):
+                    rows.append(row)
+                elif row.strip() or rows:
+                    break
+            found.append((line, rows))
+    if not found:
+        return []
+    split = lambda row: row.rstrip(" |").rpartition(" | ")[::2]  # noqa: E731  (the row without its Issue cell, the cell)
+    later = {k: v for _, more in found[1:] for k, v in map(split, more[2:]) if v.startswith("#")}
+    (head, rows), want = found[0], lambda m: int(m.group(1)) in now_open  # noqa: E731
+    link = lambda m: "[#%s](%s)" % (m.group(1), now_open[int(m.group(1))][0]) if want(m) else m.group(0)  # noqa: E731
+    out = [re.sub(r"#(\d+)(?= \|$)", link, "%s | %s |" % (k, later.get(k, v))) for k, v in map(split, rows[2:])]
+    more = ["", "%d more findings: run health.py check" % (len(out) - most)] if len(out) > most else []
+    return ["### Findings", "", head] + (["", rows[0], rows[1]] + out[:most] if out else []) + more + [""]
 
 
 def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None, pages=(), table=()):

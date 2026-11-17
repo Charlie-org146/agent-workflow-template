@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/table.py skills/workflow-health/scripts/file.py
-# reads: skills/workflow-health/scripts/issues.py skills/workflow-health/scripts/report.py skills/workflow-health/scripts/automation.py
+# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/report.py skills/workflow-health/scripts/file.py
+# reads: skills/workflow-health/scripts/issues.py skills/workflow-health/scripts/automation.py
 # reads: dev/toy/fakegh/fake.py
 """HLT-3 and HLT-4 (issue 4658): the findings table, and every filed issue tagged with its feature or Other.
 
@@ -62,7 +62,7 @@ def run_script(repo, name, *args):
     """A health script in REPO, in this process (so its gh calls reach `patched`); its stdout."""
     out = io.StringIO()
     sys.argv, sys.path[:0] = [os.path.join(scripts, name)] + list(args), [scripts]
-    for mod in ("health", "file", "issues", "report", "defects", "groups", "table", "rules", "automation", "rounds", "workflows"):
+    for mod in ("health", "file", "issues", "report", "defects", "groups", "rules", "automation", "rounds", "workflows"):
         sys.modules.pop(mod, None)
     os.chdir(repo)
     with contextlib.redirect_stdout(out):

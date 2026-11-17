@@ -1,16 +1,15 @@
 """The twelve health groups (HLT-2) and the formal health report (HLT-3), plus health.py's commands other than check.
 
-Groups: each has the angle its rules take, in report order, plus Mine. Every rule belongs to one group and has one name; a
-row's family is its group's slug and its rule label is the rule's name (older labels map through LABELS). Exactly twelve
-groups: adding one means retiring one or raising the cap on purpose.
+Groups: each has its angle, in report order, plus Mine. Every rule is in one group with one name; a row's family is its
+group's slug, its rule label the rule's name (older labels map through LABELS). Exactly twelve groups.
 
 Report (pure formatting; check, judge, review): a header naming every group run and any skipped, the findings table
-(table.py), each group in the fixed order under its angle with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix on
+(findings), each group in the fixed order under its angle with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix on
 each non-pass), then one verdict. A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
 
-Commands (each takes the health module h): review, judge, preview, file and triage. Refusals print REFUSED[code] and exit 2:
-[group] an unknown group (health.py), [file] file with no group, [gh] the issues can't be listed (nothing is written), [review]
-a --review FILE that isn't a saved review --json, [why] and [cap] from triage.
+Commands (each takes the health module h): review, judge, preview, file, triage. Refusals print REFUSED[code], exit 2:
+[group] unknown group (health.py), [file] file with no group, [gh] issues can't be listed (nothing written), [review] a
+--review FILE that isn't a saved review --json, [why] and [cap] from triage.
 """
 import json
 import os
@@ -197,6 +196,33 @@ def build(rows, asked=None, ran_rules=None):
     return out + [verdict], counts, green, verdict, [shown(n) for n in ran], [shown(n) for n, _ in skipped], rows
 
 
+def findings(rows, root, numbers, only=None):
+    """The findings table (HLT-3): a row per WARN, FAIL or UNREAD finding, by feature (Other last), group, severity."""
+    import issues as IS
+    try:
+        from file import REPORT_ONLY as quiet
+    except ImportError:
+        quiet = ()
+    cache, out, bad = {}, [], ("FAIL", "UNREAD", "WARN")
+    for item in rows:
+        if item.get("state") not in bad:
+            continue
+        try:
+            page = IS.about(root, item, cache)
+        except Exception:  # an unreadable page map never breaks it
+            page = None
+        if only and page != only:
+            continue
+        number = next((numbers[k] for k in [IS.key_of(item)] + IS.legacy(item) if numbers and k in numbers), None)
+        cells = (page or "Other", TITLE.get(item["family"], item["family"]), rule_of(item), item["state"],
+                 "details stay local" if item["family"] == "mine" else "%s: %s" % (item.get("subject"), item.get("detail")),
+                 "#%d" % number if number else "report only" if item["rule"] in quiet else "not read" if numbers is None else "not filed")
+        out.append(((page is None, (page or "").lower(), ORDER.index(item["family"]) if item["family"] in ORDER else 99,
+                     bad.index(item["state"])), "| %s |" % " | ".join(" ".join(str(c).split()).replace("|", "\\|") for c in cells)))
+    head = ["| Feature | Group | Rule | Severity | Finding | Issue |", "|---|---|---|---|---|---|"]
+    return ["FINDINGS (%d)" % len(out), ""] + head + [r for _, r in sorted(out)] + [""] if out else ["FINDINGS: none"]
+
+
 def refuse(code, text):
     print("REFUSED[%s]: %s" % (code, text))
     sys.exit(2)
@@ -285,8 +311,7 @@ def cmd_file(h, args):
         refuse("file", "file needs --group NAME[,NAME] (one of %s) or --review FILE. Run preview first." % ", ".join(h.NAMES))
     filing, acts, groups = plan_for(h, root, asked if asked else [], bool(asked) and "performance" in asked, args.feature, args.review)
     filing.apply(filing.only_open(acts) if args.open_only else acts, root, groups)
-    tab = h.sibling_module("table")
-    tab and tab.show(filing.ROWS, root, args.feature)
+    print("\n".join([""] + findings(filing.ROWS, root, h.sibling_module("issues").filed(root, True), args.feature)))
 
     return 0
 

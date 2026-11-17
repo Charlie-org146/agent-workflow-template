@@ -254,6 +254,37 @@ def feature_of(root, item, cache=None):
     return None
 
 
+MARK = re.compile(r"<!-- loop-health (.+?)(?: evidence=\w+)?(?: placed=\S*)? -->")
+
+
+def filed(root, fresh=False):
+    """{marker key: number} of the open health issues, for the findings table's Issue column (report.findings), or None
+    when the list was not read; fresh reads it again, after file has opened issues."""
+    if fresh:
+        CACHE.pop((root, "health"), None)
+        CACHE.pop((root, "held"), None)
+        fetch(root, "health")
+    found = CACHE.get((root, "health"), (None, ""))[0]
+    if found is None:
+        return None
+    out = {}
+    for issue in sorted(found, key=lambda one: one["number"]):
+        match = MARK.search(issue.get("body") or "")
+        if match and is_health(issue):
+            out.setdefault(posix(match.group(1)), issue["number"])
+    return out
+
+
+def about(root, item, cache):
+    """feature_of, but a finding about an issue (#N, finding-age) takes its feature from the health list check read."""
+    subject = str(item.get("subject") or "").strip()
+    if subject[:1] == "#" and subject[1:].isdigit():
+        pages, held = cache.setdefault("pages", features(root)), CACHE.get((root, "health"), (None, ""))[0] or []
+        page = next((feature_group(i, pages) for i in held if str(i.get("number")) == subject[1:]), NO_FEATURE)
+        return None if page == NO_FEATURE else page
+    return feature_of(root, item, cache)
+
+
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
