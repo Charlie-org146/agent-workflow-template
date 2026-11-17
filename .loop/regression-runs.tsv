@@ -417,7 +417,7 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-17		f2af063f6e34
+pending-waits	PASS	2026-11-17	
 perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
