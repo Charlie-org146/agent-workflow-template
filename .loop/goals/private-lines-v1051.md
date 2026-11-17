@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-private-class.py`.
+   Expect: every line starts with PASS and the exit status is 0.
+2. Stage docs/wiki/Monitoring.md, docs/ROADMAP.md and skills/workflow-monitoring/scripts/auto.py and commit.
+   Expect: the pre-commit private scan passes.
