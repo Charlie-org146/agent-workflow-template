@@ -246,7 +246,8 @@ def cmd_build(args):
         print("Fix: git status shows what it left; build it yourself in this session, or git checkout . to start over.")
         return 1
     git("add", "-A")
-    git("commit", "-qm", "Build via %s: %s" % (pick["agent"], args.slug))
+    who = [] if git("config", "user.email").stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=loop@localhost"]  # CI has no author
+    git(*who + ["commit", "-qm", "Build via %s: %s" % (pick["agent"], args.slug)])
     print("COMMITTED the %s build" % pick["agent"])
     print("NEXT: check the diff and the tests, fill in Verify by hand, then flow.py %s review" % args.slug)
     return 0
