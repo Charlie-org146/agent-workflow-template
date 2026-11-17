@@ -319,6 +319,9 @@ def cmd_dashboard(args):
 
 
 # ---- hands-off operation: archive (MON-6) and grouping (MON-5); callers pass paths
+DOWN = []  # set once gh gives no answer: no more lookups in this run
+
+
 def ghj(args, cwd):
     """One gh call as JSON, None on any doubt."""
     try:
@@ -381,7 +384,7 @@ def feature_of(root, text, item=None):
     cache = os.path.join(common(), "loop", "features.json")
     seen = read_json(cache) or {}
     for number in re.findall(r"#(\d+)", str(text or ""))[:3]:
-        if number not in seen and (found := ghj(["issue", "view", number, "--json", "labels,milestone"], root)) is not None:
+        if number not in seen and not DOWN and (found := ghj(["issue", "view", number, "--json", "labels,milestone"], root) or DOWN.append(1)) is not None and not DOWN:
             names = [str(x.get("name")) for x in found.get("labels") or []] + [str((found.get("milestone") or {}).get("title"))]
             seen[number] = next((n.split(":")[-1].strip() for n in names if n.split(":")[-1].strip() in pages), "")
             os.makedirs(os.path.dirname(cache), exist_ok=True)
