@@ -105,7 +105,8 @@ if want SET-4; then
 " "|")"
   git show workflow-update-v1.1.0:.loop/config.json | grep -q '"template_version": "1.1.0"' || no "template_version not stamped"
   extra=$(git diff --name-only main workflow-update-v1.1.0 | grep -vxE '\.loop/config\.json|\.loop/START\.md|CLAUDE\.md|AGENTS\.md')
-  [ -z "$extra" ] || no "the update branch changed hand-written data: $extra"
+  [ -z "$extra" ] || no "the update branch changed hand-written data: $extra: $(git diff main workflow-update-v1.1.0 -- $extra | grep "^[+-]" | cut -c1-110 | head -10 | tr "
+" "|")"
   git show workflow-update-v1.1.0:.loop/START.md >/dev/null 2>&1 || no "no START.md on the update branch"
   echo "$out" | grep -q "^NEXT: merge workflow-update-v1.1.0 into main" || no "no NEXT merge line"
   tip=$(git rev-parse workflow-update-v1.1.0)
