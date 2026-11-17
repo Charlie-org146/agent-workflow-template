@@ -1,6 +1,6 @@
 # id	status	date	run	flaky
 adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
-adopt-replaces-stale	PASS	2026-11-16		d56985620a6e
+adopt-replaces-stale	PASS	2026-11-16		81436ab36362
 adopt-set-1	FAIL	2026-11-12	
 adopt-set-2	FAIL	2026-11-12	
 adopt-set-3	FAIL	2026-11-12	
@@ -142,6 +142,9 @@ doc18-howto-restamp	PASS	2026-11-16
 doc18-howto-skeleton	PASS	2026-11-16	
 doc18-review-link-line	PASS	2026-11-16	
 doc18-runbook-on-howto	PASS	2026-11-16	
+doc19-item-missing	PASS	2026-11-16	
+doc19-item-unknown	PASS	2026-11-16	
+doc19-runbook-plain	PASS	2026-11-16	
 docs-audit	PASS	2026-11-12	
 docs-block-split	FAIL	2026-11-16	
 docs-check-same	PASS	2026-11-12	
@@ -312,6 +315,9 @@ local-row-env	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lock-in-report	PASS	2026-11-12	
 ls-plist	FAIL	2026-11-13	
 mac-rows-skip-77	PASS	2026-11-13	
+machine-caps	PASS	2026-11-16	
+machine-done-12	PASS	2026-11-16	
+machine-setting-listed	PASS	2026-11-16	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -397,6 +403,8 @@ pods-lock	PASS	2026-11-12
 pods-owner	PASS	2026-11-12	
 pool-edges-122	PASS	2026-11-10	
 pr-body-by-file	PASS	2026-11-13	
+pr-body-cap-large	PASS	2026-11-16	
+pr-body-cap-small	PASS	2026-11-16	
 pr-body-criterion	PASS	2026-11-12	
 pr-body-no-checks	PASS	2026-11-12	
 pr-body-no-home-3841	PASS	2026-11-14	

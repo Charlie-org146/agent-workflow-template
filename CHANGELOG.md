@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.0.30 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.29 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.28 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.27 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.26 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.25 - 2026-11-16
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.24 - 2026-11-16
 
 - docs: import render with a plain import, no __import__ (#4652)

@@ -51,8 +51,8 @@ def inbox(common, slug):
 
 def report(old, state, at):
     if (old.get("step"), old.get("status")) != (state.get("step"), state.get("status")):
-        state.setdefault("reports", []).append({"at": at, "step": state.get("step") or "-", "status": state.get("status") or "-",
-                                                "text": "worker %s: step %s, %s" % (state["slug"], state.get("step") or "-", state.get("status") or "-")})
+        now = state.get("step") or "-", state.get("status") or "-"
+        state.setdefault("reports", []).append({"at": at, "step": now[0], "status": now[1], "text": "worker %s: step %s, %s" % (state["slug"], *now)})
         del state["reports"][:-30]
 
 
@@ -121,8 +121,7 @@ def recorded_gate(args, runs, job):
         return
     if not args.again:
         head = state.get("plan_head")
-        count = git("rev-list", "--count", head + "..HEAD") if head else None
-        at = fit.resume_at(state, bool(count and count.returncode == 0 and count.stdout.strip() not in ("", "0")))
+        at = fit.resume_at(state, (git_out("rev-list", "--count", head + "..HEAD") if head else "") not in ("", "0"))
         print("REFUSED (no try used): %s is already recorded (%s). Fix: go on with %s, or rerun it on purpose with "
               "flow.py %s %s --again (ALREADY_RECORDED)" % (args.step, state["flow"][args.step], fit.next_command(state, at),
                                                               args.slug, args.step))
@@ -146,10 +145,8 @@ def after(step):
 
 def begin(record, step):
     """Set the step's label in the run record and log its start, so the time to the recorded step is the step's own."""
-    try:
-        with open(record) as handle:
-            state = json.load(handle)
-    except (OSError, ValueError):
+    state = goal_state(*os.path.split(record[:-5]))
+    if not state:
         return
     state["step"] = step
     (state.get("depth") or {}).pop(step, None)
@@ -176,7 +173,8 @@ def depth_of(cfg, state=None, runs=None):
 
 def setting_of(cfg):
     """review_depth from the base branch's .loop/config.json (a worker can't change it): condensed only if it says so."""
-    base = (cfg or {}).get("base") or "main"
+    cfg = cfg or {}
+    base = cfg.get("base") or "main"
     for ref in ("origin/" + base, base):
         done = git("show", "%s:.loop/config.json" % ref)
         if done.returncode == 0:
@@ -184,13 +182,14 @@ def setting_of(cfg):
                 return "condensed" if json.loads(done.stdout).get("review_depth") == "condensed" else "full"
             except ValueError:
                 return "full"
-    return "condensed" if (cfg or {}).get("review_depth") == "condensed" else "full"
+    return "condensed" if cfg.get("review_depth") == "condensed" else "full"
 
 
 def markers(step):
     """(markers, error): the strings a full plan or review reply must carry, from full_markers in both flow files."""
     found = []
-    for path in dict.fromkeys(os.path.expanduser(p) for p in ("~/.workflow-loop/flow.json", os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")):
+    flow = "~/.workflow-loop/flow.json"
+    for path in dict.fromkeys(os.path.expanduser(p) for p in (flow, os.environ.get("LOOP_FLOW") or flow)):
         try:
             with open(path) as handle:
                 spec = json.load(handle)
@@ -228,7 +227,7 @@ def need_lane(runs, slug, reply, step="qa"):
     import guards
     if found and found[-1].lower() == "failed" and not guards.pending_items(text):
         return None
-    head = git("rev-parse", "HEAD").stdout.strip()
+    head = git_out("rev-parse", "HEAD")
     try:
         ok = open(os.path.join(runs, "%s.%s-lane.ok" % (slug, step))).read().strip()
     except OSError:
@@ -245,19 +244,19 @@ def need_lane(runs, slug, reply, step="qa"):
 
 def over_caps():
     """A refusal when the repo is over a test cap and this goal adds rows net (the base branch's caps; removing or merging as many always passes)."""
-    top = git("rev-parse", "--show-toplevel").stdout.strip()
-    at = "origin/" + (json.loads(git("show", "HEAD:.loop/config.json").stdout or "{}").get("base") or "main")
+    top = git_out("rev-parse", "--show-toplevel")
+    at = "origin/" + (json.loads(git_out("show", "HEAD:.loop/config.json") or "{}").get("base") or "main")
 
     def ids(text):
         return {x.split("\t")[0] for x in text.splitlines() if "\t" in x and x[0] != "#"}
     try:
         now = ids(open(os.path.join(top, ".loop", "regression.tsv")).read())
-        cfg = json.loads(git("show", at + ":.loop/config.json").stdout)
+        cfg = json.loads(git_out("show", at + ":.loop/config.json"))
     except (OSError, ValueError):
         return None
-    old = ids(git("show", at + ":.loop/regression.tsv").stdout)
+    old = ids(git_out("show", at + ":.loop/regression.tsv"))
     net = len(now - old) - len(old - now)
-    tests = os.path.join(git("rev-parse", "--git-common-dir").stdout.strip(), "loop", "tests", "*.json")
+    tests = os.path.join(git_out("rev-parse", "--git-common-dir"), "loop", "tests", "*.json")
     secs = max([d.get("total_seconds") or 0 for d in (json.load(open(f)) for f in glob.glob(tests)) if "--reuse" not in str(d.get("command"))] + [0])
     over = [text for have, key, default, text in ((len(now), "max_regression_rows", 1200, "%d rows, max_regression_rows is %d"),
                                                   (secs, "max_suite_seconds", 1900, "the full suite takes %d s, max_suite_seconds is %d"))
@@ -299,6 +298,14 @@ def results(top):
         print("NOTE: lane results not recorded in regression-runs.tsv: %s" % why[:200])
 
 
+def cap_rows(rows, lines=300, chars=30000):
+    """Rows within `lines` lines and `chars` characters, then `... N more` (gh refuses a body over 65,536)."""
+    keep = rows[:lines]
+    while keep and sum(map(len, keep)) + len(keep) > chars:
+        keep.pop()
+    return keep + ["... %d more" % (len(rows) - len(keep))] * (len(keep) < len(rows))
+
+
 def lane_part(slug):
     common = git_out("rev-parse", "--git-common-dir")
     base = os.path.join(os.path.abspath(common), "loop", "runs", "%s.pr-lane" % slug) if common and slug else ""
@@ -310,7 +317,7 @@ def lane_part(slug):
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
-    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(rows[:300] + ["... %d more" % (len(rows) - 300)] * (len(rows) > 300)) if rows else ""
+    folded = "\n\n<details><summary>Rows and why they ran</summary>\n\n```\n%s\n```\n</details>" % "\n".join(cap_rows(rows)) if rows else ""
     return "\n### Regression lane\n\n%s%s\n" % (line, folded) if line else ""
 
 

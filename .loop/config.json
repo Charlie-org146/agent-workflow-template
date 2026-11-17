@@ -83,7 +83,8 @@
     ],
     "Operations": [
       "Automation",
-      "Setup"
+      "Setup",
+      "Machines"
     ],
     "Docs": [
       "Documentation"

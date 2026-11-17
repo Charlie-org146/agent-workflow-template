@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept trim-scripts-98@73215da8 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept pr-body-cap@ec931fbd -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -88,6 +88,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [ptb-dead-lane](Tests#t-ptb-dead-lane) | requirement | DEL-1 | Given a lane that ended with no exit status (killed from outside), when goal.py pr or a record sees it, then it reruns without spending a try, at most 3 times, and a real failure still spends one. | PASS 2026-11-12 |
 | [ptb-plain-paths](Tests#t-ptb-plain-paths) | requirement | DEL-1 | Given a finding or stop text that carries an absolute path, when goal.py writes it, then the finding, the journal and findings.md hold no absolute path and keep the row id and file name. | PASS 2026-11-12 |
 | [pr-moved-uncounted](Tests#t-pr-moved-uncounted) | requirement | DEL-1 | Given a goal whose pr try was lost to main moving, when it happens five times, then tries and max_tries stay unchanged and each says TRY NOT COUNTED; the sixth counts as an ordinary failed try. | PASS 2026-11-15 |
+| [lane-memory-not-counted](Tests#t-lane-memory-not-counted) | requirement | DEL-1 | Given a lane that gave up waiting for memory, when the goal records the failed try, then no counted try is used and a real failure still costs one. | not run |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-2 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
 | [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-12 |
 | [auto-approved](Tests#t-auto-approved) | requirement | DEL-3 | Given an auto-approved step, when it ends, then it is logged and nothing waits. | PASS 2026-11-09 |
