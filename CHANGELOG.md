@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.0.38 - 2026-11-17
+
+- docs check: How-to-use Kinds, listed commands and a links-only README (DOC-19, #4677)
+- How-to-use pages: What's delivered tables and Kind blocks; README and Home link the pages
+- Documentation: DOC-4 and DOC-5 for a links-only README, the Kind rules under DOC-19 (owner record o87); re-stamp Setup
+- Adoption writes an unwritten How-to-use stub per page; the machine and adopt toys read the How-to-use page and the README links
+- DOC-18: the README keeps only a link to each How-to-use page (owner record o91); re-render Tests
+- Toy fixtures: a links-only README, a How-to-use page for the fixture feature, the DOC-5 cases rewritten
+- Wiki: re-stamp Setup and the How-to-use pages; re-render Tests
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/howto-kinds
+- Merge remote-tracking branch 'origin/main' into loop/howto-kinds
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/howto-kinds
+- Wiki: update pages for howto-kinds
+- Wiki: re-stamp How-to-use-Documentation, How-to-use-Setup and Setup after the main merge (mapped code only)
+- Wiki: update pages for howto-kinds
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.37 - 2026-11-17
 
 - The home guard tells a toy's writes from another session's in skills-main and the schedule registry (#4760)

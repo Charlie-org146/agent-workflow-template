@@ -334,22 +334,23 @@ def docs_format():
 def home_page(repo, names, pf):
     """Home in the docs format (DOC-4): marker, title, Features and one table, a row for each feature page."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin", check=False))
-    link = "[README](https://github.com/%s#%%s)" % (found.group(1) if found else "OWNER/REPO")
-    rows = [["[%s](%s)" % (n, n), PLACEHOLDER, link % pf.slug(pf.heading_of(n)), "-"] for n in names]
+    link = "[How to use %%s](https://github.com/%s/wiki/How-to-use-%%s)" % (found.group(1) if found else "OWNER/REPO")
+    rows = [["[%s](%s)" % (n, n), PLACEHOLDER, link % (n.replace("-", " "), n), "-"] for n in names]
     return "%s\n# %s\n\n## Features\n\n%s\n" % (pf.MARKER, os.path.basename(repo), "\n".join(pf.table(pf.HOME, rows)))
 
 
-def readme_with(text, names, pf):
-    """The README with a '### How to use <Feature>' section (DOC-5) added for each page that lacks one."""
-    block = "\n\n".join("### %s\n\nAsk for %s in plain words.\n\n%s" % (pf.heading_of(n), n, "\n".join(pf.table(pf.FRONT, [['"Show me %s"' % n.lower(), PLACEHOLDER]])))
-                         for n in names if pf.heading_of(n) not in text)
+def readme_with(text, names, pf, repo=""):
+    """The README with a link to each page's How-to-use page (DOC-5) added under '## How to use' for each page that lacks one."""
+    found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin", check=False)) if repo else None
+    block = "\n".join("- [How to use %s](https://github.com/%s/wiki/How-to-use-%s)" % (n.replace("-", " "), found.group(1) if found else "OWNER/REPO", n)
+                      for n in names if "How-to-use-%s)" % n not in text)
     if not block:
         return text
     at = text.find("\n## How to use\n")
     if at < 0:
         return text.rstrip("\n") + ("\n\n" if text.strip() else "") + "## How to use\n\n" + block + "\n"
     end = text.find("\n## ", at + 5) + 1 or len(text)
-    return text[:end].rstrip("\n") + "\n\n" + block + "\n" + ("\n" + text[end:] if end < len(text) else "")
+    return text[:end].rstrip("\n") + "\n" + block + "\n" + ("\n" + text[end:] if end < len(text) else "")
 
 
 def main():

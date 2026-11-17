@@ -5,6 +5,14 @@
 
 Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, keeps it in step with the template, adopts several repos in one pass through `board.py repos adopt`, and lists, with the exact instruction, what the owner must still do on a new machine.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `workflow-setup` | Skill | Turns any repo into a ready workspace for any agent without blocking it. | Say "Set up this repo"; it shows what it found and writes a setup branch. |
+| `setup.py` | Command | Surveys a repo and writes its `.loop/` config on a branch. | `python3 skills/workflow-setup/scripts/setup.py`. |
+| `unattended.py` | Command | Checks what an unattended run needs, replays the golden adoption and lists connectors. | `python3 skills/workflow-monitoring/scripts/unattended.py prerequisites`. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -40,6 +48,24 @@ Each requirement and how it is delivered:
 - SET-14: The connectors each repo needs are checked. Example, from the adopt-connectors-probed test: given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled.
 - SET-16: A repo is judged fully migrated by one command. Example, from the migration-clean test: given a clean private repo and a clean public repo, both recorded mac with the task registered, when migration-check runs, then each prints MIGRATION OK and exits 0.
 
+### Skill: workflow-setup
+- **Say:** "Set up this repo"
+- **Command:** `/workflow-setup setup`
+
+### Command: setup.py
+- **Command:** `python3 skills/workflow-setup/scripts/setup.py [--dry-run]`
+- **Dry run:** `--dry-run` lists every file it would add or convert and writes nothing.
+- **Reads:** the repo and its settings.
+- **Writes:** `.loop/` files, README and agent files on a setup branch.
+- **Exit codes:** 0 on a ready repo; setup never blocks, and a refusal prints its fix.
+
+### Command: unattended.py
+- **Command:** `python3 skills/workflow-monitoring/scripts/unattended.py prerequisites` (also `replay` and `connectors`)
+- **Dry run:** none needed: each part only reports.
+- **Reads:** this machine's tools and the followed repos' PRDs.
+- **Writes:** nothing.
+- **Exit codes:** 0 after it prints its checklist; a gap is a `MISSING` line with its exact fix.
+
 ## URLs and deployments
 
 - Wiki: [Setup](https://github.com/jcl2018/agent-workflow-template/wiki/Setup)
@@ -51,4 +77,4 @@ Each requirement and how it is delivered:
 - PRD page: [Setup](Setup)
 - Backlog: [Backlog: Setup](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept email-notify@dda5d59c -->
+<!-- kept howto-kinds@bd92154f -->
