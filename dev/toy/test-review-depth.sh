@@ -41,7 +41,8 @@ new() { git switch -q main; $goal new "$1" --here --goal "Goal $1" --done "Line 
 
 echo "== setup writes the setting"
 check "setup writes review_depth full with its one-line explanation" '[ "$(python3 -c "import json;c=json.load(open(\".loop/config.json\"));print(c[\"review_depth\"], bool(c[\"_help\"][\"review_depth\"]))")" = "full True" ]'
-check "the settings reference lists review_depth with its default and a line" '$SET reference | grep -q "^| .review_depth. | .full. | full runs the plan and review skills"'
+check "the settings reference lists review_depth with its default and a line" '$SET reference | grep -q "^| .review_depth. | .full. | full runs the whole plan and review pipeline"'
+grep -q "^ref:" "$DIAG" 2>/dev/null || { echo "ref: $($SET reference 2>&1 | grep -E "review_depth|full_markers|REFUSED|Error" | cut -c1-110)"; echo "private: $($SET fill-private --file "$d/private-diag.json" 2>&1 | tail -2 | cut -c1-160)"; } >> "$DIAG" 
 check "the private half lists full_markers, and fill-private writes it" '$SET reference | grep -q "^| .full_markers. |" && $SET fill-private --file "$d/private.json" >/dev/null && grep -q "\"full_markers\"" "$d/private.json"'
 base() { git switch -q main; cfg "$@"; git commit -qam "Config: $*"; git push -q origin main; }  # the setting is read from the base branch
 cfg 'review_depth="Full"'
@@ -72,6 +73,7 @@ import flow; print(flow.PROMPT.format(skill="s", step="review", slug="x", branch
 PY
 check "the review prompt says run the full pipeline, never condense, and write a DEPTH line" 'grep -q "review_depth is full: run the skill.s full pipeline" "$d/prompt" && grep -q "DEPTH: full. or .DEPTH: condensed" "$d/prompt"'
 out=$($goal pr full1 2>&1)
+grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" || { echo "pr full1: $(tail -4 <<<"$out" | cut -c1-200)"; echo "pr calls: $(grep -c "^pr create" "$FAKE_GH_DIR/calls.log") pr create, depth lines: $(grep -c "depth full" "$FAKE_GH_DIR/calls.log")"; } >> "$DIAG"
 check "the pull request body lists every step with its depth" 'grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" && grep -q -- "- idea: done (depth full)" "$FAKE_GH_DIR/calls.log"'
 
 echo "== condensed under full is refused"
@@ -158,6 +160,6 @@ s = json.load(open(sys.argv[1])); s["status"] = "running"; s.pop("pr", None); js
 PY
 $LB > "$d/board" 2>&1
 check "the live board shows each recorded step's depth and the setting" 'grep -A1 -x "    depth: idea full, plan full, review full, qa full, ship" "$d/board" | grep -qx "      full (setting full)"'
-grep -qx '      full (setting full)' "$d/board" || { echo "board lines with depth:"; grep -n -B1 -A1 'depth' "$d/board" | head -12; } >> "$DIAG"
+grep -qx '      full (setting full)' "$d/board" || { echo "board around full1 (status $(field full1 status)):"; grep -n -A8 'full1' "$d/board" | grep -E "full1|depth|full\)" | head -6; } >> "$DIAG"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }

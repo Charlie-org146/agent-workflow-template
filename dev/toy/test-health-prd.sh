@@ -56,6 +56,9 @@ echo "== HLT-4: findings become tagged issues, a defect on no milestone and a ba
 # closed instead of moved, a fix closes the wrong issue, or the feature tag appears with feature_labels off; why_new=every
 # issue used to be placed on its feature's milestone or Backlog; seam=fake gh; no_claim=GitHub's own label and milestone API
 mkrepo; f0=$fails
+# usage-readme reads the skills' Command maps (drop-usage) and is quiet in a repo with none: give the toy one that lacks frob
+mkdir -p skills/workflow-calc; printf '# workflow-calc\n\n## Command map\n\n- `/workflow-calc add`: adds.\n' > skills/workflow-calc/SKILL.md
+git add -A; git commit -qm "skill map"
 python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
 import json, sys
 json.dump([{"number": 1, "title": "old size finding", "state": "OPEN", "labels": [{"name": "health"}, {"name": "health:size"}],

@@ -39,7 +39,11 @@ case "$1 $2" in
   "run list") cat "$d/runs.json" 2>/dev/null || echo "[]";;
   "repo view") echo "${STUB_OWNER:-toy-owner}";;
   "api users/"*) echo "${STUB_TYPE:-User}";;
-  "api repos/"*|"api --paginate"*) cat "$d/milestones.json" 2>/dev/null || echo "[]";;
+  "api --paginate") case "$3" in *"/issues?"*labels=*)  # the workflow reads open issues one JSON object per line (--jq '.[] | ...')
+    [ -n "${STUB_LIST_FAIL:-}" ] && { echo "HTTP 502" >&2; exit 1; }; l=${3##*labels=}; l=${l%%&*}
+    python3 -c 'import json,sys; [print(json.dumps(i)) for i in json.load(open(sys.argv[1]))]' "$d/$l.json" 2>/dev/null; exit 0;; esac
+    cat "$d/milestones.json" 2>/dev/null || echo "[]";;
+  "api repos/"*) cat "$d/milestones.json" 2>/dev/null || echo "[]";;
   "issue create") echo "https://github.com/o/r/issues/77";;
   "issue pin") exit "${STUB_PIN_FAIL:-0}";;
   "issue comment") [ -n "${STUB_COMMENT_FAIL:-}" ] && { echo "API rate limit" >&2; exit 1; }; n=$3; shift 3; [ "$1" = --body ] && printf '%s' "$2" > "$d/comment-$n.md";;

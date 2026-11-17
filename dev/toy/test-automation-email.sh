@@ -63,6 +63,10 @@ elif a[:2] == ["repo", "view"]:
     print("toy-owner")
 elif a[0] == "api" and a[1].startswith("users/"):
     print("User")
+elif a[0] == "api" and "--paginate" in a and any("/issues?" in x and "labels=" in x for x in a):  # open issues, one JSON object per line
+    fail("STUB_LIST_FAIL")
+    for i in load(re.search(r"labels=([^&]+)", next(x for x in a if "/issues?" in x)).group(1) + ".json", []):
+        print(json.dumps(i))
 elif a[0] == "api" and "PATCH" in a and os.environ.get("STUB_ISSUE_PATCH_FAIL") and "/issues/comments/" not in " ".join(a):
     sys.stderr.write("HTTP 502\n"); sys.exit(1)
 elif a[0] == "api" and "PATCH" in a and "/issues/comments/" in " ".join(a):
