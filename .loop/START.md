@@ -70,7 +70,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `digest_owner` | none | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). |
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
-| `full_auto` | true | true lets the operation session answer a worker's routine decision with its recommended option; risky ones wait. |
+| `full_auto` | true | true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait. |
 | `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `govern_hook` | true | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
@@ -88,7 +88,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
-| `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
+| `min_free_memory_gb` | 2.5 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `plan_pause_percent` | 80 | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. |

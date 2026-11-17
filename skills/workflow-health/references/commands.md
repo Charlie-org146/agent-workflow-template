@@ -59,6 +59,8 @@ unchanged repo print the same lines.
 | | `eta-missing` | a live goal with no ETA (WARN; shown, never filed) |
 | | `eta-extended` | a goal's ETA extended without an owner-words record that covers it (FAIL; shown, never filed) |
 | | `eta-overrun` | a goal a step past its ETA that is not waiting under Needs you for the owner's choice (FAIL; shown, never filed) |
+| | `auto-safety` | an AUTO line in loop/auto.log whose question or answer is in a safety class (FAIL; shown, never filed) |
+| | `auto-record` | an AUTO line without an existing standing owner rule record (FAIL; shown, never filed) |
 | Adoption (would this work installed fresh?) | `config` | `.loop/config.json` doesn't parse or has no base (FAIL) |
 | | `checks-run-tests` | the regression workflow exists but no land row does (WARN) |
 | | `template-version` | VERSION isn't the newest CHANGELOG heading (WARN) |

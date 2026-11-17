@@ -324,7 +324,8 @@ def preflight_answer(g, args, state, why):
     seen = g.fit.view(state, g.state_dir())
     left, have = auto.eta_open(seen), dict((seen.get("preflight_answers") or {}).get("answers") or {})
     left or g.no("%s has no open pre-flight item; nothing changed." % args.slug)
-    rid = auto.eta_record(g, args.owner_record, args.slug, "a pre-flight answer")
+    ok = args.preflight == "recommended" and not any(auto.why_not({"ask": i["ask"], "words": i["options"], "recommend": i["recommend"], "kind": "owner"}, g.config()) for i in left)
+    rid = auto.eta_record(g, args.owner_record, args.slug, "the recommended pre-flight answer" if ok else "a pre-flight answer")
     for part in [] if args.preflight == "recommended" else args.preflight.split(","):
         key, _, value = part.partition("=")
         item = next((i for i in left if i["id"] == key.strip()), None)
