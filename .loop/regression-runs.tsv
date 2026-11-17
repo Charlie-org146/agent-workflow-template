@@ -257,6 +257,8 @@ hlt8-triage	PASS	2026-11-10
 hlt9-evidence-or-nothing	PASS	2026-11-10	
 home-guard-catches-leak	PASS	2026-11-15	
 home-header-both	PASS	2026-11-14	
+home-howto-linksonly	PASS	2026-11-17	
+home-howto-linksonly-control	PASS	2026-11-17	
 home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
 hook-stub-mark-foreign	PASS	2026-11-17	

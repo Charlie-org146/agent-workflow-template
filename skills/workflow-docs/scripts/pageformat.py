@@ -157,8 +157,8 @@ def home(text, features, existing, readme, repo, topics=None):
         if wiki and not (repo and wiki.group(1).lower() != repo.lower()):
             pass
         elif not link or (repo and link.group(1).lower() != repo.lower()) or link.group(2) != want or want not in keys:
-            out.append(bad("Home", number, "Features", 4, "How to use links the README's '### %s' section" % heading_of(name),
-                           short(row[2]), "link [README](https://github.com/%s#%s) and add that README heading" % (repo or "OWNER/REPO", want)))
+            out.append(bad("Home", number, "Features", 4, "How to use links the page How-to-use-%s" % name,
+                           short(row[2]), "link [%s](https://github.com/%s/wiki/How-to-use-%s); the README needs no '### %s' heading (DOC-18)" % (heading_of(name), repo or "OWNER/REPO", name, heading_of(name))))
     for name in features:
         count = seen.count(name)
         if count != 1:
