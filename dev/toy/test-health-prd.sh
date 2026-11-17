@@ -52,7 +52,7 @@ fi
 if want h4; then
 echo "== HLT-4: findings become tagged issues, a defect on no milestone and a backlog item on its Backlog milestone; repeat, fix, return; covering issues linked; old markers moved"
 # Value: protects=HLT-4; fails_when=a finding is placed on a milestone, a covered finding is duplicated, an old marker is
-# closed instead of moved, a fix closes the wrong issue, or the feature tag appears with feature_labels off; why_new=every
+# closed instead of moved, a fix closes the wrong issue, or an issue lacks its feature tag (Other when none); why_new=every
 # issue used to be placed on its feature's milestone or Backlog; seam=fake gh; no_claim=GitHub's own label and milestone API
 mkrepo; f0=$fails
 python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
@@ -62,14 +62,14 @@ json.dump([{"number": 1, "title": "old size finding", "state": "OPEN", "labels":
             "body": "<!-- loop-health size:skills/calc/scripts/near.py:limit -->\nold"}], open(sys.argv[1], "w"))
 PY
 out=$($H preview --group size,consistency 2>&1)
-check "an old marker is moved to the new key, not closed" 'grep -q "^WOULD update #1 size:skills/calc/scripts/near.py:scripts \[health:size\]" <<<"$out" && ! grep -q "close #1" <<<"$out"'
-check "a finding is tagged with its group and the preview says where it goes" 'grep -q "^WOULD open issue .health: consistency /workflow-zzz frob usage-readme. \[health:consistency\]" <<<"$out" && grep -qE "\] as (defect|backlog on Backlog: .+)$" <<<"$out"'
+check "an old marker is moved to the new key, not closed" 'grep -q "^WOULD update #1 size:skills/calc/scripts/near.py:scripts \[health:size, feature:Calc\]" <<<"$out" && ! grep -q "close #1" <<<"$out"'
+check "a finding is tagged with its group and the preview says where it goes" 'grep -q "^WOULD open issue .health: consistency /workflow-zzz frob usage-readme. \[health:consistency, feature:Other\]" <<<"$out" && grep -qE "\] as (defect|backlog on Backlog: .+)$" <<<"$out"'
 pf=$(r=$PWD; cd "$S" && python3 -B -c "import issues; print(issues.feature_of('$r', {'subject': 'Calc', 'evidence': 'Calc'}), issues.feature_of('$r', {'subject': 'nothing/here.py', 'evidence': ''}))" 2>&1)
 check "a page-level finding (a stale page) is about that page, one that fits none about none ($pf)" '[ "$pf" = "Calc None" ]'
 : > "$FAKE_GH_DIR/calls.log"
 $H file --group size,consistency >/dev/null 2>&1
 m=$(python3 -c "import json;print([i['milestone']['title'] for i in json.load(open('$FAKE_GH_DIR/issues.json')) if i['number']==1][0])")
-check "file leaves an issue the owner put on a milestone where it is" '[ "$m" = Backlog ] && ! grep -q "feature:" "$FAKE_GH_DIR/calls.log"'
+check "file leaves an issue the owner put on a milestone where it is, and tags it with its feature" '[ "$m" = Backlog ] && grep -q -- "--add-label feature:Calc" "$FAKE_GH_DIR/calls.log"'
 out=$($H preview --group size,consistency 2>&1)
 check "a repeat is SAME, a key with a space (a /workflow command) included" 'grep -q "^SAME #1 " <<<"$out" && grep -q "^SAME #2 consistency:/workflow-zzz frob:usage-readme" <<<"$out" && grep -q "PREVIEW: 0 to write" <<<"$out"'
 printf '# small\n' > skills/calc/scripts/near.py; git commit -qam fixed
@@ -91,7 +91,8 @@ $H file --group requirements >/dev/null 2>&1; $H file --group requirements >/dev
 check "the link comment is written once" '[ "$(python3 -c "import json;print(sum(\"loop-health-link requirements:CAL-1:rows\" in c[\"body\"] for i in json.load(open(\"$FAKE_GH_DIR/issues.json\")) for c in i.get(\"comments\") or []))")" = 1 ]'
 python3 -c "import json;c=json.load(open('.loop/config.json'));c['feature_labels']=True;json.dump(c,open('.loop/config.json','w'))"; git commit -qam labels-on
 out=$($H preview --group size,consistency 2>&1)
-check "with feature_labels on, a finding about a feature is also tagged feature:<Page>, one about none is not" 'grep -q "^WOULD update #1 .*\[health:size, feature:Calc\]" <<<"$out" && grep -q "^SAME #2 " <<<"$out" && ! grep -q "feature:" <<<"$(grep consistency <<<"$out")"'
+check "with feature_labels on nothing changes: health already tagged each issue with its feature, Other when none" 'grep -q "^WOULD reopen #1 .*\[health:size, feature:Calc\]" <<<"$out" && ! grep -q "^WOULD update" <<<"$out" && grep -q "^SAME #2 " <<<"$out"'
+
 [ "$fails" = "$f0" ] && echo "PASS milestone-freeform:hlt4-feature-milestones"
 fi
 
