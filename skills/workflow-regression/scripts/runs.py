@@ -8,7 +8,7 @@ record in the git common dir, never here: a commit cell would differ per branch 
 It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body,
 dry-run (WOULD lines) unless live; actions.py keeps the CI copy. The time budget of an in-loop test run lives here too (budget, fit,
 execute): a --reuse run (qa, ship and pull-request lanes) stops at test_budget_minutes (default 15, floor 15), runs rows in tier
-order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite. regression.py's readers sit at the end.
+order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite.
 """
 import datetime
 import glob
@@ -59,7 +59,7 @@ def shown(run, command, code, text):
 
 
 def path(root):
-    return os.path.join(root, ".loop", NAME)
+    return path_of(root, NAME)
 
 
 def read(root):
@@ -71,7 +71,7 @@ def read(root):
     return {cells[0]: (cells + [""] * 5)[:5] for cells in rows}
 
 
-def where(sha=None):
+def where():
     parts = [os.environ.get(key, "") for key in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID")]
     return "%s/%s/actions/runs/%s" % tuple(parts) if all(parts) else ""
 
@@ -79,10 +79,10 @@ def where(sha=None):
 def write(root, results, date, sha):
     if not results:
         return
-    ran, run = read(root), where(sha)
+    ran, run = read(root), where()
     for item in results:
-        if item["state"] == "SKIPPED" and (ran.get(item["id"]) or [""] * 5)[1] == "PASS":
-            continue  # a skip here says nothing against the last pass
+        if item["state"] == "SKIPPED" and ran.get(item["id"], "--")[1] in ("PASS", "FAIL"):
+            continue  # a skip says nothing against the last result
         flag = item["flaky"] if "flaky" in item else ran.get(item["id"], [""] * 5)[4]
         ran[item["id"]] = [item["id"], item["state"] if item["state"] in ("PASS", "SKIPPED") else "FAIL", date, run, flag[:12]]
     with open(path(root), "w") as handle:
@@ -131,7 +131,7 @@ def sync_issues(results, live, day):
     for item in results:
         mark = MARK % item["id"]
         hits = sorted((issue for issue in issues if re.search(r"<!-- loop-regression %s(?: placed=\S*)? -->" % re.escape(item["id"]), issue.get("body", ""))),
-                      key=lambda issue: issue["number"])
+                      key=lambda i: i["number"])
         opened = [issue for issue in hits if issue.get("state") == "OPEN"]
         hit = opened[0] if opened else hits[-1] if hits else None
         number = str(hit["number"]) if hit else ""
@@ -179,7 +179,7 @@ def minutes(cfg, key, default=DEFAULT):
 
 def budget(root):
     try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
+        with open(path_of(root, "config.json")) as handle:
             cfg = json.load(handle)
     except (OSError, ValueError):
         cfg = {}
@@ -198,17 +198,22 @@ def fit(todo, est, limit):
 
 
 def execute(root, picked, todo, est, limit, timeout, expected, reuse):
-    keep, left = fit(todo, est, limit) if limit else (todo, [])
-    by, results, start = {row["id"]: row for row in picked}, [], time.time()
+    keep, left = fit(todo, est, limit) if limit else (todo[:], [])
+    by, results, start, first = {row["id"]: row for row in picked}, [], time.time(), {}
     for key in keep:
-        remaining = limit - (time.time() - start) if limit else None
-        if remaining is not None and remaining < 1:
+        remaining = limit - (time.time() - start) if limit else timeout
+        if remaining < 1 and key not in first:
             left.append(key)
             continue
-        cap = timeout if remaining is None else min(timeout, remaining)
-        began = time.time()
+        cap, began = min(timeout, remaining), time.time()
         skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))
-        code, text, pid, signal = lanes.run_row(by[key]["command"], root, dict(actions.row_env(), TOY_SKIP_FILE=skip), cap)
+        env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
+        got = first[key] if remaining < 1 else lanes.run_row(by[key]["command"], root, env, cap)
+        code, text, pid, signal = got
+        if code in START_CODES and key not in first:  # could not start: rerun it last (#4639)
+            first[key] = got
+            keep.append(key)
+            continue
         if code and os.path.exists(skip):
             os.remove(skip)
             code = SKIP_CODE
@@ -224,16 +229,15 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         print("%s %s%s" % ("ENV" if nostart else "NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else " (exit %d: could not start; rerun when memory allows)" % code if nostart else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
-        env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
         tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
         if state == "FAIL" and reuse:
-            print(chr(10).join("    " + line for line in tail.splitlines()[-20:]), file=sys.stderr)
+            print(chr(10).join("    " + x for x in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal, "notrun": cannot, "env": nostart})
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (
-                ", +%d more" % (len(left) - 20) if len(left) > 20 else "")))
+                ", +%d more" % (len(left) - 20)) * (len(left) > 20)))
     return results, left
 
 
@@ -311,7 +315,7 @@ def off_record(root, row_id, runner, commit, today, read_rows, edit_rows):
         sys.exit("REFUSED: %s is not a commit in this repo. Fix: git fetch, and pass the commit the red run used." % commit)
     day = today()
     edit_rows(root, lambda current: current[row_id].update(seen_red=day))
-    path = os.path.join(root, ".loop", "regression-red.tsv")
+    path = path_of(root, "regression-red.tsv")
     kept = [line for line in (open(path).read().splitlines() if os.path.exists(path) else []) if line and line.split("\t")[0] != row_id]
     with open(path, "w", newline="\n") as out:
         out.write("\n".join(kept + ["\t".join((row_id, day, runner, commit))]) + "\n")
@@ -324,7 +328,7 @@ OWED, OWED_LABEL = "regression-owed.tsv", "other-machine"
 
 
 def owed_read(root):
-    file = os.path.join(root, ".loop", OWED)
+    file = path_of(root, OWED)
     cells = [(line.rstrip("\n").split("\t") + [""] * 4)[:4] for line in (open(file) if os.path.exists(file) else []) if line.strip()]
     return {c[0]: c for c in cells}
 
@@ -333,7 +337,7 @@ def owed_clear(root, row_id, live=False):
     held = owed_read(root)
     mine = held.pop(row_id, None)
     if mine:
-        with open(os.path.join(root, ".loop", OWED), "w", newline="\n") as out:
+        with open(path_of(root, OWED), "w", newline="\n") as out:
             out.write("".join("\t".join(c) + "\n" for c in held.values()))
         if mine[3] and live:
             done = gh("issue", "close", mine[3], "--comment", "The red proof for %s is recorded; closing the to-do." % row_id)
@@ -403,7 +407,7 @@ def owed_record(root, args, today, read_rows):
         issue = owed_issue(root, row_id, [row_id], "To do on %s: prove %s fails" % (runner, row_id),
                            "Row `%s` skips here: red proof owed from %s. There run `regression.py red %s --off-platform --runner %s --commit SHA`, "
                            "then close this. It never blocks.\n" % (row_id, runner, row_id, runner), live)
-        with open(os.path.join(root, ".loop", OWED), "a", newline="\n") as out:
+        with open(path_of(root, OWED), "a", newline="\n") as out:
             out.write("\t".join((row_id, today(), runner, issue)) + "\n")
         print("OWED %s: red proof owed on %s (to-do %s). The goal goes on." % (row_id, runner, issue or "not opened"))
     return 0

@@ -771,3 +771,12 @@ next and what it unblocks, or tap it to open the same text in the list below. Th
 - Merge only when told, by the owner, for that pull request. Otherwise never merge.
 - Never archive a worker's work. The board only notes when something could be archived; the owner decides.
 - Never loosen permissions, edit done lines or change `agent_command`.
+
+### merge.py's apply step re-renders generated blocks (DOC-2, #4632)
+
+Before it merges, `merge.py` runs `operate.py apply SLUG BRANCH`, which re-stamps pages stale only through mapped code (a How-to-use page too) and now
+also re-renders, in the same wiki-only commit, the generated blocks and Tests tables that differ from a fresh render only
+because the template, main or a regression row moved (`audit.py rerender`). A file is re-rendered only when the branch added no
+line to its generated part that a fresh render lacks and the render touches nothing outside that part; a hand edit inside a
+block, or any other difference, is put back and stays STALE for the worker. `operate.py wiki-only` accepts README.md in that commit
+when only its generated blocks changed.

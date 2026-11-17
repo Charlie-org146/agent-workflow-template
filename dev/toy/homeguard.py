@@ -20,11 +20,25 @@ def folder():
     return os.environ.get("TOY_REAL_WL") or os.path.expanduser("~/.workflow-loop")
 
 
+def other_runs(top, here, name=""):
+    """True for what other sessions' runs write in the owner's real folder, which a toy can't be judged on: compiled caches, the lane
+    tickets under lanes/, and the scheduler's own files under schedule/ (log/, each repo's health-report.txt and tree/). Anything else
+    under schedule/ (repos.json, a new entry) is state a toy must not touch (#4683). TOY_GUARD_STRICT judges a fresh home in full."""
+    rel = os.path.relpath(os.path.join(here, name), top).replace(os.sep, "/").split("/")
+    if "__pycache__" in rel:
+        return True
+    if os.environ.get("TOY_GUARD_STRICT"):
+        return False
+    return rel[0] == "lanes" or (rel[0] == "schedule" and (rel[1:2] == ["log"] or rel[2:3] == ["tree"] or rel[2:] == ["health-report.txt"]))
+
+
 def scan(top):
     found = {}
     for here, _dirs, names in os.walk(top):
-        _dirs[:] = [d for d in _dirs if d != "__pycache__" and not (here == top and d in ("lanes", "schedule"))]  # caches, lane tickets and the schedule's own log and registry that other sessions' runs write, not state
+        _dirs[:] = [d for d in _dirs if not other_runs(top, here, d)]
         for name in names:
+            if other_runs(top, here, name):
+                continue
             path = os.path.join(here, name)
             try:
                 with open(path, "rb") as handle:

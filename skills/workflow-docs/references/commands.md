@@ -39,6 +39,7 @@ render [--check]                rewrite each page's Tests from the regression ro
 prd NAME "<idea>" --paths A,B   draft a new feature's PRD, Unreviewed, and map it
 convert                         turn old Summary/Criteria pages into PRD pages (prd.py convert previews, --write writes)
 relock                         re-stamp a reviewed page whose lock moved only because of owner-reviewed requirement lines (docs.py audit --relock; logs auto-relock in reviews.tsv)
+audit.py rerender BASE               in a checkout of a goal branch: re-render the generated blocks and Tests tables (README and Home Settings, Automation and template blocks, the Tests page, each page's Tests) that differ from a fresh render only because something else moved; operate.py apply runs it (#4632)
 publish [--dry-run] [--adopt PAGE]   copy the pages to the GitHub wiki, commit and push
 restore                         revert the last publish, if nothing came after it
 ```

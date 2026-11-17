@@ -243,6 +243,8 @@ home-guard-catches-leak	PASS	2026-11-15
 home-header-both	PASS	2026-11-14	
 home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
+hook-stub-mark-foreign	PASS	2026-11-17	
+hook-stub-mark-own	PASS	2026-11-17	
 issue-129-docs-published	PASS	2026-11-12	
 issue-129-wiki-first-page	PASS	2026-11-12	
 issue-134-protected-release	PASS	2026-11-12	
@@ -317,6 +319,8 @@ ls-plist	FAIL	2026-11-13
 mac-rows-skip-77	PASS	2026-11-13	
 machine-caps	PASS	2026-11-16	
 machine-done-12	PASS	2026-11-16	
+machine-done-7	PASS	2026-11-17		5f5595078446
+machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-setting-listed	PASS	2026-11-16	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
@@ -517,9 +521,11 @@ settings-overridden	PASS	2026-11-12
 settings-publish-refresh	PASS	2026-11-12	
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
+settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
 settings-render-fresh	FAIL	2026-11-16	
 settings-stale	PASS	2026-11-12	
+settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
