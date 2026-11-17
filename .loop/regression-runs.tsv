@@ -255,7 +255,7 @@ hlt6-worktrees	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
 hlt8-triage	PASS	2026-11-10	
 hlt9-evidence-or-nothing	PASS	2026-11-10	
-home-guard-catches-leak	PASS	2026-11-15	
+home-guard-catches-leak	PASS	2026-11-17	
 home-header-both	PASS	2026-11-14	
 home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
@@ -337,6 +337,7 @@ machine-caps	PASS	2026-11-16
 machine-done-12	PASS	2026-11-16	
 machine-done-5	PASS	2026-11-16	
 machine-done-7	PASS	2026-11-17		5f5595078446
+machine-hook-state	PASS	2026-11-17	
 machine-new-machine-docs	PASS	2026-11-16	
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-setting-listed	PASS	2026-11-16	
@@ -558,6 +559,7 @@ settings-start-fresh	PASS	2026-11-16
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
+setup-refusal-writes-120	PASS	2026-11-17	
 size-139	PASS	2026-11-12	
 size-140	PASS	2026-11-12	
 size-141	PASS	2026-11-12	
