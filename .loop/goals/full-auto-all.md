@@ -16,3 +16,13 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-full-auto-all.py`.
+   Expect: every line starts with PASS (an owner un-review, a row cap and a budget are answered; the security question and every safety class wait; the negative control line says the guard-less question is answered).
+2. Run `echo "Raise criteria_max from 18 to 19?" | python3 skills/workflow-monitoring/scripts/auto.py decide-text --kind owner --recommend yes`.
+   Expect: it prints AUTO.
+3. Run `echo "Print the API key into the log?" | python3 skills/workflow-monitoring/scripts/auto.py decide-text --kind owner --recommend yes`.
+   Expect: it prints WAITS: safety class security: api key.
+4. Open `docs/wiki/Monitoring.md`.
+   Expect: MON-11 and MON-5 both read Unreviewed (nothing was stamped), and MON-11 names the standing rule and the safety classes.
+
