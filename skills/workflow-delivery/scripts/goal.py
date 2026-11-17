@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hold one goal's record: done lines, the skill flow's steps, PR.
+"""Hold one goal's record: done lines, flow steps, PR.
 
 usage: goal.py <command> <slug> [options]
 
@@ -28,7 +28,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lanekit, guards, fit, private  # noqa: E402,E401
+import lanekit, guards, fit, private, routing  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
@@ -438,7 +438,7 @@ def main():
     return args.func(args)
 
 
-add_tokens = guards.add_tokens
+add_tokens = routing.add_tokens
 
 
 def round_stop(g, state, what):
