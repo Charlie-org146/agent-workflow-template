@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept hotfix-4859@0ef9b479 -->
+Review: **Unreviewed** <!-- kept private-lines-v1051@0f4f7e0e -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -53,7 +53,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - It never stops or restarts a running goal to re-plan, and every change is logged with its reason and shown in the check-in.
 - MON-11: **Unreviewed** Full auto mode
   - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
-  - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private names, mail, Dropbox, records), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
+  - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
   - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.
   - Turning it off takes effect at the next decision.
 
