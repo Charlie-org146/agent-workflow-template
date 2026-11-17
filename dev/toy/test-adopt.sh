@@ -99,7 +99,9 @@ if want SET-4; then
   grep -q '"version": "1.1.0"' "$d/agent/skills/workflow-package.json" || no "stamp not moved"
   [ "$(git branch --show-current)" = main ] && [ -z "$(git status --short)" ] || no "update changed the checkout"
   git rev-parse -q --verify workflow-update-v1.1.0 >/dev/null || no "no commit on workflow-update-v1.1.0"
-  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings"
+  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings: $(git diff --stat main workflow-update-v1.1.0 | tail -6 | tr "
+" "|") $(diff <(echo "$kbefore") <(keys workflow-update-v1.1.0) | head -4 | tr "
+" "|")"
   git show workflow-update-v1.1.0:.loop/config.json | grep -q '"template_version": "1.1.0"' || no "template_version not stamped"
   extra=$(git diff --name-only main workflow-update-v1.1.0 | grep -vxE '\.loop/config\.json|\.loop/START\.md|CLAUDE\.md|AGENTS\.md')
   [ -z "$extra" ] || no "the update branch changed hand-written data: $extra"
