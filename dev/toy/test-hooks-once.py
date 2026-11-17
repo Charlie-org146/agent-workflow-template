@@ -44,18 +44,19 @@ try:
     def counts():
         data = json.load(open(path))
         found = {}
-        for groups in data.get("hooks", {}).values():
+        for event, groups in data.get("hooks", {}).items():
             for group in groups:
                 for hook in group.get("hooks", []):
                     for name in ("reply_hook.py", "govern_hook.py"):
                         if "/%s'" % name in hook.get("command", "").replace("\\", "/"):
-                            found[name] = found.get(name, 0) + 1
+                            key = "quiet" if event == "UserPromptSubmit" else name  # govern_hook.py also serves the prompt event (C3)
+                            found[key] = found.get(key, 0) + 1
         return found
 
     for flag in ("--reply-hook", "--govern-hook", "--reply-hook", "--govern-hook"):
         code, out = run(flag)
         check("setup.py %s exits 0" % flag, code == 0, out[-200:])
-    check("each hook is installed exactly once after four runs", counts() == {"reply_hook.py": 1, "govern_hook.py": 1}, counts())
+    check("each hook is installed exactly once after four runs", counts() == {"reply_hook.py": 1, "govern_hook.py": 1, "quiet": 1}, counts())
     code, out = run("--govern-hook")
     check("a repeat install says the hook is already installed", "HOOK: already installed" in out, out[-200:])
     data = json.load(open(path))
@@ -64,7 +65,7 @@ try:
     json.dump(data, open(path, "w"))
     check("the fixture holds two govern hooks", counts().get("govern_hook.py") == 2, counts())
     run("--govern-hook")
-    check("an install collapses a duplicate govern hook to one", counts() == {"reply_hook.py": 1, "govern_hook.py": 1}, counts())
+    check("an install collapses a duplicate govern hook to one", counts() == {"reply_hook.py": 1, "govern_hook.py": 1, "quiet": 1}, counts())
 finally:
     shutil.rmtree(tmp, ignore_errors=True)
 if not fails:
