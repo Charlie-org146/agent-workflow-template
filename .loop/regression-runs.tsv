@@ -375,7 +375,7 @@ no-done-line-refused	PASS	2026-11-12
 no-flow-refused	PASS	2026-11-12	
 no-line-in-governor	PASS	2026-11-12	
 no-pid-left-alone	PASS	2026-11-09	
-no-prompts	PASS	2026-11-12	
+no-prompts	FAIL	2026-11-17	
 no-row-fail	PASS	2026-11-12	
 no-token-dry-run	PASS	2026-11-12	
 no-token-would	PASS	2026-11-12	
@@ -631,7 +631,7 @@ usage-section-allowed	PASS	2026-11-12
 usage-section-refused	SKIPPED	2026-11-15	
 waits-first	PASS	2026-11-09	
 wiki-no-report	PASS	2026-11-12	
-wiki-release	PASS	2026-11-12	
+wiki-release	FAIL	2026-11-17	
 wiki-release-pycache	PASS	2026-11-12	
 wiki-unmapped-stale	PASS	2026-11-12	
 win-posix-calls-gone	PASS	2026-11-15	
