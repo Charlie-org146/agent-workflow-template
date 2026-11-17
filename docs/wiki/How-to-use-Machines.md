@@ -60,4 +60,4 @@ Each requirement and how it is delivered:
 - PRD page: [Machines](Machines)
 - Backlog: [Backlog: Machines](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept email-notify@dc2a6d53 -->
+<!-- kept full-auto-all@08ab9232 -->
