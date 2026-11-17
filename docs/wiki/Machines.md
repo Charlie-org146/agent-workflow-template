@@ -37,6 +37,8 @@ None
 - A fresh Mac or Windows home fails the machine check with each gap named, and the same home passes after `machine.py apply` and the owner steps.
 - One command line lists, for each repo adopted on the machine, the same items every other machine of mine has.
 
+## Regression behavior
+
 The SMTP toy fixture assembles its credential values at runtime and checks that the mailer output never reveals them.
 
 ## Tests

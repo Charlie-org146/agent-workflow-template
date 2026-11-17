@@ -87,6 +87,8 @@ How to use: [How-to-use-Health](How-to-use-Health)
 - After the first full review, every feature's findings are issues tagged with that feature, each with its evidence, and none is a duplicate.
 - The verdict is never green while a rule could not be read.
 
+## Regression behavior
+
 Requirement consistency checks read canonical definitions from each PRD’s Requirements section; How-to references do not create duplicate definitions. Judge savings findings use a stable subject independently of issue feature resolution.
 
 ## Tests

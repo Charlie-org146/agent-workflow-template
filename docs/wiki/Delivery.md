@@ -75,6 +75,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - A goal that fails three tries stops and says why.
 - No goal merges while a wiki page its own diff made stale is still stale.
 
+## Regression behavior
+
 Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
 
 ## Tests
