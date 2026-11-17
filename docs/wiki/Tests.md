@@ -1249,3 +1249,9 @@
 | <a id="t-done-homeguard-skills-main-2"></a>done-homeguard-skills-main-2 | workflow | done line homeguard-skills-main:2 | not run | - | local | no |
 | <a id="t-affected-deleted-root-runner"></a>affected-deleted-root-runner | defect | [#4554](https://github.com/jcl2018/agent-workflow-template/issues/4554) open (2026-11-16) | not run | - | local | 2026-11-17 |
 | <a id="t-affected-no-effect-folder"></a>affected-no-effect-folder | defect | [#4554](https://github.com/jcl2018/agent-workflow-template/issues/4554) open (2026-11-16) | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-step-tokens"></a>token-diet-step-tokens | requirement | done line token-diet:1 | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-op-rows"></a>token-diet-op-rows | requirement | done line token-diet:2 | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-budget"></a>token-diet-budget | requirement | done line token-diet:3 | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-quiet"></a>token-diet-quiet | requirement | done line token-diet:4 | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-layout"></a>token-diet-layout | requirement | done line token-diet:5 | not run | - | local | 2026-11-17 |
+| <a id="t-token-diet-output-cap"></a>token-diet-output-cap | requirement | done line token-diet:6 | not run | - | local | 2026-11-17 |
