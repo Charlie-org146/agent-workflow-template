@@ -150,15 +150,15 @@ printf '# Alpha\n\n## Requirements\n\n- AAA-1: **Reviewed 2026-11-08** Alpha wor
 printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\nred\tland\tfalse\tAAA-1\t2026-01-01\tGiven a, when b, then c.\tcriterion\t\n' > .loop/regression.tsv
 printf '{}\n' > .loop/config.json; $reg workflow >/dev/null; step $W "Run the rows, and keep one issue per failing row" rows.sh
 printf '[]\n' > "$G/regression.json"; : > "$G/calls.log"
-PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
+PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >"$r/rows.out" 2>&1
 grep -q "^issue create --title Regression: red --label regression --label defect --body " "$G/calls.log" && grep -q "^- Feature: Alpha$" "$G/calls.log" \
   && grep -q "^- Guards: AAA-1: Alpha words.$" "$G/calls.log" && grep -q "^label create defect --description" "$G/calls.log" \
   && ! grep -q "^label create defect.*--force" "$G/calls.log" \
-  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || bad "defect issue"
+  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || { bad "defect issue"; { echo "--- rows.sh output:"; tail -25 "$r/rows.out"; echo "--- gh calls:"; cat "$G/calls.log"; }; }
 printf '[{"number": 31, "state": "OPEN", "body": "<!-- loop-regression red -->", "labels": [{"name": "regression"}]}]\n' > "$G/regression.json"; : > "$G/calls.log"
-PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
+PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >"$r/rows.out" 2>&1
 grep -q "^issue edit 31 --add-label defect" "$G/calls.log" && ! grep -q "^issue create" "$G/calls.log" \
-  && ok "an older failing-test issue gains the defect label" || bad "old issue relabel"
+  && ok "an older failing-test issue gains the defect label" || { bad "old issue relabel"; { echo "--- rows.sh output:"; tail -25 "$r/rows.out"; echo "--- gh calls:"; cat "$G/calls.log"; }; }
 : > "$G/calls.log"; PATH="$G:$PATH" STUB_LIST_FAIL=1 GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
 ! grep -q "^issue create\|^issue edit\|^issue comment" "$G/calls.log" && ok "when the issues can't be read the run changes no issue" || bad "issue list failure"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$G/fake"; mkdir -p "$FAKE_GH_DIR"

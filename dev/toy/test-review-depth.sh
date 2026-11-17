@@ -20,9 +20,9 @@ export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" LOOP_FLOW="$d/flow.
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
-fails=0
+fails=0; failed=""
 ok() { echo "PASS: $1"; }
-bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
+bad() { echo "FAIL: $1"; fails=$((fails + 1)); failed="$failed$1; "; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 C=$(cd "$(git rev-parse --git-common-dir)" && pwd)
 field() { python3 -c "import json,sys;d=json.load(open(sys.argv[1]));v=d;exec('for k in sys.argv[2].split(\".\"): v=(v or {}).get(k)');print(v)" "$C/loop/runs/$1.json" "$2"; }
@@ -155,7 +155,8 @@ python3 - "$C/loop/runs/full1.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s["status"] = "running"; s.pop("pr", None); json.dump(s, open(sys.argv[1], "w"))
 PY
-$LB > "$d/board"
+$LB > "$d/board" 2>&1
 check "the live board shows each recorded step's depth and the setting" 'grep -A1 -x "    depth: idea full, plan full, review full, qa full, ship" "$d/board" | grep -qx "      full (setting full)"'
+[ -z "$(grep -x '      full (setting full)' "$d/board")" ] && { echo "--- what the live board printed:"; head -60 "$d/board"; echo "--- run record:"; cat "$C/loop/runs/full1.json"; }
 
-[ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
+[ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; echo "$fails FAILED"; exit 1; }

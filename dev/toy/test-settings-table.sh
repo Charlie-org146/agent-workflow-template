@@ -67,7 +67,8 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['health_cro
 $cri render >/dev/null 2>&1
 a=$(sed -n '/automation:begin/,/automation:end/p' $H)
 grep -q '^| health | .* | on | daily at 06:30 | this Mac.s local schedule | docs.py automation | none |' <<<"$a" && grep -q '^| money brief | Mails a daily money brief. | on (declared) | daily at 07:00 | this Mac (launch agent com.example.brief) | docs.py automation |' <<<"$a" && ok "Automation reads a daily cron in words, where it runs from the workflow file, and a routine added as one config entry" || bad "automation rows: $a"
-$docs automation 2>&1 | grep -q '^money brief: not loaded$' && ok "docs.py automation reports a launch agent entry as not loaded when it is not" || bad "live status: $($docs automation 2>&1)"
+mkdir -p "$FAKE_GH_DIR/mac"; printf '#!/bin/sh\nexit 113\n' > "$FAKE_GH_DIR/mac/launchctl"; chmod +x "$FAKE_GH_DIR/mac/launchctl"  # a Mac with no such job; Linux has no launchctl
+PATH="$FAKE_GH_DIR/mac:$PATH" $docs automation 2>&1 | grep -q '^money brief: not loaded$' && ok "docs.py automation reports a launch agent entry as not loaded when it is not" || bad "live status: $($docs automation 2>&1)"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['health_cron'] = 'off'; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 $cri render >/dev/null 2>&1
 sed -n '/automation:begin/,/automation:end/p' $H |  grep -q '^| health | .* | off | off |' && ok "a routine turned off reads off" || bad "off row"

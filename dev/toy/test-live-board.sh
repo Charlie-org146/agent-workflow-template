@@ -21,7 +21,7 @@ export LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; echo "--- the board:"; sed -n 1,60p "$T/board" | sed "s/^/    | /"; fi; }
 "$here/dev/toy/make.sh" "$T" >/dev/null || exit 1
 cd "$T/repo" || exit 1
 echo 0.1.2 > VERSION

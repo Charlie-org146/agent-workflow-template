@@ -2,8 +2,9 @@
 # reads: docs/wiki/Documentation.md docs/wiki/Health.md docs/wiki/Automation.md docs/wiki/Setup.md
 # reads: .loop/regression.tsv
 # Test the milestone-freeform wording and rows: DOC-4, DOC-10, HLT-2, HLT-4, AUT-2, AUT-3 and SET-1 say a milestone is
-# optional (Unreviewed after the owner's un-review, or later re-reviewed with the same text), none says one is required or
-# per feature, and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
+# optional (Unreviewed after the owner's un-review, or later re-reviewed with the same text), none says an issue or a pull
+# request must have one (DOC-10 keeps a standing "Backlog: <Feature>" milestone per feature and HLT-4 puts a defect on no
+# milestone), and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
@@ -28,16 +29,17 @@ for page, ids in pages.items():
             bad.append("%s is missing" % key)
             continue
         block = (m.group(2) + "\n" + m.group(3)).lower()
-        for phrase in ("on its feature's milestone", "on the milestone of the feature", "milestone per feature", "backlog",
-                       "every open issue is on", "issue to milestone to feature", "every open issue on a milestone"):
+        for phrase in ("every open issue is on", "issue to milestone to feature", "every open issue on a milestone"):
             if phrase in block:
                 bad.append("%s says %r" % (key, phrase))
-        if key in ("DOC-10", "HLT-4") and "optional" not in block and "only when i put it there" not in block:
+        if key == "DOC-10" and "optional" not in block and "only when i put it there" not in block:
             bad.append("%s does not say a milestone is optional" % key)
+        if key == "HLT-4" and "on no milestone" not in block:
+            bad.append("%s does not say a defect is on no milestone" % key)
 print("; ".join(bad) or "CLEAN")
 PY
 )
-[ "$out" = CLEAN ] && ok "the seven lines say a milestone is optional or not at all, and none says it is required or per feature" || bad "wording: $out"
+[ "$out" = CLEAN ] && ok "the seven lines say a milestone is optional or not at all, and none says an issue or a pull request must have one" || bad "wording: $out"
 [ "$fails" = 0 ] && echo "PASS milestone-freeform:milestone-wording-unreviewed"
 
 echo "== every other milestone-freeform row was seen failing"
@@ -45,7 +47,7 @@ f0=$fails
 out=$(python3 - <<'PY'
 rows = [l.rstrip("\n").split("\t") for l in open(".loop/regression.tsv") if not l.startswith("#")]
 want = ["no-milestone-issue-ok", "no-milestone-page-ok", "home-milestone-optional", "pr-no-milestone", "health-file-no-milestone",
-        "regression-issue-no-milestone", "digest-no-milestone", "setup-no-milestone-step", "health-workflow-no-milestone",
+        "regression-issue-no-milestone", "digest-no-milestone", "setup-no-milestone-step",
         "milestone-v1-free-form", "milestone-wording-unreviewed"]
 have = {r[0]: r for r in rows}
 gone = [w for w in want if w not in have]
@@ -54,6 +56,6 @@ msg = (["missing " + ", ".join(gone)] if gone else []) + (["no seen_red for " + 
 print("; ".join(msg) or "CLEAN")
 PY
 )
-[ "$out" = CLEAN ] && ok "the eleven other rows exist and each has a seen-failing date" || bad "rows: $out"
+[ "$out" = CLEAN ] && ok "the ten other rows exist and each has a seen-failing date" || bad "rows: $out"
 [ "$fails" = "$f0" ] && echo "PASS milestone-freeform:milestone-rows-seen-red"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

@@ -17,7 +17,7 @@ export USERPROFILE="$HOME"
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; echo "${out:-}" | tail -12 | sed "s/^/    saw: /"; fi; }
 want() { [ "$part" = all ] || [ "$part" = "$1" ]; }
 mkrepo() {  # a repo with one feature (Calc, skills/calc) and a near-limit script in it
   rm -rf "$d/repo"; mkdir -p "$d/repo"; cd "$d/repo" || exit 1
