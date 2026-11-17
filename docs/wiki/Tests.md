@@ -939,6 +939,21 @@
 | <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
 
+## Release
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-rel-major-refused"></a>rel-major-refused | requirement | REL-1 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-open-issue-refused"></a>rel-open-issue-refused | requirement | REL-2 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-red-row-refused"></a>rel-red-row-refused | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-checks-refused"></a>rel-checks-refused | requirement | REL-4 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-freeze-refuses"></a>rel-freeze-refuses | requirement | REL-5 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-page-held"></a>rel-page-held | requirement | REL-1 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-sizes-held"></a>rel-sizes-held | requirement | REL-6 | not run | - | local | 2026-11-17 |
+
 ## Setup
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
