@@ -269,7 +269,7 @@ def quiet_path(folder):
 
 
 def remember(folder, text, now=None):
-    __import__("reply_hook").write(quiet_path(folder), json.dumps({"sig": signature(text), "at": now or time.time()}))
+    reply_hook.write(quiet_path(folder), json.dumps({"sig": signature(text), "at": now or time.time()}))
 
 
 def held(folder):

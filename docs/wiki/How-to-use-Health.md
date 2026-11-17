@@ -82,4 +82,4 @@ The scheduled health routine's Runbook lives in the [Health](Health) page, where
 - PRD page: [Health](Health)
 - Backlog: [Backlog: Health](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept health-feature-table@b869bb8a -->
+<!-- kept full-auto-all@08ab9232 -->

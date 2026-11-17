@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.0.52 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.51 - 2026-11-17
+
+- full-auto-all: safety-class gate, standing rule record, health rules, tests
+- full-auto-all: regression rows seen red, MON-11 rows follow the rule
+- full-auto-all: docs and settings text
+- full-auto-all: regenerate tables from committed data
+- full-auto-all: pre-flight recommended answers ride the standing record
+- full-auto-all: review fixes (wider classes, tighter standing record, history lines)
+- Merge branch 'main' into loop/full-auto-all
+- full-auto-all: keep checkin.py no bigger than main
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/full-auto-all
+- pr: record issue states and the lane's results
+
+### How to verify
+
+1. Run `python3 dev/toy/test-full-auto-all.py`.
+   Expect: every line starts with PASS (an owner un-review, a row cap and a budget are answered; the security question and every safety class wait; the negative control line says the guard-less question is answered).
+2. Run `echo "Raise criteria_max from 18 to 19?" | python3 skills/workflow-monitoring/scripts/auto.py decide-text --kind owner --recommend yes`.
+   Expect: it prints AUTO.
+3. Run `echo "Print the API key into the log?" | python3 skills/workflow-monitoring/scripts/auto.py decide-text --kind owner --recommend yes`.
+   Expect: it prints WAITS: safety class security: api key.
+4. Open `docs/wiki/Monitoring.md`.
+   Expect: MON-11 and MON-5 both read Unreviewed (nothing was stamped), and MON-11 names the standing rule and the safety classes.
+
 ## v1.0.50 - 2026-11-17
 
 - No code changes

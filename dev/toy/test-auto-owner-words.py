@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-monitoring/scripts/auto.py skills/workflow-setup/scripts/settings.py .loop/config.json
-"""MON-11 (#4287, #4048): full auto never answers a question that asks for the owner's words; the config holds each key once.
+"""MON-11 (o118, which supersedes #4287): full auto answers a question that asks for the owner's words; the config holds each key once.
 
 Calls auto.why_not and the settings table directly. No model, no network."""
 import json
@@ -32,8 +32,9 @@ for ask in ("Add the DOC-17 sub-bullet to Delivery as drafted?",
             "Raise criteria_max from 26 to 28?",
             "Un-review the Setup page so its wording can change?",
             "Is a reviewed requirement changed here without owner words?"):
-    check(verdict(ask) == "it asks for owner words", "a routine question that asks for owner words waits: " + ask[:40])
+    check(verdict(ask) == "", "a routine question that asks for owner words is answered (o118): " + ask[:40])
 check(verdict("Which name should the toy use?") == "", "a plain routine question is still answered")
+check(verdict("Raise criteria_max from 26 to 28?", "owner") == "", "an owner-kind question with a recommendation is answered (o118)")
 check(verdict("Use the step-2 wording for the log line?") == "", "a lower-case word before a number is not a requirement id")
 
 
