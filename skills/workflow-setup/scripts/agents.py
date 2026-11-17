@@ -193,14 +193,15 @@ def refuse(what, fix):
 
 
 HOOKS = {"reply_hook.py": ("Stop", None, "it checks only the operation session's reply layout"),
+         "quiet": ("UserPromptSubmit", None, "it skips the model turn of a scheduled check-in when nothing changed (off with reply_hook false)", "govern_hook.py"),
          "govern_hook.py": ("PreToolUse", "Edit|Write|MultiEdit|NotebookEdit|Bash",
                             'it blocks edits and git commit/push/merge in the operation session; off: "govern_hook": false')}
 
 
 def reply_hook(repo, remove, name="reply_hook.py"):
-    event, matcher, what = HOOKS[name]
+    event, matcher, what, *file = HOOKS[name]
     script = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring",
-                                           "scripts", name))
+                                           "scripts", file[0] if file else name))
     common = os.path.realpath(os.path.join(repo, git(repo, "rev-parse", "--git-common-dir")))
     path = os.path.join(repo, ".claude", "settings.local.json")
     if not remove:
@@ -227,7 +228,7 @@ def reply_hook(repo, remove, name="reply_hook.py"):
         return refuse("%s has hooks in a shape this can't edit safely; nothing was written" % path,
                       'make "hooks" an object whose "%s" is a list of {"hooks": [...]} groups' % event)
     command = "if [ -f '%s' ]; then python3 '%s'; fi" % (script, script)
-    mine = lambda h: isinstance(h, dict) and "/%s'" % name in str(h.get("command", "")).replace("\\", "/")
+    mine = lambda h: isinstance(h, dict) and "/%s'" % (file[0] if file else name) in str(h.get("command", "")).replace("\\", "/")
     had = [h for g in stops for h in g.get("hooks", []) if mine(h)]
     if remove and not had:
         print("HOOK: not installed%s" % ("" if name == "reply_hook.py" else " (%s)" % name))

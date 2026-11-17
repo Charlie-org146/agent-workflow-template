@@ -235,7 +235,8 @@ def adopt(args, repo):
                 return undo(tx, "REFUSED: a file the adoption changes had uncommitted changes (SETUP_PLANNED_PATH_DIRTY). Fix: commit or stash them; nothing written.", 2)
             held_back = set(subprocess.run(["git", "-C", repo, "check-ignore", "--stdin"], input="\n".join(changed), capture_output=True, text=True).stdout.split("\n"))
             git(repo, "add", "-f", "--", *[p for p in changed if p in held_back and p in seed.FORCED] or ["--"]) if held_back & set(seed.FORCED) else None
-            git(repo, "add", "-A", "--", *[p for p in changed if p not in held_back] or ["--"])
+            to = [p for p in changed if p not in held_back]
+            to and git(repo, "add", "-A", "--", *to)
             changed = [p for p in changed if p not in held_back or p in seed.FORCED]
             scan = agents.sibling("workflow-delivery", "private.py")  # SET-8: no private name in setup's commit
             if scan and subprocess.run([sys.executable, scan, "hook", "staged"], cwd=repo).returncode:
@@ -312,7 +313,7 @@ def main():
     if args.govern_hook:
         return reply_hook(repo, args.remove, "govern_hook.py")
     if args.reply_hook:
-        return reply_hook(repo, args.remove) or (0 if args.remove else reply_hook(repo, False, "govern_hook.py"))
+        return reply_hook(repo, args.remove) or reply_hook(repo, args.remove, "quiet") or (0 if args.remove else reply_hook(repo, False, "govern_hook.py"))
     if args.no_health:
         os.environ["LOOP_NO_HEALTH"] = "1"
     tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "unattended.py")

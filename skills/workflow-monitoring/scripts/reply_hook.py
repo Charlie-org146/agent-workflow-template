@@ -10,6 +10,10 @@ All sessions (a table), Dependencies (a graph with an `== repo ==` block per rep
 (numbered items, most-blocking first, each saying what it holds up with a goal count, or "blocks nothing", MON-19; or
 "Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
 
+Only a reply to a scheduled check-in, or to the owner asking for one (check-in, status, report, board, where do things
+stand), must have the layout; a reply to a peer message, a task notification or other talk is not checked, and should be
+1-3 lines (proctree.needs_layout; a turn it can't read is checked).
+
 Only the operation session is checked: one named in <common>/loop/operation.id, or whose latest signal is an unrefused
 'operate.py run|claim'. A worker (a flow step, 'goal.py step|record|pr', or a cwd in <common>/loop/worktrees/) is never
 checked, nor a session in a repo with no .loop/config.json. "reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0,
@@ -382,7 +386,14 @@ def decide(payload, session, common):
     write(base + ".kind", json.dumps({"kind": known, "offset": keep}))
     if known != "operation":
         return None
-    found = None if isinstance(payload.get("last_assistant_message"), str) else entries(path, TAIL)[0] if path else []
+    tail = entries(path, TAIL)[0] if path and os.path.exists(path) else []
+    try:  # C4: only a scheduled or asked-for check-in needs the layout; a peer message or other talk may answer in 1-3 lines
+        import proctree
+        if tail and not proctree.needs_layout(tail):
+            return None
+    except Exception as error:
+        log(common, "layout-trigger unread %s: %s" % (session, error))
+    found = None if isinstance(payload.get("last_assistant_message"), str) else tail
     text = final_reply(payload, found or [])
     wrong = problems(text) + left_out(text, payload.get("cwd")) + shown(text, payload.get("cwd")) if text is not None else []
     try:

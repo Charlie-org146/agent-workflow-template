@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Reviewed 2026-11-16** <!-- prd P=506dd70a R=ffb4fffb N=e6bf17f7 M=5109e571 U=03828777 --> <!-- kept stale-code-page@7d2fea23 -->
+Review: **Unreviewed** <!-- kept agent-routing@994be445 -->
 
 How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
@@ -21,13 +21,15 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - This page is an index: it lists every guardrail the template has or needs, each with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on.
   - Each guardrail points to the requirement id that owns it (DEL-8, REG-7, DEL-9, SET-8, MON-7, MON-8) and says "new" where none does yet; the page restates none of the owner's text, which holds the exact wording.
   - A guardrail counts as on only when its Tests row here passes; until then it reads not enforced.
-- GRD-2: **Reviewed 2026-11-13** Time and token budgets stop a goal or a step before it runs away <!-- reviewed fd2887fa -->
+- GRD-2: **Unreviewed** Time and token budgets stop a goal or a step before it runs away
   - Review and ship step time limit: DEL-8.
   - In-loop test run time limit: REG-7.
   - The work before a lane's first test row (preparing, planning and waiting for a slot) stops at `prep_budget_minutes` (default 15, never under 15; this repo sets 25); the lane says which part ran long and the goal can rerun it (Delivery, Regression).
   - A goal past `time_budget_minutes` starts no new step, and the setting is in the settings reference with its default (Delivery, new).
   - A goal past `token_budget` starts no new step, whether its steps run in a session or headless (Delivery, DEL-8 for showing it on the board; new for steps run in a session: today only headless goals are refused).
   - A goal with no token count records "unknown" and the board shows "tokens unread", never 0, so an unread count is never mistaken for an unspent budget (Delivery, new).
+  - Each worker step's tokens are read from its session transcript when it is recorded (input, cache reads, cache writes, output, calls, model and the largest context), kept in the run record and listed by `goal.py show`; `token_budget` counts the fresh part (input, cache writes and output, not cache reads) of those measured tokens, plus what the step in progress has spent so far (Delivery, token-diet).
+  - A loop script's output is cut to 2,000 characters, the first half and the last half with a line naming the file that keeps the whole text, so a long result does not fill a session's context; the step prompt a worker must read whole is not cut (Delivery, token-diet).
 - GRD-3: **Reviewed 2026-11-15** Nothing private is committed, and no commit skips the hooks that check it <!-- reviewed eecc70d8 -->
   - Private-name scan on every commit and push: DEL-9.
   - A commit or push that skips the repo's hooks (a no-verify flag, an empty hooks path) is refused by the loop's own commands and flagged by health (Delivery, new).

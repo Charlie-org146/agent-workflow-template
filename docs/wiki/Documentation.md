@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed**
+Review: **Unreviewed** <!-- kept agent-routing@994be445 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -239,7 +239,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | DOC-17 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
 | [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | DOC-17 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
 | [sync-owns-only](Tests#t-sync-owns-only) | requirement | DOC-17 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
-| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta, when docs.py sync runs, then it posts one GitHub issue on the feature's milestone and one comment on the external page. | not run |
+| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
 | [sync-posts-once](Tests#t-sync-posts-once) | requirement | DOC-17 | Given a delta already posted, when docs.py sync runs again, then it posts nothing more. | not run |
 | [sync-accept-source](Tests#t-sync-accept-source) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=source runs, then the source's text is written to the repo copy for that id only and the issue is closed. | not run |
 | [sync-accept-repo](Tests#t-sync-accept-repo) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=repo runs, then the repo's text is written to the external document through the writer for that id only and the issue is closed. | not run |
@@ -288,7 +288,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc19-kind-fields](Tests#t-doc19-kind-fields) | requirement | DOC-19 | Given a Command row whose block lacks its dry-run form, when docs check runs, then it fails naming the page and the missing field. | PASS 2026-11-16 |
 | [doc19-command-listed](Tests#t-doc19-command-listed) | requirement | DOC-19 | Given a feature page that names a command its How-to-use page does not list, when docs check runs, then it fails naming the command. | PASS 2026-11-16 |
 | [doc19-readme-links](Tests#t-doc19-readme-links) | requirement | DOC-19 | Given a README with a How-to-use table of more than one row, when docs check runs, then it fails, and a README that only links each page passes. | PASS 2026-11-16 |
-| [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-12 |
+| [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-17 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
 | [publish-tables-handwritten](Tests#t-publish-tables-handwritten) | requirement | DOC-11 | Given a stale hand-written page, when the wiki publish re-renders the generated tables, then that page is still reported stale and the publish still refuses. | PASS 2026-11-13 |

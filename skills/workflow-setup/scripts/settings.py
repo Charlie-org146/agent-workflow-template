@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Every setting in one table: where it lives, its default and a one-line explanation.
+"""Every setting in one table: where it lives, its default and a one-line note.
 
 usage: settings.py reference [--write]   print the settings reference (--write saves references/settings.md)
        settings.py fill-repo [--repo DIR]  add every missing repo setting, with its default, to .loop/config.json
@@ -190,12 +190,12 @@ def fill_private(path=None):
     new["_help"] = help_
     if new != held:
         write_json(path, new, 0o600)
-    home = os.path.expanduser("~/.workflow-loop")
     health = health_path()
     if not os.path.exists(health):
         write_json(health, {"rules": []}, 0o600)
-    repos = os.path.join(home, "repos")
+    repos = os.path.expanduser("~/.workflow-loop/repos")
     if not os.path.exists(repos):
+        os.makedirs(os.path.dirname(repos), exist_ok=True)
         open(repos, "w").close()
         os.chmod(repos, 0o600)
     return added

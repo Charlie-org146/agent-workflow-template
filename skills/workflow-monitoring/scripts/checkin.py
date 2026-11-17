@@ -14,7 +14,8 @@ usage: checkin.py [--since ISO]
                   silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
   Coming up       each goal's next expected step and what the owner will need to do
 
---since defaults to the last check-in in <git common dir>/loop/checkin.json. Read-only.
+--since defaults to the last check-in in <git common dir>/loop/checkin.json. Changes nothing but one row it adds to
+<git common dir>/loop/op-tokens.tsv: the operation session's tokens since the last row, by trigger (proctree.op_append).
 """
 import argparse
 import datetime
@@ -327,7 +328,16 @@ def main():
     parser.add_argument("--since", default="")
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
-    print("\n".join(render(stamp=args.since or None)))
+    lines = render(stamp=args.since or None)
+    print("\n".join(lines))
+    try:  # an op-tokens.tsv row (proctree.op_append) and what the quiet hook compares with; never fail a check-in
+        import govern_hook
+        import proctree
+        top = bs.git("rev-parse", "--show-toplevel")
+        proctree.op_append(top)
+        govern_hook.remember(proctree.common(top), "\n".join(lines))
+    except Exception:
+        pass
     return 0
 
 

@@ -127,12 +127,10 @@ def clear_refusals(state):
         state["note"] = None
 
 
-def add_tokens(state, step, given):
-    """A worker's tokens for a step (GRD-2); unknown adds nothing."""
-    if str(given).isdigit():
-        held = state.get("tokens") if isinstance(state.get("tokens"), dict) else {}
-        old = held.get(step) if isinstance(held.get(step), int) else 0
-        state["tokens"] = dict(held, **{step: int(given) + old})
+def add_tokens(state, step, given, measure=False):
+    """A worker's tokens for a step (GRD-2, DEL-16): measured from its transcript when asked; unknown adds nothing."""
+    import proctree
+    proctree.add(state, step, given, measure)
 
 
 def hold(state, ask):
