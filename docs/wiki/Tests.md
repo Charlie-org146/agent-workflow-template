@@ -193,6 +193,7 @@
 | <a id="t-held-charge-idle"></a>held-charge-idle | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
+| <a id="t-main-reds-4901"></a>main-reds-4901 | defect | [#4901](https://github.com/jcl2018/agent-workflow-template/issues/4901) state unknown | not run | - | local | no |
 
 ## Documentation
 
@@ -396,6 +397,8 @@
 | <a id="t-doc19-command-listed"></a>doc19-command-listed | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc19-readme-links"></a>doc19-readme-links | requirement | DOC-19 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-main-reds-4660"></a>main-reds-4660 | defect | [#4660](https://github.com/jcl2018/agent-workflow-template/issues/4660) state unknown | not run | - | local | no |
+| <a id="t-main-reds-4695"></a>main-reds-4695 | defect | [#4695](https://github.com/jcl2018/agent-workflow-template/issues/4695) state unknown | not run | - | local | no |
 
 ## Guardrails
 
@@ -543,6 +546,8 @@
 | <a id="t-judge-key-old"></a>judge-key-old | requirement | HLT-4 | not run | - | local | 2026-11-16 |
 | <a id="t-health-findings-table"></a>health-findings-table | requirement | HLT-3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-health-feature-always"></a>health-feature-always | requirement | HLT-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-main-reds-4896"></a>main-reds-4896 | defect | [#4896](https://github.com/jcl2018/agent-workflow-template/issues/4896) state unknown | not run | - | local | no |
+| <a id="t-main-reds-4865"></a>main-reds-4865 | defect | [#4865](https://github.com/jcl2018/agent-workflow-template/issues/4865) state unknown | not run | - | local | no |
 
 ## Machines
 
@@ -561,6 +566,7 @@
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-main-reds-4758"></a>main-reds-4758 | defect | [#4758](https://github.com/jcl2018/agent-workflow-template/issues/4758) state unknown | not run | - | local | no |
 
 ## Monitoring
 
@@ -938,6 +944,8 @@
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
+| <a id="t-main-reds-4858"></a>main-reds-4858 | defect | [#4858](https://github.com/jcl2018/agent-workflow-template/issues/4858) state unknown | not run | - | local | no |
+| <a id="t-main-reds-4683"></a>main-reds-4683 | defect | [#4683](https://github.com/jcl2018/agent-workflow-template/issues/4683) state unknown | not run | - | local | no |
 
 ## Setup
 
@@ -1046,6 +1054,7 @@
 | <a id="t-private-checks-run-local"></a>private-checks-run-local | requirement | SET-1 | not run | - | local | 2026-11-16 |
 | <a id="t-private-checks-fail-not-green"></a>private-checks-fail-not-green | requirement | SET-1 | not run | - | local | 2026-11-16 |
 | <a id="t-private-checks-control"></a>private-checks-control | requirement | SET-1 | not run | - | local | 2026-11-16 |
+| <a id="t-main-reds-4772"></a>main-reds-4772 | defect | [#4772](https://github.com/jcl2018/agent-workflow-template/issues/4772) state unknown | not run | - | local | no |
 
 ## Other
 
@@ -1271,3 +1280,6 @@
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) open (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-done-main-reds-1"></a>done-main-reds-1 | workflow | done line main-reds:1 | not run | - | local | no |
+| <a id="t-done-main-reds-2"></a>done-main-reds-2 | workflow | done line main-reds:2 | not run | - | local | no |
+| <a id="t-done-main-reds-3"></a>done-main-reds-3 | workflow | done line main-reds:3 | not run | - | local | no |

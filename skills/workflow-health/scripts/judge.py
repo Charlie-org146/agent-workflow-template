@@ -1,16 +1,4 @@
-"""Judge: suggestions on criteria quality, test quality and performance, test time and tokens. Never findings, never the verdict.
-
-gather() builds the input (every criterion, every regression test row with its command, the skill files, the recent
-goals' step times and tokens), with the free plain-text hints on overlapping criteria. ask() gets the answer, session
-first (the owner's rule): a reply the session saved (LOOP_JUDGE_ANSWER, or --judge-answer) is used as is; inside a session
-(CLAUDECODE set) it writes the prompt to a temporary file for an in-session subagent and never runs a model itself; only
-with no session (the scheduled GitHub Actions run) does it run judge_command (claude -p) with the prompt on stdin. VIA
-says which: "session" or "claude -p (no session)", and the report logs it as "judge: <VIA>". The answer is parsed only
-for tagged lines (CRITERION, TEST, SAVES) and printed, never run. No answer prints JUDGE UNAVAILABLE. All of it is data.
-It also holds the per-feature repo review (HLT-5, HLT-9), which reads the pages, issues, tests and code, never changes the verdict
-and writes nothing: a deterministic layer, then the judge's FINDING|feature|kind|angle|detail|evidence|fix lines, each kept
-only with verified citations (a requirement id, a file or file:line, a row id or an issue #N); the rest are dropped and counted.
-"""
+"""Judge gathered health findings and match recurring advice by stable subjects."""
 import glob
 import json
 import os
@@ -338,7 +326,7 @@ def twin(item, issues):
             same, old = hit and head.startswith("review:") and rule == item["rule"] and head[7:].rpartition("-")[0] == item["feature"], hit and IS.first_cite(hit.group(1))
         else:
             hit = re.search(r"saving: (.*?) -> fix:", body, re.S)
-            same, old = hit and key.startswith("performance:judge:saves-"), hit and IS.about(hit.group(1))
+            same, old = hit and key.startswith("performance:judge:saves-"), hit and IS.savings_subject(hit.group(1))
         if same and old == item["about"]:
             return key, issue
     return None

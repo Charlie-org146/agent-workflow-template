@@ -14,4 +14,13 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-health/scripts/health.py check --group consistency`.
+   Expect: the group is green and reports no duplicate requirement IDs.
+2. Run `python3 dev/toy/test-home-guard.py guard`.
+   Expect: routine logs and concurrent lane tickets are allowed; changes to settings and schedule entries are caught; strict mode catches routine logs too.
+3. Inspect `dev/toy/test-machine.sh` and run `bash dev/toy/test-machine.sh machine-mailer`.
+   Expect: the toy SMTP value is assembled at runtime and the mailer reports no secret in its output.
+
+## Issues
+
+Fixes #4901, fixes #4896, fixes #4865, fixes #4858, fixes #4683, fixes #4660, fixes #4695, fixes #4772, fixes #4758.
