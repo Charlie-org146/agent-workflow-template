@@ -341,6 +341,15 @@ machine-new-machine-docs	PASS	2026-11-16
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-setting-listed	PASS	2026-11-16	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
+main-reds-4660	PASS	2026-11-17	
+main-reds-4683	PASS	2026-11-17	
+main-reds-4695	PASS	2026-11-17	
+main-reds-4758	PASS	2026-11-17	
+main-reds-4772	PASS	2026-11-17	
+main-reds-4858	PASS	2026-11-17	
+main-reds-4865	PASS	2026-11-17	
+main-reds-4896	PASS	2026-11-17	
+main-reds-4901	PASS	2026-11-17	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
