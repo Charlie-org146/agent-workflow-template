@@ -543,7 +543,7 @@
 | <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-custom-items"></a>machine-custom-items | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
+| <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) open (2026-11-16) | not run | - | local | 2026-11-16 |
 
 ## Monitoring
