@@ -26,6 +26,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -277,8 +278,15 @@ def wiki_only(top, old, new):
     rows = [(line.split("\t")[0].split(), line.split("\t")[1:]) for line in done.stdout.split("\n") if line]
     return not done.returncode and bool(rows) and all(
         len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
-        and p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md"
+        and ((p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md")
+             or (p[0] == "README.md" and m[4] == "M" and readme_blocks_only(top, old, new)))  # README: its generated blocks only (#4632)
         for m, p in rows)
+
+
+def readme_blocks_only(top, old, new):
+    """True when README.md reads the same at OLD and NEW outside its generated Settings, Automation and template blocks."""
+    bare = lambda ref: re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", "", run(["git", "show", ref + ":README.md"], cwd=top).stdout, flags=re.S)
+    return bare(old) == bare(new)
 
 
 def apply(slug, branch):
@@ -295,9 +303,11 @@ def apply(slug, branch):
         base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
-        said = pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()
-        if said and run(["git", "add", "-A", "--", folder], tree).returncode == 0:
-            run(["git", "commit", "-q", "-m", "Wiki: re-stamp pages for %s" % slug], tree)
+        again = run([sys.executable, os.path.join(docs, "audit.py"), "rerender", base], tree).stdout.strip()  # generated blocks first (#4632)
+        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
+        said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
+        if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
+            run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
     except (OSError, ValueError):
