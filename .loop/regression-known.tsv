@@ -27,3 +27,16 @@ trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (
 package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
+session-assign	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-rename	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-reuse	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-reports	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-fallback	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+steps-in-session	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-board-issue98	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+record-in-session	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-answer	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-quiet	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-ended-waiting	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-tool-timeout	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+session-tool-helper	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
