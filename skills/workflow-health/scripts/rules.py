@@ -9,6 +9,7 @@
   checks-run-tests  the regression workflow exists but no land row does (WARN)
   template-version  VERSION is not the newest CHANGELOG heading (WARN), or template_version is missing or older (WARN: migrate)
   scheduled         the regression or health workflow is missing, or has no schedule (WARN)
+  machine           a gap machine.py check lists
   no-fit            an open [adoption] line in .loop/findings.md, written by setup: one WARN row each (report.py)
   agent-tools       agent_command (or the flow file's command) grants its agent no tools (WARN) (report.py)
   prompt-pointer    a scheduled-task prompt holds more than the Runbook pointer (WARN)
@@ -220,9 +221,21 @@ def milestones(root):
             for title in milestone.standing(root) if title not in have]
 
 
+def machine(root):
+    """machine: each gap workflow-setup's machine.py check lists, one WARN with its fix."""
+    tool = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "dev", "machine.py")
+    if os.environ.get("CI") or not os.path.isdir(os.path.expanduser("~/.claude/skills/workflow-health")) or not os.path.exists(tool):
+        return []
+    try:
+        text = subprocess.run([sys.executable, tool, "check", "--repo", root], capture_output=True, text=True, timeout=30).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return [row("WARN", "adoption", g, "machine", w, f, g) for g, w, f in re.findall(r"^GAP ([^:]+): (.*?) -> (.*)$", text, re.M)]
+
+
 FUNCTIONS = {"nightly": nightly, "unreleased": unreleased, "finding-age": finding_age, "skipped": skipped,
              "network": network, "config": config, "checks-run-tests": checks_run_tests,
-             "template-version": lambda root: template_version(root) + behind(root), "scheduled": scheduled, "no-fit": no_fit, "agent-tools": _report.agent_tools, "prompt-pointer": prompt_pointer,
+             "template-version": lambda root: template_version(root) + behind(root), "scheduled": scheduled, "machine": machine, "no-fit": no_fit, "agent-tools": _report.agent_tools, "prompt-pointer": prompt_pointer,
              "milestones": milestones}
 
 

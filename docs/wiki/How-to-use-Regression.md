@@ -19,6 +19,15 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. |
 | (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes), even on the lane's one rerun of it: it is not a failure, so rerun it when memory allows. |
 
+Each requirement and how it is delivered:
+
+- REG-1: Three kinds of tests. Example, from the refused-unmet test: given a criterion with no test, when a release is cut, then it is refused.
+- REG-2: Test format. Example, from the unproven-blocks test: given a test never seen failing, when the run happens, then the run is blocked.
+- REG-3: One command, three places. Example, from the workflow-same-as-run test: given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues.
+- REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test.
+- REG-5: Failures go to GitHub. Example, from the known-no-block test: given a known failure, when the run happens, then it does not block the run or open an issue.
+- REG-6: Every fixed issue leaves a test. Example, from the release-lists-fixes test: given a goal that proved a defect row linked to an issue, when its release is cut, then the CHANGELOG and the release notes list the issue with its test.
+
 ## URLs and deployments
 
 - Wiki: [Regression](https://github.com/jcl2018/agent-workflow-template/wiki/Regression)
