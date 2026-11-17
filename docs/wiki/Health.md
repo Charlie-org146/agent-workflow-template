@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Reviewed 2026-11-16** <!-- prd P=b4d391e0 R=81a7c56c N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept stale-code-page@7d2fea23 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=b4d391e0 R=81a7c56c N=e89b4f3b M=39cf9800 U=03828777 --> <!-- kept docs-sync-milestone@c7b0179b -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
