@@ -27,16 +27,20 @@ import auto  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
 
-sys.path.insert(1, os.path.join(HERE, "..", "..", "workflow-health", "scripts"))
-import mail  # noqa: E402
-import rounds  # noqa: E402
-
+HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
 SECRETS = ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAIL_TOKEN", "DIGEST_SMTP_USER", "DIGEST_SMTP_PASSWORD")
 HEAD = re.compile(r"^[\s>#*_`-]*([A-Za-z ]+?)[\s:*_`]*(?:\(\d+\))?\s*$")
 
 
+def mailer():
+    """workflow-health's mail.py (it brings rounds.py), loaded only when there is something to send."""
+    sys.path.insert(1, HEALTH)
+    import mail
+    return mail
+
+
 def say(text):
-    print("NOTIFY: " + mail.scrub(text))
+    print("NOTIFY: " + (sys.modules["mail"].scrub(text) if "mail" in sys.modules else str(text)))
 
 
 def read_json(path):
@@ -58,7 +62,7 @@ def enabled():
 
 def env_path():
     home = os.environ.get("LOOP_SCHEDULE_HOME") or os.path.expanduser("~/.workflow-loop/schedule")
-    return rounds.mail_path(home)
+    return os.environ.get("LOOP_MAIL_ENV") or os.path.join(home, "mail.env")  # rounds.mail_path
 
 
 def load_env():
@@ -66,7 +70,7 @@ def load_env():
     path = env_path()
     if not os.path.exists(path):
         return None, "MAIL_NOT_SET_UP"
-    if rounds.mail_mode(path):
+    if os.name != "nt" and os.stat(path).st_mode & 0o077:
         return None, "MAIL_ENV_MODE"
     found = {}
     with open(path) as handle:
@@ -162,6 +166,7 @@ def cmd_send(args):
         say("%d new event(s), not sent: no usable mail.env on this machine (%s)" % (len(new), why))
         return 0
     os.environ.update(secrets)
+    mail = mailer()
     try:
         mode, host, port, wait, api = mail.settings(args.root)
         if mode == "off":
@@ -176,7 +181,7 @@ def cmd_send(args):
         save(path, state)
         body = "%s\n\nRepo: %s. Event: %s.\n" % (action, repo, kind)
         try:
-            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s)" % (kind, slug, repo), body, rounds.to_html(body),
+            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s)" % (kind, slug, repo), body, mail.rounds.to_html(body),
                                               (host, port, wait, api))
         except Exception as err:  # noqa: BLE001 - maybe mid-send: keep it marked, never send twice
             outcome, detail = "unknown", type(err).__name__
