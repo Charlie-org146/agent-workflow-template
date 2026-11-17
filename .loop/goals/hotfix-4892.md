@@ -13,4 +13,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/package.py`.
+   Expect: it prints a line starting `PASS:` and no `FAIL Safety` line.
+2. Run `python3 dev/toy/test-quiet-import.py`.
+   Expect: two `PASS:` lines and exit code 0.
