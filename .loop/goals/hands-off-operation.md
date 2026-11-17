@@ -20,3 +20,13 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. In a repo with `.loop/config.json`, run `python3 skills/workflow-monitoring/scripts/operate.py start`.
+   Expect: a table with the rows session tool, workers, skills, hooks, memory and pool, each ok or FIX with its fix, and a READY or NOT READY line; no goal starts.
+2. Run `python3 skills/workflow-monitoring/scripts/operate.py timer`, then `operate.py timer created`, then `python3 skills/workflow-monitoring/scripts/checkin.py`.
+   Expect: the first shows the interval, the steps and what the timer never does; after `created` the check-in has no timer item under Needs you, and after changing `cadence` it says the check-in timer is stale.
+3. With a session tool set and a goal whose release is published, run `python3 skills/workflow-monitoring/scripts/pool.py archive`, then the check-in.
+   Expect: `ARCHIVED <session> (<goal> released vX)` and, in the next check-in, an Archived section naming it; a running goal's session is untouched.
+4. Run `python3 skills/workflow-monitoring/scripts/checkin.py` in a repo with queued goals that name only issue numbers.
+   Expect: each goal under a feature heading (not "no feature") when its issue has a feature label or its touches map in `.loop/docs.tsv`, and a time instead of `~?` once finished goals exist.
+
