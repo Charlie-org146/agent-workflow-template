@@ -26,7 +26,7 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Check this machine before setting up" | One checklist of git, python3, gh installed and signed in, real symlinks and the platform, each gap with its exact fix; a setup run prints it first and is never blocked by it. |
 | "Replay the first adoption against the golden run" | The eight golden steps are compared with what this machine shows and it stops at the first mismatch, saying what differs; the live check-in step is reported as not observed, never passed. |
 | "Which connectors do my repos need?" | Each connector a followed repo's PRDs name is listed as connected, needs sign-in or missing, and nothing is enabled for you. |
-| "Install the reply hook" | Operation-session replies that don't follow the check-in layout are blocked, saying what is missing. |
+| "Install the reply hook" | Operation-session replies to a scheduled or asked-for check-in that don't follow the check-in layout are blocked, saying what is missing; it also installs a prompt hook that skips the model turn of a scheduled check-in when nothing changed. |
 | "Is there a newer template version?" | It shows what the newest release brings and which skill files you changed here; nothing is written. |
 | "Update this repo to the newest template" | The skills update, and this repo's new settings, entry point and agent files land on an update branch for you to merge; your own values and pages are kept. |
 | "Send my skill fix back to the template" | It drafts one issue with the diff and no repo name, and files it once you say so. |
