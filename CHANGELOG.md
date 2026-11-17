@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.0.39 - 2026-11-17
+
+- email-notify: notify.py mails each new check-in event (MON-5)
+- email-notify: render Tests tables and START.md
+- email-notify: MON-5 sub-bullet for email notification (owner record o95)
+- email-notify: review fixes: one mail per stopped or past-ETA goal; operate pass survives an unwritable checkin.txt
+- email-notify: render Tests
+- email-notify: notify.py loads mail.py lazily, so it runs alone in a package
+- Lane: re-render the Tests tables
+- email-notify: machine-caps checks only that machine.py stays out of skills/ (its stated rule), not that no goal adds a script
+- Lane: re-render the Tests tables
+- Wiki: re-stamp pages for email-notify (audit.py restamp, under operation-pc's authority)
+- Machines: machine-caps test text says what it checks now (machine.py stays out of skills/)
+- Merge origin/main into loop/email-notify (resolve wiki stamps, Tests rows and regression.tsv)
+- Merge remote-tracking branch 'origin/main' into loop/email-notify
+- email-notify: notify.py loads mail.py with importlib, so the package scan sees no non-stdlib import
+- Wiki: re-stamp Monitoring and How-to-use-Monitoring for email-notify after the main merge (audit.py restamp: mapped code only)
+- Merge origin/main into loop/email-notify (resolve wiki stamps and regression.tsv)
+- Wiki: re-stamp Setup, How-to-use-Setup and How-to-use-Machines for email-notify after the main merge (audit.py restamp: mapped code only)
+
+### How to verify
+
+1. On this PC, run `python3 skills/workflow-monitoring/scripts/notify.py status`.
+   Expect: `NOTIFY: on on this machine; ...`, with mail.env `ready` once you have written `~/.workflow-loop/schedule/mail.env`.
+2. With mail.env written, let the operation session make two passes (`operate.py run --once`, twice).
+   Expect: the first prints `NOTIFY: baseline N events, nothing sent`; after a new Needs you item appears, the next pass prints `NOTIFY: sent needs you <goal>` and one mail arrives naming the goal and what to do.
+3. Run another pass with nothing new.
+   Expect: no `NOTIFY:` line and no new mail.
+
 ## v1.0.38 - 2026-11-17
 
 - docs check: How-to-use Kinds, listed commands and a links-only README (DOC-19, #4677)
