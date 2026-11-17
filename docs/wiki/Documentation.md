@@ -29,7 +29,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - Once I review a PRD, the loop writes Given/When/Then scenarios and tests for each requirement, links each to a regression row, and keeps them in step when a requirement changes.
   - I never write or manage tests.
 - DOC-4: **Unreviewed** Home is one table
-  - Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
+  - Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page on the wiki; the README keeps only links to those pages (DOC-18), so Home never needs a README heading), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
   - Below the table Home carries only the System diagram block (DOC-19) and the generated Settings and Automation sections (DOC-15); nothing else is on Home.
 - DOC-5: **Unreviewed** The front door links each feature's How-to-use page
   - The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages.
@@ -190,6 +190,8 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-4 | Given this repo's topics setting, when Home is read, then its table leads with a Topic column. | PASS 2026-11-14 |
 | [home-stale-clears](Tests#t-home-stale-clears) | requirement | DOC-4 | Given a generated Home that docs.tsv maps to README.md and .loop/config.json, when a goal changes one of them and Home's fresh render is unchanged, then docs check reports no STALE Home and DOC-4 still passes it. | not run |
 | [home-stale-control](Tests#t-home-stale-control) | requirement | DOC-4 | Given a Home that differs from its fresh render, when a mapped path changes, then docs check still reports it STALE until it is re-rendered. | not run |
+| [home-howto-linksonly](Tests#t-home-howto-linksonly) | requirement | DOC-4 | Given the README with the DOC-18 links-only layout and a Home whose How to use cells link the How-to-use pages, when the docs check runs, then DOC-4 passes. | PASS 2026-11-17 |
+| [home-howto-linksonly-control](Tests#t-home-howto-linksonly-control) | requirement | DOC-4 | Given a links-only README and a Home that still links a README heading, when the docs check runs, then it fails naming DOC-4 and the How-to-use page link to use. | PASS 2026-11-17 |
 | [doc4-home-diagram-ok](Tests#t-doc4-home-diagram-ok) | requirement | DOC-4 | Given a Home page whose diagram block names each part of the loop, when docs check runs, then it passes. | not run |
 | [doc4-home-diagram-missing](Tests#t-doc4-home-diagram-missing) | requirement | DOC-4 | Given a Home page with no system diagram, when docs check runs, then it fails. | not run |
 | [doc4-home-diagram-part](Tests#t-doc4-home-diagram-part) | requirement | DOC-4 | Given a Home diagram that leaves out a part of the loop, when docs check runs, then it fails naming the part. | not run |
