@@ -374,7 +374,7 @@ never-merges	PASS	2026-11-09
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
 no-done-line-refused	PASS	2026-11-17	
-no-flow-refused	PASS	2026-11-17	
+no-flow-refused	FAIL	2026-11-17	
 no-line-in-governor	PASS	2026-11-12	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-12	
