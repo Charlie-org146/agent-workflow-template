@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c3149252 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept apply-rerender@d974d643 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept email-notify@328b7c5c -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -30,7 +30,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Reviewed 2026-11-16** Cadence and reply format <!-- reviewed aefc4745 -->
+- MON-5: **Reviewed 2026-11-17** Cadence and reply format <!-- reviewed 33136bdd -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line, then a Machine line (free RAM, free commit memory, CPU, claude and node counts);
   - All sessions, one table of every session across my repos with what it is doing (a short plain sentence of under about 12 words from its goal's first line, then its slug and issue in brackets), its status, progress, time left, tokens left and latest report;
@@ -39,6 +39,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - A hook that setup installs blocks a reply that doesn't follow this layout, or has no Machine line, or has a Dependencies goal with no status marker, time or machine, or an All sessions row whose "for" cell is only a slug or issue number, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off.
   - The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine.
   - A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good.
+  - When notification is on for this machine (a private setting, off by default), each check-in mails me once per new event through the health round's mailer: a new Needs you item, a goal that stopped or passed its ETA, and a goal merged and released; each mail names the goal and what I must do, a repeat sends nothing, and the address lives only in mail.env outside the repo.
 - MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
@@ -227,6 +228,16 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | MON-5 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
 | [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | MON-5 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
 | [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | MON-5 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, GRD-14). | not run |
+| [notify-new-events](Tests#t-notify-new-events) | requirement | MON-5 | Given notification on and a check-in with a new Needs you item, a stopped goal and a released goal, when notify runs, then one mail per event goes out through mail.py. | not run |
+| [notify-names-goal](Tests#t-notify-names-goal) | requirement | MON-5 | Given three new events, when they are mailed, then each mail's subject names its goal. | not run |
+| [notify-names-action](Tests#t-notify-names-action) | requirement | MON-5 | Given three new events, when they are mailed, then each mail names what the owner must do. | not run |
+| [notify-repeat-quiet](Tests#t-notify-repeat-quiet) | requirement | MON-5 | Given events already mailed, when notify runs again on the same check-in, then nothing is sent. | not run |
+| [notify-off-quiet](Tests#t-notify-off-quiet) | requirement | MON-5 | Given notify_email off, when notify runs on a check-in with events, then nothing is sent, printed or kept. | not run |
+| [notify-baseline](Tests#t-notify-baseline) | requirement | MON-5 | Given notification just turned on, when notify first runs, then it records the current events as a baseline and sends none. | not run |
+| [notify-no-address](Tests#t-notify-no-address) | requirement | MON-5 | Given mail.env holds the owner's address, when events are mailed, then no printed line or kept file holds the address. | not run |
+| [notify-setting-default](Tests#t-notify-setting-default) | requirement | MON-5 | Given the settings reference, when it is read, then notify_email is a private setting, off by default. | not run |
+| [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | MON-5 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
+| [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | MON-5 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
 | [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |

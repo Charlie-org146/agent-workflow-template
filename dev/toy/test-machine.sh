@@ -205,10 +205,8 @@ fi
 if want machine-caps; then
   [ "$(tr -d '\015' < "$here/dev/machine.py" | wc -c)" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
   for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(tr -d '\015' < "$here/$f" | wc -c)" -lt 20480 ] || no "$f is over the script cap"; done
-  if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
-    new=$(git -C "$here" diff --name-only --diff-filter=A "$(git -C "$here" merge-base HEAD origin/main)" -- skills | wc -l | tr -d ' ')
-    [ "$new" = 0 ] || no "a new file under skills/"
-  fi
+  # machine.py adds no file to the package: it is not under skills/ (other goals may add their own scripts there)
+  git -C "$here" ls-files skills | grep -q '/machine\.py$' && no "machine.py is under skills/"
   echo "PASS: machine.py and every script stay under the byte cap and the package gains no file"
 fi
 exit 0

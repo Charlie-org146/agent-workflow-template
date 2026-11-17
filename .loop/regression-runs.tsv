@@ -396,6 +396,7 @@ package-hang-stdin	PASS	2026-11-12
 package-headroom-held	FAIL	2026-11-15	
 package-passes	SKIPPED	2026-11-16	
 package-rows-tracked	FAIL	2026-11-15	
+package-win-parity-1397	PASS	2026-11-17	
 page-relock	PASS	2026-11-14	
 page-shape	PASS	2026-11-12	
 parallel-unlimited	PASS	2026-11-12	
