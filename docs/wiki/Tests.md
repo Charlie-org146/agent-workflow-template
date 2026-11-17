@@ -561,6 +561,8 @@
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-machine-operation-peer"></a>machine-operation-peer | requirement | MCH-2 | not run | - | local | 2026-11-17 |
+| <a id="t-machine-backup-restore"></a>machine-backup-restore | requirement | MCH-3 | not run | - | local | 2026-11-17 |
 
 ## Monitoring
 
