@@ -109,6 +109,7 @@ def affected(root, rows, paths, cache):
                 path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
+            real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
             continue
         if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
