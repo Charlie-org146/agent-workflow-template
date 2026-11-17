@@ -20,14 +20,18 @@ Say these to the agent; each feature page has the exact commands.
 |---|---|
 | "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints no gap. |
 | "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
+| "Back up or restore this machine" | `machine.py backup DIR` copies the restorable state to a folder outside every repo; `machine.py restore DIR` puts it back on a new machine or account. Secrets and private-names lists are never copied; both name them. |
+| "Set up the operation session and peer link" | `machine.py apply --repo <your repo> [--peer NAME]` also writes the operation session's routine and task, its hooks and `peer.json`; then do the owner steps it prints. |
 | "Record that I registered a task" | `machine.py record-task NAME MODE` notes the permission mode you chose in the app; a missing or prompting mode is a gap. |
 
 Each requirement and how it is delivered:
 
+- MCH-2: A new machine or account reaches a working operation session and its peer link from one command. Example, from the machine-operation-peer test: given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist and the output names only the owner-only items left.
+- MCH-3: Backup and restore are commands. Example, from the machine-backup-restore test: given a set-up home, when backup and restore run, then restorable state moves to a new home and no secret or private-names list is copied.
 - MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
 
 ### Command: machine.py
-- **Command:** `python3 dev/machine.py [apply --repo REPO | check | record-task NAME MODE]`
+- **Command:** `python3 dev/machine.py [apply --repo REPO [--peer NAME] | check | record-task NAME MODE | backup DIR | restore DIR]`
 - **Dry run:** `machine.py` with no `apply` is a dry run; `check` lists each gap and writes nothing.
 - **Reads:** this machine's skills links, scheduled tasks and the followed repos.
 - **Writes:** `apply` links the skills and registers one scheduled task per adopted repo; `record-task` notes a permission mode.
@@ -60,4 +64,5 @@ Each requirement and how it is delivered:
 - PRD page: [Machines](Machines)
 - Backlog: [Backlog: Machines](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept auto-planning@c0251d40 -->
+<!-- kept machine-setup-and-restore@8497ebf6 -->
+<!-- kept full-auto-all@08ab9232 -->
