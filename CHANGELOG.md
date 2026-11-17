@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.37 - 2026-11-17
+
+- The home guard tells a toy's writes from another session's in skills-main and the schedule registry (#4760)
+- Merge remote-tracking branch 'origin/main' into loop/homeguard-skills-main
+- Merge remote-tracking branch 'origin/main' into loop/homeguard-skills-main
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.36 - 2026-11-17
 
 - Lanes: a deleted file that isn't NO_EFFECT reaches the root runners; the merge-guard toy commits on CI (#4554)
