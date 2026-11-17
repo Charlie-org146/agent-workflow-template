@@ -101,8 +101,8 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-2 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-17 |
 | [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-2 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-12 |
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-2 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
-| [describe-needed](Tests#t-describe-needed) | requirement | REG-2 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-12 |
-| [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-2 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-12 |
+| [describe-needed](Tests#t-describe-needed) | requirement | REG-2 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-17 |
+| [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-2 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-17 |
 | [every-row-described](Tests#t-every-row-described) | requirement | REG-2 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | FAIL 2026-11-15 |
 | [defect-categories](Tests#t-defect-categories) | requirement | REG-2 | Given the test rows, when they are checked, then every row has a category, defect rows link their issue, and the page shows defect tests apart. | FAIL 2026-11-12 |
 | [summary-groups](Tests#t-summary-groups) | requirement | REG-2 | Given tests guarding requirements on two wiki pages and one guarding none, when they are listed, then they come grouped by feature in page order, then Other. | PASS 2026-11-10 |

@@ -121,7 +121,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [dependencies-on-map](Tests#t-dependencies-on-map) | requirement | MON-1 | Given a goal that waits on others, when it starts, then it records what it waits on. | PASS 2026-11-09 |
 | [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | MON-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
 | [worker-refuses](Tests#t-worker-refuses) | requirement | MON-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-17 |
-| [worker-per-goal](Tests#t-worker-per-goal) | requirement | MON-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-12 |
+| [worker-per-goal](Tests#t-worker-per-goal) | requirement | MON-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-17 |
 | [one-way-to-run](Tests#t-one-way-to-run) | requirement | MON-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-17 |
 | [operate-all](Tests#t-operate-all) | requirement | MON-1 | Given the operate command's toy suite, when it runs, then the whole suite passes. | PASS 2026-11-09 |
 | [session-assign](Tests#t-session-assign) | requirement | MON-1 | Given a ready goal, when it is assigned, then it gets its own worker session in the app. | PASS 2026-11-12 |
