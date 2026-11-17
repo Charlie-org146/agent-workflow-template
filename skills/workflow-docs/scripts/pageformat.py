@@ -152,8 +152,11 @@ def home(text, features, existing, readme, repo, topics=None):
         if name not in features:
             out.append(bad("Home", number, "Features", 4, "a row for a page that is not a feature page", name, "remove the row"))
         link = re.match(r"^\[[^\]]+\]\(https://github\.com/([\w.-]+/[\w.-]+)#([\w-]+)\)$", row[2])
+        wiki = re.match(r"^\[[^\]]+\]\(https://github\.com/([\w.-]+/[\w.-]+)/wiki/How-to-use-%s\)$" % re.escape(name), row[2])
         want = slug(heading_of(name))
-        if not link or (repo and link.group(1).lower() != repo.lower()) or link.group(2) != want or want not in keys:
+        if wiki and not (repo and wiki.group(1).lower() != repo.lower()):
+            pass
+        elif not link or (repo and link.group(1).lower() != repo.lower()) or link.group(2) != want or want not in keys:
             out.append(bad("Home", number, "Features", 4, "How to use links the README's '### %s' section" % heading_of(name),
                            short(row[2]), "link [README](https://github.com/%s#%s) and add that README heading" % (repo or "OWNER/REPO", want)))
     for name in features:
@@ -165,43 +168,27 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 def frontdoor(readme, features):
-    """DOC-5: '## How to use' holds one '### How to use <Feature>' per feature page: an intro line and a FRONT table
-    of quoted phrases."""
+    """DOC-5 (DOC-19): '## How to use' links each feature's How-to-use page and holds no How-to-use table: a '### How to use <Feature>'
+    heading, if any, holds one `| You say | What happens |` row whose text links that page."""
     held = [(n, lines) for name, n, lines in parts(unblocked(readme)) if name == "How to use"]
     if not held:
-        return [bad("README", 1, "How to use", 5, "the README has a '## How to use' section", "none",
-                    "add it, with one '### How to use <Feature>' per feature page")]
+        return [bad("README", 1, "How to use", 5, "the README has a '## How to use' section", "none", "add it, with a link to each How-to-use-<Feature> page")]
     start, lines = held[0]
-    groups, out = [("", start, [])], []
+    text, out = "\n".join(line for _, line in lines), []
+    for page in features:
+        if "How-to-use-%s)" % page not in text:
+            out.append(bad("README", start, "How to use", 5, "a link to the page How-to-use-%s" % page, "none", "add [How to use %s](https://github.com/OWNER/REPO/wiki/How-to-use-%s)" % (page, page)))
+    groups = [("", start, [])]
     for number, line in lines:
-        if line.startswith("### "):
-            groups.append((line[4:].strip(), number, []))
-        else:
-            groups[-1][2].append((number, line))
-    names = [name for name, _, _ in groups[1:]]
-    wanted = [heading_of(p) for p in features]
-    for want in wanted:
-        if names.count(want) != 1:
-            out.append(bad("README", start, "How to use", 5, "one '### %s' section" % want,
-                           "%d" % names.count(want), "add it, with a | You say | What happens | table"))
+        groups.append((line[4:].strip(), number, [])) if line.startswith("### ") else groups[-1][2].append((number, line))
     for name, number, body in groups:
-        found, other = tables(body)
-        if name and name not in wanted:
-            out.append(bad("README", number, "How to use", 5, "a section named for a feature page", short(name),
-                           "name it '### How to use <Feature>'"))
-        for at, line in other[1:]:
-            out.append(bad("README", at, "How to use", 5, "only one intro line per section", short(line), "move it out of How to use"))
-        if not name:
-            continue
-        if len(found) != 1 or tuple(found[0][1]) != FRONT or not found[0][2]:
-            out.append(bad("README", number, name, 5, "one table | You say | What happens | with at least one row",
-                           "%d tables" % len(found), "say what the owner says and what happens next"))
-            continue
-        for at, row in found[0][2]:
-            said = row[0]
-            if "`" in said or not re.match(r'^"[^"]+"(\s*/\s*"[^"]+")*$', said) or re.match(r'^"?\s*(/|python|bash)', said):
-                out.append(bad("README", at, name, 5, "You say is a quoted phrase, not a command", short(said),
-                               "write what the owner says, in quotes, with no backticks"))
+        found, _ = tables(body)
+        if name and name not in [heading_of(p) for p in features]:
+            out.append(bad("README", number, "How to use", 5, "a section named for a feature page", short(name), "name it '### How to use <Feature>'"))
+        for at, head, rows in found:
+            only = len(rows) == 1 and tuple(head) == FRONT and "`" not in " ".join(rows[0][1]) and "How-to-use-" in " ".join(rows[0][1])
+            if not only:
+                out.append(bad("README", at, name or "How to use", 5, "no How-to-use table: links, or one row that links the page", "%d rows" % len(rows), "move the table to the How-to-use page"))
     return out
 
 

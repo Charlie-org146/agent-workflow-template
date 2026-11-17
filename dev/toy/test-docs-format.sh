@@ -32,6 +32,36 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria']
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median LIST` | `python3 scripts/calc.py median LIST` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
+mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
+<!-- workflow-docs -->
+# How to use Delivery
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+## How to reach or run it
+
+- DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
+- DEL-2: It answers within a second; run it on a short list.
+
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [Delivery](Delivery)
+HOWEOF
 fails=0; day=$(date -u +%F)
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -65,13 +95,15 @@ Say these to the agent:
 
 | You say | What happens |
 |---|---|
-| "What is the median of 1 2 3?" | The calculator prints 2. |
+| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |
 EOF
 cat > $P <<'EOF'
 <!-- workflow-docs -->
 # Delivery
 
 Review: **Unreviewed**
+
+How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ## Problem
 
@@ -127,12 +159,12 @@ has "^FORMAT Home:[0-9]*: Features: DOC-4 one row per feature page (got 0 rows f
 check | grep -q "^FORMAT Home" && bad "good Home" || ok "DOC-4 a Home of one features table passes"
 
 echo "== DOC-5 README front door"
-edit README.md '"What is the median of 1 2 3?"' '`/toy median 1 2 3`'; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 You say is a quoted phrase, not a command" && ok "DOC-5 a backtick command in You say fails naming README, the section and DOC-5" || bad "front backtick"; reset
-edit README.md '"What is the median of 1 2 3?"' '"/toy median 1 2 3"'; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 You say is a quoted phrase" && ok "DOC-5 a quoted slash command in You say fails" || bad "front slash"; reset
-edit README.md "### How to use Delivery" "### Delivery"; has "^FORMAT README:[0-9]*: How to use: DOC-5 one '### How to use Delivery' section" && ok "DOC-5 a feature with no How to use section fails" || bad "front missing"; reset
-edit README.md "Say these to the agent:" "Say these to the agent:
-And a second intro line."; has "^FORMAT README:[0-9]*: How to use: DOC-5 only one intro line per section" && ok "DOC-5 a second intro line fails" || bad "front intro"; reset
-check | grep -q "^FORMAT README" && bad "good README" || ok "DOC-5 a front door of quoted phrases passes"
+edit README.md "Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery)." "Opens it."; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 no How-to-use table" && ok "DOC-5 a one-row table that does not link the page fails" || bad "front no link row"; reset
+edit README.md "### How to use Delivery" "### Delivery"; has "^FORMAT README:[0-9]*: How to use: DOC-5 a section named for a feature page" && ok "DOC-5 a section not named for a feature page fails" || bad "front heading"; reset
+edit README.md "|---|---|" "|---|---|
+| \"x\" | y |"; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 no How-to-use table" && ok "DOC-5 a README table of two rows fails" || bad "front two rows"; reset
+edit README.md "wiki/How-to-use-Delivery" "wiki/elsewhere"; has "^FORMAT README:[0-9]*: How to use: DOC-5 a link to the page How-to-use-Delivery" && ok "DOC-5 a README with no link to the page fails" || bad "front missing"; reset
+check | grep -q "^FORMAT README" && bad "good README" || ok "DOC-5 a front door that links each How-to-use page passes"
 
 echo "== DOC-6 each skill's commands are in its command reference; a Usage section is gone"
 edit $P "## Requirements" "## Usage
