@@ -38,6 +38,7 @@ Each feature has its own How-to-use page, with what it delivers, how to reach or
 - [How to use Machines](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Machines)
 - [How to use Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Monitoring)
 - [How to use Regression](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Regression)
+- [How to use Release](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Release)
 - [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup)
 
 ## What it aims to be
