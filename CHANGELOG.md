@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.0.55 - 2026-11-17
+
+- Build: DEL-16 on the Delivery page (Unreviewed), rows linked
+- Render Tests tables; Verify by hand for del-16
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.54) into loop/del-16
+- pr: record issue states and the lane's results
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `grep -n "DEL-16" docs/wiki/Delivery.md`.
+   Expect: a line `- DEL-16: **Unreviewed** Each step runs on the agent the config picks` followed by three sub-bullets.
+2. Run `grep -n "^Review:" docs/wiki/Delivery.md`.
+   Expect: it prints a line reading `Review: **Unreviewed**`.
+3. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints `DOCS OK`.
+4. Run `grep -n "DEL-16" .loop/regression.tsv`.
+   Expect: the `agent-routing` row names DEL-16 as its goal.
+
 ## v1.0.54 - 2026-11-17
 
 - No code changes
