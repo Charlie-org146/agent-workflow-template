@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
-"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks (the board
-prints only for `report`, `dashboard` and "where do things stand").
+"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks.
 
 usage: checkin.py [--since ISO]
 
   headline        goals running, waiting on you or queued, and the session pool
   All sessions    one row per live goal: session, repo, purpose, status, progress, time left, ETA, latest
-  Re-plan         what replan.py changed since the last one (MON-10)
-  Auto-answered   auto.py's answers since the last one, the rule and the revert words (MON-11)
-  Dependencies    one block per repo of the pod, headed `== name ==` (MON-14); `repo/slug` in depends-on goes under
-                  `Between repos`; live goals and goals merged since the last check-in
-  Needs you       numbered: questions with options and a recommendation, stuck goals, workers silent past
-                  silent_minutes (MON-8), the pool ask (MON-12), sessions to archive, kept worktrees; or "Nothing needs you"
+  Re-plan, Auto-answered, Archived   what replan.py, auto.py and pool.py archive changed since the last check-in
+  Dependencies    one block per repo (MON-14), goals grouped by release then feature; goals merged since the last check-in
+  Needs you       numbered (MON-19): questions, stuck or silent goals, the pool ask, a missing or stale check-in timer
   Coming up       each goal's next expected step and what the owner will need to do
 
---since defaults to the last check-in (<git common dir>/loop/checkin.json). Writes only one row to <git common dir>/loop/op-tokens.tsv:
-the operation session's tokens since the last row, by trigger (proctree.op_append).
+--since defaults to the last check-in (<git common dir>/loop/checkin.json). Writes one row to op-tokens.tsv (proctree.op_append).
 """
 import argparse
 import datetime
@@ -32,6 +27,8 @@ import board_lines  # noqa: E402
 import govern_hook  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
+import monitor  # noqa: E402
+import notify  # noqa: E402
 import pool as pl  # noqa: E402
 import replan  # noqa: E402
 import unattended  # noqa: E402
@@ -176,13 +173,16 @@ def render(root=None, at=None, stamp=None):
             if len(parts) >= 6:
                 out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
+    gone = monitor.archived_since(folder, stamp)
+    if gone:
+        out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]
     blocks = []
     for g in pod:
         item = lambda r, **kw: dict(slug=r["slug"], machine=r.get("machine") or graph.machine_name(), release=release_of(g["root"], r["slug"]),
-                                    feature=feature_of(g["root"], r.get("goal")), **kw)
+                                    feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
                       owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at)) for r in g["live"]]
-        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"]) for q in g["queue"]]))
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at)) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
@@ -204,7 +204,7 @@ def render(root=None, at=None, stamp=None):
                 run["slug"], graph.silent_for(run, at) // 60))
         elif state == "held":
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
-    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live])
+    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live]) + notify.timer_lines(folder, bd.cadence_of(os.path.dirname(folder), cfg.get("cadence")))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
     for hold in ready and (replan.plan_pause(cfg), replan.memory_hold(cfg)):

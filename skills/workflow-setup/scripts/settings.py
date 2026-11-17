@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Every setting in one table: where it lives, its default and a one-line note.
+"""Every setting in one table: home, default, note.
 
 usage: settings.py reference [--write]   print the settings reference (--write saves references/settings.md)
        settings.py fill-repo [--repo DIR]  add every missing repo setting, with its default, to .loop/config.json
        settings.py fill-private [--file F]  add every missing private setting to the private flow file (mode 0600)
-       settings.py show [--repo DIR] [--json]  each value with its layer (default, repo or local) and home
+       settings.py show [--repo DIR] [--json]  each value, its layer (default, repo, local) and home
 """
 import argparse
 import functools
@@ -80,7 +80,7 @@ TABLE = [
     ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),
     ("health_skill_lines", REPO, 150, "SKILL.md line cap health fails."),
     ("feature_labels", REPO, False, "true tags each health and regression issue feature:<Page>, creating the label."),
-    ("workers", REPO, "", "app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind."),
+    ("workers", REPO, "", "app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start."),
     ("command", PRIVATE, ["claude", "-p"], "Flow file: the agent command that runs each flow step unattended."),
     ("allowed_tools", PRIVATE, [], "Flow file: tools a step's agent may use, passed as --allowedTools; empty adds nothing."),
     ("model", PRIVATE, "", "Flow file: the model a step's agent uses, passed as --model; empty keeps the command's own."),

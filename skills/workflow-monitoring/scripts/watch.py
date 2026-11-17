@@ -236,8 +236,8 @@ def launch(state, prompt, cfg):
             state.update(status="failed", finding="could not launch the agent: %s" % error)
             save(state, "failed: " + state["finding"])
             return
-    state.update(pid=child.pid, status="running")
-    save(state, "launched agent pid %d" % child.pid)
+    state.update(pid=child.pid, status="running", worker="background", bound_at=now(), attempt=int(state.get("attempt") or 0) + 1)
+    save(state, "launched agent pid %d and bound it as the goal's worker" % child.pid)
 
 
 def known_rules():
@@ -326,7 +326,7 @@ def start_round(args, cfg):
             continue
         if handed:
             continue
-        if graph.app_only(cfg):
+        if graph.app_only(cfg) and not getattr(args, "background", False):
             state["worker"], state["worker_why"] = "app", "workers: app; bind an app session: sessions.py bind %s ID" % state["slug"]
             save(state, "no app session took it; waiting for sessions.py bind (workers: app)")
         else:
@@ -465,6 +465,7 @@ def main():
     for item in sub.choices.values():
         item.add_argument("--max", type=int, default=0)
         item.add_argument("--skill-dir", default="")
+        item.add_argument("--background", action="store_true")
     if sys.argv[1:2] and sys.argv[1] in STEPS and os.environ.get("LOOP_ROLE") != "worker":
         sys.exit(REFUSE % sys.argv[1])
     args = parser.parse_args()

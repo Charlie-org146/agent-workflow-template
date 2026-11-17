@@ -318,6 +318,84 @@ def cmd_dashboard(args):
     return 0
 
 
+# ---- hands-off operation: archive (MON-6) and grouping (MON-5); callers pass paths
+def ghj(args, cwd):
+    """One gh call as JSON, None on any doubt."""
+    try:
+        done = subprocess.run(["gh"] + args, cwd=cwd, capture_output=True, text=True, timeout=20)
+        return json.loads(done.stdout) if done.returncode == 0 else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def released(run, top):
+    """Merge and published release both verified: cut with a version and url, pull request MERGED, release no draft."""
+    if run.get("release") != "cut" or not (run.get("release_url") and run.get("release_version") and run.get("pr")):
+        return False
+    pr, rel = ghj(["pr", "view", run["pr"], "--json", "state"], top), ghj(["release", "view", "v%s" % run["release_version"], "--json", "isDraft"], top)
+    return bool(pr and rel and pr.get("state") == "MERGED" and rel.get("isDraft") is False)
+
+
+def to_archive(found, runs_dir, top, pressure, mine=""):
+    """[(sid, name, why)] oldest first: worker sessions whose goal's merge and release are verified, and under memory pressure idle ones whose goal is retired.
+    Never a running, waiting or queued goal, an operation session or this one."""
+    out = []
+    for sid, item in sorted(found.items(), key=lambda kv: str(kv[1].get("since"))):
+        name, last = str(item.get("name")), item.get("slug") if item.get("state") == "busy" else (item.get("history") or [{}])[-1].get("slug")
+        run = read_json(os.path.join(runs_dir, "%s.json" % last)) if last and name.startswith("worker") and sid != mine and item.get("state") in ("busy", "free") else None
+        if not isinstance(run, dict) or run.get("status") in ("running", "waiting", "queued"):
+            continue
+        if released(run, top):
+            out.append((sid, name, "%s released v%s" % (last, run["release_version"])))
+        elif pressure and item.get("state") == "free" and run.get("status") == "retired":
+            out.append((sid, name, "%s retired, memory pressure" % last))
+    return out
+
+
+def read_json(path):
+    try:
+        with open(path) as handle:
+            return json.load(handle)
+    except (OSError, ValueError):
+        return None
+
+
+def archived_since(folder, stamp):
+    """archived.tsv rows after stamp as 'session (why)'."""
+    try:
+        rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(folder, "archived.tsv"))]
+    except OSError:
+        return []
+    return ["%s (%s)" % (r[2], r[3]) for r in rows if len(r) > 3 and r[0] > str(stamp or "")]
+
+
+def feature_of(root, text, item=None):
+    """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's feature:<Page> label, the page whose
+    docs.tsv paths cover its touches, else 'no feature'."""
+    item, wiki = item or {}, os.path.join(root, "docs", "wiki")
+    pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md")] if os.path.isdir(wiki) else []
+    prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]
+    for page in pages:
+        if prefix and re.search(r"^\s*- %s-\d+:" % prefix, open(os.path.join(wiki, page + ".md"), encoding="utf-8").read(), re.M):
+            return page.replace("-", " ")
+    cache = os.path.join(common(), "loop", "features.json")
+    seen = read_json(cache) or {}
+    for number in re.findall(r"#(\d+)", str(text or ""))[:3]:
+        if number not in seen and (found := ghj(["issue", "view", number, "--json", "labels,milestone"], root)) is not None:
+            names = [str(x.get("name")) for x in found.get("labels") or []] + [str((found.get("milestone") or {}).get("title"))]
+            seen[number] = next((n.split(":")[-1].strip() for n in names if n.split(":")[-1].strip() in pages), "")
+            os.makedirs(os.path.dirname(cache), exist_ok=True)
+            json.dump(seen, open(cache, "w"))
+    best = [(0, item.get("feature") if item.get("feature") in pages else "")] + [(1, seen[n]) for n in re.findall(r"#(\d+)", str(text or ""))[:3] if seen.get(n)]
+    try:
+        rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(root, ".loop", "docs.tsv")) if "\t" in line and line[0] != "#"]
+    except OSError:
+        rows = []
+    covers = [(len(path), page) for page, paths in rows for path in [p.strip("/") for p in paths.split(",") if p and p[0] != ":"] for t in [str(t).strip("/") for t in item.get("touches") or []]
+              if page in pages and (t == path or t.startswith(path + "/"))]
+    return (best[0][1] or (best[1][1] if len(best) > 1 else "") or max(covers, default=(0, ""))[1]).replace("-", " ") or "no feature"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)

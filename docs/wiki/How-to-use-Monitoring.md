@@ -25,6 +25,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Where do things stand?" | You get the live board: Issues first, then running goals with progress and time left, queued goals, dependencies and one finish time. |
 | "Tell the caching worker to keep the old cache format" | Your answer reaches that worker session as a message. |
 | "How much did the operation session spend?" | `<git common dir>/loop/op-tokens.tsv` holds one row per check-in with its context and the tokens spent under scheduled, peer, human and hook-retry. A scheduled check-in with nothing new is skipped by a prompt hook and logged in `quiet.log`. |
+| "Start an operation session on this machine" | `operate.py start` prints the readiness table (session tool, workers mode, skills, hooks, memory, pool), each row ok or with its fix; no goal starts. `operate.py timer` then shows the check-in timer for your yes. |
+| "Queue a goal under the Delivery page" | `batch.py add NAME --goal "..." --done "..." --feature Delivery` stores the page, so the check-in groups the goal there instead of under "no feature". |
 | "Resume the failed caching goal" | A failed or stopped goal gets a new worker; any other goal is refused. |
 | "Clean up merged branches, list them first" | You see the merged goal branches that would go; once you say so, they are deleted locally. |
 

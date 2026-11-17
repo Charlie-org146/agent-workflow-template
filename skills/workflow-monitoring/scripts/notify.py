@@ -3,6 +3,8 @@
 
 usage: notify.py send [--checkin FILE] [--root DIR]   what operate.py runs after each check-in it prints
        notify.py status [--root DIR]                  whether it is on here, mail.env is there, and how many events are seen
+       notify.py ready [--root DIR]                   operate.py start: the readiness table of a new operation session (MON-1)
+       notify.py timer [created] [--root DIR]         operate.py timer: the check-in timer to show the owner; created records it (MON-5)
 
 Off unless `notify_email` is true in this machine's flow file (`$LOOP_FLOW` or ~/.workflow-loop/flow.json); off, it
 prints nothing and sends nothing. The events: each numbered item under Needs you in the check-in (default
@@ -205,15 +207,70 @@ def cmd_status(args):
     return 0
 
 
+def timer_lines(folder, cadence):
+    """MON-5: Needs you text for a check-in timer that is missing, or stale (the cadence changed); [] when fine or the cadence is off."""
+    if str(cadence) == "off":
+        return []
+    seen = str(read_json(os.path.join(folder, "timer.json")).get("cadence") or "")
+    why = "missing" if not seen else "stale: set for %s minutes, the cadence is %s" % (seen, cadence) if seen != str(cadence) else ""
+    return ["the check-in timer is %s; fix: operate.py timer, show it to the owner, and after their yes create it and run operate.py timer created" % why] if why else []
+
+
+def readiness(root, cfg):
+    """MON-1: [(check, ok, text)] for a new operation session; the text is the fix when the row is not ok."""
+    import pool as pl
+    import replan
+    import worker
+    docs = os.path.join(HERE, "..", "..", "workflow-docs", "scripts", "entry.py")
+    lag = subprocess.run([sys.executable, docs, "lag", "--repo", root], capture_output=True, text=True).stdout.strip() if os.path.exists(docs) else ""
+    hook = subprocess.run(["git", "rev-parse", "--git-path", "hooks/pre-push"], cwd=root, capture_output=True, text=True).stdout.strip()
+    mine = os.path.expanduser("~/.claude/settings.json")
+    held = replan.memory_hold(cfg)
+    found, _ = graph.read_pool(os.path.join(lb.loop_dir(root), "session-pool.json"))
+    free, mode = pl.counts(found or {})[0], cfg.get("workers")
+    return [("session tool", bool(worker.tool(cfg)), "set session_command (or LOOP_SESSION_TOOL)"),
+            ("workers", mode in ("app", "auto"), "workers is %s: set app, or auto to let a scheduled or Remote Control turn start a background worker" % (mode or "unset")),
+            ("skills", not lag, lag or "the installed skills are behind the template"),
+            ("hooks", os.path.exists(os.path.join(root, hook)) and "reply_hook" in (open(mine).read() if os.path.exists(mine) else ""), "setup.py --git-hooks and setup.py --reply-hook"),
+            ("memory", not held, held or "lower min_free_memory_gb or close sessions"),
+            ("pool", free > 0, "%d free session(s) of %d: type fill pool" % (free, pl.size_of(cfg)))]
+
+
+def cmd_ready(args):
+    rows = readiness(args.root, read_json(os.path.join(args.root, ".loop", "config.json")))
+    print("READINESS (no goal and no background worker was started)\n| check | status | fix |\n|---|---|---|")
+    print("\n".join("| %s | %s | %s |" % (name, "ok" if ok else "FIX", "" if ok else fix) for name, ok, fix in rows))
+    print("READY: run operate.py run" if all(ok for _, ok, _ in rows) else "NOT READY: %d check(s) need the fix above" % sum(not ok for _, ok, _ in rows))
+    return 0
+
+
+def cmd_timer(args):
+    import board as bd
+    folder = lb.loop_dir(args.root)
+    cadence = bd.cadence_of(os.path.dirname(folder), read_json(os.path.join(args.root, ".loop", "config.json")).get("cadence") or 30)
+    if cadence == "off":
+        return print("NO TIMER: the cadence is off") or 0
+    if args.created:
+        os.makedirs(folder, exist_ok=True)
+        save(os.path.join(folder, "timer.json"), {"cadence": cadence, "at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")})
+        return print("TIMER recorded: every %s minutes" % cadence) or 0
+    print("CHECK-IN TIMER for the owner's yes: every %s minutes\nEach fire runs checkin.py and board_page.py checkin for every followed repo, posts the MON-5 layout,"
+          " and sends the peer a SNAPSHOT on change or every 30 minutes.\nIt never starts goals, merges, answers owner questions or edits private-name lists.\n"
+          "On the owner's yes: create the timer with the app's own tool, then run operate.py timer created." % cadence)
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, func in (("send", cmd_send), ("status", cmd_status)):
+    for name, func in (("send", cmd_send), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):
         item = sub.add_parser(name)
         item.add_argument("--root", default="")
         item.set_defaults(func=func)
         if name == "send":
             item.add_argument("--checkin", default="")
+        if name == "timer":
+            item.add_argument("created", nargs="?", default="", choices=["", "created"])
     args = parser.parse_args()
     if not args.root:
         top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)

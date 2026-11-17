@@ -245,16 +245,10 @@ def release_of(root, slug):
     return "no release"
 
 
-def feature_of(root, text):
-    """The feature page a goal is for: the page that defines the first requirement ID its goal line names, else 'no feature'."""
-    prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]
-    try:
-        for path in sorted(os.listdir(os.path.join(root, "docs", "wiki"))):
-            if prefix and path.endswith(".md") and re.search(r"^\s*- %s-\d+:" % prefix, open(os.path.join(root, "docs", "wiki", path), encoding="utf-8").read(), re.M):
-                return path[:-3].replace("-", " ")
-    except OSError:
-        pass
-    return "no feature"
+def feature_of(root, text, item=None):
+    """The feature page a goal is for (monitor.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
+    import monitor
+    return monitor.feature_of(root, text, item)
 
 
 def goal_line(item):
