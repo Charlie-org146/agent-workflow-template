@@ -1150,7 +1150,7 @@
 | <a id="t-machine-done-4"></a>machine-done-4 | requirement | done line operator-setup:4 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-6"></a>machine-done-6 | requirement | done line operator-setup:6 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-7"></a>machine-done-7 | requirement | done line operator-setup:7 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-done-7"></a>machine-done-7 | requirement | done line operator-setup:7 | PASS 2026-11-17 FLAKY | - | local | 2026-11-12 |
 | <a id="t-machine-done-8"></a>machine-done-8 | requirement | done line operator-setup:8 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-9"></a>machine-done-9 | requirement | done line operator-setup:9 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-10"></a>machine-done-10 | requirement | done line operator-setup:10 | not run | - | local | 2026-11-12 |
