@@ -83,7 +83,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
 | `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before the goal waits. |
-| `max_regression_rows` | 1200 | Most rows the regression table may hold; a goal adding rows past it is refused at qa. |
+| `max_regression_rows` | 1300 | Most rows the regression table may hold; a goal adding rows past it is refused at qa. |
 | `max_suite_seconds` | 1900 | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |

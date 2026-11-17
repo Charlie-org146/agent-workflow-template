@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.0.46 - 2026-11-17
+
+- Raise max_regression_rows to 1300 (owner o118, o119)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/row-cap-1300
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge origin/main (v1.0.44) into loop/row-cap-1300
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/row-cap-1300
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.45 - 2026-11-17
+
+- ci-small-groups: fix stale toys and rows (settings-table launchctl, milestone wording, budget suite time, mail.env row), print what failing checks saw
+- Toys replay what failing checks saw at the end, where CI keeps its last 20 lines
+- Merge remote-tracking branch 'origin/main' into loop/ci-small-groups
+- Stale toys: live board allows the budget line's tokens, automation stubs serve the paginated issue read, depth reference wording, a Command map for usage-readme; diagnostics for depth checks
+- settings.py fill-private makes ~/.workflow-loop before writing its repos file; depth toy names what full1's qa and ship steps printed
+- Depth toy: drop the health rules fill-repo leaves behind, so full1's qa and ship lanes start clean
+- Lane: re-render the Tests tables
+- Wiki: re-stamp Setup and How-to-use-Setup for ci-small-groups (audit.py restamp: mapped code only; fill-private's fresh-home fix changes no documented behavior)
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-small-groups
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-small-groups
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/ci-small-groups
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Open the regression workflow's runs on GitHub (Actions, regression) and open the first full run on main after this merges.
+   Expect: depth-on-board, depth-in-pr-body, depth-reference, aut-defect-issue, aut-old-issue-relabel, aut-email-regression, hlt4-feature-milestones, live-board-leftouts, automation-live, milestone-rows-seen-red, reg7-suite-time and health-mail-env-windows all show PASS in the run summary.
+2. On a machine with no `~/.workflow-loop` folder, run `python3 skills/workflow-setup/scripts/settings.py fill-private --file /tmp/flow.json`.
+   Expect: it prints FILLED and creates `~/.workflow-loop/repos`, with no traceback.
+
 ## v1.0.44 - 2026-11-17
 
 - No code changes

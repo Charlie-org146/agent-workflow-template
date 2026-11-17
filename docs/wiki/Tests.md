@@ -53,7 +53,7 @@
 | <a id="t-automation-table-health"></a>automation-table-health | defect | [#3857](https://github.com/jcl2018/agent-workflow-template/issues/3857) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-health-register-no-launchd"></a>health-register-no-launchd | requirement | AUT-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-health-mail-env-named"></a>health-mail-env-named | requirement | AUT-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
-| <a id="t-health-mail-env-windows"></a>health-mail-env-windows | requirement | AUT-6 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-health-mail-env-windows"></a>health-mail-env-windows | requirement | AUT-6 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-14 |
 | <a id="t-perms-undeclared"></a>perms-undeclared | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-not-written"></a>perms-not-written | requirement | AUT-9 | not run | - | local | 2026-11-14 |
 | <a id="t-perms-uncovered"></a>perms-uncovered | requirement | AUT-9 | not run | - | local | 2026-11-14 |

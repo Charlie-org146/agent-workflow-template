@@ -10,6 +10,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
 d=${1:-$(mktemp -d)}; rm -rf "$d"; mkdir -p "$d"
@@ -20,9 +21,9 @@ export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" LOOP_FLOW="$d/flow.
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
-fails=0
+fails=0; failed=""
 ok() { echo "PASS: $1"; }
-bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
+bad() { echo "FAIL: $1"; fails=$((fails + 1)); failed="$failed$1; "; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 C=$(cd "$(git rev-parse --git-common-dir)" && pwd)
 field() { python3 -c "import json,sys;d=json.load(open(sys.argv[1]));v=d;exec('for k in sys.argv[2].split(\".\"): v=(v or {}).get(k)');print(v)" "$C/loop/runs/$1.json" "$2"; }
@@ -40,7 +41,8 @@ new() { git switch -q main; $goal new "$1" --here --goal "Goal $1" --done "Line 
 
 echo "== setup writes the setting"
 check "setup writes review_depth full with its one-line explanation" '[ "$(python3 -c "import json;c=json.load(open(\".loop/config.json\"));print(c[\"review_depth\"], bool(c[\"_help\"][\"review_depth\"]))")" = "full True" ]'
-check "the settings reference lists review_depth with its default and a line" '$SET reference | grep -q "^| .review_depth. | .full. | full runs the plan and review skills"'
+check "the settings reference lists review_depth with its default and a line" '$SET reference | grep -q "^| .review_depth. | .full. | full runs the whole plan and review pipeline"'
+grep -q "^ref:" "$DIAG" 2>/dev/null || { echo "ref: $($SET reference 2>&1 | grep -E "review_depth|full_markers|REFUSED|Error" | cut -c1-110)"; echo "private: $($SET fill-private --file "$d/private-diag.json" 2>&1 | tail -2 | cut -c1-160)"; } >> "$DIAG" 
 check "the private half lists full_markers, and fill-private writes it" '$SET reference | grep -q "^| .full_markers. |" && $SET fill-private --file "$d/private.json" >/dev/null && grep -q "\"full_markers\"" "$d/private.json"'
 base() { git switch -q main; cfg "$@"; git commit -qam "Config: $*"; git push -q origin main; }  # the setting is read from the base branch
 cfg 'review_depth="Full"'
@@ -49,7 +51,7 @@ git commit -qam "bad depth"
 check "setup refuses an unknown review_depth too" 'python3 "$here/skills/workflow-setup/scripts/setup.py" --bare --dry-run 2>&1 | grep -q "REFUSED: review_depth is .Full."'
 git reset -q --hard HEAD~1
 check "fill-repo fills a config that already holds _help" '$SET fill-repo --repo . 2>&1 | grep -q "^FILLED" && python3 -c "import json;assert json.load(open(\".loop/config.json\"))[\"_help\"][\"review_depth\"]"'
-git checkout -q -- .loop/config.json
+git checkout -q -- .loop/config.json; rm -f .loop/health-rules.json  # fill-repo also writes its health rules; setup --bare does not, so the lanes would start dirty
 python3 - <<PY && ok "the config loaders read a config holding _help" || bad "loaders and _help"
 import sys
 sys.path.insert(0, "$here/skills/workflow-monitoring/scripts"); sys.path.insert(0, "$here/skills/workflow-delivery/scripts")
@@ -63,7 +65,8 @@ PY
 echo "== full is the default"
 base 'auto_approve=false'
 new full1
-for s in idea plan review qa ship; do step full1 $s >/dev/null; done
+for s in idea plan review qa ship; do step full1 $s > "$d/rec-full1-$s" 2>&1; done
+case "$(field full1 flow.ship)" in done*) ;; *) for s in qa ship; do echo "full1 $s: $(tail -3 "$d/rec-full1-$s" | cut -c1-220) | flow: $(tail -2 "$d/flow-full1-$s" | cut -c1-220)"; done >> "$DIAG";; esac
 check "with no setting change, every step records depth full" '[ "$(field full1 depth.review)" = full ] && [ "$(field full1 depth.idea)" = full ] && [ "$(field full1 flow.review)" = "done (depth full)" ]'
 python3 - "$here" <<'PY' > "$d/prompt"
 import sys; sys.path.insert(0, sys.argv[1] + "/skills/workflow-delivery/scripts")
@@ -71,6 +74,7 @@ import flow; print(flow.PROMPT.format(skill="s", step="review", slug="x", branch
 PY
 check "the review prompt says run the full pipeline, never condense, and write a DEPTH line" 'grep -q "review_depth is full: run the skill.s full pipeline" "$d/prompt" && grep -q "DEPTH: full. or .DEPTH: condensed" "$d/prompt"'
 out=$($goal pr full1 2>&1)
+grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" || { echo "pr full1: $(tail -4 <<<"$out" | cut -c1-200)"; echo "pr calls: $(grep -c "^pr create" "$FAKE_GH_DIR/calls.log") pr create, depth lines: $(grep -c "depth full" "$FAKE_GH_DIR/calls.log")"; } >> "$DIAG"
 check "the pull request body lists every step with its depth" 'grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" && grep -q -- "- idea: done (depth full)" "$FAKE_GH_DIR/calls.log"'
 
 echo "== condensed under full is refused"
@@ -93,7 +97,7 @@ out=$(FAKE_SKILL_OUT='PENDING: a gate\nDEPTH: condensed\nSTEP: pending' step con
 check "an auto-approved condensed review under full is refused too" 'grep -q "REFUSED (no try used): the review step ran condensed" <<<"$out" && ! grep -q AUTO-APPROVED <<<"$out"'
 out=$(FAKE_SKILL_OUT='DEPTH: condensed\nSTEP: failed tests broke' step cond1 review)
 check "a failed reply keeps its own reason, never a depth reason" 'grep -q "review failed: tests broke" <<<"$out" && ! grep -q "condensed while" <<<"$out"'
-git checkout -q -- .loop/config.json
+git checkout -q -- .loop/config.json; rm -f .loop/health-rules.json  # fill-repo also writes its health rules; setup --bare does not, so the lanes would start dirty
 
 echo "== condensed runs only when set"
 base 'review_depth="condensed"'
@@ -155,7 +159,8 @@ python3 - "$C/loop/runs/full1.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s["status"] = "running"; s.pop("pr", None); json.dump(s, open(sys.argv[1], "w"))
 PY
-$LB > "$d/board"
+$LB > "$d/board" 2>&1
 check "the live board shows each recorded step's depth and the setting" 'grep -A1 -x "    depth: idea full, plan full, review full, qa full, ship" "$d/board" | grep -qx "      full (setting full)"'
+grep -qx '      full (setting full)' "$d/board" || { echo "board around full1 (status $(field full1 status)):"; grep -n -A8 'full1' "$d/board" | grep -E "full1|depth|full\)" | head -6; } >> "$DIAG"
 
-[ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
+[ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }
