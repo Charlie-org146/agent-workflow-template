@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept agent-routing@994be445 -->
+Review: **Unreviewed** <!-- kept full-auto-all@08ab9232 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -51,10 +51,10 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle.
   - It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first.
   - It never stops or restarts a running goal to re-plan, and every change is logged with its reason and shown in the check-in.
-- MON-11: **Reviewed 2026-11-13** Full auto mode <!-- reviewed e3b3cf48 -->
-  - A setting, on by default. When it is on, the operation session applies each routine recommendation without asking, logs the question, the answer and why, and lists them in the next check-in; only the decisions in the next bullet and those that need my own words wait under Needs you.
-  - It never auto-answers a decision that is destructive (deletes data, a page, a repo or a deployment), that contradicts something I said, that spends money, or that changes a security or access setting; those wait under Needs you.
-  - When a decision needs my words, I answer in the operation session, which records my message verbatim with the IDs it covers (sessions.py owner-words) for the workers to use.
+- MON-11: **Unreviewed** Full auto mode
+  - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
+  - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private names, mail, Dropbox, records), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
+  - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.
   - Turning it off takes effect at the next decision.
 
 - MON-12: **Reviewed 2026-11-14** Session pool <!-- reviewed 804e0364 -->
@@ -112,7 +112,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 ## Success metrics
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
-- With full auto on, a run needs me only for decisions MON-11 excludes.
+- With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
 
 ## Tests
 
@@ -243,8 +243,8 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | MON-5 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | MON-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
-| [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on, when a worker asks a routine question, then the recommended answer is sent and logged; destructive, unlabeled, risky-word and owner-answered questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
-| [auto-owner-words-wait](Tests#t-auto-owner-words-wait) | requirement | MON-11 | Given full auto on, when a routine question asks for the owner's words, then it waits for an owner-words record and is not auto-approved (#4287). | not run |
+| [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | MON-11 | Given full auto on and a standing owner rule recorded, when a worker asks a recommended question, then the recommendation is sent with the rule record and logged; money, security, destructive-kind, unknown-kind and safety-class-word questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
+| [auto-owner-words-wait](Tests#t-auto-owner-words-wait) | requirement | MON-11 | Given full auto on and a standing owner rule recorded, when a question asks for the owner's words (an un-review, a criteria_max raise), then it is answered with its recommendation and not held for an owner-words record (o118, which supersedes #4287). | PASS 2026-11-17 |
 | [mon12-pool](Tests#t-mon12-pool) | requirement | MON-12 | Given a session pool, when it runs low, then the check-in asks to create every missing session in one step; pool.py add fills it, no pool hides the ask, and a full pool makes ready goals wait with the fix. | PASS 2026-11-10 |
 | [mon13-two-layers](Tests#t-mon13-two-layers) | requirement | MON-13 | Given a second session's claim, when it claims, then the first stays an operation session and nothing refuses or warns. | PASS 2026-11-12 |
 | [operation-checkout-ff](Tests#t-operation-checkout-ff) | requirement | MON-13 | Given a main checkout that is behind origin, when the operation loop runs a pass, then the checkout moves by fast-forward only, uncommitted work stays, and one line says it moved or could not. | not run |
