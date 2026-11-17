@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.44 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.43 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.42 - 2026-11-17
 
 - setup: add no paths when nothing changed; git rejects a bare -- pathspec (#4553)
