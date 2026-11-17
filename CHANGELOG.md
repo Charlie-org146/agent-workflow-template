@@ -1,5 +1,146 @@
 # Changelog
 
+## v1.0.39 - 2026-11-17
+
+- email-notify: notify.py mails each new check-in event (MON-5)
+- email-notify: render Tests tables and START.md
+- email-notify: MON-5 sub-bullet for email notification (owner record o95)
+- email-notify: review fixes: one mail per stopped or past-ETA goal; operate pass survives an unwritable checkin.txt
+- email-notify: render Tests
+- email-notify: notify.py loads mail.py lazily, so it runs alone in a package
+- Lane: re-render the Tests tables
+- email-notify: machine-caps checks only that machine.py stays out of skills/ (its stated rule), not that no goal adds a script
+- Lane: re-render the Tests tables
+- Wiki: re-stamp pages for email-notify (audit.py restamp, under operation-pc's authority)
+- Machines: machine-caps test text says what it checks now (machine.py stays out of skills/)
+- Merge origin/main into loop/email-notify (resolve wiki stamps, Tests rows and regression.tsv)
+- Merge remote-tracking branch 'origin/main' into loop/email-notify
+- email-notify: notify.py loads mail.py with importlib, so the package scan sees no non-stdlib import
+- Wiki: re-stamp Monitoring and How-to-use-Monitoring for email-notify after the main merge (audit.py restamp: mapped code only)
+- Merge origin/main into loop/email-notify (resolve wiki stamps and regression.tsv)
+- Wiki: re-stamp Setup, How-to-use-Setup and How-to-use-Machines for email-notify after the main merge (audit.py restamp: mapped code only)
+
+### How to verify
+
+1. On this PC, run `python3 skills/workflow-monitoring/scripts/notify.py status`.
+   Expect: `NOTIFY: on on this machine; ...`, with mail.env `ready` once you have written `~/.workflow-loop/schedule/mail.env`.
+2. With mail.env written, let the operation session make two passes (`operate.py run --once`, twice).
+   Expect: the first prints `NOTIFY: baseline N events, nothing sent`; after a new Needs you item appears, the next pass prints `NOTIFY: sent needs you <goal>` and one mail arrives naming the goal and what to do.
+3. Run another pass with nothing new.
+   Expect: no `NOTIFY:` line and no new mail.
+
+## v1.0.38 - 2026-11-17
+
+- docs check: How-to-use Kinds, listed commands and a links-only README (DOC-19, #4677)
+- How-to-use pages: What's delivered tables and Kind blocks; README and Home link the pages
+- Documentation: DOC-4 and DOC-5 for a links-only README, the Kind rules under DOC-19 (owner record o87); re-stamp Setup
+- Adoption writes an unwritten How-to-use stub per page; the machine and adopt toys read the How-to-use page and the README links
+- DOC-18: the README keeps only a link to each How-to-use page (owner record o91); re-render Tests
+- Toy fixtures: a links-only README, a How-to-use page for the fixture feature, the DOC-5 cases rewritten
+- Wiki: re-stamp Setup and the How-to-use pages; re-render Tests
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/howto-kinds
+- Merge remote-tracking branch 'origin/main' into loop/howto-kinds
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/howto-kinds
+- Wiki: update pages for howto-kinds
+- Wiki: re-stamp How-to-use-Documentation, How-to-use-Setup and Setup after the main merge (mapped code only)
+- Wiki: update pages for howto-kinds
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.37 - 2026-11-17
+
+- The home guard tells a toy's writes from another session's in skills-main and the schedule registry (#4760)
+- Merge remote-tracking branch 'origin/main' into loop/homeguard-skills-main
+- Merge remote-tracking branch 'origin/main' into loop/homeguard-skills-main
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.36 - 2026-11-17
+
+- Lanes: a deleted file that isn't NO_EFFECT reaches the root runners; the merge-guard toy commits on CI (#4554)
+- ci-affected-rows: commands.md note, Tests tables, Verify by hand
+- ci-affected-rows: row seen red, Regression pages, Verify by hand
+- Lanes: affected compares paths with forward slashes, so a NO_EFFECT file in a folder reaches no row on Windows (#4554)
+- ci-affected-rows: row seen red, Tests tables
+- Regression page: NO_EFFECT files in a folder reach no row on Windows too (#4554)
+- How-to-use-Regression: goal files are NO_EFFECT on Windows too (#4554)
+- Merge remote-tracking branch 'origin/main' into loop/ci-affected-rows
+- pr: record issue states and the lane's results
+
+### How to verify
+
+1. Run `python3 dev/toy/test-affected-deleted.py`.
+   Expect: four PASS lines, including "a deleted real file reaches the rows that name it and the root runner (['tb', 'tc'])" and "negative control: a deleted VERSION (NO_EFFECT) still reaches no row ([])"; exit 0.
+2. Open the pull request's `affected` check (regression-pr.yml) on GitHub, or the next full regression run.
+   Expect: the 7 rows from #4554 (affected-quiet-release, merge-wiki-head, merge-wiki-rename-refused, merge-wiki-skill-refused, pass3-symlink-page, merge-reach-fail-closed, merge-base-undiffable) are PASS.
+
+## v1.0.35 - 2026-11-17
+
+- Documentation: Non-goals no longer leaves milestone sync for later (owner o85); a test for it
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/doc-milestone-sync
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.34 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.33 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.32 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.31 - 2026-11-17
+
+- settings-ref: regenerate the settings reference and START.md
+- settings-ref: rows seen red, render the Tests tables
+- Wiki: re-stamp pages for settings-ref
+- Merge branch 'loop/settings-ref' of https://github.com/jcl2018/agent-workflow-template into loop/settings-ref
+- Merge origin/main into loop/settings-ref
+- Merge remote-tracking branch 'origin/main' into loop/settings-ref
+- Merge remote-tracking branch 'origin/main' into loop/settings-ref
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.30 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.29 - 2026-11-16
 
 - No code changes

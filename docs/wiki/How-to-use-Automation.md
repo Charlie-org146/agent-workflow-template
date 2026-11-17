@@ -5,6 +5,14 @@
 
 Runs health on your always-on machine (the Mac, or a Windows PC with `local register`;.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `automation.py` | Command | Posts the digest comment each round and installs the local schedule. | `python3 skills/workflow-health/scripts/automation.py digest`. |
+| `mail.py` | Command | Mails the owner the round's digest, at most once. | `python3 skills/workflow-health/scripts/mail.py send`. |
+| `.loop/config.json` | API/file contract | The schedule and digest settings. | Say "Run health every 12 hours instead"; it changes `health_cron`. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -26,6 +34,27 @@ Each requirement and how it is delivered:
 - AUT-4: A digest by email. Example, from the aut-digest-create test: given no digest issue yet, when the first round ends, then the Automation digest issue is created and pinned.
 - AUT-8: Every routine has a runbook an agent follows exactly. Example, from the runbook-repo test: given this repo's Health and Regression pages, when their Runbook sections are read, then each routine in the registry has every field, says a full run is live, and names a fixture or dry run as forbidden.
 - AUT-9: Every routine declares what it may do, in its repo. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1.
+
+### Command: automation.py
+- **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]` or `local status`
+- **Dry run:** `automation.py local tick --dry-run` shows what a tick would run.
+- **Reads:** the workflow files, `.loop/config.json` and the issues of the round.
+- **Writes:** one comment on the pinned digest issue; `local install` writes the launch agent.
+- **Exit codes:** 0 after it posts or prints; nonzero when an install is refused.
+
+### Command: mail.py
+- **Command:** `python3 skills/workflow-health/scripts/mail.py send`
+- **Dry run:** none: `mail.py test` sends one fixed test mail through the configured sender.
+- **Reads:** the digest comment and the sender's secrets, never printed.
+- **Writes:** the digest comment's marker (`mailing`, then `mailed`).
+- **Exit codes:** every outcome is one `MAIL:` line ending in a code; the codes are below.
+
+### API/file contract: .loop/config.json
+- **Path:** `.loop/config.json`
+- **Fields:** `health_cron`, `digest_owner`, `digest_mail` and the `automation` list.
+- **Example:** `"digest_mail": "cloudflare"` picks the Cloudflare sender.
+- **Writer:** workflow-setup writes the defaults; the owner edits a value.
+- **Reader:** the scheduled rounds, the digest and the mail step.
 
 ## URLs and deployments
 

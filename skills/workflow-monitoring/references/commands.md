@@ -199,6 +199,12 @@ loosen permissions, edit done lines or change `agent_command`.
 
 - `checkin.py [--since ISO]`: the check-in `operate.py run` prints each pass, in the reply hook's layout (headline, All
   sessions, Re-plan and Auto-answered when there are any, Dependencies, Needs you, Coming up). Read-only.
+- `notify.py send [--checkin FILE]` (MON-5): `operate.py run` saves each check-in to `<common>/loop/checkin.txt` and runs
+  it. Off unless the private setting `notify_email` is true on this machine. It mails one message per new event (a
+  Needs you item, a stopped or failed goal, a goal past its ETA, a goal merged and released) through workflow-health's
+  `mail.py`, with the variables in the schedule's `mail.env`; sent keys stay in `<common>/loop/notified.json`, so a
+  repeat sends nothing, and the first run records a baseline and sends none. Prints `NOTIFY:` lines only, never the
+  address. `notify.py status` says whether it is on, whether mail.env is there, and how many events it has seen.
 - `replan.py plan` logs new starts, merge and split proposals and the merge line, each once with its reason, in
   `<common>/loop/replan.log`; `replan.py since ISO` prints them. Never stops a goal; applies nothing.
 - `auto.py pass [--dry-run]` answers each waiting goal's routine question once (`full_auto`), logs
@@ -765,3 +771,12 @@ next and what it unblocks, or tap it to open the same text in the list below. Th
 - Merge only when told, by the owner, for that pull request. Otherwise never merge.
 - Never archive a worker's work. The board only notes when something could be archived; the owner decides.
 - Never loosen permissions, edit done lines or change `agent_command`.
+
+### merge.py's apply step re-renders generated blocks (DOC-2, #4632)
+
+Before it merges, `merge.py` runs `operate.py apply SLUG BRANCH`, which re-stamps pages stale only through mapped code (a How-to-use page too) and now
+also re-renders, in the same wiki-only commit, the generated blocks and Tests tables that differ from a fresh render only
+because the template, main or a regression row moved (`audit.py rerender`). A file is re-rendered only when the branch added no
+line to its generated part that a fresh render lacks and the render touches nothing outside that part; a hand edit inside a
+block, or any other difference, is put back and stays STALE for the worker. `operate.py wiki-only` accepts README.md in that commit
+when only its generated blocks changed.

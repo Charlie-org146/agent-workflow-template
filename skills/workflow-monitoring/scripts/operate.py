@@ -10,7 +10,7 @@ usage: operate.py <command> [options]
       (--board adds the live board and its changes). Then it waits the gap from `board.py cadence`,
       or less: a worker that reports (a run record changes) or a goal added to the queue starts the next pass at once.
       It stops when nothing is queued, running or waiting, or when the cadence is off. --once makes one pass.
-      Each pass also runs replan.py (MON-10) and auto.py pass (MON-11), and prints the check-in (checkin.py), not the
+      Each pass also runs replan.py (MON-10) and auto.py pass (MON-11), prints the check-in (checkin.py) and mails its new events (notify.py), not the
       live board: the board prints only for report, dashboard and "where do things stand" (MON-4; --board adds it).
   send SLUG TEXT [--source owner|auto]
       send a worker an answer or a follow-up (worker.py send); the worker's agent sees it the next time it runs goal.py.
@@ -26,6 +26,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -165,7 +166,15 @@ def one_pass(top, common, args):
         code, said = script(name, *more, cwd=top)
         if code:
             print(graph.localize(said.strip()))
-    print(graph.localize(script("checkin.py", cwd=top)[1].rstrip()))
+    text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
+    print(text)
+    try:
+        with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
+            handle.write(text + chr(10))
+    except OSError:
+        pass
+    said = script("notify.py", "send", cwd=top)[1].strip()  # MON-5: mail each new event, if on here
+    said and print(said)
     script("board_page.py", "checkin", cwd=top)
     try:
         with open(board) as handle:
@@ -277,8 +286,15 @@ def wiki_only(top, old, new):
     rows = [(line.split("\t")[0].split(), line.split("\t")[1:]) for line in done.stdout.split("\n") if line]
     return not done.returncode and bool(rows) and all(
         len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
-        and p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md"
+        and ((p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md")
+             or (p[0] == "README.md" and m[4] == "M" and readme_blocks_only(top, old, new)))  # README: its generated blocks only (#4632)
         for m, p in rows)
+
+
+def readme_blocks_only(top, old, new):
+    """True when README.md reads the same at OLD and NEW outside its generated Settings, Automation and template blocks."""
+    bare = lambda ref: re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", "", run(["git", "show", ref + ":README.md"], cwd=top).stdout, flags=re.S)
+    return bare(old) == bare(new)
 
 
 def apply(slug, branch):
@@ -295,9 +311,11 @@ def apply(slug, branch):
         base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
-        said = pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()
-        if said and run(["git", "add", "-A", "--", folder], tree).returncode == 0:
-            run(["git", "commit", "-q", "-m", "Wiki: re-stamp pages for %s" % slug], tree)
+        again = run([sys.executable, os.path.join(docs, "audit.py"), "rerender", base], tree).stdout.strip()  # generated blocks first (#4632)
+        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
+        said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
+        if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
+            run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
     except (OSError, ValueError):

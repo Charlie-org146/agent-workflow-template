@@ -5,6 +5,13 @@
 
 Brings a second Mac or Windows machine to the same working setup as the one you run on, from a git clone and one command.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `machine.py` | Command | Plans, applies and checks a second machine's setup. | `python3 dev/machine.py` (a dry run), then `machine.py apply --repo <your repo>`. |
+| health-regression | Scheduled routine | The scheduled health and regression round a second machine runs every 4 hours. | `machine.py apply` registers it; its Runbook is below. |
+
 ## How to reach or run it
 
 Say these to the agent; each feature page has the exact commands.
@@ -18,6 +25,13 @@ Say these to the agent; each feature page has the exact commands.
 Each requirement and how it is delivered:
 
 - MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
+
+### Command: machine.py
+- **Command:** `python3 dev/machine.py [apply --repo REPO | check | record-task NAME MODE]`
+- **Dry run:** `machine.py` with no `apply` is a dry run; `check` lists each gap and writes nothing.
+- **Reads:** this machine's skills links, scheduled tasks and the followed repos.
+- **Writes:** `apply` links the skills and registers one scheduled task per adopted repo; `record-task` notes a permission mode.
+- **Exit codes:** 0 when the machine matches; nonzero when `check` finds a gap, each named with its fix.
 
 ## URLs and deployments
 
@@ -45,3 +59,5 @@ Each requirement and how it is delivered:
 
 - PRD page: [Machines](Machines)
 - Backlog: [Backlog: Machines](https://github.com/jcl2018/agent-workflow-template/milestones)
+
+<!-- kept email-notify@dc2a6d53 -->
