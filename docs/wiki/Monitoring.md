@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept ci-small-groups@a1d81994 -->
+Review: **Reviewed 2026-11-16** <!-- prd P=41bfc9ae R=c0cc0c14 N=9967b317 M=0fde98a8 U=03828777 --> <!-- kept health-feature-table@b59b6c9c -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 

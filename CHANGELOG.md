@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.41 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.40 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.39 - 2026-11-17
 
 - email-notify: notify.py mails each new check-in event (MON-5)

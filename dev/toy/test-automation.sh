@@ -116,8 +116,9 @@ python3 - "$c" <<'PY' && ok "the digest groups by feature, a milestone title is 
 import sys
 c = open(sys.argv[1]).read()
 heads = [l for l in c.splitlines() if l.startswith("### ")]
-assert heads == ["### Alpha", "### No feature"], heads
-alpha, nofeature = c.split("### Alpha")[1].split("### No feature")[0], c.split("### No feature")[1]
+assert heads == ["### Alpha", "### Other"], heads
+alpha, nofeature = c.split("### Alpha")[1].split("### Other")[0], c.split("### Other")[1]
+
 assert "[#6]" in alpha and "[#9]" in alpha and "[#5]" not in alpha, alpha
 assert "[#5]" in nofeature and "(milestone v1.0)" in nofeature and "(milestone Alpha)" in alpha, (alpha, nofeature)
 assert "Backlog" not in c and "No milestone" not in c

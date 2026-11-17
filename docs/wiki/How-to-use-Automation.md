@@ -22,7 +22,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Set up the scheduled routines" | The regression workflow is written to run every 4 hours in GitHub Actions (public repo), for you to merge; health runs every 4 hours on your Mac, never in Actions. |
 | "Run health every 12 hours instead" | `health_cron` changes in `.loop/config.json` and your Mac's next round follows it; no workflow is written. |
 | "Turn off the scheduled health run" | Scheduled health runs write nothing and say the routine is off; you can still start one by hand. |
-| "Post the automation digest" | One comment on the pinned digest issue lists what ran, the new, still-open and fixed issues, and a request per open issue. |
+| "Post the automation digest" | One comment on the pinned digest issue lists what ran, the health findings table (feature, group, rule, severity, finding, issue), the new, still-open and fixed issues per feature (Other when none), and a request per open issue. |
+
 | "Write the scheduled regression run again" | The regression workflow is rewritten from the current config, so its schedule matches. |
 
 Each requirement and how it is delivered:
@@ -69,3 +70,5 @@ Regression runs every 4 hours in GitHub Actions for a public repo, or on your Ma
 
 - PRD page: [Automation](Automation)
 - Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
+
+<!-- kept health-feature-table@b869bb8a -->
