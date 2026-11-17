@@ -99,7 +99,7 @@ if want SET-4; then
   grep -q '"version": "1.1.0"' "$d/agent/skills/workflow-package.json" || no "stamp not moved"
   [ "$(git branch --show-current)" = main ] && [ -z "$(git status --short)" ] || no "update changed the checkout"
   git rev-parse -q --verify workflow-update-v1.1.0 >/dev/null || no "no commit on workflow-update-v1.1.0"
-  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings: $(git diff --stat main workflow-update-v1.1.0 | tail -6 | tr "
+  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings: pages $([ "$(pages workflow-update-v1.1.0)" = "$before" ] && echo same || echo DIFF) keys: $(python3 -c "import json,sys;a=json.loads(sys.argv[1]);b=json.loads(sys.argv[2]);print({k:(a.get(k),b.get(k)) for k in set(a)|set(b) if a.get(k)!=b.get(k)})" "$kbefore" "$(keys workflow-update-v1.1.0)" | cut -c1-700)"
 " "|") $(diff <(echo "$kbefore") <(keys workflow-update-v1.1.0) | head -4 | tr "
 " "|")"
   git show workflow-update-v1.1.0:.loop/config.json | grep -q '"template_version": "1.1.0"' || no "template_version not stamped"
