@@ -65,3 +65,4 @@ Each requirement and how it is delivered:
 - Backlog: [Backlog: Machines](https://github.com/jcl2018/agent-workflow-template/milestones)
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
+<!-- kept full-auto-all@08ab9232 -->

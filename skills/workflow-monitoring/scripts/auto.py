@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""Full auto (MON-11): the operation session answers a worker's routine decision with its recommended option.
+"""Full auto (MON-11, o118): the operation session answers every waiting decision that names a recommended option, unless it is a safety class.
 
-usage: auto.py pass [--dry-run]  decide each waiting goal's new question once (operate.py runs it every pass)
-       auto.py since ISO       the decisions logged after a time (the check-in lists those since the last one)
-       auto.py decide-text     read a question on stdin, print AUTO or WAITS with why (for tests and by hand)
+usage: auto.py pass [--dry-run] | since ISO | decide-text   (operate.py runs pass every round; the check-in lists since)
 
-`full_auto` in .loop/config.json (on by default) is read at each decision. Only the operation session answers; a worker's
-`sessions.py report --status waiting --ask Q --words W ... --recommend W --kind K` just records the question. A decision
-is answered only when all hold, else it waits under Needs you with its reason (logged once per question):
-- its kind is `routine` (destructive, money, security, owner, a missing or unknown kind all wait);
-- it names a recommended answer that is one of its words;
-- no risky word (WORDS below, whole words) appears in the question or answer, nor a path matching `risky_paths`;
-- the owner hasn't answered that goal before (answers.jsonl, source owner): full auto never answers over the owner's word.
-An answer goes through `operate.py send SLUG WORDS --source auto`. Each decision is appended to <git common dir>/loop/auto.log
-as `time | slug | AUTO|WAITS | question | answer | reason`; the check-in lists each auto answer with the words that revert it.
+`full_auto` (on by default) is read at each decision. A worker's `sessions.py report --status waiting --ask Q --words W ... --recommend W
+--kind K` records the question. It is answered, whatever its kind, once a standing record exists (sessions.py owner-words TEXT --ids
+full-auto-rule: the owner's o118 words); it waits under Needs you, with why, when its kind is destructive, money, security or unknown, it
+is an ETA choice, its goal is always-ask (a record covering always-ask:SLUG or *), it has no recommended answer, or the question or
+answer is in a safety class (CLASSES) or names a risky_paths path. The answer goes through `operate.py send SLUG "WORDS (full auto,
+owner rule oN)" --source auto`. Each decision is a line of <git common dir>/loop/auto.log: `time | slug | AUTO|WAITS | question | answer | reason`.
 """
 import argparse
 import datetime
@@ -31,15 +26,18 @@ import graph  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 KINDS = ("routine", "destructive", "money", "security", "owner")
-END = r"(?:e|es|ed|ing|s|ion|ions|al|als)?"  # the endings a risky word may take: delete, deletes, deleted, deleting
-WORDS = ["delet", "remov", "drop", "dropp", "rm", "wip", "truncat", "discard", "forc", "overwrit", "overwritten", "renam",
-         "publish", "releas", "deploy", "deployment", "merg", "push", "pay", "payment", "purchas", "billing", "cost",
-         "spend", "spent", "money", "permission", "access", "token", "secret", "credential", "password", "key", "licens",
-         "migrat", "schema", "auth", "authenticat", "authoriz", "secur", "security", "rebas", "amend", "squash", "eras",
-         "destroy", "uninstall", "kill", "unlink", "rmdir", "removal", "revert", "rewrit", "rewritten"]
-RISKY = re.compile(r"\b(?:%s)%s\b|reset\s+--hard|git\s+clean" % ("|".join(WORDS), END), re.I)
-# A PENDING line that asks for the owner's words (a reviewed change, a criteria_max raise) is never full auto's (#4287).
-OWNER_WORDS = re.compile(r"owner[- ]words|criteria_max|\b(?:un|re)-?review|reviewed\s+(?:page|requirement|prd)|\b(?-i:[A-Z]{2,5})-\d+\b[^.?]{0,60}\b(?:sub-?bullet|wording)", re.I)
+RULE = "full-auto-rule"  # the owner-words id of the standing record
+
+
+def cls(stems):  # whole words with an ending (delete, deleted); "~" is a space
+    return re.compile(r"\b(?:%s)(?:e|es|ed|ing|s|ion|ions|al|als)?\b" % "|".join(stems.split()).replace("~", " "), re.I)
+
+
+CLASSES = {"destructive": cls("delet remov drop dropp rm wip truncat discard clos cancel purg unpublish reset clean~up forc overwrit overwritten renam rebas amend squash eras destroy uninstall kill unlink rmdir revert rewrit rewritten publish releas deploy deployment migrat schema reset~--hard git~clean"),
+           "money": cls("pay payment purchas billing invoice money credits? card~on~file subscription buy bill paid price charg dollar usd cost~(?:money|\\$)"),
+           "security": cls("secret credential password passphrase api[~_-]?key ssh[~_-]?key private~key signing~key (?:api|access|auth|bearer)~token permission allowlist allow~rule sandbox auth authenticat\\w* authoriz\\w* secur\\w* licens access~control (?:write|admin|root)~access grant rotat"),
+           "private data": cls("private[~-]name private[~-]list private[~-]data private[~-]repos? dro" "pbox mail gmail e-?mail inbox smtp (?:customer|personal|private)~records?"),
+           "steward merge": cls("steward merg\\w*(?:\\W+\\w+){0,3}\\W+(?:pull~request|PR|\\#\\d+)")}
 
 
 def top():
@@ -64,46 +62,39 @@ def key_of(text):
     return " ".join(str(text or "").lower().split())
 
 
-def owner_answered(folder, slug):
-    try:
-        with open(os.path.join(folder, "answers.jsonl")) as handle:
-            for line in handle:
-                try:
-                    item = json.loads(line)
-                except ValueError:
-                    continue
-                if item.get("slug") == slug and item.get("source", "owner") == "owner":
-                    return True
-    except OSError:
-        pass
-    return False
+def standing(root):
+    """The latest owner-words record covering full-auto-rule, else ''."""
+    rows = [r[0] for r in owner_rows(root) if RULE in r[4].split(",")]
+    return rows[-1] if rows else ""
 
 
-def why_not(waiting, cfg, answered=False):
+def always(root, slug):
+    return any({"always-ask:" + slug, "always-ask:*"} & set(r[4].split(",")) for r in owner_rows(root))
+
+
+def why_not(waiting, cfg, ask_always=False):
     """'' when full auto may answer this decision, else why it waits."""
     if cfg.get("full_auto", True) is False:
         return "full_auto is off"
     kind, rec = waiting.get("kind") or "", waiting.get("recommend") or ""
-    if kind not in KINDS:
-        return "no kind given" if not kind else "unknown kind %s" % kind
-    if kind != "routine":
+    if kind and kind not in KINDS:
+        return "unknown kind %s" % kind
+    if kind in ("destructive", "money", "security"):
         return "a %s decision is the owner's" % kind
+    if waiting.get("eta") or ask_always or re.search(r"\bETA\b", str(waiting.get("ask"))):
+        return "an ETA choice or an always-ask goal is the owner's"
     if not rec or rec not in (waiting.get("words") or []):
-        return "no recommended answer among its words"
+        return "no recommended answer"
     said = " ".join([str(waiting.get("ask") or ""), rec])
-    if OWNER_WORDS.search(said):
-        return "it asks for owner words"
-    hit = RISKY.search(said)
-    if hit:
-        return "it mentions %s" % hit.group(0).lower()
+    for name, found in CLASSES.items():
+        if found.search(said):
+            return "safety class %s: %s" % (name, found.search(said).group(0).lower())
     for pattern in cfg.get("risky_paths") or []:
         try:
             if re.search(pattern, said):
-                return "it names a risky path (%s)" % pattern
+                return "risky path %s" % pattern
         except re.error:
             continue
-    if answered:
-        return "the owner has answered this goal before"
     return ""
 
 
@@ -116,9 +107,9 @@ def log(folder, slug, verdict, waiting, answer, reason, at):
 
 
 def decide_all(root=None, now=None, dry=False):
-    """One pass: each waiting goal's newest question decided once. Returns the log lines written (dry: would write)."""
+    """One pass: each waiting goal's newest question decided once; the log lines written (dry: would write)."""
     root = root or top()
-    folder, cfg = loop_dir(root), config(root)
+    folder, cfg, rule = loop_dir(root), config(root), standing(root or top())
     at, out, runs_dir = now or stamp(), [], os.path.join(folder, "runs")
     for name in sorted(os.listdir(runs_dir)) if os.path.isdir(runs_dir) else []:
         path = os.path.join(runs_dir, name)
@@ -126,26 +117,28 @@ def decide_all(root=None, now=None, dry=False):
         if not isinstance(run, dict) or run.get("status") != "waiting" or not isinstance(run.get("waiting"), dict):
             continue
         waiting = run["waiting"]
-        if waiting.get("auto") or graph.foreign(run):
+        if graph.foreign(run) or (waiting.get("auto") and not (waiting["auto"].get("norule") and rule)):
             continue
-        reason = why_not(waiting, cfg, owner_answered(folder, run.get("slug")))
+        reason = why_not(waiting, cfg, always(root, run["slug"]))
         if reason == "full_auto is off":
             continue  # nothing is marked: turning it on later still answers
+        norule = not reason and not rule
+        reason = reason or ("no standing owner rule recorded: sessions.py owner-words TEXT --ids %s" % RULE if norule else "")
         if dry:
             out.append("WOULD %s %s: %s" % ("WAIT" if reason else "ANSWER", run["slug"], reason or waiting["recommend"]))
             continue
         say = lambda verdict, answer, why: out.append(log(folder, run["slug"], verdict, waiting, answer, why, at))
         if reason:
             say("WAITS", "", reason)
-            waiting["auto"] = {"verdict": "waits", "why": reason, "at": at}
+            waiting["auto"] = {"verdict": "waits", "why": reason, "at": at, "norule": norule}
         else:
             words = waiting["recommend"]
-            sent = subprocess.run([sys.executable, os.path.join(HERE, "operate.py"), "send", run["slug"], words, "--source", "auto"],
+            sent = subprocess.run([sys.executable, os.path.join(HERE, "operate.py"), "send", run["slug"], "%s (full auto, owner rule %s)" % (words, rule), "--source", "auto"],
                                   cwd=root, capture_output=True, text=True)
             if sent.returncode:
                 say("WAITS", "", "the answer could not be sent")
                 continue
-            say("AUTO", words, "routine, recommended")
+            say("AUTO", words, "%s, recommended, owner rule %s" % (waiting.get("kind") or "no kind", rule))
             waiting["auto"] = {"verdict": "answered", "words": words, "at": at}
         fresh = bs.read_json(path)
         if isinstance(fresh, dict) and fresh.get("status") == "waiting" and key_of((fresh.get("waiting") or {}).get("ask")) == key_of(waiting.get("ask")):
@@ -188,8 +181,7 @@ def main():
     return 0
 
 
-# The owner's messages (sessions.py owner-words TEXT --ids A,B): one line each in <git common dir>/loop/owner-words.tsv:
-# id (o1, ...), UTC time, the operation session's id, the text as JSON, the IDs or pages it covers.
+# Owner words (sessions.py owner-words TEXT --ids A,B): <git common dir>/loop/owner-words.tsv, id, UTC time, session, JSON text, IDs.
 
 
 def owner_words_path(root="."):
@@ -197,7 +189,7 @@ def owner_words_path(root="."):
 
 
 def owner_rows(root="."):
-    """The owner-words records as [id, time, session, text, covers] rows."""
+    """The owner-words records as [id, time, session, text, covers]."""
     try:
         with open(owner_words_path(root), encoding="utf-8") as handle:
             return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]
@@ -205,34 +197,27 @@ def owner_rows(root="."):
         return []
 
 
-def owner_words_add(text, ids):
-    """Append the message and print OWNER-WORDS <id> <ids>; refuse a worker, an empty message or no ids."""
-    if os.environ.get("LOOP_ROLE") == "worker":
-        sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
-    ids = [item.strip() for item in ids.split(",") if item.strip()]
-    if not text.strip() or not ids:
-        sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
-    where = owner_words_path()
-    os.makedirs(os.path.dirname(where), exist_ok=True)
-    count = 0
-    if os.path.exists(where):
-        with open(where, encoding="utf-8") as handle:
-            count = sum(1 for line in handle if line.strip())
-    with open(where, "a", encoding="utf-8") as handle:
-        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, stamp(), os.environ.get("LOOP_OPERATION_SESSION") or "operation",
-                                              json.dumps(text, ensure_ascii=False), ",".join(ids)))
-    print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
-    return 0
+def auto_rows(root):
+    """(rule, FAIL, text): auto-record (an AUTO line without an existing standing record), auto-safety (an AUTO line in a safety class)."""
+    out, rules = [], {r[0]: r[1] for r in owner_rows(root) if RULE in r[4].split(",")}
+    first = min(rules.values(), default="")  # AUTO lines from before the rule existed are history
+    for p in (map(str.strip, x.split(" | ")) for x in since(root, "")):
+        p = list(p)
+        if len(p) > 5 and p[2] == "AUTO" and p[0] >= first:
+            found = re.search(r"owner rule (o\d+)", p[5])
+            found and found.group(1) in rules or out.append(("auto-record", "FAIL", "%s has an auto answer with no standing owner rule record" % p[1]))
+            hit = next((n for n, x in CLASSES.items() if x.search(p[3] + " " + p[4])), "")
+            hit and out.append(("auto-safety", "FAIL", "%s was auto-answered in safety class %s" % (p[1], hit)))
+    return out
 
 
-# --- the hard ETA (GRD-14, o52): active minutes a goal may run, set at freeze. Past it the goal waits under Needs you: ship now,
-# extend once, or defer; only `goal.py set --eta-extend|--eta-choice` with an owner record moves it.
+# --- the hard ETA (GRD-14, o52): past it the goal waits under Needs you (ship now, extend once, defer); only `goal.py set` with an owner record moves it.
 
 ETA_FLOOR = 30
 
 
 def eta_margin(cfg):
-    """The ETA margin as a factor: eta_margin_percent (0 to 300; anything else reads as the default 25)."""
+    """The ETA margin factor: eta_margin_percent (0 to 300, else 25)."""
     value = (cfg or {}).get("eta_margin_percent", 25)
     return 1 + (value if isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= 300 else 25) / 100
 
@@ -266,7 +251,7 @@ def eta_minutes(seen):
 
 
 def eta_open(seen):
-    """Pre-flight items (#4535) still unanswered; the ETA starts when none is."""
+    """Pre-flight items (#4535) still unanswered."""
     done = (seen.get("preflight_answers") or {}).get("answers") or {}
     return [i for i in (seen.get("preflight") or {}).get("items") or [] if i.get("id") not in done]
 
@@ -276,7 +261,7 @@ def eta_start(seen):
 
 
 def eta_left(seen, at):
-    """Seconds of hard ETA left (0 once passed); None with no ETA or while its pre-flight is open."""
+    """Seconds of hard ETA left; None with no ETA or an open pre-flight."""
     held = eta_minutes(seen)
     return None if not held or eta_open(seen) else max(0, held - bs.active_minutes(seen, at) + eta_start(seen)) * 60
 
@@ -295,7 +280,7 @@ def eta_text(seen, at):
 
 
 def eta_wait(state, spent, save):
-    """Put a goal past its ETA under Needs you (kind owner: never auto-answered)."""
+    """Put a goal past its ETA under Needs you (never auto-answered)."""
     slug = state["slug"]
     if (state.get("waiting") or {}).get("eta"):
         return
@@ -313,6 +298,8 @@ def eta_record(g, rid, slug, what):
     if not rid:
         g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
     found = [r for r in owner_rows() if r[0] == rid]
+    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and (what.startswith("the recommended") or what == "raising a budget" and any(" | %s | AUTO | " % slug in x and "budget" in x for x in since(top(), ""))):
+        return rid  # the standing rule, for a goal full auto answered: reusable (never an ETA move)
     if not found or slug not in found[-1][4].split(","):
         g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
     for path in glob.glob(os.path.join(g.state_dir(), "*.extra.json")):

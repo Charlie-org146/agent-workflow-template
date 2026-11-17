@@ -25,6 +25,7 @@ Security and privacy, Size, Performance check-time and Hygiene idle-sessions rul
   idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no pool)
   eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-14): a live goal with no ETA (WARN); an extension with no
                          covering owner record, or a goal a step past its ETA not waiting for the owner (FAIL)
+  auto-safety, auto-record   full auto (MON-11): an AUTO answer in a safety class, or with no standing owner rule record (FAIL)
 """
 import datetime
 import glob
@@ -359,11 +360,11 @@ def idle_sessions(root):
     return out
 
 
-ETA = ("eta-missing", "eta-extended", "eta-overrun")
+ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
 
 
 def eta(root, name):
-    """One rule's rows from workflow-monitoring's auto.eta_rows."""
+    """One rule's rows from workflow-monitoring's auto.eta_rows and auto_rows."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "workflow-monitoring", "scripts", "auto.py")
     if not os.path.exists(path):
         return [row("UNREAD", "hygiene", "eta", name, "workflow-monitoring is not installed beside this skill")]
@@ -374,8 +375,8 @@ def eta(root, name):
         spec.loader.exec_module(module)
     finally:
         sys.path.pop(0)
-    return [row(level, "hygiene", text.split()[0], name, text, "goal.py set --eta-extend or --eta-choice with an owner record")
-            for rule, level, text in module.eta_rows(root) if rule == name]
+    return [row(level, "hygiene", text.split()[0], name, text, "sessions.py owner-words with --ids full-auto-rule, or goal.py set with an owner record")
+            for rule, level, text in module.eta_rows(root) + module.auto_rows(root) if rule == name]
 
 
 GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permissions": workflow_permissions,
