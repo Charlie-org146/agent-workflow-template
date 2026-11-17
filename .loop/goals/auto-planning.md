@@ -16,4 +16,13 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In a scratch git repo with `.loop/config.json` and a `.loop/queue.md` holding two goals (`- slug: a | touches: README.md | goal: Fix the title | done: it reads right` and `- slug: b | touches: skills/x,docs/y | goal: Make lanes work on native Windows | done: p | done: q | done: r | done: s`), run `python3 <repo>/skills/workflow-monitoring/scripts/monitor.py plan --machines pc=6,mac=7 --first-release v2.0`.
+   Expect: one line per goal with a release (v2.0), `est`, `ETA`, a token budget, a machine, an agent and a reason (b on pc as Windows-only), a final `SEND to the other operation session` line, and `.loop/queue.md` unchanged.
+2. Run `python3 <repo>/skills/workflow-monitoring/scripts/monitor.py plan approve --owner-record o9`.
+   Expect: `REFUSED: approving takes the owner's words`, and the queue unchanged.
+3. Put a line `o9<TAB>2026-01-01T00:00:00Z<TAB>operation<TAB>"approve"<TAB>plan` in `<git dir>/loop/owner-words.tsv` and run `monitor.py plan approve --owner-record o9 a machine=mac`.
+   Expect: `APPROVED`, and each queue line now ends with `| release: ... | machine: ... | agent: ...`, with a on mac.
+4. Run `monitor.py plan` again.
+   Expect: both goals are gone from the plan (they have a release), and a goal with a `machine:` field shows as `LEFT OUT <slug>: already started`.
+5. Run `python3 <repo>/skills/workflow-monitoring/scripts/monitor.py plan --check` with `agents.json` routing `plan` to a profile whose command doesn't exist.
+   Expect: one `AGENT_FALLBACK` line, `Notes from claude:` under Cross-check, and the plan still printed.
