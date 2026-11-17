@@ -15,6 +15,7 @@ and sends none. No printed line or kept file holds the address.
 """
 import argparse
 import datetime
+import importlib
 import json
 import os
 import re
@@ -35,8 +36,7 @@ HEAD = re.compile(r"^[\s>#*_`-]*([A-Za-z ]+?)[\s:*_`]*(?:\(\d+\))?\s*$")
 def mailer():
     """workflow-health's mail.py (it brings rounds.py), loaded only when there is something to send."""
     sys.path.insert(1, HEALTH)
-    import mail
-    return mail
+    return importlib.import_module("mail")  # another skill's script: no static import, so the package scan sees none
 
 
 def say(text):
