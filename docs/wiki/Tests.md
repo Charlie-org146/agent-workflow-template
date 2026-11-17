@@ -566,6 +566,9 @@
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-machine-operation-peer"></a>machine-operation-peer | requirement | MCH-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-machine-backup-restore"></a>machine-backup-restore | requirement | MCH-3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-machines-handover"></a>machines-handover | requirement | MCH-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-mailbox-two-mails"></a>mailbox-two-mails | requirement | MCH-5 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-desk-lists"></a>desk-lists | requirement | MCH-6 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 
 ## Monitoring
 
@@ -765,10 +768,7 @@
 | <a id="t-mon5-for-cell-sentence"></a>mon5-for-cell-sentence | requirement | MON-5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-eta-checkin-table"></a>eta-checkin-table | requirement | MON-5 | not run | - | local | 2026-11-16 |
 | <a id="t-held-charge-pauses"></a>held-charge-pauses | requirement | MON-4 | not run | - | local | 2026-11-16 |
-| <a id="t-notify-new-events"></a>notify-new-events | requirement | MON-5 | not run | - | local | 2026-11-17 |
-| <a id="t-notify-names-goal"></a>notify-names-goal | requirement | MON-5 | not run | - | local | 2026-11-17 |
-| <a id="t-notify-names-action"></a>notify-names-action | requirement | MON-5 | not run | - | local | 2026-11-17 |
-| <a id="t-notify-repeat-quiet"></a>notify-repeat-quiet | requirement | MON-5 | not run | - | local | 2026-11-17 |
+| <a id="t-notify-new-events"></a>notify-new-events | requirement | MON-5 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-notify-off-quiet"></a>notify-off-quiet | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-baseline"></a>notify-baseline | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-no-address"></a>notify-no-address | requirement | MON-5 | not run | - | local | 2026-11-17 |

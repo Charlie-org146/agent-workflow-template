@@ -136,6 +136,7 @@ depth-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-setup	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 describe-needed	PASS	2026-11-12	
+desk-lists	PASS	2026-11-17	
 digest-backlog	PASS	2026-11-10	
 digest-no-milestone	PASS	2026-11-12	
 doc18-howto-mapped	PASS	2026-11-16	
@@ -345,6 +346,8 @@ machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-operation-peer	PASS	2026-11-17	
 machine-setting-listed	PASS	2026-11-16	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
+machines-handover	PASS	2026-11-17	
+mailbox-two-mails	PASS	2026-11-17	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -393,6 +396,7 @@ no-prompts	PASS	2026-11-12
 no-row-fail	PASS	2026-11-12	
 no-token-dry-run	PASS	2026-11-12	
 no-token-would	PASS	2026-11-12	
+notify-new-events	PASS	2026-11-17	
 notion-app-link-unread	PASS	2026-11-13	
 one-failure	PASS	2026-11-09	
 one-format-everywhere	PASS	2026-11-10	
