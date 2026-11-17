@@ -418,7 +418,7 @@
 | <a id="t-doc4-home-diagram-unread"></a>doc4-home-diagram-unread | requirement | DOC-4 | not run | - | local | 2026-11-17 |
 | <a id="t-doc19-skill-schedule-unlisted"></a>doc19-skill-schedule-unlisted | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 | <a id="t-doc19-skill-schedule-listed"></a>doc19-skill-schedule-listed | requirement | DOC-19 | not run | - | local | 2026-11-17 |
-| <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | no |
+| <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 
 ## Guardrails
 

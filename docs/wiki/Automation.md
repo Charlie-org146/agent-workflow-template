@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=6efeb669 N=e081872e M=4670eeeb U=03828777 --> <!-- kept hotfix-4892@f3401105 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=6efeb669 N=e081872e M=4670eeeb U=03828777 --> <!-- kept docs-v2@740152f8 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
