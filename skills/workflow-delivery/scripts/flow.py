@@ -248,6 +248,7 @@ def in_session(args, runs, reply, base):
             role.begin(os.path.join(runs, args.slug + ".json"), args.step)
         open(asked, "a").close()
         skill, text = step_prompt(flow(), args)
+        proctree.outcap_free(True)  # the step's prompt is read whole
         print("IN SESSION %s: no headless agent; run %s yourself in this session." % (
             args.step, "delivery's built-in routine" if skill == BUILTIN else "the %s skill" % skill))
         print(text)
@@ -256,6 +257,7 @@ def in_session(args, runs, reply, base):
                   "`BUDGET: left: <what you did not do>` before the DEPTH line; an overrun is recorded." % lanekit.minutes(
                       repo_config(), "step_budget_minutes"))
         print("Write its reply, ending with the DEPTH line and then the STEP line, to %s, then run this same command again." % reply)
+        proctree.outcap_free(False)
         return True
     if args.step in BUDGETED:
         mins = lanekit.minutes(repo_config(), "step_budget_minutes")
@@ -269,6 +271,7 @@ def in_session(args, runs, reply, base):
 
 
 def main():
+    proctree.outcap("flow.py")  # GRD-15: at most 2,000 characters of output
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("slug")
     parser.add_argument("step", choices=STEPS)
@@ -348,8 +351,7 @@ def main():
     if spent:
         record = os.path.join(runs, args.slug + ".json")
         state = json.loads(read(record))
-        old = (state.get("tokens") or {}).get(args.step)
-        state["tokens"] = dict(state.get("tokens") or {}, **{args.step: spent + (old if isinstance(old, int) else 0)})
+        fit.tokens().add(state, args.step, spent)
         with open(record + ".%d.tmp" % os.getpid(), "w") as handle:
             json.dump(state, handle, indent=2)
         os.replace(record + ".%d.tmp" % os.getpid(), record)

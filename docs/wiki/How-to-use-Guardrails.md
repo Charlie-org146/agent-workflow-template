@@ -10,6 +10,7 @@ Lists every guardrail the template has or needs, each with what it protects agai
 | Component | Kind | What it is | How a user uses it |
 |---|---|---|---|
 | `goal.py step` | Command | Records a step of a goal's flow, and refuses when a guard says stop. | `python3 skills/workflow-delivery/scripts/goal.py step SLUG NAME`. |
+| `goal.py show` | Command | Prints a goal's run record, with a `TOKENS` line per step first: the tokens that step spent, measured from the session transcript. | `python3 skills/workflow-delivery/scripts/goal.py show SLUG`. |
 | `sessions.py bind` | Command | Binds a frozen goal to its worker session and prints the WORKER command. | `python3 skills/workflow-monitoring/scripts/sessions.py bind SLUG ID`. |
 | `.loop/config.json` | API/file contract | The guardrail settings the loop reads: budgets, silence limits and the page criteria cap. | Ask for "Show me every setting"; edit a value in the file to change a guardrail. |
 
@@ -42,6 +43,13 @@ Each requirement and how it is delivered:
 - GRD-13: Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51). Example, from the test-caps-consolidate-allowed test: given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed.
 - GRD-14: A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer. Example, from the eta-freeze test: given a goal being frozen, when its fields and goal file are built, then they hold a hard ETA in whole minutes (at least 30) with its basis, and the goal file has an ETA line next to the done lines.
 
+### Command: goal.py show
+- **Command:** `python3 skills/workflow-delivery/scripts/goal.py show SLUG`
+- **Dry run:** none: it only reads.
+- **Reads:** the goal's run record; a step's tokens were read from its session transcript when `goal.py record` ran.
+- **Writes:** nothing. Its output is cut to 2,000 characters (the full text is kept under `.git/loop/out/`), so the `TOKENS` lines come first.
+- **Exit codes:** 0, or nonzero when the goal has no run record.
+
 ### Command: goal.py step
 - **Command:** `python3 skills/workflow-delivery/scripts/goal.py step SLUG NAME [--note TEXT] [--tokens N]`
 - **Dry run:** none: it records the step.
@@ -73,3 +81,5 @@ Each requirement and how it is delivered:
 
 - PRD page: [Guardrails](Guardrails)
 - Backlog: [Backlog: Guardrails](https://github.com/jcl2018/agent-workflow-template/milestones)
+
+<!-- kept row-cap-1300@4e362144 -->

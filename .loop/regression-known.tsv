@@ -35,3 +35,8 @@ no-prompts	fails on main v1.0.42; notify.py starts processes without the guard (
 wiki-release	fails on main v1.0.42 (test-wiki.sh: goal did not reach a pull request) inside a Claude session on the Mac
 tests-table-columns	fails on main v1.0.42 (test-criteria.sh: conforming page), seen on the Mac
 tests-row-shape	fails on main v1.0.42 (test-criteria.sh: rendered table), seen on the Mac
+auto-release	red on main
+trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
+package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
+scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
+package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892

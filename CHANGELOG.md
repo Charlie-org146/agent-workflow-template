@@ -1,5 +1,54 @@
 # Changelog
 
+## v1.0.50 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.49 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.48 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.47 - 2026-11-17
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.46 - 2026-11-17
+
+- Raise max_regression_rows to 1300 (owner o118, o119)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/row-cap-1300
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge origin/main (v1.0.44) into loop/row-cap-1300
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/row-cap-1300
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.45 - 2026-11-17
 
 - ci-small-groups: fix stale toys and rows (settings-table launchctl, milestone wording, budget suite time, mail.env row), print what failing checks saw
