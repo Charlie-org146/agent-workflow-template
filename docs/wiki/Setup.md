@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept row-cap-1300@69b48c98 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept changelog-v@de7955d4 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
