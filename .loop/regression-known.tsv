@@ -22,3 +22,4 @@ package-headroom-held	package at the 99-file cap; toy wants 98; fold one script 
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 stale-found	red on main (in-session flow.py path, see #4852)
 publish-refused-stale	red on main (in-session flow.py path, see #4852)
+auto-release	red on main
