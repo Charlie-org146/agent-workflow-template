@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.0.36 - 2026-11-17
+
+- Lanes: a deleted file that isn't NO_EFFECT reaches the root runners; the merge-guard toy commits on CI (#4554)
+- ci-affected-rows: commands.md note, Tests tables, Verify by hand
+- ci-affected-rows: row seen red, Regression pages, Verify by hand
+- Lanes: affected compares paths with forward slashes, so a NO_EFFECT file in a folder reaches no row on Windows (#4554)
+- ci-affected-rows: row seen red, Tests tables
+- Regression page: NO_EFFECT files in a folder reach no row on Windows too (#4554)
+- How-to-use-Regression: goal files are NO_EFFECT on Windows too (#4554)
+- Merge remote-tracking branch 'origin/main' into loop/ci-affected-rows
+- pr: record issue states and the lane's results
+
+### How to verify
+
+1. Run `python3 dev/toy/test-affected-deleted.py`.
+   Expect: four PASS lines, including "a deleted real file reaches the rows that name it and the root runner (['tb', 'tc'])" and "negative control: a deleted VERSION (NO_EFFECT) still reaches no row ([])"; exit 0.
+2. Open the pull request's `affected` check (regression-pr.yml) on GitHub, or the next full regression run.
+   Expect: the 7 rows from #4554 (affected-quiet-release, merge-wiki-head, merge-wiki-rename-refused, merge-wiki-skill-refused, pass3-symlink-page, merge-reach-fail-closed, merge-base-undiffable) are PASS.
+
 ## v1.0.35 - 2026-11-17
 
 - Documentation: Non-goals no longer leaves milestone sync for later (owner o85); a test for it
