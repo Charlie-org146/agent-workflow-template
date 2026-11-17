@@ -24,3 +24,11 @@ Frozen. A wrong done line needs a new goal.
 ## Issues
 
 Fixes #4901, fixes #4896, fixes #4865, fixes #4858, fixes #4683, fixes #4660, fixes #4695, fixes #4772, fixes #4758.
+
+## Merged defect evidence
+
+- `home-guard-catches-leak`: #4901, #4896, #4865; retains #4393 and its original Home guard command. Proves done line 1.
+- `setup-refusal-writes-120`: #4858, #4683, #4772; retains #120 and its original rollback command. Proves done line 2.
+- `machine-hook-state`: #4660, #4695, #4758; retains #4506 and its original hook-state command. Proves done line 3.
+
+All nine original defect commands remain in these rows (identical commands run once per merged row). Each issue has an independent old-code reversion or mutation that makes its merged row fail. The existing row IDs remain; no rows are added or removed relative to main. Suite-time mismatch is tracked separately in #4920.
