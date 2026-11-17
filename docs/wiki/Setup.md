@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept agent-routing@671e618f -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept agent-routing@beb0cd0e -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -168,7 +168,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [codex-harness](Tests#t-codex-harness) | requirement | SET-3 | Given a stand-in for codex that runs the prompt's commands, when the Codex harness runs them on a clean toy repo with no private settings, then setup adopts, go freezes the goal, the live board lists it, health check prints its verdict and regression run prints its result. | not run |
 | [package-gate-head](Tests#t-package-gate-head) | requirement | SET-3 | Given the merged head of a pull request, when package.py's file and script checks run on its tracked files, then the lane fails if a script is over 20,480 bytes, the package has over 100 files, or a script is not standalone; it runs on Windows too. | FAIL 2026-11-17 |
 | [package-caps-held](Tests#t-package-caps-held) | requirement | SET-3 | Given the shipped package, when a script reaches 20,480 bytes or a 101st file is added, then dev/package.py fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
-| [package-headroom-held](Tests#t-package-headroom-held) | requirement | SET-3 | Given the shipped package, when rules.py, lane.py, goal.py, actions.py or report.py passes 19,000 bytes or the package passes 100 files, then the check fails; today all five are at most 19,000 and the package has 100 files. | FAIL 2026-11-15 |
+| [package-headroom-held](Tests#t-package-headroom-held) | requirement | SET-3 | Given the shipped package, when rules.py, lane.py, goal.py, actions.py or report.py passes 19,000 bytes or the package passes 100 files, then the check fails; today all five are at most 19,000 and the package has 100 files. | FAIL 2026-11-17 |
 | [package-rows-tracked](Tests#t-package-rows-tracked) | requirement | SET-3 | Given untracked files such as __pycache__ in a checkout, when package.py walks it, then only the files git tracks are counted, and a package row that fails prints its reason. | FAIL 2026-11-15 |
 | [set7-dry-run-lists-all](Tests#t-set7-dry-run-lists-all) | requirement | SET-7 | Given a repo, when setup runs dry and then for real, then the dry run writes nothing anywhere and lists every file the real commit holds. | not run |
 | [set7-second-run-nothing](Tests#t-set7-second-run-nothing) | requirement | SET-7 | Given an adopted repo with a working config nobody committed, when setup runs again, then it prints NO CHANGE, adds no commit, leaves a clean tree and keeps the config's own values. | not run |
