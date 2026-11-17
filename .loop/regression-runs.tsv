@@ -324,6 +324,7 @@ machine-done-12	PASS	2026-11-16
 machine-done-5	PASS	2026-11-16	
 machine-new-machine-docs	PASS	2026-11-16	
 machine-setting-listed	PASS	2026-11-16	
+machine-task-layout	PASS	2026-11-17		c58079f2bd05
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
