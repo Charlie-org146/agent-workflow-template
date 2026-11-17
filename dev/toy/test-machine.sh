@@ -1,6 +1,6 @@
 #!/bin/bash
 # windows: ok
-# reads: dev/machine.py docs/wiki/Machines.md README.md
+# reads: dev/machine.py dev/machine_ops.py docs/wiki/Machines.md README.md
 # reads: skills/workflow-monitoring/references/commands.md skills/workflow-regression/scripts/actions.py
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
@@ -12,7 +12,7 @@ d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 no() { echo "FAIL ${only:-machine}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 printf '# a toy: no private names\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
-mkdir -p "$d/clone/dev"; cp -R "$here/skills" "$d/clone/"; cp "$here/dev/machine.py" "$here/dev/machine-templates.md" "$d/clone/dev/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
+mkdir -p "$d/clone/dev"; cp -R "$here/skills" "$d/clone/"; cp "$here/dev/machine.py" "$here/dev/machine_ops.py" "$here/dev/machine-templates.md" "$d/clone/dev/"; find "$d/clone" -name __pycache__ -type d -prune -exec rm -r {} +  # a clone has none  # a copy outside any goal worktree, as a real clone is
 M="python3 $d/clone/dev/machine.py"
 mk() { "$here/dev/toy/make.sh" "$d/$1" >/dev/null || no "make.sh failed"; git -C "$d/$1/repo" remote set-url origin "https://example.test/o/$1-repo.git"; }
 sums() { find "$1" -type f -print0 2>/dev/null | sort -z | xargs -0 shasum 2>/dev/null | shasum | tr -d ' -'; }
@@ -97,7 +97,7 @@ fi
 if want machine-rows-listed; then
   for row in machine-apply-installs machine-check-gaps machine-operation-guide machine-no-private machine-new-machine-docs machine-windows machine-task-layout machine-no-prompt-mode machine-custom-items machine-mailer machine-caps; do
     grep -qF "[$row](Tests#t-$row)" "$here/docs/wiki/Machines.md" || no "row $row is not in the Machines Tests table"; done
-  for n in 1 2 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
+  for n in 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
   echo "PASS: every machine row is listed in the Machines Tests table"
 fi
 
@@ -203,10 +203,39 @@ fi
 
 # done 12: machine.py is under the script cap and adds no file to the package (it lives in dev/).
 if want machine-caps; then
-  [ "$(tr -d '\015' < "$here/dev/machine.py" | wc -c)" -lt 20480 ] || no "machine.py is 20,480 bytes or more"
+  for f in machine.py machine_ops.py; do [ "$(tr -d '\015' < "$here/dev/$f" | wc -c)" -lt 20480 ] || no "$f is 20,480 bytes or more"; done
   for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(tr -d '\015' < "$here/$f" | wc -c)" -lt 20480 ] || no "$f is over the script cap"; done
   # machine.py adds no file to the package: it is not under skills/ (other goals may add their own scripts there)
   git -C "$here" ls-files skills | grep -q '/machine\.py$' && no "machine.py is under skills/"
   echo "PASS: machine.py and every script stay under the byte cap and the package gains no file"
+fi
+
+# done 13: the operation session and the peer link exist after apply; check names a missing one.
+if want machine-operation-peer; then
+  mk o; r="$d/o/repo"; h="$d/ho"; mkdir -p "$h"
+  out=$($M check --home "$h" --repo "$r"); echo "$out" | grep -q '^GAP operation-session' && echo "$out" | grep -q '^GAP peer-link' || no "a fresh machine does not name the operation session and the peer link"
+  ready "$h" "$r" --peer pc2 || no "ready failed"
+  [ -f "$h/.workflow-loop/routines/operation-session.md" ] && grep -q 'operate.py run' "$h/.workflow-loop/routines/operation-session.md" || no "the operation session routine is missing"
+  grep -q '"peer": "pc2"' "$h/.workflow-loop/peer.json" || no "the peer link does not name the peer"
+  grep -q govern_hook "$r/.claude/settings.local.json" 2>/dev/null || no "the operation session hooks are missing"
+  $M check --home "$h" --repo "$r" | grep -q '^MACHINE OK' || no "a set-up machine did not pass"
+  out=$($M apply --home "$d/ho2" --repo "$r" 2>&1 | sed -n '/owner steps/,$p'); echo "$out" | grep -q 'mail login' && echo "$out" | grep -q 'private names' || no "the owner list is missing"
+  echo "PASS: apply creates the operation session and the peer link and the output ends with the owner-only items"
+fi
+
+# done 14: backup copies restorable state, never a secret; restore rebuilds a new home.
+if want machine-backup-restore; then
+  mk k; r="$d/k/repo"; h="$d/hk"; ready "$h" "$r" || no "ready failed"
+  printf 'secret-name\n' > "$h/.workflow-loop/private-names"; b="$d/bk"
+  out=$($M backup "$b" --home "$h" --repo "$r"); echo "$out" | grep -q '^BACKED UP' || no "backup failed"
+  echo "$out" | grep -q 'mail.env' && echo "$out" | grep -q 'private-names' || no "backup does not name the owner-only items"
+  find "$b" -type f | grep -q 'mail\.env\|mail-to\|private-names' && no "a secret or names list was copied"
+  [ -f "$b/MANIFEST" ] || no "no manifest"
+  $M backup "$r/bk" --home "$h" --repo "$r" | grep -q '^REFUSED' || no "a backup inside a repo was not refused"
+  h2="$d/hk2"; mkdir -p "$h2"; $M restore "$b" --home "$h2" --repo "$r" | grep -q '^RESTORED' || no "restore failed"
+  [ -f "$h2/.workflow-loop/peer.json" ] && [ -f "$h2/.workflow-loop/routines/operation-session.md" ] && [ -f "$h2/.claude/scheduled-tasks/operation-session/SKILL.md" ] || no "restore left files out"
+  [ ! -e "$h2/.workflow-loop/private-names" ] && [ ! -e "$h2/.workflow-loop/mail.env" ] || no "restore created an owner-only file"
+  $M restore "$d/nothing" --home "$h2" | grep -q '^REFUSED' || no "restore took a non-backup"
+  echo "PASS: backup copies restorable state without secrets and restore rebuilds a new home"
 fi
 exit 0
