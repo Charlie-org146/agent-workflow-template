@@ -373,7 +373,7 @@ def feature_of(root, text, item=None):
     """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's feature:<Page> label, the page whose
     docs.tsv paths cover its touches, else 'no feature'."""
     item, wiki = item or {}, os.path.join(root, "docs", "wiki")
-    pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md")] if os.path.isdir(wiki) else []
+    pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md") and x[:-3] not in ("Home", "Tests", "Roadmap") and x[:6] != "How-to"] if os.path.isdir(wiki) else []
     prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]
     for page in pages:
         if prefix and re.search(r"^\s*- %s-\d+:" % prefix, open(os.path.join(wiki, page + ".md"), encoding="utf-8").read(), re.M):
