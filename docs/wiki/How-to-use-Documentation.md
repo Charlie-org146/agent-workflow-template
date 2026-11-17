@@ -5,6 +5,15 @@
 
 Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section;.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `workflow-docs` | Skill | Keeps the wiki pages in the repo, finds stale ones and publishes them. | Say "Check the docs" or "Audit the docs and fix what you can". |
+| `docs.py` | Command | Checks, audits and publishes the wiki pages. | `python3 skills/workflow-docs/scripts/docs.py check`. |
+| `audit.py restamp` | Command | Re-stamps a page that is stale only by code its text still describes. | `python3 skills/workflow-docs/scripts/audit.py restamp SLUG PAGE...`. |
+| `.loop/docs.tsv` | API/file contract | The map of wiki pages to the paths each describes. | Add a row with `docs.py add PAGE --paths A,B`, or edit the file. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands. A feature's routine runbooks may be written on its How-to-use page, under Runbooks, instead of on its PRD page; the docs check finds them there.
@@ -41,6 +50,31 @@ Each requirement and how it is delivered:
 - DOC-18: Every feature page has a How-to-use page for its users. Example, from the doc18-howto-missing test: given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes.
 - DOC-19: Each How-to-use page has one item per functional requirement, saying how it is delivered. Example, from the doc19-item-missing test: given a feature page with three functional requirements and a How-to-use page with items for two, when docs check runs, then it fails naming the missing ID, and with all three items it passes.
 
+### Skill: workflow-docs
+- **Say:** "Check the docs"
+- **Command:** `/workflow-docs check`
+
+### Command: docs.py
+- **Command:** `python3 skills/workflow-docs/scripts/docs.py check [--base REF] [--own]` (also `docs.py audit`, `docs.py automation`, `docs.py criteria PAGE`, `docs.py publish`)
+- **Dry run:** `docs.py audit --dry-run` and `docs.py publish --dry-run` say what they would do; `check` writes nothing.
+- **Reads:** `.loop/docs.tsv`, `.loop/config.json`, `docs/wiki/` and the git history of the paths each page describes.
+- **Writes:** `audit` fixes the mechanical trouble (Tests tables, generated blocks); `publish` copies the pages to the GitHub wiki.
+- **Exit codes:** 0 only when nothing is left; 1 when any problem line is printed.
+
+### Command: audit.py restamp
+- **Command:** `python3 skills/workflow-docs/scripts/audit.py restamp SLUG PAGE...`
+- **Dry run:** none: it prints one `RESTAMPED PAGE` line per page it changes, and nothing when no page qualifies.
+- **Reads:** the named pages and the git state of their files.
+- **Writes:** the named pages: their Review stamp, or a kept marker at the end of a How-to-use page.
+- **Exit codes:** 0, whether or not a page qualified.
+
+### API/file contract: .loop/docs.tsv
+- **Path:** `.loop/docs.tsv`
+- **Fields:** page name, a tab, the paths it describes (comma separated), and an optional third column with the page's PRD source (`url:` or `mcp:`).
+- **Example:** `Delivery`, a tab, then `skills/workflow-delivery`.
+- **Writer:** `docs.py add`, or the owner by hand.
+- **Reader:** `docs.py check`, `audit` and `publish`, and health.
+
 ## URLs and deployments
 
 - Wiki: [Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/Documentation)
@@ -52,4 +86,4 @@ Each requirement and how it is delivered:
 - PRD page: [Documentation](Documentation)
 - Backlog: [Backlog: Documentation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept apply-rerender@a99e4813 -->
+<!-- kept howto-kinds@bd92154f -->

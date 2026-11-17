@@ -85,10 +85,10 @@ if want machine-no-private; then
   echo "PASS: setup refuses a text holding an address or home path, and a write inside a repo, without echoing the value"
 fi
 
-# done 5: Setup gains a New machine section linked from the README, and the new requirements are Unreviewed.
+# done 5: Setup gains a New machine section carried by the Machines How-to-use page (the README links it), and the new requirements are Unreviewed.
 if want machine-new-machine-docs; then
   grep -q 'New machine, in order' "$here/skills/workflow-setup/SKILL.md" || no "setup's command list has no New machine steps"
-  grep -q 'New machine, in order' "$here/README.md" || no "README does not carry the New machine steps"
+  grep -q 'New machine, in order' "$here/docs/wiki/How-to-use-Machines.md" || no "the Machines How-to-use page does not carry the New machine steps"
   for id in MCH-1; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Machines.md" || no "$id is not listed Unreviewed"; done
   echo "PASS: Setup has a New machine section linked from the README and the new requirements are Unreviewed"
 fi

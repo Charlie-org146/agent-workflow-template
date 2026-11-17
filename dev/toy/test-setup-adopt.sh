@@ -126,7 +126,7 @@ if want set1-docs-format; then
   echo "$out" | grep -E 'DOC-(4|5|7|8)|BROKEN|LINK|DANGLING' && no "a docs-format gap after adoption"
   echo "$out" | grep -q '^UNWRITTEN Engine' && echo "$out" | grep -q '^UNWRITTEN Home' || no "the pages are not marked unwritten: $out"
   echo "$out" | grep -vE '^UNWRITTEN' | grep -q . && no "a gap other than unwritten: $(echo "$out" | grep -vE '^UNWRITTEN' | head -3)"
-  grep -q '^## How to use' README.md && grep -q '^### How to use Engine' README.md || no "README has no How to use section"
+  grep -q '^## How to use' README.md && grep -q 'wiki/How-to-use-Engine)' README.md || no "README has no link to the Engine How-to-use page"
   grep -q 'HOM-1' docs/wiki/*.md .loop/regression.tsv && no "Home still carries HOM-1"
   echo "PASS set1-docs-format: no format gap after adoption, only unwritten pages"
 fi

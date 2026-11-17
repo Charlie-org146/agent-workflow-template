@@ -5,6 +5,14 @@
 
 One session governs many goals at once and shows a live board of what's running and what needs you, and each check-in draws live goals with their time left and waits, with this machine's status;.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `workflow-monitoring` | Skill | One session governs many goals and shows what is running and what needs you. | Say "Run the operation session" or "Where do things stand?". |
+| `board.py` | Command | The operation session's progress board and the list of repos it follows. | `python3 skills/workflow-monitoring/scripts/board.py repos list`. |
+| `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -37,6 +45,24 @@ Each requirement and how it is delivered:
 - MON-17: A check-in lists only this machine's goals. Example, from the mon17-this-pod-only test: given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line.
 - MON-18: The operation session keeps running unattended. Example, from the unattended-sends-warn test: given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message.
 - MON-19: Blockers first. Each item under Needs you says what it holds up, so the owner sees the priorities. Example, from the blockers-first test: given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not.
+
+### Skill: workflow-monitoring
+- **Say:** "Run the operation session"
+- **Command:** `/workflow-monitoring operate`
+
+### Command: board.py
+- **Command:** `python3 skills/workflow-monitoring/scripts/board.py repos list`, or `repos adopt [OWNER/NAME ...]`
+- **Dry run:** `repos list` only lists; nothing is changed until `repos adopt` is given repos.
+- **Reads:** `~/.workflow-loop/repos` and your recent GitHub repos.
+- **Writes:** `repos adopt` clones, follows and sets up the named repos.
+- **Exit codes:** 0 when it lists or adopts; nonzero with a refusal line.
+
+### Command: checkin.py
+- **Command:** `python3 skills/workflow-monitoring/scripts/checkin.py [--since ISO]`
+- **Dry run:** none needed: it is read-only.
+- **Reads:** the run records, the queue, the session pool and the followed repos.
+- **Writes:** nothing.
+- **Exit codes:** 0 after it prints.
 
 ## URLs and deployments
 
