@@ -82,6 +82,7 @@ out=$($setup); [ $? -eq 0 ] && echo "$out" | grep -q '^NO CHANGE' && echo "$out"
 
 # Line 5 (leak scan): a prefix from the private setting blocks the package.
 cd "$here"; mkdir -p "$d/pk"; cp -R skills listing.json README.md LICENSE VERSION CHANGELOG.md "$d/pk/"
+find "$d/pk" -name __pycache__ -prune -exec rm -rf {} +  # the runner's earlier python runs leave compiled files the package refuses
 python3 dev/package.py --root "$d/pk" --out "$d/ok.zip" >/dev/null || no "clean package refused"
 printf '{"leak_prefixes": ["zzprivate", "qq-[0-9]+"]}\n' > "$HOME/leak.json"
 export LOOP_FLOW="$HOME/leak.json"
