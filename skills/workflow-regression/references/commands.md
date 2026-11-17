@@ -220,7 +220,8 @@ says what it runs in its top comment block, and `lanes.py` follows from there wi
 
 ```text
 lanes_cli.py check [SCRIPT...]                 every header problem; default: each dev/toy/test-*.sh a row names
-lanes_cli.py affected [--level L] PATH...      dependency impact: AFFECTED n of m rows (ids), ALWAYS/UNMAPPED/DELETED
+lanes_cli.py affected [--level L] PATH...      dependency impact: AFFECTED n of m rows (ids), ALWAYS/UNMAPPED/DELETED;
+                                               any change but a NO_EFFECT one (a deletion too) adds the root runners
 lanes_cli.py deps COMMAND [--why PATH]         a row command's dependencies, or the chain of files to PATH
 ```
 
