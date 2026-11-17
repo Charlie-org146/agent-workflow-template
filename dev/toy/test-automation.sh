@@ -6,6 +6,7 @@ unset CLAUDECODE LOOP_JUDGE_ANSWER  # the judge is the session only where a test
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
+DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 auto="python3 -B $here/skills/workflow-health/scripts/automation.py"
 reg="python3 -B $here/skills/workflow-regression/scripts/regression.py"
 unset GH_TOKEN GITHUB_TOKEN GITHUB_ACTIONS GITHUB_STEP_SUMMARY GITHUB_OUTPUT DIGEST_RUN DIGEST_REPO_OWNER HEALTH_REPORT
@@ -38,7 +39,11 @@ case "$1 $2" in
   "run list") cat "$d/runs.json" 2>/dev/null || echo "[]";;
   "repo view") echo "${STUB_OWNER:-toy-owner}";;
   "api users/"*) echo "${STUB_TYPE:-User}";;
-  "api repos/"*|"api --paginate"*) cat "$d/milestones.json" 2>/dev/null || echo "[]";;
+  "api --paginate") case "$3" in *"/issues?"*labels=*)  # the workflow reads open issues one JSON object per line (--jq '.[] | ...')
+    [ -n "${STUB_LIST_FAIL:-}" ] && { echo "HTTP 502" >&2; exit 1; }; l=${3##*labels=}; l=${l%%&*}
+    python3 -c 'import json,sys; [print(json.dumps(i)) for i in json.load(open(sys.argv[1]))]' "$d/$l.json" 2>/dev/null; exit 0;; esac
+    cat "$d/milestones.json" 2>/dev/null || echo "[]";;
+  "api repos/"*) cat "$d/milestones.json" 2>/dev/null || echo "[]";;
   "issue create") echo "https://github.com/o/r/issues/77";;
   "issue pin") exit "${STUB_PIN_FAIL:-0}";;
   "issue comment") [ -n "${STUB_COMMENT_FAIL:-}" ] && { echo "API rate limit" >&2; exit 1; }; n=$3; shift 3; [ "$1" = --body ] && printf '%s' "$2" > "$d/comment-$n.md";;
@@ -151,15 +156,15 @@ printf '# Alpha\n\n## Requirements\n\n- AAA-1: **Reviewed 2026-11-08** Alpha wor
 printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\nred\tland\tfalse\tAAA-1\t2026-01-01\tGiven a, when b, then c.\tcriterion\t\n' > .loop/regression.tsv
 printf '{}\n' > .loop/config.json; $reg workflow >/dev/null; step $W "Run the rows, and keep one issue per failing row" rows.sh
 printf '[]\n' > "$G/regression.json"; : > "$G/calls.log"
-PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
+PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >"$r/rows.out" 2>&1
 grep -q "^issue create --title Regression: red --label regression --label defect --body " "$G/calls.log" && grep -q "^- Feature: Alpha$" "$G/calls.log" \
   && grep -q "^- Guards: AAA-1: Alpha words.$" "$G/calls.log" && grep -q "^label create defect --description" "$G/calls.log" \
   && ! grep -q "^label create defect.*--force" "$G/calls.log" \
-  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || bad "defect issue"
+  && ok "a failing test opens one issue labelled defect, naming the feature and requirement it guards" || { bad "defect issue"; { echo "rows.sh output:"; tail -8 "$r/rows.out"; echo "gh calls:"; head -8 "$G/calls.log"; } >> "$DIAG"; }
 printf '[{"number": 31, "state": "OPEN", "body": "<!-- loop-regression red -->", "labels": [{"name": "regression"}]}]\n' > "$G/regression.json"; : > "$G/calls.log"
-PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
+PATH="$G:$PATH" GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >"$r/rows.out" 2>&1
 grep -q "^issue edit 31 --add-label defect" "$G/calls.log" && ! grep -q "^issue create" "$G/calls.log" \
-  && ok "an older failing-test issue gains the defect label" || bad "old issue relabel"
+  && ok "an older failing-test issue gains the defect label" || { bad "old issue relabel"; { echo "relabel: rows.sh output:"; tail -6 "$r/rows.out"; echo "gh calls:"; head -6 "$G/calls.log"; } >> "$DIAG"; }
 : > "$G/calls.log"; PATH="$G:$PATH" STUB_LIST_FAIL=1 GH_TOKEN=x REGRESSION_RESULTS="$r/res.tsv" RUNNER_TEMP="$r" bash rows.sh >/dev/null 2>&1
 ! grep -q "^issue create\|^issue edit\|^issue comment" "$G/calls.log" && ok "when the issues can't be read the run changes no issue" || bad "issue list failure"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$G/fake"; mkdir -p "$FAKE_GH_DIR"
@@ -190,5 +195,6 @@ login, note = automation.owner_of(types.SimpleNamespace(owner=None), {"digest_ow
 assert login == "" and note.startswith("No owner"), (login, note)
 PY
 
+[ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }
 echo "== $pass passed, $fail failed"
 [ "$fail" = 0 ]
