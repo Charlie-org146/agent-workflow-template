@@ -131,7 +131,10 @@
     "roadmap",
     "apply",
     "forward",
-    "wiki-only"
+    "wiki-only",
+    "build",
+    "detect",
+    "resolve"
   ],
   "writes": [
     ".loop/config.json, .loop/queue.md, .loop/findings.md, .loop/goals/<slug>.md in the repo",
@@ -156,7 +159,8 @@
     "reads ~/.workflow-loop/flow.json, and runs its probe and its command for each flow step; record reads its full_markers, and each step's depth goes into the run record and the pull request body",
     "a merge of a goal's pull request into the base branch, only with auto_merge on, when you run merge.py",
     "a feature page for each top-level code folder and Home, .loop/docs.tsv and .loop/regression.tsv rows, on the workflow-setup branch",
-    "the installed skill files and workflow-package.json in the skills folder, only when you run update.py --apply"
+    "the installed skill files and workflow-package.json in the skills folder, only when you run update.py --apply",
+    "~/.workflow-loop/agents.json (agent profiles and routes), only when you run routing.py detect --write; a routed build step also commits its changes on the goal's branch"
   ],
   "network": [
     "github.com (git push, wiki push, gh pull request, issue, milestone and draft release calls, only when you run them)",

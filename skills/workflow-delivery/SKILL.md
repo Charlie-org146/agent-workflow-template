@@ -81,7 +81,7 @@ lane) has its rules: the `test_record` prefix, `LANE_DIRTY`, `LANE_MISSING` and 
 
 ### 3. Build
 
-Run `goal.py step <slug> build`. Make the change the plan describes, add tests for each done line, and commit.
+Run `goal.py step <slug> build`, then `routing.py build <slug>`: the build runs on the agent the config picks (`references/commands.md`, Agent routing) and is committed; on Claude, or a fallback with its `AGENT_FALLBACK` line, you make the change the plan describes, add tests for each done line, and commit.
 
 Then fill in `## Verify by hand` in the goal file, and commit it: the steps a person follows to see the change work with
 their own eyes, not what the tests already prove. A release refuses without at least one.
