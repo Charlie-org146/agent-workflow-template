@@ -80,6 +80,8 @@ described as one `Given ..., when ..., then ...` scenario, rendered under its re
 | `USAGE` | a page still has a `## Usage` section (dropped 2026-11-13) | 1 | fails | fails | fails | remove the section; the commands are in the skill's Command map and `references/commands.md` |
 | `UNWRITTEN` | a placeholder line is still on the page | 1 | fails | blocked | refused | an agent writes the drafts |
 | `SCENARIO` | a row on the page is not Given/When/Then | 0 | fails | blocked | publishes | an agent rewrites the row's description |
+| `LINKS` | a wiki page or skill doc holds an issue, pull, commit or CI link, another host or repository, or a machine path outside its Tests section and Deployments tables (DOC-19) | 1 | fails | blocked | refused | an agent says it in words |
+| `HOME` | Home has no System diagram block, or one that names no operation session, worker, step, staging, production, machine, routine, legend or guard (DOC-4) | 1 | fails | blocked | refused | an agent draws the missing part |
 
 ### Examples
 
