@@ -424,3 +424,12 @@ The home guard reported a false LEAK when another session wrote ~/.workflow-loop
 
 - The guard tells a toy's writes from another process's by what they are, not by hash: `skills-main` is judged by `git status` (another session's checkout leaves it clean; a toy leaves a modified or untracked file, caught), and the schedule registry only by entries that point into the system temp folder (a toy's fixture; another session registers real repos) or by a registry that no longer parses. `repos.json.bak-*` is not judged. Strict mode still hashes everything in a fresh home.
 - Cost: a toy that registers a real-looking path, or edits skills-main and commits, is not caught; the toys set their own HOME and the harness points the schedule at a temp folder, so neither is a path they take.
+
+## Applied 2026-11-17 (docs-v2)
+
+The wiki and skill docs stand alone, with a System diagram per How-to-use page and on Home (#4784, #4698; #4632, #4657, #4666 and #4677 were already on main, and this goal adds their missing proofs and the skill and schedule names to the listed-on-the-page rule).
+
+- Scope of "stands alone": wiki pages and skill docs, not the README (the front door keeps its wiki links) and not the generated Tests page (it cites CI evidence) or a Deployments table. Own milestone, releases and wiki links stay as navigation; issue, pull, commit, Actions and other-host links, other-repo references and machine paths fail `docs.py check`. Bare issue numbers stay as text.
+- The diagram lives on each How-to-use page (the feature's own diagram) and on Home as one hand-kept `<!-- diagram:begin -->` block that DOC-4's table check does not read. Staging and production are drawn as planned until the release channels exist.
+- New code is in `milestones.py`, beside the other How-to-use checks, because the package is at its 100-file cap and no other docs script has room.
+- Cost: every adopting repo's Home needs a diagram block after this release, and its How-to-use pages a System diagram, before `docs.py check` is clean.
