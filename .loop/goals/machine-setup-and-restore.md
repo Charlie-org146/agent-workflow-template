@@ -12,4 +12,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In a scratch folder run `python3 dev/machine.py apply --home <empty folder> --repo <a clone> --peer pc`.
+   Expect: lines DONE operation-session and DONE peer-link, and a final "owner steps" list naming the mail files, private names, logins, permission mode and app registration.
+2. Run `python3 dev/machine.py backup <folder outside any repo> --home <that home>`, then `restore` into another empty home.
+   Expect: BACKED UP and RESTORED lines; no mail.env, mail-to or private-names file in either folder.
+3. Run `python3 dev/machine.py check --home <empty folder>`.
+   Expect: GAP lines for operation-session and peer-link, each with a fix.
