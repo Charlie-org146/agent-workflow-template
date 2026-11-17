@@ -10,7 +10,7 @@ Checked against the code: `skills/workflow-docs/scripts/criteria.py` (unreview, 
 5. Fill Verify by hand, commit.
 
 ## Tests per done line
-- Done line 1: row `del-16-on-page` greps the page for `DEL-16: **Unreviewed**` and for the Unreviewed Review line; seen failing on main (no DEL-16 there) and passing now.
+- Done line 1: row `del-16-on-page` greps the page for the DEL-16 line (Unreviewed now, and still matching once the owner stamps it); seen failing on main (no DEL-16 there) and passing now.
 - Done line 2: row `del-16-linked` checks `.loop/regression.tsv` links the `agent-routing` row to DEL-16 and keeps the covered `done-agent-routing-1` row; seen failing on main, passing now. `workflow-docs check` is run and its result reported.
 
 ## What could break
