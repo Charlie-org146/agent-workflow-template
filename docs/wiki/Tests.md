@@ -527,6 +527,8 @@
 | <a id="t-judge-key-savings"></a>judge-key-savings | requirement | HLT-4 | not run | - | local | 2026-11-16 |
 | <a id="t-judge-key-review"></a>judge-key-review | requirement | HLT-4 | not run | - | local | 2026-11-16 |
 | <a id="t-judge-key-old"></a>judge-key-old | requirement | HLT-4 | not run | - | local | 2026-11-16 |
+| <a id="t-health-findings-table"></a>health-findings-table | requirement | HLT-3 | not run | - | local | 2026-11-17 |
+| <a id="t-health-feature-always"></a>health-feature-always | requirement | HLT-4 | not run | - | local | 2026-11-17 |
 
 ## Machines
 
