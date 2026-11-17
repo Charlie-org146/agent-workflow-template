@@ -31,8 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lanekit, guards, fit, private  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
-import proctree  # noqa: E402
-from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set  # noqa: E402,F401
+from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
 
 ME = sys.modules[__name__]
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
@@ -407,7 +406,7 @@ def cmd_resume(args):
 
 
 def main():
-    proctree.outcap("goal.py")  # GRD-15: at most 2,000 characters of output
+    outcap("goal.py")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     def add(name, func, *options):
