@@ -122,7 +122,8 @@ def events(root, text):
         if status == "done" and run.get("release_version"):
             out.append(("released:%s:%s" % (slug, run["release_version"]), "released", slug,
                         "%s merged (%s) and released as v%s. Nothing to do." % (slug, run.get("pr") or "its pull request", run["release_version"])))
-    return out
+    told = {slug for _, kind, slug, _ in out if kind in ("stopped", "past ETA")}
+    return [(key, "covered" if kind == "needs you" and slug in told else kind, slug, action) for key, kind, slug, action in out]
 
 
 def save(path, state):
@@ -150,6 +151,10 @@ def cmd_send(args):
     state = read_json(path)
     sent = state.setdefault("sent", {})
     new = [e for e in found if e[0] not in sent]
+    for key, kind, _, _ in [e for e in new if e[1] == "covered"]:  # its stopped or past-ETA mail says it
+        sent[key] = "covered"
+    new = [e for e in new if e[1] != "covered"]
+    save(path, state)
     if not new:
         return 0
     secrets, why = load_env()

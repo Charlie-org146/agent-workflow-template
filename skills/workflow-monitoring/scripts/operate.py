@@ -167,8 +167,11 @@ def one_pass(top, common, args):
             print(graph.localize(said.strip()))
     text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
     print(text)
-    with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
-        handle.write(text + chr(10))
+    try:
+        with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
+            handle.write(text + chr(10))
+    except OSError:
+        pass
     said = script("notify.py", "send", cwd=top)[1].strip()  # MON-5: mail each new event, if on here
     said and print(said)
     script("board_page.py", "checkin", cwd=top)

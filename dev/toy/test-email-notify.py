@@ -127,6 +127,12 @@ with tempfile.TemporaryDirectory() as tmp:
     out = run(CHECKIN)
     check(len(posts) == 1 and "stop-goal" in posts[0].get("subject", ""), "an event held for a missing mail.env goes out once it is there")
 
+    posts.clear()
+    record("late-goal", status="stopped", step="build", attempt=1, finding="finding:late-goal-build")
+    out = run(CHECKIN.replace("[blocks nothing]", "[blocks nothing]\n2. late-goal stopped after 3 tries; resume it [blocks nothing]"))
+    check(len(posts) == 1 and "stopped late-goal" in posts[0].get("subject", ""),
+          "a stopped goal also under Needs you gets one mail, not two (%d)" % len(posts))
+
     kept = open(state).read()
     check(ADDR not in out and ADDR not in kept and "owner.fixture" not in kept, "no address is printed or kept in notified.json")
 
