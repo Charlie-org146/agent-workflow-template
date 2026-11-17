@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept hotfix-4859@7bc304b5 -->
+Review: **Reviewed 2026-11-15** <!-- prd P=7884b325 R=4e0ab711 N=9f4c33da M=3d0857c8 U=03828777 --> <!-- kept agent-routing@994be445 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -109,7 +109,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [del5-docs-patch-default](Tests#t-del5-docs-patch-default) | requirement | DEL-5 | Given a goal that changes only docs and no bump is recorded, when it is released, then the version moves by a patch. | PASS 2026-11-15 |
 | [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | DEL-5 | Given a goal set to ask and auto_merge on, when its worker ends with the pull request open, then the release step does not merge it. | not run |
 | [resume-unasked-merges](Tests#t-resume-unasked-merges) | requirement | DEL-5 | Given a goal with no ask and auto_merge on, when its worker ends with the pull request open, then the release step still merges it. | not run |
-| [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-5 | Given a package with a script over 20,480 bytes, more than 99 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
+| [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-5 | Given a package with a script over 20,480 bytes, more than 100 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
 | [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | DEL-5 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | DEL-5 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | DEL-5 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-16 |
