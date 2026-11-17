@@ -19,3 +19,13 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-release-gate.py`.
+   Expect: every line starts with PASS, and it exits 0 (it builds a throwaway repo; nothing real is touched).
+2. Run `python3 skills/workflow-release/scripts/review.py gate v2 --no-suite` from a checkout of this repo.
+   Expect: it prints GATE REFUSED lines, each naming an issue of milestone v2.0 or an Unreviewed requirement, and exits 1 (the gate refuses a milestone that is not done).
+3. Run `grep -n "^- REL-" docs/wiki/Release.md`.
+   Expect: eight lines, REL-1 to REL-8, each reading `**Unreviewed**`.
+4. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints `DOCS OK`.
+5. Run `python3 -c "import sys;sys.path.insert(0,'skills/workflow-release/scripts');import release;release.bump('1.0.54','major')"`.
+   Expect: it stops with `REFUSED (MAJOR_GATE)` naming review.py promote.
