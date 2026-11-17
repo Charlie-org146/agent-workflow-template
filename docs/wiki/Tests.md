@@ -1270,3 +1270,11 @@
 | <a id="t-health-auto-rules"></a>health-auto-rules | requirement | done line full-auto-all:3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) open (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-fallback"></a>hands-off-fallback | requirement | done line hands-off-operation:1 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-archive"></a>hands-off-archive | requirement | done line hands-off-operation:2 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-pressure"></a>hands-off-pressure | requirement | done line hands-off-operation:3 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-start"></a>hands-off-start | requirement | done line hands-off-operation:4 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-timer"></a>hands-off-timer | requirement | done line hands-off-operation:5 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-feature"></a>hands-off-feature | requirement | done line hands-off-operation:6 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-queued"></a>hands-off-queued | requirement | done line hands-off-operation:7 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-size"></a>hands-off-size | requirement | done line hands-off-operation:8 | not run | - | local | 2026-11-17 |
