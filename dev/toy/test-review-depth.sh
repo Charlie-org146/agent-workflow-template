@@ -51,7 +51,7 @@ git commit -qam "bad depth"
 check "setup refuses an unknown review_depth too" 'python3 "$here/skills/workflow-setup/scripts/setup.py" --bare --dry-run 2>&1 | grep -q "REFUSED: review_depth is .Full."'
 git reset -q --hard HEAD~1
 check "fill-repo fills a config that already holds _help" '$SET fill-repo --repo . 2>&1 | grep -q "^FILLED" && python3 -c "import json;assert json.load(open(\".loop/config.json\"))[\"_help\"][\"review_depth\"]"'
-git checkout -q -- .loop/config.json
+git checkout -q -- .loop/config.json; rm -f .loop/health-rules.json  # fill-repo also writes its health rules; setup --bare does not, so the lanes would start dirty
 python3 - <<PY && ok "the config loaders read a config holding _help" || bad "loaders and _help"
 import sys
 sys.path.insert(0, "$here/skills/workflow-monitoring/scripts"); sys.path.insert(0, "$here/skills/workflow-delivery/scripts")
@@ -97,7 +97,7 @@ out=$(FAKE_SKILL_OUT='PENDING: a gate\nDEPTH: condensed\nSTEP: pending' step con
 check "an auto-approved condensed review under full is refused too" 'grep -q "REFUSED (no try used): the review step ran condensed" <<<"$out" && ! grep -q AUTO-APPROVED <<<"$out"'
 out=$(FAKE_SKILL_OUT='DEPTH: condensed\nSTEP: failed tests broke' step cond1 review)
 check "a failed reply keeps its own reason, never a depth reason" 'grep -q "review failed: tests broke" <<<"$out" && ! grep -q "condensed while" <<<"$out"'
-git checkout -q -- .loop/config.json
+git checkout -q -- .loop/config.json; rm -f .loop/health-rules.json  # fill-repo also writes its health rules; setup --bare does not, so the lanes would start dirty
 
 echo "== condensed runs only when set"
 base 'review_depth="condensed"'
