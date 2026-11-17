@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed**
+Review: **Unreviewed** <!-- kept row-cap-1300@69b48c98 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -175,6 +175,10 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [apply-rerender-accepted](Tests#t-apply-rerender-accepted) | requirement | DOC-2 | Given the commit apply pushes, when merge.py compares the pull request head with the one its lane passed, then it moved by README generated blocks and wiki pages only and merge.py accepts it. | not run |
 | [apply-rerender-tables](Tests#t-apply-rerender-tables) | requirement | DOC-2 | Given a goal branch that added a regression row without a render, when operate.py apply runs, then the Tests tables on its pages are re-rendered in the pushed commit. | not run |
 | [apply-rerender-howto](Tests#t-apply-rerender-howto) | requirement | DOC-2 | Given a goal branch that stales a How-to-use page only through its feature's code, when operate.py apply runs, then the same run re-stamps the page, nothing about it is stale on the new head, and merge.py accepts the head. | not run |
+| [stale-code-page-reviewed](Tests#t-stale-code-page-reviewed) | requirement | DOC-2 | Given a Reviewed page that only the goal's own mapped code staled, when the lane prep runs, then the page is re-stamped in its commit before the rows run and docs check is clean. | not run |
+| [stale-code-page-unreviewed](Tests#t-stale-code-page-unreviewed) | requirement | DOC-2 | Given an Unreviewed page that only the goal's own mapped code staled, when the lane prep runs, then it carries a kept marker and is fresh before the rows run. | not run |
+| [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
+| [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
 | [untested-listed](Tests#t-untested-listed) | requirement | DOC-3 | Given a Reviewed criterion with no test or a test that no longer matches, when the check runs, then it is listed. | PASS 2026-11-12 |
 | [prd-scenarios](Tests#t-prd-scenarios) | requirement | DOC-3 | Given regression rows linked to a requirement, when the Tests are rendered, then each row is a Given/When/Then scenario with its test, result and date, and a plain description is flagged. | PASS 2026-11-10 |
 | [prd-untested](Tests#t-prd-untested) | requirement | DOC-3 | Given a PRD the owner reviewed whose requirement has no test, when the docs audit runs, then it lists that requirement as UNTESTED. | PASS 2026-11-10 |
@@ -235,7 +239,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | DOC-17 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
 | [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | DOC-17 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
 | [sync-owns-only](Tests#t-sync-owns-only) | requirement | DOC-17 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
-| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta, when docs.py sync runs, then it posts one GitHub issue on the feature's milestone and one comment on the external page. | not run |
+| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | DOC-17 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
 | [sync-posts-once](Tests#t-sync-posts-once) | requirement | DOC-17 | Given a delta already posted, when docs.py sync runs again, then it posts nothing more. | not run |
 | [sync-accept-source](Tests#t-sync-accept-source) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=source runs, then the source's text is written to the repo copy for that id only and the issue is closed. | not run |
 | [sync-accept-repo](Tests#t-sync-accept-repo) | requirement | DOC-17 | Given a delta, when docs.py sync --accept PAGE:ID=repo runs, then the repo's text is written to the external document through the writer for that id only and the issue is closed. | not run |

@@ -85,7 +85,8 @@ fi
 if want SET-4; then
   mkdir -p .claude; echo '{"private": true}' > .claude/settings.local.json; git add -f .claude/settings.local.json; git commit -qm "Private settings" >/dev/null 2>&1
   pages() { (cd "$d/toy/repo" && git show "$1":docs/wiki/Home.md; git show "$1":docs/wiki/Engine.md; git show "$1":.claude/settings.local.json) | shasum; }
-  keys() { (cd "$d/toy/repo" && git show "$1":.loop/config.json) | python3 -c "import json,sys;d=json.load(sys.stdin);d.pop('template_version',None);d.pop('_help',None);print(json.dumps(d,sort_keys=True))"; }
+  # the update fills the empty automation list with the built-in routines (fill_automation), so that one key is left out
+  keys() { (cd "$d/toy/repo" && git show "$1":.loop/config.json) | python3 -c "import json,sys;d=json.load(sys.stdin);d.pop('template_version',None);d.pop('_help',None);d.pop('automation',None);print(json.dumps(d,sort_keys=True))"; }
   before=$(pages main); kbefore=$(keys main)
   mk "$d/v2" 1.1.0; echo "# extra" >> "$d/v2/skills/workflow-setup/SKILL.md"; $pk --root "$d/v2" --out "$d/v2.zip" >/dev/null || no "v2 package refused"
   up="python3 $d/agent/skills/workflow-setup/scripts/update.py --from $d/v2.zip"
@@ -99,10 +100,10 @@ if want SET-4; then
   grep -q '"version": "1.1.0"' "$d/agent/skills/workflow-package.json" || no "stamp not moved"
   [ "$(git branch --show-current)" = main ] && [ -z "$(git status --short)" ] || no "update changed the checkout"
   git rev-parse -q --verify workflow-update-v1.1.0 >/dev/null || no "no commit on workflow-update-v1.1.0"
-  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings"
+  [ "$(pages workflow-update-v1.1.0)" = "$before" ] && [ "$(keys workflow-update-v1.1.0)" = "$kbefore" ] || no "update changed a page, a config value or private settings: $(diff <(echo "$kbefore") <(keys workflow-update-v1.1.0) | head -4 | tr '\n' '|')"
   git show workflow-update-v1.1.0:.loop/config.json | grep -q '"template_version": "1.1.0"' || no "template_version not stamped"
-  extra=$(git diff --name-only main workflow-update-v1.1.0 | grep -vxE '\.loop/config\.json|\.loop/START\.md|CLAUDE\.md|AGENTS\.md')
-  [ -z "$extra" ] || no "the update branch changed hand-written data: $extra"
+  extra=$(git diff --name-only main workflow-update-v1.1.0 | grep -vxE '\.loop/config\.json|\.loop/START\.md|CLAUDE\.md|AGENTS\.md|README\.md')  # README.md: its generated settings and automation tables are re-rendered
+  [ -z "$extra" ] || no "the update branch changed hand-written data: $extra: $(git diff main workflow-update-v1.1.0 -- $extra | grep "^[+-]" | cut -c1-110 | head -10 | tr '\n' '|')"
   git show workflow-update-v1.1.0:.loop/START.md >/dev/null 2>&1 || no "no START.md on the update branch"
   echo "$out" | grep -q "^NEXT: merge workflow-update-v1.1.0 into main" || no "no NEXT merge line"
   tip=$(git rev-parse workflow-update-v1.1.0)

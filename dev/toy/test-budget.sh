@@ -23,7 +23,7 @@ git switch -q main; git merge -q --no-edit workflow-setup
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; echo "${out:-}" | tail -12 | sed "s/^/    saw: /"; fi; }
 ran() { sort "$TOY_LOG" 2>/dev/null | tr '\n' ' '; }
 cfg() { python3 - "$1" "$2" <<'PY'
 import json, sys
@@ -134,18 +134,13 @@ for r in lean.hit_rows('.'): print(r['state'], r['detail'])" "$S/workflow-health
 check "health lists them too" 'grep -q "^INFO bg: ship step hit its 30-minute budget; left: the changelog" <<<"$out"'
 
 echo "== health flags a full suite over 30 minutes"
-fullrec() { python3 - "$common/loop/tests/full-x.json" "$1" <<'PY'
-import json, sys
-json.dump({"at": "2026-01-02T00:00:00Z", "command": "regression.py run land", "total_seconds": int(sys.argv[2]),
-           "rows": {"a": {"status": "PASS", "seconds": int(sys.argv[2]), "commit": "x"}}}, open(sys.argv[1], "w"))
-PY
-}
+fullrec() { printf 'abcdef0123456789\tfull\t%s\t2026-01-02\n' "$1" > "$common/loop/suite-times.tsv"; }  # the shape ci and local runs append (sha, full, seconds, day)
 suite() { python3 -c "
-import sys; sys.path.insert(0, sys.argv[1]); import lean
-for r in lean.suite_rows('.'): print(r['state'], r['detail'])" "$S/workflow-health/scripts" 2>&1; }
-mkdir -p "$common/loop/tests"; fullrec 2000; out=$(suite)
-check "health warns when the newest full run took over 30 minutes" 'grep -q "^WARN the full suite took 2000 s, over 30 minutes" <<<"$out"'
+import sys; sys.path.insert(0, sys.argv[1]); import milestone
+for r in milestone.suite_rows(sys.argv[2], 30, {}): print(r['state'], r['detail'])" "$S/workflow-health/scripts" "$common" 2>&1; }
+mkdir -p "$common/loop"; fullrec 2000; out=$(suite)
+check "health warns when the newest full run took over 30 minutes" 'grep -q "^WARN 33 min (limit 30" <<<"$out"'
 fullrec 1700; out=$(suite)
-check "health stays quiet for a full run within 30 minutes" '[ -z "$out" ]'
+check "health passes a full run within 30 minutes without a warning" 'grep -q "^PASS suite: 28 min (limit 30" <<<"$out" && ! grep -q "^WARN" <<<"$out"'
 
 [ $fails = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

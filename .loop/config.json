@@ -31,6 +31,7 @@
   "routines": [],
   "time_budget_minutes": 240,
   "token_budget": 3000000,
+  "max_regression_rows": 1300,
   "review_depth": "full",
   "_help": {
     "review_depth": "full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run.",
@@ -109,6 +110,5 @@
       "cadence": "with each health round",
       "runs": "mac:agent-workflow-template-health-regression"
     }
-  ],
-  "max_regression_rows": 1300
+  ]
 }

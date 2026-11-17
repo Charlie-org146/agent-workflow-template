@@ -205,10 +205,12 @@ guards-touches-finding	PASS	2026-11-12
 guards-worker-role	PASS	2026-11-10	
 guards-worktree	PASS	2026-11-10	
 guide-marker-refused	PASS	2026-11-10	
+health-feature-always	PASS	2026-11-17	
+health-findings-table	PASS	2026-11-17	
 health-group-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 health-lists-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 health-mail-env-named	PASS	2026-11-14	
-health-mail-env-windows	PASS	2026-11-14	
+health-mail-env-windows	PASS	2026-11-17	
 health-not-enforced-fail	PASS	2026-11-10	
 health-not-enforced-warn	PASS	2026-11-10	
 health-register-no-launchd	PASS	2026-11-14	
@@ -557,6 +559,7 @@ stale-merge-order	PASS	2026-11-12
 stale-own-finding	PASS	2026-11-15	
 stale-own-main-reported	PASS	2026-11-15	
 stale-page-row	PASS	2026-11-12	
+stalled-no-process-4359	PASS	2026-11-17	
 starts-at-idea	PASS	2026-11-09	
 state-shared-113	PASS	2026-11-10	
 status-graph-board	PASS	2026-11-12	
