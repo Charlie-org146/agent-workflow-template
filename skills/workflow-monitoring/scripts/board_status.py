@@ -141,7 +141,7 @@ def memory():
         if os.path.exists("/proc/meminfo"):
             info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in open("/proc/meminfo") if ":" in l)}
             return info["MemAvailable"] / 2 ** 20, (info["CommitLimit"] - info["Committed_AS"]) / 2 ** 20
-        pages = {k: int(v.strip(" .")) for k, v in (l.split(":", 1) for l in subprocess.run(["vm_stat"], capture_output=True, text=True).stdout.splitlines()[1:] if ":" in l)}
+        pages = {k: int(v.strip(" .")) for k, v in (l.split(":", 1) for l in _run_text(["vm_stat"]).splitlines()[1:] if ":" in l)}
         free = (pages["Pages free"] + pages["Pages inactive"] + pages.get("Pages purgeable", 0)) * 16384 / GB  # macOS has no commit limit: reclaimable RAM
         return free, free
     except Exception:
@@ -160,6 +160,12 @@ def allowed(cfg=None):
     return None if commit is None or floor <= 0 else 0 if commit < floor else 1 + int((commit - floor) / each)
 
 
+def _run_text(argv, timeout=30):
+    """A command's stdout as text. It is read as bytes and decoded with errors='replace': PowerShell and tasklist write the console
+    code page (GBK on a zh-CN PC), which text=True would decode as UTF-8 and raise on (#4810)."""
+    return (subprocess.run(argv, capture_output=True, timeout=timeout).stdout or b"").decode("utf-8", errors="replace")
+
+
 def slug_busy(slug):
     """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read. LOOP_PROCS (one
     command line per line) stands in for the list in tests."""
@@ -167,10 +173,9 @@ def slug_busy(slug):
         if os.environ.get("LOOP_PROCS") is not None:
             text = os.environ["LOOP_PROCS"]
         elif os.name == "nt":
-            text = subprocess.run(["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_Process | % { $_.CommandLine }"],
-                                  capture_output=True, text=True, timeout=60).stdout
+            text = _run_text(["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_Process | % { $_.CommandLine }"], 60)
         else:
-            text = subprocess.run(["ps", "-A", "-o", "args="], capture_output=True, text=True, timeout=30).stdout
+            text = _run_text(["ps", "-A", "-o", "args="], 30)
     except Exception:
         return True
     return any(slug in l and re.search(r"goal\.py|flow\.py|role\.py|lane|regression\.py", l) for l in text.splitlines())
@@ -195,7 +200,7 @@ def machine_line(cfg):
     else:
         try:
             if os.name == "nt":
-                seen = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, timeout=20).stdout.lower().splitlines()
+                seen = _run_text(["tasklist", "/fo", "csv", "/nh"], 20).lower().splitlines()
                 names = [l.split('","')[0].strip('"').replace(".exe", "") for l in seen]
                 import ctypes
                 import time
@@ -207,7 +212,7 @@ def machine_line(cfg):
                 busy = (two[1] - one[1]) + (two[2] - one[2])  # kernel time includes idle
                 cpu = 100 * (1 - (two[0] - one[0]) / busy) if busy else None
             else:
-                names = [os.path.basename(l.strip()) for l in subprocess.run(["ps", "-A", "-o", "comm="], capture_output=True, text=True, timeout=20).stdout.splitlines()]
+                names = [os.path.basename(l.strip()) for l in _run_text(["ps", "-A", "-o", "comm="], 20).splitlines()]
                 cpu = os.getloadavg()[0] / (os.cpu_count() or 1) * 100
             count = {k: sum(n == k for n in names) for k in count}
         except Exception:
