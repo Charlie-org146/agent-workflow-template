@@ -72,4 +72,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept token-diet@b6b3a95a -->
+<!-- kept token-diet@99e95b20 -->
