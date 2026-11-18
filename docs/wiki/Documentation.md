@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept gate-rerender@3cda989f -->
+Review: **Unreviewed** <!-- kept prd-principles@f0f69c2b -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -280,7 +280,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [format-groups](Tests#t-format-groups) | requirement | DOC-1 | Given Requirements without the Functional or Non-functional heading, when the docs check runs, then it fails. | PASS 2026-11-10 |
 | [format-groups-read](Tests#t-format-groups-read) | requirement | DOC-1 | Given a reviewed requirement under either group, when a sub-bullet is added, then it is still read and the check reports LOCKED. | PASS 2026-11-10 |
 | [format-problem](Tests#t-format-problem) | requirement | DOC-1 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-8. | PASS 2026-11-18 |
-| [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-1 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-9. | PASS 2026-11-10 |
+| [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-1 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-9. | PASS 2026-11-18 |
 | [cap-default-10](Tests#t-cap-default-10) | requirement | DOC-1 | Given no criteria_max in the config, when the cap is read, then it is 10 in both the docs check and setup. | PASS 2026-11-10 |
 | [format-key](Tests#t-format-key) | requirement | DOC-1 | Given a template rules block whose format key leaves out problem, when the docs check runs, then the Problem check is off. | PASS 2026-11-10 |
 | [problem-plural](Tests#t-problem-plural) | requirement | DOC-1 | Given a Problem with a banned word in the plural, when the docs check runs, then it fails. | PASS 2026-11-18 |
@@ -370,9 +370,9 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [settings-stale](Tests#t-settings-stale) | requirement | DOC-15 | Given a setting changed after render, when docs check runs, then it says STALE Settings. | PASS 2026-11-12 |
 | [automation-cron-words](Tests#t-automation-cron-words) | requirement | DOC-15 | Given a daily cron, a workflow file and a routine added as one config entry, when render runs, then the Automation page reads the cadence in words, where it runs and the added routine. | PASS 2026-11-12 |
 | [blocks-no-insert](Tests#t-blocks-no-insert) | requirement | DOC-15 | Given a repo adopted before the Settings and Automation blocks (no markers), when a lane renders, then README and Home stay byte-identical and docs check calls nothing STALE. | not run |
-| [blocks-format](Tests#t-blocks-format) | requirement | DOC-15 | Given setup inserts the blocks into README and a DOC-4 Home, including a README that opens with How to use, when docs check runs, then no FORMAT line refuses them. | not run |
+| [blocks-format](Tests#t-blocks-format) | requirement | DOC-15 | Given setup inserts the blocks into README and a DOC-4 Home, including a README that opens with How to use, when docs check runs, then no FORMAT line refuses them. | PASS 2026-11-18 |
 | [blocks-no-cascade](Tests#t-blocks-no-cascade) | requirement | DOC-15 | Given a page mapped to README, when a commit only refreshes the generated blocks, then the page stays fresh, and a real README edit still stales it. | not run |
-| [blocks-setup-clean](Tests#t-blocks-setup-clean) | requirement | DOC-15 | Given setup with criteria on, when it adopts a repo, then the README and Home blocks are in the adoption commit and the tree is clean. | PASS 2026-11-12 |
+| [blocks-setup-clean](Tests#t-blocks-setup-clean) | requirement | DOC-15 | Given setup with criteria on, when it adopts a repo, then the README and Home blocks are in the adoption commit and the tree is clean. | PASS 2026-11-18 |
 | [automation-links-runbook](Tests#t-automation-links-runbook) | requirement | DOC-15 | Given routines with a Runbook, when the Automation block is generated, then each routine's name links to its page's Runbook. | not run |
 | [launchctl-missing-unknown](Tests#t-launchctl-missing-unknown) | requirement | DOC-15 | Given a host with no launchctl and no gh, when docs.py automation runs, then it reports each routine's state as unknown and exits 0. | PASS 2026-11-14 |
 | [home-kept-config](Tests#t-home-kept-config) | requirement | DOC-15 | Given a .loop/config.json value kept on one machine with skip-worktree, when the generated blocks are rendered, then the value reaches no committed page, while an ordinary config value does. | not run |
@@ -417,8 +417,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [links-outside-links-fail](Tests#t-links-outside-links-fail) | requirement | DOC-19 | Given an unlisted site, another host, a lookalike host, another repo's README, or this repo's issue and source links, when docs check runs, then each is a LINKS finding. | not run |
 | - | requirement | DOC-20 | no passing test | not enforced |
 | - | requirement | DOC-22 | no passing test | not enforced |
-| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-23 | Given a README of the eight principles, a section off the list, a ninth section, a sentence off by a word, a cited ID that is neither real nor planned, no Home link or, on the Principles page, a sentence off by a word, when the docs check runs, then the first passes and each other fails naming README and DOC-23; a repo without the shipped list keeps its own README. | FAIL 2026-11-18 |
-| - | requirement | DOC-23 | no passing test | not enforced |
+| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-23 | Given a README of the eight principles, a section off the list, a ninth section, a sentence off by a word, a cited ID that is neither real nor planned, no Home link or, on the Principles page, a sentence off by a word, when the docs check runs, then the first passes and each other fails naming README and DOC-23; a repo without the shipped list keeps its own README. | PASS 2026-11-18 |
 | - | requirement | DOC-21 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-18 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |

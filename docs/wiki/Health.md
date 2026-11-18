@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Unreviewed** <!-- kept gate-rerender@3cda989f -->
+Review: **Unreviewed** <!-- kept prd-principles@f0f69c2b -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
@@ -156,7 +156,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [defect-health](Tests#t-defect-health) | requirement | HLT-2 | Given a closed issue or finding with no defect test, when health runs, then it is flagged. | PASS 2026-11-12 |
 | [cost-time-warn](Tests#t-cost-time-warn) | requirement | HLT-2 | Given a goal over its time budget, when health runs, then it is a Cost warning naming its slowest steps. | PASS 2026-11-12 |
 | [cost-unread-tokens](Tests#t-cost-unread-tokens) | requirement | HLT-2 | Given no tokens recorded, when the Performance rule runs, then it prints INFO and leaves the token check out, never red. | PASS 2026-11-12 |
-| [hlt2-twelve-groups](Tests#t-hlt2-twelve-groups) | requirement | HLT-2 | Given a repo, when health checks it, then it runs exactly the twelve groups plus Mine, each heading with its angle, and every rule's negative control fires, and the report then prints one PRINCIPLE line for each of the eight principles, red when a group under it fails, principle 8 UNREAD. | not run |
+| [hlt2-twelve-groups](Tests#t-hlt2-twelve-groups) | requirement | HLT-2 | Given a repo, when health checks it, then it runs exactly the twelve groups plus Mine, each heading with its angle, and every rule's negative control fires, and the report then prints one PRINCIPLE line for each of the eight principles, red when a group under it fails, principle 8 UNREAD. | PASS 2026-11-18 |
 | [health-not-enforced-warn](Tests#t-health-not-enforced-warn) | requirement | HLT-2 | Given a Reviewed requirement with no test, when health runs within 7 days of its Reviewed date, then it warns as not enforced. | PASS 2026-11-10 |
 | [health-not-enforced-fail](Tests#t-health-not-enforced-fail) | requirement | HLT-2 | Given a Reviewed requirement with no test for 8 days, when health runs, then it fails. | PASS 2026-11-10 |
 | [repo-rules-run](Tests#t-repo-rules-run) | requirement | HLT-2 | Given a rule in .loop/health-rules.json, when health checks, then it runs in the report in its group with its feature and its exit as PASS, WARN, FAIL or UNREAD. | not run |
