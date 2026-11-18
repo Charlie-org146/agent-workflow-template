@@ -171,7 +171,7 @@ merge.run = real
 
 # a repo's own published sites and its README are inside the repo
 page = "Demo: https://demo.example.org/app and https://demo.example.org#top and https://github.com/me/proj#install and " \
-       "https://github.com/me/proj/blob/main/README.md#usage."
+       "https://github.com/me/proj/blob/main/README.md#usage and https://github.com/me/proj/."
 sites = ("https://demo.example.org",)
 check("a link to the repo's own published site or its README is not a LINKS finding",
       milestones.stands_alone("P", page, "me/proj", sites) == [])
