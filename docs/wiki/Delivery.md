@@ -74,11 +74,11 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ### Retired
 
-- DEL-10: moved to MCH-5
-- DEL-11: moved to MCH-5
-- DEL-13: moved to REL-11
-- DEL-15: moved to REL-12
-- DEL-5: moved to REL-9
+- DEL-10: moved to MCH-8
+- DEL-11: moved to MCH-8
+- DEL-13: moved to REL-12
+- DEL-15: moved to REL-13
+- DEL-5: moved to REL-10
 - DEL-6: merged into DEL-3
 - DEL-8: merged into DEL-7
 
@@ -114,7 +114,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | Release <br> Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it), runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you. | v2 regroup: moved:REL-9 | o47: "Yes, start it end." |
+| r2 | 2026-11-18 | Release <br> Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it), runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you. | v2 regroup: moved:REL-10 | o47: "Yes, start it end." |
 | r1 | 2026-11-14 | Release <br> Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it), runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-6
@@ -148,14 +148,14 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | A goal started on another machine can be adopted <br> `goal.py adopt SLUG`, run in the goal's worktree on branch `loop/SLUG`, creates this machine's run record at step qa from the pushed branch, its frozen goal file and its open pull request; idea, plan and review are recorded `done on another machine`. <br> qa, ship and the pull request are never recorded from another machine's evidence: they run again here before release. <br> A record here that is running with no pid and no recorded step (a stale, never-started one) is replaced and the replacement logged; a record with a pid, a recorded step or a finished status makes adopt refuse. | v2 regroup: moved:MCH-5 | o47: "Yes, start it end." |
+| r2 | 2026-11-18 | A goal started on another machine can be adopted <br> `goal.py adopt SLUG`, run in the goal's worktree on branch `loop/SLUG`, creates this machine's run record at step qa from the pushed branch, its frozen goal file and its open pull request; idea, plan and review are recorded `done on another machine`. <br> qa, ship and the pull request are never recorded from another machine's evidence: they run again here before release. <br> A record here that is running with no pid and no recorded step (a stale, never-started one) is replaced and the replacement logged; a record with a pid, a recorded step or a finished status makes adopt refuse. | v2 regroup: moved:MCH-8 | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | A goal started on another machine can be adopted <br> `goal.py adopt SLUG`, run in the goal's worktree on branch `loop/SLUG`, creates this machine's run record at step qa from the pushed branch, its frozen goal file and its open pull request; idea, plan and review are recorded `done on another machine`. <br> qa, ship and the pull request are never recorded from another machine's evidence: they run again here before release. <br> A record here that is running with no pid and no recorded step (a stale, never-started one) is replaced and the replacement logged; a record with a pid, a recorded step or a finished status makes adopt refuse. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-11
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | Adopt never trusts an unpushed branch <br> A branch that is not on origin, a worktree missing its commits, a goal with no done line or no open pull request is refused with one line, and no run record is written. | v2 regroup: moved:MCH-5 | o47: "Yes, start it end." |
+| r2 | 2026-11-18 | Adopt never trusts an unpushed branch <br> A branch that is not on origin, a worktree missing its commits, a goal with no done line or no open pull request is refused with one line, and no run record is written. | v2 regroup: moved:MCH-8 | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | Adopt never trusts an unpushed branch <br> A branch that is not on origin, a worktree missing its commits, a goal with no done line or no open pull request is refused with one line, and no run record is written. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-12
@@ -168,7 +168,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows a merge waiting on review. | v2 regroup: moved:REL-11 | o47: "Yes, start it end." |
+| r2 | 2026-11-18 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows a merge waiting on review. | v2 regroup: moved:REL-12 | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows a merge waiting on review. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-14
@@ -182,7 +182,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | Fast merge queue. PRs merge one after another, but each waits only as long as needed. <br> A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result. <br> Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once. <br> Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit. | v2 regroup: moved:REL-12 | o47: "Yes, start it end." |
+| r2 | 2026-11-18 | Fast merge queue. PRs merge one after another, but each waits only as long as needed. <br> A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result. <br> Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once. <br> Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit. | v2 regroup: moved:REL-13 | o47: "Yes, start it end." |
 | r1 | 2026-11-14 | Fast merge queue. PRs merge one after another, but each waits only as long as needed. <br> A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result. <br> Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once. <br> Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-16

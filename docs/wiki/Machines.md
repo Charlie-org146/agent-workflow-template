@@ -23,17 +23,17 @@ Review: **Unreviewed** <!-- kept regroup-delivery@dbef838f -->
   - Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied.
 - MCH-3: **Unreviewed** Backup and restore are commands
   - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused.
-- MCH-4: **Unreviewed** Prerequisites first
+- MCH-7: **Unreviewed** Prerequisites first
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix.
-- MCH-5: **Unreviewed** A goal started on another machine can be adopted
+- MCH-8: **Unreviewed** A goal started on another machine can be adopted
   - A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release.
   - A branch that isn't pushed, or a goal with no done line or pull request, is refused.
-- MCH-6: **Unreviewed** A machine keeps its private data to itself
+- MCH-9: **Unreviewed** A machine keeps its private data to itself
   - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report.
   - A new machine gets empty private files and asks me to fill them.
-- MCH-7: **Unreviewed** A drifted machine says so
+- MCH-10: **Unreviewed** A drifted machine says so
   - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks.
-- MCH-8: **Unreviewed** No routine stops to ask
+- MCH-11: **Unreviewed** No routine stops to ask
   - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing.
 
 ### Non-functional
@@ -70,31 +70,31 @@ None
 |---|---|---|---|---|
 | r1 | 2026-11-18 | Backup and restore are commands <br> `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
-### MCH-4
+### MCH-7
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | Prerequisites first <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### MCH-5
+### MCH-8
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A goal started on another machine can be adopted <br> A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release. <br> A branch that isn't pushed, or a goal with no done line or pull request, is refused. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### MCH-6
+### MCH-9
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A machine keeps its private data to itself <br> Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. <br> A new machine gets empty private files and asks me to fill them. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### MCH-7
+### MCH-10
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A drifted machine says so <br> The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### MCH-8
+### MCH-11
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
@@ -115,13 +115,13 @@ None
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
 | [machine-operation-peer](Tests#t-machine-operation-peer) | requirement | MCH-2 | Given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist, check names them when missing, and the output names only the owner-only items left. | PASS 2026-11-17 |
 | [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | MCH-3 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
-| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | MCH-4 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
-| - | requirement | MCH-4 | no passing test | not enforced |
-| [adopt-record-qa](Tests#t-adopt-record-qa) | requirement | MCH-5 | Given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded. | PASS 2026-11-16 FLAKY |
-| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | MCH-5 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | not run |
-| [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | MCH-5 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
-| [machine-no-private](Tests#t-machine-no-private) | requirement | MCH-6 | Given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | PASS 2026-11-17 FLAKY |
-| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-7 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
+| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | MCH-7 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
 | - | requirement | MCH-7 | no passing test | not enforced |
-| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | MCH-8 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | not run |
-| - | requirement | MCH-8 | no passing test | not enforced |
+| [adopt-record-qa](Tests#t-adopt-record-qa) | requirement | MCH-8 | Given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded. | PASS 2026-11-16 FLAKY |
+| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | MCH-8 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | not run |
+| [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | MCH-8 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
+| [machine-no-private](Tests#t-machine-no-private) | requirement | MCH-9 | Given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | PASS 2026-11-17 FLAKY |
+| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-10 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
+| - | requirement | MCH-10 | no passing test | not enforced |
+| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | MCH-11 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | not run |
+| - | requirement | MCH-11 | no passing test | not enforced |

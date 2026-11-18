@@ -48,11 +48,11 @@ Each requirement and how it is delivered:
 - REL-6: Promoting a major tags it, keeps a snapshot branch and sends a state report. Example, from the rel-promote-snapshot test: given every check green and an owner record naming the version, when promote runs, then the tag, the branch, the release notes and the mail all exist.
 - REL-7: `revert vX` puts main back on the snapshot through a pull request. Example, from the rel-revert-pr test: given release/vX, when revert runs, then a pull request to main carries the snapshot's tree.
 - REL-8: Promotion and every waiver are the owner's words, never a worker's or a peer session's. Example, from the rel-owner-only test: given a worker, when it runs promote, then it is refused and nothing changes.
-- REL-9: Every goal ends with a release. Example, from the never-merges test: given auto_merge is off, when goals finish, then nothing is merged.
-- REL-10: A merge is never refused late or left half done.
-- REL-11: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
-- REL-12: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
-- REL-13: Every release is noted.
+- REL-10: Every goal ends with a release. Example, from the never-merges test: given auto_merge is off, when goals finish, then nothing is merged.
+- REL-11: A merge is never refused late or left half done.
+- REL-12: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
+- REL-13: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
+- REL-14: Every release is noted.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite]`

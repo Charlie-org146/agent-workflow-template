@@ -34,20 +34,20 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it.
 - REL-8: **Unreviewed** Promotion and waivers are my words
   - Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject.
-- REL-9: **Unreviewed** Every goal ends with a release
+- REL-10: **Unreviewed** Every goal ends with a release
   - With auto_merge on, a finished goal is merged and released automatically: version bump, release note, published release and wiki.
   - With auto_merge off it makes a draft release and merges nothing.
   - Any failure shows under Needs you.
-- REL-10: **Unreviewed** A merge is never refused late or left half done
+- REL-11: **Unreviewed** A merge is never refused late or left half done
   - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent.
   - If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice.
-- REL-11: **Unreviewed** A review hold before auto merge
+- REL-12: **Unreviewed** A review hold before auto merge
   - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review.
-- REL-12: **Unreviewed** Fast merge queue
+- REL-13: **Unreviewed** Fast merge queue
   - Pull requests merge one at a time per repo, across machines.
   - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together.
   - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next.
-- REL-13: **Unreviewed** Every release is noted
+- REL-14: **Unreviewed** Every release is noted
   - Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6).
 
 ### Non-functional
@@ -122,31 +122,31 @@ None
 | r2 | 2026-11-18 | Promotion and waivers are my words <br> Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. | v2 rewrite: on main since v1.0.61 (release-gate), Unreviewed; text condensed from the page; covers the draft's earlier REL-6 (o44). | o47: "Yes, start it end." |
 | r1 | 2026-11-18 | Promotion and every waiver are the owner's words, never a worker's or a peer session's <br> Only the operation session runs `promote` or `revert`; a worker is refused with `REVIEW_ROLE`. <br> A waiver counts only when its owner-words record exists and names its subject, and the record id is kept beside the waiver in the git folder, outside the repo. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### REL-9
+### REL-10
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | Every goal ends with a release <br> With auto_merge on, a finished goal is merged and released automatically: version bump, release note, published release and wiki. <br> With auto_merge off it makes a draft release and merges nothing. <br> Any failure shows under Needs you. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### REL-10
+### REL-11
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A merge is never refused late or left half done <br> A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent. <br> If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### REL-11
+### REL-12
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### REL-12
+### REL-13
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. | migration r1; date from the run day | o47: "Yes, start it end." |
 
-### REL-13
+### REL-14
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
@@ -172,43 +172,43 @@ None
 | - | requirement | REL-7 | no passing test | not enforced |
 | [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-8 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
 | - | requirement | REL-8 | no passing test | not enforced |
-| [never-merges](Tests#t-never-merges) | requirement | REL-9 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
-| [wiki-release](Tests#t-wiki-release) | requirement | REL-9 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-18 |
-| [auto-release](Tests#t-auto-release) | requirement | REL-9 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
-| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | REL-9 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-12 |
-| [del5-patch-default](Tests#t-del5-patch-default) | requirement | REL-9 | Given a goal with a code change and no bump set, when it is released, then the version bump is patch. | PASS 2026-11-12 |
-| [del5-bump-set](Tests#t-del5-bump-set) | requirement | REL-9 | Given the operation recorded a minor bump with goal.py set, when the goal is released, then the bump is minor. | PASS 2026-11-12 |
-| [del5-release-pr](Tests#t-del5-release-pr) | requirement | REL-9 | Given a protected main that refuses direct pushes, when a goal is released, then the version and changelog land through a release pull request. | PASS 2026-11-12 |
-| [autorelease-no-report](Tests#t-autorelease-no-report) | requirement | REL-9 | Given a goal state whose report is null, a string or has a non-string text, when the release fails and merge.py refuses, then it prints REFUSED with its fix on stderr, exits non-zero with no traceback, and records the failure on the goal. | PASS 2026-11-12 |
-| [wiki-no-report](Tests#t-wiki-no-report) | requirement | REL-9 | Given a goal state whose report is null or a string, when the wiki publish is refused, then it prints WIKI REFUSED with its fix, exits 1 with no traceback, and records the failure on the goal. | PASS 2026-11-12 |
-| [del5-docs-bump-minor](Tests#t-del5-docs-bump-minor) | requirement | REL-9 | Given a goal that changes only docs and the operation recorded a minor bump with goal.py set, when it is released, then the version moves by a minor. | PASS 2026-11-15 |
-| [del5-docs-patch-default](Tests#t-del5-docs-patch-default) | requirement | REL-9 | Given a goal that changes only docs and no bump is recorded, when it is released, then the version moves by a patch. | PASS 2026-11-15 |
-| [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | REL-9 | Given a goal set to ask and auto_merge on, when its worker ends with the pull request open, then the release step does not merge it. | not run |
-| [resume-unasked-merges](Tests#t-resume-unasked-merges) | requirement | REL-9 | Given a goal with no ask and auto_merge on, when its worker ends with the pull request open, then the release step still merges it. | not run |
-| [package-gate-controls](Tests#t-package-gate-controls) | requirement | REL-9 | Given a package with a script over 20,480 bytes, more than 100 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
-| [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | REL-9 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
-| [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | REL-9 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
-| [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | REL-9 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-16 |
-| [del5-merge-forwards-checkout](Tests#t-del5-merge-forwards-checkout) | requirement | REL-9 | Given a main checkout behind origin with a dirty lane record, when merge.py fast-forwards it, then the record is stashed and put back; any other change keeps the checkout as it is. | PASS 2026-11-15 |
-| [start-from-head-passes-4340](Tests#t-start-from-head-passes-4340) | requirement | REL-9 | Given a pull request that adds a skill command and carries the START.md its own skills render, when merge.py's wiki.pending audits it, then START.md is not reported. | not run |
-| [start-from-head-refuses-4340](Tests#t-start-from-head-refuses-4340) | requirement | REL-9 | Given a pull request whose START.md is stale for its own skills, when merge.py's wiki.pending audits it, then it still reports START.md (#4340). | not run |
-| [merge-main-own-finding-4343](Tests#t-merge-main-own-finding-4343) | requirement | REL-9 | Given a goal branch that merged main's stale page, when merge.py's wiki.pending audits it, then main's stale page is printed as a FINDING for health. | not run |
-| [audit-head-judges-own-docs](Tests#t-audit-head-judges-own-docs) | requirement | REL-9 | Given a pull request whose head carries its own docs.py, when merge.py's wiki.pending audits it, then the head's own docs.py judges its pages, not the main checkout's. | not run |
-| [ff-stash-conflict-never-unmerged](Tests#t-ff-stash-conflict-never-unmerged) | requirement | REL-9 | Given a main checkout whose dirty .loop/regression-runs.tsv conflicts with origin when merge.py fast-forwards it, when the stash apply fails, then the file is restored from HEAD, never left unmerged or with conflict markers, and the dirty results stay in the named stash the step prints. | not run |
-| [release-criteria-known-skip](Tests#t-release-criteria-known-skip) | requirement | REL-9 | Given rows that are known, skipped with exit 77 or already recorded PASS, when release.py cut checks its criteria, then none counts as failing and only the rest run. | not run |
-| [cut-pass-current-commit](Tests#t-cut-pass-current-commit) | requirement | REL-9 | Given rows whose only PASS is on an older commit and one with a PASS on the current commit, when the cut proves the requirements, then it reruns the older-PASS rows and does not rerun the current-PASS row (#4508). | not run |
-| [cut-left-listed](Tests#t-cut-left-listed) | requirement | REL-9 | Given the cut's stop reached before some rows ran, when the cut ends, then it prints those rows as LEFT with their count and writes the same section into the release notes (#4508). | not run |
-| [cut-left-none](Tests#t-cut-left-none) | requirement | REL-9 | Given time to run every row, when the cut ends, then nothing is LEFT and the release notes carry no LEFT section (negative control, #4508). | not run |
-| - | requirement | REL-10 | no passing test | not enforced |
-| [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | REL-11 | Given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review. | not run |
-| [review-recorded-merges](Tests#t-review-recorded-merges) | requirement | REL-11 | Given review_hold is on, when the operation session records a review of the head, then merge.py merges, and with the setting off merging is unchanged. | not run |
-| [review-worker-refused](Tests#t-review-worker-refused) | requirement | REL-11 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
-| [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | REL-11 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
+| [never-merges](Tests#t-never-merges) | requirement | REL-10 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
+| [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-18 |
+| [auto-release](Tests#t-auto-release) | requirement | REL-10 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
+| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | REL-10 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-12 |
+| [del5-patch-default](Tests#t-del5-patch-default) | requirement | REL-10 | Given a goal with a code change and no bump set, when it is released, then the version bump is patch. | PASS 2026-11-12 |
+| [del5-bump-set](Tests#t-del5-bump-set) | requirement | REL-10 | Given the operation recorded a minor bump with goal.py set, when the goal is released, then the bump is minor. | PASS 2026-11-12 |
+| [del5-release-pr](Tests#t-del5-release-pr) | requirement | REL-10 | Given a protected main that refuses direct pushes, when a goal is released, then the version and changelog land through a release pull request. | PASS 2026-11-12 |
+| [autorelease-no-report](Tests#t-autorelease-no-report) | requirement | REL-10 | Given a goal state whose report is null, a string or has a non-string text, when the release fails and merge.py refuses, then it prints REFUSED with its fix on stderr, exits non-zero with no traceback, and records the failure on the goal. | PASS 2026-11-12 |
+| [wiki-no-report](Tests#t-wiki-no-report) | requirement | REL-10 | Given a goal state whose report is null or a string, when the wiki publish is refused, then it prints WIKI REFUSED with its fix, exits 1 with no traceback, and records the failure on the goal. | PASS 2026-11-12 |
+| [del5-docs-bump-minor](Tests#t-del5-docs-bump-minor) | requirement | REL-10 | Given a goal that changes only docs and the operation recorded a minor bump with goal.py set, when it is released, then the version moves by a minor. | PASS 2026-11-15 |
+| [del5-docs-patch-default](Tests#t-del5-docs-patch-default) | requirement | REL-10 | Given a goal that changes only docs and no bump is recorded, when it is released, then the version moves by a patch. | PASS 2026-11-15 |
+| [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | REL-10 | Given a goal set to ask and auto_merge on, when its worker ends with the pull request open, then the release step does not merge it. | not run |
+| [resume-unasked-merges](Tests#t-resume-unasked-merges) | requirement | REL-10 | Given a goal with no ask and auto_merge on, when its worker ends with the pull request open, then the release step still merges it. | not run |
+| [package-gate-controls](Tests#t-package-gate-controls) | requirement | REL-10 | Given a package with a script over 20,480 bytes, more than 100 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
+| [skill-refusals-in-references](Tests#t-skill-refusals-in-references) | requirement | REL-10 | Given the release skill's refusals, when SKILL.md and its references folder are read, then every refusal and its fix sit in references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
+| [release-scripts-under-19000](Tests#t-release-scripts-under-19000) | requirement | REL-10 | Given the workflow-release scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
+| [scripts-a-delivery-under-19000](Tests#t-scripts-a-delivery-under-19000) | requirement | REL-10 | Given the workflow-delivery scripts, including lane.py and flow.py after merging main, when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-16 |
+| [del5-merge-forwards-checkout](Tests#t-del5-merge-forwards-checkout) | requirement | REL-10 | Given a main checkout behind origin with a dirty lane record, when merge.py fast-forwards it, then the record is stashed and put back; any other change keeps the checkout as it is. | PASS 2026-11-15 |
+| [start-from-head-passes-4340](Tests#t-start-from-head-passes-4340) | requirement | REL-10 | Given a pull request that adds a skill command and carries the START.md its own skills render, when merge.py's wiki.pending audits it, then START.md is not reported. | not run |
+| [start-from-head-refuses-4340](Tests#t-start-from-head-refuses-4340) | requirement | REL-10 | Given a pull request whose START.md is stale for its own skills, when merge.py's wiki.pending audits it, then it still reports START.md (#4340). | not run |
+| [merge-main-own-finding-4343](Tests#t-merge-main-own-finding-4343) | requirement | REL-10 | Given a goal branch that merged main's stale page, when merge.py's wiki.pending audits it, then main's stale page is printed as a FINDING for health. | not run |
+| [audit-head-judges-own-docs](Tests#t-audit-head-judges-own-docs) | requirement | REL-10 | Given a pull request whose head carries its own docs.py, when merge.py's wiki.pending audits it, then the head's own docs.py judges its pages, not the main checkout's. | not run |
+| [ff-stash-conflict-never-unmerged](Tests#t-ff-stash-conflict-never-unmerged) | requirement | REL-10 | Given a main checkout whose dirty .loop/regression-runs.tsv conflicts with origin when merge.py fast-forwards it, when the stash apply fails, then the file is restored from HEAD, never left unmerged or with conflict markers, and the dirty results stay in the named stash the step prints. | not run |
+| [release-criteria-known-skip](Tests#t-release-criteria-known-skip) | requirement | REL-10 | Given rows that are known, skipped with exit 77 or already recorded PASS, when release.py cut checks its criteria, then none counts as failing and only the rest run. | not run |
+| [cut-pass-current-commit](Tests#t-cut-pass-current-commit) | requirement | REL-10 | Given rows whose only PASS is on an older commit and one with a PASS on the current commit, when the cut proves the requirements, then it reruns the older-PASS rows and does not rerun the current-PASS row (#4508). | not run |
+| [cut-left-listed](Tests#t-cut-left-listed) | requirement | REL-10 | Given the cut's stop reached before some rows ran, when the cut ends, then it prints those rows as LEFT with their count and writes the same section into the release notes (#4508). | not run |
+| [cut-left-none](Tests#t-cut-left-none) | requirement | REL-10 | Given time to run every row, when the cut ends, then nothing is LEFT and the release notes carry no LEFT section (negative control, #4508). | not run |
 | - | requirement | REL-11 | no passing test | not enforced |
-| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-12 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
-| [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-12 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
+| [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | REL-12 | Given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review. | not run |
+| [review-recorded-merges](Tests#t-review-recorded-merges) | requirement | REL-12 | Given review_hold is on, when the operation session records a review of the head, then merge.py merges, and with the setting off merging is unchanged. | not run |
+| [review-worker-refused](Tests#t-review-worker-refused) | requirement | REL-12 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
+| [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | REL-12 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
 | - | requirement | REL-12 | no passing test | not enforced |
+| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
+| [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |
+| - | requirement | REL-14 | no passing test | not enforced |
 | [wiki-release-pycache](Tests#t-wiki-release-pycache) | defect | [#58](https://github.com/jcl2018/agent-workflow-template/issues/58) closed (2026-11-09) | Given python leaves cache files behind, when a goal merges, then its wiki pages are still published. | PASS 2026-11-12 |
 | [worker-runs-release](Tests#t-worker-runs-release) | defect | [PR 61](https://github.com/jcl2018/agent-workflow-template/pull/61) merged (2026-11-09) | Given a worker that ends with its pull request waiting, when it finishes, then it runs the release step itself. | PASS 2026-11-12 |
 | [issue-129-docs-published](Tests#t-issue-129-docs-published) | defect | [#129](https://github.com/jcl2018/agent-workflow-template/issues/129) closed (2026-11-15) | Given the release skill's docs, when they describe the auto_merge path, then they say merge.py publishes the release with no draft (issue: Release skill says it cuts a draft, but merge.py publishes the release directly). | PASS 2026-11-12 |
