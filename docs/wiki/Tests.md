@@ -1309,6 +1309,12 @@
 | <a id="t-health-auto-rules"></a>health-auto-rules | requirement | done line full-auto-all:3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-done-docs-v2-1"></a>done-docs-v2-1 | workflow | done line docs-v2:1 | not run | - | local | no |
+| <a id="t-done-docs-v2-2"></a>done-docs-v2-2 | workflow | done line docs-v2:2 | not run | - | local | no |
+| <a id="t-done-docs-v2-3"></a>done-docs-v2-3 | workflow | done line docs-v2:3 | not run | - | local | no |
+| <a id="t-done-docs-v2-4"></a>done-docs-v2-4 | workflow | done line docs-v2:4 | not run | - | local | no |
+| <a id="t-done-docs-v2-5"></a>done-docs-v2-5 | workflow | done line docs-v2:5 | not run | - | local | no |
+| <a id="t-done-docs-v2-6"></a>done-docs-v2-6 | workflow | done line docs-v2:6 | not run | - | local | no |
 | <a id="t-hands-off-fallback"></a>hands-off-fallback | requirement | done line hands-off-operation:1 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-archive"></a>hands-off-archive | requirement | done line hands-off-operation:2 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-pressure"></a>hands-off-pressure | requirement | done line hands-off-operation:3 | not run | - | local | 2026-11-17 |
