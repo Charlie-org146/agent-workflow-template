@@ -47,7 +47,8 @@ def version_key(text):
 
 def read(path, default=""):
     try:
-        return open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
     except OSError:
         return default
 
@@ -367,7 +368,7 @@ def perm_check(root):
     if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
         return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"] if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
     try:
-        written = json.load(open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8")).get("permissions") or {}
+        written = json.loads(read(os.path.join(root, ".claude", "settings.json"), "{}")).get("permissions") or {}
     except (OSError, ValueError):
         written = {}
     for _, row in counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")):
@@ -388,7 +389,6 @@ def perm_check(root):
     return findings
 
 
-# DOC-19 How-to items and commands (from milestones.py)
 ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
 NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
 

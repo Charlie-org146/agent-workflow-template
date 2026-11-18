@@ -183,7 +183,7 @@ fixed-closes	PASS	2026-11-12
 flaky-marked	PASS	2026-11-10	
 flaky-no-false-mark	PASS	2026-11-10	
 format-bullets	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-format-frontdoor	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+format-frontdoor	PASS	2026-11-18	
 format-groups	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 format-groups-read	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 format-home	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
