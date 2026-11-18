@@ -753,14 +753,6 @@
 | <a id="t-notify-new-events"></a>notify-new-events | requirement | MON-5 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-notify-operate-runs"></a>notify-operate-runs | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-one-mail-per-event"></a>notify-one-mail-per-event | requirement | MON-5 | not run | - | local | 2026-11-17 |
-| <a id="t-three-level-board"></a>three-level-board | requirement | MON-4 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-stale"></a>three-level-stale | requirement | MON-5 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-machine-line"></a>three-level-machine-line | requirement | MON-5 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-relay"></a>three-level-relay | requirement | MON-11 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-allowed"></a>three-level-allowed | requirement | MON-18 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-status"></a>three-level-status | requirement | MON-2 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-hook-machine"></a>three-level-hook-machine | requirement | MON-5 | not run | - | local | 2026-11-18 |
-| <a id="t-three-level-budget"></a>three-level-budget | requirement | MON-16 | not run | - | local | 2026-11-18 |
 
 ## Regression
 
