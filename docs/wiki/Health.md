@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Unreviewed** <!-- kept prd-revisions@d459068e -->
+Review: **Unreviewed** <!-- kept docs-gate-scope@49a1eff1 -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 

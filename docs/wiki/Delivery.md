@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept prd-revisions@d459068e -->
+Review: **Unreviewed** <!-- kept docs-gate-scope@31377011 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -238,8 +238,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [del6-full-lane](Tests#t-del6-full-lane) | requirement | DEL-6 | Given a goal whose review ran condensed, when its qa step runs, then it runs the same land regression lane as a full-depth goal, with no row dropped for depth. | not run |
 | [adopt-record-qa](Tests#t-adopt-record-qa) | requirement | DEL-10 | Given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded. | PASS 2026-11-16 FLAKY |
 | [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | DEL-10 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
-| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | DEL-11 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | not run |
-| - | requirement | DEL-11 | no passing test | not enforced |
+| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | DEL-11 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | PASS 2026-11-18 FLAKY |
 | [del7-kill-resume](Tests#t-del7-kill-resume) | requirement | DEL-7 | Given a goal whose review was killed mid-step, when it is resumed, then it reruns review from its recorded plan, never from the start, and moves on to qa. | not run |
 | [del7-recorded-refused](Tests#t-del7-recorded-refused) | requirement | DEL-7 | Given a goal with recorded steps, when a recorded step is run again without --again, then it is refused with no try and names the step to resume from. | not run |
 | - | requirement | DEL-7 | no passing test | not enforced |

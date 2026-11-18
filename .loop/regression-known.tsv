@@ -47,3 +47,4 @@ no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
 format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
 docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,000 and under the 20,480 fail line), see #4653
+rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
