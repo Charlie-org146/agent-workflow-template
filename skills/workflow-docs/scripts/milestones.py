@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Milestone sync (DOC-17) and the How-to-use page checks (DOC-19), called by `docs.py sync` and `docs.py check`; no command of its own.
 
-Sync: a repo opts in by setting `milestones_source` in .loop/config.json to a `url:<link>` or `mcp:<server>:<resource>` source; with
-none, nothing is read or called. A milestone is its title and `state | due` (`open | due 2026-12-01`, `closed | no due`): on the page
-one line `- TITLE: state | due` each, on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both sides last agreed on is kept in
-.loop/milestones.md (and its .base); each side is compared with it, so an addition or change on one side is a DELTA, a milestone that
-differs on both is a CONFLICT, and nothing is overwritten. Each delta is posted once as a GitHub issue and once as a comment on the
-page, kept in the PRD ledger under `milestones:TITLE`. `docs.py sync --accept milestones:TITLE=repo|source`
-writes that side's text to the other. A side that cannot be reached prints `not connected`, changes nothing and exits 0; --dry-run
-only reports (exit 1 on a delta); --open leaves listing the ledger to audit.sync."""
+Sync: a repo opts in with `milestones_source` in .loop/config.json (`url:<link>` or `mcp:<server>:<resource>`); with none, nothing is
+read or called. A milestone is its title and `state | due` (`open | due 2026-12-01`, `closed | no due`): on the page one line
+`- TITLE: state | due` each, on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both sides last agreed on is kept in
+.loop/milestones.md; a change on one side is a DELTA (posted once as an issue and once as a page comment, ledger key
+`milestones:TITLE`), a milestone that differs on both is a CONFLICT, and nothing is overwritten. `docs.py sync --accept
+milestones:TITLE=repo|source` writes that side's text to the other. A side that cannot be reached prints `not connected` and exits 0;
+--dry-run only reports (exit 1 on a delta); --open leaves listing the ledger to audit.sync."""
 import json
 import os
 import re
@@ -36,7 +35,7 @@ def parse(text):
 
 
 def repo_side():
-    """({title: text}, {title: number}, None) of the repo's milestones, or (None, None, why)."""
+    """({title: text}, {title: number}, None) of the milestones, or (None, None, why)."""
     ok, text = post("LOOP_GH", "api", API + "?state=all&per_page=100", "--paginate")
     if not ok:
         return None, None, text[:100]
@@ -58,8 +57,7 @@ def repo_side():
 
 
 def backlog(page, held={}):
-    """DOC-17: the milestone "Backlog: PAGE" that a page's delta issues sit on, created when it is missing; "" when gh can neither
-    list nor make it. The bare page name is never used, even when a milestone of that name exists."""
+    """DOC-17: the milestone "Backlog: PAGE" for a page's delta issues, made when missing; "" when gh can neither list nor make it."""
     title = "Backlog: " + page
     if title not in held:
         have = repo_side()[0]
@@ -68,7 +66,7 @@ def backlog(page, held={}):
 
 
 def to_repo(title, number, text):
-    """(ok, why) of making the repo's milestone `title` read `text`: created, or edited by its number."""
+    """(ok, why) of making milestone `title` read `text`."""
     state, _, due = text.partition(" | ")
     args = ["-f", "title=" + title, "-f", "state=" + state, "-F" if due == "no due" else "-f", "due_on=null" if due == "no due" else "due_on=%sT00:00:00Z" % due[4:]]
     return post("LOOP_GH", "api", "-X", "PATCH" if number else "POST", "%s/%s" % (API, number) if number else API, *args)
@@ -77,7 +75,7 @@ def to_repo(title, number, text):
 def sync(root, args):
     source = counting.config_of(root).get("milestones_source")
     if not isinstance(source, str) or not source.startswith(("url:", "mcp:")):
-        held = counting.ledger(root)  # a repo that dropped its source keeps no milestone rows, and none is listed
+        held = counting.ledger(root)
         if not args.dry_run and any(k.startswith(KEY) for k in held):
             counting.ledger(root, {k: v for k, v in held.items() if not k.startswith(KEY)})
         return 0
@@ -133,7 +131,7 @@ def sync(root, args):
     for title in sorted(set(have) | set(want)):
         r, s, a = have.get(title), want.get(title), agreed.get(title)
         if r == s:
-            if title in gone:  # closed and not on the page: nothing agreed, so a reopen is the repo's change alone
+            if title in gone:
                 agreed.pop(title, None)
             else:
                 agreed[title] = r
@@ -176,8 +174,7 @@ ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
 
 
 def howto_items(name, text, feature):
-    """DOC-19 (#4657, called by deployments.howto): the How-to-use page holds one item '- ID: how it is delivered' for each
-    functional requirement of its feature page, and none for an ID that page lacks."""
+    """DOC-19: the How-to-use page holds one item '- ID: how it is delivered' per functional requirement of its feature page, no other."""
     have, top, sub = {}, "", ""
     for line in feature.splitlines():
         top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
@@ -193,7 +190,7 @@ def howto_items(name, text, feature):
     return out
 
 
-# --- How-to-use Kinds (DOC-19, #4677): every delivered row names a Kind, and the page carries that Kind's block ---
+# --- How-to-use Kinds (DOC-19): each delivered row names a Kind and the page carries its block ---
 KHEAD = "| Component | Kind | What it is | How a user uses it |"
 ROUTINE = "Scheduled routine"
 KINDS = {
@@ -201,7 +198,7 @@ KINDS = {
     "Skill": ["Say", "Command"],
     "Command": ["Command", "Dry run", "Reads", "Writes", "Exit codes"],
     "API/file contract": ["Path", "Fields", "Example", "Writer", "Reader"],
-    ROUTINE: [],  # its runbook fields are DOC-16's: pageformat.runbook checks them
+    ROUTINE: [],
     "Deployment": ["Target", "Deploy", "Rollback", "Check"],
     "Message/channel": ["Trigger", "Recipients", "Subject", "Resend"],
     "Playbook": ["Steps", "Templates", "Stop rules"],
@@ -212,13 +209,13 @@ NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
 
 
 def part(text, name):
-    """The lines under '## name', up to the next '## ' heading."""
+    """The lines under '## name'."""
     head = "\n## %s\n" % name
     return text.split(head, 1)[1].split("\n## ", 1)[0] if head in text else ""
 
 
 def blocks(body):
-    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
+    """{heading: {field: text}} per '### ' block (indented lines continue a field)."""
     found, cur, last = {}, None, None
     for line in body.splitlines():
         if line.startswith("### "):
@@ -233,7 +230,7 @@ def blocks(body):
 
 
 def delivered(text):
-    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
+    """(header line, [(component, kind, cells)]) of the What's delivered table."""
     block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
     lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
     out = []
@@ -244,8 +241,7 @@ def delivered(text):
 
 
 def kinds(name, text, on_page=()):
-    """DOC-19: (kind, page, detail) for a How-to-use page's What's delivered table and the block each row needs. A Scheduled routine
-    row's runbook may sit under Runbooks here or on the feature page (on_page: its '### routine' names)."""
+    """DOC-19: trouble in a How-to-use page's What's delivered table and the block each row needs (on_page: runbooks on the feature page)."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
     header, table = delivered(text)
     if header != KHEAD:
@@ -288,21 +284,20 @@ CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
 
 
 def unlisted(feature, how):
-    """DOC-19: the commands, skills (`/workflow-x`) and schedules (a cron in backticks) a feature page names, Tests aside, that its
-    How-to-use page does not hold."""
+    """DOC-19: the commands, skills (`/workflow-x`) and schedules (a cron in backticks) a feature page names that its How-to-use page lacks."""
     body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
     names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
     return sorted(n for n in names if n not in how)
 
 
-# --- System diagrams and pages that stand alone (DOC-19, #4698 and #4784) ---
+# --- System diagrams and pages that stand alone (DOC-19) ---
 BOX = re.compile(r"\[([^\]:|]+): ([^\]|]+?) \| ([^\]|]+)\]")
 FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
 HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "machine", "routine", "legend", "guard")
 
 
 def diagram(name, text):
-    """DOC-19: '### System diagram' holds a box '[Kind: Component | where it runs]' per What's delivered row, none without a row, and a Legend:."""
+    """DOC-19: '### System diagram' has a box '[Kind: Component | where it runs]' per delivered row, none without one, and a Legend:."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
     fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
     if not fence:
@@ -319,7 +314,7 @@ def diagram(name, text):
 
 
 def home_diagram(text):
-    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    """DOC-4: Home's diagram block names each part of the loop."""
     fence = FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
     if not fence:
         return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
@@ -328,30 +323,44 @@ def home_diagram(text):
 
 
 AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
-NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:milestones?|releases|wiki)(?:[/?#]|$)")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|#|$)")
 
 
-def stands_alone(page, text, repo=""):
-    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases and wiki pages, no owner/repo#N, no machine path."""
+def origins(root):
+    """The repo's own sites: `public_origins` in .loop/config.json and scripts/public-origins.json (a list or {"origins": [...]})."""
+    out = counting.config_of(root).get("public_origins")
+    out = list(out) if isinstance(out, list) else []
+    try:
+        with open(join(root, "scripts", "public-origins.json"), encoding="utf-8") as handle:
+            data = json.load(handle)
+        out += data.get("origins", []) if isinstance(data, dict) else data
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+    return tuple(x.rstrip("/") for x in out if isinstance(x, str) and x.startswith("https://"))
+
+
+def stands_alone(page, text, repo="", sites=()):
+    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases, wiki and README (or a site in `sites`),
+    no owner/repo#N, no machine path."""
     out, skip = [], False
     for number, line in enumerate(text.splitlines(), 1):
         skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
         for hit in ([] if skip else AWAY.findall(line)):
             hit = hit.rstrip(".,;:)")
             near = NEAR.match(hit)
-            if not (near and (not repo or near.group(1).lower() == repo.lower())):
+            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
                 out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
     return out
 
 
 def alone(root, folder, repo=""):
-    """stands_alone for each wiki page but Tests and for the skill docs; Home's diagram too."""
-    out = []
+    """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
+    out, sites = [], origins(root)
     files = [(n[:-3], join(root, folder, n)) for n in sorted(os.listdir(join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
     files += [(os.path.relpath(join(d, n), root).replace(os.sep, "/"), join(d, n)) for d, _, ns in sorted(os.walk(join(root, "skills")))
               for n in sorted(ns) if n.endswith(".md")]
     for name, path in files:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
-        out += stands_alone(name, text, repo) + (home_diagram(text) if name == "Home" else [])
+        out += stands_alone(name, text, repo, sites) + (home_diagram(text) if name == "Home" else [])
     return out

@@ -3,10 +3,10 @@
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps,
-with stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT.
-A batch goal cuts only with --user (the human's own message). Criteria rows that are known, exit 77 or recorded PASS are
-skipped and rows stop running after 900 s. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
+ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps, with
+stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT. A batch goal
+cuts only with --user. Criteria rows that are known, exit 77 or recorded PASS are skipped; rows stop after 900 s. cut scans for
+private names (PRIVATE_NAME); it never publishes or merges.
 """
 import argparse
 import datetime
@@ -219,6 +219,23 @@ def docs_trouble(top, base, fix=False, whole=False):
     if done.returncode and not done.stdout.strip():
         return ["the docs audit failed: " + (done.stderr.strip().splitlines() or ["no output"])[-1]]
     return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))] * bool(done.returncode)
+
+
+def untouched(top, base, lines, filer=None):
+    """The merge gate's scope: DOC-19 and DOC-4 findings on pages this goal leaves alone go to filer (an issue), not a refusal."""
+    diff = run(["git", "diff", "--name-only", base + "...HEAD"], top)
+    if diff.returncode or run(["git", "merge-base", "--is-ancestor", "HEAD", base], top).returncode == 0:
+        return lines  # unknown, or on the base itself: every finding counts
+    kept, moved = [], {}
+    for line in lines:
+        page = (re.match(r"(?:LINKS|HOME|HOWTO) (\S+): DOC-(?:19|4) ", line) or [0, 0])[1]
+        if page and not any(f == page or f.endswith("/%s.md" % page) for f in diff.stdout.split()):
+            moved.setdefault(page, []).append(line)
+        else:
+            kept.append(line)
+    for page, texts in sorted(moved.items()):
+        print("FINDING %s: not touched by this goal; %s" % (page, filer(top, page, texts) if filer else "left for health"))
+    return kept
 
 
 def fails(command, top):
