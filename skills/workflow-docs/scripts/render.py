@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""The Tests renderings (DOC-9 page tables, the DOC-10 full Tests page) from the regression rows, and the file reading
-the page format checks (pageformat.py) need. Rendering functions are pure; render() writes.
-
-criteria.py render calls render(); docs.py check calls generated() and front(); setup runs `render.py blocks`, the one
-insert of the marked blocks (the rest only refresh them). Files are written via a temp file, printed as WROTE <file>.
-It runs git only.
-"""
+"""The Tests renderings (DOC-9, DOC-10) from the regression rows, and the file reading pageformat.py needs. criteria.py render
+calls render(); docs.py check calls generated() and front(); setup runs `render.py blocks`. Runs git only."""
 import importlib
 import json
 import os
@@ -145,14 +140,17 @@ def generated(root):
 
 
 def front(root, names):
-    """DOC-4 on Home, DOC-5 on the README front door, for these pages."""
+    """DOC-4 on Home, DOC-23 on the README and Principles page."""
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
     if "home" in on and home is not None:
         existing = {name[:-3] for name in os.listdir(folder) if name.endswith(".md")}
         out += pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
-    if "frontdoor" in on and names:
-        out += pf.frontdoor(readme, names)
+    listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
+    if "frontdoor" in on and "## The eight principles" in listing:
+        ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+):", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+        page = read(os.path.join(folder, "Principles.md"))
+        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, False) if page else [])
     return out
 
 
@@ -177,8 +175,7 @@ def plain(row, ran):
 
 
 def tests_table(ids, linked, defects, rows, fields, ran):
-    """A page's Tests: one TESTS table: each requirement's rows (a 'not enforced' row when none passes), then the
-    workflow tests (REG-1), then the defect tests. `fields(row)` is tests.py's format for a row."""
+    """A page's Tests table: each requirement's rows, then the workflow and defect tests."""
     out, flows = [], []
     for key, _ in ids:
         names = linked.get(key, [])
@@ -204,8 +201,7 @@ def run_cell(value, repo, day="", flow="regression.yml"):
 
 
 def full_page(groups, runs, repo, flow="regression.yml"):
-    """docs/wiki/Tests.md: marker, '# Tests', then per feature '## <Feature>' and a FULL table whose first cell is the
-    anchor pages link to. `groups`: tests.py's entries(); `runs`: a row to its run."""
+    """docs/wiki/Tests.md: per feature '## <Feature>' and a full table whose first cell is the anchor pages link to."""
     out = [pf.MARKER, "# Tests", ""]
     for feature, lines in groups:
         rows = []
@@ -316,14 +312,14 @@ def with_blocks(text, blocks, insert=False):
 
 
 def front_files(root, insert=False):
-    """[(rel, blocks)] for README and Home if present; only a DOC-4 Home gets new blocks."""
+    """[(rel, blocks)]: a DOC-4 Home gets new blocks, a README only the template line."""
     out, home = [], os.path.join(cr.folder_of(root), "Home.md")
     text = read(os.path.join(root, home)) or ""
     both = [("settings", settings_block(root)), ("automation", counting.automation_block(root))]
     if re.search(r"^## Features\s*$", text, re.M) or (block_re("settings").search(text) and not insert):
         out.append((home, both))
     if os.path.exists(os.path.join(root, "README.md")):
-        out.append(("README.md", [("template", template_line(root))] + both))
+        out.append(("README.md", [("template", template_line(root))] + [b for b in both if block_re(b[0]).search(read(os.path.join(root, "README.md")) or "")]))
     return out
 
 
@@ -365,8 +361,7 @@ def perm_wiki_page(root, page):
 
 
 def perm_needs(root, routine, page):
-    """(tool, text) pairs the Runbook's Steps and Full run name: backticked commands starting with a program, https
-    hosts as WebFetch domains."""
+    """(tool, text) pairs the Runbook's Steps and Full run name."""
     inside, field, found = False, "", []
     for line in perm_wiki_page(root, page):
         if line.startswith("### "):

@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""The page format (DOC-4..DOC-10): the checks docs.py check runs on Home, the README front door and each feature
-page. Pure: text and data in, lines or findings out; it reads no file and runs nothing.
-
-A finding is ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>). Fix: <how>"). Which checks run is the
-`format` key of the template sheet's rules block (CHECKS, default all). The words of a line are its whitespace tokens
-after `[text](url)` becomes text and backticks are stripped; one sentence means no `[.!?] ` followed by a capital.
-"""
+"""The page format (DOC-4..DOC-23): the checks docs.py check runs on Home, the README and each feature page. Pure: text in, findings out.
+A finding is ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>). Fix: <how>"); CHECKS (the template's `format` key) says which run."""
 import os
 import re
 
@@ -25,7 +20,6 @@ def topic_of(name, topics):
 
 def topic_order(topics):
     return list(topics) + [OTHER]
-FRONT = ("You say", "What happens")
 RULE = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
 PATH = re.compile(r"(?<![\w/])/[\w.-]+/")
 EXT = re.compile(r"\.(py|sh|json|tsv|md)\b")
@@ -165,27 +159,32 @@ def home(text, features, existing, readme, repo, topics=None):
     return out
 
 
-def frontdoor(readme, features):
-    """DOC-5 (DOC-19): '## How to use' links each feature's How-to-use page and holds no How-to-use table."""
-    held = [(n, lines) for name, n, lines in parts(unblocked(readme)) if name == "How to use"]
-    if not held:
-        return [bad("README", 1, "How to use", 5, "the README has a '## How to use' section", "none", "add it, with a link to each How-to-use-<Feature> page")]
-    start, lines = held[0]
-    text, out = "\n".join(line for _, line in lines), []
-    for page in features:
-        if "How-to-use-%s)" % page not in text:
-            out.append(bad("README", start, "How to use", 5, "a link to the page How-to-use-%s" % page, "none", "add [How to use %s](https://github.com/OWNER/REPO/wiki/How-to-use-%s)" % (page, page)))
-    groups = [("", start, [])]
-    for number, line in lines:
-        groups.append((line[4:].strip(), number, [])) if line.startswith("### ") else groups[-1][2].append((number, line))
-    for name, number, body in groups:
-        found, _ = tables(body)
-        if name and name not in [heading_of(p) for p in features]:
-            out.append(bad("README", number, "How to use", 5, "a section named for a feature page", short(name), "name it '### How to use <Feature>'"))
-        for at, head, rows in found:
-            only = len(rows) == 1 and tuple(head) == FRONT and "`" not in " ".join(rows[0][1]) and "How-to-use-" in " ".join(rows[0][1])
-            if not only:
-                out.append(bad("README", at, name or "How to use", 5, "no How-to-use table: links, or one row that links the page", "%d rows" % len(rows), "move the table to the How-to-use page"))
+LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
+IDREF = re.compile(r"\b([A-Z]{2,5}-\d+)\b( \(planned)?")
+
+
+def frontdoor(page, text, listing, ids, readme=True):
+    """DOC-23: the README and Principles page hold the health list's principles, each: sentence, diagram, 'Enforced by:' IDs."""
+    want, out = LIST.findall(listing.partition("## The eight principles")[2]), []
+    fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
+    head, secs = parts(unblocked(text))[0], parts(unblocked(text))[1:]
+    extra = [x for x in head[2][1:] if x[1].strip()]
+    if readme and (len(extra) != 1 or "/wiki/Home" not in extra[0][1]):
+        fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one [wiki](.../wiki/Home) line")
+    names = ["%s. %s" % (n, name.strip()) for n, name, _ in want]
+    for (name, at, lines), (n, _, sentence) in zip(secs + [("", 1, [])] * len(want), want):
+        if name != names[int(n) - 1]:
+            fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the eight principle sections, in order, and no other")
+            continue
+        body = [x for x in lines if x[1].strip()]
+        if len(body) != 3 or words(body[0][1]) != words(sentence) or "principle-0%s-" % n not in body[1][1] or not body[2][1].startswith("Enforced by:"):
+            fail(at, "its sentence from the health list, a diagram line, an 'Enforced by:' line", "%d lines" % len(body), "copy the list")
+            continue
+        for found, planned in IDREF.findall(body[2][1]):
+            if found not in ids and not planned:
+                fail(body[2][0], "an ID that exists or is marked (planned: ...)", found, "mark it '%s (planned: <goal>)' or remove it" % found)
+    if len(secs) > len(want):
+        fail(secs[len(want)][1], "no section after the eight principles", short(secs[len(want)][0]), "move it to the wiki")
     return out
 
 

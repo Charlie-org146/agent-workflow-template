@@ -364,3 +364,16 @@ def load(path):
     except (OSError, ValueError):
         return None
     return data["findings"] if isinstance(data, dict) and data.get("version") == 1 and isinstance(data.get("findings"), list) else None
+
+
+def principles(rows):
+    """HLT-2: one PRINCIPLE line per principle in commands.md, red on any FAIL in its groups; UNREAD is never green."""
+    try:
+        text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The eight principles")[2]
+    except OSError:
+        return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
+    out = []
+    for n, name, groups in re.findall(r"^\| (\d) \| ([^|]+) \| [^|]+ \| ([a-z,]+) \|$", text, re.M):
+        mine = [r["state"] for r in rows if r["family"] in groups.split(",")]
+        out.append("PRINCIPLE %s %s: %s (%s)" % (n, name.strip(), "RED" if "FAIL" in mine else "UNREAD" if not mine or "UNREAD" in mine else "green", groups.replace(",", ", ")))
+    return out

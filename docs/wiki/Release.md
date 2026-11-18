@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept prd-revisions@60ce3cfa -->
+Review: **Unreviewed** <!-- kept prd-principles@93ea7bc0 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
