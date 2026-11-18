@@ -22,7 +22,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - DOC-3: **Unreviewed** Tests follow on their own
   - Once I review a PRD, the loop writes Given/When/Then tests for each requirement, links each to a regression test, and keeps them in step when a requirement changes. I never write or manage tests.
 - DOC-4: **Unreviewed** Home is one table
-  - Home holds one table with four columns: Feature, What it does, How to use and Milestone, and may lead with an optional Topic column. Below it Home carries only the generated Settings and Automation sections.
+  - Home holds one table with four columns: Feature, What it does, How to use and Milestone, and may lead with an optional Topic column. Below it Home carries only the generated Settings and Automation sections. A version milestone stays optional and free form; nothing requires an issue or pull request to have one.
 - DOC-6: **Unreviewed** Each skill's commands are documented
   - Each skill's command map names every command, and its command reference gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code.
 - DOC-9: **Unreviewed** Tests are a table
@@ -109,6 +109,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-18 | Home is one table <br> Home holds one table with four columns: Feature, What it does, How to use and Milestone, and may lead with an optional Topic column. Below it Home carries only the generated Settings and Automation sections. A version milestone stays optional and free form; nothing requires an issue or pull request to have one. | owner addition to the v2 rewrite: the milestone-optional rule dropped from DOC-10 is kept here (o160) | o160: "Do ur recommendations" |
 | r2 | 2026-11-18 | Home is one table <br> Home holds one table with four columns: Feature, What it does, How to use and Milestone, and may lead with an optional Topic column. Below it Home carries only the generated Settings and Automation sections. | v2 rewrite (prd-rewrite-to-10): changed: optional Topic column (your decision, o39). | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-18 | Home is one table <br> Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page on the wiki; the README keeps only links to those pages (DOC-18), so Home never needs a README heading), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on). <br> Below the table Home carries only the System diagram block (DOC-19) and the generated Settings and Automation sections (DOC-15); nothing else is on Home. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
