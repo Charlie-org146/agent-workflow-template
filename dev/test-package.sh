@@ -16,7 +16,7 @@ expect "9 use cases" "Listing fields" "python3 -c \"import json;d=json.load(open
 expect "executable file" Files "chmod +x skills/workflow-setup/SKILL.md"
 expect "cache folder" Files "mkdir skills/__pycache__; echo x > skills/__pycache__/a.txt"
 expect "binary file" Files "head -c 200 /dev/urandom > skills/blob.bin"
-expect "100 files" Size "for i in \$(seq 1 100); do echo x > skills/f\$i.md; done"
+expect "110 files" Size "for i in \$(seq 1 110); do echo x > skills/f\$i.md; done"
 expect "script over 20 KB" Scripts "python3 -c \"open('skills/workflow-setup/scripts/setup.py','a').write('# '+'x'*21000+'\n')\""
 expect "script imports another package" Scripts "sed -i.b 's/^import argparse/import argparse\nimport requests/' skills/workflow-setup/scripts/setup.py; rm skills/workflow-setup/scripts/setup.py.b"
 expect "secret" Safety "echo 'token ghp_abcdefghijklmnopqrstuvwxyz0123456789' >> skills/workflow-setup/SKILL.md"

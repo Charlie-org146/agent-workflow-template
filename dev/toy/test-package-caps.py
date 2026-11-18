@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: dev/package.py
-"""dev/package.py's caps: a script of 20,480 bytes or more, or a 100th file, makes it fail; the real tree stays inside both."""
+"""dev/package.py's caps: a script of 20,480 bytes or more, or a 111th file, makes it fail; the real tree stays inside both."""
 import importlib.util
 import os
 import sys
@@ -48,11 +48,11 @@ with tempfile.TemporaryDirectory() as tmp:
         with open(os.path.join(tmp, name), "w") as handle:
             handle.write("x\n")
         names.append(name)
-    check("100 files pass the size rule", not [f for f in failures_of(lambda: package.check_files(tmp, names[:package.MAX_FILES])) if "files" in f])
-    check("a 101st file fails it", any("101" in f for f in failures_of(lambda: package.check_files(tmp, names))))
+    check("110 files pass the size rule", not [f for f in failures_of(lambda: package.check_files(tmp, names[:package.MAX_FILES])) if "files" in f])
+    check("a 111th file fails it", any("111" in f for f in failures_of(lambda: package.check_files(tmp, names))))
 
 shipped = package.walk(root)
-check("the real tree ships at most 100 files (%d)" % len(shipped), len(shipped) <= package.MAX_FILES)
+check("the real tree ships at most 110 files (%d)" % len(shipped), len(shipped) <= package.MAX_FILES)
 long = [r for r in shipped if r.endswith(".py") and len(package.read(root, r)) >= package.MAX_SCRIPT]
 check("every real script is under 20,480 bytes" + (": " + ", ".join(long) if long else ""), not long)
 sys.exit(1 if fails else 0)
