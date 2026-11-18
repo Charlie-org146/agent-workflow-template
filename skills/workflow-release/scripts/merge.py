@@ -3,19 +3,17 @@
 
 usage: merge.py SLUG
 
-Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs
-the base's routines (refusing if one fails), merges, and releases (autorelease.py; failure: `release_error`). Where
-.loop/docs.tsv maps pages, it first refuses while one is stale and after the merge publishes the wiki (wiki.py; refused:
-`wiki_error`). With "review_hold": true it refuses REVIEW_HOLD until review.py records a review of the head.
-Before merging it scans the branch and notes for private names, and holds the merge (REQUIREMENT_MISSING) while a
-criterion row the goal adds names a requirement ID no base wiki page names, where the base's pages use that prefix
-(else a NOTE). Takes <common>/loop/merge.lock (one per repo), refuses another pod's goal; a merged goal leaves the queue.
+Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs the
+base's routines (refusing if one fails), merges, and releases (autorelease.py; failure: `release_error`). Where .loop/docs.tsv
+maps pages, it first refuses while one is stale, passing a DOC-19 or DOC-4 finding on a page the goal did not change to an
+issue instead, and after the merge publishes the wiki (wiki.py; refused: `wiki_error`). With "review_hold": true it
+refuses REVIEW_HOLD until review.py records a review of the head. Before merging it scans the branch and notes for private
+names, and holds the merge (REQUIREMENT_MISSING) while a criterion row the goal adds names a requirement ID no base wiki page
+names, where the base's pages use that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo); refuses another pod's goal.
 
-Also here, the release pull request (autorelease.py calls `merge.advance` when the base takes no direct push): it pushes
-`release/vX-<slug>`, opens `Release vX (<slug>)` with the notes as its body (scanned) and merges it with `gh pr merge
---merge`, never `--admin`. `gh pr view` decides: MERGED: VERSION must be vX (else RELEASE_VERSION_MISMATCH); OPEN: pending
-checks wait, a review or block records RELEASE_PR_BLOCKED, no passing status RELEASE_STATUS_FAILED or _UNTESTED, a
-conflict restarts with the next version; CLOSED: restart.
+Also here, the release pull request (`merge.advance`, called by autorelease.py): it pushes
+`release/vX-<slug>`, opens `Release vX (<slug>)` and merges it with `gh pr merge --merge`, never `--admin`; `gh pr view` decides
+each outcome (codes: references/commands.md).
 """
 import argparse
 import datetime
@@ -33,6 +31,20 @@ import wiki
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def file_issue(top, page, texts):
+    title = "Docs: %s has DOC-19/DOC-4 findings" % page
+    stone = "Backlog: " + (page[11:] if page.startswith("How-to-use-") else "Documentation" if "/" in page or page == "Home" else page)
+    gh = lambda *a: run(["gh"] + list(a), top)
+    try:
+        held = gh("issue", "list", "--state", "open", "--limit", "1000", "--json", "title", "-q", ".[].title")
+        if held.returncode or title in held.stdout.splitlines():
+            return "no issue filed (gh)" if held.returncode else "its issue is open"
+        gh("api", "-X", "POST", "repos/{owner}/{repo}/milestones", "-f", "title=" + stone)
+        return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body", "\n".join(texts)).stdout.split()[-1]
+    except (OSError, IndexError):
+        return "no issue filed (gh)"
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
@@ -276,7 +288,7 @@ def main():
     if known != "MERGED":
         head = "origin/" + state.get("branch", "")  # the pull request's tip
         if wiki.top_of():
-            stale = wiki.pending(top, cfg, head=head)
+            stale = wiki.pending(top, cfg, head=head, filer=file_issue)
             if stale:
                 ar.fail(state, "stale wiki pages: %s. Fix: update %s, then run wiki.py prepare %s --commit." % (
                     ", ".join(stale), ", ".join(sorted({l.split(":")[0].split()[1] for l in stale if l.startswith("REWRITE ")})) or "them", slug))

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Every setting in one table: home, default, note.
 
-usage: settings.py reference [--write]   print the settings reference (--write saves references/settings.md)
-       settings.py fill-repo [--repo DIR]  add every missing repo setting, with its default, to .loop/config.json
-       settings.py fill-private [--file F]  add every missing private setting to the private flow file (mode 0600)
+usage: settings.py reference [--write]   print reference (--write saves it)
+       settings.py fill-repo [--repo DIR]  fill missing repo defaults
+       settings.py fill-private [--file F]  fill private defaults (0600)
        settings.py show [--repo DIR] [--json]  each value, its layer (default, repo, local) and home
 """
 import argparse
@@ -98,6 +98,8 @@ TABLE = [
     ("rules", PRIVATE, [], "Health file: your own health rules, each {name, command, fix}."),
     ("repos", PRIVATE, [], "Followed repos: one path a line in the repos file, shown on the board."),
     ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine."),
+    ("machine_sync", PRIVATE, False, "Sync machines."),
+    ("notify_budget", PRIVATE, 20, "Daily mail budget."),
 ]
 FLOW_KEYS = ("command", "allowed_tools", "model", "suite", "steps", "overrides", "env", "probe", "probe_expect", "full_markers", "limit")
 DEPTHS = ("full", "condensed")
