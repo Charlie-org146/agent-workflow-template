@@ -22,6 +22,8 @@ import subprocess
 import sys
 import time
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 HOME = os.path.expanduser(os.environ.get("LOOP_DESK_HOME") or "~/.workflow-loop")
 # (id, what, how, how a file proves it: a path under HOME, or None for a step only the owner can confirm)
 STEPS = (
