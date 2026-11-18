@@ -57,6 +57,10 @@ Each requirement and how it is delivered:
 - SET-13: Workers are app sessions I can see. Example, from the set13-hooks-once test: given a repo where setup.py --reply-hook and --govern-hook run repeatedly, even on a Windows path or over a file already holding two govern hooks, when settings.local.json is read, then it holds exactly one reply hook and one govern hook.
 - SET-14: The connectors each repo needs are checked. Example, from the adopt-connectors-probed test: given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled.
 - SET-16: A repo is judged fully migrated by one command. Example, from the migration-clean test: given a clean private repo and a clean public repo, both recorded mac with the task registered, when migration-check runs, then each prints MIGRATION OK and exits 0.
+- SET-18: Adoption never blocks, and health judges it. Example, from the set1-never-blocks test: given a bare agent_command and an ignored *.tsv, when setup runs, then it adopts and commits with exit 0, names each gap, writes the exception line, and a failed step after the commit is a note and a gap.
+- SET-19: Fixes flow back to the template. Example, from the sync-propose test: given a skill file fixed in an adopted repo, when update runs, then it shows as a local fix, is kept, and --propose --file-issue files one issue on the template with its diff and no repo name.
+- SET-20: A repo behind the template says so. Example, from the migration-lag-line test: given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-.
+- SET-21: Adopted repos build on the template, not copies of it.
 
 ### Skill: workflow-setup
 - **Say:** "Set up this repo"
