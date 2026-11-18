@@ -267,8 +267,7 @@ def failed_try(g, state, why, step, fix):
 
 def cmd_finding(g, args):
     if args.requirement:
-        import routing
-        return routing.requirement_finding(g, args)
+        return private.requirement_finding(g, args)
     state = g.load(args.slug)
     if state.get("status") in ("done", "merged"):
         return note_finding(g.state_dir(), state, args.text)

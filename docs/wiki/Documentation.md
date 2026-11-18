@@ -15,9 +15,9 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ## Requirements
 
 ### Functional
-- DOC-1: **Reviewed 2026-11-14** PRD template <!-- reviewed f481e6f9 -->
+- DOC-1: **Unreviewed** PRD template
   - One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section.
-  - Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections.
+  - Nothing else goes on the page except the generated, optional Deployments (DOC-14), Runbook (DOC-16) and Revisions (DOC-20) sections.
   - A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1).
   - A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works.
 - DOC-2: **Reviewed 2026-11-15** The PRD is mine <!-- reviewed 3b43042e -->
@@ -31,9 +31,6 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - DOC-4: **Unreviewed** Home is one table
   - Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page on the wiki; the README keeps only links to those pages (DOC-18), so Home never needs a README heading), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
   - Below the table Home carries only the generated Settings and Automation sections (DOC-15); nothing else is on Home.
-- DOC-5: **Unreviewed** The front door links each feature's How-to-use page
-  - The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages.
-  - A README section kept for a feature is one row that links its page, with a plain phrase and no command syntax.
 - DOC-6: **Reviewed 2026-11-13** Each skill's commands are documented in its command reference <!-- reviewed bb317f4a -->
   - Each skill's SKILL.md Command map names every command, and its references/commands.md gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code.
 - DOC-7: **Reviewed 2026-11-10** Requirements are bullets <!-- reviewed 7de6dae3 -->
@@ -41,13 +38,11 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - IDs never change in the regroup.
   - An empty group reads "None".
   - The docs check enforces both headings.
-- DOC-8: **Reviewed 2026-11-10** Problem is the user's problem <!-- reviewed b623f09d -->
-  - Problem is written from the user's side ("I ..."): what they can't do today and why it matters.
-  - It names no code internals.
-- DOC-9: **Reviewed 2026-11-10** Tests are a table <!-- reviewed df9c63f7 -->
+- DOC-9: **Unreviewed** Tests are a table
   - Tests is a table: Test, Kind, Guards, Checks, Last result.
   - Each test name links to its entry on the full Tests page.
   - Every requirement and every defect has at least one row.
+  - Tests is the last section, after the optional Deployments, Runbook and Revisions sections.
 - DOC-10: **Reviewed 2026-11-13** One Tests page, every release noted, a backlog milestone per feature <!-- reviewed 8b00915e -->
   - One full Tests page is generated, listing every test with its latest result.
   - Every release has a release note.
@@ -92,6 +87,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - On a How-to-use page, Runbooks hold plain "When X, do Y" steps; the DOC-16 routine shape applies only to a routine the repo schedules on that page.
   - A How-to-use page's "What's delivered" table (Component, Kind, What it is, How a user uses it) names exactly one Kind per row: Site/URL, Skill, Command, API/file contract, Scheduled routine, Deployment, Message/channel or Playbook. The page carries that Kind's block under "How to reach or run it" as "### Kind: Component" with these fields: Site/URL (URLs, Served by, Check, Deploy), Skill (Say, Command), Command (Command, Dry run, Reads, Writes, Exit codes), API/file contract (Path, Fields, Example, Writer, Reader), Deployment (Target, Deploy, Rollback, Check), Message/channel (Trigger, Recipients, Subject, Resend), Playbook (Steps, Templates, Stop rules); a Scheduled routine's DOC-16 runbook sits under Runbooks or on the feature page.
   - `docs.py check` fails, naming the page and the missing piece, a row with no Kind or an unknown one, a block missing a field or with no row, an address in a block, and a feature page that names a command (a script and its subcommand, in backticks) its How-to-use page does not list.
+- DOC-20: **Unreviewed** A requirement keeps its earlier wording as numbered revisions
+  - Each requirement keeps its earlier text as a numbered revision with its date, reason and owner record, newest first, in the page's Revisions section; the requirement line is the newest revision.
+  - A requirement that is dropped, merged or moved keeps its ID on the page marked Retired, merged into or moved to; the docs check fails a revision that differs from its line, a changed earlier revision, a deleted ID and a reused ID.
+- DOC-22: **Unreviewed** A Reviewed requirement is read-only while a goal builds
+  - A goal's pull request is refused when it changes the text of a Reviewed requirement that none of its done lines names and that no owner record lists, and the refusal names the requirement.
+  - A gap a goal finds is filed as a finding on the feature's Backlog milestone, naming the requirement; only the owner approves a change.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
@@ -112,6 +113,143 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - The docs check prints DOCS OK on the main branch after every merge.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
 - No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
+
+## Revisions
+
+### Retired
+
+- DOC-5: merged into DOC-18
+- DOC-8: merged into DOC-1
+
+### DOC-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r2 | 2026-11-18 | PRD template <br> One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section. <br> Nothing else goes on the page except the generated, optional Deployments (DOC-14), Runbook (DOC-16) and Revisions (DOC-20) sections. <br> A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1). <br> A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works. | the section list gains Revisions | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+| r1 | 2026-11-14 | PRD template <br> One template defines every feature page as a short PRD: Problem (who it's for and what it solves, two or three lines); Requirements (up to the repo's limit, each with an ID); Non-goals (what the feature deliberately won't do); Success metrics (how we know it works, one to three measurable lines); Tests (for each requirement, one or more Given/When/Then scenarios, each with its test, last result and date, and not enforced when no test passes). A page has no Usage section. <br> Nothing else goes on the page except the generated, optional Deployments (DOC-14) and Runbook (DOC-16) sections. <br> A feature whose PRD lives outside the repo, in Notion or behind a link, keeps the repo's copy in step through `docs.py sync`, which reports each drifted requirement and rewrites only the repo's copy (External PRDs, EXT-1). <br> A PRD lives in the repo by default. Keeping one in step with an external document, in Notion or behind a link, is opt-in per PRD, by setting that page's PRD source in `.loop/docs.tsv` to a `url:` or `mcp:` source; a page with no source is never synced and raises no signal, and DOC-17 owns how that sync works. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | The PRD is mine <br> I review the PRD as a whole (Problem, Requirements, Non-goals and Success metrics) and mark it Reviewed with a date; only I can do that, in my own words: typed by me, or recorded verbatim by the operation session from my own message. <br> A recorded message counts only for the requirement IDs or pages it lists, once for a review and once for an un-review, and every use is logged with its words. <br> After it, nothing in Problem, Requirements, Non-goals or Success metrics changes unless I un-review it. <br> A change to code or config a page maps never needs my words when none of the page's own text changed: a change that leaves the code's syntax tree the same (comments and docstrings only) doesn't make the page stale at all, and any other mapped change re-stamps the page's review at merge, logged with the goal's slug. A change to the page's wording still needs my words. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | Tests follow on their own <br> Once I review a PRD, the loop writes Given/When/Then scenarios and tests for each requirement, links each to a regression row, and keeps them in step when a requirement changes. <br> I never write or manage tests. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Home is one table <br> Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page on the wiki; the README keeps only links to those pages (DOC-18), so Home never needs a README heading), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on). <br> Below the table Home carries only the generated Settings and Automation sections (DOC-15); nothing else is on Home. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r2 | 2026-11-18 | The front door links each feature's How-to-use page <br> The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages. <br> A README section kept for a feature is one row that links its page, with a plain phrase and no command syntax. | merged into DOC-18: the front door link lives with the How-to-use page requirement | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+| r1 | 2026-11-18 | The front door links each feature's How-to-use page <br> The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages. <br> A README section kept for a feature is one row that links its page, with a plain phrase and no command syntax. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Each skill's commands are documented in its command reference <br> Each skill's SKILL.md Command map names every command, and its references/commands.md gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Requirements are bullets <br> Requirements are bullets, grouped under two sub-headings: Functional (what it does) and Non-functional (qualities and limits). <br> IDs never change in the regroup. <br> An empty group reads "None". <br> The docs check enforces both headings. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r2 | 2026-11-18 | Problem is the user's problem <br> Problem is written from the user's side ("I ..."): what they can't do today and why it matters. <br> It names no code internals. | merged into DOC-1: Problem is part of the one PRD template | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+| r1 | 2026-11-10 | Problem is the user's problem <br> Problem is written from the user's side ("I ..."): what they can't do today and why it matters. <br> It names no code internals. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r2 | 2026-11-18 | Tests are a table <br> Tests is a table: Test, Kind, Guards, Checks, Last result. <br> Each test name links to its entry on the full Tests page. <br> Every requirement and every defect has at least one row. <br> Tests is the last section, after the optional Deployments, Runbook and Revisions sections. | Tests stays the last section after Revisions | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+| r1 | 2026-11-10 | Tests are a table <br> Tests is a table: Test, Kind, Guards, Checks, Last result. <br> Each test name links to its entry on the full Tests page. <br> Every requirement and every defect has at least one row. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | One Tests page, every release noted, a backlog milestone per feature <br> One full Tests page is generated, listing every test with its latest result. <br> Every release has a release note. <br> Every feature page has one standing milestone, "Backlog: <Feature>", and "Backlog: Other" holds what fits no feature; a version milestone such as v1.0 stays optional and free form. Nothing requires an issue or a pull request to have a milestone, and a backlog item never blocks a release. <br> An existing milestone named "Backlog" is renamed "Backlog: Other", and the feature milestones that hold goals and pull requests (Delivery, Documentation and the rest) are kept as they are. <br> Release notes are passed to gh in a file (`--notes-file`), never on the command line. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Safe publish <br> Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it. <br> The last publish can be undone. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Fast check <br> The docs check finishes in under 30 seconds on this repo. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Same answer every time <br> The docs check is deterministic: the same pages and rows give the same result, with no AI judgment. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-14
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | A feature page lists what it ships: the pages people open and the deliveries people receive <br> A feature page that ships something people can open, or a delivery people receive (for example a scheduled email), has a Deployments section; it is optional otherwise. <br> Pages: one row per public or private page, with its link, who can open it (public or sign-in), what it shows, and the live build (the sha in build.txt). <br> Deliveries: one row each, with its channel, recipients as a group (never an email address), what is sent and its status. <br> The docs check refuses a malformed Deployments table, naming the table and the column. <br> A listed public link that doesn't answer, or a live build that isn't the promoted one, fails the deploying repo's own check for now; the template takes that check over later. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Home and the README show how the repo is set up and what runs by itself. <br> Home and the README carry a Settings section: each setting's name, what it means, how to set it, its default and this repo's value, marked overridden only when it differs from the default. <br> Home and the README carry an Automation section: each routine on or off, what it does, its cadence in plain words, where it runs, its last run when known (live, from `docs.py automation`, so the page does not change with every run) and any step still owed by the owner; health and regression are built in and a repo adds a routine with one entry in its config, with no code change. <br> The README names and links the template repo the loop came from, never a local path, and the adoption entry points to all three. <br> The docs check says STALE when a setting, a workflow file or a value changes, and render or publish refreshes them. <br> The code that renders the blocks stays readable and under health's size warning: `counting.py` holds the Automation block code and `render.py` the rest, so the text a config renders is the same wherever the code sits (issue 1402). <br> Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-16
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | A feature page carries a runbook for each routine it owns <br> A page that owns a scheduled or on-demand routine has an optional Runbook section, one subsection per routine, saying what an agent given only "run routine X" must read first: the requirement ids it serves, the schedule, the exact steps or command, what a full run is (live sources and real output, never a dry run or a fixture on a scheduled run), the one output and where it goes, the forbidden shortcuts, and how to tell the run was real. <br> The docs check fails a routine listed in the routine registry whose page has no runbook for it, and a runbook missing any of those fields, naming the page, the routine and the field. <br> A runbook's Serves field (continuation lines included) must name requirement ids that a page defines, and each routine and field appears once; a page whose sections are out of order is reported for that, not for its ids. <br> The runbook is not locked by the PRD review: an agent corrects it as it learns, and the owner's review of the requirements stays valid. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-17
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | A PRD kept outside the repo stays in step through reviewed deltas <br> Either side can change a requirement: an agent's goal in the repo's copy, `.loop/prd/PAGE.md`, or people in the external document. A feature's PRD source is `url:<link>` or `mcp:<server>:<resource>`, the first `docs.py sync` adopts it, and syncing is opt-in per PRD: a page with no such source is never visited and raises no signal. <br> A difference is a delta, never a silent overwrite: `docs.py sync` compares both sides with what they last agreed on, and each difference is a DELTA naming the page, the id, which side changed (the repo, the source or both) and both texts. Sync never overwrites either side on its own, `--dry-run` only reports and exits 1, and a hand-written file at the copy's path is left as it is. <br> A delta is reviewed, then both sides agree: each delta is posted once as a GitHub issue on the feature's milestone and once as a comment on the Notion page, and stays open until someone accepts one side's text. `docs.py sync --accept PAGE:ID=repo\|source` writes only the accepted text to the other side, Notion included, closes the delta and leaves every other requirement as it was. Health and the check-in show each open delta as an inconsistency, only for a page that opted in. <br> A missing connector never breaks the loop: a source, gh or writer that sync cannot reach prints `not connected`, changes nothing and exits 0, and the delta stays open; a source with no requirement ids keeps the repo's copy instead of emptying it. <br> The repo's copy is the PRD every check reads: the docs check and audit, health, the regression rows and publish read `.loop/prd/PAGE.md` and never the source, so no lane, CI run or health check needs the external document or a reader, and a page with a copy raises no LINK or UNREAD for want of one. The wiki page still shows Problem, Requirements, Non-goals and Success metrics, as a block generated from the copy. <br> `docs.py sync` reads the source only where a reader is set. It first brings the source's layout to the repo's (an id line such as `NL-1 Functional: (Reviewed 2026-11-10) text` and a `New requirements` block become ordinary requirement lines), takes a requirement added or changed on one side as a delta accepted with `--accept`, and reports a requirement changed on both sides as a CONFLICT, a delta that names both texts, which stays open for the owner and is never merged or overwritten. <br> A repo can keep its GitHub milestones in step with an external Milestones page the same way, opt-in by setting `milestones_source` (a `url:` or `mcp:` source) in `.loop/config.json`: `docs.py sync` compares each milestone by its title, state and due date with what both sides last agreed on, an addition or change on either side is a delta reviewed and accepted with `docs.py sync --accept milestones:TITLE=repo\|source`, a milestone that differs on both sides is reported as a conflict and never overwritten, and a repo with no `milestones_source` is never visited and raises no signal. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-18
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Every feature page has a How-to-use page for its users <br> The page is `docs/wiki/How-to-use-<Feature>.md`, titled "# How to use <Feature>", with these sections in order, leaving out any that do not apply: What it's for, How to reach or run it, URLs and deployments, Automations and schedules, Runbooks, Links (the PRD page and "Backlog: <Feature>"). The feature page links it in one line in its head, between its title and its first section: "How to use: [How-to-use-<Feature>](How-to-use-<Feature>)", and nothing else may sit there. A routine's runbook may sit under "Runbooks" on this page instead of the PRD. <br> `docs.py check` reports a feature page with no How-to-use page, one off that skeleton, or a feature page that does not link it (a page whose PRD is a link needs no link line); a How-to-use page has no `.loop/docs.tsv` row of its own and is mapped to its feature's paths, so it goes stale and publishes with it, and `audit.py restamp` re-stamps a stale one whose text is as committed; one whose feature has no page is an orphan, reported unmapped. <br> The README keeps only a link to each feature's How-to-use page; what to say, and any URLs, deployments and schedules, live on the How-to-use page. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-19
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Each How-to-use page has one item per functional requirement and types every delivered row <br> An item is a line `- ID: how it is delivered` anywhere on the How-to-use page, naming the requirement and showing its delivery: a command and its printout, an example, a file or page it produces, or another stated form; items for non-functional requirements are allowed, not required. <br> `docs.py check` fails a feature's How-to-use page that has no item for one of its page's functional requirement IDs, or an item naming an ID that page lacks; each failure names the IDs, and a page whose PRD is a link is not checked. <br> On a How-to-use page, Runbooks hold plain "When X, do Y" steps; the DOC-16 routine shape applies only to a routine the repo schedules on that page. <br> A How-to-use page's "What's delivered" table (Component, Kind, What it is, How a user uses it) names exactly one Kind per row: Site/URL, Skill, Command, API/file contract, Scheduled routine, Deployment, Message/channel or Playbook. The page carries that Kind's block under "How to reach or run it" as "### Kind: Component" with these fields: Site/URL (URLs, Served by, Check, Deploy), Skill (Say, Command), Command (Command, Dry run, Reads, Writes, Exit codes), API/file contract (Path, Fields, Example, Writer, Reader), Deployment (Target, Deploy, Rollback, Check), Message/channel (Trigger, Recipients, Subject, Resend), Playbook (Steps, Templates, Stop rules); a Scheduled routine's DOC-16 runbook sits under Runbooks or on the feature page. <br> `docs.py check` fails, naming the page and the missing piece, a row with no Kind or an unknown one, a block missing a field or with no row, an address in a block, and a feature page that names a command (a script and its subcommand, in backticks) its How-to-use page does not list. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-20
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | A requirement keeps its earlier wording as numbered revisions <br> Each requirement keeps its earlier text as a numbered revision with its date, reason and owner record, newest first, in the page's Revisions section; the requirement line is the newest revision. <br> A requirement that is dropped, merged or moved keeps its ID on the page marked Retired, merged into or moved to; the docs check fails a revision that differs from its line, a changed earlier revision, a deleted ID and a reused ID. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DOC-22
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | A Reviewed requirement is read-only while a goal builds <br> A goal's pull request is refused when it changes the text of a Reviewed requirement that none of its done lines names and that no owner record lists, and the refusal names the requirement. <br> A gap a goal finds is filed as a finding on the feature's Backlog milestone, naming the requirement; only the owner approves a change. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ## Tests
 
@@ -138,8 +276,10 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [prd-new](Tests#t-prd-new) | requirement | DOC-1 | Given a one-line idea, when prd new runs with --paths, then it drafts a mapped, Unreviewed PRD page that stays UNWRITTEN until its drafts are written. | PASS 2026-11-10 |
 | [prd-convert](Tests#t-prd-convert) | requirement | DOC-1 | Given old Summary and Criteria pages, when convert runs, then they become PRD pages with the same IDs and stamps, a half-converted page is completed, and a second run changes nothing. | PASS 2026-11-10 |
 | [prd-repo-green](Tests#t-prd-repo-green) | requirement | DOC-1 | Given this repo, when its docs check and health run, then nothing fails but a page whose Usage changed since the owner's review. | PASS 2026-11-10 |
+| [format-problem](Tests#t-format-problem) | requirement | DOC-1 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-8. | PASS 2026-11-10 |
 | [cap-default-10](Tests#t-cap-default-10) | requirement | DOC-1 | Given no criteria_max in the config, when the cap is read, then it is 10 in both the docs check and setup. | PASS 2026-11-10 |
 | [format-key](Tests#t-format-key) | requirement | DOC-1 | Given a template rules block whose format key leaves out problem, when the docs check runs, then the Problem check is off. | PASS 2026-11-10 |
+| [problem-plural](Tests#t-problem-plural) | requirement | DOC-1 | Given a Problem with a banned word in the plural, when the docs check runs, then it fails. | PASS 2026-11-10 |
 | [guide-marker-refused](Tests#t-guide-marker-refused) | requirement | DOC-1 | Given a page with requirement or Review lines, when it carries the guide marker, then the docs check refuses it naming the page. | PASS 2026-11-10 |
 | [spec-decisions-wording](Tests#t-spec-decisions-wording) | requirement | DOC-1 | Given the owner's 2026-11-12 spec decisions, when the pages and SKILL.md files are read, then the loop runs only affected rows, GRD-5 names --live, the feature-label requirements say feature_labels, and the budget setting is test_budget_minutes. | PASS 2026-11-12 |
 | [spec-decisions-log](Tests#t-spec-decisions-log) | requirement | DOC-1 | Given the owner's 2026-11-12 decisions, when DECISIONS.md is read, then it holds ten dated entries and the proposed wording of each locked requirement. | PASS 2026-11-13 |
@@ -190,15 +330,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [home-stale-control](Tests#t-home-stale-control) | requirement | DOC-4 | Given a Home that differs from its fresh render, when a mapped path changes, then docs check still reports it STALE until it is re-rendered. | not run |
 | [home-howto-linksonly](Tests#t-home-howto-linksonly) | requirement | DOC-4 | Given the README with the DOC-18 links-only layout and a Home whose How to use cells link the How-to-use pages, when the docs check runs, then DOC-4 passes. | PASS 2026-11-17 |
 | [home-howto-linksonly-control](Tests#t-home-howto-linksonly-control) | requirement | DOC-4 | Given a links-only README and a Home that still links a README heading, when the docs check runs, then it fails naming DOC-4 and the How-to-use page link to use. | PASS 2026-11-17 |
-| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-5 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
 | [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [format-bullets](Tests#t-format-bullets) | requirement | DOC-7 | Given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-7. | PASS 2026-11-10 |
 | [format-orphan-bullet](Tests#t-format-orphan-bullet) | requirement | DOC-7 | Given a sub-bullet with no requirement above it, when the docs check runs, then it is refused. | PASS 2026-11-10 |
 | [format-groups](Tests#t-format-groups) | requirement | DOC-7 | Given Requirements without the Functional or Non-functional heading, when the docs check runs, then it fails. | PASS 2026-11-10 |
 | [format-groups-read](Tests#t-format-groups-read) | requirement | DOC-7 | Given a reviewed requirement under either group, when a sub-bullet is added, then it is still read and the check reports LOCKED. | PASS 2026-11-10 |
-| [format-problem](Tests#t-format-problem) | requirement | DOC-8 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-8. | PASS 2026-11-10 |
-| [problem-plural](Tests#t-problem-plural) | requirement | DOC-8 | Given a Problem with a banned word in the plural, when the docs check runs, then it fails. | PASS 2026-11-10 |
 | [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-9 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-9. | PASS 2026-11-10 |
 | [milestones-once](Tests#t-milestones-once) | requirement | DOC-10 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-12 |
 | [release-note-found](Tests#t-release-note-found) | requirement | DOC-10 | Given a release with no release note, when the check runs, then it is found. | PASS 2026-11-12 |
@@ -276,6 +413,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [prd-copy-old-layout](Tests#t-prd-copy-old-layout) | requirement | DOC-17 | Given a copy written before the repo's layout, when docs.py sync runs, then it skips the page naming the fix and leaves the copy as it was. | not run |
 | [prd-copy-notion-shape](Tests#t-prd-copy-notion-shape) | requirement | DOC-17 | Given an external PRD exported the way Notion writes it (html tags, a bold id over a first sub-bullet, the mark after the kind, a New requirements heading with a note), when docs.py sync adopts it, then the copy holds ordinary markdown requirement lines and none of its Source, Milestone, Review, Runbook or Deployments lines. | not run |
 | - | requirement | DOC-17 | no passing test | not enforced |
+| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-18 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [doc18-howto-missing](Tests#t-doc18-howto-missing) | requirement | DOC-18 | Given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes. | PASS 2026-11-16 |
 | [doc18-howto-mapped](Tests#t-doc18-howto-mapped) | requirement | DOC-18 | Given a How-to-use page with no .loop/docs.tsv row, when docs check maps pages, then it is mapped to its feature's paths and is not reported unmapped. | PASS 2026-11-16 |
 | [doc18-howto-orphan](Tests#t-doc18-howto-orphan) | requirement | DOC-18 | Given a How-to-use page whose feature has no PRD page, when docs check runs, then the page is reported unmapped as an orphan. | PASS 2026-11-16 |
@@ -290,6 +428,8 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc19-kind-fields](Tests#t-doc19-kind-fields) | requirement | DOC-19 | Given a Command row whose block lacks its dry-run form, when docs check runs, then it fails naming the page and the missing field. | PASS 2026-11-16 |
 | [doc19-command-listed](Tests#t-doc19-command-listed) | requirement | DOC-19 | Given a feature page that names a command its How-to-use page does not list, when docs check runs, then it fails naming the command. | PASS 2026-11-16 |
 | [doc19-readme-links](Tests#t-doc19-readme-links) | requirement | DOC-19 | Given a README with a How-to-use table of more than one row, when docs check runs, then it fails, and a README that only links each page passes. | PASS 2026-11-16 |
+| - | requirement | DOC-20 | no passing test | not enforced |
+| - | requirement | DOC-22 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-18 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |

@@ -388,6 +388,17 @@ def bump_version(g, state, head):
     return new
 
 
+def requirement_gate(g, slug):
+    """Refuse pr while a requirement finding is unfiled or criteria.py guard refuses a changed Reviewed requirement."""
+    rows = [r for r in g.guards.extra(g.state_dir(), slug)["findings"] if r.get("requirement")]
+    loose = {r["requirement"] for r in rows if not r["filed"]} - {r["requirement"] for r in rows if r["filed"]}
+    tool = os.path.join(g.SKILLS, "workflow-docs", "scripts", "criteria.py")
+    done = g.run([sys.executable, tool, "guard", "", slug]) if os.path.exists(tool) else None
+    if loose or (done and done.returncode):
+        g.no("[FIND-FILE] %s not filed on its Backlog milestone. Fix: run goal.py finding again" % ", ".join(sorted(loose))
+             if loose else (done.stderr or done.stdout).strip())
+
+
 if __name__ == "__main__":
     import lane as lanes
     if sys.argv[1:2] in (["lane"], ["lane-wait"]):

@@ -16,7 +16,6 @@ logged in falls back with one AGENT_FALLBACK line. A new agent is one profile en
 import argparse
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -339,34 +338,6 @@ def cmd_show(args):
         print("AGENT %s %s: %s (%s) %s tokens%s" % (args.slug, step, item.get("agent"), item.get("model"),
               item.get("tokens") if item.get("tokens") is not None else "unread", "; " + item["fallback"] if item.get("fallback") else ""))
     return 0 if agents else 1
-
-
-def requirement_finding(g, args):
-    """goal.py finding --requirement ID (DOC-20): record the gap without stopping the goal, file it on its page's Backlog milestone."""
-    page = g.git("grep", "-l", "-e", "^- %s: \\*\\*" % args.requirement, "--", "*.md", check=False).split("\n")[0]
-    if not page:
-        g.no("no requirement %s on a page" % args.requirement)
-    text, runs = "%s %s" % (args.requirement, guards.private.plain(" ".join(args.text.split()))), g.state_dir()
-    reply = os.path.join(runs, args.slug + ".requirement.txt")
-    with open(reply, "w") as handle:
-        handle.write("FILE backlog %s: %s\n" % (os.path.basename(page)[:-3], text))
-    out = g.run([sys.executable, os.path.join(g.SKILLS, "workflow-health", "scripts", "milestone.py"), "leftovers", reply, "--goal", args.slug, "--live"]).stdout
-    filed = bool(re.search(r"^(FILED|SAME) ", out, re.M)) and "FAILED" not in out
-    guards.add_extra(runs, args.slug, "findings", {"at": guards.now(), "text": text, "requirement": args.requirement, "filed": filed},
-                     "requirement finding %s (%s)" % (text, "filed" if filed else "NOT filed"))
-    print(out.strip() or "nothing filed")
-    return 0 if filed else 1
-
-
-def requirement_gate(g, slug):
-    """Refuse pr while a requirement finding is unfiled or criteria.py guard refuses a changed Reviewed requirement."""
-    rows = [r for r in guards.extra(g.state_dir(), slug)["findings"] if r.get("requirement")]
-    loose = {r["requirement"] for r in rows if not r["filed"]} - {r["requirement"] for r in rows if r["filed"]}
-    tool = os.path.join(g.SKILLS, "workflow-docs", "scripts", "criteria.py")
-    done = g.run([sys.executable, tool, "guard", "", slug]) if os.path.exists(tool) else None
-    if loose or (done and done.returncode):
-        g.no("[FIND-FILE] %s not filed on its Backlog milestone. Fix: run goal.py finding again" % ", ".join(sorted(loose))
-             if loose else (done.stderr or done.stdout).strip())
 
 
 def main():

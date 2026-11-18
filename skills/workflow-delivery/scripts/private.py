@@ -385,5 +385,22 @@ def main():
     return 0 if args in ([], ["-h"], ["--help"]) else 2
 
 
+def requirement_finding(g, args):
+    """goal.py finding --requirement ID (DOC-20): record the gap without stopping the goal, file it on its page's Backlog milestone."""
+    page = g.git("grep", "-l", "-e", "^- %s: \\*\\*" % args.requirement, "--", "*.md", check=False).split("\n")[0]
+    if not page:
+        g.no("no requirement %s on a page" % args.requirement)
+    text, runs = "%s %s" % (args.requirement, plain(" ".join(args.text.split()))), g.state_dir()
+    reply = os.path.join(runs, args.slug + ".requirement.txt")
+    with open(reply, "w") as handle:
+        handle.write("FILE backlog %s: %s\n" % (os.path.basename(page)[:-3], text))
+    out = g.run([sys.executable, os.path.join(g.SKILLS, "workflow-health", "scripts", "milestone.py"), "leftovers", reply, "--goal", args.slug, "--live"]).stdout
+    filed = bool(re.search(r"^(FILED|SAME) ", out, re.M)) and "FAILED" not in out
+    g.guards.add_extra(runs, args.slug, "findings", {"at": g.guards.now(), "text": text, "requirement": args.requirement, "filed": filed},
+                       "requirement finding %s (%s)" % (text, "filed" if filed else "NOT filed"))
+    print(out.strip() or "nothing filed")
+    return 0 if filed else 1
+
+
 if __name__ == "__main__":
     sys.exit(main())

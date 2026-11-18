@@ -365,7 +365,7 @@ def cmd_pr(args):
     owed = fit.owed(root(), read(goal_file(slug)))
     if owed:
         no("no passing defect test, seen failing, for %s. Fix: regression.py add --category defect --link ..., then red." % ", ".join(owed))
-    routing.requirement_gate(ME, slug)
+    role.requirement_gate(ME, slug)
     if git("status", "--porcelain", "--", "."):
         print("NOTE: uncommitted files stay out of the PR")
     head = role.bump_version(ME, state, head)
