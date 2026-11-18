@@ -31,6 +31,17 @@ Legend: a box is Kind, Component and where it runs; --text--> a flow of data or 
 
 Say these to the agent in the operation session; each feature page has the exact commands.
 
+Keep tests visible and enforced:
+
+```text
+/workflow-regression sync
+/workflow-regression red <id> --break "<a command that breaks the code>"
+/workflow-regression run land
+/workflow-regression workflow
+```
+
+A row must be seen failing once before it counts. Known failures don't block, and each other failing row gets one issue.
+
 | You say | What happens |
 |---|---|
 | "Run the land tests" | Every land test runs; each failing test gets one GitHub issue, and a test that passes again closes its issue. |

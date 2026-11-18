@@ -7,12 +7,11 @@ usage: health.py check [--json] [--group NAME[,NAME]] [--skip NAME[,NAME]]
        health.py file --group NAME[,NAME] [--feature NAME] [--review FILE]
        health.py triage [--feature NAME] [--close (--kind K | --issue N ...) --why WORDS [--older DAYS] [--yes] [--max N]]
 
-check prints the formal report (report.py): the twelve groups, each under a heading with its angle, every rule marked
-pass, warn, fail or unread with its fix, then one verdict, HEALTH: green or not green. Only FAIL and UNREAD turn it red
+check prints the formal report (report.py): the twelve groups, each rule pass, warn, fail or unread with its fix, one
+PRINCIPLE line per principle (judge.py), then one verdict, HEALTH: green or not green. Only FAIL and UNREAD turn it red
 (exit 1). Every rule has a negative control (controls.py); a rule with none makes health.py refuse (exit 2).
-preview lists what file would do and writes nothing; file writes GitHub issues tagged with each finding's group
-(file.py, issues.py); triage lists and closes them in batches (issues.py). Rules live here, in defects.py and
-rules.py; --json prints the rows.
+preview lists what file would do; file writes GitHub issues tagged with each finding's group; triage lists and closes
+them in batches. Rules live here, in defects.py and rules.py; --json prints the rows.
 """
 import argparse
 import datetime
@@ -232,7 +231,7 @@ def docs_check(root):
 
 
 def hard_unread(item):
-    """An UNREAD row: its function didn't run."""
+    """An UNREAD row."""
     return item["state"] == "UNREAD"
 
 
@@ -282,8 +281,7 @@ def cost_rows(root):
 
 
 def gather(root, family, ran_rules=None):
-    """Rows of the groups asked (all when None), each rule function run once; one that raises gives UNREAD rows;
-    ran_rules (a set) collects the rules that ran."""
+    """Rows of the groups asked (all when None); a rule function that raises gives UNREAD rows."""
     asked = family or ORDER
     T0[0] = T0[0] or time.time()
     funcs, done, rows = rule_functions(), {}, []
@@ -326,7 +324,7 @@ def groups_of(text):
 
 
 def report(rows, asked=None, ran_rules=None):
-    """The formal report; a lone health.py prints bare rows and a verdict."""
+    """The formal report, or bare rows and a verdict."""
     formal = sibling_module("report")
     if formal:
         built = formal.build(rows, asked, ran_rules)
@@ -361,6 +359,8 @@ def cmd_check(args):
     else:
         rep, iss = sibling_module("report"), sibling_module("issues")
         text = text[:2] + [""] + rep.findings(rows, root, iss.filed(root, 0, whole is None)) + text[2:] if rep and iss else text
+        jd = sibling_module("judge")
+        text = text[:-1] + jd.principles(rows) + text[-1:] if whole is None and jd else text
         print("\n".join(with_tests(text, root) if whole is None else text))
     return 0 if green else 1
 
