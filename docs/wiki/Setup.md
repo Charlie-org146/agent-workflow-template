@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
 Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept release-gate@9a2f6750 -->
 
-How to use: [How-to-use-Setup — adoption and desk onboarding](How-to-use-Setup)
+How to use: [How-to-use-Setup](How-to-use-Setup)
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -90,7 +90,7 @@ How to use: [How-to-use-Setup — adoption and desk onboarding](How-to-use-Setup
 |---|---|---|---|---|
 | [adopt-set-1](Tests#t-adopt-set-1) | requirement | SET-1 | Given SET-1, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [adopt-set-2](Tests#t-adopt-set-2) | requirement | SET-1 | Given SET-1 with suggest then apply, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
-| [setup-both-halves](Tests#t-setup-both-halves) | requirement | SET-1 | Given a repo, when setup runs, then it writes the repo half and, outside the repo, the private half. | PASS 2026-11-12 |
+| [setup-both-halves](Tests#t-setup-both-halves) | requirement | SET-1 | Given a repo being adopted, when setup runs, then it writes the repo half and, outside the repo, the private half. | PASS 2026-11-12 |
 | [set1-health-bracket](Tests#t-set1-health-bracket) | requirement | SET-1 | Given an adoption, when setup runs, then HEALTH START comes before the first write line, ADOPTION VERDICT is the last line, and a verdict that is not green lists each gap with its fix. | not run |
 | [set1-never-blocks](Tests#t-set1-never-blocks) | requirement | SET-1 | Given a bare agent_command and an ignored *.tsv, when setup runs, then it adopts and commits with exit 0, names each gap, writes the exception line, and a failed step after the commit is a note and a gap. | not run |
 | [set1-no-fit-filed](Tests#t-set1-no-fit-filed) | requirement | SET-1 | Given two pages with their own sections, when setup runs, then one findings line lists both and one issue tagged adoption is filed through the stand-in, matching preview, and a second run files none. | not run |
