@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
+Review: **Reviewed 2026-11-18** <!-- prd P=41bfc9ae R=886ee9aa N=9967b317 M=6f7e94e4 U=03828777 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -53,7 +53,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - A merged report always frees the session (issue 175).
   - A worker session whose goal's merge and published release the operation session has verified (GitHub says merged, and the release is published) is archived by the operation session, and the next check-in names it; a session whose goal is running, waiting or has an open pull request, and every operation session, is never archived.
   - Under memory pressure (free memory below `min_free_memory_gb`) it also archives idle sessions whose goal is released or retired, oldest first, until memory is back above the floor.
-- MON-10: **Unreviewed** Re-plan at every check-in
+- MON-10: **Reviewed 2026-11-18** Re-plan at every check-in <!-- reviewed 6155f126 -->
   - At each check-in the operation session re-reads every goal's progress and re-plans the graph to finish soonest.
   - It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle.
   - It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first.

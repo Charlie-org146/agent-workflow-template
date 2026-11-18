@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
+Review: **Reviewed 2026-11-18** <!-- prd P=7884b325 R=6712f8ec N=9f4c33da M=3d0857c8 U=03828777 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -60,7 +60,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
   - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
   - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
-- DEL-16: **Unreviewed** Each step runs on the agent the config picks
+- DEL-16: **Reviewed 2026-11-18** Each step runs on the agent the config picks <!-- reviewed b20d357a -->
   - A private config maps each step and each goal size to an agent profile (a command, a model and a cost per token): heavy work on Claude, cheap work on Codex or any other agent added as one more profile entry, with no code change.
   - Setup asks which agents are installed and logged in and writes the profiles; an agent that is missing or logged out falls back to Claude with a one-line warning.
   - Review stays on the heavy profile unless the config routes it by name; the run record names the agent, the model and the tokens of every step.
