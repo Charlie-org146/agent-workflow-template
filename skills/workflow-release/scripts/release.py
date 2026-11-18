@@ -5,8 +5,7 @@ usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|mi
 
 ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps, with
 stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT. A batch goal
-cuts only with --user. Criteria rows that are known, exit 77 or recorded PASS are skipped; rows stop after 900 s. cut scans for
-private names (PRIVATE_NAME); it never publishes or merges.
+cuts only with --user. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
 """
 import argparse
 import datetime
@@ -222,14 +221,15 @@ def docs_trouble(top, base, fix=False, whole=False):
 
 
 def untouched(top, base, lines, filer=None):
-    """The merge gate's scope: DOC-19 and DOC-4 findings on pages this goal leaves alone go to filer (an issue), not a refusal."""
-    diff = run(["git", "diff", "--name-only", base + "...HEAD"], top)
+    """DOC-19 and DOC-4 findings on pages (and feature pages) the goal leaves alone go to filer, not a refusal."""
+    diff = run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", base + "...HEAD"], top)
     if diff.returncode or run(["git", "merge-base", "--is-ancestor", "HEAD", base], top).returncode == 0:
-        return lines  # unknown, or on the base itself: every finding counts
-    kept, moved = [], {}
+        return lines  # unknown, or on the base itself: all count
+    kept, moved, files = [], {}, diff.stdout.split("\0")
+    names = set(files) | {f.rsplit("/", 1)[-1] for f in files}
     for line in lines:
         page = (re.match(r"(?:LINKS|HOME|HOWTO) (\S+): DOC-(?:19|4) ", line) or [0, 0])[1]
-        if page and not any(f == page or f.endswith("/%s.md" % page) for f in diff.stdout.split()):
+        if page and not {page, page + ".md", re.sub("^How-to-use-", "", page) + ".md"} & names:
             moved.setdefault(page, []).append(line)
         else:
             kept.append(line)

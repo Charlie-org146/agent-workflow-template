@@ -63,6 +63,7 @@ GENERATED = [
     "REWRITE A: STALE 1 commits since the page: abc123 a change",
     "HOWTO How-to-use-A: DOC-18 the title is '# How to use A'. Fix: use that title",
 ]
+PAGE = "<!-- workflow-docs -->" + chr(10) + "# %s" + chr(10) + "The goal changed this page." + chr(10)
 repo = tempfile.mkdtemp(prefix="docs-gate-scope-")
 git("init", "-q", "-b", "main")
 write(".loop/config.json", "{}\n")
@@ -103,6 +104,13 @@ check("while the pages it left alone are filed (%s)" % [p for p, _ in filed], so
 write("skills/x/SKILL.md", "A skill doc the goal edited.\n")
 commit("the goal changes a skill doc")
 check("a finding in a skill doc the goal changed is refused too", gate(LINES)[0] == [LINES[0], LINES[3]])
+write("docs/wiki/Café.md", PAGE % "Café")
+commit("the goal adds a page with a non-ASCII name")
+cafe = "LINKS Café: DOC-19 line 2 holds 'https://evil.io', outside this repo. Fix: say it in words"
+check("a finding on a changed page with a non-ASCII name is refused, not read as untouched", gate(LINES + [cafe])[0] == [LINES[0], LINES[3], cafe])
+write("docs/wiki/A.md", PAGE % "A")
+commit("the goal changes feature page A")
+check("a How-to-use finding is refused when the goal changed its feature page", LINES[2] in gate(LINES)[0])
 git("checkout", "-q", "main")
 kept, filed, said = gate(LINES)
 check("on the base branch itself every finding still counts and nothing is filed (kept: %d)" % len(kept), kept == LINES and not filed)
@@ -116,7 +124,7 @@ with contextlib.redirect_stdout(out):
     lines = wiki.pending(repo, {})
 release.docs_trouble = saved
 check("wiki.pending keeps only what the goal changed or generated (%s)" % lines,
-      [l.split(":")[0] for l in lines] == ["LINKS B", "LINKS skills/x/SKILL.md", "REWRITE A"])
+      [l.split(":")[0] for l in lines] == ["LINKS B", "HOWTO How-to-use-A", "LINKS skills/x/SKILL.md", "REWRITE A"])
 check("and prints the other findings as left for health when no filer is given", "FINDING Home: not touched by this goal; left for health" in out.getvalue())
 
 
@@ -126,12 +134,12 @@ class Done:
         self.stdout, self.returncode = out, code
 
 
-def fake(open_titles, fail=False):
+def fake(open_titles, fail=False, list_fails=False):
     calls = []
 
     def run(args, cwd=None):
         calls.append(args)
-        if fail:
+        if fail or (list_fails and args[:3] == ["gh", "issue", "list"]):
             return Done("", 1)
         if args[:3] == ["gh", "issue", "list"]:
             return Done("\n".join(open_titles))
@@ -157,6 +165,9 @@ merge.file_issue(repo, "Home", ["a"])
 merge.file_issue(repo, "skills/x/SKILL.md", ["a"])
 mine = [c[c.index("--milestone") + 1] for c in calls if c[:3] == ["gh", "issue", "create"]]
 check("Home and a skill doc go on the Documentation backlog (%s)" % mine, mine == ["Backlog: Documentation"] * 2)
+calls, merge.run = fake([title], list_fails=True)
+said = merge.file_issue(repo, "How-to-use-Release", ["a"])
+check("an issue list that fails opens no issue, so a later create cannot double one (%s)" % said, not [c for c in calls if c[:3] == ["gh", "issue", "create"]])
 calls, merge.run = fake([], fail=True)
 check("a gh that fails files nothing and never raises", merge.file_issue(repo, "Home", ["a"]) == "no issue filed (gh)")
 

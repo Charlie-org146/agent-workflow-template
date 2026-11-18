@@ -9,10 +9,9 @@ maps pages, it first refuses while one is stale, passing a DOC-19 or DOC-4 findi
 issue instead, and after the merge publishes the wiki (wiki.py; refused: `wiki_error`). With "review_hold": true it
 refuses REVIEW_HOLD until review.py records a review of the head. Before merging it scans the branch and notes for private
 names, and holds the merge (REQUIREMENT_MISSING) while a criterion row the goal adds names a requirement ID no base wiki page
-names, where the base's pages use that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo), refuses another
-pod's goal; a merged goal leaves the queue.
+names, where the base's pages use that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo); refuses another pod's goal.
 
-Also here, the release pull request (autorelease.py calls `merge.advance` when the base takes no direct push): it pushes
+Also here, the release pull request (`merge.advance`, called by autorelease.py): it pushes
 `release/vX-<slug>`, opens `Release vX (<slug>)` and merges it with `gh pr merge --merge`, never `--admin`; `gh pr view` decides
 each outcome (codes: references/commands.md).
 """
@@ -37,12 +36,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def file_issue(top, page, texts):
     title = "Docs: %s has DOC-19/DOC-4 findings" % page
     stone = "Backlog: " + (page[11:] if page.startswith("How-to-use-") else "Documentation" if "/" in page or page == "Home" else page)
-    gh = lambda *a: run(["gh"] + list(a), top).stdout
+    gh = lambda *a: run(["gh"] + list(a), top)
     try:
-        if title in gh("issue", "list", "--state", "open", "--limit", "1000", "--json", "title", "-q", ".[].title").splitlines():
-            return "its issue is open"
+        held = gh("issue", "list", "--state", "open", "--limit", "1000", "--json", "title", "-q", ".[].title")
+        if held.returncode or title in held.stdout.splitlines():
+            return "no issue filed (gh)" if held.returncode else "its issue is open"
         gh("api", "-X", "POST", "repos/{owner}/{repo}/milestones", "-f", "title=" + stone)
-        return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body", "\n".join(texts)).split()[-1]
+        return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body", "\n".join(texts)).stdout.split()[-1]
     except (OSError, IndexError):
         return "no issue filed (gh)"
 
