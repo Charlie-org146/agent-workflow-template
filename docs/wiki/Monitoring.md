@@ -120,7 +120,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 ## Success metrics
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
-- With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
+- With full auto on, a run needs me only for the safety-class decisions MON-11 excludes. Notification subprocesses disable Git and GitHub terminal prompts, matching the unattended delivery commands.
 
 ## Tests
 

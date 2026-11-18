@@ -31,6 +31,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Resume the failed caching goal" | A failed or stopped goal gets a new worker; any other goal is refused. |
 | "Clean up merged branches, list them first" | You see the merged goal branches that would go; once you say so, they are deleted locally. |
 
+Notification subprocesses use the same noninteractive prompt settings as delivery commands.
+
 Each requirement and how it is delivered:
 
 - MON-1: Roles, start and planning. One command starts the operation session and drives the whole process the same way every time. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. When a worker session finishes, the operation session gives it the next ready goal, renaming it again. Example, from the dependency-held test: given a goal that depends on an unmerged goal, when the queue runs, then it is held until that goal merges.
