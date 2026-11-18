@@ -458,6 +458,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [links-alone-reads-sites](Tests#t-links-alone-reads-sites) | requirement | DOC-19 | Given a wiki page linking to a listed site and another host, when the pages are checked, then only the other host is reported. | not run |
 | [links-origins-sources](Tests#t-links-origins-sources) | requirement | DOC-19 | Given public_origins in .loop/config.json or scripts/public-origins.json, when docs check runs, then those https sites are the repo's own, and a broken file is ignored. | not run |
 | [links-outside-links-fail](Tests#t-links-outside-links-fail) | requirement | DOC-19 | Given an unlisted site, another host, a lookalike host, another repo's README, or this repo's issue and source links, when docs check runs, then each is a LINKS finding. | not run |
+| [links-origin-trailing-punct](Tests#t-links-origin-trailing-punct) | requirement | DOC-19 | Given a link or backticked URL to a listed origin followed by a parenthesis, backtick, quote or full stop, when docs check runs, then it is not a LINKS finding, and an unlisted origin in the same forms still is. | PASS 2026-11-18 |
 | - | requirement | DOC-20 | no passing test | not enforced |
 | - | requirement | DOC-22 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-18 |

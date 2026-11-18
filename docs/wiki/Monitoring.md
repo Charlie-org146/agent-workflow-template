@@ -387,6 +387,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | MON-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
 | [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | MON-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
 | [mon16-checkin-grouped](Tests#t-mon16-checkin-grouped) | requirement | MON-16 | Given a check-in, when it prints, then the Machine line follows the headline and each repo block is grouped by release milestone, then feature, with each goal's marker, time left and machine. | PASS 2026-11-16 |
+| [docs-tsv-extra-columns](Tests#t-docs-tsv-extra-columns) | requirement | MON-16 | Given a docs.tsv row with a third column such as a Notion sync, when a check-in names the goal feature, then it reads the first two columns, ignores the rest and does not crash. | PASS 2026-11-18 |
 | [mon17-this-pod-only](Tests#t-mon17-this-pod-only) | requirement | MON-17 | Given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line. | not run |
 | - | requirement | MON-17 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | MON-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
