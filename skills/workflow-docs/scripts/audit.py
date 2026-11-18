@@ -22,6 +22,7 @@ import counting
 import criteria as cr
 import docs
 import entry
+import pageformat as pf
 import prd
 from criteria import put, sha
 from entry import req_key, requirements
@@ -193,8 +194,7 @@ def live(root):
 
 
 def owned(root, rel, body, rule):
-    """True when every requirement line is owner-reviewed (seal holds; main's own line or logged id) and none of main's
-    was dropped; else the page stays LOCKED."""
+    """True when every requirement line is owner-reviewed or explained by a revision row, and none of main's was dropped."""
     name = rule["sections"][1]
     shown = cr.git("show", "origin/main:" + rel, check=False)
     main = [(line, tuple(below), m.group(1)) for line, m, below in cr.blocks(dict(cr.sections(shown)).get(name) or []) if m]
@@ -203,14 +203,17 @@ def owned(root, rel, body, rule):
             logged = {key for row in handle for item in row.split("\t")[2:3] for key in item.split(",") if row.split("\t")[1:2] == ["review"]}
     except OSError:
         logged = set()
-    have = set()
+    have, (tab, gone, _) = set(), pf.revs(body.get(rule["revs"]) or [])
     for line, m, below in cr.blocks(body.get(name) or []):
+        if m and m.group(2) == "Unreviewed" and tab.get(m.group(1)) and len(tab[m.group(1)][0]) == 5 and re.match(r"o\d+: ", tab[m.group(1)][0][4]) and " ".join(tab[m.group(1)][0][2].split()) == pf.unit(m.group(4), below):
+            have.add(m.group(1))  # DOC-20: a revision row explains the new text
+            continue
         if not m or m.group(2) == "Unreviewed" or m.group(5) != cr.seal_of(m.group(4), below):
             return False
         if (line, tuple(below), m.group(1)) not in main and m.group(1) not in logged:
             return False
         have.add(m.group(1))
-    return {key for _, _, key in main} <= have
+    return {key for _, _, key in main} <= have | set(gone)
 
 
 def relock(root, slug="", only=()):
@@ -361,6 +364,18 @@ def perm_main(argv):
     findings = entry.perm_check(root)
     print("\n".join(findings) if findings else "PERMISSIONS OK")
     return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
+
+
+HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "machine", "routine", "legend", "guard")
+
+
+def home_diagram(text):
+    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    fence = prd.FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
+    if not fence:
+        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
+    low = fence.group(1).lower()
+    return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
 
 
 if __name__ == "__main__":
