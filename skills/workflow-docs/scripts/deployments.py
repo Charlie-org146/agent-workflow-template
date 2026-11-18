@@ -2,8 +2,7 @@
 """The optional Deployments section of a feature page (DOC-14): a Page table and/or a Delivery table, nothing else.
 commands.md's rules block names the section, headers and Access words, and each column's rule. Pure: lines in, FORMAT
 findings out (pageformat.bad's shape); a secret-bearing value is never echoed: links read <link>, addresses <address>.
-The live-link and promoted-build check runs in the deploying repo. criteria.py's page rules (rules, criteria_max, SHEET)
-sit at the end, moved here unchanged.
+criteria.py's page rules (rules, criteria_max, SHEET) sit at the end, moved here unchanged.
 """
 import json
 import os
@@ -300,7 +299,7 @@ def link_of(text, listed=""):
 from prdcopy import link_page  # noqa: E402,F401  (moved: the docs check of a page that has a source reads its copy)
 
 
-UNREAD = set()  # link-form pages whose link could not be read in this run
+UNREAD = set()  # link-form pages unread in this run
 
 
 def linked(root, page, text):
@@ -347,7 +346,8 @@ def mapped(root, rows, folder):
 
 
 def howto(root, folder, features):
-    """DOC-18 trouble as (kind, page, detail): no How-to-use page, one off the skeleton, or a feature page that doesn't link it."""
+    """DOC-18 and DOC-19 trouble as (kind, page, detail), and each page that does not stand alone."""
+    import milestones, render  # noqa: E401
     found = []
     for page in features:
         name, path = HOWTO + page, os.path.join(root, folder, HOWTO + page + ".md")
@@ -365,10 +365,10 @@ def howto(root, folder, features):
             found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
         feature = slurp(os.path.join(root, folder, page + ".md"))
         if not linked(root, page, feature):
-            import milestones
             how, book = slurp(path), next((x for n, _, x in pf.parts(feature) if n == "Runbook"), [])
             found += milestones.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
             found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in milestones.unlisted(feature, how)]
+            found += milestones.diagram(name, how)
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
-    return found
+    return found + milestones.alone(root, folder, render.repo_of(root))

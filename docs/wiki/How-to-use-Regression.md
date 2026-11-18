@@ -15,6 +15,18 @@ Keeps every requirement and defect tied to a test that runs, and shows the resul
 | `.loop/regression.tsv` | API/file contract | The table of every test row. | `regression.py add` writes a row; `regression.py run` runs it. |
 | regression-round | Scheduled routine | The scheduled regression round. | Its Runbook is on the [Regression](Regression) page; run the tests by hand with `regression.py run`. |
 
+### System diagram
+
+```text
+[Command: regression.py | the repo checkout] --add writes a row--> [API/file contract: .loop/regression.tsv | the repo]
+[Command: lanes_cli.py | the repo checkout] --names the rows a change can affect--> [API/file contract: .loop/regression.tsv | the repo]
+[Scheduled routine: regression-round | GitHub Actions] --runs every row on schedule--> [Command: regression.py | the repo checkout]
+[Skill: workflow-regression | the agent session] --add, red, run, sync--> [Command: regression.py | the repo checkout]
+[Command: regression.py | the repo checkout] --files it--> (GitHub issue per failing row)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -72,7 +84,7 @@ Each requirement and how it is delivered:
 
 ## Automations and schedules
 
-The land tests also run in GitHub Actions on the workflow's schedule (every 4 hours) once `Write the GitHub workflow` has been merged; a failing test keeps one open issue.
+The land tests also run in GitHub Actions on the workflow's schedule (every 4 hours, `17 */4 * * *`) once `Write the GitHub workflow` has been merged; a failing test keeps one open issue.
 
 ## Runbooks
 
