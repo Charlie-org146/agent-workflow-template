@@ -84,6 +84,8 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.
 
+Desk onboarding (`desk.py`) disables Git and GitHub interactive prompts for its subprocesses, so an unattended setup step cannot wait for terminal input.
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
