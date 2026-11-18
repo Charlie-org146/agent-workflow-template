@@ -1301,6 +1301,11 @@
 | <a id="t-done-docs-v2-4"></a>done-docs-v2-4 | workflow | done line docs-v2:4 | not run | - | local | no |
 | <a id="t-done-docs-v2-5"></a>done-docs-v2-5 | workflow | done line docs-v2:5 | not run | - | local | no |
 | <a id="t-done-docs-v2-6"></a>done-docs-v2-6 | workflow | done line docs-v2:6 | not run | - | local | no |
+| <a id="t-auto-planning"></a>auto-planning | requirement | done line auto-planning:1 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-approve"></a>auto-planning-approve | requirement | done line auto-planning:2 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-machines"></a>auto-planning-machines | requirement | done line auto-planning:3 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-started"></a>auto-planning-started | requirement | done line auto-planning:4 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-check"></a>auto-planning-check | requirement | done line auto-planning:5 | not run | - | local | 2026-11-17 |
 | <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
 | <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | not run | - | local | 2026-11-17 |

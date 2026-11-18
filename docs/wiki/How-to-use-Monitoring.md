@@ -12,6 +12,7 @@ One session governs many goals at once and shows a live board of what's running 
 | `workflow-monitoring` | Skill | One session governs many goals and shows what is running and what needs you. | Say "Run the operation session" or "Where do things stand?". |
 | `board.py` | Command | The operation session's progress board and the list of repos it follows. | `python3 skills/workflow-monitoring/scripts/board.py repos list`. |
 | `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
+| `monitor.py plan` | Command | Plans the backlog into releases with an ETA, budget, machine and agent for each goal, and sends the owner one plan to approve. | `python3 skills/workflow-monitoring/scripts/monitor.py plan --check`, then `plan approve --owner-record ID`. |
 
 ### System diagram
 
@@ -19,6 +20,7 @@ One session governs many goals at once and shows a live board of what's running 
 [Skill: workflow-monitoring | the operation session] --the live board and the repos it follows--> [Command: board.py | the operation session]
 [Command: board.py | the operation session] --every goal and session--> [Command: checkin.py | the operation session]
 [Command: checkin.py | the operation session] --machine, sessions, dependency map, what waits on you--> (the owner)
+[Skill: workflow-monitoring | the operation session] --plans the backlog into releases--> [Command: monitor.py plan | the operation session] --one plan to approve--> (the owner)
 
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
 ```
@@ -75,6 +77,13 @@ Each requirement and how it is delivered:
 - **Writes:** nothing.
 - **Exit codes:** 0 after it prints.
 
+### Command: monitor.py plan
+- **Command:** `python3 skills/workflow-monitoring/scripts/monitor.py plan [--machines pc=GB,mac=GB] [--peer-plan FILE] [--first-release vX.Y] [--check]`, then `plan approve --owner-record ID [SLUG key=value ...]`
+- **Dry run:** `plan` is the dry run: it prints the plan and starts nothing; only `plan approve` writes the queue.
+- **Reads:** the queue, the run records, the session pool, the settings, the other machine's plan file and `agents.json`.
+- **Writes:** `plan-round.json` under the git folder's `loop/`; `plan approve` also the release, machine and agent on each queue line.
+- **Exit codes:** 0 after it prints; non-zero when `plan approve` refuses (no pending plan, no owner-words record, unknown slug).
+
 ## URLs and deployments
 
 - Wiki: [Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/Monitoring)
@@ -86,4 +95,4 @@ Each requirement and how it is delivered:
 - PRD page: [Monitoring](Monitoring)
 - Backlog: [Backlog: Monitoring](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept hotfix-4892@3cdb9c19 -->
+<!-- kept auto-planning@c0251d40 -->
