@@ -105,8 +105,8 @@ def saves(root, here, rows):
 
 def saves_rows(found):
     """The judge's SAVES lines (percent, where, change) as rows, keyed by what they are about, not by their wording (#4543)."""
-    return [{"state": "WARN", "family": "performance", "subject": "judge", "rule": "saves-" + hashlib.sha1(IS.about(w).encode()).hexdigest()[:8],
-             "detail": "%s%% saving: %s" % (p.rstrip("% "), w), "fix": c, "about": IS.about(w)} for p, w, c in found]
+    return [{"state": "WARN", "family": "performance", "subject": "judge", "rule": "saves-" + hashlib.sha1(IS.savings_subject(w).encode()).hexdigest()[:8],
+             "detail": "%s%% saving: %s" % (p.rstrip("% "), w), "fix": c, "about": IS.savings_subject(w)} for p, w, c in found]
 
 
 def held(root):

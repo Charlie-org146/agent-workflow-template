@@ -33,7 +33,7 @@ def acts(rows, issues, group, tmp):
 
 
 def filed(act, number):
-    return {act["key"]: {"number": number, "state": "open", "body": act["body"], "labels": [act["tag"]], "evidence": act["evidence"]}}
+    return {act["key"]: {"number": number, "state": "open", "body": act["body"], "labels": [act["tag"], act["feature"]], "evidence": act["evidence"]}}
 
 
 with tempfile.TemporaryDirectory() as tmp:
