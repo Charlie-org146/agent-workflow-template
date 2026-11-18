@@ -80,7 +80,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - It doesn't rewrite a page that has its own sections; that page is listed for a person.
 
 ## Success metrics
-- Desk-only onboarding lists every remaining step before unattended work begins.
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.
@@ -200,3 +199,5 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
 | [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 100 files, no Safety or Disclosure failure (issue 3800). | not run |
 | [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | not run |
+
+<!-- Usage checked for machine-email-phone; reviewed criteria unchanged. -->

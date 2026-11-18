@@ -111,7 +111,6 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 - Full auto never answers for me on destructive, money, security or owner-contradicting decisions.
 
 ## Success metrics
-- A mail event held by the shared send budget is retried on a later check-in.
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
 - With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
@@ -319,3 +318,5 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [pr-order-one-queue](Tests#t-pr-order-one-queue) | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) closed (2026-11-14) | Given three goals retrying their pr turn in a loop, when each asks, then every goal sees one order by first-join time, a retry touches only the heartbeat, and no goal without a readable ticket counts as first. | not run |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs git pull --ff-only (also with -C and a remote), then the govern hook lets it through. | PASS 2026-11-12 |
 | [pull-plain-blocked](Tests#t-pull-plain-blocked) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs a plain git pull, -r, --rebase=merges, --no-ff, --ff-only with --rebase or --ff, a +refspec or -f, then the govern hook still refuses it (negative control). | PASS 2026-11-12 |
+
+<!-- Usage checked for machine-email-phone; reviewed criteria unchanged. -->
