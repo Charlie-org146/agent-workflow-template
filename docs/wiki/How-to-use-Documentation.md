@@ -29,6 +29,38 @@ Legend: a box is Kind, Component and where it runs; --text--> a flow of data or 
 
 Say these to the agent in the operation session; each feature page has the exact commands. A feature's routine runbooks may be written on its How-to-use page, under Runbooks, instead of on its PRD page; the docs check finds them there.
 
+Keep the wiki in step with the code. Pages live in `docs/wiki/`, so they're reviewed in pull requests:
+
+```text
+/workflow-docs check
+/workflow-docs publish
+/workflow-docs restore
+```
+
+To write the first pages, ask the agent to set up the docs: it follows the skill's `init` steps (survey, choose pages, write them).
+
+`publish` only adds or updates pages it wrote, unless you name one with `--adopt`, and never deletes one. `restore`
+undoes the last publish.
+
+With `"criteria": true` in the config, `check` also holds the wiki to a contract: Home is free-form and each feature page
+is a short PRD: Problem, up to 6 requirements (`criteria_max`) marked Unreviewed or Reviewed with a
+date, Non-goals, Success metrics, and Tests: each requirement's regression rows as Given/When/Then scenarios with their
+last result. Only the owner reviews a PRD (`/workflow-docs review PAGE`); after that Problem, Requirements, Non-goals and
+Success metrics are locked until the owner un-reviews it. `/workflow-docs prd NAME "<idea>" --paths A,B` drafts a new feature's PRD.
+
+Upgrading a repo whose pages still have Summary and Criteria:
+
+1. Preview: `python3 prd.py convert` (in `skills/workflow-docs/scripts`) prints one line per page and writes nothing.
+2. Convert: `python3 prd.py convert --write`: Summary becomes Problem, Criteria Requirements (ids and Reviewed stamps
+   kept), and each page gets `Review: **Unreviewed**` and placeholder Non-goals and Success metrics.
+3. Write the drafts: replace each placeholder with what the feature deliberately won't do and one to three measurable
+   lines on how you know it works.
+4. Rewrite each regression row's description (column 6 of `.loop/regression.tsv`) as `Given ..., when ..., then ...`.
+5. Render: `python3 criteria.py render`.
+6. Check: `python3 docs.py check` prints `DOCS OK`.
+
+Rollback is reverting that commit.
+
 | You say | What happens |
 |---|---|
 | "Check the docs" | Every stale, missing, unmapped or unwritten page is listed with what is wrong, or you hear that the docs are clean. |
@@ -50,13 +82,13 @@ Each requirement and how it is delivered:
 - DOC-4: Home is one table. Example, from the format-home test: given a Home page with a line outside its Features table, when the docs check runs, then it fails naming Home, Features and DOC-4.
 - DOC-6: Each skill's commands are documented in its command reference. Example, from the command-reference-complete test: given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md.
 - DOC-7: Requirements are bullets. Example, from the format-bullets test: given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-7.
-- DOC-9: Tests are a table. Example, from the format-tests-table test: given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-9.
 - DOC-10: One Tests page, every release noted, a backlog milestone per feature. Example, from the milestones-once test: given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists.
 - DOC-14: A feature page lists what it ships: the pages people open and the deliveries people receive. Example, from the deploy-section-optional test: given a feature page with no Deployments section, a good Page table, a good Delivery table or both, when the docs check runs, then it passes, and a Deployments section before Success metrics is refused as out of order.
 - DOC-16: A feature page carries a runbook for each routine it owns. Example, from the runbook-good test: given a feature page with a well-formed Runbook section after its Problem, when the docs check runs, then it passes, and a Runbook placed before Problem is refused as out of order.
-- DOC-15: Home and the README show how the repo is set up and what runs by itself. Example, from the settings-overridden test: given a toy repo with one overridden setting, when render runs, then Home's Settings table marks exactly that one overridden with its value.
+- DOC-15: Home shows how the repo is set up and what runs by itself. Example, from the settings-overridden test: given a toy repo with one overridden setting, when render runs, then Home's Settings table marks exactly that one overridden with its value.
 - DOC-17: A PRD kept outside the repo stays in step through reviewed deltas. Example, from the sync-not-connected test: given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0.
 - DOC-18: Every feature page has a How-to-use page for its users. Example, from the doc18-howto-missing test: given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes.
+- DOC-23: The README is the principles. Example, from the format-frontdoor test: given a README holding only its title, the eight principles and one link to the wiki Home, when the docs check runs, then it passes, and a README with any other section fails naming it.
 - DOC-19: Each How-to-use page has one item per functional requirement, saying how it is delivered. Example, from the doc19-item-missing test: given a feature page with three functional requirements and a How-to-use page with items for two, when docs check runs, then it fails naming the missing ID, and with all three items it passes.
 - DOC-20: A requirement keeps its earlier wording as numbered revisions. Example, from the revision tests: given a Reviewed requirement and an owner record that lists the goal and the page, when I run `criteria.py revise DOC-4 --text "New wording" --why "the owner asked" --owner-record o30`, then it prints `REVISED DOC-4 r1->r2 (now Unreviewed, awaits review)`, the page's Revisions section shows r2 above r1 with the date, reason and record, and no other requirement changes. `criteria.py retire DOC-6 --as merged:DOC-7 --why "same rule" --owner-record o30` prints `RETIRED DOC-6 as merged into DOC-7` and keeps the ID under Retired; `criteria.py migrate --page Documentation --owner-record o30` gives each requirement its first revision and a second run changes nothing. A refusal starts with a code (REV-NOOP, REV-RECORD, REV-ROW, IDS-MISSING, IDS-REUSE, REV-GONE) and says nothing was written; `docs.py check` prints a NOTE for a page not yet migrated.
 - DOC-22: A Reviewed requirement is read-only while a goal builds. Example, from the guard tests: given a goal that rewords a Reviewed requirement no done line names, when `goal.py pr` runs, then it prints `GUARD REFUSED DOC-1 (Documentation): text changed` with the worker fix and the owner fix and pushes nothing; `goal.py finding GOAL "DOC-1 gap" --requirement DOC-1` files the gap on the feature's Backlog milestone and the goal goes on, and `criteria.py guard` runs the same check by hand and prints GUARD OK.

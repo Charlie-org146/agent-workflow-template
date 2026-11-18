@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 846" role="img" aria-label="How the loop and coverage principle is enforced">
+<style>
+.d-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.d-h{font:600 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.04em}
+.d-b{font:600 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.d-s{font:400 11.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#3c4757}
+.d-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.d-step{fill:#f3f5f8;stroke:#8a94a3}
+.d-you{fill:#e4eeff;stroke:#3b6fd6}
+.d-gate{fill:#fff4d6;stroke:#c08a00}
+.d-find{fill:#fde9e7;stroke:#c5483f}
+.d-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.d-bg{fill:#ffffff}
+.d-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.d-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.d-t,.d-b{fill:#eef2f6}.d-h,.d-x{fill:#a3afbf}.d-s{fill:#cdd5df}
+.d-step{fill:#222b36;stroke:#5c6b7d}.d-you{fill:#162a4f;stroke:#6d9bf0}
+.d-gate{fill:#3a2e0d;stroke:#d9a521}.d-find{fill:#3d1c1a;stroke:#e0736a}
+.d-ok{fill:#153420;stroke:#4fb56c}.d-bg{fill:#12171d}.d-a{stroke:#9aa7b8}.d-ah{fill:#9aa7b8}
+}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="d-ah"/></marker></defs>
+<rect width="420" height="846" class="d-bg"/>
+<text x="12" y="24" class="d-t">Principle 2: the loop and coverage</text>
+<text x="12" y="50" class="d-h">ONE REQUIREMENT'S COVERAGE LADDER</text>
+<rect x="12" y="60" width="74" height="40" rx="6" class="d-step" stroke-width="1.2"/>
+<text x="49.0" y="76.5" text-anchor="middle" class="d-b">Stated</text>
+<text x="49.0" y="91.5" text-anchor="middle" class="d-x">written</text>
+<rect x="92" y="60" width="74" height="40" rx="6" class="d-you" stroke-width="1.2"/>
+<text x="129.0" y="76.5" text-anchor="middle" class="d-b">Reviewed</text>
+<text x="129.0" y="91.5" text-anchor="middle" class="d-x">your words</text>
+<path d="M86 80 L92 80" class="d-a" marker-end="url(#ah)"/>
+<rect x="172" y="60" width="74" height="40" rx="6" class="d-gate" stroke-width="1.2"/>
+<text x="209.0" y="76.5" text-anchor="middle" class="d-b">Enforced</text>
+<text x="209.0" y="91.5" text-anchor="middle" class="d-x">a gate exists</text>
+<path d="M166 80 L172 80" class="d-a" marker-end="url(#ah)"/>
+<rect x="252" y="60" width="74" height="40" rx="6" class="d-ok" stroke-width="1.2"/>
+<text x="289.0" y="76.5" text-anchor="middle" class="d-b">Proven</text>
+<text x="289.0" y="91.5" text-anchor="middle" class="d-x">test passes</text>
+<path d="M246 80 L252 80" class="d-a" marker-end="url(#ah)"/>
+<rect x="332" y="60" width="74" height="40" rx="6" class="d-ok" stroke-width="1.2"/>
+<text x="369.0" y="76.5" text-anchor="middle" class="d-b">Fresh</text>
+<text x="369.0" y="91.5" text-anchor="middle" class="d-x">green today</text>
+<path d="M326 80 L332 80" class="d-a" marker-end="url(#ah)"/>
+<text x="12" y="119" class="d-s">Only Fresh counts as covered.</text>
+<text x="12" y="134" class="d-s">Reviewed is your mark; the other steps are measured.</text>
+<text x="12" y="164" class="d-h">CHECKED IN FOUR DIRECTIONS</text>
+<rect x="10" y="174" width="196" height="58" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="108.0" y="192.0" text-anchor="middle" class="d-b">Down</text>
+<text x="108.0" y="207.0" text-anchor="middle" class="d-x">Every requirement has a gate</text>
+<text x="108.0" y="222.0" text-anchor="middle" class="d-x">and a test that passes</text>
+<rect x="214" y="174" width="196" height="58" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="312.0" y="192.0" text-anchor="middle" class="d-b">Up</text>
+<text x="312.0" y="207.0" text-anchor="middle" class="d-x">Every test, script and goal</text>
+<text x="312.0" y="222.0" text-anchor="middle" class="d-x">names a requirement</text>
+<rect x="10" y="240" width="196" height="58" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="108.0" y="258.0" text-anchor="middle" class="d-b">Across</text>
+<text x="108.0" y="273.0" text-anchor="middle" class="d-x">No two requirements conflict</text>
+<text x="108.0" y="288.0" text-anchor="middle" class="d-x">or say the same thing</text>
+<rect x="214" y="240" width="196" height="58" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="312.0" y="258.0" text-anchor="middle" class="d-b">Over time</text>
+<text x="312.0" y="273.0" text-anchor="middle" class="d-x">The proof ran on current</text>
+<text x="312.0" y="288.0" text-anchor="middle" class="d-x">main, on each machine</text>
+<text x="12" y="328" class="d-h">THE LOOP THAT CLOSES EVERY GAP</text>
+<rect x="112" y="338" width="296" height="46" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="260.0" y="357.5" text-anchor="middle" class="d-b">Check</text>
+<text x="260.0" y="372.5" text-anchor="middle" class="d-s">Nightly tests in CI, health rules, review</text>
+<path d="M260 384 L260 399" class="d-a" marker-end="url(#ah)"/>
+<rect x="112" y="400" width="296" height="46" rx="8" class="d-find" stroke-width="1.2"/>
+<text x="260.0" y="419.5" text-anchor="middle" class="d-b">Finding</text>
+<text x="260.0" y="434.5" text-anchor="middle" class="d-s">Gap, conflict, orphan or stale proof</text>
+<path d="M260 446 L260 461" class="d-a" marker-end="url(#ah)"/>
+<rect x="112" y="462" width="296" height="46" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="260.0" y="481.5" text-anchor="middle" class="d-b">Filed by feature</text>
+<text x="260.0" y="496.5" text-anchor="middle" class="d-s">One issue on the feature's milestone</text>
+<path d="M260 508 L260 523" class="d-a" marker-end="url(#ah)"/>
+<rect x="112" y="524" width="296" height="46" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="260.0" y="543.5" text-anchor="middle" class="d-b">Planned into goals</text>
+<text x="260.0" y="558.5" text-anchor="middle" class="d-s">Most blocking first; none left unseen</text>
+<path d="M184 570 L184 589" class="d-a" marker-end="url(#ah)"/>
+<path d="M336 570 L336 589" class="d-a" marker-end="url(#ah)"/>
+<rect x="112" y="590" width="144" height="62" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="184.0" y="610.0" text-anchor="middle" class="d-b">Fix</text>
+<text x="184.0" y="625.0" text-anchor="middle" class="d-x">Code or tests change</text>
+<text x="184.0" y="640.0" text-anchor="middle" class="d-x">PRD stays as it is</text>
+<rect x="264" y="590" width="144" height="62" rx="8" class="d-you" stroke-width="1.2"/>
+<text x="336.0" y="610.0" text-anchor="middle" class="d-b">Revise</text>
+<text x="336.0" y="625.0" text-anchor="middle" class="d-x">Merge, retire, reword</text>
+<text x="336.0" y="640.0" text-anchor="middle" class="d-x">You approve the text</text>
+<path d="M184 652 L184 671" class="d-a" marker-end="url(#ah)"/>
+<path d="M336 652 L336 671" class="d-a" marker-end="url(#ah)"/>
+<rect x="112" y="672" width="296" height="46" rx="8" class="d-ok" stroke-width="1.2"/>
+<text x="260.0" y="691.5" text-anchor="middle" class="d-b">Release</text>
+<text x="260.0" y="706.5" text-anchor="middle" class="d-s">Coverage is measured again</text>
+<path d="M112 695 H53 V361 H111" class="d-a" marker-end="url(#ah)"/>
+<rect x="4" y="464" width="98" height="66" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="53.0" y="486.0" text-anchor="middle" class="d-b">Every release</text>
+<text x="53.0" y="501.0" text-anchor="middle" class="d-x">re-measures</text>
+<text x="53.0" y="516.0" text-anchor="middle" class="d-x">coverage</text>
+<rect x="10" y="736" width="400" height="62" rx="20" class="d-gate" stroke-width="1.2"/>
+<text x="210.0" y="756.0" text-anchor="middle" class="d-b">Coverage only goes up (proposed)</text>
+<text x="210.0" y="771.0" text-anchor="middle" class="d-s">Removing the only proof of a requirement is</text>
+<text x="210.0" y="786.0" text-anchor="middle" class="d-s">refused; a drop needs your words</text>
+<rect x="12" y="816" width="14" height="14" rx="3" class="d-you" stroke-width="1.2"/>
+<text x="31" y="827" class="d-x">You</text>
+<rect x="70" y="816" width="14" height="14" rx="3" class="d-step" stroke-width="1.2"/>
+<text x="89" y="827" class="d-x">Step</text>
+<rect x="130" y="816" width="14" height="14" rx="3" class="d-gate" stroke-width="1.2"/>
+<text x="149" y="827" class="d-x">Gate</text>
+<rect x="192" y="816" width="14" height="14" rx="3" class="d-find" stroke-width="1.2"/>
+<text x="211" y="827" class="d-x">Finding</text>
+<rect x="270" y="816" width="14" height="14" rx="3" class="d-ok" stroke-width="1.2"/>
+<text x="289" y="827" class="d-x">Proven</text>
+</svg>

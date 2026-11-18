@@ -29,6 +29,53 @@ Legend: a box is Kind, Component and where it runs; --text--> a flow of data or 
 
 Say these to the agent in the operation session; each feature page has the exact commands.
 
+See where things stand, or pick up a failed goal:
+
+```text
+/workflow-monitoring report
+/workflow-monitoring dashboard
+/workflow-monitoring resume <slug>
+```
+
+`mend` and `resume_on_limit` in `.loop/config.json` let `watch` give a failed goal one fresh agent, and continue after a
+usage limit. Both are off until you turn them on. Background agents need the tools you allow in `agent_command`.
+
+Run the operation session with one command. It plans queued goals as a dependency graph (`depends-on` on a queue line,
+at most `parallel` workers at once, no waiting for shared files), starts every goal whose dependencies are merged, watches
+the workers, updates the board and prints the full live board on the cadence (30 minutes by default), or at once when a worker reports:
+
+```text
+/workflow-monitoring operate
+/workflow-monitoring send <slug> "<answer or follow-up>"
+```
+
+A goal merges the latest base branch before its pull request and reruns its checks if that changed anything; only a real
+conflict costs it a try. Goal steps refuse outside a worker.
+
+The pieces it runs, if you want them by hand, are asked in plain words (see `skills/workflow-monitoring/references/commands.md`):
+
+```text
+"update the board and print what changed"
+"draw the board page"
+"set the check-in cadence to 30 minutes"
+"follow the goals in ../other-repo"
+/workflow-monitoring go "<goal>" --done "<line>"
+```
+
+Updating the board writes `board.json` and prints what changed; drawing the page then makes `board.html` and
+`board-artifact.html` from it.
+
+An operation session only assigns, watches and reports. It puts goals in a named batch, `start` begins one worker for
+each goal, each worker runs its own loop to the end, and each sends its result (merged, failed or waiting, with the pull
+request) back as a prompt message that the board shows. A check-in prints the live board: Issues, Running goals,
+Queued goals, Dependencies, Finish:
+
+```text
+"add a goal to the nightly batch: <goal>, done when <line>"
+"start the nightly batch"
+"show the nightly batch status"
+```
+
 | You say | What happens |
 |---|---|
 | "Adopt my recent GitHub repos" | Your repos are listed by last push, private ones included; the ones you choose are cloned into one folder, followed and set up or updated, each ending with its template version. |

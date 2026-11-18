@@ -28,22 +28,22 @@ marks() { grep -c -e '<!-- settings:begin -->' -e '<!-- automation:begin -->' "$
 
 # format: setup inserts the blocks into the README and the DOC-4 Home, and the page format passes them.
 if want format; then
-  [ "$(marks README.md)" = 2 ] && [ "$(marks $H)" = 2 ] && grep -q '<!-- template:begin -->' README.md \
-    && ok "setup inserts the blocks into README and Home" || bad "setup did not insert the blocks (README $(marks README.md), Home $(marks $H))"
+  [ "$(marks README.md)" = 0 ] && [ "$(marks $H)" = 2 ] && grep -q '<!-- template:begin -->' README.md \
+    && ok "setup inserts the blocks into Home and only the template line into README (DOC-23)" || bad "setup did not insert the blocks (README $(marks README.md), Home $(marks $H))"
   [ -z "$(git status --short)" ] && ok "setup leaves the tree clean" || bad "setup left $(git status --short | tr '\n' ' ')"
   out=$($docs check 2>&1)
   grep -E "^(FORMAT (README|Home)|STALE (Settings|Automation|README line))" <<<"$out" && bad "docs.py check refuses the blocks setup inserted" \
     || ok "docs.py check passes the page format on the inserted blocks"
   got=$(cd "$here/skills/workflow-docs/scripts" && python3 - "$d/toy/repo" <<'PY'
-import os, sys
-import pageformat, render
-root = sys.argv[1]  # a README that opens with How to use: the template line lands inside it, which the format must allow
-text = "## How to use\n\n### How to use Engine\n\nAsk.\n\n| You say | What happens |\n|---|---|\n| \"Show me engine\" | It shows. |\n"
-blocks = dict(render.front_files(root))["README.md"]
-print(pageformat.frontdoor(render.with_blocks(text, blocks, True), ["Engine"]) or "clean")
+import sys
+import render
+root = sys.argv[1]  # a README that opens with a section: the template line lands in it, and no Settings or Automation block does
+blocks = dict(render.front_files(root, True))["README.md"]
+text = render.with_blocks("## How to use\n\nAsk.\n", blocks, True)
+print("clean" if "template:begin" in text and "settings:begin" not in text and "automation:begin" not in text else text)
 PY
 )
-  [ "$got" = clean ] && ok "a README with no title paragraph still passes DOC-5 with the blocks in" || bad "DOC-5 on a title-less README: $got"
+  [ "$got" = clean ] && ok "a README with no title paragraph still gets only the template line (DOC-23)" || bad "template line on a title-less README: $got"
 fi
 
 # no-insert: a repo adopted before the blocks (no markers): a render leaves README and Home byte-identical and check is quiet.
@@ -72,6 +72,7 @@ if want no-cascade; then
   git commit -qm "Engine also describes the README" -- .loop/docs.tsv
   python3 -c "import json; c = json.load(open('.loop/config.json')); c['health_cron'] = '5 */6 * * *'; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
   git commit -qam "Health every six hours"
+  printf '\n<!-- automation:begin -->\nold\n<!-- automation:end -->\n' >> README.md; git commit -qam "A README that kept its Automation block"
   $render >/dev/null 2>&1
   [ -n "$(git status --short README.md)" ] || bad "the render did not refresh the README's Automation block"
   git commit -qm "Refresh the generated blocks" -- README.md $H
