@@ -46,6 +46,10 @@ check "check runs exactly the twelve groups in order, plus Mine" '[ "$heads" = "
 check "each group heading prints its angle" 'grep -q "^== Tests (a skeptic.s angle: do the tests prove anything?) ==" <<<"$out" && grep -q "^== Security and privacy (a leak.s angle: can anything private escape?) ==" <<<"$out"'
 n=$(python3 -c "import sys;sys.path.insert(0,'$S');import report;print(len(report.RULES))")
 check "every rule has a negative control that fires" '[ "$(grep -c "^PASS controls .* control: fires on its fixture" <<<"$out")" = "$n" ] && [ "$n" -ge 30 ]'
+check "after the groups the report prints one PRINCIPLE line for each of the eight principles, in order" '[ "$(grep -c "^PRINCIPLE [1-8] " <<<"$out")" = 8 ] && [ "$(grep "^PRINCIPLE " <<<"$out" | cut -c1-11 | tr "\n" "|")" = "PRINCIPLE 1|PRINCIPLE 2|PRINCIPLE 3|PRINCIPLE 4|PRINCIPLE 5|PRINCIPLE 6|PRINCIPLE 7|PRINCIPLE 8|" ]'
+check "principle 8 prints UNREAD until its Attention group exists" 'grep -q "^PRINCIPLE 8 It stops for you only when it must: UNREAD (attention)" <<<"$out"'
+pr=$(python3 -c "import sys;sys.path.insert(0,'$S');import judge;print('\n'.join(judge.principles([{'family':'traceability','state':'FAIL'},{'family':'requirements','state':'PASS'},{'family':'tests','state':'WARN'},{'family':'controls','state':'PASS'}])))")
+check "a principle is RED when a group under it fails, green when none does, and UNREAD is never green" 'grep -q "^PRINCIPLE 1 Documentation-driven: RED" <<<"$pr" && grep -q "^PRINCIPLE 2 The loop and coverage: green" <<<"$pr" && grep -q "^PRINCIPLE 3 The docs are true: UNREAD" <<<"$pr"'
 mkdir -p "$d/g13"; sed 's/^GROUPS = (/GROUPS = (("extra", "Extra", "x", ()),/' "$S/report.py" > "$d/g13/report.py"
 check "report.py refuses a thirteenth group" 'python3 -c "import sys;sys.path.insert(0,\"$d/g13\");import report" 2>&1 | grep -q "AssertionError: exactly 12 groups"'
 fi

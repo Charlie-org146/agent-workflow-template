@@ -160,13 +160,25 @@ PY
 has "^FORMAT Home:[0-9]*: Features: DOC-4 one row per feature page (got 0 rows for Delivery)" && ok "DOC-4 a feature page with no Home row fails" || bad "home row"; reset
 check | grep -q "^FORMAT Home" && bad "good Home" || ok "DOC-4 a Home of one features table passes"
 
-echo "== DOC-5 README front door"
-edit README.md "Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery)." "Opens it."; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 no How-to-use table" && ok "DOC-5 a one-row table that does not link the page fails" || bad "front no link row"; reset
-edit README.md "### How to use Delivery" "### Delivery"; has "^FORMAT README:[0-9]*: How to use: DOC-5 a section named for a feature page" && ok "DOC-5 a section not named for a feature page fails" || bad "front heading"; reset
-edit README.md "|---|---|" "|---|---|
-| \"x\" | y |"; has "^FORMAT README:[0-9]*: How to use Delivery: DOC-5 no How-to-use table" && ok "DOC-5 a README table of two rows fails" || bad "front two rows"; reset
-edit README.md "wiki/How-to-use-Delivery" "wiki/elsewhere"; has "^FORMAT README:[0-9]*: How to use: DOC-5 a link to the page How-to-use-Delivery" && ok "DOC-5 a README with no link to the page fails" || bad "front missing"; reset
-check | grep -q "^FORMAT README" && bad "good README" || ok "DOC-5 a front door that links each How-to-use page passes"
+echo "== DOC-23 the README is the principles"
+mkdir -p skills/workflow-health/references; cp "$here/skills/workflow-health/references/commands.md" skills/workflow-health/references/commands.md
+python3 - <<'PY'
+import re
+rows = re.findall(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", open("skills/workflow-health/references/commands.md").read().partition("## The eight principles")[2], re.M)
+out = ["# toy", "", "[the wiki](https://github.com/toy/repo/wiki/Home)", ""]
+for n, name, sentence in rows:
+    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "Enforced by: DEL-1, DEL-9 (planned: regroup 2)", ""]
+open("README.md", "w").write("\n".join(out))
+PY
+git add -A; git commit -qm "principles README"
+check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
+edit README.md "## 3. The docs are true" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. The docs are true'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
+printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the eight principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
+edit README.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence from the health list" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
+edit README.md "DEL-9 (planned: regroup 2)" "DEL-9"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is marked (planned: ...) (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset
+edit README.md "[the wiki](https://github.com/toy/repo/wiki/Home)" "nothing"; has "^FORMAT README:[0-9]*: Principles: DOC-23 the title and one link to the wiki Home" && ok "DOC-23 a README with no Home link fails" || bad "readme home"; reset
+cp README.md docs/wiki/Principles.md; edit docs/wiki/Principles.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT Principles:[0-9]*: Principles: DOC-23 its sentence from the health list" && ok "DOC-23 a Principles page with a sentence off by a word fails" || bad "principles page"; reset
+git rm -rq --cached skills/workflow-health >/dev/null; rm -rf skills/workflow-health; check | grep -q "^FORMAT README" && bad "adopter README" || ok "DOC-23 a repo without the shipped list keeps its own README unchecked"; reset; git reset -q --hard HEAD~1
 
 echo "== DOC-6 each skill's commands are in its command reference; a Usage section is gone"
 edit $P "## Requirements" "## Usage
