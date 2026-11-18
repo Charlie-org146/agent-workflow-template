@@ -42,7 +42,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - Only the operation session runs `promote` or `revert`; a worker is refused with `REVIEW_ROLE`.
   - A waiver counts only when its owner-words record exists and names its subject, and the record id is kept beside the waiver in the git folder, outside the repo.
 - REL-9: **Unreviewed** The merge's wiki check refuses only for what the goal changed
-  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes, a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it.
+  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it.
   - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so.
   - On the base branch itself every finding counts.
 
@@ -93,4 +93,7 @@ None
 | [gate-gh-missing-safe](Tests#t-gate-gh-missing-safe) | requirement | REL-9 | Given gh is not installed, when the gate files an issue, then nothing is filed and the merge check does not crash. | not run |
 | [gate-pending-scoped](Tests#t-gate-pending-scoped) | requirement | REL-9 | Given findings on untouched pages, when wiki.py prepare or merge.py checks the wiki, then only the goal's own and generated findings remain. | not run |
 | [gate-prepare-left-for-health](Tests#t-gate-prepare-left-for-health) | requirement | REL-9 | Given wiki.py prepare (no filer), when findings sit on untouched pages, then each prints as a FINDING left for health and nothing is filed. | not run |
+| [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | REL-9 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
+| [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
+| [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
 | - | requirement | REL-9 | no passing test | not enforced |

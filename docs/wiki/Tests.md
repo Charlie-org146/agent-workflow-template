@@ -999,6 +999,9 @@
 | <a id="t-gate-gh-missing-safe"></a>gate-gh-missing-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-prepare-left-for-health"></a>gate-prepare-left-for-health | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-nonascii-page-refused"></a>gate-nonascii-page-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-feature-edit-refuses"></a>gate-feature-edit-refuses | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-list-failure-no-create"></a>gate-list-failure-no-create | requirement | REL-9 | not run | - | local | 2026-11-18 |
 
 ## Setup
 
