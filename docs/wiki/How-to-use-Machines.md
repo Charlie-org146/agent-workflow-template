@@ -99,4 +99,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept safety-fixes@585daa17 -->
+<!-- kept hands-off-operation@f100bbe6 -->
