@@ -15,4 +15,11 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Open `docs/wiki/Operation.md` and `docs/wiki/Check-in-and-board.md`.
+   Expect: Operation holds OPS-1 to OPS-23 and Check-in and board holds CHK-1 to CHK-9, each with a Revisions table starting at r1.
+2. Open `docs/wiki/Monitoring.md`, section Revisions, and read the Retired list.
+   Expect: MON-1 to MON-19 each read "moved to" an OPS or CHK ID, and the page has no live requirement.
+3. Run `python3 skills/workflow-docs/scripts/criteria.py guard origin/main regroup-guardrails` and `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: GUARD OK, and no REVISION, IDS, LINK or HOWTO line (the Guardrails CAP line goes once GRD-11, GRD-13 and GRD-14 retire as moved).
+4. Open `docs/wiki/Home.md`.
+   Expect: rows for Monitoring, Operation and Check-in-and-board, each Build loop, each on milestone 6.
