@@ -28,6 +28,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Merge it" | A ready pull request is merged and released. |
 | (a lane says MEMORY_WAIT or LANE_ENV) | The machine was short of memory, not the goal: no try is spent, so run the same command again when memory frees. |
 
+Delivery subprocesses fail instead of waiting for terminal prompts, including routed agent commands and their login checks.
+
 Each requirement and how it is delivered:
 
 - DEL-1: The loop. Example, from the no-done-line-refused test: given a goal with no done line, when it is started, then it is refused.
