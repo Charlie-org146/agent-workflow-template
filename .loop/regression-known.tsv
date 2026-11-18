@@ -46,6 +46,9 @@ stale-page-row	red on main (scheduled regression 2026-11-17)
 no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
 format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
+prd-copy-no-reader	red on main since v1.0.64 (docs-v2 How-to fixture family, same as format-frontdoor), see #4961; reproduced on base 210cc556, same two FAILs (README:5 How to use link to How-to-use-Delivery)
+every-row-described	red on main: prd-lock-four (501 chars) and prd-stamps-free (493 chars) have descriptions over its 400-character limit; reproduced on base 210cc556
+scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (19,636 bytes), checkin.py (19,444), operate.py (19,262) and reply_hook.py (19,386) are over the 19,000 warn line (owner record o39)
 issue-129-docs-published	red on main (v1.0.65): workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,000 and under the 20,480 fail line), see #4653
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)

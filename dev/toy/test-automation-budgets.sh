@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py skills/workflow-health/scripts/automation.py .github/workflows/regression.yml docs/wiki/Regression.md docs/wiki/Automation.md
+# reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py skills/workflow-health/scripts/automation.py .github/workflows/regression.yml docs/wiki/How-to-use-Regression.md docs/wiki/How-to-use-Automation.md
 # Test that REG-7, AUT-7 and regression.yml name one regression budget with the suite sharded to fit it, and that the digest never cuts its counts silently.
 # usage: test-automation-budgets.sh [budgets|digest|health]   Exits 0 only when every case in the group passes.
 set -u
@@ -16,17 +16,17 @@ import re, sys
 sys.path.insert(0, "skills/workflow-regression/scripts")
 import actions
 yml = open(".github/workflows/regression.yml").read()
-reg = open("docs/wiki/Regression.md").read()
-aut = open("docs/wiki/Automation.md").read()
+reg = open("docs/wiki/How-to-use-Regression.md").read()  # the v2 rewrite moved the budget detail from the requirements to the How-to pages
+aut = open("docs/wiki/How-to-use-Automation.md").read()
 b = actions.BUDGET_MINUTES
 errs = []
 if "timeout-minutes: %d" % b not in yml: errs.append("regression.yml timeout is not %d" % b)
 if "(%d - 2) * 60" % b not in yml: errs.append("the job seconds do not come from the budget")
 if "shard: %s" % list(range(actions.SHARDS)) not in yml: errs.append("regression.yml has no %d-shard matrix" % actions.SHARDS)
 if "REGRESSION_SHARD" not in yml: errs.append("no REGRESSION_SHARD")
-req7 = reg[reg.index("- REG-7:"):reg.index("- REG-8:")]
+req7 = re.search(r"^- REG-7:.*(?:\n(?:  .*|))*", reg, re.M).group(0)
 if "under %d minutes" % b not in req7 or "sharded" not in req7: errs.append("REG-7 does not name %d minutes and sharding" % b)
-req = aut[aut.index("- AUT-7:"):aut.index("## Non-goals")]
+req = re.search(r"^- AUT-7:.*(?:\n(?:  .*|))*", aut, re.M).group(0)
 if "45 minutes" not in req or str(b) not in req: errs.append("AUT-7 does not name the 45-minute round of %d plus health" % b)
 if 45 - b != 15: errs.append("round budget is not the regression budget plus 15")
 print("; ".join(errs) or "OK")
