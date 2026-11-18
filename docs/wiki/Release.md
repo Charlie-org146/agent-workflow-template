@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept ci-release-commit-identity@17e60598 -->
+Review: **Unreviewed** <!-- kept extra-cols-links@ae681d28 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
