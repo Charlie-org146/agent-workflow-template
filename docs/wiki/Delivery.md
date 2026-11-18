@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept regroup-delivery@200ba3dd -->
+Review: **Unreviewed** <!-- kept gate-rerender@3cda989f -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
