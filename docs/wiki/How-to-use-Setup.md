@@ -11,6 +11,7 @@ Turns any repo into a ready workspace for any agent without ever blocking, judge
 |---|---|---|---|
 | `workflow-setup` | Skill | Turns any repo into a ready workspace for any agent without blocking it. | Say "Set up this repo"; it shows what it found and writes a setup branch. |
 | `setup.py` | Command | Surveys a repo and writes its `.loop/` config on a branch. | `python3 skills/workflow-setup/scripts/setup.py`. |
+| `setup.py desk` | Command | Lists and records the desk steps needed before phone-only operation. | `python3 skills/workflow-setup/scripts/setup.py desk list`. |
 | `unattended.py` | Command | Checks what an unattended run needs, replays the golden adoption and lists connectors. | `python3 skills/workflow-monitoring/scripts/unattended.py prerequisites`. |
 
 ### System diagram
@@ -18,6 +19,7 @@ Turns any repo into a ready workspace for any agent without ever blocking, judge
 ```text
 [Skill: workflow-setup | the agent session] --surveys the repo--> [Command: setup.py | the repo checkout]
 [Command: setup.py | the repo checkout] --writes it--> (.loop/ config on a branch)
+[Command: setup.py desk | the repo checkout] --lists and records desk steps--> (machine-local desk.json and phone-start gaps)
 [Command: unattended.py | the repo checkout] --checks what an unattended run needs--> (connector and prerequisite list)
 
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
@@ -68,6 +70,13 @@ Each requirement and how it is delivered:
 - **Reads:** the repo and its settings.
 - **Writes:** `.loop/` files, README and agent files on a setup branch.
 - **Exit codes:** 0 on a ready repo; setup never blocks, and a refusal prints its fix.
+
+### Command: setup.py desk
+- **Commands:** `python3 skills/workflow-setup/scripts/setup.py desk list`, `python3 skills/workflow-setup/scripts/setup.py desk run`, `python3 skills/workflow-setup/scripts/setup.py desk done STEP [STEP ...]`, and `python3 skills/workflow-setup/scripts/setup.py desk check`.
+- **Dry run:** `list` and `check` report without writing; `run` lists open steps once and records that they were listed.
+- **Reads:** machine-local step records, file existence, the agent command on PATH and the repo's worker settings.
+- **Writes:** `run` and `done` update `~/.workflow-loop/desk.json` (or the folder set by `LOOP_DESK_HOME`); nothing in the repo.
+- **Exit codes:** `list` and `run` return 0; `check` returns 0 with `DESK OK` or 1 with each `GAP`; `done` returns 2 for an unknown step.
 
 ### Command: unattended.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/unattended.py prerequisites` (also `replay` and `connectors`)
