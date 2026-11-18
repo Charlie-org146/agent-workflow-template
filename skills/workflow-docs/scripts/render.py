@@ -405,3 +405,39 @@ if __name__ == "__main__":
     sys.argv[1:] == ["blocks"] or sys.exit("usage: render.py blocks")
     top = cr.git("rev-parse", "--show-toplevel")
     print("\n".join("WROTE %s (%s block)" % x for x in (refresh(top, insert=True) if config_of(top).get("criteria") else [])) or "BLOCKS OK")
+
+
+KHEAD = "| Component | Kind | What it is | How a user uses it |"
+FIELD = re.compile(r"^- \*\*([A-Z][A-Za-z ]*):\*\*\s*(.*)$")
+
+
+def part(text, name):
+    """The lines under '## name', up to the next '## ' heading."""
+    head = "\n## %s\n" % name
+    return text.split(head, 1)[1].split("\n## ", 1)[0] if head in text else ""
+
+
+def blocks(body):
+    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
+    found, cur, last = {}, None, None
+    for line in body.splitlines():
+        if line.startswith("### "):
+            cur, last = line[4:].strip(), None
+            found[cur] = {}
+        elif cur is not None and FIELD.match(line):
+            last, text = FIELD.match(line).groups()
+            found[cur][last] = found[cur].get(last, "") + text
+        elif cur is not None and last and line[:1].isspace():
+            found[cur][last] += " " + line.strip()
+    return found
+
+
+def delivered(text):
+    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
+    block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
+    lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
+    out = []
+    for line in lines[2:]:
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        out.append((cells[0].replace("`", ""), cells[1] if len(cells) > 1 else "", len(cells)))
+    return (lines[0] if lines else ""), out

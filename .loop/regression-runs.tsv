@@ -116,6 +116,7 @@ del5-patch-default	PASS	2026-11-12
 del5-release-pr	PASS	2026-11-12	
 del9-hooks	PASS	2026-11-12	
 del9-merge-refuses	PASS	2026-11-12	
+del9-pr-refuses	PASS	2026-11-18	
 dependencies-on-map	PASS	2026-11-09	
 dependency-held	PASS	2026-11-09	
 deploy-doc14-reviewed	PASS	2026-11-12	
@@ -448,7 +449,7 @@ pr-statuses-only-lane-3840	PASS	2026-11-14
 pr-waits-owed	PASS	2026-11-13	
 prd-audit-ignores-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-convert	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-prd-lock-four	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+prd-lock-four	PASS	2026-11-18	
 prd-new	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-no-dunder-import-3800	PASS	2026-11-16	
 prd-nongoals-metrics	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -456,8 +457,8 @@ prd-readers	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-repo-green	PASS	2026-11-10	
 prd-review-args	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-scenarios	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-prd-section-order	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-prd-stamps-free	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+prd-section-order	PASS	2026-11-18	
+prd-stamps-free	PASS	2026-11-18	
 prd-untested	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-usage-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 preview-writes-nothing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a

@@ -365,10 +365,11 @@ def howto(root, folder, features):
             found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
         feature = slurp(os.path.join(root, folder, page + ".md"))
         if not linked(root, page, feature):
+            import entry
             import milestones
             how, book = slurp(path), next((x for n, _, x in pf.parts(feature) if n == "Runbook"), [])
-            found += milestones.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
-            found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in milestones.unlisted(feature, how)]
+            found += entry.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
+            found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in entry.unlisted(feature, how)]
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
     return found

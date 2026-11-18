@@ -1,12 +1,13 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/fit.py
 # reads: skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/guards.py
-# reads: skills/workflow-delivery/scripts/role.py skills/workflow-setup/scripts/setup.py
+# reads: skills/workflow-delivery/scripts/role.py skills/workflow-setup/scripts/setup.py skills/workflow-delivery/scripts/routing.py
+# reads: skills/workflow-docs/scripts/milestones.py skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/pageformat.py
 # reads: skills/workflow-release/scripts/ skills/workflow-delivery/scripts/ skills/workflow-regression/scripts/regression.py
 # Proves the Delivery PRD's delivery side: depth by size with the owner's override (DEL-6), resume from the last
 # recorded step after a kill (DEL-7), the goal's budget (DEL-8), the private-name scan before goal.py pr pushes (DEL-9),
 # verdicts in the pull request (issue 38) and GitHub touches, regeneration warnings and set (issue 117). No model.
-# usage: test-delivery-prd.sh [depth|resume|budget|private|defects|hold|all]
+# usage: test-delivery-prd.sh [depth|resume|budget|private|defects|hold|guard|all]
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_PRIVATE_NAMES LOOP_BATCH LOOP_ROLE  # w() sets the worker role per call; set and touches run as the operation
 here=$(cd "$(dirname "$0")/../.." && pwd); case=${1:-all}
@@ -225,6 +226,51 @@ sys.path.insert(0, sys.argv[1]); import merge
 print(merge.missing_ids(".", json.load(open(".loop/config.json"))))
 PY
   check "merge.py holds a row whose requirement ID no base page names where the pages use that prefix, and only notes a new prefix" 'grep -q "^(\[.ABC-2.\], \[.XYZ-1.\])$" "$d/hold"'
+fi
+
+if on guard; then
+  echo "== DOC-20 the requirement guard: a Reviewed requirement changes only with a done line or an owner record"
+  cri="python3 $here/skills/workflow-docs/scripts/criteria.py"
+  git switch -q main; mkdir -p docs/wiki
+  R1='- ABC-%s: **Reviewed 2026-11-01** Text %s <!-- reviewed 11111111 -->\n  - sub %s\n'
+  { printf '# Page\n\n## Requirements\n\n### Functional\n\n'; for n in 1 2 20 3 4 5 6 7; do printf -- "$R1" $n $n $n; done; printf '\n### Non-functional\n\nNone\n\n## Tests\n\n'; } > docs/wiki/Page.md
+  git add docs/wiki/Page.md; git commit -qm "page"; git push -q origin main
+  mkdir -p "$C/loop"; printf 'o1\t2026-11-17T00:00:00Z\toperation\t"reword it"\tg3,g8,Page\no2\t2026-11-17T00:00:00Z\toperation\t"other"\tPage,ABC-4\n' > "$C/loop/owner-words.tsv"
+  gnew() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --done "$2" --touches docs/wiki 2>&1 >/dev/null; }
+  edit() { sed -i.bak "s/Text $1 /Text $1 changed /" docs/wiki/Page.md; rm -f docs/wiki/Page.md.bak; }
+  gnew g1 "Line one"; edit 1; git commit -qam "reword ABC-1"
+  out=$($cri guard origin/main g1 2>&1); rc=$?
+  check "the guard refuses a Reviewed requirement whose text changed with no done line behind it, naming it and the fix" '[ $rc = 1 ] && grep -q "^GUARD REFUSED ABC-1 (Page): text changed. Worker fix: revert it, or goal.py finding g1 \"ABC-1 <gap>\" --requirement ABC-1" <<<"$out" && grep -q "Owner fix: an owner record naming g1 and ABC-1 or Page" <<<"$out"'
+  gnew g2 "ABC-2 is reworded"; edit 20; git commit -qam "reword ABC-20"
+  check "a done line naming ABC-2 does not state ABC-20 (the match is on a whole ID)" '! $cri guard origin/main g2 2>&1 | grep -q "GUARD OK" && $cri guard origin/main g2 2>&1 | grep -q "ABC-20 (Page)"'
+  gnew g5 "ABC-5 is reworded"; edit 5; git commit -qam "reword ABC-5"
+  check "a done line that names the requirement lets its text change" '$cri guard origin/main g5 2>&1 | grep -q "^GUARD OK$"'
+  gnew g3 "Line three"; $cri migrate --page Page --owner-record o1 --goal g3 >/dev/null
+  out=$($cri revise ABC-3 --text "Text 3 revised" --why "the owner said so" --owner-record o1 --goal g3 2>&1); git commit -qam "revise ABC-3"
+  check "a revise row citing an owner record that lists the goal and the page passes the guard" 'grep -q "^REVISED ABC-3 r1->r2" <<<"$out" && $cri guard origin/main g3 2>&1 | grep -q "^GUARD OK$"'
+  gnew g4 "Line four"; $cri migrate --page Page --owner-record o1 --goal g4 >/dev/null 2>&1; git commit -qam "migrate" 2>/dev/null
+  check "an owner record that does not list the goal is refused by revise, writing nothing" '! $cri revise ABC-4 --text x --why w --owner-record o2 --goal g4 2>&1 | grep -v "^\[REV-RECORD\]" | grep -q . && git diff --quiet'
+  gnew g6 "Line six"; edit 6; git commit -qam "reword ABC-6"; git stash -q 2>/dev/null; sed -i.bak "s/Text 6 changed /Text 6 /" docs/wiki/Page.md; rm -f docs/wiki/Page.md.bak
+  check "a committed change is refused although the working tree was put back (the guard reads commits)" '$cri guard origin/main g6 2>&1 | grep -q "ABC-6 (Page): text changed"'
+  git checkout -q -- docs/wiki/Page.md
+  gnew g7 "Line seven"; sed -i.bak "s/^- ABC-7: \*\*Reviewed 2026-11-01\*\* \(.*\) <!-- reviewed 11111111 -->/- ABC-7: **Unreviewed** \1/" docs/wiki/Page.md; rm -f docs/wiki/Page.md.bak; git commit -qam "unreview ABC-7"
+  check "a status-only change is no text change" '$cri guard origin/main g7 2>&1 | grep -q "^GUARD OK$"'
+  gnew g8 "Line eight"; python3 - <<'PY'
+import re
+t = open("docs/wiki/Page.md").read()
+open("docs/wiki/Page.md", "w").write(re.sub(r"- ABC-2: .*\n  - sub 2\n", "", t))
+PY
+  git commit -qam "drop ABC-2"
+  check "dropping a Reviewed requirement with no retire row is refused as removed" '$cri guard origin/main g8 2>&1 | grep -q "ABC-2 (Page): removed changed"'
+  out=$($cri guard no-such-ref g1 2>&1); rc=$?
+  check "an unreadable base refuses with the base, the shallow flag and the fix" '[ $rc = 1 ] && grep -q "^\[GUARD-BASE\] cannot read no-such-ref (shallow: false). Fix: git fetch origin main" <<<"$out"'
+  gnew g9 "Line nine"; edit 1; git commit -qam "reword ABC-1 again"; run_all g9
+  out=$(w $goal pr g9 2>&1); rc=$?
+  check "goal.py pr refuses a goal that changed a Reviewed requirement no done line states, pushing nothing" '[ $rc != 0 ] && grep -q "GUARD REFUSED ABC-1 (Page)" <<<"$out" && ! git ls-remote --exit-code origin loop/g9 >/dev/null'
+  out=$(w $goal finding g9 "ABC-1 the wording was reworded without a done line" --requirement ABC-1 2>&1); rc=$?
+  check "finding --requirement records the gap, files it on the page's Backlog milestone and does not stop the goal" '[ $rc = 0 ] && grep -qE "^(FILED|SAME) backlog" <<<"$out" && [ "$(field g9 status)" != failed ]'
+  out=$(w $goal finding g9 "x" --requirement NOPE-9 2>&1)
+  check "finding --requirement for an ID no page has is refused" 'grep -q "REFUSED: no requirement NOPE-9 on a page" <<<"$out"'
 fi
 
 [ "$fails" = 0 ] || { echo "$fails failed"; exit 1; }

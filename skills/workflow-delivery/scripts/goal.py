@@ -11,11 +11,11 @@ usage: goal.py <command> <slug> [options]
 step, record and pr refuse outside a worker.
   wait SLUG --ask TEXT --words W [--words W]
   answer SLUG
-  finding SLUG TEXT
+  finding SLUG TEXT [--requirement ID]
   resume SLUG --why T [--by W]
   touches SLUG --add PATH --why T
   set SLUG [--depth D] [--bump B] [--budget-minutes N] [--budget-tokens N] [--eta-extend N] [--eta-choice ship|defer]
-          [--owner-record ID] --why T   (a raise or an ETA move needs a record)
+          [--owner-record ID] --why T
   show SLUG
 """
 import argparse
@@ -340,13 +340,13 @@ def cmd_pr(args):
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
     waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
     queue("preflight", ME, state)
-    pods and pods.pr_queue("join", ME, state)  # pool.pr_join takes (g, state): no runs folder
+    pods and pods.pr_queue("join", ME, state)
     if ahead := queue("turn", slug):
         waited or save(state, "waiting: pr queue, behind " + ahead)
         print("WAITING pr queue: %s first; run pr again" % ahead)
         return 0
     waited and save(state, "pr queue: its turn")
-    queue("hold", slug)  # the lane starts: the goal holds the slot
+    queue("hold", slug)
     what, detail = role.sync(base)
     if what == "merged":
         state = held(slug)
@@ -365,6 +365,7 @@ def cmd_pr(args):
     owed = fit.owed(root(), read(goal_file(slug)))
     if owed:
         no("no passing defect test, seen failing, for %s. Fix: regression.py add --category defect --link ..., then red." % ", ".join(owed))
+    routing.requirement_gate(ME, slug)
     if git("status", "--porcelain", "--", "."):
         print("NOTE: uncommitted files stay out of the PR")
     head = role.bump_version(ME, state, head)
@@ -424,7 +425,7 @@ def main():
     add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
         ("--tokens", {"default": ""}))
     add("wait", cmd_wait, ("--ask", {"required": True}), ("--words", {"action": "append", "required": True}))
-    add("finding", cmd_finding, ("text", {}))
+    add("finding", cmd_finding, ("text", {}), ("--requirement", {"default": ""}))
     add("resume", cmd_resume, ("--why", {"required": True}), ("--by", {"default": "operation session"}))
     add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
     add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),

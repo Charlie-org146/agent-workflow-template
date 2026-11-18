@@ -224,12 +224,12 @@
 | <a id="t-no-usage-passes"></a>no-usage-passes | requirement | DOC-1 | not run | - | local | 2026-11-09 |
 | <a id="t-docs-count-mismatch"></a>docs-count-mismatch | requirement | DOC-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
 | <a id="t-docs-counts-issue-39"></a>docs-counts-issue-39 | defect | [#39](https://github.com/jcl2018/agent-workflow-template/issues/39) closed (2026-11-09) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-prd-section-order"></a>prd-section-order | requirement | DOC-1 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
+| <a id="t-prd-section-order"></a>prd-section-order | requirement | DOC-1 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-09 |
 | <a id="t-prd-nongoals-metrics"></a>prd-nongoals-metrics | requirement | DOC-1 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
-| <a id="t-prd-lock-four"></a>prd-lock-four | requirement | DOC-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
+| <a id="t-prd-lock-four"></a>prd-lock-four | requirement | DOC-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-09 |
 | <a id="t-usage-section-not-changed"></a>usage-section-not-changed | requirement | DOC-2 | not run | - | local | 2026-11-09 |
 | <a id="t-prd-review-args"></a>prd-review-args | requirement | DOC-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
-| <a id="t-prd-stamps-free"></a>prd-stamps-free | requirement | DOC-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
+| <a id="t-prd-stamps-free"></a>prd-stamps-free | requirement | DOC-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-09 |
 | <a id="t-prd-scenarios"></a>prd-scenarios | requirement | DOC-3 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-prd-untested"></a>prd-untested | requirement | DOC-3 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-audit-names-usage"></a>audit-names-usage | requirement | DOC-1 | not run | - | local | 2026-11-09 |
@@ -406,7 +406,7 @@
 |---|---|---|---|---|---|---|
 | <a id="t-reg7-budget-leaves"></a>reg7-budget-leaves | requirement | GRD-2 | not run | - | local | 2026-11-11 |
 | <a id="t-del8-step-stops"></a>del8-step-stops | requirement | GRD-2 | not run | - | local | 2026-11-11 |
-| <a id="t-del9-pr-refuses"></a>del9-pr-refuses | requirement | GRD-3 | not run | - | local | 2026-11-10 |
+| <a id="t-del9-pr-refuses"></a>del9-pr-refuses | requirement | GRD-3 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-10 |
 | <a id="t-del9-hooks"></a>del9-hooks | requirement | GRD-3 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-11 |
 | <a id="t-grd2-step-budget"></a>grd2-step-budget | requirement | GRD-2 | not run | - | local | 2026-11-12 |
 | <a id="t-grd2-test-budget"></a>grd2-test-budget | requirement | GRD-2 | not run | - | local | 2026-11-12 |

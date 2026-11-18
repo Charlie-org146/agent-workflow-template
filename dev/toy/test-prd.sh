@@ -324,4 +324,92 @@ out=$($prd convert --write); rc=$?
 grep -q "^Delivery refused: sections are Overview, Tests" <<<"$out" && [ "$rc" = 1 ] && grep -q "Fix:" <<<"$out" && ok "an unrecognized page is refused with what is missing" || bad "refused: $out"
 git checkout -q -- .
 
+echo "== 11. revisions: migrate, revise, retire and the REVISION and IDS checks"
+git checkout -q -- .; git switch -q main 2>/dev/null; MS="Milestone: https://example.test/milestone/1"
+REQS='### Functional
+
+- DEL-1: **Unreviewed** The calculator prints a median.
+  - The median of the numbers given is printed.
+- DEL-2: **Unreviewed** It exits 0.
+  - It exits 0 once it has printed.
+- DEL-3: **Unreviewed** It is quick.
+  - It answers within a second.
+- DEL-4: **Unreviewed** It is quiet.
+  - It prints nothing else.
+- DEL-5: **Unreviewed** It is small.
+  - It fits one file.
+
+### Non-functional
+
+None'
+printf -- '- DEL-3: Quick; run calc.py on a short list.\n- DEL-4: Quiet; read its one line.\n- DEL-5: Small; it is one file.\n' > "$d/items"; python3 - "$d/items" <<'PY'
+import sys
+p = 'docs/wiki/How-to-use-Delivery.md'; t = open(p).read()
+open(p, 'w').write(t.replace('- DEL-2: It answers within a second; run it on a short list.\n', '- DEL-2: It answers within a second; run it on a short list.\n' + open(sys.argv[1]).read(), 1))
+PY
+page "$USAGE"; git add -A; git commit -qm "five requirements" >/dev/null; git push -q origin main 2>/dev/null
+C=$(cd "$(git rev-parse --git-common-dir)" && pwd); mkdir -p "$C/loop"
+printf 'o1\t2026-11-17T00:00:00Z\toperation\t"revise it"\tprd-t,Delivery,DEL-1,DEL-2\no2\t2026-11-17T00:00:00Z\toperation\t"other"\tDelivery,DEL-4\n' > "$C/loop/owner-words.tsv"
+rv="$cri"; R="--owner-record o1 --goal prd-t"
+! check | grep -qE "REVISION|IDS" && check | grep -q "DOCS OK" && ok "a page with no Revisions section is not failed for it" || bad "a page with no Revisions section is not failed for it"
+$rv migrate --page Delivery $R | grep -q "^MIGRATED docs/wiki/Delivery.md$" && check | grep -q "DOCS OK" && [ "$(grep -c '^| r1 |' $P)" = 5 ] && grep -q "migration r1; date from the run day" $P && ok "migrate gives each requirement r1 and the check passes" || bad "migrate gives each requirement r1 and the check passes"
+cp $P "$d/migrated.md"; $rv migrate --page Delivery $R | grep -q "^MIGRATE OK$"; cmp -s $P "$d/migrated.md" && ok "a second migrate changes nothing" || bad "a second migrate changes nothing"
+$rv review DEL-1 --user >/dev/null; sed -i.bak 's/^Review: .*/Review: **Unreviewed**/' $P; rm -f $P.bak; git add -A; git commit -qm "base with DEL-1 reviewed" >/dev/null; git push -q origin main 2>/dev/null
+before=$(grep -c "Reviewed" $P)
+out=$($rv revise DEL-1 --text "The calculator prints a median | and <br> a \\ mean." --why "the owner reworded it" $R 2>&1)
+grep -q "^REVISED DEL-1 r1->r2 (now Unreviewed, awaits review)$" <<<"$out" && grep -q "^- DEL-1: \*\*Unreviewed\*\* The calculator prints a median | and <br> a \\\\ mean\.$" $P && ! grep -q "reviewed [0-9a-f]\{8\} -->.*mean" $P && [ "$(grep -c "^- DEL-[2-5]: \*\*Unreviewed" $P)" = 4 ] && check | grep -q "DOCS OK" && ok "revise touches only that requirement, writes no Reviewed stamp and the check stays green" || bad "revise touches only that requirement, writes no Reviewed stamp and the check stays green"
+[ "$(grep -n "^| r2 | " $P | head -1 | cut -d: -f1)" -lt "$(grep -n "^| r1 | " $P | sed -n 1p | cut -d: -f1)" ] && grep -qF '| r2 | '"$day"' | The calculator prints a median \| and \<br> a \\ mean. <br> The median of the numbers given is printed. | the owner reworded it | o1: "revise it" |' $P && ok "the Revisions table shows the newest revision first with date, reason and owner record" || bad "the Revisions table shows the newest revision first with date, reason and owner record"
+ok "text with a pipe, a literal <br> and a backslash round-trips through a revision (the check above is green)"
+[ "$(sed -n '/^### DEL-1$/,/^### DEL-2$/p' $P | grep -c '^| r[0-9]')" = 2 ] && sed -n '/^### DEL-1$/,/^### DEL-2$/p' $P | grep -qF "| r1 | $day | The calculator prints a median. <br> The median of the numbers given is printed. |" && ok "the earlier text stays as r1 beside r2" || bad "the earlier text stays as r1 beside r2"
+cp $P "$d/revised.md"; edit "It exits 0." "It exits one."; check | grep -q "^REVISION Delivery: \[REV-ROW\] DEL-2: r1 differs from its line" && ok "a line that differs from its newest row fails REVISION" || bad "a line that differs from its newest row fails REVISION"; cp "$d/revised.md" $P
+python3 - "$P" <<'PY'
+import sys
+p = sys.argv[1]; t = open(p).read()
+row = [x for x in t.split("\n") if x.startswith("| r2 |")][0]
+open(p, "w").write(t.replace(row, row + "\n" + row, 1))
+PY
+check | grep -q "^REVISION Delivery: \[REV-ROW\] DEL-1 rows are not r3..r1 newest first (two heads?)" && ok "a duplicated r-number fails as two heads" || bad "a duplicated r-number fails as two heads"; cp "$d/revised.md" $P
+git add -A; git commit -qm "revised" >/dev/null; git push -q origin main 2>/dev/null
+python3 - "$P" <<'PY'
+import sys
+p = sys.argv[1]; t = open(p).read()
+open(p, "w").write(t.replace("| r1 | ", "| r1 | 1999-01-01 ", 1).replace("1999-01-01 " + "20", "20", 0))
+PY
+sed -i.bak 's/^| r1 | \(.*\) | migration r1/| r1 | \1 | edited r1/' $P; rm -f $P.bak
+check | grep -q "^REVISION Delivery: \[REV-ROW\] DEL-[0-9]: r1 changed since the base (append-only). Fix: add r[0-9]" && ok "a revision row changed since the base fails as append-only" || bad "a revision row changed since the base fails as append-only"; git checkout -q -- $P
+! $rv revise DEL-1 --text "The calculator prints a median | and <br> a \\ mean." --why x $R 2>&1 | grep -qv "^\[REV-NOOP\] DEL-1 already reads so. No changes written.$" && ok "a revise that changes nothing is refused as REV-NOOP" || bad "a revise that changes nothing is refused as REV-NOOP"
+$rv revise DEL-2 --text "It exits 0 now." --why x --owner-record o2 --goal prd-t 2>&1 | grep -q "^\[REV-RECORD\] need an owner record naming prd-t and DEL-2 or Delivery. No changes written.$" && git diff --quiet && ok "an owner record that does not name the goal and the ID or page is refused" || bad "an owner record that does not name the goal and the ID or page is refused"
+$rv retire DEL-3 --as retired --why "no longer wanted" $R | grep -q "^RETIRED DEL-3 as Retired$"
+$rv retire DEL-4 --as merged:DEL-1 --why "same as DEL-1" $R | grep -q "^RETIRED DEL-4 as merged into DEL-1$"
+$rv retire DEL-5 --as moved:DEL-1 --why "lives with DEL-1" $R | grep -q "^RETIRED DEL-5 as moved to DEL-1$"
+$cri render >/dev/null; sed -i.bak '/^- DEL-[345]: /d' docs/wiki/How-to-use-Delivery.md; rm -f docs/wiki/How-to-use-Delivery.md.bak
+grep -q "^- DEL-3: Retired$" $P && grep -q "^- DEL-4: merged into DEL-1$" $P && grep -q "^- DEL-5: moved to DEL-1$" $P && ! grep -q "^- DEL-[345]: \*\*" $P && grep -q "^### DEL-5$" $P && check | grep -q "DOCS OK" && ok "retire writes Retired, merged into and moved to entries, keeps the revision rows and the check passes" || bad "retire writes Retired, merged into and moved to entries, keeps the revision rows and the check passes"
+$rv retire DEL-3 --as retired --why again $R 2>&1 | grep -q "^\[REV-ROW\] no live requirement DEL-3" && ok "a Retired ID cannot be revised or retired again" || bad "a Retired ID cannot be revised or retired again"
+cp $P "$d/before.md"; $rv retire DEL-2 --as merged:DEL-9 --why x $R 2>&1 | grep -q "^\[IDS-MISSING\]" && cmp -s $P "$d/before.md" && ok "a merged or moved target that is no live requirement is refused" || bad "a merged or moved target that is no live requirement is refused"
+cp $P "$d/retired.md"; sed -i.bak 's/^- DEL-3: Retired$/- DEL-3: moved to DEL-9/' $P; rm -f $P.bak
+check | grep -q "^IDS Delivery: \[IDS-MISSING\] DEL-3: moved to DEL-9 is no requirement" && ok "a Retired entry pointing at a missing requirement fails" || bad "a Retired entry pointing at a missing requirement fails"; cp "$d/retired.md" $P
+python3 - "$P" <<'PY'
+import re, sys
+p = sys.argv[1]; t = open(p).read()
+open(p, "w").write(re.sub(r"- DEL-2: .*\n  - It exits 0 once it has printed\.\n", "", t))
+PY
+check | grep -q "^IDS Delivery: \[IDS-MISSING\] DEL-2 is gone" && ok "an ID deleted from a migrated page fails IDS-MISSING" || bad "an ID deleted from a migrated page fails IDS-MISSING"; cp "$d/retired.md" $P
+git add -A; git commit -qm "retired" >/dev/null; git push -q origin main 2>/dev/null
+sed -i.bak 's/^- DEL-3: Retired$/- DEL-3: Retired\n- DEL-1: Retired/' $P; rm -f $P.bak
+check | grep -q "^IDS Delivery: \[IDS-REUSE\] DEL-1 is live and Retired" && ok "an ID that is live and Retired fails IDS-REUSE" || bad "an ID that is live and Retired fails IDS-REUSE"; git checkout -q -- $P
+sed -i.bak 's/^- DEL-3: Retired$//' $P; rm -f $P.bak
+check | grep -q "^IDS Delivery: \[IDS-MISSING\] DEL-3 is gone" && ok "a Retired entry deleted since the base fails (an ID cannot disappear)" || bad "a Retired entry deleted since the base fails (an ID cannot disappear)"; git checkout -q -- $P
+python3 - "$P" <<'PY'
+import sys
+p = sys.argv[1]; t = open(p).read()
+head, rest = t.split("\n## Revisions\n", 1)
+open(p, "w").write(head + "\n" + rest.split("\n## ", 1)[1].join(["## ", ""]) if False else head + "\n## " + rest.split("\n## ", 1)[1])
+PY
+check | grep -q "^REVISION Delivery: \[REV-GONE\] Revisions section removed" && ok "removing the Revisions section fails REV-GONE" || bad "removing the Revisions section fails REV-GONE"; git checkout -q -- $P
+$rv review Delivery --user >/dev/null; $rv migrate --page Delivery $R >/dev/null; check | grep -q "LOCKED" && bad "migrate trips the page lock: $(check)" || ok "the Revisions section stays out of the page fingerprint"
+git checkout -q -- .; $rv review Delivery --user >/dev/null; $rv review DEL-1 --user >/dev/null; $rv migrate --page Delivery $R >/dev/null; git add -A; git commit -qm "page reviewed" >/dev/null; git push -q origin main 2>/dev/null
+$rv revise DEL-1 --text "The calculator prints the median." --why "reworded" $R >/dev/null; check | grep -q "LOCKED" && bad "a revise on a Reviewed page keeps the page lock quiet: $(check | head -3)" || ok "a revise on a Reviewed page keeps the page lock quiet (a revision row explains it)"
+git checkout -q -- .; edit "- No charts." "- No pies."; check | grep -q "^LOCKED Delivery: the reviewed PRD changed in Non-goals" && ok "an unrelated edit of a Reviewed page is still LOCKED" || bad "an unrelated edit of a Reviewed page is still LOCKED"
+git checkout -q -- .
+
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

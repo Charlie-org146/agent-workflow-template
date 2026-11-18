@@ -14,6 +14,7 @@ import counting
 import criteria as cr
 import pageformat as pf
 import prd
+import render
 from criteria import put, sha
 from prd import out as post
 
@@ -168,28 +169,11 @@ def sync(root, args):
     return 0
 
 
-ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
 
 
-def howto_items(name, text, feature):
-    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement of its feature page, and none else."""
-    have, top, sub = {}, "", ""
-    for line in feature.splitlines():
-        top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
-        hit = re.match(r"^- ([A-Z]{2,5}-\d+):", line)
-        if hit and top == "Requirements":
-            have[hit.group(1)] = sub
-    items = {m.group(1) for m in map(ITEM.match, text.splitlines()) if m}
-    out = []
-    for kind, ids, fix in (("no item for the functional requirement", sorted(k for k, v in have.items() if v == "Functional" and k not in items),
-                            "add '- ID: how it is delivered' under 'How to reach or run it'"),
-                           ("an item for an ID its feature page lacks:", sorted(items - set(have)), "remove it or fix the ID")):
-        out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
-    return out
 
 
 # --- How-to-use Kinds (DOC-19, #4677): every delivered row names a Kind, and the page carries that Kind's block ---
-KHEAD = "| Component | Kind | What it is | How a user uses it |"
 ROUTINE = "Scheduled routine"
 KINDS = {
     "Site/URL": ["URLs", "Served by", "Check", "Deploy"],
@@ -201,52 +185,24 @@ KINDS = {
     "Message/channel": ["Trigger", "Recipients", "Subject", "Resend"],
     "Playbook": ["Steps", "Templates", "Stop rules"],
 }
-FIELD = re.compile(r"^- \*\*([A-Z][A-Za-z ]*):\*\*\s*(.*)$")
 ADDRESS = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
 
 
-def part(text, name):
-    """The lines under '## name', up to the next '## ' heading."""
-    head = "\n## %s\n" % name
-    return text.split(head, 1)[1].split("\n## ", 1)[0] if head in text else ""
 
 
-def blocks(body):
-    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
-    found, cur, last = {}, None, None
-    for line in body.splitlines():
-        if line.startswith("### "):
-            cur, last = line[4:].strip(), None
-            found[cur] = {}
-        elif cur is not None and FIELD.match(line):
-            last, text = FIELD.match(line).groups()
-            found[cur][last] = found[cur].get(last, "") + text
-        elif cur is not None and last and line[:1].isspace():
-            found[cur][last] += " " + line.strip()
-    return found
 
 
-def delivered(text):
-    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
-    block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
-    lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
-    out = []
-    for line in lines[2:]:
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        out.append((cells[0].replace("`", ""), cells[1] if len(cells) > 1 else "", len(cells)))
-    return (lines[0] if lines else ""), out
 
 
 def kinds(name, text, on_page=()):
     """DOC-19: (kind, page, detail) findings for a How-to-use page's What's delivered table and the block each row needs."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
-    header, table = delivered(text)
-    if header != KHEAD:
-        bad("the What's delivered header is '%s' (got '%s'). Fix: use that header" % (KHEAD, header))
+    header, table = render.delivered(text)
+    if header != render.KHEAD:
+        bad("the What's delivered header is '%s' (got '%s'). Fix: use that header" % (render.KHEAD, header))
     if not table:
         bad("What's delivered holds no row. Fix: add a row for each component, with its Kind")
-    reach, books_here = blocks(part(text, "How to reach or run it")), blocks(part(text, "Runbooks"))
+    reach, books_here = render.blocks(render.part(text, "How to reach or run it")), render.blocks(render.part(text, "Runbooks"))
     wanted = set()
     for component, kind, cells in table:
         if cells != 4:
@@ -277,11 +233,6 @@ def kinds(name, text, on_page=()):
     return out
 
 
-def unlisted(feature, how):
-    """DOC-19: the commands a feature page names in backticks that its How-to-use page does not hold."""
-    body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
-    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)}
-    return sorted(n for n in names if n not in how)
 
 
 # --- DOC-20: revisions (criteria.py revise, retire, migrate, guard) ---
@@ -308,7 +259,7 @@ def record(rid, slug, *names):
 def put(text, tab, ret):
     """The page with its Revisions section rebuilt: Retired first, then one table per ID."""
     got = (["### Retired\n\n" + "\n".join("- %s: %s" % kv for kv in sorted(ret.items()))] if ret else []) + [
-        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(tab, key=lambda k: (k[:2], int(k.split("-")[1])))]
+        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(tab.keys() - {"Retired"}, key=lambda k: (k[:2], int(k.split("-")[1])))]
     block = "## Revisions\n\n" + "\n\n".join(got) + "\n"
     if "\n## Revisions\n" in text:
         head, rest = text.split("\n## Revisions\n", 1)
@@ -349,9 +300,9 @@ def revise(args):
     if args.command == "retire":
         form = re.sub(r"^(merged|moved):", lambda x: x.group(1) + (" into " if x.group(1) == "merged" else " to "), args.as_)
         live = {x.group(1) for r in cr.pages(root) for x in map(cr.LINE.match, cr.slurp(join(root, r)).split("\n")) if x}
-        if not re.match(r"^(Retired|(merged into|moved to) %s)$" % IDS, form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
+        if not re.match(r"^([Rr]etired|(merged into|moved to) %s)$" % IDS, form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
             no("IDS-MISSING", "--as is Retired, merged:ID or moved:ID with a live ID")
-        ret[key], fresh, subs = form, old, []
+        ret[key], fresh, subs = "Retired" if form[0] in "rR" else form, old, []
     else:
         body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
         subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
