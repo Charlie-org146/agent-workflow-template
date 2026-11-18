@@ -679,7 +679,7 @@ To pass the loop to a new session, run `board.py handoff` and give it the path.
   goals with the same `prd:` and shared `touches:`, proposes splitting a goal two or more wait on when its queue line
   has `parts:`, and orders the merge line critical path first. It never stops or restarts a running goal and applies
   nothing; open proposals show at every check-in until the owner acts (`board.py retire` and a new queue line).
-- **Full auto (MON-11).** `full_auto` (on by default) lets `auto.py pass` answer a waiting worker's decision of any kind
+- **Full auto (MON-11).** `full_auto` (off by default, on in this repo) lets `auto.py pass` answer a waiting worker's decision of any kind
   (routine, owner, none) with its recommended words through `operate.py send --source auto`, logged in `loop/auto.log`
   with the standing rule record and listed in the next check-in with how to revert it. A safety class (CLASSES:
   destructive, money, security, private data, steward merge), kinds destructive, money, security or an unknown one, an ETA

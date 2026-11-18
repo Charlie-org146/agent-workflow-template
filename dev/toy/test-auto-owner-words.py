@@ -25,7 +25,7 @@ def check(ok, text):
 
 
 def verdict(ask, kind="routine"):
-    return auto.why_not({"kind": kind, "recommend": "yes", "words": ["yes", "no"], "ask": ask}, {})
+    return auto.why_not({"kind": kind, "recommend": "yes", "words": ["yes", "no"], "ask": ask}, {"full_auto": True})
 
 
 for ask in ("Add the DOC-17 sub-bullet to Delivery as drafted?",
@@ -50,4 +50,9 @@ with open(os.path.join(root, ".loop", "config.json")) as handle:
 value = live.get("min_free_memory_gb")
 check(isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0, "this repo's config holds min_free_memory_gb once, as a positive number")
 check("min_free_memory_gb" in {row[0] for row in settings.TABLE}, "the settings table registers min_free_memory_gb")
+# An adopted repo keeps every gate until its owner turns one off: full_auto defaults off, and a config with no key holds auto.py back.
+check({row[0]: row[2] for row in settings.TABLE}.get("full_auto") is False and
+      auto.why_not({"kind": "routine", "recommend": "yes", "words": ["yes"], "ask": "Which name?"}, {}) == "full_auto is off",
+      "full_auto is off by default: the settings table says false and a config with no key holds full auto back")
+check(live.get("full_auto") is True, "this repo's config keeps full_auto true, so its behaviour is unchanged")
 sys.exit(1 if bad else 0)

@@ -74,7 +74,7 @@ TABLE = [
     ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from, when the installed package names none."),
     ("reply_hook", REPO, True, "false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session."),
     ("govern_hook", REPO, True, "false turns off the govern-only hook: edits, commits and pushes are refused in the operation session."),
-    ("full_auto", REPO, True, "true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait."),
+    ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait."),
     ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more."),
     ("silent_minutes", REPO, 30, "Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides."),
     ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),

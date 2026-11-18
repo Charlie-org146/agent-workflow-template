@@ -222,8 +222,7 @@ def cmd_build(args):
     git = lambda *a: subprocess.run(["git"] + list(a), cwd=top(), capture_output=True, text=True)
     before = git("status", "--porcelain").stdout
     try:
-        done = subprocess.run(base + ([] if stdin else [prompt]), cwd=top(), input=stdin, stdin=None if stdin else subprocess.DEVNULL,
-                              capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=int(prof.get("limit") or 2700))
+        done = tree_run(base + ([] if stdin else [prompt]), stdin, int(prof.get("limit") or 2700), top())
         out, code = done.stdout, done.returncode
     except (OSError, subprocess.SubprocessError) as why:
         out, code = "", 1
@@ -293,14 +292,26 @@ any goal that depends on one planned later. At most 8 lines, no file edits. The 
 """
 
 
+def tree_run(argv, stdin, limit, cwd=None):
+    """subprocess.run(timeout=) kills only the child; a timed-out agent loses its whole process tree (DEL-8)."""
+    kid = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE if stdin else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           text=True, encoding="utf-8", errors="replace", start_new_session=True)
+    try:
+        out, err = kid.communicate(stdin, timeout=limit)
+    except subprocess.TimeoutExpired:
+        proctree.kill(kid.pid)
+        kid.communicate()
+        raise
+    return subprocess.CompletedProcess(argv, kid.returncode, out, err)
+
+
 def ask(prof, prompt):
     """(reply text, return code, stderr) from running the profile's agent once on a prompt, without a shell."""
     base = [exe(prof["command"][0]) or prof["command"][0]] + list(prof["command"][1:])
     base += [prof["model_flag"], prof["model"]] if prof.get("model") and prof.get("model_flag") else []
     stdin = prompt if prof.get("prompt") == "stdin" else None
     try:
-        done = subprocess.run(base + ([] if stdin else [prompt]), input=stdin, stdin=None if stdin else subprocess.DEVNULL, capture_output=True,
-                              text=True, encoding="utf-8", errors="replace", timeout=int(prof.get("limit") or 900))
+        done = tree_run(base + ([] if stdin else [prompt]), stdin, int(prof.get("limit") or 900))
     except (OSError, subprocess.SubprocessError) as why:
         return "", 1, str(why)
     return usage(prof, done.stdout)[0], done.returncode, done.stderr
