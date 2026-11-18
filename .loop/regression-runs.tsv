@@ -203,6 +203,7 @@ full-auto-safety-control	PASS	2026-11-17
 full-auto-safety-waits	PASS	2026-11-17	
 full-auto-standing-reuse	PASS	2026-11-17	
 full-goal-lane-timeout	PASS	2026-11-10	
+gate-untouched-not-refused	PASS	2026-11-18	
 goal-levels-nightly	PASS	2026-11-11	
 grd2-merge-rounds-default-8	PASS	2026-11-15	
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
