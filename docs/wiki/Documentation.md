@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept three-level-ops-reland@461890a4 -->
+Review: **Unreviewed** <!-- kept regroup-regression@5a575355 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -412,7 +412,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [links-own-site-passes](Tests#t-links-own-site-passes) | requirement | DOC-19 | Given a page linking to a site in public_origins or to the repo's own README, when docs check runs, then it is not a LINKS finding. | not run |
 | [links-unlisted-site-fails](Tests#t-links-unlisted-site-fails) | requirement | DOC-19 | Given the same page and no listed site, when docs check runs, then each site link is a LINKS finding. | not run |
 | [links-origins-config](Tests#t-links-origins-config) | requirement | DOC-19 | Given public_origins in .loop/config.json, when docs check runs, then those https sites are the repo's own. | not run |
-| [links-alone-reads-sites](Tests#t-links-alone-reads-sites) | requirement | DOC-19 | Given a wiki page linking to a listed site and another host, when the pages are checked, then only the other host is reported. | not run |
+| [links-alone-reads-sites](Tests#t-links-alone-reads-sites) | requirement | DOC-19 | Given a wiki page linking to a listed site and another host, when the pages are checked, then only the other host is reported, and a listed origin followed by a parenthesis, backtick, quote or full stop passes while an unlisted one is reported. | PASS 2026-11-18 |
 | [links-origins-sources](Tests#t-links-origins-sources) | requirement | DOC-19 | Given public_origins in .loop/config.json or scripts/public-origins.json, when docs check runs, then those https sites are the repo's own, and a broken file is ignored. | not run |
 | [links-outside-links-fail](Tests#t-links-outside-links-fail) | requirement | DOC-19 | Given an unlisted site, another host, a lookalike host, another repo's README, or this repo's issue and source links, when docs check runs, then each is a LINKS finding. | not run |
 | - | requirement | DOC-20 | no passing test | not enforced |

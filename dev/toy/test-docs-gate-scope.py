@@ -214,5 +214,11 @@ write("docs/wiki/B.md", "<!-- workflow-docs -->\n# B\nSee https://demo.example.o
 found = [f for f in milestones.alone(repo, "docs/wiki", "me/proj") if f[0] == "LINKS"]
 check("alone reads the repo's sites: the listed one passes, the other is reported (%s)" % [d[:60] for _, _, d in found],
       len(found) == 1 and "other.example.org" in found[0][2])
+BT = chr(96)
+here = ("https://demo.example.org", "https://demo.example.org/app")
+for text in ("[a link](https://demo.example.org/app)", "See " + BT + "https://demo.example.org" + BT + ".", "Open (" + BT + "https://demo.example.org/app" + BT + "), then.", "Say 'https://demo.example.org'."):
+    check("a listed origin followed by ), a backtick, a quote or a full stop passes: %s" % text, milestones.stands_alone("P", text, "me/proj", here) == [])
+check("and an unlisted origin in a link or backticks is still reported",
+      len(milestones.stands_alone("P", "[x](https://other.example.org/z) " + BT + "https://evil.example.org" + BT + ".", "me/proj", here)) == 2)
 print("PASS: merge.py's wiki gate refuses only for pages the goal changed" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)
