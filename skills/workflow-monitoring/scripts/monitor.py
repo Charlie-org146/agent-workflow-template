@@ -5,6 +5,7 @@ usage: monitor.py <command> [options]
 
   report                 print every run, what waits on you, and findings
   dashboard [--out FILE] write one self-contained HTML page
+  plan [approve --owner-record ID [SLUG k=v]] [--machines pc=GB,mac=GB] [--peer-plan F] [--first-release vX.Y] [--check]   MON-10 plan
 
 Run state lives in <git common dir>/loop/. It runs git and nothing else. watch.py starts and moves goals.
 """
@@ -12,6 +13,7 @@ import argparse
 import datetime
 import hashlib
 import html
+import importlib.util
 import itertools
 import json
 import os
@@ -318,96 +320,88 @@ def cmd_dashboard(args):
     return 0
 
 
-# ---- hands-off operation: archive (MON-6) and grouping (MON-5); callers pass paths
-DOWN = []  # set once gh gives no answer: no more lookups in this run
-
-
-def ghj(args, cwd):
-    """One gh call as JSON, None on any doubt."""
+def cmd_plan(args):
+    path = os.path.join(loop_dir(), "plan-round.json")
+    here_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, here_dir)
+    if args.rest[:1] == ["approve"]:
+        import notify
+        return notify.approve(args, path, root(), common())
+    import auto
+    import board_status as bs
+    cfg = config()
+    free = {k: float(v) for k, v in (x.split("=") for x in args.machines.split(",") if "=" in x)} or {"pc" if os.name == "nt" else "mac": bs.memory()[0] or 4.0}
     try:
-        done = subprocess.run(["gh"] + args, cwd=cwd, capture_output=True, text=True, timeout=20)
-        return json.loads(done.stdout) if done.returncode == 0 else None
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return None
-
-
-def released(run, top):
-    """Merge and published release both verified: cut with a version and url, pull request MERGED, release no draft."""
-    if run.get("release") != "cut" or not (run.get("release_url") and run.get("release_version") and run.get("pr")):
-        return False
-    pr, rel = ghj(["pr", "view", run["pr"], "--json", "state"], top), ghj(["release", "view", "v%s" % run["release_version"], "--json", "isDraft"], top)
-    return bool(pr and rel and pr.get("state") == "MERGED" and rel.get("isDraft") is False)
-
-
-def to_archive(found, runs_dir, top, pressure, mine=""):
-    """[(sid, name, why)] oldest first: worker sessions whose goal's merge and release are verified, and under memory pressure idle ones whose goal is retired.
-    Never a running, waiting or queued goal, an operation session or this one."""
-    out = []
-    for sid, item in sorted(found.items(), key=lambda kv: str(kv[1].get("since"))):
-        name, last = str(item.get("name")), item.get("slug") if item.get("state") == "busy" else (item.get("history") or [{}])[-1].get("slug")
-        run = read_json(os.path.join(runs_dir, "%s.json" % last)) if last and name.startswith("worker") and sid != mine and item.get("state") in ("busy", "free") else None
-        if not isinstance(run, dict) or run.get("status") in ("running", "waiting", "queued"):
-            continue
-        if released(run, top):
-            out.append((sid, name, "%s released v%s" % (last, run["release_version"])))
-        elif pressure and item.get("state") == "free" and run.get("status") == "retired":
-            out.append((sid, name, "%s retired, memory pressure" % last))
-    return out
-
-
-def read_json(path):
-    try:
-        with open(path) as handle:
-            return json.load(handle)
-    except (OSError, ValueError):
-        return None
-
-
-def archived_since(folder, stamp):
-    """archived.tsv rows after stamp as 'session (why)'."""
-    try:
-        rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(folder, "archived.tsv"))]
-    except OSError:
-        return []
-    return ["%s (%s)" % (r[2], r[3]) for r in rows if len(r) > 3 and r[0] > str(stamp or "")]
-
-
-def feature_of(root, text, item=None):
-    """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's feature:<Page> label, the page whose
-    docs.tsv paths cover its touches, else 'no feature'."""
-    item, wiki = item or {}, os.path.join(root, "docs", "wiki")
-    pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md") and x[:-3] not in ("Home", "Tests", "Roadmap") and x[:6] != "How-to"] if os.path.isdir(wiki) else []
-    prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]
-    for page in pages:
-        if prefix and re.search(r"^\s*- %s-\d+:" % prefix, open(os.path.join(wiki, page + ".md"), encoding="utf-8").read(), re.M):
-            return page.replace("-", " ")
-    cache = os.path.join(common(), "loop", "features.json")
-    seen = read_json(cache) or {}
-    for number in re.findall(r"#(\d+)", str(text or ""))[:3]:
-        if number not in seen and not DOWN and (found := ghj(["issue", "view", number, "--json", "labels,milestone"], root) or DOWN.append(1)) is not None and not DOWN:
-            names = [str(x.get("name")) for x in found.get("labels") or []] + [str((found.get("milestone") or {}).get("title"))]
-            seen[number] = next((n.split(":")[-1].strip() for n in names if n.split(":")[-1].strip() in pages), "")
-            os.makedirs(os.path.dirname(cache), exist_ok=True)
-            json.dump(seen, open(cache, "w"))
-    best = [(0, item.get("feature") if item.get("feature") in pages else "")] + [(1, seen[n]) for n in re.findall(r"#(\d+)", str(text or ""))[:3] if seen.get(n)]
-    try:
-        rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(root, ".loop", "docs.tsv")) if "\t" in line and line[0] != "#"]
-    except OSError:
-        rows = []
-    covers = [(len(path), page) for page, paths in rows for path in [p.strip("/") for p in paths.split(",") if p and p[0] != ":"] for t in [str(t).strip("/") for t in item.get("touches") or []]
-              if page in pages and (t == path or t.startswith(path + "/"))]
-    return (best[0][1] or (best[1][1] if len(best) > 1 else "") or max(covers, default=(0, ""))[1]).replace("-", " ") or "no feature"
+        peer = json.load(open(args.peer_plan, encoding="utf-8")).get("goals") or {}
+    except (OSError, ValueError, TypeError, AttributeError):
+        peer = {}
+    states, held = runs(), pool()[0] or {}
+    seen = {s["slug"] for s in states} | set(held) | set(peer)
+    raw = open(os.path.join(root(), ".loop", "queue.md"), encoding="utf-8").read()
+    todo, left = [], []
+    for goal in (g for g in parse_queue() if not g["release"]):
+        busy = goal["slug"] in seen or re.search(r"slug: %s\s*\|[^\n]*\| machine:" % goal["slug"], raw)
+        (left if busy else todo).append(goal)
+    order = []
+    while len(order) < len(todo):
+        placed = {o["slug"] for o in order}
+        step = [g for g in todo if g not in order and all(d in placed or d not in {t["slug"] for t in todo} for d in g["depends"])]
+        order += step or [g for g in todo if g not in order][:1]
+    major, minor = (int(x) for x in re.findall(r"\d+", args.first_release or open(os.path.join(root(), cfg.get("version_file") or "VERSION")).read())[:2])
+    minor += not args.first_release
+    past = [t for t in (sum(v for v in s["tokens"].values() if isinstance(v, int)) for s in states if s.get("status") == "done" and isinstance(s.get("tokens"), dict)) if t]
+    cap = int(cfg.get("token_budget") or 0)
+    spend = -(-int(1.5 * sum(past) / len(past)) // 50000) * 50000 if past else cap
+    spend = min(spend, cap or spend)
+    spec = importlib.util.spec_from_file_location("routing", os.path.join(here_dir, "..", "..", "workflow-delivery", "scripts", "routing.py"))
+    routing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(routing)
+    plan, body = {}, []
+    for number, goal in enumerate(order):
+        text, size = " ".join([goal["goal"]] + goal["touches"] + goal["done"]), graph.size(goal["done"], goal["touches"]) or (9, 9)
+        small = size[0] <= 3 and size[1] <= 1
+        if re.search(r"windows|\bwin-|powershell", text, re.I) and "pc" in free:
+            where, why = "pc", "Windows"
+        elif re.search(r"\bmac\b|macos|launchctl|\bjudge\b", text, re.I) and "mac" in free:
+            where, why = "mac", "Mac lane"
+        else:
+            where, why = max(free, key=free.get), "most memory left"
+        free[where] -= 1.5
+        pick = routing.resolve("build", "small" if small else "large")
+        eta = auto.eta_new(root(), goal["slug"], goal["done"], goal["touches"], cfg.get("time_budget_minutes") or 240, cfg)
+        item = plan[goal["slug"]] = {"release": "v%d.%d" % (major, minor + number // 6), "estimate": eta["estimate"], "eta": eta["minutes"], "budget": spend, "machine": where,
+                                     "agent": pick["profile"], "why": "%s, %s goal %s" % (why, "small" if small else "large", pick["warning"])}
+        body.append("%s %s | est %dm | ETA %dm | %dk tokens | %s | %s | %s" % (item["release"], goal["slug"], eta["estimate"], eta["minutes"], spend // 1000, where, pick["profile"], item["why"]))
+    stamp = now()
+    body = ["PLAN round-%s: %d goal(s), %d left out" % (stamp, len(plan), len(left))] + body + ["LEFT OUT %s: already started" % g["slug"] for g in left]
+    if args.check and plan:
+        done = subprocess.run([sys.executable, routing.__file__, "check"], input="\n".join(body), capture_output=True, text=True, encoding="utf-8", errors="replace")
+        body += ["Cross-check:"] + (done.stdout + done.stderr).strip().splitlines()
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump({"id": stamp, "status": "pending", "goals": plan}, handle, indent=1)
+    print("\n".join(body + ["ETA choices (ship, extend, defer) stay yours. Approve: plan approve --owner-record ID"]))
+    print("SEND to the other operation session: plan round-%s gives %s" % (stamp, ", ".join("%s=%s" % (s, i["machine"]) for s, i in plan.items()) or "nothing"))
+    return 0
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    item = sub.add_parser("report", help="print the state of every run")
+    item = sub.add_parser("report", help="show every run")
     item.set_defaults(func=cmd_report)
     item = sub.add_parser("dashboard", help="write the HTML dashboard")
     item.add_argument("--out", default="", help="file to write (default <common>/loop/dashboard.html)")
     item.set_defaults(func=cmd_dashboard)
-    args = parser.parse_args()
+    item = sub.add_parser("plan", help="plan the backlog")
+    item.add_argument("rest", nargs="*")
+    item.add_argument("--machines", default="")
+    item.add_argument("--peer-plan", default="")
+    item.add_argument("--first-release", default="")
+    item.add_argument("--check", action="store_true")
+    item.add_argument("--owner-record", default="")
+    item.set_defaults(func=cmd_plan)
+    args, more = parser.parse_known_args()
+    args.rest = getattr(args, "rest", []) + more
     return args.func(args)
 
 

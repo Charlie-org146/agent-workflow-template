@@ -27,7 +27,7 @@ import board_lines  # noqa: E402
 import govern_hook  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
-import monitor  # noqa: E402
+import mend  # noqa: E402
 import notify  # noqa: E402
 import pool as pl  # noqa: E402
 import replan  # noqa: E402
@@ -173,7 +173,7 @@ def render(root=None, at=None, stamp=None):
             if len(parts) >= 6:
                 out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
-    gone = monitor.archived_since(folder, stamp)
+    gone = mend.archived_since(folder, stamp)
     if gone:
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]
     blocks = []

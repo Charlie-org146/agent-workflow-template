@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept hands-off-operation@3c24eb55 -->
+Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -53,12 +53,13 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - A merged report always frees the session (issue 175).
   - A worker session whose goal's merge and published release the operation session has verified (GitHub says merged, and the release is published) is archived by the operation session, and the next check-in names it; a session whose goal is running, waiting or has an open pull request, and every operation session, is never archived.
   - Under memory pressure (free memory below `min_free_memory_gb`) it also archives idle sessions whose goal is released or retired, oldest first, until memory is back above the floor.
-- MON-10: **Reviewed 2026-11-10** Re-plan at every check-in <!-- reviewed f6c13026 -->
+- MON-10: **Unreviewed** Re-plan at every check-in
   - At each check-in the operation session re-reads every goal's progress and re-plans the graph to finish soonest.
   - It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle.
   - It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first.
   - It never stops or restarts a running goal to re-plan, and every change is logged with its reason and shown in the check-in.
-- MON-11: **Reviewed 2026-11-17** Full auto mode <!-- reviewed d372adfe -->
+  - Each planning round takes the backlog with no release and plans it itself: `monitor.py plan` gives each goal a release, an estimate, a hard ETA and a token budget from past runs and settings, and a machine (the PC or the Mac, by free memory and platform needs) and an agent profile with a one-line reason, cross-checks the plan on a second agent when the agent routing config names one, and sends one plan to the owner and to the other machine's operation session; goals already started are left out, nothing starts until the owner approves with the words "approve" or line edits, and ETA choices stay the owner's.
+- MON-11: **Unreviewed** Full auto mode
   - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
   - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
   - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.

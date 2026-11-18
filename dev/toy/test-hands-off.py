@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/monitor.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/batch.py
+# reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/monitor.py skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/batch.py
 """hands-off-operation (#4781, #4507, #4813, #4679): a worker starts from a scheduled turn (workers: auto or --background), merged and released
 worker sessions are archived (and idle ones of retired goals under memory pressure), operate.py start prints a readiness table, the check-in
 timer is shown, recorded and found stale, and the check-in groups goals by feature. A throwaway repo and stand-ins: no network, no real pool.
@@ -107,7 +107,7 @@ if want("fallback"):
           "the background worker is bound: worker background, bound_at set, attempt 1 to 2 (%s)" % {k: state.get(k) for k in ("worker", "bound_at", "attempt")})
 
 if want("archive") or want("pressure"):
-    import monitor
+    import mend
     import pool
     import sessions
 
@@ -137,7 +137,7 @@ if want("archive") or want("pressure"):
         tool = os.path.join(tmp, "tool.py")
         write(tool, "import sys\nopen(%r, 'a').write(' '.join(sys.argv[1:]) + chr(10))\n" % log.replace(os.sep, "/"))
         states = {"https://x/pull/1": "MERGED", "https://x/pull/2": "MERGED", "https://x/pull/3": "OPEN"}
-        monitor.ghj = lambda args, cwd: {"state": states.get(args[2], "OPEN")} if args[0] == "pr" else {"isDraft": False}
+        mend.ghj = lambda args, cwd: {"state": states.get(args[2], "OPEN")} if args[0] == "pr" else {"isDraft": False}
         os.environ["LOOP_SESSION_TOOL"] = "%s %s" % (sys.executable.replace(os.sep, "/"), tool.replace(os.sep, "/"))
         here = os.getcwd()
         os.chdir(root)
@@ -155,18 +155,18 @@ if want("archive") or want("pressure"):
             check(all(k in left for k in ("s-busy", "s-asks", "s-open", "s-op", "s-fresh")),
                   "negative control: sessions of a running, waiting or open-PR goal, an operation session and a fresh idle one are never archived")
             check(all(k in left for k in ("s-gone", "s-gone2")), "negative control: with no memory pressure a retired goal's idle session is kept")
-            lines = monitor.archived_since(loop, "2000-01-01T00:00:00Z")
+            lines = mend.archived_since(loop, "2000-01-01T00:00:00Z")
             check(len(lines) == 2 and any("shipped released v1.2.3" in x for x in lines), "the archived rows name each session and why (%s)" % lines)
-            check(monitor.archived_since(loop, "2999-01-01T00:00:00Z") == [], "negative control: rows older than the last check-in are not named again")
+            check(mend.archived_since(loop, "2999-01-01T00:00:00Z") == [], "negative control: rows older than the last check-in are not named again")
             import checkin
             text = "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="2000-01-01T00:00:00Z"))
             check("Archived (worker sessions freed):" in text and "- worker · shipped (shipped released v1.2.3)" in text, "the check-in names the archived sessions")
-            monitor.ghj = lambda args, cwd: None  # gh gives no answer: nothing is verified
+            mend.ghj = lambda args, cwd: None  # gh gives no answer: nothing is verified
             write(os.path.join(loop, "session-pool.json"), entries)
             open(log, "w").close()
             pool.cmd_archive(None)
             check(archived_calls() == [], "negative control: with no answer from GitHub nothing is archived")
-            monitor.ghj = lambda args, cwd: {"state": states.get(args[2], "OPEN")} if args[0] == "pr" else {"isDraft": False}
+            mend.ghj = lambda args, cwd: {"state": states.get(args[2], "OPEN")} if args[0] == "pr" else {"isDraft": False}
             os.environ["LOOP_SESSION_TOOL"] = ""
             write(os.path.join(loop, "session-pool.json"), entries)
             pool.cmd_archive(None)
@@ -177,7 +177,7 @@ if want("archive") or want("pressure"):
 
         if want("pressure"):
             os.environ["LOOP_SESSION_TOOL"] = "%s %s" % (sys.executable.replace(os.sep, "/"), tool.replace(os.sep, "/"))
-            monitor.ghj = lambda args, cwd: None  # only retired goals can qualify here
+            mend.ghj = lambda args, cwd: None  # only retired goals can qualify here
             write(os.path.join(loop, "session-pool.json"), entries)
             open(log, "w").close()
             calls = []
@@ -228,7 +228,7 @@ if want("timer"):
         check("check-in timer is stale" in text, "the check-in shows a stale timer under Needs you")
 
 if want("feature") or want("queued"):
-    import monitor
+    import mend
     with tempfile.TemporaryDirectory() as tmp:
         root, loop = repo(tmp)
         for page, line in (("Monitoring", "- MON-1: x"), ("Delivery", "- DEL-1: y")):
@@ -236,14 +236,14 @@ if want("feature") or want("queued"):
         write(os.path.join(root, ".loop", "docs.tsv"), "# page\tpaths\nDelivery\tskills/workflow-delivery\nMonitoring\tskills/workflow-monitoring,:(exclude)skills/workflow-monitoring/SKILL.md\n")
         here = os.getcwd()
         os.chdir(root)
-        monitor.ghj = lambda args, cwd: {"labels": [{"name": "feature:Delivery"}], "milestone": None}
+        mend.ghj = lambda args, cwd: {"labels": [{"name": "feature:Delivery"}], "milestone": None}
         if want("feature"):
-            check(monitor.feature_of(root, "Fix (#4679)") == "Delivery", "a goal naming only an issue number takes the issue's feature label")
-            monitor.ghj = lambda args, cwd: {"labels": [], "milestone": None}
-            check(monitor.feature_of(root, "Fix #4680", {"feature": "Monitoring"}) == "Monitoring", "a feature set by batch.py add --feature groups the goal")
-            check(monitor.feature_of(root, "Fix #4681", {"touches": ["skills/workflow-delivery/scripts/goal.py"]}) == "Delivery", "touches covered by a docs.tsv page group the goal there")
-            check(monitor.feature_of(root, "Fix #4682", {"touches": ["README.md"]}) == "no feature", "negative control: nothing to go on shows no feature")
-            check(monitor.feature_of(root, "Fix MON-1 and #1") == "Monitoring", "a requirement ID in the goal text still wins")
+            check(mend.feature_of(root, "Fix (#4679)") == "Delivery", "a goal naming only an issue number takes the issue's feature label")
+            mend.ghj = lambda args, cwd: {"labels": [], "milestone": None}
+            check(mend.feature_of(root, "Fix #4680", {"feature": "Monitoring"}) == "Monitoring", "a feature set by batch.py add --feature groups the goal")
+            check(mend.feature_of(root, "Fix #4681", {"touches": ["skills/workflow-delivery/scripts/goal.py"]}) == "Delivery", "touches covered by a docs.tsv page group the goal there")
+            check(mend.feature_of(root, "Fix #4682", {"touches": ["README.md"]}) == "no feature", "negative control: nothing to go on shows no feature")
+            check(mend.feature_of(root, "Fix MON-1 and #1") == "Monitoring", "a requirement ID in the goal text still wins")
             out = run_py(root, "batch.py", "add", "b1", "--goal", "Do a thing", "--done", "it works", "--feature", "Delivery")
             line = open(os.path.join(root, ".loop", "queue.md")).read()
             import graph
@@ -272,7 +272,7 @@ if want("size"):
         return len(data) - data.count(b"\r\n")
 
     base = "skills/workflow-monitoring/scripts/"
-    caps = {"checkin.py": 19495, "pool.py": 19000, "monitor.py": 19000, "notify.py": 19000, "watch.py": 19000, "graph.py": 19000, "board_status.py": 19000, "batch.py": 19000, "operate.py": 19864}
+    caps = {"checkin.py": 19495, "pool.py": 19000, "monitor.py": 18993, "mend.py": 19000, "notify.py": 19000, "watch.py": 19000, "graph.py": 19000, "board_status.py": 19000, "batch.py": 19000, "operate.py": 19864}
     bad = ["%s %d > %d" % (n, lf_size(base + n), c) for n, c in caps.items() if lf_size(base + n) > c]
     check(not bad, "checkin.py stays at or under 19,495 bytes and no script this goal touched grew past its starting size or 19,000 (%s)" % (bad or "all within"))
     check(lf_size("skills/workflow-setup/scripts/settings.py") <= 19000, "settings.py stays under 19,000 bytes")

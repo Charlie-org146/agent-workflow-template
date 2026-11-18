@@ -214,9 +214,9 @@ def cmd_add(args):
 
 
 def cmd_archive(args):
-    import monitor
+    import mend
     cfg, tool, n = config(), se.tool(config()), 0
-    for sid, name, why in monitor.to_archive(se.pool(), os.path.join(se.base(), "runs"), se.git("rev-parse", "--show-toplevel"), True, os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "")):
+    for sid, name, why in mend.to_archive(se.pool(), os.path.join(se.base(), "runs"), se.git("rev-parse", "--show-toplevel"), True, os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "")):
         if "pressure" not in why or lim.memory_hold(cfg):
             n += archived(sid, name, why, bool(tool) and se.call(tool, "archive", sid) is not None)
     print("ARCHIVED %d" % n)

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Bring a second Mac or Windows machine to this machine's setup. Standard library only.
 
-usage: machine.py [plan|apply|check] [--repo DIR] [--platform mac|windows] [--home DIR]
+usage: machine.py [plan|apply|check] [--repo DIR] [--platform mac|windows] [--home DIR] [--peer NAME]
        machine.py record-task NAME MODE [--home DIR]
+       machine.py backup DIR [--home DIR]   |   machine.py restore DIR [--home DIR]
   plan (the default)  a dry run: lists what apply would write, then the owner checklist; writes nothing
   apply               installs the skill links, hooks, private-names file, mailer and one scheduled task per repo
                       (<repo>-health-regression, every 4 hours) plus the repo's own machine_setup items
   check               lists each gap as "GAP item: what -> run: fix"; writes nothing; exit 0 only with no gap
+                      also the operation session (its routine and task) and the peer link (peer.json: machine labels only)
+  backup DIR          copies the restorable machine state (never a secret or a private-names list) to DIR
+  restore DIR         puts a backup back on a new machine or account, then names what is still yours to do
   record-task         notes that you registered task NAME in the app with permission mode MODE (the app's own
                       setting is the truth)
 A value (secret, owner address, home path) is never written: a text that holds one is refused.
@@ -26,6 +30,7 @@ CLONE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # this fil
 SK = os.path.join(CLONE, "skills")
 sys.path.insert(0, os.path.join(SK, "workflow-setup", "scripts"))
 import seed  # noqa: E402
+from machine_ops import (git, repo_of, inside, read, in_repo, hook_gap, hook_do, peer_gap, backup, restore, checklist, tasks_of, WIN, cadence)  # noqa: E402
 NO_PROMPT = ("bypass",)  # permission modes that never stop to ask
 MODEL = "claude-sonnet-5-5"
 UD = "Us" + "ers"  # spelled in two parts so this file holds no home path itself
@@ -34,7 +39,6 @@ LEAKS = (("home path", r"(?i)(/%s/|/home/|/root/|[A-Z]:\\{1,2}%s\\{1,2})[^/\\\s]
          ("secret", r"(AKIA[0-9A-Z]{16}|gh[pousr]_\w{30,}|github_pat_\w{20,}|sk-[\w-]{20,}|xox[bp]-[\w-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY)"),
          ("secret", r"(?i)(password|token|secret)\s*[:=]\s*[^\s<{$]{8,}"))
 ALLOW = r"mcp__[A-Za-z0-9_-]+(__[A-Za-z0-9_-]+)?"  # an allow rule from a repo may only name an MCP tool, never a wildcard
-WIN = " [unverified on Windows]"
 
 
 class Ctx:
@@ -48,6 +52,9 @@ class Ctx:
         self.skills = os.path.join(self.home, ".claude", "skills")
         self.py = "py -3" if self.win else "python3"
         self.state_path = os.path.join(self.loop, "machine.json")
+        self.peer_path = os.path.join(self.loop, "peer.json")
+        self.me = "pc" if self.win else "mac"
+        self.peer = args.peer or ("mac" if self.win else "pc")
         try:
             state = json.load(open(self.state_path))
         except (OSError, ValueError):
@@ -73,24 +80,10 @@ class Ctx:
         os.replace(self.state_path + ".tmp", self.state_path)
 
 
-def git(repo, *args):
-    done = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True)
-    return done.stdout.strip() if done.returncode == 0 else ""
-
-
-def repo_of(path):
-    top = git(path, "rev-parse", "--show-toplevel")
-    return os.path.realpath(top) if top else ""
-
-
 def name_of(repo):
     url = re.sub(r"^[a-z+]+://[^/@]*@", "", git(repo, "remote", "get-url", "origin") or repo)  # never a login in a name
     base = url.rstrip("/").replace("\\", "/").split("/")[-1].split(":")[-1]
     return re.sub(r"[^a-z0-9-]+", "-", re.sub(r"\.git$", "", base).lower()).strip("-") or "repo"
-
-
-def cadence(name):  # every 4 hours; the minute is staggered by the name so repos do not start together
-    return "%d */4 * * *" % (int(hashlib.sha1(name.encode()).hexdigest()[:4], 16) % 60)
 
 
 def leak(text, home=""):
@@ -102,25 +95,6 @@ def leak(text, home=""):
         if any(f in line for f in forms):
             return number, "home path"
     return None
-
-
-def inside(path, root):
-    path, root = os.path.realpath(path), os.path.realpath(root)
-    return path == root or path.startswith(root + os.sep)
-
-
-def read(path):
-    try:
-        return open(path).read()
-    except OSError:
-        return None
-
-
-def in_repo(path):  # the nearest folder that exists decides: a dotfiles repo holding the home folder counts too
-    folder = os.path.dirname(os.path.realpath(path))
-    while folder and not os.path.isdir(folder):
-        folder = os.path.dirname(folder)
-    return bool(repo_of(folder))
 
 
 def put(c, label, path, text, mode=None):
@@ -230,6 +204,11 @@ def items(c):
            ("task:operation-checkin", "register the operation check-in task (a pointer to the operation guide, no prompt text)",
             lambda: held(c, "operation-checkin"),
             lambda: routine(c, "operation-checkin", "operation", template("checkin"), "Operation check-in: a pointer to the operation guide."))]
+    out += [("operation-session", "write the operation session's start routine and task (it runs operate.py and never builds)",
+             lambda: held(c, "operation-session") or hook_gap(c),
+             lambda: (routine(c, "operation-session", "operation", template("operation"), "Operation session: governs the workflow loop, never builds."), hook_do(c))),
+            ("peer-link", "record the peer machine link ~/.workflow-loop/peer.json (machine labels only: this machine and its peer)",
+             lambda: peer_gap(c), lambda: put(c, "peer-link", c.peer_path, json.dumps({"self": c.me, "peer": c.peer}, indent=2) + "\n"))]
     if c.repo:
         name, task = c.name, c.name + "-health-regression"
 
@@ -295,26 +274,6 @@ def custom_item(c, repo, item):
     return [(label, "%s %s (yours to provide; setup never writes it)" % (kind, name), gap, lambda: None)]
 
 
-def checklist(c, tasks):
-    steps = ["mail login: create ~/.workflow-loop/mail.env (SMTP_USER, SMTP_PASSWORD; SMTP_HOST, SMTP_PORT if not Gmail; mode 600) and ~/.workflow-loop/mail-to (one address) | verify: %s ~/.workflow-loop/routines/send-mail.py --check" % c.py,
-             "account logins: claude, and gh auth login | verify: claude --version; gh auth status",
-             "private names: one pattern per line in ~/.workflow-loop/private-names | verify: machine.py check",
-             "permission mode: choose a mode that never asks (bypass) for each task in the app, then machine.py record-task NAME bypass | verify: machine.py check"]
-    steps += ["register task %s in the app at \"%s\" with the no-prompt mode | verify: machine.py check" % (t, cron) for t, cron in tasks]
-    if c.win:
-        steps.append("Windows: install Git for Windows (sh hooks) and Python (py -3); junctions need developer mode, else a copy is used" + WIN)
-    return ["owner steps (setup cannot do these):"] + ["%d. %s" % (n, s) for n, s in enumerate(steps, 1)]
-
-
-def tasks_of(its):  # (task name, its cron) for every task item
-    out = []
-    for name, text, *_ in its:
-        if name.startswith("task:"):
-            found = re.search(r'at "([^"]+)"', text)
-            out.append((name[5:], found.group(1) if found else cadence(name[5:].replace("-health-regression", ""))))
-    return out
-
-
 def gaps(c, its):
     out = ["GAP %s: %s -> %s" % (n, t, g()) for n, t, g, _ in its if g()]
     for task, _ in tasks_of(its):
@@ -334,13 +293,19 @@ def gaps(c, its):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("verb", nargs="?", default="plan", choices=("plan", "apply", "check", "record-task"))
+    parser.add_argument("verb", nargs="?", default="plan", choices=("plan", "apply", "check", "record-task", "backup", "restore"))
+    parser.add_argument("--peer", default="")
     parser.add_argument("rest", nargs="*")
     parser.add_argument("--repo", default="")
     parser.add_argument("--platform", choices=("mac", "windows"), default="")
     parser.add_argument("--home", default="")
     args = parser.parse_args()
     c = Ctx(args)
+    if args.verb in ("backup", "restore"):
+        if len(args.rest) != 1:
+            print("REFUSED: usage: machine.py %s DIR" % args.verb)
+            return 2
+        return (backup if args.verb == "backup" else restore)(c, args.rest[0])
     its, found = items(c), []
     if args.verb == "record-task":
         known = [t for t, _ in tasks_of(its)]

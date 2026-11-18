@@ -564,6 +564,8 @@
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-machine-hook-state"></a>machine-hook-state | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | not run | - | local | 2026-11-16 |
+| <a id="t-machine-operation-peer"></a>machine-operation-peer | requirement | MCH-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-machine-backup-restore"></a>machine-backup-restore | requirement | MCH-3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 
 ## Monitoring
 
@@ -1168,8 +1170,6 @@
 | <a id="t-flow-stale-pid-safe"></a>flow-stale-pid-safe | requirement | done line lane-died:1 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-signal"></a>lane-died-signal | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
 | <a id="t-lane-died-sigkill"></a>lane-died-sigkill | requirement | done line lane-died:2 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-1"></a>machine-done-1 | requirement | done line operator-setup:1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-done-2"></a>machine-done-2 | requirement | done line operator-setup:2 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-3"></a>machine-done-3 | requirement | done line operator-setup:3 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-4"></a>machine-done-4 | requirement | done line operator-setup:4 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-done-5"></a>machine-done-5 | requirement | done line operator-setup:5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
@@ -1280,6 +1280,11 @@
 | <a id="t-hands-off-feature"></a>hands-off-feature | requirement | done line hands-off-operation:6 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-queued"></a>hands-off-queued | requirement | done line hands-off-operation:7 | not run | - | local | 2026-11-17 |
 | <a id="t-hands-off-size"></a>hands-off-size | requirement | done line hands-off-operation:8 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning"></a>auto-planning | requirement | done line auto-planning:1 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-approve"></a>auto-planning-approve | requirement | done line auto-planning:2 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-machines"></a>auto-planning-machines | requirement | done line auto-planning:3 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-started"></a>auto-planning-started | requirement | done line auto-planning:4 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-check"></a>auto-planning-check | requirement | done line auto-planning:5 | not run | - | local | 2026-11-17 |
 | <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
 | <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | not run | - | local | 2026-11-17 |

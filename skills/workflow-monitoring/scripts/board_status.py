@@ -246,9 +246,9 @@ def release_of(root, slug):
 
 
 def feature_of(root, text, item=None):
-    """The feature page a goal is for (monitor.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
-    import monitor
-    return monitor.feature_of(root, text, item)
+    """The feature page a goal is for (mend.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
+    import mend
+    return mend.feature_of(root, text, item)
 
 
 def goal_line(item):
