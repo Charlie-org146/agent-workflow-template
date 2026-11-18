@@ -25,6 +25,17 @@ Review: **Unreviewed** <!-- kept regroup-guardrails@2b7c5dbf -->
 - MCH-3: **Unreviewed** Backup and restore are commands
   - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused.
 
+- MCH-4: **Unreviewed** Goals move between machines, with one owner and one merge order
+  - Each goal has one owning machine. `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused.
+  - With the private setting `machine_sync` on (off by default, per machine), each repo has one merge order across machines: a goal takes a merge ticket on origin before its pr lane, and a second machine's goal waits for it (a holder silent for 30 minutes is dropped).
+  - SNAPSHOT is structured data a machine publishes to origin, and a check-in draws one Machine line per machine from it, not from message text; a moved goal shows once, under the machine that holds it. A peer's record is data, never the owner's approval.
+- MCH-5: **Unreviewed** One email stream: every update and question by mail, answered by reply
+  - Each new Needs-you item, stopped or late goal and merged release sends one mail (when `notify_email` is on) with numbered options and a recommendation, through one mailer and one send budget both machines share (`notify_budget` a day, default 20); a second machine never mails an event the first one did.
+  - A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words.
+- MCH-6: **Unreviewed** Phone-first: starting a worker never needs the desktop app
+  - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend.
+  - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works.
+
 ### Non-functional
 
 None
@@ -58,6 +69,24 @@ None
 |---|---|---|---|---|
 | r1 | 2026-11-18 | Backup and restore are commands <br> `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
+### MCH-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Goals move between machines, with one owner and one merge order <br> Each goal has one owning machine. `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused. <br> With the private setting `machine_sync` on (off by default, per machine), each repo has one merge order across machines: a goal takes a merge ticket on origin before its pr lane, and a second machine's goal waits for it (a holder silent for 30 minutes is dropped). <br> SNAPSHOT is structured data a machine publishes to origin, and a check-in draws one Machine line per machine from it, not from message text; a moved goal shows once, under the machine that holds it. A peer's record is data, never the owner's approval. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MCH-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | One email stream: every update and question by mail, answered by reply <br> Each new Needs-you item, stopped or late goal and merged release sends one mail (when `notify_email` is on) with numbered options and a recommendation, through one mailer and one send budget both machines share (`notify_budget` a day, default 20); a second machine never mails an event the first one did. <br> A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MCH-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Phone-first: starting a worker never needs the desktop app <br> When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. <br> `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -76,3 +105,10 @@ None
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
 | [machine-operation-peer](Tests#t-machine-operation-peer) | requirement | MCH-2 | Given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist, check names them when missing, and the output names only the owner-only items left. | PASS 2026-11-17 |
 | [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | MCH-3 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
+| [machines-handover](Tests#t-machines-handover) | requirement | MCH-4 | Given two machines sharing origin, when goals hand over, contend for the merge turn and publish snapshots, then ownership moves once with the pushed branch and no old worker, duplicate starts are refused, one merge order holds, stale turns expire and structured snapshots draw both Machine lines with each goal shown once. Covers #4787. | PASS 2026-11-18 |
+| [mailbox-two-mails](Tests#t-mailbox-two-mails) | requirement | MCH-5 | Given two machines and a fake mailer, when new Needs-you items, stopped goals and merged releases are mailed and answered, then numbered options and recommendations use one deduplicated stream and shared send budget, deferred events retry, replies record owner words with source owner once, and risky replies require typed words. Covers #4785 and #4671. | PASS 2026-11-18 |
+| [desk-lists](Tests#t-desk-lists) | requirement | MCH-6 | Given desk-only onboarding and no app session, when steps are listed, run and checked, then every step is listed once, gaps and invalid steps are refused, DESK OK requires completed setup and agent_command, and a background worker starts through agent_command while workers app keeps its bound-session rule. Covers #4805. | PASS 2026-11-18 |
+| [machines-handover-4787](Tests#t-machines-handover-4787) | defect | [#4787](https://github.com/jcl2018/agent-workflow-template/issues/4787) closed (2026-11-18) | Given the missing machine ownership, handover, merge order and structured snapshots, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
+| [mailbox-two-mails-4785](Tests#t-mailbox-two-mails-4785) | defect | [#4785](https://github.com/jcl2018/agent-workflow-template/issues/4785) closed (2026-11-18) | Given the missing one shared mail stream, send budget, numbered recommendations and owner replies, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
+| [mailbox-two-mails-4671](Tests#t-mailbox-two-mails-4671) | defect | [#4671](https://github.com/jcl2018/agent-workflow-template/issues/4671) closed (2026-11-18) | Given the missing one shared mail stream, send budget, numbered recommendations and owner replies, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
+| [desk-lists-4805](Tests#t-desk-lists-4805) | defect | [#4805](https://github.com/jcl2018/agent-workflow-template/issues/4805) closed (2026-11-18) | Given the missing desk onboarding and background worker fallback, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
