@@ -34,3 +34,4 @@ no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
 format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
 prd-copy-no-reader	red on main since v1.0.64 (docs-v2 How-to fixture family, same as format-frontdoor), see #4961; reproduced on base 210cc556, same two FAILs (README:5 How to use link to How-to-use-Delivery)
+every-row-described	red on main: prd-lock-four (501 chars) and prd-stamps-free (493 chars) have descriptions over its 400-character limit; reproduced on base 210cc556
