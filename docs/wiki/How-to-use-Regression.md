@@ -50,6 +50,12 @@ Each requirement and how it is delivered:
 - REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test.
 - REG-5: Failures go to GitHub. Example, from the known-no-block test: given a known failure, when the run happens, then it does not block the run or open an issue.
 - REG-6: Every fixed issue leaves a test. Example, from the release-lists-fixes test: given a goal that proved a defect row linked to an issue, when its release is cut, then the CHANGELOG and the release notes list the issue with its test.
+- REG-11: Preparation is budgeted too. A lane whose work before its first test, preparing, planning or waiting for a slot, reaches its budget (15 minutes by default, never lower) stops, names which part ran long and can be rerun instead of started over.
+- REG-12: Lanes don't disturb each other. Lanes running side by side take separate files and ports, and a lane over its limit says so in its own line.
+- REG-13: One machine's failure is not the goal's failure. Planned, not built yet: a test that fails on one machine but passes on CI is filed as an issue and is not counted as a failure of the goal.
+- REG-14: Caps on tests and suite time. Set the test-count and suite-time caps in `.loop/config.json`; a goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or the owner raises the cap in their own words.
+- REG-15: Coverage is measured in one place. Planned, not built yet: each requirement's coverage step, from Stated to Fresh, is computed from the latest full run on main and shown beside it on its page.
+- REG-16: Coverage never drops silently. Planned, not built yet: qa refuses a goal that would remove the only proof of a Reviewed requirement, and a release that lowers coverage waits for the owner's words.
 
 ### Skill: workflow-regression
 - **Say:** "Add a test for DEL-1 that runs the delivery toy suite"

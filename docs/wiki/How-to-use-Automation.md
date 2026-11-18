@@ -40,11 +40,11 @@ Say these to the agent in the operation session; each feature page has the exact
 Each requirement and how it is delivered:
 
 - AUT-1: Routines run where they can run fully. Example, from the ci-summary test: given the nightly run, when it ends, then it writes a results table to the job summary.
-- AUT-2: Regression every few hours. Example, from the aut-defect-issue test: given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards.
-- AUT-3: Health every few hours. Example, from the aut-email-file test: given health findings, when the scheduled health run files them, then each is tagged with its group on no milestone (and with its feature when feature_labels is on), no open issue is duplicated, and an issue the owner put on a milestone stays.
+- AUT-2: Regression on a schedule. Example, from the aut-defect-issue test: given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards.
+- AUT-3: Health on a schedule. Example, from the aut-email-file test: given health findings, when the scheduled health run files them, then each is tagged with its group on no milestone (and with its feature when feature_labels is on), no open issue is duplicated, and an issue the owner put on a milestone stays.
 - AUT-4: A digest by email. Example, from the aut-digest-create test: given no digest issue yet, when the first round ends, then the Automation digest issue is created and pinned.
-- AUT-8: Every routine has a runbook an agent follows exactly. Example, from the runbook-repo test: given this repo's Health and Regression pages, when their Runbook sections are read, then each routine in the registry has every field, says a full run is live, and names a fixture or dry run as forbidden.
-- AUT-9: Every routine declares what it may do, in its repo. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1.
+- AUT-9: Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1.
+- AUT-10: A private repo needs no Actions check to merge. Example: given a private repo whose rules require named checks and a pull-request lane that passed, when the lane posts, then it posts those names as commit statuses itself and no GitHub Actions check is needed to merge.
 
 ### Command: automation.py
 - **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]` or `local status`
