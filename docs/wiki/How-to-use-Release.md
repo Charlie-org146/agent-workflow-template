@@ -30,6 +30,19 @@ Legend: a box is Kind, Component and where it runs; --text--> a flow of data or 
 
 Say these to the agent in the operation session; each feature page has the exact commands.
 
+Release the work, or leave it unreleased for now:
+
+```text
+/workflow-release cut <slug>
+/workflow-release leave <slug>
+```
+
+Every goal has a `Verify by hand` section: steps you can follow to see the change work, each with what to expect. `cut`
+refuses without one, and refuses if a wiki page is stale or a requirement's regression row is missing or failing. It then
+creates a draft GitHub release that carries those steps and the docs that changed, for you to publish. After a cut, the
+agent publishes the wiki. No release is published without you. Nothing merges without you, unless the repo turns on
+`auto_merge`, as this one does.
+
 | You say | What happens |
 |---|---|
 | "Can v2 ship?" | The gate runs on the release candidate and lists every reason it would refuse, or prints `GATE PASS v2.0`. |

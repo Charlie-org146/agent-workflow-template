@@ -29,6 +29,75 @@ Legend: a box is Kind, Component and where it runs; --text--> a flow of data or 
 
 Say these to the agent in the operation session; each feature page has the exact commands.
 
+**Getting started**
+
+From install to one finished goal.
+
+1. **Install.** Run `dev/install-local.sh`. It links each `skills/workflow-*` folder into `~/.claude/skills` (or
+   `$CLAUDE_SKILLS_DIR`) and prints `LINKED <name>`. It skips a name that is already a real folder. For another agent,
+   copy the `skills/` folders into its skills folder.
+2. **Set up your repo.** Run `/workflow-setup`. It writes `.loop/config.json`, `.loop/queue.md` and `.loop/findings.md`
+   on a branch called `workflow-setup`. Preview with `/workflow-setup setup --dry-run`, using the path to the skill's
+   folder. Then allow the
+   tools a background agent needs in `agent_command` (for example
+   `["claude", "-p", "--allowedTools=Bash,Read,Write,Edit"]`; you choose the list), and review and merge the branch
+   yourself. The other skills read the config from the base branch. Setup also writes `.loop/START.md`, the entry point
+   any new session reads first, and the same workflow-loop block into `CLAUDE.md` and `AGENTS.md`, so Claude Code and
+   Codex run the same loop.
+
+   To run the loop from Codex, use `codex exec -s workspace-write` with these writable roots in
+   `sandbox_workspace_write.writable_roots`: the repo's git folder, its remote, and `~/.workflow-loop` (setup and `go`
+   write the private settings there; a read-only home leaves them unwritten and `go` is refused). The git folder root
+   also lets a run write `.git/hooks`, which a narrower `.git/loop` root would not. The first setup run exits 1 until
+   `agent_command` names the tools you allow. Pick the model yourself (`-m`): a model your account does not support is
+   rejected before anything runs. `dev/toy/test-codex.sh` proves this on a clean toy repo and is skipped, never passed,
+   where Codex cannot answer.
+3. **Start a goal.** From the main checkout, on the base branch:
+   `/workflow-monitoring go "add result caching" --done "repeat searches are served from the cache"`. Done lines are
+   frozen once the goal starts, so make each one provable before the pull request, by a test or by what a person
+   can see (see [Delivery](docs/wiki/Delivery.md)). Setup filled `~/.workflow-loop/flow.json` with `built-in` steps,
+   so this works with no skill suite; name your own skill for any step there and it replaces that step's routine.
+4. **Watch it.** `/workflow-monitoring watch` starts queued goals in their own worktrees, prints what changed, and ends
+   with what waits on you. Use `report` for a snapshot.
+5. **Answer what waits on you**, in the exact words `watch` prints.
+6. **Review.** The goal ends at a pull request. A monitored goal answers `leave` by itself, unless you started it with
+   `--release ask`; then it waits for `cut <slug>` or `leave <slug>` (see [Delivery](docs/wiki/Delivery.md)). With
+   `"release_auto": true`, it decides from its diff and may cut a draft instead. Answer before you merge, because `cut`
+   commits on the goal's branch. Review and merge the pull request yourself; nothing here merges unless `auto_merge` is on.
+7. **Keep it current.** `/workflow-setup update --check` shows what a newer template version brings;
+   `/workflow-setup update` applies it and puts this repo's generated files on a `workflow-update-vX` branch for you to
+   merge. A skill you fixed here is kept, and `/workflow-setup update --propose` sends the fix back to the template.
+
+**File reference**
+
+In the repo:
+
+| File | Holds |
+|---|---|
+| `.loop/config.json` | Base branch, agent commands, risky paths, wiki folder |
+| `.loop/queue.md` | Goals to run, one line each |
+| `.loop/goals/<slug>.md` | One goal: frozen done lines, plan, verify steps |
+| `.loop/findings.md` | Open findings |
+| `.loop/docs.tsv` | Each wiki page and the paths it describes |
+| `.loop/regression.tsv` | Test rows |
+| `.loop/regression-known.tsv` | Rows expected to fail, with a reason |
+| `.loop/regression-red.tsv` | Red results proven on another runner, with runner and commit |
+| `.loop/regression-runs.tsv`, `.loop/regression-issues.tsv` | Each row's last result; each defect test's issue state |
+| `.github/workflows/regression.yml`, `.github/workflows/regression-pr.yml` | A public repo's regression routines (written by setup); health and a private repo's regression run on the Mac |
+| `docs/wiki/` | Wiki pages, each starting with `<!-- workflow-docs -->` |
+
+Outside the repo, run state lives in `<git common dir>/loop/`: `runs/<slug>.json`, `logs/<slug>.log`,
+`dashboard.html`, `wiki.json`, `board.json`, `board.html`, `board-artifact.html`, `cadence` (minutes between
+check-ins, or `off`) and `handoff.md`. Nothing there is committed. `board.py repos add` keeps a list of repo paths in `~/.workflow-loop/repos`, and
+`~/.workflow-loop/flow.json` names your skill flow.
+
+In this template: `skills/` (the seven skills; the full contract is `skills/loop-files.md`), `dev/` (install, package and
+toy tests), `listing.json`, `VERSION`, `DECISIONS.md`, `FINDINGS.md`, `docs/ROADMAP.md` and `LICENSE`.
+
+**License**
+
+MIT. See [LICENSE](LICENSE).
+
 | You say | What happens |
 |---|---|
 | "Set up this repo" | It shows what it found and would add, then writes it on a setup branch for you to review and merge. |
