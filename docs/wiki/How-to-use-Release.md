@@ -75,4 +75,4 @@ Each requirement and how it is delivered:
 - PRD page: [Release](Release)
 - Backlog: [Backlog: Release](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept release-gate@e4677f95 -->
+<!-- kept release-gate@8032c1fd -->
