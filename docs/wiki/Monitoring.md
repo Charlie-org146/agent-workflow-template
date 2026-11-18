@@ -55,7 +55,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 - MON-11: **Unreviewed** Full auto mode
   - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
   - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
-  - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.
+  - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal changes a Reviewed requirement's wording only through a revision that cites an owner record: the old wording stays as a numbered revision, the pull request refuses any other change, the page shows that requirement Unreviewed until I read it, and only I stamp it.
   - Turning it off takes effect at the next decision.
 
 - MON-12: **Reviewed 2026-11-14** Session pool <!-- reviewed 804e0364 -->
@@ -114,6 +114,122 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
 - With full auto on, a run needs me only for the safety-class decisions MON-11 excludes. Notification subprocesses disable Git and GitHub terminal prompts, matching the unattended delivery commands.
+
+## Revisions
+
+### MON-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | Roles, start and planning. One command starts the operation session and drives the whole process the same way every time. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. When a worker session finishes, the operation session gives it the next ready goal, renaming it again. <br> One command starts the operation session and drives the whole process the same way every time. <br> The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds. <br> A goal waits only on goals it truly depends on; sharing files is not a reason to wait. <br> When a worker session finishes, the operation session gives it the next ready goal, renaming it again. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | Live communication. Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up. Background processes are used only when the app can't start or reach a session, and the board says so. <br> Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up. <br> Background processes are used only when the app can't start or reach a session, and the board says so. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Live board <br> Report, dashboard and the artifact show the live board in the one fixed layout MON-4 lists; this requirement owns the board, and a check-in never prints it. <br> The board lists each open PRD delta of a page that opted in to syncing as waiting on the owner, with its issue and the words to accept either side; a page with no external source never shows one. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Live board layout <br> `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time. <br> Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer. <br> Check-ins don't print this board; MON-5 owns the check-in reply. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Cadence and reply format <br> The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board. <br> Every check-in reply has the same layout: one headline line, then a Machine line (free RAM, free commit memory, CPU, claude and node counts); <br> All sessions, one table of every session across my repos with what it is doing (a short plain sentence of under about 12 words from its goal's first line, then its slug and issue in brackets), its status, progress, time left, tokens left and latest report; <br> Dependencies, a drawn graph marking what is running, holding, queued or stuck, with each goal's status marker, expected time left and machine (pc or mac); <br> Needs you, each question numbered with its options and a recommended answer, or Nothing needs you; and last, Coming up, the next expected events and what I will need to do. <br> A hook that setup installs blocks a reply that doesn't follow this layout, or has no Machine line, or has a Dependencies goal with no status marker, time or machine, or an All sessions row whose "for" cell is only a slug or issue number, saying what is missing; it never checks worker sessions or other repos, and one setting turns it off. <br> The check-in lists owed off-machine to-dos under Coming up, and the operation session never holds a goal for another pod or machine. <br> A goal shows as [x] in one check-in only, the one right after it merges; a goal that merged before the previous check-in is never listed, and a goal whose pull request merged, or that is retired or stopped, is closed for good. <br> When notification is on for this machine (a private setting, off by default), each check-in mails me once per new event through the health round's mailer: a new Needs you item, a goal that stopped or passed its ETA, and a goal merged and released; each mail names the goal and what I must do, a repeat sends nothing, and the address lives only in mail.env outside the repo. <br> Only a scheduled check-in, or my asking for one (check-in, status, report, board, where do things stand), must be answered in this layout; a reply to a peer message or any other talk is 1 to 3 lines and the hook does not check it, and a turn the hook cannot read is checked as before. <br> A scheduled check-in whose check-in, apart from its Machine line and numbers, is the same as the last full one skips the model turn: a prompt hook blocks it with one line, at most two hours in a row, and any error lets the prompt through. <br> Each check-in adds one row to `op-tokens.tsv`: the time, the operation session, its context, and the tokens it spent since the last row under each trigger (scheduled, peer, human, hook-retry). | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Clean up after every goal <br> When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed. <br> A merged report always frees the session (issue 175). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Govern only <br> A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | No silent worker <br> A worker with no report for 30 minutes shows under Needs you. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Fast board <br> The board builds in under 10 seconds. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Re-plan at every check-in <br> At each check-in the operation session re-reads every goal's progress and re-plans the graph to finish soonest. <br> It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle. <br> It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first. <br> It never stops or restarts a running goal to re-plan, and every change is logged with its reason and shown in the check-in. <br> Each planning round takes the backlog with no release and plans it itself: `monitor.py plan` gives each goal a release, an estimate, a hard ETA and a token budget from past runs and settings, and a machine (the PC or the Mac, by free memory and platform needs) and an agent profile with a one-line reason, cross-checks the plan on a second agent when the agent routing config names one, and sends one plan to the owner and to the other machine's operation session; goals already started are left out, nothing starts until the owner approves with the words "approve" or line edits, and ETA choices stay the owner's. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Full auto mode <br> A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you. <br> It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record. <br> My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal changes a Reviewed requirement's wording only through a revision that cites an owner record: the old wording stays as a numbered revision, the pull request refuses any other change, the page shows that requirement Unreviewed until I read it, and only I stamp it. <br> Turning it off takes effect at the next decision. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Session pool <br> The operation session keeps a pool of idle worker sessions, sized by a setting (default 20), and hands each ready goal one from the pool instead of starting a new session. <br> Because sessions can only be created from the desktop app, whenever the pool runs low the operation session asks me, at the desktop, to fill it, and it creates every missing session in one step on my word. <br> A finished goal's session goes back to the pool (MON-6), the board shows the pool as free, busy and total, and a goal that finds the pool empty waits under Needs you with the one action that fixes it. <br> A ready goal also waits while live goals are at `max_active_goals` (default 20), weekly plan usage is above `plan_pause_percent` (default 80) or free memory is below `min_free_memory_gb` (default 4); the check-in names the limit that holds. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | Two layers per pod: one operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session; several pods may run concurrently and independently <br> A claim adds the session to every repo the pod follows and keeps the other sessions already claimed; nothing refuses or warns when a second operation session runs. <br> `board.py repos adopt` lists my recent GitHub repos by last push, or clones, follows and sets up the named ones in one pass, ending with each repo's template version (Setup, SET-12). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-14
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-16 | Dependency map grouped by repo <br> The check-in dependency map is grouped by repo first: one block per repo headed by the repo's name, cross-repo dependencies drawn between blocks; inside every repo's block, in the operation repo and every other repo, goals are grouped by release milestone and then by feature, a goal with none under "no release" or "no feature". <br> Each goal shows its status marker, its expected time left from past runs and the machine that runs it (pc or mac, from its pod record); each repo block ends with its expected finish, and each wait is drawn as an arrow. <br> A repo owned by another pod is one line marked with that pod's machine, from its last report. <br> The map lists only live goals: a record with no goal or status, a stopped goal and a goal left with release: leave are not drawn, and a worker held at pr reads holding, not stuck. <br> The check requires only live goals: running, holding, queued, waiting on the owner, or merged since the previous check-in; a goal merged before the previous check-in is never required. <br> Each repo prints as `== name ==` within 60 characters, then a `Between repos` list for `repo/slug` dependencies, then the legend once. <br> Each release milestone's header starts with its expected release time, the latest expected finish among its goals, and its count of goals not started, for example "v1.1 release ETA tomorrow ~20:00 (11 goals, 6 not started)"; a release with nothing started reads "release ETA unknown (N not started)". <br> The reply hook flags a check-in whose Dependencies section leaves out a goal on the board, or a release header with no release ETA, or shows a goal with no status marker, time or machine, or a repo block whose goals are not under a release and a feature. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-12 | Pods coordinate through shared state, not messages: every goal records its owning pod and only that pod starts, answers, merges or resumes it; other pods show it read-only as owned by that pod; merges into one repo's main are serialized across pods by a short lock <br> The pod id is `LOOP_POD_ID`, else the operation session's own id; a goal with no recorded pod belongs to no one. Another pod's attempt prints one `REFUSED: goal <slug> is owned by pod <id>. Fix: ...` line, exit 2, and changes nothing. <br> `merge.py` takes `<git common dir>/loop/merge.lock` for the whole merge step; a dead holder or one older than 30 minutes is replaced. <br> A pod's watch, auto-answers and mending skip other pods' goals, and its check-in lists their questions as read-only. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-16
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-16 | Fill every free slot at once; speed comes before tokens, within the guardrails. <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; token and time budgets (Guardrails) still hold. The check-in's Machine line, always printed first, shows free RAM, free commit memory, CPU and the claude and node counts, and says how many goal starts memory allows. Each pass checks that the main checkout is current with origin/main; when it is behind, the check-in asks a free worker to fast-forward it, because the operation session's govern hook blocks the pull itself. A goal waiting in the pr queue with a fresh queue file reads alive, never silent. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-17
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | A check-in lists only this machine's goals. <br> Goals of another pod are not listed; each other pod gets one line, "<pod>: N goals, last activity HH:MM" (the owner's decision), and never a question for this pod. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-18
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | The operation session keeps running unattended. <br> One standing instruction to merge, recorded once by the operation session for named goals or all, replaces a go per merge; a worker at pr reads it and does not wait for another. <br> The check-in says how many cross-session sends are left before the app's cap of 20 without an owner message; from 16 sent it asks the owner for any message, which resets the count. <br> The check-in loop is re-created before its 7 days run out; the check-in says when. <br> Every worker accepts an owner-words record the operation session names, per the Delivery rule, and does not ask the owner again; a record covers only its listed ids. <br> On start the operation session runs a self-check and lists what is missing, each with its fix: a permission mode that holds cross-session messages for approval, a routine whose rules are not written or do not cover its Runbook (AUT-9), and the main checkout behind origin/main (MON-16). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### MON-19
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Blockers first. Each item under Needs you says what it holds up, so the owner sees the priorities. <br> An item names the goals, merges or release it holds up, with the count of goals behind it, and says whether it is on the critical path to the next release; an item that holds nothing says "blocks nothing". <br> Items are sorted with the one holding up the most goals first, and the Dependencies graph marks the owner item on each chain. <br> The Stop hook refuses a check-in whose Needs you items do not say what they hold up. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ## Tests
 

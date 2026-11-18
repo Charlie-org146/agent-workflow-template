@@ -87,6 +87,62 @@ How to use: [How-to-use-Health](How-to-use-Health)
 - After the first full review, every feature's findings are issues tagged with that feature, each with its evidence, and none is a duplicate.
 - The verdict is never green while a rule could not be read. Requirement consistency checks read canonical definitions from each PRD’s Requirements section; How-to references do not create duplicate definitions. Judge savings findings use a stable subject independently of issue feature resolution.
 
+## Revisions
+
+### HLT-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Deterministic and read-only <br> The rule check gives the same answer twice on an unchanged repo and changes nothing; only file writes, and only GitHub issues. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-16 | The rules <br> Health checks exactly these groups, each with the angle its tests take: <br> Requirements (my angle: is every promise I approved proven?): every Reviewed requirement has a test seen failing and passing now; done lines have tests; none stays not enforced over 7 days. <br> Traceability (an auditor's angle: can I follow any work end to end?): requirement to test to last run; issue to feature; pull request to goal to done lines; release to the issues it fixed. <br> Consistency (a reader's angle: do the pages agree?): IDs unique across pages; no reference to a missing ID; a command named the same in its skill's command reference and the README; no two requirements that contradict. <br> Docs (a newcomer's angle: does each page match the template and the code?): template sections and limits; each skill's command reference matches the real commands and output; Home complete. <br> Freshness (my angle when I come back: is anything out of date?): the nightly suite ran in the last 24 hours; no merged work unreleased over 3 days; pages updated after their code changed; no finding older than 30 days. <br> Tests (a skeptic's angle: do the tests prove anything?): every row seen failing once; no flaky rows; no row skipped over 7 days; slowest rows named; no test touches the network. <br> Performance (my clock's and my wallet's angle: is it fast and cheap enough?): goal runs and the full suite within their time limits; goals within their time and token budgets; the health check within its limit. <br> Security and privacy (a leak's angle: can anything private escape?): no private names, paths, emails or keys in tracked files; secrets only in the environment or secrets; the commit scan hook installed; workflows with least permissions. <br> Size (a maintainer's angle: can someone still read this?): scripts under 20 KB with a warning over 19,000 bytes; SKILL.md under 150 lines; requirements per page within the limit. <br> Hygiene (a janitor's angle: is anything left lying around?): open findings within the cap; no wait on me over 24 hours; no merged or stale branches or worktrees; no idle worker sessions. <br> Adoption (another repo's angle: would this work installed fresh?): config valid; every check runs at least one test; template version current; the local schedule installed and, for a public repo, the regression workflow present and firing. <br> Controls (the checker's own angle: can each rule fire?): every rule has a negative control run against a deliberately broken copy. <br> Mine (my private angle): rules I add in a private setting. <br> At most 12 groups plus Mine; adding one means retiring one or raising the cap on purpose. <br> An owed proof (`.loop/regression-owed.tsv`) is not a seen-red failure; it warns once it is older than 7 days and never fails. <br> The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`). <br> A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Formal report with one findings table <br> A header listing every group it ran (and any skipped), then one findings table, then each group with every rule marked pass, warn, fail or unread with its fix, then one verdict. A rule that can't read its data is never shown as passing. <br> The findings table holds every warn, fail and unread finding, one row each, with the columns feature, group, rule, severity, finding and issue, sorted by feature. Every row names a feature page, or Other when the finding fits none; the issue column names the open issue filed for it, or says it is not filed; a check of every group reads the open health issues for that column, while `check --group` only uses a list already read. `file` prints the table again naming the issues it filed, and the digest shows that same table. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Findings become issues tagged with their group and their feature <br> Each finding, from a rule or from the review, is one GitHub issue tagged with its group or kind and with the feature it is about, `feature:<Page>`, or `feature:Other` when it fits no feature, whatever feature_labels says (that setting governs regression issues only). A FAIL (except a performance one) and a review conflict is a defect, labelled `defect`, on no milestone; every other finding (a WARN, a performance FAIL, a drift, weak-test or saving finding, a review gap, an unread rule) is a backlog item, labelled `backlog`, on its feature's milestone "Backlog: <Feature>", or on "Backlog: Other" when it fits no feature. An issue I move to another milestone stays there. <br> A preview lists exactly what would be opened, updated, closed or reopened, and nothing is written until I confirm or name the groups or features to file, behind an explicit `--live`. <br> A repeat updates its issue, a fix closes it, a return reopens it, and an existing open issue that already covers a finding is linked, not duplicated. <br> A finding's issue body and comment are passed to gh in a file (`--body-file`), never on the command line. <br> Health reads only the issues a command needs, a page of 100 at a time: triage the open health issues, `file` the health issues and the open ones. A repo with thousands of issues lists within the time limit, and a page that fails, or a listing past 20,000 issues, refuses with one line naming it. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Repo review <br> A reviewer, separate from the rules and never part of the verdict, reads every PRD page, the README, milestones, open issues, tests and code, feature by feature, and reports: <br> Conflicts: two requirements that contradict each other, or a page that breaks a reviewed rule (for example DOC-1's Problem length). <br> Gaps: a feature with no non-functional requirement where one is expected (performance, safety, privacy), an untested requirement, an open issue that fits no requirement, a done line with no test. <br> Drift: code or Usage that does something its PRD doesn't say, or a requirement the code no longer meets. <br> Weak tests: a test that doesn't really prove what it claims, misses a case or tests the wrong thing. <br> Savings: where skill steps, prompts, scripts, waits and retries could cut time or tokens, ranked by size. <br> It ends with ranked next steps per feature. Wording changes it suggests are only applied by me. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Health keeps itself honest and the repo lean <br> Every health rule has a negative control that proves it can fire; the check flags a land test run over its time budget and names the slowest rows to move to nightly; and it flags stale worktrees and branches that exist only on this machine. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Fast check <br> The rule check without controls finishes in under 60 seconds. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Triage <br> Open findings are shown per feature with their kind, age and count, so I can see where the repo is weakest. <br> When I close a batch (for example "won't fix the docs findings older than a week"), each is closed with my words as the reason, and the review doesn't refile it unless the evidence changes. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Evidence or nothing <br> Every review finding names its feature and cites its evidence (a page and requirement ID, a file and line, a test row or an issue link); a finding without evidence is dropped, and nothing is filed twice. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |

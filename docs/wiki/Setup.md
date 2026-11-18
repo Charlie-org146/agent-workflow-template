@@ -84,6 +84,110 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.
 
+## Revisions
+
+### SET-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | One command adopts a repo <br> One command sets up a new or existing repo: the loop config, PRD feature pages in the docs format, the Home table and README How to use, the nightly regression in GitHub Actions, the health groups, and every setting with its default. <br> It shows what it found and would change first, then applies it on a branch through the loop, adapting what is there instead of overwriting. <br> It never blocks: what doesn't fit is listed and filed as issues tagged with the right feature, and the rest is adopted. <br> Health is the first and last step: before adopting, a health check records where the repo starts; after adopting, the full health check (every group, Adoption included) must come back green or name each gap with its fix, and that verdict is the adoption result, because if health works, the rest works. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Layered settings <br> Settings come in three layers: the template's defaults, the repo's settings (committed and shared), and my local settings (private, outside the repo); a later layer overrides an earlier one. <br> Every setting has a default and a one-line explanation; I can see each setting's value and which layer it came from, and change any of them at any time. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Shipped as a versioned package. <br> The template ships as one versioned package of separate skills in the Agensi format, every script self-contained and under 20 KB. It works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex on a clean test repo with no private settings. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Updates flow both ways <br> An adopted repo can check for a newer template version, see what's new and update, keeping its own config, pages, rules and local settings. <br> The operation session flags any governed repo running an older template version. <br> A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | A self-describing workspace <br> Every adopted repo has one entry point that any new session reads first: how the loop, release, operation and workers, docs, regression, health and settings fit together, and which features exist and how to use them. <br> It is generated from the PRD pages and settings, so it is never stale. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Adoption is proven <br> Adoption is proven on test repos shaped like real ones (existing checks, CI tests, a blocking .gitignore, a bare agent command, features that aren't folders), and every adoption defect found in a real repo adds a test repo that reproduces it. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Safe and repeatable <br> A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Learn from a repo already set up <br> Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | The right format for every agent <br> The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | Prerequisites first, then a strict replay of the first adoption <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC. <br> Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent. <br> Comes from [#1408](https://github.com/jcl2018/agent-workflow-template/issues/1408), with the Windows crashes in [#1395](https://github.com/jcl2018/agent-workflow-template/issues/1395), [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) and [#1397](https://github.com/jcl2018/agent-workflow-template/issues/1397). <br> Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Adopt all my repos in one pass <br> From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version. <br> It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version. <br> Comes from [#1409](https://github.com/jcl2018/agent-workflow-template/issues/1409). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. <br> Comes from [#1404](https://github.com/jcl2018/agent-workflow-template/issues/1404). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-14
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | The connectors each repo needs are checked <br> For each followed repo, setup reads which connectors its PRDs need (mail accounts, a calendar, a file store, a notification channel) and probes each with a read-only call. <br> It prints each as connected, needs sign-in or missing, with the fix, and names the owner-written files a repo needs that don't exist yet. It never attaches or enables a connector itself: I do, with the narrowest access. <br> Comes from [#1410](https://github.com/jcl2018/agent-workflow-template/issues/1410). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> Comes from [#1411](https://github.com/jcl2018/agent-workflow-template/issues/1411). <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-16
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | A repo is judged fully migrated by one command <br> One read-only command lists every gap between a repo and the current template, each with a one-line fix, and exits 0 only when none remain; it writes nothing, and health's Adoption group runs the same check. <br> A repo carries `template_version` (set by update) and one with none counts as behind; a session that starts in a repo behind the installed template is told so in one line and never blocked, except that a new goal is refused when the major version differs. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-17
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |

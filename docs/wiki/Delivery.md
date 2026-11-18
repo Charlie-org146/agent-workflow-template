@@ -75,6 +75,104 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - A goal that fails three tries stops and says why.
 - No goal merges while a wiki page its own diff made stale is still stale. Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
 
+## Revisions
+
+### DEL-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | The loop <br> I give one sentence and its done lines; a worker runs it unattended. <br> Steps, in order: freeze, idea, plan, build, review, qa, ship, pull request, release. <br> Review is the only gate. <br> Each step maps to a skill I choose, in a private setting outside the repo. <br> It won't start without the flow set up, and stops with a reason after 3 failed tries. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | Frozen done lines <br> Done lines can't change once the goal starts; a change means a new goal. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | Decisions <br> A decision for me waits under Needs you, or, where the repo allows, is auto-approved and logged. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-08 | The pull request <br> Carries the done lines, the plan, how to verify by hand, and each step's result. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Release <br> Every goal ends with release. With auto_merge on it is fully automatic: it bumps the version, writes the release note, refuses to merge while a page its own changes made stale is still stale (a page left stale by another goal's commit is reported as a finding, and health still flags it), runs my routines, merges, publishes the release and the wiki. With auto_merge off it makes a draft release for me to publish and merges nothing. Any failure shows under Needs you. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Review depth fits the goal <br> Plan and review run at full depth by default (`review_depth: full`); a condensed plan and review happens only when `review_depth: condensed`, and I can override it per goal. Tests never shrink: every goal runs its test lane, the affected rows within the test budget (REG-7). | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Resumable <br> A stopped or crashed goal resumes from its last recorded step, never from the start. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | Budgeted <br> Each goal has a time and token budget, and going over shows on the board. <br> Each review and ship step has a time limit, a setting no lower than 15 minutes; a step that reaches it finishes with what it has done, records what it left, and the goal goes on instead of restarting. <br> A lane that stops at its preparation budget is recorded on the goal with the part that ran long, and the board and health list it beside the step and test budget hits. <br> A goal past its time budget (`time_budget_minutes`, active time) or its `token_budget` starts no new step, and a merge-and-rerun round past `max_merge_rounds` (default 8) is refused: the goal waits under Needs you, and only the operation session raises a limit. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-15 | Nothing private ships <br> Every commit and pull request passes the private-name scan before it is pushed. <br> The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | A goal started on another machine can be adopted <br> `goal.py adopt SLUG`, run in the goal's worktree on branch `loop/SLUG`, creates this machine's run record at step qa from the pushed branch, its frozen goal file and its open pull request; idea, plan and review are recorded `done on another machine`. <br> qa, ship and the pull request are never recorded from another machine's evidence: they run again here before release. <br> A record here that is running with no pid and no recorded step (a stale, never-started one) is replaced and the replacement logged; a record with a pid, a recorded step or a finished status makes adopt refuse. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Adopt never trusts an unpushed branch <br> A branch that is not on origin, a worktree missing its commits, a goal with no done line or no open pull request is refused with one line, and no run record is written. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Windows-safe on merge <br> A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen. <br> A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows a merge waiting on review. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-14
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Leftover findings are filed by kind at ship <br> When a goal ships, each finding it did not fix is filed once. A break of a Reviewed requirement inside the goal's touches is fixed in place; outside them it is an open issue labelled `defect`. An improvement, idea or saving is an issue labelled `backlog` on its feature's milestone "Backlog: <Feature>" ("Backlog: Other" when it fits no feature). Filing writes to GitHub only with `--live`, which the goal passes after ship is recorded, and a finding already filed is not filed again. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Fast merge queue. PRs merge one after another, but each waits only as long as needed. <br> A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result. <br> Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once. <br> Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### DEL-16
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Each step runs on the agent the config picks <br> A private config maps each step and each goal size to an agent profile (a command, a model and a cost per token): heavy work on Claude, cheap work on Codex or any other agent added as one more profile entry, with no code change. <br> Setup asks which agents are installed and logged in and writes the profiles; an agent that is missing or logged out falls back to Claude with a one-line warning. <br> Review stays on the heavy profile unless the config routes it by name; the run record names the agent, the model and the tokens of every step. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |

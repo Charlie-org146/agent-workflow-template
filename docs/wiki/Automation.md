@@ -60,6 +60,62 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 - After each scheduled round, one digest email arrives and every failing test or finding has exactly one open issue tagged with its feature.
 - With a routine set to off, its runs write no issue, label, comment or email.
 
+## Revisions
+
+### AUT-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Routines run where they can run fully <br> Health runs on my always-on machine (the Mac through its launch agent, or a Windows PC through its own scheduled task) for every repo. Regression runs in GitHub Actions for a public repo and on that machine for a private one. <br> Each routine runs on a schedule set in the repo's config (every 4 hours by default), and I can also start it by hand. <br> A routine missed while that machine is asleep or off runs once at the next tick, and the digest says it was missed. <br> Each run's report says whether it ran on my Mac or in GitHub Actions. <br> A long issue body or comment is passed to gh in a file (`--body-file`), never on the command line, so a routine writes the same on native Windows. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Regression every few hours <br> The full regression suite runs on the schedule (every 4 hours by default), in GitHub Actions for a public repo (which also runs it on every release tag) and on my Mac for a private one; the report names every test it skipped and why. <br> A push or pull request runs only the tests its change affects (Regression, REG-4), in the same place as the full suite. <br> No GitHub Actions check this tool writes is needed to merge a private repo; where its ruleset requires named checks, the pull request lane posts them as commit statuses itself, success when the lane passes and failure when it fails, so a failing lane holds that merge and a passing one releases it. <br> A failing test opens or updates one issue labeled defect, tagged with the feature it guards when feature_labels is on, naming the test and the requirement; it closes by itself when the test passes again. <br> The CI suite runs in eight shards with one combined summary: each row is given the time left, the suite-time line counts the rows skipped for time (the unrun rows), and a newer run on the same ref cancels the older. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Health every few hours <br> Health never runs in GitHub Actions: it runs on my always-on machine on the schedule (every 4 hours by default), after the latest finished regression run, with all its rule groups; its report names that run with its commit and age, or says none finished, and says when health last ran. <br> The repo review always runs, using my own login on that machine, with no API key secret; when the login has expired or can't be reached, the report says which and the next round tries again. <br> Every finding becomes one issue tagged with its group and, when feature_labels is on, its feature, updated, closed or reopened as things change, never duplicated. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | A digest by email <br> After each round, one email goes to the address I set: what ran and its results, then the new, still-open and fixed issues grouped by feature, each with its link and the request to give the agent to fix it. <br> The same digest is also posted as one comment on a pinned Automation digest issue. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Under my control <br> Each routine can be turned off or rescheduled in one setting. It writes to GitHub only with `--live` (the scheduled workflows pass it), and without the secrets it needs a routine runs but writes nothing and says what is missing. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Private address <br> The email address and the mail key live only in a local secrets file outside git, kept where the repo review cannot reach it, read only by the local runner; never in the repo, logs, issues or the digest comment, and never printed. The same holds for the GitHub token the Mac uses. <br> The mail file is `mail.env` in the schedule home, or the file `LOOP_MAIL_ENV` names (a shared file on a synced folder); on a machine with file modes a mail.env others can read sends nothing, and on Windows, which has no modes, that check is skipped. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Bounded cost <br> A round finishes within 45 minutes (the 30-minute regression budget of Regression REG-7 plus 15 for health and the digest, health starting when regression has finished, not at a fixed offset), and each report shows the round's wall time and its pass and fail counts, plus its Actions minutes when it ran in GitHub Actions, so I can slow the schedule if it costs too much. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Every routine has a runbook an agent follows exactly <br> Each routine is listed in the routine registry with the feature page that owns it (health-round on Health, regression-round on Regression), and that page's Runbook section says what a full run is, the one output, the forbidden shortcuts and how to check the run was real. <br> An automation prompt for a routine reduces to "read the <page> Runbook and follow it exactly"; a scheduled run never sends a dry run, a fixture or a test mail in place of the real output. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### AUT-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Every routine declares what it may do, in its repo. <br> Each routine in the registry has rows in `.loop/permissions.tsv` (routine, allow or deny, rule, why): the commands, file paths and sites its Runbook needs, and the denies its Never field states. The repo owns its list; the template owns the rule, the command that writes it and the check. <br> Setup writes the rows into the repo's committed project settings (`.claude/settings.json`, keeping every other rule), so a scheduled run on a fresh machine stops at no approval prompt for what its Runbook says it does; nothing private is written there. <br> The docs check fails a routine with no rows, a row missing from the project settings, a command or site the Runbook names that no allow row covers, and an allow that a deny contradicts. | migration r1; date from its Reviewed stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
