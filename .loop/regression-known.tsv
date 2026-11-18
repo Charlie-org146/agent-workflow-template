@@ -54,3 +54,4 @@ docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,0
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
 skill-refusals-in-references	red on main 9d93ceb3: workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 release-criteria-known-skip	red on main 9d93ceb3: test-release-criteria.py fails 5 checks, see #4989
+sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
