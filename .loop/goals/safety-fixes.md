@@ -15,3 +15,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-agent-routing.py`.
+   Expect: the last lines read `PASS: the timed-out agent and the child it started are both gone` and `PASS: agent-routing`.
+2. Run `python3 skills/workflow-setup/scripts/settings.py reference | grep full_auto`.
+   Expect: the default column shows `false`, and the help text starts "Off keeps every gate".
+3. Run `python3 -c "import json;print(json.load(open('.loop/config.json'))['full_auto'])"`.
+   Expect: it prints True (this repo keeps full auto on).
