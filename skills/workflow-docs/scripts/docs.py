@@ -441,15 +441,15 @@ def main():
 
 def alone(root, folder, repo=""):
     """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
-    import audit, prdcopy
-    out = []
+    import audit, milestones, prdcopy
+    out, sites = [], milestones.origins(root)
     files = [(n[:-3], os.path.join(root, folder, n)) for n in sorted(os.listdir(os.path.join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
     files += [(os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/"), os.path.join(d, n)) for d, _, ns in sorted(os.walk(os.path.join(root, "skills")))
               for n in sorted(ns) if n.endswith(".md")]
     for name, path in files:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
-        out += prdcopy.stands_alone(name, text, repo) + (audit.home_diagram(text) if name == "Home" else [])
+        out += prdcopy.stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
     return out
 
 

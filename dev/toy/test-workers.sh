@@ -56,7 +56,7 @@ PY
 A
 python3 - "$T/agent.sh" <<'PY'
 import json, sys
-c = json.load(open(".loop/config.json")); c["agent_command"] = ["bash", sys.argv[1]]; c["parallel"] = 4; c["mend"] = False
+c = json.load(open(".loop/config.json")); c["agent_command"] = ["bash", sys.argv[1]]; c["parallel"] = 4; c["mend"] = False; c["min_free_memory_gb"] = 0
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 git commit -qam "Agent"; git push -q origin main
