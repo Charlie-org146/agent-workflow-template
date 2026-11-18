@@ -92,3 +92,5 @@ Outside the repo, never committed: `~/.workflow-loop/flow.json` (or `$LOOP_FLOW`
 | `rules` | `[]` | Health file: your own health rules, each {name, command, fix}. |
 | `repos` | `[]` | Followed repos: one path a line in the repos file, shown on the board. |
 | `notify_email` | `false` | Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine. |
+| `machine_sync` | `false` | Flow file: true shares the merge turn, SNAPSHOT lines and mail ledger with your other machine through origin; per machine. |
+| `notify_budget` | `20` | Flow file: most mails both machines send you in 24 hours, from one shared ledger; 0 sends none. |
