@@ -19,7 +19,7 @@ Frozen. A wrong done line needs a new goal.
 
 1. Open docs/wiki/Documentation.md and find `## Revisions`, then `### DOC-1`.
    Expect: a table with rows r2 above r1, each with a date, a reason and `o30: "..."`, and the DOC-1 line above reads Unreviewed.
-2. Run `python3 skills/workflow-docs/scripts/criteria.py revise DOC-4 --text "Home is one table, reworded" --why "try it" --owner-record o30 --goal prd-revisions --dry-run` is not offered; instead copy the repo to a scratch clone and run the same command without --dry-run.
+2. In a scratch clone run `python3 skills/workflow-docs/scripts/criteria.py revise DOC-4 --text "Home is one table, reworded" --why "try it" --owner-record o30 --goal prd-revisions`.
    Expect: it prints `REVISED DOC-4 r1->r2 (now Unreviewed, awaits review)` and only DOC-4 changes.
 3. In a scratch clone reword a Reviewed requirement in docs/wiki/Delivery.md without a done line, commit, and run `python3 skills/workflow-docs/scripts/criteria.py guard origin/main prd-revisions`.
    Expect: `GUARD REFUSED DEL-... (Delivery): text changed` with a worker fix and an owner fix, and exit status 1.
