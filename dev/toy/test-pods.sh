@@ -2,7 +2,7 @@
 # reads: skills/ skills/workflow-delivery/ skills/workflow-release/
 # reads: skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/board.py
 # reads: skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/graph.py skills/workflow-monitoring/scripts/live_board.py
-# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md
+# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md docs/wiki/Operation.md
 # reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/worker.py
 # reads: skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/board_status.py
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-release/scripts/merge.py dev/package.py

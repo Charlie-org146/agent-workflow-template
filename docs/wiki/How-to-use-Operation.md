@@ -86,13 +86,13 @@ Each requirement and how it is delivered:
 
 ## URLs and deployments
 
-- Wiki: [Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/Monitoring)
-- Milestone: [Monitoring](https://github.com/jcl2018/agent-workflow-template/milestone/6)
+- Wiki: [Operation](https://github.com/jcl2018/agent-workflow-template/wiki/Operation)
+- Milestone: [Operation](https://github.com/jcl2018/agent-workflow-template/milestone/6)
 - Releases: https://github.com/jcl2018/agent-workflow-template/releases
 
 ## Links
 
-- PRD page: [Monitoring](Monitoring)
-- Backlog: [Backlog: Monitoring](https://github.com/jcl2018/agent-workflow-template/milestones)
+- PRD page: [Operation](Operation)
+- Backlog: [Backlog: Operation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
 <!-- kept safety-fixes@585daa17 -->
