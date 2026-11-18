@@ -87,4 +87,4 @@ Each requirement and how it is delivered:
 - PRD page: [Setup](Setup)
 - Backlog: [Backlog: Setup](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept safety-fixes@585daa17 -->
+<!-- kept hands-off-operation@f100bbe6 -->

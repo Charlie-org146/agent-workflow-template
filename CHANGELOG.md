@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.0.63 - 2026-11-18
+
+- Hands-off operation: background fallback worker, auto-archive, readiness start, check-in timer, feature grouping
+- Hands-off operation: the queued-estimate test reads the Dependencies line, rows seen red
+- Hands-off operation: feature lookup skips Home, Tests, Roadmap and How-to pages
+- Lane: re-render the Tests tables
+- Hands-off operation: command docs, settings render
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.53) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/hands-off-operation
+- Hands-off operation: the fallback test no longer depends on this machine's free memory
+- Hands-off operation: no more gh lookups in a run once gh gives no answer
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Monitoring: MON-1, MON-5, MON-6 and MON-11 reviewed by the owner (o141)
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.55) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge main (v1.0.58) into loop/hands-off-operation
+- Review DEL-16, Delivery, MON-10, Monitoring (owner record o147)
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Fix mend.py indent; list archive, archived and timer in listing.json
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Merge main (v1.0.61) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge main (v1.0.62) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. In a repo with `.loop/config.json`, run `python3 skills/workflow-monitoring/scripts/operate.py start`.
+   Expect: a table with the rows session tool, workers, skills, hooks, memory and pool, each ok or FIX with its fix, and a READY or NOT READY line; no goal starts.
+2. Run `python3 skills/workflow-monitoring/scripts/operate.py timer`, then `operate.py timer created`, then `python3 skills/workflow-monitoring/scripts/checkin.py`.
+   Expect: the first shows the interval, the steps and what the timer never does; after `created` the check-in has no timer item under Needs you, and after changing `cadence` it says the check-in timer is stale.
+3. With a session tool set and a goal whose release is published, run `python3 skills/workflow-monitoring/scripts/pool.py archive`, then the check-in.
+   Expect: `ARCHIVED <session> (<goal> released vX)` and, in the next check-in, an Archived section naming it; a running goal's session is untouched.
+4. Run `python3 skills/workflow-monitoring/scripts/checkin.py` in a repo with queued goals that name only issue numbers.
+   Expect: each goal under a feature heading (not "no feature") when its issue has a feature label or its touches map in `.loop/docs.tsv`, and a time instead of `~?` once finished goals exist.
+
 ## v1.0.62 - 2026-11-18
 
 - Build: routing timeout stops the agent's process tree; full_auto defaults off in the template

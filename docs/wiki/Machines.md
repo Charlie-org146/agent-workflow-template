@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/23
 
 How to use: [How-to-use-Machines](How-to-use-Machines)
 
-Review: **Unreviewed** <!-- kept docs-v2@c3bea769 -->
+Review: **Unreviewed** <!-- kept hands-off-operation@f100bbe6 -->
 
 
 ## Problem

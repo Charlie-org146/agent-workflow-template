@@ -24,11 +24,11 @@ LAST_BAD = {}  # pool path -> the malformed entries read_pool set aside on its l
 
 
 def parse(line):
-    """One '- slug: ...' queue line as a dict: slug, goal, touches, depends, done, release, prd (the PRD it builds, e.g.
-    "Monitoring MON-4") and parts (ready parts a split could start first). None when it isn't a goal line."""
+    """One '- slug: ...' queue line as a dict: slug, goal, touches, depends, done, release, prd (e.g. "Monitoring MON-4"),
+    feature (a page name) and parts (ready parts a split could start first); None when it isn't a goal line."""
     if not line.startswith("- slug:"):
         return None
-    item = {"done": [], "touches": [], "depends": [], "parts": [], "release": "", "goal": "", "slug": "", "prd": ""}
+    item = {"done": [], "touches": [], "depends": [], "parts": [], "release": "", "goal": "", "slug": "", "prd": "", "feature": ""}
     for part in line.strip()[2:].split("|"):
         key, _, value = part.partition(":")
         key, value = key.strip(), " ".join(value.split())
@@ -37,7 +37,7 @@ def parse(line):
         elif key in ("touches", "depends", "depends-on", "parts"):
             name = key if key in ("touches", "parts") else "depends"
             item[name] += [x.strip() for x in re.split(r"[,\s]+", value) if x.strip() and x.strip() not in item[name]]
-        elif key in ("slug", "goal", "release", "prd"):
+        elif key in ("slug", "goal", "release", "prd", "feature"):
             item[key] = value
     return item
 
@@ -116,12 +116,12 @@ def parallel_of(cfg):
 
 
 def app_only(cfg):
-    """True when the pod's rule is app sessions only (`workers: app` in .loop/config.json): no background process starts."""
+    """True under `workers: app` (.loop/config.json): no background process starts."""
     return cfg.get("workers") == "app"
 
 
 def pool_fix(why):
-    """The one line every reader prints for a pool it can't trust."""
+    """The line every reader prints for a pool it can't trust."""
     return ("the session pool can't be read (%s); fix: check it with python3 -m json.tool, repair it (moved aside, every held goal is forgotten); "
             "nothing was started" % why)
 
