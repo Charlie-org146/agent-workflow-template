@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     with open(os.path.join(root, ".loop", "config.json"), "w") as f:
         json.dump({"base": "main"}, f)
     with open(os.path.join(root, ".loop", "queue.md"), "w") as f:
-        f.write("## Batch: v1-0-1\n- slug: later-goal | goal: Later (MON-5) | done: Done\n")
+        f.write("## Batch: v1-0-1\n- slug: later-goal | goal: Later (MON-5) | done: Done\n- slug: plain-goal | goal: No id here | done: Done\n")
     runs = os.path.join(root, ".git", "loop", "runs")
     os.makedirs(runs)
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
