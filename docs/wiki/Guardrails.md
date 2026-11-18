@@ -55,12 +55,6 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1).
   - A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4).
   - Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9).
-- GRD-14: **Reviewed 2026-11-16** A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer <!-- reviewed 43180cea -->
-  - Owner o52 (2026-11-15): the ETA is a hard criterion so goals stop sliding. Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal.
-  - A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release.
-  - goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot.
-  - Health warns on a live goal with no ETA, fails on an ETA extended without a record, and fails on a goal past its ETA that is not under Needs you; each rule has a negative control.
-  - Pre-flight: when a goal is frozen, every owner decision it can foresee goes on one Needs you line, each with its options and a recommendation. Until you answer, the ETA reads "after your answers", and the hard ETA counts from your answers. At the pull-request step, a refusal the freeze list didn't foresee (the private-name scan, the memory floor) is logged as a missed pre-flight item.
 - GRD-15: **Unreviewed** Token counts are real or say unread
   - Each step's tokens are read from its session record when the step is recorded.
   - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget.
@@ -99,6 +93,10 @@ None
 - A freshly adopted repo has every guardrail on with its default setting.
 
 ## Revisions
+
+### Retired
+
+- GRD-14: moved to DEL-17
 
 ### GRD-1
 
@@ -193,6 +191,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer <br> Owner o52 (2026-11-15): the ETA is a hard criterion so goals stop sliding. Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal. <br> A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release. <br> goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot. <br> Health warns on a live goal with no ETA, fails on an ETA extended without a record, and fails on a goal past its ETA that is not under Needs you; each rule has a negative control. <br> Pre-flight: when a goal is frozen, every owner decision it can foresee goes on one Needs you line, each with its options and a recommendation. Until you answer, the ETA reads "after your answers", and the hard ETA counts from your answers. At the pull-request step, a refusal the freeze list didn't foresee (the private-name scan, the memory floor) is logged as a missed pre-flight item. | A goal's ETA is a hard limit now lives on Delivery as DEL-17 | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-16 | A goal's ETA is a hard limit: past it the owner chooses ship now, extend once or defer <br> Owner o52 (2026-11-15): the ETA is a hard criterion so goals stop sliding. Every goal records an ETA when it is frozen: the estimate model's high end plus a 25 percent margin, or the time budget when there is no estimate. It sits in the run record and as an ETA line in the goal file, and the check-in shows it for every goal. <br> A goal past its ETA may finish the step it is on, starts no new step and appears under Needs you with three choices: ship now with what is done (the steps left are recorded as skipped and named in the pull request), extend once by an amount in the owner's own words, or move it to the next release. <br> goal.py refuses to extend an ETA or raise a time or token budget without an owner-words record that covers the goal and has not been used; the operation session alone cannot. <br> Health warns on a live goal with no ETA, fails on an ETA extended without a record, and fails on a goal past its ETA that is not under Needs you; each rule has a negative control. <br> Pre-flight: when a goal is frozen, every owner decision it can foresee goes on one Needs you line, each with its options and a recommendation. Until you answer, the ETA reads "after your answers", and the hard ETA counts from your answers. At the pull-request step, a refusal the freeze list didn't foresee (the private-name scan, the memory floor) is logged as a missed pre-flight item. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### GRD-15
@@ -304,16 +303,6 @@ None
 | - | requirement | GRD-12 | no passing test | not enforced |
 | [test-caps-consolidate-allowed](Tests#t-test-caps-consolidate-allowed) | requirement | GRD-13 | Given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed. | PASS 2026-11-16 |
 | [test-caps-own-cap](Tests#t-test-caps-own-cap) | requirement | GRD-13 | Given a goal that raises max_regression_rows in its own config, when qa checks the caps, then it reads the base branch's cap and still refuses; the owner raising the cap on the base lets the goal pass. | PASS 2026-11-16 |
-| [eta-freeze](Tests#t-eta-freeze) | requirement | GRD-14 | Given a goal being frozen, when its fields and goal file are built, then they hold a hard ETA in whole minutes (at least 30) with its basis, and the goal file has an ETA line next to the done lines. | not run |
-| [eta-gate](Tests#t-eta-gate) | requirement | GRD-14 | Given a goal that has spent its ETA, when a step or pr is asked for, then it is refused with one line naming goal.py set and an owner record, and a goal inside its ETA starts its step. | not run |
-| [eta-needs-you](Tests#t-eta-needs-you) | requirement | GRD-14 | Given a goal past its ETA, when the refusal is recorded, then the goal waits with three choices (ship now, extend, defer) as an owner question that full auto never answers, so the check-in lists it under Needs you. | not run |
-| [eta-owner-record](Tests#t-eta-owner-record) | requirement | GRD-14 | Given goal.py set with an ETA extension or a budget raise, when no owner-words record covers the goal or the record was used before, then it is refused and nothing changes; with a fresh covering record it is accepted. | not run |
-| [eta-ship-defer](Tests#t-eta-ship-defer) | requirement | GRD-14 | Given a goal past its ETA and an owner record, when the owner chooses ship now or defer, then ship now records the steps left as skipped and lets the pull request go on, and defer retires the goal for the next release. | not run |
-| [eta-checkin](Tests#t-eta-checkin) | requirement | GRD-14 | Given goals with and without an ETA, when the check-in builds its All sessions table, then each goal's cell shows its ETA clock time, ETA passed, or no ETA. | not run |
-| [eta-health-missing](Tests#t-eta-health-missing) | requirement | GRD-14 | Given a live goal with no ETA, when health runs, then it warns (eta-missing), and the rule's negative control fires. | not run |
-| [eta-health-extended](Tests#t-eta-health-extended) | requirement | GRD-14 | Given an ETA extension whose owner-words record is missing or does not cover the goal, when health runs, then it fails (eta-extended), and the rule's negative control fires. | not run |
-| [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | GRD-14 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
-| - | requirement | GRD-14 | no passing test | not enforced |
 | - | requirement | GRD-15 | no passing test | not enforced |
 | - | requirement | GRD-16 | no passing test | not enforced |
 | - | requirement | GRD-17 | no passing test | not enforced |

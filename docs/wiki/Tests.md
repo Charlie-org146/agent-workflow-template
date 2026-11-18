@@ -256,6 +256,15 @@
 | <a id="t-prd-no-dunder-import-3800"></a>prd-no-dunder-import-3800 | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-14 |
 | <a id="t-pr-body-no-home-3841"></a>pr-body-no-home-3841 | defect | [#3841](https://github.com/jcl2018/agent-workflow-template/issues/3841) closed (2026-11-14) | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-test-caps-qa-refused"></a>test-caps-qa-refused | requirement | DEL-7 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
+| <a id="t-eta-freeze"></a>eta-freeze | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-gate"></a>eta-gate | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-needs-you"></a>eta-needs-you | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-owner-record"></a>eta-owner-record | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-ship-defer"></a>eta-ship-defer | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-checkin"></a>eta-checkin | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-missing"></a>eta-health-missing | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-extended"></a>eta-health-extended | requirement | DEL-17 | not run | - | local | 2026-11-16 |
+| <a id="t-eta-health-overrun"></a>eta-health-overrun | requirement | DEL-17 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-budget-raise"></a>eta-budget-raise | requirement | DEL-7 | not run | - | local | 2026-11-16 |
 | <a id="t-eta-legacy-goal"></a>eta-legacy-goal | requirement | DEL-7 | not run | - | local | 2026-11-16 |
 | <a id="t-private-checks-stop"></a>private-checks-stop | requirement | DEL-4 | not run | - | local | 2026-11-16 |
@@ -556,15 +565,6 @@
 | <a id="t-issues-both-down-nochange"></a>issues-both-down-nochange | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-test-caps-consolidate-allowed"></a>test-caps-consolidate-allowed | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-test-caps-own-cap"></a>test-caps-own-cap | requirement | GRD-13 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
-| <a id="t-eta-freeze"></a>eta-freeze | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-gate"></a>eta-gate | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-needs-you"></a>eta-needs-you | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-owner-record"></a>eta-owner-record | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-ship-defer"></a>eta-ship-defer | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-checkin"></a>eta-checkin | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-health-missing"></a>eta-health-missing | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-health-extended"></a>eta-health-extended | requirement | GRD-14 | not run | - | local | 2026-11-16 |
-| <a id="t-eta-health-overrun"></a>eta-health-overrun | requirement | GRD-14 | not run | - | local | 2026-11-16 |
 
 ## Health
 
