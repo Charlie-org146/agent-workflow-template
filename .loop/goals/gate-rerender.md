@@ -15,3 +15,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-docs-gate-scope.py`.
+   Expect: it prints "PASS: a page only the loop's own re-render commit changed still counts as untouched, and is filed" and no FAIL line.
+2. Open the REL-9 entry in `docs/wiki/Release.md` and its Revisions table.
+   Expect: the requirement says a page only merge.py's own re-render of the Tests tables changed counts as left alone, and the table shows r2 above r1.
+3. Run `wc -c skills/workflow-release/scripts/release.py`.
+   Expect: it prints a number under 19000.
