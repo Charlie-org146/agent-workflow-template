@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory() as tmp:
     layers.publish_board(common, {}, now)
     check(os.path.exists(os.path.join(common, "loop", "top-board.txt")), "top publishes the one board")
     rows = dict(layers.defaults(common, {"agent_command": ["claude", "-p", "--allowedTools", "Bash,Read"], "time_budget_minutes": 240, "token_budget": 100}))
-    check(rows["agent_command is one --allowedTools=<list> token"].startswith("FIX: ") and layers.check_allowed({"agent_command": ["claude", "--allowedTools=Bash,Read"]}) == "ok", "the two-token --allowedTools form is reported, one token is ok")
+    check("two tokens" in rows["agent_command is one --allowedTools=<list> token"] and layers.check_allowed({"agent_command": ["claude", "--allowedTools=Bash,Read"]}) == "ok", "the two-token --allowedTools form is reported, one token is ok")
     json.dump({"slug": "h", "budget": {"minutes": 999, "tokens": 5}}, open(os.path.join(common, "loop", "runs", "h.json"), "w"))
     check(layers.check_budgets(common, {"time_budget_minutes": 240, "token_budget": 100}).startswith("FIX: h "), "a budget above the owner's cap is reported; caps stay the owner's")
     check(all(v == "ok" for k, v in dict(layers.defaults(common, {})).items() if "budgets" not in k and "allowed" not in k), "the other defaults hold")
