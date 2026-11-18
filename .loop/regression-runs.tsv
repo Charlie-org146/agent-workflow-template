@@ -383,7 +383,6 @@ mon14-repo-blocks	PASS	2026-11-12
 mon15-merge-lock	PASS	2026-11-12	
 mon15-pod-owner	PASS	2026-11-12	
 mon16-checkin-grouped	PASS	2026-11-18	
-mon16-checkin-grouped	PASS	2026-11-16	
 mon16-machine-line	PASS	2026-11-18	
 mon4-checkin-no-board	PASS	2026-11-10	
 mon5-checkin-machine-line	PASS	2026-11-16	
@@ -647,9 +646,6 @@ toy-no-leftovers	PASS	2026-11-12
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
-unproven-blocks	PASS	2026-11-12	
-unread-closes-none	PASS	2026-11-12	
-unread-not-green	PASS	2026-11-12	
 unattended-sends-warn	PASS	2026-11-18	
 unproven-blocks	PASS	2026-11-18	
 unread-closes-none	PASS	2026-11-18	
