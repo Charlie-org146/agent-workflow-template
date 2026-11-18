@@ -26,6 +26,9 @@ import guards  # noqa: E402
 import proctree  # noqa: E402
 import role  # noqa: E402
 
+# Subprocesses fail instead of waiting for a terminal prompt, as in the other delivery scripts.
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 FILE = "~/.workflow-loop/agents.json"
 HEAVY = {"agent": "claude", "model": "sonnet", "output": "claude-json", "prompt": "arg",
          "command": ["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"],

@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.59 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.58 - 2026-11-18
 
 - Build: monitor.py plan and plan approve, routing.py check, toy test
