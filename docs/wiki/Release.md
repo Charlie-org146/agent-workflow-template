@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept prd-principles@f0f69c2b -->
+Review: **Unreviewed** <!-- kept extra-cols-links@d19c66b5 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 

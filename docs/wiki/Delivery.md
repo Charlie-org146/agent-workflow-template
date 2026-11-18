@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept prd-principles@f0f69c2b -->
+Review: **Unreviewed** <!-- kept extra-cols-links@d19c66b5 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
