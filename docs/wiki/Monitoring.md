@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
 Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
 
-How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
+How to use: [How-to-use-Monitoring](How-to-use-Monitoring). The notification command retries budget-held events on a later check-in through the shared mail stream.
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.

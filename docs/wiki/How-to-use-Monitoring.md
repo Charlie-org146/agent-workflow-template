@@ -3,7 +3,7 @@
 
 ## What it's for
 
-One session governs many goals at once and shows a live board of what's running and what needs you, and each check-in draws live goals with their time left and waits, with this machine's status;.
+One session governs many goals at once and shows a live board of what's running and what needs you, and each check-in draws live goals with their time left and waits, with this machine's status. New mail events share a send budget across machines; a deferred event retries on a later check-in.
 
 ### What's delivered
 
