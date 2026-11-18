@@ -22,4 +22,4 @@ links-outside-fails. c/d) existing size rows.
 - Script size: wiki.py 19,319 and milestones.py 19,347 already past 19,000; neither may pass 20,480.
 
 ## Out of scope
-Moving DOC-19 checks, changing lane (check --own) scope, thermis page content.
+Moving DOC-19 checks, changing lane (check --own) scope, private page content.

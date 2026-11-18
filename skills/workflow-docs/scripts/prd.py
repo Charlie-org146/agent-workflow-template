@@ -45,7 +45,7 @@ def names(rule):
 
 def core(parts, rule):
     """The section names other than Usage, Deployments, Runbook."""
-    return [name for name, _ in parts if name not in (rule["usage"], rule["deploy"], rule["runbook"])]
+    return [name for name, _ in parts if name not in (rule["usage"], rule["deploy"], rule["runbook"], rule["revs"])]
 
 
 def paras(lines):
@@ -323,9 +323,7 @@ READER = "LOOP_PRD_READER"  # run as `COMMAND URL`; stdout is the PRD
 
 
 def read_link(url):
-    """(text, None) of the PRD at a source (`url:<link>` or `mcp:<server>:<resource>`), or (None, why): never a guess or
-    cache. A reader command in $LOOP_PRD_READER (given the whole source) wins, and is how an MCP connector is reached;
-    else a file path, file: link or http(s) page. An mcp source or a Notion link needs the reader (no sign-in)."""
+    """(text, None) of the PRD at a `url:` or `mcp:` source via $LOOP_PRD_READER or a file or http(s) page, else (None, why)."""
     try:
         source, url = url, url[4:] if url.startswith("url:") else url
         reader = os.environ.get(READER)
@@ -347,8 +345,7 @@ def read_link(url):
 
 
 def out(env, *args, **kw):
-    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER: `WRITER SOURCE comment|replace ID|remove ID`,
-    text on stdin). Never raises."""
+    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER), text on stdin; never raises."""
     cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
     if not cmd:
         return False, "set %s to the command that writes to the document" % env
@@ -378,6 +375,28 @@ def main():
         item.add_argument(name, required=True)
     args = parser.parse_args()
     return args.func(args)
+
+
+BOX = re.compile(r"\[([^\]:|]+): ([^\]|]+?) \| ([^\]|]+)\]")
+FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
+
+
+def diagram(name, text):
+    """DOC-19: the System diagram holds a box per What's delivered row, none without a row, and a Legend:."""
+    import render
+    out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
+    fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
+    if not fence:
+        return [("HOWTO", name, "DOC-19 no System diagram. Fix: add '### System diagram' and a ```text fence")]
+    boxes = {(k.strip(), c.strip().replace("`", "")) for k, c, _ in BOX.findall(fence.group(1))}
+    rows = {(kind, comp) for comp, kind, _ in render.delivered(text)[1]}
+    for kind, comp in sorted(rows - boxes):
+        bad("the System diagram has no box for '%s: %s'. Fix: add it" % (kind, comp))
+    for kind, comp in sorted(boxes - rows):
+        bad("the System diagram names '%s: %s', which What's delivered lacks. Fix: remove the box" % (kind, comp))
+    if "Legend:" not in fence.group(1):
+        bad("the System diagram has no 'Legend:' line")
+    return out
 
 
 if __name__ == "__main__":

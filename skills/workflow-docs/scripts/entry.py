@@ -11,10 +11,10 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (from .loop/config.json through references/commands.md, Entry point templates), then a
+regression, health and settings (see references/commands.md, Entry point templates), then a
 Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
 Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
-holds no count, date or machine path, so it changes only when a page or a setting does.
+holds no count, date or machine path.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
 (the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
@@ -47,7 +47,8 @@ def version_key(text):
 
 def read(path, default=""):
     try:
-        return open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
     except OSError:
         return default
 
@@ -219,8 +220,7 @@ def agent_files(cfg):
 
 
 def installed():
-    """The installed template version (workflow-package.json); empty for a checkout. LOOP_INSTALLED_VERSION counts only
-    with LOOP_TEST=1."""
+    """The installed template version (workflow-package.json); empty for a checkout; LOOP_INSTALLED_VERSION only with LOOP_TEST=1."""
     if os.environ.get("LOOP_TEST") == "1" and os.environ.get("LOOP_INSTALLED_VERSION"):
         return os.environ["LOOP_INSTALLED_VERSION"]
     try:
@@ -367,7 +367,7 @@ def perm_check(root):
     if not os.path.exists(os.path.join(root, ".loop", "permissions.tsv")):
         return ["NOTE no .loop/permissions.tsv: routines declare no permissions yet. Fix: add its rows, then permissions.py write"] if counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")) else []
     try:
-        written = json.load(open(os.path.join(root, ".claude", "settings.json"), encoding="utf-8")).get("permissions") or {}
+        written = json.loads(read(os.path.join(root, ".claude", "settings.json"), "{}")).get("permissions") or {}
     except (OSError, ValueError):
         written = {}
     for _, row in counting.perm_rows(os.path.join(root, ".loop", "routines.tsv")):
@@ -386,6 +386,37 @@ def perm_check(root):
             if kind == "allow" and inner and any(k == "deny" and counting.perm_matches(r, inner.group(1), inner.group(2)) for k, r, _ in mine):
                 findings.append("CONFLICT %s: the allow %s is covered by a deny, which wins" % (routine, rule))
     return findings
+
+
+ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
+NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
+
+
+def howto_items(name, text, feature):
+    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement, and none else."""
+    have, top, sub = {}, "", ""
+    for line in feature.splitlines():
+        top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
+        hit = re.match(r"^- ([A-Z]{2,5}-\d+):", line)
+        if hit and top == "Requirements":
+            have[hit.group(1)] = sub
+    items = {m.group(1) for m in map(ITEM.match, text.splitlines()) if m}
+    out = []
+    for kind, ids, fix in (("no item for the functional requirement", sorted(k for k, v in have.items() if v == "Functional" and k not in items),
+                            "add '- ID: how it is delivered' under 'How to reach or run it'"),
+                           ("an item for an ID its feature page lacks:", sorted(items - set(have)), "remove it or fix the ID")):
+        out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
+    return out
+
+SKILL = re.compile(r"`(/workflow-[a-z]+)[ `]")
+CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
+
+
+def unlisted(feature, how):
+    """DOC-19: commands, skills and cron schedules the feature page names that its How-to-use page lacks."""
+    body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
+    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
+    return sorted(n for n in names if n not in how)
 
 
 if __name__ == "__main__":

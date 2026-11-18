@@ -356,3 +356,21 @@ def sync(root, dry=False, accept=(), opened=False):
         counting.ledger(root, held)
     print("SYNC: %d in step, %d with a delta, %d not connected" % (same, new, away))
     return 1 if dry and new else 0
+
+
+AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
+
+
+def stands_alone(page, text, repo="", sites=()):
+    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases, wiki and README (or a site in `sites`),
+    no owner/repo#N, no machine path."""
+    out, skip = [], False
+    for number, line in enumerate(text.splitlines(), 1):
+        skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
+        for hit in ([] if skip else AWAY.findall(line)):
+            hit = hit.rstrip(".,;:)")
+            near = NEAR.match(hit)
+            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
+                out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
+    return out

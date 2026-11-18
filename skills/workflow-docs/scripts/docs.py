@@ -294,6 +294,8 @@ def cmd_check(args):
     point = entry.problems(root)
     notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]
     found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    notes += [i for i in found if i[0] == "NOTE"]
+    found = [i for i in found if i[0] != "NOTE"]
     from entry import perm_check
     for line in perm_check(root):
         (notes if line.startswith("NOTE") else found).append(("PERMISSIONS", "permissions.tsv", line))
@@ -324,7 +326,7 @@ def cmd_publish(args):
         sys.exit("REFUSED: no pages. Fix: run add first.")
     if config(root).get("criteria"):
         render.refresh(root)
-    found = problems(root, None) + [c for c in contract(root) if c[0] != "CHANGED"]
+    found = problems(root, None) + [c for c in contract(root) if c[0] not in ("CHANGED", "NOTE")]
     found += [c for c in counts(root) if c[1].startswith(wiki_dir(root) + "/")]
     if found:
         for kind, page, detail in found:
@@ -435,6 +437,20 @@ def main():
         item.set_defaults(func=func)
     args = parser.parse_args()
     return args.func(args)
+
+
+def alone(root, folder, repo=""):
+    """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
+    import audit, milestones, prdcopy
+    out, sites = [], milestones.origins(root)
+    files = [(n[:-3], os.path.join(root, folder, n)) for n in sorted(os.listdir(os.path.join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
+    files += [(os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/"), os.path.join(d, n)) for d, _, ns in sorted(os.walk(os.path.join(root, "skills")))
+              for n in sorted(ns) if n.endswith(".md")]
+    for name, path in files:
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        out += prdcopy.stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
+    return out
 
 
 if __name__ == "__main__":

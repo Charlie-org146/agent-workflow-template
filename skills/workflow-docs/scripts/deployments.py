@@ -228,7 +228,7 @@ def rules():
                 "groups": listed("requirement_groups", ", ".join(pf.GROUPS)),
                 "runbook": found.get("runbook_section", "Runbook"),
                 "fields": listed("runbook_fields", "Serves, Schedule, Steps, Full run, Output, Never, Check"),
-                "deploy": found.get("deployments_section", "Deployments"), "access": listed("deployments_access", "public, sign-in"),
+                "revs": "Revisions", "deploy": found.get("deployments_section", "Deployments"), "access": listed("deployments_access", "public, sign-in"),
                 "page_cols": listed("deployments_page", ", ".join(PAGE_COLS)),
                 "delivery_cols": listed("deployments_delivery", ", ".join(DELIVERY_COLS))}
     except (OSError, AttributeError, KeyError, ValueError):
@@ -365,9 +365,10 @@ def howto(root, folder, features):
             found.append(("HOWTO", name, "DOC-18 sections are %s, in that order, each once, none other (got %s). Fix: rename, reorder or remove" % (" · ".join(PARTS), short(", ".join(heads)))))
         feature = slurp(os.path.join(root, folder, page + ".md"))
         if not linked(root, page, feature):
+            import entry, milestones
             how, book = slurp(path), next((x for n, _, x in pf.parts(feature) if n == "Runbook"), [])
-            found += milestones.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
-            found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in milestones.unlisted(feature, how)]
+            found += entry.howto_items(name, how, feature) + milestones.kinds(name, how, {x.strip()[4:].strip() for _, x in book if x.strip().startswith("### ")})
+            found += [("HOWTO", name, "DOC-19 the feature page names `%s`, which this page does not list. Fix: list it" % c) for c in entry.unlisted(feature, how)]
             found += milestones.diagram(name, how)
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))

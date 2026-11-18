@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17) and the How-to-use page checks (DOC-19), called by `docs.py sync` and `docs.py check`; no command of its own.
-
-Sync: a repo opts in with `milestones_source` in .loop/config.json (`url:<link>` or `mcp:<server>:<resource>`); with none, nothing is
-read or called. A milestone is its title and `state | due` (`open | due 2026-12-01`, `closed | no due`): on the page one line
-`- TITLE: state | due` each, on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both sides last agreed on is kept in
-.loop/milestones.md; a change on one side is a DELTA (posted once as an issue and once as a page comment, ledger key
-`milestones:TITLE`), a milestone that differs on both is a CONFLICT, and nothing is overwritten. `docs.py sync --accept
-milestones:TITLE=repo|source` writes that side's text to the other. A side that cannot be reached prints `not connected` and exits 0;
---dry-run only reports (exit 1 on a delta); --open leaves listing the ledger to audit.sync."""
+"""Milestone sync (DOC-17): the repo's GitHub milestones against an external Milestones page, opt-in (`milestones_source` in config),
+via `docs.py sync`; a delta or CONFLICT is posted once and nothing is overwritten (`--accept milestones:TITLE=repo|source`).
+Also DOC-19 how-to checks and DOC-20 revisions (revise, retire, migrate, guard)."""
 import json
 import os
 import re
+import sys
 from os.path import join
 
 import counting
 import criteria as cr
+import pageformat as pf
 import prd
+import render
 from criteria import put, sha
 from prd import out as post
 
@@ -57,7 +54,7 @@ def repo_side():
 
 
 def backlog(page, held={}):
-    """DOC-17: the milestone "Backlog: PAGE" for a page's delta issues, made when missing; "" when gh can neither list nor make it."""
+    """DOC-17: the milestone "Backlog: PAGE" for a page's delta issues, created when missing, "" when gh cannot list or make it."""
     title = "Backlog: " + page
     if title not in held:
         have = repo_side()[0]
@@ -170,28 +167,7 @@ def sync(root, args):
     return 0
 
 
-ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
-
-
-def howto_items(name, text, feature):
-    """DOC-19: the How-to-use page holds one item '- ID: how it is delivered' per functional requirement of its feature page, no other."""
-    have, top, sub = {}, "", ""
-    for line in feature.splitlines():
-        top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
-        hit = re.match(r"^- ([A-Z]{2,5}-\d+):", line)
-        if hit and top == "Requirements":
-            have[hit.group(1)] = sub
-    items = {m.group(1) for m in map(ITEM.match, text.splitlines()) if m}
-    out = []
-    for kind, ids, fix in (("no item for the functional requirement", sorted(k for k, v in have.items() if v == "Functional" and k not in items),
-                            "add '- ID: how it is delivered' under 'How to reach or run it'"),
-                           ("an item for an ID its feature page lacks:", sorted(items - set(have)), "remove it or fix the ID")):
-        out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
-    return out
-
-
-# --- How-to-use Kinds (DOC-19): each delivered row names a Kind and the page carries its block ---
-KHEAD = "| Component | Kind | What it is | How a user uses it |"
+# --- How-to-use Kinds (DOC-19) ---
 ROUTINE = "Scheduled routine"
 KINDS = {
     "Site/URL": ["URLs", "Served by", "Check", "Deploy"],
@@ -203,52 +179,18 @@ KINDS = {
     "Message/channel": ["Trigger", "Recipients", "Subject", "Resend"],
     "Playbook": ["Steps", "Templates", "Stop rules"],
 }
-FIELD = re.compile(r"^- \*\*([A-Z][A-Za-z ]*):\*\*\s*(.*)$")
 ADDRESS = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
-
-
-def part(text, name):
-    """The lines under '## name'."""
-    head = "\n## %s\n" % name
-    return text.split(head, 1)[1].split("\n## ", 1)[0] if head in text else ""
-
-
-def blocks(body):
-    """{heading: {field: text}} per '### ' block (indented lines continue a field)."""
-    found, cur, last = {}, None, None
-    for line in body.splitlines():
-        if line.startswith("### "):
-            cur, last = line[4:].strip(), None
-            found[cur] = {}
-        elif cur is not None and FIELD.match(line):
-            last, text = FIELD.match(line).groups()
-            found[cur][last] = found[cur].get(last, "") + text
-        elif cur is not None and last and line[:1].isspace():
-            found[cur][last] += " " + line.strip()
-    return found
-
-
-def delivered(text):
-    """(header line, [(component, kind, cells)]) of the What's delivered table."""
-    block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
-    lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
-    out = []
-    for line in lines[2:]:
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        out.append((cells[0].replace("`", ""), cells[1] if len(cells) > 1 else "", len(cells)))
-    return (lines[0] if lines else ""), out
 
 
 def kinds(name, text, on_page=()):
-    """DOC-19: trouble in a How-to-use page's What's delivered table and the block each row needs (on_page: runbooks on the feature page)."""
+    """DOC-19: (kind, page, detail) findings for a How-to-use page's What's delivered table and the block each row needs."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
-    header, table = delivered(text)
-    if header != KHEAD:
-        bad("the What's delivered header is '%s' (got '%s'). Fix: use that header" % (KHEAD, header))
+    header, table = render.delivered(text)
+    if header != render.KHEAD:
+        bad("the What's delivered header is '%s' (got '%s'). Fix: use that header" % (render.KHEAD, header))
     if not table:
         bad("What's delivered holds no row. Fix: add a row for each component, with its Kind")
-    reach, books_here = blocks(part(text, "How to reach or run it")), blocks(part(text, "Runbooks"))
+    reach, books_here = render.blocks(render.part(text, "How to reach or run it")), render.blocks(render.part(text, "Runbooks"))
     wanted = set()
     for component, kind, cells in table:
         if cells != 4:
@@ -279,55 +221,157 @@ def kinds(name, text, on_page=()):
     return out
 
 
-SKILL = re.compile(r"`(/workflow-[a-z]+)[ `]")
-CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
+# --- DOC-20: revisions (criteria.py revise, retire, migrate, guard) ---
+NINE = ("Delivery", "Setup", "Regression", "Automation", "Documentation", "Guardrails", "Health", "Machines", "Monitoring")
 
 
-def unlisted(feature, how):
-    """DOC-19: the commands, skills (`/workflow-x`) and schedules (a cron in backticks) a feature page names that its How-to-use page lacks."""
-    body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
-    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
-    return sorted(n for n in names if n not in how)
+def no(code, why):
+    sys.exit("[%s] %s. No changes written." % (code, why))
 
 
-# --- System diagrams and pages that stand alone (DOC-19) ---
-BOX = re.compile(r"\[([^\]:|]+): ([^\]|]+?) \| ([^\]|]+)\]")
-FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
-HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "machine", "routine", "legend", "guard")
+def record(rid, slug, *names):
+    try:
+        with open(join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv"), encoding="utf-8") as fh:
+            rows = [x.rstrip("\n").split("\t") for x in fh]
+    except OSError:
+        rows = []
+    for r in rows:
+        if len(r) == 5 and r[0] == rid and slug in r[4].split(",") and set(names) & set(r[4].split(",")):
+            return '%s: "%s"' % (rid, pf.enc(" ".join(json.loads(r[3]).split()[:12])))
 
 
-def diagram(name, text):
-    """DOC-19: '### System diagram' has a box '[Kind: Component | where it runs]' per delivered row, none without one, and a Legend:."""
-    out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
-    fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
-    if not fence:
-        return [("HOWTO", name, "DOC-19 no System diagram. Fix: add '### System diagram' and a ```text fence")]
-    boxes = {(k.strip(), c.strip().replace("`", "")) for k, c, _ in BOX.findall(fence.group(1))}
-    rows = {(kind, comp) for comp, kind, _ in delivered(text)[1]}
-    for kind, comp in sorted(rows - boxes):
-        bad("the System diagram has no box for '%s: %s'. Fix: add it" % (kind, comp))
-    for kind, comp in sorted(boxes - rows):
-        bad("the System diagram names '%s: %s', which What's delivered lacks. Fix: remove the box" % (kind, comp))
-    if "Legend:" not in fence.group(1):
-        bad("the System diagram has no 'Legend:' line")
-    return out
+def rput(text, tab, ret):
+    got = (["### Retired\n\n" + "\n".join("- %s: %s" % kv for kv in sorted(ret.items()))] if ret else []) + [
+        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(set(tab) - {"Retired"}, key=lambda k: (k[:2], int(re.sub(r"\D", "", k) or 0)))]
+    block = "## Revisions\n\n" + "\n\n".join(got) + "\n"
+    if "\n## Revisions\n" in text:
+        head, rest = text.split("\n## Revisions\n", 1)
+        return head + "\n" + block + ("\n## " + rest.split("\n## ", 1)[1] if "\n## " in rest else "")
+    top, mid, rest = text.partition("\n## Tests")
+    return top.rstrip("\n") + "\n\n" + block + mid + rest
 
 
-def home_diagram(text):
-    """DOC-4: Home's diagram block names each part of the loop."""
-    fence = FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
-    if not fence:
-        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
-    low = fence.group(1).lower()
-    return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
+def save(path, old, new):
+    if cr.slurp(path) != old:
+        no("REV-ROW", "%s changed while it was read" % path)
+    with open(path + ".%d.tmp" % os.getpid(), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(new)
+    os.replace(path + ".%d.tmp" % os.getpid(), path)
 
 
-AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
-NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
+def slug_of(args):
+    return args.goal or cr.git("branch", "--show-current").replace("loop/", "", 1)
+
+
+def revise(args):
+    """DOC-20: revise a requirement's text or retire it, keeping the earlier text as a row."""
+    root, key = cr.git("rev-parse", "--show-toplevel"), args.id
+    for rel in cr.pages(root):
+        text = cr.slurp(join(root, rel))
+        lines = text.split("\n")
+        hit = [(n, m) for n, x in enumerate(lines) for m in [cr.LINE.match(x)] if m and m.group(1) == key]
+        if hit:
+            break
+    else:
+        no("REV-ROW", "no live requirement " + key)
+    (n, m), page, below = hit[0], os.path.basename(rel)[:-3], cr.subs(lines, hit[0][0])
+    said = record(args.owner_record, slug_of(args), key, page)
+    tab, ret, _ = pf.revs(dict(cr.sections(text)).get("Revisions") or [])
+    if not said or key not in tab:
+        no("REV-RECORD" if not said else "REV-ROW", "need an owner record naming %s and %s or %s" % (slug_of(args), key, page) if not said else "%s has no table. Fix: criteria.py migrate" % key)
+    rows, old = tab[key], pf.unit(m.group(4), below)
+    if args.command == "retire":
+        form = args.as_.replace("merged:", "merged into ").replace("moved:", "moved to ").replace("retired", "Retired")
+        live = {x.group(1) for r in cr.pages(root) for x in map(cr.LINE.match, cr.slurp(join(root, r)).split("\n")) if x}
+        if not pf.RET.match("- XX-1: " + form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
+            no("IDS-MISSING", "--as is Retired, merged:ID or moved:ID with a live ID")
+        ret[key], fresh, subs = form, old, []
+    else:
+        body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
+        if not (body and body[0].strip()) or "\n" in args.text:
+            no("REV-NOOP", "empty text or a line break (use --text-file)")
+        subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
+        fresh = pf.unit(body[0].strip(), subs)
+        if fresh == old:
+            no("REV-NOOP", key + " already reads so")
+    rows.insert(0, ["r%d" % (len(rows) + 1), cr.today(), fresh, pf.enc(" ".join(args.why.split())), said])
+    lines[n:n + 1 + len(below)] = [] if args.command == "retire" else ["- %s: **Unreviewed** %s" % (key, body[0].strip())] + subs
+    save(join(root, rel), text, rput("\n".join(lines), tab, ret))
+    print(("RETIRED %s as %s" % (key, ret[key])) if args.command == "retire" else "REVISED %s r%d->r%d (now Unreviewed, awaits review)" % (key, len(rows) - 1, len(rows)))
+    return 0
+
+
+def migrate(args):
+    root, rule, plans = cr.git("rev-parse", "--show-toplevel"), cr.rules(), []
+    for rel in cr.pages(root):
+        page, text = os.path.basename(rel)[:-3], cr.slurp(join(root, rel))
+        body = dict(cr.sections(text))
+        if page not in (args.page or NINE) or not body.get(rule["sections"][1]):
+            continue
+        said = record(args.owner_record, slug_of(args), page)
+        tab, ret, _ = pf.revs(body.get(rule["revs"]) or [])
+        day = re.search(r"\d{4}-\d\d-\d\d", next((x for x in text.split("\n") if x.startswith("Review:")), ""))
+        for _, m, below in cr.blocks(body[rule["sections"][1]]):
+            if m and m.group(1) not in tab | ret.keys():
+                tab[m.group(1)] = [["r1", m.group(3) or (day and day.group(0)) or cr.today(), pf.unit(m.group(4), below),
+                                    "migration r1; date from " + ("its stamp" if m.group(3) else "the Review line" if day else "the run day"), said]]
+        if not said:
+            no("REV-RECORD", "need an owner record naming %s and %s" % (slug_of(args), page))
+        plans.append((rel, text, rput(text, tab, ret)))
+    for rel, text, fresh in [x for x in plans if x[1] != x[2]]:
+        save(join(root, rel), text, fresh)
+        print("MIGRATED " + rel)
+    print("MIGRATE OK")
+    return 0
+
+
+def guard(args):
+    """DOC-20: GUARD OK, or exit 1 naming a Reviewed requirement changed with no done line or owner record."""
+    root = cr.git("rev-parse", "--show-toplevel")
+    base = args.base or next((r for r in ("origin/main", "main") if cr.git("rev-parse", "--verify", "-q", r, check=False)), "origin/main")
+    if not cr.git("rev-parse", "--verify", "-q", base + "^{commit}", check=False):
+        sys.exit("[GUARD-BASE] cannot read %s (shallow: %s). Fix: git fetch origin main" % (base, cr.git("rev-parse", "--is-shallow-repository", check=False)))
+    slug, rule, sec = args.slug or cr.git("branch", "--show-current").replace("loop/", "", 1), cr.rules(), cr.rules()["sections"][1]
+    goal = cr.git("show", "HEAD:.loop/goals/%s.md" % slug, check=False).split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+    goal = "\n".join(re.findall(r"^\d+\. .*$", goal, re.M))
+    bad = []
+    for rel in cr.git("diff", "--no-renames", "--name-only", base + "...HEAD", "--", cr.folder_of(root)).split():
+        was, now = (dict(cr.sections(cr.git("show", "%s:%s" % (r, rel), check=False))) for r in (base, "HEAD"))
+        mine = lambda d: {m.group(1): (m.group(2), pf.unit(m.group(4), b)) for _, m, b in cr.blocks(d.get(sec) or []) if m}
+        old, new, page = mine(was), mine(now), os.path.basename(rel)[:-3]
+        have, rows = (pf.revs(d.get(rule["revs"]) or [])[0] for d in (now, was))
+        for key, (mark, text) in old.items():
+            fresh = have.get(key, [])[:len(have.get(key, [])) - len(rows.get(key, []))]
+            if mark == "Unreviewed" or new.get(key, ("", ""))[1] == text or re.search(r"(?<![A-Z0-9-])%s(?!\d)" % key, goal) or any(
+                    record(r[4].split(":")[0], slug, key, page) for r in fresh[:1] if len(r) == 5):
+                continue
+            bad.append("%s (%s): %s changed. Worker fix: revert it, or goal.py finding %s \"%s <gap>\" --requirement %s. Owner fix: an owner record "
+                       "naming %s and %s or %s" % (key, page, "text" if key in new else "removed", slug, key, key, slug, key, page))
+    sys.exit("GUARD REFUSED " + "\nGUARD REFUSED ".join(bad)) if bad else print("GUARD OK")
+    return 0
+
+
+def add_parsers(sub):
+    for name, func in (("revise", revise), ("retire", revise), ("migrate", migrate), ("guard", guard)):
+        item = sub.add_parser(name)
+        item.set_defaults(func=func)
+        if name == "guard":
+            item.add_argument("base", nargs="?", default="")
+            item.add_argument("slug", nargs="?", default="")
+            continue
+        item.add_argument("--owner-record", required=True)
+        item.add_argument("--goal", default="")
+        if name == "migrate":
+            item.add_argument("--page", action="append")
+            continue
+        item.add_argument("id")
+        item.add_argument("--why", required=True)
+        item.add_argument("--as", dest="as_", required=True, help="retired, merged:ID or moved:ID") if name == "retire" else [
+            item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]
 
 
 def origins(root):
-    """The repo's own sites: `public_origins` in .loop/config.json and scripts/public-origins.json (a list or {"origins": [...]})."""
+    """The repo's own sites: `public_origins` in config and scripts/public-origins.json."""
     out = counting.config_of(root).get("public_origins")
     out = list(out) if isinstance(out, list) else []
     try:
@@ -339,28 +383,8 @@ def origins(root):
     return tuple(x.rstrip("/") for x in out if isinstance(x, str) and x.startswith("https://"))
 
 
-def stands_alone(page, text, repo="", sites=()):
-    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases, wiki and README (or a site in `sites`),
-    no owner/repo#N, no machine path."""
-    out, skip = [], False
-    for number, line in enumerate(text.splitlines(), 1):
-        skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
-        for hit in ([] if skip else AWAY.findall(line)):
-            hit = hit.rstrip(".,;:)")
-            near = NEAR.match(hit)
-            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
-                out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
-    return out
-
-
-def alone(root, folder, repo=""):
-    """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
-    out, sites = [], origins(root)
-    files = [(n[:-3], join(root, folder, n)) for n in sorted(os.listdir(join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
-    files += [(os.path.relpath(join(d, n), root).replace(os.sep, "/"), join(d, n)) for d, _, ns in sorted(os.walk(join(root, "skills")))
-              for n in sorted(ns) if n.endswith(".md")]
-    for name, path in files:
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
-        out += stands_alone(name, text, repo, sites) + (home_diagram(text) if name == "Home" else [])
-    return out
+from audit import home_diagram  # noqa: E402,F401
+from entry import unlisted  # noqa: E402,F401
+from docs import alone  # noqa: E402,F401
+from prd import diagram  # noqa: E402,F401
+from prdcopy import stands_alone  # noqa: E402,F401

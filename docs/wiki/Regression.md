@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept docs-gate-scope@49a1eff1 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept prd-revisions@60ce3cfa -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -77,6 +77,68 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 - Every closed issue fixed by a goal has a passing defect test listed in its release note.
 - A GitHub run and a local run of the same rows end the same way.
 
+## Revisions
+
+### REG-1
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Three kinds of tests <br> Requirement tests: one or more for every Reviewed requirement, functional and non-functional alike. <br> Workflow tests: end-to-end runs of a whole flow on a toy repo (for example a goal from freeze to release), proving the steps work together. <br> Defect tests: one for every issue, finding or bug that gets fixed, proving it stays fixed. <br> A requirement with no passing test shows as not enforced; a fix isn't finished until its defect test exists and passes. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-2
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Test format <br> Every test is listed in one fixed format, grouped by feature, wherever tests are shown (the wiki, the GitHub run summary, the health report): its kind, what it guards (the requirement, the workflow, or the issue with its state), what it checks in one plain line, when it runs, its last result and date, and whether it has been seen failing once. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-3
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | One command, three places <br> One command runs the suite the same way for me, the loop and GitHub Actions. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-4
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | When tests run <br> In the loop, each goal runs only the rows affected by its changes plus its own new rows, at qa; ship and release reuse that run when no code changed since. <br> Before a pull request merges, the affected rows run again on the merged result. <br> The full suite (every requirement, workflow and defect test) runs in GitHub Actions on the Automation schedule (every few hours by default) and on every release, never on every goal. <br> I can run the full suite or any part of it at any time. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-5
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Failures go to GitHub <br> One labeled issue per failing test, updated while it fails and closed when it passes; known failures don't block; it only previews unless `--live` is given, and the scheduled workflows pass `--live`. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-6
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Every fixed issue leaves a test <br> A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. <br> Each release note lists the issues it fixed, each with its defect test, so every version carries the regressions for what it fixed. <br> A reopened issue's test is marked failing until it passes again. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Fast in the loop <br> Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't. <br> The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over. <br> Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off. <br> Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit. <br> A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Controllable <br> Which levels run where, the GitHub schedule, the time limits and how many test lanes run at once are settings. <br> Lanes running side by side never share files or ports or time each other out, and a lane over its limit says so. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-9
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-10 | Honest results <br> Every test has been seen failing once, or shows as unproven. <br> A test that fails then passes on the same commit is marked flaky, never silently retried. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-13 | Red proof for rows a platform can't run <br> A row whose red proof needs another machine can be recorded owed (`red ID --owed --runner R`): it reads PENDING instead of UNPROVEN, one to-do issue labelled `other-machine` opens on the row's feature milestone, and neither the goal's pr lane nor the release waits for it. A real red proof clears it. <br> A row the local platform can't run (the bash toy rows on native Windows exit 77) is skipped with its reason and is never counted as seen failing: a skip, on any platform, never sets the seen-failing date. <br> Its red proof runs on a capable runner (Linux or macOS, in CI or a session), and the result is written back to the row with the runner and the commit it ran on; a Windows runner can't be named. <br> A pull request that adds such a row lists the exact red commands still owed, so the proof is run and written back before the row counts as proven. <br> A loop run that fails only on rows both skipped on this platform and unproven (qa or ship) waits for the off-platform proof, naming the rows and the red commands, and spends no failed try; a real failure still does. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -95,9 +157,9 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [toys-no-leak-lane-pool](Tests#t-toys-no-leak-lane-pool) | requirement | REG-1 | Given a toy that takes a lane port lease and counter lock as the CI runner's four LEAK rows did, when it runs under a fresh home, then ~/.workflow-loop stays empty because the harness points LOOP_LANES_DIR at a temp pool, and a toy aimed at the real lanes/ is still caught. | not run |
 | [homeguard-other-writer](Tests#t-homeguard-other-writer) | requirement | REG-1 | Given another session writes the schedule registry (a real repo, a backup) or moves ~/.workflow-loop/skills-main (START.md rewritten, clean afterwards) during a toy run, when the guard checks, then it reports no LEAK (#4760). | not run |
 | [homeguard-own-write](Tests#t-homeguard-own-write) | requirement | REG-1 | Given a toy itself registers a fixture repo from the temp folder in the schedule registry, or edits or adds a file in ~/.workflow-loop/skills-main, when the guard checks, then it still reports the LEAK (#4760). | not run |
-| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-12 |
-| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-12 |
-| [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-12 |
+| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-18 |
+| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-18 |
+| [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-18 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-2 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-12 |
 | [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-2 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-12 |
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-2 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
@@ -176,9 +238,9 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [config-lane-unparseable](Tests#t-config-lane-unparseable) | requirement | REG-4 | Given a .loop/config.json that no longer parses, when the affected rows are chosen, then every row that reads it reruns (fail wide) (#4321). | PASS 2026-11-15 |
 | [config-lane-duplicate-same](Tests#t-config-lane-duplicate-same) | requirement | REG-4 | Given .loop/config.json with a duplicate key whose last value is the one json.load returns (the guard-fixes case), when the other duplicate is removed, then no row is affected, since every reader sees the same config (#4321). | PASS 2026-11-15 |
 | [private-checks-classify](Tests#t-private-checks-classify) | requirement | REG-4 | Given a private repo's required checks, when they are classified, then a regression-only job, plain script jobs and a third-party-action job are told apart (#4537). | not run |
-| [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-12 |
+| [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-18 |
 | [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
-| [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-12 |
+| [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-18 |
 | [known-recorded](Tests#t-known-recorded) | requirement | REG-5 | Given a known failure, when the GitHub run runs it, then its result is recorded KNOWN, not FAIL. | PASS 2026-11-10 |
 | [reg-defect-label](Tests#t-reg-defect-label) | requirement | REG-5 | Given a failing test, when a local live run reports it, then its issue is labelled defect. | PASS 2026-11-12 |
 | [reg-local-relabel](Tests#t-reg-local-relabel) | requirement | REG-5 | Given an older open issue for a failing test, when a local live run reports it, then the issue gains the defect label. | PASS 2026-11-12 |
