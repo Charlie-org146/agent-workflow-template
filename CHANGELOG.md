@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.67 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.66 - 2026-11-18
 
 - Gate the wiki check by what the goal changed; a repo's own sites and README are inside it
