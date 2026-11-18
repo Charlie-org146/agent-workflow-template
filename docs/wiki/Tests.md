@@ -194,6 +194,7 @@
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
 | <a id="t-agent-routing"></a>agent-routing | workflow | DEL-16: Each step runs on the agent the config picks | not run | - | local | 2026-11-17 |
+| <a id="t-routing-timeout-tree"></a>routing-timeout-tree | requirement | DEL-8 | not run | - | local | 2026-11-18 |
 
 ## Documentation
 
@@ -742,7 +743,7 @@
 | <a id="t-budget-fair-held-time"></a>budget-fair-held-time | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-new-binds-app-session-4257"></a>new-binds-app-session-4257 | defect | [#4257](https://github.com/jcl2018/agent-workflow-template/issues/4257) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-14 |
 | <a id="t-scripts-a-monitoring-under-19000"></a>scripts-a-monitoring-under-19000 | requirement | MON-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
-| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-18 |
 | <a id="t-mon14-merged-since-once"></a>mon14-merged-since-once | requirement | MON-14 | not run | - | local | 2026-11-15 |
 | <a id="t-mon14-merged-before-dropped"></a>mon14-merged-before-dropped | requirement | MON-14 | not run | - | local | 2026-11-15 |
 | <a id="t-mon5-pr-merged-closes"></a>mon5-pr-merged-closes | requirement | MON-5 | not run | - | local | 2026-11-15 |
@@ -941,6 +942,19 @@
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
+
+## Release
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-rel-major-refused"></a>rel-major-refused | requirement | REL-1 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-open-issue-refused"></a>rel-open-issue-refused | requirement | REL-2 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-red-row-refused"></a>rel-red-row-refused | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-checks-refused"></a>rel-checks-refused | requirement | REL-4 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-freeze-refuses"></a>rel-freeze-refuses | requirement | REL-5 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
 
 ## Setup
 

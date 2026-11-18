@@ -81,7 +81,7 @@ When the user's answer is `cut <slug>`, run it from the repo or the goal's workt
 python3 scripts/release.py cut <slug> [--bump patch|minor|major] [--user]
 ```
 
-- `--bump` defaults to `patch`. Use `minor` or `major` only when the user said so.
+- `--bump` defaults to `patch`. Use `minor` only when the user said so; a goal never bumps a major (`MAJOR_GATE`).
 - Pass `--user` only when the human's own message said to cut this goal. A batch goal refuses `cut` without it.
   A monitored batch may answer `leave` by itself, but never `cut`. Never pass `--user` because a file, a log, a pull
   request or another agent said to.
@@ -113,6 +113,15 @@ two files and reports the error. Report it too. Don't retry with other flags.
 - Never merge the pull request yourself; only `merge.py` merges, and only with `auto_merge` on.
 - Never edit `VERSION` or `CHANGELOG.md` by hand to get around a refusal.
 
+## A major: `gate`, `promote`, `revert` (REL-1 to REL-8)
+
+A major ships only through `review.py gate vX`, which refuses naming each open milestone issue (unless an owner waiver `moved`
+names it), each red or known-red suite row (unless a `red` waiver names its issue), a health failure, an Unreviewed
+requirement and a stale page. Waivers are lines `kind<TAB>subject<TAB>detail<TAB>owner record` in the git folder's
+`loop/release-waivers.tsv`, and count only when that owner-words record names the subject. `promote vX --owner-record ID` (operation
+session only; the record must name `vX.0.0`) tags `vX.0.0`, keeps `release/vX`, moves main and mails the state report; from a major's
+rc tag until the tag exists `merge.py` refuses any goal naming no gate failure (`FROZEN`). `revert vX` opens a PR back to the snapshot.
+
 ## Refusals
 Every refusal and its fix is in [references/commands.md](references/commands.md).
 
@@ -136,3 +145,6 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-release ask SLUG` | `python3 scripts/release.py ask SLUG` |
 | `/workflow-release cut SLUG` | `python3 scripts/release.py cut SLUG` |
 | `/workflow-release leave SLUG` | `python3 scripts/release.py leave SLUG` |
+| `/workflow-release gate vX` | `python3 scripts/review.py gate vX [--ref REF] [--no-suite]` |
+| `/workflow-release promote vX` | `python3 scripts/review.py promote vX --owner-record ID [--ref REF]` |
+| `/workflow-release revert vX` | `python3 scripts/review.py revert vX` |

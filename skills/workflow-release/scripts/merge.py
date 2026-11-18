@@ -296,6 +296,8 @@ def main():
         if moved:
             print(moved[1], file=sys.stderr)
             return ar.reopen(state, moved[0])
+        why = review.frozen(top, head, slug)  # REL-5: a cut rc freezes the base
+        why and ar.fail(state, why)
         why = review.held(cfg, state, new)
         if why:
             print(why, file=sys.stderr)

@@ -1,5 +1,75 @@
 # Changelog
 
+## v1.0.62 - 2026-11-18
+
+- Build: routing timeout stops the agent's process tree; full_auto defaults off in the template
+- Build: docs, settings reference, rows seen red, Verify by hand
+- Review: bound the post-kill drain in tree_run
+- Lane: re-render the Tests tables
+- Merge main (v1.0.59) into loop/safety-fixes
+- MON-11: off by default in the template, on in this repo (owner o149)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/safety-fixes
+- Lane: re-render the Tests tables
+- Merge main (v1.0.61) into loop/safety-fixes
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 dev/toy/test-agent-routing.py`.
+   Expect: the last lines read `PASS: the timed-out agent and the child it started are both gone` and `PASS: agent-routing`.
+2. Run `python3 skills/workflow-setup/scripts/settings.py reference | grep full_auto`.
+   Expect: the default column shows `false`, and the help text starts "Off keeps every gate".
+3. Run `python3 -c "import json;print(json.load(open('.loop/config.json'))['full_auto'])"`.
+   Expect: it prints True (this repo keeps full auto on).
+
+## v1.0.61 - 2026-11-18
+
+- release-gate: the hard-release gate in review.py, the freeze hook in merge.py, no major bump in release.py, its test and the Release page
+- release-gate: Release page set, regression rows seen red, skill and command docs
+- Wiki: update pages for release-gate
+- Wiki: update pages for release-gate
+- release-gate: escape the report in the mail page
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main into release-gate
+- release-gate: restamp Delivery after the merge
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- release-gate: refuse a suite stopped with rows left, wait four hours for a long suite, 8 rows
+- release-gate: restamp pages
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- release-gate: the toy sets a git identity for the tag and the revert commit (CI runners have none)
+- Merge origin/main into release-gate
+- release-gate: restamp pages after the merge
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 dev/toy/test-release-gate.py`.
+   Expect: every line starts with PASS, and it exits 0 (it builds a throwaway repo; nothing real is touched).
+2. Run `python3 skills/workflow-release/scripts/review.py gate v2 --no-suite` from a checkout of this repo.
+   Expect: it prints GATE REFUSED lines, each naming an issue of milestone v2.0 or an Unreviewed requirement, and exits 1 (the gate refuses a milestone that is not done).
+3. Run `grep -n "^- REL-" docs/wiki/Release.md`.
+   Expect: eight lines, REL-1 to REL-8, each reading `**Unreviewed**`.
+4. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints `DOCS OK`.
+5. Run `python3 -c "import sys;sys.path.insert(0,'skills/workflow-release/scripts');import release;release.bump('1.0.54','major')"`.
+   Expect: it stops with `REFUSED (MAJOR_GATE)` naming review.py promote.
+
 ## v1.0.60 - 2026-11-18
 
 - No code changes
