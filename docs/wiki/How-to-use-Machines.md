@@ -43,6 +43,8 @@ Each requirement and how it is delivered:
 - MCH-4: Prerequisites first. Example, from the adopt-prerequisites test: given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap.
 - MCH-5: A goal started on another machine can be adopted. Example, from the adopt-record-qa test: given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded.
 - MCH-6: A machine keeps its private data to itself. Example, from the machine-no-private test: given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value.
+- MCH-7: A drifted machine says so. Example, from the machine-check-gaps test: given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK.
+- MCH-8: No routine stops to ask. Example, from the machine-no-prompt-mode test: given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes.
 
 ### Command: machine.py
 - **Command:** `python3 dev/machine.py [apply --repo REPO [--peer NAME] | check | record-task NAME MODE | backup DIR | restore DIR]`

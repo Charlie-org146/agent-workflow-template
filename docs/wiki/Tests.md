@@ -521,14 +521,14 @@
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
 | <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | MCH-1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-7 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-no-private"></a>machine-no-private | requirement | MCH-6 | PASS 2026-11-17 FLAKY | - | local | 2026-11-12 |
 | <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-windows"></a>machine-windows | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-task-layout"></a>machine-task-layout | requirement | MCH-1 | PASS 2026-11-17 FLAKY | - | local | 2026-11-12 |
-| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | MCH-1 | not run | - | local | 2026-11-12 |
+| <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | MCH-8 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-custom-items"></a>machine-custom-items | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-mailer"></a>machine-mailer | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-caps"></a>machine-caps | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |

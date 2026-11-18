@@ -31,6 +31,10 @@ Review: **Unreviewed** <!-- kept prd-revisions@71f2d8b1 -->
 - MCH-6: **Unreviewed** A machine keeps its private data to itself
   - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report.
   - A new machine gets empty private files and asks me to fill them.
+- MCH-7: **Unreviewed** A drifted machine says so
+  - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks.
+- MCH-8: **Unreviewed** No routine stops to ask
+  - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing.
 
 ### Non-functional
 
@@ -84,18 +88,28 @@ None
 |---|---|---|---|---|
 | r1 | 2026-11-18 | A machine keeps its private data to itself <br> Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. <br> A new machine gets empty private files and asks me to fill them. | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### MCH-7
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | A drifted machine says so <br> The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. | migration r1; date from the run day | o47: "Yes, start it end." |
+
+### MCH-8
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | No routine stops to ask <br> Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. | migration r1; date from the run day | o47: "Yes, start it end." |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [machine-apply-installs](Tests#t-machine-apply-installs) | requirement | MCH-1 | Given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks. | not run |
-| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-1 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
 | [machine-operation-guide](Tests#t-machine-operation-guide) | requirement | MCH-1 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held lines, and the check-in routine file is only a pointer. | not run |
 | [machine-new-machine-docs](Tests#t-machine-new-machine-docs) | requirement | MCH-1 | Given the Machines page and README, when read, then the New machine steps are there and linked from the README and SET-11 and SET-12 are Unreviewed. | PASS 2026-11-16 |
 | [machine-rows-listed](Tests#t-machine-rows-listed) | requirement | MCH-1 | Given the machine rows, when the Setup Tests table is read, then every row is listed. | not run |
 | [machine-windows](Tests#t-machine-windows) | requirement | MCH-1 | Given a Windows-shaped toy home, when machine plan, apply and check run for Windows, then it passes beside the Mac form and a fresh Windows home fails. | not run |
 | [machine-task-layout](Tests#t-machine-task-layout) | requirement | MCH-1 | Given two repos, when apply runs, then each has a <repo>-health-regression task every 4 hours with staggered starts, and no repo keeps a second launch agent run. | PASS 2026-11-17 FLAKY |
-| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | MCH-1 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | not run |
 | [machine-custom-items](Tests#t-machine-custom-items) | requirement | MCH-1 | Given a repo with allow, routine and secret custom items, when apply and check run, then they are applied, listed and checked, and a repo without items gets nothing. | not run |
 | [machine-mailer](Tests#t-machine-mailer) | requirement | MCH-1 | Given the mailer, when it runs, then it reads only the local files, prints no secret, sends only to the one configured address and refuses any other. | not run |
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
@@ -107,3 +121,7 @@ None
 | [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | MCH-5 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | not run |
 | [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | MCH-5 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
 | [machine-no-private](Tests#t-machine-no-private) | requirement | MCH-6 | Given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | PASS 2026-11-17 FLAKY |
+| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-7 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
+| - | requirement | MCH-7 | no passing test | not enforced |
+| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | MCH-8 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | not run |
+| - | requirement | MCH-8 | no passing test | not enforced |
