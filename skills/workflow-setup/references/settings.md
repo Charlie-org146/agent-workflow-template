@@ -62,7 +62,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `template_repo` | `(empty)` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
 | `reply_hook` | `true` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `govern_hook` | `true` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
-| `full_auto` | `true` | true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait. |
+| `full_auto` | `false` | Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait. |
 | `pool_size` | `20` | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. |
 | `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
 | `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |

@@ -47,7 +47,7 @@ for pair in sys.argv[1:]:
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 }
-cfg parallel=0 mend=false auto_merge=false 'agent_command=["true"]' resume_on_limit=false
+cfg parallel=0 mend=false auto_merge=false full_auto=true 'agent_command=["true"]' resume_on_limit=false
 git commit -qam "Config" 2>/dev/null
 # fresh: an empty loop folder (runs, pool, logs) and an empty queue, before each case
 fresh() { rm -rf "$L"; mkdir -p "$L/runs"; printf '# Queue\n' > .loop/queue.md; rm -rf "$T/gh"; }

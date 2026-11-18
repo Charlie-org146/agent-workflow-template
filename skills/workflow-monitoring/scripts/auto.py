@@ -3,7 +3,7 @@
 
 usage: auto.py pass [--dry-run] | since ISO | decide-text   (operate.py runs pass every round; the check-in lists since)
 
-`full_auto` (on by default) is read at each decision. A worker's `sessions.py report --status waiting --ask Q --words W ... --recommend W
+`full_auto` (off by default) is read at each decision. A worker's `sessions.py report --status waiting --ask Q --words W ... --recommend W
 --kind K` records the question. It is answered, whatever its kind, once a standing record exists (sessions.py owner-words TEXT --ids
 full-auto-rule: the owner's o118 words); it waits under Needs you, with why, when its kind is destructive, money, security or unknown, it
 is an ETA choice, its goal is always-ask (a record covering always-ask:SLUG or *), it has no recommended answer, or the question or
@@ -74,7 +74,7 @@ def always(root, slug):
 
 def why_not(waiting, cfg, ask_always=False):
     """'' when full auto may answer this decision, else why it waits."""
-    if cfg.get("full_auto", True) is False:
+    if cfg.get("full_auto") is not True:
         return "full_auto is off"
     kind, rec = waiting.get("kind") or "", waiting.get("recommend") or ""
     if kind and kind not in KINDS:

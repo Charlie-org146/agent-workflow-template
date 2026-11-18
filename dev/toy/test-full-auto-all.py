@@ -144,10 +144,10 @@ for slug in ("kind-destructive", "kind-money", "kind-security", "eta1", "ask1"):
 # 4. negative control: with the safety guard removed, the same security question is answered
 saved = dict(auto.CLASSES)
 auto.CLASSES.clear()
-control = auto.why_not({"ask": classes["security-key"], "kind": "routine", "recommend": "yes", "words": ["yes", "no"]}, {})
+control = auto.why_not({"ask": classes["security-key"], "kind": "routine", "recommend": "yes", "words": ["yes", "no"]}, {"full_auto": True})
 auto.CLASSES.update(saved)
 check(control == "", "negative control: without the safety guard a security question is answered")
-check(auto.why_not({"ask": classes["security-key"], "kind": "routine", "recommend": "yes", "words": ["yes", "no"]}, {}) != "",
+check(auto.why_not({"ask": classes["security-key"], "kind": "routine", "recommend": "yes", "words": ["yes", "no"]}, {"full_auto": True}) != "",
       "negative control: with the guard back it waits again")
 
 # 5. the standing record: reusable to un-review (never to review), and for a budget only when full auto answered that goal
@@ -211,11 +211,11 @@ items = {"plan": ("the plan step ends pending and waits for your approval (auto_
          "budget": ("its time budget is 240 minutes; held and waiting time may count toward it", "keep"),
          "memory": ("memory is under the floor", "lower min_free_memory_gb to the free memory"),
          "quota": ("the GitHub API quota is 10 requests; pr steps stall at 0", "go on with local steps")}
-check(all(auto.why_not({"ask": a, "words": [r], "recommend": r, "kind": "owner"}, {}) == "" for a, r in items.values()),
+check(all(auto.why_not({"ask": a, "words": [r], "recommend": r, "kind": "owner"}, {"full_auto": True}) == "" for a, r in items.values()),
       "the plan, budget, memory and quota pre-flight items are answered with their recommendation")
-check(auto.why_not({"ask": "Merge main into the branch?", "words": ["yes"], "recommend": "yes", "kind": "routine"}, {}) == "",
+check(auto.why_not({"ask": "Merge main into the branch?", "words": ["yes"], "recommend": "yes", "kind": "routine"}, {"full_auto": True}) == "",
       "merging main into the goal's branch is routine and answered")
-check(auto.why_not({"ask": "the private-name list would refuse: x.py", "words": ["edit the list line"], "recommend": "edit the list line", "kind": "owner"}, {}) != "",
+check(auto.why_not({"ask": "the private-name list would refuse: x.py", "words": ["edit the list line"], "recommend": "edit the list line", "kind": "owner"}, {"full_auto": True}) != "",
       "the private-name pre-flight item waits for the owner")
 
 # 6. health: an AUTO line that hits a safety class, or carries no rule record, fails; the clean log is clean

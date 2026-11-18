@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 SCRIPTS = os.path.join(root, "skills", "workflow-delivery", "scripts")
@@ -138,6 +139,56 @@ with tempfile.TemporaryDirectory() as base:
     done = run("detect", "--write")
     written = json.load(open(agents_file)) if os.path.exists(agents_file) else {}
     check(done.stdout.count("AGENT ") == 2 and "profiles" in written and "routes" in written, "detect names each agent and writes the profiles: " + done.stdout[-300:])
+
+# A routed agent that passes its timeout loses its whole tree: the agent and the child it started are both gone (net row routing-timeout-tree).
+TREE = r'''import os, subprocess, sys, time
+kid = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+open(sys.argv[1], "w").write("%d %d" % (os.getpid(), kid.pid))
+time.sleep(30)
+'''
+sys.path.insert(0, SCRIPTS)
+import proctree  # noqa: E402
+import routing  # noqa: E402
+
+
+def gone(pid, wait=10):
+    end = time.time() + wait
+    while time.time() < end:
+        if not proctree.alive_since(pid):  # a zombie counts as gone
+            return True
+        time.sleep(0.2)
+    return False
+
+
+def pids(path):
+    end = time.time() + 10
+    while time.time() < end and not (os.path.exists(path) and open(path).read().count(" ")):
+        time.sleep(0.1)
+    return [int(n) for n in open(path).read().split()]
+
+
+with tempfile.TemporaryDirectory() as base:
+    agent = os.path.join(base, "tree-agent.py")
+    with open(agent, "w", newline="\n") as handle:
+        handle.write(TREE)
+    prof = {"command": [sys.executable, agent, os.path.join(base, "tree.pids")], "prompt": "arg", "limit": 3}
+    began = time.time()
+    _, code, err = routing.ask(prof, "go")
+    took = time.time() - began
+    held = pids(os.path.join(base, "tree.pids"))
+    check(code == 1 and "timed out" in err and len(held) == 2 and took < 15,  # a stop that waits on the child's pipe takes the child's 30 s
+          "a routed agent past its timeout fails at once: %s %s %.0fs" % (code, err[-60:], took))
+    check(all(gone(pid) for pid in held), "the timed-out agent and the child it started are both gone: %s" % held)
+    # Negative control: the old subprocess.run(timeout) kills only the agent, so its child keeps running (here with no pipe to wait on, which Windows drains).
+    try:
+        subprocess.run(prof["command"] + ["go"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
+    except subprocess.TimeoutExpired:
+        pass
+    old = pids(os.path.join(base, "tree.pids"))
+    left = not gone(old[1], 2)
+    check(left, "negative control: subprocess.run(timeout) leaves the agent's child running: %s" % old)
+    for pid in old:
+        os.kill(pid, 9) if os.name != "nt" else proctree.kill(pid)
 
 print("FAILED: %d" % len(failed) if failed else "PASS: agent-routing")
 sys.exit(1 if failed else 0)
