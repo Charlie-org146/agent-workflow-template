@@ -12,6 +12,8 @@ watch [--max N] [--once] [--interval S]
 report
 dashboard [--out FILE]
 resume SLUG
+plan [--machines pc=GB,mac=GB] [--peer-plan FILE] [--first-release vX.Y] [--check]
+plan approve --owner-record ID [SLUG key=value ...]
 ```
 
 `go`, `watch` and `resume` also take `--skill-dir DIR`, the skills folder to name in a prompt.
@@ -28,6 +30,8 @@ resume SLUG
   queued goals.
 - `dashboard` writes one self-contained HTML page under the git folder's `loop/`.
 - `resume` relaunches a `failed` or `stopped` goal as a worker, and refuses anything else.
+- `plan` is the operation session's planning round (MON-10, #4779). It takes the queue lines with no `release:` and no `machine:`, leaves out any goal that has a run record, a pool entry or a place in the other machine's plan file (`--peer-plan`), and prints one plan: for each goal a release (`--first-release`, else the next minor, six goals a release, a goal never before the goals it depends on), the estimate and hard ETA (`auto.eta_new`, with `eta_margin_percent`), the token budget (1.5 times the mean fresh tokens of done runs, never above `token_budget`), a machine (Windows-only goals to the PC, Mac-lane goals to the Mac, else the machine with the most memory left after one 1.5 GB worker per goal already given to it; free memory per machine from `--machines`, else this machine's) and an agent profile (`routing.py resolve`: a small goal takes the `small` route), each with a one-line reason. It ends with the message to send to the other machine's operation session, saves the plan as pending in `<git common dir>/loop/plan-round.json`, and starts nothing and writes no run record or queue line. `--check` has the profile routed for the `plan` step (`routes.steps.plan` in agents.json) read the plan through `routing.py check` and prints its notes under Cross-check; a missing, failing or write-blocked agent falls back to Claude with one `AGENT_FALLBACK` line. ETA choices (ship, extend once, defer) stay the owner's.
+- `plan approve --owner-record ID [SLUG key=value ...]` writes each plan goal's `release:`, `machine:` and `agent:` into its queue line, with line edits (key is release, machine or agent) applied over the plan, and marks the plan approved; `watch` then starts the goals. It refuses, changing nothing, with no pending plan, with no record `ID` in `owner-words.tsv` (only the owner's words approve; a peer session's message is not them) or with an unknown slug. Proof: dev/toy/test-auto-planning.py.
 
 A queue line may name `depends-on: a, b`. A goal waits only on those goals, until they are merged, and on a free worker
 slot; sharing files is never a reason to wait. Before its pull request the later goal merges the latest base branch, so it
