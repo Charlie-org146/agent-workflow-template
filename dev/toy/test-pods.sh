@@ -2,7 +2,7 @@
 # reads: skills/ skills/workflow-delivery/ skills/workflow-release/
 # reads: skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/board.py
 # reads: skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/graph.py skills/workflow-monitoring/scripts/live_board.py
-# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md
+# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md docs/wiki/Operation.md
 # reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/worker.py
 # reads: skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/board_status.py
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-release/scripts/merge.py dev/package.py
@@ -255,11 +255,12 @@ check "the package rules pass, 99 files or fewer (dev/package.py)" '[ $rc = 0 ] 
 fi
 
 if want docs; then
-echo "== done line 1: MON-13, MON-14 and MON-15 are in the Monitoring page, Reviewed"
+echo "== done line 1: MON-13 and MON-15 moved to OPS-13 and OPS-15 on the Operation page, MON-14 to CHK-5"
 out=""
-for id in MON-13 MON-14 MON-15; do check "$id is Reviewed with a seal" 'grep -Eq "^- '"$id"': \*\*Reviewed [0-9-]+\*\* .*<!-- reviewed [0-9a-f]{8} -->" "$here/docs/wiki/Monitoring.md"'; done
+for n in 13 15; do check "MON-$n is moved to OPS-$n, which has its revisions" 'grep -q "^- MON-'"$n"': moved to OPS-'"$n"'" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- OPS-'"$n"': " "$here/docs/wiki/Operation.md" && grep -q "^### OPS-'"$n"'" "$here/docs/wiki/Operation.md"'; done
+check "MON-14 is retired as moved to CHK-5" 'grep -q "^- MON-14: moved to CHK-5" "$here/docs/wiki/Monitoring.md"'
 out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
-check "the Monitoring page's review lock accepts the three requirements" '! has "LOCKED Monitoring" && ! has "TESTS Monitoring"'
+check "the Operation page's review lock accepts the requirements" '! has "LOCKED Operation" && ! has "TESTS Operation"'
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ "$fails" = 0 ]

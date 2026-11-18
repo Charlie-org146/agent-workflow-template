@@ -75,7 +75,9 @@
   "topics": {
     "Build loop": [
       "Delivery",
-      "Monitoring"
+      "Monitoring",
+      "Operation",
+      "Check-in-and-board"
     ],
     "Quality": [
       "Regression",

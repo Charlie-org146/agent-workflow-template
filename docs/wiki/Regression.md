@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept regroup-delivery@ba1acb25 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept regroup-guardrails@47a3bea8 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -337,9 +337,11 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [pr-real-fail-costs-try](Tests#t-pr-real-fail-costs-try) | requirement | REG-10 | Given a pr lane with a real FAIL or an unproven row that ran, when goal.py pr sees it, then it is a failed try. | PASS 2026-11-13 |
 | [mac-rows-skip-77](Tests#t-mac-rows-skip-77) | requirement | REG-10 | Given the macOS-only local-schedule toy, when it runs on a host that is not macOS, then it exits 77 with its reason, so its rows are SKIPPED and open no issue. | PASS 2026-11-13 |
 | [machine-local-owed](Tests#t-machine-local-owed) | requirement | REG-10 | Given a row whose red proof needs another platform, when it is recorded owed, then it reads PENDING not UNPROVEN, a to-do issue is planned on its milestone, and a real red proof clears it. | not run |
+| [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | REG-10 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
 | - | requirement | REG-11 | no passing test | not enforced |
 | - | requirement | REG-12 | no passing test | not enforced |
-| - | requirement | REG-14 | no passing test | not enforced |
+| [test-caps-consolidate-allowed](Tests#t-test-caps-consolidate-allowed) | requirement | REG-14 | Given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed. | PASS 2026-11-16 |
+| [test-caps-own-cap](Tests#t-test-caps-own-cap) | requirement | REG-14 | Given a goal that raises max_regression_rows in its own config, when qa checks the caps, then it reads the base branch's cap and still refuses; the owner raising the cap on the base lets the goal pass. | PASS 2026-11-16 |
 | [workflow-goal-to-release](Tests#t-workflow-goal-to-release) | workflow | REG-1 | Given a toy goal that fixes an issue, when it runs from goal.py new through its flow, its defect row seen failing, goal.py pr, merge.py and the automatic release, then the published release note and the CHANGELOG list Fixes #N with its defect test. | PASS 2026-11-10 |
 | [summary-only-real-rows](Tests#t-summary-only-real-rows) | defect | [#92](https://github.com/jcl2018/agent-workflow-template/issues/92) closed (2026-11-10) | Given a row that writes to the run summary, env or outputs like a toy test, when the GitHub run runs it, then nothing it writes reaches the real summary, env or outputs. | PASS 2026-11-10 |
 | [toy-no-leftovers](Tests#t-toy-no-leftovers) | defect | [#100](https://github.com/jcl2018/agent-workflow-template/issues/100) closed (2026-11-11) | Given a toy test that starts stand-in agents, when it passes, fails, is interrupted or its pipe closes, then no process it started is left running. | PASS 2026-11-12 |
