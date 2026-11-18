@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
 Review: **Reviewed 2026-11-15** <!-- prd P=7f1b1066 R=9f216921 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept auto-planning@dbd16a6b -->
 
-How to use: [How-to-use-Setup](How-to-use-Setup). Run `setup.py desk list`, `desk run` and `desk check` to finish desk-only onboarding before unattended work.
+How to use: [How-to-use-Setup](How-to-use-Setup)
 
 ## Problem
 - I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each.
@@ -80,6 +80,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup). Run `setup.py desk list`, `des
 - It doesn't rewrite a page that has its own sections; that page is listed for a person.
 
 ## Success metrics
+- Desk-only onboarding lists every remaining step before unattended work begins.
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.

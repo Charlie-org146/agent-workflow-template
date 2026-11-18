@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
 Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
 
-How to use: [How-to-use-Monitoring](How-to-use-Monitoring). The notification command retries budget-held events on a later check-in through the shared mail stream.
+How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
 ## Problem
 - I run many goals at once, and opening each session to see which are running, stuck or waiting on me doesn't scale; without the same check-in every time, a stuck goal can sit unnoticed for hours.
@@ -111,6 +111,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring). The notification com
 - Full auto never answers for me on destructive, money, security or owner-contradicting decisions.
 
 ## Success metrics
+- A mail event held by the shared send budget is retried on a later check-in.
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - The check-in prints in the same format every time, at least every 30 minutes by default.
 - With full auto on, a run needs me only for the safety-class decisions MON-11 excludes.
