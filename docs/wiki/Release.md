@@ -196,6 +196,7 @@ None
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | REL-9 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
+| [link-form-note-passes](Tests#t-link-form-note-passes) | requirement | REL-9 | Given link-form pages and one migrated local page, when merge.py's wiki step checks the docs, then the unmigrated-Revisions NOTE counts only local pages and does not refuse (and the old code refuses the same fixture). | not run |
 | [never-merges](Tests#t-never-merges) | requirement | REL-10 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
 | [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-18 |
 | [auto-release](Tests#t-auto-release) | requirement | REL-10 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
