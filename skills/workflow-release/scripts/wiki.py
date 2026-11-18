@@ -53,7 +53,7 @@ def own_entry(tree, lines):
     return [l for l in lines if not l.endswith("(entry.py write)")] + ["WOULD FIX %s: regenerate it (entry.py write)" % x for x in bad]
 
 
-def pending(top, cfg, fix=False, head="HEAD"):
+def pending(top, cfg, fix=False, head="HEAD", filer=None):
     """What the docs audit still finds for the goal, one line each; fix mends the mechanical trouble first. A head other than
     HEAD is audited from its own tree and docs scripts (a temporary worktree), not this checkout's (#4208)."""
     base = base_of(top, cfg)
@@ -68,7 +68,7 @@ def pending(top, cfg, fix=False, head="HEAD"):
     saved, docs = release.DOCS, docs if tree != top and os.path.exists(docs) else DOCS
     try:
         release.DOCS = docs
-        lines = release.docs_trouble(tree, base, whole=True)
+        lines = release.untouched(tree, base, release.docs_trouble(tree, base, whole=True), filer)
         lines = own_entry(tree, lines) if tree != top else lines
         done = run([sys.executable, docs, "check", "--own", head if tree == top else "HEAD"], tree)
     finally:

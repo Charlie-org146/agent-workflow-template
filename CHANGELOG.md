@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.0.66 - 2026-11-18
+
+- Gate the wiki check by what the goal changed; a repo's own sites and README are inside it
+- Rows for the gate scope and own-site links, and the break helper
+- Fix the links-source break
+- Release and Documentation: the gate scope and own-site links; rows seen red
+- Docs command reference: the LINKS row names the repo's own sites
+- Restamp Delivery, How-to-use-Delivery and How-to-use-Documentation (stamp only)
+- A repo link with a trailing slash is its own
+- The gate reads names NUL-separated, counts a feature-page edit as touching its How-to-use page, and files nothing when the issue list fails
+- Release: REL-9 names the feature-page rule; Tests re-rendered
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Seen-red dates for the merged rows; Tests re-rendered
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- release-gate toy: the Release page holds REL-1 to REL-9; rel-major-refused's size check is red on main
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. In a checkout of this branch, run `python3 dev/toy/test-docs-gate-scope.py`. Expect: every line starts with PASS and the last line is `PASS: merge.py's wiki gate refuses only for pages the goal changed`.
+2. Run `python3 skills/workflow-release/scripts/wiki.py prepare docs-gate-scope`. Expect: any stale page this goal did not touch is printed as `FINDING ... (not touched by this goal; left for health)`, and the last line is `WIKI CURRENT: no stale page for docs-gate-scope`.
+3. Run `python3 skills/workflow-docs/scripts/entry.py check`. Expect: `ENTRY OK`.
+4. In a throwaway repo with a wiki page that links to a site listed in `scripts/public-origins.json` (a JSON list of https origins) and to `https://github.com/OWNER/REPO#readme`, run `python3 skills/workflow-docs/scripts/docs.py check`. Expect: no LINKS finding for those two links, and a LINKS finding for a link to any other host.
+5. Run `python3 -c "import glob,sys;[print(len(open(f,'rb').read().replace(b'\r\n',b'\n')),f) for f in glob.glob('skills/workflow-release/scripts/*.py')+['skills/workflow-docs/scripts/milestones.py']]"`. Expect: every number is under 19,000.
+
+## v1.0.65 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.64 - 2026-11-18
 
 - docs-v2: System diagram and stands-alone checks, diagrams, Home diagram, rows

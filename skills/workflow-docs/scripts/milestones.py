@@ -32,7 +32,7 @@ def parse(text):
 
 
 def repo_side():
-    """({title: text}, {title: number}, None) of the repo's milestones, or (None, None, why)."""
+    """({title: text}, {title: number}, None) of the milestones, or (None, None, why)."""
     ok, text = post("LOOP_GH", "api", API + "?state=all&per_page=100", "--paginate")
     if not ok:
         return None, None, text[:100]
@@ -63,7 +63,7 @@ def backlog(page, held={}):
 
 
 def to_repo(title, number, text):
-    """(ok, why) of making the repo's milestone `title` read `text`: created, or edited by its number."""
+    """(ok, why) of making milestone `title` read `text`."""
     state, _, due = text.partition(" | ")
     args = ["-f", "title=" + title, "-f", "state=" + state, "-F" if due == "no due" else "-f", "due_on=null" if due == "no due" else "due_on=%sT00:00:00Z" % due[4:]]
     return post("LOOP_GH", "api", "-X", "PATCH" if number else "POST", "%s/%s" % (API, number) if number else API, *args)
@@ -72,7 +72,7 @@ def to_repo(title, number, text):
 def sync(root, args):
     source = counting.config_of(root).get("milestones_source")
     if not isinstance(source, str) or not source.startswith(("url:", "mcp:")):
-        held = counting.ledger(root)  # a repo that dropped its source keeps no milestone rows, and none is listed
+        held = counting.ledger(root)
         if not args.dry_run and any(k.startswith(KEY) for k in held):
             counting.ledger(root, {k: v for k, v in held.items() if not k.startswith(KEY)})
         return 0
@@ -128,7 +128,7 @@ def sync(root, args):
     for title in sorted(set(have) | set(want)):
         r, s, a = have.get(title), want.get(title), agreed.get(title)
         if r == s:
-            if title in gone:  # closed and not on the page: nothing agreed, so a reopen is the repo's change alone
+            if title in gone:
                 agreed.pop(title, None)
             else:
                 agreed[title] = r
@@ -174,7 +174,7 @@ KINDS = {
     "Skill": ["Say", "Command"],
     "Command": ["Command", "Dry run", "Reads", "Writes", "Exit codes"],
     "API/file contract": ["Path", "Fields", "Example", "Writer", "Reader"],
-    ROUTINE: [],  # its runbook fields are DOC-16's: pageformat.runbook checks them
+    ROUTINE: [],
     "Deployment": ["Target", "Deploy", "Rollback", "Check"],
     "Message/channel": ["Trigger", "Recipients", "Subject", "Resend"],
     "Playbook": ["Steps", "Templates", "Stop rules"],
@@ -230,7 +230,6 @@ def no(code, why):
 
 
 def record(rid, slug, *names):
-    """Record rid as 'rid: "12 words"' when it lists slug and one of names, else None."""
     try:
         with open(join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv"), encoding="utf-8") as fh:
             rows = [x.rstrip("\n").split("\t") for x in fh]
@@ -242,7 +241,6 @@ def record(rid, slug, *names):
 
 
 def rput(text, tab, ret):
-    """The page with its Revisions section rebuilt."""
     got = (["### Retired\n\n" + "\n".join("- %s: %s" % kv for kv in sorted(ret.items()))] if ret else []) + [
         "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(set(tab) - {"Retired"}, key=lambda k: (k[:2], int(re.sub(r"\D", "", k) or 0)))]
     block = "## Revisions\n\n" + "\n\n".join(got) + "\n"
@@ -304,7 +302,6 @@ def revise(args):
 
 
 def migrate(args):
-    """DOC-20: give each requirement of the nine pages its first revision, r1."""
     root, rule, plans = cr.git("rev-parse", "--show-toplevel"), cr.rules(), []
     for rel in cr.pages(root):
         page, text = os.path.basename(rel)[:-3], cr.slurp(join(root, rel))
@@ -371,7 +368,22 @@ def add_parsers(sub):
         item.add_argument("--why", required=True)
         item.add_argument("--as", dest="as_", required=True, help="retired, merged:ID or moved:ID") if name == "retire" else [
             item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]
-from audit import home_diagram  # noqa: E402,F401  (DOC-19 checks live in audit.py, docs.py, entry.py, prd.py, prdcopy.py)
+
+
+def origins(root):
+    """The repo's own sites: `public_origins` in config and scripts/public-origins.json."""
+    out = counting.config_of(root).get("public_origins")
+    out = list(out) if isinstance(out, list) else []
+    try:
+        with open(join(root, "scripts", "public-origins.json"), encoding="utf-8") as handle:
+            data = json.load(handle)
+        out += data.get("origins", []) if isinstance(data, dict) else data
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+    return tuple(x.rstrip("/") for x in out if isinstance(x, str) and x.startswith("https://"))
+
+
+from audit import home_diagram  # noqa: E402,F401
 from entry import unlisted  # noqa: E402,F401
 from docs import alone  # noqa: E402,F401
 from prd import diagram  # noqa: E402,F401

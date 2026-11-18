@@ -98,4 +98,4 @@ Each requirement and how it is delivered:
 
 <!-- kept doc4-doc18-conflict@06ce732b -->
 
-<!-- kept prd-revisions@d96483b1 -->
+<!-- kept docs-gate-scope@c146659c -->
