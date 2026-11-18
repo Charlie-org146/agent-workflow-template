@@ -116,6 +116,7 @@ del5-docs-patch-default	PASS	2026-11-15
 del5-merge-forwards-checkout	PASS	2026-11-15	
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
+del8-floor-step	PASS	2026-11-18	
 del9-hooks	PASS	2026-11-12	
 del9-merge-refuses	PASS	2026-11-12	
 del9-pr-refuses	PASS	2026-11-18	
@@ -126,16 +127,16 @@ deploy-not-locked	PASS	2026-11-12
 deploy-section-optional	PASS	2026-11-12	
 deploy-table-refused	PASS	2026-11-12	
 deps-graph-94	PASS	2026-11-10	
-depth-auto-approve-gate	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-base-branch	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-condensed-refused	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-condensed-when-set	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-auto-approve-gate	PASS	2026-11-18	
+depth-base-branch	PASS	2026-11-18	
+depth-condensed-refused	PASS	2026-11-18	
+depth-condensed-when-set	PASS	2026-11-18	
 depth-fill-repo-help	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-in-pr-body	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-loop-flow	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-markers	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-loop-flow	PASS	2026-11-18	
+depth-markers	PASS	2026-11-18	
 depth-on-board	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-recorded	PASS	2026-11-18	
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-setup	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 describe-needed	PASS	2026-11-12	
@@ -381,6 +382,7 @@ merge-wiki-head	PASS	2026-11-11
 merge-wiki-rename-refused	PASS	2026-11-11	
 merge-wiki-skill-refused	PASS	2026-11-11	
 merged-frees-175	PASS	2026-11-10	
+migration-lag-line	PASS	2026-11-18	
 migration-v1	PASS	2026-11-16	
 milestone-links	PASS	2026-11-12	
 milestone-rows-seen-red	PASS	2026-11-12	
@@ -681,14 +683,14 @@ usage-section-refused	SKIPPED	2026-11-15
 waits-first	PASS	2026-11-09	
 wiki-no-report	PASS	2026-11-12	
 wiki-release	PASS	2026-11-18	
-wiki-release-pycache	PASS	2026-11-12	
-wiki-unmapped-stale	PASS	2026-11-12	
+wiki-release-pycache	PASS	2026-11-18	
+wiki-unmapped-stale	PASS	2026-11-18	
 win-posix-calls-gone	PASS	2026-11-15	
 worker-per-goal	PASS	2026-11-18	
 worker-refuses	PASS	2026-11-18	
 worker-reports	PASS	2026-11-18	
 worker-reports-live	PASS	2026-11-09	
-worker-runs-release	PASS	2026-11-12	
+worker-runs-release	PASS	2026-11-18	
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-10	
 workflow-same-as-run	PASS	2026-11-12	

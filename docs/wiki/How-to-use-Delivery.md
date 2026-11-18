@@ -117,10 +117,9 @@ Each requirement and how it is delivered:
 - DEL-2: Frozen done lines. Example, from the frozen-done-lines test: given a running goal, when a frozen done line is changed, then the goal stops.
 - DEL-3: Decisions. Example, from the pending-waits test: given a step that leaves a decision for the owner, when it ends, then the goal stops and waits.
 - DEL-4: The pull request. Example, from the cut-needs-verify test: given no Verify by hand steps, when a release is cut, then it is refused.
-- DEL-5: Release. Example, from the never-merges test: given auto_merge is off, when goals finish, then nothing is merged.
-- DEL-6: Review depth fits the goal. Example, from the depth-condensed-refused test: given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used.
-- DEL-10: A goal started on another machine can be adopted. Example, from the adopt-record-qa test: given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded.
-- DEL-11: Adopt never trusts an unpushed branch. Example, from the adopt-refuses-unpushed test: given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written.
+- DEL-17: A goal's ETA is a hard limit.
+- DEL-18: Everything goes through a goal.
+- DEL-19: Every goal serves a requirement.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"
@@ -131,7 +130,7 @@ Each requirement and how it is delivered:
 - **Command:** `/workflow-release merge SLUG`
 
 ### Command: goal.py
-- **Command:** `python3 skills/workflow-delivery/scripts/goal.py new SLUG --goal "goal" --done "line"` (also `record`, `pr`, `adopt SLUG`, `show`)
+- **Command:** `python3 skills/workflow-delivery/scripts/goal.py new SLUG --goal "goal" --done "line"` (also `record`, `pr`, `goal.py adopt SLUG`, `show`)
 - **Dry run:** none: `new` freezes the goal when it runs; `show SLUG` only prints the record.
 - **Reads:** `.loop/config.json` and the goal's run record under the git common dir's `loop/runs`.
 - **Writes:** `.loop/goals/SLUG.md`, the goal's branch and its run record; `pr` pushes the branch and opens the pull request.
