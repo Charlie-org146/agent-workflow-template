@@ -614,8 +614,14 @@ summary-refuses	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+sync-both-sides	PASS	2026-11-18	
 sync-default-source	SKIPPED	2026-11-16	
+sync-dry-run-drift	PASS	2026-11-18	
+sync-first-adopts	PASS	2026-11-18	
+sync-not-connected	PASS	2026-11-18	
 sync-propose	SKIPPED	2026-11-16	
+sync-repo-delta	PASS	2026-11-18	
+sync-source-delta	PASS	2026-11-18	
 sync-template-redirect	SKIPPED	2026-11-16	
 template-sheet	PASS	2026-11-12	
 test-caps-consolidate-allowed	PASS	2026-11-16	
