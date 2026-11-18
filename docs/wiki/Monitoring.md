@@ -243,13 +243,13 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [dependency-held](Tests#t-dependency-held) | requirement | MON-1 | Given a goal that depends on an unmerged goal, when the queue runs, then it is held until that goal merges. | PASS 2026-11-09 |
-| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | MON-1 | Given the governing session, when goals run, then no goal runs inside it. | PASS 2026-11-18 |
-| [skill-says-governs](Tests#t-skill-says-governs) | requirement | MON-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-18 |
+| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | MON-1 | Given the governing session, when goals run, then no goal runs inside it. | PASS 2026-11-12 |
+| [skill-says-governs](Tests#t-skill-says-governs) | requirement | MON-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-12 |
 | [dependencies-on-map](Tests#t-dependencies-on-map) | requirement | MON-1 | Given a goal that waits on others, when it starts, then it records what it waits on. | PASS 2026-11-09 |
 | [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | MON-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
-| [worker-refuses](Tests#t-worker-refuses) | requirement | MON-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-18 |
-| [worker-per-goal](Tests#t-worker-per-goal) | requirement | MON-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-18 |
-| [one-way-to-run](Tests#t-one-way-to-run) | requirement | MON-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-18 |
+| [worker-refuses](Tests#t-worker-refuses) | requirement | MON-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-12 |
+| [worker-per-goal](Tests#t-worker-per-goal) | requirement | MON-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-12 |
+| [one-way-to-run](Tests#t-one-way-to-run) | requirement | MON-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-12 |
 | [operate-all](Tests#t-operate-all) | requirement | MON-1 | Given the operate command's toy suite, when it runs, then the whole suite passes. | PASS 2026-11-09 |
 | [session-assign](Tests#t-session-assign) | requirement | MON-1 | Given a ready goal, when it is assigned, then it gets its own worker session in the app. | PASS 2026-11-12 |
 | [session-rename](Tests#t-session-rename) | requirement | MON-1 | Given a worker session, when it takes a goal, then it is renamed after that goal. | PASS 2026-11-12 |
@@ -258,7 +258,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [record-in-session](Tests#t-record-in-session) | requirement | MON-1 | Given a step a worker session ran, when it is recorded, then it is recorded as in session and a goal with no session is refused. | PASS 2026-11-12 |
 | [session-holds-slot](Tests#t-session-holds-slot) | requirement | MON-1 | Given a goal in a worker session, when the parallel limit is counted, then it counts against the limit. | PASS 2026-11-12 |
 | [scripts-a-monitoring-under-19000](Tests#t-scripts-a-monitoring-under-19000) | requirement | MON-1 | Given the workflow-monitoring scripts (board_report.py folded into board_log.py, whose --help exits 0), when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
-| [worker-reports](Tests#t-worker-reports) | requirement | MON-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-18 |
+| [worker-reports](Tests#t-worker-reports) | requirement | MON-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-12 |
 | [worker-reports-live](Tests#t-worker-reports-live) | requirement | MON-2 | Given a report to a running worker, when goal.py next runs, then the report reaches its agent once. | PASS 2026-11-09 |
 | [session-reports](Tests#t-session-reports) | requirement | MON-2 | Given a worker session's step report, when it arrives, then it is recorded on its goal. | PASS 2026-11-12 |
 | [session-fallback](Tests#t-session-fallback) | requirement | MON-2 | Given no session can be started, when a goal runs, then it falls back to a background process and the board says so. | PASS 2026-11-12 |
@@ -273,10 +273,10 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [mon-stray-runs](Tests#t-mon-stray-runs) | requirement | MON-3 | Given a file in loop/runs that is not a run record, when report or dashboard runs, then it is skipped and the board prints. | PASS 2026-11-14 |
 | [review-board-shows-wait](Tests#t-review-board-shows-wait) | requirement | MON-3 | Given a goal held by review_hold, when the live board lists its Issues, then it says merge waiting on review and names the review.py command. | not run |
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | MON-4 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
-| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-18 |
-| [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-18 |
-| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | MON-4 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-18 |
-| [estimates-shown](Tests#t-estimates-shown) | requirement | MON-4 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-18 |
+| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | MON-4 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-12 |
+| [status-order](Tests#t-status-order) | requirement | MON-4 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-12 |
+| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | MON-4 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-12 |
+| [estimates-shown](Tests#t-estimates-shown) | requirement | MON-4 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-12 |
 | [status-roadmap-features](Tests#t-status-roadmap-features) | requirement | MON-4 | Given merged goals, when the live board is printed, then they do not appear. | PASS 2026-11-09 |
 | [status-graph-order](Tests#t-status-graph-order) | requirement | MON-4 | Given the live board, when it is printed, then its sections come in a fixed order. | PASS 2026-11-12 |
 | [status-graph-levels](Tests#t-status-graph-levels) | requirement | MON-4 | Given chained goals, when the board is printed, then they are drawn as a top-to-bottom graph between running and queued goals. | PASS 2026-11-12 |
@@ -355,7 +355,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 | [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | MON-5 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
 | [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | MON-5 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
 | [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | MON-5 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, GRD-14). | not run |
-| [notify-new-events](Tests#t-notify-new-events) | requirement | MON-5 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |
+| [notify-new-events](Tests#t-notify-new-events) | requirement | MON-5 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | not run |
 | [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | MON-5 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
 | [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | MON-5 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | MON-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
