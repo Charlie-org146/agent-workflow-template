@@ -72,7 +72,7 @@ Each requirement and how it is delivered:
 - **Exit codes:** 0 on a ready repo; setup never blocks, and a refusal prints its fix.
 
 ### Command: setup.py desk
-- **Commands:** `python3 skills/workflow-setup/scripts/setup.py desk list`, `python3 skills/workflow-setup/scripts/setup.py desk run`, `python3 skills/workflow-setup/scripts/setup.py desk done STEP [STEP ...]`, and `python3 skills/workflow-setup/scripts/setup.py desk check`.
+- **Command:** `python3 skills/workflow-setup/scripts/setup.py desk list`, `python3 skills/workflow-setup/scripts/setup.py desk run`, `python3 skills/workflow-setup/scripts/setup.py desk done STEP [STEP ...]`, and `python3 skills/workflow-setup/scripts/setup.py desk check`.
 - **Dry run:** `list` and `check` report without writing; `run` lists open steps once and records that they were listed.
 - **Reads:** machine-local step records, file existence, the agent command on PATH and the repo's worker settings.
 - **Writes:** `run` and `done` update `~/.workflow-loop/desk.json` (or the folder set by `LOOP_DESK_HOME`); nothing in the repo.

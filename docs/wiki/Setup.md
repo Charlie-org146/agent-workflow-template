@@ -12,8 +12,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - Adopting a repo should never block: it should look at what is there, borrow what fits, learn from a repo I've already set up, and list what doesn't fit instead of refusing.
 - Any new session should see the design logic, the docs and every command at once, and an improvement in one repo, or in the template, should reach the others.
 
-Machine handover (`machines.py`), owner-reply recording (`mailbox.py`) and desk onboarding (`setup.py desk`) set `GIT_TERMINAL_PROMPT=0`, `GH_PROMPT_DISABLED=1`, `GIT_EDITOR=true`, `GIT_ASKPASS=true` and `SSH_ASKPASS=true` for their subprocesses. Their git and GitHub commands therefore run without waiting for credential prompts or an editor, keeping these machine and onboarding steps unattended.
-
 ## Requirements
 
 ### Functional
