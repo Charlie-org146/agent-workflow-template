@@ -14,3 +14,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.useConfigOnly GIT_CONFIG_VALUE_0=true python3 dev/toy/test-review-hold.py merge`.
+   Expect: every line is PASS and it exits 0 (without the toy-local identity it prints "REFUSED: could not commit the release files").
+2. Open the pull request's regression run on GitHub and find the rows merge-failed-retry and review-recorded-merges.
+   Expect: both print PASS; sync-propose still fails there for its own cause (dev/package.py: 103 of 100 files, 7 commands missing from listing.commands) and has its own goal.
+
