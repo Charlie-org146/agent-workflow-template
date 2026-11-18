@@ -1,7 +1,7 @@
 # merge.py's wiki gate refuses only on pages the goal changed and on stale generated tables; DOC-19/DOC-4 findings on untouched pages become filed issues, and a repo's own published sites count as inside the repo
 
 - Slug: docs-gate-scope
-- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-release/scripts/wiki.py, skills/workflow-docs/scripts/milestones.py, docs/wiki/Release.md, docs/wiki/Documentation.md, docs/wiki/Tests.md, .loop/regression.tsv, skills/workflow-release/scripts/release.py, docs/wiki/How-to-use-Release.md, skills/workflow-docs/references/commands.md, dev/toy/test-docs-gate-scope.py, dev/toy/break-docs-gate-scope.py, docs/wiki/Delivery.md, docs/wiki/How-to-use-Delivery.md, docs/wiki/How-to-use-Documentation.md
+- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-release/scripts/wiki.py, skills/workflow-docs/scripts/milestones.py, docs/wiki/Release.md, docs/wiki/Documentation.md, docs/wiki/Tests.md, .loop/regression.tsv, skills/workflow-release/scripts/release.py, docs/wiki/How-to-use-Release.md, skills/workflow-docs/references/commands.md, dev/toy/test-docs-gate-scope.py, dev/toy/break-docs-gate-scope.py, docs/wiki/Delivery.md, docs/wiki/How-to-use-Delivery.md, docs/wiki/How-to-use-Documentation.md, dev/toy/test-release-gate.py, .loop/regression-known.tsv
 - ETA: 235 active minutes (estimate 186m plus a 25% margin)
 
 ## Done lines
