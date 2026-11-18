@@ -115,9 +115,7 @@ def unblocked(text):
 
 
 def home(text, features, existing, readme, repo, topics=None):
-    """DOC-4: the marker, '# title', '## Features' and one table HOME, a row per feature page, nothing else. With
-    topics (the `topics` setting) the table may lead with a Topic column, its rows grouped by topic; the header
-    without Topic is accepted too, so a repo adopts the column on setting it."""
+    """DOC-4: the marker, '# title', '## Features' and one table HOME, a row per feature page, nothing else."""
     out, seen, keys, last = [], [], anchors(readme), -1
     lines = list(enumerate(unblocked(text).splitlines(), 1))
     body = [(n, x) for n, x in lines if x.strip() and x.strip() != MARKER]
@@ -168,8 +166,7 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 def frontdoor(readme, features):
-    """DOC-5 (DOC-19): '## How to use' links each feature's How-to-use page and holds no How-to-use table: a '### How to use <Feature>'
-    heading, if any, holds one `| You say | What happens |` row whose text links that page."""
+    """DOC-5 (DOC-19): '## How to use' links each feature's How-to-use page and holds no How-to-use table."""
     held = [(n, lines) for name, n, lines in parts(unblocked(readme)) if name == "How to use"]
     if not held:
         return [bad("README", 1, "How to use", 5, "the README has a '## How to use' section", "none", "add it, with a link to each How-to-use-<Feature> page")]
@@ -197,8 +194,7 @@ ROUTINE = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
 def runbook(page, name, lines, fields):
-    """DOC-16: one '### routine' subsection per routine, each holding every field as '- **Field:** text' (indented
-    lines continue it), nothing else. Pure: lines in, FORMAT findings out."""
+    """DOC-16: one '### routine' subsection per routine, each holding every field as '- **Field:** text', nothing else."""
     out, subs, cur, titles = [], [], None, set()
     for number, line in lines:
         if not line.strip():
@@ -240,8 +236,7 @@ ROW_NAMED = re.compile(r"Deployments row:\s*`?([^`;,.)\n]+?)`?\s*(?=[;,.)]|$)")
 
 
 def linked(page, name, runbook, deploy):
-    """DOC-16: a routine's Output may name the Deployments row it produces ('Deployments row: NAME'); that row, the
-    first cell of a Deployments table row, must exist. Pure: (number, line) pairs in, FORMAT findings out."""
+    """DOC-16: a routine's 'Deployments row: NAME' output must name an existing first cell of a Deployments table row."""
     rows = {c.strip().strip("`") for _, line in deploy for c in line.split("|")[1:2] if line.lstrip().startswith("|")}
     out, text = [], ""
     for number, line in runbook + [(0, "")]:  # the sentinel flushes the last Output
@@ -262,10 +257,7 @@ GROUPS = ["Functional", "Non-functional"]
 
 
 def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
-    """DOC-7: Requirements is '### Functional' then '### Non-functional', each holding requirement lines with their
-    '  - ' sub-bullets, or the single line 'None'. An orphan or deeper sub-bullet is always refused; with strict, the
-    groups are checked, each requirement has a sub-bullet, and an Unreviewed line is at most 20 words (Reviewed
-    is locked by DOC-2)."""
+    """DOC-7: Requirements is '### Functional' then '### Non-functional', each with requirement lines and '  - ' sub-bullets, or 'None'."""
     out, held, groups = [], [], []
     say = lambda number, what, got, fix: out.append(bad(page, number, name, 7, what, short(got), fix))
     for number, line in lines:
@@ -333,3 +325,58 @@ def stale(page, name, start, lines, fresh):
         return None
     return ("TESTS", "%s:%d" % (page, have[at][0]), "%s: DOC-9 the table differs from a fresh render (got %s). "
             "Fix: /workflow-docs render" % (name, short(have[at][1])))
+
+
+RET = re.compile(r"^- ([A-Z]{2,5}-\d+): (Retired|merged into ([A-Z]{2,5}-\d+)|moved to ([A-Z]{2,5}-\d+))$")
+RHEAD = ["rev", "date", "text", "why", "approved"]
+
+
+def enc(text):
+    return text.replace("\\", "\\\\").replace("|", "\\|").replace("<br>", "\\<br>")
+
+
+def unit(text, below):
+    """DOC-20: a requirement and its sub-bullets as one revision cell."""
+    return " <br> ".join(" ".join(enc(re.sub(r"^- ", "", p.strip())).split()) for p in [text] + list(below))
+
+
+def revs(lines):
+    """({id: [cells]}, {id: status}, [bad line]) of Revisions."""
+    tab, ret, bad, cur = {}, {}, [], None
+    for line in lines:
+        if line.startswith("### "):
+            cur = line[4:].strip()
+            tab.setdefault(cur, [])
+        elif cur == "Retired" and line.startswith("- "):
+            hit = RET.match(line)
+            ret.__setitem__(hit.group(1), hit.group(2)) if hit else bad.append(line[:40])
+        elif cur and line.startswith("|") and not RULE.match(line.strip()) and cells(line) != RHEAD:
+            tab[cur].append(cells(line))
+    return tab, ret, bad
+
+
+def revcheck(page, live, lines, base):
+    """DOC-20: REVISION and IDS findings; base is None or (ids, Revisions lines or None)."""
+    out = []
+    bad = lambda code, why: out.append(("REVISION" if code[0] == "R" else "IDS", page, "[%s] %s" % (code, why)))
+    tab, ret, errs = revs(lines or [])
+    ids, src = base or (set(), None)
+    btab, bret, _ = revs(src or [])
+    [bad("REV-ROW", "bad Retired: " + e) for e in errs]
+    [bad("IDS-REUSE", "%s is live and Retired" % k) for k in set(live) & set(ret) | set(bret) & set(live)]
+    for k in sorted(live) if lines is not None else []:
+        rows = tab.get(k) or []
+        if not rows or any(len(c) != 5 for c in rows) or [c[0] for c in rows] != ["r%d" % n for n in range(len(rows), 0, -1)]:
+            bad("REV-ROW", "%s rows are not r%d..r1 newest first (two heads?)" % (k, len(rows)))
+        elif " ".join(rows[0][2].split()) != live[k]:
+            bad("REV-ROW", "%s: %s differs from its line. Fix: criteria.py revise" % (k, rows[0][0]))
+    if src is not None and lines is None:
+        bad("REV-GONE", "Revisions section removed")
+    for k in sorted(ids | set(bret)):
+        if k not in live and k not in ret:
+            bad("IDS-MISSING", "%s is gone. Fix: restore it or criteria.py retire" % k)
+    for k, old in btab.items():
+        if old and tab.get(k, [])[-len(old):] != old:
+            bad("REV-ROW", "%s: %s changed since the base (append-only). Fix: add r%d" % (k, old[0][0], len(old) + 1))
+    return out
+

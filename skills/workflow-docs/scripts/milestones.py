@@ -1,29 +1,18 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17): a repo's GitHub milestones against an external Milestones page, both ways, opt-in.
-
-Called by `docs.py sync`; there is no command of its own. A repo opts in by setting `milestones_source` in .loop/config.json to
-a `url:<link>` or `mcp:<server>:<resource>` source (read as prd.read_link reads a PRD source); with none, nothing is read,
-printed or called. A milestone is its title and `state | due`, `open | due 2026-12-01`, `closed | no due`: on the page one
-line `- TITLE: state | due` each (split on the last `: `), on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both
-sides last agreed on is kept in .loop/milestones.md (and its .base); each side is compared with it, so:
-
-  an addition or change on one side   DELTA milestones: TITLE the repo|the source changed (repo: ... | source: ...)
-  a milestone that differs on both    CONFLICT milestones: TITLE both sides changed (...)
-  a milestone only on the repo        the page is out of date: closed is the same as absent on the page
-
-Nothing is overwritten. Each delta is posted once as a GitHub issue and once as a comment on the page (the PRD writer,
-$LOOP_PRD_WRITER), kept in the same ledger as the PRD deltas under `milestones:TITLE`. `docs.py sync --accept
-milestones:TITLE=repo|source` writes that side's text to the other: `source` creates, edits or closes the GitHub milestone
-(a milestone only on the repo is closed), `repo` has the writer `replace TITLE` (adds when absent) or `remove TITLE` on the
-page. A side that cannot be reached prints `not connected`, changes nothing and exits 0; --dry-run only reports (exit 1 on
-a delta); --open leaves listing the ledger to audit.sync."""
+"""Milestone sync (DOC-17): a repo's GitHub milestones against an external Milestones page, both ways, opt-in; called by `docs.py sync`.
+A repo opts in with `milestones_source` in .loop/config.json (`url:<link>` or `mcp:<server>:<resource>`); a milestone is `- TITLE: state | due`
+on the page and from `gh api` on GitHub, compared with .loop/milestones.md. A delta or CONFLICT is posted once as an issue and a page
+comment; nothing is overwritten. `docs.py sync --accept milestones:TITLE=repo|source` writes one side's text to the other.
+Below: DOC-19 How-to checks and DOC-20 revisions (criteria.py revise, retire, migrate, guard)."""
 import json
 import os
 import re
+import sys
 from os.path import join
 
 import counting
 import criteria as cr
+import pageformat as pf
 import prd
 from criteria import put, sha
 from prd import out as post
@@ -66,8 +55,7 @@ def repo_side():
 
 
 def backlog(page, held={}):
-    """DOC-17: the milestone "Backlog: PAGE" that a page's delta issues sit on, created when it is missing; "" when gh can neither
-    list nor make it. The bare page name is never used, even when a milestone of that name exists."""
+    """DOC-17: the milestone "Backlog: PAGE" for a page's delta issues, created when missing, "" when gh cannot list or make it."""
     title = "Backlog: " + page
     if title not in held:
         have = repo_side()[0]
@@ -184,8 +172,7 @@ ITEM = re.compile(r"^- ([A-Z]{2,5}-\d+): ?\S")
 
 
 def howto_items(name, text, feature):
-    """DOC-19 (#4657, called by deployments.howto): the How-to-use page holds one item '- ID: how it is delivered' for each
-    functional requirement of its feature page, and none for an ID that page lacks."""
+    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement of its feature page, and none else."""
     have, top, sub = {}, "", ""
     for line in feature.splitlines():
         top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
@@ -252,8 +239,7 @@ def delivered(text):
 
 
 def kinds(name, text, on_page=()):
-    """DOC-19: (kind, page, detail) for a How-to-use page's What's delivered table and the block each row needs. A Scheduled routine
-    row's runbook may sit under Runbooks here or on the feature page (on_page: its '### routine' names)."""
+    """DOC-19: (kind, page, detail) findings for a How-to-use page's What's delivered table and the block each row needs."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
     header, table = delivered(text)
     if header != KHEAD:
@@ -292,8 +278,157 @@ def kinds(name, text, on_page=()):
 
 
 def unlisted(feature, how):
-    """DOC-19: the commands a feature page names in backticks (`script.py subcommand`, its Tests section and Milestone line aside) that its
-    How-to-use page does not hold."""
+    """DOC-19: the commands a feature page names in backticks that its How-to-use page does not hold."""
     body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
     names = {"%s %s" % m.groups() for m in NAMED.finditer(body)}
     return sorted(n for n in names if n not in how)
+
+
+# --- DOC-20: revisions (criteria.py revise, retire, migrate, guard) ---
+NINE = ("Delivery", "Setup", "Regression", "Automation", "Documentation", "Guardrails", "Health", "Machines", "Monitoring")
+IDS = r"[A-Z]{2,5}-\d+"
+
+
+def no(code, why):
+    sys.exit("[%s] %s. No changes written." % (code, why))
+
+
+def record(rid, slug, *names):
+    """Owner-words record rid as 'rid: "first 12 words"' when it lists slug and one of names, else None."""
+    try:
+        with open(join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv"), encoding="utf-8") as fh:
+            rows = [x.rstrip("\n").split("\t") for x in fh]
+    except OSError:
+        rows = []
+    for r in rows:
+        if len(r) == 5 and r[0] == rid and slug in r[4].split(",") and set(names) & set(r[4].split(",")):
+            return '%s: "%s"' % (rid, pf.enc(" ".join(json.loads(r[3]).split()[:12])))
+
+
+def put(text, tab, ret):
+    """The page with its Revisions section rebuilt: Retired first, then one table per ID."""
+    got = (["### Retired\n\n" + "\n".join("- %s: %s" % kv for kv in sorted(ret.items()))] if ret else []) + [
+        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(tab, key=lambda k: (k[:2], int(k.split("-")[1])))]
+    block = "## Revisions\n\n" + "\n\n".join(got) + "\n"
+    if "\n## Revisions\n" in text:
+        head, rest = text.split("\n## Revisions\n", 1)
+        return head + "\n" + block + ("\n## " + rest.split("\n## ", 1)[1] if "\n## " in rest else "")
+    top, mid, rest = text.partition("\n## Tests")
+    return top.rstrip("\n") + "\n\n" + block + mid + rest
+
+
+def save(path, old, new):
+    if cr.slurp(path) != old:
+        no("REV-ROW", "%s changed while it was read" % path)
+    with open(path + ".tmp", "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(new)
+    os.replace(path + ".tmp", path)
+
+
+def slug_of(args):
+    return args.goal or cr.git("branch", "--show-current").replace("loop/", "", 1)
+
+
+def revise(args):
+    """Change a requirement's text (revise) or drop it (retire --as), keeping every earlier text as a revision row."""
+    root, key = cr.git("rev-parse", "--show-toplevel"), args.id
+    for rel in cr.pages(root):
+        text = cr.slurp(join(root, rel))
+        lines = text.split("\n")
+        hit = [(n, m) for n, x in enumerate(lines) for m in [cr.LINE.match(x)] if m and m.group(1) == key]
+        if hit:
+            break
+    else:
+        no("REV-ROW", "no live requirement " + key)
+    (n, m), page, below = hit[0], os.path.basename(rel)[:-3], cr.subs(lines, hit[0][0])
+    said = record(args.owner_record, slug_of(args), key, page)
+    tab, ret, _ = pf.revs(dict(cr.sections(text)).get("Revisions") or [])
+    if not said or key not in tab:
+        no("REV-RECORD" if not said else "REV-ROW", "need an owner record naming %s and %s or %s" % (slug_of(args), key, page) if not said else "%s has no table. Fix: criteria.py migrate" % key)
+    rows, old = tab[key], pf.unit(m.group(4), below)
+    if args.command == "retire":
+        form = re.sub(r"^(merged|moved):", lambda x: x.group(1) + (" into " if x.group(1) == "merged" else " to "), args.as_)
+        live = {x.group(1) for r in cr.pages(root) for x in map(cr.LINE.match, cr.slurp(join(root, r)).split("\n")) if x}
+        if not re.match(r"^(Retired|(merged into|moved to) %s)$" % IDS, form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
+            no("IDS-MISSING", "--as is Retired, merged:ID or moved:ID with a live ID")
+        ret[key], fresh, subs = form, old, []
+    else:
+        body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
+        subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
+        fresh = pf.unit(body[0].strip(), subs)
+        if fresh == old:
+            no("REV-NOOP", key + " already reads so")
+    rows.insert(0, ["r%d" % (len(rows) + 1), cr.today(), fresh, pf.enc(" ".join(args.why.split())), said])
+    lines[n:n + 1 + len(below)] = [] if args.command == "retire" else ["- %s: **Unreviewed** %s" % (key, body[0].strip())] + subs
+    save(join(root, rel), text, put("\n".join(lines), tab, ret))
+    print(("RETIRED %s as %s" % (key, ret[key])) if args.command == "retire" else "REVISED %s r%d->r%d (now Unreviewed, awaits review)" % (key, len(rows) - 1, len(rows)))
+    return 0
+
+
+def migrate(args):
+    """Give each requirement of the nine pages its first revision row, r1, from its current text."""
+    root, rule, plans = cr.git("rev-parse", "--show-toplevel"), cr.rules(), []
+    for rel in cr.pages(root):
+        page, text = os.path.basename(rel)[:-3], cr.slurp(join(root, rel))
+        body = dict(cr.sections(text))
+        if page not in (args.page or NINE) or not body.get(rule["sections"][1]):
+            continue
+        said = record(args.owner_record, slug_of(args), page)
+        tab, ret, _ = pf.revs(body.get(rule["revs"]) or [])
+        day = re.search(r"\d{4}-\d\d-\d\d", next((x for x in text.split("\n") if x.startswith("Review:")), ""))
+        for _, m, below in cr.blocks(body[rule["sections"][1]]):
+            if m and m.group(1) not in tab | ret.keys():
+                tab[m.group(1)] = [["r1", m.group(3) or (day and day.group(0)) or cr.today(), pf.unit(m.group(4), below),
+                                    "migration r1; date from " + ("its Reviewed stamp" if m.group(3) else "the page Review line" if day else "the run day"), said]]
+        if not said:
+            no("REV-RECORD", "need an owner record naming %s and %s" % (slug_of(args), page))
+        plans.append((rel, text, put(text, tab, ret)))
+    for rel, text, fresh in [x for x in plans if x[1] != x[2]]:
+        save(join(root, rel), text, fresh)
+        print("MIGRATED " + rel)
+    print("MIGRATE OK")
+    return 0
+
+
+def guard(args):
+    """GUARD OK, or exit 1 naming each Reviewed requirement of the branch whose text changed with no done line or owner record behind it."""
+    root = cr.git("rev-parse", "--show-toplevel")
+    base = args.base or next((r for r in ("origin/main", "main") if cr.git("rev-parse", "--verify", "-q", r, check=False)), "origin/main")
+    if not cr.git("rev-parse", "--verify", "-q", base + "^{commit}", check=False):
+        sys.exit("[GUARD-BASE] cannot read %s (shallow: %s). Fix: git fetch origin main" % (base, cr.git("rev-parse", "--is-shallow-repository", check=False)))
+    slug, rule, sec = args.slug or cr.git("branch", "--show-current").replace("loop/", "", 1), cr.rules(), cr.rules()["sections"][1]
+    goal = cr.git("show", "HEAD:.loop/goals/%s.md" % slug, check=False).split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+    bad = []
+    for rel in cr.git("diff", "--name-only", base + "...HEAD", "--", cr.folder_of(root)).split():
+        was, now = (dict(cr.sections(cr.git("show", "%s:%s" % (r, rel), check=False))) for r in (base, "HEAD"))
+        mine = lambda d: {m.group(1): (m.group(2), pf.unit(m.group(4), b)) for _, m, b in cr.blocks(d.get(sec) or []) if m}
+        old, new, page = mine(was), mine(now), os.path.basename(rel)[:-3]
+        have, rows = (pf.revs(d.get(rule["revs"]) or [])[0] for d in (now, was))
+        for key, (mark, text) in old.items():
+            fresh = have.get(key, [])[:len(have.get(key, [])) - len(rows.get(key, []))]
+            if mark == "Unreviewed" or new.get(key, ("", ""))[1] == text or re.search(r"(?<![A-Z0-9-])%s(?!\d)" % key, goal) or any(
+                    record(r[4].split(":")[0], slug, key, page) for r in fresh if len(r) == 5):
+                continue
+            bad.append("%s (%s): %s changed. Worker fix: revert it, or goal.py finding %s \"%s <gap>\" --requirement %s. Owner fix: an owner record "
+                       "naming %s and %s or %s, then criteria.py revise" % (key, page, "text" if key in new else "removed", slug, key, key, slug, key, page))
+    sys.exit("GUARD REFUSED " + "\nGUARD REFUSED ".join(bad)) if bad else print("GUARD OK")
+    return 0
+
+
+def add_parsers(sub):
+    for name, func in (("revise", revise), ("retire", revise), ("migrate", migrate), ("guard", guard)):
+        item = sub.add_parser(name)
+        item.set_defaults(func=func)
+        if name == "guard":
+            item.add_argument("base", nargs="?", default="")
+            item.add_argument("slug", nargs="?", default="")
+            continue
+        item.add_argument("--owner-record", required=True)
+        item.add_argument("--goal", default="")
+        if name == "migrate":
+            item.add_argument("--page", action="append")
+            continue
+        item.add_argument("id")
+        item.add_argument("--why", required=True)
+        item.add_argument("--as", dest="as_", help="retired, merged:ID or moved:ID") if name == "retire" else [
+            item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]

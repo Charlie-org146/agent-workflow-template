@@ -181,8 +181,7 @@ def cmd_render(args):
 
 
 def criteria_of(lines):
-    """(line, LINE match or None) per requirement line: indented lines belong to the line above; group headings
-    (### Functional, ### Non-functional) and a group's 'None' are not requirements."""
+    """(line, LINE match or None) per requirement line; indented lines, group headings and a group's 'None' are not requirements."""
     return [(line, match) for line, match, _ in blocks(lines)]
 
 
@@ -199,7 +198,7 @@ def contract(root, names, seen):
     import pageformat as pf
     import prd
     import render
-    found, rule, unread = [], rules(), False
+    found, rule, unread, moves, done = [], rules(), False, [], 0
     limit, on = criteria_max(root), rule["format"]
     linked, loose = test_rows(root)
     head, books = rule["sections"], {page: [] for page in names}
@@ -221,6 +220,8 @@ def contract(root, names, seen):
         want = head[:1] + [rule["runbook"]] * (rule["runbook"] in have) + head[1:]
         if rule["deploy"] in have:
             want = want[:-1] + [rule["deploy"]] + want[-1:]
+        if rule["revs"] in have:
+            want = want[:-1] + [rule["revs"]] + want[-1:]
         if have != want:
             if "Commands" in have:
                 hint = ". Fix: remove the Commands section; the commands are in the skill's Command map and references/commands.md"
@@ -230,7 +231,7 @@ def contract(root, names, seen):
                 hint = ". Fix: use exactly these sections, in this order, and nothing else"
             found.append(("SECTIONS", page, "have %s, want %s%s" % (", ".join(have) or "none", ", ".join(want), hint)))
             continue
-        body, ids = dict(parts), []
+        body, ids, units = dict(parts), [], {}
         found += prd.trouble(root, page, text, parts, rule)
         for line, match, below in blocks(body[head[1]]):
             if not match:
@@ -242,6 +243,7 @@ def contract(root, names, seen):
                 continue
             seen[key] = page
             ids.append((key, text))
+            units[key] = pf.unit(text, below)
             named = SCRIPT_FILE.findall(text)
             if named:
                 found.append(("SCRIPT", page, "%s names %s. Fix: say what it does, not the file" % (key, ", ".join(named))))
@@ -255,6 +257,10 @@ def contract(root, names, seen):
             found.append(("PROBLEM", page, "is over %d lines. Fix: say who it is for and what it solves in %d lines or fewer"
                           % (rule["problem_lines"], rule["problem_lines"])))
         found += pf.bullets(page, head[1], numbered[head[1]][1], LINE, "bullets" in on, rule["groups"])
+        rl = [x for _, x in numbered[rule["revs"]][1]] if rule["revs"] in numbered else None
+        found += pf.revcheck(page, units, rl, base_of(page, body, rule))
+        moves += [(page, k, v) for k, v in pf.revs(rl or [])[1].items()]
+        done += rl is not None
         if "deployments" in on and rule["deploy"] in numbered:
             found += deployments.deployments(page, rule["deploy"], numbered[rule["deploy"]][1], rule["page_cols"], rule["delivery_cols"], rule["access"])
         if "runbook" in on and rule["runbook"] in numbered:
@@ -273,6 +279,9 @@ def contract(root, names, seen):
     if "tests" in on:
         found += [("FORMAT", "Tests:1", "Tests: DOC-9 one anchor per row (got %s). Fix: rename one row id" % x)
                   for x in render.clashes([row[0] for row in tsv(root, "regression.tsv") if row[1] != "draft"])]
+    found += [("IDS", p, "[IDS-MISSING] %s: %s is no requirement" % (k, v)) for p, k, v in moves for t in re.findall(r"[A-Z]{2,5}-\d+$", v) if t not in seen]
+    if 0 < done < len(names):
+        found.append(("NOTE", "Revisions", "%d page(s) have no Revisions section (unmigrated)" % (len(names) - done)))
     found += [("LINK", "regression", text) for text in loose]
     for key in sorted(set(defect_rows(root)) - set(seen)):
         found.append(("LINK", "regression", "defect tests guard %s, which no page has" % key))
@@ -280,6 +289,14 @@ def contract(root, names, seen):
         if not unread:
             found.append(("LINK", "regression", "rows link to %s, which no page has" % key))
     return found
+
+
+def base_of(page, body, rule):
+    """(ids, Revisions lines or None) of a page at origin/main (or main), None when neither exists."""
+    ref = next((r for r in ("origin/main", "main") if git("rev-parse", "--verify", "-q", r, check=False)), None)
+    shown = git("show", "%s:%s/%s.md" % (ref, folder_of(git("rev-parse", "--show-toplevel")), page), check=False) if ref else None
+    old = dict(sections(shown or ""))
+    return ref and ({m.group(1) for _, m, _ in blocks(old.get(rule["sections"][1]) or []) if m}, old.get(rule["revs"]))
 
 
 def rewrite(root, change):
@@ -310,8 +327,7 @@ def today():
 
 
 def mark_all(args, make, page_change):
-    """Validate every argument, then change the requirement lines (make) and PRD review lines (page_change); nothing is
-    written unless every argument is good."""
+    """Validate every argument, then change the requirement and PRD review lines; nothing is written unless every argument is good."""
     if not args.user:
         sys.exit("REFUSED: only the owner changes a review. Fix: pass --user when their own words said to.")
     words = " ".join(os.environ.get("LOOP_OWNER_WORDS", "").split())
@@ -385,6 +401,8 @@ def main():
         if name == "review":
             item.add_argument("--date", help="YYYY-MM-DD, on or before today; default today (UTC)")
         item.set_defaults(func=func)
+    import milestones
+    milestones.add_parsers(sub)
     item = sub.add_parser("render")
     item.add_argument("--check", action="store_true")
     item.add_argument("--tables", action="store_true",

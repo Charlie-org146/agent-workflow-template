@@ -229,7 +229,7 @@ def rules():
                 "groups": listed("requirement_groups", ", ".join(pf.GROUPS)),
                 "runbook": found.get("runbook_section", "Runbook"),
                 "fields": listed("runbook_fields", "Serves, Schedule, Steps, Full run, Output, Never, Check"),
-                "deploy": found.get("deployments_section", "Deployments"), "access": listed("deployments_access", "public, sign-in"),
+                "revs": "Revisions", "deploy": found.get("deployments_section", "Deployments"), "access": listed("deployments_access", "public, sign-in"),
                 "page_cols": listed("deployments_page", ", ".join(PAGE_COLS)),
                 "delivery_cols": listed("deployments_delivery", ", ".join(DELIVERY_COLS))}
     except (OSError, AttributeError, KeyError, ValueError):

@@ -294,6 +294,8 @@ def cmd_check(args):
     point = entry.problems(root)
     notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]
     found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    notes += [i for i in found if i[0] == "NOTE"]
+    found = [i for i in found if i[0] != "NOTE"]
     from entry import perm_check
     for line in perm_check(root):
         (notes if line.startswith("NOTE") else found).append(("PERMISSIONS", "permissions.tsv", line))
@@ -324,7 +326,7 @@ def cmd_publish(args):
         sys.exit("REFUSED: no pages. Fix: run add first.")
     if config(root).get("criteria"):
         render.refresh(root)
-    found = problems(root, None) + [c for c in contract(root) if c[0] != "CHANGED"]
+    found = problems(root, None) + [c for c in contract(root) if c[0] not in ("CHANGED", "NOTE")]
     found += [c for c in counts(root) if c[1].startswith(wiki_dir(root) + "/")]
     if found:
         for kind, page, detail in found:

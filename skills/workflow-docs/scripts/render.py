@@ -102,7 +102,7 @@ def render(args):
             top, mid, rest = text.partition("\n## Tests")
             base = prdcopy.with_block(top, body) + mid + rest if prdcopy.copy_of(root, slug) else text
         else:
-            if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"])] != rules["sections"] or parts[-1][0] != "Tests":
+            if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"], rules["revs"])] != rules["sections"] or parts[-1][0] != "Tests":
                 continue  # a Runbook after Tests would be cut off: leave it to the check
             ids = idsof(dict(parts)[rules["sections"][1]])
         out.append((rel, text, base.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
