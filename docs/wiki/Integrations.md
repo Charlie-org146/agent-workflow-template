@@ -100,12 +100,12 @@ None
 |---|---|---|---|---|
 | - | requirement | INT-1 | no passing test | not enforced |
 | - | requirement | INT-2 | no passing test | not enforced |
-| [sync-not-connected](Tests#t-sync-not-connected) | requirement | INT-3 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | not run |
-| [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | INT-3 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | not run |
-| [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | INT-3 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | not run |
-| [sync-source-delta](Tests#t-sync-source-delta) | requirement | INT-3 | Given a requirement people changed in the external document, when docs.py sync runs, then it prints a DELTA naming the source as the side and both texts. | not run |
-| [sync-both-sides](Tests#t-sync-both-sides) | requirement | INT-3 | Given a requirement changed in the repo and in the document, when docs.py sync runs, then it is a CONFLICT naming both texts. | not run |
-| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | INT-3 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | not run |
+| [sync-not-connected](Tests#t-sync-not-connected) | requirement | INT-3 | Given an mcp source and no connector, when docs.py sync runs, then it prints not connected, writes nothing and exits 0. | PASS 2026-11-18 |
+| [sync-first-adopts](Tests#t-sync-first-adopts) | requirement | INT-3 | Given an external PRD and no repo copy, when docs.py sync runs, then it adopts the source with a baseline and no delta. | PASS 2026-11-18 |
+| [sync-repo-delta](Tests#t-sync-repo-delta) | requirement | INT-3 | Given a requirement an agent changed in the repo copy, when docs.py sync runs, then it prints a DELTA naming the page, the id, the repo as the side and both texts. | PASS 2026-11-18 |
+| [sync-source-delta](Tests#t-sync-source-delta) | requirement | INT-3 | Given a requirement people changed in the external document, when docs.py sync runs, then it prints a DELTA naming the source as the side and both texts. | PASS 2026-11-18 |
+| [sync-both-sides](Tests#t-sync-both-sides) | requirement | INT-3 | Given a requirement changed in the repo and in the document, when docs.py sync runs, then it is a CONFLICT naming both texts. | PASS 2026-11-18 |
+| [sync-dry-run-drift](Tests#t-sync-dry-run-drift) | requirement | INT-3 | Given a delta, when docs.py sync --dry-run runs, then it prints the DELTA, exits 1 and posts and writes nothing. | PASS 2026-11-18 |
 | [sync-delta-no-overwrite](Tests#t-sync-delta-no-overwrite) | requirement | INT-3 | Given a delta, when docs.py sync runs, then the repo copy and the external document are both unchanged. | not run |
 | [sync-owns-only](Tests#t-sync-owns-only) | requirement | INT-3 | Given a hand-written file where the repo copy goes, when docs.py sync runs, then it is SKIPPED and left as it was. | not run |
 | [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | INT-3 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
@@ -142,7 +142,6 @@ None
 | [prd-copy-no-source](Tests#t-prd-copy-no-source) | requirement | INT-3 | Given a page with no PRD source, when docs.py sync and render run, then the page is never visited, gets no block and raises no signal. | not run |
 | [prd-copy-old-layout](Tests#t-prd-copy-old-layout) | requirement | INT-3 | Given a copy written before the repo's layout, when docs.py sync runs, then it skips the page naming the fix and leaves the copy as it was. | not run |
 | [prd-copy-notion-shape](Tests#t-prd-copy-notion-shape) | requirement | INT-3 | Given an external PRD exported the way Notion writes it (html tags, a bold id over a first sub-bullet, the mark after the kind, a New requirements heading with a note), when docs.py sync adopts it, then the copy holds ordinary markdown requirement lines and none of its Source, Milestone, Review, Runbook or Deployments lines. | not run |
-| - | requirement | INT-3 | no passing test | not enforced |
 | - | requirement | INT-4 | no passing test | not enforced |
 | - | requirement | INT-5 | no passing test | not enforced |
 | - | requirement | INT-6 | no passing test | not enforced |
