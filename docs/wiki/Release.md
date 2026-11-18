@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept regroup-regression@5c59b4e5 -->
+Review: **Unreviewed** <!-- kept ci-release-commit-identity@17e60598 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
