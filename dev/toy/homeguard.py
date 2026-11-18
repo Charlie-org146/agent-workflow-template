@@ -30,7 +30,7 @@ def other_runs(top, here, name=""):
         return True
     if os.environ.get("TOY_GUARD_STRICT"):
         return False
-    return (rel[0] == "lanes" or rel[0] == "skills-main" or (rel[0] == "schedule" and (rel[1:2] == ["log"] or rel[2:3] == ["tree"] or rel[2:] == ["health-report.txt"]
+    return (rel[:2] == ["routines", "logs"] or rel[0] == "lanes" or rel[0] == "skills-main" or (rel[0] == "schedule" and (rel[1:2] == ["log"] or rel[2:3] == ["tree"] or rel[2:] == ["health-report.txt"]
             or rel[1:2] and rel[1].startswith("repos.json"))))  # skills-main and the registry are judged by who wrote them, below (#4760)
 
 

@@ -7,6 +7,7 @@
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
+toy_smtp=$(printf 'toy-%s-%04d' pass 0)
 . "$here/dev/toy/reap.sh"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 no() { echo "FAIL ${only:-machine}: $1"; exit 1; }
@@ -20,7 +21,7 @@ ready() { # ready HOME REPO [flags]: apply, record both modes, add the owner's t
   h=$1; r=$2; shift 2
   $M apply --home "$h" --repo "$r" "$@" >/dev/null || return 1
   for t in $(ls "$h/.claude/scheduled-tasks"); do $M record-task "$t" bypass --home "$h" --repo "$r" >/dev/null; done
-  printf 'SMTP_USER=toy\nSMTP_PASSWORD=toy-pass-0000\n' > "$h/.workflow-loop/mail.env"; chmod 600 "$h/.workflow-loop/mail.env"; printf 'owner@example.test\n' > "$h/.workflow-loop/mail-to"
+  printf 'SMTP_USER=toy\nSMTP_PASSWORD=%s\n' "$toy_smtp" > "$h/.workflow-loop/mail.env"; chmod 600 "$h/.workflow-loop/mail.env"; printf 'owner@example.test\n' > "$h/.workflow-loop/mail-to"
 }
 
 # done 1: a dry run writes nothing; apply installs the links, the private-names file, the mailer and the tasks.
@@ -170,9 +171,9 @@ fi
 if want machine-mailer; then
   mk m; h="$d/hm"; ready "$h" "$d/m/repo" || no "ready failed"; S="$h/.workflow-loop/routines/send-mail.py"; oldhome=$HOME; oldprof=${USERPROFILE:-}; export HOME="$h" USERPROFILE="$h"
   python3 "$S" --to someone@example.test --subject s --body-file /dev/null 2>&1 | grep -q 'unrecognized arguments' || no "the mailer accepts a recipient option"
-  printf 'SMTP_USER=toy\nSMTP_PASSWORD=toy-pass-0000\nSMTP_HOST=127.0.0.1\nSMTP_PORT=1\n' > "$h/.workflow-loop/mail.env"
+  printf 'SMTP_USER=toy\nSMTP_PASSWORD=%s\nSMTP_HOST=127.0.0.1\nSMTP_PORT=1\n' "$toy_smtp" > "$h/.workflow-loop/mail.env"
   out=$(python3 "$S" --check 2>&1); echo "$out" | grep -q '^ERROR' || no "a failed login was not an ERROR line"
-  echo "$out" | grep -q 'toy-pass-0000\|owner@example' && no "the mailer printed a secret or the address"
+  { printf '%s\n' "$out" | grep -qF "$toy_smtp" || printf '%s\n' "$out" | grep -q 'owner@example'; } && no "the mailer printed a secret or the address"
   printf 'a@example.test b@example.test\n' > "$h/.workflow-loop/mail-to"
   python3 "$S" --check 2>&1 | grep -q 'exactly one address' || no "two recipients were accepted"
   awk '/^```text template=mailer/{f=1;next} /^```$/{f=0} f' "$here/dev/machine-templates.md" | grep -q '@[a-z0-9-]*\.[a-z]' && no "the template holds an address"

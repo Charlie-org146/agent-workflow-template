@@ -1,10 +1,4 @@
-"""What the health commands read from gh and from the pages. A milestone is optional and free form: nothing here requires one.
-
-It holds the cached list of every issue (fetch), the feature a finding is about (feature_of, from .loop/docs.tsv) and the
-feature an issue is about (feature_group: its feature:<Page> label, else a milestone named like a page, else No feature),
-an issue's marker key and evidence hash (key_of, legacy, evidence_of, covering), and triage (listing, close): open
-findings per feature, closed in a batch only with the owner's words. Read-only apart from close, which needs --yes.
-"""
+"""Issue lookup, feature resolution and stable judge subjects for health findings."""
 import datetime
 import glob
 import hashlib
@@ -22,8 +16,6 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 CACHE = {}
 FIELDS = ("number", "title", "body", "state", "labels", "milestone", "created_at", "closed_at", "pull_request")
@@ -142,7 +134,7 @@ FILE = re.compile(r"[\w./-]+\.(?:py|sh|md|json|tsv|ya?ml)\b")
 ROW = re.compile(r"\b[a-z]+(?:-[a-z0-9]+)+\b")
 
 
-def about(where):
+def savings_subject(where):
     """What a judge savings finding is about: the first file or test row it names, else its first six words; never its advice."""
     low = where.lower()
     hit = FILE.search(low) or ROW.search(low)
@@ -275,7 +267,7 @@ def filed(root, fresh=False, read=True):
 
 
 def about(root, item, cache):
-    """feature_of, but a finding about an issue (#N, finding-age) takes its feature from the health list check read."""
+    """Resolve issue findings from the cached health list, other findings by feature."""
     subject = str(item.get("subject") or "").strip()
     if subject[:1] == "#" and subject[1:].isdigit():
         pages, held = cache.setdefault("pages", features(root)), CACHE.get((root, "health"), (None, ""))[0] or []
@@ -284,8 +276,6 @@ def about(root, item, cache):
     return feature_of(root, item, cache)
 
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
 CAP = 20

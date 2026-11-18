@@ -28,6 +28,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Judge the repo" | The report, plus suggestions on requirement wording, test strength and speed, with ranked next steps; the verdict doesn't change. |
 | "Is this machine set up like my other one?" | The Adoption group's machine rule runs `machine.py check` and lists each gap as one WARN with its one-line fix. |
 
+The consistency group counts definitions in Requirements sections; How-to items refer to those definitions. Reworded savings about the same file keep the same issue subject.
+
 Each requirement and how it is delivered:
 
 - HLT-2: The rules. Example, from the size-fail test: given a script over 20 KB, when health runs, then it is a FAIL with a fix.
