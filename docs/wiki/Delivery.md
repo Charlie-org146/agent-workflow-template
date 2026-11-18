@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept release-gate@440111bf -->
+Review: **Unreviewed** <!-- kept release-gate@515bcff3 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
