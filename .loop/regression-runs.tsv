@@ -255,7 +255,7 @@ hlt6-worktrees	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
 hlt8-triage	PASS	2026-11-10	
 hlt9-evidence-or-nothing	PASS	2026-11-10	
-home-guard-catches-leak	PASS	2026-11-15	
+home-guard-catches-leak	PASS	2026-11-18	
 home-header-both	PASS	2026-11-14	
 home-howto-linksonly	PASS	2026-11-17	
 home-howto-linksonly-control	PASS	2026-11-17	
@@ -340,11 +340,21 @@ machine-caps	PASS	2026-11-16
 machine-done-12	PASS	2026-11-16	
 machine-done-5	PASS	2026-11-16	
 machine-done-7	PASS	2026-11-17		5f5595078446
+machine-hook-state	PASS	2026-11-18	
 machine-new-machine-docs	PASS	2026-11-16	
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-operation-peer	PASS	2026-11-17	
 machine-setting-listed	PASS	2026-11-16	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
+main-reds-4660	PASS	2026-11-17	
+main-reds-4683	PASS	2026-11-17	
+main-reds-4695	PASS	2026-11-17	
+main-reds-4758	PASS	2026-11-17	
+main-reds-4772	PASS	2026-11-17	
+main-reds-4858	PASS	2026-11-17	
+main-reds-4865	PASS	2026-11-17	
+main-reds-4896	PASS	2026-11-17	
+main-reds-4901	PASS	2026-11-17	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -553,6 +563,7 @@ settings-start-fresh	PASS	2026-11-16
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
+setup-refusal-writes-120	PASS	2026-11-18	
 size-139	PASS	2026-11-12	
 size-140	PASS	2026-11-12	
 size-141	PASS	2026-11-12	

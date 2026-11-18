@@ -140,6 +140,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-monitoring resume SLUG` | `python3 scripts/watch.py resume SLUG` |
 | `/workflow-monitoring report` | `python3 scripts/monitor.py report` |
 | `/workflow-monitoring dashboard` | `python3 scripts/monitor.py dashboard` |
+| `/workflow-monitoring plan` | `python3 scripts/monitor.py plan [--check]`, then `plan approve --owner-record ID [SLUG key=value]` |
 | `/workflow-monitoring met SLUG N` | `python3 scripts/worker.py met SLUG N` |
 | `/workflow-monitoring cleanup` | `python3 scripts/worker.py cleanup` |
 | `/workflow-monitoring selfcheck` | `python3 scripts/unattended.py selfcheck` (also `sends [add TO\|reset]`, `loop [created]`, `standing add\|check\|revoke`: MON-18) |

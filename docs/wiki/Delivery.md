@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
+Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -73,7 +73,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.
 - A goal that fails three tries stops and says why.
-- No goal merges while a wiki page its own diff made stale is still stale.
+- No goal merges while a wiki page its own diff made stale is still stale. Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
 
 ## Tests
 

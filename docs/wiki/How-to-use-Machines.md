@@ -24,6 +24,8 @@ Say these to the agent; each feature page has the exact commands.
 | "Set up the operation session and peer link" | `machine.py apply --repo <your repo> [--peer NAME]` also writes the operation session's routine and task, its hooks and `peer.json`; then do the owner steps it prints. |
 | "Record that I registered a task" | `machine.py record-task NAME MODE` notes the permission mode you chose in the app; a missing or prompting mode is a gap. |
 
+The mailer check reports connection failures while keeping credentials out of its output.
+
 Each requirement and how it is delivered:
 
 - MCH-2: A new machine or account reaches a working operation session and its peer link from one command. Example, from the machine-operation-peer test: given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist and the output names only the owner-only items left.
@@ -65,4 +67,5 @@ Each requirement and how it is delivered:
 - Backlog: [Backlog: Machines](https://github.com/jcl2018/agent-workflow-template/milestones)
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
-<!-- kept full-auto-all@08ab9232 -->
+
+<!-- kept auto-planning@36825335 -->
