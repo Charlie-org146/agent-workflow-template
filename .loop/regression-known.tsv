@@ -33,3 +33,4 @@ stale-page-row	red on main (scheduled regression 2026-11-17)
 no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
 format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
+issue-129-docs-published	red on main (v1.0.65): workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
