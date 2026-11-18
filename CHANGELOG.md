@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.65 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.64 - 2026-11-18
 
 - docs-v2: System diagram and stands-alone checks, diagrams, Home diagram, rows
