@@ -16,3 +16,12 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints no LINK, HOWTO, FORMAT or TESTS line (the one CAP Setup line waits on the owner's cap decision).
+2. Open docs/wiki/Release.md and read REL-9 to REL-13, then its Revisions section.
+   Expect: each is a title with sub-bullets, and REL-1 to REL-8 show an r2 row above their r1 row.
+3. Open docs/wiki/Delivery.md and search for DEL-5.
+   Expect: it appears only under Retired as "moved to REL-9"; DEL-10 and DEL-11 read "moved to MCH-5".
+4. Open docs/wiki/Machines.md.
+   Expect: MCH-1 and live MCH-2 and MCH-3 stand, with MCH-4 to MCH-8 added.
+
