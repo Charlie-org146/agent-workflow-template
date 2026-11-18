@@ -19,6 +19,9 @@ Brings a second Mac or Windows machine to the same working setup as the one you 
 
 ```text
 [Command: machine.py | the second machine] --plans, applies and checks its setup--> [Scheduled routine: health-regression | the second machine]
+[Command: machines.py | either machine] --goal handover, merge turn and SNAPSHOT refs--> (origin)
+[Command: mailbox.py | the operation session] --the owner's reply recorded with source owner--> (the goal's worker)
+[Command: setup.py desk | this machine] --lists and checks desk-only steps, records completion--> (machine-local desk record)
 [Scheduled routine: health-regression | the second machine] --runs health and regression each round--> (GitHub issues and digest)
 
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
