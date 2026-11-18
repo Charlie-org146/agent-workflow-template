@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Unreviewed** <!-- kept extra-cols-links@ae681d28 -->
+Review: **Unreviewed** <!-- kept three-level-ops@cffc0d3c -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
@@ -174,13 +174,13 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [size-warn-over](Tests#t-size-warn-over) | requirement | HLT-2 | Given a script of 19,100 bytes, when health's size rule runs, then it warns, and a script over the 20,480-byte limit still fails (#4370, #4560). | not run |
 | [size-warn-control](Tests#t-size-warn-control) | requirement | HLT-2 | Given scripts in the old warning band, 18,432 to 19,000 bytes, when health's size rule runs, then nothing is raised (negative control, #4370, #4560). | not run |
 | [trim-monitoring-4-size](Tests#t-trim-monitoring-4-size) | requirement | HLT-2 | Given workflow-monitoring's checkin.py, auto.py, replan.py and pool.py, when health's size rule measures them as git stores them, then each is at or under the 19,000-byte target (trim-monitoring-4). | not run |
-| [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-12 |
+| [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-18 |
 | [report-header](Tests#t-report-header) | requirement | HLT-3 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
 | [health-findings-table](Tests#t-health-findings-table) | requirement | HLT-3 | Given a health run with findings from at least three groups, when the report prints, then findings are one table with feature, group, rule, severity, finding and issue columns, every row naming a feature page or Other, and the digest shows the same table. | PASS 2026-11-17 |
 | [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |
 | [fixed-closes](Tests#t-fixed-closes) | requirement | HLT-4 | Given a finding with an open issue, when the finding is fixed, then its issue is closed. | PASS 2026-11-12 |
 | [repeat-no-second](Tests#t-repeat-no-second) | requirement | HLT-4 | Given a finding with an open issue, when the finding repeats, then no second issue is opened. | PASS 2026-11-12 |
-| [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-12 |
+| [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-18 |
 | [preview-writes-nothing](Tests#t-preview-writes-nothing) | requirement | HLT-4 | Given findings in several groups, when health preview runs, then it lists each issue it would open, update, close or reopen with its tag and makes no write call. | PASS 2026-11-10 |
 | [file-one-group](Tests#t-file-one-group) | requirement | HLT-4 | Given open issues in several groups, when health files only the docs group, then only the docs issue is closed and no other group's issue changes. | PASS 2026-11-10 |
 | [hlt4-feature-milestones](Tests#t-hlt4-feature-milestones) | requirement | HLT-4 | Given findings about a feature and about none, when they are previewed and filed, then each is a tagged issue on no milestone, a repeat updates, a fix closes, a return reopens, an old marker moves, and an issue that names the subject is linked once instead of duplicated. | not run |

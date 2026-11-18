@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.0.72 - 2026-11-18
+
+- Monitoring: top and machine roles, STATUS, defaults checks, reply-hook machine mode
+- Monitoring: row proofs for three layers
+- Monitoring: three-layer rules folded into MON-1, 2, 4, 5, 11, 16, 18 (owner record o65)
+- Lane: re-render the Tests tables
+- Monitoring: keep operate.py within its size cap
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.70, regroup-delivery) into loop/three-level-ops
+- Wiki: update pages for three-level-ops
+- Wiki: update pages for three-level-ops
+- Wiki: update pages for three-level-ops
+- Wiki: update pages for three-level-ops
+- Wiki: update pages for three-level-ops
+- Wiki: update pages for three-level-ops
+- Merge origin/main (v1.0.71) into loop/three-level-ops
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.71 - 2026-11-18
 
 - No code changes

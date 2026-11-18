@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept extra-cols-links@ae681d28 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept three-level-ops@cffc0d3c -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -157,7 +157,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [toys-no-leak-lane-pool](Tests#t-toys-no-leak-lane-pool) | requirement | REG-1 | Given a toy that takes a lane port lease and counter lock as the CI runner's four LEAK rows did, when it runs under a fresh home, then ~/.workflow-loop stays empty because the harness points LOOP_LANES_DIR at a temp pool, and a toy aimed at the real lanes/ is still caught. | not run |
 | [homeguard-other-writer](Tests#t-homeguard-other-writer) | requirement | REG-1 | Given another session writes the schedule registry (a real repo, a backup) or moves ~/.workflow-loop/skills-main (START.md rewritten, clean afterwards) during a toy run, when the guard checks, then it reports no LEAK (#4760). | not run |
 | [homeguard-own-write](Tests#t-homeguard-own-write) | requirement | REG-1 | Given a toy itself registers a fixture repo from the temp folder in the schedule registry, or edits or adds a file in ~/.workflow-loop/skills-main, when the guard checks, then it still reports the LEAK (#4760). | not run |
-| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-12 |
+| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-18 |
 | [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-12 |
 | [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-12 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-2 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-12 |
