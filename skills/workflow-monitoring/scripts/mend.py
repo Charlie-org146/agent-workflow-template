@@ -367,7 +367,7 @@ def feature_of(root, text, item=None):
         if number not in seen and not DOWN and (found := ghj(["issue", "view", number, "--json", "labels,milestone"], root) or DOWN.append(1)) is not None and not DOWN:
             names = [str(x.get("name")) for x in found.get("labels") or []] + [str((found.get("milestone") or {}).get("title"))]
             seen[number] = next((n.split(":")[-1].strip() for n in names if n.split(":")[-1].strip() in pages), "")
-                    json.dump(seen, open(cache, "w"))
+            json.dump(seen, open(cache, "w"))
     best = [(0, item.get("feature") if item.get("feature") in pages else "")] + [(1, seen[n]) for n in re.findall(r"#(\d+)", str(text or ""))[:3] if seen.get(n)]
     try:
         rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(root, ".loop", "docs.tsv")) if "\t" in line and line[0] != "#"]
