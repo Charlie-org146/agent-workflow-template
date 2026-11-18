@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.0.62 - 2026-11-18
+
+- Build: routing timeout stops the agent's process tree; full_auto defaults off in the template
+- Build: docs, settings reference, rows seen red, Verify by hand
+- Review: bound the post-kill drain in tree_run
+- Lane: re-render the Tests tables
+- Merge main (v1.0.59) into loop/safety-fixes
+- MON-11: off by default in the template, on in this repo (owner o149)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/safety-fixes
+- Lane: re-render the Tests tables
+- Merge main (v1.0.61) into loop/safety-fixes
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 dev/toy/test-agent-routing.py`.
+   Expect: the last lines read `PASS: the timed-out agent and the child it started are both gone` and `PASS: agent-routing`.
+2. Run `python3 skills/workflow-setup/scripts/settings.py reference | grep full_auto`.
+   Expect: the default column shows `false`, and the help text starts "Off keeps every gate".
+3. Run `python3 -c "import json;print(json.load(open('.loop/config.json'))['full_auto'])"`.
+   Expect: it prints True (this repo keeps full auto on).
+
 ## v1.0.61 - 2026-11-18
 
 - release-gate: the hard-release gate in review.py, the freeze hook in merge.py, no major bump in release.py, its test and the Release page
