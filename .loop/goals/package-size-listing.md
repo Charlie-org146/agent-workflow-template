@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/package.py`.
+   Expect: it prints PASS with the file count (103 now) and no FAIL line.
+2. Run `python3 -c "import json;print(len(json.load(open('listing.json'))['commands']))"` and compare with the seven new names.
+   Expect: done, handover, pending, reply, snapshot, take and turn are all in listing.json's commands.
+3. Run `bash dev/toy/test-sync-update.sh propose`.
+   Expect: it exits 0 (the sync-propose row).
