@@ -989,7 +989,7 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
-| <a id="t-gate-untouched-not-refused"></a>gate-untouched-not-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-untouched-not-refused"></a>gate-untouched-not-refused | requirement | REL-9 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 | <a id="t-gate-untouched-filed-once"></a>gate-untouched-filed-once | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-one-issue-per-page"></a>gate-one-issue-per-page | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-generated-still-refused"></a>gate-generated-still-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |

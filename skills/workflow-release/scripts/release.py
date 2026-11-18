@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Ask whether a finished goal is released, then cut a draft GitHub release or leave it unreleased.
+"""Ask whether a finished goal is released: cut a draft GitHub release or leave it.
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-ask shows the docs and verify steps, then asks cut or leave (a batch answers leave); cut refuses without verify steps, with
-stale docs or an unmet criterion, else bumps the version, writes the changelog, commits, pushes and creates a DRAFT. A batch goal
-cuts only with --user. cut scans for private names (PRIVATE_NAME); it never publishes or merges.
+ask shows the docs and verify steps and asks cut or leave; cut bumps the version, writes the changelog,
+pushes and creates a DRAFT; it never publishes or merges.
 """
 import argparse
 import datetime
@@ -221,11 +220,13 @@ def docs_trouble(top, base, fix=False, whole=False):
 
 
 def untouched(top, base, lines, filer=None):
-    """DOC-19 and DOC-4 findings on pages (and feature pages) the goal leaves alone go to filer, not a refusal."""
-    diff = run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", base + "...HEAD"], top)
-    if diff.returncode or run(["git", "merge-base", "--is-ancestor", "HEAD", base], top).returncode == 0:
-        return lines  # unknown, or on the base itself: all count
-    kept, moved, files = [], {}, diff.stdout.split("\0")
+    """DOC-19 and DOC-4 findings on pages the goal leaves alone go to filer, not a refusal."""
+    made = run(["git", "log", "--format=%H", "--grep=^Wiki: re-render and re-stamp ", base + "..HEAD"], top).stdout.split()[::-1]
+    spans = [a + b for a, b in zip([base + "..."] + [c + ".." for c in made], [c + "^" for c in made] + ["HEAD"])]
+    diffs = [run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", span], top) for span in spans]
+    if any(d.returncode for d in diffs) or run(["git", "merge-base", "--is-ancestor", "HEAD", base], top).returncode == 0:
+        return lines
+    kept, moved, files = [], {}, [f for d in diffs for f in d.stdout.split("\0")]
     names = set(files) | {f.rsplit("/", 1)[-1] for f in files}
     for line in lines:
         page = (re.match(r"(?:LINKS|HOME|HOWTO) (\S+): DOC-(?:19|4) ", line) or [0, 0])[1]
