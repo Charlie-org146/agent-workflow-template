@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/23
 
 How to use: [How-to-use-Machines](How-to-use-Machines)
 
-Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
+Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
 
 ## Problem
 - A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer.
@@ -19,6 +19,10 @@ Review: **Unreviewed** <!-- kept del-16@6a8c6a65 -->
   - A second Mac or Windows machine reaches this one's setup from a git clone and one command, `machine.py`: a dry run lists everything first, `apply` installs the skill links, the commit and private-name hooks, the empty private-names file, the operation check-in (a pointer to the operation guide, whose layout shows each goal's time left and ETA) and one scheduled task per adopted repo named `<repo>-health-regression`, every 4 hours with staggered starts, running health and the full regression for public and private repos alike (it replaces local-schedule's launch agent, so no repo has two 4-hourly runs); `check` lists every gap with a one-line fix and writes nothing, and health's Adoption group runs it. A repo's own routine or custom item (`machine_setup` in its config) applies only when that repo is adopted on the machine. What setup cannot do (secrets files, logins, connectors, the permission mode, registering a task in the app) is a numbered owner checklist; anything not yet possible on Windows is named in it, never skipped silently.
   - No routine stops to ask: each task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing (a note you record, not the app's own setting).
   - Routine emails go through a local SMTP send script that reads its credentials only from a local secrets file, never prints them and sends only to the one configured owner address; nothing private is committed, and setup refuses a text with a secret, address or home path.
+- MCH-2: **Unreviewed** A new machine or account reaches a working operation session and its peer link from one command
+  - Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied.
+- MCH-3: **Unreviewed** Backup and restore are commands
+  - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused.
 
 ### Non-functional
 
@@ -49,4 +53,6 @@ None
 | [machine-custom-items](Tests#t-machine-custom-items) | requirement | MCH-1 | Given a repo with allow, routine and secret custom items, when apply and check run, then they are applied, listed and checked, and a repo without items gets nothing. | not run |
 | [machine-mailer](Tests#t-machine-mailer) | requirement | MCH-1 | Given the mailer, when it runs, then it reads only the local files, prints no secret, sends only to the one configured address and refuses any other. | not run |
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
+| [machine-operation-peer](Tests#t-machine-operation-peer) | requirement | MCH-2 | Given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist, check names them when missing, and the output names only the owner-only items left. | PASS 2026-11-17 |
+| [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | MCH-3 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
 | [machine-hook-state](Tests#t-machine-hook-state) | defect | [#4506](https://github.com/jcl2018/agent-workflow-template/issues/4506) closed (2026-11-16) | Given a repo whose hooks setup just wrote, when --git-hooks --check reads them back, then each reads installed, never foreign. | not run |
