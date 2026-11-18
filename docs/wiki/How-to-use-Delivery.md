@@ -74,4 +74,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept safety-fixes@6e919102 -->
+<!-- kept prd-revisions@ecf3062b -->
