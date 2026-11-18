@@ -241,8 +241,8 @@ if on guard; then
   gnew g1 "Line one"; edit 1; git commit -qam "reword ABC-1"
   out=$($cri guard origin/main g1 2>&1); rc=$?
   check "the guard refuses a Reviewed requirement whose text changed with no done line behind it, naming it and the fix" '[ $rc = 1 ] && grep -q "^GUARD REFUSED ABC-1 (Page): text changed. Worker fix: revert it, or goal.py finding g1 \"ABC-1 <gap>\" --requirement ABC-1" <<<"$out" && grep -q "Owner fix: an owner record naming g1 and ABC-1 or Page" <<<"$out"'
-  gnew g2 "ABC-2 is reworded"; edit 20; git commit -qam "reword ABC-20"
-  check "a done line naming ABC-2 does not state ABC-20 (the match is on a whole ID)" '! $cri guard origin/main g2 2>&1 | grep -q "GUARD OK" && $cri guard origin/main g2 2>&1 | grep -q "ABC-20 (Page)"'
+  gnew g2 "ABC-20 is reworded"; edit 2; git commit -qam "reword ABC-2"
+  check "a done line naming ABC-20 does not state ABC-2 (the match is on a whole ID)" '! $cri guard origin/main g2 2>&1 | grep -q "GUARD OK" && $cri guard origin/main g2 2>&1 | grep -q "ABC-2 (Page)"'
   gnew g5 "ABC-5 is reworded"; edit 5; git commit -qam "reword ABC-5"
   check "a done line that names the requirement lets its text change" '$cri guard origin/main g5 2>&1 | grep -q "^GUARD OK$"'
   gnew g3 "Line three"; $cri migrate --page Page --owner-record o1 --goal g3 >/dev/null
