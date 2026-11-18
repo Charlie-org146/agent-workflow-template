@@ -27,3 +27,8 @@ trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (
 package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
+no-token-dry-run	red on main (scheduled regression 2026-11-17)
+refused-unmet	red on main (scheduled regression 2026-11-17)
+stale-page-row	red on main (scheduled regression 2026-11-17)
+no-token-would	red on main (scheduled regression 2026-11-17)
+no-prompts	red on main (scheduled regression 2026-11-17)
