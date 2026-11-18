@@ -16,3 +16,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-link-form-note.sh`.
+   Expect: every line starts with PASS, including the negative control that the old code is refused, and it ends with ALL PASS.
+2. In a repo whose PRD pages are link-form with one migrated local page, run `python3 skills/workflow-docs/scripts/docs.py audit --dry-run`.
+   Expect: no `NOTE Revisions` line appears while every local page has a Revisions section.
