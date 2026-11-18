@@ -336,21 +336,19 @@ def enc(text):
 
 
 def unit(text, below):
-    """DOC-20: a requirement and its sub-bullets as one revision cell."""
     return " <br> ".join(" ".join(enc(re.sub(r"^- ", "", p.strip())).split()) for p in [text] + list(below))
 
 
 def revs(lines):
-    """({id: [cells]}, {id: status}, [bad line]) of Revisions."""
     tab, ret, bad, cur = {}, {}, [], None
     for line in lines:
         if line.startswith("### "):
             cur = line[4:].strip()
-            tab.setdefault(cur, [])
+            re.match(r"[A-Z]{2,5}-\d+$", cur) and tab.setdefault(cur, [])
         elif cur == "Retired" and line.startswith("- "):
             hit = RET.match(line)
             ret.__setitem__(hit.group(1), hit.group(2)) if hit else bad.append(line[:40])
-        elif cur and line.startswith("|") and not RULE.match(line.strip()) and cells(line) != RHEAD:
+        elif cur in tab and line.startswith("|") and not RULE.match(line.strip()) and cells(line) != RHEAD:
             tab[cur].append(cells(line))
     return tab, ret, bad
 
@@ -366,7 +364,7 @@ def revcheck(page, live, lines, base):
     [bad("IDS-REUSE", "%s is live and Retired" % k) for k in set(live) & set(ret) | set(bret) & set(live)]
     for k in sorted(live) if lines is not None else []:
         rows = tab.get(k) or []
-        if not rows or any(len(c) != 5 for c in rows) or [c[0] for c in rows] != ["r%d" % n for n in range(len(rows), 0, -1)]:
+        if not rows or any(len(c) != 5 or not all(c) or not re.match(r"o\d+: ", c[4]) for c in rows) or [c[0] for c in rows] != ["r%d" % n for n in range(len(rows), 0, -1)]:
             bad("REV-ROW", "%s rows are not r%d..r1 newest first (two heads?)" % (k, len(rows)))
         elif " ".join(rows[0][2].split()) != live[k]:
             bad("REV-ROW", "%s: %s differs from its line. Fix: criteria.py revise" % (k, rows[0][0]))
@@ -379,4 +377,3 @@ def revcheck(page, live, lines, base):
         if old and tab.get(k, [])[-len(old):] != old:
             bad("REV-ROW", "%s: %s changed since the base (append-only). Fix: add r%d" % (k, old[0][0], len(old) + 1))
     return out
-

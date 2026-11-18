@@ -2,8 +2,8 @@
 """Milestone sync (DOC-17): a repo's GitHub milestones against an external Milestones page, both ways, opt-in; called by `docs.py sync`.
 A repo opts in with `milestones_source` in .loop/config.json (`url:<link>` or `mcp:<server>:<resource>`); a milestone is `- TITLE: state | due`
 on the page and from `gh api` on GitHub, compared with .loop/milestones.md. A delta or CONFLICT is posted once as an issue and a page
-comment; nothing is overwritten. `docs.py sync --accept milestones:TITLE=repo|source` writes one side's text to the other.
-Below: DOC-19 How-to checks and DOC-20 revisions (criteria.py revise, retire, migrate, guard)."""
+comment; nothing is overwritten. `docs.py sync --accept milestones:TITLE=repo|source` copies one side to the other.
+Also DOC-19 how-to checks and DOC-20 revisions (revise, retire, migrate, guard)."""
 import json
 import os
 import re
@@ -169,10 +169,6 @@ def sync(root, args):
     return 0
 
 
-
-
-
-
 # --- How-to-use Kinds (DOC-19, #4677): every delivered row names a Kind, and the page carries that Kind's block ---
 ROUTINE = "Scheduled routine"
 KINDS = {
@@ -186,12 +182,6 @@ KINDS = {
     "Playbook": ["Steps", "Templates", "Stop rules"],
 }
 ADDRESS = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-
-
-
-
-
-
 
 
 def kinds(name, text, on_page=()):
@@ -233,11 +223,8 @@ def kinds(name, text, on_page=()):
     return out
 
 
-
-
 # --- DOC-20: revisions (criteria.py revise, retire, migrate, guard) ---
 NINE = ("Delivery", "Setup", "Regression", "Automation", "Documentation", "Guardrails", "Health", "Machines", "Monitoring")
-IDS = r"[A-Z]{2,5}-\d+"
 
 
 def no(code, why):
@@ -245,7 +232,7 @@ def no(code, why):
 
 
 def record(rid, slug, *names):
-    """Owner-words record rid as 'rid: "first 12 words"' when it lists slug and one of names, else None."""
+    """Record rid as 'rid: "12 words"' when it lists slug and one of names, else None."""
     try:
         with open(join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv"), encoding="utf-8") as fh:
             rows = [x.rstrip("\n").split("\t") for x in fh]
@@ -256,10 +243,10 @@ def record(rid, slug, *names):
             return '%s: "%s"' % (rid, pf.enc(" ".join(json.loads(r[3]).split()[:12])))
 
 
-def put(text, tab, ret):
-    """The page with its Revisions section rebuilt: Retired first, then one table per ID."""
+def rput(text, tab, ret):
+    """The page with its Revisions section rebuilt."""
     got = (["### Retired\n\n" + "\n".join("- %s: %s" % kv for kv in sorted(ret.items()))] if ret else []) + [
-        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(tab.keys() - {"Retired"}, key=lambda k: (k[:2], int(k.split("-")[1])))]
+        "### %s\n\n%s" % (k, "\n".join(pf.table(pf.RHEAD, tab[k]))) for k in sorted(set(tab) - {"Retired"}, key=lambda k: (k[:2], int(re.sub(r"\D", "", k) or 0)))]
     block = "## Revisions\n\n" + "\n\n".join(got) + "\n"
     if "\n## Revisions\n" in text:
         head, rest = text.split("\n## Revisions\n", 1)
@@ -271,9 +258,9 @@ def put(text, tab, ret):
 def save(path, old, new):
     if cr.slurp(path) != old:
         no("REV-ROW", "%s changed while it was read" % path)
-    with open(path + ".tmp", "w", encoding="utf-8", newline="\n") as fh:
+    with open(path + ".%d.tmp" % os.getpid(), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(new)
-    os.replace(path + ".tmp", path)
+    os.replace(path + ".%d.tmp" % os.getpid(), path)
 
 
 def slug_of(args):
@@ -281,7 +268,7 @@ def slug_of(args):
 
 
 def revise(args):
-    """Change a requirement's text (revise) or drop it (retire --as), keeping every earlier text as a revision row."""
+    """DOC-20: revise a requirement's text or retire it, keeping the earlier text as a row."""
     root, key = cr.git("rev-parse", "--show-toplevel"), args.id
     for rel in cr.pages(root):
         text = cr.slurp(join(root, rel))
@@ -298,26 +285,28 @@ def revise(args):
         no("REV-RECORD" if not said else "REV-ROW", "need an owner record naming %s and %s or %s" % (slug_of(args), key, page) if not said else "%s has no table. Fix: criteria.py migrate" % key)
     rows, old = tab[key], pf.unit(m.group(4), below)
     if args.command == "retire":
-        form = re.sub(r"^(merged|moved):", lambda x: x.group(1) + (" into " if x.group(1) == "merged" else " to "), args.as_)
+        form = args.as_.replace("merged:", "merged into ").replace("moved:", "moved to ").replace("retired", "Retired")
         live = {x.group(1) for r in cr.pages(root) for x in map(cr.LINE.match, cr.slurp(join(root, r)).split("\n")) if x}
-        if not re.match(r"^([Rr]etired|(merged into|moved to) %s)$" % IDS, form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
+        if not pf.RET.match("- XX-1: " + form) or form[-1].isdigit() and form.split()[-1] not in live - {key}:
             no("IDS-MISSING", "--as is Retired, merged:ID or moved:ID with a live ID")
-        ret[key], fresh, subs = "Retired" if form[0] in "rR" else form, old, []
+        ret[key], fresh, subs = form, old, []
     else:
         body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
+        if not (body and body[0].strip()) or "\n" in args.text:
+            no("REV-NOOP", "empty text or a line break (use --text-file)")
         subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
         fresh = pf.unit(body[0].strip(), subs)
         if fresh == old:
             no("REV-NOOP", key + " already reads so")
     rows.insert(0, ["r%d" % (len(rows) + 1), cr.today(), fresh, pf.enc(" ".join(args.why.split())), said])
     lines[n:n + 1 + len(below)] = [] if args.command == "retire" else ["- %s: **Unreviewed** %s" % (key, body[0].strip())] + subs
-    save(join(root, rel), text, put("\n".join(lines), tab, ret))
+    save(join(root, rel), text, rput("\n".join(lines), tab, ret))
     print(("RETIRED %s as %s" % (key, ret[key])) if args.command == "retire" else "REVISED %s r%d->r%d (now Unreviewed, awaits review)" % (key, len(rows) - 1, len(rows)))
     return 0
 
 
 def migrate(args):
-    """Give each requirement of the nine pages its first revision row, r1, from its current text."""
+    """DOC-20: give each requirement of the nine pages its first revision, r1."""
     root, rule, plans = cr.git("rev-parse", "--show-toplevel"), cr.rules(), []
     for rel in cr.pages(root):
         page, text = os.path.basename(rel)[:-3], cr.slurp(join(root, rel))
@@ -330,10 +319,10 @@ def migrate(args):
         for _, m, below in cr.blocks(body[rule["sections"][1]]):
             if m and m.group(1) not in tab | ret.keys():
                 tab[m.group(1)] = [["r1", m.group(3) or (day and day.group(0)) or cr.today(), pf.unit(m.group(4), below),
-                                    "migration r1; date from " + ("its Reviewed stamp" if m.group(3) else "the page Review line" if day else "the run day"), said]]
+                                    "migration r1; date from " + ("its stamp" if m.group(3) else "the Review line" if day else "the run day"), said]]
         if not said:
             no("REV-RECORD", "need an owner record naming %s and %s" % (slug_of(args), page))
-        plans.append((rel, text, put(text, tab, ret)))
+        plans.append((rel, text, rput(text, tab, ret)))
     for rel, text, fresh in [x for x in plans if x[1] != x[2]]:
         save(join(root, rel), text, fresh)
         print("MIGRATED " + rel)
@@ -342,15 +331,16 @@ def migrate(args):
 
 
 def guard(args):
-    """GUARD OK, or exit 1 naming each Reviewed requirement of the branch whose text changed with no done line or owner record behind it."""
+    """DOC-20: GUARD OK, or exit 1 naming a Reviewed requirement changed with no done line or owner record."""
     root = cr.git("rev-parse", "--show-toplevel")
     base = args.base or next((r for r in ("origin/main", "main") if cr.git("rev-parse", "--verify", "-q", r, check=False)), "origin/main")
     if not cr.git("rev-parse", "--verify", "-q", base + "^{commit}", check=False):
         sys.exit("[GUARD-BASE] cannot read %s (shallow: %s). Fix: git fetch origin main" % (base, cr.git("rev-parse", "--is-shallow-repository", check=False)))
     slug, rule, sec = args.slug or cr.git("branch", "--show-current").replace("loop/", "", 1), cr.rules(), cr.rules()["sections"][1]
     goal = cr.git("show", "HEAD:.loop/goals/%s.md" % slug, check=False).split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+    goal = "\n".join(re.findall(r"^\d+\. .*$", goal, re.M))
     bad = []
-    for rel in cr.git("diff", "--name-only", base + "...HEAD", "--", cr.folder_of(root)).split():
+    for rel in cr.git("diff", "--no-renames", "--name-only", base + "...HEAD", "--", cr.folder_of(root)).split():
         was, now = (dict(cr.sections(cr.git("show", "%s:%s" % (r, rel), check=False))) for r in (base, "HEAD"))
         mine = lambda d: {m.group(1): (m.group(2), pf.unit(m.group(4), b)) for _, m, b in cr.blocks(d.get(sec) or []) if m}
         old, new, page = mine(was), mine(now), os.path.basename(rel)[:-3]
@@ -358,10 +348,10 @@ def guard(args):
         for key, (mark, text) in old.items():
             fresh = have.get(key, [])[:len(have.get(key, [])) - len(rows.get(key, []))]
             if mark == "Unreviewed" or new.get(key, ("", ""))[1] == text or re.search(r"(?<![A-Z0-9-])%s(?!\d)" % key, goal) or any(
-                    record(r[4].split(":")[0], slug, key, page) for r in fresh if len(r) == 5):
+                    record(r[4].split(":")[0], slug, key, page) for r in fresh[:1] if len(r) == 5):
                 continue
             bad.append("%s (%s): %s changed. Worker fix: revert it, or goal.py finding %s \"%s <gap>\" --requirement %s. Owner fix: an owner record "
-                       "naming %s and %s or %s, then criteria.py revise" % (key, page, "text" if key in new else "removed", slug, key, key, slug, key, page))
+                       "naming %s and %s or %s" % (key, page, "text" if key in new else "removed", slug, key, key, slug, key, page))
     sys.exit("GUARD REFUSED " + "\nGUARD REFUSED ".join(bad)) if bad else print("GUARD OK")
     return 0
 
@@ -381,5 +371,5 @@ def add_parsers(sub):
             continue
         item.add_argument("id")
         item.add_argument("--why", required=True)
-        item.add_argument("--as", dest="as_", help="retired, merged:ID or moved:ID") if name == "retire" else [
+        item.add_argument("--as", dest="as_", required=True, help="retired, merged:ID or moved:ID") if name == "retire" else [
             item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]

@@ -280,6 +280,7 @@ def contract(root, names, seen):
         found += [("FORMAT", "Tests:1", "Tests: DOC-9 one anchor per row (got %s). Fix: rename one row id" % x)
                   for x in render.clashes([row[0] for row in tsv(root, "regression.tsv") if row[1] != "draft"])]
     found += [("IDS", p, "[IDS-MISSING] %s: %s is no requirement" % (k, v)) for p, k, v in moves for t in re.findall(r"[A-Z]{2,5}-\d+$", v) if t not in seen]
+    found += [("IDS", seen[k], "[IDS-REUSE] %s is Retired on %s" % (k, p)) for p, k, v in moves if v == "Retired" and k in seen]
     if 0 < done < len(names):
         found.append(("NOTE", "Revisions", "%d page(s) have no Revisions section (unmigrated)" % (len(names) - done)))
     found += [("LINK", "regression", text) for text in loose]

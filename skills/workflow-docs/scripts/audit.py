@@ -205,7 +205,7 @@ def owned(root, rel, body, rule):
         logged = set()
     have, (tab, gone, _) = set(), pf.revs(body.get(rule["revs"]) or [])
     for line, m, below in cr.blocks(body.get(name) or []):
-        if m and m.group(2) == "Unreviewed" and tab.get(m.group(1)) and " ".join(tab[m.group(1)][0][2].split()) == pf.unit(m.group(4), below):
+        if m and m.group(2) == "Unreviewed" and tab.get(m.group(1)) and len(tab[m.group(1)][0]) == 5 and re.match(r"o\d+: ", tab[m.group(1)][0][4]) and " ".join(tab[m.group(1)][0][2].split()) == pf.unit(m.group(4), below):
             have.add(m.group(1))  # DOC-20: a revision row explains the new text
             continue
         if not m or m.group(2) == "Unreviewed" or m.group(5) != cr.seal_of(m.group(4), below):

@@ -235,7 +235,7 @@ if on guard; then
   R1='- ABC-%s: **Reviewed 2026-11-01** Text %s <!-- reviewed 11111111 -->\n  - sub %s\n'
   { printf '# Page\n\n## Requirements\n\n### Functional\n\n'; for n in 1 2 20 3 4 5 6 7; do printf -- "$R1" $n $n $n; done; printf '\n### Non-functional\n\nNone\n\n## Tests\n\n'; } > docs/wiki/Page.md
   git add docs/wiki/Page.md; git commit -qm "page"; git push -q origin main
-  mkdir -p "$C/loop"; printf 'o1\t2026-11-17T00:00:00Z\toperation\t"reword it"\tg3,g8,Page\no2\t2026-11-17T00:00:00Z\toperation\t"other"\tPage,ABC-4\n' > "$C/loop/owner-words.tsv"
+  mkdir -p "$C/loop"; printf 'o1\t2026-11-17T00:00:00Z\toperation\t"reword it"\tg3,g8,g10,g11,g12,Page\no2\t2026-11-17T00:00:00Z\toperation\t"other"\tPage,ABC-4\n' > "$C/loop/owner-words.tsv"
   gnew() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --done "$2" --touches docs/wiki 2>&1 >/dev/null; }
   edit() { sed -i.bak "s/Text $1 /Text $1 changed /" docs/wiki/Page.md; rm -f docs/wiki/Page.md.bak; }
   gnew g1 "Line one"; edit 1; git commit -qam "reword ABC-1"
@@ -264,6 +264,28 @@ PY
   check "dropping a Reviewed requirement with no retire row is refused as removed" '$cri guard origin/main g8 2>&1 | grep -q "ABC-2 (Page): removed changed"'
   out=$($cri guard no-such-ref g1 2>&1); rc=$?
   check "an unreadable base refuses with the base, the shallow flag and the fix" '[ $rc = 1 ] && grep -q "^\[GUARD-BASE\] cannot read no-such-ref (shallow: false). Fix: git fetch origin main" <<<"$out"'
+  gnew g10 "Line ten"; python3 - <<'PY'
+p = ".loop/goals/g10.md"; t = open(p).read()
+open(p, "w").write(t.replace("## Done lines\n", "## Done lines\n\n<!-- ABC-1 -->\n", 1))
+PY
+  edit 1; git commit -qam "reword ABC-1 and name it in a comment"
+  check "an ID in a comment of the goal file is no done line" '$cri guard origin/main g10 2>&1 | grep -q "ABC-1 (Page): text changed"'
+  gnew g11 "Line eleven"; $cri migrate --page Page --owner-record o1 --goal g11 >/dev/null
+  python3 - <<'PY'
+import re
+t = open("docs/wiki/Page.md").read()
+t = re.sub(r"- ABC-1: \*\*Reviewed[^\n]*\n  - sub 1\n", "- ABC-1: **Unreviewed** Text 1 forged\n  - sub 1\n", t)
+t = t.replace("| r1 | ", "| r2 | 2026-11-18 | Text 1 forged <br> sub 1 | forged | o99: \"nobody\" |\n| r1 | ", 1) if False else t
+rows = [l for l in t.split("\n") if l.startswith("| r1 |") and "Text 1 " in l][0]
+t = t.replace(rows, "| r2 | 2026-11-18 | Text 1 forged <br> sub 1 | forged | o99: \"nobody\" |\n" + rows, 1)
+open("docs/wiki/Page.md", "w").write(t)
+PY
+  git commit -qam "forged revision row"
+  check "a hand-written revision row citing no real owner record does not pass the guard" '$cri guard origin/main g11 2>&1 | grep -q "ABC-1 (Page): text changed"'
+  gnew g12 "Line twelve"; $cri migrate --page Page --owner-record o1 --goal g12 >/dev/null
+  out=$($cri retire ABC-7 --as retired --why "no longer wanted" --owner-record o1 --goal g12 2>&1); git commit -qam "retire ABC-7"
+  check "a retire row citing an owner record passes the guard" 'grep -q "^RETIRED ABC-7 as Retired$" <<<"$out" && $cri guard origin/main g12 2>&1 | grep -q "^GUARD OK$"'
+  check "retire needs --as and revise needs text" '! $cri retire ABC-1 --why x --owner-record o1 --goal g12 2>&1 | grep -q RETIRED && $cri revise ABC-1 --text "" --why x --owner-record o1 --goal g12 2>&1 | grep -q "^\[REV-NOOP\] empty text or a line break"'
   gnew g9 "Line nine"; edit 1; git commit -qam "reword ABC-1 again"; run_all g9
   out=$(w $goal pr g9 2>&1); rc=$?
   check "goal.py pr refuses a goal that changed a Reviewed requirement no done line states, pushing nothing" '[ $rc != 0 ] && grep -q "GUARD REFUSED ABC-1 (Page)" <<<"$out" && ! git ls-remote --exit-code origin loop/g9 >/dev/null'
