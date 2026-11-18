@@ -62,6 +62,11 @@ Each requirement and how it is delivered:
 - REL-7: `revert vX` puts main back on the snapshot through a pull request. Example, from the rel-revert-pr test: given release/vX, when revert runs, then a pull request to main carries the snapshot's tree.
 - REL-8: Promotion and every waiver are the owner's words, never a worker's or a peer session's. Example, from the rel-owner-only test: given a worker, when it runs promote, then it is refused and nothing changes.
 - REL-9: The merge's wiki check refuses only for what the goal changed; findings on other pages become one issue each. Example, from the gate-untouched-not-refused test: given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, when merge.py checks the wiki, then it does not refuse on them.
+- REL-10: Every goal ends with a release. Example, from the never-merges test: given auto_merge is off, when goals finish, then nothing is merged.
+- REL-11: A merge is never refused late or left half done.
+- REL-12: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
+- REL-13: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
+- REL-14: Every release is noted.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite]`

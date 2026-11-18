@@ -93,4 +93,4 @@ Each requirement and how it is delivered:
 - PRD page: [Guardrails](Guardrails)
 - Backlog: [Backlog: Guardrails](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept row-cap-1300@4e362144 -->
+<!-- kept regroup-delivery@b7dd574b -->
