@@ -326,6 +326,7 @@ lanes-wide-parity	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 launchctl-missing-unknown	PASS	2026-11-14	
 link-page-passes	FAIL	2026-11-16	
 link-unread-never-pass	PASS	2026-11-13	
+links-alone-reads-sites	PASS	2026-11-18	
 links-origin-trailing-punct	PASS	2026-11-18	
 list-kind-filter	PASS	2026-11-10	
 list-link-ids	PASS	2026-11-13	
@@ -393,7 +394,7 @@ mon14-release-eta	PASS	2026-11-16
 mon14-repo-blocks	PASS	2026-11-12	
 mon15-merge-lock	PASS	2026-11-12	
 mon15-pod-owner	PASS	2026-11-12	
-mon16-checkin-grouped	PASS	2026-11-16	
+mon16-checkin-grouped	PASS	2026-11-18	
 mon4-checkin-no-board	PASS	2026-11-10	
 mon5-checkin-machine-line	PASS	2026-11-16	
 mon5-for-cell-sentence	PASS	2026-11-16	

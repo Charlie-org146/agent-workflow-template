@@ -426,10 +426,9 @@
 | <a id="t-links-own-site-passes"></a>links-own-site-passes | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-unlisted-site-fails"></a>links-unlisted-site-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-origins-config"></a>links-origins-config | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-alone-reads-sites"></a>links-alone-reads-sites | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-alone-reads-sites"></a>links-alone-reads-sites | requirement | DOC-19 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 | <a id="t-links-origins-sources"></a>links-origins-sources | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-origin-trailing-punct"></a>links-origin-trailing-punct | requirement | DOC-19 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 
 ## Guardrails
 
@@ -797,7 +796,7 @@
 | <a id="t-machine-guide-monitoring"></a>machine-guide-monitoring | requirement | MON-5 | not run | - | local | 2026-11-16 |
 | <a id="t-mon5-checkin-machine-line"></a>mon5-checkin-machine-line | requirement | MON-5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-15 |
 | <a id="t-mon14-checkin-goal-lines"></a>mon14-checkin-goal-lines | requirement | MON-14 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-15 |
-| <a id="t-mon16-checkin-grouped"></a>mon16-checkin-grouped | requirement | MON-16 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-15 |
+| <a id="t-mon16-checkin-grouped"></a>mon16-checkin-grouped | requirement | MON-16 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-15 |
 | <a id="t-mon14-release-eta"></a>mon14-release-eta | requirement | MON-14 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-mon5-for-cell-sentence"></a>mon5-for-cell-sentence | requirement | MON-5 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-eta-checkin-table"></a>eta-checkin-table | requirement | MON-5 | not run | - | local | 2026-11-16 |
@@ -805,7 +804,6 @@
 | <a id="t-notify-new-events"></a>notify-new-events | requirement | MON-5 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-notify-operate-runs"></a>notify-operate-runs | requirement | MON-5 | not run | - | local | 2026-11-17 |
 | <a id="t-notify-one-mail-per-event"></a>notify-one-mail-per-event | requirement | MON-5 | not run | - | local | 2026-11-17 |
-| <a id="t-docs-tsv-extra-columns"></a>docs-tsv-extra-columns | requirement | MON-16 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 
 ## Regression
 
