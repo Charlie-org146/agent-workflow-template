@@ -742,7 +742,7 @@
 | <a id="t-pr-parallel-disjoint"></a>pr-parallel-disjoint | requirement | OPS-15 | not run | - | local | 2026-11-13 |
 | <a id="t-pr-order-one-queue"></a>pr-order-one-queue | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-operate-toy-no-check"></a>operate-toy-no-check | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-13 |
-| <a id="t-unattended-sends-warn"></a>unattended-sends-warn | requirement | OPS-18 | not run | - | local | 2026-11-14 |
+| <a id="t-unattended-sends-warn"></a>unattended-sends-warn | requirement | OPS-23 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-loop-recreate"></a>unattended-loop-recreate | requirement | OPS-18 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-standing-worker-refused"></a>unattended-standing-worker-refused | requirement | OPS-18 | not run | - | local | 2026-11-14 |
 | <a id="t-unattended-selfcheck-missing"></a>unattended-selfcheck-missing | requirement | OPS-18 | not run | - | local | 2026-11-14 |

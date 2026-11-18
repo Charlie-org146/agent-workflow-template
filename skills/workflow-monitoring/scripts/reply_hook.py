@@ -395,7 +395,11 @@ def decide(payload, session, common):
         log(common, "layout-trigger unread %s: %s" % (session, error))
     found = None if isinstance(payload.get("last_assistant_message"), str) else tail
     text = final_reply(payload, found or [])
-    wrong = problems(text) + left_out(text, payload.get("cwd")) + shown(text, payload.get("cwd")) if text is not None else []
+    if text is not None and os.path.exists(base + ".role"):  # a machine session: its one-line check-in (layers.machine_reply)
+        import layers
+        wrong = layers.machine_reply(text, common)
+    else:
+        wrong = problems(text) + left_out(text, payload.get("cwd")) + shown(text, payload.get("cwd")) if text is not None else []
     try:
         counted = payload.get("stop_hook_active") and time.time() - os.path.getmtime(base + ".count") < 900
         count = int(open(base + ".count").read().strip() or 0) if counted else 0
@@ -444,6 +448,9 @@ def main(argv):
             print("REFUSED: cannot read %s (%s). Fix: name a readable file, or - for stdin." % (argv[1], error.strerror))
             return 2
         wrong = problems(text) + left_out(text, os.getcwd()) + shown(text, os.getcwd())
+        if os.environ.get("LOOP_OP_ROLE") == "machine":  # machine mode: one line once STATUS went to top
+            import layers
+            wrong = layers.machine_reply(text, layers.os.path.abspath(layers.machines.sh("rev-parse", "--git-common-dir") or ".git"))
         for line in wrong:
             print(line)
         return 1 if wrong else 0
