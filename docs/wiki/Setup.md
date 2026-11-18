@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=1d91eb41 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept prd-principles@f0f69c2b -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=ebc3ac8e N=9c385754 M=471a58c6 U=03828777 --> <!-- kept regroup-delivery@ba1acb25 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -15,49 +15,57 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Reviewed 2026-11-13** One command adopts a repo <!-- reviewed 8cd2a972 -->
-  - One command sets up a new or existing repo: the loop config, PRD feature pages in the docs format, the Home table and README How to use, the nightly regression in GitHub Actions, the health groups, and every setting with its default.
-  - It shows what it found and would change first, then applies it on a branch through the loop, adapting what is there instead of overwriting.
-  - It never blocks: what doesn't fit is listed and filed as issues tagged with the right feature, and the rest is adopted.
-  - Health is the first and last step: before adopting, a health check records where the repo starts; after adopting, the full health check (every group, Adoption included) must come back green or name each gap with its fix, and that verdict is the adoption result, because if health works, the rest works.
-- SET-2: **Reviewed 2026-11-10** Layered settings <!-- reviewed 4adab145 -->
-  - Settings come in three layers: the template's defaults, the repo's settings (committed and shared), and my local settings (private, outside the repo); a later layer overrides an earlier one.
-  - Every setting has a default and a one-line explanation; I can see each setting's value and which layer it came from, and change any of them at any time.
-- SET-4: **Reviewed 2026-11-10** Updates flow both ways <!-- reviewed 22b1453a -->
-  - An adopted repo can check for a newer template version, see what's new and update, keeping its own config, pages, rules and local settings.
-  - The operation session flags any governed repo running an older template version.
-  - A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue.
-- SET-5: **Reviewed 2026-11-10** A self-describing workspace <!-- reviewed 5cce9f58 -->
-  - Every adopted repo has one entry point that any new session reads first: how the loop, release, operation and workers, docs, regression, health and settings fit together, and which features exist and how to use them.
-  - It is generated from the PRD pages and settings, so it is never stale.
-- SET-6: **Reviewed 2026-11-10** Adoption is proven <!-- reviewed 48224f33 -->
-  - Adoption is proven on test repos shaped like real ones (existing checks, CI tests, a blocking .gitignore, a bare agent command, features that aren't folders), and every adoption defect found in a real repo adds a test repo that reproduces it.
-- SET-9: **Reviewed 2026-11-10** Learn from a repo already set up <!-- reviewed c1f9b120 -->
-  - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo.
-- SET-10: **Reviewed 2026-11-10** The right format for every agent <!-- reviewed 06345b05 -->
-  - The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way.
-- SET-11: **Reviewed 2026-11-17** Prerequisites first, then a strict replay of the first adoption <!-- reviewed 71de4571 -->
-  - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC.
-  - Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent.
-  - Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12.
-- SET-12: **Reviewed 2026-11-17** Adopt all my repos in one pass <!-- reviewed 46be35b0 -->
-  - From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version.
-  - It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version.
+- SET-1: **Unreviewed** One command adopts a repo
+  - One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups.
+  - It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting.
+- SET-2: **Unreviewed** Layered settings
+  - Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one.
+  - Every setting has a default and a one-line explanation, and I can see each value and its layer.
+- SET-4: **Unreviewed** Updates reach every repo
+  - An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings.
+  - A repo running an older template version is flagged.
+- SET-5: **Unreviewed** A self-describing workspace
+  - Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them.
+  - It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values.
+- SET-6: **Unreviewed** Adoption is proven
+  - Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it.
+- SET-9: **Unreviewed** Learn from a repo already set up
+  - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo.
+- SET-10: **Unreviewed** The right format for every agent
+  - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way.
+- SET-11: **Unreviewed** A strict replay of the first adoption
+  - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`.
+  - It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe.
+- SET-12: **Unreviewed** Adopt all my repos in one pass
+  - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template.
+  - It ends with the board showing exactly the repos I chose.
 - SET-13: **Reviewed 2026-11-17** Workers are app sessions I can see <!-- reviewed ca8efc98 -->
   - When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control.
   - The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that.
   - Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses.
   - The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs.
-- SET-14: **Reviewed 2026-11-17** The connectors each repo needs are checked <!-- reviewed deab5634 -->
-  - For each followed repo, setup reads which connectors its PRDs need (mail accounts, a calendar, a file store, a notification channel) and probes each with a read-only call.
-  - It prints each as connected, needs sign-in or missing, with the fix, and names the owner-written files a repo needs that don't exist yet. It never attaches or enables a connector itself: I do, with the narrowest access.
-- SET-16: **Reviewed 2026-11-13** A repo is judged fully migrated by one command <!-- reviewed 66eb89ce -->
-  - One read-only command lists every gap between a repo and the current template, each with a one-line fix, and exits 0 only when none remain; it writes nothing, and health's Adoption group runs the same check.
-  - A repo carries `template_version` (set by update) and one with none counts as behind; a session that starts in a repo behind the installed template is told so in one line and never blocked, except that a new goal is refused when the major version differs.
+- SET-14: **Unreviewed** The connectors each repo needs are checked
+  - For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call.
+  - It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself.
+- SET-16: **Unreviewed** One command judges a repo fully migrated
+  - One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain.
+  - Health's Adoption group runs the same check.
+- SET-18: **Unreviewed** Adoption never blocks, and health judges it
+  - Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted.
+  - A health check runs before and after, and the one after is green or names each gap with its fix.
+- SET-19: **Unreviewed** Fixes flow back to the template
+  - A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue.
+- SET-20: **Unreviewed** A repo behind the template says so
+  - A repo records the template version it is on, and one with none counts as behind.
+  - A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to.
+- SET-21: **Unreviewed** Adopted repos build on the template, not copies of it
+  - An adopted repo holds only its own settings, pages, tests and data.
+  - The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there.
 
 ### Non-functional
-- SET-3: **Reviewed 2026-11-13** Shipped as a versioned package. <!-- reviewed 4ddb26bd -->
-  - The template ships as one versioned package of separate skills in the Agensi format, every script self-contained and under 20 KB. It works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex on a clean test repo with no private settings.
+- SET-3: **Unreviewed** Shipped as a versioned package
+  - The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex.
+  - The rules the package must pass are Guardrails' (GRD-20 to GRD-22).
 - SET-7: **Reviewed 2026-11-10** Safe and repeatable <!-- reviewed fb39932b -->
   - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten.
 - SET-8: **Reviewed 2026-11-10** Private stays private <!-- reviewed 22a16ae7 -->
@@ -85,36 +93,42 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | One command adopts a repo <br> One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups. <br> It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | One command adopts a repo <br> One command sets up a new or existing repo: the loop config, PRD feature pages in the docs format, the Home table and README How to use, the nightly regression in GitHub Actions, the health groups, and every setting with its default. <br> It shows what it found and would change first, then applies it on a branch through the loop, adapting what is there instead of overwriting. <br> It never blocks: what doesn't fit is listed and filed as issues tagged with the right feature, and the rest is adopted. <br> Health is the first and last step: before adopting, a health check records where the repo starts; after adopting, the full health check (every group, Adoption included) must come back green or name each gap with its fix, and that verdict is the adoption result, because if health works, the rest works. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-2
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Layered settings <br> Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one. <br> Every setting has a default and a one-line explanation, and I can see each value and its layer. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Layered settings <br> Settings come in three layers: the template's defaults, the repo's settings (committed and shared), and my local settings (private, outside the repo); a later layer overrides an earlier one. <br> Every setting has a default and a one-line explanation; I can see each setting's value and which layer it came from, and change any of them at any time. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-3
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Shipped as a versioned package <br> The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. <br> The rules the package must pass are Guardrails' (GRD-20 to GRD-22). | v2 rewrite: changed: the Agensi rules move to Guardrails. | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | Shipped as a versioned package. <br> The template ships as one versioned package of separate skills in the Agensi format, every script self-contained and under 20 KB. It works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex on a clean test repo with no private settings. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-4
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Updates reach every repo <br> An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings. <br> A repo running an older template version is flagged. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Updates flow both ways <br> An adopted repo can check for a newer template version, see what's new and update, keeping its own config, pages, rules and local settings. <br> The operation session flags any governed repo running an older template version. <br> A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-5
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | A self-describing workspace <br> Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them. <br> It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values. | v2 rewrite: "committed settings only" is new. | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | A self-describing workspace <br> Every adopted repo has one entry point that any new session reads first: how the loop, release, operation and workers, docs, regression, health and settings fit together, and which features exist and how to use them. <br> It is generated from the PRD pages and settings, so it is never stale. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-6
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Adoption is proven <br> Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Adoption is proven <br> Adoption is proven on test repos shaped like real ones (existing checks, CI tests, a blocking .gitignore, a bare agent command, features that aren't folders), and every adoption defect found in a real repo adds a test repo that reproduces it. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-7
@@ -133,24 +147,29 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Learn from a repo already set up <br> Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Learn from a repo already set up <br> Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules (never private values) and adapts them to the new repo. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-10
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | The right format for every agent <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | The right format for every agent <br> The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-11
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-18 | A strict replay of the first adoption <br> Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`. <br> It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. | adoption-golden: SET-11 names its fixture file again, so the test finds the fixture and the stop rule (operation-mac, 2026-11-18) | o48: "Do ur choice" |
+| r2 | 2026-11-18 | A strict replay of the first adoption <br> Adoption replays the first run step by step against a recorded good result. <br> It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-17 | Prerequisites first, then a strict replay of the first adoption <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC. <br> Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent. <br> Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-12
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Adopt all my repos in one pass <br> From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template. <br> It ends with the board showing exactly the repos I chose. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-17 | Adopt all my repos in one pass <br> From the operation session, one flow lists my GitHub repos by last push, private ones included, lets me choose which to follow, clones them into one folder, registers each with the board and updates each to the current template version. <br> It ends with the board showing exactly the repos I chose and none of them on an unknown or older template version. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-13
@@ -163,6 +182,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | The connectors each repo needs are checked <br> For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call. <br> It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-17 | The connectors each repo needs are checked <br> For each followed repo, setup reads which connectors its PRDs need (mail accounts, a calendar, a file store, a notification channel) and probes each with a read-only call. <br> It prints each as connected, needs sign-in or missing, with the fix, and names the owner-written files a repo needs that don't exist yet. It never attaches or enables a connector itself: I do, with the narrowest access. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-15
@@ -175,6 +195,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | One command judges a repo fully migrated <br> One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain. <br> Health's Adoption group runs the same check. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | A repo is judged fully migrated by one command <br> One read-only command lists every gap between a repo and the current template, each with a one-line fix, and exits 0 only when none remain; it writes nothing, and health's Adoption group runs the same check. <br> A repo carries `template_version` (set by update) and one with none counts as behind; a session that starts in a repo behind the installed template is told so in one line and never blocked, except that a new goal is refused when the major version differs. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-17
@@ -182,6 +203,30 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-13 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### SET-18
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-17 | Adoption never blocks, and health judges it <br> Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted. <br> A health check runs before and after, and the one after is green or names each gap with its fix. | migration r1; date from the Review line | o47: "Yes, start it end." |
+
+### SET-19
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-17 | Fixes flow back to the template <br> A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. | migration r1; date from the Review line | o47: "Yes, start it end." |
+
+### SET-20
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-17 | A repo behind the template says so <br> A repo records the template version it is on, and one with none counts as behind. <br> A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to. | migration r1; date from the Review line | o47: "Yes, start it end." |
+
+### SET-21
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-17 | Adopted repos build on the template, not copies of it <br> An adopted repo holds only its own settings, pages, tests and data. <br> The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there. | migration r1; date from the Review line | o47: "Yes, start it end." |
 
 ## Tests
 
@@ -191,7 +236,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [adopt-set-2](Tests#t-adopt-set-2) | requirement | SET-1 | Given SET-1 with suggest then apply, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [setup-both-halves](Tests#t-setup-both-halves) | requirement | SET-1 | Given a repo, when setup runs, then it writes the repo half and, outside the repo, the private half. | PASS 2026-11-12 |
 | [set1-health-bracket](Tests#t-set1-health-bracket) | requirement | SET-1 | Given an adoption, when setup runs, then HEALTH START comes before the first write line, ADOPTION VERDICT is the last line, and a verdict that is not green lists each gap with its fix. | not run |
-| [set1-never-blocks](Tests#t-set1-never-blocks) | requirement | SET-1 | Given a bare agent_command and an ignored *.tsv, when setup runs, then it adopts and commits with exit 0, names each gap, writes the exception line, and a failed step after the commit is a note and a gap. | not run |
 | [set1-no-fit-filed](Tests#t-set1-no-fit-filed) | requirement | SET-1 | Given two pages with their own sections, when setup runs, then one findings line lists both and one issue tagged adoption is filed through the stand-in, matching preview, and a second run files none. | not run |
 | [set1-docs-format](Tests#t-set1-docs-format) | requirement | SET-1 | Given a fresh adoption, when the docs check runs, then no Home, front door, requirement or problem format gap and no broken link remains, only pages still to be written. | not run |
 | [repo-rules-setup](Tests#t-repo-rules-setup) | requirement | SET-1 | Given a repo adopted or updated by setup, when settings fill-repo runs, then an empty commented .loop/health-rules.json exists once and an edited one is kept. | not run |
@@ -217,7 +261,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [sync-apply-keeps](Tests#t-sync-apply-keeps) | requirement | SET-4 | Given an adopted repo, when update applies a newer version, then the skills update, the repo half lands on workflow-update-vX with template_version stamped, and config values, pages and private settings are kept. | not run |
 | [sync-default-source](Tests#t-sync-default-source) | requirement | SET-4 | Given an update from the template's release source archive, when the next default check runs, then it still finds the template through the installed stamp. | SKIPPED 2026-11-16 |
 | [sync-template-redirect](Tests#t-sync-template-redirect) | requirement | SET-4 | Given a committed template_repo that differs from the installed stamp's repo, when update runs, then it refuses rather than read another repo's releases. | SKIPPED 2026-11-16 |
-| [sync-propose](Tests#t-sync-propose) | requirement | SET-4 | Given a skill file fixed in an adopted repo, when update runs, then it shows as a local fix, is kept, and --propose --file-issue files one issue on the template with its diff and no repo name. | SKIPPED 2026-11-16 |
 | [sync-board-lag](Tests#t-sync-board-lag) | requirement | SET-4 | Given a governed repo on an older template version, when the live board renders, then it lists that repo under Issues with the fix. | not run |
 | - | requirement | SET-4 | no passing test | not enforced |
 | [adopt-set-5](Tests#t-adopt-set-5) | requirement | SET-5 | Given SET-5, when the toy adopt test runs, then the design guide is installed and setup's .loop/START.md holds the opener and every part. | FAIL 2026-11-12 |
@@ -236,7 +279,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | - | requirement | SET-9 | no passing test | not enforced |
 | [agents-wire](Tests#t-agents-wire) | requirement | SET-10 | Given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing. | PASS 2026-11-12 |
 | [adoption-golden](Tests#t-adoption-golden) | requirement | SET-11 | Given the golden first adoption, when its fixture and SET-11 are read, then the fixture holds steps 1 to 8 in order, each with a check, golden result and fix, no machine path or account, and SET-11 names it and its first-mismatch stop. | PASS 2026-11-13 |
-| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | SET-11 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
 | [adopt-replay-strict](Tests#t-adopt-replay-strict) | requirement | SET-11 | Given a machine that differs from the golden first adoption, when the replay runs, then it stops at the first mismatch naming what differs and never passes a step it cannot observe (the live check-in, step 8, is reported as not observed). | not run |
 | [adopt-many-one-pass](Tests#t-adopt-many-one-pass) | requirement | SET-12 | Given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version. | not run |
 | - | requirement | SET-12 | no passing test | not enforced |
@@ -252,13 +294,18 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [migration-health-same](Tests#t-migration-health-same) | requirement | SET-16 | Given a repo with no template_version and an unknown setting, when health check runs the Adoption group, then it prints the same gap codes through the migration rule and the template-version row, stays green, previews WOULD open for both, and the migration rule's negative control fires. | not run |
 | [migration-base-config](Tests#t-migration-base-config) | requirement | SET-16 | Given an adopted repo, when update --check runs from a branch cut before setup, with no local main, from a fresh clone, with a default branch that is neither main nor master, or with a stale local main, then it reports the base branch's config and never says it has none. | not run |
 | [migration-robustness](Tests#t-migration-robustness) | requirement | SET-16 | Given a linked worktree, a subdirectory, a missing or malformed config, a corrupt regression.tsv, an unparseable docs.tsv, an unprintable wiki page name and two runs at once, when migration-check runs, then each ends with a verdict line and no traceback, and no temp folder is left. | not run |
-| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-16 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | not run |
 | [migration-major-refused](Tests#t-migration-major-refused) | requirement | SET-16 | Given a repo behind the installed template, when goal.py new starts a goal, then it warns and goes on, refuses a differing major with exit 2 and no goal state, lets a migrate- slug through, and only notes a missing entry.py. | not run |
 | [migration-blocks-inserted](Tests#t-migration-blocks-inserted) | requirement | SET-16 | Given a repo adopted before the Settings and Automation blocks existed, when update --apply runs, then its README and Home hold both blocks and the README line, its config holds template_version and the three routines, and the repo is no longer behind. | not run |
 | [migration-queue](Tests#t-migration-queue) | requirement | SET-16 | Given followed repos app, app.v2 and app-api all behind the template, when the operation session's pass runs, then each gets exactly one migrate-<repo> goal line, a second or concurrent pass adds none, a finished goal for this version is an Issues line, an older one allows a version-suffixed slug, and a repo on another branch or with a modified queue file is skipped with its reason. | not run |
 | [migration-mac-kept](Tests#t-migration-mac-kept) | requirement | SET-16 | Given a public repo recorded regression_runs mac, when setup re-runs and the tick runs, then mac is kept, no DRIFT line prints and only origin/<base> is fetched. | not run |
 | [migration-v1](Tests#t-migration-v1) | requirement | SET-16 | Given a toy repo missing a feature the template carries (Usage dropped, .loop/health-rules.json, routine Runbook pointers, hooks once, a node or python the repo asks for), when migration-check runs, then it names each with its code and fix, or an OWNER STEP with the exact install command, and exits 1 only for a gap; with everything present it exits 0. | PASS 2026-11-16 |
 | [adopt-stamps-version](Tests#t-adopt-stamps-version) | requirement | SET-16 | Given a repo set up from an installed package, when setup finishes, then its config holds the installed template_version. | not run |
+| [set1-never-blocks](Tests#t-set1-never-blocks) | requirement | SET-18 | Given a bare agent_command and an ignored *.tsv, when setup runs, then it adopts and commits with exit 0, names each gap, writes the exception line, and a failed step after the commit is a note and a gap. | not run |
+| - | requirement | SET-18 | no passing test | not enforced |
+| [sync-propose](Tests#t-sync-propose) | requirement | SET-19 | Given a skill file fixed in an adopted repo, when update runs, then it shows as a local fix, is kept, and --propose --file-issue files one issue on the template with its diff and no repo name. | SKIPPED 2026-11-16 |
+| - | requirement | SET-19 | no passing test | not enforced |
+| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-20 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | PASS 2026-11-18 |
+| - | requirement | SET-21 | no passing test | not enforced |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-3 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-3 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-12 |
 | [codex-ro-home](Tests#t-codex-ro-home) | requirement | SET-3 | Given a Codex sandbox that leaves the home folder read-only, when setup adopts a clean toy repo, then it says the private settings were not written and still adopts the repo, with no crash. | not run |
