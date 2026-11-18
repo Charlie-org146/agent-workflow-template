@@ -200,6 +200,42 @@ def cmd_send(args):
     return 0
 
 
+def approve(args, path, top, common):
+    """monitor.py plan approve: the owner's plan (plan-round.json) written into the queue lines. Needs an owner-words record; any refusal changes nothing."""
+    keys = ("release", "machine", "agent")
+    plan = read_json(path)
+    plan = plan if isinstance(plan, dict) else {}
+    if plan.get("status") != "pending":
+        sys.exit("REFUSED: no pending plan. Fix: run monitor.py plan first.")
+    try:
+        known = {x.split("\t")[0] for x in open(os.path.join(common, "loop", "owner-words.tsv"), encoding="utf-8").read().splitlines()}
+    except OSError:
+        known = set()
+    if not args.owner_record or args.owner_record not in known:
+        sys.exit("REFUSED: approving takes the owner's words. Fix: record them (sessions.py owner-words), then pass --owner-record ID.")
+    goals, slug = plan["goals"], ""
+    for token in args.rest[1:]:
+        key, equal, value = token.partition("=")
+        if not equal:
+            slug = token
+        if (not equal and slug not in goals) or (equal and (key not in keys or slug not in goals)):
+            sys.exit("REFUSED: %s is not a plan goal, or key=value with key release, machine or agent. Nothing changed." % token)
+        if equal:
+            goals[slug][key] = value
+    queue = os.path.join(top, ".loop", "queue.md")
+    lines = open(queue, encoding="utf-8").read().split("\n")
+    for number, line in enumerate(lines):
+        item = graph.parse(line)
+        if item and item["slug"] in goals:
+            keep = [x for x in line.split("|") if x.split(":")[0].strip() not in keys]
+            lines[number] = "|".join(keep).rstrip() + "".join(" | %s: %s" % (k, goals[item["slug"]][k]) for k in keys)
+    with open(queue, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(lines))
+    save(path, dict(plan, status="approved", record=args.owner_record))
+    print("APPROVED plan round-%s: %d goal(s) carry release, machine and agent in the queue; watch starts them" % (plan.get("id"), len(goals)))
+    return 0
+
+
 def cmd_status(args):
     state = read_json(os.path.join(lb.loop_dir(args.root), "notified.json"))
     _, why = load_env()

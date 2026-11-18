@@ -5,6 +5,7 @@ usage: monitor.py <command> [options]
 
   report                 print every run, what waits on you, and findings
   dashboard [--out FILE] write one self-contained HTML page
+  plan [approve --owner-record ID [SLUG k=v]] [--machines pc=GB,mac=GB] [--peer-plan F] [--first-release vX.Y] [--check]   MON-10 plan
 
 Run state lives in <git common dir>/loop/. It runs git and nothing else. watch.py starts and moves goals.
 """
@@ -12,6 +13,7 @@ import argparse
 import datetime
 import hashlib
 import html
+import importlib.util
 import itertools
 import json
 import os
@@ -318,15 +320,88 @@ def cmd_dashboard(args):
     return 0
 
 
+def cmd_plan(args):
+    path = os.path.join(loop_dir(), "plan-round.json")
+    here_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, here_dir)
+    if args.rest[:1] == ["approve"]:
+        import notify
+        return notify.approve(args, path, root(), common())
+    import auto
+    import board_status as bs
+    cfg = config()
+    free = {k: float(v) for k, v in (x.split("=") for x in args.machines.split(",") if "=" in x)} or {"pc" if os.name == "nt" else "mac": bs.memory()[0] or 4.0}
+    try:
+        peer = json.load(open(args.peer_plan, encoding="utf-8")).get("goals") or {}
+    except (OSError, ValueError, TypeError, AttributeError):
+        peer = {}
+    states, held = runs(), pool()[0] or {}
+    seen = {s["slug"] for s in states} | set(held) | set(peer)
+    raw = open(os.path.join(root(), ".loop", "queue.md"), encoding="utf-8").read()
+    todo, left = [], []
+    for goal in (g for g in parse_queue() if not g["release"]):
+        busy = goal["slug"] in seen or re.search(r"slug: %s\s*\|[^\n]*\| machine:" % goal["slug"], raw)
+        (left if busy else todo).append(goal)
+    order = []
+    while len(order) < len(todo):
+        placed = {o["slug"] for o in order}
+        step = [g for g in todo if g not in order and all(d in placed or d not in {t["slug"] for t in todo} for d in g["depends"])]
+        order += step or [g for g in todo if g not in order][:1]
+    major, minor = (int(x) for x in re.findall(r"\d+", args.first_release or open(os.path.join(root(), cfg.get("version_file") or "VERSION")).read())[:2])
+    minor += not args.first_release
+    past = [t for t in (sum(v for v in s["tokens"].values() if isinstance(v, int)) for s in states if s.get("status") == "done" and isinstance(s.get("tokens"), dict)) if t]
+    cap = int(cfg.get("token_budget") or 0)
+    spend = -(-int(1.5 * sum(past) / len(past)) // 50000) * 50000 if past else cap
+    spend = min(spend, cap or spend)
+    spec = importlib.util.spec_from_file_location("routing", os.path.join(here_dir, "..", "..", "workflow-delivery", "scripts", "routing.py"))
+    routing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(routing)
+    plan, body = {}, []
+    for number, goal in enumerate(order):
+        text, size = " ".join([goal["goal"]] + goal["touches"] + goal["done"]), graph.size(goal["done"], goal["touches"]) or (9, 9)
+        small = size[0] <= 3 and size[1] <= 1
+        if re.search(r"windows|\bwin-|powershell", text, re.I) and "pc" in free:
+            where, why = "pc", "Windows"
+        elif re.search(r"\bmac\b|macos|launchctl|\bjudge\b", text, re.I) and "mac" in free:
+            where, why = "mac", "Mac lane"
+        else:
+            where, why = max(free, key=free.get), "most memory left"
+        free[where] -= 1.5
+        pick = routing.resolve("build", "small" if small else "large")
+        eta = auto.eta_new(root(), goal["slug"], goal["done"], goal["touches"], cfg.get("time_budget_minutes") or 240, cfg)
+        item = plan[goal["slug"]] = {"release": "v%d.%d" % (major, minor + number // 6), "estimate": eta["estimate"], "eta": eta["minutes"], "budget": spend, "machine": where,
+                                     "agent": pick["profile"], "why": "%s, %s goal %s" % (why, "small" if small else "large", pick["warning"])}
+        body.append("%s %s | est %dm | ETA %dm | %dk tokens | %s | %s | %s" % (item["release"], goal["slug"], eta["estimate"], eta["minutes"], spend // 1000, where, pick["profile"], item["why"]))
+    stamp = now()
+    body = ["PLAN round-%s: %d goal(s), %d left out" % (stamp, len(plan), len(left))] + body + ["LEFT OUT %s: already started" % g["slug"] for g in left]
+    if args.check and plan:
+        done = subprocess.run([sys.executable, routing.__file__, "check"], input="\n".join(body), capture_output=True, text=True, encoding="utf-8", errors="replace")
+        body += ["Cross-check:"] + (done.stdout + done.stderr).strip().splitlines()
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump({"id": stamp, "status": "pending", "goals": plan}, handle, indent=1)
+    print("\n".join(body + ["ETA choices (ship, extend, defer) stay yours. Approve: plan approve --owner-record ID"]))
+    print("SEND to the other operation session: plan round-%s gives %s" % (stamp, ", ".join("%s=%s" % (s, i["machine"]) for s, i in plan.items()) or "nothing"))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    item = sub.add_parser("report", help="print the state of every run")
+    item = sub.add_parser("report", help="show every run")
     item.set_defaults(func=cmd_report)
     item = sub.add_parser("dashboard", help="write the HTML dashboard")
     item.add_argument("--out", default="", help="file to write (default <common>/loop/dashboard.html)")
     item.set_defaults(func=cmd_dashboard)
-    args = parser.parse_args()
+    item = sub.add_parser("plan", help="plan the backlog")
+    item.add_argument("rest", nargs="*")
+    item.add_argument("--machines", default="")
+    item.add_argument("--peer-plan", default="")
+    item.add_argument("--first-release", default="")
+    item.add_argument("--check", action="store_true")
+    item.add_argument("--owner-record", default="")
+    item.set_defaults(func=cmd_plan)
+    args, more = parser.parse_known_args()
+    args.rest = getattr(args, "rest", []) + more
     return args.func(args)
 
 
