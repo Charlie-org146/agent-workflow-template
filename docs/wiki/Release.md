@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept docs-gate-scope@9150194c -->
+Review: **Unreviewed** <!-- kept prd-revisions@60ce3cfa -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
