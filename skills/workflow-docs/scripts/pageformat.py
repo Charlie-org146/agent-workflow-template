@@ -111,7 +111,7 @@ def anchors(readme):
 
 def unblocked(text):
     """text with the generated Settings, Automation and template blocks (render.py) blanked, line numbers kept."""
-    return re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
+    return re.sub(r"<!-- (settings|automation|template|diagram):begin -->\n.*?<!-- \1:end -->\n", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
 
 
 def home(text, features, existing, readme, repo, topics=None):

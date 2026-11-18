@@ -13,6 +13,17 @@ Runs health on your always-on machine (the Mac, or a Windows PC with `local regi
 | `mail.py` | Command | Mails the owner the round's digest, at most once. | `python3 skills/workflow-health/scripts/mail.py send`. |
 | `.loop/config.json` | API/file contract | The schedule and digest settings. | Say "Run health every 12 hours instead"; it changes `health_cron`. |
 
+### System diagram
+
+```text
+[API/file contract: .loop/config.json | the repo] --schedule and digest settings--> [Command: automation.py | the always-on machine]
+[Command: automation.py | the always-on machine] --posts the digest each round--> (GitHub issue comment)
+[Command: automation.py | the always-on machine] --hands over the digest--> [Command: mail.py | the always-on machine]
+[Command: mail.py | the always-on machine] --mails it at most once--> (the owner's inbox)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

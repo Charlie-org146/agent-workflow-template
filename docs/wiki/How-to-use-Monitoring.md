@@ -14,6 +14,17 @@ One session governs many goals at once and shows a live board of what's running 
 | `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
 | `monitor.py plan` | Command | Plans the backlog into releases with an ETA, budget, machine and agent for each goal, and sends the owner one plan to approve. | `python3 skills/workflow-monitoring/scripts/monitor.py plan --check`, then `plan approve --owner-record ID`. |
 
+### System diagram
+
+```text
+[Skill: workflow-monitoring | the operation session] --the live board and the repos it follows--> [Command: board.py | the operation session]
+[Command: board.py | the operation session] --every goal and session--> [Command: checkin.py | the operation session]
+[Command: checkin.py | the operation session] --machine, sessions, dependency map, what waits on you--> (the owner)
+[Skill: workflow-monitoring | the operation session] --plans the backlog into releases--> [Command: monitor.py plan | the operation session] --one plan to approve--> (the owner)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

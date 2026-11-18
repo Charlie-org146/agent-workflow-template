@@ -14,6 +14,17 @@ Keeps the wiki and README in one enforced format (feature pages are PRDs with no
 | `audit.py restamp` | Command | Re-stamps a page that is stale only by code its text still describes. | `python3 skills/workflow-docs/scripts/audit.py restamp SLUG PAGE...`. |
 | `.loop/docs.tsv` | API/file contract | The map of wiki pages to the paths each describes. | Add a row with `docs.py add PAGE --paths A,B`, or edit the file. |
 
+### System diagram
+
+```text
+[Skill: workflow-docs | the agent session] --check, audit, publish--> [Command: docs.py | the repo checkout]
+[API/file contract: .loop/docs.tsv | the repo] --maps pages to the paths they describe--> [Command: docs.py | the repo checkout]
+[Command: docs.py | the repo checkout] --a page stale only by code its text still describes--> [Command: audit.py restamp | the repo checkout]
+[Command: docs.py | the repo checkout] --publish writes only the pages it wrote--> (GitHub wiki)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands. A feature's routine runbooks may be written on its How-to-use page, under Runbooks, instead of on its PRD page; the docs check finds them there.

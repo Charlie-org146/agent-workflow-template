@@ -38,6 +38,14 @@ It does a thing for its users, in one plain sentence here.
 |---|---|---|---|
 | Guide | Playbook | A short guide | Follow the steps |
 
+### System diagram
+
+```text
+[Playbook: Guide | the agent session] --follows--> (a finished task)
+
+Legend: a box is Kind, Component and where it runs.
+```
+
 ## How to reach or run it
 
 ### Playbook: Guide
