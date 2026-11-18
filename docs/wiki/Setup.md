@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=74670897 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept ci-release-commit-identity@17e60598 -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=74670897 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept extra-cols-links@8a64044b -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -304,7 +304,8 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | - | requirement | SET-18 | no passing test | not enforced |
 | [sync-propose](Tests#t-sync-propose) | requirement | SET-19 | Given a skill file fixed in an adopted repo, when update runs, then it shows as a local fix, is kept, and --propose --file-issue files one issue on the template with its diff and no repo name. | SKIPPED 2026-11-16 |
 | - | requirement | SET-19 | no passing test | not enforced |
-| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-20 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | PASS 2026-11-18 |
+| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-20 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | not run |
+| - | requirement | SET-20 | no passing test | not enforced |
 | - | requirement | SET-21 | no passing test | not enforced |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-3 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-3 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-12 |

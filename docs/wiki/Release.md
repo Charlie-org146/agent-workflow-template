@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept ci-release-commit-identity@17e60598 -->
+Review: **Unreviewed** <!-- kept extra-cols-links@8a64044b -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -183,7 +183,7 @@ None
 | - | requirement | REL-7 | no passing test | not enforced |
 | [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-8 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
 | - | requirement | REL-8 | no passing test | not enforced |
-| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | REL-9 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, or pages only merge.py's own re-render changed, when merge.py checks the wiki, then it does not refuse on them. | PASS 2026-11-18 |
+| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | REL-9 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, or pages only merge.py's own re-render changed, when merge.py checks the wiki, then it does not refuse on them. | not run |
 | [gate-untouched-filed-once](Tests#t-gate-untouched-filed-once) | requirement | REL-9 | Given those findings on untouched pages, when merge.py checks the wiki, then each page is printed as a FINDING and handed to the issue filer once. | not run |
 | [gate-one-issue-per-page](Tests#t-gate-one-issue-per-page) | requirement | REL-9 | Given a page with several DOC-19 findings, when they are filed, then one issue carries every line. | not run |
 | [gate-generated-still-refused](Tests#t-gate-generated-still-refused) | requirement | REL-9 | Given a stale Tests table, START.md, a stale page and a DOC-18 finding, when merge.py checks the wiki, then each still refuses and none is filed. | not run |
@@ -196,10 +196,11 @@ None
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | REL-9 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
+| - | requirement | REL-9 | no passing test | not enforced |
 | [never-merges](Tests#t-never-merges) | requirement | REL-10 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
-| [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-18 |
+| [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-12 |
 | [auto-release](Tests#t-auto-release) | requirement | REL-10 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
-| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | REL-10 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-18 |
+| [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | REL-10 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-12 |
 | [del5-patch-default](Tests#t-del5-patch-default) | requirement | REL-10 | Given a goal with a code change and no bump set, when it is released, then the version bump is patch. | PASS 2026-11-12 |
 | [del5-bump-set](Tests#t-del5-bump-set) | requirement | REL-10 | Given the operation recorded a minor bump with goal.py set, when the goal is released, then the bump is minor. | PASS 2026-11-12 |
 | [del5-release-pr](Tests#t-del5-release-pr) | requirement | REL-10 | Given a protected main that refuses direct pushes, when a goal is released, then the version and changelog land through a release pull request. | PASS 2026-11-12 |
@@ -233,8 +234,8 @@ None
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |
 | - | requirement | REL-14 | no passing test | not enforced |
-| [wiki-release-pycache](Tests#t-wiki-release-pycache) | defect | [#58](https://github.com/jcl2018/agent-workflow-template/issues/58) closed (2026-11-09) | Given python leaves cache files behind, when a goal merges, then its wiki pages are still published. | PASS 2026-11-18 |
-| [worker-runs-release](Tests#t-worker-runs-release) | defect | [PR 61](https://github.com/jcl2018/agent-workflow-template/pull/61) merged (2026-11-09) | Given a worker that ends with its pull request waiting, when it finishes, then it runs the release step itself. | PASS 2026-11-18 |
+| [wiki-release-pycache](Tests#t-wiki-release-pycache) | defect | [#58](https://github.com/jcl2018/agent-workflow-template/issues/58) closed (2026-11-09) | Given python leaves cache files behind, when a goal merges, then its wiki pages are still published. | PASS 2026-11-12 |
+| [worker-runs-release](Tests#t-worker-runs-release) | defect | [PR 61](https://github.com/jcl2018/agent-workflow-template/pull/61) merged (2026-11-09) | Given a worker that ends with its pull request waiting, when it finishes, then it runs the release step itself. | FAIL 2026-11-18 |
 | [issue-129-docs-published](Tests#t-issue-129-docs-published) | defect | [#129](https://github.com/jcl2018/agent-workflow-template/issues/129) closed (2026-11-15) | Given the release skill's docs, when they describe the auto_merge path, then they say merge.py publishes the release with no draft (issue: Release skill says it cuts a draft, but merge.py publishes the release directly). | PASS 2026-11-12 |
 | [issue-129-wiki-first-page](Tests#t-issue-129-wiki-first-page) | defect | [#129](https://github.com/jcl2018/agent-workflow-template/issues/129) closed (2026-11-15) | Given a GitHub wiki with no first page, when the release publishes it, then the error names how to create the first page (issue: Release skill says it cuts a draft, but merge.py publishes the release directly). | PASS 2026-11-12 |
 | [issue-134-protected-release](Tests#t-issue-134-protected-release) | defect | [#134](https://github.com/jcl2018/agent-workflow-template/issues/134) closed (2026-11-11) | Given a PR-only ruleset on main, when a goal is released, then a release PR lands the version and exactly one GitHub release is made at its merge commit (issue: Autorelease fails on a protected base branch). | PASS 2026-11-12 |
