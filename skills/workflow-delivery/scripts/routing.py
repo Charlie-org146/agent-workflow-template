@@ -300,7 +300,7 @@ def tree_run(argv, stdin, limit, cwd=None):
         out, err = kid.communicate(stdin, timeout=limit)
     except subprocess.TimeoutExpired:
         proctree.kill(kid.pid)
-        kid.communicate()
+        kid.communicate(timeout=10)  # a stray holder of the pipe can't hang the stop
         raise
     return subprocess.CompletedProcess(argv, kid.returncode, out, err)
 
