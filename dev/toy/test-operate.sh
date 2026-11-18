@@ -76,8 +76,8 @@ PY
 printf 'Shared\tshared.py\n' > .loop/docs.tsv
 git add -A; git commit -qm "Agent"; git push -q origin main
 
-echo "== MON-1 carries the v2 wording"
-check "MON-1 is the v2 rewrite on the Operation page, with its revision" 'grep -q "^- MON-1: \*\*Unreviewed\*\* One command starts the operation session" "$here/docs/wiki/Operation.md" && grep -q "^### MON-1" "$here/docs/wiki/Operation.md"'
+echo "== OPS-1 carries the v2 wording"
+check "OPS-1 is the v2 rewrite on the Operation page, with its revision" 'grep -q "^- OPS-1: \*\*Unreviewed\*\* One command starts the operation session" "$here/docs/wiki/Operation.md" && grep -q "^### OPS-1" "$here/docs/wiki/Operation.md"'
 
 echo "== a goal waits only for the goals it depends on"
 touch "$FAKE_AGENT/hold-a" "$FAKE_AGENT/hold-c"

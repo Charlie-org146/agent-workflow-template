@@ -255,10 +255,10 @@ check "the package rules pass, 99 files or fewer (dev/package.py)" '[ $rc = 0 ] 
 fi
 
 if want docs; then
-echo "== done line 1: MON-13 and MON-15 are on the Operation page, MON-14 moved to CHK-5"
+echo "== done line 1: MON-13 and MON-15 moved to OPS-13 and OPS-15 on the Operation page, MON-14 to CHK-5"
 out=""
-for id in MON-13 MON-15; do check "$id is on the Operation page with its revisions" 'grep -Eq "^- '"$id"': " "$here/docs/wiki/Operation.md" && grep -q "^### '"$id"'" "$here/docs/wiki/Operation.md"'; done
-check "MON-14 is retired as moved to CHK-5" 'grep -q "^- MON-14: moved to CHK-5" "$here/docs/wiki/Operation.md"'
+for n in 13 15; do check "MON-$n is moved to OPS-$n, which has its revisions" 'grep -q "^- MON-'"$n"': moved to OPS-'"$n"'" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- OPS-'"$n"': " "$here/docs/wiki/Operation.md" && grep -q "^### OPS-'"$n"'" "$here/docs/wiki/Operation.md"'; done
+check "MON-14 is retired as moved to CHK-5" 'grep -q "^- MON-14: moved to CHK-5" "$here/docs/wiki/Monitoring.md"'
 out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
 check "the Operation page's review lock accepts the requirements" '! has "LOCKED Operation" && ! has "TESTS Operation"'
 fi

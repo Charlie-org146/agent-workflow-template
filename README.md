@@ -36,6 +36,7 @@ Each feature has its own How-to-use page, with what it delivers, how to reach or
 - [How to use Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Guardrails)
 - [How to use Health](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Health)
 - [How to use Machines](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Machines)
+- [How to use Monitoring](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Monitoring)
 - [How to use Operation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Operation)
 - [How to use Check-in-and-board](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Check-in-and-board)
 - [How to use Regression](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Regression)
@@ -349,7 +350,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
 | `machine_setup` | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. | set "machine_setup" in .loop/config.json | `[]` | default |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |
-| `topics` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Operation", "Check-in-and-board"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]}` |
+| `topics` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring", "Operation", "Check-in-and-board"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]}` |
 | `ci_levels` | Target of the scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
 | `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `240` | default |
 | `max_merge_rounds` | Merge rounds goal.py pr may take before the goal waits. | set "max_merge_rounds" in .loop/config.json | `8` | default |
