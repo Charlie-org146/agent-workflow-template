@@ -1,7 +1,7 @@
 # Guardrails, Health, Operation, and Check-in and board carry the v2 rewrite text through the revision tooling, with Monitoring split into Operation and Check-in and board
 
 - Slug: regroup-guardrails
-- Touches: docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Monitoring.md, docs/wiki/Operation.md, docs/wiki/Check-in-and-board.md, docs/wiki/Home.md, docs/wiki/Tests.md, .loop/regression.tsv
+- Touches: docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Monitoring.md, docs/wiki/Operation.md, docs/wiki/Check-in-and-board.md, docs/wiki/Home.md, docs/wiki/Tests.md, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Regression.md, docs/wiki/Documentation.md
 - ETA: 230 active minutes (estimate 182m plus a 25% margin)
 
 ## Done lines
