@@ -130,7 +130,7 @@ fi
 
 if want owner; then
 echo "== MON-15: only the owning pod acts on a goal"
-echo '{"auto_merge": true}' > "$T/alpha-app/.loop/config.json"
+echo '{"auto_merge": true, "full_auto": true}' > "$T/alpha-app/.loop/config.json"
 own alpha-app core pod-a failed; own alpha-app mine pod-a done 7; own alpha-app plain - failed; own alpha-app held1 pod-a waiting
 line='REFUSED: goal core is owned by pod pod-a.'
 for cmdline in "python3 $SCRIPTS/sessions.py send core hi" "python3 $SCRIPTS/sessions.py bind core s9" "python3 $SCRIPTS/sessions.py free core" "python3 $SCRIPTS/worker.py send core hi" "python3 $GOAL resume core --why x" \

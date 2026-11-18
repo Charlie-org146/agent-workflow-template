@@ -74,7 +74,7 @@ TABLE = [
     ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from, when the installed package names none."),
     ("reply_hook", REPO, True, "false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session."),
     ("govern_hook", REPO, True, "false turns off the govern-only hook: edits, commits and pushes are refused in the operation session."),
-    ("full_auto", REPO, True, "true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait."),
+    ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait."),
     ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more."),
     ("silent_minutes", REPO, 30, "Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides."),
     ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),
@@ -98,8 +98,8 @@ TABLE = [
     ("rules", PRIVATE, [], "Health file: your own health rules, each {name, command, fix}."),
     ("repos", PRIVATE, [], "Followed repos: one path a line in the repos file, shown on the board."),
     ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine."),
-    ("machine_sync", PRIVATE, False, "Flow file: true shares the merge turn, SNAPSHOT lines and mail ledger with your other machine through origin; per machine."),
-    ("notify_budget", PRIVATE, 20, "Flow file: most mails both machines send you in 24 hours, from one shared ledger; 0 sends none."),
+    ("machine_sync", PRIVATE, False, "Sync machines."),
+    ("notify_budget", PRIVATE, 20, "Daily mail budget."),
 ]
 FLOW_KEYS = ("command", "allowed_tools", "model", "suite", "steps", "overrides", "env", "probe", "probe_expect", "full_markers", "limit")
 DEPTHS = ("full", "condensed")

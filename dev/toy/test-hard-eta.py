@@ -109,7 +109,7 @@ waiting = read(here, "g")
 check(waiting["status"] == "waiting" and (waiting["waiting"] or {}).get("eta") is True, "the goal is put to waiting for the owner")
 check(len(waiting["waiting"]["words"]) == 3 and "ship g now" in waiting["waiting"]["words"] and "defer g" in waiting["waiting"]["words"]
       and any(w.startswith("extend g by") for w in waiting["waiting"]["words"]), "Needs you offers ship now, extend and defer")
-check(auto.why_not(waiting["waiting"], {}) != "", "full auto never answers the ETA question: %s" % auto.why_not(waiting["waiting"], {}))
+check(auto.why_not(waiting["waiting"], {"full_auto": True}) != "", "full auto never answers the ETA question: %s" % auto.why_not(waiting["waiting"], {"full_auto": True}))
 check(refused(fit.budget_stop, "g", running(30), runs, {"time_budget_minutes": 240}) == "", "a goal inside its ETA starts its step")
 check(refused(fit.budget_stop, "g", {"slug": "g", "status": "running", "log": [ago(500) + " start build"]}, runs, {}) == "", "a goal frozen without an ETA is not stopped by one")
 

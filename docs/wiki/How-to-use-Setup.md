@@ -78,3 +78,4 @@ Each requirement and how it is delivered:
 - Backlog: [Backlog: Setup](https://github.com/jcl2018/agent-workflow-template/milestones)
 
 <!-- kept machine-email-phone@9a67a8ff -->
+<!-- kept safety-fixes@585daa17 -->
