@@ -43,18 +43,10 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - A guardrail its rule can't read shows as unread, never as passing.
 - GRD-10: **Unreviewed** Setup installs the whole set
   - Adopting a repo installs every guardrail on this page with its default setting and lists each one installed, and health judges a freshly adopted repo on the same rules as the template.
-- GRD-11: **Reviewed 2026-11-13** A goal depends only on what its own machine can do <!-- reviewed c1c9c836 -->
-  - A step only another machine can do (a red proof on another platform, a smoke cell, a Mac-only check) is filed as a to-do issue on the feature's milestone and never blocks the goal, its merge or the release.
-  - A row whose red proof needs another platform is recorded owed (Regression, `red ID --owed --runner R`): it reads PENDING, opens one `other-machine` to-do on its feature milestone, and its goal merges.
-  - Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring).
 - GRD-12: **Unreviewed** Nothing starts under the memory floor
   - No goal or test lane starts while free memory is below one setting, 3 GB by default and stated here only.
   - A machine may set its own value locally.
   - A lane already running is never stopped.
-- GRD-13: **Reviewed 2026-11-16** Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51) <!-- reviewed 89fdf6a8 -->
-  - `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1).
-  - A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4).
-  - Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9).
 - GRD-15: **Unreviewed** Token counts are real or say unread
   - Each step's tokens are read from its session record when the step is recorded.
   - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget.
@@ -96,6 +88,8 @@ None
 
 ### Retired
 
+- GRD-11: moved to REG-10
+- GRD-13: moved to REG-14
 - GRD-14: moved to DEL-17
 
 ### GRD-1
@@ -172,6 +166,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | A goal depends only on what its own machine can do <br> A step only another machine can do (a red proof on another platform, a smoke cell, a Mac-only check) is filed as a to-do issue on the feature's milestone and never blocks the goal, its merge or the release. <br> A row whose red proof needs another platform is recorded owed (Regression, `red ID --owed --runner R`): it reads PENDING, opens one `other-machine` to-do on its feature milestone, and its goal merges. <br> Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring). | A goal depends only on what its own machine can do now lives on Regression as REG-10 | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | A goal depends only on what its own machine can do <br> A step only another machine can do (a red proof on another platform, a smoke cell, a Mac-only check) is filed as a to-do issue on the feature's milestone and never blocks the goal, its merge or the release. <br> A row whose red proof needs another platform is recorded owed (Regression, `red ID --owed --runner R`): it reads PENDING, opens one `other-machine` to-do on its feature milestone, and its goal merges. <br> Health warns on an owed proof older than 7 days and never fails on it (Health); the check-in lists owed items under Coming up, and the operation session never holds a goal for another pod or machine (Monitoring). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### GRD-12
@@ -185,6 +180,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51) <br> `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1). <br> A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4). <br> Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9). | Regression rows and full-suite time are capped now lives on Regression as REG-14 | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-16 | Regression rows and full-suite time are capped, and going over a cap blocks delivery (owner record o51) <br> `max_regression_rows` (default 1200) and `max_suite_seconds` (default 1900) are settings in `.loop/config.json`, shown in Home's settings table (Setup, SET-1). <br> A goal whose rows take the repo over either cap is refused at qa, with the numbers, unless it removes or merges at least as many rows as it adds, or the owner raises the cap in their own words; a goal that only consolidates is always allowed. The caps read are the base branch's, so a goal can't raise its own (GRD-4). <br> Health shows the rows and the slowest full-suite time against both caps, warns at 90% and fails over the cap, and each rule has a negative control (GRD-9). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### GRD-14
@@ -297,12 +293,8 @@ None
 | - | requirement | GRD-9 | no passing test | not enforced |
 | [grd10-install-hooks](Tests#t-grd10-install-hooks) | requirement | GRD-10 | Given a repo being adopted, when setup runs by default, then it installs the three private-name hooks after its commit. | not run |
 | - | requirement | GRD-10 | no passing test | not enforced |
-| [machine-local-guardrail](Tests#t-machine-local-guardrail) | requirement | GRD-11 | Given a row whose red proof needs another machine and is recorded owed, when sync runs, then it reads PENDING and no longer blocks as UNPROVEN. | not run |
-| - | requirement | GRD-11 | no passing test | not enforced |
 | [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | GRD-12 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
 | - | requirement | GRD-12 | no passing test | not enforced |
-| [test-caps-consolidate-allowed](Tests#t-test-caps-consolidate-allowed) | requirement | GRD-13 | Given a repo over a cap, when a goal removes or merges at least as many rows as it adds, then qa lets it pass, so a goal that only consolidates is always allowed. | PASS 2026-11-16 |
-| [test-caps-own-cap](Tests#t-test-caps-own-cap) | requirement | GRD-13 | Given a goal that raises max_regression_rows in its own config, when qa checks the caps, then it reads the base branch's cap and still refuses; the owner raising the cap on the base lets the goal pass. | PASS 2026-11-16 |
 | - | requirement | GRD-15 | no passing test | not enforced |
 | - | requirement | GRD-16 | no passing test | not enforced |
 | - | requirement | GRD-17 | no passing test | not enforced |

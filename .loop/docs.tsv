@@ -13,4 +13,5 @@ Regression	skills/workflow-regression,:(exclude)skills/workflow-regression/SKILL
 Roadmap	docs/ROADMAP.md
 Setup	skills/workflow-setup,dev/install-local.sh,:(exclude)skills/workflow-setup/SKILL.md,:(exclude)skills/workflow-setup/references/commands.md
 Release	skills/workflow-release/scripts/review.py,dev/toy/test-release-gate.py
+Integrations	skills/workflow-docs/scripts/milestones.py,skills/workflow-docs/scripts/prdcopy.py
 Principles	skills/workflow-health/references/commands.md,README.md

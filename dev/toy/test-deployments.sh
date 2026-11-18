@@ -136,8 +136,9 @@ PY
 
 case_doc14() {
   reset
-  check "the Documentation page carries DOC-14, Reviewed, with both owner messages" \
-    'grep -q "^- DOC-14: \*\*Reviewed " docs/wiki/Documentation.md && grep -q "or a delivery people receive (for example a scheduled email)" docs/wiki/Documentation.md && grep -q "the live build (the sha in build.txt)" docs/wiki/Documentation.md'
+  # the v2 rewrite revised DOC-14 (now Unreviewed); the owner's Reviewed words with both messages stay as its first revision r1
+  check "the Documentation page carries DOC-14, with both owner messages kept as its first revision" \
+    'grep -q "^- DOC-14: \*\*\(Reviewed\|Unreviewed\)" docs/wiki/Documentation.md && r1=$(awk "/^### DOC-14\$/{f=1} f&&/^\| r1 \|/{print; exit}" docs/wiki/Documentation.md) && grep -q "or a delivery people receive (for example a scheduled email)" <<<"$r1" && grep -q "the live build (the sha in build.txt)" <<<"$r1"'
   check "this repo's docs check passes with DOC-14" '[ "$(out | tail -1)" = "DOCS OK: $n pages" ]'
 }
 
