@@ -673,7 +673,7 @@ worker-per-goal	PASS	2026-11-18
 worker-refuses	PASS	2026-11-18	
 worker-reports	PASS	2026-11-18	
 worker-reports-live	PASS	2026-11-09	
-worker-runs-release	PASS	2026-11-12	
+worker-runs-release	FAIL	2026-11-18	
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-10	
 workflow-same-as-run	PASS	2026-11-12	
