@@ -136,7 +136,8 @@ depth-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-setup	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 describe-needed	PASS	2026-11-12	
-desk-lists	PASS	2026-11-17	
+desk-lists	PASS	2026-11-18	
+desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
 digest-no-milestone	PASS	2026-11-12	
 doc18-howto-mapped	PASS	2026-11-16	
@@ -256,7 +257,7 @@ hlt6-worktrees	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
 hlt8-triage	PASS	2026-11-10	
 hlt9-evidence-or-nothing	PASS	2026-11-10	
-home-guard-catches-leak	PASS	2026-11-15	
+home-guard-catches-leak	PASS	2026-11-18	
 home-header-both	PASS	2026-11-14	
 home-howto-linksonly	PASS	2026-11-17	
 home-howto-linksonly-control	PASS	2026-11-17	
@@ -341,13 +342,26 @@ machine-caps	PASS	2026-11-16
 machine-done-12	PASS	2026-11-16	
 machine-done-5	PASS	2026-11-16	
 machine-done-7	PASS	2026-11-17		5f5595078446
+machine-hook-state	PASS	2026-11-18	
 machine-new-machine-docs	PASS	2026-11-16	
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-operation-peer	PASS	2026-11-17	
 machine-setting-listed	PASS	2026-11-16	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
-machines-handover	PASS	2026-11-17	
-mailbox-two-mails	PASS	2026-11-17	
+machines-handover	PASS	2026-11-18	
+machines-handover-4787	PASS	2026-11-18	
+mailbox-two-mails	PASS	2026-11-18	
+mailbox-two-mails-4671	PASS	2026-11-18	
+mailbox-two-mails-4785	PASS	2026-11-18	
+main-reds-4660	PASS	2026-11-17	
+main-reds-4683	PASS	2026-11-17	
+main-reds-4695	PASS	2026-11-17	
+main-reds-4758	PASS	2026-11-17	
+main-reds-4772	PASS	2026-11-17	
+main-reds-4858	PASS	2026-11-17	
+main-reds-4865	PASS	2026-11-17	
+main-reds-4896	PASS	2026-11-17	
+main-reds-4901	PASS	2026-11-17	
 matrix-health-rule	PASS	2026-11-13	
 matrix-smoke-record	PASS	2026-11-13	
 merge-base-undiffable	PASS	2026-11-11	
@@ -388,15 +402,15 @@ needs-you-stuck	PASS	2026-11-12
 never-merges	PASS	2026-11-09	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
-no-done-line-refused	PASS	2026-11-17	
-no-flow-refused	PASS	2026-11-17	
+no-done-line-refused	PASS	2026-11-18	
+no-flow-refused	PASS	2026-11-18	
 no-line-in-governor	PASS	2026-11-12	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-12	
 no-row-fail	PASS	2026-11-12	
 no-token-dry-run	PASS	2026-11-12	
 no-token-would	PASS	2026-11-12	
-notify-new-events	PASS	2026-11-17	
+notify-new-events	PASS	2026-11-18	
 notion-app-link-unread	PASS	2026-11-13	
 one-failure	PASS	2026-11-09	
 one-format-everywhere	PASS	2026-11-10	
@@ -423,7 +437,7 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-17	
+pending-waits	PASS	2026-11-18	
 perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
@@ -476,7 +490,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
-refuse-replace	PASS	2026-11-17	
+refuse-replace	PASS	2026-11-18	
 refused-unmet	PASS	2026-11-12	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
@@ -557,6 +571,7 @@ settings-start-fresh	PASS	2026-11-16
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
+setup-refusal-writes-120	PASS	2026-11-18	
 size-139	PASS	2026-11-12	
 size-140	PASS	2026-11-12	
 size-141	PASS	2026-11-12	
@@ -663,19 +678,3 @@ worker-runs-release	PASS	2026-11-12
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-10	
 workflow-same-as-run	PASS	2026-11-12	
-home-guard-catches-leak	PASS	2026-11-18	
-machine-hook-state	PASS	2026-11-18	
-main-reds-4660	PASS	2026-11-17	
-main-reds-4683	PASS	2026-11-17	
-main-reds-4695	PASS	2026-11-17	
-main-reds-4758	PASS	2026-11-17	
-main-reds-4772	PASS	2026-11-17	
-main-reds-4858	PASS	2026-11-17	
-main-reds-4865	PASS	2026-11-17	
-main-reds-4896	PASS	2026-11-17	
-main-reds-4901	PASS	2026-11-17	
-no-done-line-refused	PASS	2026-11-18	
-no-flow-refused	PASS	2026-11-18	
-pending-waits	PASS	2026-11-18	
-refuse-replace	PASS	2026-11-18	
-setup-refusal-writes-120	PASS	2026-11-18	
