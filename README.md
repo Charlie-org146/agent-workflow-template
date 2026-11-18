@@ -4,7 +4,7 @@
 Built with the [jcl2018/agent-workflow-template](https://github.com/jcl2018/agent-workflow-template) workflow loop.
 <!-- template:end -->
 
-[The wiki](https://github.com/jcl2018/agent-workflow-template/wiki/Home) has the features, how to use each one, the settings and what runs by itself.
+[The wiki](https://github.com/jcl2018/agent-workflow-template/wiki/Home) has the features, how to use each one, the settings and what runs by itself. The eight sections below are the project's principles; [the Principles page](https://github.com/jcl2018/agent-workflow-template/wiki/Principles) has each in full, with its diagram and requirements.
 
 ## 1. Documentation-driven
 
