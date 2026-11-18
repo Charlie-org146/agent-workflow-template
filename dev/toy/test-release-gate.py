@@ -18,6 +18,9 @@ import tempfile
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
+for key in ("AUTHOR", "COMMITTER"):  # a CI runner has no git identity: the tag and the revert commit need one
+    os.environ.setdefault("GIT_%s_NAME" % key, "t")
+    os.environ.setdefault("GIT_%s_EMAIL" % key, "t@t")
 fails = 0
 LEG = sys.argv[1] if len(sys.argv) > 1 else ""
 
