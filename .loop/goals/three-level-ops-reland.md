@@ -15,3 +15,11 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-three-level.py`.
+   Expect: every line is PASS and the last line is ALL PASS.
+2. Open the Operation and Check-in-and-board wiki pages and read OPS-1, OPS-2, OPS-11, OPS-16, OPS-23, CHK-1 and CHK-2.
+   Expect: each has one added sub-bullet about the three layers, STATUS, the safety rules, busy machines, the one-token tool list, the 5-minute board or the machine one-line check-in, and each is Unreviewed with a new revision row.
+3. Open the two Linux CI runs cited in the pull request for the row reply-hook-scope.
+   Expect: the first (reply_hook.py at main's version) prints FAIL reply-hook-scope on the machine-mode check; the second (the re-landed version) prints PASS reply-hook-scope.
+
