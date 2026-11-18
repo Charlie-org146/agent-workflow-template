@@ -526,7 +526,7 @@
 | <a id="t-hlt6-removes-nothing"></a>hlt6-removes-nothing | requirement | HLT-6 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-hlt6-clean-quiet"></a>hlt6-clean-quiet | requirement | HLT-6 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-hlt6-never-filed"></a>hlt6-never-filed | requirement | HLT-6 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-hlt2-twelve-groups"></a>hlt2-twelve-groups | requirement | HLT-2 | not run | - | local | 2026-11-10 |
+| <a id="t-hlt2-twelve-groups"></a>hlt2-twelve-groups | requirement | HLT-2 | not run | - | local | 2026-11-18 |
 | <a id="t-hlt4-feature-milestones"></a>hlt4-feature-milestones | requirement | HLT-4 | not run | - | local | 2026-11-12 |
 | <a id="t-hlt5-review-evidence"></a>hlt5-review-evidence | requirement | HLT-5 | not run | - | local | 2026-11-10 |
 | <a id="t-hlt6-controls-lean"></a>hlt6-controls-lean | requirement | HLT-6 | not run | - | local | 2026-11-10 |

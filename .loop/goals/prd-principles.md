@@ -16,3 +16,15 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Open `README.md`.
+   Expect: only the title line, the template line, one link to the wiki Home and eight `## N. Name` sections, each with one sentence, a diagram image and an `Enforced by:` line.
+2. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: no FORMAT line for the README or the Principles page. Add a `## Extra` heading to the README and run it again: it reports a DOC-23 FORMAT line naming it.
+3. Open `docs/wiki/Principles.md`.
+   Expect: the same eight sentences, each with its diagram file under `docs/wiki` and its requirement IDs; an ID that is not on a page reads "(planned: regroup N)".
+4. Run `python3 skills/workflow-health/scripts/health.py check` and read the end of the report.
+   Expect: after the twelve groups, eight `PRINCIPLE n` lines, red or green by their groups; `PRINCIPLE 8` reads UNREAD.
+5. Open `docs/wiki/Documentation.md`, section Revisions, and the DOC-23 requirement.
+   Expect: DOC-23 added; HLT-2 (Health page), DOC-15 and DOC-18 each show a new revision r2 and the changed ones read Unreviewed.
+
