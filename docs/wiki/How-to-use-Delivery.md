@@ -14,6 +14,18 @@ Takes one sentence and its done lines to a merged, released pull request (a draf
 | `goal.py` | Command | Holds one goal's record: its done lines, the skill flow's steps and its pull request. | `python3 skills/workflow-delivery/scripts/goal.py <command> <slug>`. |
 | `flow.py` | Command | Runs one step of a goal's skill flow (idea, plan, review, qa, ship). | `python3 skills/workflow-delivery/scripts/flow.py SLUG STEP`, again until it stops printing `RUNNING`. |
 
+### System diagram
+
+```text
+[Skill: workflow-delivery | the agent session] --freezes the done lines--> [Command: goal.py | the worker's worktree]
+[Command: goal.py | the worker's worktree] --runs each step: idea, plan, build, review, qa, ship--> [Command: flow.py | the worker's worktree]
+[Command: goal.py | the worker's worktree] --pr opens it--> (GitHub pull request)
+(GitHub pull request) --a ready pull request--> [Skill: workflow-release | the agent session]
+[Skill: workflow-release | the agent session] --merges and publishes--> (main and its release)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

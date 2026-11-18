@@ -15,6 +15,19 @@ Checks the repo with fixed rules and a full reviewer, and files every finding as
 | `mail.py` | Command | Mails the owner the round's digest, at most once. | `python3 skills/workflow-health/scripts/mail.py send`. |
 | health-round | Scheduled routine | The scheduled health round on the always-on machine. | Its Runbook is on the [Health](Health) page; start a round by hand with `health.py check`. |
 
+### System diagram
+
+```text
+[Scheduled routine: health-round | the always-on machine] --starts the check on schedule--> [Command: health.py | the always-on machine]
+[Skill: workflow-health | the agent session] --check, review, preview, file, triage--> [Command: health.py | the always-on machine]
+[Command: health.py | the always-on machine] --twelve rule groups--> (one HEALTH verdict)
+[Command: health.py | the always-on machine] --findings to the digest--> [Command: automation.py | the always-on machine]
+[Command: automation.py | the always-on machine] --digest to the mailer--> [Command: mail.py | the always-on machine]
+[Command: mail.py | the always-on machine] --at most once--> (the owner's inbox)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

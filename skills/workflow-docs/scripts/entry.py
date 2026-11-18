@@ -11,10 +11,10 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (from .loop/config.json through references/commands.md, Entry point templates), then a
+regression, health and settings (see references/commands.md, Entry point templates), then a
 Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
 Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
-holds no count, date or machine path, so it changes only when a page or a setting does.
+holds no count, date or machine path.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
 (the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
@@ -220,8 +220,7 @@ def agent_files(cfg):
 
 
 def installed():
-    """The installed template version (workflow-package.json); empty for a checkout. LOOP_INSTALLED_VERSION counts only
-    with LOOP_TEST=1."""
+    """The installed template version (workflow-package.json); empty for a checkout; LOOP_INSTALLED_VERSION only with LOOP_TEST=1."""
     if os.environ.get("LOOP_TEST") == "1" and os.environ.get("LOOP_INSTALLED_VERSION"):
         return os.environ["LOOP_INSTALLED_VERSION"]
     try:
@@ -394,7 +393,7 @@ NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
 
 
 def howto_items(name, text, feature):
-    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement of its feature page, and none else."""
+    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement, and none else."""
     have, top, sub = {}, "", ""
     for line in feature.splitlines():
         top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
@@ -409,11 +408,14 @@ def howto_items(name, text, feature):
         out += [("HOWTO", name, "DOC-19 %s %s. Fix: %s" % (kind, ", ".join(ids), fix))] * bool(ids)
     return out
 
+SKILL = re.compile(r"`(/workflow-[a-z]+)[ `]")
+CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
+
 
 def unlisted(feature, how):
-    """DOC-19: the commands a feature page names in backticks that its How-to-use page does not hold."""
+    """DOC-19: commands, skills and cron schedules the feature page names that its How-to-use page lacks."""
     body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
-    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)}
+    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
     return sorted(n for n in names if n not in how)
 
 

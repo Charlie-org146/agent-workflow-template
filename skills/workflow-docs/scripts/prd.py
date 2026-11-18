@@ -377,5 +377,27 @@ def main():
     return args.func(args)
 
 
+BOX = re.compile(r"\[([^\]:|]+): ([^\]|]+?) \| ([^\]|]+)\]")
+FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
+
+
+def diagram(name, text):
+    """DOC-19: the System diagram holds a box per What's delivered row, none without a row, and a Legend:."""
+    import render
+    out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
+    fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
+    if not fence:
+        return [("HOWTO", name, "DOC-19 no System diagram. Fix: add '### System diagram' and a ```text fence")]
+    boxes = {(k.strip(), c.strip().replace("`", "")) for k, c, _ in BOX.findall(fence.group(1))}
+    rows = {(kind, comp) for comp, kind, _ in render.delivered(text)[1]}
+    for kind, comp in sorted(rows - boxes):
+        bad("the System diagram has no box for '%s: %s'. Fix: add it" % (kind, comp))
+    for kind, comp in sorted(boxes - rows):
+        bad("the System diagram names '%s: %s', which What's delivered lacks. Fix: remove the box" % (kind, comp))
+    if "Legend:" not in fence.group(1):
+        bad("the System diagram has no 'Legend:' line")
+    return out
+
+
 if __name__ == "__main__":
     sys.exit(main())

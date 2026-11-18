@@ -14,6 +14,18 @@ A major version (a milestone) ships only through a hard gate: every milestone is
 | `review.py revert` | Command | Opens a pull request that puts main back on the `release/vX` snapshot. | `python3 skills/workflow-release/scripts/review.py revert v2`. |
 | `release-waivers.tsv` | API/file contract | The owner's waivers for the gate, kept in the git folder outside the repo. | The operation session adds a line after you name the issue or row in your own words. |
 
+### System diagram
+
+```text
+[Command: review.py gate | the operation session] --GATE PASS, or one GATE REFUSED line per failure--> (the owner)
+[API/file contract: release-waivers.tsv | the git folder outside the repo] --the owner's waivers--> [Command: review.py gate | the operation session]
+[Command: review.py gate | the operation session] --every check passes--> [Command: review.py promote | the operation session] --tag, release branch, main moved--> (GitHub)
+[Command: review.py promote | the operation session] --state report--> (the owner's mail)
+[Command: review.py revert | the operation session] --a pull request putting main back on the release branch--> (GitHub)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.

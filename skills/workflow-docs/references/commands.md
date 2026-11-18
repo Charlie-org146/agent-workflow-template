@@ -80,6 +80,8 @@ described as one `Given ..., when ..., then ...` scenario, rendered under its re
 | `USAGE` | a page still has a `## Usage` section (dropped 2026-11-13) | 1 | fails | fails | fails | remove the section; the commands are in the skill's Command map and `references/commands.md` |
 | `UNWRITTEN` | a placeholder line is still on the page | 1 | fails | blocked | refused | an agent writes the drafts |
 | `SCENARIO` | a row on the page is not Given/When/Then | 0 | fails | blocked | publishes | an agent rewrites the row's description |
+| `LINKS` | a wiki page or skill doc holds an issue, pull, commit or CI link, another host or repository, or a machine path outside its Tests section and Deployments tables (DOC-19) | 1 | fails | blocked | refused | an agent says it in words |
+| `HOME` | Home has no System diagram block, or one that names no operation session, worker, step, staging, production, machine, routine, legend or guard (DOC-4) | 1 | fails | blocked | refused | an agent draws the missing part |
 
 ### Examples
 
@@ -479,7 +481,7 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
   tables and blank lines: at most one Page table `| Page | Link | Access | Shows | Live build |` (`deployments_page`) and
   at most one Delivery table `| Delivery | Channel | Recipients | What's sent | Status |` (`deployments_delivery`), each
   with its separator row and at least one row, headers exact after trimming spaces. Page rows: Page and Shows filled,
-  Link a full `https://` URL, Access one of `deployments_access` (public, sign-in), Live build the 7 to 40 hex sha in
+  Link a full secure link (the https scheme), Access one of `deployments_access` (public, sign-in), Live build the 7 to 40 hex sha in
   the page's build.txt, in backticks. Delivery rows: every cell filled, and Recipients a group name, never an email
   address. A `|` inside a cell is written `\|`. Not part of the PRD fingerprints: it changes with each deploy. The
   live-link and promoted-build check runs in the deploying repo for now.
@@ -494,7 +496,7 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
 
 - **Home** (`home`, DOC-4): the marker, `# <repo>`, `## Features` and one table
   `| Feature | What it does | How to use | Milestone |`, nothing else, with one row per feature page. Feature is
-  `[Page](Page)`; How to use is `[README](https://github.com/OWNER/REPO#how-to-use-<feature>)`, an anchor of the README's
+  `[Page](Page)`; How to use is `[README](<this repo's link>#how-to-use-<feature>)`, an anchor of the README's
   `### How to use <Feature>` heading; Milestone is optional: empty, a link such as `…/milestone/N`, or free text, never checked.
   Home may also hold the generated `## Settings` and `## Automation` blocks, each between `<!-- settings:begin -->`/`end` (or `automation`) markers; the check skips them and holds them to a fresh render instead.
 - **README** (`frontdoor`, DOC-5): `## How to use`, then one `### How to use <Feature>` per feature page, each with at most
@@ -518,7 +520,7 @@ rewritten.
 <!-- workflow-docs -->
 # Billing
 
-Milestone: https://github.com/owner/repo/milestone/9
+Milestone: <this repo's link>/milestone/9
 
 Review: **Unreviewed**
 

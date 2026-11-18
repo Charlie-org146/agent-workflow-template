@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17): a repo's GitHub milestones against an external Milestones page, both ways, opt-in; called by `docs.py sync`.
-A repo opts in with `milestones_source` in .loop/config.json (`url:<link>` or `mcp:<server>:<resource>`); a milestone is `- TITLE: state | due`
-on the page and from `gh api` on GitHub, compared with .loop/milestones.md. A delta or CONFLICT is posted once as an issue and a page
-comment; nothing is overwritten. `docs.py sync --accept milestones:TITLE=repo|source` copies one side to the other.
+"""Milestone sync (DOC-17): the repo's GitHub milestones against an external Milestones page, opt-in (`milestones_source` in config),
+via `docs.py sync`; a delta or CONFLICT is posted once and nothing is overwritten (`--accept milestones:TITLE=repo|source`).
 Also DOC-19 how-to checks and DOC-20 revisions (revise, retire, migrate, guard)."""
 import json
 import os
@@ -169,7 +167,7 @@ def sync(root, args):
     return 0
 
 
-# --- How-to-use Kinds (DOC-19, #4677): every delivered row names a Kind, and the page carries that Kind's block ---
+# --- How-to-use Kinds (DOC-19) ---
 ROUTINE = "Scheduled routine"
 KINDS = {
     "Site/URL": ["URLs", "Served by", "Check", "Deploy"],
@@ -373,3 +371,8 @@ def add_parsers(sub):
         item.add_argument("--why", required=True)
         item.add_argument("--as", dest="as_", required=True, help="retired, merged:ID or moved:ID") if name == "retire" else [
             item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]
+from audit import home_diagram  # noqa: E402,F401  (DOC-19 checks live in audit.py, docs.py, entry.py, prd.py, prdcopy.py)
+from entry import unlisted  # noqa: E402,F401
+from docs import alone  # noqa: E402,F401
+from prd import diagram  # noqa: E402,F401
+from prdcopy import stands_alone  # noqa: E402,F401

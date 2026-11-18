@@ -1,5 +1,71 @@
 # Changelog
 
+## v1.0.64 - 2026-11-18
+
+- docs-v2: System diagram and stands-alone checks, diagrams, Home diagram, rows
+- docs-v2: decision entry
+- docs-v2: red proofs, done-line rows, Tests tables
+- docs-v2: LINKS and HOME states in the docs reference
+- docs-v2: review fixes (wording)
+- docs-v2: Setup SET-11 to SET-15 drop their history sub-bullets (un-reviewed under o130)
+- Lane: re-render the Tests tables
+- docs-v2: SET-11 to SET-15 re-reviewed under o137
+- Lane: re-render the Tests tables
+- docs-v2: Setup page and GRD-2 reviewed under o138
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.53) into loop/docs-v2; Tests tables re-rendered from the merged rows
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge origin/main (#4903) into loop/docs-v2
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.55) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.56) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.58) into loop/docs-v2; box for monitor.py plan
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.59) into loop/docs-v2
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.61) into loop/docs-v2
+- docs-v2: System diagram for How-to-use-Release
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.62) into loop/docs-v2
+- Wiki: re-stamp Setup after the v1.0.62 merge
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.63) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Wiki: re-stamp Setup after the v1.0.63 merge
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 skills/workflow-docs/scripts/docs.py check` from the repo root.
+   Expect: it prints DOCS OK and no LINKS, HOME or HOWTO line.
+2. Open `docs/wiki/How-to-use-Health.md` and find its System diagram under What's delivered.
+   Expect: one box per row of the table, each saying where it runs, the flows between them and a Legend line.
+3. Delete one box from that diagram and run `docs.py check` again.
+   Expect: it fails naming that part (DOC-19); restore the box.
+4. Open `docs/wiki/Home.md`.
+   Expect: a System diagram under the features table shows the operation session, workers and steps, staging and production (planned), machines, routines, a legend and guard marks.
+5. Put an issue link into any wiki page outside its Tests section and run `docs.py check`.
+   Expect: a LINKS line names the page, the line and the link; remove the link.
+
 ## v1.0.63 - 2026-11-18
 
 - Hands-off operation: background fallback worker, auto-archive, readiness start, check-in timer, feature grouping

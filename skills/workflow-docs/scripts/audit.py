@@ -366,6 +366,18 @@ def perm_main(argv):
     return 1 if [line for line in findings if not line.startswith("NOTE")] else 0
 
 
+HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "machine", "routine", "legend", "guard")
+
+
+def home_diagram(text):
+    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    fence = prd.FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
+    if not fence:
+        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
+    low = fence.group(1).lower()
+    return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["rerender"] and len(sys.argv) > 2:
         print("".join("RERENDERED %s\n" % rel for rel in rerender(os.getcwd(), sys.argv[2])), end="")
