@@ -1,22 +1,14 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17): a repo's GitHub milestones against an external Milestones page, both ways, opt-in.
+"""Milestone sync (DOC-17) and the How-to-use page checks (DOC-19), called by `docs.py sync` and `docs.py check`; no command of its own.
 
-Called by `docs.py sync`; there is no command of its own. A repo opts in by setting `milestones_source` in .loop/config.json to
-a `url:<link>` or `mcp:<server>:<resource>` source (read as prd.read_link reads a PRD source); with none, nothing is read,
-printed or called. A milestone is its title and `state | due`, `open | due 2026-12-01`, `closed | no due`: on the page one
-line `- TITLE: state | due` each (split on the last `: `), on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both
-sides last agreed on is kept in .loop/milestones.md (and its .base); each side is compared with it, so:
-
-  an addition or change on one side   DELTA milestones: TITLE the repo|the source changed (repo: ... | source: ...)
-  a milestone that differs on both    CONFLICT milestones: TITLE both sides changed (...)
-  a milestone only on the repo        the page is out of date: closed is the same as absent on the page
-
-Nothing is overwritten. Each delta is posted once as a GitHub issue and once as a comment on the page (the PRD writer,
-$LOOP_PRD_WRITER), kept in the same ledger as the PRD deltas under `milestones:TITLE`. `docs.py sync --accept
-milestones:TITLE=repo|source` writes that side's text to the other: `source` creates, edits or closes the GitHub milestone
-(a milestone only on the repo is closed), `repo` has the writer `replace TITLE` (adds when absent) or `remove TITLE` on the
-page. A side that cannot be reached prints `not connected`, changes nothing and exits 0; --dry-run only reports (exit 1 on
-a delta); --open leaves listing the ledger to audit.sync."""
+Sync: a repo opts in by setting `milestones_source` in .loop/config.json to a `url:<link>` or `mcp:<server>:<resource>` source; with
+none, nothing is read or called. A milestone is its title and `state | due` (`open | due 2026-12-01`, `closed | no due`): on the page
+one line `- TITLE: state | due` each, on GitHub from `gh api repos/{owner}/{repo}/milestones`. What both sides last agreed on is kept in
+.loop/milestones.md (and its .base); each side is compared with it, so an addition or change on one side is a DELTA, a milestone that
+differs on both is a CONFLICT, and nothing is overwritten. Each delta is posted once as a GitHub issue and once as a comment on the
+page, kept in the PRD ledger under `milestones:TITLE`. `docs.py sync --accept milestones:TITLE=repo|source`
+writes that side's text to the other. A side that cannot be reached prints `not connected`, changes nothing and exits 0; --dry-run
+only reports (exit 1 on a delta); --open leaves listing the ledger to audit.sync."""
 import json
 import os
 import re
@@ -291,9 +283,75 @@ def kinds(name, text, on_page=()):
     return out
 
 
+SKILL = re.compile(r"`(/workflow-[a-z]+)[ `]")
+CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
+
+
 def unlisted(feature, how):
-    """DOC-19: the commands a feature page names in backticks (`script.py subcommand`, its Tests section and Milestone line aside) that its
+    """DOC-19: the commands, skills (`/workflow-x`) and schedules (a cron in backticks) a feature page names, Tests aside, that its
     How-to-use page does not hold."""
     body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
-    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)}
+    names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
     return sorted(n for n in names if n not in how)
+
+
+# --- System diagrams and pages that stand alone (DOC-19, #4698 and #4784) ---
+BOX = re.compile(r"\[([^\]:|]+): ([^\]|]+?) \| ([^\]|]+)\]")
+FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
+HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "machine", "routine", "legend", "guard")
+
+
+def diagram(name, text):
+    """DOC-19: '### System diagram' holds a box '[Kind: Component | where it runs]' per What's delivered row, none without a row, and a Legend:."""
+    out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
+    fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
+    if not fence:
+        return [("HOWTO", name, "DOC-19 no System diagram. Fix: add '### System diagram' and a ```text fence")]
+    boxes = {(k.strip(), c.strip().replace("`", "")) for k, c, _ in BOX.findall(fence.group(1))}
+    rows = {(kind, comp) for comp, kind, _ in delivered(text)[1]}
+    for kind, comp in sorted(rows - boxes):
+        bad("the System diagram has no box for '%s: %s'. Fix: add it" % (kind, comp))
+    for kind, comp in sorted(boxes - rows):
+        bad("the System diagram names '%s: %s', which What's delivered lacks. Fix: remove the box" % (kind, comp))
+    if "Legend:" not in fence.group(1):
+        bad("the System diagram has no 'Legend:' line")
+    return out
+
+
+def home_diagram(text):
+    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    fence = FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
+    if not fence:
+        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
+    low = fence.group(1).lower()
+    return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
+
+
+AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Users/|/home/\w")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:milestones?|releases|wiki)(?:[/?#]|$)")
+
+
+def stands_alone(page, text, repo=""):
+    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases and wiki pages, no owner/repo#N, no machine path."""
+    out, skip = [], False
+    for number, line in enumerate(text.splitlines(), 1):
+        skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
+        for hit in ([] if skip else AWAY.findall(line)):
+            hit = hit.rstrip(".,;:)")
+            near = NEAR.match(hit)
+            if not (near and (not repo or near.group(1).lower() == repo.lower())):
+                out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
+    return out
+
+
+def alone(root, folder, repo=""):
+    """stands_alone for each wiki page but Tests and for the skill docs; Home's diagram too."""
+    out = []
+    files = [(n[:-3], join(root, folder, n)) for n in sorted(os.listdir(join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
+    files += [(os.path.relpath(join(d, n), root).replace(os.sep, "/"), join(d, n)) for d, _, ns in sorted(os.walk(join(root, "skills")))
+              for n in sorted(ns) if n.endswith(".md")]
+    for name, path in files:
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        out += stands_alone(name, text, repo) + (home_diagram(text) if name == "Home" else [])
+    return out

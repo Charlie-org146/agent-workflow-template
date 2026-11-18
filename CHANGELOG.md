@@ -1,5 +1,197 @@
 # Changelog
 
+## v1.0.64 - 2026-11-18
+
+- docs-v2: System diagram and stands-alone checks, diagrams, Home diagram, rows
+- docs-v2: decision entry
+- docs-v2: red proofs, done-line rows, Tests tables
+- docs-v2: LINKS and HOME states in the docs reference
+- docs-v2: review fixes (wording)
+- docs-v2: Setup SET-11 to SET-15 drop their history sub-bullets (un-reviewed under o130)
+- Lane: re-render the Tests tables
+- docs-v2: SET-11 to SET-15 re-reviewed under o137
+- Lane: re-render the Tests tables
+- docs-v2: Setup page and GRD-2 reviewed under o138
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.53) into loop/docs-v2; Tests tables re-rendered from the merged rows
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge origin/main (#4903) into loop/docs-v2
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.55) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.56) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.58) into loop/docs-v2; box for monitor.py plan
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.59) into loop/docs-v2
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/docs-v2
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.61) into loop/docs-v2
+- docs-v2: System diagram for How-to-use-Release
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.62) into loop/docs-v2
+- Wiki: re-stamp Setup after the v1.0.62 merge
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.63) into loop/docs-v2
+- Lane: re-render the Tests tables
+- Wiki: re-stamp Setup after the v1.0.63 merge
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 skills/workflow-docs/scripts/docs.py check` from the repo root.
+   Expect: it prints DOCS OK and no LINKS, HOME or HOWTO line.
+2. Open `docs/wiki/How-to-use-Health.md` and find its System diagram under What's delivered.
+   Expect: one box per row of the table, each saying where it runs, the flows between them and a Legend line.
+3. Delete one box from that diagram and run `docs.py check` again.
+   Expect: it fails naming that part (DOC-19); restore the box.
+4. Open `docs/wiki/Home.md`.
+   Expect: a System diagram under the features table shows the operation session, workers and steps, staging and production (planned), machines, routines, a legend and guard marks.
+5. Put an issue link into any wiki page outside its Tests section and run `docs.py check`.
+   Expect: a LINKS line names the page, the line and the link; remove the link.
+
+## v1.0.63 - 2026-11-18
+
+- Hands-off operation: background fallback worker, auto-archive, readiness start, check-in timer, feature grouping
+- Hands-off operation: the queued-estimate test reads the Dependencies line, rows seen red
+- Hands-off operation: feature lookup skips Home, Tests, Roadmap and How-to pages
+- Lane: re-render the Tests tables
+- Hands-off operation: command docs, settings render
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.53) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge origin/main into loop/hands-off-operation
+- Hands-off operation: the fallback test no longer depends on this machine's free memory
+- Hands-off operation: no more gh lookups in a run once gh gives no answer
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Monitoring: MON-1, MON-5, MON-6 and MON-11 reviewed by the owner (o141)
+- Lane: re-render the Tests tables
+- Merge origin/main (v1.0.55) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge main (v1.0.58) into loop/hands-off-operation
+- Review DEL-16, Delivery, MON-10, Monitoring (owner record o147)
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Fix mend.py indent; list archive, archived and timer in listing.json
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/hands-off-operation
+- Merge main (v1.0.61) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+- Merge main (v1.0.62) into loop/hands-off-operation
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. In a repo with `.loop/config.json`, run `python3 skills/workflow-monitoring/scripts/operate.py start`.
+   Expect: a table with the rows session tool, workers, skills, hooks, memory and pool, each ok or FIX with its fix, and a READY or NOT READY line; no goal starts.
+2. Run `python3 skills/workflow-monitoring/scripts/operate.py timer`, then `operate.py timer created`, then `python3 skills/workflow-monitoring/scripts/checkin.py`.
+   Expect: the first shows the interval, the steps and what the timer never does; after `created` the check-in has no timer item under Needs you, and after changing `cadence` it says the check-in timer is stale.
+3. With a session tool set and a goal whose release is published, run `python3 skills/workflow-monitoring/scripts/pool.py archive`, then the check-in.
+   Expect: `ARCHIVED <session> (<goal> released vX)` and, in the next check-in, an Archived section naming it; a running goal's session is untouched.
+4. Run `python3 skills/workflow-monitoring/scripts/checkin.py` in a repo with queued goals that name only issue numbers.
+   Expect: each goal under a feature heading (not "no feature") when its issue has a feature label or its touches map in `.loop/docs.tsv`, and a time instead of `~?` once finished goals exist.
+
+## v1.0.62 - 2026-11-18
+
+- Build: routing timeout stops the agent's process tree; full_auto defaults off in the template
+- Build: docs, settings reference, rows seen red, Verify by hand
+- Review: bound the post-kill drain in tree_run
+- Lane: re-render the Tests tables
+- Merge main (v1.0.59) into loop/safety-fixes
+- MON-11: off by default in the template, on in this repo (owner o149)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/safety-fixes
+- Lane: re-render the Tests tables
+- Merge main (v1.0.61) into loop/safety-fixes
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 dev/toy/test-agent-routing.py`.
+   Expect: the last lines read `PASS: the timed-out agent and the child it started are both gone` and `PASS: agent-routing`.
+2. Run `python3 skills/workflow-setup/scripts/settings.py reference | grep full_auto`.
+   Expect: the default column shows `false`, and the help text starts "Off keeps every gate".
+3. Run `python3 -c "import json;print(json.load(open('.loop/config.json'))['full_auto'])"`.
+   Expect: it prints True (this repo keeps full auto on).
+
+## v1.0.61 - 2026-11-18
+
+- release-gate: the hard-release gate in review.py, the freeze hook in merge.py, no major bump in release.py, its test and the Release page
+- release-gate: Release page set, regression rows seen red, skill and command docs
+- Wiki: update pages for release-gate
+- Wiki: update pages for release-gate
+- release-gate: escape the report in the mail page
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge origin/main into release-gate
+- release-gate: restamp Delivery after the merge
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- release-gate: refuse a suite stopped with rows left, wait four hours for a long suite, 8 rows
+- release-gate: restamp pages
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- release-gate: the toy sets a git identity for the tag and the revert commit (CI runners have none)
+- Merge origin/main into release-gate
+- release-gate: restamp pages after the merge
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+- Merge remote-tracking branch 'origin/main' into loop/release-gate
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 dev/toy/test-release-gate.py`.
+   Expect: every line starts with PASS, and it exits 0 (it builds a throwaway repo; nothing real is touched).
+2. Run `python3 skills/workflow-release/scripts/review.py gate v2 --no-suite` from a checkout of this repo.
+   Expect: it prints GATE REFUSED lines, each naming an issue of milestone v2.0 or an Unreviewed requirement, and exits 1 (the gate refuses a milestone that is not done).
+3. Run `grep -n "^- REL-" docs/wiki/Release.md`.
+   Expect: eight lines, REL-1 to REL-8, each reading `**Unreviewed**`.
+4. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints `DOCS OK`.
+5. Run `python3 -c "import sys;sys.path.insert(0,'skills/workflow-release/scripts');import release;release.bump('1.0.54','major')"`.
+   Expect: it stops with `REFUSED (MAJOR_GATE)` naming review.py promote.
+
+## v1.0.60 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.59 - 2026-11-18
 
 - No code changes

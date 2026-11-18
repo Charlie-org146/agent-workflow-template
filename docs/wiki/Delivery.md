@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
+Review: **Unreviewed** <!-- kept docs-v2@04343c2d -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -60,7 +60,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A pr lane that runs again after main moved reruns only the rows both the goal's diff and main's new commits reach; a row only main's new commits reach keeps its earlier result.
   - Goals at pr queue behind each other only when their touches overlap; goals with disjoint touches run their lanes at once.
   - Three or four ready pull requests with disjoint touches are verified together and merged in one go, and a failing batch splits to name the culprit.
-- DEL-16: **Unreviewed** Each step runs on the agent the config picks
+- DEL-16: **Reviewed 2026-11-18** Each step runs on the agent the config picks <!-- reviewed b20d357a -->
   - A private config maps each step and each goal size to an agent profile (a command, a model and a cost per token): heavy work on Claude, cheap work on Codex or any other agent added as one more profile entry, with no code change.
   - Setup asks which agents are installed and logged in and writes the profiles; an agent that is missing or logged out falls back to Claude with a one-line warning.
   - Review stays on the heavy profile unless the config routes it by name; the run record names the agent, the model and the tokens of every step.
@@ -161,6 +161,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [eta-legacy-goal](Tests#t-eta-legacy-goal) | requirement | DEL-8 | Given a goal frozen before ETAs existed, when the owner gives it an ETA with an unused owner-words record, then it runs inside that ETA and is stopped past it like any other goal. | not run |
 | [held-charge-idle](Tests#t-held-charge-idle) | requirement | DEL-8 | Given a session silent past the idle limit with no step running, when the minute budget is read through fit.budget_stop, then it is charged no more than the limit until its next step starts, while a step that is running is charged in full. | not run |
 | [held-charge-show](Tests#t-held-charge-show) | requirement | DEL-8 | Given a goal with idle time, when goal.py show prints it, then it shows the charged minutes and the wall minutes. | not run |
+| [routing-timeout-tree](Tests#t-routing-timeout-tree) | requirement | DEL-8 | Given a routed agent that has started a child and passes its timeout, when routing stops it, then the agent and its child are both gone, and the old subprocess.run(timeout) leaves the child running. | not run |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
 | [del9-scan-sites](Tests#t-del9-scan-sites) | requirement | DEL-9 | Given the delivery, release and monitoring scripts, when any function pushes or writes to GitHub, then it calls the private-name scan first. | not run |
 | [del9-lane-part-no-path](Tests#t-del9-lane-part-no-path) | requirement | DEL-9 | Given a lane record whose LANE line ends with a local log path, when the pull request body's lane part is built, then it keeps the LANE line, the before-rows parts and the rows and drops the log path, so the private-name scan does not refuse every pull request from a machine whose home folder is on the list. | not run |

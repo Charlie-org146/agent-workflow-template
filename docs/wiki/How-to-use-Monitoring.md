@@ -14,6 +14,17 @@ One session governs many goals at once and shows a live board of what's running 
 | `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
 | `monitor.py plan` | Command | Plans the backlog into releases with an ETA, budget, machine and agent for each goal, and sends the owner one plan to approve. | `python3 skills/workflow-monitoring/scripts/monitor.py plan --check`, then `plan approve --owner-record ID`. |
 
+### System diagram
+
+```text
+[Skill: workflow-monitoring | the operation session] --the live board and the repos it follows--> [Command: board.py | the operation session]
+[Command: board.py | the operation session] --every goal and session--> [Command: checkin.py | the operation session]
+[Command: checkin.py | the operation session] --machine, sessions, dependency map, what waits on you--> (the owner)
+[Skill: workflow-monitoring | the operation session] --plans the backlog into releases--> [Command: monitor.py plan | the operation session] --one plan to approve--> (the owner)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -26,6 +37,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | "Where do things stand?" | You get the live board: Issues first, then running goals with progress and time left, queued goals, dependencies and one finish time. |
 | "Tell the caching worker to keep the old cache format" | Your answer reaches that worker session as a message. |
 | "How much did the operation session spend?" | `<git common dir>/loop/op-tokens.tsv` holds one row per check-in with its context and the tokens spent under scheduled, peer, human and hook-retry. A scheduled check-in with nothing new is skipped by a prompt hook and logged in `quiet.log`. |
+| "Start an operation session on this machine" | `operate.py start` prints the readiness table (session tool, workers mode, skills, hooks, memory, pool), each row ok or with its fix; no goal starts. `operate.py timer` then shows the check-in timer for your yes. |
+| "Queue a goal under the Delivery page" | `batch.py add NAME --goal "..." --done "..." --feature Delivery` stores the page, so the check-in groups the goal there instead of under "no feature". |
 | "Resume the failed caching goal" | A failed or stopped goal gets a new worker; any other goal is refused. |
 | "Clean up merged branches, list them first" | You see the merged goal branches that would go; once you say so, they are deleted locally. |
 
@@ -86,4 +99,4 @@ Each requirement and how it is delivered:
 - PRD page: [Monitoring](Monitoring)
 - Backlog: [Backlog: Monitoring](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept auto-planning@c0251d40 -->
+<!-- kept safety-fixes@585daa17 -->

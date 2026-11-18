@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
+Review: **Unreviewed** <!-- kept docs-v2@04343c2d -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -15,11 +15,13 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 ## Requirements
 
 ### Functional
-- MON-1: **Reviewed 2026-11-08** Roles, start and planning. One command starts the operation session and drives the whole process the same way every time. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. When a worker session finishes, the operation session gives it the next ready goal, renaming it again. <!-- reviewed b9787a35 -->
+- MON-1: **Reviewed 2026-11-17** Roles, start and planning <!-- reviewed b924067c -->
   - One command starts the operation session and drives the whole process the same way every time.
   - The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds.
   - A goal waits only on goals it truly depends on; sharing files is not a reason to wait.
   - When a worker session finishes, the operation session gives it the next ready goal, renaming it again.
+  - `operate.py start` prints one readiness table before any goal runs: the session tool, the workers mode, the installed skills against the template, the hooks, free memory and the idle pool, each ok or with its fix; it starts no goal and no background worker.
+  - A worker start from a scheduled check-in or a Remote Control turn, where the app refuses to start a session, falls back to a background agent only when `workers` is `auto` or the start is asked with `--background`: the agent is launched in the goal's worktree and bound to the goal, and the board says background; with `workers: app` and no flag nothing is launched.
 - MON-2: **Reviewed 2026-11-08** Live communication. Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up. Background processes are used only when the app can't start or reach a session, and the board says so. <!-- reviewed 53b98768 -->
   - Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up.
   - Background processes are used only when the app can't start or reach a session, and the board says so.
@@ -30,7 +32,7 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - `report`, `dashboard` and "Where do things stand?" print the live board in one fixed format: Issues first (only what is open now, each with its fix in plain words); then Running goals with progress bar, time left, step flow with the current step marked and the next step; then Queued goals; then dependency arrows; then one finish time.
   - Merged work, history and totals are left out; a stuck worker stays at the top of Issues until I answer.
   - Check-ins don't print this board; MON-5 owns the check-in reply.
-- MON-5: **Unreviewed** Cadence and reply format
+- MON-5: **Reviewed 2026-11-17** Cadence and reply format <!-- reviewed 8b4823c0 -->
   - The operation session updates the board on a set cadence, 30 minutes by default and changeable, and at once whenever a worker reports something new, and each check-in prints only its reply layout, never the board.
   - Every check-in reply has the same layout: one headline line, then a Machine line (free RAM, free commit memory, CPU, claude and node counts);
   - All sessions, one table of every session across my repos with what it is doing (a short plain sentence of under about 12 words from its goal's first line, then its slug and issue in brackets), its status, progress, time left, tokens left and latest report;
@@ -43,17 +45,22 @@ How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
   - Only a scheduled check-in, or my asking for one (check-in, status, report, board, where do things stand), must be answered in this layout; a reply to a peer message or any other talk is 1 to 3 lines and the hook does not check it, and a turn the hook cannot read is checked as before.
   - A scheduled check-in whose check-in, apart from its Machine line and numbers, is the same as the last full one skips the model turn: a prompt hook blocks it with one line, at most two hours in a row, and any error lets the prompt through.
   - Each check-in adds one row to `op-tokens.tsv`: the time, the operation session, its context, and the tokens it spent since the last row under each trigger (scheduled, peer, human, hook-retry).
-- MON-6: **Reviewed 2026-11-10** Clean up after every goal <!-- reviewed deb6802e -->
+  - The operation session sets up its own check-in timer: it shows the owner the interval, the steps each fire runs (checkin.py and board_page.py checkin for every followed repo, post the layout, send the peer a SNAPSHOT on change or every 30 minutes) and what it never does (start goals, merge, answer owner questions, edit private-name lists), creates it on the owner's yes and records it; a missing timer, or one set for another cadence, shows under Needs you with the words to fix it.
+  - Dependencies groups goals by feature: the page that defines the requirement ID in the goal, else the feature given to `batch.py add --feature`, else the goal's issue label `feature:<Page>`, else the page whose `.loop/docs.tsv` paths cover the goal's touches, else "no feature"; a queued goal shows its estimated time, not "~?", once finished goals give a basis.
+  - Each check-in names the worker sessions archived since the last one under Archived.
+- MON-6: **Reviewed 2026-11-17** Clean up after every goal <!-- reviewed c8d831e2 -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
   - A merged report always frees the session (issue 175).
-- MON-10: **Unreviewed** Re-plan at every check-in
+  - A worker session whose goal's merge and published release the operation session has verified (GitHub says merged, and the release is published) is archived by the operation session, and the next check-in names it; a session whose goal is running, waiting or has an open pull request, and every operation session, is never archived.
+  - Under memory pressure (free memory below `min_free_memory_gb`) it also archives idle sessions whose goal is released or retired, oldest first, until memory is back above the floor.
+- MON-10: **Reviewed 2026-11-18** Re-plan at every check-in <!-- reviewed 6155f126 -->
   - At each check-in the operation session re-reads every goal's progress and re-plans the graph to finish soonest.
   - It starts every goal whose dependencies are met in a free or freed session, up to the slot limit, so no ready goal sits idle.
   - It merges goals that do the same thing or touch the same files for the same PRD, splits a goal that blocks others when part of it is ready, and reorders the merge line so the critical path goes first.
   - It never stops or restarts a running goal to re-plan, and every change is logged with its reason and shown in the check-in.
   - Each planning round takes the backlog with no release and plans it itself: `monitor.py plan` gives each goal a release, an estimate, a hard ETA and a token budget from past runs and settings, and a machine (the PC or the Mac, by free memory and platform needs) and an agent profile with a one-line reason, cross-checks the plan on a second agent when the agent routing config names one, and sends one plan to the owner and to the other machine's operation session; goals already started are left out, nothing starts until the owner approves with the words "approve" or line edits, and ETA choices stay the owner's.
-- MON-11: **Unreviewed** Full auto mode
-  - A setting, on by default. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
+- MON-11: **Reviewed 2026-11-18** Full auto mode <!-- reviewed 2156b28d -->
+  - A setting, off by default in the template; this repo turns it on in its config. When it is on, the operation session applies every recommendation without asking, whatever its kind (routine, or an owner one such as un-reviewing a requirement, a row cap, a budget or a pre-flight list), logs the question, the answer, my standing rule record and the words that revert it, and lists them in the next check-in and the email; only a safety-class decision waits under Needs you.
   - It never auto-answers a safety class: destructive (deletes, force pushes, history rewrites, closing other people's work), money, security (secrets, credentials, permissions, sandbox or security settings), private data (private-name lists and the owner's personal accounts), steward merges, an ETA choice, or anything I marked always-ask; health fails an auto answer in one of those classes or one without my rule record.
   - My standing rule is recorded once in the operation session with the owner words (sessions.py owner-words, covering full-auto-rule). A goal that changes requirement wording un-reviews it with that record and goes on; the page shows Unreviewed until I read it, and only I stamp it.
   - Turning it off takes effect at the next decision.

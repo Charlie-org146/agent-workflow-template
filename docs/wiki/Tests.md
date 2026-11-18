@@ -194,6 +194,7 @@
 | <a id="t-held-charge-show"></a>held-charge-show | requirement | DEL-8 | not run | - | local | 2026-11-16 |
 | <a id="t-lane-memory-not-counted"></a>lane-memory-not-counted | requirement | DEL-1 | not run | - | local | 2026-11-16 |
 | <a id="t-agent-routing"></a>agent-routing | workflow | DEL-16: Each step runs on the agent the config picks | not run | - | local | 2026-11-17 |
+| <a id="t-routing-timeout-tree"></a>routing-timeout-tree | requirement | DEL-8 | not run | - | local | 2026-11-18 |
 
 ## Documentation
 
@@ -399,6 +400,29 @@
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-home-howto-linksonly"></a>home-howto-linksonly | requirement | DOC-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-home-howto-linksonly-control"></a>home-howto-linksonly-control | requirement | DOC-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-doc19-diagram-passes"></a>doc19-diagram-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-missing"></a>doc19-diagram-missing | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-row-box"></a>doc19-diagram-row-box | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-extra-box"></a>doc19-diagram-extra-box | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-legend"></a>doc19-diagram-legend | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-where"></a>doc19-diagram-where | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-own-links"></a>doc19-alone-own-links | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-issue"></a>doc19-alone-issue | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-ci"></a>doc19-alone-ci | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-host"></a>doc19-alone-host | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-other-repo"></a>doc19-alone-other-repo | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-foreign-ref"></a>doc19-alone-foreign-ref | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-path"></a>doc19-alone-path | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-unix-path"></a>doc19-alone-unix-path | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-exempt"></a>doc19-alone-exempt | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-alone-files"></a>doc19-alone-files | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-ok"></a>doc4-home-diagram-ok | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-missing"></a>doc4-home-diagram-missing | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-part"></a>doc4-home-diagram-part | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc4-home-diagram-unread"></a>doc4-home-diagram-unread | requirement | DOC-4 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-skill-schedule-unlisted"></a>doc19-skill-schedule-unlisted | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-skill-schedule-listed"></a>doc19-skill-schedule-listed | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 
 ## Guardrails
 
@@ -742,7 +766,7 @@
 | <a id="t-budget-fair-held-time"></a>budget-fair-held-time | requirement | MON-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-new-binds-app-session-4257"></a>new-binds-app-session-4257 | defect | [#4257](https://github.com/jcl2018/agent-workflow-template/issues/4257) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-14 |
 | <a id="t-scripts-a-monitoring-under-19000"></a>scripts-a-monitoring-under-19000 | requirement | MON-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
-| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-auto-owner-words-wait"></a>auto-owner-words-wait | requirement | MON-11 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-18 |
 | <a id="t-mon14-merged-since-once"></a>mon14-merged-since-once | requirement | MON-14 | not run | - | local | 2026-11-15 |
 | <a id="t-mon14-merged-before-dropped"></a>mon14-merged-before-dropped | requirement | MON-14 | not run | - | local | 2026-11-15 |
 | <a id="t-mon5-pr-merged-closes"></a>mon5-pr-merged-closes | requirement | MON-5 | not run | - | local | 2026-11-15 |
@@ -942,6 +966,19 @@
 | <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
 
+## Release
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-rel-major-refused"></a>rel-major-refused | requirement | REL-1 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-open-issue-refused"></a>rel-open-issue-refused | requirement | REL-2 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-red-row-refused"></a>rel-red-row-refused | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-checks-refused"></a>rel-checks-refused | requirement | REL-4 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-freeze-refuses"></a>rel-freeze-refuses | requirement | REL-5 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
+
 ## Setup
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
@@ -1098,7 +1135,7 @@
 | <a id="t-lane-control-all"></a>lane-control-all | requirement | done line lane-control:1 | not run | - | local | 2026-11-10 |
 | <a id="t-operate-wait-99"></a>operate-wait-99 | defect | [#99](https://github.com/jcl2018/agent-workflow-template/issues/99) closed (2026-11-11) | not run | - | local | 2026-11-10 |
 | <a id="t-operate-10-under-load"></a>operate-10-under-load | requirement | done line lane-control:6 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-11 |
-| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) open (2026-11-17) | failing (issue reopened) 2026-11-18 | - | local | 2026-11-10 |
+| <a id="t-done-lines-warning-143"></a>done-lines-warning-143 | defect | [#143](https://github.com/jcl2018/agent-workflow-template/issues/143) closed (2026-11-17) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-lanes-trace-hook-173"></a>lanes-trace-hook-173 | defect | [#173](https://github.com/jcl2018/agent-workflow-template/issues/173) closed (2026-11-14) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-narrow-root-172"></a>narrow-root-172 | defect | [#172](https://github.com/jcl2018/agent-workflow-template/issues/172) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-repo-narrow-178"></a>repo-narrow-178 | defect | [#178](https://github.com/jcl2018/agent-workflow-template/issues/178) closed (2026-11-12) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
@@ -1272,6 +1309,20 @@
 | <a id="t-health-auto-rules"></a>health-auto-rules | requirement | done line full-auto-all:3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-done-docs-v2-1"></a>done-docs-v2-1 | workflow | done line docs-v2:1 | not run | - | local | no |
+| <a id="t-done-docs-v2-2"></a>done-docs-v2-2 | workflow | done line docs-v2:2 | not run | - | local | no |
+| <a id="t-done-docs-v2-3"></a>done-docs-v2-3 | workflow | done line docs-v2:3 | not run | - | local | no |
+| <a id="t-done-docs-v2-4"></a>done-docs-v2-4 | workflow | done line docs-v2:4 | not run | - | local | no |
+| <a id="t-done-docs-v2-5"></a>done-docs-v2-5 | workflow | done line docs-v2:5 | not run | - | local | no |
+| <a id="t-done-docs-v2-6"></a>done-docs-v2-6 | workflow | done line docs-v2:6 | not run | - | local | no |
+| <a id="t-hands-off-fallback"></a>hands-off-fallback | requirement | done line hands-off-operation:1 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-archive"></a>hands-off-archive | requirement | done line hands-off-operation:2 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-pressure"></a>hands-off-pressure | requirement | done line hands-off-operation:3 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-start"></a>hands-off-start | requirement | done line hands-off-operation:4 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-timer"></a>hands-off-timer | requirement | done line hands-off-operation:5 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-feature"></a>hands-off-feature | requirement | done line hands-off-operation:6 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-queued"></a>hands-off-queued | requirement | done line hands-off-operation:7 | not run | - | local | 2026-11-17 |
+| <a id="t-hands-off-size"></a>hands-off-size | requirement | done line hands-off-operation:8 | not run | - | local | 2026-11-17 |
 | <a id="t-auto-planning"></a>auto-planning | requirement | done line auto-planning:1 | not run | - | local | 2026-11-17 |
 | <a id="t-auto-planning-approve"></a>auto-planning-approve | requirement | done line auto-planning:2 | not run | - | local | 2026-11-17 |
 | <a id="t-auto-planning-machines"></a>auto-planning-machines | requirement | done line auto-planning:3 | not run | - | local | 2026-11-17 |

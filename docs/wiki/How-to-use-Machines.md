@@ -12,6 +12,15 @@ Brings a second Mac or Windows machine to the same working setup as the one you 
 | `machine.py` | Command | Plans, applies and checks a second machine's setup. | `python3 dev/machine.py` (a dry run), then `machine.py apply --repo <your repo>`. |
 | health-regression | Scheduled routine | The scheduled health and regression round a second machine runs every 4 hours. | `machine.py apply` registers it; its Runbook is below. |
 
+### System diagram
+
+```text
+[Command: machine.py | the second machine] --plans, applies and checks its setup--> [Scheduled routine: health-regression | the second machine]
+[Scheduled routine: health-regression | the second machine] --runs health and regression each round--> (GitHub issues and digest)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 Say these to the agent; each feature page has the exact commands.
@@ -68,4 +77,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept auto-planning@36825335 -->
+<!-- kept hands-off-operation@f100bbe6 -->

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept auto-planning@dbd16a6b -->
+Review: **Unreviewed** <!-- kept docs-v2@04343c2d -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -30,7 +30,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - I never write or manage tests.
 - DOC-4: **Unreviewed** Home is one table
   - Home holds one table with four columns: Feature, What it does, How to use (a link to the feature's How-to-use page on the wiki; the README keeps only links to those pages (DOC-18), so Home never needs a README heading), Milestone (optional: empty, or a link to the free-form milestone the feature is planned on).
-  - Below the table Home carries only the generated Settings and Automation sections (DOC-15); nothing else is on Home.
+  - Below the table Home carries only the System diagram block (DOC-19) and the generated Settings and Automation sections (DOC-15); nothing else is on Home.
 - DOC-5: **Unreviewed** The front door links each feature's How-to-use page
   - The README's "How to use" section links every feature's How-to-use page and holds no How-to-use table: what I say to the agent, and what happens, live on those pages.
   - A README section kept for a feature is one row that links its page, with a plain phrase and no command syntax.
@@ -91,7 +91,9 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - `docs.py check` fails a feature's How-to-use page that has no item for one of its page's functional requirement IDs, or an item naming an ID that page lacks; each failure names the IDs, and a page whose PRD is a link is not checked.
   - On a How-to-use page, Runbooks hold plain "When X, do Y" steps; the DOC-16 routine shape applies only to a routine the repo schedules on that page.
   - A How-to-use page's "What's delivered" table (Component, Kind, What it is, How a user uses it) names exactly one Kind per row: Site/URL, Skill, Command, API/file contract, Scheduled routine, Deployment, Message/channel or Playbook. The page carries that Kind's block under "How to reach or run it" as "### Kind: Component" with these fields: Site/URL (URLs, Served by, Check, Deploy), Skill (Say, Command), Command (Command, Dry run, Reads, Writes, Exit codes), API/file contract (Path, Fields, Example, Writer, Reader), Deployment (Target, Deploy, Rollback, Check), Message/channel (Trigger, Recipients, Subject, Resend), Playbook (Steps, Templates, Stop rules); a Scheduled routine's DOC-16 runbook sits under Runbooks or on the feature page.
-  - `docs.py check` fails, naming the page and the missing piece, a row with no Kind or an unknown one, a block missing a field or with no row, an address in a block, and a feature page that names a command (a script and its subcommand, in backticks) its How-to-use page does not list.
+  - `docs.py check` fails, naming the page and the missing piece, a row with no Kind or an unknown one, a block missing a field or with no row, an address in a block, and a feature page that names a command (a script and its subcommand, in backticks), a skill (its slash name, in backticks) or a schedule (a five-field cron, in backticks) its How-to-use page does not list.
+  - A How-to-use page carries a System diagram under What it's for, after What's delivered: a `### System diagram` holding one ```text fence with a box `[Kind: Component | where it runs]` for each delivered row, the flows between the boxes (a part outside the table is plain text in parentheses) and a `Legend:` line; `docs.py check` fails a page with no diagram, a row with no box, a box with no row and a diagram with no legend, naming the part.
+  - Wiki pages and skill docs stand alone: outside its generated Tests section and its Deployments tables, a page holds no URL except this repo's own milestone, releases and wiki pages, no `owner/repo#N` issue reference and no machine path (a Windows or Unix home folder); history belongs in the changelog. Home holds one hand-kept `<!-- diagram:begin -->` block with the whole-system diagram (the operation session, the workers and their steps, staging and production, the machines, the scheduled routines, a legend and the guard marks); `docs.py check` fails each breach and a Home with no diagram or a missing part, naming the page and line.
 
 ### Non-functional
 - DOC-11: **Reviewed 2026-11-10** Safe publish <!-- reviewed f33a3310 -->
@@ -190,6 +192,10 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [home-stale-control](Tests#t-home-stale-control) | requirement | DOC-4 | Given a Home that differs from its fresh render, when a mapped path changes, then docs check still reports it STALE until it is re-rendered. | not run |
 | [home-howto-linksonly](Tests#t-home-howto-linksonly) | requirement | DOC-4 | Given the README with the DOC-18 links-only layout and a Home whose How to use cells link the How-to-use pages, when the docs check runs, then DOC-4 passes. | PASS 2026-11-17 |
 | [home-howto-linksonly-control](Tests#t-home-howto-linksonly-control) | requirement | DOC-4 | Given a links-only README and a Home that still links a README heading, when the docs check runs, then it fails naming DOC-4 and the How-to-use page link to use. | PASS 2026-11-17 |
+| [doc4-home-diagram-ok](Tests#t-doc4-home-diagram-ok) | requirement | DOC-4 | Given a Home page whose diagram block names each part of the loop, when docs check runs, then it passes. | not run |
+| [doc4-home-diagram-missing](Tests#t-doc4-home-diagram-missing) | requirement | DOC-4 | Given a Home page with no system diagram, when docs check runs, then it fails. | not run |
+| [doc4-home-diagram-part](Tests#t-doc4-home-diagram-part) | requirement | DOC-4 | Given a Home diagram that leaves out a part of the loop, when docs check runs, then it fails naming the part. | not run |
+| [doc4-home-diagram-unread](Tests#t-doc4-home-diagram-unread) | requirement | DOC-4 | Given a Home page with the diagram block, when the DOC-4 table check runs, then the block is not read as a stray line. | not run |
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-5 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-10 |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
 | [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
@@ -290,6 +296,25 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc19-kind-fields](Tests#t-doc19-kind-fields) | requirement | DOC-19 | Given a Command row whose block lacks its dry-run form, when docs check runs, then it fails naming the page and the missing field. | PASS 2026-11-16 |
 | [doc19-command-listed](Tests#t-doc19-command-listed) | requirement | DOC-19 | Given a feature page that names a command its How-to-use page does not list, when docs check runs, then it fails naming the command. | PASS 2026-11-16 |
 | [doc19-readme-links](Tests#t-doc19-readme-links) | requirement | DOC-19 | Given a README with a How-to-use table of more than one row, when docs check runs, then it fails, and a README that only links each page passes. | PASS 2026-11-16 |
+| [doc19-diagram-passes](Tests#t-doc19-diagram-passes) | requirement | DOC-19 | Given a How-to-use page whose System diagram has a box for each delivered row, where it runs and a legend, when docs check runs, then it passes. | not run |
+| [doc19-diagram-missing](Tests#t-doc19-diagram-missing) | requirement | DOC-19 | Given a How-to-use page with no System diagram, when docs check runs, then it fails naming the page. | not run |
+| [doc19-diagram-row-box](Tests#t-doc19-diagram-row-box) | requirement | DOC-19 | Given a System diagram that misses a delivered row, when docs check runs, then it fails naming the part. | not run |
+| [doc19-diagram-extra-box](Tests#t-doc19-diagram-extra-box) | requirement | DOC-19 | Given a System diagram that names a part the delivered table lacks, when docs check runs, then it fails naming the part. | not run |
+| [doc19-diagram-legend](Tests#t-doc19-diagram-legend) | requirement | DOC-19 | Given a System diagram with no legend, when docs check runs, then it fails. | not run |
+| [doc19-diagram-where](Tests#t-doc19-diagram-where) | requirement | DOC-19 | Given a box that does not say where the part runs, when docs check runs, then it fails naming the part. | not run |
+| [doc19-alone-own-links](Tests#t-doc19-alone-own-links) | requirement | DOC-19 | Given a page linking only this repo's milestone and wiki pages, when docs check runs, then it passes. | not run |
+| [doc19-alone-issue](Tests#t-doc19-alone-issue) | requirement | DOC-19 | Given a wiki page with an issue link, when docs check runs, then it fails naming the page, line and link. | not run |
+| [doc19-alone-ci](Tests#t-doc19-alone-ci) | requirement | DOC-19 | Given a wiki page with a CI run link, when docs check runs, then it fails naming the link. | not run |
+| [doc19-alone-host](Tests#t-doc19-alone-host) | requirement | DOC-19 | Given a wiki page with a link to another host, when docs check runs, then it fails naming the link. | not run |
+| [doc19-alone-other-repo](Tests#t-doc19-alone-other-repo) | requirement | DOC-19 | Given a wiki page linking another repository's milestone, when docs check runs, then it fails. | not run |
+| [doc19-alone-foreign-ref](Tests#t-doc19-alone-foreign-ref) | requirement | DOC-19 | Given a wiki page naming another repository's issue, when docs check runs, then it fails naming the reference. | not run |
+| [doc19-alone-path](Tests#t-doc19-alone-path) | requirement | DOC-19 | Given a wiki page with a Windows home path, when docs check runs, then it fails naming the path. | not run |
+| [doc19-alone-unix-path](Tests#t-doc19-alone-unix-path) | requirement | DOC-19 | Given a wiki page with a Unix home path, when docs check runs, then it fails naming the path. | not run |
+| [doc19-alone-exempt](Tests#t-doc19-alone-exempt) | requirement | DOC-19 | Given links inside a page's generated Tests section or a Deployments table, when docs check runs, then they are not reported, and a link after the Tests section is. | not run |
+| [doc19-alone-files](Tests#t-doc19-alone-files) | requirement | DOC-19 | Given a wiki folder and the skill docs, when docs check runs, then it reads each page and doc except the generated Tests page. | not run |
+| [doc19-skill-schedule-unlisted](Tests#t-doc19-skill-schedule-unlisted) | requirement | DOC-19 | Given a feature page that names a skill or a schedule its How-to-use page does not list, when docs check runs, then it fails naming each. | not run |
+| [doc19-skill-schedule-listed](Tests#t-doc19-skill-schedule-listed) | requirement | DOC-19 | Given a skill and a schedule the How-to-use page lists, when docs check runs, then it passes. | not run |
+| [docs-v2-repo-passes](Tests#t-docs-v2-repo-passes) | requirement | DOC-19 | Given this repo's wiki pages and skill docs, when docs check runs, then it prints DOCS OK: every How-to-use page has a passing System diagram, Home has its diagram and no page holds a history link, another repo's name or a machine path. | not run |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-18 |
 | [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |

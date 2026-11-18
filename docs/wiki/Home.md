@@ -14,6 +14,38 @@
 | Operations | [Machines](Machines) | Brings a second Mac or Windows machine to this one's setup from a git clone and one command: skills, hooks, the empty private-names file, the unattended mailer, one health-and-regression task per repo, and a check that lists every gap; what only the owner can do (logins, secrets, the permission mode) is a numbered checklist. | [How to use Machines](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Machines) | [Machines](https://github.com/jcl2018/agent-workflow-template/milestone/23) |
 | Operations | [Setup](Setup) | Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, keeps it in step with the template, adopts several repos in one pass through `board.py repos adopt`, and lists, with the exact instruction, what the owner must still do on a new machine. | [How to use Setup](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Setup) | [Setup](https://github.com/jcl2018/agent-workflow-template/milestone/9) |
 | Docs | [Documentation](Documentation) | Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section; each feature's How-to-use page, with a short start in the README's How to use tables and each skill's command reference, covers usage), and publishes them on every release; the README's Automation rows follow the Automation requirements and show health on the Mac's local schedule; a PRD the owner opts in, at a `url:` or `mcp:` source, is kept as a copy in the repo, `.loop/prd/PAGE.md`, which every check reads and the page shows as a generated block, and `docs.py sync` keeps it in step with the source, showing every difference as a delta and a change on both sides as a conflict (DOC-17). | [How to use Documentation](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Documentation) | [Documentation](https://github.com/jcl2018/agent-workflow-template/milestone/3) |
+| Other | [Release](Release) | Ships a major only through a hard gate: every milestone issue closed or moved by name, the full suite green with each known-red row fixed or waived, health green, every requirement Reviewed and no stale page; a cut release candidate admits only gate fixes, and promotion tags the major, keeps a snapshot branch, sends a state report and can be reverted by pull request (owner records o144 and o145). | [How to use Release](https://github.com/jcl2018/agent-workflow-template/wiki/How-to-use-Release) | none yet |
+
+<!-- diagram:begin -->
+## System diagram
+
+The whole loop on one page: each part, where it runs, and the flows between them. Each feature's own diagram is on its How-to-use page.
+
+```text
+ THE OWNER (any machine)
+   | says a goal in one sentence, answers what waits on them, reviews pull requests
+   v
+ [OPERATION SESSION | the PC or the Mac, governs and never builds]
+   | assigns one goal each          ^ every step's result, every question
+   v                                |
+ [WORKER SESSIONS | each in its own worktree, one goal each]
+   freeze -> idea -> plan -> build -> review -> qa -> ship -> pull request -> release
+   |  guard: a step that fails 3 times stops and files a finding      |
+   |  guard: a Reviewed requirement is never edited without the owner |
+   v                                                                  v
+ [STAGING | planned: a staging branch and release candidates]  -> [PRODUCTION | main and its tagged release]
+   (the owner promotes; planned, not built)                          |
+                                                                     v
+                                                  [GITHUB WIKI | published pages, never a page it did not write]
+
+ [MACHINES | the PC and the Mac, each set up from a git clone and one command]
+   run the operation session, the workers and the scheduled routines
+ [SCHEDULED ROUTINES | the always-on machine and GitHub Actions]
+   health round --> issues and a digest mail ; regression round --> one issue per failing row
+
+Legend: [box] a part and where it runs; --> or v a flow of work; "guard" a rule that refuses; planned = not built yet.
+```
+<!-- diagram:end -->
 
 <!-- settings:begin -->
 ## Settings
@@ -76,13 +108,13 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `template_repo` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. | set "template_repo" in .loop/config.json | `(empty)` | default |
 | `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
 | `govern_hook` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. | set "govern_hook" in .loop/config.json | `true` | default |
-| `full_auto` | true lets the operation session answer a worker's decision with its recommended option; safety-class ones wait. | set "full_auto" in .loop/config.json | `true` | default |
+| `full_auto` | Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait. | set "full_auto" in .loop/config.json | `false` | **overridden:** `true` |
 | `pool_size` | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. | set "pool_size" in .loop/config.json | `20` | default |
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. | set "silent_minutes" in .loop/config.json | `30` | default |
 | `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
 | `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
-| `workers` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
+| `workers` | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->
 
 <!-- automation:begin -->
