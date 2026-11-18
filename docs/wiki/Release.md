@@ -41,6 +41,10 @@ How to use: [How-to-use-Release](How-to-use-Release)
 - REL-8: **Unreviewed** Promotion and every waiver are the owner's words, never a worker's or a peer session's
   - Only the operation session runs `promote` or `revert`; a worker is refused with `REVIEW_ROLE`.
   - A waiver counts only when its owner-words record exists and names its subject, and the record id is kept beside the waiver in the git folder, outside the repo.
+- REL-9: **Unreviewed** The merge's wiki check refuses only for what the goal changed
+  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes, a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it.
+  - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so.
+  - On the base branch itself every finding counts.
 
 ### Non-functional
 
@@ -76,3 +80,17 @@ None
 | - | requirement | REL-7 | no passing test | not enforced |
 | [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-8 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
 | - | requirement | REL-8 | no passing test | not enforced |
+| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | REL-9 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, when merge.py checks the wiki, then it does not refuse on them. | not run |
+| [gate-untouched-filed-once](Tests#t-gate-untouched-filed-once) | requirement | REL-9 | Given those findings on untouched pages, when merge.py checks the wiki, then each page is printed as a FINDING and handed to the issue filer once. | not run |
+| [gate-one-issue-per-page](Tests#t-gate-one-issue-per-page) | requirement | REL-9 | Given a page with several DOC-19 findings, when they are filed, then one issue carries every line. | not run |
+| [gate-generated-still-refused](Tests#t-gate-generated-still-refused) | requirement | REL-9 | Given a stale Tests table, START.md, a stale page and a DOC-18 finding, when merge.py checks the wiki, then each still refuses and none is filed. | not run |
+| [gate-changed-page-refused](Tests#t-gate-changed-page-refused) | requirement | REL-9 | Given a DOC-19 finding on a page the goal's diff changes, when merge.py checks the wiki, then it still refuses. | not run |
+| [gate-base-branch-counts](Tests#t-gate-base-branch-counts) | requirement | REL-9 | Given the check runs on the base branch itself, when DOC-19 findings exist, then every one counts and none is filed. | not run |
+| [gate-issue-not-doubled](Tests#t-gate-issue-not-doubled) | requirement | REL-9 | Given an open issue for a page's findings, when the gate files that page again, then no second issue is opened. | not run |
+| [gate-issue-on-feature-backlog](Tests#t-gate-issue-on-feature-backlog) | requirement | REL-9 | Given findings on an untouched How-to-use-X page, when the gate files them, then the issue sits on the Backlog: X milestone, which is made when missing. | not run |
+| [gate-issue-docs-backlog](Tests#t-gate-issue-docs-backlog) | requirement | REL-9 | Given findings on Home or a skill doc, when the gate files them, then the issue sits on Backlog: Documentation. | not run |
+| [gate-gh-failure-safe](Tests#t-gate-gh-failure-safe) | requirement | REL-9 | Given gh fails, when the gate files an issue, then nothing is filed and the merge check does not crash. | not run |
+| [gate-gh-missing-safe](Tests#t-gate-gh-missing-safe) | requirement | REL-9 | Given gh is not installed, when the gate files an issue, then nothing is filed and the merge check does not crash. | not run |
+| [gate-pending-scoped](Tests#t-gate-pending-scoped) | requirement | REL-9 | Given findings on untouched pages, when wiki.py prepare or merge.py checks the wiki, then only the goal's own and generated findings remain. | not run |
+| [gate-prepare-left-for-health](Tests#t-gate-prepare-left-for-health) | requirement | REL-9 | Given wiki.py prepare (no filer), when findings sit on untouched pages, then each prints as a FINDING left for health and nothing is filed. | not run |
+| - | requirement | REL-9 | no passing test | not enforced |

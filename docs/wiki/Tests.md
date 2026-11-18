@@ -423,6 +423,14 @@
 | <a id="t-doc19-skill-schedule-unlisted"></a>doc19-skill-schedule-unlisted | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 | <a id="t-doc19-skill-schedule-listed"></a>doc19-skill-schedule-listed | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 | <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
+| <a id="t-links-own-site-passes"></a>links-own-site-passes | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-unlisted-site-fails"></a>links-unlisted-site-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-lookalike-fails"></a>links-lookalike-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-source-link-fails"></a>links-source-link-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-origins-config"></a>links-origins-config | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-origins-file"></a>links-origins-file | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-origins-broken-file"></a>links-origins-broken-file | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-alone-reads-sites"></a>links-alone-reads-sites | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 
 ## Guardrails
 
@@ -978,6 +986,19 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-7 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-8 | not run | - | local | 2026-11-17 |
+| <a id="t-gate-untouched-not-refused"></a>gate-untouched-not-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-untouched-filed-once"></a>gate-untouched-filed-once | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-one-issue-per-page"></a>gate-one-issue-per-page | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-generated-still-refused"></a>gate-generated-still-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-changed-page-refused"></a>gate-changed-page-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-base-branch-counts"></a>gate-base-branch-counts | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-issue-not-doubled"></a>gate-issue-not-doubled | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-issue-on-feature-backlog"></a>gate-issue-on-feature-backlog | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-issue-docs-backlog"></a>gate-issue-docs-backlog | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-gh-failure-safe"></a>gate-gh-failure-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-gh-missing-safe"></a>gate-gh-missing-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-prepare-left-for-health"></a>gate-prepare-left-for-health | requirement | REL-9 | not run | - | local | 2026-11-18 |
 
 ## Setup
 
@@ -1332,3 +1353,7 @@
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
 | <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | not run | - | local | 2026-11-17 |
 | <a id="t-del-16-linked"></a>del-16-linked | workflow | done line del-16:2 | not run | - | local | 2026-11-17 |
+| <a id="t-done-docs-gate-scope-1"></a>done-docs-gate-scope-1 | workflow | done line docs-gate-scope:1 | not run | - | local | no |
+| <a id="t-done-docs-gate-scope-2"></a>done-docs-gate-scope-2 | workflow | done line docs-gate-scope:2 | not run | - | local | no |
+| <a id="t-done-docs-gate-scope-3"></a>done-docs-gate-scope-3 | workflow | done line docs-gate-scope:3 | not run | - | local | no |
+| <a id="t-done-docs-gate-scope-4"></a>done-docs-gate-scope-4 | workflow | done line docs-gate-scope:4 | not run | - | local | no |

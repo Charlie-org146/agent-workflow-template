@@ -48,6 +48,7 @@ Each requirement and how it is delivered:
 - REL-6: Promoting a major tags it, keeps a snapshot branch and sends a state report. Example, from the rel-promote-snapshot test: given every check green and an owner record naming the version, when promote runs, then the tag, the branch, the release notes and the mail all exist.
 - REL-7: `revert vX` puts main back on the snapshot through a pull request. Example, from the rel-revert-pr test: given release/vX, when revert runs, then a pull request to main carries the snapshot's tree.
 - REL-8: Promotion and every waiver are the owner's words, never a worker's or a peer session's. Example, from the rel-owner-only test: given a worker, when it runs promote, then it is refused and nothing changes.
+- REL-9: The merge's wiki check refuses only for what the goal changed; findings on other pages become one issue each. Example, from the gate-untouched-not-refused test: given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, when merge.py checks the wiki, then it does not refuse on them.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite]`
