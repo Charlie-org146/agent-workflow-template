@@ -105,6 +105,8 @@ check("a page only the loop's own re-render commit changed still counts as untou
       kept == [] and sorted(p for p, _ in filed) == ["B", "Home", "How-to-use-A", "skills/x/SKILL.md"])
 write("docs/wiki/B.md", "<!-- workflow-docs -->\n# B\nThe goal changed this page.\n")
 commit("the goal changes page B")
+write("docs/wiki/Home.md", "<!-- workflow-docs -->\n# Home\nText.\n## Tests\nre-rendered again\n")
+commit("Wiki: re-render and re-stamp pages for goal")
 kept, filed, said = gate(LINES)
 check("a finding on a page the goal changed is still refused (kept: %s)" % kept, kept == LINES[:1])
 check("while the pages it left alone are filed (%s)" % [p for p, _ in filed], sorted(p for p, _ in filed) == ["Home", "How-to-use-A", "skills/x/SKILL.md"])

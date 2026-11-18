@@ -3,7 +3,7 @@
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-ask shows the docs and verify steps and asks cut or leave (a batch answers leave); cut bumps the version, writes the changelog,
+ask shows the docs and verify steps and asks cut or leave; cut bumps the version, writes the changelog,
 pushes and creates a DRAFT; it never publishes or merges.
 """
 import argparse
@@ -221,8 +221,8 @@ def docs_trouble(top, base, fix=False, whole=False):
 
 def untouched(top, base, lines, filer=None):
     """DOC-19 and DOC-4 findings on pages the goal leaves alone go to filer, not a refusal."""
-    made = run(["git", "log", "--format=%H", "--grep=^Wiki: re-render and re-stamp ", base + "..HEAD"], top).stdout.split()
-    spans = [base + "..." + made[-1] + "^", made[0] + "..HEAD"] if made else [base + "...HEAD"]
+    made = run(["git", "log", "--format=%H", "--grep=^Wiki: re-render and re-stamp ", base + "..HEAD"], top).stdout.split()[::-1]
+    spans = [a + b for a, b in zip([base + "..."] + [c + ".." for c in made], [c + "^" for c in made] + ["HEAD"])]
     diffs = [run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", span], top) for span in spans]
     if any(d.returncode for d in diffs) or run(["git", "merge-base", "--is-ancestor", "HEAD", base], top).returncode == 0:
         return lines
