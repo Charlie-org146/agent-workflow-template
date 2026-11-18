@@ -1272,6 +1272,11 @@
 | <a id="t-health-auto-rules"></a>health-auto-rules | requirement | done line full-auto-all:3 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-full-auto-no-new-file"></a>full-auto-no-new-file | requirement | done line full-auto-all:4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning"></a>auto-planning | requirement | done line auto-planning:1 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-approve"></a>auto-planning-approve | requirement | done line auto-planning:2 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-machines"></a>auto-planning-machines | requirement | done line auto-planning:3 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-started"></a>auto-planning-started | requirement | done line auto-planning:4 | not run | - | local | 2026-11-17 |
+| <a id="t-auto-planning-check"></a>auto-planning-check | requirement | done line auto-planning:5 | not run | - | local | 2026-11-17 |
 | <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
 | <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | not run | - | local | 2026-11-17 |
