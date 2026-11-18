@@ -40,3 +40,8 @@ session-quiet	identical failure on main 253c6d12 in dev/toy/test-session-workers
 session-ended-waiting	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 session-tool-timeout	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 session-tool-helper	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
+no-token-dry-run	red on main (scheduled regression 2026-11-17)
+refused-unmet	red on main (scheduled regression 2026-11-17)
+stale-page-row	red on main (scheduled regression 2026-11-17)
+no-token-would	red on main (scheduled regression 2026-11-17)
+no-prompts	red on main (scheduled regression 2026-11-17)
