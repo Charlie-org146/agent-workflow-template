@@ -32,9 +32,19 @@ GOOD = """<!-- workflow-docs -->
 
 It does a thing for its users, in one plain sentence here.
 
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| Guide | Playbook | A short guide | Follow the steps |
+
 ## How to reach or run it
 
-Say "run it" to the agent.
+### Playbook: Guide
+
+- **Steps:** Say "run it" to the agent.
+- **Templates:** none
+- **Stop rules:** Stop when it reports an error.
 
 ## Links
 
