@@ -425,12 +425,10 @@
 | <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-19 | not run | - | local | 2026-11-17 |
 | <a id="t-links-own-site-passes"></a>links-own-site-passes | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-unlisted-site-fails"></a>links-unlisted-site-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-lookalike-fails"></a>links-lookalike-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-source-link-fails"></a>links-source-link-fails | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-origins-config"></a>links-origins-config | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-origins-file"></a>links-origins-file | requirement | DOC-19 | not run | - | local | 2026-11-18 |
-| <a id="t-links-origins-broken-file"></a>links-origins-broken-file | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 | <a id="t-links-alone-reads-sites"></a>links-alone-reads-sites | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-origins-sources"></a>links-origins-sources | requirement | DOC-19 | not run | - | local | 2026-11-18 |
+| <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-19 | not run | - | local | 2026-11-18 |
 
 ## Guardrails
 
@@ -994,11 +992,8 @@
 | <a id="t-gate-base-branch-counts"></a>gate-base-branch-counts | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-issue-not-doubled"></a>gate-issue-not-doubled | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-issue-on-feature-backlog"></a>gate-issue-on-feature-backlog | requirement | REL-9 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-issue-docs-backlog"></a>gate-issue-docs-backlog | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-gh-failure-safe"></a>gate-gh-failure-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-gh-missing-safe"></a>gate-gh-missing-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | REL-9 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-prepare-left-for-health"></a>gate-prepare-left-for-health | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-nonascii-page-refused"></a>gate-nonascii-page-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-feature-edit-refuses"></a>gate-feature-edit-refuses | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-list-failure-no-create"></a>gate-list-failure-no-create | requirement | REL-9 | not run | - | local | 2026-11-18 |
