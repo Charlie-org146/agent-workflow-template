@@ -34,7 +34,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - SET-10: **Unreviewed** The right format for every agent
   - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way.
 - SET-11: **Unreviewed** A strict replay of the first adoption
-  - Adoption replays the first run step by step against a recorded good result.
+  - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`.
   - It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe.
 - SET-12: **Unreviewed** Adopt all my repos in one pass
   - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template.
@@ -161,6 +161,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-18 | A strict replay of the first adoption <br> Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`. <br> It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. | adoption-golden: SET-11 names its fixture file again, so the test finds the fixture and the stop rule (operation-mac, 2026-11-18) | o48: "Do ur choice" |
 | r2 | 2026-11-18 | A strict replay of the first adoption <br> Adoption replays the first run step by step against a recorded good result. <br> It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-17 | Prerequisites first, then a strict replay of the first adoption <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh installed and signed in as me, real symlinks, and a supported platform (no crash on a missing POSIX call, and the qa lane runs on this platform instead of hanging). Each line that fails carries its exact fix, for example the install command, or `gh auth login` run with a device code I can enter from my phone instead of a prompt waiting at the PC. <br> Adoption then replays the first run step by step against its golden result (`dev/toy/adoption-golden.tsv`, eight steps from prerequisites to the first check-in). It stops at the first mismatch, says what differs and asks me to do the exact step that fixes it; it never accepts a looser equivalent. <br> Setup prints that checklist at the start of every run; `unattended.py prerequisites`, `replay` and `connectors` run each part alone (the replay stops at the first mismatch and never passes a step it cannot observe), and `board.py repos adopt` is the one-pass adoption of SET-12. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -303,8 +304,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | - | requirement | SET-18 | no passing test | not enforced |
 | [sync-propose](Tests#t-sync-propose) | requirement | SET-19 | Given a skill file fixed in an adopted repo, when update runs, then it shows as a local fix, is kept, and --propose --file-issue files one issue on the template with its diff and no repo name. | SKIPPED 2026-11-16 |
 | - | requirement | SET-19 | no passing test | not enforced |
-| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-20 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | not run |
-| - | requirement | SET-20 | no passing test | not enforced |
+| [migration-lag-line](Tests#t-migration-lag-line) | requirement | SET-20 | Given a repo behind the installed template, when entry.py lag runs through a fake install folder and through the test override, then it prints the exact version line, nothing for a current or newer repo or a tree that holds the skills, and a differing major refuses a new goal unless its slug starts with migrate-. | PASS 2026-11-18 |
 | - | requirement | SET-21 | no passing test | not enforced |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-3 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-12 |
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-3 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-12 |

@@ -231,13 +231,13 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-2 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
 | [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-18 |
 | [auto-approved](Tests#t-auto-approved) | requirement | DEL-3 | Given an auto-approved step, when it ends, then it is logged and nothing waits. | PASS 2026-11-09 |
-| [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-3 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-10 |
-| [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-3 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-10 |
-| [depth-markers](Tests#t-depth-markers) | requirement | DEL-3 | Given private evidence markers, when a full review reply lacks one, then it is refused with no try used, without showing the marker. | PASS 2026-11-10 |
-| [depth-recorded](Tests#t-depth-recorded) | requirement | DEL-3 | Given the default setting, when a goal runs its steps, then every recorded step names the depth it ran. | PASS 2026-11-10 |
-| [depth-condensed-when-set](Tests#t-depth-condensed-when-set) | requirement | DEL-3 | Given review_depth condensed on the base branch, when a review runs condensed, then it is recorded as condensed. | PASS 2026-11-10 |
-| [depth-base-branch](Tests#t-depth-base-branch) | requirement | DEL-3 | Given review_depth full on the base branch, when a worker sets condensed in its own worktree, then it is still held to full. | PASS 2026-11-10 |
-| [depth-loop-flow](Tests#t-depth-loop-flow) | requirement | DEL-3 | Given markers in the default flow file, when LOOP_FLOW points elsewhere, then the markers still apply. | PASS 2026-11-10 |
+| [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-3 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-18 |
+| [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-3 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-18 |
+| [depth-markers](Tests#t-depth-markers) | requirement | DEL-3 | Given private evidence markers, when a full review reply lacks one, then it is refused with no try used, without showing the marker. | PASS 2026-11-18 |
+| [depth-recorded](Tests#t-depth-recorded) | requirement | DEL-3 | Given the default setting, when a goal runs its steps, then every recorded step names the depth it ran. | PASS 2026-11-18 |
+| [depth-condensed-when-set](Tests#t-depth-condensed-when-set) | requirement | DEL-3 | Given review_depth condensed on the base branch, when a review runs condensed, then it is recorded as condensed. | PASS 2026-11-18 |
+| [depth-base-branch](Tests#t-depth-base-branch) | requirement | DEL-3 | Given review_depth full on the base branch, when a worker sets condensed in its own worktree, then it is still held to full. | PASS 2026-11-18 |
+| [depth-loop-flow](Tests#t-depth-loop-flow) | requirement | DEL-3 | Given markers in the default flow file, when LOOP_FLOW points elsewhere, then the markers still apply. | PASS 2026-11-18 |
 | [del6-depth-by-size](Tests#t-del6-depth-by-size) | requirement | DEL-3 | Given review_depth condensed, when a small goal (up to 3 done lines, one area) and a larger goal run their plan and review, then the small one is told to run condensed and the larger one full. | not run |
 | [del6-large-held-full](Tests#t-del6-large-held-full) | requirement | DEL-3 | Given review_depth condensed and a goal touching two areas, when its review replies condensed, then it is refused with no try used. | not run |
 | [del6-owner-override](Tests#t-del6-owner-override) | requirement | DEL-3 | Given a large goal, when the owner sets its depth to condensed with goal.py set, then a condensed review is recorded; a worker can't set it. | not run |
@@ -258,7 +258,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | - | requirement | DEL-17 | no passing test | not enforced |
 | - | requirement | DEL-18 | no passing test | not enforced |
 | - | requirement | DEL-19 | no passing test | not enforced |
-| [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | not run |
+| [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | PASS 2026-11-18 |
 | [del8-step-recorded](Tests#t-del8-step-recorded) | requirement | DEL-7 | Given a step that hit its budget, when the goal's record is read, then it names the step and what it left. | not run |
 | [del8-session-budget](Tests#t-del8-session-budget) | requirement | DEL-7 | Given a step run by the worker session, when it is asked for, then its instructions carry the step budget. | not run |
 | [del8-session-overrun](Tests#t-del8-session-overrun) | requirement | DEL-7 | Given a session-run step that took longer than its budget, when it is recorded, then the overrun and what it left are kept. | not run |
