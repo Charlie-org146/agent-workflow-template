@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept prd-principles@04856524 -->
+Review: **Unreviewed** <!-- kept gate-rerender@3cda989f -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -42,7 +42,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - Only the operation session runs `promote` or `revert`; a worker is refused with `REVIEW_ROLE`.
   - A waiver counts only when its owner-words record exists and names its subject, and the record id is kept beside the waiver in the git folder, outside the repo.
 - REL-9: **Unreviewed** The merge's wiki check refuses only for what the goal changed
-  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it.
+  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it, and a page only merge.py's own re-render of the Tests tables changed counts as left alone.
   - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so.
   - On the base branch itself every finding counts.
 
@@ -114,6 +114,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | The merge's wiki check refuses only for what the goal changed <br> `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it, and a page only merge.py's own re-render of the Tests tables changed counts as left alone. <br> Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so. <br> On the base branch itself every finding counts. | merge.py re-renders other pages Tests tables on the goal branch; those pages are not the goal pages | o56: "Yes, start it" |
 | r1 | 2026-11-18 | The merge's wiki check refuses only for what the goal changed <br> `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it. <br> Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so. <br> On the base branch itself every finding counts. | migration r1; date from the run day | o51: "Yes to both" |
 
 ## Tests
@@ -136,7 +137,7 @@ None
 | - | requirement | REL-7 | no passing test | not enforced |
 | [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-8 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
 | - | requirement | REL-8 | no passing test | not enforced |
-| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | REL-9 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, when merge.py checks the wiki, then it does not refuse on them. | not run |
+| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | REL-9 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, or pages only merge.py's own re-render changed, when merge.py checks the wiki, then it does not refuse on them. | PASS 2026-11-18 |
 | [gate-untouched-filed-once](Tests#t-gate-untouched-filed-once) | requirement | REL-9 | Given those findings on untouched pages, when merge.py checks the wiki, then each page is printed as a FINDING and handed to the issue filer once. | not run |
 | [gate-one-issue-per-page](Tests#t-gate-one-issue-per-page) | requirement | REL-9 | Given a page with several DOC-19 findings, when they are filed, then one issue carries every line. | not run |
 | [gate-generated-still-refused](Tests#t-gate-generated-still-refused) | requirement | REL-9 | Given a stale Tests table, START.md, a stale page and a DOC-18 finding, when merge.py checks the wiki, then each still refuses and none is filed. | not run |
@@ -149,4 +150,3 @@ None
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | REL-9 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
-| - | requirement | REL-9 | no passing test | not enforced |

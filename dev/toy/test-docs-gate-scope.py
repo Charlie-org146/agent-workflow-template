@@ -96,8 +96,17 @@ check("and a page with several findings is one issue carrying them all",
 kept, filed, said = gate(GENERATED + LINES[:0])
 check("a stale generated block or table, a stale page and a DOC-18 line are still refused (kept: %d of %d)" % (len(kept), len(GENERATED)),
       kept == GENERATED and not filed)
+# merge.py's apply re-renders other pages' Tests tables on the goal's branch; those pages are still not the goal's
+write("docs/wiki/Home.md", "<!-- workflow-docs -->\n# Home\nText.\n## Tests\nre-rendered\n")
+write("docs/wiki/How-to-use-A.md", "<!-- workflow-docs -->\n# How-to-use-A\nText.\n## Tests\nre-rendered\n")
+commit("Wiki: re-render and re-stamp pages for goal")
+kept, filed, said = gate(LINES)
+check("a page only the loop's own re-render commit changed still counts as untouched, and is filed (kept: %s)" % kept,
+      kept == [] and sorted(p for p, _ in filed) == ["B", "Home", "How-to-use-A", "skills/x/SKILL.md"])
 write("docs/wiki/B.md", "<!-- workflow-docs -->\n# B\nThe goal changed this page.\n")
 commit("the goal changes page B")
+write("docs/wiki/Home.md", "<!-- workflow-docs -->\n# Home\nText.\n## Tests\nre-rendered again\n")
+commit("Wiki: re-render and re-stamp pages for goal")
 kept, filed, said = gate(LINES)
 check("a finding on a page the goal changed is still refused (kept: %s)" % kept, kept == LINES[:1])
 check("while the pages it left alone are filed (%s)" % [p for p, _ in filed], sorted(p for p, _ in filed) == ["Home", "How-to-use-A", "skills/x/SKILL.md"])
