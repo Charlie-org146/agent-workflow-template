@@ -12,6 +12,9 @@ ask SLUG
 leave SLUG
 cut SLUG [--bump patch|minor|major] [--user]
 show SLUG
+gate vX [--ref REF] [--no-suite]
+promote vX --owner-record ID [--ref REF]
+revert vX
 ```
 
 - `wiki prepare` lists the mapped pages that are stale (see `.loop/docs.tsv`). The agent rewrites them, then `--commit`
@@ -68,6 +71,10 @@ Each refusal ends with one of these codes; the line also gives the fix and what 
 | `RELEASE_VERSION_MISMATCH` | VERSION at the release PR's merge commit is not vX; no release made | set VERSION on the base, then `merge.py SLUG` |
 | `RELEASE_EXISTS` | a GitHub release vX already exists at another target | look at it, keep or delete it, then `merge.py SLUG` |
 | `REQUIREMENT_MISSING` | a criterion row names a requirement ID no wiki page on the base names; nothing merged | merge the goal that adds its text, then `merge.py SLUG` |
+| `MAJOR_GATE` | a goal's release (cut or merge) would bump a major | a major ships only through `review.py promote` |
+| `FROZEN` | a major's rc tag exists without its release tag and the goal names no recorded gate failure; nothing merged | name a gate failure in the goal, or wait for the next milestone |
+| `OWNER_RECORD` | `promote` was given an owner-words record that doesn't name `vX.0.0`, or the tag exists; nothing changed | the operation session records the owner's words with `--ids vX.0.0` |
+| `PROMOTE_PUSH` | `promote` could not fast-forward main or push; the local tag and branch are removed | merge or rebase the rc on main, then promote again |
 
 The package for Agensi is a skill pack: one ZIP with all seven skills, and the shared file contract under `shared/`.
 
