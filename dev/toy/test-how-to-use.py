@@ -36,27 +36,23 @@ It does a thing for its users, in one plain sentence here.
 
 | Component | Kind | What it is | How a user uses it |
 |---|---|---|---|
-| `a.py` | Command | Does a thing. | Run it. |
+| Guide | Playbook | A short guide | Follow the steps |
 
 ### System diagram
 
 ```text
-[Command: a.py | the repo checkout] --writes--> (a file)
+[Playbook: Guide | the agent session] --follows--> (a finished task)
 
 Legend: a box is Kind, Component and where it runs.
 ```
 
 ## How to reach or run it
 
-Say "run it" to the agent.
+### Playbook: Guide
 
-### Command: a.py
-
-- **Command:** `python3 a.py go`
-- **Dry run:** none
-- **Reads:** its input
-- **Writes:** nothing
-- **Exit codes:** 0 done
+- **Steps:** Say "run it" to the agent.
+- **Templates:** none
+- **Stop rules:** Stop when it reports an error.
 
 ## Links
 
