@@ -3,7 +3,7 @@
 
 usage: batch.py <command> [options]
 
-  add NAME --goal GOAL --done LINE [--done LINE] [--slug S] [--touches A,B] [--depends-on A,B] [--release ask]
+  add NAME --goal GOAL --done LINE [--done LINE] [--slug S] [--touches A,B] [--depends-on A,B] [--release ask] [--feature PAGE]
       add a goal line under the heading '## Batch: NAME' in .loop/queue.md
   start NAME [--max N] [--skill-dir DIR]
       start one worker for each goal line (watch.py beside this file does it); each worker runs its own loop to the end
@@ -157,6 +157,8 @@ def cmd_add(args):
         parts.append("depends-on: " + ", ".join(depends))
     if args.release:
         parts.append("release: " + args.release)
+    if args.feature:
+        parts.append("feature: " + clean(args.feature))
     parts += ["goal: " + text] + ["done: " + clean(item) for item in args.done]
     line = "- " + " | ".join(parts)
     put(args.name, line)
@@ -350,6 +352,7 @@ def main():
     item.add_argument("--touches", default="")
     item.add_argument("--depends-on", default="")
     item.add_argument("--release", default="", choices=["", "ask"])
+    item.add_argument("--feature", default="")
     item = sub.add_parser("start")
     item.add_argument("name")
     item.add_argument("--max", type=int, default=0)

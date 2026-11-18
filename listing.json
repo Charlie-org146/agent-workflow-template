@@ -134,7 +134,10 @@
     "wiki-only",
     "build",
     "detect",
-    "resolve"
+    "resolve",
+    "archive",
+    "archived",
+    "timer"
   ],
   "writes": [
     ".loop/config.json, .loop/queue.md, .loop/findings.md, .loop/goals/<slug>.md in the repo",
