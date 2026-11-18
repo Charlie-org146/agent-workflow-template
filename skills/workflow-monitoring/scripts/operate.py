@@ -11,8 +11,7 @@ usage: operate.py <command> [options]
       new events (notify.py). The live board prints only for report, dashboard and "where do things stand" (MON-4; --board adds it).
       It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued, and stops when nothing is queued,
       running or waiting, or when the cadence is off. --once makes one pass.
-  run --role top|machine   top builds the one board from each machine's STATUS every 5 minutes and is the only role that publishes it;
-      a machine runs today's loop, sends STATUS to top (layers.py) and prints one line, no board; $LOOP_OP_ROLE sets it too
+  run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
   start     the readiness table of a new operation session (session tool, workers, skills, hooks, memory, pool), each row ok or its fix;
             it starts no goal and no background worker (notify.py ready)
   timer [created]   show the check-in timer for the owner's yes (interval, steps, what it never does); `created` records it (notify.py timer)
@@ -44,6 +43,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import graph  # noqa: E402
 import layers  # noqa: E402
+CFG = lambda top: layers.read(os.path.join(top, ".loop", "config.json"))
 DONE = "NOTHING LEFT TO OPERATE: no goal is queued, running or waiting. Nothing was merged."
 
 
@@ -144,9 +144,8 @@ def behind_ask(common, base="main"):
 
 def one_pass(top, common, args):
     who = layers.role(args.role)
-    if who == "top":  # MON-2: top only builds the one board from every machine's STATUS and publishes it
-        cfg = layers.read(os.path.join(top, ".loop", "config.json"))
-        print(graph.localize(layers.publish_board(common, cfg)))
+    if who == "top":
+        print(graph.localize(layers.publish_board(common, CFG(top))))
         script("board_page.py", cwd=top)
         return str(layers.TOP_GAP), True
     moved = refresh(common)
@@ -175,11 +174,7 @@ def one_pass(top, common, args):
         if code or "ARCHIVE-NOW" in said:
             print(graph.localize(said.strip()))
     text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
-    if who == "machine":  # the machine sends STATUS to top and prints one line, never the board
-        sent = layers.send(common, layers.read(os.path.join(top, ".loop", "config.json")))
-        print(layers.one_line(*sent))
-    else:
-        print(text)
+    print(layers.one_line(*layers.send(common, CFG(top))) if who == "machine" else text)
     try:
         with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
             handle.write(text + chr(10))
@@ -372,7 +367,7 @@ def main():
     item.add_argument("--max", type=int, default=0)
     item.add_argument("--skill-dir", default="")
     item.add_argument("--board", action="store_true", help="also print the live board each pass (where do things stand)")
-    item.add_argument("--role", default="", choices=list(layers.ROLES), help="top: the one board for all machines; machine: STATUS to top, one line")
+    item.add_argument("--role", default="", choices=list(layers.ROLES), help="top or machine")
     sub.add_parser("start")
     sub.add_parser("timer").add_argument("created", nargs="?", default="", choices=["", "created"])
     item = sub.add_parser("send")
