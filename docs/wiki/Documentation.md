@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept regroup-delivery@dbef838f -->
+Review: **Unreviewed** <!-- kept prd-revisions@210cc556 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -418,7 +418,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [prd-copy-no-source](Tests#t-prd-copy-no-source) | requirement | DOC-17 | Given a page with no PRD source, when docs.py sync and render run, then the page is never visited, gets no block and raises no signal. | not run |
 | [prd-copy-old-layout](Tests#t-prd-copy-old-layout) | requirement | DOC-17 | Given a copy written before the repo's layout, when docs.py sync runs, then it skips the page naming the fix and leaves the copy as it was. | not run |
 | [prd-copy-notion-shape](Tests#t-prd-copy-notion-shape) | requirement | DOC-17 | Given an external PRD exported the way Notion writes it (html tags, a bold id over a first sub-bullet, the mark after the kind, a New requirements heading with a note), when docs.py sync adopts it, then the copy holds ordinary markdown requirement lines and none of its Source, Milestone, Review, Runbook or Deployments lines. | not run |
-| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-18 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | PASS 2026-11-18 |
+| [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-18 | Given a README How to use table with a command in You say, when the docs check runs, then it fails naming README, the section and DOC-5. | FAIL 2026-11-18 |
 | [doc18-howto-missing](Tests#t-doc18-howto-missing) | requirement | DOC-18 | Given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes. | PASS 2026-11-16 |
 | [doc18-howto-mapped](Tests#t-doc18-howto-mapped) | requirement | DOC-18 | Given a How-to-use page with no .loop/docs.tsv row, when docs check maps pages, then it is mapped to its feature's paths and is not reported unmapped. | PASS 2026-11-16 |
 | [doc18-howto-orphan](Tests#t-doc18-howto-orphan) | requirement | DOC-18 | Given a How-to-use page whose feature has no PRD page, when docs check runs, then the page is reported unmapped as an orphan. | PASS 2026-11-16 |

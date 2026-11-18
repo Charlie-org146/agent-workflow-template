@@ -32,3 +32,4 @@ refused-unmet	red on main (scheduled regression 2026-11-17)
 stale-page-row	red on main (scheduled regression 2026-11-17)
 no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
+format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
