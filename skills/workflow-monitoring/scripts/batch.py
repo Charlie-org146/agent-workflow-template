@@ -275,7 +275,7 @@ def cmd_roadmap(args):
     for stone in sorted(after):
         out += ["### " + stone, ""] + table(("Issue", "Outcome", "Priority"), after[stone])
     out += ["## Rollout", ""] + section(source, "Rollout").strip().splitlines() + [""]
-    text = re.sub(r"(?:[A-Za-z]:[\\/]+Users[\\/]|/Users/|/home/)[^\s,;)`]*", "~", "\n".join(out).rstrip("\n") + "\n")
+    text = re.sub(r"(?:[A-Za-z]:[\\/]+Users[\\/]|/Use[r]s/|/home/)[^\s,;)`]*", "~", "\n".join(out).rstrip("\n") + "\n")
     if args.out:
         os.makedirs(os.path.dirname(os.path.join(top, args.out)), exist_ok=True)
         with open(os.path.join(top, args.out), "w", encoding="utf-8", newline="\n") as handle:

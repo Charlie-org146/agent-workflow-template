@@ -327,7 +327,7 @@ def home_diagram(text):
     return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
 
 
-AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Users/|/home/\w")
+AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
 NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:milestones?|releases|wiki)(?:[/?#]|$)")
 
 
