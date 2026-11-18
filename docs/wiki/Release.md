@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept prd-revisions@71f2d8b1 -->
+Review: **Unreviewed** <!-- kept regroup-delivery@dbef838f -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
