@@ -15,3 +15,8 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-checkin-view.py`.
+   Expect: it prints "PASS: a docs.tsv row with a third column is read by its first two" and no FAIL line.
+2. Run `python3 dev/toy/test-docs-gate-scope.py`.
+   Expect: four "PASS: a listed origin followed by ), a backtick, a quote or a full stop passes" lines, "PASS: and an unlisted origin in a link or backticks is still reported", and no FAIL line.
