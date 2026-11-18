@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     with open(os.path.join(root, ".loop", "config.json"), "w") as f:
         json.dump({"base": "main"}, f)
     with open(os.path.join(root, ".loop", "queue.md"), "w") as f:
-        f.write("## Batch: v1-0-1\n- slug: later-goal | goal: Later (MON-5) | done: Done\n")
+        f.write("## Batch: v1-0-1\n- slug: later-goal | goal: Later (MON-5) | done: Done\n- slug: plain-goal | goal: No id here | done: Done\n")
     runs = os.path.join(root, ".git", "loop", "runs")
     os.makedirs(runs)
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -56,6 +56,11 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     check(checkin.release_of(root, "nobody") == "no release", "a goal in no batch is under no release")
     check(checkin.feature_of(root, "Later (MON-5)") == "Monitoring", "a goal's feature is the page that defines its first requirement ID")
     check(checkin.feature_of(root, "no id here") == "no feature", "a goal naming no requirement ID is under no feature")
+    with open(os.path.join(root, ".loop", "docs.tsv"), "w") as f:
+        f.write("# page\tpaths\tnotion sync\nMonitoring\tskills/workflow-monitoring\tnotion:abc\n")
+    check(checkin.feature_of(root, "no id here", {"touches": ["skills/workflow-monitoring/scripts/x.py"]}) == "Monitoring",
+          "a docs.tsv row with a third column is read by its first two")
+    os.remove(os.path.join(root, ".loop", "docs.tsv"))
     line = checkin.goal_line(dict(slug="a-goal", mark="running", left=2400, machine="mac"))
     check(line == "[>] a-goal ~40m left mac", "a goal line is its marker, slug, time left and machine (%s)" % line)
     check(checkin.goal_line(dict(slug="b", mark="queued")).startswith("[ ] b ~? left pc"), "no estimate reads ~? and the machine defaults to this one")

@@ -373,7 +373,7 @@ def feature_of(root, text, item=None):
         rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(root, ".loop", "docs.tsv")) if "\t" in line and line[0] != "#"]
     except OSError:
         rows = []
-    covers = [(len(path), page) for page, paths in rows for path in [p.strip("/") for p in paths.split(",") if p and p[0] != ":"] for t in [str(t).strip("/") for t in item.get("touches") or []]
+    covers = [(len(path), page) for page, paths, *_ in rows for path in [p.strip("/") for p in paths.split(",") if p and p[0] != ":"] for t in [str(t).strip("/") for t in item.get("touches") or []]
               if page in pages and (t == path or t.startswith(path + "/"))]
     return (best[0][1] or (best[1][1] if len(best) > 1 else "") or max(covers, default=(0, ""))[1]).replace("-", " ") or "no feature"
 
