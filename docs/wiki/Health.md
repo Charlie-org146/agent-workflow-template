@@ -250,6 +250,9 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [hlt6-controls-lean](Tests#t-hlt6-controls-lean) | requirement | HLT-6 | Given every rule and a stale loop worktree, when health checks, then each control fires and the worktree is flagged with the command that removes it, which health never runs. | not run |
 | [hlt8-triage](Tests#t-hlt8-triage) | requirement | HLT-8 | Given open health findings, when triage runs, then it lists them per feature by kind, count and age, and a closed batch carries the owner's words and is not refiled until its evidence changes. | PASS 2026-11-10 |
 | [hlt8-triage-one-issue](Tests#t-hlt8-triage-one-issue) | requirement | HLT-8 | Given two open health findings, when triage --close --issue N runs with --yes, then only that issue closes, with the owner's words, and a number that is not an open finding closes nothing. | not run |
+| [backlog-milestones-made](Tests#t-backlog-milestones-made) | requirement | HLT-10 | Given a repo with feature pages Calc and Zed, when the Backlog milestones are made with --live, then Backlog: Calc, Backlog: Zed and Backlog: Other exist, a dry run writes none and a second run makes none. | not run |
+| [backlog-setup-makes](Tests#t-backlog-setup-makes) | requirement | HLT-10 | Given setup's issue filing, when it runs on a GitHub repo, then it makes the Backlog milestones with --live before it files health issues, and --no-issues makes none. | not run |
+| [backlog-adoption-warns](Tests#t-backlog-adoption-warns) | requirement | HLT-10 | Given a GitHub repo missing one standing Backlog milestone, when health checks the Adoption group, then it warns for that one and for none in a repo with no GitHub origin. | not run |
 | - | requirement | HLT-10 | no passing test | not enforced |
 | - | requirement | HLT-11 | no passing test | not enforced |
 | - | requirement | HLT-12 | no passing test | not enforced |
