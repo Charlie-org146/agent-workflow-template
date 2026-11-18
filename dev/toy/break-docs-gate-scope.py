@@ -25,7 +25,7 @@ BREAKS = {
     "links-sites-ignored": (MS, "for o in sites)", "for o in ())"),
     "links-sites-default": (MS, 'def stands_alone(page, text, repo="", sites=()):', 'def stands_alone(page, text, repo="", sites=("https://demo.example.org",)):'),
     "links-lookalike-passes": (MS, 'in ("", "/", "?", "#")', 'in ("", "/", "?", "#", ".")'),
-    "links-source-passes": (MS, "/blob/[^/]+/README", "/blob/[^/]+/"),
+    "links-source-passes": (MS, "/blob/[^/]+/README\.md", "/blob/.*"),
     "links-config-ignored": (MS, 'get("public_origins")', 'get("public_origin")'),
     "links-file-ignored": (MS, '"public-origins.json"', '"public-origin.json"'),
     "links-broken-file-raises": (MS, "except (OSError, ValueError, TypeError, AttributeError):", "except OSError:"),
