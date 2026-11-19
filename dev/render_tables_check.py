@@ -1,8 +1,8 @@
 """Row settings-render-tables: a lane's render rewrites the Tests tables and nothing else (#3777).
 
-Copies the repo to a scratch git repo, makes the Settings block on Home and README stale (the state a lane finds when the
-scripts it runs are older than the page), then checks that `criteria.py render --tables` leaves both pages as they were
-and that a plain `render` still repairs them. Same on every platform; exit 0 when both hold."""
+Copies the repo to a scratch git repo, makes the Settings block on Home stale (the state a lane finds when the scripts it
+runs are older than the page; the README is principles-only and carries no automation row), then checks that
+`criteria.py render --tables` leaves Home and README as they were and that a plain `render` still repairs Home. Same on every platform; exit 0 when both hold."""
 import os
 import shutil
 import subprocess
@@ -32,8 +32,9 @@ def main():
             elif os.path.exists(src):
                 shutil.copy(src, scratch)
         run("git", "init", "-q", cwd=scratch)
-        pages = [os.path.join(scratch, "README.md"), os.path.join(scratch, "docs", "wiki", "Home.md")]
-        for page in pages:
+        home = os.path.join(scratch, "docs", "wiki", "Home.md")
+        pages = [os.path.join(scratch, "README.md"), home]
+        for page in [home]:
             text = read(page)
             if "| `automation` |" not in text:
                 print("FAIL: %s has no automation row to make stale" % page)
@@ -48,7 +49,7 @@ def main():
             print("FAIL: render --tables changed README.md or Home.md (exit %d): %s" % (tables.returncode, tables.stdout + tables.stderr))
             return 1
         full = run(sys.executable, criteria, "render", cwd=scratch)
-        if full.returncode or [read(page) for page in pages] == before:
+        if full.returncode or read(home) == before[1]:
             print("FAIL: a plain render no longer repairs the Settings block (exit %d): %s" % (full.returncode, full.stdout + full.stderr))
             return 1
         audit = run(sys.executable, os.path.join(scratch, "skills", "workflow-docs", "scripts", "docs.py"), "audit", "--dry-run", cwd=scratch)

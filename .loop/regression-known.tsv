@@ -5,7 +5,6 @@ adopt-set-2	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-3	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-4	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-5	fails on clean main since v0.27.17; fixed by render-readme-guard
-defect-categories	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-repo-narrow	fails on clean main since v0.27.17; fixed by package-cap-3
 narrow-root-172	fails on clean main since v0.27.17; fixed by package-cap-3
@@ -20,8 +19,6 @@ del8-session-tokens	not built: only headless goals are refused past token_budget
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
-stale-found	red on main (in-session flow.py path, see #4852)
-publish-refused-stale	red on main (in-session flow.py path, see #4852)
 auto-release	red on main
 trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
 package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
@@ -41,12 +38,9 @@ session-ended-waiting	identical failure on main 253c6d12 in dev/toy/test-session
 session-tool-timeout	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 session-tool-helper	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 no-token-dry-run	red on main (scheduled regression 2026-11-17)
-refused-unmet	red on main (scheduled regression 2026-11-17)
-stale-page-row	red on main (scheduled regression 2026-11-17)
 no-token-would	red on main (scheduled regression 2026-11-17)
 no-prompts	red on main (scheduled regression 2026-11-17)
 format-frontdoor	red on main since v1.0.64 (docs-v2 fixtures), see #4961
-prd-copy-no-reader	red on main since v1.0.64 (docs-v2 How-to fixture family, same as format-frontdoor), see #4961; reproduced on base 210cc556, same two FAILs (README:5 How to use link to How-to-use-Delivery)
 every-row-described	red on main: prd-lock-four (501 chars) and prd-stamps-free (493 chars) have descriptions over its 400-character limit; reproduced on base 210cc556
 scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (19,636 bytes), checkin.py (19,444), operate.py (19,262) and reply_hook.py (19,386) are over the 19,000 warn line (owner record o39)
 issue-129-docs-published	red on main (v1.0.65): workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
@@ -55,5 +49,3 @@ rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,
 skill-refusals-in-references	red on main 9d93ceb3: workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 release-criteria-known-skip	red on main 9d93ceb3: test-release-criteria.py fails 5 checks, see #4989
 sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
-settings-render-tables	red on main since v1.0.69: prd-principles made the README principles-only, so dev/render_tables_check.py finds no automation row in it; the lane already holds the open issue, see #5031
-runbook-repo	red on main since at least 87504617 (main nightly run 44357340394): dev/toy/test-runbook.sh wants anthropic_api_key, judge_command and "not run on the runner" in Health.md's health-round runbook, which never carried them; the lane already holds the open issue, see #4120
