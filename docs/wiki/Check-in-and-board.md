@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept link-form-note@9cf1b4b1 -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
@@ -18,10 +18,12 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 - CHK-1: **Unreviewed** Live board
   - Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies.
   - Merged work and history are left out, and a stuck worker stays at the top until I answer.
+  - Top's 5-minute board order is: Issues and needs-owner first, then Running goals, Queued goals, dependency arrows, per-machine STATUS with a call-out for any STATUS over 30 minutes old, then one finish time. Only top publishes it; a machine session prints one line and sends STATUS.
 - CHK-2: **Unreviewed** A check-in on a cadence, in one layout
   - The operation session checks in on a set cadence, 30 minutes by default, and at once when a worker reports something new.
   - Every full check-in has the same layout: headline, machine line, all sessions, dependencies, needs you, coming up.
   - A hook blocks a reply that doesn't follow it.
+  - A machine session's check-in is one line (the time plus 'STATUS sent' or 'no change') once STATUS went to top; top keeps the full layout. The hook accepts the one-line form only in machine mode.
 - CHK-3: **Unreviewed** Notify me by mail
   - When notification is on for this machine, each check-in mails me once per new event, such as a new Needs you item or a goal that stopped or passed its ETA.
 - CHK-4: **Unreviewed** A check-in with nothing new costs nothing
@@ -60,12 +62,14 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Live board <br> Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies. <br> Merged work and history are left out, and a stuck worker stays at the top until I answer. <br> Top's 5-minute board order is: Issues and needs-owner first, then Running goals, Queued goals, dependency arrows, per-machine STATUS with a call-out for any STATUS over 30 minutes old, then one finish time. Only top publishes it; a machine session prints one line and sends STATUS. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto CHK-1 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Live board <br> Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies. <br> Merged work and history are left out, and a stuck worker stays at the top until I answer. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### CHK-2
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | A check-in on a cadence, in one layout <br> The operation session checks in on a set cadence, 30 minutes by default, and at once when a worker reports something new. <br> Every full check-in has the same layout: headline, machine line, all sessions, dependencies, needs you, coming up. <br> A hook blocks a reply that doesn't follow it. <br> A machine session's check-in is one line (the time plus 'STATUS sent' or 'no change') once STATUS went to top; top keeps the full layout. The hook accepts the one-line form only in machine mode. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto CHK-2 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | A check-in on a cadence, in one layout <br> The operation session checks in on a set cadence, 30 minutes by default, and at once when a worker reports something new. <br> Every full check-in has the same layout: headline, machine line, all sessions, dependencies, needs you, coming up. <br> A hook blocks a reply that doesn't follow it. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### CHK-3
@@ -117,10 +121,10 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | CHK-1 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | CHK-1 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
-| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-18 |
-| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-18 |
-| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-18 |
-| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-18 |
+| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-19 |
+| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. Given two machines' STATUS, when top builds the board, then one board lists both machines' running goals. | PASS 2026-11-19 |
+| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-19 |
+| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-19 |
 | [status-roadmap-features](Tests#t-status-roadmap-features) | requirement | CHK-1 | Given merged goals, when the live board is printed, then they do not appear. | PASS 2026-11-09 |
 | [status-graph-order](Tests#t-status-graph-order) | requirement | CHK-1 | Given the live board, when it is printed, then its sections come in a fixed order. | PASS 2026-11-12 |
 | [status-graph-levels](Tests#t-status-graph-levels) | requirement | CHK-1 | Given chained goals, when the board is printed, then they are drawn as a top-to-bottom graph between running and queued goals. | PASS 2026-11-12 |
@@ -184,10 +188,10 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [held-charge-pauses](Tests#t-held-charge-pauses) | requirement | CHK-1 | Given a goal that runs 30 minutes, is paused 300 minutes (goal.py wait, or a session report that says waiting or paused) and runs 20 more, when the minute budget is read through fit.budget_stop, then it is charged 50, and the same goal running 350 minutes with no pause is charged 350 and stopped by a smaller budget. | not run |
 | [no-change-quiet](Tests#t-no-change-quiet) | requirement | CHK-2 | Given a board field the old board lacked or gh not answering, when boards are compared, then it counts as no change. | PASS 2026-11-09 |
 | [operate-wakes-on-report](Tests#t-operate-wakes-on-report) | requirement | CHK-2 | Given a worker's report, when it arrives before the cadence, then operate wakes and every pass prints the full board. | PASS 2026-11-09 |
-| [live-board-no-oneline](Tests#t-live-board-no-oneline) | requirement | CHK-2 | Given an unchanged pass, when the operation session checks in, then the full check-in is printed again and there is no one-line mode. | PASS 2026-11-12 |
-| [live-board-cadence](Tests#t-live-board-cadence) | requirement | CHK-2 | Given no cadence setting, when check-ins are scheduled, then the cadence is 30 minutes. | PASS 2026-11-12 |
+| [live-board-no-oneline](Tests#t-live-board-no-oneline) | requirement | CHK-2 | Given an unchanged pass, when the operation session checks in, then the full check-in is printed again and there is no one-line mode. Given the machine role, when a pass runs, then it prints one line, no board, and publishes no Loop Board. | PASS 2026-11-19 |
+| [live-board-cadence](Tests#t-live-board-cadence) | requirement | CHK-2 | Given no cadence setting, when check-ins are scheduled, then the cadence is 30 minutes. Given a STATUS older than 30 minutes, when top builds the board, then it calls the machine out and not a fresh one. | PASS 2026-11-19 |
 | [reply-hook-blocks](Tests#t-reply-hook-blocks) | requirement | CHK-2 | Given an operation-session check-in reply, when it stops without the headline, All sessions, Dependencies, Needs you and Coming up last, then the hook blocks it and says what is missing, and a reply in that layout passes. | PASS 2026-11-10 |
-| [reply-hook-scope](Tests#t-reply-hook-scope) | requirement | CHK-2 | Given a worker session or a session in another repo, when it stops with any reply, then the hook never checks it, and only the operation session is checked. | PASS 2026-11-10 |
+| [reply-hook-scope](Tests#t-reply-hook-scope) | requirement | CHK-2 | Given a worker session or a session in another repo, when it stops with any reply, then the hook never checks it, and only the operation session is checked. Given a machine session's one-line check-in once STATUS went to top, when the reply hook checks it, then it passes, while top keeps the full-layout check. | PASS 2026-11-19 |
 | [reply-hook-off](Tests#t-reply-hook-off) | requirement | CHK-2 | Given reply_hook set to false in the config, when the operation session stops without the board, then the hook lets it through. | PASS 2026-11-10 |
 | [reply-hook-guard](Tests#t-reply-hook-guard) | requirement | CHK-2 | Given a reply blocked twice in a row or a broken hook input, when the session stops again, then the hook lets it through and logs it instead of looping. | PASS 2026-11-10 |
 | [reply-hook-install](Tests#t-reply-hook-install) | requirement | CHK-2 | Given a repo, when setup --reply-hook runs, then the Stop hook is merged into its machine-local Claude settings, which git ignores, and a second run changes nothing. | PASS 2026-11-10 |
@@ -200,7 +204,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [machine-guide-monitoring](Tests#t-machine-guide-monitoring) | requirement | CHK-2 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held-line conventions, and the check-in routine file is only a pointer to it. | not run |
 | [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-2 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
 | [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | CHK-2 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
-| [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-2 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, GRD-14). | not run |
+| [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-2 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, DEL-17). | not run |
 | [notify-new-events](Tests#t-notify-new-events) | requirement | CHK-2 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |
 | [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | CHK-2 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
 | [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | CHK-2 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
