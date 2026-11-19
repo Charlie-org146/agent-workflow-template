@@ -130,8 +130,8 @@ Each requirement and how it is delivered:
 - PRD page: [Monitoring](Monitoring)
 - Backlog: [Backlog: Monitoring](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept operate-exit-codes@08f8464e -->
+<!-- kept machine-email-phone@9a67a8ff -->
 
-<!-- kept operate-exit-codes@08f8464e -->
+<!-- kept plan-red-team-core@6edef587 -->
 
 <!-- kept operate-exit-codes@08f8464e -->
