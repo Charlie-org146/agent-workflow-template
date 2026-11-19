@@ -120,6 +120,7 @@ Each requirement and how it is delivered:
 - DEL-7: Work survives failure and moves by backup. A failed step is resumed from its recorded step, never from the start; `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.
 - DEL-17: A goal's ETA is a hard limit.
 - DEL-19: Every goal serves a requirement.
+- DEL-20: A pr record commit gets no second full CI round. In this repo, CI runs dev/recordonly.py first; the pr step pushes the lane head, then its record commit, and CI skips the affected rows when that commit changes only record files on a parent whose check passed.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"

@@ -40,6 +40,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19]
   - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19]
   - Done lines can't change once the goal starts; a change means a new goal. [DEL-2]
+- DEL-20: **Unreviewed** A pr record commit gets no second full CI round
+  - The pr step's bookkeeping commit (issue states and the Tests and Documentation result rows) is pushed on a parent whose affected check passed; CI then skips the affected rows for it, and a record commit that touches anything else, or a parent without a pass, gets the full round. [DEL-20]
 
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-19** Work survives failure and moves by backup <!-- reviewed 491db53a -->
@@ -228,6 +230,12 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every goal serves a requirement <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. <br> A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### DEL-20
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | A pr record commit gets no second full CI round <br> The pr step's bookkeeping commit (issue states and the Tests and Documentation result rows) is pushed on a parent whose affected check passed; CI then skips the affected rows for it, and a record commit that touches anything else, or a parent without a pass, gets the full round. [DEL-20] | migration r1; date from the run day | o261: "relayed by operation-top 11:10, under o257: "approve DEL-20 as written" (DEL-20 is" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -290,9 +298,6 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | DEL-1 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | DEL-1 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | DEL-1 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
-| [record-ci-skip](Tests#t-record-ci-skip) | requirement | DEL-1 | Given the pr step's record commit on a parent whose affected check passed, when CI runs recordonly.py on it, then it prints RECORD-ONLY and the workflow skips the rows. | not run |
-| [record-ci-full](Tests#t-record-ci-full) | requirement | DEL-1 | Given a head that is not a record-only commit on a passing parent (other file, other lines, other subject, merge, failed or missing check), when CI runs recordonly.py, then it prints FULL and the rows run. | not run |
-| [record-ci-adopter](Tests#t-record-ci-adopter) | requirement | DEL-1 | Given the regression-pr workflow template rendered for a repo without dev/recordonly.py, when its record step runs, then it exits 0 and reports skip=false, so no step fails and the rows run. | not run |
 | [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-19 |
 | [auto-approved](Tests#t-auto-approved) | requirement | DEL-3 | Given an auto-approved step, when it ends, then it is logged and nothing waits. | PASS 2026-11-09 |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-3 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-18 |
@@ -323,6 +328,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | DEL-17 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
 | - | requirement | DEL-17 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
+| [record-ci-skip](Tests#t-record-ci-skip) | requirement | DEL-20 | Given the pr step's record commit on a parent whose affected check passed, when CI runs recordonly.py on it, then it prints RECORD-ONLY and the workflow skips the rows. | not run |
+| [record-ci-full](Tests#t-record-ci-full) | requirement | DEL-20 | Given a head that is not a record-only commit on a passing parent (other file, other lines, other subject, merge, failed or missing check), when CI runs recordonly.py, then it prints FULL and the rows run. | not run |
+| [record-ci-adopter](Tests#t-record-ci-adopter) | requirement | DEL-20 | Given the regression-pr workflow template rendered for a repo without dev/recordonly.py, when its record step runs, then it exits 0 and reports skip=false, so no step fails and the rows run. | not run |
+| - | requirement | DEL-20 | no passing test | not enforced |
 | [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | PASS 2026-11-18 |
 | [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | DEL-7 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
 | [del8-step-stops](Tests#t-del8-step-stops) | requirement | DEL-7 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |
