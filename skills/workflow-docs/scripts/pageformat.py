@@ -160,7 +160,7 @@ def frontdoor(page, text, listing, ids, kind="README"):
         fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one wiki Home link")
     names = ["%s. %s" % (n, name.strip()) for n, name, _ in want]
     for (name, at, lines), (n, _, sentence) in zip(secs + [("", 1, [])] * len(want), want):
-        if re.sub(r" \(enforce score \d/5\)$", "", name) != names[int(n) - 1]:
+        if name != names[int(n) - 1]:
             fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the list")
             continue
         ok, rows, other = grid(lines, HEAD1)
