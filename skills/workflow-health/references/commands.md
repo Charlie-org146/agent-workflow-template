@@ -74,8 +74,8 @@ unchanged repo print the same lines.
 - Performance's `test-time` reads the land lane record (`regression.py`'s record of the current branch, else the newest
   one) and warns when its land rows took longer than `test_budget_minutes` (default 15, floor 15), naming the five
   slowest rows and the slowest toy scripts; a full run over 30 minutes also warns, and each step or test run that hit its
-  budget is an INFO row with what it left. Its `cost` rule also carries lane-control's REG-7 timing rows: the newest full
-  suite over 30 minutes warns. Hygiene's `worktrees` and `local-branches` list loop
+  budget is an INFO row with what it left. Its `cost` rule also carries lane-control's REG-7 timing rows: a goal lane over
+  `goal_lane_minutes`, or the newest full suite over 30 minutes, warns. Hygiene's `worktrees` and `local-branches` list loop
   worktrees that no live goal names and local branches on no remote older than `stale_branch_days`, one row per kind with
   the first five and their removal commands (all of them under `--json`). A branch whose commits exist only on this
   machine says so before `git branch -D`. These rows are never filed and the commands are never run for you.
