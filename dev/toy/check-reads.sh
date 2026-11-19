@@ -6,11 +6,35 @@
 # (LANES-TRACE-NOHOOK: PYTHONPATH reset, or -I/-S), or on a traced skill file outside the closure
 # (LANES-TRACE-UNDECLARED, with the # reads: line to add). Reads outside the repo (copied skills) map back to repo
 # files by content. Coverage limit: Python reads only; bash reads are covered by the static scan.
-# usage: check-reads.sh [--level land|nightly|all] [ROW-ID...]   Writes to a temp dir it removes, and keeps each traced
+# usage: check-reads.sh [--level land|nightly|all] [--shard I/N] [--list] [ROW-ID...]   Writes to a temp dir it removes, and keeps each traced
 # row's skill reads in <git dir>/lanes-trace.tsv (id, epoch, path), which regression.py reads ROW turns into a header.
+# One serial replay of ~1,200 land commands outruns the 900 s row limit, so the replay is sharded: --shard I/N replays the
+# unique commands whose position in the list is I modulo N (I from 0), so N shards of ~1/N the work each cover the list once.
+# --list prints the selected "ids<TAB>command" lines and replays nothing. --count-check N proves the N shards' lists together
+# equal the full list (same commands, each once); it fails naming a command a shard dropped or doubled.
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
-level=land; [ "${1:-}" = "--level" ] && { level=$2; shift 2; }
+level=land; shard=""; list=0; countn=""
+while [ $# -gt 0 ]; do
+  case $1 in
+    --level) level=$2; shift 2 ;;
+    --shard) shard=$2; shift 2 ;;
+    --list) list=1; shift ;;
+    --count-check) countn=$2; shift 2 ;;
+    *) break ;;
+  esac
+done
+case "$shard" in ""|[0-9]*/[0-9]*) ;; *) echo "check-reads: --shard wants I/N, e.g. 0/16"; exit 2 ;; esac
+if [ -n "$shard" ] && [ "${shard%/*}" -ge "${shard#*/}" ] || [ "${shard#*/}" = 0 ]; then echo "check-reads: --shard I/N needs 0 <= I < N"; exit 2; fi
+if [ -n "$countn" ]; then
+  tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+  bash "$0" --level "$level" --list "$@" | sort > "$tmp/full"; : > "$tmp/union"; i=0
+  while [ "$i" -lt "$countn" ]; do bash "$0" --level "$level" --list --shard "$i/$countn" "$@" >> "$tmp/union"; i=$((i + 1)); done
+  sort -o "$tmp/union" "$tmp/union"
+  if cmp -s "$tmp/full" "$tmp/union"; then echo "SHARDS OK: $countn shards replay $(wc -l < "$tmp/full" | tr -d ' ') commands, each once"; exit 0; fi
+  echo "SHARDS DIFFER: the full list has $(wc -l < "$tmp/full" | tr -d ' ') commands, the $countn shards $(wc -l < "$tmp/union" | tr -d ' ')"
+  diff "$tmp/full" "$tmp/union" | grep '^[<>]' | cut -c1-200 | head -5; exit 1
+fi
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/hook" "$tmp/bin"
 cat > "$tmp/hook/sitecustomize.py" <<'PY'
@@ -107,9 +131,9 @@ done
 exec "\$real" "\${orig[@]}"
 SH
 chmod +x "$tmp/bin/python3"; cp "$tmp/bin/python3" "$tmp/bin/python"
-rows=$(python3 - "$here" "$level" "$@" <<'PY'
+rows=$(python3 - "$here" "$level" "$shard" "$@" <<'PY'
 import sys
-here, level, wanted = sys.argv[1], sys.argv[2], set(sys.argv[3:])
+here, level, shard, wanted = sys.argv[1], sys.argv[2], sys.argv[3], set(sys.argv[4:])
 seen = {}
 for line in open(here + "/.loop/regression.tsv"):
     cells = line.rstrip("\n").split("\t")
@@ -118,10 +142,13 @@ for line in open(here + "/.loop/regression.tsv"):
     if not wanted and level != "all" and cells[1] != level:
         continue
     seen.setdefault(cells[2], []).append(cells[0])
-for command, ids in seen.items():
-    print("\t".join([",".join(ids), command]))
+index, count = map(int, shard.split("/")) if shard else (0, 1)
+for position, (command, ids) in enumerate(seen.items()):
+    if position % count == index:
+        print("\t".join([",".join(ids), command]))
 PY
 )
+[ $list = 1 ] && { [ -n "$rows" ] && printf '%s\n' "$rows"; exit 0; }
 store=$(git -C "$here" rev-parse --absolute-git-dir 2>/dev/null)  # lanes: no read (where the trace is kept)
 fails=0; n=0
 while IFS=$'\t' read -r ids command; do

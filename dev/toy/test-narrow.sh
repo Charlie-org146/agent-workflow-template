@@ -151,7 +151,8 @@ git checkout -q -- skills/k/scripts/k.py
 echo "== check-reads.sh: runtime reads outside a row's closure fail the trace"
 c="$d/trace"; mkdir -p "$c/dev/toy" "$c/skills/workflow-regression/scripts" "$c/skills/a/scripts" "$c/.loop"
 cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here/skills/workflow-regression/scripts/lanes.py" "$here/skills/workflow-regression/scripts/narrow.py" \
-  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$c/skills/workflow-regression/scripts/"
+  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$here/skills/workflow-regression/scripts/tiers.py" "$here/skills/workflow-regression/scripts/slots.py" \
+  "$c/skills/workflow-regression/scripts/"  # lanes_cli.py imports tiers, and lanes.py imports slots
 for f in a b c e; do printf 'NAME = "%s"\nopen(__file__).read()\n' "$f" > "$c/skills/a/scripts/$f.py"; done
 printf 'import os\nopen(os.path.join(os.path.dirname(__file__), "c" + ".py")).read()\n' > "$c/skills/a/scripts/g.py"
 printf 'import os, shutil, subprocess, sys, tempfile\nt = tempfile.mkdtemp(); shutil.copy(os.path.join(os.path.dirname(__file__), "e" + ".py"), t + "/x.py")\nsubprocess.run(["python3", t + "/x.py"], check=True)\n' > "$c/skills/a/scripts/k.py"
@@ -187,5 +188,21 @@ check "a module loaded by name is in the closure, and opening a missing file rea
 # fails_when=check-reads stops keeping the trace or reads stops reading it; why_new=new command; seam=<git dir>/lanes-trace.tsv;
 # no_claim=bash reads (the trace sees Python only)
 check "regression.py reads suggests a row's # reads: header from the newest trace, and says how to make one" '[ $brc = 1 ] && grep -q "^NO TRACE r2: run bash dev/toy/check-reads.sh r2" <<<"$before" && grep -qx "# reads: skills/a/scripts/c.py skills/a/scripts/g.py" <<<"$after"'
+
+# Value: protects=the nightly replay of every land command is split across shards that each cover a slice once, so no shard outruns
+# the 900 s row limit and the slices together lose nothing; fails_when=--shard replays the wrong slice, or the shards' union differs
+# from the full list; why_new=one serial replay of ~1,190 commands died at the row limit on every nightly since 2026-11-10;
+# seam=check-reads.sh --list, --shard I/N and --count-check N; no_claim=how many shards CI runs or that a shard fits 900 s
+shards=$(cd "$c" && bash dev/toy/check-reads.sh --count-check 3 2>&1); src=$?
+full=$(cd "$c" && bash dev/toy/check-reads.sh --list | wc -l | tr -d ' ')
+one=$(cd "$c" && bash dev/toy/check-reads.sh --shard 1/3 2>&1)
+check "check-reads --count-check proves N shards replay the full land list, each command once" '[ $src = 0 ] && [ "$full" = 7 ] && grep -qx "SHARDS OK: 3 shards replay 7 commands, each once" <<<"$shards"'
+check "check-reads --shard 1/3 replays only its slice (r2 and r5), not the rest" 'grep -q "^LANES-TRACE-UNDECLARED r2 " <<<"$one" && grep -q "^LANES-TRACE-UNDECLARED r5 " <<<"$one" && grep -qx "2 of 2 commands FAILED" <<<"$one" && ! grep -qE "UNDECLARED r(1|3|4|6|7) |^PASS r" <<<"$one"'
+# Value: protects=the count check fails when a shard drops a command; fails_when=--count-check passes a shard list that lost a command;
+# why_new=a shard that silently skips a command would leave its reads untraced; seam=a copy of check-reads.sh whose shards drop row 3 (the full list keeps it); no_claim=none
+sed 's/if position % count == index:/if position % count == index and not (count > 1 and position == 2):/' "$c/dev/toy/check-reads.sh" > "$c/dev/toy/check-reads-drop.sh"
+dropped=$(cd "$c" && bash dev/toy/check-reads-drop.sh --count-check 3 2>&1); drc=$?
+check "negative control: a shard that drops a command fails the count check, naming the command" '[ $drc = 1 ] && grep -q "^SHARDS DIFFER: the full list has 7 commands, the 3 shards 6" <<<"$dropped" && grep -q "dev/t3.sh" <<<"$dropped"'
+rm -f "$c/dev/toy/check-reads-drop.sh"
 
 [ $fails = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
