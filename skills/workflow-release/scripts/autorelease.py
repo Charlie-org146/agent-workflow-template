@@ -15,7 +15,7 @@ import tempfile
 import release
 import wiki  # noqa: E402
 
-# a prompt from git or gh must fail, not block
+# no prompt may block
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -36,8 +36,8 @@ def sibling(name):
             spec.loader.exec_module(module)
         except Exception as error:  # noqa: BLE001
             return None, ("workflow-delivery's %s.py could not be loaded from %s (%s: %s); nothing was pushed or merged"
-                          % (name, path, type(error).__name__, "no such file" if isinstance(error, OSError) else str(error)[:120]),
-                          "reinstall the skills, or put workflow-delivery beside workflow-release, then run it again", "PRIVATE_MODULE")
+                          % (name, path, type(error).__name__, str(error)[:80]),
+                          "reinstall the skills, then run it again", "PRIVATE_MODULE")
         LOADED[name] = module
     return LOADED[name], None
 
@@ -71,11 +71,7 @@ def notes_text(state):
 def protected(top, base):
     """True when the base has a pull_request rule."""
     got = sh(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], cwd=top)
-    try:
-        rules = json.loads(got.stdout) if got.returncode == 0 else []
-    except ValueError:
-        return False
-    return isinstance(rules, list) and any(isinstance(r, dict) and r.get("type") == "pull_request" for r in rules)
+    return got.returncode == 0 and '"type":"pull_request"' in got.stdout.replace(" ", "")
 
 
 def sh(args, cwd=None):
@@ -96,13 +92,13 @@ def sh_text(args, text, flag="--body-file", cwd=None):
 
 
 def fail(state, text):
-    state["release_error"] = text if len(text) <= 400 else text[:330] + " ... " + text[-65:]  # keeps the (CODE)
+    state["release_error"] = text if len(text) <= 400 else text[:330] + " ... " + text[-65:]
     report, note = state.get("report"), ""
-    if not isinstance(report, dict):  # a goal reset leaves report null
+    if not isinstance(report, dict):
         note = "" if report is None else "(the stored report was a %s and was reset) " % type(report).__name__
         report = state["report"] = {}
     report["text"] = ("%s %sRelease failed: %s" % (str(report.get("text") or ""), note, text)).strip()[:600]
-    if state.get("release") != "merged":  # the pull request is still open: resume can revive it
+    if state.get("release") != "merged":
         state["status"] = "failed"
     release.save(state, "release failed: " + text[:200])
     sys.exit("REFUSED: " + text)
@@ -218,13 +214,22 @@ def restatus(top, cfg, state, head):
         module.pr_result(top, cfg.get("base", "main"), head, state["branch"], True)
 
 
+STAMPS = ("VERSION", "CHANGELOG.md", ".loop/regression-runs.tsv", ".loop/regression-issues.tsv")
+ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
+
+
+def tems(top, old, new, extra="", allow=None):
+    """Tree equal modulo stamps: old to new only adds or edits regular files at STAMPS paths (and extra, and allow's);
+    code, a symlink, a rename or a delete breaks it."""
+    done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
+    rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
+    return done.returncode == 0 and bool(rows) and all(
+        m and (m[1] in STAMPS or m[1] == extra or bool(allow and allow(m[1]))) for m in rows)
+
+
 def carried(top, cfg, state, sha):
-    """True when the pr lane passed and the release head only moves VERSION and CHANGELOG over its parent (#3870)."""
-    if state.get("statuses") != "ok":
-        return False
-    done = sh(["git", "diff", "--name-only", sha + "^", sha], cwd=top)
-    names = set(done.stdout.split())
-    return done.returncode == 0 and bool(names) and names <= {cfg.get("version_file") or "VERSION", "CHANGELOG.md"}
+    """The pr lane passed and the head is its parent plus stamps (tems): the pass carries (#3870)."""
+    return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION")
 
 
 def lane_at(top, cfg, sha):
@@ -254,7 +259,7 @@ def release_statuses(top, cfg, state, branch, sha):
     if sh(["git", "cat-file", "-e", sha + "^{commit}"], cwd=top).returncode:
         sh(["git", "fetch", "-q", "origin", branch], cwd=top)
     if carried(top, cfg, state, sha):
-        print("CARRIED the goal's passing lane to the release head %s (it only moves the version and changelog)" % sha[:12])
+        print("CARRIED the goal's passing lane to the release head %s (stamps only)" % sha[:12])
         ok = True
     else:
         code, text = lane_at(top, cfg, sha)
@@ -297,8 +302,8 @@ def status_held(state, url, number, seen=None):
            if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
     why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
     if red and not why:
-        fail(state, "the release PR %s (#%s) can't merge: required checks failed: %s. Nothing needs the owner's merge, and none "
-             "may be merged past a red check; fix the cause and run merge.py %s again (RELEASE_CHECKS_FAILED)"
+        fail(state, "the release PR %s (#%s) can't merge: required checks failed: %s. Nothing needs the owner's merge; "
+             "fix the cause and run merge.py %s again (RELEASE_CHECKS_FAILED)"
              % (url, number, ", ".join(sorted(set(red))[:8]), state["slug"]))
     if not why:
         return
@@ -318,8 +323,8 @@ def create_release(top, cfg, state, version, target):
         if info.get("targetCommitish") == target:
             print("ADOPTED the existing release %s at %s" % (tag, target[:12]))
             return info.get("url") or ""
-        fail(state, "a GitHub release %s already exists at %s, not at this goal's release commit %s; nothing new was "
-             "created. Fix: look at it (gh release view %s) and keep or delete it, then run merge.py %s (RELEASE_EXISTS)"
+        fail(state, "a GitHub release %s already exists at %s, not at this goal's release commit %s; nothing was created. "
+             "Fix: keep or delete it (gh release view %s), then run merge.py %s (RELEASE_EXISTS)"
              % (tag, info.get("targetCommitish") or "another target", target[:12], tag, state["slug"]))
     made = sh_text(["gh", "release", "create", tag, "--title", tag, "--target", target], text, "--notes-file", top)
     if made.returncode:
