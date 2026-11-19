@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.73 - 2026-11-18
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.72 - 2026-11-18
 
 - Monitoring: top and machine roles, STATUS, defaults checks, reply-hook machine mode

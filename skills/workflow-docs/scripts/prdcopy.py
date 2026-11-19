@@ -358,7 +358,7 @@ def sync(root, dry=False, accept=(), opened=False):
     return 1 if dry and new else 0
 
 
-AWAY = re.compile(r"https?://\S+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
+AWAY = re.compile(r"https?://[^\s`'\")>\]]+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
 NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
 
 
