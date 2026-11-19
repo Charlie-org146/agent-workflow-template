@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `LOOP_FREE_GB=4.5 python3 skills/workflow-regression/scripts/regression.py run settings-reference-fresh agent-routing set1-docs-format adopt-fixture-bare-agent`.
+   Expect: RESULT 4 passed, 0 known, 0 failed.
+2. Run `bash dev/toy/test-adopt-fixtures.sh` with no argument.
+   Expect: four PASS adopt-fixture lines.
