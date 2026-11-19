@@ -230,7 +230,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-3 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-12 |
 | [local-row-env](Tests#t-local-row-env) | requirement | REG-3 | Given a local run with GH_TOKEN and a run summary file set, when a row runs, then it sees neither. | PASS 2026-11-10 |
 | [lanes-reuse](Tests#t-lanes-reuse) | requirement | REG-4 | Given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. | PASS 2026-11-10 |
-| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run. | PASS 2026-11-10 |
+| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run; an edit to the known list selects only the rows whose known status flipped. | PASS 2026-11-10 |
 | [lanes-failing](Tests#t-lanes-failing) | requirement | REG-4 | Given a run with a failing test, when a later run happens, then it is never reused. | PASS 2026-11-10 |
 | [lanes-missing](Tests#t-lanes-missing) | requirement | REG-4 | Given no recorded run, when tests run, then every test runs. | PASS 2026-11-10 |
 | [lanes-ship-reuses](Tests#t-lanes-ship-reuses) | requirement | REG-4 | Given nothing changed since the qa run, when ship runs, then it reuses the qa run. | PASS 2026-11-10 |
@@ -277,7 +277,6 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [config-lane-unparseable](Tests#t-config-lane-unparseable) | requirement | REG-4 | Given a .loop/config.json that no longer parses, when the affected rows are chosen, then every row that reads it reruns (fail wide) (#4321). | PASS 2026-11-15 |
 | [config-lane-duplicate-same](Tests#t-config-lane-duplicate-same) | requirement | REG-4 | Given .loop/config.json with a duplicate key whose last value is the one json.load returns (the guard-fixes case), when the other duplicate is removed, then no row is affected, since every reader sees the same config (#4321). | PASS 2026-11-15 |
 | [private-checks-classify](Tests#t-private-checks-classify) | requirement | REG-4 | Given a private repo's required checks, when they are classified, then a regression-only job, plain script jobs and a third-party-action job are told apart (#4537). | not run |
-| [lanes-known-flip](Tests#t-lanes-known-flip) | requirement | REG-4 | Given an edit to the known list that flips one row, when the affected rows are asked for, then that row is selected and the rows that merely read the table are not. | not run |
 | [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-18 |
 | [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
 | [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-18 |

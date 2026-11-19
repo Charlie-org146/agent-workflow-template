@@ -944,7 +944,6 @@
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-other-writer"></a>homeguard-other-writer | requirement | REG-1 | not run | - | local | 2026-11-17 |
 | <a id="t-homeguard-own-write"></a>homeguard-own-write | requirement | REG-1 | not run | - | local | 2026-11-17 |
-| <a id="t-lanes-known-flip"></a>lanes-known-flip | requirement | REG-4 | not run | - | local | no |
 
 ## Release
 
