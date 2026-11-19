@@ -3,7 +3,6 @@
 
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
-Each control builds a throwaway git repo with the one file that breaks its rule.
 """
 import hashlib
 import importlib
@@ -360,12 +359,12 @@ CONTROLS = {
 CONTROLS.update({name: ("hygiene", name, f_eta(name)) for name in ("eta-missing", "eta-extended", "eta-overrun")})
 CONTROLS.update({name: ("hygiene", name, f_auto) for name in ("auto-safety", "auto-record")})
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-try:
-    CONTROLS.update(importlib.import_module("defects").CONTROLS)
-except ImportError:
-    pass
-finally:
-    sys.path.pop(0)
+for _m in ("defects", "rules"):
+    try:
+        CONTROLS.update(importlib.import_module(_m).CONTROLS)
+    except ImportError:
+        pass
+sys.path.pop(0)
 LEAK = "PLANTED-SECRET"
 
 
@@ -436,7 +435,6 @@ def run(rules, here):
 
 
 def repo_control(root, rule):
-    """The Controls row for one repo rule: its break runs on a private copy, then its command must exit 1 or 2."""
     name, folder = rule["name"], tempfile.mkdtemp(prefix="health-control-")
     copy, fix = os.path.join(folder, "repo"), "fix the rule's break in .loop/health-rules.json"
     try:

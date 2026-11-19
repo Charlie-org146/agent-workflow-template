@@ -10,7 +10,7 @@ import sys
 
 
 GROUPS = (
-    ("requirements", "Requirements", "my angle: is every promise I approved proven?", ("rows", "proof", "done")),
+    ("requirements", "Requirements", "my angle: is every promise I approved proven?", ("rows", "proof", "done", "principle-map")),
     ("traceability", "Traceability", "an auditor's angle: can I follow any work end to end?",
      ("defect-tests", "row-requirement")),
     ("consistency", "Consistency", "a reader's angle: do the pages agree?", ("ids-unique", "refs", "usage-readme")),
@@ -243,7 +243,6 @@ def cmd_judge(h, args):
 
 
 def cmd_review(h, args):
-    """The per-feature repo review; writes nothing, exit 0."""
     root = h.repo_root()
     review = h.sibling_module("judge") or refuse("review", "judge.py is not installed beside health.py")
     names = h.sibling_module("issues").features(root)
@@ -254,7 +253,7 @@ def cmd_review(h, args):
         via = getattr(h.sibling_module("judge"), "VIA", [""])[0]
         print(json.dumps({"version": 1, "findings": found, "dropped": dropped, "judge": why or "answered", "via": via}, indent=2))
     else:
-        print("\n".join(review.render_review(found, dropped, why)))
+        print("\n".join(review.render_review(found, dropped, why) + h.sibling_module("rules").principle_review(root)))
     return 0
 
 

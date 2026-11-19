@@ -50,6 +50,16 @@ check "after the groups the report prints one PRINCIPLE line for each of the pri
 check "principle 6 prints UNREAD until its Attention group exists" 'grep -q "^PRINCIPLE 6 Autonomous, and you decide only what'"'"'s yours: UNREAD (attention)" <<<"$out"'
 pr=$(python3 -c "import sys;sys.path.insert(0,'$S');import judge;print('\n'.join(judge.principles([{'family':'traceability','state':'FAIL'},{'family':'requirements','state':'PASS'},{'family':'tests','state':'WARN'},{'family':'controls','state':'PASS'}])))")
 check "a principle is RED when a group under it fails, green when none does, and UNREAD is never green" 'grep -q "^PRINCIPLE 1 Documentation-driven: RED" <<<"$pr" && grep -q "^PRINCIPLE 2 Enforced and kept true: green" <<<"$pr" && grep -q "^PRINCIPLE 3 Fast, cheap and small: UNREAD" <<<"$pr"'
+rl() { python3 -c "import sys;sys.path.insert(0,'$S');import judge;print('\n'.join(judge.principles([{'family':'requirements','state':'PASS','rule':'rows','subject':'x'},{'family':'controls','state':'PASS','rule':'control','subject':'$1'}])))"; }
+check "a principle is green when a rule under it has a passing control" 'grep -q "^PRINCIPLE 2 Enforced and kept true: green" <<<"$(rl rows)"'
+check "a principle is RED when no rule under it has a passing control (none can be shown to fail)" 'grep -q "^PRINCIPLE 2 Enforced and kept true: RED" <<<"$(rl other)"'
+mkdir -p "$d/pm/docs/wiki"; cd "$d/pm"; printf '# P\n\n## 1. A\n\n| [AB-1 x](One) |\n\n## 2. B\n\n| Requirement |\n' > docs/wiki/Principles.md; printf '# One\n\n## Requirements\n\n- AB-1: **Reviewed 2026-11-19** a.\n- AB-2: **Reviewed 2026-11-19** b.\n' > docs/wiki/One.md
+pm=$(python3 -c "import sys;sys.path.insert(0,'$S');import rules;print('\n'.join(r['detail'] for r in rules.principle_map('.')));print('\n'.join(rules.principle_review('.')))"); cd "$d"
+check "principle-map fails a Reviewed requirement under no principle and a principle with none, and review lists each principle's requirements, tests and weak spots" 'grep -q "AB-2 is Reviewed under no principle" <<<"$pm" && grep -q "principle 2 has no Reviewed requirement" <<<"$pm" && grep -q "principle 1: AB-1 (0 tests) WEAK" <<<"$pm" && grep -q "principle 2: NONE" <<<"$pm"'
+rd="$d/rd"; mkdir -p "$rd"; cp -R "$here/README.md" "$here/docs" "$here/skills" "$here/.loop" "$here/CLAUDE.md" "$here/AGENTS.md" "$rd/" 2>/dev/null; (cd "$rd" && python3 - <<'PY' && git init -q -b main && git add -A >/dev/null 2>&1 && git -c user.email=a@b -c user.name=a commit -qm toy)
+t = open("README.md").read(); open("README.md", "w").write(t.replace("tests come from the requirements", "tests come from the requirements, quietly", 1))
+PY
+check "a README principle sentence that differs from the list by a word fails health's Docs group, naming the README line" '(cd "$rd" && python3 skills/workflow-health/scripts/health.py check --group docs 2>&1 | grep -q "FAIL.*README:[0-9]*: Principles: DOC-23 its sentence")'
 mkdir -p "$d/g13"; sed 's/^GROUPS = (/GROUPS = (("extra", "Extra", "x", ()),/' "$S/report.py" > "$d/g13/report.py"
 check "report.py refuses a thirteenth group" 'python3 -c "import sys;sys.path.insert(0,\"$d/g13\");import report" 2>&1 | grep -q "AssertionError: exactly 12 groups"'
 fi
