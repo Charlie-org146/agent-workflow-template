@@ -124,8 +124,6 @@ def registry(root):
 
 
 def owed(root, books, name):
-    """DOC-16: every routine in .loop/routines.tsv (`routine<TAB>page`) and each own routine of the config's `automation`
-    list (custom) has its '### routine' runbook on its page; `books` maps a page to its Runbook lines. No file, no registry."""
     out = []
     try:
         rows = registry(root)
@@ -151,7 +149,6 @@ POINTER = "In %s, fast-forward to origin/main, then read %s's Runbook section %s
 
 
 def custom(root):
-    """(routine, page, runs) per non-built-in `automation` entry of .loop/config.json ("page" owns its Runbook)."""
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
             items = json.load(handle).get("automation")
@@ -177,7 +174,6 @@ def custom_owed(root, books, name, seen):
 
 
 def prompts(root, repo, wiki_dir="docs/wiki"):
-    """(routine, line) per routine, routines.tsv first then the config's own: the one-line prompt a scheduler holds."""
     pairs = []
     try:
         pairs = [tuple((row + [""])[:2]) for _, row in registry(root)]
@@ -188,7 +184,6 @@ def prompts(root, repo, wiki_dir="docs/wiki"):
 
 
 def unserved(books, seen, name):
-    """DOC-16: each routine's Serves field (continuation lines too) names requirement ids, each on some page."""
     out = []
     for page, lines in books.items():
         fields, cur = [], None
@@ -262,7 +257,6 @@ def owner_rows(path):
 
 
 def owner_words(args, git):
-    """The record's text, or exit with nothing changed: no such record, an uncovered ID or page, or a used record."""
     common = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop")
     found = [row for row in owner_rows(os.path.join(common, "owner-words.tsv")) if len(row) == 5 and row[0] == args.owner_record]
     if not found:
@@ -287,8 +281,6 @@ LINK = re.compile(r"^PRD:\s*(\S+)\s*$")
 
 
 def link_of(text, listed=""):
-    """Where a link-form page's PRD lives, else None: the docs.tsv source (`url:<link>` or `mcp:<server>:<resource>`; `page`
-    or empty means on the page) or the page's own 'PRD: <source>' line before its first section (a bare link is a url)."""
     import prd
     if listed and listed != "page":
         return listed
@@ -315,8 +307,6 @@ def topics_of(root):
 
 
 def regroup(text, topics):
-    """Home's features table with a leading Topic column, rows grouped by topic (setting order, then Other) and by name;
-    text unchanged when there is no such table or no topics."""
     lines = text.split("\n")
     start = next((i for i, x in enumerate(lines) if x.startswith("| Feature") or x.startswith("| Topic")), None)
     if not topics or start is None:
@@ -337,7 +327,6 @@ PARTS = ("What it's for", "How to reach or run it", "URLs and deployments", "Aut
 
 
 def mapped(root, rows, folder):
-    """rows plus each How-to-use-<Feature> page, mapped to its feature's paths (it has no docs.tsv row, #4542)."""
     out = dict(rows)
     for page, paths in rows.items():
         if page != "Home" and page not in pf.GENERATED and os.path.isfile(os.path.join(root, folder, HOWTO + page + ".md")):
