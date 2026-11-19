@@ -102,6 +102,38 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
         deps = GOOD.replace("[>] first-goal ~40m left pc", text).replace("[>] first-goal\n", "first-goal\n")
         wrong = reply_hook.shown(reply(deps.replace(text, text.replace("[>] ", "") if drop == "marker" else text)), root)
         check(any("first-goal" in w for w in wrong), "negative control: a goal with no %s is flagged by name" % drop)
+    # OPS-1: the operation layer files its own findings (mailbox.py finding), and the check-in lists them
+    import argparse
+    import mailbox
+    calls, opened = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}]
+    def fake(args, cwd):
+        calls.append(args)
+        out = json.dumps(opened) if args[:2] == ["issue", "list"] else "https://github.com/o/r/issues/6001\n"
+        return subprocess.CompletedProcess(args, 0, out, "")
+    mailbox.gh = fake
+    subprocess.run = (lambda real: lambda a, *k, **kw: subprocess.CompletedProcess(a, 0, "", "") if "milestone.py" in " ".join(map(str, a)) else real(a, *k, **kw))(subprocess.run)
+    with open(os.path.join(root, ".loop", "docs.tsv"), "w") as f:
+        f.write("Operation\tskills/workflow-monitoring\n")
+    make = lambda title, **kw: mailbox.file_finding(root, argparse.Namespace(**dict(dict(title=title, feature="operation", found="TOP-DECISION 88", text="", owner_words="", dry_run=False), **kw)))
+    code, line = make("Slot hand-out order was guessed")
+    creates = [c for c in calls if c[:2] == ["issue", "create"]]
+    check(code == 0 and len(creates) == 1 and "Backlog: Operation" in creates[0] and "backlog,ops-finding" in creates[0] and "TOP-DECISION 88" in creates[0][-1],
+          "a finding is filed on the feature's Backlog milestone with its decision linked (%s)" % line)
+    check(make("Unmapped thing", feature="nothing")[1].count("Backlog: Other") == 1 and calls[-1][1] == "create", "a finding with no matching feature goes to Backlog: Other")
+    del calls[:]
+    for title, why in (("merge slot  WAIT is not logged!", "the same normalised title"), ("Slot wait for #5170 never logged", "the same IDs and most of the words")):
+        code, line = make(title)
+        check(code == 1 and "repeats open issue #516" in line and not any(c[:2] == ["issue", "create"] for c in calls), "negative control: %s is refused as a duplicate" % why)
+    code, line = make("Delete the old worktrees by hand")
+    check(code == 2 and "safety class destructive" in line and not any(c[:2] == ["issue", "create"] for c in calls), "negative control: a safety-class finding with no owner's words is refused (%s)" % line)
+    with open(os.path.join(root, ".git", "loop", "owner-words.tsv"), "w") as f:
+        f.write('o9\t2026-11-19T00:00:00Z\ttop\t"file it"\tOPS-1\no10\t2026-11-19T00:00:00Z\ttop\t"file it"\tOperation\n')
+    check(make("Delete the old worktrees by hand", owner_words="o9")[0] == 2, "negative control: owner's words that list other IDs do not cover the finding")
+    check(make("Delete the old worktrees by hand", owner_words="o10")[0] == 0, "a safety-class finding is filed with the owner's words that list its page")
+    check(make("A title", found="")[0] == 2, "negative control: a finding naming no decision or record is refused")
+    shown = "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="0000"))
+    check("Findings filed (operation layer):" in shown and "#6001 on Backlog: Operation: Slot hand-out order was guessed" in shown, "the check-in lists the findings filed since the last check-in")
+    check("Findings filed" not in "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="9999")), "the check-in lists none filed before its stamp")
     os.chdir(here)
 
 sys.exit(1 if failed else 0)
