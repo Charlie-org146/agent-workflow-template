@@ -110,5 +110,51 @@ with tempfile.TemporaryDirectory() as tmp:
     machine = subprocess.run([sys.executable, hook, "check", reply], capture_output=True, text=True, env=dict(os.environ, LOOP_OP_ROLE="machine"), cwd=tmp)
     check(machine.returncode == 0, "the hook's check in machine mode accepts the one-line check-in")
 
+# DEL-1 red-team pass: input, record and due read and record only; they never edit a repo file, merge, file or send.
+import builtins  # noqa: E402
+import hashlib  # noqa: E402
+
+REPLY = "A: the Mac's STATUS is trusted but was never re-read\nI: a free PC slot could start a known-red goal\nnoise\nR: the 3.0 GB floor stalls every lane at once\n"
+with tempfile.TemporaryDirectory() as tmp:
+    common = os.path.join(tmp, ".git")
+    for name, item in (("mac", mac), ("pc", pc)):
+        layers.write(os.path.join(common, "loop", "status", name + ".json"), item)
+    open(os.path.join(tmp, "README.md"), "w").write("repo file")
+    redteam = os.path.join(common, "loop", "redteam")
+
+    def snapshot():
+        return {os.path.join(d, f): hashlib.sha1(open(os.path.join(d, f), "rb").read()).hexdigest()
+                for d, _, files in os.walk(tmp) for f in files if not d.startswith(redteam)}
+
+    before, writes, calls = snapshot(), [], []
+    real_open, real_run = builtins.open, subprocess.run
+    builtins.open = lambda f, mode="r", *a, **k: (writes.append(os.path.abspath(str(f))) if any(c in mode for c in "wax+") else None, real_open(f, mode, *a, **k))[1]
+    subprocess.run = lambda cmd, *a, **k: (calls.append(cmd), real_run(cmd, *a, **k))[1]
+    try:
+        text = layers.reviewer_input(common, now)
+        routes = layers.record(common, REPLY, now)
+    finally:
+        builtins.open, subprocess.run = real_open, real_run
+    check("STATUS mac" in text and "STATUS pc" in text and "mac/a build running" in text and "exactly one `R:" in text, "red-team input holds the board and each machine's latest STATUS, and asks for the three lists")
+    saved = layers.read(os.path.join(redteam, os.listdir(redteam)[0]))
+    check(saved["time"] == layers.iso(now) and saved["assumptions"] == ["the Mac's STATUS is trusted but was never re-read"] and len(saved["idle"]) == 1 and saved["risk"].startswith("the 3.0 GB floor"), "red-team record stores the three lists with a timestamp")
+    check(routes == ["ROUTE ops-findings: A: the Mac's STATUS is trusted but was never re-read", "ROUTE TOP-DECISION (proposed): I: a free PC slot could start a known-red goal",
+                     "ROUTE TOP-DECISION (proposed): R: the 3.0 GB floor stalls every lane at once"], "each item is routed: assumptions to ops-findings, idle work and the risk to top as a proposed TOP-DECISION")
+    words = [w for c in calls for w in (c if isinstance(c, (list, tuple)) else str(c).split())]
+    check(writes and all(w.startswith(redteam) for w in writes) and snapshot() == before, "the red-team pass writes only under the git folder's loop/redteam and changes no repo file")
+    check(not {"merge", "push", "gh", "send", "commit", "add"} & set(map(str, words)), "the red-team pass runs no merge, push, gh, send or commit")
+    try:
+        layers.record(common, "R: one\nR: two\n", now + 1)
+        refused = False
+    except SystemExit as stop:
+        refused = "exactly one biggest risk" in str(stop)
+    check(refused and len(os.listdir(redteam)) == 1, "negative control: two R: lines are refused and nothing is recorded")
+    check(layers.due(common, now + 59 * 60).startswith("RED-TEAM ok") and layers.due(common, now + 61 * 60).startswith("RED-TEAM DUE"), "a pass is due once the last is over an hour old, not before")
+    eta = now + 30 * 60
+    check(layers.due(common, now + 25 * 60, eta).startswith("RED-TEAM DUE: the release ETA") and layers.due(common, now + 10 * 60, eta).startswith("RED-TEAM ok"), "a pass is due within an hour of a release ETA unless one ran in the last 20 minutes")
+    check("RED-TEAM DUE" in layers.publish_board(common, {}, now + 61 * 60) and "RED-TEAM" not in layers.publish_board(common, {}, now + 60), "the top board carries the due line only when a pass is due")
+with tempfile.TemporaryDirectory() as tmp:
+    check(layers.due(os.path.join(tmp, ".git"), now) == "RED-TEAM DUE: no pass recorded", "with no pass recorded a pass is due")
+
 print("ALL PASS" if not fails else "%d FAILED" % fails)
 sys.exit(1 if fails else 0)

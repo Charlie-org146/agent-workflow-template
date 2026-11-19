@@ -20,6 +20,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Each step maps to a skill I choose.
   - It won't start until the flow is set up.
   - Review is the only gate a person has to pass.
+  - A red-team pass runs every hour and before a release ETA: a fresh-context reviewer reads the board and each machine's latest STATUS and lists unverified assumptions, work idle capacity could start now, and the single biggest risk to the release time. Each item is routed to operation-top as a proposed TOP-DECISION or filed through ops-findings; the reviewer never edits, merges or decides (`layers.py redteam`).
 - DEL-2: **Unreviewed** Done lines are frozen
   - Done lines can't change once the goal starts; a change means a new goal.
 - DEL-3: **Unreviewed** It only stops for me when it must
