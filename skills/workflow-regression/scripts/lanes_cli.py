@@ -175,7 +175,7 @@ permissions:
   checks: read
 concurrency:
   group: regression-pr-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'pr: record') }}
+  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'pr:') }}
 jobs:
   affected:
     runs-on: ubuntu-latest

@@ -97,6 +97,9 @@ elif mode == "adopter":  # a repo without dev/recordonly.py: the step must not f
     done = subprocess.run(["bash", "-e", "-c", script], cwd=top, env=dict(os.environ, GITHUB_OUTPUT=out), capture_output=True, text=True)
     check("without dev/recordonly.py the step exits 0", done.returncode == 0)
     check("and it reports skip=false, so the rows run", open(out).read().strip() == "skip=false")
+    import re
+    bad = [x for x in text.split(chr(10)) if re.match(r"^\s*[\w-]+: \$\{\{", x) and ": " in x.split("}}")[0].split(": ", 1)[1]]
+    check("no workflow value is an unquoted expression holding a colon and space (invalid YAML)", not bad)
     check("and the rows step runs unless skip is true", "- if: steps.rec.outputs.skip != 'true'" in text and "continue-on-error" not in text)
 else:
     sys.exit("usage: test-record-ci.py skip|full|adopter")
