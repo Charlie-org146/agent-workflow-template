@@ -295,6 +295,10 @@ def eta_line(fields):
 
 
 def pr_open(g, state, base, info, body):
+    import private
+    stop = private.refusal(private.scan(g.root(), base), base)
+    if stop:
+        g.no(stop[0])
     for wait in (2, 5, 0):
         pushed = g.run(["git", "push", "-u", "origin", state["branch"]])
         if not pushed.returncode:

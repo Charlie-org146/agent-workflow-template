@@ -27,7 +27,6 @@ os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 def worker():
-    """True for a worker or a goal worktree."""
     common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
     inside = os.path.join(os.path.normcase(os.path.realpath(common)), "loop", "worktrees") + os.sep
     return os.environ.get("LOOP_ROLE") == "worker" or os.path.normcase(os.path.realpath(os.getcwd())).startswith(inside)
@@ -46,7 +45,6 @@ def held(cfg, state, head):
 
 
 def wait(state):
-    """Mark the goal as waiting on review (exit 5)."""
     state["review_wait"] = True
     release.save(state, "merge waiting on review (REVIEW_HOLD)")
     return 5
@@ -94,7 +92,6 @@ def proven(top):
 
 
 def tsv(*path):
-    """Tab-file rows, padded; [] if missing."""
     try:
         return [l.rstrip("\n").split("\t") + [""] * 5 for l in open(os.path.join(*path)) if l[0] != "#"]
     except OSError:
@@ -257,7 +254,6 @@ def frozen(top, head, slug):
 
 
 def email(top, subject, text):
-    """"" when mailed, else why not."""
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts"))
     try:
         notify = importlib.import_module("notify")  # another skill's script: no static import
@@ -266,7 +262,7 @@ def email(top, subject, text):
         mode, host, port, wait, api = mail.settings(top)
         done = mail.deliver(mode, mail.secrets(mode, False), subject, text, "<pre>%s</pre>" % text.replace("<", "&lt;"), (host, port, wait, api)) if mode != "off" else ("off",) * 2
         return "" if done[0] == "ok" else "%s: %s" % done[:2]
-    except Exception as err:  # noqa: BLE001 - a mail failure never undoes a promotion
+    except Exception as err:  # noqa: BLE001
         return str(getattr(err, "text", err))[:200]
 
 
@@ -280,6 +276,12 @@ def state_report(top, ver, tag, sha, facts):
                    + ["- #%d %s" % (i["number"], i["title"]) for i in closed] + ["## Changes since " + (prior or "the start")] + log) + NL
 
 
+def check(top, base, text):
+    stop = importlib.import_module("autorelease").private_check(top, base, {"notes": text})
+    if stop:
+        sys.exit("REFUSED (%s): %s" % (stop[2], stop[0]))
+
+
 def promote(top, cfg, ver, rec, ref, run=""):
     tag, rel, base = "v%d.0.0" % ver, "release/v%d" % ver, cfg.get("base", "main")
     if tag not in re.split(r"[,\s]+", " ".join(r[4] for r in table(top, "owner-words.tsv") if r[0] == rec)) or OK(["refs/tags/" + tag], top):
@@ -291,12 +293,13 @@ def promote(top, cfg, ver, rec, ref, run=""):
     sha = release.git("rev-parse", ref + "^{commit}", cwd=top)
     text, path = state_report(top, ver, tag, sha, facts), os.path.join(common_of(top), "gate", tag + ".md")
     open(path, "w").write(text)
+    check(top, "origin/" + base, text)
     release.git("tag", "-a", tag, sha, "-m", "Release " + tag, cwd=top)
     release.git("branch", rel, sha, cwd=top)
     for push in (["origin", "%s:refs/heads/%s" % (sha, base)], ["origin", tag, rel]):
         done = release.run(["git", "push"] + push, cwd=top)
         if done.returncode:
-            for undo in ([["tag", "-d", tag], ["branch", "-D", rel]] if push[1] != tag else []):  # nothing remote changed yet
+            for undo in ([["tag", "-d", tag], ["branch", "-D", rel]] if push[1] != tag else []):
                 release.run(["git"] + undo, cwd=top)
             sys.exit("REFUSED (PROMOTE_PUSH): git push failed: " + done.stderr.strip()[-200:])
     made = release.run(["gh", "release", "create", tag, "--title", tag, "--notes-file", path, "--verify-tag"], cwd=top)
@@ -309,12 +312,12 @@ def promote(top, cfg, ver, rec, ref, run=""):
 
 
 def revert(top, cfg, ver):
-    """REL-7: a pull request putting main's tree back on release/vX."""
     rel, base = "release/v%d" % ver, cfg.get("base", "main")
     release.run(["git", "fetch", "-q", "origin", rel, base], cwd=top)
     snap = next((n for n in ("origin/" + rel, rel) if OK([n], top)), "")
     if not snap:
         sys.exit("REFUSED: no snapshot branch " + rel)
+    check(top, "origin/" + base, "Revert to v%d" % ver)
     name, body = "revert/v%d-%s" % (ver, time.strftime("%Y%m%d%H%M%S", time.gmtime())), os.path.join(common_of(top), "gate", "revert.md")
     release.git("push", "origin", "%s:refs/heads/%s" % (release.git("commit-tree", snap + "^{tree}", "-p", "origin/" + base, "-m",
                                                                      "Revert to v%d" % ver, cwd=top), name), cwd=top)
