@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept ops-findings-v20@452c8b36 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
@@ -18,7 +18,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 - CHK-1: **Unreviewed** Live board
   - Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies.
   - Merged work and history are left out, and a stuck worker stays at the top until I answer.
-  - Top's 5-minute board order is: Issues and needs-owner first, then Running goals, Queued goals, dependency arrows, per-machine STATUS with a call-out for any STATUS over 30 minutes old, then one finish time. Only top publishes it; a machine session prints one line and sends STATUS.
+  - Only operation-top publishes the 5-minute Loop Board; its layout (Your move, Release goals with progress, Critical path with clock ETAs and no tags, Workers) is owned by the skillset board skill. A machine session prints one line and sends STATUS.
 - CHK-2: **Unreviewed** A check-in on a cadence, in one layout
   - The operation session checks in on a set cadence, 30 minutes by default, and at once when a worker reports something new.
   - Every full check-in has the same layout: headline, machine line, all sessions, dependencies, needs you, coming up.
@@ -62,6 +62,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Live board <br> Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies. <br> Merged work and history are left out, and a stuck worker stays at the top until I answer. <br> Only operation-top publishes the 5-minute Loop Board; its layout (Your move, Release goals with progress, Critical path with clock ETAs and no tags, Workers) is owned by the skillset board skill. A machine session prints one line and sends STATUS. | TOP-DECISION 65 and 66: the Loop Board layout is owned by the skillset board skill; the report and dashboard order is unchanged. owner, typed in operation-top at about 23:28, relayed verbatim: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3." | o144: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3. (owner, typed in" |
 | r2 | 2026-11-18 | Live board <br> Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies. <br> Merged work and history are left out, and a stuck worker stays at the top until I answer. <br> Top's 5-minute board order is: Issues and needs-owner first, then Running goals, Queued goals, dependency arrows, per-machine STATUS with a call-out for any STATUS over 30 minutes old, then one finish time. Only top publishes it; a machine session prints one line and sends STATUS. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto CHK-1 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Live board <br> Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies. <br> Merged work and history are left out, and a stuck worker stays at the top until I answer. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
@@ -202,7 +203,8 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [mon5-pr-merged-closes](Tests#t-mon5-pr-merged-closes) | requirement | CHK-2 | Given a done run whose pull request merged on GitHub before the last check-in, when the check-in prints, then the goal is gone from the graph and the check. | not run |
 | [mon5-merged-pr-retires](Tests#t-mon5-merged-pr-retires) | requirement | CHK-2 | Given a running record whose pull request merged, when it is retired with --pr, then it closes for good; with no merged pull request it is still refused. | not run |
 | [machine-guide-monitoring](Tests#t-machine-guide-monitoring) | requirement | CHK-2 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held-line conventions, and the check-in routine file is only a pointer to it. | not run |
-| [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-2 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes; and given an All sessions row whose for cell is only a slug or issue number, then it flags that row. | PASS 2026-11-16 |
+| [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-2 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
+| [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | CHK-2 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
 | [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-2 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, DEL-17). | not run |
 | [notify-new-events](Tests#t-notify-new-events) | requirement | CHK-2 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |
 | [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | CHK-2 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
