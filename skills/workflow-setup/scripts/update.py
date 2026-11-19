@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Show what a newer template version brings, then update the skills and this repo's generated files.
+"""Show what a newer template brings, then update the skills and this repo's generated files.
 
 usage: update.py [--check | --apply | --propose [--file-issue]] [--take FILE ...] [--from PACKAGE] [--tag vX]
-                 [--template OWNER/NAME] [--skills DIR] [--repo DIR]
+        [--template OWNER/NAME] [--skills DIR] [--repo DIR]
 """
 import argparse
 import contextlib
@@ -50,7 +50,7 @@ CAP = 20 * 1024 * 1024
 
 
 def version_key(text):
-    """The first three integers of a version; empty or unreadable is older than any version."""
+    """First three integers of a version; empty is older than any."""
     return tuple(int(x) for x in re.findall(r"\d+", str(text or ""))[:3])
 
 
@@ -63,7 +63,7 @@ def strings(value, skip=()):
 
 
 def local_values():
-    """The owner's local strings that look like a path or an address (/, ~ or @."""
+    """Local strings that look like a path or an address."""
     import settings
     found = set(strings([settings.load(settings.private_path()), settings.load(settings.health_path())], ("_help",)))
     try:
@@ -97,7 +97,7 @@ def guard_staged(repo, paths):
 
 
 def stop(proc, sig):
-    """Send sig to proc's process group; a group that already ended is fine."""
+    """Send sig to proc's process group."""
     try:
         os.killpg(proc.pid, sig)  # posix-only branch
     except ProcessLookupError:
@@ -105,7 +105,7 @@ def stop(proc, sig):
 
 
 def commit(repo, message, files):
-    """(exit code, output) of git commit for exactly these files, in its own process group."""
+    """(exit code, output) of git commit of exactly these files."""
     proc = subprocess.Popen(["git", "-C", repo, "commit", "--allow-empty", "-m", message, "--"] + files, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, start_new_session=True)
     try:
@@ -113,12 +113,12 @@ def commit(repo, message, files):
     except BaseException:
         if os.name == "nt":
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
-        else:  # posix-only branch: TERM first, so git removes its index.lock before it exits (a KILL leaves it behind)
-            stop(proc, signal.SIGTERM)  # posix-only branch
+        else:  # posix-only branch: TERM first so git removes index.lock
+            stop(proc, signal.SIGTERM)
             try:
                 proc.wait(timeout=10)
             except subprocess.TimeoutExpired:
-                stop(proc, signal.SIGKILL)  # posix-only branch
+                stop(proc, signal.SIGKILL)
         proc.wait()
         raise
     return proc.returncode, out
@@ -158,7 +158,7 @@ def safe(name):
 
 
 def from_tree(names, get):
-    """A manifest built from a source tree (skills/, VERSION, CHANGELOG.md), keyed as dev/package.py keys a package."""
+    """A manifest from a source tree."""
     firsts = {n.split("/")[0] for n in names}
     top = "" if "skills" in firsts or len(firsts) != 1 else firsts.pop() + "/"
     files, data = {}, {}
@@ -177,7 +177,7 @@ def from_tree(names, get):
 
 
 def load(source):
-    """(manifest, reader) from a built ZIP or folder (PACKAGE.json) or a source tree or archive (VERSION + skills/)."""
+    """(manifest, reader) from a package ZIP or folder, or a source tree."""
     if os.path.isdir(source):
         names = [os.path.relpath(os.path.join(d, f), source).replace(os.sep, "/") for d, _, fs in os.walk(source) for f in fs]
         get = lambda rel: open(os.path.join(source, rel), "rb").read()
@@ -210,7 +210,7 @@ def stamp(skills):
 
 
 def checkout(skills):
-    """The checkout's VERSION when the skills folder is a source checkout."""
+    """The checkout's VERSION for a source checkout."""
     linked = os.path.islink(skills) or any(os.path.islink(os.path.join(skills, n)) for n in os.listdir(skills) if n.startswith("workflow-"))
     above = os.path.join(os.path.realpath(skills), os.pardir, "VERSION")
     if linked or (not os.path.exists(os.path.join(skills, STAMP)) and os.path.exists(above)):
@@ -233,7 +233,7 @@ def template(skills, repo_cfg, chosen):
 
 
 def fetch(name, where, tag, into):
-    """Download the template release's source archive with gh; return its path."""
+    """Download the release archive with gh; return its path."""
     if not name:
         refuse("no template repo is known", "UPDATE_NO_TEMPLATE", "set template_repo in .loop/config.json, or run update --from <ZIP|DIR>")
     gh = lambda *a: subprocess.run(["gh", *a], capture_output=True, text=True, timeout=60)
@@ -263,7 +263,7 @@ def newer(text, installed):
 
 
 def local_fixes(skills, old):
-    """Skill files whose bytes differ from what the stamp says was installed."""
+    """Skill files changed since the stamp."""
     out = []
     for rel, digest in sorted((old.get("files") or {}).items()):
         path = os.path.join(skills, rel)
@@ -273,7 +273,7 @@ def local_fixes(skills, old):
 
 
 def check(skills, manifest, old, fixes, ours):
-    """Print the preview; return (changed, dropped)."""
+    """Preview; return (changed, dropped)."""
     files = manifest["files"]
     changed = sorted(r for r, h in files.items() if (old.get("files") or {}).get(r) != h or not os.path.isfile(os.path.join(skills, r)))
     dropped = sorted(r for r in (old.get("files") or {}) if r not in files and r not in fixes)
@@ -404,7 +404,7 @@ def main():
         up = not changed and not dropped and not behind and not args.take and (tree or manifest["version"] == ours)
         print("UP TO DATE" if up else "PREVIEW: nothing written. Ask for workflow-setup update to apply")
         return 0 if up else 1
-    wrote = not tree and bool(changed or dropped or args.take or manifest["version"] != ours)  # a version bump moves the stamp
+    wrote = not tree and bool(changed or dropped or args.take or manifest["version"] != ours)
     if wrote:
         with locked(skills):
             apply_skills(skills, manifest, read, old, fixes, args.take, where)

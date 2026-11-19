@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `wc -c skills/workflow-setup/scripts/agents.py skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/update.py`.
+   Expect: each of the three files is under 19,000 bytes.
+2. Run `bash dev/toy/test-portable.sh | tail -2`.
+   Expect: `PASS: no script under skills calls os.getuid, os.killpg or os.kill(pid, 0) outside proctree` and `ALL PASS`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wire the same workflow skills into each agent's entry file, so Claude Code and Codex run the same loop the same way.
+"""Wire the same workflow skills into each agent's entry file, so every agent runs the same loop.
 
 usage: agents.py wire [--repo DIR] [--dry-run]
 """
@@ -20,7 +20,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 
 def targets(repo):
-    """The agent files to wire, from the repo's agent_files setting."""
+    """The agent_files setting."""
     try:
         with open(os.path.join(repo, ".loop", "config.json")) as handle:
             value = json.load(handle).get("agent_files", ["CLAUDE.md", "AGENTS.md"])
@@ -37,12 +37,12 @@ def block():
 
 
 def inside(root, full):
-    """True for a file in the repo's tree, outside its .git folder."""
+    """True for a file in the repo tree, outside .git."""
     return full.startswith(root + os.sep) and ".git" not in os.path.relpath(full, root).split(os.sep)
 
 
 def wired(raw, text):
-    """raw with its block replaced by text, or text appended; line endings and a BOM kept."""
+    """raw with its block replaced by text, or text appended (line endings, BOM kept)."""
     bom, body = (BOM, raw[1:]) if raw.startswith(BOM) else ("", raw)
     newline = "\r\n" if "\r\n" in body else "\n"
     new = text.rstrip("\n").replace("\n", newline)
@@ -89,7 +89,7 @@ def wire(repo, dry=False):
 
 
 def entry(repo, *argv):
-    """Run the sibling entry.py; (returncode, stdout). Missing workflow-docs is (None, "")."""
+    """Run entry.py: (returncode, stdout); (None, "") without workflow-docs."""
     if not os.path.isfile(ENTRY):
         return None, ""
     done = subprocess.run([sys.executable, ENTRY] + list(argv) + ["--repo", repo], capture_output=True, text=True)
@@ -97,7 +97,7 @@ def entry(repo, *argv):
 
 
 def installed_version():
-    """The installed package's version from workflow-package.json beside the skills; empty for a checkout."""
+    """The installed version from workflow-package.json; empty for a checkout."""
     try:
         with open(os.path.join(os.path.dirname(os.path.dirname(HERE)), "workflow-package.json")) as handle:
             return str(json.load(handle).get("version") or "")
@@ -106,7 +106,7 @@ def installed_version():
 
 
 def plan(repo):
-    """Setup's acts for the entry point and the agent files: (verb, path, note, "agents") for each that would change."""
+    """Acts (verb, path, note, "agents") for the entry point and agent files that would change."""
     code, out = entry(repo, "check")
     if code is None:
         print("SKIPPED entry point: workflow-docs not installed beside workflow-setup (UPDATE_NO_ENTRY)")
@@ -122,13 +122,13 @@ def plan(repo):
 
 
 def dirty(repo):
-    """The agent files with uncommitted changes: setup won't sweep a person's edits into its commit."""
+    """Agent files with uncommitted changes (setup never commits a person's edits)."""
     done = subprocess.run(["git", "-C", repo, "status", "--porcelain", "--"] + targets(repo), capture_output=True, text=True)
     return [line[3:] for line in done.stdout.splitlines() if line.strip()]
 
 
 def apply(repo):
-    """Write the entry point and wire the agent files; say each refusal; return the paths to stage (inside the repo)."""
+    """Write the entry point, wire the agent files, say each refusal; return the paths to stage."""
     code = entry(repo, "write")[0]
     if code not in (0, None):
         print("WARN: entry.py write failed (exit %s); .loop/START.md may be stale. Fix: run docs.py audit" % code, file=sys.stderr)
@@ -158,7 +158,7 @@ BUILT = (("health", "Checks the repo, files findings.", "health_cron"), ("regres
 
 
 def fill_automation(held, repo):
-    """held's automation list plus the three built-in routines on the repo's one Mac task."""
+    """held's automation list plus the three built-in routines."""
     out, path = held.get("automation"), sibling("workflow-health", "workflows.py")
     if not isinstance(out, list) or not path:
         return out
@@ -274,12 +274,12 @@ FIXES = {"own-sections": "add the marker and the contract sections by hand (docs
 
 
 def stored(config, old):
-    """The config as written: every key but checks, which stays only where the config already held it (PR 83)."""
+    """The config as written: every key but checks, kept only where it was held (PR 83)."""
     return {k: v for k, v in config.items() if k != "checks" or "checks" in (old or {})}
 
 
 def kinds_of(acts):
-    """{kind: subjects} of what did not fit: one findings line per kind, four kinds in all."""
+    """{kind: subjects} of what did not fit: one findings line per kind."""
     got = {}
     for verb, path, note, _ in acts:
         kind = {"GUARD": "tsv-guard", "GAP": "ignored"}.get(verb)
@@ -291,7 +291,7 @@ def kinds_of(acts):
 
 
 def update_findings(text, kinds):
-    """The findings text with this tool's [adoption] lines set to kinds."""
+    """The findings text with its [adoption] lines set to kinds."""
     line = lambda k: "- [adoption] %s: %s. Fix: %s" % (k, ", ".join(sorted(set(kinds[k]))), FIXES[k])
     out, seen = [], set()
     for row in text.split("\n"):
@@ -308,13 +308,13 @@ def update_findings(text, kinds):
 
 
 def ignore_lines(blocked):
-    """Exception lines for what the repo's own ignore file blocks."""
+    """Exception lines for what the repo's ignore file blocks."""
     own = [(p, l) for p, l, src in blocked if os.path.basename(src) == ".gitignore" and not os.path.isabs(src) and not src.startswith(".git/")]
     return list(dict.fromkeys("!%s/*.tsv" % os.path.dirname(p) if l.endswith(".tsv") and "/" in p else l for p, l in own))
 
 
 def ignore_with(text, lines):
-    """The ignore file's text with the missing exception lines appended under one comment (line endings kept)."""
+    """The ignore text with the missing exception lines appended under one comment."""
     nl, have = "\r\n" if "\r\n" in text else "\n", text.splitlines()
     note = "# workflow-setup: keep the loop files tracked"
     add = [l for l in lines if l not in have]
@@ -322,7 +322,7 @@ def ignore_with(text, lines):
 
 
 def docs_format():
-    """workflow-docs' pageformat module (Home's table header and the heading names come from it), or None."""
+    """workflow-docs' pageformat module, or None."""
     path = sibling("workflow-docs", "pageformat.py")
     if not path:
         return None
@@ -333,7 +333,7 @@ def docs_format():
 
 
 def home_page(repo, names, pf):
-    """Home in the docs format (DOC-4): marker, title, Features and one table, a row for each feature page."""
+    """Home in the docs format (DOC-4): a row for each feature page."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin", check=False))
     link = "[How to use %%s](https://github.com/%s/wiki/How-to-use-%%s)" % (found.group(1) if found else "OWNER/REPO")
     rows = [["[%s](%s)" % (n, n), PLACEHOLDER, link % (n.replace("-", " "), n), "-"] for n in names]
@@ -341,7 +341,7 @@ def home_page(repo, names, pf):
 
 
 def readme_with(text, names, pf, repo=""):
-    """The README with a link to each page's How-to-use page (DOC-5) added under '## How to use' for each page that lacks one."""
+    """The README with a How-to-use link (DOC-5) added under '## How to use' for each page lacking one."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin", check=False)) if repo else None
     block = "\n".join("- [How to use %s](https://github.com/%s/wiki/How-to-use-%s)" % (n.replace("-", " "), found.group(1) if found else "OWNER/REPO", n)
                       for n in names if "How-to-use-%s)" % n not in text)
