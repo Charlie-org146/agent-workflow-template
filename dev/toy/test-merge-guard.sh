@@ -3,6 +3,7 @@
 # reads: skills/workflow-release/scripts/release.py skills/workflow-release/scripts/wiki.py
 # reads: skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/lanes.py
 # reads: skills/workflow-regression/scripts/narrow.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/lanes_cli.py dev/toy/fakegh/gh
+# reads: skills/workflow-monitoring/scripts/machines.py dev/toy/test-merge-batch.sh
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # REG-4 (Amendment A1c, V2, E-8): before merging, merge.py refuses when the pull request head moved since the pr lane
@@ -130,4 +131,6 @@ printf '#!/bin/bash\n# reads: src/a.txt\ncd "$here" && cat src/a.txt\n' > dev/tc
 printf 'tc\tland\tbash dev/tc.sh\n' >> .loop/regression.tsv; touch VERSION; git add -A; git commit -qm "root runner"
 out=$(python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected VERSION; python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected src/b.txt)
 check "a change only to NO_EFFECT files (a release's VERSION) reaches no root runner; a real change still does" 'grep -qx "AFFECTED 0 of 3 rows ()" <<<"$out" && grep -q "^AFFECTED 2 of 3 rows (tb, tc)" <<<"$out"'
+# merge batching (merge-queue C): its own toy, folded in here so it adds no regression row
+out=$(bash "$here/dev/toy/test-merge-batch.sh" 2>&1 | tail -4); check "merge.py --batch: off by default, one release per batch, a red, conflicting, safety, major or stale-GO case never merges (dev/toy/test-merge-batch.sh)" 'grep -qx "ALL PASS" <<<"$out"'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
