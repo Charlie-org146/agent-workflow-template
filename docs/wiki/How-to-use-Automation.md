@@ -41,7 +41,6 @@ Each requirement and how it is delivered:
 
 - AUT-1: Routines run where they can run fully. Example, from the ci-summary test: given the nightly run, when it ends, then it writes a results table to the job summary.
 - AUT-9: Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. Also: `setup.py desk` lists every desk-only setup step once and `desk check` ends with DESK OK when none is left. Also: `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
-  - A round finishes within 45 minutes (the 30-minute regression budget of Regression REG-7 plus 15 for health and the digest, health starting when regression has finished, not at a fixed offset), and each report shows the round's wall time and its pass and fail counts, plus its Actions minutes when it ran in GitHub Actions, so I can slow the schedule if it costs too much.
 
 ### Command: automation.py
 - **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]` or `local status`

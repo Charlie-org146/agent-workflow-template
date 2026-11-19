@@ -17,24 +17,24 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-4: **Unreviewed** Each session writes only what its role allows
+- GRD-4: **Reviewed 2026-11-19** Each session writes only what its role allows <!-- reviewed 5443f514 -->
   - A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands. Only the operation session can do the rest. [GRD-4]
   - A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo. [OPS-7]
-- GRD-5: **Unreviewed** Nothing is written outside without explicit say
+- GRD-5: **Reviewed 2026-11-19** Nothing is written outside without explicit say <!-- reviewed 391b2a85 -->
   - Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit --live switch; a token in the environment does not turn writing on. [GRD-5]
   - An integration reads by default. It writes outside only behind an explicit switch and, for shared text, an accepted delta. I attach each connector myself with the narrowest access, and its secrets live outside the repo. [INT-4]
-- GRD-6: **Unreviewed** Base branch and hooks cannot be bypassed
+- GRD-6: **Reviewed 2026-11-19** Base branch and hooks cannot be bypassed <!-- reviewed 38016892 -->
   - The base branch refuses direct and force pushes, and a pull request merges only when the repo's required checks pass. [GRD-6]
   - I set those rules on the platform; setup never edits them, and health reads that they are set. [GRD-6]
   - A commit or push that skips the repo's hooks is refused by the loop's own commands and flagged by health. [GRD-16]
-- GRD-7: **Unreviewed** CI minutes are spent only where needed
+- GRD-7: **Reviewed 2026-11-19** CI minutes are spent only where needed <!-- reviewed 579d9629 -->
   - A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code. [GRD-7]
   - Runs or minutes per day past a set limit raise one alarm, and each round shows the Actions minutes it used. [GRD-17]
-- GRD-8: **Unreviewed** Token and time use is real and watched
+- GRD-8: **Reviewed 2026-11-19** Token and time use is real and watched <!-- reviewed 793633ab -->
   - Each step's tokens are read from its session record when the step is recorded. [GRD-15]
   - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget. [GRD-15]
   - A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. [GRD-8]
-- GRD-20: **Unreviewed** The package always fits Agensi's rules
+- GRD-20: **Reviewed 2026-11-19** The package always fits Agensi's rules <!-- reviewed c3325c66 -->
   - No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20]
   - One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21]
   - A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22]

@@ -15,7 +15,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
 
 ### Functional
 
-- REL-3: **Unreviewed** A major ships only through the gate
+- REL-3: **Reviewed 2026-11-19** A major ships only through the gate <!-- reviewed fd47b15f -->
   - A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1]
   - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2]
   - The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3]
@@ -26,7 +26,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8]
   - revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7]
   - (v2.0 planned) release-readiness: a release-readiness check runs before the gate (named only).
-- REL-12: **Unreviewed** Merges wait only on gates I set
+- REL-12: **Reviewed 2026-11-19** Merges wait only on gates I set <!-- reviewed 73d3745e -->
   - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12]
   - No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10]
 - REL-13: **Unreviewed** Fast merge queue
