@@ -117,4 +117,4 @@ Each requirement and how it is delivered:
 
 <!-- kept doc4-doc18-conflict@06ce732b -->
 
-<!-- kept readme-principles-table4@7f065919 -->
+<!-- kept readme-principles-table4@d6215838 -->
