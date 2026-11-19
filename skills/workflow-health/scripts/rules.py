@@ -15,7 +15,6 @@ import report as _report
 from defects import LINE, behind, pages, row, setting, table, wiki
 
 
-# No prompt may block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -364,22 +363,23 @@ def pmap(root):
     return {n: re.findall(r"^\| \[([A-Z]+-\d+) ", b, re.M) for n, b in re.findall(r"^## (\d)\. .*\n((?:(?!## ).*\n?)*)", text, re.M)}
 
 
-def reviewed(root):
-    return {k for t in pages(root).values() for k in re.findall(r"^- ([A-Z]+-\d+): \*\*Reviewed", t, re.M)}
+def reviewed(root, mark="Reviewed"):
+    return {k for t in pages(root).values() for k in re.findall(r"^- ([A-Z]+-\d+): \*\*" + mark, t, re.M)}
 
 
 def principle_map(root):
     plan, done = pmap(root), reviewed(root)
     under = {i for ids in plan.values() for i in ids}
-    return ([row("FAIL", "requirements", i, "principle-map", "%s is Reviewed under no principle" % i, "add it to a principle table") for i in sorted(done - under)] * bool(plan)
-            + [row("FAIL", "requirements", "principle " + n, "principle-map", "principle %s has no Reviewed requirement" % n, "name one") for n, ids in sorted(plan.items()) if not done & set(ids)])
+    return ([row("FAIL", "requirements", i, "principle-map", "%s is Reviewed under no principle" % i, "add it to Principles.md") for i in sorted(done - under)] * bool(plan)
+            + [row("FAIL", "requirements", i, "principle-map", "Principles.md lists %s, no live requirement (stale)" % i, "regenerate it") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
+            + [row("FAIL", "requirements", "principle " + n, "principle-map", "principle %s has no Reviewed requirement" % n, "add one") for n, ids in sorted(plan.items()) if not done & set(ids)])
 
 
 def principle_review(root):
     plan, done, hit = pmap(root), reviewed(root), {}
     for item in table(root):
         hit[item["goal"].strip()] = hit.get(item["goal"].strip(), 0) + 1
-    return ["PRINCIPLES: Reviewed requirements, their tests, and weak spots, per principle"] + ["principle %s: %s" % (n, ", ".join(
+    return ["PRINCIPLES: Reviewed requirements, tests and weak spots per principle"] + ["principle %s: %s" % (n, ", ".join(
         "%s (%d tests)%s" % (i, hit.get(i, 0), "" if hit.get(i) else " WEAK") for i in ids if i in done) or "NONE") for n, ids in sorted(plan.items())]
 
 
