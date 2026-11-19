@@ -160,7 +160,8 @@ touch "$FAKE_AGENT/hold-late"
 $W go "Add late" --done "late" --touches late.py --slug late >/dev/null
 python3 -c "import os;print(os.spawnlp(os.P_NOWAIT,'sh','sh','-c','exec python3 -c \"import os,time;os.setsid();time.sleep(60)\"'))" > "$T/mpid"; sleep 0.3
 kill -9 -- "-$(field late pid)" 2>/dev/null; mender=$(cat "$T/mpid")
-sets late "pid=$mender" 'mended=true' 'status="running"'
+pst=$(python3 -c "import json,sys;sys.path.insert(0, '$here/skills/workflow-monitoring/scripts');import proctree;print(json.dumps(proctree.pstart($mender)))")  # a mender is stopped only when its pid and start time match the record
+sets late "pid=$mender" "pstart=$pst" 'mended=true' 'status="running"'
 echo loop/late >> "$FAKE_AGENT/merged"
 python3 "$here/skills/workflow-monitoring/scripts/mend.py" > "$T/m2"
 check "a mender running after its goal lands is stopped" 'sleep 0.3; ! kill -0 "$mender" 2>/dev/null && [ "$(field late status)" = done ]'
