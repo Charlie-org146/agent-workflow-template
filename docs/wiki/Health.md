@@ -211,7 +211,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 |---|---|---|---|---|
 | [same-lines](Tests#t-same-lines) | requirement | HLT-2 | Given an unchanged repo, when health runs twice, then both runs print the same lines. | PASS 2026-11-19 |
 | [size-fail](Tests#t-size-fail) | requirement | HLT-2 | Given a script over 20 KB, when health runs, then it is a FAIL with a fix. | PASS 2026-11-19 |
-| [stale-page-row](Tests#t-stale-page-row) | requirement | HLT-2 | Given a stale wiki page, when health runs, then it shows as a docs row naming the page. | PASS 2026-11-12 |
+| [stale-page-row](Tests#t-stale-page-row) | requirement | HLT-2 | Given a stale wiki page, when health runs, then it shows as a docs row naming the page. | PASS 2026-11-19 |
 | [no-row-fail](Tests#t-no-row-fail) | requirement | HLT-2 | Given a criterion with no test row, when health runs, then it is a FAIL. | PASS 2026-11-19 |
 | [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-2 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-19 |
 | [check-writes-nothing](Tests#t-check-writes-nothing) | requirement | HLT-2 | Given a repo, when the health check runs, then it writes no file and makes no commit. | PASS 2026-11-19 |
@@ -238,7 +238,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [health-not-enforced-warn](Tests#t-health-not-enforced-warn) | requirement | HLT-2 | Given a Reviewed requirement with no test, when health runs within 7 days of its Reviewed date, then it warns as not enforced. | PASS 2026-11-10 |
 | [health-not-enforced-fail](Tests#t-health-not-enforced-fail) | requirement | HLT-2 | Given a Reviewed requirement with no test for 8 days, when health runs, then it fails. | PASS 2026-11-10 |
 | [grd9-controls](Tests#t-grd9-controls) | requirement | HLT-2 | Given every health rule, when the controls run on broken copies, then each rule fires. | SKIPPED 2026-11-14 |
-| [grd1-guardrail-list](Tests#t-grd1-guardrail-list) | requirement | HLT-2 | Given the How-to-use-Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check. | not run |
+| [grd1-guardrail-list](Tests#t-grd1-guardrail-list) | requirement | HLT-2 | Given the How-to-use-Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check. | PASS 2026-11-19 |
 | [repo-rules-run](Tests#t-repo-rules-run) | requirement | HLT-2 | Given a rule in .loop/health-rules.json, when health checks, then it runs in the report in its group with its feature and its exit as PASS, WARN, FAIL or UNREAD. | not run |
 | [repo-rules-control](Tests#t-repo-rules-control) | requirement | HLT-2 | Given a repo rule with a break command, when the Controls group runs, then the rule whose break makes it fail passes its control and one whose break changes nothing is reported as unable to fire. | not run |
 | [repo-rules-refuse](Tests#t-repo-rules-refuse) | requirement | HLT-2 | Given a repo rule with no break command, when health runs, then it refuses with exit 2 naming the rule. | not run |
@@ -263,7 +263,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [known-no-block](Tests#t-known-no-block) | requirement | HLT-4 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-19 |
 | [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | HLT-4 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-19 |
 | [one-issue](Tests#t-one-issue) | requirement | HLT-4 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-19 |
-| [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |
+| [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-19 |
 | [fixed-closes](Tests#t-fixed-closes) | requirement | HLT-4 | Given a finding with an open issue, when the finding is fixed, then its issue is closed. | PASS 2026-11-19 |
 | [repeat-no-second](Tests#t-repeat-no-second) | requirement | HLT-4 | Given a finding with an open issue, when the finding repeats, then no second issue is opened. | PASS 2026-11-19 |
 | [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-19 |
