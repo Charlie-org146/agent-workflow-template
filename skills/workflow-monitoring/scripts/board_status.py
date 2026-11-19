@@ -22,12 +22,12 @@ import machines  # noqa: E402
 import board_page  # noqa: E402
 # board_log sets the no-prompt guard (GIT_TERMINAL_PROMPT and the rest) before any git or gh process starts.
 from board_log import (COMMON, FLOW, HOLD, STEPS, UNHOLD, active_minutes, after, current, flow_seconds, git, goal_file,  # noqa: E402,F401
-                       holding, named, read_json, size_of, stamp)
+  holding, named, read_json, size_of, stamp)
 from board_model import (CANDIDATES, CELLS, LABELS, MIN_BACKTEST, MODEL, SIMILAR, STALL, STALL_FLOOR,  # noqa: E402,F401
-                         STEP_UP, TILT, History, accuracy_text, backtest, base, blend_cell, cached, chosen, envelope,
-                         estimate, estimate_full, estimate_text, folds, holds, left_time, lifted_steps, model, overrun,
-                         pace_of, score, size_cell, span, spread, stall_lines, stalled, step_left, step_now, steps_cell,
-                         steps_for, table)
+  STEP_UP, TILT, History, accuracy_text, backtest, base, blend_cell, cached, chosen, envelope,
+  estimate, estimate_full, estimate_text, folds, holds, left_time, lifted_steps, model, overrun,
+  pace_of, score, size_cell, span, spread, stall_lines, stalled, step_left, step_now, steps_cell,
+  steps_for, table)
 
 ASKING = ("waiting", "failed", "stopped")
 
@@ -36,118 +36,118 @@ LINE = re.compile(r"^\W*\d{1,2}:\d{2}\b.*\b(STATUS sent|no change)\b", re.I)
 
 
 def mark_role(common, sid=""):
-    """Record that this operation session runs as a machine, for reply_hook.py's machine mode."""
-    sid = sid or os.environ.get("CLAUDE_SESSION_ID", "")
-    if re.match(r"^[A-Za-z0-9_-]{1,128}$", sid):
-        machines.write(os.path.join(common, "loop", "reply-hook", sid + ".role"), {"role": "machine"})
+  """Record that this operation session runs as a machine, for reply_hook.py's machine mode."""
+  sid = sid or os.environ.get("CLAUDE_SESSION_ID", "")
+  if re.match(r"^[A-Za-z0-9_-]{1,128}$", sid):
+    machines.write(os.path.join(common, "loop", "reply-hook", sid + ".role"), {"role": "machine"})
 
 
 def machine_reply(text, common, now=None):
-    """MON-5 machine mode: what a machine session's check-in is missing. It is one line, the time then 'STATUS sent' or
+  """MON-5 machine mode: what a machine session's check-in is missing. It is one line, the time then 'STATUS sent' or
     'no change', and it is only right once STATUS went to top within 30 minutes."""
-    lines = [l for l in str(text or "").splitlines() if l.strip()]
-    if len(lines) != 1 or not LINE.match(lines[0]):
-        return ["a machine check-in is one line: the time, then 'STATUS sent' or 'no change'"]
-    path = os.path.join(common, "loop", "status", machines.me() + ".json")
-    try:
-        sent = (now if now is not None else time.time()) - os.path.getmtime(path) <= machines.STALE_SECONDS + 300
-    except OSError:
-        sent = False
-    return [] if sent else ["STATUS has not gone to top in the last 30 minutes; run machines.py status first"]
+  lines = [l for l in str(text or "").splitlines() if l.strip()]
+  if len(lines) != 1 or not LINE.match(lines[0]):
+    return ["a machine check-in is one line: the time, then 'STATUS sent' or 'no change'"]
+  path = os.path.join(common, "loop", "status", machines.me() + ".json")
+  try:
+    sent = (now if now is not None else time.time()) - os.path.getmtime(path) <= machines.STALE_SECONDS + 300
+  except OSError:
+    sent = False
+  return [] if sent else ["STATUS has not gone to top in the last 30 minutes; run machines.py status first"]
 
 
 def timed(text, what="%r"):
-    """Exit unless text is a time, YYYY-MM-DDTHH:MM:SSZ or any front part of it (`what` words the refusal)."""
-    if not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", text):
-        sys.exit("REFUSED: %s is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % (what % text))
+  """Exit unless text is a time, YYYY-MM-DDTHH:MM:SSZ or any front part of it (`what` words the refusal)."""
+  if not re.match(r"^\d{4}(-\d\d(-\d\d(T\d\d(:\d\d(:\d\dZ?)?)?)?)?)?$", text):
+    sys.exit("REFUSED: %s is not a time. Fix: give it as YYYY-MM-DDTHH:MM:SSZ." % (what % text))
 
 
 def seconds_by_step(run, at):
-    """Time each step took, by the board's held-time rule (board_log.flow_seconds): time held in the pr queue, on a hold, on
+  """Time each step took, by the board's held-time rule (board_log.flow_seconds): time held in the pr queue, on a hold, on
     an owner answer or after a stop counts nothing, so a budget counts only active step time (#3878)."""
-    return flow_seconds(run, at)
+  return flow_seconds(run, at)
 
 
 def fresh_tokens(n):
-    """A step's fresh tokens: an int, or a measure's input + cache writes + output (proctree.py)."""
-    return sum(int(n.get(k) or 0) for k in ("input", "cache_write", "output", "reported")) if isinstance(n, dict) else n if isinstance(n, int) else 0
+  """A step's fresh tokens: an int, or a measure's input + cache writes + output (proctree.py)."""
+  return sum(int(n.get(k) or 0) for k in ("input", "cache_write", "output", "reported")) if isinstance(n, dict) else n if isinstance(n, int) else 0
 
 
 def tokens_by_step(run):
-    value = run.get("tokens")
-    return {step: fresh_tokens(n) for step, n in value.items() if step in STEPS and fresh_tokens(n)} if isinstance(value, dict) else {}
+  value = run.get("tokens")
+  return {step: fresh_tokens(n) for step, n in value.items() if step in STEPS and fresh_tokens(n)} if isinstance(value, dict) else {}
 
 
 def usual(runs, mine, step, pick):
-    values = [pick(run).get(step) for run in runs if run["slug"] != mine["slug"] and run.get("status") == "done"]
-    values = [v for v in values if v]
-    return statistics.median(values) if values else None
+  values = [pick(run).get(step) for run in runs if run["slug"] != mine["slug"] and run.get("status") == "done"]
+  values = [v for v in values if v]
+  return statistics.median(values) if values else None
 
 
 def board_items(live, queue, freezing, lines, runs, at, root, waits, held=None):
-    """The board's goal items: slug, mark, depends, stage, left, the estimate, and partial (a step with no estimate). held:
+  """The board's goal items: slug, mark, depends, stage, left, the estimate, and partial (a step with no estimate). held:
     the slugs the session pool says are held (None when unknown), whose step time stops growing."""
-    def item(run, mark, depends):
-        found = estimate_full(run, runs, at, root, held)
-        return dict(slug=run["slug"], mark=mark, depends=waits(depends), stage=0, est=found and found[:4], owner=graph.foreign(run),
-                    left=found[0] if found else None, partial=bool(found and found[4]))
-    out = [item(r, board_page.mark(r.get("status")), r.get("waits_on") or []) for r in live]
-    out += [item(dict(g, status="queued"), "queued", g["depends"]) for g in queue]
-    out += [item(dict(lines.get(f["slug"]) or {"slug": f["slug"]}, status="queued"), board_page.mark("running"),
-                 (lines.get(f["slug"]) or {}).get("depends") or []) for f in freezing]
-    return out
+  def item(run, mark, depends):
+    found = estimate_full(run, runs, at, root, held)
+    return dict(slug=run["slug"], mark=mark, depends=waits(depends), stage=0, est=found and found[:4], owner=graph.foreign(run),
+      left=found[0] if found else None, partial=bool(found and found[4]))
+  out = [item(r, board_page.mark(r.get("status")), r.get("waits_on") or []) for r in live]
+  out += [item(dict(g, status="queued"), "queued", g["depends"]) for g in queue]
+  out += [item(dict(lines.get(f["slug"]) or {"slug": f["slug"]}, status="queued"), board_page.mark("running"),
+      (lines.get(f["slug"]) or {}).get("depends") or []) for f in freezing]
+  return out
 
 
 def queued(root, runs):
-    """Queued goals, as queue.md lines parsed by graph.parse: the ones with no run record yet."""
-    by_slug = {run["slug"] for run in runs}
-    try:
-        with open(os.path.join(root, ".loop", "queue.md")) as handle:
-            return [item for item in map(graph.parse, handle.read().splitlines()) if item and item["slug"] not in by_slug]
-    except OSError:
-        return []
+  """Queued goals, as queue.md lines parsed by graph.parse: the ones with no run record yet."""
+  by_slug = {run["slug"] for run in runs}
+  try:
+    with open(os.path.join(root, ".loop", "queue.md")) as handle:
+      return [item for item in map(graph.parse, handle.read().splitlines()) if item and item["slug"] not in by_slug]
+  except OSError:
+    return []
 
 
 def github_state(url, cwd):
-    """MERGED, CLOSED or OPEN as gh says it; any doubt (no gh, no answer) is an empty string."""
-    try:
-        done = subprocess.run(["gh", "pr", "view", url, "--json", "state"], cwd=cwd, capture_output=True, text=True, timeout=20)
-        state = str(json.loads(done.stdout).get("state", "")).upper() if done.returncode == 0 else ""
-        return state if state in ("MERGED", "CLOSED", "OPEN") else ""
-    except (OSError, ValueError, AttributeError, subprocess.SubprocessError):
-        return ""
+  """MERGED, CLOSED or OPEN as gh says it; any doubt (no gh, no answer) is an empty string."""
+  try:
+    done = subprocess.run(["gh", "pr", "view", url, "--json", "state"], cwd=cwd, capture_output=True, text=True, timeout=20)
+    state = str(json.loads(done.stdout).get("state", "")).upper() if done.returncode == 0 else ""
+    return state if state in ("MERGED", "CLOSED", "OPEN") else ""
+  except (OSError, ValueError, AttributeError, subprocess.SubprocessError):
+    return ""
 
 
 def pr_states(runs, root):
-    """GitHub's state of each done run's pull request, asked once per run."""
-    return {run["slug"]: github_state(run["pr"], root) for run in runs if run.get("status") == "done" and run.get("pr") and not graph.merged(run)}
+  """GitHub's state of each done run's pull request, asked once per run."""
+  return {run["slug"]: github_state(run["pr"], root) for run in runs if run.get("status") == "done" and run.get("pr") and not graph.merged(run)}
 
 
 def error_open(run, gone, marker):
-    """An error stays under Issues unless its goal merged. A record-merged goal's error stays when it was logged after the merge
+  """An error stays under Issues unless its goal merged. A record-merged goal's error stays when it was logged after the merge
     (the wiki publishes after it); one merged only on GitHub never merged through here, so what it logged came before."""
-    log = [str(entry).split(" ", 2)[1:] or [""] for entry in run.get("log") or []]
-    last = lambda test: max([n for n, parts in enumerate(log) if test(parts)] + [-1])
-    if marker == "wiki not published" and last(lambda parts: " ".join(parts).startswith(("wiki published", "wiki unchanged"))) > last(lambda parts: " ".join(parts).startswith(marker)):
-        return False   # a later publish went through or found nothing to change
-    if run["slug"] not in gone:
-        return True
-    return graph.merged(run) and last(lambda parts: " ".join(parts).startswith(marker)) > last(lambda parts: parts[0] == "merged")
+  log = [str(entry).split(" ", 2)[1:] or [""] for entry in run.get("log") or []]
+  last = lambda test: max([n for n, parts in enumerate(log) if test(parts)] + [-1])
+  if marker == "wiki not published" and last(lambda parts: " ".join(parts).startswith(("wiki published", "wiki unchanged"))) > last(lambda parts: " ".join(parts).startswith(marker)):
+    return False   # a later publish went through or found nothing to change
+  if run["slug"] not in gone:
+    return True
+  return graph.merged(run) and last(lambda parts: " ".join(parts).startswith(marker)) > last(lambda parts: parts[0] == "merged")
 
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
 
 
 def wiki_check(root):
-    """The pages docs.py check reports now, as sorted [(kind, page)]; None when the check could not judge."""
-    try:
-        done = subprocess.run([sys.executable, DOCS, "check"], cwd=root, capture_output=True, text=True, timeout=60)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if done.returncode not in (0, 1) or "NO PAGES" in done.stdout:
-        return None
-    found = {m.groups() for m in re.finditer(r"^([A-Z]+) (\S+): ", done.stdout, re.M)} if done.returncode else set()
-    return sorted(item for item in found if item[0] != "LAG")  # a repo behind the installed skills shows as template_lag
+  """The pages docs.py check reports now, as sorted [(kind, page)]; None when the check could not judge."""
+  try:
+    done = subprocess.run([sys.executable, DOCS, "check"], cwd=root, capture_output=True, text=True, timeout=60)
+  except (OSError, subprocess.SubprocessError):
+    return None
+  if done.returncode not in (0, 1) or "NO PAGES" in done.stdout:
+    return None
+  found = {m.groups() for m in re.finditer(r"^([A-Z]+) (\S+): ", done.stdout, re.M)} if done.returncode else set()
+  return sorted(item for item in found if item[0] != "LAG")  # a repo behind the installed skills shows as template_lag
 
 
 # The machine this pod runs on (machine-status): the check-in's Machine line, and the memory floor that holds a goal back from starting.
@@ -155,202 +155,202 @@ GB, NAMES = 2 ** 30, ("ram", "commit", "cpu", "claude", "node")
 
 
 def memory():
-    """(free RAM, free commit) in GB, or (None, None). LOOP_MACHINE="ram,commit,cpu,claude,node" stands in for the machine (toys)."""
-    fake = os.environ.get("LOOP_MACHINE")
-    if fake:
-        got = [float(x) if x.strip() else None for x in (fake.split(",") + [""] * 5)[:5]]
-        return got[0], got[1]
-    try:
-        if os.name == "nt":
-            import ctypes
+  """(free RAM, free commit) in GB, or (None, None). LOOP_MACHINE="ram,commit,cpu,claude,node" stands in for the machine (toys)."""
+  fake = os.environ.get("LOOP_MACHINE")
+  if fake:
+    got = [float(x) if x.strip() else None for x in (fake.split(",") + [""] * 5)[:5]]
+    return got[0], got[1]
+  try:
+    if os.name == "nt":
+      import ctypes
 
-            class Status(ctypes.Structure):
-                _fields_ = [("size", ctypes.c_ulong), ("load", ctypes.c_ulong)] + [(n, ctypes.c_ulonglong) for n in ("tp", "ap", "tc", "ac", "tv", "av", "ae")]
-            one = Status(size=ctypes.sizeof(Status))
-            ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(one))
-            return one.ap / GB, one.ac / GB
-        if os.path.exists("/proc/meminfo"):
-            info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in open("/proc/meminfo") if ":" in l)}
-            return info["MemAvailable"] / 2 ** 20, (info["CommitLimit"] - info["Committed_AS"]) / 2 ** 20
-        pages = {k: int(v.strip(" .")) for k, v in (l.split(":", 1) for l in _run_text(["vm_stat"]).splitlines()[1:] if ":" in l)}
-        free = (pages["Pages free"] + pages["Pages inactive"] + pages.get("Pages purgeable", 0)) * 16384 / GB  # macOS has no commit limit: reclaimable RAM
-        return free, free
-    except Exception:
-        return None, None
+      class Status(ctypes.Structure):
+        _fields_ = [("size", ctypes.c_ulong), ("load", ctypes.c_ulong)] + [(n, ctypes.c_ulonglong) for n in ("tp", "ap", "tc", "ac", "tv", "av", "ae")]
+      one = Status(size=ctypes.sizeof(Status))
+      ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(one))
+      return one.ap / GB, one.ac / GB
+    if os.path.exists("/proc/meminfo"):
+      info = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in open("/proc/meminfo") if ":" in l)}
+      return info["MemAvailable"] / 2 ** 20, (info["CommitLimit"] - info["Committed_AS"]) / 2 ** 20
+    pages = {k: int(v.strip(" .")) for k, v in (l.split(":", 1) for l in _run_text(["vm_stat"]).splitlines()[1:] if ":" in l)}
+    free = (pages["Pages free"] + pages["Pages inactive"] + pages.get("Pages purgeable", 0)) * 16384 / GB  # macOS has no commit limit: reclaimable RAM
+    return free, free
+  except Exception:
+    return None, None
 
 
 def allowed(cfg=None):
-    """Goals memory lets start now: None when it can't be read or the floor is 0, 0 under min_free_memory_gb of free commit
+  """Goals memory lets start now: None when it can't be read or the floor is 0, 0 under min_free_memory_gb of free commit
     (default 3.5), else one plus one per 1.5 GB above the floor."""
-    cfg = cfg if cfg is not None else read_json(os.path.join(git("rev-parse", "--show-toplevel") or ".", ".loop", "config.json")) or {}
-    try:
-        floor, each = float(cfg.get("min_free_memory_gb", 3.5)), 1.5  # a goal's worker needs about 1.5 GB
-    except (TypeError, ValueError):
-        return None
-    commit = memory()[1]
-    return None if commit is None or floor <= 0 else 0 if commit < floor else 1 + int((commit - floor) / each)
+  cfg = cfg if cfg is not None else read_json(os.path.join(git("rev-parse", "--show-toplevel") or ".", ".loop", "config.json")) or {}
+  try:
+    floor, each = float(cfg.get("min_free_memory_gb", 3.5)), 1.5  # a goal's worker needs about 1.5 GB
+  except (TypeError, ValueError):
+    return None
+  commit = memory()[1]
+  return None if commit is None or floor <= 0 else 0 if commit < floor else 1 + int((commit - floor) / each)
 
 
 def _run_text(argv, timeout=30):
-    """A command's stdout as text. It is read as bytes and decoded with errors='replace': PowerShell and tasklist write the console
+  """A command's stdout as text. It is read as bytes and decoded with errors='replace': PowerShell and tasklist write the console
     code page (GBK on a zh-CN PC), which text=True would decode as UTF-8 and raise on (#4810)."""
-    return (subprocess.run(argv, capture_output=True, timeout=timeout).stdout or b"").decode("utf-8", errors="replace")
+  return (subprocess.run(argv, capture_output=True, timeout=timeout).stdout or b"").decode("utf-8", errors="replace")
 
 
 def slug_busy(slug):
-    """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read. LOOP_PROCS (one
+  """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read. LOOP_PROCS (one
     command line per line) stands in for the list in tests."""
-    try:
-        if os.environ.get("LOOP_PROCS") is not None:
-            text = os.environ["LOOP_PROCS"]
-        elif os.name == "nt":
-            text = _run_text(["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_Process | % { $_.CommandLine }"], 60)
-        else:
-            text = _run_text(["ps", "-A", "-o", "args="], 30)
-    except Exception:
-        return True
-    return any(slug in l and re.search(r"goal\.py|flow\.py|role\.py|lane|regression\.py", l) for l in text.splitlines())
+  try:
+    if os.environ.get("LOOP_PROCS") is not None:
+      text = os.environ["LOOP_PROCS"]
+    elif os.name == "nt":
+      text = _run_text(["powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_Process | % { $_.CommandLine }"], 60)
+    else:
+      text = _run_text(["ps", "-A", "-o", "args="], 30)
+  except Exception:
+    return True
+  return any(slug in l and re.search(r"goal\.py|flow\.py|role\.py|lane|regression\.py", l) for l in text.splitlines())
 
 
 def stalled_line(run, state, at, cfg, worker):
-    """The Needs-you line for a live goal whose log has not moved for silent_minutes while nothing runs for it (#4359), else ''."""
-    quiet = graph.silent_for(run, at)
-    if state in ("silent", "held", "running") and quiet is not None and quiet >= graph.silent_limit(cfg) and not slug_busy(run["slug"]):
-        return "STALLED %s: no process since %s; restart %s" % (run["slug"], graph.last_spoke(run).astimezone().strftime("%H:%M"), worker)
-    return ""
+  """The Needs-you line for a live goal whose log has not moved for silent_minutes while nothing runs for it (#4359), else ''."""
+  quiet = graph.silent_for(run, at)
+  if state in ("silent", "held", "running") and quiet is not None and quiet >= graph.silent_limit(cfg) and not slug_busy(run["slug"]):
+    return "STALLED %s: no process since %s; restart %s" % (run["slug"], graph.last_spoke(run).astimezone().strftime("%H:%M"), worker)
+  return ""
 
 
 def machine_line(cfg):
-    """Machine: free RAM and commit memory, CPU, the claude and node processes, and the goal slots memory allows."""
-    ram, commit = memory()
-    cpu, count = None, {"claude": None, "node": None}
-    fake = os.environ.get("LOOP_MACHINE")
-    if fake:
-        got = [float(x) if x.strip() else None for x in (fake.split(",") + [""] * 5)[:5]]
-        cpu, count = got[2], {"claude": got[3], "node": got[4]}
-    else:
-        try:
-            if os.name == "nt":
-                seen = _run_text(["tasklist", "/fo", "csv", "/nh"], 20).lower().splitlines()
-                names = [l.split('","')[0].strip('"').replace(".exe", "") for l in seen]
-                import ctypes
-                import time
-                tick = [ctypes.c_ulonglong() for _ in range(3)]
-                snap = lambda: (ctypes.windll.kernel32.GetSystemTimes(*map(ctypes.byref, tick)), [x.value for x in tick])[1]
-                one = snap()
-                time.sleep(0.2)
-                two = snap()
-                busy = (two[1] - one[1]) + (two[2] - one[2])  # kernel time includes idle
-                cpu = 100 * (1 - (two[0] - one[0]) / busy) if busy else None
-            else:
-                names = [os.path.basename(l.strip()) for l in _run_text(["ps", "-A", "-o", "comm="], 20).splitlines()]
-                cpu = os.getloadavg()[0] / (os.cpu_count() or 1) * 100
-            count = {k: sum(n == k for n in names) for k in count}
-        except Exception:
-            pass
-    show = lambda v, unit="": "unreadable" if v is None else "%.1f%s" % (v, unit)
-    room = allowed(cfg)
-    return "Machine: RAM %s, commit %s free, CPU %s, %s claude, %s node; memory allows %s" % (
-        show(ram, " GB"), show(commit, " GB"), "unreadable" if cpu is None else "%d%%" % cpu,
-        "?" if count["claude"] is None else int(count["claude"]), "?" if count["node"] is None else int(count["node"]),
-        "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3.5) if room == 0
-        else "%d goal start%s" % (room, "" if room == 1 else "s"))
+  """Machine: free RAM and commit memory, CPU, the claude and node processes, and the goal slots memory allows."""
+  ram, commit = memory()
+  cpu, count = None, {"claude": None, "node": None}
+  fake = os.environ.get("LOOP_MACHINE")
+  if fake:
+    got = [float(x) if x.strip() else None for x in (fake.split(",") + [""] * 5)[:5]]
+    cpu, count = got[2], {"claude": got[3], "node": got[4]}
+  else:
+    try:
+      if os.name == "nt":
+        seen = _run_text(["tasklist", "/fo", "csv", "/nh"], 20).lower().splitlines()
+        names = [l.split('","')[0].strip('"').replace(".exe", "") for l in seen]
+        import ctypes
+        import time
+        tick = [ctypes.c_ulonglong() for _ in range(3)]
+        snap = lambda: (ctypes.windll.kernel32.GetSystemTimes(*map(ctypes.byref, tick)), [x.value for x in tick])[1]
+        one = snap()
+        time.sleep(0.2)
+        two = snap()
+        busy = (two[1] - one[1]) + (two[2] - one[2])  # kernel time includes idle
+        cpu = 100 * (1 - (two[0] - one[0]) / busy) if busy else None
+      else:
+        names = [os.path.basename(l.strip()) for l in _run_text(["ps", "-A", "-o", "comm="], 20).splitlines()]
+        cpu = os.getloadavg()[0] / (os.cpu_count() or 1) * 100
+      count = {k: sum(n == k for n in names) for k in count}
+    except Exception:
+      pass
+  show = lambda v, unit="": "unreadable" if v is None else "%.1f%s" % (v, unit)
+  room = allowed(cfg)
+  return "Machine: RAM %s, commit %s free, CPU %s, %s claude, %s node; memory allows %s" % (
+    show(ram, " GB"), show(commit, " GB"), "unreadable" if cpu is None else "%d%%" % cpu,
+    "?" if count["claude"] is None else int(count["claude"]), "?" if count["node"] is None else int(count["node"]),
+    "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3.5) if room == 0
+    else "%d goal start%s" % (room, "" if room == 1 else "s"))
 
 
 def release_of(root, slug):
-    """The release a goal is planned for: its '## Batch: NAME' heading in .loop/queue.md (v1-0-1 reads v1.0.1), else 'no release'."""
-    name = ""
-    try:
-        for line in open(os.path.join(root, ".loop", "queue.md"), encoding="utf-8"):
-            head = re.match(r"^## Batch: (\S+)\s*$", line)
-            name = head.group(1) if head else name
-            if name and re.search(r"slug: %s\b" % re.escape(slug), line):
-                return re.sub(r"^(v?\d+)-(\d+)(?:-(\d+))?$", lambda m: ".".join(g for g in m.groups() if g), name)
-    except OSError:
-        pass
-    return "no release"
+  """The release a goal is planned for: its '## Batch: NAME' heading in .loop/queue.md (v1-0-1 reads v1.0.1), else 'no release'."""
+  name = ""
+  try:
+    for line in open(os.path.join(root, ".loop", "queue.md"), encoding="utf-8"):
+      head = re.match(r"^## Batch: (\S+)\s*$", line)
+      name = head.group(1) if head else name
+      if name and re.search(r"slug: %s\b" % re.escape(slug), line):
+        return re.sub(r"^(v?\d+)-(\d+)(?:-(\d+))?$", lambda m: ".".join(g for g in m.groups() if g), name)
+  except OSError:
+    pass
+  return "no release"
 
 
 def feature_of(root, text, item=None):
-    """The feature page a goal is for (mend.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
-    import mend
-    return mend.feature_of(root, text, item)
+  """The feature page a goal is for (mend.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
+  import mend
+  return mend.feature_of(root, text, item)
 
 
 def goal_line(item):
-    """One goal: its status marker, expected time left and the machine that runs it."""
-    import board_lines  # noqa: E402  (board_lines imports this module)
-    left = item.get("left")
-    return "[%s] %s ~%s left %s" % (board_lines.MARKS.get(item.get("mark"), " "), item["slug"],
-                                    board_page.span(left) if left else "?", item.get("machine") or graph.machine_name())
+  """One goal: its status marker, expected time left and the machine that runs it."""
+  import board_lines  # noqa: E402  (board_lines imports this module)
+  left = item.get("left")
+  return "[%s] %s ~%s left %s" % (board_lines.MARKS.get(item.get("mark"), " "), item["slug"],
+    board_page.span(left) if left else "?", item.get("machine") or graph.machine_name())
 
 
 def intro(goal, slug):
-    """The All sessions 'for' cell (MON-5): the goal's first clause in at most 12 words, then (slug, #issue)."""
-    first = re.split(r"[.;:,]", re.sub(r"\s*\([^)]*\)", "", str(goal or "")))[0]
-    issue = re.findall(r"#\d+", str(goal or ""))[:1]
-    return "%s (%s)" % (" ".join(first.split()[:12])[:56].rstrip() or slug, ", ".join([slug] + issue))
+  """The All sessions 'for' cell (MON-5): the goal's first clause in at most 12 words, then (slug, #issue)."""
+  first = re.split(r"[.;:,]", re.sub(r"\s*\([^)]*\)", "", str(goal or "")))[0]
+  issue = re.findall(r"#\d+", str(goal or ""))[:1]
+  return "%s (%s)" % (" ".join(first.split()[:12])[:56].rstrip() or slug, ", ".join([slug] + issue))
 
 
 def release_header(release, items, at):
-    """The release milestone's header (MON-14): its release ETA, the latest expected finish among its goals, and counts. A started goal's
+  """The release milestone's header (MON-14): its release ETA, the latest expected finish among its goals, and counts. A started goal's
     hard ETA (GRD-14) counts in place of its estimate; the header says how many goals each way, and nothing when none has a hard ETA."""
-    import datetime
-    hard = [i["hard"] for i in items if i.get("hard") is not None and i.get("mark") not in ("merged", "awaiting merge")]
-    left = hard + [i["left"] for i in items if i.get("left") and (i.get("hard") is None or i.get("mark") in ("merged", "awaiting merge"))]
-    new = sum(i.get("mark") == "queued" for i in items)
-    if not left or not at:
-        return "%s release ETA unknown (%d not started)" % (release, new)
-    end = (at + datetime.timedelta(seconds=max(left))).astimezone()
-    days = (end.date() - at.astimezone().date()).days
-    day = "today" if days <= 0 else "tomorrow" if days == 1 else end.strftime("%a %d %b")
-    how = "; hard ETA for %d, estimate for %d" % (len(hard), len(left) - len(hard)) if hard else ""
-    return "%s release ETA %s ~%s (%d goals, %d not started%s)" % (release, day, end.strftime("%H:%M"), len(items), new, how)
+  import datetime
+  hard = [i["hard"] for i in items if i.get("hard") is not None and i.get("mark") not in ("merged", "awaiting merge")]
+  left = hard + [i["left"] for i in items if i.get("left") and (i.get("hard") is None or i.get("mark") in ("merged", "awaiting merge"))]
+  new = sum(i.get("mark") == "queued" for i in items)
+  if not left or not at:
+    return "%s release ETA unknown (%d not started)" % (release, new)
+  end = (at + datetime.timedelta(seconds=max(left))).astimezone()
+  days = (end.date() - at.astimezone().date()).days
+  day = "today" if days <= 0 else "tomorrow" if days == 1 else end.strftime("%a %d %b")
+  how = "; hard ETA for %d, estimate for %d" % (len(hard), len(left) - len(hard)) if hard else ""
+  return "%s release ETA %s ~%s (%d goals, %d not started%s)" % (release, day, end.strftime("%H:%M"), len(items), new, how)
 
 
 def check_view(text, cwd):
-    """MON-5, MON-14: the check-in has a Machine line, and every Dependencies goal a status marker, a time and a machine."""
-    lines = str(text or "").splitlines()
-    first = next((i for i, l in enumerate(lines) if re.sub(r"[^a-z ]", "", l.lower()).strip() == "all sessions"), len(lines))
-    found = [] if any(l.strip().startswith("Machine:") for l in lines[:first]) else ["no Machine line before All sessions (MON-5)"]
-    try:
-        import checkin
-        section = checkin.body(text)
-        flat_ = " ".join((section or "").split())
-        bare_ = [slug for _, slug in checkin.expected(cwd or None)]
-    except Exception:
-        return found
-    if section is None:
-        return found
-    flat_blocks, name = {}, ""
-    for row in section.splitlines():
-        name = row.strip() if re.match(r"^\s*==\s*\S.*\S\s*==\s*$", row) else name
-        flat_blocks.setdefault(name, []).append(row)
-    loose = [n for n, rows in flat_blocks.items() if n and any(re.search(r"\[.\] ", r) for r in rows)
-             and not (any(re.match(r"^\s*-- .+ --\s*$", r) for r in rows) and any(re.match(r"^\s+\S.*:\s*$", r) for r in rows))]
-    bare_rows = [r for rows in flat_blocks.values() for r in rows]
-    heads = [r for r in bare_rows if re.match(r"^\s*-- ", r)]
-    found += ["a release header has no release ETA (MON-14)"] * (len(heads) > sum("release ETA" in r for r in heads))
-    head = next((r for r in lines if r.lstrip().startswith("| session")), "")
-    col = [c.strip() for c in head.strip().strip("|").split("|")].index("for") if " for " in head else -1
-    thin = [r for r in lines if col >= 0 and r.lstrip().startswith("| ") and not r.lstrip().startswith(("| session", "|---"))
-            and len(r.strip().strip("|").split("|")) > col and not re.search(r"[A-Za-z]{2,}\s+[A-Za-z]{2,}", re.sub(r"\([^)]*\)", "", r.strip().strip("|").split("|")[col]))]
-    found += ["All sessions row %s has no plain-language sentence in its for cell (MON-5)" % ", ".join(r.split("|")[1].strip() for r in thin)] * bool(thin)
-    found += ["repo block %s has goals not grouped under a release and a feature (MON-14)" % ", ".join(loose)] * bool(loose)
-    gaps = [s for s in bare_ if re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(s), flat_)
-            and not re.search(r"\[.\] %s ~\S+ left (pc|mac)" % re.escape(s), flat_)]
-    return found + ["Dependencies goal %s has no status marker, time or machine (MON-14)" % ", ".join(gaps)] * bool(gaps)
+  """MON-5, MON-14: the check-in has a Machine line, and every Dependencies goal a status marker, a time and a machine."""
+  lines = str(text or "").splitlines()
+  first = next((i for i, l in enumerate(lines) if re.sub(r"[^a-z ]", "", l.lower()).strip() == "all sessions"), len(lines))
+  found = [] if any(l.strip().startswith("Machine:") for l in lines[:first]) else ["no Machine line before All sessions (MON-5)"]
+  try:
+    import checkin
+    section = checkin.body(text)
+    flat_ = " ".join((section or "").split())
+    bare_ = [slug for _, slug in checkin.expected(cwd or None)]
+  except Exception:
+    return found
+  if section is None:
+    return found
+  flat_blocks, name = {}, ""
+  for row in section.splitlines():
+    name = row.strip() if re.match(r"^\s*==\s*\S.*\S\s*==\s*$", row) else name
+    flat_blocks.setdefault(name, []).append(row)
+  loose = [n for n, rows in flat_blocks.items() if n and any(re.search(r"\[.\] ", r) for r in rows)
+    and not (any(re.match(r"^\s*-- .+ --\s*$", r) for r in rows) and any(re.match(r"^\s+\S.*:\s*$", r) for r in rows))]
+  bare_rows = [r for rows in flat_blocks.values() for r in rows]
+  heads = [r for r in bare_rows if re.match(r"^\s*-- ", r)]
+  found += ["a release header has no release ETA (MON-14)"] * (len(heads) > sum("release ETA" in r for r in heads))
+  head = next((r for r in lines if r.lstrip().startswith("| session")), "")
+  col = [c.strip() for c in head.strip().strip("|").split("|")].index("for") if " for " in head else -1
+  thin = [r for r in lines if col >= 0 and r.lstrip().startswith("| ") and not r.lstrip().startswith(("| session", "|---"))
+    and len(r.strip().strip("|").split("|")) > col and not re.search(r"[A-Za-z]{2,}\s+[A-Za-z]{2,}", re.sub(r"\([^)]*\)", "", r.strip().strip("|").split("|")[col]))]
+  found += ["All sessions row %s has no plain-language sentence in its for cell (MON-5)" % ", ".join(r.split("|")[1].strip() for r in thin)] * bool(thin)
+  found += ["repo block %s has goals not grouped under a release and a feature (MON-14)" % ", ".join(loose)] * bool(loose)
+  gaps = [s for s in bare_ if re.search(r"(?<![\w-])%s(?![\w-])" % re.escape(s), flat_)
+    and not re.search(r"\[.\] %s ~\S+ left (pc|mac)" % re.escape(s), flat_)]
+  return found + ["Dependencies goal %s has no status marker, time or machine (MON-14)" % ", ".join(gaps)] * bool(gaps)
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--html", action="store_true")
-    args = parser.parse_args()
-    import live_board  # noqa: E402  (live_board imports this module)
-    lines = live_board.render()
-    sys.stdout.write(live_board.fragment(lines) if args.html else "\n".join(lines) + "\n")
-    return 0
+  parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+  parser.add_argument("--html", action="store_true")
+  args = parser.parse_args()
+  import live_board  # noqa: E402  (live_board imports this module)
+  lines = live_board.render()
+  sys.stdout.write(live_board.fragment(lines) if args.html else "\n".join(lines) + "\n")
+  return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+  sys.exit(main())

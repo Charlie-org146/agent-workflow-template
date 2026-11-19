@@ -15,7 +15,7 @@ import defects as T
 # No terminal, no waiting: a prompt from git or the judge must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
-    os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 OVERLAP = 0.6
 NEGATIONS = {"not", "never", "no", "nothing", "without", "cannot", "isnt", "doesnt", "wont"}
@@ -24,54 +24,54 @@ ORDER = {"FAIL": 0, "UNREAD": 1, "WARN": 2}
 
 
 def words(text):
-    return re.findall(r"[a-z]+", text.lower().replace("'", ""))
+  return re.findall(r"[a-z]+", text.lower().replace("'", ""))
 
 
 def pages(root):
-    found, path = [], os.path.join(root, ".loop", "docs.tsv")
-    try:
-        with open(path) as handle:
-            for line in handle:
-                name = line.split("\t")[0].strip()
-                if name and not line.startswith("#") and name != "Home":
-                    found.append(name)
-    except OSError:
-        pass
-    return sorted(found)
+  found, path = [], os.path.join(root, ".loop", "docs.tsv")
+  try:
+    with open(path) as handle:
+      for line in handle:
+        name = line.split("\t")[0].strip()
+        if name and not line.startswith("#") and name != "Home":
+          found.append(name)
+  except OSError:
+    pass
+  return sorted(found)
 
 
 def criteria(root, page):
-    try:
-        with open(os.path.join(root, "docs", "wiki", page + ".md")) as handle:
-            text = handle.read()
-    except OSError:
-        return []
-    found = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", text), maxsplit=1)
-    body = found[1].split("\n## ", 1)[0] if len(found) > 1 else ""
-    return [(m.group(1), m.group(2)) for m in re.finditer(r"^- ([A-Z]+-\d+[a-z]?): (.*)$", body, re.M)]
+  try:
+    with open(os.path.join(root, "docs", "wiki", page + ".md")) as handle:
+      text = handle.read()
+  except OSError:
+    return []
+  found = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", text), maxsplit=1)
+  body = found[1].split("\n## ", 1)[0] if len(found) > 1 else ""
+  return [(m.group(1), m.group(2)) for m in re.finditer(r"^- ([A-Z]+-\d+[a-z]?): (.*)$", body, re.M)]
 
 
 def suggestions(root, rows):
-    lines, items = [], []
-    for page in pages(root):
-        found = criteria(root, page)
-        if not found:
-            lines.append("missing: feature %s has no requirement -> add a Requirements section with at least one line" % page)
-        items += found
-    pairs = []
-    for i, (a_id, a_text) in enumerate(items):
-        for b_id, b_text in items[i + 1:]:
-            a, b = set(words(a_text)) - STOP, set(words(b_text)) - STOP
-            na, nb = bool(a & NEGATIONS), bool(b & NEGATIONS)
-            a, b = a - NEGATIONS, b - NEGATIONS
-            if a and b and len(a & b) / min(len(a), len(b)) >= OVERLAP:
-                pairs.append("%s: %s and %s say much the same%s -> merge or reword one" % (
-                    "conflict" if na != nb else "overlap", a_id, b_id, " in opposite ways" if na != nb else ""))
-    lines += sorted(pairs)
-    worst = sorted((r for r in rows if r["state"] in ORDER), key=lambda r: (ORDER[r["state"]], r["family"], r["subject"]))
-    steps = ["next %d: %s %s %s -> %s" % (n, r["state"], r["family"], r["subject"], r["fix"] or "look into it")
-             for n, r in enumerate(worst, 1)]
-    return lines, steps
+  lines, items = [], []
+  for page in pages(root):
+    found = criteria(root, page)
+    if not found:
+      lines.append("missing: feature %s has no requirement -> add a Requirements section with at least one line" % page)
+    items += found
+  pairs = []
+  for i, (a_id, a_text) in enumerate(items):
+    for b_id, b_text in items[i + 1:]:
+      a, b = set(words(a_text)) - STOP, set(words(b_text)) - STOP
+      na, nb = bool(a & NEGATIONS), bool(b & NEGATIONS)
+      a, b = a - NEGATIONS, b - NEGATIONS
+      if a and b and len(a & b) / min(len(a), len(b)) >= OVERLAP:
+        pairs.append("%s: %s and %s say much the same%s -> merge or reword one" % (
+            "conflict" if na != nb else "overlap", a_id, b_id, " in opposite ways" if na != nb else ""))
+  lines += sorted(pairs)
+  worst = sorted((r for r in rows if r["state"] in ORDER), key=lambda r: (ORDER[r["state"]], r["family"], r["subject"]))
+  steps = ["next %d: %s %s %s -> %s" % (n, r["state"], r["family"], r["subject"], r["fix"] or "look into it")
+    for n, r in enumerate(worst, 1)]
+  return lines, steps
 
 
 CAP = 6000
@@ -85,57 +85,57 @@ SAVES <percent> | <where a skill step, prompt, script, test row, wait or retry c
 
 
 def clip(text):
-    return text if len(text) <= CAP else text[:CAP] + "\n[cut]"
+  return text if len(text) <= CAP else text[:CAP] + "\n[cut]"
 
 
 def read(path):
-    try:
-        with open(path) as handle:
-            return handle.read()
-    except OSError:
-        return ""
+  try:
+    with open(path) as handle:
+      return handle.read()
+  except OSError:
+    return ""
 
 
 def gather(root, here, rows):
-    """The judge input as one labelled, size-capped text."""
-    out = ["## Requirements"]
-    for page in pages(root):
-        out += ["%s [%s]: %s" % (cid, page, text) for cid, text in criteria(root, page)]
-    out += ["## Test rows (id | goal | command | description)"]
-    for line in read(os.path.join(root, ".loop", "regression.tsv")).splitlines()[1:]:
-        cells = line.split("\t")
-        if len(cells) >= 6:
-            out.append("%s | %s | %s | %s" % (cells[0], cells[3], cells[2], cells[5]))
-    out += ["## Hints (plain text matching)"] + suggestions(root, rows)[0]
-    out += ["## Recent goals (steps: seconds, tokens)"]
-    found = cost.facts(root, here)
-    for run in (found[0] if found else []):
-        seconds, tokens = found[2][run["slug"]]
-        out.append("%s: %s" % (run["slug"], ", ".join("%s %ds %st" % (s, seconds.get(s, 0), tokens.get(s, 0))
-                                                     for s in sorted(set(seconds) | set(tokens)))))
-    out += ["## Test time (the land lane)"]
-    try:
-        sys.path.insert(0, here)
-        import lean
-        out += lean.facts(root)
-    except ImportError:
-        out += ["lean.py is not installed beside health.py"]
-    finally:
-        sys.path.pop(0)
-    out += ["## Skill files"]
-    for path in sorted(glob.glob(os.path.join(root, "skills", "*", "SKILL.md")) +
-                       glob.glob(os.path.join(root, "skills", "*", "references", "*.md"))):
-        out += ["### " + os.path.relpath(path, root), clip(read(path))]
-    return ASK + "<<<DATA\n" + "\n".join(out) + "\nDATA>>>\n"
+  """The judge input as one labelled, size-capped text."""
+  out = ["## Requirements"]
+  for page in pages(root):
+    out += ["%s [%s]: %s" % (cid, page, text) for cid, text in criteria(root, page)]
+  out += ["## Test rows (id | goal | command | description)"]
+  for line in read(os.path.join(root, ".loop", "regression.tsv")).splitlines()[1:]:
+    cells = line.split("\t")
+    if len(cells) >= 6:
+      out.append("%s | %s | %s | %s" % (cells[0], cells[3], cells[2], cells[5]))
+  out += ["## Hints (plain text matching)"] + suggestions(root, rows)[0]
+  out += ["## Recent goals (steps: seconds, tokens)"]
+  found = cost.facts(root, here)
+  for run in (found[0] if found else []):
+    seconds, tokens = found[2][run["slug"]]
+    out.append("%s: %s" % (run["slug"], ", ".join("%s %ds %st" % (s, seconds.get(s, 0), tokens.get(s, 0))
+          for s in sorted(set(seconds) | set(tokens)))))
+  out += ["## Test time (the land lane)"]
+  try:
+    sys.path.insert(0, here)
+    import lean
+    out += lean.facts(root)
+  except ImportError:
+    out += ["lean.py is not installed beside health.py"]
+  finally:
+    sys.path.pop(0)
+  out += ["## Skill files"]
+  for path in sorted(glob.glob(os.path.join(root, "skills", "*", "SKILL.md")) +
+    glob.glob(os.path.join(root, "skills", "*", "references", "*.md"))):
+    out += ["### " + os.path.relpath(path, root), clip(read(path))]
+  return ASK + "<<<DATA\n" + "\n".join(out) + "\nDATA>>>\n"
 
 
 def cause(done):
-    """Why a judge command failed (issue 158): its last stdout line (a CLI often prints the reason there, such as a usage
+  """Why a judge command failed (issue 158): its last stdout line (a CLI often prints the reason there, such as a usage
     limit) and its last stderr line, never just the exit code."""
-    last = lambda text: ([line.strip() for line in text.splitlines() if line.strip()] or [""])[-1][:160]
-    out, err = last(done.stdout or ""), last(done.stderr or "")
-    said = "; ".join(part for part in (out, "stderr: " + err if err else "") if part)
-    return "the judge exited %d%s" % (done.returncode, ": " + said if said else " (no output)")
+  last = lambda text: ([line.strip() for line in text.splitlines() if line.strip()] or [""])[-1][:160]
+  out, err = last(done.stdout or ""), last(done.stderr or "")
+  said = "; ".join(part for part in (out, "stderr: " + err if err else "") if part)
+  return "the judge exited %d%s" % (done.returncode, ": " + said if said else " (no output)")
 
 
 SESSION_ENV = "CLAUDECODE"  # set by Claude Code in every command a session runs; absent in GitHub Actions
@@ -143,70 +143,70 @@ VIA = [""]  # how the last answer was got: "session" or "claude -p (no session)"
 
 
 def ask(prompt, root, timeout=180):
-    """(text, why): the judge's answer, or why there is none. Session first, claude -p only with no session."""
-    saved = os.environ.get("LOOP_JUDGE_ANSWER")
-    if saved or os.environ.get(SESSION_ENV):
-        VIA[0] = "session"
-        if saved:
-            try:
-                with open(saved, errors="replace") as handle:
-                    return handle.read(), ""
-            except OSError:
-                return "", "the session's saved answer %s can't be read" % saved
-        handle, path = tempfile.mkstemp(prefix="health-judge-", suffix=".txt")
-        with os.fdopen(handle, "w") as out:
-            out.write(prompt)
-        return "", ("a session runs this, so the judge is the session: give the prompt in %s to an in-session subagent, "
-                    "save its reply to a file, then rerun with --judge-answer FILE" % path)
-    VIA[0] = "claude -p (no session)"
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            command = json.load(handle).get("judge_command")
-    except (OSError, ValueError, AttributeError):
-        command = None
-    if not isinstance(command, list) or not command:
-        return "", "no judge_command in .loop/config.json"
-    try:
-        done = subprocess.run([str(part) for part in command], input=prompt, capture_output=True, text=True,
-                              timeout=timeout, cwd=root)
-    except (OSError, subprocess.SubprocessError) as error:
-        return "", "the judge did not run: %s" % str(error)[:100]
-    if done.returncode:
-        return "", cause(done)
-    return done.stdout, ""
+  """(text, why): the judge's answer, or why there is none. Session first, claude -p only with no session."""
+  saved = os.environ.get("LOOP_JUDGE_ANSWER")
+  if saved or os.environ.get(SESSION_ENV):
+    VIA[0] = "session"
+    if saved:
+      try:
+        with open(saved, errors="replace") as handle:
+          return handle.read(), ""
+      except OSError:
+        return "", "the session's saved answer %s can't be read" % saved
+    handle, path = tempfile.mkstemp(prefix="health-judge-", suffix=".txt")
+    with os.fdopen(handle, "w") as out:
+      out.write(prompt)
+    return "", ("a session runs this, so the judge is the session: give the prompt in %s to an in-session subagent, "
+      "save its reply to a file, then rerun with --judge-answer FILE" % path)
+  VIA[0] = "claude -p (no session)"
+  try:
+    with open(os.path.join(root, ".loop", "config.json")) as handle:
+      command = json.load(handle).get("judge_command")
+  except (OSError, ValueError, AttributeError):
+    command = None
+  if not isinstance(command, list) or not command:
+    return "", "no judge_command in .loop/config.json"
+  try:
+    done = subprocess.run([str(part) for part in command], input=prompt, capture_output=True, text=True,
+      timeout=timeout, cwd=root)
+  except (OSError, subprocess.SubprocessError) as error:
+    return "", "the judge did not run: %s" % str(error)[:100]
+  if done.returncode:
+    return "", cause(done)
+  return done.stdout, ""
 
 
 def parse(answer):
-    found = {tag: [] for tag in TAGS}
-    for line in answer.splitlines():
-        tag, _, rest = line.strip().partition(" ")
-        parts = [part.strip() for part in rest.split("|")]
-        if tag in TAGS and len(parts) == TAGS[tag] and all(parts):
-            found[tag].append(parts)
-    return found
+  found = {tag: [] for tag in TAGS}
+  for line in answer.splitlines():
+    tag, _, rest = line.strip().partition(" ")
+    parts = [part.strip() for part in rest.split("|")]
+    if tag in TAGS and len(parts) == TAGS[tag] and all(parts):
+      found[tag].append(parts)
+  return found
 
 
 def percent(item):
-    match = re.match(r"\d+", item[0])
-    return int(match.group()) if match else 0
+  match = re.match(r"\d+", item[0])
+  return int(match.group()) if match else 0
 
 
 def render(found, steps):
-    """The judge section: three reviews, Needs you, candidate goals ranked by savings, then ranked next steps."""
-    saves = sorted(found["SAVES"], key=lambda item: -percent(item))
-    out = ["JUDGE (suggestions, never part of the verdict)", "== criteria quality =="]
-    out += ["%s: %s" % (i, p) for i, p, _ in found["CRITERION"]] or ["none"]
-    out += ["== test quality =="] + (["%s: %s -> %s" % tuple(item) for item in found["TEST"]] or ["none"])
-    out += ["== performance, test time and tokens, ranked by savings =="]
-    out += ["%s%%: %s -> %s" % (item[0].rstrip("% "), item[1], item[2]) for item in saves] or ["none"]
-    out += ["== Needs you =="]
-    out += ["reword %s: %s (only you can apply this)" % (i, w) for i, _, w in found["CRITERION"]] or ["none"]
-    out += ["== candidate goals =="]
-    out += ["goal: strengthen test %s: %s" % (i, w) for i, _, w in found["TEST"]]
-    out += ["goal: save %s%%: %s" % (item[0].rstrip("% "), item[2]) for item in saves]
-    if not found["TEST"] and not saves:
-        out.append("none")
-    return out + ["== next steps =="] + (steps or ["none"])
+  """The judge section: three reviews, Needs you, candidate goals ranked by savings, then ranked next steps."""
+  saves = sorted(found["SAVES"], key=lambda item: -percent(item))
+  out = ["JUDGE (suggestions, never part of the verdict)", "== criteria quality =="]
+  out += ["%s: %s" % (i, p) for i, p, _ in found["CRITERION"]] or ["none"]
+  out += ["== test quality =="] + (["%s: %s -> %s" % tuple(item) for item in found["TEST"]] or ["none"])
+  out += ["== performance, test time and tokens, ranked by savings =="]
+  out += ["%s%%: %s -> %s" % (item[0].rstrip("% "), item[1], item[2]) for item in saves] or ["none"]
+  out += ["== Needs you =="]
+  out += ["reword %s: %s (only you can apply this)" % (i, w) for i, _, w in found["CRITERION"]] or ["none"]
+  out += ["== candidate goals =="]
+  out += ["goal: strengthen test %s: %s" % (i, w) for i, _, w in found["TEST"]]
+  out += ["goal: save %s%%: %s" % (item[0].rstrip("% "), item[2]) for item in saves]
+  if not found["TEST"] and not saves:
+    out.append("none")
+  return out + ["== next steps =="] + (steps or ["none"])
 
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
@@ -226,154 +226,154 @@ A finding with no file:line or row citation will be dropped.
 
 
 def finding(name, kind, angle, detail, evidence, fix, source):
-    return {"feature": name, "kind": kind, "angle": angle, "detail": detail, "evidence": evidence, "fix": fix, "source": source}
+  return {"feature": name, "kind": kind, "angle": angle, "detail": detail, "evidence": evidence, "fix": fix, "source": source}
 
 
 def deterministic(root, name, text, paths):
-    out = []
-    if T.LINE.search(text) and not re.search(r"^#+\s*Non-functional", text, re.M | re.I):
-        out.append(finding(name, "gap", "a reader's angle", "the page has no non-functional requirement (performance, safety, privacy)",
-                           "docs/wiki/%s.md" % name, "add one under Non-functional, or say none applies", "rule"))
-    found, _ = IS.fetch(root, "open")
-    pages = IS.features(root)
-    for issue in found or []:
-        body = "%s %s" % (issue.get("title") or "", issue.get("body") or "")
-        if issue.get("state") == "open" and IS.feature_group(issue, pages) == name and not IS.is_health(issue) \
-                and not re.search(r"\b[A-Z]{2,5}-\d+\b", body):
-            out.append(finding(name, "gap", "an auditor's angle", "open issue #%d names no requirement" % issue["number"],
-                               "#%d" % issue["number"], "tie it to a requirement, or add one", "rule"))
-    return out
+  out = []
+  if T.LINE.search(text) and not re.search(r"^#+\s*Non-functional", text, re.M | re.I):
+    out.append(finding(name, "gap", "a reader's angle", "the page has no non-functional requirement (performance, safety, privacy)",
+        "docs/wiki/%s.md" % name, "add one under Non-functional, or say none applies", "rule"))
+  found, _ = IS.fetch(root, "open")
+  pages = IS.features(root)
+  for issue in found or []:
+    body = "%s %s" % (issue.get("title") or "", issue.get("body") or "")
+    if issue.get("state") == "open" and IS.feature_group(issue, pages) == name and not IS.is_health(issue) \
+      and not re.search(r"\b[A-Z]{2,5}-\d+\b", body):
+      out.append(finding(name, "gap", "an auditor's angle", "open issue #%d names no requirement" % issue["number"],
+          "#%d" % issue["number"], "tie it to a requirement, or add one", "rule"))
+  return out
 
 
 def verified(root, cite, known, rows, issues):
-    cite = cite.strip()
-    if cite in known or cite in rows:
-        return True
-    if re.match(r"^#\d+$", cite):
-        return any(str(i["number"]) == cite[1:] for i in issues or [])
-    path, _, line = cite.partition(":")
-    full = os.path.realpath(os.path.join(root, path))
-    if not full.startswith(os.path.realpath(root) + os.sep) or not os.path.isfile(full):
-        return False
-    return not line or (line.split("-")[0].isdigit() and int(line.split("-")[0]) <= sum(1 for _ in open(full, errors="replace")))
+  cite = cite.strip()
+  if cite in known or cite in rows:
+    return True
+  if re.match(r"^#\d+$", cite):
+    return any(str(i["number"]) == cite[1:] for i in issues or [])
+  path, _, line = cite.partition(":")
+  full = os.path.realpath(os.path.join(root, path))
+  if not full.startswith(os.path.realpath(root) + os.sep) or not os.path.isfile(full):
+    return False
+  return not line or (line.split("-")[0].isdigit() and int(line.split("-")[0]) <= sum(1 for _ in open(full, errors="replace")))
 
 
 def located(cite, rows):
-    """A citation that points at a place: a regression row id, or path:line."""
-    return cite in rows or bool(re.match(r"^[^:#\s]+:\d+(-\d+)?$", cite))
+  """A citation that points at a place: a regression row id, or path:line."""
+  return cite in rows or bool(re.match(r"^[^:#\s]+:\d+(-\d+)?$", cite))
 
 
 def judged(root, wanted, every):
-    """(findings, dropped, why) from the judge, each citation verified."""
-    data = ["## %s\n%s" % (name, text[:6000]) for name, text in every.items() if name in wanted]
-    try:
-        data.append("## README\n" + open(os.path.join(root, "README.md"), errors="replace").read()[:4000])
-    except OSError:
-        pass
-    issues, _ = IS.fetch(root, "open")
-    data.append("## open issues\n" + "\n".join("#%d [%s] %s" % (i["number"], i.get("milestone"), i.get("title"))
-                                                for i in issues or [] if i.get("state") == "open"))
-    data.append("## rows\n" + "\n".join("%s %s %s" % (r["id"], r["goal"], r["description"][:100]) for r in T.table(root)))
-    text, why = ask(REVIEW_ASK + "<<<DATA\n" + "\n".join(data) + "\nDATA>>>\n", root, timeout=300)
-    if why:
-        return [], 0, why
-    known, rows = T.defined(root), {r["id"] for r in T.table(root)}
-    out, dropped = [], 0
-    for line in text.splitlines():
-        parts = [p.strip() for p in line.split("|")]
-        if len(parts) != 7 or parts[0] != "FINDING" or parts[2] not in KINDS or parts[1] not in wanted:
-            continue
-        cites = [c for c in parts[5].split(",") if c.strip() and verified(root, c, known, rows, issues)]
-        if not any(located(c.strip(), rows) for c in cites):  # HLT-9: a file and line, or a test row, or the finding is dropped
-            dropped += 1
-            continue
-        out.append(finding(parts[1], parts[2], parts[3], parts[4], ", ".join(c.strip() for c in cites), parts[6], "judge"))
-    return out, dropped, ""
+  """(findings, dropped, why) from the judge, each citation verified."""
+  data = ["## %s\n%s" % (name, text[:6000]) for name, text in every.items() if name in wanted]
+  try:
+    data.append("## README\n" + open(os.path.join(root, "README.md"), errors="replace").read()[:4000])
+  except OSError:
+    pass
+  issues, _ = IS.fetch(root, "open")
+  data.append("## open issues\n" + "\n".join("#%d [%s] %s" % (i["number"], i.get("milestone"), i.get("title"))
+      for i in issues or [] if i.get("state") == "open"))
+  data.append("## rows\n" + "\n".join("%s %s %s" % (r["id"], r["goal"], r["description"][:100]) for r in T.table(root)))
+  text, why = ask(REVIEW_ASK + "<<<DATA\n" + "\n".join(data) + "\nDATA>>>\n", root, timeout=300)
+  if why:
+    return [], 0, why
+  known, rows = T.defined(root), {r["id"] for r in T.table(root)}
+  out, dropped = [], 0
+  for line in text.splitlines():
+    parts = [p.strip() for p in line.split("|")]
+    if len(parts) != 7 or parts[0] != "FINDING" or parts[2] not in KINDS or parts[1] not in wanted:
+      continue
+    cites = [c for c in parts[5].split(",") if c.strip() and verified(root, c, known, rows, issues)]
+    if not any(located(c.strip(), rows) for c in cites):  # HLT-9: a file and line, or a test row, or the finding is dropped
+      dropped += 1
+      continue
+    out.append(finding(parts[1], parts[2], parts[3], parts[4], ", ".join(c.strip() for c in cites), parts[6], "judge"))
+  return out, dropped, ""
 
 
 def review(root, only=None):
-    """(findings, dropped, why)."""
-    features, every = IS.features(root), T.pages(root)
-    wanted = [name for name in features if name in every and (not only or name == only)]
-    out = []
-    for name in wanted:
-        out += deterministic(root, name, every[name], features[name])
-    model, dropped, why = judged(root, wanted, every)
-    return out + model, dropped, why
+  """(findings, dropped, why)."""
+  features, every = IS.features(root), T.pages(root)
+  wanted = [name for name in features if name in every and (not only or name == only)]
+  out = []
+  for name in wanted:
+    out += deterministic(root, name, every[name], features[name])
+  model, dropped, why = judged(root, wanted, every)
+  return out + model, dropped, why
 
 
 def as_rows(findings):
-    """The findings as health rows, for file.py: family review, the feature and a hash of its first citation (its subject, not
+  """The findings as health rows, for file.py: family review, the feature and a hash of its first citation (its subject, not
     its wording or its whole citation set) as subject, the kind as rule, so a later round updates the open issue (#4543)."""
-    import hashlib
-    return [{"state": "WARN", "family": "review", "rule": f["kind"], "detail": f["detail"], "about": IS.first_cite(f["evidence"]),
-             "subject": "%s-%s" % (f["feature"], hashlib.sha1(IS.first_cite(f["evidence"]).encode()).hexdigest()[:6]),
-             "fix": f["fix"], "evidence": f["evidence"], "feature": f["feature"], "angle": f["angle"]} for f in findings]
+  import hashlib
+  return [{"state": "WARN", "family": "review", "rule": f["kind"], "detail": f["detail"], "about": IS.first_cite(f["evidence"]),
+      "subject": "%s-%s" % (f["feature"], hashlib.sha1(IS.first_cite(f["evidence"]).encode()).hexdigest()[:6]),
+      "fix": f["fix"], "evidence": f["evidence"], "feature": f["feature"], "angle": f["angle"]} for f in findings]
 
 
 def twin(item, issues):
-    """(key, issue) of an issue filed for the same judge finding under an older key (a hash of its wording or of all its
+  """(key, issue) of an issue filed for the same judge finding under an older key (a hash of its wording or of all its
     citations), matched by rule and subject (item["about"]); open, or closed by the owner. None when there is none."""
-    if item.get("about") is None:
-        return None
-    for key, issue in sorted(issues.items()):
-        body, names = issue.get("body") or "", [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]
-        if issue.get("state", "").lower() != "open" and "health:closed" not in names:
-            continue
-        if item["family"] == "review":
-            head, _, rule = key.rpartition(":")
-            hit = re.search(r"Evidence: ([^\n]*)", body)
-            same, old = hit and head.startswith("review:") and rule == item["rule"] and head[7:].rpartition("-")[0] == item["feature"], hit and IS.first_cite(hit.group(1))
-        else:
-            hit = re.search(r"saving: (.*?) -> fix:", body, re.S)
-            same, old = hit and key.startswith("performance:judge:saves-"), hit and IS.savings_subject(hit.group(1))
-        if same and old == item["about"]:
-            return key, issue
+  if item.get("about") is None:
     return None
+  for key, issue in sorted(issues.items()):
+    body, names = issue.get("body") or "", [l.get("name") if isinstance(l, dict) else l for l in issue.get("labels") or []]
+    if issue.get("state", "").lower() != "open" and "health:closed" not in names:
+      continue
+    if item["family"] == "review":
+      head, _, rule = key.rpartition(":")
+      hit = re.search(r"Evidence: ([^\n]*)", body)
+      same, old = hit and head.startswith("review:") and rule == item["rule"] and head[7:].rpartition("-")[0] == item["feature"], hit and IS.first_cite(hit.group(1))
+    else:
+      hit = re.search(r"saving: (.*?) -> fix:", body, re.S)
+      same, old = hit and key.startswith("performance:judge:saves-"), hit and IS.savings_subject(hit.group(1))
+    if same and old == item["about"]:
+      return key, issue
+  return None
 
 
 def render_review(findings, dropped, why):
-    out = ["REVIEW (per feature; never part of the verdict; writes nothing)"]
-    if VIA[0]:
-        out.append("judge: " + VIA[0])
-    if why:
-        out.append("JUDGE UNAVAILABLE: " + why)
-    for name in sorted({f["feature"] for f in findings}):
-        mine = sorted([f for f in findings if f["feature"] == name], key=lambda f: KINDS.index(f["kind"]))
-        out.append("== %s ==" % name)
-        out += ["FINDING %s (%s): %s -- evidence: %s -> fix: %s" % (f["kind"], f["angle"], f["detail"], f["evidence"], f["fix"])
-                for f in mine]
-        steps = list(dict.fromkeys(f["fix"] for f in mine))[:3]  # one step per distinct fix, in rank order
-        out.append("next steps: " + "; ".join("%d. %s" % (n, step) for n, step in enumerate(steps, 1)))
-    out.append("REVIEW: %d findings, %d dropped for no evidence" % (len(findings), dropped))
-    return out
+  out = ["REVIEW (per feature; never part of the verdict; writes nothing)"]
+  if VIA[0]:
+    out.append("judge: " + VIA[0])
+  if why:
+    out.append("JUDGE UNAVAILABLE: " + why)
+  for name in sorted({f["feature"] for f in findings}):
+    mine = sorted([f for f in findings if f["feature"] == name], key=lambda f: KINDS.index(f["kind"]))
+    out.append("== %s ==" % name)
+    out += ["FINDING %s (%s): %s -- evidence: %s -> fix: %s" % (f["kind"], f["angle"], f["detail"], f["evidence"], f["fix"])
+      for f in mine]
+    steps = list(dict.fromkeys(f["fix"] for f in mine))[:3]  # one step per distinct fix, in rank order
+    out.append("next steps: " + "; ".join("%d. %s" % (n, step) for n, step in enumerate(steps, 1)))
+  out.append("REVIEW: %d findings, %d dropped for no evidence" % (len(findings), dropped))
+  return out
 
 
 def answered(path):
-    """True when a saved review --json came from a judge that answered (an unanswered judge found nothing, not nothing wrong)."""
-    try:
-        return json.load(open(path)).get("judge") == "answered"
-    except (OSError, ValueError, AttributeError):
-        return False
+  """True when a saved review --json came from a judge that answered (an unanswered judge found nothing, not nothing wrong)."""
+  try:
+    return json.load(open(path)).get("judge") == "answered"
+  except (OSError, ValueError, AttributeError):
+    return False
 
 
 def load(path):
-    """The findings of a saved review --json, or None when it isn't one."""
-    try:
-        data = json.load(open(path))
-    except (OSError, ValueError):
-        return None
-    return data["findings"] if isinstance(data, dict) and data.get("version") == 1 and isinstance(data.get("findings"), list) else None
+  """The findings of a saved review --json, or None when it isn't one."""
+  try:
+    data = json.load(open(path))
+  except (OSError, ValueError):
+    return None
+  return data["findings"] if isinstance(data, dict) and data.get("version") == 1 and isinstance(data.get("findings"), list) else None
 
 
 def principles(rows):
-    """HLT-2: one PRINCIPLE line per principle in commands.md, red on any FAIL in its groups; UNREAD is never green."""
-    try:
-        text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The eight principles")[2]
-    except OSError:
-        return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
-    out = []
-    for n, name, groups in re.findall(r"^\| (\d) \| ([^|]+) \| [^|]+ \| ([a-z,]+) \|$", text, re.M):
-        mine = [r["state"] for r in rows if r["family"] in groups.split(",")]
-        out.append("PRINCIPLE %s %s: %s (%s)" % (n, name.strip(), "RED" if "FAIL" in mine else "UNREAD" if not mine or "UNREAD" in mine else "green", groups.replace(",", ", ")))
-    return out
+  """HLT-2: one PRINCIPLE line per principle in commands.md, red on any FAIL in its groups; UNREAD is never green."""
+  try:
+    text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The eight principles")[2]
+  except OSError:
+    return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
+  out = []
+  for n, name, groups in re.findall(r"^\| (\d) \| ([^|]+) \| [^|]+ \| ([a-z,]+) \|$", text, re.M):
+    mine = [r["state"] for r in rows if r["family"] in groups.split(",")]
+    out.append("PRINCIPLE %s %s: %s (%s)" % (n, name.strip(), "RED" if "FAIL" in mine else "UNREAD" if not mine or "UNREAD" in mine else "green", groups.replace(",", ", ")))
+  return out
