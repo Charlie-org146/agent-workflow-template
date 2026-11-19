@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept plan-red-team-core@6edef587 -->
+Review: **Unreviewed** <!-- kept readme-conformance@03cceed8 -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 
