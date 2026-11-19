@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept merge-queue-c@8552c80d -->
+Review: **Unreviewed** <!-- kept merge-queue-c@6e6421c2 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
