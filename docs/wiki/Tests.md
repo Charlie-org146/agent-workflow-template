@@ -1002,7 +1002,7 @@
 | <a id="t-pr-joins-queue"></a>pr-joins-queue | requirement | REL-13 | not run | - | local | 2026-11-16 |
 | <a id="t-rel-major-refused"></a>rel-major-refused | requirement | REL-1 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-open-issue-refused"></a>rel-open-issue-refused | requirement | REL-2 | not run | - | local | 2026-11-17 |
-| <a id="t-rel-red-row-refused"></a>rel-red-row-refused | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-red-row-refused"></a>rel-red-row-refused | requirement | REL-3 | not run | - | local | 2026-11-19 |
 | <a id="t-rel-checks-refused"></a>rel-checks-refused | requirement | REL-4 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-freeze-refuses"></a>rel-freeze-refuses | requirement | REL-5 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-6 | not run | - | local | 2026-11-17 |
