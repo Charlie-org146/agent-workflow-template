@@ -95,4 +95,4 @@ Each requirement and how it is delivered:
 - PRD page: [Operation](Operation)
 - Backlog: [Backlog: Operation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept plan-red-team-core@f02d830a -->
+<!-- kept plan-red-team-core@c413c8c5 -->
