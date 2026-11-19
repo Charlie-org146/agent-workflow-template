@@ -39,11 +39,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - SET-12: **Unreviewed** Adopt all my repos in one pass
   - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template.
   - It ends with the board showing exactly the repos I chose.
-- SET-13: **Reviewed 2026-11-17** Workers are app sessions I can see <!-- reviewed ca8efc98 -->
-  - When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control.
-  - The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that.
-  - Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses.
-  - The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs.
 - SET-14: **Unreviewed** The connectors each repo needs are checked
   - For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call.
   - It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself.
@@ -68,14 +63,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
   - The rules the package must pass are Guardrails' (GRD-20 to GRD-22).
 - SET-7: **Reviewed 2026-11-10** Safe and repeatable <!-- reviewed fb39932b -->
   - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing existing is overwritten.
-- SET-8: **Reviewed 2026-11-10** Private stays private <!-- reviewed 22a16ae7 -->
-  - Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one.
-- SET-15: **Reviewed 2026-11-17** One private-name list that fits every repo <!-- reviewed f12292ea -->
-  - When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits.
-  - A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show.
-  - The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`).
-- SET-17: **Reviewed 2026-11-13** The Backlog milestones exist after adoption <!-- reviewed e4d6023c -->
-  - Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing.
 
 ## Non-goals
 - It never commits private settings or values.
@@ -88,6 +75,13 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - A template update reaches every governed repo without losing any repo setting or page.
 
 ## Revisions
+
+### Retired
+
+- SET-13: moved to OPS-12
+- SET-15: moved to GRD-3
+- SET-17: moved to HLT-10
+- SET-8: moved to GRD-3
 
 ### SET-1
 
@@ -141,6 +135,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | moved by the v2 regroup to GRD-3 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-10 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-9
@@ -176,6 +171,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. | moved by the v2 regroup to OPS-12 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-17 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-14
@@ -189,6 +185,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | moved by the v2 regroup to GRD-3 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-17 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-16
@@ -202,6 +199,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | moved by the v2 regroup to HLT-10 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-13 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-18
@@ -282,8 +280,6 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [adopt-replay-strict](Tests#t-adopt-replay-strict) | requirement | SET-11 | Given a machine that differs from the golden first adoption, when the replay runs, then it stops at the first mismatch naming what differs and never passes a step it cannot observe (the live check-in, step 8, is reported as not observed). | not run |
 | [adopt-many-one-pass](Tests#t-adopt-many-one-pass) | requirement | SET-12 | Given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version. | not run |
 | - | requirement | SET-12 | no passing test | not enforced |
-| [set13-hooks-once-bullet](Tests#t-set13-hooks-once-bullet) | requirement | SET-13 | Given a repo where setup runs the reply and govern hook commands several times, when it finishes, then each hook is installed exactly once (the SET-13 bullet on hooks; the app-session, pool and model bullets are not covered by this row). | not run |
-| - | requirement | SET-13 | no passing test | not enforced |
 | [adopt-connectors-probed](Tests#t-adopt-connectors-probed) | requirement | SET-14 | Given followed repos whose PRDs name connectors, when the connectors are listed, then each is connected, needs sign-in or missing from a read-only probe, and nothing is enabled. | not run |
 | - | requirement | SET-14 | no passing test | not enforced |
 | [migration-clean](Tests#t-migration-clean) | requirement | SET-16 | Given a clean private repo and a clean public repo, both recorded mac with the task registered, when migration-check runs, then each prints MIGRATION OK and exits 0. | not run |
@@ -319,23 +315,9 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [set7-dry-run-lists-all](Tests#t-set7-dry-run-lists-all) | requirement | SET-7 | Given a repo, when setup runs dry and then for real, then the dry run writes nothing anywhere and lists every file the real commit holds. | not run |
 | [set7-second-run-nothing](Tests#t-set7-second-run-nothing) | requirement | SET-7 | Given an adopted repo with a working config nobody committed, when setup runs again, then it prints NO CHANGE, adds no commit, leaves a clean tree and keeps the config's own values. | not run |
 | - | requirement | SET-7 | no passing test | not enforced |
-| [set8-hooks](Tests#t-set8-hooks) | requirement | SET-8 | Given a repo with the hooks setup installs, when a staged change adds a private line, then git commit refuses naming the file and line and never the text, and nothing is committed. | PASS 2026-11-12 |
-| [set8-setup-commit](Tests#t-set8-setup-commit) | requirement | SET-8 | Given an adoption whose staged file holds a private line, when setup runs, then it refuses before its own commit, naming the place, and commits nothing. | PASS 2026-11-12 |
-| [set8-local-setting-refused](Tests#t-set8-local-setting-refused) | requirement | SET-8 | Given a private-home key in the config the adoption would commit, when setup runs, then it refuses naming the key and the line, never the value, and writes nothing. | not run |
-| [set8-private-value-refused](Tests#t-set8-private-value-refused) | requirement | SET-8 | Given a home path or a local setting value on a line the adoption adds, when setup runs, then it refuses naming file and line and never the value, while text the repo already had, a short value and a template default pass. | not run |
-| [set8-health](Tests#t-set8-health) | requirement | SET-8 | Given a repo with the private-name hooks installed or removed, when health runs its hooks rule, then the row appears in the Security and privacy group with its PASS or WARN text, and a wrong group, which prints no hooks row, fails the row. | PASS 2026-11-12 |
-| [private-names-scoped](Tests#t-private-names-scoped) | requirement | SET-15 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | not run |
-| - | requirement | SET-15 | no passing test | not enforced |
-| [backlog-milestones-made](Tests#t-backlog-milestones-made) | requirement | SET-17 | Given a repo with feature pages Calc and Zed, when the Backlog milestones are made with --live, then Backlog: Calc, Backlog: Zed and Backlog: Other exist, a dry run writes none and a second run makes none. | not run |
-| [backlog-setup-makes](Tests#t-backlog-setup-makes) | requirement | SET-17 | Given setup's issue filing, when it runs on a GitHub repo, then it makes the Backlog milestones with --live before it files health issues, and --no-issues makes none. | not run |
-| [backlog-adoption-warns](Tests#t-backlog-adoption-warns) | requirement | SET-17 | Given a GitHub repo missing one standing Backlog milestone, when health checks the Adoption group, then it warns for that one and for none in a repo with no GitHub origin. | not run |
-| - | requirement | SET-17 | no passing test | not enforced |
 | [setup-zero-tests-119](Tests#t-setup-zero-tests-119) | defect | [#119](https://github.com/jcl2018/agent-workflow-template/issues/119) closed (2026-11-13) | Given a repo whose tests are named *_test.py, when setup picks its check, then the command finds at least one test, and with no proof it is no fit with a finding. | not run |
 | [setup-tsv-guard-127](Tests#t-setup-tsv-guard-127) | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) closed (2026-11-13) | Given a .gitignore blocking *.tsv and a hook that rejects tracked .tsv files, when setup runs, then the ignore is exempted by a written line and the hook is named with its exemption and never edited. | not run |
 | [pr-statuses-only-lane-3840](Tests#t-pr-statuses-only-lane-3840) | defect | [#3840](https://github.com/jcl2018/agent-workflow-template/issues/3840) closed (2026-11-14) | Given required checks whose jobs do more than the lane, or that no workflow job names, when goal.py pr posts statuses, then only a check whose job runs only the lane's regression command gets one and each other is printed as BLOCKS (issue 3840). | PASS 2026-11-14 |
-| [set13-hooks-once](Tests#t-set13-hooks-once) | defect | [#2880](https://github.com/jcl2018/agent-workflow-template/issues/2880) closed (2026-11-12) | Given a repo where setup.py --reply-hook and --govern-hook run repeatedly, even on a Windows path or over a file already holding two govern hooks, when settings.local.json is read, then it holds exactly one reply hook and one govern hook. | not run |
-| [go-app-holds-goal](Tests#t-go-app-holds-goal) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given workers app in the config and no app session to take a goal, when watch starts it, then no background process launches and the goal waits queued for sessions.py bind. | not run |
-| [go-background-default](Tests#t-go-background-default) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given no workers setting, when no app session takes a goal, then watch still launches the background fallback. | not run |
 | [migration-runs](Tests#t-migration-runs) | defect | 3821 | Given a public repo (actions, regression.yml present) and a private repo (mac), when migration-check runs, then only the wrong settings and a private repo's leftover regression.yml are gaps. | not run |
 | [skill-size-116](Tests#t-skill-size-116) | defect | [#116](https://github.com/jcl2018/agent-workflow-template/issues/116) closed (2026-11-10) | Given the package's skills, when each SKILL.md is counted, then every one is under 150 lines, so test-board passes. | PASS 2026-11-10 |
 | [size-139](Tests#t-size-139) | defect | [#139](https://github.com/jcl2018/agent-workflow-template/issues/139) open (2026-11-16) | Given criteria.py's page rules moved into deployments.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on criteria. | failing (issue reopened) 2026-11-16 |
@@ -343,4 +325,3 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [size-141](Tests#t-size-141) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/141) open (2026-11-17) | Given regression.py's row and page readers moved into runs.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on regression. | failing (issue reopened) 2026-11-17 |
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
 | [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 100 files, no Safety or Disclosure failure (issue 3800). | not run |
-| [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | not run |
