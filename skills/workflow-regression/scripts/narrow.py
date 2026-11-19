@@ -171,11 +171,13 @@ def header(root, rel, cache):
     if key in cache:
         return cache[key]
     text, paths, problems, lead = lanes.read(root, rel, cache), [], [], True
-    if text is None or not (rel.endswith(".sh") or "." not in os.path.basename(rel)):
+    if text is None or not (rel.endswith((".sh", ".py")) or "." not in os.path.basename(rel)):
         cache[key] = (None, [])
         return cache[key]
     code = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#"))
     mentioned = {p for p in lanes.references(root, code, os.path.dirname(rel), wide=False)[0] if p.endswith("/")}
+    if rel.endswith(".py") and re.search(r"""["']skills["']""", code):
+        mentioned.add("skills/")  # a Python script lists the skills folder by its quoted name
     found = False
     for number, line in enumerate(text.splitlines(), 1):
         lead = lead and (line.startswith("#") or (number == 1 and line.startswith("#!")))

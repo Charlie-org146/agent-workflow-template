@@ -1,14 +1,15 @@
 #!/bin/bash
-here=$(cd "$(dirname "$0")/../.." && pwd)
-. "$here/dev/toy/reap.sh"
 # windows: ok
 # reads: skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/slots.py skills/workflow-delivery/scripts/proctree.py skills/workflow-monitoring/scripts/proctree.py skills/workflow-regression/scripts/proctree.py skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/lane.py skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/worker.py skills/workflow-regression/scripts/lanes.py
+# reads: skills/
 # Issue 1396: lanes, slots and step timeouts on native Windows Python as on POSIX. port_base() leases a base with no
 # os.getuid or os.O_NOFOLLOW; a stop for a timeout or a mend takes the child's whole tree (killpg on POSIX, taskkill /T
 # on Windows), and no stop site calls os.killpg itself. Runs the same on Linux, macOS and Windows.
 # Value: protects=lanes get ports and timeouts stop whole trees on Windows (issue 1396); fails_when=a POSIX-only call
 # comes back into a lease or a stop; why_new=the lane rows run only where POSIX calls exist; seam=none;
 # no_claim=a real lane run on Windows
+here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 set -u
 export LOOP_LANES_DIR=$(mktemp -d)/lanes
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$(dirname "$LOOP_LANES_DIR")"'

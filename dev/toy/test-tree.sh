@@ -29,7 +29,7 @@ check "every test script a row of this repo names has a valid # reads: header (l
 out=$(cd "$here" && $L affected skills/workflow-monitoring/scripts/batch.py)
 total=$(awk -F'\t' '!/^#/ && $2 == "land"' "$here/.loop/regression.tsv" | wc -l | tr -d ' ')
 got=$(sed -n 's/^AFFECTED \([0-9]*\) of.*/\1/p' <<<"$out")
-missing=$(cd "$here" && for s in $(grep -l "^# reads:.*skills/workflow-monitoring/scripts/batch.py" dev/toy/test-*.sh); do awk -F'\t' -v s="$s" '$2 == "land" && index($3, s) {print $1}' .loop/regression.tsv; done | while read -r id; do grep -qw "$id" <<<"$out" || echo "$id"; done)
+missing=$(cd "$here" && for s in $(grep -l "^# reads:.*skills/workflow-monitoring/scripts/batch.py" dev/toy/test-*.sh dev/toy/test-*.py); do awk -F'\t' -v s="$s" '$2 == "land" && index($3, s) {print $1}' .loop/regression.tsv; done | while read -r id; do grep -qw "$id" <<<"$out" || echo "$id"; done)
 check "on this repo a one-file change reruns fewer than half the land rows and every row whose script declares it" '[ -n "$got" ] && [ "$got" -lt $((total / 2)) ] && [ -z "$missing" ]'
 # Value: protects=test-summary's and test-defect's rows rerun only on what they read (issue 172); fails_when=either stands in
 # the repo root again (ROOT_RUN: every change reruns it); why_new=both ran there; seam=none; no_claim=skill changes (both read skills/)

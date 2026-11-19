@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/fit.py
+# reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/fit.py skills/workflow-monitoring/scripts/batch.py
 # Test goal.py adopt: a goal pushed from another machine gets this machine's run record at qa, and a branch not on origin is refused.
 # usage: test-goal-adopt.sh [DIR]
 # windows: ok

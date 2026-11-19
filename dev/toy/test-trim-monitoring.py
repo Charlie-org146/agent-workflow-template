@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# reads: skills/workflow-monitoring/scripts/checkin.py, auto.py, replan.py, pool.py
+# reads: skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/auto.py
+# reads: skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/pool.py
 """Proves workflow-monitoring's checkin.py, auto.py, replan.py and pool.py are each at or under the 19,000-byte script cap,
 measured as git stores them (line ends as LF), and that the measure fails a script one byte over."""
 import os

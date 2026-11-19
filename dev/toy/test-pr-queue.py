@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
+# reads: skills/workflow-delivery/scripts/goal.py skills/workflow-monitoring/scripts/graph.py
 """pr-queue (#3877): pr lanes take turns per repo, and a try lost to main moving does not use up max_tries.
 
 Parts: queue (order, a goal that left, a dead holder, a stale ticket), moved (the separate cap), pr (goal.py's cmd_pr end to end

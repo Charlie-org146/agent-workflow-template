@@ -12,7 +12,7 @@ affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, p
           read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it.
 deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
           from the command to PATH, or NOT REACHED.
-check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
+check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh or test-*.py a row of the table names), one
           `<CODE> <file>:<line>: <what>` line and a `fix:` line each. Exit 0 clean, 1 problems.
 merge-runs  merge the branch's lane record's row results (PASS or FAIL, with any flaky flag) into
           .loop/regression-runs.tsv under slots.py's row lock (DX-19); workflow-delivery's goal.py pr runs it, by path,
@@ -47,7 +47,7 @@ FIX = {
     "LANES-DECL-FOLDER": "add the files {file} runs from that folder to its # reads: line",
     "LANES-DECL-TREE": "add skills/ to the # reads: line of {file} (it stays wide: it reads every skill)",
 }
-TEST = re.compile(r"(?<![\w./-])(dev/toy/test-[\w-]+\.sh)")
+TEST = re.compile(r"(?<![\w./-])(dev/toy/test-[\w-]+\.(?:sh|py))")
 
 
 def usage(message):
@@ -289,7 +289,8 @@ def main():
                                                                                       "whole repo"))
         return 0
     scripts = [relative(root, s) for s in args.scripts] or sorted(
-        {m for r in rows_of(root, "all") for m in TEST.findall(r["command"])})
+        {m for r in rows_of(root, "all") for m in TEST.findall(r["command"])
+         if os.path.exists(os.path.join(root, m))})  # a name no file answers to (a made-up $0 label) has no header to check
     problems = check(root, scripts, cache)
     for code, rel, line, what in problems:
         print("%s %s:%d: %s\nfix: %s" % (code, rel, line, what, FIX.get(code, "").format(file=rel)))

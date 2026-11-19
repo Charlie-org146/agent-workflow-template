@@ -2,6 +2,7 @@
 # windows: ok
 # reads: dev/machine.py dev/machine_ops.py docs/wiki/Machines.md README.md
 # reads: skills/workflow-monitoring/references/commands.md skills/workflow-regression/scripts/actions.py
+# reads: skills/
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.

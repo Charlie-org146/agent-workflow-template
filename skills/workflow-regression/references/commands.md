@@ -190,7 +190,7 @@ dirties a checkout); commit it with the re-rendered wiki Tests (`criteria.py ren
 ## Narrow rows
 
 A reusing run (`run --reuse`, the qa, ship and pr lanes) reruns a row only when a file it reads changed. A test script
-says what it runs in its top comment block, and `lanes.py` follows from there without widening to folders.
+(shell or Python) says what it runs in its top comment block, and `lanes.py` follows from there without widening to folders.
 
 ```bash
 #!/bin/bash

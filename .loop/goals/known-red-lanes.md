@@ -15,3 +15,12 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 skills/workflow-regression/scripts/lanes_cli.py check`.
+   Expect: it prints nothing and exits 0 (it printed 21 findings before).
+2. Run `python3 skills/workflow-regression/scripts/lanes_cli.py affected skills/workflow-monitoring/scripts/batch.py | head -1 | cut -c1-40`.
+   Expect: `AFFECTED 4xx of 1233 rows`, well under half (it printed 879 before).
+3. Run `bash dev/toy/test-narrow.sh 2>&1 | grep -E "Python test|ALL PASS|FAILED"`.
+   Expect: two `PASS: a Python test's ...` lines and `ALL PASS`.
+4. Run `grep -c "lanes-headers\|lanes-repo-narrow" .loop/regression-known.tsv`.
+   Expect: 0.
