@@ -214,6 +214,7 @@ gate-pending-scoped	PASS	2026-11-19
 gate-untouched-not-refused	PASS	2026-11-18	
 go-app-holds-goal	PASS	2026-11-19	
 goal-levels-nightly	PASS	2026-11-11	
+grd1-guardrail-list	PASS	2026-11-19	
 grd2-merge-rounds-default-8	PASS	2026-11-15	
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
@@ -426,7 +427,7 @@ no-pid-left-alone	PASS	2026-11-09
 no-prompts	PASS	2026-11-19	
 no-row-fail	PASS	2026-11-19	
 no-token-dry-run	PASS	2026-11-19	
-no-token-would	PASS	2026-11-12	
+no-token-would	PASS	2026-11-19	
 notify-new-events	PASS	2026-11-18	
 notion-app-link-unread	PASS	2026-11-13	
 one-failure	PASS	2026-11-09	
@@ -438,6 +439,7 @@ operate-10-under-load	PASS	2026-11-11
 operate-all	PASS	2026-11-09	
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
+ops-findings-filed	PASS	2026-11-19	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
 package-gate-head	FAIL	2026-11-16	
 package-hang-bound	PASS	2026-11-12	
@@ -501,7 +503,7 @@ problem-plural	PASS	2026-11-18
 ptb-dead-lane	PASS	2026-11-12	
 ptb-mend	PASS	2026-11-12	
 ptb-plain-paths	PASS	2026-11-12	
-publish-refused-stale	PASS	2026-11-12	
+publish-refused-stale	PASS	2026-11-19	
 publish-restore	PASS	2026-11-19	
 publish-tables-handwritten	PASS	2026-11-13	
 publish-tables-regen	PASS	2026-11-13	
@@ -509,7 +511,7 @@ pull-ff-only-passes	PASS	2026-11-12
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
 refuse-replace	PASS	2026-11-19	
-refused-unmet	PASS	2026-11-12	
+refused-unmet	PASS	2026-11-19	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-12	
@@ -554,7 +556,7 @@ runs-sha	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-upgrade	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-url	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 same-lines	PASS	2026-11-19	
-schedule-setting	PASS	2026-11-12	
+schedule-setting	PASS	2026-11-19	
 scripts-a-delivery-under-19000	PASS	2026-11-16	
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
@@ -609,12 +611,12 @@ slot-pool-112	PASS	2026-11-10
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-12	
 stale-comments-only-3122	PASS	2026-11-15	
-stale-found	PASS	2026-11-12	
+stale-found	PASS	2026-11-19	
 stale-groups-defect	PASS	2026-11-12	
 stale-merge-order	PASS	2026-11-19	
 stale-own-finding	PASS	2026-11-15	
 stale-own-main-reported	PASS	2026-11-15	
-stale-page-row	PASS	2026-11-12	
+stale-page-row	PASS	2026-11-19	
 stalled-no-process-4359	PASS	2026-11-17	
 starts-at-idea	PASS	2026-11-09	
 state-shared-113	PASS	2026-11-10	

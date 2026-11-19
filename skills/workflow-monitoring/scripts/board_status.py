@@ -155,10 +155,10 @@ def memory():
 
 def allowed(cfg=None):
     """Goals memory lets start now: None when it can't be read or the floor is 0, 0 under min_free_memory_gb of free commit
-    (default 3.5), else one plus one per 1.5 GB above the floor."""
+    (default 3), else one plus one per 1.5 GB above the floor."""
     cfg = cfg if cfg is not None else read_json(os.path.join(git("rev-parse", "--show-toplevel") or ".", ".loop", "config.json")) or {}
     try:
-        floor, each = float(cfg.get("min_free_memory_gb", 3.5)), 1.5  # a goal's worker needs about 1.5 GB
+        floor, each = float(cfg.get("min_free_memory_gb", 3)), 1.5  # a goal's worker needs about 1.5 GB
     except (TypeError, ValueError):
         return None
     commit = memory()[1]
@@ -227,7 +227,7 @@ def machine_line(cfg):
     return "Machine: RAM %s, commit %s free, CPU %s, %s claude, %s node; memory allows %s" % (
         show(ram, " GB"), show(commit, " GB"), "unreadable" if cpu is None else "%d%%" % cpu,
         "?" if count["claude"] is None else int(count["claude"]), "?" if count["node"] is None else int(count["node"]),
-        "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3.5) if room == 0
+        "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3) if room == 0
         else "%d goal start%s" % (room, "" if room == 1 else "s"))
 
 

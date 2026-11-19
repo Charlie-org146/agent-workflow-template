@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept plan-red-team-core@6edef587 -->
+Review: **Unreviewed** <!-- kept known-red-docs-release2@0483a6dc7 -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 
@@ -209,6 +209,7 @@ None
 | [blockers-first](Tests#t-blockers-first) | requirement | OPS-1 | Given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not. | PASS 2026-11-14 |
 | [scripts-a-monitoring-under-19000](Tests#t-scripts-a-monitoring-under-19000) | requirement | OPS-1 | Given the workflow-monitoring scripts (board_report.py folded into board_log.py, whose --help exits 0), when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
 | [stalled-no-process-4359](Tests#t-stalled-no-process-4359) | requirement | OPS-1 | Given a live goal whose log has not moved for silent_minutes and no goal.py, flow.py or lane process for it, when the check-in is built, then Needs you says STALLED, since when, and which worker to restart. Also, given a quiet goal with a process running for it, then it is not STALLED. | PASS 2026-11-17 |
+| [ops-findings-filed](Tests#t-ops-findings-filed) | requirement | OPS-1 | Given a finding the operation layer makes while scheduling, merging or deciding, when it is filed, then it is an ops-finding issue on the feature's Backlog milestone naming the decision or record that found it, a repeat of an open issue (same normalised title or same IDs) and a safety-class finding with no owner's words are refused, and the next check-in lists what was filed. | PASS 2026-11-19 |
 | [worker-reports](Tests#t-worker-reports) | requirement | OPS-2 | Given a merged goal, when the board is shown, then it shows its pull request. Given a goal with a PR, when a machine sends STATUS, then the worker line carries the PR number, and parked and idle sessions carry reasons. | PASS 2026-11-19 |
 | [worker-reports-live](Tests#t-worker-reports-live) | requirement | OPS-2 | Given a report to a running worker, when goal.py next runs, then the report reaches its agent once. | PASS 2026-11-09 |
 | [session-reports](Tests#t-session-reports) | requirement | OPS-2 | Given a worker session's step report, when it arrives, then it is recorded on its goal. | PASS 2026-11-12 |
