@@ -147,4 +147,4 @@ None
 | - | requirement | INT-6 | no passing test | not enforced |
 | - | requirement | INT-7 | no passing test | not enforced |
 | - | requirement | INT-8 | no passing test | not enforced |
-| [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when DOC-17 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
+| [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when INT-3 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
