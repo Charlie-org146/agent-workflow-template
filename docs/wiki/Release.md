@@ -20,10 +20,17 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - A goal's release never bumps a major; a major exists only after the gate passes.
 - REL-2: **Unreviewed** A major's milestone is closed out
   - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue.
-- REL-3: **Unreviewed** The full suite passes on the candidate
-  - The gate runs the whole nightly suite on the release candidate.
-  - Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses.
-  - The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result.
+- REL-3: **Unreviewed** A major ships only through the gate
+  - A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1]
+  - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2]
+  - The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3]
+  - The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3]
+  - The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4]
+  - From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5]
+  - Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6]
+  - Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8]
+  - revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7]
+  - (v2.1 planned) release-readiness: a release-readiness check runs before the gate (named only).
 - REL-4: **Unreviewed** Health, review and pages pass on the candidate
   - The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails.
 - REL-5: **Unreviewed** A candidate admits only gate fixes
@@ -46,12 +53,14 @@ How to use: [How-to-use-Release](How-to-use-Release)
 - REL-11: **Unreviewed** A merge is never refused late or left half done
   - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent.
   - If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice.
-- REL-12: **Unreviewed** A review hold before auto merge
-  - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review.
+- REL-12: **Unreviewed** Merges wait only on gates I set
+  - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12]
+  - No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10]
 - REL-13: **Unreviewed** Fast merge queue
-  - Pull requests merge one at a time per repo, across machines.
-  - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together.
-  - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next.
+  - Pull requests merge one at a time per repo, across machines. [REL-13]
+  - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13]
+  - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13]
+  - (v2.1 planned) merge-queue: a merge queue (named only).
 - REL-14: **Unreviewed** Every release is noted
   - Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6).
 
@@ -89,6 +98,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-19 | A major ships only through the gate <br> A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1] <br> Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2] <br> The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3] <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3] <br> The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4] <br> From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5] <br> Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6] <br> Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8] <br> revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7] <br> (v2.1 planned) release-readiness: a release-readiness check runs before the gate (named only). | consolidation (TOP-DECISION 89) | o228: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r3 | 2026-11-19 | The full suite passes on the candidate <br> The gate runs the whole nightly suite on the release candidate. <br> Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. | a CI run of the regression workflow is an accepted suite source for the gate (TOP-DECISION 36) | o191: "TOP-DECISION 36 under the owner's delegation (o168), ~18:12: freeze gate-ci-suite on a" |
 | r2 | 2026-11-18 | The full suite passes on the candidate <br> The gate runs the whole nightly suite on the release candidate. <br> Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. | v2 rewrite: on main since v1.0.61 (release-gate), Unreviewed; text condensed from the page; covers the draft's earlier REL-6 (o44). | o47: "Yes, start it end." |
 | r1 | 2026-11-18 | The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue <br> The gate runs the whole nightly suite on a checkout of the candidate, not the goal lane. <br> A row that fails, could not run or is on the known-red list refuses, naming the row, unless a `red` waiver gives its issue and its owner record names the row; a suite that did not run refuses. <br> A suite that runs past `max_suite_seconds` is not itself a refusal (health reports that cap); the gate waits up to four hours (`LOOP_GATE_SECONDS`), and a run a time budget stopped with rows left refuses, since rows that did not run prove nothing. | migration r1; date from the run day | o51: "Yes to both" |
@@ -151,12 +161,14 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Merges wait only on gates I set <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12] <br> No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10] | consolidation (TOP-DECISION 89) | o344: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### REL-13
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.1 planned) merge-queue: a merge queue (named only). | consolidation (TOP-DECISION 89) | o289: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### REL-14

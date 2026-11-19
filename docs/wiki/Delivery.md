@@ -15,41 +15,50 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Requirements
 
 ### Functional
-- DEL-1: **Unreviewed** The loop
-  - I give one sentence and its done lines, and a worker runs it unattended through freeze, idea, plan, build, review, qa, ship, pull request and release.
-  - Each step maps to a skill I choose.
-  - It won't start until the flow is set up.
-  - Review is the only gate a person has to pass.
+- DEL-1: **Unreviewed** One sentence runs unattended to a released PR
+  - I give one sentence and its done lines, and a worker runs it unattended through freeze, idea, plan, build, review, qa, ship, pull request and release. Each step maps to a skill I choose. It won't start until the flow is set up. Review is the only gate a person has to pass. [DEL-1]
+  - Every pull request carries the done lines, the plan, how to verify by hand, and each step's result. [DEL-4]
+  - With auto_merge on, a finished goal is merged and released automatically: version bump, release note, published release and wiki. With auto_merge off it makes a draft release and merges nothing. Any failure shows under Needs you. [REL-10]
+  - Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). [REL-14]
+  - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it, and a page only merge.py's own re-render of the Tests tables changed counts as left alone. On the base branch itself every finding counts. [REL-9]
+  - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so. [REL-9]
+  - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent. If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice. [REL-11]
+  - (v2.1 planned) plan-red-team: an adversarial red-team pass runs over each goal's plan before build (named only; no guarantee stated yet).
 - DEL-2: **Unreviewed** Done lines are frozen
   - Done lines can't change once the goal starts; a change means a new goal.
-- DEL-3: **Unreviewed** It only stops for me when it must
-  - A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows.
-  - Plan and review run at full depth unless the repo or I choose condensed.
-  - Tests never shrink.
+- DEL-3: **Unreviewed** It stops only for decisions that are mine
+  - A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3]
+  - Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11]
+  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. [OPS-11]
+  - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18]
 - DEL-4: **Unreviewed** The pull request is the record
   - Every pull request carries the done lines, the plan, how to verify by hand, and each step's result.
-- DEL-17: **Unreviewed** A goal's ETA is a hard limit
-  - Every goal records an ETA when it is frozen.
-  - Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer.
-  - Decisions a goal can foresee are asked once, up front, each with a recommendation.
-  - Time spent waiting for a queue, for memory or for me does not count.
+- DEL-17: **Unreviewed** Goal ETAs and release freezes are hard limits
+  - Every goal records an ETA when it is frozen. [DEL-17]
+  - Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. [DEL-17]
+  - Decisions a goal can foresee are asked once, up front, each with a recommendation. [DEL-17]
+  - Time spent waiting for a queue, for memory or for me does not count. [DEL-17]
 - DEL-18: **Unreviewed** Everything goes through a goal
   - Every change to a repo's main branch arrives through a goal: its pull request and its release commit.
   - Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for.
-- DEL-19: **Unreviewed** Every goal serves a requirement
-  - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true.
-  - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal.
-  - A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through.
+- DEL-19: **Unreviewed** Every change is a goal serving a requirement
+  - Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18]
+  - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19]
+  - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19]
+  - Done lines can't change once the goal starts; a change means a new goal. [DEL-2]
 
 ### Non-functional
-- DEL-7: **Unreviewed** It survives failure
-  - A failed step is retried, and after three failed tries the goal stops with a reason.
-  - A stopped or crashed goal resumes from its last recorded step.
-  - Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit.
-  - A step that fails because its session or tool is unusable restarts in a fresh session with its notes.
-- DEL-9: **Reviewed 2026-11-15** Nothing private ships <!-- reviewed e53156c1 -->
-  - Every commit and pull request passes the private-name scan before it is pushed.
-  - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo.
+- DEL-7: **Unreviewed** Work survives failure and moves by backup
+  - A failed step is retried, and after three failed tries the goal stops with a reason. [DEL-7]
+  - A stopped or crashed goal resumes from its last recorded step. [DEL-7]
+  - Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit. [DEL-7]
+  - A step that fails because its session or tool is unusable restarts in a fresh session with its notes. [DEL-7]
+  - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. [MCH-3]
+- DEL-9: **Unreviewed** Nothing private is committed, shipped or copied
+  - Every commit, push and pull request passes the private-name scan before it is pushed, and local settings and private values are never written into a repo. [DEL-9, GRD-3]
+  - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. [DEL-9, GRD-3]
+  - The email address and the mail key live only in one local secrets file outside git, shared by both mailers and read only by the local runner. They never appear in the repo, logs, issues or the digest, and mail goes only to the one address I set. [AUT-6]
+  - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. A new machine gets empty private files and asks me to fill them. [MCH-9]
 - DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
   - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen.
   - A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows.
@@ -86,6 +95,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | One sentence runs unattended to a released PR <br> I give one sentence and its done lines, and a worker runs it unattended through freeze, idea, plan, build, review, qa, ship, pull request and release. Each step maps to a skill I choose. It won't start until the flow is set up. Review is the only gate a person has to pass. [DEL-1] <br> Every pull request carries the done lines, the plan, how to verify by hand, and each step's result. [DEL-4] <br> With auto_merge on, a finished goal is merged and released automatically: version bump, release note, published release and wiki. With auto_merge off it makes a draft release and merges nothing. Any failure shows under Needs you. [REL-10] <br> Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). [REL-14] <br> `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it, and a page only merge.py's own re-render of the Tests tables changed counts as left alone. On the base branch itself every finding counts. [REL-9] <br> Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so. [REL-9] <br> A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent. If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice. [REL-11] <br> (v2.1 planned) plan-red-team: an adversarial red-team pass runs over each goal's plan before build (named only; no guarantee stated yet). | consolidation (TOP-DECISION 89) | o222: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | The loop <br> I give one sentence and its done lines, and a worker runs it unattended through freeze, idea, plan, build, review, qa, ship, pull request and release. <br> Each step maps to a skill I choose. <br> It won't start until the flow is set up. <br> Review is the only gate a person has to pass. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-08 | The loop <br> I give one sentence and its done lines; a worker runs it unattended. <br> Steps, in order: freeze, idea, plan, build, review, qa, ship, pull request, release. <br> Review is the only gate. <br> Each step maps to a skill I choose, in a private setting outside the repo. <br> It won't start without the flow set up, and stops with a reason after 3 failed tries. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -100,6 +110,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | It stops only for decisions that are mine <br> A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3] <br> Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11] <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. [OPS-11] <br> One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18] | consolidation (TOP-DECISION 89) | o332: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | It only stops for me when it must <br> A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. <br> Plan and review run at full depth unless the repo or I choose condensed. <br> Tests never shrink. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-08 | Decisions <br> A decision for me waits under Needs you, or, where the repo allows, is auto-approved and logged. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -128,6 +139,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Work survives failure and moves by backup <br> A failed step is retried, and after three failed tries the goal stops with a reason. [DEL-7] <br> A stopped or crashed goal resumes from its last recorded step. [DEL-7] <br> Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit. [DEL-7] <br> A step that fails because its session or tool is unusable restarts in a fresh session with its notes. [DEL-7] <br> `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. [MCH-3] | consolidation (TOP-DECISION 89) | o302: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | It survives failure <br> A failed step is retried, and after three failed tries the goal stops with a reason. <br> A stopped or crashed goal resumes from its last recorded step. <br> Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit. <br> A step that fails because its session or tool is unusable restarts in a fresh session with its notes. | v2 rewrite: changed: last sentence is new (the planning-tool risk). | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Resumable <br> A stopped or crashed goal resumes from its last recorded step, never from the start. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -142,6 +154,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Nothing private is committed, shipped or copied <br> Every commit, push and pull request passes the private-name scan before it is pushed, and local settings and private values are never written into a repo. [DEL-9, GRD-3] <br> The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. [DEL-9, GRD-3] <br> The email address and the mail key live only in one local secrets file outside git, shared by both mailers and read only by the local runner. They never appear in the repo, logs, issues or the digest, and mail goes only to the one address I set. [AUT-6] <br> Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. A new machine gets empty private files and asks me to fill them. [MCH-9] | consolidation (TOP-DECISION 89) | o290: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-15 | Nothing private ships <br> Every commit and pull request passes the private-name scan before it is pushed. <br> The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-10
@@ -196,6 +209,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Goal ETAs and release freezes are hard limits <br> Every goal records an ETA when it is frozen. [DEL-17] <br> Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. [DEL-17] <br> Decisions a goal can foresee are asked once, up front, each with a recommendation. [DEL-17] <br> Time spent waiting for a queue, for memory or for me does not count. [DEL-17] | consolidation (TOP-DECISION 89) | o267: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A goal's ETA is a hard limit <br> Every goal records an ETA when it is frozen. <br> Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. <br> Decisions a goal can foresee are asked once, up front, each with a recommendation. <br> Time spent waiting for a queue, for memory or for me does not count. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### DEL-18
@@ -208,6 +222,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every goal serves a requirement <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. <br> A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ## Tests

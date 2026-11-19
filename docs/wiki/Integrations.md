@@ -13,10 +13,14 @@ Review: **Unreviewed** <!-- kept readme-principles-table4@64d87e5b -->
 ## Requirements
 
 ### Functional
-- INT-1: **Unreviewed** One contract for every integration
-  - Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page.
-- INT-2: **Unreviewed** The repo stays the source of truth
-  - Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop.
+- INT-1: **Unreviewed** Every integration is a declared, visible adapter
+  - Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page. [INT-1]
+  - Adding a system means one reader or writer, one registry row and one How-to page. No loop code changes, and an adopted repo gets it by declaring it, not by building it. [INT-6]
+  - The board shows each integration's connection state and its open deltas as waiting on me, with the words to accept either side, and health counts an open delta or an unreadable integration as a finding, never as passing. [INT-5]
+- INT-2: **Unreviewed** Integrations never override the repo copy
+  - Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop. [INT-2]
+  - Where both sides can change the same thing, sync compares them with what they last agreed on. Each difference is a delta naming what changed and on which side, and it stays open until someone accepts one side's text. It is posted on the feature's Backlog milestone. [INT-3]
+  - A repo can keep its GitHub milestones in step with an outside Milestones page under this contract, opt-in by one setting. [INT-8]
 - INT-3: **Unreviewed** A difference is a delta, never a silent overwrite
   - Where both sides can change the same thing, sync compares them with what they last agreed on. Each difference is a delta naming what changed and on which side, and it stays open until someone accepts one side's text. It is posted on the feature's Backlog milestone.
 - INT-4: **Unreviewed** Nothing leaves without my say
@@ -25,8 +29,8 @@ Review: **Unreviewed** <!-- kept readme-principles-table4@64d87e5b -->
   - The board shows each integration's connection state and its open deltas as waiting on me, with the words to accept either side, and health counts an open delta or an unreadable integration as a finding, never as passing.
 - INT-6: **Unreviewed** A new system is an adapter, not a rewrite
   - Adding a system means one reader or writer, one registry row and one How-to page. No loop code changes, and an adopted repo gets it by declaring it, not by building it.
-- INT-7: **Unreviewed** PRDs kept in an outside document
-  - A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads.
+- INT-7: **Unreviewed** PRDs may sync with an outside document
+  - A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads. [INT-7]
 - INT-8: **Unreviewed** Milestones kept in step with an outside page
   - A repo can keep its GitHub milestones in step with an outside Milestones page under this contract, opt-in by one setting.
 
@@ -50,12 +54,14 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Every integration is a declared, visible adapter <br> Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page. [INT-1] <br> Adding a system means one reader or writer, one registry row and one How-to page. No loop code changes, and an adopted repo gets it by declaring it, not by building it. [INT-6] <br> The board shows each integration's connection state and its open deltas as waiting on me, with the words to accept either side, and health counts an open delta or an unreadable integration as a finding, never as passing. [INT-5] | consolidation (TOP-DECISION 89) | o313: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | One contract for every integration <br> Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### INT-2
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Integrations never override the repo copy <br> Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop. [INT-2] <br> Where both sides can change the same thing, sync compares them with what they last agreed on. Each difference is a delta naming what changed and on which side, and it stays open until someone accepts one side's text. It is posted on the feature's Backlog milestone. [INT-3] <br> A repo can keep its GitHub milestones in step with an outside Milestones page under this contract, opt-in by one setting. [INT-8] | consolidation (TOP-DECISION 89) | o264: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | The repo stays the source of truth <br> Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### INT-3
@@ -86,6 +92,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | PRDs may sync with an outside document <br> A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads. [INT-7] | consolidation (TOP-DECISION 89) | o200: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | PRDs kept in an outside document <br> A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### INT-8

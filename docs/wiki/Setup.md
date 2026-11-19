@@ -15,24 +15,39 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Unreviewed** One command adopts a repo
-  - One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups.
-  - It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting.
-- SET-2: **Unreviewed** Layered settings
-  - Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one.
-  - Every setting has a default and a one-line explanation, and I can see each value and its layer.
-- SET-4: **Unreviewed** Updates reach every repo
-  - An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings.
-  - A repo running an older template version is flagged.
+- SET-1: **Unreviewed** Any repo adopts the template byte for byte
+  - Any repo adopts the template cleanly, byte for byte: every file the template installs matches the template's copy exactly, and the adopted repo's README shows the template's principles and design logic as written, byte for byte, plus its own product principles if it has any. (Owner rule 2026-11-19; resolves the DOC-23 conflict.) [SET-1]
+  - Files the template owns install exactly; the repo's own files are adapted, never overwritten. (Owner rule 2026-11-19 01:40, o192; resolves the SET-1 vs SET-7 conflict.) [SET-1]
+  - One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups. It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting. [SET-1]
+  - A dry run lists everything before any write; running setup twice changes nothing the second time; nothing of the repo's own is overwritten. [SET-7]
+  - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo. [SET-9]
+  - Adopting a repo installs every guardrail on the Guardrails page with its default setting and lists each one installed, and health judges a freshly adopted repo on the same rules as the template. [GRD-10]
+  - Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted. A health check runs before and after, and the one after is green or names each gap with its fix. [SET-18]
+  - For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call. It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself. [SET-14]
+  - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template. It ends with the board showing exactly the repos I chose. [SET-12]
+- SET-2: **Unreviewed** Layered settings and a generated entry page
+  - Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one. Every setting has a default and a one-line explanation, and I can see each value and its layer. [SET-2]
+  - Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them. It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values. [SET-5]
+- SET-4: **Unreviewed** Repos build on the template and stay current
+  - An adopted repo holds only its own settings, pages, tests and data. The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there. [SET-21]
+  - An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings. A repo running an older template version is flagged. [SET-4]
+  - A repo records the template version it is on, and one with none counts as behind. A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to. [SET-20]
+  - One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain. Health's Adoption group runs the same check. [SET-16]
+  - A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. [SET-19]
+  - (v2.1 planned) develop-staging: a develop or staging branch runs ahead of main, so updates are proven before they reach main and adopted repos (named only).
 - SET-5: **Unreviewed** A self-describing workspace
   - Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them.
   - It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values.
-- SET-6: **Unreviewed** Adoption is proven
-  - Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it.
+- SET-6: **Unreviewed** Adoption is proven by strict replay
+  - Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it. [SET-6]
+  - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`. It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. [SET-11]
+  - (v2.0) ci-trace-matrix: the 1,188-command adoption replay runs across about 16 CI jobs within the time limit.
 - SET-9: **Unreviewed** Learn from a repo already set up
   - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo.
-- SET-10: **Unreviewed** The right format for every agent
-  - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way.
+- SET-10: **Unreviewed** One versioned package; every agent runs one loop
+  - The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. The size and listing rules the package must pass are Guardrails' (GRD-20 to GRD-22, principle 3). [SET-3]
+  - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. [SET-10]
+  - A private setting maps each step and goal size to an agent profile. A missing or signed-out agent falls back to the default with a warning. The run record names the agent, model and tokens of every step. [DEL-16]
 - SET-11: **Unreviewed** A strict replay of the first adoption
   - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`.
   - It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe.
@@ -87,6 +102,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Any repo adopts the template byte for byte <br> Any repo adopts the template cleanly, byte for byte: every file the template installs matches the template's copy exactly, and the adopted repo's README shows the template's principles and design logic as written, byte for byte, plus its own product principles if it has any. (Owner rule 2026-11-19; resolves the DOC-23 conflict.) [SET-1] <br> Files the template owns install exactly; the repo's own files are adapted, never overwritten. (Owner rule 2026-11-19 01:40, o192; resolves the SET-1 vs SET-7 conflict.) [SET-1] <br> One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups. It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting. [SET-1] <br> A dry run lists everything before any write; running setup twice changes nothing the second time; nothing of the repo's own is overwritten. [SET-7] <br> Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo. [SET-9] <br> Adopting a repo installs every guardrail on the Guardrails page with its default setting and lists each one installed, and health judges a freshly adopted repo on the same rules as the template. [GRD-10] <br> Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted. A health check runs before and after, and the one after is green or names each gap with its fix. [SET-18] <br> For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call. It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself. [SET-14] <br> From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template. It ends with the board showing exactly the repos I chose. [SET-12] | consolidation (TOP-DECISION 89) | o316: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | One command adopts a repo <br> One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups. <br> It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-13 | One command adopts a repo <br> One command sets up a new or existing repo: the loop config, PRD feature pages in the docs format, the Home table and README How to use, the nightly regression in GitHub Actions, the health groups, and every setting with its default. <br> It shows what it found and would change first, then applies it on a branch through the loop, adapting what is there instead of overwriting. <br> It never blocks: what doesn't fit is listed and filed as issues tagged with the right feature, and the rest is adopted. <br> Health is the first and last step: before adopting, a health check records where the repo starts; after adopting, the full health check (every group, Adoption included) must come back green or name each gap with its fix, and that verdict is the adoption result, because if health works, the rest works. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -94,6 +110,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Layered settings and a generated entry page <br> Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one. Every setting has a default and a one-line explanation, and I can see each value and its layer. [SET-2] <br> Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them. It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values. [SET-5] | consolidation (TOP-DECISION 89) | o330: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Layered settings <br> Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one. <br> Every setting has a default and a one-line explanation, and I can see each value and its layer. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Layered settings <br> Settings come in three layers: the template's defaults, the repo's settings (committed and shared), and my local settings (private, outside the repo); a later layer overrides an earlier one. <br> Every setting has a default and a one-line explanation; I can see each setting's value and which layer it came from, and change any of them at any time. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -108,6 +125,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Repos build on the template and stay current <br> An adopted repo holds only its own settings, pages, tests and data. The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there. [SET-21] <br> An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings. A repo running an older template version is flagged. [SET-4] <br> A repo records the template version it is on, and one with none counts as behind. A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to. [SET-20] <br> One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain. Health's Adoption group runs the same check. [SET-16] <br> A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. [SET-19] <br> (v2.1 planned) develop-staging: a develop or staging branch runs ahead of main, so updates are proven before they reach main and adopted repos (named only). | consolidation (TOP-DECISION 89) | o323: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Updates reach every repo <br> An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings. <br> A repo running an older template version is flagged. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Updates flow both ways <br> An adopted repo can check for a newer template version, see what's new and update, keeping its own config, pages, rules and local settings. <br> The operation session flags any governed repo running an older template version. <br> A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -122,6 +140,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Adoption is proven by strict replay <br> Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it. [SET-6] <br> Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`. It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. [SET-11] <br> (v2.0) ci-trace-matrix: the 1,188-command adoption replay runs across about 16 CI jobs within the time limit. | consolidation (TOP-DECISION 89) | o328: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Adoption is proven <br> Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | Adoption is proven <br> Adoption is proven on test repos shaped like real ones (existing checks, CI tests, a blocking .gitignore, a bare agent command, features that aren't folders), and every adoption defect found in a real repo adds a test repo that reproduces it. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -149,6 +168,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | One versioned package; every agent runs one loop <br> The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. The size and listing rules the package must pass are Guardrails' (GRD-20 to GRD-22, principle 3). [SET-3] <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. [SET-10] <br> A private setting maps each step and goal size to an agent profile. A missing or signed-out agent falls back to the default with a warning. The run record names the agent, model and tokens of every step. [DEL-16] | consolidation (TOP-DECISION 89) | o304: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | The right format for every agent <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-10 | The right format for every agent <br> The same skills are wired into each agent's own entry files (for example CLAUDE.md and AGENTS.md), so Claude Code, Codex and other SKILL.md agents run the same loop the same way. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
