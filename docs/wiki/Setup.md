@@ -135,7 +135,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | moved by the v2 regroup to GRD-3 | o74: "Yes, I want you to handle all of the questions except the" |
+| r2 | 2026-11-19 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | moved by the v2 regroup to GRD-3 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-10 | Private stays private <br> Local settings and private values are never written into the repo, and setup refuses to commit a file that holds one. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-9
@@ -171,7 +171,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. | moved by the v2 regroup to OPS-12 | o74: "Yes, I want you to handle all of the questions except the" |
+| r2 | 2026-11-19 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. | moved by the v2 regroup to OPS-12 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-17 | Workers are app sessions I can see <br> When I've chosen app sessions, a goal never falls back to a background worker: it waits for a free session and says so, including when the app refuses to start one because my message came over Remote Control. <br> The pool is kept at `pool_size` sessions (MON-12): it asks me to fill it only when it runs low, and never starts more than that. <br> Worker and pool sessions start on the model one setting names, and the operation session sets it on every session it starts or reuses. <br> The reply and govern hooks are installed exactly once each, however many times setup or either hook command runs. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-14
@@ -185,7 +185,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | moved by the v2 regroup to GRD-3 | o74: "Yes, I want you to handle all of the questions except the" |
+| r2 | 2026-11-19 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | moved by the v2 regroup to GRD-3 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-17 | One private-name list that fits every repo <br> When setup seeds the private-name list, it explains that the list covers every repo on this machine, so a private repo's own name, or a contact it cites on purpose, would block that repo's own commits. <br> A pattern can be scoped, for example to public repos only or to named repos, so a private repo can hold what a public one must never show. <br> The checklist notes a missing list and says how to scope a line (`@public`, `@repos=a,b`). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-16
@@ -199,7 +199,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
-| r2 | 2026-11-18 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | moved by the v2 regroup to HLT-10 | o74: "Yes, I want you to handle all of the questions except the" |
+| r2 | 2026-11-19 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | moved by the v2 regroup to HLT-10 | o89: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-13 | The Backlog milestones exist after adoption <br> Adoption creates one milestone "Backlog: <Feature>" for each feature page and "Backlog: Other", and creates none that already exists. Health's Adoption group warns for each one that is missing. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### SET-18
