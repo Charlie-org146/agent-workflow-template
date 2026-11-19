@@ -2,31 +2,19 @@
 operate-all	fails on main v0.12.0 (test-operate timing), issue 126
 adopt-set-1	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-2	fails on clean main since v0.27.17; fixed by render-readme-guard
-adopt-set-3	fails on clean main since v0.27.17; fixed by render-readme-guard
-adopt-set-4	fails on clean main since v0.27.17; fixed by render-readme-guard
-adopt-set-5	fails on clean main since v0.27.17; fixed by render-readme-guard
 defect-categories	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-repo-narrow	fails on clean main since v0.27.17; fixed by package-cap-3
 narrow-root-172	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
-plan-sizes	fails on clean main since v0.27.17; fixed by package-cap-3
-pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
-sync-check-preview	fails on clean main since v0.27.17; fixed by package-cap-3
-sync-board-lag	fails on clean main since v0.27.17; fixed by package-cap-3
 size-140	fails on clean main since v0.27.17: skills/workflow-docs/scripts/docs.py is 18,702 bytes, past the 90% size warning; fixed by package-cap-3 (moves a block out of docs.py)
 grd1-guardrail-list	not built: the Guardrails page is a definition only, no table yet (GRD-1)
 del8-session-tokens	not built: only headless goals are refused past token_budget (DEL-8)
 grd3-hook-bypass	not built: no refusal of a commit or push that skips hooks (GRD-3)
-package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
-package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 stale-found	red on main (in-session flow.py path, see #4852)
 publish-refused-stale	red on main (in-session flow.py path, see #4852)
 auto-release	red on main
-trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
-package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
-package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 session-assign	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 session-rename	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
 session-reuse	identical failure on main 253c6d12 in dev/toy/test-session-workers.sh; accepted baseline for machine-email-phone
