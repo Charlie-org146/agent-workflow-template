@@ -56,4 +56,4 @@ Each requirement and how it is delivered:
 - PRD page: [Check-in-and-board](Check-in-and-board)
 - Backlog: [Backlog: Check-in-and-board](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept regroup-guardrails@f853153e -->
+<!-- kept known-red-w5-merge-st@b3950f1b -->
