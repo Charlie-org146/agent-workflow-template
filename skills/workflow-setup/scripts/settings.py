@@ -264,8 +264,8 @@ def fill_repo(path):
         sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (most, path))
     check_depth(held, path)
     source = held.get("milestones_source", "")
-    if source and not re.fullmatch(r"url:https://\S+|mcp:(?!notion:)\w[\w-]*:\S+|mcp:notion:[0-9a-f]{32}", str(source)):
-        sys.exit("REFUSED: milestones_source is %r in %s. Fix: url:https://..., mcp:<server>:<id>, mcp:notion:<32 hex>." % (source, path))
+    if source and not re.fullmatch(r"url:\S+|mcp:(?!notion:)\w[\w-]*:\S+|mcp:notion:[0-9a-f]{32}", str(source)):
+        sys.exit("REFUSED: milestones_source is %r in %s. Fix: url:<link>, mcp:<server>:<id>, mcp:notion:<32 hex>." % (source, path))
     added = [k for k in repo_defaults() if k not in held]
     merged = dict(held, **{k: v for k, v in repo_defaults().items() if k not in held})
     merged["_help"] = repo_help(held)

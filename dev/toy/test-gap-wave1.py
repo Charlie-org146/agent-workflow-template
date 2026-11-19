@@ -109,7 +109,7 @@ for var in ("LOOP_FREE_GB", "LOOP_MACHINE", "LOOP_MEMORY_WAIT_SECONDS"):
 # 2. milestones_source and the repo's own image links
 home = os.path.join(tmp, ".loop", "config.json")
 GOOD = ["", "url:https://example.org/ms", "mcp:notion:" + "ab12" * 8, "mcp:other:page-1"]
-BAD = ["plain words", "url:http://example.org", "mcp:notion:abc", "mcp:notion:" + "xyz!" * 8, "mcp:notion:" + "ab12" * 9, 5]
+BAD = ["plain words", "url:", "mcp:notion:abc", "mcp:notion:" + "xyz!" * 8, "mcp:notion:" + "ab12" * 9, 5]
 known = dict((k, d) for k, _, d, _ in settings.keys(settings.REPO)).get("milestones_source", "absent")
 
 
