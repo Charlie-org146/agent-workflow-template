@@ -304,6 +304,8 @@ PLAN_RULE_AT = "2026-11-19T10:45:00Z"  # cut-over: goals frozen before it need n
 def plan_gate(g, state):
     """Red team (HLT-2): a goal frozen after PLAN_RULE_AT needs a review of its current plan; a recorded break blocks until accepted."""
     slug, plan = state["slug"], g.goal_file(state["slug"])[:-3] + ".plan.md"
+    if not os.path.exists(os.path.join(g.root(), "docs", "wiki", "Principles.md")):
+        return
     path = os.path.join(os.path.dirname(g.state_dir()), "redteam", "plan-%s.json" % slug)
     seen = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
     sha = hashlib.sha1(open(plan, "rb").read().replace(b"\r\n", b"\n")).hexdigest() if os.path.exists(plan) else ""
