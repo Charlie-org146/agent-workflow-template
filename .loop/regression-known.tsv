@@ -20,3 +20,7 @@ scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (1
 docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,000 and under the 20,480 fail line), see #4653
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
 sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
+no-flow-refused	red on main (in-session flow.py path, see #4852)
+pending-waits	red on main (in-session flow.py path, see #4852)
+cut-needs-verify	red on main (in-session flow.py path, see #4852)
+wiki-release	red on main (in-session flow.py path, see #4852)
