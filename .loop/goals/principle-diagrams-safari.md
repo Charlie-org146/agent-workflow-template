@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-wiki-images.sh`.
+   Expect: every line starts with PASS, ending ALL PASS (publish copies the image; check fails img/, ../ and a missing file).
+2. Run `python3 skills/workflow-docs/scripts/docs.py publish --dry-run`.
+   Expect: it prints WOULD WRITE for principles-overview.svg and the eight principle-NN-*.svg files.
+3. After the merge publishes the wiki, open the Principles page of the GitHub wiki in Safari.
+   Expect: the overview and the eight principle diagrams all show.
