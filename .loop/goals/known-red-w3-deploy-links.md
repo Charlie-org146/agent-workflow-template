@@ -14,3 +14,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `LOOP_FREE_GB=4.5 python3 skills/workflow-regression/scripts/regression.py run deploy-doc14-reviewed`, then the same for deploy-not-locked, deploy-section-optional, deploy-table-refused and deployments-counts-pages.
+   Expect: each prints "RESULT 1 passed, 0 known, 0 failed".
+2. Run the same command for home-topic-column, link-page-passes, link-unread-never-pass and del-16-on-page.
+   Expect: each prints "RESULT 1 passed, 0 known, 0 failed".
+3. Run `grep -c '^doc19-readme-links' .loop/regression.tsv`.
+   Expect: 0 (the row is removed: its behaviour was replaced by DOC-23).
