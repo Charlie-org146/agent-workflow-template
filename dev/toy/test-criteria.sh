@@ -43,7 +43,7 @@ page() { # NAME CRITERIA-LINES: writes a page with an empty Tests section, then 
 }
 python3 - <<'PY'
 import json
-c = json.load(open(".loop/config.json")); c["criteria"] = True
+c = json.load(open(".loop/config.json")); c["criteria"] = True; c["min_free_memory_gb"] = 0  # the default floor held every toy lane on a busy machine
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "Give me the median" | The calculator prints it. |\n' >> README.md  # the DOC-5 front door
@@ -216,15 +216,68 @@ grep -q "^GAP DEL-1" <<<"$out" && bad "DEL-1 still a gap" || ok "a row closes th
 grep -q "^GAP DEL-2" <<<"$out" && ok "DEL-2 still a gap" || bad "DEL-2 gap"
 git add -A; git commit -qm "Criteria" >/dev/null
 
+howto() { # howto PAGE: writes the How-to-use page DOC-18 and DOC-19 ask for, one item per functional requirement now on PAGE
+  python3 - "$1" <<'PYEND'
+import re, sys
+page = sys.argv[1]
+text = open("docs/wiki/%s.md" % page).read()
+ids, group = [], ""
+for line in text.split("\n## Tests")[0].splitlines():
+    group = line[4:].strip() if line.startswith("### ") else group
+    hit = re.match(r"^- ([A-Z]{2,5}-\d+):", line)
+    if hit and group == "Functional":
+        ids.append(hit.group(1))
+items = "".join("- %s: Run `calc.py median LIST` and read its one line.\n" % i for i in ids)
+fence = "`" * 3
+link = "How to use: [How-to-use-%s](How-to-use-%s)" % (page, page)
+if link not in text:
+    open("docs/wiki/%s.md" % page, "w").write(text.replace("\n## Problem", "\n" + link + "\n\n## Problem", 1))
+open("docs/wiki/How-to-use-%s.md" % page, "w").write("""<!-- workflow-docs -->
+# How to use %s
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+### System diagram
+
+%stext
+[Command: calc.py | the toy repo] --prints one line--> (the reader)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+%s
+
+## How to reach or run it
+
+%s
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [%s](%s)
+""" % (page, fence, fence, items, page, page))
+PYEND
+}
 echo "== cut needs a passing row for every criterion"
 git push -q origin main
 $goal new crit --here --goal "Change calc" --done "calc changed" >/dev/null
-printf '\n# crit\n' >> calc.py
+printf '\nCRIT = 1\n' >> calc.py
 python3 - <<'PY'
 p = ".loop/goals/crit.md"; t = open(p).read().replace("## Verify by hand\n", "## Verify by hand\n\n1. Open calc.py.\n   Expect: the change.\n", 1); open(p, "w").write(t)
 PY
 echo "Covers the change too, with more words for the check." >> docs/wiki/Delivery.md
-$cri render >/dev/null; git add -A; git commit -qm "Change calc"
+$cri render >/dev/null; howto Delivery; git add -A; git commit -qm "Change calc"
 bash "$here/dev/toy/flow-done.sh" crit; $goal pr crit >/dev/null
 cutout=$($rel cut crit 2>&1 || true); grep -q "DEL-2 (no regression row)" <<<"$cutout" && ok "cut refuses a missing row" || { bad "cut missing row"; echo "$cutout" | head -5; }
 $reg add del-2 --level land --command "false" --goal DEL-2 --describe "$gwt" >/dev/null
