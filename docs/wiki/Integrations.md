@@ -3,7 +3,7 @@
 
 How to use: [How-to-use-Integrations](How-to-use-Integrations)
 
-Review: **Unreviewed** <!-- kept known-red-w4-docs-health@8a9e8b87 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 ## Problem
 - The loop works with systems outside the repo, such as documents, trackers, mail, chat, agents and deploy targets, and each one is wired in its own way, so a new system means rebuilding something.

@@ -76,7 +76,7 @@ merge.pods = None
 real_run = subprocess.run
 OPEN, CLOSED, calls, tip, merged = [], [{"number": 3, "title": "done thing"}], [], [rc], []
 SUITE = ["PASS a", "PASS b"]
-HEALTH = ["HEALTH: green"]
+HEALTH = ["HEALTH: green (12 pass, 3 warn, 0 fail, 0 unread)"]
 DOCS = []
 MAIL = [""]
 review.run_in = lambda work, script, *args: "\n".join(SUITE if "regression" in script else HEALTH)
@@ -129,7 +129,7 @@ def tags():
 def reset():
     OPEN[:] = []
     SUITE[:] = ["PASS a", "PASS b"]
-    HEALTH[:] = ["HEALTH: green"]
+    HEALTH[:] = ["HEALTH: green (12 pass, 3 warn, 0 fail, 0 unread)"]
     DOCS[:] = []
     MAIL[0] = ""
     open(page, "w").write(GOOD)
@@ -180,6 +180,14 @@ reset()
 HEALTH[:] = ["HEALTH: not green"]
 code, said = gate()
 check("a failing health check refuses", code == 1 and "(health): HEALTH: not green" in said, said, "checks")
+reset()
+for bad in ("HEALTH: not green (9 pass, 0 warn, 1 fail, 0 unread)", "HEALTH: green (9 pass, 0 warn, 2 fail, 0 unread)", "HEALTH: green (9 pass, 0 warn, 0 fail, 1 unread)", "HEALTH: greenish"):
+    HEALTH[:] = [bad]
+    code, said = gate()
+    check("a counted health verdict that is not 0 fail and 0 unread refuses: " + bad, code == 1 and "(health): " + bad in said, said, "checks")
+reset()
+code, said = gate()
+check("the real counted green verdict passes the health check", code == 0 and "(health)" not in said, said, "checks")
 reset()
 open(page, "w").write(GOOD.replace("PG-2: **Reviewed 2026-11-01**", "PG-2: **Unreviewed**"))
 git("commit", "-q", "-am", "unreviewed"); git("push", "-q", "origin", "main"); git("branch", "-f", "staging", "main")
