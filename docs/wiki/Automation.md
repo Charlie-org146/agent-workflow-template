@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept regroup-regression@1ad116b7 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept principle-diagrams-safari@cba3a2bf -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
