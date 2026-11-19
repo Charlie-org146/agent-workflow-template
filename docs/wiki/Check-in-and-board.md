@@ -139,7 +139,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | CHK-1 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
-| [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-19 |
+| [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-19 |
 | [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. Given two machines' STATUS, when top builds the board, then one board lists both machines' running goals. | PASS 2026-11-19 |
 | [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-19 |
@@ -244,8 +244,10 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | - | requirement | CHK-6 | no passing test | not enforced |
 | [blockers-first](Tests#t-blockers-first) | requirement | CHK-7 | Given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not. | PASS 2026-11-14 |
 | - | requirement | CHK-9 | no passing test | not enforced |
-| [eta-slip-reported](Tests#t-eta-slip-reported) | requirement | CHK-10 | Given a goal's eta that moved later than the one last reported, when status runs, then a slip over 15 minutes sends STATUS at once and a slip of 10 minutes does not. | PASS 2026-11-19 |
-| [eta-forecast-pace](Tests#t-eta-forecast-pace) | requirement | CHK-11 | Given the night's merge gaps of 44, 49, 22 and 20 minutes, when the finish is forecast, then the pace is their median (33 minutes) and the forecast is the last merge plus one gap per goal left, with the quartiles as a band. | PASS 2026-11-19 |
+| [eta-slip-reported](Tests#t-eta-slip-reported) | requirement | CHK-10 | Given a goal's eta that moved later than the one last reported, when status runs, then a slip over 15 minutes sends STATUS at once and a slip of 10 minutes does not. | not run |
+| - | requirement | CHK-10 | no passing test | not enforced |
+| [eta-forecast-pace](Tests#t-eta-forecast-pace) | requirement | CHK-11 | Given the night's merge gaps of 44, 49, 22 and 20 minutes, when the finish is forecast, then the pace is their median (33 minutes) and the forecast is the last merge plus one gap per goal left, with the quartiles as a band. | not run |
+| - | requirement | CHK-11 | no passing test | not enforced |
 | [mon9-board-fast](Tests#t-mon9-board-fast) | requirement | CHK-8 | Given 12 goals with pull requests and a slow GitHub, when the board is built, then it takes under 10 seconds. | PASS 2026-11-10 |
 | [held-stale-next](Tests#t-held-stale-next) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a session goal with an old failure report and a newer session report, when the live board prints, then its next line is the newer report. | PASS 2026-11-10 |
 | [held-shows-held](Tests#t-held-shows-held) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a running goal with no worker (session reassigned, worktree kept), when the live board prints, then it is listed as held, not running and not as a background worker. | PASS 2026-11-10 |
