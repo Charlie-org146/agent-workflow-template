@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-release/scripts/wiki.py
+# reads: skills/workflow-release/scripts/wiki.py skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/graph.py
 """DEL-15, batch merge: ready goals with disjoint touches group into batches of 3 or 4; a failing batch splits to name the culprit."""
 import json
 import os
@@ -44,6 +44,43 @@ with tempfile.TemporaryDirectory() as tmp:
     out = subprocess.run([sys.executable, script, "batch", "plan"], cwd=tmp, capture_output=True, text=True).stdout.splitlines()
     check(out == ["BATCH 1: g1, g2, g3", "BATCH 2: g5"], "plan lists the ready, unheld goals in batches and leaves held and running goals out: %s" % out)
     os.chdir(here)
+# The merge slot (#5309): a goal whose lane finished (PR open) no longer holds it; a running lane still does; the wait names and refuses.
+sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts"))
+import graph  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+
+with tempfile.TemporaryDirectory() as tmp:
+    runs = os.path.join(tmp, "runs")
+    os.makedirs(runs)
+    record = lambda slug, **kv: json.dump(dict({"slug": slug}, **kv), open(os.path.join(runs, slug + ".json"), "w"))
+    graph.pr_queue("hold", runs, "a")
+    time.sleep(0.05)
+    graph.pr_queue("hold", runs, "b")
+    record("a", status="running")
+    check(graph.pr_queue("before", runs, "b") == "a", "a goal whose lane is still running keeps the slot: b waits for a")
+    record("a", status="done", pr="https://example.test/pull/1")
+    check(graph.pr_queue("before", runs, "b") == "", "a goal whose lane finished (PR open) does not hold the slot: b does not wait")
+    check(not os.path.exists(os.path.join(runs, "..", "pr-slots", "a")), "and its slot file is gone")
+    graph.pr_queue("free", runs, "b")
+    graph.pr_queue("hold", runs, "c")
+    os.environ.update(LOOP_SLOT_POLL="0.05", LOOP_MERGE_LOCK_SECONDS="1")
+    record("c", status="running")
+    graph.pr_queue("hold", runs, "d")
+    live = [True]
+
+    def keep():  # the holder's lane keeps its slot fresh while it runs
+        while live[0]:
+            graph.pr_queue("hold", runs, "c")
+            time.sleep(0.1)
+    threading.Thread(target=keep, daemon=True).start()
+    try:
+        graph.pr_queue("wait", runs, "d")
+        check(False, "a wait behind a running lane refuses past LOOP_MERGE_LOCK_SECONDS")
+    except SystemExit as error:
+        check("REFUSED" in str(error) and "c" in str(error), "a wait behind a running lane refuses past LOOP_MERGE_LOCK_SECONDS, naming it: %s" % error)
+    live[0] = False
 if not failed:
+    print("PASS: #5309: a finished lane releases the merge slot")
     print("PASS: DEL-15: a batch of 3 passing goals merges together and a failing batch splits to name the culprit")
 sys.exit(1 if failed else 0)
