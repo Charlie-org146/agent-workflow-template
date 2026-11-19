@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. On a branch that edited one line of `.loop/regression.tsv`, run `python3 skills/workflow-regression/scripts/lanes_cli.py affected --root . -- .loop/regression.tsv | head -1`.
+   Expect: `AFFECTED n of m rows`, with n a few hundred at most (it was about 1,260 of 1,300).
+2. Run `python3 skills/workflow-regression/scripts/lanes_cli.py affected --root . -- .loop/regression-known.tsv | head -1` on a branch that did not edit the known list.
+   Expect: `AFFECTED 0 of m rows ()`.
