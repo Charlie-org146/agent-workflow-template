@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
+Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -192,7 +192,7 @@ None
 | [gate-issue-not-doubled](Tests#t-gate-issue-not-doubled) | requirement | REL-9 | Given an open issue for a page's findings, when the gate files that page again, then no second issue is opened. | not run |
 | [gate-issue-on-feature-backlog](Tests#t-gate-issue-on-feature-backlog) | requirement | REL-9 | Given findings on an untouched How-to-use-X page, Home or a skill doc, when the gate files them, then the issue sits on Backlog: X or Backlog: Documentation, made when missing. | not run |
 | [gate-gh-failure-safe](Tests#t-gate-gh-failure-safe) | requirement | REL-9 | Given gh fails or is not installed, when the gate files an issue, then nothing is filed and the merge check does not crash. | not run |
-| [gate-pending-scoped](Tests#t-gate-pending-scoped) | requirement | REL-9 | Given findings on untouched pages, when wiki.py prepare or merge.py checks the wiki, then only the goal's own and generated findings remain, and prepare prints the rest as left for health without filing. | not run |
+| [gate-pending-scoped](Tests#t-gate-pending-scoped) | requirement | REL-9 | Given findings on untouched pages, when wiki.py prepare or merge.py checks the wiki, then only the goal's own and generated findings remain, and prepare prints the rest as left for health without filing; and link-form PRD pages with one migrated local page do not make it refuse on the unmigrated-Revisions NOTE (the old code does). | PASS 2026-11-19 |
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | REL-9 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |

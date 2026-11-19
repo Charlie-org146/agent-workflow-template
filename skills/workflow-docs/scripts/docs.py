@@ -5,9 +5,8 @@ usage: docs.py <command> [options]
 
   survey                       show the wiki's pages and this repo's page map
   add PAGE --paths A,B         add a page and the paths it describes
-  check [--base REF] [--own]   list missing, stale, unmapped and unwritten pages, counts the repo doesn't match, and
-                               broken criteria; exit 1 if any. --own: a stale page this branch's diff doesn't touch is
-                               a FINDING line, not a failure (the pr lane's rows use it)
+  check [--base REF] [--own]   list missing, stale, unmapped and unwritten pages, wrong counts, broken criteria and
+                               unpublishable images; exit 1 if any. --own: a stale page this branch doesn't touch is a FINDING
   audit [--base REF] [--dry-run]
                                the one command: check every required doc, fix what is mechanical, list wording to rewrite
   criteria PAGE                print the requirement format and the next free id for a page
@@ -21,8 +20,8 @@ usage: docs.py <command> [options]
 With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the page
 format (FORMAT lines) and that the generated Tests page matches a fresh render.
 
-Publish never deletes a page, and refuses to replace a page without this tool's marker unless you name it with --adopt.
-It runs git and nothing else.
+Publish never deletes a page, refuses to replace one without this tool's marker unless --adopt names it, and copies the
+images its pages embed. It runs git and nothing else.
 """
 import argparse
 import json
@@ -198,6 +197,7 @@ def problems(root, base):
                                           cwd=root).splitlines(), mine)
         if changed and not netless(root, judged, mine):
             found.append(("STALE", page, "%d commits since the page: %s" % (len(changed), changed[0][:70])))
+    found += counting.image_trouble(root, folder, rows)
     held = os.path.join(root, folder)
     if os.path.isdir(held):
         for name in sorted(os.listdir(held)):
@@ -353,12 +353,13 @@ def cmd_publish(args):
                 if not args.dry_run:
                     with open(target, "w") as handle:
                         handle.write(text)
+        changed += counting.copy_images(root, wiki_dir(root), set(rows) | set(made), wiki, args.dry_run)
         for page in changed:
             print("%s %s" % ("WOULD WRITE" if args.dry_run else "WROTE", page))
         if args.dry_run or not changed:
             print("NO CHANGE" if not changed else "DRY RUN: nothing pushed")
             return 0
-        git("add", "--", *[page + ".md" for page in changed], cwd=wiki)
+        git("add", "--", *[c if "." in c else c + ".md" for c in changed], cwd=wiki)
         head = git("rev-parse", "--short", "HEAD", cwd=root)
         git(*identity(wiki), "commit", "-m", "Docs from %s: %s" % (head, ", ".join(changed)), cwd=wiki)
         push(wiki, ", nothing changed")
