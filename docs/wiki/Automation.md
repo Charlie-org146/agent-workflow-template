@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept regroup-guardrails@c97dfe1a -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept principle-diagrams-safari@6397242e -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -124,7 +124,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-12 |
+| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-19 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-12 |
 | [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given a toy repo whose regression_runs is mac and one failing row, when the tick runs, then health runs, the regression runs live, one issue is filed for the failing row, the digest is posted and the tick says REGRESSION: runs on the Mac. | not run |
 | [ls-public-tick](Tests#t-ls-public-tick) | requirement | AUT-1 | Given a toy repo whose regression_runs is actions, when the tick runs, then health runs, no regression runs the tick says REGRESSION: runs in GitHub Actions and the newest suite-time artifact is fetched into the git common dir. | not run |

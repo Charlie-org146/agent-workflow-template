@@ -1,5 +1,69 @@
 # Changelog
 
+## v1.0.80 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.79 - 2026-11-19
+
+- review.py: gate and promote take --suite-from RUN, REL-3's suite from a CI run of the regression workflow (o191)
+- REL-3 r3 names a CI run as a suite source (o191); the gate-ci-suite row, seen red then green
+- How-to-use-Release: review.py gate and promote take --suite-from RUN (o191)
+- Delivery pages kept after the review.py change (stamp lines only)
+- gate-ci-suite: reviewer fixes: only a regression-workflow run, no run id recorded when none was read, --suite-from needs a run id; toy controls for each
+- Release and Delivery pages kept after the final review.py change (stamp lines only)
+- Lane: re-render the Tests tables
+- gate-ci-suite toy: run with an empty LOOP_ROLE so a lane or worker shell does not refuse promote
+- Lane: re-render the Tests tables
+- max_regression_rows 1300 to 1310 for v2.0 (TOP-DECISION 45, owner record o201); START.md and Home re-rendered
+- Lane: re-render the Tests tables
+- Merge main (v1.0.76) into gate-ci-suite
+- Lane: re-render the Tests tables
+- Revert "max_regression_rows 1300 to 1310 for v2.0 (TOP-DECISION 45, owner record o201); START.md and Home re-rendered"
+- Tests tables render the merged REL-3 row
+- Merge main (v1.0.77) into gate-ci-suite
+- Guardrails pages kept after the config edit and its revert (stamp lines only)
+- Delivery pages kept again after the merge of main (stamp lines only)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- criteria.py: trim 33 bytes of docstring prose to get under the 20,480 script cap (no behaviour change)
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main (v1.0.78) into gate-ci-suite-net0
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.78 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.77 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.76 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.75 - 2026-11-19
 
 - Design: regroup-guardrails

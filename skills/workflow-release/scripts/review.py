@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-"""The review hold (DEL-13, issue 3803) and the hard-release gate (REL-1 to REL-8, issue 4914).
+"""The review hold (DEL-13) and the hard-release gate (REL-1 to REL-8).
 
 usage: review.py record SLUG
-       review.py gate vX [--ref REF] [--no-suite]   |   review.py promote vX --owner-record ID [--ref REF]
+       review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]
+       review.py promote vX --owner-record ID [--ref REF] [--suite-from RUN]
        review.py revert vX
 
-With "review_hold": true, merge.py merges a goal only after the operation session has recorded that it read the diff.
-
-record stores the pull request's head as the reviewed one; a later push moves the head, so the hold applies again. Only
-the operation role records: LOOP_ROLE=worker, or a path inside a goal worktree, is refused and nothing is written.
-Until a review of the current head is recorded merge.py refuses with REVIEW_HOLD; the goal stays done and `review_wait`
-puts "merge waiting on review" on the board and in the check-in. It runs git and gh and nothing else.
+With "review_hold": true, merge.py merges only a head the operation session ran record on (else REVIEW_HOLD).
+--suite-from RUN takes REL-3's suite from a completed regression run on the gate ref with every shard reported, nothing UNRUN
+and every row logged; else "suite run does not cover the candidate". The run id goes in loop/gate/vX.json.
 """
 import glob
 import importlib
@@ -29,14 +27,14 @@ os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 def worker():
-    """True for a worker or a path inside a goal worktree, where a goal could record its own review."""
+    """True for a worker or a goal worktree."""
     common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
     inside = os.path.join(os.path.normcase(os.path.realpath(common)), "loop", "worktrees") + os.sep
     return os.environ.get("LOOP_ROLE") == "worker" or os.path.normcase(os.path.realpath(os.getcwd())).startswith(inside)
 
 
 def held(cfg, state, head):
-    """"" when merging may go ahead, else the REVIEW_HOLD refusal: the setting is on and HEAD has no recorded review."""
+    """"" to merge, else the REVIEW_HOLD refusal."""
     if cfg.get("review_hold") is not True:
         return ""
     if head and (state.get("review") or {}).get("head") == head:
@@ -48,7 +46,7 @@ def held(cfg, state, head):
 
 
 def wait(state):
-    """Mark the goal as a merge waiting on review (exit 5)."""
+    """Mark the goal as waiting on review (exit 5)."""
     state["review_wait"] = True
     release.save(state, "merge waiting on review (REVIEW_HOLD)")
     return 5
@@ -83,12 +81,10 @@ def main():
 
 
 def proven(top):
-    """Row ids with a PASS on the current commit in any lane record of this repo (loop/tests/*.json in the git common folder).
-    regression-runs.tsv holds no commit, so a PASS there is not trusted: a row that passed on an older commit runs again."""
+    """Row ids with a PASS on this commit in a lane record (loop/tests/*.json); regression-runs.tsv is not trusted."""
     head = release.git("rev-parse", "HEAD", cwd=top, check=False)
-    common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top, check=False)
     found = set()
-    for path in glob.glob(os.path.join(common, "loop", "tests", "*.json")):
+    for path in glob.glob(os.path.join(common_of(top), "tests", "*.json")):
         try:
             rows = json.load(open(path)).get("rows") or {}
         except (OSError, ValueError, AttributeError):
@@ -97,24 +93,23 @@ def proven(top):
     return found
 
 
+def tsv(*path):
+    """Tab-file rows, padded; [] if missing."""
+    try:
+        return [l.rstrip("\n").split("\t") + [""] * 5 for l in open(os.path.join(*path)) if l[0] != "#"]
+    except OSError:
+        return []
+
+
 def left_text(left):
-    """The LEFT section of the cut's output and release notes: the count and the ids, or '' when nothing was left."""
+    """The cut's LEFT section: the count and the ids, or ''."""
     return "\n## LEFT\n\nLEFT %d rows were not run before the cut's stop: %s\n" % (len(left), ", ".join(left)) if left else ""
 
 
 def criteria(top, cfg, doc_rows, fails):
-    """(unmet, left): requirements with no passing row, and the rows the cut did not run before its stop (900 seconds, or
-    LOOP_CUT_SECONDS). A row is skipped when it is known failing or has a PASS on the current commit; the rest run until the stop."""
-    seconds = float(os.environ.get("LOOP_CUT_SECONDS") or 900)
-    try:
-        rows = [line.rstrip("\n").split("\t") + [""] * 5 for line in open(os.path.join(top, ".loop", "regression.tsv")) if line[0] != "#"]
-    except OSError:
-        rows = []
-    out, left, stop, skip = [], [], time.time() + seconds, proven(top)
-    try:
-        skip |= {line.split("\t")[0] for line in open(os.path.join(top, ".loop", "regression-known.tsv")) if line[0] != "#"}
-    except OSError:
-        pass
+    """(unmet, left): requirements with no passing row, and rows the cut left unrun (LOOP_CUT_SECONDS, 900)."""
+    rows, stop = tsv(top, ".loop", "regression.tsv"), time.time() + float(os.environ.get("LOOP_CUT_SECONDS") or 900)
+    out, left, skip = [], [], proven(top) | {r[0] for r in tsv(top, ".loop", "regression-known.tsv")}
     for page in doc_rows(top):
         try:
             part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(
@@ -147,10 +142,7 @@ def common_of(top):
 
 
 def table(top, name):
-    try:
-        return [l.split("\t") + [""] * 5 for l in open(os.path.join(common_of(top), name)).read().splitlines() if l[:1] != "#"]
-    except OSError:
-        return []
+    return tsv(common_of(top), name)
 
 
 def waivers(top, kind):
@@ -189,10 +181,25 @@ def run_in(work, script, *args):
         return ""
 
 
-def check_suite(work, red):
+ROW = re.compile(r"(?:^|Z )(PASS|FAIL|KNOWN|NOTRUN|ENV|SKIPPED) (\S+)", re.M)
+
+
+def ci_text(work, run, sha):
+    """(a run's log, why it misses sha)."""
+    info = json.loads(release.run(["gh", "run", "view", run, "--json", "headSha,status,workflowName"], cwd=work).stdout or "{}")
+    text = release.run(["gh", "run", "view", run, "--log"], cwd=work).stdout if info.get("status") == "completed" else ""
+    seen = {r for _, r in ROW.findall(text)}
+    gone = [r[0] for r in tsv(work, ".loop", "regression.tsv") if r[1] in ("land", "nightly") and r[0] not in seen]
+    return text, ("another commit or workflow" if (info.get("headSha"), info.get("workflowName")) != (sha, "regression") else "not completed" if not text else "cut by budget"
+                  if not re.search(r"SHARDS (\d+) of \1 reported\. UNRUN 0\b", text) else "%d rows are unlogged" % len(gone) if gone else "")
+
+
+def check_suite(work, red, run="", sha=""):
     """REL-3: a FAIL, NOTRUN, ENV, KNOWN or budget-LEFT row refuses unless a red waiver names its issue."""
-    text = run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly")
-    rows = re.findall(r"^(PASS|FAIL|KNOWN|NOTRUN|ENV) (\S+)", text, re.M)
+    text, why = ci_text(work, run, sha) if run else (run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly"), "")
+    if why:
+        return [("suite", "suite run does not cover the candidate (%s)" % why, ["suite"])], {}
+    rows = [m for m in ROW.findall(text) if m[0] != "SKIPPED"]
     rows += [("LEFT", "budget-left")] * bool(re.search(r"^BUDGET .*LEFT [1-9]", text, re.M))
     tally = {k: sum(s == k for s, _ in rows) for k in ("PASS", "FAIL", "KNOWN", "NOTRUN", "ENV", "LEFT")}
     if not rows:
@@ -206,8 +213,8 @@ def check_health(work):
     return ([] if verdict == "HEALTH: green" else [("health", verdict, ["health"])]), verdict
 
 
-def gate_refusals(top, cfg, ver, ref, suite=True):
-    """([(check, subject, keys)], facts): the five checks on ref, saved to loop/gate/vX.json."""
+def gate_refusals(top, cfg, ver, ref, suite=True, run=""):
+    """([(check, subject, keys)], facts) of the checks on ref."""
     work, moved, base = tempfile.mkdtemp(prefix="gate-"), waivers(top, "moved"), release.base_of(top, cfg)
     got = gh_json("issue", "list", "--milestone", "v%d.0" % ver, "--state", "open")
     out = [("issues", "#%d %s" % (i["number"], i["title"][:60]), ["#%d" % i["number"]]) for i in got or [] if "#%d" % i["number"] not in moved]
@@ -221,19 +228,19 @@ def gate_refusals(top, cfg, ver, ref, suite=True):
             pages = list(release.doc_rows(work))
             out += bad + [("docs", l.strip()[:100], [p for p in pages if p in l] or ["docs"]) for l in release.docs_trouble(work, base, whole=True)]
             if suite:
-                for key, bad in (("suite", check_suite(work, waivers(top, "red"))), ("health", check_health(work))):
+                for key, bad in (("suite", check_suite(work, waivers(top, "red"), run, release.git("rev-parse", "HEAD", cwd=work))), ("health", check_health(work))):
                     out += bad[0]
                     facts[key] = bad[1]
         finally:
             release.run(["git", "worktree", "remove", "--force", work], cwd=top)
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(common_of(top), "gate"), exist_ok=True)
-    json.dump({"ref": ref, "at": release.now(), "refusals": out}, open(os.path.join(common_of(top), "gate", "v%d.json" % ver), "w"))
+    json.dump({"ref": ref, "at": release.now(), "suite_run": run if suite else "", "refusals": out}, open(os.path.join(common_of(top), "gate", "v%d.json" % ver), "w"))
     return out, facts
 
 
 def frozen(top, head, slug):
-    """REL-5: "" or FROZEN: from a major's rc tag until its release tag a goal merges only if its goal file names a gate subject."""
+    """REL-5: after an rc tag a goal merges only if its goal file names a gate subject."""
     live = sorted({int(m.group(1)) for m in map(RC.match, release.git("tag", "--list", "v*.0.0-rc.*", cwd=top, check=False).split())
                    if m and not OK(["refs/tags/v%s.0.0" % m.group(1)], top)})
     if not live:
@@ -250,7 +257,7 @@ def frozen(top, head, slug):
 
 
 def email(top, subject, text):
-    """"" when mailed, else why not (the secrets come from mail.env, as notify.py reads it)."""
+    """"" when mailed, else why not."""
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts"))
     try:
         notify = importlib.import_module("notify")  # another skill's script: no static import
@@ -273,11 +280,11 @@ def state_report(top, ver, tag, sha, facts):
                    + ["- #%d %s" % (i["number"], i["title"]) for i in closed] + ["## Changes since " + (prior or "the start")] + log) + NL
 
 
-def promote(top, cfg, ver, rec, ref):
+def promote(top, cfg, ver, rec, ref, run=""):
     tag, rel, base = "v%d.0.0" % ver, "release/v%d" % ver, cfg.get("base", "main")
     if tag not in re.split(r"[,\s]+", " ".join(r[4] for r in table(top, "owner-words.tsv") if r[0] == rec)) or OK(["refs/tags/" + tag], top):
         sys.exit("REFUSED (OWNER_RECORD): owner-words record %r must name %s, and %s must not exist. Nothing changed." % (rec, tag, tag))
-    bad, facts = gate_refusals(top, cfg, ver, ref)
+    bad, facts = gate_refusals(top, cfg, ver, ref, True, run)
     if bad:
         print(NL.join("GATE REFUSED v%d.0 (%s): %s" % (ver, c, s) for c, s, _ in bad) + NL + "NOT PROMOTED %s: no tag, branch or release." % tag)
         return 1
@@ -326,6 +333,8 @@ def gate_cli(args):
         sys.exit("REFUSED: give the major as vX, for example v2.")
     ver, top = int(spec.group(1)), release.git("rev-parse", "--show-toplevel")
     cfg, opt = release.read_config(top), lambda flag: rest[rest.index(flag) + 1] if flag in rest[:-1] else ""
+    if "--suite-from" in rest and not opt("--suite-from"):
+        sys.exit("REFUSED: --suite-from needs a run id.")
     if args[0] != "gate" and worker():
         sys.exit("REFUSED (REVIEW_ROLE): only the operation session does this, on the owner's words.")
     if args[0] == "revert":
@@ -333,8 +342,8 @@ def gate_cli(args):
     tags = release.git("tag", "--list", "v%d.0.0-rc.*" % ver, "--sort=-v:refname", cwd=top, check=False).split()
     ref = opt("--ref") or (tags + [n for n in ("origin/staging", release.base_of(top, cfg)) if OK([n], top)] + ["HEAD"])[0]
     if args[0] == "promote":
-        return promote(top, cfg, ver, opt("--owner-record"), ref)
-    bad, _ = gate_refusals(top, cfg, ver, ref, "--no-suite" not in rest)
+        return promote(top, cfg, ver, opt("--owner-record"), ref, opt("--suite-from"))
+    bad, _ = gate_refusals(top, cfg, ver, ref, "--no-suite" not in rest, opt("--suite-from"))
     print(NL.join("GATE REFUSED v%d.0 (%s): %s" % (ver, c, s) for c, s, _ in bad) or "GATE PASS v%d.0" % ver)
     return 1 if bad else 0
 

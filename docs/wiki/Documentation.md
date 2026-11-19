@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
+Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -72,7 +72,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is INT-8.)
 
 ## Success metrics
-- The docs check prints DOCS OK on the main branch after every merge.
+- The docs check prints DOCS OK on the main branch after every merge, and a link-form PRD page never holds a merge on the unmigrated-Revisions note.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
 - No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
 
@@ -256,12 +256,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 |---|---|---|---|---|
 | [stale-found](Tests#t-stale-found) | requirement | DOC-1 | Given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale. | PASS 2026-11-12 |
 | [publish-refused-stale](Tests#t-publish-refused-stale) | requirement | DOC-1 | Given a stale wiki page, when the wiki is published, then publishing is refused. | PASS 2026-11-12 |
-| [stale-merge-order](Tests#t-stale-merge-order) | requirement | DOC-1 | Given two docs merges, when they merge in either order, then no page is left stale. | PASS 2026-11-18 |
-| [page-shape](Tests#t-page-shape) | requirement | DOC-1 | Given a wiki page with a Commands section, when the check runs, then it fails. | PASS 2026-11-18 |
-| [criteria-no-scripts](Tests#t-criteria-no-scripts) | requirement | DOC-1 | Given a criterion that names a script, when the check runs, then it fails. | PASS 2026-11-18 |
-| [tests-not-enforced](Tests#t-tests-not-enforced) | requirement | DOC-1 | Given a criterion with no passing test, when the page is shown, then it shows as not enforced. | PASS 2026-11-18 |
-| [tests-last-run](Tests#t-tests-last-run) | requirement | DOC-1 | Given recorded runs, when the Tests table is shown, then it shows each test's last result and date. | PASS 2026-11-18 |
-| [tests-table-stale](Tests#t-tests-table-stale) | requirement | DOC-1 | Given a Tests table behind the last run, when the check runs, then it is reported stale. | PASS 2026-11-18 |
+| [stale-merge-order](Tests#t-stale-merge-order) | requirement | DOC-1 | Given two docs merges, when they merge in either order, then no page is left stale. | PASS 2026-11-19 |
+| [page-shape](Tests#t-page-shape) | requirement | DOC-1 | Given a wiki page with a Commands section, when the check runs, then it fails. | PASS 2026-11-19 |
+| [criteria-no-scripts](Tests#t-criteria-no-scripts) | requirement | DOC-1 | Given a criterion that names a script, when the check runs, then it fails. | PASS 2026-11-19 |
+| [tests-not-enforced](Tests#t-tests-not-enforced) | requirement | DOC-1 | Given a criterion with no passing test, when the page is shown, then it shows as not enforced. | PASS 2026-11-19 |
+| [tests-last-run](Tests#t-tests-last-run) | requirement | DOC-1 | Given recorded runs, when the Tests table is shown, then it shows each test's last result and date. | PASS 2026-11-19 |
+| [tests-table-stale](Tests#t-tests-table-stale) | requirement | DOC-1 | Given a Tests table behind the last run, when the check runs, then it is reported stale. | PASS 2026-11-19 |
 | [template-sheet](Tests#t-template-sheet) | requirement | DOC-1 | Given a changed template sheet, when the docs check runs, then it reads the page rules from the sheet, so the check changes with it. | PASS 2026-11-12 |
 | [docs-audit](Tests#t-docs-audit) | requirement | DOC-1 | Given rewording left in the docs, when the docs command runs, then it fixes the Tests table, lists wording to rewrite and exits 1 while any is left. | PASS 2026-11-12 |
 | [release-runs-audit](Tests#t-release-runs-audit) | requirement | DOC-1 | Given trouble in the docs, when the release step runs, then it reads the docs command and sees the trouble. | PASS 2026-11-12 |
@@ -299,11 +299,11 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [docs-scripts-under-19000](Tests#t-docs-scripts-under-19000) | requirement | DOC-1 | Given the workflow-docs scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [template-in-commands](Tests#t-template-in-commands) | requirement | DOC-1 | Given the docs skill, when its page rules are read, then they live in references/commands.md and no separate template file ships. | not run |
 | [docs-scripts-import-by-name](Tests#t-docs-scripts-import-by-name) | requirement | DOC-1 | Given the docs scripts, when render.py and prd.py load a sibling script, then they import it by name through importlib and never call __import__. | PASS 2026-11-15 |
-| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-18 |
-| [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-18 |
-| [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |
-| [unreview-lifts](Tests#t-unreview-lifts) | requirement | DOC-2 | Given a reviewed criterion, when it is unreviewed, then its lock is lifted. | PASS 2026-11-12 |
-| [lock-in-report](Tests#t-lock-in-report) | requirement | DOC-2 | Given a reviewed criterion that changed, when the report is printed, then it names that criterion. | PASS 2026-11-12 |
+| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-19 |
+| [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-19 |
+| [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-19 |
+| [unreview-lifts](Tests#t-unreview-lifts) | requirement | DOC-2 | Given a reviewed criterion, when it is unreviewed, then its lock is lifted. | PASS 2026-11-19 |
+| [lock-in-report](Tests#t-lock-in-report) | requirement | DOC-2 | Given a reviewed criterion that changed, when the report is printed, then it names that criterion. | PASS 2026-11-19 |
 | [prd-lock-four](Tests#t-prd-lock-four) | requirement | DOC-2 | Given a reviewed PRD, when Problem, Requirements, Non-goals or Success metrics changes, then the docs check fails with LOCKED naming each section. Also, a requirement revised through the docs tooling keeps its earlier text as a numbered revision, newest first; a page with no Revisions section passes; a line differing from its newest row, a duplicate number or a changed old row fails. | PASS 2026-11-18 |
 | [usage-section-not-changed](Tests#t-usage-section-not-changed) | requirement | DOC-2 | Given a reviewed PRD, when a Usage section is added, then the check says USAGE, never CHANGED or LOCKED, and exits 1. | not run |
 | [prd-review-args](Tests#t-prd-review-args) | requirement | DOC-2 | Given review or unreview with no --user, a bad ID, a bad page or a bad date, when it runs, then it refuses and changes nothing. | PASS 2026-11-10 |
@@ -340,7 +340,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc4-home-diagram-unread](Tests#t-doc4-home-diagram-unread) | requirement | DOC-4 | Given a Home page with the diagram block, when the DOC-4 table check runs, then the block is not read as a stray line. | not run |
 | [command-reference-complete](Tests#t-command-reference-complete) | requirement | DOC-6 | Given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md. | not run |
 | [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-6 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
-| [milestones-once](Tests#t-milestones-once) | requirement | DOC-10 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-18 |
+| [milestones-once](Tests#t-milestones-once) | requirement | DOC-10 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-19 |
 | [release-note-found](Tests#t-release-note-found) | requirement | DOC-10 | Given a release with no release note, when the check runs, then it is found. | PASS 2026-11-12 |
 | [tests-page-stale](Tests#t-tests-page-stale) | requirement | DOC-10 | Given a full Tests page behind the runs, when the docs check runs, then it is reported stale with its first differing line. | PASS 2026-11-10 |
 | [tests-page-run-link](Tests#t-tests-page-run-link) | requirement | DOC-10 | Given a runs file with a run column, when the Tests page is rendered, then each result links its Actions run, or that day's CI runs when the cell is empty. | PASS 2026-11-10 |
@@ -419,8 +419,8 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | - | requirement | DOC-22 | no passing test | not enforced |
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-23 | Given a README of the eight principles, a section off the list, a ninth section, a sentence off by a word, a cited ID that is neither real nor planned, no Home link or, on the Principles page, a sentence off by a word, when the docs check runs, then the first passes and each other fails naming README and DOC-23; a repo without the shipped list keeps its own README. | PASS 2026-11-18 |
 | - | requirement | DOC-21 | no passing test | not enforced |
-| [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-18 |
-| [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
+| [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-19 |
+| [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-19 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
 | [publish-tables-handwritten](Tests#t-publish-tables-handwritten) | requirement | DOC-11 | Given a stale hand-written page, when the wiki publish re-renders the generated tables, then that page is still reported stale and the publish still refuses. | PASS 2026-11-13 |
 | [docs-check-speed](Tests#t-docs-check-speed) | requirement | DOC-12 | Given this repo, when the docs check runs, then it finishes in under 30 seconds. | PASS 2026-11-12 |
