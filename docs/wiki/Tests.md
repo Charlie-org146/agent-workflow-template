@@ -1360,7 +1360,7 @@
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
 | <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-17 |
 | <a id="t-del-16-linked"></a>del-16-linked | workflow | done line del-16:2 | not run | - | local | 2026-11-17 |
-| <a id="t-done-docs-gate-scope-1"></a>done-docs-gate-scope-1 | workflow | done line docs-gate-scope:1 | not run | - | local | no |
-| <a id="t-done-docs-gate-scope-2"></a>done-docs-gate-scope-2 | workflow | done line docs-gate-scope:2 | not run | - | local | no |
-| <a id="t-done-docs-gate-scope-3"></a>done-docs-gate-scope-3 | workflow | done line docs-gate-scope:3 | not run | - | local | no |
-| <a id="t-done-docs-gate-scope-4"></a>done-docs-gate-scope-4 | workflow | done line docs-gate-scope:4 | not run | - | local | no |
+| <a id="t-gap-floor-default-3"></a>gap-floor-default-3 | requirement | done line gap-wave1-small:1 | not run | - | local | 2026-11-19 |
+| <a id="t-gap-milestones-source-known"></a>gap-milestones-source-known | requirement | done line gap-wave1-small:2 | not run | - | local | 2026-11-19 |
+| <a id="t-gap-token-needs-live"></a>gap-token-needs-live | requirement | done line gap-wave1-small:3 | not run | - | local | 2026-11-19 |
+| <a id="t-done-gap-wave1-small-4"></a>done-gap-wave1-small-4 | workflow | done line gap-wave1-small:4 | not run | - | local | no |
