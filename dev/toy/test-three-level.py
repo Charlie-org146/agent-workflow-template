@@ -110,7 +110,7 @@ with tempfile.TemporaryDirectory() as tmp:
     machine = subprocess.run([sys.executable, hook, "check", reply], capture_output=True, text=True, env=dict(os.environ, LOOP_OP_ROLE="machine"), cwd=tmp)
     check(machine.returncode == 0, "the hook's check in machine mode accepts the one-line check-in")
 
-# DEL-1 red-team pass: input, record and due read and record only; they never edit a repo file, merge, file or send.
+# HLT-2 red-team pass: input, record and due read and record only; they never edit a repo file, merge, file or send.
 import builtins  # noqa: E402
 import hashlib  # noqa: E402
 

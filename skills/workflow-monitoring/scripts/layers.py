@@ -4,7 +4,7 @@
 usage: layers.py status [--force]   a machine: send its STATUS to top when it changed or 30 minutes passed (prints the one line)
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
-       layers.py redteam input|record FILE|-|due [--eta ISO]   the red-team pass (DEL-1): the reviewer's input; record its three lists
+       layers.py redteam input|record FILE|-|due [--eta ISO]   the red-team pass (HLT-2): the reviewer's input; record its three lists
                                     (A: assumptions, I: idle work, R: the one biggest risk) with routes; is a pass due
 
 STATUS is one JSON message per machine in <git common dir>/loop/status/<machine>.json, also published as
@@ -12,7 +12,7 @@ refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, i
 status, PR number), the merges, the parked and idle sessions each with a reason, and needs-owner items with the exact words
 and a recommendation. Top is the only role that publishes the board; a machine prints one line. Imported by operate.py.
 
-Red-team (DEL-1): every hour and within an hour of a release ETA, a fresh-context reviewer session is given `redteam input` (the board
+Red-team (HLT-2): every hour and within an hour of a release ETA, a fresh-context reviewer session is given `redteam input` (the board
 and each machine's latest STATUS) and answers `A:`, `I:` and `R:` lines. `redteam record` stores them with a timestamp in
 <git common dir>/loop/redteam/ (never a repo file) and prints one route per item: A to ops-findings, I and R to operation-top as a
 proposed TOP-DECISION. It reads, records and prints: it never edits, merges, files or sends. The ETA is --eta or loop/release-eta.json ({"at": epoch}).
