@@ -1,7 +1,7 @@
 """The twelve health groups (HLT-2) and the formal health report (HLT-3), plus health.py's commands other than check.
 
-The groups, the report layout and the refusal codes: references/commands.md, "report.py notes".
 A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
+Commands: review, judge, preview, file, triage; a refusal prints REFUSED[code] and exits 2.
 """
 import json
 import os
@@ -52,7 +52,7 @@ MATRIX_V1 = (("Claude Code on Windows", (("claude-app", "windows"), ("claude-cli
 
 
 def matrix(root):
-    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv within 7 days (notes: references/commands.md)."""
+    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv within 7 days."""
     from defects import row
     from rules import days_since
     try:

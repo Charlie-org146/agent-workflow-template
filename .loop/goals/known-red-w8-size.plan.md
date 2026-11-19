@@ -4,7 +4,7 @@ Claims checked against the code and the CI log: each of the nine rows' commands 
 
 ## Build steps (done and committed)
 
-1. SKILL.md line caps (rewrap), skill-kept toy re-aim, setup.py, regression.py, lanes.py, runs.py, report/rules/automation/controls, the checkin.py move, notes sections in two references files, kept stamps and one Principles intro sentence.
+1. SKILL.md line caps (rewrap), skill-kept toy re-aim, setup.py, regression.py, lanes.py, runs.py (its notes go to the regression references), report/rules/automation/controls (docstring trims only), the checkin.py move and kept stamps.
 2. Merge main (v1.0.80); then main again after w11 lands.
 
 ## Tests per done line
@@ -16,7 +16,7 @@ Claims checked against the code and the CI log: each of the nine rows' commands 
 
 - A moved helper breaks an import: 12 monitoring toys pass; checkin.gather is board_lines.gather (asserted).
 - Docstring text a toy reads: grep of dev/toy for each cut phrase found none that asserts on it.
-- Stale pages: restamped; Principles got an intro sentence.
+- Stale pages: restamped; the health references are not touched, so Principles is not stale.
 
 ## Out of scope
 

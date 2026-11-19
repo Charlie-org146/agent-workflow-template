@@ -5,7 +5,7 @@ usage: automation.py local install [--load] | register | uninstall | status [--j
        automation.py digest [--owner L]  post this round's comment on the pinned Automation digest issue
        automation.py workflow            removed: health no longer runs in GitHub Actions (exit 2)
 
-What `local` does and what the digest lists: references/commands.md, "automation.py notes".
+`local` drives the Mac's one launch agent; the digest lists what ran and the issues since the last comment.
 """
 import argparse
 import datetime

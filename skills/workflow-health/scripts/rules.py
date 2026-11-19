@@ -1,7 +1,12 @@
 """Freshness, Tests and Adoption rules (report.py), plus Security and privacy, Size, Performance and Hygiene rules.
 Read-only; dates are days, so one day's runs print the same lines.
 
-Each rule and what it flags (WARN, FAIL, INFO): references/commands.md, "rules.py notes".
+Freshness: nightly (newest run over a day old), unreleased (commits over 3 days past the newest v* tag), finding-age (open health
+issue over 30 days), skipped (SKIPPED over 7 days). Tests: network (a land row reaching the network), config (config.json unparsable
+or no base: FAIL), checks-run-tests, template-version, scheduled, machine. Adoption: no-fit, agent-tools, prompt-pointer, milestones.
+Security, Size, Performance, Hygiene: private (a leak pattern: FAIL, never the text), scan-hook, workflow-permissions, skill-lines
+(150 lines: FAIL), requirements-per-page (over criteria_max: FAIL), check-time (over 60 s), idle-sessions, eta-missing, eta-extended,
+eta-overrun (GRD-14), auto-safety, auto-record (MON-11).
 """
 import datetime
 import glob

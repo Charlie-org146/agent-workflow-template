@@ -3,7 +3,7 @@
 
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
-How a control is built and when it fires: references/commands.md, "controls.py notes".
+Each control builds a throwaway git repo with the one file that breaks its rule.
 """
 import hashlib
 import importlib

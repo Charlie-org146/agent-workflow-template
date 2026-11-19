@@ -1,7 +1,7 @@
 # Main-red size and caps rows pass again or are removed with evidence, so the v2.0 release gate's full suite has no FAIL outside the known list (TOP-DECISION 52-54, o195 no waivers, o212)
 
 - Slug: known-red-w8-size
-- Touches: not declared
+- Touches: dev/toy/test-defect.sh, skills/workflow-monitoring/SKILL.md, skills/workflow-release/SKILL.md, skills/workflow-monitoring/scripts/checkin.py, skills/workflow-setup/scripts/setup.py, skills/workflow-regression/scripts/runs.py, skills/workflow-regression/scripts/lanes.py, skills/workflow-regression/scripts/regression.py, skills/workflow-health/scripts/report.py, skills/workflow-health/scripts/rules.py, skills/workflow-health/scripts/automation.py, skills/workflow-health/scripts/controls.py, .loop/regression.tsv, docs/wiki/Tests.md, docs/wiki/Health.md, docs/wiki/Regression.md, docs/wiki/Release.md, docs/wiki/Documentation.md, docs/wiki/Monitoring.md, docs/wiki/Setup.md, skills/workflow-monitoring/scripts/board_lines.py, skills/workflow-regression/references/commands.md, skills/workflow-health/references/commands.md, docs/wiki/Check-in-and-board.md, docs/wiki/How-to-use-Check-in-and-board.md, docs/wiki/How-to-use-Monitoring.md, docs/wiki/How-to-use-Operation.md, docs/wiki/Operation.md, docs/wiki/Principles.md
 - ETA: 225 active minutes (estimate 177m plus a 25% margin, rough)
 
 ## Done lines
