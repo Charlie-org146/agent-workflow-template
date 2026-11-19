@@ -277,7 +277,7 @@ import release, regression, judge, criteria
 root, out = os.getcwd(), []
 release.doc_rows = lambda top: ["Alpha", "Beta"]
 release.run = lambda *a, **k: type("R", (), {"returncode": 0})()
-out.append(sorted(x.split()[0] for x in release.criteria_trouble(root, {})))
+out.append(sorted(x.split()[0] for x in release.criteria_trouble(root, {})[0]))
 out.append(sorted(regression.criteria_ids(root)))
 out.append(sorted(i for p in ("Alpha", "Beta") for i, _ in judge.criteria(root, p)))
 seen = {}
