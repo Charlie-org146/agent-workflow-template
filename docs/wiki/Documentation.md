@@ -15,24 +15,24 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ## Requirements
 
 ### Functional
-- DOC-1: **Unreviewed** PRD template
+- DOC-1: **Reviewed 2026-11-19** PRD template <!-- reviewed b27c7cca -->
   - One template defines every feature page: Problem written from the user's side, Requirements as ID'd bullets under Functional and Non-functional, Non-goals, Success metrics and a generated Tests table. Nothing else goes on the page except the generated Deployments and Runbook sections.
-- DOC-2: **Unreviewed** The PRD is mine
+- DOC-2: **Reviewed 2026-11-19** The PRD is mine <!-- reviewed e464844f -->
   - Only I mark a page or a requirement Reviewed, in my own recorded words. After that its text does not change unless I un-review it, and a recorded message counts only for the pages or IDs it lists.
-- DOC-3: **Unreviewed** Tests follow on their own
+- DOC-3: **Reviewed 2026-11-19** Tests follow on their own <!-- reviewed 34619024 -->
   - Once I review a PRD, the loop writes Given/When/Then tests for each requirement, links each to a regression test, and keeps them in step when a requirement changes. I never write or manage tests.
-- DOC-4: **Unreviewed** Home is one table
+- DOC-4: **Reviewed 2026-11-19** Home is one table <!-- reviewed 419edd2b -->
   - Home holds one table with four columns: Feature, What it does, How to use and Milestone, and may lead with an optional Topic column. Below it Home carries only the generated Settings and Automation sections. A version milestone stays optional and free form; nothing requires an issue or pull request to have one.
-- DOC-6: **Unreviewed** Each skill's commands are documented
+- DOC-6: **Reviewed 2026-11-19** Each skill's commands are documented <!-- reviewed d7d6df17 -->
   - Each skill's command map names every command, and its command reference gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code.
-- DOC-10: **Unreviewed** One Tests page
+- DOC-10: **Reviewed 2026-11-19** One Tests page <!-- reviewed 89cb801b -->
   - One full Tests page is generated, listing every test with its latest result.
-- DOC-14: **Unreviewed** A feature page lists what it ships
+- DOC-14: **Reviewed 2026-11-19** A feature page lists what it ships <!-- reviewed 5f07b944 -->
   - A feature that ships a page people open or a delivery people receive lists it in a Deployments section: its link or channel, who can open or receives it, what it shows or sends, and its live status. Recipients are named as a group, never an address.
-- DOC-16: **Unreviewed** A runbook for each routine
+- DOC-16: **Reviewed 2026-11-19** A runbook for each routine <!-- reviewed f46bd0c0 -->
   - A page that owns a routine has a Runbook for it, saying what an agent told only "run routine X" must read and do, and a scheduled run follows it exactly. The docs check fails a registered routine with no runbook or a missing field. A runbook is not locked by my review.
 
-- DOC-15: **Unreviewed** Home shows the setup and what runs by itself
+- DOC-15: **Reviewed 2026-11-19** Home shows the setup and what runs by itself <!-- reviewed 250f849b -->
   - Home carries a Settings section: each setting's name, what it means, how to set it, its default and this repo's value, marked overridden only when it differs from the default.
   - Home carries an Automation section: each routine on or off, what it does, its cadence in plain words, where it runs, its last run when known (live, from `docs.py automation`, so the page does not change with every run) and any step still owed by the owner; health and regression are built in and a repo adds a routine with one entry in its config, with no code change.
   - The README names and links the template repo the loop came from, never a local path, and the adoption entry points to all three.
@@ -40,29 +40,29 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - The code that renders the blocks stays readable and under health's size warning: `counting.py` holds the Automation block code and `render.py` the rest, so the text a config renders is the same wherever the code sits (issue 1402).
   - Health and the digest email run on the Mac's local schedule, never in GitHub Actions, so the Automation table owes no health workflow; the digest's keys go in the schedule's mail.env on the Mac, outside git.
 
-- DOC-18: **Unreviewed** Every feature has a How-to-use page
+- DOC-18: **Reviewed 2026-11-19** Every feature has a How-to-use page <!-- reviewed 34d3832a -->
   - The page is `docs/wiki/How-to-use-<Feature>.md`, titled "# How to use <Feature>", with these sections in order, leaving out any that do not apply: What it's for, How to reach or run it, URLs and deployments, Automations and schedules, Runbooks, Links (the PRD page and "Backlog: <Feature>"). The feature page links it in one line in its head, between its title and its first section: "How to use: [How-to-use-<Feature>](How-to-use-<Feature>)", and nothing else may sit there. A routine's runbook may sit under "Runbooks" on this page instead of the PRD.
   - `docs.py check` reports a feature page with no How-to-use page, one off that skeleton, or a feature page that does not link it (a page whose PRD is a link needs no link line); a How-to-use page has no `.loop/docs.tsv` row of its own and is mapped to its feature's paths, so it goes stale and publishes with it, and `audit.py restamp` re-stamps a stale one whose text is as committed; one whose feature has no page is an orphan, reported unmapped.
   - Home links each feature's How-to-use page, and the README holds only the principles (DOC-23); what to say, and any URLs, deployments and schedules, live on the How-to-use page.
-- DOC-19: **Unreviewed** One How-to item per functional requirement
+- DOC-19: **Reviewed 2026-11-19** One How-to item per functional requirement <!-- reviewed e7cf8f20 -->
   - Each How-to-use page has one item for every functional requirement of its feature, showing how it is delivered: a command and its output, an example, or a file or page it produces. The docs check fails a missing or unknown item.
   - A repo's own published sites (listed in `scripts/public-origins.json` or as `public_origins` in `.loop/config.json`) and its README count as inside the repo: a page may link to them, and the docs check and the merge's wiki check do not report them.
-- DOC-20: **Unreviewed** Reviewed text is revised, never rewritten
+- DOC-20: **Reviewed 2026-11-19** Reviewed text is revised, never rewritten <!-- reviewed 530c5c3f -->
   - A change to a Reviewed requirement is a new revision with its date, reason and my approval; earlier revisions stay on the page. I review only the changed requirement, and no other requirement loses its review. IDs are never reused, and a dropped requirement stays, marked Retired. A requirement that moves without a change of text keeps its Reviewed mark.
-- DOC-22: **Unreviewed** The PRD is read-only while a goal builds
+- DOC-22: **Reviewed 2026-11-19** The PRD is read-only while a goal builds <!-- reviewed 02d554e4 -->
   - A goal never edits a Reviewed requirement while it builds, and a page has one writer at a time on any machine. A gap is filed as a finding on the feature's Backlog milestone and becomes a revision only when I approve it. A goal that changes a requirement states the new text in its done lines, approved before it starts.
-- DOC-23: **Unreviewed** The README is the principles
+- DOC-23: **Reviewed 2026-11-19** The README is the principles <!-- reviewed 289a32a4 -->
   - The README holds only its title, the eight principles, each with its one-sentence statement, its diagram and the requirement IDs that enforce it, and one link to the wiki Home; everything else it once held is on Home or a How-to-use page. The Principles page shows the same eight with their diagrams.
   - `docs.py check` fails a README with any other section, a principle sentence that differs by a word from the list health uses (the list in workflow-health's commands reference), and a cited requirement that neither exists nor is marked planned; it checks only a repo that ships that list, so a repo that adopts the template keeps its own README.
-- DOC-21: **Unreviewed** A code change alone never un-reviews a page
+- DOC-21: **Reviewed 2026-11-19** A code change alone never un-reviews a page <!-- reviewed 896550ab -->
   - A change to code or settings a page describes never needs my words when none of the page's own text changed, and a comments-only change doesn't make the page stale.
 
 ### Non-functional
-- DOC-11: **Unreviewed** Safe publish
+- DOC-11: **Reviewed 2026-11-19** Safe publish <!-- reviewed 4053c373 -->
   - Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it. The last publish can be undone.
-- DOC-12: **Unreviewed** Fast check
+- DOC-12: **Reviewed 2026-11-19** Fast check <!-- reviewed 3729a8c5 -->
   - The docs check finishes in under 30 seconds on this repo, every time.
-- DOC-13: **Unreviewed** Same answer every time
+- DOC-13: **Reviewed 2026-11-19** Same answer every time <!-- reviewed 4f80ab56 -->
   - The docs check is deterministic: the same pages and tests give the same result, with no AI judgment.
 
 ## Non-goals

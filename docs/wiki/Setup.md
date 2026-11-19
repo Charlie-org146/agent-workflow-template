@@ -15,50 +15,50 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Unreviewed** One command adopts a repo
+- SET-1: **Reviewed 2026-11-19** One command adopts a repo <!-- reviewed 83783c99 -->
   - One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups.
   - It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting.
-- SET-2: **Unreviewed** Layered settings
+- SET-2: **Reviewed 2026-11-19** Layered settings <!-- reviewed a228a035 -->
   - Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one.
   - Every setting has a default and a one-line explanation, and I can see each value and its layer.
-- SET-4: **Unreviewed** Updates reach every repo
+- SET-4: **Reviewed 2026-11-19** Updates reach every repo <!-- reviewed 910ba464 -->
   - An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings.
   - A repo running an older template version is flagged.
-- SET-5: **Unreviewed** A self-describing workspace
+- SET-5: **Reviewed 2026-11-19** A self-describing workspace <!-- reviewed 67d7baad -->
   - Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them.
   - It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values.
-- SET-6: **Unreviewed** Adoption is proven
+- SET-6: **Reviewed 2026-11-19** Adoption is proven <!-- reviewed 42006f1c -->
   - Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it.
-- SET-9: **Unreviewed** Learn from a repo already set up
+- SET-9: **Reviewed 2026-11-19** Learn from a repo already set up <!-- reviewed c5214c37 -->
   - Setup can take an adopted repo as its model: it borrows that repo's settings shape, flow, milestone layout and private rules, never private values, and adapts them to the new repo.
-- SET-10: **Unreviewed** The right format for every agent
+- SET-10: **Reviewed 2026-11-19** The right format for every agent <!-- reviewed 6abb5d30 -->
   - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way.
-- SET-11: **Unreviewed** A strict replay of the first adoption
+- SET-11: **Reviewed 2026-11-19** A strict replay of the first adoption <!-- reviewed 437971a8 -->
   - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`.
   - It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe.
-- SET-12: **Unreviewed** Adopt all my repos in one pass
+- SET-12: **Reviewed 2026-11-19** Adopt all my repos in one pass <!-- reviewed f7b86dc3 -->
   - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template.
   - It ends with the board showing exactly the repos I chose.
-- SET-14: **Unreviewed** The connectors each repo needs are checked
+- SET-14: **Reviewed 2026-11-19** The connectors each repo needs are checked <!-- reviewed 85e7cfdb -->
   - For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call.
   - It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself.
-- SET-16: **Unreviewed** One command judges a repo fully migrated
+- SET-16: **Reviewed 2026-11-19** One command judges a repo fully migrated <!-- reviewed 5a856861 -->
   - One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain.
   - Health's Adoption group runs the same check.
-- SET-18: **Unreviewed** Adoption never blocks, and health judges it
+- SET-18: **Reviewed 2026-11-19** Adoption never blocks, and health judges it <!-- reviewed 3f2d5b42 -->
   - Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted.
   - A health check runs before and after, and the one after is green or names each gap with its fix.
-- SET-19: **Unreviewed** Fixes flow back to the template
+- SET-19: **Reviewed 2026-11-19** Fixes flow back to the template <!-- reviewed 1b3888a4 -->
   - A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue.
-- SET-20: **Unreviewed** A repo behind the template says so
+- SET-20: **Reviewed 2026-11-19** A repo behind the template says so <!-- reviewed 1f23883f -->
   - A repo records the template version it is on, and one with none counts as behind.
   - A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to.
-- SET-21: **Unreviewed** Adopted repos build on the template, not copies of it
+- SET-21: **Reviewed 2026-11-19** Adopted repos build on the template, not copies of it <!-- reviewed 6b77fd9c -->
   - An adopted repo holds only its own settings, pages, tests and data.
   - The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there.
 
 ### Non-functional
-- SET-3: **Unreviewed** Shipped as a versioned package
+- SET-3: **Reviewed 2026-11-19** Shipped as a versioned package <!-- reviewed 9cb60bec -->
   - The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex.
   - The rules the package must pass are Guardrails' (GRD-20 to GRD-22).
 - SET-7: **Reviewed 2026-11-10** Safe and repeatable <!-- reviewed fb39932b -->
