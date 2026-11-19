@@ -43,10 +43,10 @@ def file_issue(top, page, texts):
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+    sys.path.append(os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts"))  # graph's proctree
     try:
-        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "graph.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(sys.path[-1], "graph.py"))
+        spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
         return mod
     except Exception:
         return None
@@ -80,7 +80,7 @@ def reach(top, paths):
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
-OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
+OPERATE = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "operate.py")
 
 
 def base_moved(state, cfg, top):
@@ -277,7 +277,7 @@ def main():
     if pods:
         pods.refuse(state)
         pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), slug)  # an earlier pr lane holds the slot
-        pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
+        pods.merge_lock(os.path.abspath(common))  # one merge per repo, across pods
     wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())  # #3867
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}

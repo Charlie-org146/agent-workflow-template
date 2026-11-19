@@ -24,7 +24,24 @@ ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 # fail NAME EXPECTED ACTUAL: the one failure format, with the line that reruns it
 fail() { bad "$1"; echo "    expected: $2"; echo "    actual:   $3"; echo "    rerun: bash dev/toy/test-plan-cache.sh ${cur:-$mode}"; }
-nocache() { grep -v '^PLAN_CACHE:'; }
+# norm: the planned row SET, not its order. lane-order (#531) deliberately runs a goal's new and failed rows first, so the order
+# differs from the v0.27.6 golden; test-lane-order.py pins that order. Sort each id list and each run of SELECTED lines.
+NORM_PY=$(cat <<'PYEND'
+import re, sys
+out, sel = [], []
+for line in sys.stdin.read().split("\n"):
+    line = re.sub(r"^(AFFECTED \d+ of \d+ rows \()([^)]*)\)", lambda m: m.group(1) + ", ".join(sorted(m.group(2).split(", "))) + ")", line)
+    line = re.sub(r"^(RETURN todo=)(\S*)", lambda m: m.group(1) + ",".join(sorted(m.group(2).split(","))), line)
+    if line.startswith("SELECTED "):
+        sel.append(line)
+        continue
+    out += sorted(sel) + [line]
+    sel = []
+print("\n".join(out + sorted(sel)), end="")
+PYEND
+)
+norm() { python3 -B -c "$NORM_PY"; }
+nocache() { grep -v '^PLAN_CACHE:' | norm; }
 
 m_golden() { cur=golden
   echo "== golden: the planned rows equal the v0.27.6 planner's"
@@ -32,7 +49,7 @@ m_golden() { cur=golden
   mkdir -p "$d/g"
   local got
   got=$(LANES_NO_CACHE=1 python3 -B "$F" golden "$S" "$d/g" | nocache)
-  if [ "$got" = "$(cat "$G")" ]; then ok "every fixture case plans exactly as the committed golden"; else
+  if [ "$got" = "$(norm < "$G")" ]; then ok "every fixture case plans the committed golden's rows"; else
     fail "golden plans" "plan-golden.txt" "$(diff <(echo "$got") "$G" | head -20)"; fi
   # Value: protects=the committed golden holds no machine path; fails_when=a temp or home path is in plan-golden.txt; why_new=goldens are committed text; seam=none; no_claim=none
   if grep -Eq '/(Users|home|private|var|tmp)/' "$G"; then fail "golden has no machine path" "none" "$(grep -E '/(Users|home|private|var|tmp)/' "$G" | head -3)"; else ok "plan-golden.txt names no machine path"; fi
@@ -78,7 +95,7 @@ m_calls() { cur=calls
 }
 
 # case_golden NAME: that case's block of plan-golden.txt, without its "== NAME" line
-case_golden() { awk -v n="== $1" '$0 == n {on = 1; next} /^== / {on = 0} on' "$G"; }
+case_golden() { awk -v n="== $1" '$0 == n {on = 1; next} /^== / {on = 0} on' "$G" | norm; }
 CASES="narrow wide mixed root unmapped deleted merged record norecord nobase detached"
 
 # plan_case NAME [ENV...]: one plan of a case repo, the PLAN_CACHE lines and all
