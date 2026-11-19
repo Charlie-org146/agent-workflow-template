@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, `goal.py set`, `queue`, the PR body and `fit.py owed`."""
+"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, set, queue, the PR body, owed."""
 import importlib.util
 import json
 import os
@@ -90,13 +90,11 @@ def budget(seen, cfg):
 
 
 def tokens():
-    """The token functions, which live in proctree.py (one identical copy in each skill)."""
     import proctree
     return proctree
 
 
 def spent_tokens(run, live=False):
-    """Fresh tokens (input + cache writes + output) a goal spent, from its measured steps, plus the open window if asked."""
     value = run.get("tokens") if isinstance(run.get("tokens"), dict) else {}
     tok = tokens()
     steps = [tok.fresh(n) for key, n in value.items() if key != "total"]
@@ -124,7 +122,7 @@ def wall_minutes(state):
 
 
 def monitor(name, paths=False):
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", name + ".py")
+    path = tool("workflow-monitoring", "scripts", name + ".py")
     paths and sys.path.insert(0, os.path.dirname(path))
     spec = importlib.util.spec_from_file_location("fit_" + name, path)
     module = importlib.util.module_from_spec(spec)
@@ -261,20 +259,35 @@ def keep(g, state, step, text):
         state["plan_head"] = g.git("rev-parse", "HEAD")
 
 
+def tool(*parts):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", *parts)
+
+
+def regen(g, slug):
+    # #5317
+    if g.git("ls-files", ".loop/START.md"):
+        g.run([sys.executable, tool("workflow-docs", "scripts", "entry.py"), "write"])
+        files = g.git("diff", "--name-only", "--", "CLAUDE.md", "AGENTS.md", ".loop/START.md").split()
+        files and g.git("commit", "-m", "Regenerate START.md for " + slug, "--", *files)
+    done = g.run([sys.executable, tool("workflow-release", "scripts", "wiki.py"), "prepare", slug, "--commit"])
+    done.returncode and g.no("stale generated page: " + done.stdout)
+    return g.git("rev-parse", "HEAD")
+
+
 def nag(g, args):
-    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "entry.py")
-    if not os.path.exists(tool):
+    entry = tool("workflow-docs", "scripts", "entry.py")
+    if not os.path.exists(entry):
         return print("NOTE: entry.py is missing, so the template version was not checked. Fix: reinstall the skills", file=sys.stderr)
-    seen = g.run([sys.executable, tool, "lag", "--new", args.slug, "--repo", g.root()])
+    seen = g.run([sys.executable, entry, "lag", "--new", args.slug, "--repo", g.root()])
     sys.stdout.write(seen.stdout)
     sys.stderr.write(seen.stderr)
     seen.returncode == 3 and sys.exit(2)
 
 
 def bind_here(g, slug):
-    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "sessions.py")
-    if os.environ.get("CLAUDE_CODE_HOST_SESSION_ID") and os.path.exists(tool):
-        done = g.run([sys.executable, tool, "bind", slug, "self"])
+    bind = tool("workflow-monitoring", "scripts", "sessions.py")
+    if os.environ.get("CLAUDE_CODE_HOST_SESSION_ID") and os.path.exists(bind):
+        done = g.run([sys.executable, bind, "bind", slug, "self"])
         print(done.stdout + done.stderr, end="")
 
 
@@ -292,7 +305,6 @@ def frozen_fields(g, args, lines, touches):
 
 
 def plan_ahead(state, runs, step):
-    """The owner answered the pre-flight plan item 'approve ahead' (#4535): a pending plan takes the recommended answers."""
     return step == "plan" and view(state, runs).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"
 
 
@@ -321,7 +333,7 @@ def pr_text(g, state):
     import guards, private, role
     base, cfg = g.base_ref(state), g.config()
     body = pr_body(g.read(g.goal_file(state["slug"])), view(state, g.state_dir()), cfg, role.setting_of(cfg),
-                          "", regen_warnings(g.root(), base))
+                          "", regen_warnings(g, base))
     found = private.scan(g.root(), base, {"pr-title": state["goal"][:70], "pr-body": body})
     stop = private.refusal(found, base) or private.cannot(g.root(), base)
     if stop:
@@ -349,10 +361,8 @@ def step_line(step, seen):
     return line
 
 
-def regen_warnings(top, base):
-    def git(*args):
-        done = subprocess.run(["git"] + list(args), cwd=top, capture_output=True, text=True)
-        return done.stdout if done.returncode == 0 else ""
+def regen_warnings(g, base):
+    git = lambda *args: g.git(*args, check=False)
     gone = [line for line in git("diff", "--name-only", "--diff-filter=D", "--no-renames", base + "...HEAD").splitlines() if line]
     scripts = [p for p in git("ls-files").splitlines() if p.endswith((".py", ".sh")) or p.startswith(".github/workflows/")]
     found = []
