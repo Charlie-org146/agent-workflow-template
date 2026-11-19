@@ -25,7 +25,7 @@ D="python3 skills/workflow-docs/scripts/docs.py check"
 P=docs/wiki/Setup.md; cp "$P" "$T/setup.orig"; cp .loop/routines.tsv "$T/routines.orig"
 BASE=$($D 2>&1 | sort)  # the copy's own check output (another page may be CHANGED for its owner): a good change adds nothing to it
 GOOD='### setup-nightly
-- **Serves:** SET-1, SET-7.
+- **Serves:** SET-1, SET-2.
 - **Schedule:** every night at 02:00, and by hand.
 - **Steps:** run the setup check command from the repo root.
 - **Full run:** reads the live repo and writes the real report, never a dry run or a fixture.
@@ -79,7 +79,7 @@ $GOOD" "each routine once"
   refuse "a short Serves is still accepted but an empty one is not" "$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Serves:\*\* .*/- **Serves:**/')" "a 'Serves' field of 5 characters or more under setup-nightly"
   refuse "an unknown Serves id" "$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Serves:\*\* .*/- **Serves:** ZZZ-99 nonsense./')" "a Serves id that a page defines"
   refuse "a Serves field with no id" "$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Serves:\*\* .*/- **Serves:** whatever it needs./')" "a Serves field naming a requirement id"
-  reset; place "$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Serves:\*\* .*/- **Serves:** the setup checks, see\n  SET-1 and SET-7./')"
+  reset; place "$(printf '%s\n' "$GOOD" | sed 's/^- \*\*Serves:\*\* .*/- **Serves:** the setup checks, see\n  SET-1 and SET-2./')"
   check "an id on a continuation line of Serves counts" '[ "$(out | sort)" = "$BASE" ]'
   reset; place "$GOOD"; printf '\n## After\n' >> docs/wiki/Regression.md
   check "a misordered page gives its SECTIONS finding and no false Serves finding" 'out | grep -q "^SECTIONS Regression" && ! out | grep -q "a Serves id"'
