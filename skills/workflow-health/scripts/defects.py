@@ -134,9 +134,20 @@ def ids_unique(root):
             for key, names in sorted(defined(root).items()) if len(names) > 1]
 
 
+def retired(root):
+    """Ids a page lists under `### Retired`: each resolves through its moved-to marker (DOC-20)."""
+    out = set()
+    for text in pages(root).values():
+        for part in re.findall(r"^### Retired\n\n((?:- .*\n?)+)", text, re.M):
+            out.update(LINE.findall(part))
+    return out
+
+
 def refs(root):
     known = defined(root)
-    prefixes = {key.split("-")[0] for key in known}
+    live = set(known)
+    known = dict.fromkeys(live | retired(root), 1)
+    prefixes = {key.split("-")[0] for key in live}
     out, seen = [], set()
     for name, text in pages(root).items():
         for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", text):

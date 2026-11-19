@@ -69,14 +69,14 @@ Each requirement and how it is delivered:
 - REL-14: Every release is noted.
 
 ### Command: review.py gate
-- **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite]`
-- **Dry run:** the gate only reads, except that it saves its refusals to the git folder for the freeze; `--no-suite` skips the suite and health.
-- **Reads:** the milestone's issues (gh), a throwaway checkout of REF (default: the newest `vX.0.0-rc.N` tag, else `origin/staging`, else the base), the waivers and the owner-words records.
-- **Writes:** `loop/gate/vX.json` in the git folder.
+- **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]`
+- **Dry run:** the gate only reads, except that it saves its refusals to the git folder for the freeze; `--no-suite` skips the suite and health; `--suite-from RUN` reads the suite from that GitHub Actions run of the regression workflow instead of running it, and refuses "suite run does not cover the candidate" unless the run is on the candidate's commit, completed, fully reported with nothing UNRUN and logging every land or nightly row.
+- **Reads:** the milestone's issues (gh), the run's logs when `--suite-from` is given (gh), a throwaway checkout of REF (default: the newest `vX.0.0-rc.N` tag, else `origin/staging`, else the base), the waivers and the owner-words records.
+- **Writes:** `loop/gate/vX.json` in the git folder, with the run id as `suite_run` when `--suite-from` was given.
 - **Exit codes:** 0 on `GATE PASS`; 1 with one `GATE REFUSED vX.0 (check): subject` line per failure.
 
 ### Command: review.py promote
-- **Command:** `python3 skills/workflow-release/scripts/review.py promote vX --owner-record ID [--ref REF]`
+- **Command:** `python3 skills/workflow-release/scripts/review.py promote vX --owner-record ID [--ref REF] [--suite-from RUN]`
 - **Dry run:** none; a refused gate or owner record changes nothing.
 - **Reads:** the same as the gate, and the owner-words record, which must name `vX.0.0`.
 - **Writes:** tag `vX.0.0`, branch `release/vX`, main (fast-forward only), a GitHub release carrying the state report, and the report file `loop/gate/vX.0.0.md`; it mails the report when the machine's mail.env is set up.
@@ -106,4 +106,4 @@ Each requirement and how it is delivered:
 - PRD page: [Release](Release)
 - Backlog: [Backlog: Release](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept known-red-release@a812c594 -->
+<!-- kept gate-ci-suite@e5c1b658 -->
