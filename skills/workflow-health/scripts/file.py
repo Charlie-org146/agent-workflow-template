@@ -342,8 +342,8 @@ def limit_rows(root):
     try:
         with open(os.path.join(loop, "memory-waits.log")) as handle:
             waits = len(handle.read().splitlines())
-        if waits and number(config, "min_free_memory_gb", 4):
-            rows.append(limit_row("WARN", "memory", "waits", "%d lane wait(s) for free memory (min_free_memory_gb %s)" % (waits, config.get("min_free_memory_gb", 4)), "close sessions to free memory, or lower min_free_memory_gb"))
+        if waits and number(config, "min_free_memory_gb", 3):
+            rows.append(limit_row("WARN", "memory", "waits", "%d lane wait(s) for free memory (min_free_memory_gb %s)" % (waits, config.get("min_free_memory_gb", 3)), "close sessions to free memory, or lower min_free_memory_gb"))
     except OSError:
         pass
     active = number(config, "max_active_goals", 20)

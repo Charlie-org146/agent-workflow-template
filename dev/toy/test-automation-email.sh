@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/ skills/workflow-health/scripts/ skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py dev/toy/fakegh/ .loop/docs.tsv skills/workflow-setup/scripts/seed.py
-# Test the round's mail, feature grouping and round cost with a stub gh, a local Cloudflare stub and a local SMTP stub.
+# Test the round mail, feature grouping and round cost with stub gh, a Cloudflare stub and an SMTP stub.
 # usage: test-automation-email.sh GROUP   (mail secrets retry mailtest digest rounds file regression, or all)
 # Exits 0 only when every case in the group passes, so each regression row runs one group.
 set -u
@@ -442,7 +442,7 @@ if want digest; then
   printf '[{"number": 10, "title": "Automation"}, {"number": 2, "title": "Backlog"}, {"number": 11, "title": "Ops, team: A"}]\n' > "$G/milestones.json"
   printf '[{"number": 12, "url": "https://github.com/o/r/issues/12", "milestone": {"number": 10, "title": "Automation"}}, {"number": 14, "url": "https://github.com/o/r/issues/14", "milestone": {"number": 11, "title": "Ops, team: A"}}]\n' > "$G/regression.json"
   printf '[{"number": 9, "url": "https://github.com/o/r/issues/9", "milestone": null}]\n' > "$G/health.json"
-  dg() { env GH_TOKEN=x GITHUB_ACTIONS=true DIGEST_REPO_OWNER=toy-owner GITHUB_STEP_SUMMARY=$r/sum.md "$@" $auto digest; }
+  dg() { env GH_TOKEN=x GITHUB_ACTIONS=true DIGEST_REPO_OWNER=toy-owner GITHUB_STEP_SUMMARY=$r/sum.md "$@" $auto digest --live; }
   reset; rm -f "$G/comments.json"; runs; issue "<!-- automation-digest open=5,9 run=200 -->"
   out=$(dg DIGEST_RUN=201); c=$(python3 -c "import json;print(json.load(open('$G/comments.json'))[-1]['body'])")
   python3 - "$c" <<'PY' && grep -q "run=201 open=9:0,12:10,14:11 -->" "$G/body-77.md" && ok "the digest groups new, still-open and fixed issues by feature, a free-form milestone as a suffix, the rest No feature" || bad "grouping"
@@ -480,7 +480,7 @@ PY
   out=$(dg DIGEST_RUN=206 MAIL_ADDR_SET=false); c=$(python3 -c "import json;print(json.load(open('$G/comments.json'))[-1]['body'])"); cfg '{"digest_mail": "cloudflare"}'
   grep -qF "| email | off (digest_mail in .loop/config.json) |" <<<"$c" && ok "with mail off and no secrets the email row says off, not missing" || bad "email off row"
   reset; rm -f "$G/comments.json"; issue "<!-- automation-digest run=206 open=12:10 -->"
-  out=$(env GH_TOKEN=x DIGEST_REPO_OWNER=toy-owner $auto digest); c=$(python3 -c "import json;print(json.load(open('$G/comments.json'))[-1]['body'])")
+  out=$(env GH_TOKEN=x DIGEST_REPO_OWNER=toy-owner $auto digest --live); c=$(python3 -c "import json;print(json.load(open('$G/comments.json'))[-1]['body'])")
   grep -q "run=206 open=" "$G/body-77.md" && grep -q "run=local open=" <<<"$c" && grep -qF "| round cost | not read (only read in Actions) (ROUND_UNREAD) |" <<<"$c" \
     && ok "a digest run by hand keeps the last Actions run on the issue and says the cost is only read in Actions" || bad "local digest"
   python3 -B -c "
