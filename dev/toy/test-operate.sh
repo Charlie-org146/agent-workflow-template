@@ -175,25 +175,28 @@ check "the operation checkout never ran a goal step" '[ "$(cut -d" " -f2 "$FAKE_
 
 echo "== the latest base is merged before the pull request"
 git switch -q main
+wt() { git worktree add -q -b "loop/$1" "$C/loop/worktrees/$1" main; }
 flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 >/dev/null; $goal record "$1" "$2" --file "$C/loop/runs/$1.$2.txt"; }
+wt s1; cd "$C/loop/worktrees/s1"
 $goal new s1 --here --goal "S1" --done "s1" >/dev/null; echo s1 > s1.txt; git add s1.txt; git commit -qm s1
 FAKE_SKILL_OUT='used 4,200 tokens\nDEPTH: full\nSTEP: done' step s1 idea >/dev/null
 check "a flow step records the tokens its agent reported" 'python3 -c "import json,sys;assert json.load(open(sys.argv[1]))[\"tokens\"][\"idea\"]==4200" "$C/loop/runs/s1.json"'
-flowall s1; git switch -q main
-$goal new s2 --here --goal "S2" --done "s2" >/dev/null; printf '# from s2\n' >> calc.py; git commit -qam s2; flowall s2; git switch -q main
+flowall s1
+wt s2; cd "$C/loop/worktrees/s2"
+$goal new s2 --here --goal "S2" --done "s2" >/dev/null; printf '# from s2\n' >> calc.py; git commit -qam s2; flowall s2
 other="$T/other"; git clone -q "$T/origin.git" "$other"
 ( cd "$other" && git config user.email t@example.test && git config user.name Toy && echo n1 > n1.txt && printf '# from main\n' >> calc.py && git add -A && git commit -qm "Main moves" && git push -q origin main )
-git switch -q loop/s1
+cd "$C/loop/worktrees/s1"
 out=$($goal pr s1 2>&1); echo "$out" | sed 's/^/  /'
 check "a clean merge goes on, costing no try" 'grep -q "^MERGED origin/main into the branch" <<<"$out" && grep -q "^PR " <<<"$out" && [ "$(field s1 tries)" = 0 ] && [ -e n1.txt ]'
-git switch -q loop/s2
+cd "$C/loop/worktrees/s2"
 out=$($goal pr s2 2>&1); echo "$out" | sed 's/^/  /'
 check "a real conflict is a try lost to main moving: not counted, and the tree stays clean" 'grep -q "^TRY NOT COUNTED (main moved: 1 of 5; .*calc.py" <<<"$out" && [ "$(field s2 tries)" = 0 ] && [ ! -e "$(git rev-parse --git-dir)/MERGE_HEAD" ] && [ -z "$(git status --porcelain --untracked-files=no)" ]'
 git merge -q -X theirs --no-edit origin/main >/dev/null 2>&1
 out=$($goal pr s2 2>&1)
 check "once the conflict is merged by hand it goes on, with no try counted" 'grep -q "^PR " <<<"$out" && [ "$(field s2 tries)" = 0 ]'
-git switch -q main
+cd "$T/repo"
 
 echo "== sizes"
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
