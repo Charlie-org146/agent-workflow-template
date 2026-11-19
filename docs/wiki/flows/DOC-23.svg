@@ -36,9 +36,9 @@
 <path d="M220 113 L220 125" class="f-a" marker-end="url(#ah)"/>
 <rect x="12" y="125" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
 <text x="24" y="141" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="157" class="f-s">The README holds only its title, the eight principles,</text>
-<text x="24" y="172" class="f-s">each with its one-sentence statement, its diagram and a</text>
-<text x="24" y="187" class="f-s">table of the requirements that enforce it, then one…</text>
+<text x="24" y="157" class="f-s">The README holds only its title, the principles, each</text>
+<text x="24" y="172" class="f-s">with its one-sentence statement, its diagram and a table</text>
+<text x="24" y="187" class="f-s">of the requirements that enforce it, then a table of…</text>
 <path d="M220 198 L220 210" class="f-a" marker-end="url(#ah)"/>
 <rect x="12" y="210" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
 <text x="24" y="226" class="f-h">THE CHECK THAT PROVES IT</text>
@@ -49,7 +49,7 @@
 <text x="24" y="297" class="f-s">The first passes and each other fails naming README and</text>
 <text x="24" y="312" class="f-s">DOC-23; a repo without the shipped list keeps its own</text>
 <text x="24" y="327" class="f-s">README</text>
-<text x="12" y="358" class="f-x">Documentation | r2 README holds the eight principles with enforcing-requirement… (since v1.0.69)</text>
+<text x="12" y="358" class="f-x">Documentation | r4 final README shape: Score column, optional Not yet covered… (since v1.0.69)</text>
 <rect x="2" y="2" width="436" height="362" rx="6" fill="none" class="k-v20"/>
-<rect x="371" y="8" width="57" height="18" rx="9" class="p-v20"/><text x="400" y="21" text-anchor="middle" class="f-pill">v2.0 r2</text>
+<rect x="371" y="8" width="57" height="18" rx="9" class="p-v20"/><text x="400" y="21" text-anchor="middle" class="f-pill">v2.0 r4</text>
 </svg>
