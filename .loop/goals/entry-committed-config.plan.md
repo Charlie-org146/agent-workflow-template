@@ -12,6 +12,16 @@ for `render`, `write`, `check` and `block`; `merge.py`'s stale check runs `entry
 3. One `land` regression row `entry-committed-config` for the test, seen failing on main's `entry.py` before the change.
 4. Documentation page: one sentence under the entry-point requirement stating the rule, marked Unreviewed with the new wording going to the owner.
 
+## Review changes (red-team pass)
+- Mirror `counting.py` `config_of` (lines 258-266), which already does skip-worktree then `HEAD:`; test its flag as `S` or `s` (any flag char in `Ss`).
+- Always run git with `cwd=root`; the test calls `entry.py write --repo TREE` from an unrelated cwd.
+- Test in a linked worktree (`git worktree add`), where the per-worktree index carries the flag.
+- Extra negative controls: skip-worktree set but file absent from HEAD, and invalid JSON from `git show`, both fall back to the working copy.
+- "Seen failing": the test takes an `ENTRY` env override so it can run against main's `entry.py` (`git show origin/main:`) first.
+- Byte check: assert `entry.py` is no larger than main's size after the change.
+- The merge path is `wiki.own_entry` -> `entry.py check --repo TREE`; the test runs `check` the same way.
+- Unreviewed marking: the Documentation page's changed requirement text is stamped Unreviewed by the docs tooling, and the PR body asks the owner to review it.
+
 ## Done line coverage
 1 -> steps 1-2 (3.0 shown, check passes). 2 -> steps 3-4.
 
