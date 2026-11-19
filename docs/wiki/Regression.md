@@ -197,8 +197,8 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [homeguard-other-writer](Tests#t-homeguard-other-writer) | requirement | REG-1 | Given another session writes the schedule registry (a real repo, a backup) or moves ~/.workflow-loop/skills-main (START.md rewritten, clean afterwards) during a toy run, when the guard checks, then it reports no LEAK (#4760). | not run |
 | [homeguard-own-write](Tests#t-homeguard-own-write) | requirement | REG-1 | Given a toy itself registers a fixture repo from the temp folder in the schedule registry, or edits or adds a file in ~/.workflow-loop/skills-main, when the guard checks, then it still reports the LEAK (#4760). | not run |
 | [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-2 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-19 |
-| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-18 |
-| [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-18 |
+| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-19 |
+| [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-19 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-2 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-12 |
 | [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-2 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-12 |
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-2 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
@@ -278,8 +278,8 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [config-lane-duplicate-same](Tests#t-config-lane-duplicate-same) | requirement | REG-4 | Given .loop/config.json with a duplicate key whose last value is the one json.load returns (the guard-fixes case), when the other duplicate is removed, then no row is affected, since every reader sees the same config (#4321). | PASS 2026-11-15 |
 | [private-checks-classify](Tests#t-private-checks-classify) | requirement | REG-4 | Given a private repo's required checks, when they are classified, then a regression-only job, plain script jobs and a third-party-action job are told apart (#4537). | not run |
 | [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-19 |
-| [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
-| [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-18 |
+| [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-19 |
+| [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-19 |
 | [known-recorded](Tests#t-known-recorded) | requirement | REG-5 | Given a known failure, when the GitHub run runs it, then its result is recorded KNOWN, not FAIL. | PASS 2026-11-10 |
 | [reg-defect-label](Tests#t-reg-defect-label) | requirement | REG-5 | Given a failing test, when a local live run reports it, then its issue is labelled defect. | PASS 2026-11-12 |
 | [reg-local-relabel](Tests#t-reg-local-relabel) | requirement | REG-5 | Given an older open issue for a failing test, when a local live run reports it, then the issue gains the defect label. | PASS 2026-11-12 |

@@ -117,10 +117,10 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | CHK-1 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | CHK-1 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
-| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-18 |
-| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-18 |
-| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-18 |
-| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-18 |
+| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-19 |
+| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. | PASS 2026-11-19 |
+| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-19 |
+| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-19 |
 | [status-roadmap-features](Tests#t-status-roadmap-features) | requirement | CHK-1 | Given merged goals, when the live board is printed, then they do not appear. | PASS 2026-11-09 |
 | [status-graph-order](Tests#t-status-graph-order) | requirement | CHK-1 | Given the live board, when it is printed, then its sections come in a fixed order. | PASS 2026-11-12 |
 | [status-graph-levels](Tests#t-status-graph-levels) | requirement | CHK-1 | Given chained goals, when the board is printed, then they are drawn as a top-to-bottom graph between running and queued goals. | PASS 2026-11-12 |

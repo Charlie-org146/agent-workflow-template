@@ -162,13 +162,13 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [dependency-held](Tests#t-dependency-held) | requirement | OPS-1 | Given a goal that depends on an unmerged goal, when the queue runs, then it is held until that goal merges. | PASS 2026-11-09 |
-| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given the governing session, when goals run, then no goal runs inside it. | PASS 2026-11-18 |
-| [skill-says-governs](Tests#t-skill-says-governs) | requirement | OPS-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-18 |
+| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given the governing session, when goals run, then no goal runs inside it. | PASS 2026-11-19 |
+| [skill-says-governs](Tests#t-skill-says-governs) | requirement | OPS-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-19 |
 | [dependencies-on-map](Tests#t-dependencies-on-map) | requirement | OPS-1 | Given a goal that waits on others, when it starts, then it records what it waits on. | PASS 2026-11-09 |
 | [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
-| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-18 |
-| [worker-per-goal](Tests#t-worker-per-goal) | requirement | OPS-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-18 |
-| [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-18 |
+| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-19 |
+| [worker-per-goal](Tests#t-worker-per-goal) | requirement | OPS-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-19 |
+| [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-19 |
 | [operate-all](Tests#t-operate-all) | requirement | OPS-1 | Given the operate command's toy suite, when it runs, then the whole suite passes. | PASS 2026-11-09 |
 | [session-assign](Tests#t-session-assign) | requirement | OPS-1 | Given a ready goal, when it is assigned, then it gets its own worker session in the app. | PASS 2026-11-12 |
 | [session-rename](Tests#t-session-rename) | requirement | OPS-1 | Given a worker session, when it takes a goal, then it is renamed after that goal. | PASS 2026-11-12 |
@@ -178,7 +178,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [session-holds-slot](Tests#t-session-holds-slot) | requirement | OPS-1 | Given a goal in a worker session, when the parallel limit is counted, then it counts against the limit. | PASS 2026-11-12 |
 | [scripts-a-monitoring-under-19000](Tests#t-scripts-a-monitoring-under-19000) | requirement | OPS-1 | Given the workflow-monitoring scripts (board_report.py folded into board_log.py, whose --help exits 0), when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
 | - | requirement | OPS-20 | no passing test | not enforced |
-| [worker-reports](Tests#t-worker-reports) | requirement | OPS-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-18 |
+| [worker-reports](Tests#t-worker-reports) | requirement | OPS-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-19 |
 | [worker-reports-live](Tests#t-worker-reports-live) | requirement | OPS-2 | Given a report to a running worker, when goal.py next runs, then the report reaches its agent once. | PASS 2026-11-09 |
 | [session-reports](Tests#t-session-reports) | requirement | OPS-2 | Given a worker session's step report, when it arrives, then it is recorded on its goal. | PASS 2026-11-12 |
 | [session-fallback](Tests#t-session-fallback) | requirement | OPS-2 | Given no session can be started, when a goal runs, then it falls back to a background process and the board says so. | PASS 2026-11-12 |
