@@ -28,6 +28,7 @@ python3 - "$F" <<'PY'
 import json, os, sys
 F = sys.argv[1]
 good = """Two goals moved; one needs you.
+Machine: RAM 9.0 GB, commit 12.0 GB free, CPU 10%, 2 claude, 1 node; memory allows 3 goal starts
 
 ## All sessions
 | session | repo | for | status | progress | ETA | tokens left | latest |
@@ -37,9 +38,11 @@ good = """Two goals moved; one needs you.
 ## Dependencies
 ```
 == toy ==
-[>] alpha
- |
-[ ] beta
+[>] alpha  [ ] beta
+-- v1.0.1 release ETA tomorrow ~20:00 (2 goals, 1 not started) --
+  Monitoring:
+    [>] alpha ~20m left mac
+    [ ] beta ~? left pc
 ```
 
 ## Needs you
@@ -55,7 +58,7 @@ replies = {
     "nosection": good.replace("## Dependencies\n", ""),
     "order": good.replace("## Needs you\n1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n\n", "") +
              "\n## Needs you\n1. Release alpha?\n",
-    "noheadline": good.replace("Two goals moved; one needs you.\n\n", ""),
+    "noheadline": good.replace("Two goals moved; one needs you.\nMachine: RAM 9.0 GB, commit 12.0 GB free, CPU 10%, 2 claude, 1 node; memory allows 3 goal starts\n\n", ""),
     "twoheadlines": "Status report.\n" + good,
     "emptyneeds": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "We will see.\n"),
     "nothing": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "Nothing needs you.\n"),
