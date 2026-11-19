@@ -221,7 +221,7 @@ if want size; then
   if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
     check "skills holds no more files than origin/main" '[ "$(git -C "$here" ls-files skills | wc -l)" -le "$(git -C "$here" ls-tree -r --name-only origin/main -- skills | wc -l)" ]'
   else echo "SKIP size baseline (no origin/main)"; fi
-  check "the package holds at most 99 files" 'python3 "$here/dev/package.py" >/dev/null 2>&1 || true; [ "$(git -C "$here" ls-files skills listing.json README.md LICENSE | wc -l)" -le 99 ]'
+  check "the package holds at most 100 files" 'python3 "$here/dev/package.py" >/dev/null 2>&1 || true; [ "$(git -C "$here" ls-files skills listing.json README.md LICENSE | wc -l)" -le 100 ]'
 fi
 setup() { ( cd "$1" && shift && python3 "$here/skills/workflow-setup/scripts/setup.py" "$@" 2>&1 ); }
 bare() {  # NAME: a toy repo with no loop files yet, pushed

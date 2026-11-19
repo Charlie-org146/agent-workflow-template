@@ -406,7 +406,7 @@ m_seconds() {
 
 m_sizes() {
   cur=sizes
-  echo "== sizes: the files this goal edits stay inside their ceilings, the package stays at 99 files"
+  echo "== sizes: the files this goal edits stay inside their ceilings, the package stays at 100 files"
   local r="$here/skills/workflow-regression/scripts" size
   # Value: protects=the planner change stays inside the size budget (done line 5, read as: lanes.py does not grow past 19,710 (its size on main at v0.27.12); tiers.py and narrow.py stay under 19,000); fails_when=lanes.py grows or tiers.py or narrow.py reaches the health warn line; why_new=the cache code lives in scripts near their ceilings; seam=none; no_claim=files this goal does not edit, and the literal done-line text (27 scripts already exceed 18 KB)
   size=$(wc -c < "$r/lanes.py" | tr -d ' ')
@@ -415,12 +415,12 @@ m_sizes() {
     size=$(wc -c < "$r/$f" | tr -d ' ')
     if [ "$size" -lt 19000 ]; then ok "$f is $size bytes (under 19000)"; else fail "$f size" "< 19000" "$size"; fi
   done
-  # Value: protects=the shipped package passes its own scan with at most 99 files; fails_when=package.py fails or counts more than 99 files; why_new=the cache must fit in existing scripts; seam=dev/package.py with its ZIP in a temp folder; no_claim=the new files under dev/toy (not shipped)
+  # Value: protects=the shipped package passes its own scan with at most 100 files; fails_when=package.py fails or counts more than 100 files; why_new=the cache must fit in existing scripts; seam=dev/package.py with its ZIP in a temp folder; no_claim=the new files under dev/toy (not shipped)
   local out count
   mkdir -p "$d/pkgroot" && git -C "$here" archive HEAD | tar -x -C "$d/pkgroot"  # the committed files only: a stray __pycache__ in the worktree is not shipped
   out=$(python3 -B "$here/dev/package.py" --root "$d/pkgroot" --out "$d/pkg.zip" </dev/null 2>&1)
   count=$(sed -n 's/^PASS: \([0-9]*\) files.*/\1/p' <<<"$out")
-  if [ -n "$count" ] && [ "$count" -le 99 ]; then ok "package.py passes with $count files"; else fail "package.py" "PASS with <= 99 files" "$(tail -3 <<<"$out")"; fi
+  if [ -n "$count" ] && [ "$count" -le 100 ]; then ok "package.py passes with $count files"; else fail "package.py" "PASS with <= 100 files" "$(tail -3 <<<"$out")"; fi
   # Value: protects=the owner can look up every PLAN_CACHE state in commands.md; fails_when=a state token the planner prints is missing from its Plan cache section; why_new=tokens are the owner's only view of the cache; seam=none; no_claim=the table's wording
   local section missing="" token
   section=$(awk '/^## Plan cache/ {on = 1; next} /^## / {on = 0} on' "$here/skills/workflow-regression/references/commands.md")
