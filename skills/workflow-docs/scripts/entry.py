@@ -11,14 +11,12 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (see references/commands.md, Entry point templates), then a
-Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
-Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
+regression, health and settings, then a
+Features table (each PRD page: name, milestone, first Problem sentence, its skills' asks) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
 holds no count, date or machine path.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
-(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
-tables are always checked. It runs git and nothing else.
+(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. Features and Settings are always checked.
 """
 import argparse
 import json
@@ -54,8 +52,11 @@ def read(path, default=""):
 
 
 def config(root):
+    # Committed file under a skip-worktree edit, else the working copy.
+    import counting
+    found = counting.config_of(root)
     try:
-        found = json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
+        found = found or json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
     except ValueError:
         found = {}
     return found if isinstance(found, dict) else {}
@@ -252,7 +253,7 @@ def problems(root):
     lag = lagging(root, cfg)
     fix = "Fix: python3 <workflow-docs>/scripts/entry.py write (or docs.py audit)"
     note = NOTE % (cfg.get("template_version") or "0", installed())
-    # MISSING applies once the repo holds template_version, or to the template's own checkout.
+    # MISSING: once the repo holds template_version, or in the template's own checkout.
     owed = cfg.get("criteria") and (cfg.get("template_version") or ours(root))
     if have is None:
         if owed:
