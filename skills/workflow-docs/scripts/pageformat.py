@@ -4,8 +4,8 @@ A finding is ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>).
 import os
 import re
 
-GENERATED = {"Tests"}  # pages render writes: never mapped, never a feature page
-GUIDE = "<!-- workflow-docs guide -->"  # marks a guide page: mapped and kept fresh, not a feature page
+GENERATED = {"Tests"}  # pages render writes: not a feature page
+GUIDE = "<!-- workflow-docs guide -->"  # a guide page: mapped, kept fresh, not a feature page
 CHECKS = ("home", "frontdoor", "usage", "bullets", "problem", "tests", "deployments", "runbook")  # deployments: deployments.py
 BANNED = "script, function, regex, json, tsv, stdout"
 MARKER = "<!-- workflow-docs -->"
@@ -153,13 +153,14 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
+TABLE = "Requirement Feature Release Summary Flow".split()
 IDREF = re.compile(r"\b([A-Z]{2,5}-\d+)\b( \(planned)?")
 
 
 def frontdoor(page, text, listing, ids, readme=True):
     want, out = LIST.findall(listing.partition("## The eight principles")[2]), []
     fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
-    head, secs = parts(unblocked(text))[0], parts(unblocked(text))[1:]
+    head, *secs = parts(unblocked(text))
     extra = [x for x in head[2][1:] if x[1].strip()]
     if readme and (len(extra) != 1 or "/wiki/Home" not in extra[0][1]):
         fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one [wiki](.../wiki/Home) line")
@@ -169,12 +170,13 @@ def frontdoor(page, text, listing, ids, readme=True):
             fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the eight principle sections, in order, and no other")
             continue
         body = [x for x in lines if x[1].strip()]
-        if len(body) != 3 or words(body[0][1]) != words(sentence) or "principle-0%s-" % n not in body[1][1] or not body[2][1].startswith("Enforced by:"):
-            fail(at, "its sentence from the health list, a diagram line, an 'Enforced by:' line", "%d lines" % len(body), "copy the list")
+        rows = [(x[0], [c.strip() for c in x[1].strip()[1:-1].split("|")]) for x in body if x[1].startswith("|")]
+        if not body or words(body[0][1]) != words(sentence) or len(rows) < 3 or rows[0][1] != TABLE or len(body) - len(rows) > 3 or any(len(r[1]) != 5 for r in rows):
+            fail(at, "its sentence and a table", "%d rows" % len(rows), "add the table")
             continue
-        for found, planned in IDREF.findall(body[2][1]):
-            if found not in ids and not planned:
-                fail(body[2][0], "an ID that exists or is marked (planned: ...)", found, "mark it '%s (planned: <goal>)' or remove it" % found)
+        for number, c in rows[2:]:
+            for found, _ in IDREF.findall(c[0]):
+                found in ids or "planned" in c[2] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
     if len(secs) > len(want):
         fail(secs[len(want)][1], "no section after the eight principles", short(secs[len(want)][0]), "move it to the wiki")
     return out
