@@ -39,17 +39,14 @@ REVIEW = re.compile(r"^Review: \*\*(Unreviewed|Reviewed (\d{4}-\d\d-\d\d))\*\*"
                     r"(?: <!-- prd P=(\w{8}) R=(\w{8}) N=(\w{8}) M=(\w{8}) U=(\w{8}) -->)?(?: <!-- kept [\w.@-]+ -->)?$")
 KEYS = "PRNMU"
 def names(rule):
-    """Section names in fingerprint order."""
     return rule["sections"][:4] + [rule["usage"]]
 
 
 def core(parts, rule):
-    """The section names other than Usage, Deployments, Runbook."""
     return [name for name, _ in parts if name not in (rule["usage"], rule["deploy"], rule["runbook"], rule["revs"])]
 
 
 def paras(lines):
-    """A section's paragraphs: a blank line or list item starts one; a wrapped line joins the last."""
     out = []
     for block in re.split(r"\n[ \t]*\n", "\n".join(lines or []).replace("\r\n", "\n").replace("\r", "\n")):
         new = True
@@ -63,7 +60,6 @@ def paras(lines):
 
 
 def norm(name, lines):
-    """A section as hashed: name, then lines, whitespace collapsed, stamps removed."""
     found = [" ".join(" ".join("- %s: %s" % (m.group(1), m.group(4)) if m else x for x, m in
                                ((x, criteria.LINE.match(x.rstrip())) for x in para.split("\n"))).split()) for para in paras(lines)]
     return name + "\n" + "\n".join(found)
@@ -75,7 +71,6 @@ def prints(parts, rule):
 
 
 def head(text):
-    """The lines before the first section."""
     return list(itertools.takewhile(lambda line: not line.startswith("## "), text.replace("\r\n", "\n").split("\n")))
 
 
@@ -83,7 +78,6 @@ LINK = re.compile(r"^How to use: \[(How-to-use-[\w-]+)\]\(\1\)$")
 
 
 def review_of(text, rule):
-    """(review line or None, trouble or None) from the page head."""
     seq = [line.strip() for line in head(text) if line.strip()]
     link = next((i for i, x in enumerate(seq) if LINK.match(x)), None)  # DOC-18: one link to the feature's How-to-use page, anywhere in the head
     seq = seq[:link] + seq[link + 1:] if link is not None else seq
@@ -109,7 +103,6 @@ def review_of(text, rule):
 
 
 def trouble(root, page, text, parts, rule):
-    """The PRD contract lines for one page, as (kind, page, detail)."""
     found, body, top = [], dict(parts), rule["metrics_lines"]
     nongoals, metrics = rule["sections"][2:4]
     line, why = review_of(text, rule)
@@ -141,7 +134,6 @@ def trouble(root, page, text, parts, rule):
 
 
 def set_review(text, line):
-    """The text with its Review line replaced."""
     lines = text.split("\n")
     for number in range(len(head(text))):
         if lines[number].startswith("Review:"):
@@ -151,7 +143,6 @@ def set_review(text, line):
 
 
 def review_text(text, day, page):
-    """(new text, None) Reviewed on day, or (text, why)."""
     rule = criteria.rules()
     parts = criteria.sections(text)
     have = core(parts, rule)
@@ -170,21 +161,18 @@ def unreview_text(text, page):
 
 
 def skeleton(title, problem, requirement, milestone=""):
-    """The one PRD page writer: an Unreviewed page with placeholder sections."""
     return "%s\n%s\n\n%sReview: **Unreviewed**\n\n## Problem\n\n%s\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- %s\n\n" \
            "## Success metrics\n\n- %s\n\n## Tests\n\n" % (MARKER, title, milestone + "\n\n" if milestone else "",
                                                            problem.strip(), group(requirement), PLACEHOLDER, PLACEHOLDER)
 
 
 def group(requirements):
-    """Requirement lines under the two DOC-7 groups (all Functional); kept if grouped."""
     if re.search(r"^### ", requirements, re.M):
         return requirements
     return "### Functional\n\n%s\n\n### Non-functional\n\nNone" % requirements.strip("\n")
 
 
 def convert_text(text, rule):
-    """(outcome, new text): skipped, converted, completed, 'refused: why'."""
     parts = criteria.sections(text)
     have = core(parts, rule)
     first, second, third, fourth = rule["sections"][:4]
@@ -323,7 +311,6 @@ READER = "LOOP_PRD_READER"  # run as `COMMAND URL`; stdout is the PRD
 
 
 def read_link(url):
-    """(text, None) of the PRD at a `url:` or `mcp:` source via $LOOP_PRD_READER or a file or http(s) page, else (None, why)."""
     try:
         source, url = url, url[4:] if url.startswith("url:") else url
         reader = os.environ.get(READER)
@@ -345,7 +332,6 @@ def read_link(url):
 
 
 def out(env, *args, **kw):
-    """(ok, text) of gh ($LOOP_GH) or the PRD writer ($LOOP_PRD_WRITER), text on stdin; never raises."""
     cmd = os.environ.get(env) or ("gh" if env == "LOOP_GH" else "")
     if not cmd:
         return False, "set %s to the command that writes to the document" % env
@@ -382,7 +368,6 @@ FENCE = re.compile(r"```text\n(.*?)\n```", re.S)
 
 
 def diagram(name, text):
-    """DOC-19: the System diagram holds a box per What's delivered row, none without a row, and a Legend:."""
     import render
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 " + why))
     fence = FENCE.search(text.partition("\n### System diagram\n")[2].split("\n##", 1)[0])
