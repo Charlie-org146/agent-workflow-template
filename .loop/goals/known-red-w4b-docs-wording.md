@@ -1,7 +1,7 @@
 # Two main-red docs-wording rows pass again or are removed with evidence, so the v2.0 gate's full suite has no FAIL outside the known list (TOP-DECISION 57, o195 no waivers, o213)
 
 - Slug: known-red-w4b-docs-wording
-- Touches: not declared
+- Touches: dev/toy/test-milestone-wording.sh, .loop/regression.tsv, docs/wiki/Documentation.md, docs/wiki/Tests.md
 - ETA: 220 active minutes (estimate 176m plus a 25% margin, rough)
 
 ## Done lines
