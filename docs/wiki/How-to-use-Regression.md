@@ -108,4 +108,4 @@ The scheduled regression routine's Runbook lives in the [Regression](Regression)
 - PRD page: [Regression](Regression)
 - Backlog: [Backlog: Regression](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept known-red-docs-release2@24480cc8 -->
+<!-- kept readme-conformance@26f57c19 -->
