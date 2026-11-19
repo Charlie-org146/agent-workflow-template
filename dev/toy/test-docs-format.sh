@@ -173,6 +173,8 @@ PY
 git add -A; git commit -qm "principles README"
 check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
 edit README.md "## 3. The docs are true" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. The docs are true'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
+printf '\n## Not yet covered\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; check | grep -q "^FORMAT README" && bad "not yet covered: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Not yet covered' table passes"; reset
+printf '\n## Not yet covered\n\n| Requirement | Feature | Why |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 its Reason table" && ok "DOC-23 a 'Not yet covered' table with another header fails" || bad "not yet covered header"; reset
 printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the eight principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
 edit README.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
 edit README.md "v2.1 (planned)" "v1.0"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is planned (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset

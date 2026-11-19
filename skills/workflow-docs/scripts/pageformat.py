@@ -43,10 +43,6 @@ def words(text):
     return re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text).replace("`", "").split()
 
 
-def sentences(text):
-    return len(re.findall(r"[.!?] (?=[A-Z])", " ".join(words(text)))) + 1
-
-
 def slug(text):
     return re.sub(r"[^\w\- ]", "", text.strip().lower()).replace(" ", "-")
 
@@ -109,16 +105,16 @@ def home(text, features, existing, readme, repo, topics=None):
     found, other = tables([(n, x) for n, x in lines if not x.startswith(("# ", "## Features")) and x.strip() != MARKER])
     if not body or not body[0][1].startswith("# ") or "## Features" not in [x.strip() for _, x in body]:
         out.append(bad("Home", 1, "Features", 4, "Home is the marker, '# title' and '## Features'", short(body[0][1] if body else ""),
-                       "write '# <repo>', then '## Features', then the features table"))
+                       "write '# <repo>', '## Features', the table"))
     for number, line in other:
-        out.append(bad("Home", number, "Features", 4, "a line outside the features table", short(line), "move it to the README or a feature page"))
+        out.append(bad("Home", number, "Features", 4, "a line outside the features table", short(line), "move it to a page"))
     with_topic = len(found) == 1 and tuple(found[0][1]) == ("Topic",) + HOME
     want_head = ("Topic",) + HOME if with_topic else HOME
     topics = topics if with_topic else None
     if len(found) != 1 or tuple(found[0][1]) != want_head:
         return out + [bad("Home", found[0][0] if found else 1, "Features", 4, "one table with the header | %s |" % " | ".join(want_head),
                           "%d tables%s" % (len(found), ", header " + short(" | ".join(found[0][1])) if found else ""),
-                          "use exactly that header, in one table")]
+                          "use that header, one table")]
     for number, row in found[0][2]:
         topic, row = (row[0], row[1:]) if with_topic and len(row) == 5 else (None, row)
         page = re.match(r"^\[([^\]]+)\]\(([^)]+)\)$", row[0]) if len(row) == 4 else None
@@ -131,8 +127,8 @@ def home(text, features, existing, readme, repo, topics=None):
         if topics:
             order, held = topic_order(topics), topic_of(name, topics)
             if topic != held or order.index(held) < last:
-                out.append(bad("Home", number, "Features", 4, "the Topic cell names the page's topic and rows are grouped by topic",
-                               short(topic or ""), "write %s here and keep each topic's rows together, in the order of the topics setting" % held))
+                out.append(bad("Home", number, "Features", 4, "the Topic cell names the page's topic, rows grouped by topic",
+                               short(topic or ""), "write %s and keep topics together, in setting order" % held))
             last = max(last, order.index(held)) if held in order else last
         if name not in features:
             out.append(bad("Home", number, "Features", 4, "a row for a page that is not a feature page", name, "remove the row"))
@@ -154,12 +150,22 @@ def home(text, features, existing, readme, repo, topics=None):
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
 TABLE = "Requirement Feature Release Summary Flow".split()
-IDREF = re.compile(r"\b([A-Z]{2,5}-\d+)\b( \(planned)?")
+IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
 def frontdoor(page, text, listing, ids, readme=True):
     want, out = LIST.findall(listing.partition("## The eight principles")[2]), []
     fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
+
+    def grid(lines, head):
+        tabs, other = tables([x for x in lines if x[1].strip()])
+        ok = len(tabs) == 1 and tabs[0][1] == head and tabs[0][2] and all(len(c) == len(head) for _, c in tabs[0][2])
+        rows = tabs[0][2] if ok else []
+        for number, c in rows:
+            for found in IDREF.findall(c[0]):
+                found in ids or "planned" in c[2] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
+        return ok, rows, other
+
     head, *secs = parts(unblocked(text))
     extra = [x for x in head[2][1:] if x[1].strip()]
     if readme and (len(extra) != 1 or "/wiki/Home" not in extra[0][1]):
@@ -167,18 +173,17 @@ def frontdoor(page, text, listing, ids, readme=True):
     names = ["%s. %s" % (n, name.strip()) for n, name, _ in want]
     for (name, at, lines), (n, _, sentence) in zip(secs + [("", 1, [])] * len(want), want):
         if name != names[int(n) - 1]:
-            fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the eight principle sections, in order, and no other")
+            fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the eight, in order")
             continue
-        body = [x for x in lines if x[1].strip()]
-        rows = [(x[0], [c.strip() for c in x[1].strip()[1:-1].split("|")]) for x in body if x[1].startswith("|")]
-        if not body or words(body[0][1]) != words(sentence) or len(rows) < 3 or rows[0][1] != TABLE or len(body) - len(rows) > 3 or any(len(r[1]) != 5 for r in rows):
-            fail(at, "its sentence and a table", "%d rows" % len(rows), "add the table")
-            continue
-        for number, c in rows[2:]:
-            for found, _ in IDREF.findall(c[0]):
-                found in ids or "planned" in c[2] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
-    if len(secs) > len(want):
-        fail(secs[len(want)][1], "no section after the eight principles", short(secs[len(want)][0]), "move it to the wiki")
+        ok, rows, other = grid(lines, TABLE)
+        if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
+            fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
+    more = secs[len(want):]
+    if more and more[0][0].startswith("Not yet covered"):
+        grid(more[0][2], TABLE[:2] + ["Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
+        more = more[1:]
+    if more:
+        fail(more[0][1], "no section after the eight principles", short(more[0][0]), "move it to the wiki")
     return out
 
 
