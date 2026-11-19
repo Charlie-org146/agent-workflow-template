@@ -219,13 +219,14 @@ def record(common, text, now=None):
     routes = [{"kind": k, "item": item, "to": ROUTES[k], "state": "proposed"} for k in "AIR" for item in lists[k]]
     write(os.path.join(common, "loop", RED, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now)) + ".json"),
           {"at": now, "time": iso(now), "assumptions": lists["A"], "idle": lists["I"], "risk": lists["R"][0], "routes": routes})
-    return ["ROUTE %s: %s: %s" % (r["to"], r["kind"], r["item"]) for r in routes]
+    file = "python3 skills/workflow-monitoring/scripts/mailbox.py finding %s --feature <PAGE> --found redteam/" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
+    return ["ROUTE ops-findings: " + file % json.dumps(r["item"][:100]) if r["kind"] == "A" else "ROUTE %s: %s: %s" % (r["to"], r["kind"], r["item"]) for r in routes]
 
 
 def due(common, now=None, eta=None):
     """`RED-TEAM DUE: why` when no pass is recorded, the last is over an hour old, or a release ETA is within an hour and the last pass is over 20 minutes old."""
     now, folder = now if now is not None else time.time(), os.path.join(common, "loop", RED)
-    last = max([float(read(os.path.join(folder, n)).get("at") or 0) for n in os.listdir(folder) if n.endswith(".json")] if os.path.isdir(folder) else [0])
+    last = max([float(read(os.path.join(folder, n)).get("at") or 0) for n in (os.listdir(folder) if os.path.isdir(folder) else []) if re.fullmatch(r"\d{8}T\d{6}Z\.json", n)] or [0])
     if eta is None:
         eta = read(os.path.join(common, "loop", "release-eta.json")).get("at")
     age = int((now - last) // 60)
