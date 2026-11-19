@@ -26,6 +26,7 @@ An LLM asked to run the operation session runs `operate.py run` and nothing else
 """
 import argparse
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -124,7 +125,7 @@ def refresh(common, base="main"):
 
 
 def behind_ask(common, base="main"):
-    """When the main checkout is behind origin/<base> (the govern hook blocks its own pull), the line asks a free worker to fast-forward it (<loop>/checkout-behind.txt); '' when current."""
+    """When the main checkout is behind origin/<base> (the govern hook blocks its own pull), the line asks a free worker to fast-forward it; '' when current."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -288,15 +289,18 @@ def run(args, cwd=None):
 
 
 def tems(*args, **kwargs):
-    """workflow-release's one compare, autorelease.tems."""
-    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts"))
-    import autorelease
-    return autorelease.tems(*args, **kwargs)
+    """workflow-release's autorelease.tems, loaded by path."""
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts")
+    sys.path.append(here)
+    spec = importlib.util.spec_from_file_location("autorelease", os.path.join(here, "autorelease.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.tems(*args, **kwargs)
 
 
 def wiki_only(top, old, new):
-    """True when NEW descends from OLD and the diff is only stamp files, .md pages in the base branch's wiki folder (no
-    SKILL.md) and README.md outside its generated blocks, as tems checks (no symlink, rename, delete)."""
+    """True when NEW descends from OLD and the diff is only stamp files, .md pages in the wiki folder (no SKILL.md) and
+    README.md outside its generated blocks, as tems checks."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -317,9 +321,9 @@ def readme_blocks_only(top, old, new):
 
 
 def apply(slug, branch):
-    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree: restamp marks a page
-    only while its reviewed text still holds, so a wording change stays refused. The pushed commit moves the head by wiki
-    pages only, which merge.py accepts."""
+    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree: only while a
+    page's reviewed text still holds, so a wording change stays refused. The pushed commit moves the head by wiki pages
+    only, which merge.py accepts."""
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
