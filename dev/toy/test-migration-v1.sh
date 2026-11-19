@@ -11,5 +11,5 @@ here=$(cd "$(dirname "$0")" && pwd); tmp="$here/.v1-$$.sh"
 rm -f "$here"/.v1-*.sh
 trap 'rm -f "$tmp"' EXIT
 trap 'rm -f "$tmp"; exit 143' TERM INT HUP
-sed '2i # windows: ok' "$here/test-migration.sh" > "$tmp"
+awk 'NR == 2 { print "# windows: ok" } { print }' "$here/test-migration.sh" > "$tmp"
 bash "$tmp" v1 < /dev/null
