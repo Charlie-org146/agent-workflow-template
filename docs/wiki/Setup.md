@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept v2-health-green@8f6e0749 -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept known-red-w11-docs-size@0fac53e6 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
