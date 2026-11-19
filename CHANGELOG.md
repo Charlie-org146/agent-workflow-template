@@ -1,5 +1,65 @@
 # Changelog
 
+## v1.0.74 - 2026-11-19
+
+- Regression, Automation, Documentation, Integrations carry the v2 rewrite text through the revision tooling
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Re-aim rows and toys that pinned the old wording; move the budget detail to the How-to pages
+- Lane: re-render the Tests tables
+- DOC-4 keeps the milestone-optional rule (owner record o160); re-aim the milestone wording toy to DOC-4
+- Merge prd-revisions (60ce3cfa) into regroup-regression
+- Integrations pages kept after the link-check changes from prd-revisions
+- DOC-19 r3 states again that a repo's own published sites and README count as inside the repo (v1.0.66, REL-9; owner record o155)
+- Merge main (v1.0.67) into regroup-regression
+- Merge prd-principles (04856524) into regroup-regression
+- Merge gate-rerender (3cda989f) into regroup-regression
+- Merge regroup-delivery (f88e6cf5) into regroup-regression
+- Merge main (v1.0.68) into regroup-regression
+- Merge prd-principles (f74d3e4a) into regroup-regression
+- Merge regroup-delivery (004d6893) into regroup-regression
+- Merge main (v1.0.69) into regroup-regression
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge regroup-delivery (42a009dc) into regroup-regression
+- README: say the eight sections are the project's principles and link the Principles page (owner o170)
+- Principles: say the README shows the same eight in short (owner o170)
+- Merge main (v1.0.70) into regroup-regression
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main (v1.0.71) into regroup-regression
+- Merge extra-cols-links (51995577) into regroup-regression
+- Lane: re-render the Tests tables
+- Integrations pages kept after the docs.tsv reader change from extra-cols-links
+- Merge extra-cols-links (ae681d28) into regroup-regression
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge extra-cols-links (8bb069dd) into regroup-regression
+- Lane: re-render the Tests tables
+- Merge main (5e8822f1, revert of v1.0.72) into regroup-regression
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge extra-cols-links (b04e0dc9) into regroup-regression
+- Lane: re-render the Tests tables
+- Merge main (v1.0.73) into regroup-regression
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Open docs/wiki/Integrations.md.
+   Expect: INT-1 to INT-8 each read Unreviewed, each has a Revisions table with an r1 row, and Home links How-to-use-Integrations (the README is the principles only, DOC-23).
+2. Open docs/wiki/Regression.md and find `### REG-7` under Revisions.
+   Expect: rows r2 above r1, r2 with the reason `v2 rewrite (prd-rewrite-to-10)` and owner record o155, and REG-11 to REG-16 listed with an r1 row.
+3. Open docs/wiki/Documentation.md and find `### Retired` under Revisions.
+   Expect: DOC-7 merged into DOC-1 and DOC-17 moved to INT-3 are listed, next to DOC-5, DOC-8 and DOC-9 (merged into DOC-1 by prd-principles, o39 and o169); docs/wiki/Automation.md lists AUT-8 moved to DOC-16.
+4. Run `python3 skills/workflow-docs/scripts/docs.py check` and `python3 skills/workflow-docs/scripts/entry.py check`.
+   Expect: DOCS OK: 14 pages and ENTRY OK.
+5. Run `python3 skills/workflow-docs/scripts/criteria.py guard origin/main regroup-regression`.
+   Expect: GUARD OK.
+
 ## v1.0.73 - 2026-11-18
 
 - No code changes

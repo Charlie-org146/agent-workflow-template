@@ -1,7 +1,7 @@
 # Regression, Automation, Documentation and Integrations carry the v2 rewrite text through the revision tooling, each requirement on the page it belongs to
 
 - Slug: regroup-regression
-- Touches: docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Documentation.md, docs/wiki/Integrations.md, docs/wiki/Home.md, docs/wiki/Tests.md, .loop/regression.tsv, .loop/docs.tsv, .loop/START.md, docs/wiki/How-to-use-Regression.md, docs/wiki/How-to-use-Automation.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/How-to-use-Integrations.md, README.md
+- Touches: docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Documentation.md, docs/wiki/Integrations.md, docs/wiki/Home.md, docs/wiki/Tests.md, .loop/regression.tsv, .loop/docs.tsv, .loop/START.md, docs/wiki/How-to-use-Regression.md, docs/wiki/How-to-use-Automation.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/How-to-use-Integrations.md, README.md, .loop/regression-known.tsv, dev/toy/test-automation-budgets.sh, dev/toy/test-defect.sh, dev/toy/test-deployments.sh, dev/toy/test-milestone-wording.sh, docs/wiki/Principles.md
 - ETA: 230 active minutes (estimate 182m plus a 25% margin)
 
 ## Done lines
