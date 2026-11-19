@@ -134,4 +134,4 @@ Each requirement and how it is delivered:
 
 <!-- kept plan-red-team-core@6edef587 -->
 
-<!-- kept gap-wave1-small@1aecea23 -->
+<!-- kept delivery-small-fixes@ba5c06b14 -->
