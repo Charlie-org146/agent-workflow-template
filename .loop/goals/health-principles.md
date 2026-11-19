@@ -16,3 +16,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-health/scripts/health.py check`.
+   Expect: six PRINCIPLE lines, principle 6 UNREAD, the others green, and `PASS controls principle-map control: fires on its fixture`.
+2. Run `python3 skills/workflow-health/scripts/health.py review`.
+   Expect: after the findings, a PRINCIPLES block with one line per principle listing its Reviewed requirements and test counts, WEAK on any with no test.
+3. Remove one requirement row from docs/wiki/Principles.md (a scratch copy) and run health check.
+   Expect: a FAIL principle-map row naming that Reviewed requirement as under no principle.
+
