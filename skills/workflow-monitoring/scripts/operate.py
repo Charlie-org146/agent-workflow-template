@@ -327,7 +327,8 @@ def apply(slug, branch):
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
-        return 0
+        return 1
+    code = 0
     try:
         with open(os.path.join(tree, ".loop", "config.json")) as handle:
             config = json.load(handle)
@@ -338,21 +339,22 @@ def apply(slug, branch):
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
         said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
         if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
-            run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
+            code = run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree).returncode
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
+            code = code or pushed.returncode
     except (OSError, ValueError):
-        pass
+        code = 1
     finally:
         run(["git", "worktree", "remove", "--force", tree], top)
-    return 0
+    return 1 if code else 0
 
 
 def cmd_forward(args):
     """merge.py / wiki.py: move this main checkout to origin/BASE (exit 0 when it moved)."""
     line = refresh(fgit(os.getcwd(), "rev-parse", "--path-format=absolute", "--git-common-dir")[1], args.base)
     print(line)
-    return 0 if "FAST-FORWARDED" in line else 1
+    return 0 if line.startswith("CHECKOUT FAST-FORWARDED") else 1
 
 
 def cmd_wiki_only(args):
