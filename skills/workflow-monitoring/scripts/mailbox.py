@@ -267,6 +267,8 @@ def plan_main(argv):
     parser.add_argument("--root", default="")
     args = parser.parse_args(argv)
     root = args.root or subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or os.getcwd()
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", args.slug) or (args.command == "plan-accept" and not args.arg.isdigit()):
+        sys.exit("REFUSED: usage: mailbox.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID (a goal slug, a principle number)")
     if args.command == "plan-review":
         print(plan_input(root, args.slug))
     elif args.command == "plan-record":
