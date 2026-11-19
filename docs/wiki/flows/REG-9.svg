@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 345" width="440" role="img" aria-label="Flow of REG-9 Test results and coverage are honest">
+<title>REG-9 Test results and coverage are honest</title>
+<style>
+.f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
+.f-s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
+.f-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.f-you{fill:#e4eeff;stroke:#3b6fd6}
+.f-step{fill:#f3f5f8;stroke:#8a94a3}
+.f-gate{fill:#fff4d6;stroke:#c08a00}
+.f-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.f-find{fill:#fde9e7;stroke:#c5483f}
+.f-bg{fill:#ffffff}
+.f-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.f-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.f-t{fill:#eef2f6}.f-h,.f-x{fill:#a3afbf}.f-s{fill:#e1e7ee}
+.f-step{fill:#222b36;stroke:#5c6b7d}.f-you{fill:#162a4f;stroke:#6d9bf0}
+.f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
+.f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
+}
+
+.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-planned{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
+.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-planned{fill:#8a5cd6}
+.f-pill{font:700 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}
+@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-planned{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-planned{fill:#7a4cc6}}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
+<rect width="440" height="345" class="f-bg"/>
+<text x="12" y="22" class="f-t">REG-9 Test results and coverage are honest</text>
+<rect x="12.0" y="42" width="416.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="220.0" y="62" text-anchor="middle" class="f-s">Test result recorded</text>
+<rect x="12.0" y="103" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="123" text-anchor="middle" class="f-s">Ever seen failing?</text>
+<rect x="12.0" y="164" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="184" text-anchor="middle" class="f-s">Shown unproven or owed</text>
+<rect x="225.0" y="164" width="203.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="326.5" y="184" text-anchor="middle" class="f-s">Fail then pass, same commit?</text>
+<rect x="12.0" y="225" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="245" text-anchor="middle" class="f-s">Marked flaky, never retried</text>
+<rect x="225.0" y="225" width="203.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="326.5" y="245" text-anchor="middle" class="f-s">Coverage from main full run</text>
+<rect x="12.0" y="286" width="416.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="220.0" y="306" text-anchor="middle" class="f-s">Dropping only proof refused</text>
+<path d="M220.0 73.0 L220.0 103.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 134.0 L113.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="160.8" y="153.0" text-anchor="end" class="f-x">no</text>
+<path d="M220.0 134.0 L326.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="279.2" y="153.0" text-anchor="start" class="f-x">yes</text>
+<path d="M326.5 195.0 L113.5 225.0" class="f-a" marker-end="url(#ah)"/>
+<text x="214.0" y="214.0" text-anchor="end" class="f-x">yes</text>
+<path d="M326.5 195.0 L326.5 225.0" class="f-a" marker-end="url(#ah)"/>
+<text x="332.5" y="214.0" text-anchor="start" class="f-x">no</text>
+<path d="M326.5 256.0 L220.0 286.0" class="f-a" marker-end="url(#ah)"/>
+<text x="12" y="337" class="f-x">Regression | v0.1.2, v2.0</text>
+<rect x="2" y="2" width="436" height="341" rx="6" fill="none" class="k-v2.0"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v2.0"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
+</svg>

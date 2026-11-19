@@ -3,6 +3,7 @@
 # reads: skills/workflow-release/scripts/release.py skills/workflow-release/scripts/wiki.py
 # reads: skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/lanes.py
 # reads: skills/workflow-regression/scripts/narrow.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/lanes_cli.py dev/toy/fakegh/gh
+# reads: skills/workflow-monitoring/scripts/machines.py dev/toy/test-merge-batch.sh
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # REG-4 (Amendment A1c, V2, E-8): before merging, merge.py refuses when the pull request head moved since the pr lane
@@ -80,8 +81,33 @@ git reset -q --hard "$wiki"
 echo x > src/c.txt; git add src/c.txt; git commit -qm code; code=$(git rev-parse HEAD)
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$code python3 "$M/merge.py" g 2>&1); rc=$?
 check "a head moved by any other commit still refuses HEAD_MOVED (exit 4)" '[ $rc = 4 ] && grep -q "^REFUSED (HEAD_MOVED)" <<<"$out"'
+# #5171: --go-head binds a GO to one head and to CI on exactly that head (the PR's rollup is that head's, so a green parent never counts)
+echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"
+go() { echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"  # a refusal that reopens the goal must not mask the next check
+  FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$head FAKE_GH_ROLLUP="$1" python3 "$M/merge.py" g --go-head "${2:-$head}" 2>&1; }
+ok1='[{"name":"suite","status":"COMPLETED","conclusion":"SUCCESS"}]'
+out=$(go "$ok1" deadbeefdeadbeef); rc=$?
+check "a GO for another head refuses GO_HEAD (exit 4), nothing merged" '[ $rc = 4 ] && grep -q "^REFUSED (GO_HEAD): the GO was for deadbeefdead, the PR head is ${head:0:12}" <<<"$out"'
+out=$(go "$ok1" abc); rc=$?
+check "a GO that names no more than a few characters refuses GO_HEAD (exit 4)" '[ $rc = 4 ] && grep -q "^REFUSED (GO_HEAD)" <<<"$out"'
+out=$(go '[{"name":"suite","status":"IN_PROGRESS","conclusion":""}]'); rc=$?
+check "a check still running on the head refuses CI_PENDING, naming it (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_PENDING): suite on head ${head:0:12}" <<<"$out"'
+out=$(go '[{"name":"suite","status":"COMPLETED","conclusion":"FAILURE"}]'); rc=$?
+check "a check red on the head refuses CI_RED, naming it (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_RED): suite on head" <<<"$out"'
+out=$(go '[]'); rc=$?
+check "a head with no check reported (green only on its parent) refuses CI_MISSING (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_MISSING): no check reported on head" <<<"$out"'
+printf '{"required_status_checks": {"checks": [{"context": "suite", "app_id": null}]}}\n' > "$FAKE_GH_DIR/protection.json"
+out=$(go '[{"name":"other","status":"COMPLETED","conclusion":"SUCCESS"}]'); rc=$?
+check "a required check never reported on the head refuses CI_MISSING, naming it (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_MISSING): suite on head" <<<"$out"'
+out=$(go '[{"name":"suite","status":"COMPLETED","conclusion":"SUCCESS"},{"name":"known","status":"COMPLETED","conclusion":"FAILURE"}]')
+check "a red check no rule requires does not stop a GO whose required checks are green" '! grep -q "CI_\|GO_HEAD" <<<"$out" && grep -q "BASE_MOVED" <<<"$out"'
+rm -f "$FAKE_GH_DIR/protection.json"
+out=$(go "$ok1" "${head:0:9}")
+check "with every check green on the head, a GO that names it (even shortened) passes the gate" '! grep -q "CI_\|GO_HEAD" <<<"$out" && grep -q "BASE_MOVED" <<<"$out"'
 printf '#!/bin/bash\n# reads: src/a.txt\ncd "$here" && cat src/a.txt\n' > dev/tc.sh  # lanes: no read (toy repo file)
 printf 'tc\tland\tbash dev/tc.sh\n' >> .loop/regression.tsv; touch VERSION; git add -A; git commit -qm "root runner"
 out=$(python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected VERSION; python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected src/b.txt)
 check "a change only to NO_EFFECT files (a release's VERSION) reaches no root runner; a real change still does" 'grep -qx "AFFECTED 0 of 3 rows ()" <<<"$out" && grep -q "^AFFECTED 2 of 3 rows (tb, tc)" <<<"$out"'
+# merge batching (merge-queue C): its own toy, folded in here so it adds no regression row
+out=$(bash "$here/dev/toy/test-merge-batch.sh" 2>&1 | tail -4); check "merge.py --batch: off by default, one release per batch, a red, conflicting, safety, major or stale-GO case never merges (dev/toy/test-merge-batch.sh)" 'grep -qx "ALL PASS" <<<"$out"'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

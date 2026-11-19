@@ -3,13 +3,8 @@
 
 Closed: a merged goal says it fixed it ("fixes #35", "fixes finding:SLUG" in .loop/goals/*.md), or a line of
 .loop/findings.md is marked [closed]. A defect row's link holds the issue URL or finding:SLUG. Reads files only (no gh call).
-Also holds the Traceability and Consistency rules (report.py) and the shared page reader (read-only):
-  row-requirement  a regression row whose goal names no requirement on any page and is not a done line slug:N (FAIL)
-  ids-unique       a requirement id defined on two pages (FAIL)
-  refs             a page naming an id of a known prefix that no page defines (FAIL)
-  usage-readme     a /workflow-<skill> <verb> in the README that no skill's Command map names (WARN)
-  migration        migration_gaps (below) as WARN rows, the same gaps setup.py migration-check prints
-Each rule's negative control is in CONTROLS (controls.py runs it).
+Also the Traceability and Consistency rules (report.py) and the shared page reader: row-requirement, ids-unique, refs,
+usage-readme, migration. Each rule's negative control is in CONTROLS (controls.py runs it).
 """
 import glob
 import importlib
@@ -150,7 +145,7 @@ def refs(root):
     prefixes = {key.split("-")[0] for key in live}
     out, seen = [], set()
     for name, text in pages(root).items():
-        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", text):
+        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", re.sub(r"^\| r\d+ \|.*$", "", text, flags=re.M)):  # Revisions rows are history
             if key.split("-")[0] in prefixes and key not in known and (name, key) not in seen:
                 seen.add((name, key))
                 out.append(row("FAIL", "consistency", key, "refs", "page %s names %s, which no page defines" % (name, key),

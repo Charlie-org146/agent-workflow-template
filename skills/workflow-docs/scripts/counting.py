@@ -22,8 +22,7 @@ os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above
 WORDS = "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
 NOUNS = {"skill": "skill", "skills": "skill", "feature page": "page", "feature pages": "page", "criterion": "criteria",
          "criteria": "criteria", "test": "test", "tests": "test"}
-# One word may sit between number and noun only if it means "all of them" ("eight workflow-ready skills"); any other
-# ("two delivery skills") is a label, so nothing is read; "defect" is the one part read ("2 defect tests").
+# Between number and noun only a word meaning "all of them" may sit ("eight workflow-ready skills"); "defect" is read too.
 ALL = r"workflow(?:-ready)?|installed|available|bundled|shipped|listed|defect"
 CLAIM = re.compile(r"(?<![-\w.,/#])(\d+|%s)[ \t]+(?:(%s)[ \t]+)?(skills?|feature pages?|criteri(?:on|a)|tests?)\b"
                    % ("|".join(WORDS), ALL), re.I | re.ASCII)
@@ -41,8 +40,6 @@ def git(root, *args):
 
 
 def prose(text):
-    """Prose lines as a reader sees them: no fenced or indented code, comments or code spans; None if a fence never
-    closes. Indented code is CommonMark's: four columns past the item's text, after a blank line; it stays empty."""
     lines, fence, comment, blank, code, column = [], None, False, True, False, None
     for raw in text.splitlines():
         line = QUOTE.sub("", raw)
@@ -88,8 +85,7 @@ IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 
 
 def images(root, folder, pages):
-    """(page, path, here) for each relative image a wiki page embeds. Publish copies a bare file name from the wiki folder
-    to the wiki's top level, where GitHub serves it; any other relative path (a folder, ../, a missing file) 404s there."""
+    """(page, path, here) for each relative image a wiki page embeds."""
     out = []
     for page in pages:
         full = os.path.join(root, folder, page + ".md")
@@ -105,7 +101,6 @@ def image_trouble(root, folder, pages):
 
 
 def copy_images(root, folder, pages, wiki, dry):
-    """Copy the wiki folder's images the pages embed into the wiki clone; the names that differed there."""
     out = []
     for img in sorted({path for _, path, here in images(root, folder, pages) if here}):
         src, dst = os.path.join(root, folder, img), os.path.join(wiki, img)
@@ -121,7 +116,6 @@ def text_of(path):
 
 
 def counts(root, folder, rows, on):
-    """Checkable numbers the docs state, as (COUNT, file, detail) rows; folder: wiki folder, rows: page map, on: criteria."""
     top = os.path.realpath(root) + os.sep
     skills = len(glob.glob(os.path.join(root, "skills", "*", "SKILL.md")))
     wiki = os.path.join(root, folder)
@@ -158,8 +152,7 @@ def counts(root, folder, rows, on):
         if mine is not None:
             real.update(criteria=len(mine), defect=sum(len(defects.get(i, [])) for i in mine),
                         test=sum(len(linked.get(i, [])) + len(defects.get(i, [])) for i in mine))
-        # A line naming this file's own criterion is skipped; one naming another page's still has its skills and pages
-        # counts read; its criteria and tests counts are about that one.
+        # A line naming this file's own criterion is skipped; one naming another page's keeps its skills and pages counts.
         alone = lambda s: NOT_A_COUNT in s or own.intersection(ID.findall(s))
         other = lambda s: known.intersection(ID.findall(s))
         paras = []
@@ -203,7 +196,6 @@ def read_map(root):
 
 
 def sources(root):
-    """docs.tsv's optional third column: a page's PRD source (url:, mcp: or page)."""
     return {r[0]: s for r in map_rows(root) if (s := r[2].strip())}
 
 
@@ -220,7 +212,6 @@ BLOCK = re.compile(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:e
 
 
 def code_only(root, sha, files):
-    """True when each changed file is Python with the same syntax tree before and after: comments, docstrings only (#3122)."""
     drop = type("Drop", (ast.NodeTransformer,), {"visit_Expr": lambda self, n: None if isinstance(getattr(n.value, "value", 0), str) else n})
 
     def tree(ref, f):
@@ -232,8 +223,6 @@ def code_only(root, sha, files):
 
 
 def real(root, changed, paths):
-    """changed ('<sha> <subject>' lines) without the commits that only refresh a generated block of README.md or Home.md, or
-    only change comments in Python (code_only)."""
     if not changed:
         return changed
     names, shas = {}, [c.split()[0] for c in changed]  # one git call for all commits
@@ -267,8 +256,7 @@ def cadence(cron):
 
 
 def config_of(root):
-    """.loop/config.json as a dict; a copy marked skip-worktree (a value kept on this machine) reads as committed at HEAD, so
-    generated pages never carry it (#4608)."""
+    """.loop/config.json as a dict."""
     try:
         kept = git(root, "ls-files", "-v", "--", ".loop/config.json").stdout.startswith("S")
         with open(os.path.join(root, ".loop", "config.json")) as fh:
@@ -278,14 +266,24 @@ def config_of(root):
         return {}
 
 
+def origins(root):
+    out = config_of(root).get("public_origins")
+    out = list(out) if isinstance(out, list) else []
+    try:
+        with open(os.path.join(root, "scripts", "public-origins.json"), encoding="utf-8") as handle:
+            data = json.load(handle)
+        out += data.get("origins", []) if isinstance(data, dict) else data
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+    return tuple(x.rstrip("/") for x in out if isinstance(x, str) and x.startswith("https://"))
+
+
 BUILT_IN = (("health", "Checks the repo and files each finding.", "health_cron", "47 */4 * * *", "local:schedule"),
             ("regression", "Runs every regression row, files each failure.", "regression_cron", "17 */4 * * *", "github:regression.yml"),
             ("digest email", "Mails one digest per health round.", None, "", "local:schedule"))
 
 
 def entries(root):
-    """Built-in routines, then config's `automation` entries {name, does, cadence, runs, enabled?, last_run?}; a same-named
-    one replaces the built-in."""
     cfg, out = config_of(root), []
     for name, does, key, default, flow in BUILT_IN:
         mail = str(cfg.get("digest_mail", "cloudflare"))
@@ -299,7 +297,6 @@ def entries(root):
 
 
 def runbook_link(root, entry, wiki):
-    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it; '' if none."""
     try:
         with open(os.path.join(root, ".loop", "routines.tsv"), encoding="utf-8") as fh:
             held = [line.split("\t")[:2] for line in fh if line.strip() and line[0] != "#" and "\t" in line]
@@ -350,7 +347,6 @@ def perm_root_of(repo):
 
 
 def perm_rows(path):
-    """The (line number, fields) of a tab file, comments and blanks skipped."""
     try:
         with open(path, encoding="utf-8-sig") as fh:
             return [(n, line.rstrip("\r\n").split("\t")) for n, line in enumerate(fh, 1)
@@ -374,7 +370,6 @@ def perm_declared(root):
 
 
 def perm_matches(rule, tool, text):
-    """Does rule `Tool(spec)` cover `text`: a prefix rule `x:*`, else a glob."""
     found = re.match(r"^([A-Za-z]+)\((.*)\)$", rule)
     if not found or found.group(1) != tool:
         return False
@@ -383,7 +378,6 @@ def perm_matches(rule, tool, text):
 
 
 def ledger(root, rows=None):
-    """The posted deltas {PAGE:ID: [side, issue, commented 1/0, sha8]} in <git common dir>/loop/deltas.tsv."""
     folder = os.path.join(os.path.abspath(criteria.git("rev-parse", "--git-common-dir", check=False) or os.path.join(root, ".git")), "loop")
     path = os.path.join(folder, "deltas.tsv")
     if rows is not None:

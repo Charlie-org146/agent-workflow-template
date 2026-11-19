@@ -11,20 +11,21 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `base` | `main` | The branch goals start from and pull requests target. |
 | `agent_command` | `[]` | The command that runs a goal in the background; the prompt is its last argument. |
 | `parallel` | `0` | Workers running at once; 0 means unlimited. |
-| `cadence` | `30` | Minutes between check-ins of the operation session, 1 to 60, or off. |
-| `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged as auto-approved. |
-| `auto_merge` | `false` | true lets the release step merge a goal's pull request and publish. |
+| `cadence` | `30` | Minutes between operation check-ins, 1 to 60, or off. |
+| `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged auto-approved. |
+| `auto_merge` | `false` | true lets the release step merge a goal's PR and publish. |
+| `merge_batch` | `false` | true lets merge.py --batch merge 2-3 green goals as one. |
 | `review_hold` | `false` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
-| `pr_bumps_version` | `false` | true moves the last number of the version file once on a goal's branch. |
-| `version_file` | `VERSION` | The file that holds the version; a release bumps it and writes the changelog. |
-| `routines` | `[]` | Commands the release step runs on the base branch before it merges. |
+| `pr_bumps_version` | `false` | true moves the last version number once on a goal's branch. |
+| `version_file` | `VERSION` | The file holding the version; a release bumps it, writes the changelog. |
+| `routines` | `[]` | Commands the release step runs on the base before it merges. |
 | `regression_cron` | `17 */4 * * *` | Five cron fields: when the full regression runs; off is off. |
-| `health_cron` | `47 */4 * * *` | Five cron fields: when health, the judge and its digest run on the Mac; off is off. |
+| `health_cron` | `47 */4 * * *` | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
 | `judge_env` | `ANTHROPIC_API_KEY` | No longer read. |
-| `judge_setup` | `(empty)` | No longer read: kept so old configs stay valid. |
-| `digest_owner` | `(empty)` | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). |
+| `judge_setup` | `(empty)` | No longer read; old configs stay valid. |
+| `digest_owner` | `(empty)` | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
 | `digest_mail` | `cloudflare` | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
-| `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp sends through (with the DIGEST_SMTP_* secrets). |
+| `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). |
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `review_depth` | `full` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `criteria` | `true` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
@@ -40,7 +41,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. |
 | `ci_levels` | `nightly` | Target of the scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
-| `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before the goal waits. |
+| `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |
 | `plan_pause_percent` | `80` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
 | `min_free_memory_gb` | `4` | Free GB below which no lane or goal starts; 0 off. |
@@ -68,7 +69,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
-| `workers` | `(empty)` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. |
+| `workers` | `(empty)` | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. |
 
 ## Private settings
 
@@ -92,5 +93,5 @@ Outside the repo, never committed: `~/.workflow-loop/flow.json` (or `$LOOP_FLOW`
 | `rules` | `[]` | Health file: your own health rules, each {name, command, fix}. |
 | `repos` | `[]` | Followed repos: one path a line in the repos file, shown on the board. |
 | `notify_email` | `false` | Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine. |
-| `machine_sync` | `false` | Flow file: true shares the merge turn, SNAPSHOT lines and mail ledger with your other machine through origin; per machine. |
-| `notify_budget` | `20` | Flow file: most mails both machines send you in 24 hours, from one shared ledger; 0 sends none. |
+| `machine_sync` | `false` | Sync machines. |
+| `notify_budget` | `20` | Daily mail budget. |

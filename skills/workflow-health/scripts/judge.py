@@ -369,7 +369,7 @@ def load(path):
 def principles(rows):
     """HLT-2: one PRINCIPLE line per principle in commands.md, red on any FAIL in its groups; UNREAD is never green."""
     try:
-        text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The eight principles")[2]
+        text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The principles")[2]
     except OSError:
         return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
     out = []

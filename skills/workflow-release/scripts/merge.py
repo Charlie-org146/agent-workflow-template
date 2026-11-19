@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
-"""Merge a finished goal's pull request into the base branch, then release.
+"""Merge a finished goal's pull request into the base branch, then release. usage: merge.py SLUG [--go-head SHA]
+       merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]
 
-usage: merge.py SLUG
+Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges
+(`gh pr merge --match-head-commit`), releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py;
+refused: `wiki_error`); a stale wiki page, REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse
+first. --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green.
 
-Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs the
-base's routines (refusing if one fails), merges, and releases (autorelease.py; failure: `release_error`). Where .loop/docs.tsv
-maps pages, it first refuses while one is stale, passing a DOC-19 or DOC-4 finding on a page the goal did not change to an
-issue instead, and after the merge publishes the wiki (wiki.py; refused: `wiki_error`). With "review_hold": true it
-refuses REVIEW_HOLD until review.py records a review of the head. Before merging it scans the branch and notes for private
-names, and holds the merge (REQUIREMENT_MISSING) while a criterion row the goal adds names a requirement ID no base wiki page
-names, where the base's pages use that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo); refuses another pod's goal.
-
-Also here, the release pull request (`merge.advance`, called by autorelease.py): it pushes
-`release/vX-<slug>`, opens `Release vX (<slug>)` and merges it with `gh pr merge --merge`, never `--admin`; `gh pr view` decides
-each outcome (codes: references/commands.md).
+--batch (setting merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
+Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
 """
 import argparse
 import datetime
@@ -31,6 +26,7 @@ import wiki
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+MON = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
 
 
 def file_issue(top, page, texts):
@@ -48,10 +44,10 @@ def file_issue(top, page, texts):
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+    sys.path.append(MON)  # graph's proctree
     try:
-        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "graph.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(MON, "graph.py"))
+        spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
         return mod
     except Exception:
         return None
@@ -73,7 +69,7 @@ REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "
 
 
 def reach(top, paths):
-    """Row ids PATHS can affect, or None for every row (unmapped, deleted, no planner)."""
+    """Row ids PATHS can affect, or None for all."""
     if not paths:
         return set()
     if not os.path.exists(REACH):
@@ -85,17 +81,16 @@ def reach(top, paths):
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
-OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
+OPERATE = os.path.join(MON, "operate.py")
 
 
 def base_moved(state, cfg, top):
-    """None when the merge may go ahead, else (exit code, refusal): the base moved since the pr lane in paths this goal's
-    rows reach (2), or origin can't be fetched (3); a move elsewhere only notes it."""
+    """None to go ahead, else (exit code, refusal): the base moved in paths this goal's rows reach (2), or no fetch (3)."""
     base, was, slug = cfg.get("base", "main"), state.get("pr_base"), state.get("slug", "SLUG")
-    if not was and state.get("pr_head"):  # a head but no base: never clear
+    if not was and state.get("pr_head"):
         return 2, "REFUSED (BASE_MOVED): the base the pr lane ran on was not recorded. Fix: goal.py pr %s, then merge.py %s" % (
             slug, slug)
-    if not was:  # opened before pr recorded a base
+    if not was:
         return None
     try:
         done = subprocess.run(["git", "fetch", "-q", "origin", base], cwd=top, capture_output=True, text=True, timeout=60)
@@ -108,7 +103,7 @@ def base_moved(state, cfg, top):
     now = run(["git", "rev-parse", "origin/" + base], cwd=top).stdout.strip()
     if now == was:
         return None
-    def names(a, b):  # None when git can't diff: refused below
+    def names(a, b):
         done = run(["git", "diff", "--name-only", "--no-renames", a, b], cwd=top)
         return None if done.returncode else [p for p in done.stdout.split("\n") if p]
     theirs, ours = [None if x is None else reach(top, x) for x in (names(was, now), names(was, state.get("pr_head") or "HEAD"))]
@@ -120,7 +115,7 @@ def base_moved(state, cfg, top):
 
 
 def missing_ids(top, cfg, head="HEAD"):
-    """(held, noted): requirement IDs this goal's criterion rows add that no origin/<base> wiki page names."""
+    """(held, noted): requirement IDs its criterion rows add that no origin/<base> wiki page names."""
     base = "origin/" + cfg.get("base", "main")
     folder = (cfg.get("wiki_dir") or "docs/wiki").strip("/")
     added = run(["git", "diff", "-U0", base + "..." + head, "--", ".loop/regression.tsv"], cwd=top).stdout
@@ -135,7 +130,7 @@ def missing_ids(top, cfg, head="HEAD"):
         found = run(["git", "ls-tree", "--name-only", ref, folder + "/"], cwd=top).stdout.split()
         return found, "\n".join(run(["git", "show", "%s:%s" % (ref, n)], cwd=top).stdout for n in found if n.endswith(".md"))
     names, text = pages(base)
-    both = text + "\n" + pages(head)[1]  # a page this goal adds counts
+    both = text + "\n" + pages(head)[1]
     gone = sorted(i for i in ids if not re.search(r"\b%s\b" % re.escape(i), both))
     held = [i for i in gone if names and re.search(r"\b%s\d+\b" % re.escape(i.split("-")[0] + "-"), text)]
     return held, [i for i in gone if i not in held]
@@ -176,7 +171,7 @@ def start(top, cfg, state):
     ar.check(state, top, None, {"release PR title": title, "release notes": body})
     made = ar.sh_text(["gh", "pr", "create", "--base", base, "--head", branch, "--title", title], body, cwd=top)
     url = (made.stdout.strip().splitlines() or [""])[-1] if made.returncode == 0 else ""
-    if not url:  # a restart may find it still open
+    if not url:
         seen = view(top, branch)
         url = seen.get("url", "") if seen.get("state") == "OPEN" else ""
     if not url:
@@ -210,7 +205,7 @@ def advance(top, cfg, state, again=False):
         base, vfile = cfg.get("base", "main"), cfg.get("version_file") or "VERSION"
         ar.sh(["git", "fetch", "-q", "origin", base], cwd=top)
         found = ar.sh(["git", "show", "%s:%s" % (oid, vfile)], cwd=top)
-        if oid and found.stdout.strip() != version:  # VERSION set by hand: release at the tip
+        if oid and found.stdout.strip() != version:
             tip = ar.sh(["git", "rev-parse", "origin/" + base], cwd=top).stdout.strip()
             fixed = ar.sh(["git", "show", "origin/%s:%s" % (base, vfile)], cwd=top)
             oid, found = (tip, fixed) if tip and fixed.stdout.strip() == version else (oid, found)
@@ -222,7 +217,7 @@ def advance(top, cfg, state, again=False):
         print("MERGED the release PR %s at %s" % (url, oid[:12]))
         return version, oid
     if not again and (status == "CLOSED" or (status == "OPEN" and seen.get("mergeStateStatus") in ("DIRTY", "BEHIND"))):
-        if status == "OPEN":  # another release moved VERSION first
+        if status == "OPEN":
             ar.sh(["gh", "pr", "close", url], cwd=top)
         forget(state, "%s was %s" % (url, "closed unmerged" if status == "CLOSED" else "behind the base"))
         return advance(top, cfg, state, again=True)
@@ -259,8 +254,10 @@ def leave_queue(path, slug):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("slug")
-    slug = parser.parse_args().slug
+    parser.add_argument("slug", nargs="+")
+    parser.add_argument("--batch", action="store_true", help="2-3 goals as one")
+    parser.add_argument("--go-head", metavar="SHA", help="GO for this head only")
+    args = parser.parse_args()
     top, common = (run(["git", "rev-parse", opt]).stdout.strip() for opt in ("--show-toplevel", "--git-common-dir"))
     if not top or not common:
         sys.exit("REFUSED: not in a git repo.")
@@ -271,7 +268,17 @@ def main():
     wiki.where(__file__, cfg.get("base"))
     if cfg.get("auto_merge") is not True:
         sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
-    path = os.path.join(os.path.abspath(common), "loop", "runs", slug + ".json")
+    if args.batch or len(args.slug) > 1:
+        if not (args.batch and cfg.get("merge_batch") is True):
+            sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing merged.")
+        pods and pods.merge_lock(os.path.abspath(common))
+        spec = importlib.util.spec_from_file_location("batch", os.path.join(MON, "machines.py"))
+        machines = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(machines)
+        return machines.batch(top, common, cfg, args.slug, args.go_head, sys.modules[__name__])
+    slug = args.slug[0]
+    runs = os.path.join(os.path.abspath(common), "loop", "runs")
+    path = os.path.join(runs, slug + ".json")
     state = load(path)
     if state is None:
         sys.exit("REFUSED: no goal named %s." % slug)
@@ -279,14 +286,14 @@ def main():
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
     if pods:
         pods.refuse(state)
-        pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), slug)  # an earlier pr lane holds the slot
-        pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
-    wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())  # #3867
-    view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
+        pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
+        pods.merge_lock(os.path.abspath(common))
+    wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
+    view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
     known, new = info.get("state", ""), info.get("headRefOid")
     if known != "MERGED":
-        head = "origin/" + state.get("branch", "")  # the pull request's tip
+        head = "origin/" + state.get("branch", "")
         if wiki.top_of():
             stale = wiki.pending(top, cfg, head=head, filer=file_issue)
             if stale:
@@ -304,11 +311,15 @@ def main():
             print("REFUSED (HEAD_MOVED): the pull request head moved since the pr lane passed (lane on %s, PR head %s). Fix: "
                   "goal.py pr %s, then merge.py %s" % (tested[:12], new[:12], slug, slug), file=sys.stderr)
             return ar.reopen(state, 4)
+        why = args.go_head and ar.go_gate(top, base, info, args.go_head)
+        if why:
+            print(why, file=sys.stderr)
+            return 4 if "GO_HEAD" in why else 5
         moved = base_moved(state, cfg, top)
         if moved:
             print(moved[1], file=sys.stderr)
             return ar.reopen(state, moved[0])
-        why = review.frozen(top, head, slug)  # REL-5: a cut rc freezes the base
+        why = review.frozen(top, head, slug)
         why and ar.fail(state, why)
         why = review.held(cfg, state, new)
         if why:
