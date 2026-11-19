@@ -144,7 +144,7 @@ def front(root, names):
         existing = {name[:-3] for name in os.listdir(folder) if name.endswith(".md")}
         out += pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
     listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
-    if "frontdoor" in on and "## The eight principles" in listing:
+    if "frontdoor" in on and "## The principles" in listing:
         ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+):", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
         ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
         page = read(os.path.join(folder, "Principles.md"))

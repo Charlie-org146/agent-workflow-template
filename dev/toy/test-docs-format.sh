@@ -164,20 +164,23 @@ echo "== DOC-23 the README is the principles"
 mkdir -p skills/workflow-health/references; cp "$here/skills/workflow-health/references/commands.md" skills/workflow-health/references/commands.md
 python3 - <<'PY'
 import os, re
-rows = re.findall(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", open("skills/workflow-health/references/commands.md").read().partition("## The eight principles")[2], re.M)
+rows = re.findall(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", open("skills/workflow-health/references/commands.md").read().partition("## The principles")[2], re.M)
 out = ["# toy", "", "[the wiki](https://github.com/toy/repo/wiki/Home)", ""]
 for n, name, sentence in rows:
-    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Feature | Release | Score | Summary | Flow |", "|---|---|---|---|---|---|", "| [DEL-1](x) | Delivery | v1.0 | 4/5 | one line (absorbs GRD-3) | [flow](https://github.com/toy/repo/blob/main/docs/wiki/flows/DEL-1.svg?raw=true) |", "| [DEL-9](x) | Delivery | v2.1 (planned) | 3 | one line | |", "", "Release means first appearance.", ""]
+    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Features | Release | Score | Summary | Flow |", "|---|---|---|---|---|---|", "| [DEL-1](x) | Delivery | v1.0 | 4/5 | one line (absorbs GRD-3) | [flow](https://github.com/toy/repo/blob/main/docs/wiki/flows/DEL-1.svg?raw=true) |", "| [DEL-9](x) | Delivery | v2.1 (planned) | 3 | one line | |", "", "Release means first appearance.", ""]
 open("README.md", "w").write("\n".join(out))
 os.makedirs("docs/wiki/flows", exist_ok=True); open("docs/wiki/flows/DEL-1.svg", "w").write("<svg/>")
 PY
 git add -A; git commit -qm "principles README"
 check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
-edit README.md "## 3. The docs are true" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. The docs are true'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
+edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score 3/5)"; check | grep -q "^FORMAT README" && bad "enforce score heading: $(check | grep '^FORMAT README')" || ok "DOC-23 a principle heading with its enforce score passes"; reset
+edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score x/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a principle heading with a bad enforce score fails" || bad "readme bad enforce score"; reset
+edit README.md "## 3. Fast, cheap and small" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
 printf '\n## Not yet covered\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; check | grep -q "^FORMAT README" && bad "not yet covered: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Not yet covered' table passes"; reset
 printf '\n## Not yet covered\n\n| Requirement | Feature | Why |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 its Reason table" && ok "DOC-23 a 'Not yet covered' table with another header fails" || bad "not yet covered header"; reset
-printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the eight principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
-edit README.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
+printf '\n## Open conflicts for the owner\n\n- SET-1 against SET-7: open.\n' >> README.md; check | grep -q "^FORMAT README" && bad "open conflicts: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Open conflicts' note passes"; reset
+printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
+edit README.md "tests come from the requirements" "tests come from the requirements, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
 edit README.md "v2.1 (planned)" "v1.0"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is planned (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset
 python3 - <<'PY'
 import re; t = open("README.md").read(); i = t.index("## 3. "); j = t.index("## 4. "); open("README.md", "w").write(t[:i] + re.sub(r"^\|.*\n", "", t[i:j], flags=re.M) + t[j:])
@@ -187,7 +190,7 @@ edit README.md "| 4/5 |" "| 9/5 |"; has "^FORMAT README:[0-9]*: Principles: DOC-
 printf '\n## Proposed cuts\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | repeats another |\n' >> README.md; check | grep -q "^FORMAT README" && bad "proposed cuts: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Proposed cuts' section passes"; reset
 edit README.md "flows/DEL-1.svg" "flows/DEL-X.svg"; has "^FORMAT README:[0-9]*: Principles: DOC-23 a Flow link to a file in docs/wiki/flows" && ok "DOC-23 a Flow link to a missing diagram fails" || bad "readme missing flow"; reset
 edit README.md "[the wiki](https://github.com/toy/repo/wiki/Home)" "nothing"; has "^FORMAT README:[0-9]*: Principles: DOC-23 the title and one link to the wiki Home" && ok "DOC-23 a README with no Home link fails" || bad "readme home"; reset
-cp README.md docs/wiki/Principles.md; edit docs/wiki/Principles.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT Principles:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a Principles page with a sentence off by a word fails" || bad "principles page"; reset
+cp README.md docs/wiki/Principles.md; edit docs/wiki/Principles.md "tests come from the requirements" "tests come from the requirements, quietly"; has "^FORMAT Principles:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a Principles page with a sentence off by a word fails" || bad "principles page"; reset
 git rm -rq --cached skills/workflow-health >/dev/null; rm -rf skills/workflow-health; check | grep -q "^FORMAT README" && bad "adopter README" || ok "DOC-23 a repo without the shipped list keeps its own README unchecked"; reset; git reset -q --hard HEAD~1
 
 echo "== DOC-6 each skill's commands are in its command reference; a Usage section is gone"

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 326" width="440" role="img" aria-label="Flow of GRD-20 The package always passes Agensi's rules: trigger, what the loop does, the check that proves it, the result">
-<title>GRD-20 The package always passes Agensi's rules</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 345" width="440" role="img" aria-label="Flow of GRD-20 The package always fits Agensi's rules">
+<title>GRD-20 The package always fits Agensi's rules</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
 .f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
@@ -26,27 +26,33 @@
 @media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="326" class="f-bg"/>
-<text x="12" y="22" class="f-t">GRD-20 The package always passes Agensi's</text>
-<text x="12" y="42" class="f-t">rules</text>
-<rect x="12" y="60" width="416" height="73" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="24" y="76" class="f-h">TRIGGER</text>
-<text x="24" y="92" class="f-s">No release is cut unless the built package passes every</text>
-<text x="24" y="107" class="f-s">rule Agensi publishes: the file, size and text-only</text>
-<text x="24" y="122" class="f-s">limits of both upload routes, what a buyer's agent is…</text>
-<path d="M220 133 L220 145" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="145" width="416" height="43" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="24" y="161" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="177" class="f-s">A failure names the rule and the file.</text>
-<path d="M220 188 L220 200" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="200" width="416" height="43" rx="8" class="f-find" stroke-width="1.2"/>
-<text x="24" y="216" class="f-h">THE CHECK THAT PROVES IT</text>
-<text x="24" y="232" class="f-s">No test names this requirement yet</text>
-<path d="M220 243 L220 255" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="255" width="416" height="43" rx="8" class="f-ok" stroke-width="1.2"/>
-<text x="24" y="271" class="f-h">RESULT</text>
-<text x="24" y="287" class="f-s">As stated: The package always passes Agensi's rules</text>
-<text x="12" y="318" class="f-x">Guardrails | since v1.0.75</text>
-<rect x="2" y="2" width="436" height="322" rx="6" fill="none" class="k-shipped"/>
+<rect width="440" height="345" class="f-bg"/>
+<text x="12" y="22" class="f-t">GRD-20 The package always fits Agensi's rules</text>
+<rect x="12.0" y="42" width="416.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="220.0" y="62" text-anchor="middle" class="f-s">Goal grows the package</text>
+<rect x="12.0" y="103" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="123" text-anchor="middle" class="f-s">Past a package limit at qa?</text>
+<rect x="12.0" y="164" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="184" text-anchor="middle" class="f-s">Refused, names room left</text>
+<rect x="225.0" y="164" width="203.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="326.5" y="184" text-anchor="middle" class="f-s">Release builds package</text>
+<rect x="12.0" y="225" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="245" text-anchor="middle" class="f-s">Passes every Agensi rule?</text>
+<rect x="12.0" y="286" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="306" text-anchor="middle" class="f-s">No release, names rule, file</text>
+<rect x="225.0" y="286" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="326.5" y="306" text-anchor="middle" class="f-s">Versioned package released</text>
+<path d="M220.0 73.0 L220.0 103.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 134.0 L113.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="160.8" y="153.0" text-anchor="end" class="f-x">yes, no room freed</text>
+<path d="M220.0 134.0 L326.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="279.2" y="153.0" text-anchor="start" class="f-x">no</text>
+<path d="M326.5 195.0 L220.0 225.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 256.0 L113.5 286.0" class="f-a" marker-end="url(#ah)"/>
+<text x="160.8" y="275.0" text-anchor="end" class="f-x">no</text>
+<path d="M220.0 256.0 L326.5 286.0" class="f-a" marker-end="url(#ah)"/>
+<text x="279.2" y="275.0" text-anchor="start" class="f-x">yes</text>
+<text x="12" y="337" class="f-x">Guardrails | v1.0.75</text>
+<rect x="2" y="2" width="436" height="341" rx="6" fill="none" class="k-shipped"/>
 <rect x="315" y="8" width="113" height="18" rx="9" class="p-shipped"/><text x="372" y="21" text-anchor="middle" class="f-pill">SHIPPED v1.0.75</text>
 </svg>

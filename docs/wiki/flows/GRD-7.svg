@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 326" width="440" role="img" aria-label="Flow of GRD-7 CI spends minutes only on runs that matter: trigger, what the loop does, the check that proves it, the result">
-<title>GRD-7 CI spends minutes only on runs that matter</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 406" width="440" role="img" aria-label="Flow of GRD-7 CI minutes are spent only where needed">
+<title>GRD-7 CI minutes are spent only where needed</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
 .f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
@@ -26,27 +26,32 @@
 @media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="326" class="f-bg"/>
-<text x="12" y="22" class="f-t">GRD-7 CI spends minutes only on runs that</text>
-<text x="12" y="42" class="f-t">matter</text>
-<rect x="12" y="60" width="416" height="43" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="24" y="76" class="f-h">TRIGGER</text>
-<text x="24" y="92" class="f-s">Given a scheduled round; when its digest is posted</text>
-<path d="M220 103 L220 115" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="115" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="24" y="131" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="147" class="f-s">A newer run of the same workflow on the same branch</text>
-<text x="24" y="162" class="f-s">cancels the one it replaces, and a heavy job is skipped</text>
-<text x="24" y="177" class="f-s">for a change that touches no code.</text>
-<path d="M220 188 L220 200" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="200" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
-<text x="24" y="216" class="f-h">THE CHECK THAT PROVES IT</text>
-<text x="24" y="232" class="f-s">grd7-round-cost (not run)</text>
-<path d="M220 243 L220 255" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="255" width="416" height="43" rx="8" class="f-ok" stroke-width="1.2"/>
-<text x="24" y="271" class="f-h">RESULT</text>
-<text x="24" y="287" class="f-s">The round cost shows its minutes and Actions minutes</text>
-<text x="12" y="318" class="f-x">Guardrails | r2 reworded (since v0.27.1)</text>
-<rect x="2" y="2" width="436" height="322" rx="6" fill="none" class="k-v20"/>
-<rect x="371" y="8" width="57" height="18" rx="9" class="p-v20"/><text x="400" y="21" text-anchor="middle" class="f-pill">v2.0 r2</text>
+<rect width="440" height="406" class="f-bg"/>
+<text x="12" y="22" class="f-t">GRD-7 CI minutes are spent only where needed</text>
+<rect x="12.0" y="42" width="416.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="220.0" y="62" text-anchor="middle" class="f-s">Workflow run triggered</text>
+<rect x="12.0" y="103" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="123" text-anchor="middle" class="f-s">Cancels older run, same branch</text>
+<rect x="12.0" y="164" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="184" text-anchor="middle" class="f-s">Change touches code?</text>
+<rect x="12.0" y="225" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="245" text-anchor="middle" class="f-s">Heavy job skipped</text>
+<rect x="225.0" y="225" width="203.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="326.5" y="245" text-anchor="middle" class="f-s">Runs, minutes counted</text>
+<rect x="12.0" y="286" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="306" text-anchor="middle" class="f-s">Daily limit passed?</text>
+<rect x="12.0" y="347" width="416.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="220.0" y="367" text-anchor="middle" class="f-s">One alarm raised</text>
+<path d="M220.0 73.0 L220.0 103.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 134.0 L220.0 164.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 195.0 L113.5 225.0" class="f-a" marker-end="url(#ah)"/>
+<text x="160.8" y="214.0" text-anchor="end" class="f-x">no</text>
+<path d="M220.0 195.0 L326.5 225.0" class="f-a" marker-end="url(#ah)"/>
+<text x="279.2" y="214.0" text-anchor="start" class="f-x">yes</text>
+<path d="M326.5 256.0 L220.0 286.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 317.0 L220.0 347.0" class="f-a" marker-end="url(#ah)"/>
+<text x="226.0" y="336.0" text-anchor="start" class="f-x">yes</text>
+<text x="12" y="398" class="f-x">Guardrails | v0.27.1, v2.0</text>
+<rect x="2" y="2" width="436" height="402" rx="6" fill="none" class="k-v20"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v20"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
 </svg>

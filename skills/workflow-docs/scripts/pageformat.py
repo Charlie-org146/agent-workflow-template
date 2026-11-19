@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""The page format (DOC-4..DOC-23): checks docs.py runs on Home, the README and feature pages; text in, findings out."""
+"""The page format checks (DOC-4..DOC-23) docs.py runs: text in, findings out."""
 import os
 import re
 
-GENERATED = {"Tests"}  # render writes it
-GUIDE = "<!-- workflow-docs guide -->"  # a guide page: mapped, kept fresh, not a feature page
+GENERATED = {"Tests"}
+GUIDE = "<!-- workflow-docs guide -->"  # a guide page, not a feature page
 CHECKS = ("home", "frontdoor", "usage", "bullets", "problem", "tests", "deployments", "runbook")  # deployments: deployments.py
 BANNED = "script, function, regex, json, tsv, stdout"
 MARKER = "<!-- workflow-docs -->"
@@ -147,12 +147,12 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
-TABLE = "Requirement Feature Release Score Summary Flow".split()
+TABLE = "Requirement Features Release Score Summary Flow".split()
 IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
 def frontdoor(page, text, listing, ids, readme=True):
-    want, out = LIST.findall(listing.partition("## The eight principles")[2]), []
+    want, out = LIST.findall(listing.partition("## The principles")[2]), []
     fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
 
     def grid(lines, head):
@@ -170,8 +170,8 @@ def frontdoor(page, text, listing, ids, readme=True):
         fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one [wiki](.../wiki/Home) line")
     names = ["%s. %s" % (n, name.strip()) for n, name, _ in want]
     for (name, at, lines), (n, _, sentence) in zip(secs + [("", 1, [])] * len(want), want):
-        if name != names[int(n) - 1]:
-            fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the eight, in order")
+        if re.sub(r" \(enforce score \d/5\)$", "", name) != names[int(n) - 1]:
+            fail(at, "section '%s'" % names[int(n) - 1], short(name), "keep the list, in order")
             continue
         ok, rows, other = grid(lines, TABLE)
         if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
@@ -181,11 +181,11 @@ def frontdoor(page, text, listing, ids, readme=True):
             re.fullmatch(r"[1-5](/5)?", c[3].strip()) or fail(number, "a Score from 1 to 5", short(c[3]), "set it")
             "planned" in c[2] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
     more = secs[len(want):]
-    while more and more[0][0].startswith(("Not yet covered", "Proposed cuts")):
-        grid(more[0][2], TABLE[:2] + ["Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
+    while more and more[0][0].startswith(("Not yet covered", "Proposed cuts", "Open conflicts")):
+        more[0][0].startswith("Open") or grid(more[0][2], ["Requirement", "Feature", "Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
         more = more[1:]
     if more:
-        fail(more[0][1], "no section after the eight principles", short(more[0][0]), "move it to the wiki")
+        fail(more[0][1], "no section after the principles", short(more[0][0]), "move it to the wiki")
     return out
 
 
