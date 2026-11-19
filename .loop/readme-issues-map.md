@@ -12,7 +12,7 @@ Each says a requirement has no test row naming it. The tags below are the bullet
 | #5220 | CHK-3, CHK-4, CHK-9 | MCH-5.2 done, HLT-7.5 done, MCH-5.4 partial | naming gap plus behaviour gap (1 of 3 bullets) | naming goal after G05 |
 | #5221 | DEL-18, DEL-19 | DEL-19.1 missing, DEL-19.2 missing, DEL-19.3 missing | naming gap plus behaviour gap (3 of 3 bullets) | naming goal after G06 |
 | #5222 | DOC-20, DOC-21, DOC-22 | DOC-2.4 done, DOC-2.5 done, DOC-1.16 done, DOC-2.2 partial, DOC-2.3 done | naming gap plus behaviour gap (1 of 5 bullets) | naming goal after G18 |
-| #5223 | GRD-15, GRD-16, GRD-17, GRD-18, GRD-19, GRD-20, GRD-22 | GRD-8.1 done, GRD-8.2 done, GRD-6.3 partial, GRD-7.2 partial, MCH-1.6 done, MCH-1.7 partial, HLT-11.3 done, GRD-20.1 partial, GRD-20.3 partial | naming gap plus behaviour gap (5 of 9 bullets) | naming goal after G03, G07, G14 |
+| #5223 | GRD-15, GRD-16, GRD-17, GRD-18, GRD-19, GRD-20, GRD-22 | GRD-8.1 done, GRD-8.2 done, GRD-6.3 partial, GRD-7.2 partial, MCH-1.6 done, MCH-1.7 partial, HLT-11.3 done, GRD-20.1 partial, GRD-20.3 partial | naming gap plus behaviour gap (5 of 9 bullets) | naming goal after C01, G07, G14 |
 | #5224 | HLT-11, HLT-12, HLT-13 | HLT-11.1 done, HLT-11.2 done, HLT-4.8 missing, HLT-2.16 partial | naming gap plus behaviour gap (2 of 4 bullets) | naming goal after G06 |
 | #5225 | INT-1, INT-2, INT-4, INT-5, INT-6, INT-7, INT-8 | INT-1.1 partial, INT-2.1 done, GRD-5.2 partial, INT-1.3 partial, INT-1.2 missing, INT-7.1 done, INT-2.3 partial | naming gap plus behaviour gap (5 of 7 bullets) | naming goal after G02, G03, G17 |
 | #5226 | OPS-20 | OPS-16.4 done | behaviour done; naming gap only | naming goal (retag or name existing rows) |
@@ -49,7 +49,7 @@ Name the existing rows in one goal (`tests-name-requirements`, net rows 0): the 
 | #4701 | every open defect names its regression row | none (nearest HLT-4.3, REG-1.1) | README silent | Same as #4702. |
 | #4700 | per-row time limit max_row_seconds | none (nearest REG-7.1, HLT-11.1) | README silent | Same as #4702. |
 | #4682 | public-repo regression off GitHub Actions (o86) | AUT-1.1, AUT-1.2 | conflict: owner decides | README still says public regression runs in Actions and on every tag; REL-3.4 and ci-shards-unrun0 depend on CI runs; code follows the README. Amend AUT-1, or close as superseded. |
-| #4653 | seven scripts over 19,000 bytes | HLT-11.4 | closed by named goal | size-trims-19000 (in progress). known-red-w8-size fixed docs, health, regression; 12 delivery, monitoring and setup scripts remain: G13. |
+| #4653 | seven scripts over 19,000 bytes | HLT-11.4 | close proposed | The scripts the issue names (auto, checkin, pool, replan, controls, judge, runs, docs) are all under 19,000 now (known-red-w8-size and later trims). A different set of 12 delivery, monitoring and setup scripts is over the line: that is G13 size-trims-19000, not this issue. |
 | #4556 | CI regression: cause not read for 29 rows | REG-4.9 (ci-shards-unrun0), REL-3.10 | closed by named goal | Folded into #4516; closes with ci-shards-unrun0 and release-readiness once the red-row count is zero. |
 | #4516 | 100 rows fail on Linux CI, cause unknown | REG-4.9, REL-3.10 | closed by named goal | Same: G12 and G16. State is from the issue (baseline 2026-11-15), not re-measured. |
 | #4507 | one clean prompt starts an operation session | OPS-1.4, MCH-1.1 | close proposed | OPS-1.4 and MCH-1.1 done: unattended.py:219 prerequisites, notify.py readiness, pool ask-to-fill. |
@@ -62,5 +62,6 @@ Nothing was closed. Closes need the owner's words:
 - **Defer or close:** #5131 (nothing requires the page).
 - **Owner decision first (README silent):** #4788, #4828, #4829, #4830 (token-diet o104); #4700, #4701, #4702 (o90). Add a requirement each, or move to v2.1.
 - **Owner decision first (README conflicts):** #4682 (AUT-1 versus o86); #5239 (v2.1 title versus v2.0 planned text).
-- **Close when a named goal lands:** #4653 (size-trims-19000), #4556 and #4516 (ci-shards-unrun0, release-readiness), #4914 (release-readiness), #4778 (develop-staging).
+- **Delivered, close:** also #4653 (its seven scripts are under 19,000 now).
+- **Close when a named goal lands:** #4556 and #4516 (ci-shards-unrun0, release-readiness), #4914 (release-readiness), #4778 (develop-staging).
 - **Stay open as gaps:** the 11 test-naming issues until the behaviour or the naming lands; #5126, #5124, #5123, #5079, #5078, #4904, #4784, #4781.
