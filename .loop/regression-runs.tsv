@@ -186,6 +186,8 @@ done-lines-warning-143	PASS	2026-11-12
 entry-adopt	SKIPPED	2026-11-16	
 entry-stale	PASS	2026-11-12	
 estimates-shown	PASS	2026-11-19	
+eta-forecast-pace	PASS	2026-11-19	
+eta-slip-reported	PASS	2026-11-19	
 every-row-described	PASS	2026-11-19	
 failed-waits-mender	PASS	2026-11-09	
 file-one-group	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -515,6 +517,7 @@ reg-local-relabel	PASS	2026-11-12
 reg-same-env	PASS	2026-11-12	
 reg2-wording	PASS	2026-11-19	
 regression-issue-no-milestone	PASS	2026-11-12	
+release-freeze-marks	PASS	2026-11-19	
 release-lists-fixes	PASS	2026-11-12	
 release-note-found	PASS	2026-11-19	
 release-runs-audit	PASS	2026-11-12	

@@ -22,6 +22,14 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
   - A machine session's check-in is one line (the time plus 'STATUS sent' or 'no change') once STATUS went to top; top keeps the full layout. The hook accepts the one-line form only in machine mode. [CHK-2]
   - The check-in's dependency map is grouped by repo, then by release. Each goal shows its status, expected time left and machine; each release shows its expected time and how many goals haven't started; only live goals are drawn. [CHK-5]
   - A check-in lists this machine's goals in full and, for every other machine, one row per goal with its agent, step and status from that machine's latest report. It never asks me another machine's questions. [CHK-6]
+- CHK-10: **Reviewed 2026-11-19** Every goal's STATUS carries an ETA, and a slip is reported at once <!-- reviewed 51e23cb0 -->
+  - A worker line in STATUS carries eta, eta_basis (measured or steps) and slip, the minutes since its eta was last reported.
+  - A slip of more than 15 minutes sends STATUS at once and adds one line under Issues: the goal, its old eta, its new eta and the cause.
+  - A slip that moves a goal past the freeze is a Needs-you line with a recommendation.
+- CHK-11: **Reviewed 2026-11-19** The finish is forecast from measured merge pace, not step estimates <!-- reviewed bc4f0330 -->
+  - The forecast is the last merge plus the goals still to merge times the median of the last 5 gaps between merges, with the quartiles as a band; with fewer than 3 gaps it says there is no measured pace yet.
+  - The pace counts MERGE-GO and CI waits, because they are real time on the single merge slot.
+  - The board prints the measured forecast as Finish and the step estimate on a second labelled line.
 
 ### Non-functional
 
@@ -118,6 +126,18 @@ None
 | r2 | 2026-11-19 | I can answer and steer from my phone or mail <br> I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way. <br> A reply counts as my words only when it comes from my own address or signed-in session. | consolidation (TOP-DECISION 89): absorbed into MCH-5 | o338: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | I can answer and steer from my phone or mail <br> I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way. <br> A reply counts as my words only when it comes from my own address or signed-in session. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
+### CHK-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Every goal's STATUS carries an ETA, and a slip is reported at once <br> A worker line in STATUS carries eta, eta_basis (measured or steps) and slip, the minutes since its eta was last reported. <br> A slip of more than 15 minutes sends STATUS at once and adds one line under Issues: the goal, its old eta, its new eta and the cause. <br> A slip that moves a goal past the freeze is a Needs-you line with a recommendation. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
+
+### CHK-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | The finish is forecast from measured merge pace, not step estimates <br> The forecast is the last merge plus the goals still to merge times the median of the last 5 gaps between merges, with the quartiles as a band; with fewer than 3 gaps it says there is no measured pace yet. <br> The pace counts MERGE-GO and CI waits, because they are real time on the single merge slot. <br> The board prints the measured forecast as Finish and the step estimate on a second labelled line. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -125,7 +145,6 @@ None
 | [retired-leaves-waiting](Tests#t-retired-leaves-waiting) | requirement | CHK-1 | Given a retired goal, when the board is shown, then it no longer shows under Issues. | PASS 2026-11-09 |
 | [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [no-change-quiet](Tests#t-no-change-quiet) | requirement | CHK-1 | Given a board field the old board lacked or gh not answering, when boards are compared, then it counts as no change. | PASS 2026-11-09 |
-| [board-sections](Tests#t-board-sections) | requirement | CHK-1 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
 | [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-19 |
 | [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. Given two machines' STATUS, when top builds the board, then one board lists both machines' running goals. | PASS 2026-11-19 |
 | [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-19 |
@@ -224,6 +243,8 @@ None
 | [notify-new-events](Tests#t-notify-new-events) | requirement | CHK-1 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |
 | [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | CHK-1 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
 | [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | CHK-1 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
+| [eta-slip-reported](Tests#t-eta-slip-reported) | requirement | CHK-10 | Given a goal's eta that moved later than the one last reported, when status runs, then a slip over 15 minutes sends STATUS at once and a slip of 10 minutes does not. | PASS 2026-11-19 |
+| [eta-forecast-pace](Tests#t-eta-forecast-pace) | requirement | CHK-11 | Given the night's merge gaps of 44, 49, 22 and 20 minutes, when the finish is forecast, then the pace is their median (33 minutes) and the forecast is the last merge plus one gap per goal left, with the quartiles as a band. | PASS 2026-11-19 |
 | [held-stale-next](Tests#t-held-stale-next) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a session goal with an old failure report and a newer session report, when the live board prints, then its next line is the newer report. | PASS 2026-11-10 |
 | [held-shows-held](Tests#t-held-shows-held) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a running goal with no worker (session reassigned, worktree kept), when the live board prints, then it is listed as held, not running and not as a background worker. | PASS 2026-11-10 |
 | [held-freezing](Tests#t-held-freezing) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a goal handed to a worker session before it is frozen, when the live board prints, then it shows at once under that session with step freezing. | PASS 2026-11-10 |

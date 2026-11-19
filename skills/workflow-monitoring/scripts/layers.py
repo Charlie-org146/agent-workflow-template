@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """The three layers (MON-2, MON-5, MON-11): top (the owner's one session), machine (one operation session per machine), worker.
 
-usage: layers.py status [--force]   a machine: send its STATUS to top when it changed or 30 minutes passed (prints the one line)
+usage: layers.py status [--force] [--target T] [--freeze T] [--go SLUG]   a machine: send its STATUS to top when it changed, 30 minutes passed
+                                      or an eta slipped over 15 (prints the one line); the options record the owner's release times
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
 
@@ -24,6 +25,8 @@ import machines  # noqa: E402
 
 REF, STALE_SECONDS, TOP_GAP = "refs/loop/status/", 30 * 60, 300
 ROLES = ("", "top", "machine")
+FLOW = ("idea", "plan", "build", "review", "qa", "ship", "pr", "release")  # a goal further along merges sooner
+SLIP_MINUTES = 15
 
 
 def role(given=""):
@@ -73,12 +76,34 @@ def build(common, cfg, now=None):
     root = os.path.dirname(common) if os.path.basename(common) == ".git" else os.getcwd()
     base = cfg.get("base") or "main"
     main = {os.path.basename(root): machines.sh("rev-parse", "--short", "origin/" + base, cwd=root) or "unknown"}
-    return {"machine": machines.me(), "at": now if now is not None else time.time(), "main": main, "workers": workers,
-            "merges": merges, "parked": parked, "idle": idle, "needs_owner": needs}
+    now = now if now is not None else time.time()
+    found = {"machine": machines.me(), "at": now, "main": main, "workers": workers, "merges": merges, "parked": parked, "idle": idle,
+             "needs_owner": needs}
+    return eta(found, folder, root, base, now)
+
+
+def eta(status, folder, root, base, now):
+    """release-eta: each unmerged worker gets its turn at the measured merge pace (eta, eta_basis), its slip in minutes since the
+    eta last reported, and next_release once the owner's freeze passed with no MERGE-GO for it; the release record is the owner's."""
+    times, gaps = machines.merge_gaps(root, base)
+    found, rel = machines.pace(gaps), read(os.path.join(folder, "release.json"))
+    reported = read(os.path.join(folder, "status-sent.json")).get("eta") or {}
+    live = [w for w in status["workers"] if w["status"] != "done"]
+    for rank, w in enumerate(sorted(live, key=lambda w: -FLOW.index(w["step"]) if w.get("step") in FLOW else 0)):
+        w["eta"] = int(times[-1] + (rank + 1) * found["median"] * 60) if found and times else None
+        w["eta_basis"] = "measured" if w["eta"] else "none: fewer than 3 merge gaps"
+        w["slip"] = round((w["eta"] - reported[w["slug"]]) / 60) if w["eta"] and reported.get(w["slug"]) else 0
+        w["next_release"] = bool(rel.get("freeze") and now >= rel["freeze"] and w["slug"] not in rel.get("go", []))
+    status["slips"] = [{"slug": w["slug"], "old": reported[w["slug"]], "new": w["eta"], "minutes": w["slip"]} for w in live if w["slip"] > SLIP_MINUTES]
+    band = machines.forecast(max(times or [now]), len(live), found)
+    status["release"] = {"target": rel.get("target"), "freeze": rel.get("freeze"), "left": len(live), "forecast": band}
+    return status
 
 
 def fingerprint(status):
-    return hashlib.sha1(json.dumps({k: v for k, v in status.items() if k != "at"}, sort_keys=True).encode()).hexdigest()
+    clean = {k: v for k, v in status.items() if k not in ("at", "slips")}
+    clean["workers"] = [{k: v for k, v in w.items() if k != "slip"} for w in status["workers"]]  # a slip is relative to the last report
+    return hashlib.sha1(json.dumps(clean, sort_keys=True).encode()).hexdigest()
 
 
 def send(common, cfg, force=False, now=None):
@@ -87,10 +112,10 @@ def send(common, cfg, force=False, now=None):
     status, mark = build(common, cfg, now), os.path.join(common, "loop", "status-sent.json")
     mark_role(common)
     last = read(mark)
-    if not force and last.get("sha") == fingerprint(status) and now - float(last.get("at") or 0) < STALE_SECONDS:
+    if not force and not status["slips"] and last.get("sha") == fingerprint(status) and now - float(last.get("at") or 0) < STALE_SECONDS:
         return status, "no change"
     write(os.path.join(common, "loop", "status", status["machine"] + ".json"), status)
-    write(mark, {"sha": fingerprint(status), "at": now})
+    write(mark, {"sha": fingerprint(status), "at": now, "eta": {w["slug"]: w["eta"] for w in status["workers"] if w.get("eta")}})
     if machines.shared():
         machines.write_ref(REF + status["machine"], status, machines.read_ref(REF + status["machine"])[1])
     return status, "sent"
@@ -127,6 +152,28 @@ def one_line(status, said, now=None):
                                             "" if len(status["workers"]) == 1 else "s")
 
 
+def release_text(rel):
+    """The board's Release line from a STATUS release block: the owner's target and freeze, and the measured forecast band."""
+    at, band = machines.clock, rel.get("forecast") or {}
+    text = "target %s, freeze %s" % (at(rel["target"]) if rel.get("target") else "not set", at(rel["freeze"]) if rel.get("freeze") else "not set")
+    return text + (", forecast %s to %s, median %s" % (at(band["q25"]), at(band["q75"]), at(band["median"])) if band else ", no measured pace yet")
+
+
+def set_release(common, argv):
+    """`status --target T --freeze T --go SLUG` (the owner's words, passed on by the operation session): the release record."""
+    path, rel = machines.release_file(common), read(machines.release_file(common))
+    for flag, value in zip(argv, argv[1:]):
+        if flag == "--go":
+            rel["go"] = sorted(set(rel.get("go", [])) | {value})
+        elif flag in ("--target", "--freeze"):
+            if machines.when(value) is None:
+                print("REFUSED: %s needs a time such as 2026-11-19T02:00 (local) or ...Z. Fix: pass one." % flag)
+                return 2
+            rel[flag[2:]] = machines.when(value)
+    write(path, rel)
+    return 0
+
+
 def collect(common):
     """Every machine's latest STATUS: the local status folder, then each published ref (the newer wins)."""
     found, folder = {}, os.path.join(common, "loop", "status")
@@ -151,6 +198,8 @@ def board(statuses, now=None):
     out += ["  %d. [%s/%s] %s -> recommended: %s" % (i, m, n.get("slug"), n.get("words"), n.get("recommend") or "none") for i, (m, n) in enumerate(needs, 1)] or ["  Nothing needs you"]
     stale = [m for m, a in sorted(ages.items()) if a * 60 > STALE_SECONDS]
     out += ["STALE: %s STATUS is %d minutes old (over 30)" % (m, ages[m]) for m in stale]
+    out += ["SLIP: %s/%s eta %s -> %s (+%d min)" % (s["machine"], x["slug"], machines.clock(x["old"]), machines.clock(x["new"]), x["minutes"]) for s in statuses for x in s.get("slips", [])]
+    out += ["Release (%s): %s" % (s["machine"], release_text(s["release"])) for s in statuses if s.get("release")]
     sections = (("Running", lambda s: ["%s/%s %s %s" % (s["machine"], w["slug"], w.get("step"), w.get("status")) for w in s.get("workers", []) if w.get("status") == "running"]),
                 ("PRs", lambda s: ["%s/%s #%s" % (s["machine"], w["slug"], w["pr"]) for w in s.get("workers", []) if w.get("pr")]),
                 ("Merges", lambda s: ["%s/%s #%s" % (s["machine"], m["slug"], m.get("pr")) for m in s.get("merges", [])]),
@@ -222,6 +271,8 @@ def main(argv):
     root = machines.sh("rev-parse", "--show-toplevel") or os.getcwd()
     cfg = read(os.path.join(root, ".loop", "config.json"))
     if argv[:1] == ["status"]:
+        if set(argv) & {"--target", "--freeze", "--go"} and set_release(common, argv):
+            return 2
         status, said = send(common, cfg, "--force" in argv)
         print(one_line(status, said))
     elif argv[:1] == ["board"]:

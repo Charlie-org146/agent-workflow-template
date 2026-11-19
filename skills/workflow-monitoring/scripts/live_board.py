@@ -25,6 +25,7 @@ import board_lines  # noqa: E402
 bb = board_lines  # budget, depth and private-name lines (its section 4)
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import machines  # noqa: E402
 import board_page  # noqa: E402
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
@@ -304,7 +305,8 @@ def render(root=None, at=None):
     missing = board_page.unknown(items) or any(i["partial"] for i in items) or held or freezing
     finish = "nothing left" if not items else "no estimate yet" if not seconds else "%sfinish about %s" % (
         "at least " if missing else "", graph.clock(at + datetime.timedelta(seconds=seconds)))
-    return fit(out + ["", "Finish", board_lines.paused(live) or finish, bs.accuracy_text(runs, at, root)])
+    measured = machines.forecast_line(root, len(items), at.timestamp()) if items else ""
+    return fit(out + ["", "Finish", board_lines.paused(live) or measured or finish, *(["work left by steps: " + finish] if measured else []), bs.accuracy_text(runs, at, root)])
 
 def pool_line(found, root):
     import pool as pl  # pool.py imports sessions.py; only the board's pool line needs it

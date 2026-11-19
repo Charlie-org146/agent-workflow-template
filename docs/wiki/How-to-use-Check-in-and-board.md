@@ -30,6 +30,8 @@ Say these to the agent in the operation session; each feature page has the exact
 Each requirement and how it is delivered:
 
 - CHK-1: Live board. Example, from the waits-first test: given a live board, when the board page is opened, then it shows the live board.
+- CHK-10: Every goal's STATUS carries an ETA, and a slip is reported at once. `layers.py status` sends STATUS with each goal's eta, eta_basis and slip, and sends it at once when a slip is over 15 minutes; top's board shows one SLIP line. Example, from the release-eta test: given an eta that slipped 20 minutes, when status runs, then STATUS is sent at once and the board carries the SLIP line.
+- CHK-11: The finish is forecast from measured merge pace, not step estimates. The board's Finish line shows the measured forecast, from the median and quartiles of the last 5 gaps between merges, and the step estimate on a second line. Example, from the release-eta test: given merge gaps of 44, 49, 22 and 20 minutes, when 3 goals are left, then the forecast is the last merge plus 3 times 33 minutes.
 
 ### Command: checkin.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/checkin.py [--since ISO]`

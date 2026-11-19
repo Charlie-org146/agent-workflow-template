@@ -205,6 +205,53 @@ def cmd_take(args):
     return 0
 
 
+def merge_gaps(root, base="main", keep=6):
+    """(epoch seconds of the last merges into origin/<base>, oldest first; the gaps between them in minutes). Wall-clock, so
+    MERGE-GO and CI waits on the single merge slot are inside every gap (release-eta)."""
+    out = sh("log", "--first-parent", "--merges", "--format=%ct", "-%d" % keep, "origin/" + base, cwd=root) or ""
+    times = sorted(int(x) for x in out.split())
+    return times, [(b - a) / 60 for a, b in zip(times, times[1:])]
+
+
+def pace(gaps, last=5):
+    """Minutes per merge, {q25, median, q75}, from the last 5 gaps; None under 3 gaps (no measured pace yet)."""
+    g, n = sorted(gaps[-last:]), len(gaps[-last:])
+    if n < 3:
+        return None
+    return {"q25": g[n // 4], "median": g[n // 2] if n % 2 else (g[n // 2 - 1] + g[n // 2]) / 2, "q75": g[3 * n // 4]}
+
+
+def forecast(last, left, found):
+    """{band: epoch seconds the last of `left` more merges lands}, or None without a measured pace."""
+    return {k: last + left * m * 60 for k, m in found.items()} if found and left > 0 else None
+
+
+def release_file(common):
+    return os.path.join(common, "loop", "release.json")
+
+
+def clock(epoch):
+    return time.strftime("%H:%M", time.localtime(epoch))
+
+
+def when(text):
+    """Epoch seconds from YYYY-MM-DDTHH:MM (local) or ...Z (UTC), else None."""
+    try:
+        if text.endswith("Z"):
+            import calendar
+            return calendar.timegm(time.strptime(text, "%Y-%m-%dT%H:%MZ"))
+        return time.mktime(time.strptime(text, "%Y-%m-%dT%H:%M"))
+    except (ValueError, TypeError):
+        return None
+
+
+def forecast_line(root, left, now):
+    """The board's measured Finish line for `left` goals still to merge; '' when there is no pace."""
+    times, gaps = merge_gaps(root, (read_json(os.path.join(root, ".loop", "config.json")).get("base") or "main"))
+    found, band = pace(gaps), forecast(max(times or [now]), left, pace(gaps))
+    return "measured pace %d min per merge: finish %s to %s, median %s" % (found["median"], clock(band["q25"]), clock(band["q75"]), clock(band["median"])) if band else ""
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)

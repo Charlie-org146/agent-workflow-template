@@ -39,6 +39,10 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session, in parallel. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. [OPS-20]
   - The operation session keeps a pool of idle worker sessions, sized by one setting, and hands each ready goal one from the pool. When the pool runs low it asks me to fill it, at the desktop. When I've chosen app sessions, a goal never falls back to a background worker: it waits and says so. [OPS-12]
   - No goal or test lane starts while free memory is below one setting, 3 GB by default and stated here only. A machine may set its own value locally. A lane already running is never stopped. [GRD-12]
+- OPS-24: **Reviewed 2026-11-19** A release has a target time and a freeze point that I set <!-- reviewed d7170fdb -->
+  - I set the release's target time and its freeze time in my own words; the operation session proposes both from the forecast (CHK-11) and never sets them itself.
+  - At the freeze, a goal with no MERGE-GO is marked "next release" on the board and in STATUS, keeps the front of the next release's queue, and is not cancelled.
+  - A failing row is never waived by the freeze: it is fixed by a goal already in the release or by a gate fix, or the release moves.
 
 ### Non-functional
 
@@ -180,6 +184,12 @@ None
 | r2 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. <br> agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-23 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
+### OPS-24
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | A release has a target time and a freeze point that I set <br> I set the release's target time and its freeze time in my own words; the operation session proposes both from the forecast (CHK-11) and never sets them itself. <br> At the freeze, a goal with no MERGE-GO is marked "next release" on the board and in STATUS, keeps the front of the next release's queue, and is not cancelled. <br> A failing row is never waived by the freeze: it is fixed by a goal already in the release or by a gate fix, or the release moves. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -226,6 +236,7 @@ None
 | [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | OPS-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
 | [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | OPS-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
 | [mon16-checkin-grouped](Tests#t-mon16-checkin-grouped) | requirement | OPS-16 | Given a check-in, when it prints, then the Machine line follows the headline and each repo block is grouped by release milestone, then feature, with each goal's marker, time left and machine, and a docs.tsv row with a third column is read by its first two. | PASS 2026-11-18 |
+| [release-freeze-marks](Tests#t-release-freeze-marks) | requirement | OPS-24 | Given the owner's freeze has passed, when STATUS is built, then a goal with no MERGE-GO is marked next release and one with a recorded MERGE-GO is not. | PASS 2026-11-19 |
 | [merged-frees-175](Tests#t-merged-frees-175) | defect | [#175](https://github.com/jcl2018/agent-workflow-template/issues/175) closed (2026-11-11) | Given a done goal, when its worker reports merged, then its session is freed. | PASS 2026-11-10 |
 | [operate-toy-no-check](Tests#t-operate-toy-no-check) | defect | [#3906](https://github.com/jcl2018/agent-workflow-template/issues/3906) closed (2026-11-13) | Given test-operate.sh, when it is read, then it no longer calls the removed goal.py check command. | PASS 2026-11-13 |
 | [runs-skips-non-dict](Tests#t-runs-skips-non-dict) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given a list or string JSON file in the runs folder, when watch reads the goals, then it skips it and keeps the real goals. | not run |
