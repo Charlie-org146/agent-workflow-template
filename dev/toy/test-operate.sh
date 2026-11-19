@@ -77,7 +77,18 @@ printf 'Shared\tshared.py\n' > .loop/docs.tsv
 git add -A; git commit -qm "Agent"; git push -q origin main
 
 echo "== OPS-1 carries the v2 wording"
-check "OPS-1 is the v2 rewrite on the Operation page, with its revision" 'grep -q "^- OPS-1: \*\*Unreviewed\*\* One command starts the operation session" "$here/docs/wiki/Operation.md" && grep -q "^### OPS-1" "$here/docs/wiki/Operation.md"'
+ops1_ok() {  # an Operation page holds the consolidated OPS-1 (Reviewed, "governs, re-plans and cleans up"), its first bullet and a newest revision row of that text
+  grep -Eq '^- OPS-1: \*\*Reviewed [0-9-]+\*\* The operation session governs, re-plans and cleans up' "$1" \
+    && grep -q '^  - One command starts the operation session and drives the whole process the same way every time\.' "$1" \
+    && awk '/^### OPS-1$/ {on = 1; next} /^### / {on = 0} on' "$1" | grep -Eq '^\| r[0-9]+ \| [0-9-]+ \| The operation session governs, re-plans and cleans up <br>'
+}
+ops1_page="$here/docs/wiki/Operation.md"
+check "OPS-1 is the consolidated rewrite on the Operation page, with its revision" 'ops1_ok "$ops1_page"'
+sed 's/^- OPS-1: .*$//' "$ops1_page" > "$T/ops1-none.md"
+sed 's/^- OPS-1: \*\*Reviewed [0-9-]*\*\* The operation session governs.*$/- OPS-1: **Unreviewed** One command starts the operation session/' "$ops1_page" > "$T/ops1-old.md"
+sed 's/^### OPS-1$/### OPS-1x/' "$ops1_page" > "$T/ops1-norev.md"
+sed 's/^| r\([0-9]*\) | \([0-9-]*\) | The operation session governs, re-plans and cleans up/| r\1 | \2 | One command starts the operation session/' "$ops1_page" > "$T/ops1-revold.md"
+check "negative control: a page with no OPS-1 line, the pre-consolidation OPS-1 line, no OPS-1 revision, or an old revision text each fails" '! ops1_ok "$T/ops1-none.md" && ! ops1_ok "$T/ops1-old.md" && ! ops1_ok "$T/ops1-norev.md" && ! ops1_ok "$T/ops1-revold.md" && ! cmp -s "$ops1_page" "$T/ops1-none.md"'
 
 echo "== a goal waits only for the goals it depends on"
 touch "$FAKE_AGENT/hold-a" "$FAKE_AGENT/hold-c"

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept delivery-small-fixes@a34764d9 -->
+Review: **Unreviewed** <!-- kept merge-queue-c@1d308b4a -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -335,7 +335,7 @@ None
 | [stale-own-block-kept](Tests#t-stale-own-block-kept) | requirement | DOC-1 | Given a Settings, Automation or README block that differs from a fresh render, when docs.py check --own runs, then its STALE line is kept, never moved to a FINDING. | not run |
 | [notion-app-link-unread](Tests#t-notion-app-link-unread) | requirement | DOC-1 | Given a feature page whose PRD is an app.notion.com link and no reader, when the docs check runs, then it reports UNREAD instead of reading the sign-in page. | PASS 2026-11-13 |
 | [home-header-both](Tests#t-home-header-both) | requirement | DOC-1 | Given Home with or without a Topic column, when the docs check runs, then both headers are accepted, and the Topic cell is checked only when the topics setting is set. | PASS 2026-11-14 |
-| [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-1 | Given this repo's topics setting, when Home is read, then its table leads with a Topic column. | PASS 2026-11-14 |
+| [home-topic-live](Tests#t-home-topic-live) | requirement | DOC-1 | Given this repo's topics setting, when Home is read, then its requirements are listed under a heading for each topic. | PASS 2026-11-19 |
 | [launchctl-missing-unknown](Tests#t-launchctl-missing-unknown) | requirement | DOC-1 | Given a host with no launchctl and no gh, when docs.py automation runs, then it reports each routine's state as unknown and exits 0. | PASS 2026-11-14 |
 | [skill-criteria-in-references](Tests#t-skill-criteria-in-references) | requirement | DOC-1 | Given the docs skill's criteria rules, when SKILL.md and its references folder are read, then the rules sit in the commands reference, see references/commands.md, SKILL.md points to it, and SKILL.md is under 150 lines. | PASS 2026-11-14 |
 | [doc1-sync-pointer](Tests#t-doc1-sync-pointer) | requirement | DOC-1 | Given the Documentation page, when DOC-1 is read, then it carries the docs.py sync pointer and DECISIONS.md records it. | not run |

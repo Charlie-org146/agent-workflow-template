@@ -5,6 +5,7 @@ usage: notify.py send [--checkin FILE] [--root DIR]   what operate.py runs after
        notify.py status [--root DIR]                  whether it is on here, mail.env is there, and how many events are seen
        notify.py ready [--root DIR]                   operate.py start: the readiness table of a new operation session (MON-1)
        notify.py timer [created] [--root DIR]         operate.py timer: the check-in timer to show the owner; created records it (MON-5)
+       notify.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID   the red team on a plan (HLT-2)
 
 Off unless `notify_email` is true in this machine's flow file (`$LOOP_FLOW` or ~/.workflow-loop/flow.json); off, it
 prints nothing and sends nothing. The events: each numbered item under Needs you in the check-in (default
@@ -306,7 +307,42 @@ def cmd_timer(args):
     return 0
 
 
+USAGE = "usage: notify.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID"
+ASK = "Red-team this plan against every principle; reply in lines only: `A: <unverified assumption>`, `R: <risk>`, `B<n>: <how it breaks principle n>` (n as numbered above), `C: <cheaper path>`."
+
+
+def plan_input(root, slug):
+    """Red team (HLT-2): the reviewer's input for one goal's plan. Reads only."""
+    import board_log as bl
+    goals = os.path.join(root, ".loop", "goals", slug)
+    if not bl.plan_sha(root, slug):
+        sys.exit("REFUSED: %s has no plan yet" % slug)
+    parts = ["== %s ==\n%s" % (t, open(goals + s, encoding="utf-8").read().strip()) for t, s in (("GOAL", ".md"), ("DESIGN", ".design.md"), ("PLAN", ".plan.md")) if os.path.exists(goals + s)]
+    return "\n\n".join(parts + ["== PRINCIPLES ==\n" + bl.principles(root)[0].strip(), ASK])
+
+
+def plan_main(argv):
+    text = sys.stdin.read() if argv[2:3] == ["-"] else ""
+    import board_log as bl
+    import board_model
+    import govern_hook
+    root, cmd, slug, rest = bl.git("rev-parse", "--show-toplevel") or os.getcwd(), argv[0], (argv + [""])[1], argv[2:]
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
+        sys.exit(USAGE)
+    if cmd == "plan-review":
+        print(plan_input(root, slug))
+    elif cmd == "plan-record" and rest:
+        print("\n".join(govern_hook.plan_record(root, slug, text if rest[0] == "-" else open(rest[0], encoding="utf-8").read())))
+    elif cmd == "plan-accept" and len(rest) == 3 and rest[0].isdigit() and rest[1] == "--owner-record":
+        print(board_model.plan_accept(root, slug, int(rest[0]), rest[2]))
+    else:
+        sys.exit(USAGE)
+    return 0
+
+
 def main():
+    if sys.argv[1:2] and sys.argv[1].startswith("plan-"):
+        return plan_main(sys.argv[1:])
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     for name, func in (("send", cmd_send), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):

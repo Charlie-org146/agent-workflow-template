@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept delivery-small-fixes@a34764d9 -->
+Review: **Unreviewed** <!-- kept merge-queue-c@1d308b4a -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 

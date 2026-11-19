@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept delivery-small-fixes@a34764d9 -->
+Review: **Unreviewed** <!-- kept plan-red-team-core@6edef587 -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 
@@ -188,7 +188,7 @@ None
 | [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given the governing session, when goals run, then no goal runs inside it. | PASS 2026-11-19 |
 | [skill-says-governs](Tests#t-skill-says-governs) | requirement | OPS-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-19 |
 | [dependencies-on-map](Tests#t-dependencies-on-map) | requirement | OPS-1 | Given a goal that waits on others, when it starts, then it records what it waits on. | PASS 2026-11-09 |
-| [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits and only an unusable session or tool gets a fresh mender; the PR body carries the plan, an empty Verify by hand refuses a goal frozen after the change and spares an earlier one, and a budget stop waits with the raise command. | PASS 2026-11-09 |
+| [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
 | [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-19 |
 | [worker-per-goal](Tests#t-worker-per-goal) | requirement | OPS-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-19 |
 | [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-19 |
