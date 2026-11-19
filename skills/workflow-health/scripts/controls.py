@@ -3,11 +3,7 @@
 
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
-health.py passes its rule functions to run(): every control builds a throwaway git repo in a private temporary folder
-with the one file or record that breaks its rule, and calls the real rule on it. It fires only when that rule reports a
-WARN or FAIL row of its own group and rule, never an UNREAD row or a sibling rule's. A rule whose control stays green
-cannot fire. Git runs with no inherited GIT_DIR, no global or system config and a fixed identity. Rows carry no
-temporary path or time. run() imports nothing from health.py.
+Each control builds a throwaway git repo with the one file that breaks its rule.
 """
 import hashlib
 import importlib
@@ -440,8 +436,7 @@ def run(rules, here):
 
 
 def repo_control(root, rule):
-    """The Controls row for one repo rule: its break runs on a private copy of the repo's files, then its command
-    runs there and must exit 1 or 2."""
+    """The Controls row for one repo rule: its break runs on a private copy, then its command must exit 1 or 2."""
     name, folder = rule["name"], tempfile.mkdtemp(prefix="health-control-")
     copy, fix = os.path.join(folder, "repo"), "fix the rule's break in .loop/health-rules.json"
     try:
@@ -471,7 +466,6 @@ def repo_controls(root):
 
 
 def refuse_repo():
-    """Exit 2 when a repo rule has no break, known group or name of its own."""
     import enforce
     top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     problems = enforce.repo_load(top.stdout.strip())[2] if not top.returncode else []
@@ -485,7 +479,6 @@ def missing(names):
 
 
 def refuse(names):
-    """Exit 2 when a rule has no negative control."""
     gap = missing(names)
     if gap:
         print("REFUSED: rule %s has no negative control. Fix: add CONTROLS[\"%s\"] in controls.py" % (", ".join(gap), gap[0]))
