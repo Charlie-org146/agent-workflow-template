@@ -208,6 +208,7 @@ full-auto-safety-control	PASS	2026-11-17
 full-auto-safety-waits	PASS	2026-11-17	
 full-auto-standing-reuse	PASS	2026-11-17	
 full-goal-lane-timeout	PASS	2026-11-10	
+gate-pending-scoped	PASS	2026-11-19	
 gate-untouched-not-refused	PASS	2026-11-18	
 go-app-holds-goal	PASS	2026-11-19	
 goal-levels-nightly	PASS	2026-11-11	

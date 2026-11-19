@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept gate-ci-suite@3ac4554f -->
+Review: **Unreviewed** <!-- kept link-form-note@9cf1b4b1 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -72,7 +72,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is INT-8.)
 
 ## Success metrics
-- The docs check prints DOCS OK on the main branch after every merge.
+- The docs check prints DOCS OK on the main branch after every merge, and a link-form PRD page never holds a merge on the unmigrated-Revisions note.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
 - No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
 
