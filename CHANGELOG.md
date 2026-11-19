@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.80 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.79 - 2026-11-19
 
 - review.py: gate and promote take --suite-from RUN, REL-3's suite from a CI run of the regression workflow (o191)

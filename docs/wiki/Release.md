@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept known-red-w11-docs-size@b931eb37 -->
+Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -199,7 +199,7 @@ None
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | REL-9 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | REL-9 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
 | [never-merges](Tests#t-never-merges) | requirement | REL-10 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
-| [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-18 |
+| [wiki-release](Tests#t-wiki-release) | requirement | REL-10 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-19 |
 | [auto-release](Tests#t-auto-release) | requirement | REL-10 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
 | [wiki-unmapped-stale](Tests#t-wiki-unmapped-stale) | requirement | REL-10 | Given a page no touched path maps to, when the release step runs, then it lists the page as a finding and does not refuse, and merge refuses only for a page its own diff made stale. | PASS 2026-11-18 |
 | [del5-patch-default](Tests#t-del5-patch-default) | requirement | REL-10 | Given a goal with a code change and no bump set, when it is released, then the version bump is patch. | PASS 2026-11-12 |
