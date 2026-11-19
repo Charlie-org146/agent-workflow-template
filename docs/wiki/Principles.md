@@ -2,7 +2,7 @@
 <!-- workflow-docs guide -->
 # Principles
 
-Eight principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. A requirement marked planned is added by the named regroup goal of the v2.0 roadmap (regroup-delivery, regroup-regression or regroup-guardrails); an ID never takes a new meaning, so a drafted requirement whose ID a live one holds is cited under its next free number.
+Eight principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. A requirement marked planned is added by the named regroup goal of the v2.0 roadmap (regroup-delivery, regroup-regression or regroup-guardrails); an ID never takes a new meaning, so a drafted requirement whose ID a live one holds is cited under its next free number. The README shows the same eight in short; this page has each in full, with its diagram and requirements.
 
 ![How principles, health and features fit](principles-overview.svg)
 

@@ -32,7 +32,7 @@ for page, ids in pages.items():
         for phrase in ("every open issue is on", "issue to milestone to feature", "every open issue on a milestone"):
             if phrase in block:
                 bad.append("%s says %r" % (key, phrase))
-        if key == "DOC-10" and "optional" not in block and "only when i put it there" not in block:
+        if key == "DOC-4" and "stays optional" not in block and "only when i put it there" not in block:  # the owner moved the rule here from DOC-10 in the v2 rewrite (o160); DOC-4 also says "optional Topic column", so the phrase is "stays optional"
             bad.append("%s does not say a milestone is optional" % key)
         if key == "HLT-4" and "on no milestone" not in block:
             bad.append("%s does not say a defect is on no milestone" % key)
