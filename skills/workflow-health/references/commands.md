@@ -351,17 +351,15 @@ Syntax, what each prints, and each refusal with its message and exit code.
 
 - `/workflow-health file --group NAME[,NAME] [--open-only]` — Files the named groups' findings as GitHub issues, each tagged with its group and, when the `feature_labels` setting is on (off by default), with the feature whose path holds it; a FAIL (except a performance one) and a review conflict is a defect labelled `defect` on no milestone, and everything else is a backlog item labelled `backlog` on its feature's milestone `Backlog: <Feature>` (`Backlog: Other` when it fits none), made first when missing (an old `Backlog` milestone is renamed `Backlog: Other` once); an issue you put on another milestone stays where you put it. `--open-only` only opens or links issues and never closes, reopens or updates one (setup files an adoption's findings this way, and an issue that would hold the home folder or an email is skipped with `NOTE: skipped <key> (holds a private value)`); the Adoption group's `no-fit` rule turns each open `[adoption]` line of `.loop/findings.md` into one finding `agent-tools` names an agent command that grants no tools, and `milestones` warns for each standing Backlog milestone a GitHub repo lacks. Prints `DONE <open|update|reopen|close> ...`, `FAILED <action>: <error>` or `SAME #<n> <key>` per issue. Refuses (exit 1) `REFUSED: file needs --group NAME[,NAME], one of ... Run preview first.`, `REFUSED: unknown group <names>. ...`, `REFUSED: not inside a git repo.`, `REFUSED: file.py is not installed beside health.py` and `REFUSED: could not read the health issues: <why>`; (exit 2) `REFUSED: rule <name> has no negative control. ...`
 
-## The eight principles
+## The principles
 
-The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principle 8 reads UNREAD until its Attention group exists.
+The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principle 6 reads UNREAD until its Attention group exists.
 
 | # | Principle | Sentence | Groups |
 |---|---|---|---|
-| 1 | Documentation-driven | Nothing is built that a Reviewed requirement doesn't ask for, and the PRD changes only by your words. | traceability |
-| 2 | The loop and coverage | Every requirement is enforced and proven, and whatever falls short, conflicts or has no owner becomes work until it is fixed or the PRD is revised. | requirements,tests,controls |
-| 3 | The docs are true | The pages agree with each other and with the code: one ID, one name for each command, and no two requirements that contradict. | consistency,docs |
-| 4 | Nothing stale or left over | The tests ran today, merged work is released, and no stale branch, idle session, old finding or question to you is left behind. | freshness,hygiene |
-| 5 | Fast, cheap and small | Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's. | performance,size |
-| 6 | Nothing private escapes | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
-| 7 | It works installed fresh | A repo that adopts the template gets the same loop, checks and guardrails, with nothing rebuilt there. | adoption |
-| 8 | It stops for you only when it must | It asks you only for what is yours to decide: anything destructive, costly or private, and any change to the PRD. Everything else it decides, tells you, and lets you reverse. | attention |
+| 1 | Documentation-driven | Principles, features, requirements and tests are written first, in that order: nothing is built that a Reviewed requirement doesn't ask for, tests come from the requirements, and the PRD changes only by your words. | traceability |
+| 2 | Enforced and kept true | Every requirement is proven and kept true: tests and health check it, the pages agree with each other and the code, and whatever falls short, conflicts or goes stale becomes work until it is fixed. | requirements,tests,controls,consistency,docs,freshness,hygiene |
+| 3 | Fast, cheap and small | Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's. | performance,size |
+| 4 | Private and guarded | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
+| 5 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent; any repo adopts the template cleanly, byte for byte, and its README shows the template's principles and design logic as written; it plugs into other systems through adapters, and survives a failure without losing work. | adoption |
+| 6 | Autonomous, and you decide only what's yours | It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours. | attention |
