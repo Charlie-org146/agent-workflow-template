@@ -5,9 +5,6 @@ send budget, and a reply such as "1 recommended" is recorded as the owner's word
 usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply it read; QID is the
                                                  `Question id` line of the mail
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
-       mailbox.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID   the red team's pre-build plan
-                    review (HLT-2): the reviewer's input; record its A/R/B<n>/C lines with a timestamp under <git common dir>/loop/redteam/;
-                    the owner accepts a principle break by an owner-words.tsv record. goal.py step build refuses on an unaccepted break.
 
 notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
 secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
@@ -176,111 +173,7 @@ def cmd_pending(args):
     return 0
 
 
-ASK = ("Red-team this plan against every principle. Reply with lines only, no edits and no decisions: `A: <an unverified assumption>`, "
-       "`R: <a risk>`, `B<n>: <how the plan breaks principle n>` (n is its number above) and `C: <a cheaper path>`.")
-
-
-def sha_of(path):
-    try:
-        with open(path, "rb") as handle:
-            return hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest()
-    except OSError:
-        return ""
-
-
-def loop_dir(root):
-    out = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True, cwd=root).stdout.strip() or ".git"
-    return os.path.join(os.path.abspath(os.path.join(root, out)), "loop")
-
-
-def principles(root):
-    try:
-        with open(os.path.join(root, "docs", "wiki", "Principles.md"), encoding="utf-8") as handle:
-            text = handle.read()
-    except OSError:
-        text = ""
-    return text, [int(n) for n in re.findall(r"^## (\d+)\. ", text, re.M)] or list(range(1, 9))
-
-
-def plan_input(root, slug):
-    """The red-team reviewer's input for one goal: its goal file, design and plan, the principles, and the request. Reads only."""
-    goals, parts = os.path.join(root, ".loop", "goals", slug), []
-    if not os.path.exists(goals + ".plan.md"):
-        sys.exit("REFUSED: %s has no plan to red-team. Fix: run the plan step first." % slug)
-    for title, path in (("GOAL", goals + ".md"), ("DESIGN", goals + ".design.md"), ("PLAN", goals + ".plan.md")):
-        with open(path, encoding="utf-8") as handle:
-            parts.append("== %s ==\n%s" % (title, handle.read().strip()))
-    return "\n\n".join(["RED-TEAM PLAN INPUT " + slug] + parts + ["== PRINCIPLES ==\n" + principles(root)[0].strip(), ASK])
-
-
-def plan_parse(text, nums):
-    """{'A': [...], 'R': [...], 'C': [...], 'B': [(n, text)]}; refuses a B line with no principle number, or one the principles lack."""
-    got = {"A": [], "R": [], "C": [], "B": []}
-    for line in str(text or "").splitlines():
-        found = re.match(r"^\W*([ARC]|B\s*\d*)\s*:\s*(\S.*)$", line)
-        if not found:
-            continue
-        key, words = found.group(1)[0], found.group(2).strip()
-        if key == "B":
-            n = re.sub(r"\D", "", found.group(1))
-            if not n or int(n) not in nums:
-                sys.exit("REFUSED: a principle break must name its principle, B<n> with n one of %s. Fix: send `B<n>: <break>`; nothing was recorded." % nums)
-            got["B"].append((int(n), words))
-        else:
-            got[key].append(words)
-    return got
-
-
-def plan_record(root, slug, text, now=None):
-    """Write the findings with a timestamp under <git common dir>/loop/redteam/ (never a repo file); returns the break lines."""
-    now, got = now if now is not None else time.time(), plan_parse(text, principles(root)[1])
-    folder = os.path.join(loop_dir(root), "redteam")
-    os.makedirs(folder, exist_ok=True)
-    write_json(os.path.join(folder, "plan-%s-%s.json" % (slug, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now)))), {
-        "slug": slug, "at": now, "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "assumptions": got["A"], "risks": got["R"],
-        "cheaper": got["C"], "breaks": [{"principle": n, "text": w} for n, w in got["B"]],
-        "plan_sha": sha_of(os.path.join(root, ".loop", "goals", slug + ".plan.md"))})
-    return ["BREAK principle %d: %s" % item for item in got["B"]] or ["NO BREAKS"]
-
-
-def plan_accept(root, slug, n, record):
-    """The operation session's: the owner accepts principle n's break for this goal, by an owner-words.tsv record."""
-    try:
-        with open(os.path.join(loop_dir(root), "owner-words.tsv"), encoding="utf-8") as handle:
-            known = {row.split("\t")[0] for row in handle}
-    except OSError:
-        known = set()
-    if record not in known:
-        sys.exit("REFUSED: %s is not an owner-words.tsv record. Fix: the operation session records the owner's words first (sessions.py owner-words)." % record)
-    path = os.path.join(loop_dir(root), "redteam", "plan-%s.accept.json" % slug)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    write_json(path, dict(read_json(path), **{str(n): record}))
-    return "ACCEPTED principle %d for %s by %s" % (n, slug, record)
-
-
-def plan_main(argv):
-    parser = argparse.ArgumentParser(prog="mailbox.py")
-    parser.add_argument("command", choices=["plan-review", "plan-record", "plan-accept"])
-    parser.add_argument("slug")
-    parser.add_argument("arg", nargs="?", default="")
-    parser.add_argument("--owner-record", default="")
-    parser.add_argument("--root", default="")
-    args = parser.parse_args(argv)
-    root = args.root or subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or os.getcwd()
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", args.slug) or (args.command == "plan-accept" and not args.arg.isdigit()):
-        sys.exit("REFUSED: usage: mailbox.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID (a goal slug, a principle number)")
-    if args.command == "plan-review":
-        print(plan_input(root, args.slug))
-    elif args.command == "plan-record":
-        print("\n".join(plan_record(root, args.slug, sys.stdin.read() if args.arg == "-" else open(args.arg, encoding="utf-8").read())))
-    else:
-        print(plan_accept(root, args.slug, int(args.arg), args.owner_record))
-    return 0
-
-
 def main():
-    if sys.argv[1:2] and sys.argv[1].startswith("plan-"):
-        return plan_main(sys.argv[1:])
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     one = sub.add_parser("reply")

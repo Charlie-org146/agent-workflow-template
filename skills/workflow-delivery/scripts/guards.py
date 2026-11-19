@@ -298,22 +298,22 @@ def waiting_gate(g, state):
         sys.exit(2)
 
 
+PLAN_RULE_AT = "2026-11-19T10:45:00Z"  # cut-over: goals frozen before it need no review
+
+
 def plan_gate(g, state):
-    """Red team (HLT-2): a recorded principle break on the unchanged plan blocks the build until each has an owner record."""
-    slug, loop = state["slug"], os.path.dirname(g.state_dir())
-    red, plan = os.path.join(loop, "redteam"), g.goal_file(slug)[:-3] + ".plan.md"
-    names = sorted(n for n in os.listdir(red) if re.fullmatch(r"plan-%s-\d{8}T\d{6}Z\.json" % re.escape(slug), n)) if os.path.isdir(red) else []
-    if not names or not os.path.exists(plan):
-        return
-    load = lambda *p: json.load(open(os.path.join(*p), encoding="utf-8")) if os.path.exists(os.path.join(*p)) else {}
-    seen, owner = load(red, names[-1]), os.path.join(loop, "owner-words.tsv")
-    if seen.get("plan_sha") != hashlib.sha1(open(plan, "rb").read().replace(b"\r\n", b"\n")).hexdigest():
-        return print("NOTE: the plan changed since the red team ran; rerun mailbox.py plan-review " + slug)
-    ids = {r.split("\t")[0] for r in open(owner, encoding="utf-8")} if os.path.exists(owner) else set()
-    left = [b for b in seen.get("breaks", []) if load(red, "plan-%s.accept.json" % slug).get(str(b.get("principle"))) not in ids]
-    if left:
-        sys.stderr.write("REFUSED (no try used): the red team recorded a break of principle %s: %s. Fix: change the plan, or record the owner's "
-                         "words and run mailbox.py plan-accept %s N --owner-record ID (PLAN_BREAK)\n" % (left[0]["principle"], left[0]["text"][:200], slug))
+    """Red team (HLT-2): a goal frozen after PLAN_RULE_AT needs a review of its current plan; a recorded break blocks until accepted."""
+    slug, plan = state["slug"], g.goal_file(state["slug"])[:-3] + ".plan.md"
+    path = os.path.join(os.path.dirname(g.state_dir()), "redteam", "plan-%s.json" % slug)
+    seen = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+    sha = hashlib.sha1(open(plan, "rb").read().replace(b"\r\n", b"\n")).hexdigest() if os.path.exists(plan) else ""
+    left = [b for b in seen.get("breaks", []) if not b.get("accepted")]
+    new = ((state.get("log") or [""])[0].split(" ")[0]) > PLAN_RULE_AT
+    why = ("no recorded review of the current plan" if not seen else "the plan changed since its last review" if seen.get("sha") != sha else "") * new
+    why = why or ("the red team recorded a break of principle %s: %s" % (left[0]["principle"], left[0]["text"][:200]) if left else "")
+    if why:
+        sys.stderr.write("REFUSED (no try used): %s. Fix: record a fresh review (machines.py plan-review, plan-record) or, for a break, the "
+                         "owner's words and machines.py plan-accept SLUG N --owner-record ID (PLAN_BREAK)\n" % why)
         sys.exit(2)
 
 

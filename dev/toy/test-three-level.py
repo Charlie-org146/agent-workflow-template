@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py
+# reads: skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/machines.py skills/workflow-delivery/scripts/guards.py skills/workflow-delivery/scripts/goal.py
 """MON-1, MON-2, MON-5, MON-11, MON-16 (three layers): top builds one board from every machine's STATUS and is the only
 publisher, a machine prints one line, the relay rule, the budget and agent_command checks, and the reply hook's machine mode."""
 import json
@@ -157,14 +157,18 @@ with tempfile.TemporaryDirectory() as tmp:
 with tempfile.TemporaryDirectory() as tmp:
     check(layers.due(os.path.join(tmp, ".git"), now) == "RED-TEAM DUE: no pass recorded", "with no pass recorded a pass is due")
 
-# HLT-2 red team on a plan: a fresh-context reviewer reads one goal's plan and records findings; a principle break blocks that goal's build.
-import mailbox  # noqa: E402
+# HLT-2 red team on a plan: a fresh-context reviewer reads one goal's plan and records findings; a goal frozen after the rule's cut-over
+# cannot build without a review of its current plan, and a recorded principle break blocks until a fresh clean review or an owner record.
+machines = layers.machines
+guards_py = os.path.join(here, "..", "..", "skills", "workflow-delivery", "scripts", "goal.py")
+LATE, EARLY = "2099-01-01T00:00:00Z frozen 1 done lines", "2020-01-01T00:00:00Z frozen 1 done lines"
 
-goal_py = os.path.join(here, "..", "..", "skills", "workflow-delivery", "scripts", "goal.py")
 
-
-def step_build(tmp):
-    got = subprocess.run([sys.executable, goal_py, "step", "g", "build"], capture_output=True, text=True, cwd=tmp, env=dict(os.environ, LOOP_ROLE="worker"))
+def step_build(tmp, log=LATE):
+    state = {"slug": "g", "status": "running", "step": "plan", "tries": 0, "flow": {}, "goal": "g", "branch": "loop/g", "log": [log]}
+    with open(os.path.join(tmp, ".git", "loop", "runs", "g.json"), "w") as handle:
+        json.dump(state, handle)
+    got = subprocess.run([sys.executable, guards_py, "step", "g", "build"], capture_output=True, text=True, cwd=tmp, env=dict(os.environ, LOOP_ROLE="worker"))
     return got.returncode, got.stdout + got.stderr
 
 
@@ -172,32 +176,33 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(["git", "init", "-q", tmp], check=True)
     for sub in (".loop/goals", ".git/loop/runs", "docs/wiki"):
         os.makedirs(os.path.join(tmp, sub))
+    plan = os.path.join(tmp, ".loop", "goals", "g.plan.md")
     for name, body in ((".loop/config.json", "{}"), (".loop/goals/g.md", "# g\n"), (".loop/goals/g.design.md", "design text\n"), (".loop/goals/g.plan.md", "plan v1\n"),
-                       ("docs/wiki/Principles.md", "## 1. Documentation-driven\nfirst\n## 2. The loop\nsecond\n## 3. The docs are true\nthird\n"),
-                       (".git/loop/runs/g.json", json.dumps({"slug": "g", "status": "running", "step": "plan", "tries": 0, "flow": {}, "goal": "g", "branch": "loop/g"}))):
+                       ("docs/wiki/Principles.md", "## 1. Documentation-driven\nfirst\n## 2. The loop\nsecond\n## 3. The docs are true\nthird\n")):
         open(os.path.join(tmp, name), "w").write(body)
     red = os.path.join(tmp, ".git", "loop", "redteam")
-    ls = lambda: sorted(os.listdir(red)) if os.path.isdir(red) else []
+    ls = lambda: sorted(n for n in os.listdir(red) if n.startswith("plan-g-")) if os.path.isdir(red) else []
     repo_files = lambda: {os.path.join(d, f): hashlib.sha1(open(os.path.join(d, f), "rb").read()).hexdigest() for d, ds, fs in os.walk(tmp) if ".git" not in d.split(os.sep) for f in fs}
     before, writes, calls = repo_files(), [], []
     real_open, real_run = builtins.open, subprocess.run
     builtins.open = lambda f, mode="r", *a, **k: (writes.append(os.path.abspath(str(f))) if any(c in mode for c in "wax+") else None, real_open(f, mode, *a, **k))[1]
     subprocess.run = lambda cmd, *a, **k: (calls.append(cmd), real_run(cmd, *a, **k))[1]
     try:
-        asked = mailbox.plan_input(tmp, "g")
-        lines = mailbox.plan_record(tmp, "g", "A: the plan trusts main\nR: lane waits\nB3: the plan contradicts a page\nC: reuse the old toy\n", now)
+        asked = machines.plan_input(tmp, "g")
+        lines = machines.plan_record(tmp, "g", "A: the plan trusts main\nR: lane waits\nB3: the plan contradicts a page\nC: reuse the old toy\n", now)
     finally:
         builtins.open, subprocess.run = real_open, real_run
     check("plan v1" in asked and "design text" in asked and "3. The docs are true" in asked and "B<n>" in asked, "the plan review input holds the goal's design and plan, the principles and the request")
     saved = layers.read(os.path.join(red, ls()[0]))
     check(saved["time"] == layers.iso(now) and saved["assumptions"] == ["the plan trusts main"] and saved["risks"] == ["lane waits"] and saved["cheaper"] == ["reuse the old toy"]
-          and saved["breaks"] == [{"principle": 3, "text": "the plan contradicts a page"}] and saved["plan_sha"] and lines == ["BREAK principle 3: the plan contradicts a page"], "the findings are recorded with a timestamp, each break naming its principle")
+          and [(b["principle"], b["text"]) for b in saved["breaks"]] == [(3, "the plan contradicts a page")] and saved["plan_sha"] and lines == ["BREAK principle 3: the plan contradicts a page"],
+          "the findings are recorded with a timestamp, each break naming its principle")
     words = [w for c in calls for w in (c if isinstance(c, (list, tuple)) else str(c).split())]
     check(writes and all(w.startswith(red) for w in writes) and repo_files() == before and not {"merge", "push", "gh", "send", "commit", "add"} & set(map(str, words)),
           "the plan reviewer reads only: it writes under loop/redteam alone, changes no repo file and runs no merge, push, gh, send or commit")
     for bad in ("B: no number\n", "B9: no such principle\n"):
         try:
-            mailbox.plan_record(tmp, "g", bad, now + 5)
+            machines.plan_record(tmp, "g", bad, now + 5)
             refused = False
         except SystemExit as stop:
             refused = "must name its principle" in str(stop)
@@ -206,22 +211,27 @@ with tempfile.TemporaryDirectory() as tmp:
     code, said = step_build(tmp)
     check(code == 2 and "break of principle 3" in said and "PLAN_BREAK" in said, "a recorded principle break blocks the goal's build step")
     open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "w").write("o1\t2026-11-19T00:00:00Z\ts\t{}\n")
-    try:
-        mailbox.plan_accept(tmp, "g", 3, "o99")
-        refused = False
-    except SystemExit:
-        refused = True
-    check(refused and step_build(tmp)[0] == 2, "negative control: an owner record that does not exist neither accepts the break nor unblocks the build")
-    mailbox.plan_accept(tmp, "g", 3, "o1")
+    refused = []
+    for args in ((3, "o99"), (2, "o1")):
+        try:
+            machines.plan_accept(tmp, "g", *args)
+        except SystemExit:
+            refused.append(args)
+    check(len(refused) == 2 and step_build(tmp)[0] == 2, "negative control: an owner record that does not exist, or a principle with no break, accepts nothing and the build stays blocked")
+    machines.plan_accept(tmp, "g", 3, "o1")
     code, said = step_build(tmp)
     check(code == 0 and "STEP g build" in said, "an owner record that accepts the break lets the build start")
-    os.remove(os.path.join(red, "plan-g.accept.json"))
-    open(os.path.join(tmp, ".loop", "goals", "g.plan.md"), "w").write("plan v2\n")
+    open(plan, "w").write("plan v2\n")
     code, said = step_build(tmp)
-    check(code == 0 and "the plan changed since the red team ran" in said, "negative control: a changed plan unblocks the build and says to rerun the red team")
-    open(os.path.join(tmp, ".loop", "goals", "g.plan.md"), "w").write("plan v1\n")
-    mailbox.plan_record(tmp, "g", "A: only an assumption\n", now + 120)
-    check(step_build(tmp)[0] == 0, "negative control: a review with no principle break does not block")
+    check(code == 2 and "the plan changed since its last review" in said, "a plan changed since its last review blocks the build until a fresh review is recorded")
+    check(step_build(tmp, EARLY)[0] == 0, "negative control: a goal frozen before the rule's cut-over is exempt from the review requirement")
+    machines.plan_record(tmp, "g", "A: only an assumption\n", now + 120)
+    check(step_build(tmp)[0] == 0, "a fresh clean review of the changed plan unblocks the build")
+    machines.plan_record(tmp, "g", "B1: the plan breaks principle one\n", now + 240)
+    check(step_build(tmp)[0] == 2 and step_build(tmp, EARLY)[0] == 2, "a fresh review that finds a break blocks again, for a goal frozen before the cut-over too")
+    os.remove(os.path.join(red, "plan-g.json"))
+    code, said = step_build(tmp)
+    check(code == 2 and "no recorded review of the current plan" in said and step_build(tmp, EARLY)[0] == 0, "a goal frozen after the cut-over with no recorded review cannot build; one frozen before it can")
 
 print("ALL PASS" if not fails else "%d FAILED" % fails)
 sys.exit(1 if fails else 0)
