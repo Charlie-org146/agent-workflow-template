@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/board_log.py skills/workflow-monitoring/scripts/batch.py skills/workflow-delivery/scripts/guards.py skills/workflow-delivery/scripts/goal.py
+# reads: skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/board_log.py skills/workflow-monitoring/scripts/board_model.py skills/workflow-delivery/scripts/guards.py skills/workflow-delivery/scripts/goal.py
 """MON-1, MON-2, MON-5, MON-11, MON-16 (three layers): top builds one board from every machine's STATUS and is the only
 publisher, a machine prints one line, the relay rule, the budget and agent_command checks, and the reply hook's machine mode."""
 import json
@@ -159,7 +159,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
 # HLT-2 red team on a plan: a fresh-context reviewer reads one goal's plan and records findings; a goal frozen after the rule's cut-over
 # cannot build without a review of its current plan, and a recorded principle break blocks until a fresh clean review or an owner record.
-import batch  # noqa: E402
+import board_model  # noqa: E402
 import govern_hook  # noqa: E402
 import notify  # noqa: E402
 
@@ -222,11 +222,11 @@ with tempfile.TemporaryDirectory() as tmp:
     refused = []
     for args in ((3, "o99"), (2, "o1")):
         try:
-            batch.plan_accept(tmp, "g", *args)
+            board_model.plan_accept(tmp, "g", *args)
         except SystemExit:
             refused.append(args)
     check(len(refused) == 2 and step_build(tmp)[0] == 2, "negative control: an owner record that does not exist, or a principle with no break, accepts nothing and the build stays blocked")
-    batch.plan_accept(tmp, "g", 3, "o1")
+    board_model.plan_accept(tmp, "g", 3, "o1")
     code, said = step_build(tmp)
     check(code == 0 and "STEP g build" in said, "an owner record that accepts the break lets the build start")
     open(plan, "w").write("plan v2\n")

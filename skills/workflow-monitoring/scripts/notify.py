@@ -324,7 +324,7 @@ def plan_input(root, slug):
 def plan_main(argv):
     text = sys.stdin.read() if argv[2:3] == ["-"] else ""
     import board_log as bl
-    import batch
+    import board_model
     import govern_hook
     root, cmd, slug, rest = bl.git("rev-parse", "--show-toplevel") or os.getcwd(), argv[0], (argv + [""])[1], argv[2:]
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
@@ -334,7 +334,7 @@ def plan_main(argv):
     elif cmd == "plan-record" and rest:
         print("\n".join(govern_hook.plan_record(root, slug, text if rest[0] == "-" else open(rest[0], encoding="utf-8").read())))
     elif cmd == "plan-accept" and len(rest) == 3 and rest[0].isdigit() and rest[1] == "--owner-record":
-        print(batch.plan_accept(root, slug, int(rest[0]), rest[2]))
+        print(board_model.plan_accept(root, slug, int(rest[0]), rest[2]))
     else:
         sys.exit(USAGE)
     return 0
