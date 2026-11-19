@@ -8,7 +8,9 @@ Built with the [jcl2018/agent-workflow-template](https://github.com/jcl2018/agen
 
 ## 1. Documentation-driven (enforce score 2/5)
 
-Statement: pending (to come from the owner's review).
+Principles, features, requirements and tests are written first, in that order: nothing is built that a Reviewed requirement doesn't ask for, tests come from the requirements, and the PRD changes only by your words.
+
+![Documentation-driven](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-01-documentation-driven.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -23,7 +25,9 @@ Statement: pending (to come from the owner's review).
 
 ## 2. Enforced and kept true (enforce score 2/5)
 
-Statement: pending (to come from the owner's review).
+Every requirement is proven and kept true: tests and health check it, the pages agree with each other and the code, and whatever falls short, conflicts or goes stale becomes work until it is fixed.
+
+![Enforced and kept true](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-02-the-loop-and-coverage.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -89,7 +93,9 @@ Statement: pending (to come from the owner's review).
 
 ## 3. Fast, cheap and small (enforce score 3/5)
 
-Statement: pending (to come from the owner's review).
+Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's.
+
+![Fast, cheap and small](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-05-fast-cheap-and-small.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -117,7 +123,9 @@ Statement: pending (to come from the owner's review).
 
 ## 4. Private and guarded (enforce score 3/5)
 
-Statement: pending (to come from the owner's review).
+No private name, path, address or key leaves the machine, and automation gets only the access it needs.
+
+![Private and guarded](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-06-nothing-private-escapes.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -135,7 +143,9 @@ Statement: pending (to come from the owner's review).
 
 ## 5. Reproducible and portable (enforce score 3/5)
 
-Statement: pending (to come from the owner's review).
+The same inputs give the same result, on any machine, in any repo and on any agent: it works installed fresh, plugs into other systems through adapters, and survives a failure without losing work.
+
+![Reproducible and portable](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-07-it-works-installed-fresh.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -144,6 +154,7 @@ Statement: pending (to come from the owner's review).
 | [DEL-16 Each step runs on the agent I pick](https://github.com/jcl2018/agent-workflow-template/wiki/Delivery) | Delivery | 🟧 v2.0 r2 reworded (since v1.0.49) | 4/5 | A private setting maps each step to an agent; fallback warns; run record names agent and tokens. | [DEL-16 flow](docs/wiki/flows/DEL-16.svg) |
 | [GRD-10 Setup installs the whole set](https://github.com/jcl2018/agent-workflow-template/wiki/Guardrails) | Guardrails | 🟧 v2.0 r2 reworded (since v0.27.1) | 4/5 | Adoption installs every guardrail with defaults and lists them; health judges it like the template. | [GRD-10 flow](docs/wiki/flows/GRD-10.svg) |
 | [INT-1 One contract for every integration](https://github.com/jcl2018/agent-workflow-template/wiki/Integrations) | Integrations | 🟩 v1.0.74 | 4/5 | Every outside system the loop works with is an opt-in integration declared in one… (absorbs INT-6) | [INT-1 flow](docs/wiki/flows/INT-1.svg) |
+| [INT-5 Every integration is visible](https://github.com/jcl2018/agent-workflow-template/wiki/Integrations) | Integrations | 🟩 v1.0.74 | 3/5 | The board shows integration state and open deltas; health counts them as findings. | [INT-5 flow](docs/wiki/flows/INT-5.svg) |
 | [MCH-1 One command sets a machine up](https://github.com/jcl2018/agent-workflow-template/wiki/Machines) | Machines | 🟧 v2.0 r2 reworded (since v1.0.26) | 3/5 | From a fresh clone on a Mac or Windows machine, a dry run then machine.py apply installs… (absorbs MCH-2, MCH-10) | [MCH-1 flow](docs/wiki/flows/MCH-1.svg) |
 | [MCH-3 Backup and restore are commands](https://github.com/jcl2018/agent-workflow-template/wiki/Machines) | Machines | 🟩 v1.0.57 | 5/5 | Backup and restore commands move restorable state between machines, never secrets. | [MCH-3 flow](docs/wiki/flows/MCH-3.svg) |
 | [MCH-4 One owner per goal across machines](https://github.com/jcl2018/agent-workflow-template/wiki/Machines) | Machines | 🟩 v1.0.65 | 4/5 | Each goal has one owning machine, and only it starts, answers, merges or resumes the… (absorbs MCH-8, OPS-15) | [MCH-4 flow](docs/wiki/flows/MCH-4.svg) |
@@ -167,7 +178,9 @@ Statement: pending (to come from the owner's review).
 
 ## 6. Autonomous, and you decide only what's yours (enforce score 2/5)
 
-Statement: pending (to come from the owner's review).
+It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours.
+
+![Autonomous, and you decide only what's yours](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-08-it-stops-for-you-only-when-it-must.svg?raw=true)
 
 | Requirement | Feature | Release | Score | Summary | Flow |
 |---|---|---|---|---|---|
@@ -180,7 +193,6 @@ Statement: pending (to come from the owner's review).
 | [CHK-6 What a check-in shows of other machines](https://github.com/jcl2018/agent-workflow-template/wiki/Check-in-and-board) | Check in and board | 🟩 v0.1.3 | 3/5 | Check-ins show this machine's goals in full and one row per goal elsewhere; never relay questions. | [CHK-6 flow](docs/wiki/flows/CHK-6.svg) |
 | [DEL-3 It only stops for me when it must](https://github.com/jcl2018/agent-workflow-template/wiki/Delivery) | Delivery | 🟧 v2.0 r2 reworded (since v0.1.2) | 3/5 | Owner decisions wait or are auto-approved where allowed; plan and review full depth; tests never shrink. | [DEL-3 flow](docs/wiki/flows/DEL-3.svg) |
 | [DOC-11 Safe publish](https://github.com/jcl2018/agent-workflow-template/wiki/Documentation) | Documentation | 🟧 v2.0 r2 reworded (since v0.22.0) | 5/5 | Publishing never deletes wiki pages or overwrites foreign ones unless named; last publish undoable. | [DOC-11 flow](docs/wiki/flows/DOC-11.svg) |
-| [INT-5 Every integration is visible](https://github.com/jcl2018/agent-workflow-template/wiki/Integrations) | Integrations | 🟩 v1.0.74 | 3/5 | The board shows integration state and open deltas; health counts them as findings. | [INT-5 flow](docs/wiki/flows/INT-5.svg) |
 | [MCH-5 One email stream, answered by reply or phone](https://github.com/jcl2018/agent-workflow-template/wiki/Machines) | Machines | 🟩 v1.0.65 | 4/5 | With notify_email on, each new Needs-you item, stopped or late goal and merged release… (absorbs CHK-3, CHK-9) | [MCH-5 flow](docs/wiki/flows/MCH-5.svg) |
 | [OPS-2 Live communication](https://github.com/jcl2018/agent-workflow-template/wiki/Operation) | Operation | 🟧 v2.0 r2 three-layer operation reland (since v0.1.2) | 4/5 | Workers report each step change live; a fixed message protocol links worker, machine and top. | [OPS-2 flow](docs/wiki/flows/OPS-2.svg) |
 | [OPS-11 Full auto mode](https://github.com/jcl2018/agent-workflow-template/wiki/Operation) | Operation | 🟧 v2.0 r2 three-layer operation reland (since v0.1.2) | 5/5 | Full auto applies every recommendation except safety classes judged by effect; off by default. | [OPS-11 flow](docs/wiki/flows/OPS-11.svg) |
