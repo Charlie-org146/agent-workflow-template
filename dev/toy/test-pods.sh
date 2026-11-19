@@ -257,8 +257,9 @@ fi
 if want docs; then
 echo "== done line 1: MON-13 and MON-15 moved to OPS-13 and OPS-15 on the Operation page, MON-14 to CHK-5"
 out=""
-for n in 13 15; do check "MON-$n is moved to OPS-$n, which has its revisions" 'grep -q "^- MON-'"$n"': moved to OPS-'"$n"'" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- OPS-'"$n"': " "$here/docs/wiki/Operation.md" && grep -q "^### OPS-'"$n"'" "$here/docs/wiki/Operation.md"'; done
-check "MON-14 is retired as moved to CHK-5" 'grep -q "^- MON-14: moved to CHK-5" "$here/docs/wiki/Monitoring.md"'
+check "MON-13 is moved to OPS-1, which holds the OPS-13 revisions" 'grep -q "^- MON-13: moved to OPS-1" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- OPS-1: " "$here/docs/wiki/Operation.md" && grep -q "^### OPS-13" "$here/docs/wiki/Operation.md"' 
+check "MON-14 is retired as moved to CHK-1" 'grep -q "^- MON-14: moved to CHK-1" "$here/docs/wiki/Monitoring.md"' 
+check "MON-15 is moved to MCH-4, which holds the OPS-15 revisions" 'grep -q "^- MON-15: moved to MCH-4" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- MCH-4: " "$here/docs/wiki/Machines.md" && grep -q "^### OPS-15" "$here/docs/wiki/Operation.md"' 
 out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
 check "the Operation page's review lock accepts the requirements" '! has "LOCKED Operation" && ! has "TESTS Operation"'
 fi
