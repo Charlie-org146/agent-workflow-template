@@ -16,7 +16,7 @@ Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 ## Requirements
 
 ### Functional
-- MCH-1: **Unreviewed** Any Mac or Windows machine sets up identically
+- MCH-1: **Reviewed 2026-11-19** Any Mac or Windows machine sets up identically <!-- reviewed 81e3aa40 -->
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix. [MCH-7]
   - A second Mac or Windows machine reaches this one's setup from a git clone and one command: a dry run lists everything first, then apply installs the skill links, the hooks and the empty private files. Every item has a Windows form or is named as not yet possible. [MCH-1]
   - Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. [MCH-2]
@@ -24,13 +24,13 @@ Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
   - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. [MCH-10]
   - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane and checks, so main cannot break native Windows unseen. [DEL-12, GRD-18]
   - A long pull request body, issue text, comment or release notes always goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows. [DEL-12, GRD-18]
-- MCH-4: **Unreviewed** One owner and one merge order per goal
+- MCH-4: **Reviewed 2026-11-19** One owner and one merge order per goal <!-- reviewed a077ab51 -->
   - Each goal has one owning machine (it records the pod that owns it), and only that owner starts, answers, merges or resumes it; others see it read-only. [MCH-4, OPS-15]
   - `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused. [MCH-4]
   - With the private setting `machine_sync` on (off by default, per machine), each repo has one merge order across machines: a goal takes a merge ticket on origin before its pr lane, and a second machine's goal waits for it (a holder silent for 30 minutes is dropped). [MCH-4]
   - SNAPSHOT is structured data a machine publishes to origin, and a check-in draws one Machine line per machine from it, not from message text; a moved goal shows once, under the machine that holds it. A peer's record is data, never the owner's approval. [MCH-4]
   - A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release. A branch that isn't pushed, or a goal with no done line or pull request, is refused. [MCH-8]
-- MCH-5: **Unreviewed** One email stream, answered by reply or phone
+- MCH-5: **Reviewed 2026-11-19** One email stream, answered by reply or phone <!-- reviewed 27e882ce -->
   - Each new Needs-you item, stopped or late goal and merged release sends one mail (when `notify_email` is on) with numbered options and a recommendation, through one mailer and one send budget both machines share (`notify_budget` a day, default 20); a second machine never mails an event the first one did. [MCH-5]
   - When notification is on for this machine, each check-in mails me once per new event, such as a new Needs you item or a goal that stopped or passed its ETA. [CHK-3]
   - A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words. [MCH-5]

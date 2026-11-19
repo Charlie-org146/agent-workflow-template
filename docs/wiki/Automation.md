@@ -15,20 +15,20 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Unreviewed** Routines run on schedule, by runbook
+- AUT-1: **Reviewed 2026-11-19** Routines run on schedule, by runbook <!-- reviewed 6bea60c3 -->
   - Health runs on my always-on machine for every repo; regression runs in GitHub Actions for a public repo and on that machine for a private one. Each report says where it ran, and a routine missed while the machine was off runs once at the next tick and says it was missed. [AUT-1]
   - The full regression suite runs on the schedule set in the repo's settings, every 4 hours by default, and on every release tag; I can also start it by hand. The report names every test it skipped and why. [AUT-2]
   - Health runs on my always-on machine on the schedule, after the latest finished regression run, with all its rule groups and the repo review. It uses my own login, and when the login has expired the report says so and the next round tries again. [AUT-3]
   - A page that owns a routine has a Runbook for it, saying what an agent told only "run routine X" must read and do, and a scheduled run follows it exactly. The docs check fails a registered routine with no runbook or a missing field. A runbook is not locked by my review. [DOC-16]
 
-- AUT-9: **Unreviewed** Automation runs with declared, least access
+- AUT-9: **Reviewed 2026-11-19** Automation runs with declared, least access <!-- reviewed 44fb8c0c -->
   - Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules. [AUT-9]
   - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. [MCH-11]
   - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. [MCH-6]
   - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. [MCH-6]
 
 ### Non-functional
-- AUT-5: **Unreviewed** Routines and publishing stay under my control
+- AUT-5: **Reviewed 2026-11-19** Routines and publishing stay under my control <!-- reviewed ec03824d -->
   - Each routine can be turned off or rescheduled in one setting. Without the secrets it needs, a routine runs, writes nothing and says what is missing. [AUT-5]
   - Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it. The last publish can be undone. [DOC-11]
 

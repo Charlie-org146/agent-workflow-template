@@ -13,15 +13,15 @@ Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 ## Requirements
 
 ### Functional
-- INT-1: **Unreviewed** Every integration is a declared, visible adapter
+- INT-1: **Reviewed 2026-11-19** Every integration is a declared, visible adapter <!-- reviewed debd1c31 -->
   - Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page. [INT-1]
   - Adding a system means one reader or writer, one registry row and one How-to page. No loop code changes, and an adopted repo gets it by declaring it, not by building it. [INT-6]
   - The board shows each integration's connection state and its open deltas as waiting on me, with the words to accept either side, and health counts an open delta or an unreadable integration as a finding, never as passing. [INT-5]
-- INT-2: **Unreviewed** Integrations never override the repo copy
+- INT-2: **Reviewed 2026-11-19** Integrations never override the repo copy <!-- reviewed 93df798f -->
   - Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop. [INT-2]
   - Where both sides can change the same thing, sync compares them with what they last agreed on. Each difference is a delta naming what changed and on which side, and it stays open until someone accepts one side's text. It is posted on the feature's Backlog milestone. [INT-3]
   - A repo can keep its GitHub milestones in step with an outside Milestones page under this contract, opt-in by one setting. [INT-8]
-- INT-7: **Unreviewed** PRDs may sync with an outside document
+- INT-7: **Reviewed 2026-11-19** PRDs may sync with an outside document <!-- reviewed 0fced196 -->
   - A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads. [INT-7]
 
 ### Non-functional

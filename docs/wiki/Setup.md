@@ -15,7 +15,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Unreviewed** Any repo adopts the template; its own files are adapted
+- SET-1: **Reviewed 2026-11-19** Any repo adopts the template; its own files are adapted <!-- reviewed f2232bf0 -->
   - Files the template owns install exactly, byte for byte; the repo's own files are adapted, never overwritten. The adopted repo's README shows the template's principles and design logic as written, plus its own product principles if it has any. (Owner rule 2026-11-19, o192; resolves the DOC-23 conflict.) [SET-1]
   - Conflict SET-1 vs SET-7 resolved by the owner, 2026-11-19 (o192). [SET-7]
   - One command sets up a new or existing repo: the loop settings, feature pages, Home, the scheduled regression and the health groups. It shows what it would change first, applies it on a branch through the loop, and adapts what is there instead of overwriting. [SET-1]
@@ -25,21 +25,21 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
   - Adoption never blocks: what doesn't fit is listed and filed as issues on the right feature, and the rest is adopted. A health check runs before and after, and the one after is green or names each gap with its fix. [SET-18]
   - For each followed repo, setup reads which connectors its feature pages need and probes each with a read-only call. It reports each as connected, needs sign-in or missing, with the fix, and never attaches or enables one itself. [SET-14]
   - From the operation session, one flow lists my GitHub repos by last push, lets me choose which to follow, clones and registers them, and updates each to the current template. It ends with the board showing exactly the repos I chose. [SET-12]
-- SET-2: **Unreviewed** Layered settings and a generated entry page
+- SET-2: **Reviewed 2026-11-19** Layered settings and a generated entry page <!-- reviewed 0fc34db4 -->
   - Settings come in three layers: the template's defaults, the repo's committed settings, and my private local settings; a later layer overrides an earlier one. Every setting has a default and a one-line explanation, and I can see each value and its layer. [SET-2]
   - Every adopted repo has one entry page any new session reads first: how the parts fit together, which features exist and how to use them. It is generated from the feature pages and the committed settings only, so it is never stale and never carries one machine's local values. [SET-5]
-- SET-4: **Unreviewed** Repos build on the template and stay current
+- SET-4: **Reviewed 2026-11-19** Repos build on the template and stay current <!-- reviewed 37028201 -->
   - An adopted repo holds only its own settings, pages, tests and data. The loop's code lives once per machine in the installed template, so a fix or feature in the template reaches every repo through an update, never by rebuilding it there. [SET-21]
   - An adopted repo can see what is new in the template and update to it, keeping its own settings, pages, rules and local settings. A repo running an older template version is flagged. [SET-4]
   - A repo records the template version it is on, and one with none counts as behind. A session that starts in a repo behind the installed template is told so in one line; the cases where a new goal is refused are in How-to. [SET-20]
   - One read-only command lists every gap between a repo and the current template, each with a one-line fix, and succeeds only when none remain. Health's Adoption group runs the same check. [SET-16]
   - A fix made in an adopted repo that belongs in the template is proposed back to the template as an issue. [SET-19]
   - (v2.0 planned) develop-staging: a develop or staging branch runs ahead of main, so updates are proven before they reach main and adopted repos (named only).
-- SET-6: **Unreviewed** Adoption is proven by strict replay
+- SET-6: **Reviewed 2026-11-19** Adoption is proven by strict replay <!-- reviewed 340ffece -->
   - Adoption is proven on test repos shaped like real ones, and every adoption defect found in a real repo adds a test repo that reproduces it. [SET-6]
   - Adoption replays the first run step by step against the recorded good result in `dev/toy/adoption-golden.tsv`. It stops at the first mismatch, says what differs and asks me, and never passes a step it cannot observe. [SET-11]
   - (v2.0) ci-trace-matrix: the 1,188-command adoption replay runs across about 16 CI jobs within the time limit.
-- SET-10: **Unreviewed** One versioned package; every agent runs one loop
+- SET-10: **Reviewed 2026-11-19** One versioned package; every agent runs one loop <!-- reviewed ada09efb -->
   - The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. The size and listing rules the package must pass are Guardrails' (GRD-20 to GRD-22, principle 3). [SET-3]
   - The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. [SET-10]
   - A private setting maps each step and goal size to an agent profile. A missing or signed-out agent falls back to the default with a warning. The run record names the agent, model and tokens of every step. [DEL-16]

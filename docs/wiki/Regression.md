@@ -26,10 +26,10 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 ## Requirements
 
 ### Functional
-- REG-1: **Unreviewed** Three kinds of tests
+- REG-1: **Reviewed 2026-11-19** Three kinds of tests <!-- reviewed 9315fad1 -->
   - Every Reviewed requirement has at least one requirement test, every whole flow has an end-to-end workflow test on a toy repo, and every fixed issue has a defect test. [REG-1]
   - A requirement with no passing test shows as not enforced. [REG-1]
-- REG-4: **Unreviewed** Tests are written, listed and run one way
+- REG-4: **Reviewed 2026-11-19** Tests are written, listed and run one way <!-- reviewed 19fe177a -->
   - Once I review a PRD, the loop writes Given/When/Then tests for each requirement, links each to a regression test, and keeps them in step when a requirement changes. I never write or manage tests. [DOC-3]
   - Every test is listed in one fixed format, grouped by feature, wherever tests are shown: its kind, what it guards, what it checks and its last result. [REG-2]
   - One full Tests page is generated, listing every test with its latest result. [DOC-10]
@@ -42,11 +42,11 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
   - (v2.0) lanes-table-data: an edit to the test list re-runs only the rows it changes.
 
 ### Non-functional
-- REG-7: **Unreviewed** Test lanes and suite stay within budgets
+- REG-7: **Reviewed 2026-11-19** Test lanes and suite stay within budgets <!-- reviewed 9e64eb92 -->
   - Every in-loop test run stays within a time budget, 15 minutes by default and never lower. A run that would go past it runs what fits and defers the rest to the full suite, naming how many. It is the only time limit on a lane. [REG-7]
   - The work before a lane's first test, preparing, planning and waiting for a slot, has its own budget, 15 minutes by default and never lower. A lane that reaches it stops, says which part ran long, and can be rerun. [REG-11]
   - The number of tests and the full-suite time are capped by settings. A goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or I raise the cap in my own words. The suite time is measured from the latest full run. [REG-14]
-- REG-9: **Unreviewed** Test results and coverage are honest
+- REG-9: **Reviewed 2026-11-19** Test results and coverage are honest <!-- reviewed 20790b40 -->
   - Every test has been seen failing once, or shows as unproven. A test that fails then passes on the same commit is marked flaky, never silently retried. [REG-9]
   - A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. A reopened issue's test is marked failing until it passes again. [REG-6]
   - A test this machine can't run is skipped with its reason and never counted as seen failing. Its failing proof is recorded as owed, runs on a machine that can, and is written back with that machine and commit. An owed proof never blocks the goal, its merge or the release. [REG-10]

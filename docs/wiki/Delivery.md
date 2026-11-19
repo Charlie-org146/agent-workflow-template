@@ -24,30 +24,30 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so. [REL-9]
   - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent. If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice. [REL-11]
   - (v2.0 planned) plan-red-team (see HLT-2).
-- DEL-3: **Unreviewed** It stops only for decisions that are mine
+- DEL-3: **Reviewed 2026-11-19** It stops only for decisions that are mine <!-- reviewed 80abc826 -->
   - A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3]
-  - Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11]
-  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. [OPS-11]
+  - Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, or anything that contradicts my words. A merge is not a safety class. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11]
+  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only. Caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21). [OPS-11]
   - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18]
-- DEL-17: **Unreviewed** Goal ETAs are hard limits
+- DEL-17: **Reviewed 2026-11-19** Goal ETAs are hard limits <!-- reviewed e066b537 -->
   - Every goal records an ETA when it is frozen. [DEL-17]
   - Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. [DEL-17]
   - Decisions a goal can foresee are asked once, up front, each with a recommendation. [DEL-17]
   - Time spent waiting for a queue, for memory or for me does not count. [DEL-17]
-- DEL-19: **Unreviewed** Every change is a goal serving a requirement
+- DEL-19: **Reviewed 2026-11-19** Every change is a goal serving a requirement <!-- reviewed c3aaa9a1 -->
   - Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18]
   - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19]
   - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19]
   - Done lines can't change once the goal starts; a change means a new goal. [DEL-2]
 
 ### Non-functional
-- DEL-7: **Unreviewed** Work survives failure and moves by backup
+- DEL-7: **Reviewed 2026-11-19** Work survives failure and moves by backup <!-- reviewed 491db53a -->
   - A failed step is retried, and after three failed tries the goal stops with a reason. [DEL-7]
   - A stopped or crashed goal resumes from its last recorded step. [DEL-7]
   - Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit. [DEL-7]
   - A step that fails because its session or tool is unusable restarts in a fresh session with its notes. [DEL-7]
   - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. [MCH-3]
-- DEL-9: **Unreviewed** Nothing private is committed, shipped or copied
+- DEL-9: **Reviewed 2026-11-19** Nothing private is committed, shipped or copied <!-- reviewed 942db40e -->
   - Every commit, push and pull request passes the private-name scan before it is pushed, and local settings and private values are never written into a repo. [DEL-9, GRD-3]
   - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. [DEL-9, GRD-3]
   - The email address and the mail key live only in one local secrets file outside git, shared by both mailers and read only by the local runner. They never appear in the repo, logs, issues or the digest, and mail goes only to the one address I set. [AUT-6]
@@ -102,6 +102,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-19 | It stops only for decisions that are mine <br> A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3] <br> Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, or anything that contradicts my words. A merge is not a safety class. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11] <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only. Caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21). [OPS-11] <br> One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18] | carries the owner-approved #5186 OPS-11 r3 sentences (o141-o144) | o423: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3. (owner ~23:28, relayed" |
 | r3 | 2026-11-19 | It stops only for decisions that are mine <br> A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3] <br> Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11] <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. [OPS-11] <br> One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18] | consolidation (TOP-DECISION 89) | o332: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | It only stops for me when it must <br> A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. <br> Plan and review run at full depth unless the repo or I choose condensed. <br> Tests never shrink. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
 | r1 | 2026-11-08 | Decisions <br> A decision for me waits under Needs you, or, where the repo allows, is auto-approved and logged. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
