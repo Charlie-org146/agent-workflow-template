@@ -78,7 +78,7 @@ for page, ids in want.items():
     for key, words in ids.items():
         sealed = re.search(r"^- %s: \*\*Reviewed \d{4}-\d\d-\d\d\*\* \S.* <!-- reviewed \w+ -->$" % key, text, re.M)  # the owner's latest words, sealed
         # a requirement the v2 rewrite revised reads Unreviewed, and the owner's sealed words stay as its first revision r1
-        kept = re.search(r"^- %s: \*\*Unreviewed\*\* \S" % key, text, re.M) and re.search(r"^### %s\n\n(?:\|.*\n)+?\| r1 \| \d{4}-\d\d-\d\d \| .*o\d+: " % key, text, re.M)
+        kept = re.search(r"^- %s: (?:\*\*Unreviewed\*\* \S|moved to )" % key, text, re.M) and re.search(r"^### %s\n\n(?:\|.*\n)+?\| r1 \| \d{4}-\d\d-\d\d \| .*o\d+: " % key, text, re.M)
         assert sealed or kept, key
 PY
     out=$(real && python3 skills/workflow-docs/scripts/docs.py check 2>&1); grep -q "LOCKED" <<<"$out" && no "a reviewed criterion's seal is broken"

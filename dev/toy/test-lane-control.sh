@@ -287,6 +287,12 @@ echo "note" >> .loop/findings.md; printf '# link\tstate\tdate\treopened_at\nhttp
 out=$(PATH="$T/nogh:$PATH" python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import role;s={'slug':'rp'};role.record(s,'main')" "$S" 2>&1)
 # Value: protects=goal.py pr's bookkeeping commit takes only the issue and run files and re-rendered Tests pages (review finding); fails_when=it sweeps any dirty .md (the loop's findings, queue or goal files) into the pull request; why_new=prsteps is new; seam=none; no_claim=none beyond protects
 check "the pr bookkeeping commit takes the issue file and never the loop's own dirty findings" '[ "$(git log -1 --format=%s)" = "pr: record issue states and the lane'"'"'s results" ] && git show --name-only --format= HEAD | grep -qx .loop/regression-issues.tsv && ! git show --name-only --format= HEAD | grep -q findings.md && git status --porcelain | grep -q findings.md'
+rr="$T/rr"; rm -rf "$rr"; mkdir -p "$rr/.loop" "$rr/nogh"; ( cd "$rr" && git init -q -b main && git config user.email t@example.test && git config user.name Toy && echo x > a.txt && printf '# link\tstate\tdate\treopened_at\nhttps://example.test/o/r/issues/1\topen\t2026-01-01\t\n' > .loop/regression-issues.tsv && echo '{}' > .loop/config.json && git add -A && git commit -qm base )
+printf '#!/bin/sh\necho "toy hook refuses" >&2\nexit 1\n' > "$rr/.git/hooks/pre-commit"; chmod +x "$rr/.git/hooks/pre-commit"
+printf 'https://example.test/o/r/issues/2\topen\t2026-01-02\t\n' >> "$rr/.loop/regression-issues.tsv"; before=$(git -C "$rr" rev-parse HEAD)
+out=$(cd "$rr" && PATH="$rr/nogh:$PATH" python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import role;s={'slug':'rp'};role.record(s,'main')" "$S" 2>&1); rc=$?
+# Value: protects=goal.py pr never pushes a head that its own record commit will move afterwards (#5178); fails_when=a bookkeeping commit that cannot land lets pr go on to the push; why_new=the record used to be put back and derived again by the next run, after CI had started on the pushed head; seam=none; no_claim=none beyond protects
+check "a pr whose bookkeeping commit cannot land refuses before any push, and the head has not moved" '[ $rc != 0 ] && grep -q "^REFUSED: the bookkeeping commit did not land, so nothing was pushed" <<<"$out" && [ "$(git -C "$rr" rev-parse HEAD)" = "$before" ]'
 
 python3 - "$RUNS" "$(git rev-parse HEAD)" <<'PY'
 import json, os, sys, time
