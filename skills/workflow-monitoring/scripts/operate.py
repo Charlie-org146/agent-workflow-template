@@ -321,7 +321,7 @@ def apply(slug, branch):
         again = run([sys.executable, os.path.join(docs, "audit.py"), "rerender", base], tree).stdout.strip()
         pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
         said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
-        if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
+        if said and run(["git", "add", "-A", "--", *[p for p in (folder, "README.md") if os.path.exists(os.path.join(tree, p))]], tree).returncode == 0:
             run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
