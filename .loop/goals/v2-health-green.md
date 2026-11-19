@@ -1,7 +1,7 @@
 # Health is green on main for the v2.0.0 gate: every requirement reference resolves, the known traceability gaps are closed, the SKILL.md files fit, and the caps are set for v2.0 (TOP-DECISION 37)
 
 - Slug: v2-health-green
-- Touches: docs/wiki/Roadmap.md, docs/wiki/Delivery.md, docs/wiki/Documentation.md, docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Home.md, docs/wiki/Check-in-and-board.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/Integrations.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Tests.md, skills/workflow-monitoring/SKILL.md, skills/workflow-release/SKILL.md, skills/workflow-monitoring/references, skills/workflow-release/references, .loop/regression.tsv, .loop/config.json
+- Touches: docs/wiki/Roadmap.md, docs/wiki/Delivery.md, docs/wiki/Documentation.md, docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Home.md, docs/wiki/Check-in-and-board.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/Integrations.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Tests.md, skills/workflow-monitoring/SKILL.md, skills/workflow-release/SKILL.md, skills/workflow-monitoring/references, skills/workflow-release/references, .loop/regression.tsv, .loop/config.json, skills/workflow-health/scripts/defects.py
 - ETA: 225 active minutes (estimate 178m plus a 25% margin)
 
 ## Done lines
