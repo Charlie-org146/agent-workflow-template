@@ -71,6 +71,8 @@ Each refusal ends with one of these codes; the line also gives the fix and what 
 | `RELEASE_VERSION_MISMATCH` | VERSION at the release PR's merge commit is not vX; no release made | set VERSION on the base, then `merge.py SLUG` |
 | `RELEASE_EXISTS` | a GitHub release vX already exists at another target | look at it, keep or delete it, then `merge.py SLUG` |
 | `REQUIREMENT_MISSING` | a criterion row names a requirement ID no wiki page on the base names; nothing merged | merge the goal that adds its text, then `merge.py SLUG` |
+| `GO_HEAD` | `merge.py SLUG --go-head SHA`: the pull request head is not SHA (or SHA is under 7 characters); nothing merged | ask for a GO on the head now open |
+| `CI_PENDING`, `CI_RED`, `CI_MISSING` | with `--go-head`: a required check is still running, red, or never reported on that exact head (a check green on the parent does not count; with no rule naming checks every reported check is required, and none reported is `CI_MISSING`); nothing merged | wait for the required checks to finish green on the head, then `merge.py SLUG --go-head SHA` |
 | `MAJOR_GATE` | a goal's release (cut or merge) would bump a major | a major ships only through `review.py promote` |
 | `FROZEN` | a major's rc tag exists without its release tag and the goal names no recorded gate failure; nothing merged | name a gate failure in the goal, or wait for the next milestone |
 | `OWNER_RECORD` | `promote` was given an owner-words record that doesn't name `vX.0.0`, or the tag exists; nothing changed | the operation session records the owner's words with `--ids vX.0.0` |
