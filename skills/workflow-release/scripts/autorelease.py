@@ -278,6 +278,23 @@ def release_statuses(top, cfg, state, branch, sha):
 RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_REQUIRED")
 
 
+def main_reds(top, base, info, red):
+    """[failing rows, log URLs] of the red checks if every failing row is a known main red (known file or main's last run), else None."""
+    show = lambda f: [x.split("\t") for x in sh(["git", "show", "origin/%s:.loop/%s" % (base, f)], cwd=top).stdout.splitlines()]
+    known = {x[0] for x in show("regression-known.tsv")} | {x[0] for x in show("regression-runs.tsv") if x[1:2] == ["FAIL"]}
+    rows, urls = set(), []
+    for c in info.get("statusCheckRollup") or []:
+        if isinstance(c, dict) and str(c.get("name") or c.get("context")) in red:
+            url = str(c.get("detailsUrl"))
+            log = sh(["gh", "api", "repos/{owner}/{repo}/actions/jobs/%s/logs" % url.split("?")[0].rsplit("/", 1)[-1]], cwd=top)
+            found = set(re.findall(r"^\S+ FAIL (\S+)$", log.stdout, re.M)) if log.returncode == 0 else set()
+            if not found or not found <= known:
+                return None
+            rows |= found
+            urls.append(url)
+    return sorted(rows), urls
+
+
 def go_gate(top, base, info, go):
     """None, or the refusal, unless the PR head is the GO's and every required check is green on it (#5171)."""
     head = str(info.get("headRefOid"))
@@ -291,7 +308,10 @@ def go_gate(top, base, info, go):
     need = sorted(set(got[0]) | set(got[1]) or seen) if got is not None else ["the required checks"]
     for code in ("CI_RED", "CI_PENDING", "CI_MISSING"):
         names = [n for n in need if seen.get(n, "CI_MISSING") == code] or (["no check reported"] if code == "CI_MISSING" and not need else [])
-        if names:
+        found = names and code == "CI_RED" and main_reds(top, base, info, names)
+        if found:
+            print("GO_HEAD ok: %s red only on known main reds (%s); logs: %s" % (", ".join(names), ", ".join(found[0]), ", ".join(found[1])))
+        elif names:
             return "REFUSED (%s): %s on head %s. Nothing merged. Fix: wait for CI green on the head, then merge.py again." % (
                 code, ", ".join(names), head[:12])
 
