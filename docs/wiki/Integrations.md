@@ -3,11 +3,7 @@
 
 How to use: [How-to-use-Integrations](How-to-use-Integrations)
 
-<<<<<<< HEAD
-Review: **Unreviewed** <!-- kept gap-wave1-small@dfc1acc5 -->
-=======
 Review: **Unreviewed** <!-- kept ci-shards-unrun0@999137c6 -->
->>>>>>> origin/main
 
 ## Problem
 - The loop works with systems outside the repo, such as documents, trackers, mail, chat, agents and deploy targets, and each one is wired in its own way, so a new system means rebuilding something.
