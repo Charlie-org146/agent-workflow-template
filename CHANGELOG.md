@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.0.88 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.87 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.86 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.85 - 2026-11-19
 
 - Main-red size rows: skill-kept reads the moved review rule, monitoring and release SKILL.md under 150 lines, setup.py under 19,000 bytes
