@@ -1,7 +1,7 @@
 # review.py gate and promote can take --suite-from <run-id>, reading REL-3's suite result from a GitHub Actions run of the regression workflow instead of running it locally; it accepts only a run whose head SHA equals the gate ref, that completed, and whose jobs together cover every nightly row; NOTRUN, ENV, FAIL, KNOWN and budget-LEFT rows still refuse unless a red waiver names the issue. Replaces gate-ci-suite (TOP-DECISION 48), carrying its commits (o205)
 
 - Slug: gate-ci-suite-net0
-- Touches: skills/workflow-release/scripts/review.py, dev/toy/test-gate-ci-suite.py, docs/wiki/Release.md, docs/wiki/How-to-use-Release.md, docs/wiki/Tests.md, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/How-to-use-Delivery.md, docs/wiki/Guardrails.md, docs/wiki/How-to-use-Guardrails.md, docs/wiki/Home.md, .loop/START.md
+- Touches: skills/workflow-release/scripts/review.py, dev/toy/test-gate-ci-suite.py, docs/wiki/Release.md, docs/wiki/How-to-use-Release.md, docs/wiki/Tests.md, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/How-to-use-Delivery.md, docs/wiki/Guardrails.md, docs/wiki/How-to-use-Guardrails.md, docs/wiki/Home.md, .loop/START.md, skills/workflow-docs/scripts/criteria.py
 - ETA: 215 active minutes (estimate 170m plus a 25% margin)
 
 ## Done lines
