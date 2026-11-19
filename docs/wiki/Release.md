@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Unreviewed** <!-- kept known-red-w7-ops-checkin@068aeb2f -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
