@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept ops-findings-v20@17ac1c9f -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 

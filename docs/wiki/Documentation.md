@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept ops-findings-v20@17ac1c9f -->
+Review: **Unreviewed** <!-- kept merge-queue-a@d352fb76 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -389,7 +389,6 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [doc19-kind-row](Tests#t-doc19-kind-row) | requirement | DOC-19 | Given a How-to-use page with a delivered row that has no Kind, when docs check runs, then it fails naming the page and the missing piece, and a page whose rows each name a Kind with its block passes. | PASS 2026-11-16 |
 | [doc19-kind-fields](Tests#t-doc19-kind-fields) | requirement | DOC-19 | Given a Command row whose block lacks its dry-run form, when docs check runs, then it fails naming the page and the missing field. | PASS 2026-11-16 |
 | [doc19-command-listed](Tests#t-doc19-command-listed) | requirement | DOC-19 | Given a feature page that names a command its How-to-use page does not list, when docs check runs, then it fails naming the command. | PASS 2026-11-16 |
-| [doc19-readme-links](Tests#t-doc19-readme-links) | requirement | DOC-19 | Given a README with a How-to-use table of more than one row, when docs check runs, then it fails, and a README that only links each page passes. | PASS 2026-11-16 |
 | [doc19-diagram-passes](Tests#t-doc19-diagram-passes) | requirement | DOC-19 | Given a How-to-use page whose System diagram has a box for each delivered row, where it runs and a legend, when docs check runs, then it passes. | not run |
 | [doc19-diagram-missing](Tests#t-doc19-diagram-missing) | requirement | DOC-19 | Given a How-to-use page with no System diagram, when docs check runs, then it fails naming the page. | not run |
 | [doc19-diagram-row-box](Tests#t-doc19-diagram-row-box) | requirement | DOC-19 | Given a System diagram that misses a delivered row, when docs check runs, then it fails naming the part. | not run |

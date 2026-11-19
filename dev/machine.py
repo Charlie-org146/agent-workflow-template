@@ -189,7 +189,7 @@ def held(c, task, body=True):
 def items(c):
     """(name, text, gap, do): gap() is "" when the machine holds the item, else the fix; do() applies it."""
     names, mailer = os.path.join(c.loop, "private-names"), os.path.join(c.routines, "send-mail.py")
-    need = [x for x in ("git", "py" if c.win else "python3", "gh") if not shutil.which(x)]
+    need = [x for x in ("git", "py" if c.win and os.name == "nt" else "python3", "gh") if not shutil.which(x)]  # a Windows form planned on another host checks that host
     out = [("prerequisites", "git, Python 3 and gh are installed (gh signed in: gh auth status)",
             lambda: "run: install " + ", ".join(need) + "; then gh auth login" if need else "", lambda: None),
            ("skills", "link the workflow skills into ~/.claude/skills" + WIN * c.win,
@@ -223,7 +223,7 @@ def items(c):
                  lambda: held(c, task), register),
                 ("local-schedule", "drop this repo from local-schedule's launch agent (the task replaces its 4-hourly run)",
                  lambda: "run: python3 %s local uninstall --root %s" % (c.show(auto), c.repo) if doubled(c) else "",
-                 lambda: subprocess.run([sys.executable, auto, "local", "uninstall", "--root", c.repo], capture_output=True,
+                 lambda: subprocess.run([sys.executable, "-B", auto, "local", "uninstall", "--root", c.repo], capture_output=True,
                                         env=dict(os.environ, LOOP_SCHEDULE_HOME=os.path.join(c.loop, "schedule"),
                                                    LOOP_AGENTS_DIR=os.path.join(c.home, "Library", "LaunchAgents"))))]
         for item in custom(c.repo):

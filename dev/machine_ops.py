@@ -49,7 +49,7 @@ def hook_gap(c):  # the operation session's reply and govern hooks live in the r
 
 def hook_do(c):
     if c.repo and hook_gap(c):
-        subprocess.run([sys.executable, os.path.join(SK, "workflow-setup", "scripts", "setup.py"), "--reply-hook"], cwd=c.repo, capture_output=True)
+        subprocess.run([sys.executable, "-B", os.path.join(SK, "workflow-setup", "scripts", "setup.py"), "--reply-hook"], cwd=c.repo, capture_output=True)
 
 
 def peer_gap(c):
