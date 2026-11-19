@@ -223,7 +223,7 @@ def reply_hook(repo, remove, name="reply_hook.py"):
     if "'" in script:
       return refuse("the hook's path %s holds a single quote" % script, "move the skills to a folder without one")
     if (script + os.sep).startswith(os.path.join(common, "loop", "worktrees") + os.sep) or \
-      os.path.realpath(repo).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
+        os.path.realpath(repo).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
       return refuse("the hook (%s) or the repo is inside a goal's worktree, which goes away when the goal ends" % script,
         "run setup.py from the main checkout or an installed copy of the skills")
   if not remove and git(repo, "ls-files", ".claude/settings.local.json", check=False):

@@ -147,7 +147,7 @@ def measure(repo):
         return None, "skipped by --no-health" if py else "workflow-health is not beside workflow-setup"
     try:
         done = subprocess.run([sys.executable, py, "check", "--skip", "mine"], cwd=repo, capture_output=True, text=True,
-          timeout=int(os.environ.get("LOOP_HEALTH_LIMIT") or 120))
+                              timeout=int(os.environ.get("LOOP_HEALTH_LIMIT") or 120))
     except subprocess.TimeoutExpired:
         return None, "the check ran past its time limit"
     lines = done.stdout.splitlines()
