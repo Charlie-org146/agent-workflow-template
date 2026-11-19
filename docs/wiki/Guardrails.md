@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
+Review: **Unreviewed** <!-- kept link-form-note@9cf1b4b1 -->
 
 How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
@@ -264,11 +264,17 @@ None
 | [grd2-merge-rounds-default-8](Tests#t-grd2-merge-rounds-default-8) | requirement | GRD-2 | Given no max_merge_rounds in the config, when goal.py pr merges the base, then eight rounds are allowed. | PASS 2026-11-15 |
 | [grd2-pr-lane-holds-merge-slot](Tests#t-grd2-pr-lane-holds-merge-slot) | requirement | GRD-2 | Given a goal whose pr lane started before another's, when the other's merge.py runs, then it waits until the first merges or fails. | PASS 2026-11-15 |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | GRD-3 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
+| [set8-hooks](Tests#t-set8-hooks) | requirement | GRD-3 | Given a repo with the hooks setup installs, when a staged change adds a private line, then git commit refuses naming the file and line and never the text, and nothing is committed. | PASS 2026-11-19 |
+| [set8-setup-commit](Tests#t-set8-setup-commit) | requirement | GRD-3 | Given an adoption whose staged file holds a private line, when setup runs, then it refuses before its own commit, naming the place, and commits nothing. | PASS 2026-11-19 |
 | [del9-hooks](Tests#t-del9-hooks) | requirement | GRD-3 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
+| [set8-local-setting-refused](Tests#t-set8-local-setting-refused) | requirement | GRD-3 | Given a private-home key in the config the adoption would commit, when setup runs, then it refuses naming the key and the line, never the value, and writes nothing. | PASS 2026-11-19 |
+| [set8-private-value-refused](Tests#t-set8-private-value-refused) | requirement | GRD-3 | Given a home path or a local setting value on a line the adoption adds, when setup runs, then it refuses naming file and line and never the value, while text the repo already had, a short value and a template default pass. | PASS 2026-11-19 |
+| [set8-health](Tests#t-set8-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed or removed, when health runs its hooks rule, then the row appears in the Security and privacy group with its PASS or WARN text, and a wrong group, which prints no hooks row, fails the row. | PASS 2026-11-19 |
 | [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | GRD-3 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
 | [grd3-hooks-health](Tests#t-grd3-hooks-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed, when health runs, then it passes the hooks rule. | not run |
 | [grd3-hook-bypass](Tests#t-grd3-hook-bypass) | requirement | GRD-3 | Given a commit or push that skips hooks (no-verify, empty hooks path), when a loop command runs it, then it is refused and health flags it (not built). | not run |
 | [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | GRD-3 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
+| [private-names-scoped](Tests#t-private-names-scoped) | requirement | GRD-3 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | PASS 2026-11-19 |
 | [machine-guardrail-private](Tests#t-machine-guardrail-private) | requirement | GRD-3 | Given a repo routine holding an address or home path, when machine apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | not run |
 | [grd4-touches](Tests#t-grd4-touches) | requirement | GRD-4 | Given a worker session, when it tries to widen its goal's touches, then the command refuses. | not run |
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
@@ -305,6 +311,7 @@ None
 | - | requirement | GRD-22 | no passing test | not enforced |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
+| [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | PASS 2026-11-19 |
 | [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GraphQL issue list times out, when a regression run is live, then it reads the REST pages and keeps one open issue per failing row. | not run |
 | [issues-both-down-nochange](Tests#t-issues-both-down-nochange) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given both issue reads time out, when a regression run is live, then no issue is opened, commented or closed. | not run |
 | [quiet-plain-import-4892](Tests#t-quiet-plain-import-4892) | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | Given the quiet hook's remember(), when dev/package.py scans govern_hook.py, then it has no __import__ call and remember() still writes the signature held() reads back (issue 4892). | not run |

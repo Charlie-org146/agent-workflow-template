@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.77 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.76 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.75 - 2026-11-19
 
 - Design: regroup-guardrails
