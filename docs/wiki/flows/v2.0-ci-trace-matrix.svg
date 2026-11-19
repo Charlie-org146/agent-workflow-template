@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 351" width="440" role="img" aria-label="Flow of ci-trace-matrix: trigger, what the loop does, the check that proves it, the result">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 359" width="440" role="img" aria-label="Flow of ci-trace-matrix">
 <title>ci-trace-matrix</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
@@ -20,35 +20,31 @@
 .f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
 }
 
-.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-v21{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
-.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-v21{fill:#8a5cd6}
+.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-planned{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
+.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-planned{fill:#8a5cd6}
 .f-pill{font:700 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}
-@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
+@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-planned{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-planned{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="351" class="f-bg"/>
+<rect width="440" height="359" class="f-bg"/>
 <text x="12" y="22" class="f-t">ci-trace-matrix</text>
-<rect x="12" y="40" width="416" height="43" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="24" y="56" class="f-h">TRIGGER</text>
-<text x="24" y="72" class="f-s">The nightly regression run</text>
-<path d="M220 83 L220 95" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="95" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="24" y="111" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="127" class="f-s">About 16 matrix jobs each run check-reads.sh --shard</text>
-<text x="24" y="142" class="f-s">i/16 under the existing 900 s limit; no timeout is</text>
-<text x="24" y="157" class="f-s">raised</text>
-<path d="M220 168 L220 180" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="180" width="416" height="73" rx="8" class="f-gate" stroke-width="1.2"/>
-<text x="24" y="196" class="f-h">THE CHECK THAT PROVES IT</text>
-<text x="24" y="212" class="f-s">The lanes-trace row is the count check: the union of the</text>
-<text x="24" y="227" class="f-s">shards equals the full land list (1,188 commands), with</text>
-<text x="24" y="242" class="f-s">a negative control for a dropped shard</text>
-<path d="M220 253 L220 265" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="265" width="416" height="58" rx="8" class="f-ok" stroke-width="1.2"/>
-<text x="24" y="281" class="f-h">RESULT</text>
-<text x="24" y="297" class="f-s">Undeclared reads in any script header are caught in CI;</text>
-<text x="24" y="312" class="f-s">net rows 0</text>
-<text x="12" y="343" class="f-x">Regression | v2.0 (in progress)</text>
-<rect x="2" y="2" width="436" height="347" rx="6" fill="none" class="k-v20"/>
-<rect x="308" y="8" width="120" height="18" rx="9" class="p-v20"/><text x="368" y="21" text-anchor="middle" class="f-pill">v2.0 IN PROGRESS</text>
+<rect x="12.0" y="42" width="416.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="220.0" y="62" text-anchor="middle" class="f-s">TRIGGER: The nightly regression run</text>
+<rect x="12.0" y="103" width="416.0" height="61" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="123" text-anchor="middle" class="f-s">WHAT THE LOOP DOES: About 16 matrix jobs each run check-reads.sh</text>
+<text x="220.0" y="138" text-anchor="middle" class="f-s">--shard i/16 under the existing 900 s limit; no timeout is</text>
+<text x="220.0" y="153" text-anchor="middle" class="f-s">raised</text>
+<rect x="12.0" y="194" width="416.0" height="61" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="214" text-anchor="middle" class="f-s">THE CHECK THAT PROVES IT: The lanes-trace row is the count</text>
+<text x="220.0" y="229" text-anchor="middle" class="f-s">check: the union of the shards equals the full land list (1,188</text>
+<text x="220.0" y="244" text-anchor="middle" class="f-s">commands), with a negative control for a dropped shard</text>
+<rect x="12.0" y="285" width="416.0" height="46" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="220.0" y="305" text-anchor="middle" class="f-s">RESULT: Undeclared reads in any script header are caught in CI;</text>
+<text x="220.0" y="320" text-anchor="middle" class="f-s">net rows 0</text>
+<path d="M220.0 73.0 L220.0 103.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 164.0 L220.0 194.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 255.0 L220.0 285.0" class="f-a" marker-end="url(#ah)"/>
+<text x="12" y="351" class="f-x">Regression | v2.0 (in progress)</text>
+<rect x="2" y="2" width="436" height="355" rx="6" fill="none" class="k-v2.0"/>
+<rect x="308" y="8" width="120" height="18" rx="9" class="p-v2.0"/><text x="368" y="21" text-anchor="middle" class="f-pill">v2.0 IN PROGRESS</text>
 </svg>
