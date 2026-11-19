@@ -57,7 +57,7 @@ def base_branch(repo):
 
 
 def survey_agent():
-    """The agent commands this machine has. Permissions stay as the user set them."""
+    """Agent commands on this machine, permissions as set."""
     if shutil.which("claude"):
         return ["claude", "-p"]
     if shutil.which("codex"):
@@ -71,7 +71,7 @@ ADD = {"claude": ["--allowedTools", "Bash,Read,Write,Edit"], "codex": ["--full-a
 
 
 def bare_agent(command):
-    """The line to add when the agent command grants no tools, else None."""
+    """The line to add if the agent grants no tools, else None."""
     name = os.path.basename(command[0]) if command else ""
     if name in ALLOWS and not any(a.lower().split("=")[0] in ALLOWS[name] or a.lower().startswith("--dangerous") for a in command[1:]):
         return '"agent_command": %s' % json.dumps(command + ADD[name])
@@ -79,7 +79,7 @@ def bare_agent(command):
 
 
 def merged(repo, old, borrowed=None):
-    """The config: values already there win, then values borrowed with --from, the survey fills the rest."""
+    """Config: existing values win, then --from values, then the survey's."""
     agent = survey_agent()
     config = settings.repo_defaults()
     files = git(repo, "ls-files").splitlines()
@@ -101,7 +101,7 @@ except AttributeError:
 
 
 def measure(repo):
-    """(the check's lines, why not): workflow-health's check beside this skill, without the owner's private rules."""
+    """(check lines, why not): workflow-health's check, without the owner's private rules."""
     py = agents.sibling("workflow-health", "health.py")
     if os.environ.get("LOOP_NO_HEALTH") == "1" or not py:
         return None, "skipped by --no-health" if py else "workflow-health is not beside workflow-setup"
@@ -115,7 +115,7 @@ def measure(repo):
 
 
 def verdict(lines, why, failed):
-    """Print each FAIL, WARN and UNREAD line, then ADOPTION VERDICT last; True when it is not green."""
+    """Print each FAIL, WARN and UNREAD line, then ADOPTION VERDICT; True if not green."""
     if lines is None:
         print("ADOPTION VERDICT: not measured (%s)" % why)
         return True
@@ -130,7 +130,7 @@ def verdict(lines, why, failed):
 
 
 def undo(tx, why, code=1):
-    """Roll the adoption back, then say why (or that it is half undone, exit 4). Nothing stays written."""
+    """Roll the adoption back, then say why (half undone: exit 4). Nothing stays written."""
     bad = tx.rollback()
     print(tx.failed(bad) if bad else "NOTE: the adoption was already committed on the branch and is kept (SETUP_COMMITTED)" if bad is None else why)
     return 4 if bad else code
@@ -252,7 +252,7 @@ def adopt(args, repo):
                 print("\n".join(update.mask(l) for l in out.strip().splitlines()[-20:]))
                 return undo(tx, "REFUSED: the repo's own commit hook refused the adoption commit (SETUP_HOOK_REFUSED). Fix: if it refuses tracked "
                                 "data files, exempt .loop/*.tsv (docs, regression rows and runs) there, then run setup again; nothing written.")
-            shutil.rmtree(tx.dir, ignore_errors=True)  # committed: the journal ends with the commit
+            shutil.rmtree(tx.dir, ignore_errors=True)  # committed: the journal ends
         except KeyboardInterrupt:
             undo(tx, "REFUSED: interrupted; rolled back, nothing written (SETUP_INTERRUPTED)")
             return 130
