@@ -108,4 +108,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept requirements-consolidate@35f62965 -->
+<!-- kept ops-findings-v20@05070ba4 -->
