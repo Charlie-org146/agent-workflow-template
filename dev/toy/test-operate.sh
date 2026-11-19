@@ -117,13 +117,13 @@ def trial(fail, config=True):
     operate.run = run
     return operate.apply("ec-goal", "ec-branch")
 results = {"all fine": (trial([]), 0), "worktree add fails": (trial(["worktree"]), 1), "fetch fails": (trial(["fetch"]), 1),
-           "commit fails": (trial(["commit"]), 1), "push fails": (trial(["push"]), 1), "config unreadable": (trial([], config=False), 1)}
+           "add fails": (trial(["add"]), 1), "commit fails": (trial(["commit"]), 1), "push fails": (trial(["push"]), 1), "config unreadable": (trial([], config=False), 1)}
 for name, (got, want) in results.items():
     print(("PASS" if (got == 0) == (want == 0) else "FAIL") + ": apply with " + name + " exits " + ("0" if want == 0 else "nonzero"))
 PY
 )
 echo "$out" | sed 's/^/  /'
-check "apply exits nonzero on every failure path (worktree add, fetch, commit, push, config) and 0 when all is fine" '! grep -q "^FAIL" <<<"$out" && [ "$(grep -c "^PASS" <<<"$out")" = 6 ]'
+check "apply exits nonzero on every failure path (worktree add, fetch, add, commit, push, config) and 0 when all is fine" '! grep -q "^FAIL" <<<"$out" && [ "$(grep -c "^PASS" <<<"$out")" = 7 ]'
 [ "${OPERATE_ONLY:-}" = exitcodes ] && { echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }; exit 0; }
 echo "== OPS-1 carries the v2 wording"
 check "OPS-1 is the v2 rewrite on the Operation page, with its revision" 'grep -q "^- OPS-1: \*\*Unreviewed\*\* One command starts the operation session" "$here/docs/wiki/Operation.md" && grep -q "^### OPS-1" "$here/docs/wiki/Operation.md"'

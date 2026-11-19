@@ -343,6 +343,8 @@ def apply(slug, branch):
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
             code = code or pushed.returncode
+        elif said:
+            code = 1
     except (OSError, ValueError):
         code = 1
     finally:
