@@ -31,13 +31,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def file_issue(top, page, texts):
     title = "Docs: %s has DOC-19/DOC-4 findings" % page
     stone = "Backlog: " + (page[11:] if page.startswith("How-to-use-") else "Documentation" if "/" in page or page == "Home" else page)
-    gh = lambda *a: run(["gh"] + list(a), top)
+    gh = lambda *a, **k: run(["gh"] + list(a), top, **k)
     try:
         held = gh("issue", "list", "--state", "open", "--limit", "1000", "--json", "title", "-q", ".[].title")
         if held.returncode or title in held.stdout.splitlines():
             return "no issue filed (gh)" if held.returncode else "its issue is open"
         gh("api", "-X", "POST", "repos/{owner}/{repo}/milestones", "-f", "title=" + stone)
-        return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body", "\n".join(texts)).stdout.split()[-1]
+        return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body-file", "-", input="\n".join(texts)).stdout.split()[-1]
     except (OSError, IndexError):
         return "no issue filed (gh)"
 
@@ -60,8 +60,8 @@ if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 
-def run(args, cwd=None):
-    return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+def run(args, cwd=None, **kw):
+    return subprocess.run(args, cwd=cwd, capture_output=True, text=True, **kw)
 
 
 REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "scripts", "lanes_cli.py"))
@@ -301,7 +301,7 @@ def main():
             print("REFUSED (HEAD_MOVED): the pull request head moved since the pr lane passed (lane on %s, PR head %s). Fix: "
                   "goal.py pr %s, then merge.py %s" % (tested[:12], new[:12], slug, slug), file=sys.stderr)
             return ar.reopen(state, 4)
-        why = args.go_head and ar.go_gate(top, base, info, args.go_head)  # #5171: a GO binds to one head and its CI
+        why = args.go_head and ar.go_gate(top, base, info, args.go_head)
         if why:
             print(why, file=sys.stderr)
             return 4 if "GO_HEAD" in why else 5

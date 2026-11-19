@@ -385,8 +385,8 @@ lane ends.
 
 - `lane_limit` (flow file, default 2): full lanes that may run at once on this machine; 0 is unlimited. Best effort:
   it limits concurrent full lanes, not the machine's load; AFFECTED, by-id and red runs take no slot.
-- `goal_lane_minutes` (10): health warns above it (REG-7), and a goal lane over it adds `; over N min (goal_lane_minutes)`
-  to its LANE line. The scheduled full suite has a fixed 30-minute limit that health warns above.
+- A goal lane has no limit of its own beside its budget (`test_budget_minutes`, REG-7). The scheduled full suite has a fixed
+  30-minute limit that health warns above.
 - `goal_levels` (land) and `ci_levels` (nightly): the levels a goal lane plans from (nightly adds the nightly rows a
   change reaches) and the CI target. A CI run cut short by its job time still records its time, so health warns.
 - Each lane child gets its own `TMPDIR` and `LOOP_LANE_PORT_BASE` (a leased range of 100 ports from 20000); a row that

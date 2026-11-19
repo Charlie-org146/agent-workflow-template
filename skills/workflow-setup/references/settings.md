@@ -32,7 +32,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. |
-| `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
@@ -68,7 +67,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
-| `workers` | `(empty)` | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. |
+| `workers` | `(empty)` | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. |
 
 ## Private settings
 
@@ -92,5 +91,5 @@ Outside the repo, never committed: `~/.workflow-loop/flow.json` (or `$LOOP_FLOW`
 | `rules` | `[]` | Health file: your own health rules, each {name, command, fix}. |
 | `repos` | `[]` | Followed repos: one path a line in the repos file, shown on the board. |
 | `notify_email` | `false` | Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine. |
-| `machine_sync` | `false` | Flow file: true shares the merge turn, SNAPSHOT lines and mail ledger with your other machine through origin; per machine. |
-| `notify_budget` | `20` | Flow file: most mails both machines send you in 24 hours, from one shared ledger; 0 sends none. |
+| `machine_sync` | `false` | Sync machines. |
+| `notify_budget` | `20` | Daily mail budget. |

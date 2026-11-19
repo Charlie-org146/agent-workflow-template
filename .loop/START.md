@@ -75,7 +75,6 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
 | `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait. |
-| `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
 | `govern_hook` | true | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; off is off. |
@@ -121,4 +120,4 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |
-| `workers` | app | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. |
+| `workers` | app | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. |

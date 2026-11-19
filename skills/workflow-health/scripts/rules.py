@@ -300,9 +300,9 @@ def skill_lines(root):
 def requirements_per_page(root):
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
-            limit = int(json.load(handle).get("criteria_max", 6))
+            limit = int(json.load(handle).get("criteria_max", 10))
     except (OSError, ValueError, TypeError, AttributeError):
-        limit = 6
+        limit = 10
     return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (len(LINE.findall(text)), limit),
                 "merge requirements, or raise criteria_max", name)
             for name, text in pages(root).items() if len(LINE.findall(text)) > limit]
