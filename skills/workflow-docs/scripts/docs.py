@@ -170,7 +170,6 @@ def netless(root, judged, mine):
 
 
 def problems(root, base):
-    """Each page's trouble as (kind, page, detail)."""
     found = []
     folder = wiki_dir(root)
     rows = deployments.mapped(root, read_map(root), folder)
@@ -209,7 +208,7 @@ def problems(root, base):
 
 
 def from_base(root, base):
-    """With a base, the base-branch commits merged in since it, as parents to skip (judged in their own goal)."""
+    """With a base, the base-branch commits merged in since it, as parents to skip."""
     if not base:
         return []
     name = config(root).get("base") or "main"
@@ -231,7 +230,6 @@ def guide(root, page):
 
 
 def guarded(root, page):
-    """The page's first requirement or Review line, shortened; '' when none."""
     hit = next((x for x in slurp(page_file(root, page)).splitlines()
                 if criteria.LINE.match(x) or x.startswith("Review: ")), "")
     return pageformat.short(hit) if hit else ""

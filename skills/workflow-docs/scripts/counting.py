@@ -17,7 +17,7 @@ import sys
 import criteria
 import pageformat as pf
 
-os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above) sets the rest, stdin included
+os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal (criteria, imported above, sets the rest)
 
 WORDS = "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split()
 NOUNS = {"skill": "skill", "skills": "skill", "feature page": "page", "feature pages": "page", "criterion": "criteria",
@@ -42,7 +42,7 @@ def git(root, *args):
 
 def prose(text):
     """Prose lines as a reader sees them: no fenced or indented code, comments or code spans; None if a fence never
-    closes. Indented code is CommonMark's: four columns past the item's text, after a blank line; it stays empty."""
+    closes. Indented code is CommonMark's: four columns past the item's text, after a blank line."""
     lines, fence, comment, blank, code, column = [], None, False, True, False, None
     for raw in text.splitlines():
         line = QUOTE.sub("", raw)
@@ -88,8 +88,8 @@ IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 
 
 def images(root, folder, pages):
-    """(page, path, here) for each relative image a wiki page embeds. Publish copies a bare file name from the wiki folder
-    to the wiki's top level, where GitHub serves it; any other relative path (a folder, ../, a missing file) 404s there."""
+    """(page, path, here) per relative image a page embeds. Publish copies a bare file name to the wiki's top level;
+    any other relative path (folder, ../, missing file) 404s there."""
     out = []
     for page in pages:
         full = os.path.join(root, folder, page + ".md")
@@ -105,7 +105,7 @@ def image_trouble(root, folder, pages):
 
 
 def copy_images(root, folder, pages, wiki, dry):
-    """Copy the wiki folder's images the pages embed into the wiki clone; the names that differed there."""
+    """Copy the images the pages embed into the wiki clone; the names that differed."""
     out = []
     for img in sorted({path for _, path, here in images(root, folder, pages) if here}):
         src, dst = os.path.join(root, folder, img), os.path.join(wiki, img)
@@ -185,7 +185,7 @@ def counts(root, folder, rows, on):
     return found
 
 
-# docs.py's page map, moved here (size).
+# docs.py's page map, moved here.
 def map_path(root):
     return os.path.join(root, ".loop", "docs.tsv")
 
@@ -232,8 +232,8 @@ def code_only(root, sha, files):
 
 
 def real(root, changed, paths):
-    """changed ('<sha> <subject>' lines) without the commits that only refresh a generated block of README.md or Home.md, or
-    only change comments in Python (code_only)."""
+    """changed ('<sha> <subject>' lines) without the commits that only refresh a generated block of README.md or Home.md,
+    or only change Python comments (code_only)."""
     if not changed:
         return changed
     names, shas = {}, [c.split()[0] for c in changed]  # one git call for all commits
@@ -267,7 +267,7 @@ def cadence(cron):
 
 
 def config_of(root):
-    """.loop/config.json as a dict; a copy marked skip-worktree (a value kept on this machine) reads as committed at HEAD, so
+    """.loop/config.json as a dict; a skip-worktree copy (a value kept on this machine) reads as committed at HEAD, so
     generated pages never carry it (#4608)."""
     try:
         kept = git(root, "ls-files", "-v", "--", ".loop/config.json").stdout.startswith("S")
@@ -284,8 +284,8 @@ BUILT_IN = (("health", "Checks the repo and files each finding.", "health_cron",
 
 
 def entries(root):
-    """Built-in routines, then config's `automation` entries {name, does, cadence, runs, enabled?, last_run?}; a same-named
-    one replaces the built-in."""
+    """Built-in routines, then config's `automation` entries {name, does, cadence, runs, enabled?, last_run?}; a same name
+    replaces the built-in."""
     cfg, out = config_of(root), []
     for name, does, key, default, flow in BUILT_IN:
         mail = str(cfg.get("digest_mail", "cloudflare"))
@@ -299,7 +299,7 @@ def entries(root):
 
 
 def runbook_link(root, entry, wiki):
-    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it; '' if none."""
+    """The wiki link to an entry's Runbook: its `runbook` key, else the .loop/routines.tsv routine named like it; ''."""
     try:
         with open(os.path.join(root, ".loop", "routines.tsv"), encoding="utf-8") as fh:
             held = [line.split("\t")[:2] for line in fh if line.strip() and line[0] != "#" and "\t" in line]
