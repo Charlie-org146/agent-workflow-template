@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept lanes-known-data@e2a6b99e -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept lanes-table-data@a3c69822 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -230,7 +230,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-3 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-12 |
 | [local-row-env](Tests#t-local-row-env) | requirement | REG-3 | Given a local run with GH_TOKEN and a run summary file set, when a row runs, then it sees neither. | PASS 2026-11-10 |
 | [lanes-reuse](Tests#t-lanes-reuse) | requirement | REG-4 | Given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. | PASS 2026-11-10 |
-| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run; an edit to the known list selects only the rows whose known status flipped. | PASS 2026-11-10 |
+| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run; an edit to the known list or the table selects only the rows whose lines changed and the rows that name the table. | PASS 2026-11-10 |
 | [lanes-failing](Tests#t-lanes-failing) | requirement | REG-4 | Given a run with a failing test, when a later run happens, then it is never reused. | PASS 2026-11-10 |
 | [lanes-missing](Tests#t-lanes-missing) | requirement | REG-4 | Given no recorded run, when tests run, then every test runs. | PASS 2026-11-10 |
 | [lanes-ship-reuses](Tests#t-lanes-ship-reuses) | requirement | REG-4 | Given nothing changed since the qa run, when ship runs, then it reuses the qa run. | PASS 2026-11-10 |
