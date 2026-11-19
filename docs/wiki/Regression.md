@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=2d92af17 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept record-commit-ci@6d1dcbe2 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=2d92af17 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept known-red-docs-release2@0483a6dc7 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -205,7 +205,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [refused-unmet](Tests#t-refused-unmet) | requirement | REG-1 | Given a criterion with no test, when a release is cut, then it is refused. | PASS 2026-11-12 |
+| [refused-unmet](Tests#t-refused-unmet) | requirement | REG-1 | Given a criterion with no test, when a release is cut, then it is refused. | PASS 2026-11-19 |
 | [defect-owed](Tests#t-defect-owed) | requirement | REG-1 | Given a goal that fixes an issue, when it opens its pull request without a defect test seen failing, then it is refused. | PASS 2026-11-12 |
 | [defect-known](Tests#t-defect-known) | requirement | REG-1 | Given issues 35 and 58 and the two worker defects, when the tests are listed, then defect tests exist for each. | PASS 2026-11-12 |
 | [prd-readers](Tests#t-prd-readers) | requirement | REG-1 | Given pages under the Requirements heading or the old Criteria heading, when the release, regression, health and docs readers run, then they all find the same requirement IDs and the release refuses an unmet one. | PASS 2026-11-10 |
