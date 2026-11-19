@@ -17,7 +17,7 @@ sys.path.insert(0, "skills/workflow-regression/scripts")
 import actions
 yml = open(".github/workflows/regression.yml").read()
 reg = open("docs/wiki/How-to-use-Regression.md").read()  # the v2 rewrite moved the budget detail from the requirements to the How-to pages
-aut = open("docs/wiki/How-to-use-Automation.md").read()
+aut = open("docs/wiki/How-to-use-Health.md").read()
 b = actions.BUDGET_MINUTES
 errs = []
 if "timeout-minutes: %d" % b not in yml: errs.append("regression.yml timeout is not %d" % b)
@@ -26,8 +26,8 @@ if "shard: %s" % list(range(actions.SHARDS)) not in yml: errs.append("regression
 if "REGRESSION_SHARD" not in yml: errs.append("no REGRESSION_SHARD")
 req7 = re.search(r"^- REG-7:.*(?:\n(?:  .*|))*", reg, re.M).group(0)
 if "under %d minutes" % b not in req7 or "sharded" not in req7: errs.append("REG-7 does not name %d minutes and sharding" % b)
-req = re.search(r"^- AUT-7:.*(?:\n(?:  .*|))*", aut, re.M).group(0)
-if "45 minutes" not in req or str(b) not in req: errs.append("AUT-7 does not name the 45-minute round of %d plus health" % b)
+req = re.search(r"^- HLT-7:.*(?:\n(?:  .*|))*", aut, re.M).group(0)
+if "45 minutes" not in req or str(b) not in req: errs.append("HLT-7 does not name the 45-minute round of %d plus health" % b)
 if 45 - b != 15: errs.append("round budget is not the regression budget plus 15")
 print("; ".join(errs) or "OK")
 PY
