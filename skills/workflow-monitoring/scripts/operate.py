@@ -11,6 +11,7 @@ usage: operate.py <command> [options]
       new events (notify.py). The live board prints only for report, dashboard and "where do things stand" (MON-4; --board adds it).
       It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued, and stops when nothing is queued,
       running or waiting, or when the cadence is off. --once makes one pass.
+  run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
   start     the readiness table of a new operation session (session tool, workers, skills, hooks, memory, pool), each row ok or its fix;
             it starts no goal and no background worker (notify.py ready)
   timer [created]   show the check-in timer for the owner's yes (interval, steps, what it never does); `created` records it (notify.py timer)
@@ -41,6 +42,8 @@ if not sys.stdin or not sys.stdin.isatty():
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import graph  # noqa: E402
+import layers  # noqa: E402
+CFG = lambda top: layers.read(os.path.join(top, ".loop", "config.json"))
 DONE = "NOTHING LEFT TO OPERATE: no goal is queued, running or waiting. Nothing was merged."
 
 
@@ -140,6 +143,11 @@ def behind_ask(common, base="main"):
 
 
 def one_pass(top, common, args):
+    who = layers.role(args.role)
+    if who == "top":
+        print(graph.localize(layers.publish_board(common, CFG(top))))
+        script("board_page.py", cwd=top)
+        return str(layers.TOP_GAP), True
     moved = refresh(common)
     moved and print(moved)
     ask = behind_ask(common)
@@ -158,15 +166,15 @@ def one_pass(top, common, args):
     delay = next((line.split()[1] for line in out.splitlines() if line.startswith("NEXT_DELAY ")), "none")
     if args.board:
         print(graph.localize(out.rstrip()))
-    said = script("board_page.py", "migrate", cwd=top)[1].strip()
+    said = "" if who else script("board_page.py", "migrate", cwd=top)[1].strip()
     said and print(graph.localize(said))
-    script("board_page.py", cwd=top)
+    who or script("board_page.py", cwd=top)
     for name, *more in (("replan.py", "plan"), ("auto.py", "pass"), ("pool.py", "archive")):
         code, said = script(name, *more, cwd=top)
         if code or "ARCHIVE-NOW" in said:
             print(graph.localize(said.strip()))
     text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
-    print(text)
+    print(layers.one_line(*layers.send(common, CFG(top))) if who == "machine" else text)
     try:
         with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
             handle.write(text + chr(10))
@@ -174,7 +182,7 @@ def one_pass(top, common, args):
         pass
     said = script("notify.py", "send", cwd=top)[1].strip()
     said and print(said)
-    script("board_page.py", "checkin", cwd=top)
+    who or script("board_page.py", "checkin", cwd=top)
     try:
         with open(board) as handle:
             busy = bool(json.load(handle).get("open"))
@@ -359,6 +367,7 @@ def main():
     item.add_argument("--max", type=int, default=0)
     item.add_argument("--skill-dir", default="")
     item.add_argument("--board", action="store_true", help="also print the live board each pass (where do things stand)")
+    item.add_argument("--role", default="", choices=list(layers.ROLES), help="top or machine")
     sub.add_parser("start")
     sub.add_parser("timer").add_argument("created", nargs="?", default="", choices=["", "created"])
     item = sub.add_parser("send")
