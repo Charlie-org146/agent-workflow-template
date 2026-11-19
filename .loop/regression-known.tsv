@@ -17,8 +17,6 @@ package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, whic
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (19,636 bytes), checkin.py (19,444), operate.py (19,262) and reply_hook.py (19,386) are over the 19,000 warn line (owner record o39)
-issue-129-docs-published	red on main (v1.0.65): workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,000 and under the 20,480 fail line), see #4653
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
-skill-refusals-in-references	red on main 9d93ceb3: workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
