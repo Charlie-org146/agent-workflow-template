@@ -152,7 +152,7 @@ check "pod-b does not decide another pod's waiting question" '! has held1'
 as pod-a "python3 $SCRIPTS/auto.py pass --dry-run"
 check "pod-a decides its own" 'has held1'
 as pod-b "python3 $SCRIPTS/checkin.py"
-check "the check-in as pod-b marks pod-a's goal owned by pod-a, read-only, and numbers no question for it" 'has "core owned by pod-a" && has "held1 asks (owned by pod-a, read-only here)" && ! grep -q "^[0-9]*\. held1" <<<"$out" && [ -z "$(awk "length > 60" <<<"$out" | grep -F "owned by")" ]'
+check "the check-in as pod-b counts pod-a's goals on one line (this pod only), lists none of them and numbers no question for them" 'grep -q "^pod-a: [0-9]* goals, last activity" <<<"$out" && ! has "core owned" && ! has "held1 asks" && ! grep -q "^[0-9]*\. held1" <<<"$out"'
 as pod-a "python3 $SCRIPTS/checkin.py"
 check "as pod-a the same goals carry no owned-by mark" '! has "owned by"'
 as pod-b "python3 $SCRIPTS/board.py board"
@@ -225,9 +225,9 @@ check "both pods claim the one repo: nothing refuses or warns, both ids are kept
 own alpha-app api pod-a failed; own alpha-app web pod-b failed; own alpha-app m1 pod-a done 5; own alpha-app m2 pod-b done 6
 ra=$(fp alpha-app api); rw=$(fp alpha-app web)
 r "cd $T/alpha-app && HOME=$T/homeA USERPROFILE=$T/homeA LOOP_POD_ID=pod-a python3 $SCRIPTS/checkin.py"
-check "pod-a's check-in shows its own goal plain and the other's as owned by pod-b" 'has "web owned by pod-b" && has api && ! has "api owned by"'
+check "pod-a's check-in shows its own goal and counts the other pod's goals on one line, listing none" 'grep -q "^pod-b: [0-9]* goals, last activity" <<<"$out" && has "Goal api" && ! has "Goal web" && ! has "Goal m2"'
 r "cd $T/alpha-app && HOME=$T/homeB USERPROFILE=$T/homeB LOOP_POD_ID=pod-b python3 $SCRIPTS/checkin.py"
-check "pod-b's shows the reverse" 'has "api owned by pod-a" && ! has "web owned by"'
+check "pod-b's shows the reverse" 'grep -q "^pod-a: [0-9]* goals, last activity" <<<"$out" && has "Goal m2" && ! has "Goal api" && ! has "Goal m1"'
 as pod-a "python3 $SCRIPTS/operate.py send api hi"; ok1=$rc; o1=$out
 as pod-a "python3 $SCRIPTS/operate.py send web hi"
 check "each pod can act on its own goal and is refused on the other's" '! grep -q "owned by pod" <<<"$o1" && [ $rc = 2 ] && has "owned by pod pod-b"'

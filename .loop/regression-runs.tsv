@@ -112,6 +112,7 @@ defect-known	PASS	2026-11-12
 defect-owed	PASS	2026-11-12	
 defect-owed-branch-proved	PASS	2026-11-10	
 defect-wording	PASS	2026-11-12	
+del-16-on-page	PASS	2026-11-19	
 del1-new-here-main-refused	PASS	2026-11-14	
 del5-bump-set	PASS	2026-11-12	
 del5-docs-bump-minor	PASS	2026-11-15	
