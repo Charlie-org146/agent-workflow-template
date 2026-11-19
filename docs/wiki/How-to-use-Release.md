@@ -51,6 +51,8 @@ agent publishes the wiki. No release is published without you. Nothing merges wi
 | "Promote v2" | If your words name `v2.0.0` and every check passes, it tags `v2.0.0`, keeps `release/v2`, moves main and mails the state report. |
 | "Go back to v2" | A pull request puts main's tree back on `release/v2`; you merge it. |
 
+A commit that moves only stamp files carries the pass already recorded for the tested tree, so it needs no fresh CI run. The stamp files are `VERSION` (or the repo's version file), `CHANGELOG.md`, `.loop/regression-runs.tsv` and `.loop/regression-issues.tsv`. Two commits count as equal modulo stamps only when the diff between them adds or edits regular files at those paths: any other path, a symlink, a rename or a delete breaks the match. `merge.py` and the release head use that one compare (`tems` in `autorelease.py`), and `operate.py wiki-only` uses it too, so the record commit `goal.py pr` adds, a release bump and a wiki re-stamp keep the lane's pass.
+
 Each requirement and how it is delivered:
 
 - REL-3: The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue. Example, from the rel-red-row-refused test: given a known-red row with no waiver, when the gate runs, then it refuses naming the row.
