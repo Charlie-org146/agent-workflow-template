@@ -115,7 +115,7 @@ if want clean; then fresh
   export FAKE_GH_PRIVATE=false; r2=$(cleanrepo cl2); mig "$r2"
   check "a clean public repo recorded mac passes the same way (public repos run regression on the Mac too)" '[ $rc = 0 ] && tail -1 <<<"$out" | grep -qx "MIGRATION OK"'
   check "the run names what it did not check and what it read" 'grep -q "^NOT CHECKED: branch protection (no gh read)" <<<"$out" && grep -q "^CHECKED: installed v1.0.0, repo template_version 1.0.0" <<<"$out" && grep -q "^DOCS: " <<<"$out"'
-  r3=$(cleanrepo cl3); cfgset "$r3" "d['goal_lane_minutes']=10"; mig "$r3"
+  r3=$(cleanrepo cl3); cfgset "$r3" "d['goal_lane_minutes']=10"; ( cd "$r3" && python3 "$DOCS/entry.py" write ) >/dev/null 2>&1; mig "$r3"
   check "a repo whose config still holds the retired goal_lane_minutes stays clean: the key is ignored, while an unknown one is a gap (gaps-pr)" '[ $rc = 0 ] && ! grep -q "^GAP" <<<"$out"'
 fi
 
