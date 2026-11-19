@@ -411,7 +411,7 @@ needs-you-stuck	PASS	2026-11-18
 never-merges	PASS	2026-11-09	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
-no-done-line-refused	PASS	2026-11-18	
+no-done-line-refused	PASS	2026-11-19	
 no-flow-refused	FAIL	2026-11-19	
 no-line-in-governor	PASS	2026-11-18	
 no-pid-left-alone	PASS	2026-11-09	
@@ -499,7 +499,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
-refuse-replace	PASS	2026-11-18	
+refuse-replace	PASS	2026-11-19	
 refused-unmet	PASS	2026-11-12	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
@@ -667,7 +667,7 @@ toy-no-leftovers	PASS	2026-11-12
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
-unproven-blocks	PASS	2026-11-18	
+unproven-blocks	PASS	2026-11-19	
 unread-closes-none	PASS	2026-11-18	
 unread-not-green	PASS	2026-11-18	
 unreview-lifts	PASS	2026-11-12	
