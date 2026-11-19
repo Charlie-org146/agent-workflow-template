@@ -321,7 +321,7 @@ def sync(root, dry=False, accept=(), opened=False):
                 row[2] = "0"
             elif not row[1]:
                 from milestones import backlog
-                home = backlog(page)  # "Backlog: PAGE", made when missing, never the bare page name (DOC-17)
+                home = backlog(page)  # Backlog: PAGE (DOC-17)
                 for stone in ([["--milestone", home]] if home else []) + [[]]:
                     ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (kind_of(side), page, ident, what(side)), "--body-file", "-", *stone, input=text)
                     if ok:
