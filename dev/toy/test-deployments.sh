@@ -8,6 +8,7 @@
 # usage: test-deployments.sh [CASE ...]   cases: section refused locked doc14 pull readme (default: all)
 set -u
 unset LOOP_ROLE LOOP_GOVERN_HOOK
+export PYTHONDONTWRITEBYTECODE=1  # the copy's commits must not hold bytecode: a pycache in the render commit counts as code changed after the page
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 cases=("$@"); [ ${#cases[@]} -eq 0 ] && cases=(section refused locked doc14 pull readme)

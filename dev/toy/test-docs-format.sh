@@ -40,6 +40,14 @@ mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
 
 The toy calculator prints the median of the numbers given.
 
+### System diagram
+
+```text
+[Command: calc.py | the agent session]
+
+Legend: a box is Kind, Component and where it runs.
+```
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |
@@ -84,6 +92,19 @@ cat > $H <<'EOF'
 | Feature | What it does | How to use | Milestone |
 |---|---|---|---|
 | [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |
+
+<!-- diagram:begin -->
+## System diagram
+
+```text
+ [OPERATION SESSION | the toy machine] -> [WORKER SESSIONS | one worker per goal, each step in turn]
+ [STAGING | none] -> [PRODUCTION | main]
+ [MACHINES | the toy machine] run [SCHEDULED ROUTINES | none]
+ guard: a failing step stops
+
+Legend: [box] a part and where it runs; -> a flow of work; guard a rule that refuses.
+```
+<!-- diagram:end -->
 EOF
 cat >> README.md <<'EOF'
 
