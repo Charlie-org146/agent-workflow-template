@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.83 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.82 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.81 - 2026-11-19
 
 - v2-health-green: SKILL.md files under 150 lines, caps for v2.0, quiet-import row on GRD-20
