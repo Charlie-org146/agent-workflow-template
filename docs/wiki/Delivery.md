@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept requirements-consolidate@35f62965 -->
+Review: **Unreviewed** <!-- kept plan-red-team-core@1358d3b8 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
