@@ -239,7 +239,7 @@ def cmd_red(args):
         return 1
     edit_rows(root, lambda current: current[args.id].update(seen_red=today()) if args.id in current else None)
     print("SEEN RED %s on %s" % (args.id, today()))
-    runs.owed_clear(root, args.id, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
+    runs.owed_clear(root, args.id, args.live)
     return 0
 
 
@@ -306,7 +306,7 @@ def cmd_run(args):
     never = [key for key in runs.unproven(root, picked, SEEN) if key not in [i["id"] for i in results if i.get("notrun")]]
     if cannot:
         slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
-        runs.notrun_todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
+        runs.notrun_todo(root, slug, cannot, args.live)
     for key in never:
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))
