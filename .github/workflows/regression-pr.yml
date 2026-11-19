@@ -7,9 +7,10 @@ on:
       - "main"
 permissions:
   contents: read
+  checks: read
 concurrency:
   group: regression-pr-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'pr: record') }}
 jobs:
   affected:
     runs-on: ubuntu-latest
@@ -22,4 +23,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --timeout 900
+      - id: rec
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 skills/workflow-regression/scripts/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}
+      - if: steps.rec.outcome == 'failure'
+        run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --timeout 900

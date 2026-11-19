@@ -25,6 +25,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent. If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice. [REL-11]
   - (v2.0 planned) plan-red-team (see HLT-2).
   - (v2.0 planned) A pr record commit (the regression run and issue records and re-rendered wiki tables) never sends the goal back to pr: it carries the lane that passed. [DEL-1]
+  - A pr record commit (issue states and the Tests and Documentation result rows) gets no second full CI round: when it sits on a pushed parent whose affected check passed, CI skips the rows (recordonly.py); a record commit that touches anything else, or a parent without a pass, gets the full round. [DEL-1]
 - DEL-3: **Reviewed 2026-11-19** It stops only for decisions that are mine <!-- reviewed 3609150c -->
   - A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows. Plan and review run at full depth unless the repo or I choose condensed. Tests never shrink. [DEL-3]
   - Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a steward merge, or anything that contradicts my words. A merge is not a safety class. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11]
