@@ -8,6 +8,7 @@
 # usage: test-deployments.sh [CASE ...]   cases: section refused locked doc14 pull readme (default: all)
 set -u
 unset LOOP_ROLE LOOP_GOVERN_HOOK
+export PYTHONDONTWRITEBYTECODE=1  # the copy's commits must not hold bytecode: a pycache in the render commit counts as code changed after the page
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 cases=("$@"); [ ${#cases[@]} -eq 0 ] && cases=(section refused locked doc14 pull readme)
@@ -16,7 +17,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
-mkdir -p "$T/r" && git -C "$here" ls-files skills docs .loop README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
+mkdir -p "$T/r" && git -C "$here" ls-files skills docs .loop .claude README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
   tar -C "$here" -cf - -T - | tar -C "$T/r" -xf -
 cd "$T/r" || exit 1
 git init -q && git add -A && git -c user.email=t@example.test -c user.name=Toy commit -qm base
@@ -31,12 +32,12 @@ GOOD_PAGE='| Page | Link | Access | Shows | Live build |
 GOOD_DELIVERY="| Delivery | Channel | Recipients | What's sent | Status |
 |---|---|---|---|---|
 | Newsletter | email | subscribers | the weekly PDF | live |"
-# put SECTION_TEXT as ## Deployments before ## Tests (or, with "early", before ## Success metrics)
+# put SECTION_TEXT as ## Deployments before ## Revisions (before ## Tests when the page has none; with "early", before ## Success metrics)
 place() { python3 - "$P" "$1" "${2:-}" <<'PY'
 import sys
 p, body, where = sys.argv[1], sys.argv[2], sys.argv[3]
 s = open(p).read()
-mark = "\n## Success metrics" if where == "early" else "\n## Tests"
+mark = "\n## Success metrics" if where == "early" else "\n## Revisions" if "\n## Revisions" in s else "\n## Tests"  # Revisions sits just before Tests
 i = s.index(mark)
 open(p, "w").write(s[:i] + "\n## Deployments\n\n" + body + "\n" + s[i:])
 PY
@@ -51,7 +52,7 @@ case_section() {
   reset; place "$GOOD_PAGE
 
 $GOOD_DELIVERY"; check "a page with both tables passes" '[ "$(out | tail -1)" = "DOCS OK: $n pages" ]'
-  reset; place "$GOOD_PAGE" early; check "Deployments before Success metrics is refused as out of order" 'out | grep -q "^SECTIONS Setup: .*want .*Success metrics, Deployments, Tests"'
+  reset; place "$GOOD_PAGE" early; check "Deployments before Success metrics is refused as out of order" 'out | grep -qE "^SECTIONS Setup: .*want .*Success metrics, Deployments, (Revisions, )?Tests"'
 }
 
 refuse() {  # refuse NAME BODY GREP: the body is refused with a DOC-14 line matching GREP

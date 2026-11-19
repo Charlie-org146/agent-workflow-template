@@ -94,6 +94,8 @@ def merge_g():
     finally:
         subprocess.run = real_run
         os.chdir(old)
+        lock = os.path.join(repo, ".git", "loop", "merge.lock")
+        os.path.exists(lock) and os.unlink(lock)  # the pod lock is dropped when a merge.py process exits; these runs share one process
     return code, out.getvalue() + err.getvalue()
 
 
