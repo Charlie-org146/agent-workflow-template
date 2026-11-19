@@ -14,3 +14,11 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-apply-rerender.py`.
+   Expect: every line is PASS and it exits 0 (the Settings block it re-renders is the one on docs/wiki/Home.md).
+2. Run `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.useConfigOnly GIT_CONFIG_VALUE_0=true python3 dev/toy/test-stale-code-page.py`.
+   Expect: no FAIL line and "PASS: the lane prep re-stamps an Unreviewed page in its commit", although no git identity is configured.
+3. Open the pull request's full-suite shards for the nine rows named in the goal.
+   Expect: each of them prints PASS, or the PR says which still wait for package-100 (sync-apply-keeps, sync-default-source, sync-template-redirect, docs-import-rows-pass, listing-names-every-command).
+
