@@ -148,7 +148,7 @@ None
 | [reply-hook-guard](Tests#t-reply-hook-guard) | requirement | CHK-1 | Given a reply blocked twice in a row or a broken hook input, when the session stops again, then the hook lets it through and logs it instead of looping. | PASS 2026-11-10 |
 | [reply-hook-install](Tests#t-reply-hook-install) | requirement | CHK-1 | Given a repo, when setup --reply-hook runs, then the Stop hook is merged into its machine-local Claude settings, which git ignores, and a second run changes nothing. | PASS 2026-11-10 |
 | [reply-hook-all](Tests#t-reply-hook-all) | requirement | CHK-1 | Given the reply hook's toy suite, when it runs, then every check passes. | PASS 2026-11-10 |
-| [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | CHK-1 | Given the Check-in and board PRD, when CHK-2 is read, then it carries the check-in layout the hook enforces. | PASS 2026-11-16 |
+| [reply-hook-mon5-wording](Tests#t-reply-hook-mon5-wording) | requirement | CHK-1 | Given the Check-in and board PRD, when CHK-2 is read, then it carries the check-in layout the hook enforces. | FAIL 2026-11-19 |
 | [depth-on-board](Tests#t-depth-on-board) | requirement | CHK-1 | Given a running goal with recorded steps, when the live board prints, then it shows each step's depth and the setting. | PASS 2026-11-10 |
 | [held-all](Tests#t-held-all) | requirement | CHK-1 | Given the board-held toy repo, when every check runs (held, freezing, pool lock, free, bind, done is final, fail-closed watch and mend, assign races), then all pass. | PASS 2026-11-10 |
 | [est-area](Tests#t-est-area) | requirement | CHK-1 | Given touched paths, when a goal's size is counted, then each folds to one area: a skill folder, else its first folder, else the root file. | not run |
