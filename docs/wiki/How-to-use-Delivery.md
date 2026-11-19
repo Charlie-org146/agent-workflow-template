@@ -152,4 +152,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gate-health-verdict@5d094f65 -->
+<!-- kept merge-queue-a@d352fb76 -->
