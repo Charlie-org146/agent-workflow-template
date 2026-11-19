@@ -6,7 +6,7 @@
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/audit.py
 # reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
 # reads: skills/workflow-release/scripts/release.py skills/workflow-release/scripts/wiki.py skills/workflow-release/scripts/merge.py
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the unmigrated-Revisions NOTE (link-form-note, REL-9): with link-form pages plus one migrated local page, the NOTE counts
 # only local pages, and the wiki step merge.py runs (wiki.pending) passes; the same fixture on the old code (the two fixes reverted
