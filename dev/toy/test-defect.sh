@@ -246,7 +246,7 @@ KEPT
       grep -q "^## Command map" "$here/skills/$skill/SKILL.md" || no "$skill/SKILL.md lost its Command map"
     done
     grep -qiE "governance only|one session governs" "$here/skills/workflow-delivery/SKILL.md" || no "workflow-delivery/SKILL.md lost its governance line"
-    grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" || no "workflow-docs/SKILL.md lost its review rule"
+    grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" "$here/skills/workflow-docs/references/commands.md" || no "workflow-docs lost its review rule (SKILL.md and its commands reference)"
     exit 0;;
   size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py; it stays under health's size warning
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/criteria.py deployments \
