@@ -3,7 +3,7 @@
 
 How to use: [How-to-use-Integrations](How-to-use-Integrations)
 
-Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Unreviewed** <!-- kept known-red-w11-docs-size@8f1efe72 -->
 
 ## Problem
 - The loop works with systems outside the repo, such as documents, trackers, mail, chat, agents and deploy targets, and each one is wired in its own way, so a new system means rebuilding something.
