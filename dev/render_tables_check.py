@@ -48,7 +48,7 @@ def main():
             print("FAIL: render --tables changed Home.md (exit %d): %s" % (tables.returncode, tables.stdout + tables.stderr))
             return 1
         full = run(sys.executable, criteria, "render", cwd=scratch)
-        if full.returncode or read(home) == before[1]:
+        if full.returncode or [read(page) for page in pages] == before:
             print("FAIL: a plain render no longer repairs the Settings block (exit %d): %s" % (full.returncode, full.stdout + full.stderr))
             return 1
         audit = run(sys.executable, os.path.join(scratch, "skills", "workflow-docs", "scripts", "docs.py"), "audit", "--dry-run", cwd=scratch)
