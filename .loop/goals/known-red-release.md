@@ -14,3 +14,15 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-release-criteria.py`.
+   Expect: six PASS lines, no FAIL, exit 0.
+2. Run `bash dev/toy/test-autorelease.sh`.
+   Expect: it ends with ALL PASS, including "a goal never bumps a major (MAJOR_GATE); minor and patch still bump".
+3. Run `bash dev/toy/test-milestones.sh`.
+   Expect: no FAIL line; the preview prints "as backlog on Backlog: Calc" and nothing is written.
+4. Run `python3 dev/toy/test-release-gate.py major`.
+   Expect: "the Release page holds REL-1 to REL-14, all Unreviewed" passes; the size check passes once known-red-size has trimmed checkin.py.
+5. Run `grep -cE "^(release-criteria-known-skip|auto-release|no-token-would|rel-major-refused|issue-129-docs-published|skill-refusals-in-references)\t" .loop/regression-known.tsv`.
+   Expect: 0.
+
