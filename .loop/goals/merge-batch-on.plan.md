@@ -9,7 +9,7 @@
 ## Tests
 
 - Done line 1 (merge.py stops refusing): the config row `merge-batch-config-on` plus the existing `merge-batch-split` row for the `--batch` path itself; the refusal at merge.py:273 only fires when the setting is false.
-- Done line 2 (settings show, START.md, Home render): the same row also checks `settings.py show`; `entry.py write` and `docs.py audit` print no FIXED line on rerun.
+- Done line 2 (settings show, START.md, Home render): `settings.py show` lists it from that same config line; `entry.py write` and `docs.py audit` print no FIXED line on rerun.
 
 ## What could break
 
