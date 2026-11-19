@@ -65,7 +65,10 @@ automation-cron-words	PASS	2026-11-12
 automation-live	PASS	2026-11-12	
 automation-missing-workflow	PASS	2026-11-12	
 autorelease-no-report	PASS	2026-11-12	
+backlog-adoption-warns	PASS	2026-11-19	
 backlog-leftovers-filed	PASS	2026-11-16		52a00777dfa3
+backlog-milestones-made	PASS	2026-11-19	
+backlog-setup-makes	PASS	2026-11-19	
 bad-schedule-refused	PASS	2026-11-12	
 batch-cut-user	PASS	2026-11-09	
 blockers-first	PASS	2026-11-14	
@@ -205,8 +208,8 @@ full-auto-safety-control	PASS	2026-11-17
 full-auto-safety-waits	PASS	2026-11-17	
 full-auto-standing-reuse	PASS	2026-11-17	
 full-goal-lane-timeout	PASS	2026-11-10	
-gate-pending-scoped	PASS	2026-11-19	
 gate-untouched-not-refused	PASS	2026-11-18	
+go-app-holds-goal	PASS	2026-11-19	
 goal-levels-nightly	PASS	2026-11-11	
 grd2-merge-rounds-default-8	PASS	2026-11-15	
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
@@ -270,6 +273,7 @@ home-howto-linksonly	PASS	2026-11-17
 home-howto-linksonly-control	PASS	2026-11-17	
 home-topic-column	PASS	2026-11-16		82d6561a4dec
 home-topic-live	PASS	2026-11-14	
+hook-count	PASS	2026-11-19	
 hook-stub-mark-foreign	PASS	2026-11-17	
 hook-stub-mark-own	PASS	2026-11-17	
 issue-129-docs-published	PASS	2026-11-12	
@@ -412,7 +416,7 @@ never-merges	PASS	2026-11-09
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
 no-done-line-refused	PASS	2026-11-19	
-no-flow-refused	FAIL	2026-11-19	
+no-flow-refused	PASS	2026-11-19	
 no-line-in-governor	PASS	2026-11-18	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-18	
@@ -446,7 +450,7 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	FAIL	2026-11-19	
+pending-waits	PASS	2026-11-19	
 perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
@@ -488,6 +492,7 @@ prd-stamps-free	PASS	2026-11-18
 prd-untested	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-usage-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 preview-writes-nothing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+private-names-scoped	PASS	2026-11-19	
 problem-plural	PASS	2026-11-18	
 ptb-dead-lane	PASS	2026-11-12	
 ptb-mend	PASS	2026-11-12	
@@ -563,9 +568,13 @@ session-reports	PASS	2026-11-12
 session-reuse	PASS	2026-11-12	
 session-tool-helper	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 session-tool-timeout	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-set8-health	PASS	2026-11-12	
-set8-hooks	PASS	2026-11-12	
-set8-setup-commit	PASS	2026-11-12	
+set13-hooks-once	PASS	2026-11-19	
+set13-hooks-once-bullet	PASS	2026-11-19	
+set8-health	PASS	2026-11-19	
+set8-hooks	PASS	2026-11-19	
+set8-local-setting-refused	PASS	2026-11-19	
+set8-private-value-refused	PASS	2026-11-19	
+set8-setup-commit	PASS	2026-11-19	
 settings-default-row	PASS	2026-11-12	
 settings-entry	PASS	2026-11-12	
 settings-overridden	PASS	2026-11-12	
@@ -667,7 +676,7 @@ toy-no-leftovers	PASS	2026-11-12
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
-unproven-blocks	PASS	2026-11-19	
+unproven-blocks	PASS	2026-11-18	
 unread-closes-none	PASS	2026-11-18	
 unread-not-green	PASS	2026-11-18	
 unreview-lifts	PASS	2026-11-12	
