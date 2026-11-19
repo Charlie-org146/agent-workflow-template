@@ -63,7 +63,7 @@ HOWTO = os.path.join(root, "docs", "wiki", "How-to-use-Guardrails.md")
 
 
 def figure(cell):
-    m = re.match(r"([\d,]+)\s*(files|MB|KB|characters)\b", cell)
+    m = re.match(r"([\d,]+)\s*(files|MB|KB|bytes|characters)\b", cell)
     return (int(m.group(1).replace(",", "")) * UNIT.get(m.group(2), 1), m.group(2) in UNIT or m.group(2)) if m else None
 
 
@@ -95,6 +95,6 @@ doc = open(HOWTO, encoding="utf-8").read()
 check("the package-limits table is there, dated, and none of ours is looser than Agensi's", not limits_problems(doc))
 check("control: no table fails", any("missing" in b for b in limits_problems(doc.replace("| Limit |", "| Item |"))))
 check("control: ours looser (101 files) fails", any("looser" in b for b in limits_problems(doc.replace("| 100 files (MAX_FILES)", "| 101 files (MAX_FILES)", 1))))
-check("control: ours looser (6 MB) fails", any("looser" in b for b in limits_problems(doc.replace("5 MB for the whole package", "6 MB for the whole package", 1))))
+check("control: ours looser (6 MB) fails", any("looser" in b for b in limits_problems(doc.replace("5,000,000 bytes for the whole package", "6 MB for the whole package", 1))))
 check("control: no date fails", any("no dated row" in b for b in limits_problems(doc.replace("| 2026-11-18 |", "| |"))))
 sys.exit(1 if fails else 0)
