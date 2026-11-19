@@ -194,8 +194,12 @@ def mended(text):
 res.append(mended("planning tool unavailable: autoplan is not installed") and mended("agent crashed") and not mended("2 tests failed: calc add is red"))
 goal = os.path.join(sys.argv[2], "g.md")
 open(goal, "w").write("# g\n\n## Verify by hand\n\n<!-- steps -->\n"); open(goal[:-3] + ".plan.md", "w").write("Step one then two.")
+mend.git = lambda *a, **k: "2026-11-20T00:00:00+00:00"  # frozen after the refusal landed
 body, why = mend.pr_extra(goal, "x\n## Result\nok")
 res.append("## Plan" in body and "Step one then two." in body and bool(why))
+mend.git = lambda *a, **k: "2026-11-01T00:00:00+00:00"  # frozen before it landed: spared
+res.append(mend.pr_extra(goal, "x")[1] == "")
+mend.git = lambda *a, **k: "2026-11-20T00:00:00+00:00"
 open(goal, "w").write("# g\n\n## Verify by hand\n\n1. Run it.\n   Expect: ok.\n")
 res.append(mend.pr_extra(goal, "x")[1] == "")
 st, note = {"slug": "x", "status": "running"}, []
@@ -205,7 +209,7 @@ res.append(st["status"] == "waiting" and w["kind"] == "owner" and w["words"] == 
 print("OK" if all(res) else "BAD %s" % res)
 PY
 )
-check "mend gives a fresh session only for an unusable session or tool, the PR body gets the plan and an empty Verify by hand refuses, and a budget stop waits with the raise command" '[ "$out" = OK ]'
+check "mend gives a fresh session only for an unusable session or tool, the PR body gets the plan, an empty Verify by hand refuses a goal frozen after the change and spares one frozen before it, and a budget stop waits with the raise command" '[ "$out" = OK ]'
 sets slow 'status="done"' 
 mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$here/skills/workflow-monitoring/scripts/proctree.py" "$here/skills/workflow-monitoring/scripts/replan.py" "$here/skills/workflow-monitoring/scripts/worker.py" "$here/skills/workflow-monitoring/scripts/sessions.py" "$here/skills/workflow-monitoring/scripts/auto.py" "$here/skills/workflow-monitoring/scripts/board_log.py" "$here/skills/workflow-monitoring/scripts/board_model.py" "$here/skills/workflow-monitoring/scripts/board_page.py" "$here/skills/workflow-monitoring/scripts/board_status.py" "$T/lone/"  # watch.py and what it imports, but no mend.py
 check "watch.py alone runs, and says it mended nothing" 'python3 "$T/lone/watch.py" watch --once | grep -q "mend.py isn.t beside"'

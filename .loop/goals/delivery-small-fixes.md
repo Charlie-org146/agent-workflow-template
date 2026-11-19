@@ -24,3 +24,9 @@ Frozen. A wrong done line needs a new goal.
 3. Run `python3 dev/machine.py check` on a machine whose skills checkout is behind origin.
    Expect: a `GAP skills-checkout:` line with `-> run: git -C ... pull`.
 
+## Notes for the PR
+
+- Behaviour change: `goal.py pr` now refuses (VERIFY_EMPTY, no try used) when Verify by hand is still the empty comment.
+- In-flight goals are spared: the refusal binds only a goal frozen after 2026-11-19T14:54Z, read from the commit that first added its goal file (`mend.FROZEN_AFTER`). A goal frozen before that passes `pr` with an empty section. No new marker or sync is written.
+- fit.py 19,827 to 19,815 bytes; dev/machine.py 19,774 to 19,728; mend.py 18,916.
+- #5188 reindents mend.py wholesale; it absorbs these hunks at its slot.
