@@ -230,7 +230,8 @@ if want flags; then fresh
   check "--offline drops exactly the wiki codes (the task gap stays) and its last line says the wiki was not checked" '[ $rc = 1 ] && grep -q "^GAP MIG_TASK" <<<"$out" && ! grep -q "MIG_WIKI" <<<"$out" && tail -1 <<<"$out" | grep -q "(offline: wiki not checked)$" && grep -q "^NOT CHECKED:.*wiki" <<<"$out"'
   mig "$r" --pr --offline; po=$out; mig "$r" --pr
   check "--pr with --offline is the same as --pr" '[ "$po" = "$out" ]'
-  check "the CHECKED line names the versions, platform and mode, and the DOCS line is present" 'grep -q "^CHECKED: installed v1.0.0, repo template_version 1.0.0 (working tree), platform darwin, mode offline" <<<"$out" && grep -q "^DOCS: " <<<"$out"'
+  plat=$(python3 -c "import sys; print(sys.platform)")  # the platform the check reports is the host's: darwin on a Mac, linux on CI
+  check "the CHECKED line names the versions, platform and mode, and the DOCS line is present" 'grep -q "^CHECKED: installed v1.0.0, repo template_version 1.0.0 (working tree), platform $plat, mode offline" <<<"$out" && grep -q "^DOCS: " <<<"$out"'
   mig "$r" --bogus
   check "an unknown flag exits 2 with the fix on stderr" '[ $rc = 2 ] && grep -q "Fix: run setup.py migration-check --help" <<<"$out"'
   out=$(cd "$d" && python3 "$SETUP/setup.py" migration-check --repo "$d" 2>&1 < /dev/null); rc=$?
