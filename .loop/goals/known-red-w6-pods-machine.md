@@ -14,3 +14,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `bash dev/toy/test-pods.sh layers twopods; bash dev/toy/test-pods.sh lock; bash dev/toy/test-pods.sh owner`.
+   Expect: each run ends with `ALL PASS`.
+2. Run `unset PYTHONDONTWRITEBYTECODE; bash dev/toy/test-machine.sh machine-apply-installs; bash dev/toy/test-machine.sh machine-windows`.
+   Expect: each prints a `PASS:` line.
+3. Run `bash dev/toy/test-plan-cache.sh key | tail -1`.
+   Expect: `ALL PASS`.
