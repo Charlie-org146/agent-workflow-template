@@ -64,7 +64,7 @@ def git(*args, cwd=None, check=True):
 
 
 def identity(cwd):
-    """git -c options giving a commit an author where none is configured (CI); a real identity is kept."""
+    """git -c options giving a commit an author where none is set (CI); a real one is kept."""
     if git("config", "user.email", cwd=cwd, check=False):
         return []
     return ["-c", "user.name=workflow-docs", "-c", "user.email=workflow-docs@users.noreply.github.com"]
@@ -165,8 +165,7 @@ def cmd_add(args):
 
 
 def netless(root, judged, mine):
-    """True when the paths read the same at HEAD as at the newest commit already judged: commits that add then revert a
-    change stale no page (issue 3771)."""
+    """True when the paths read the same at HEAD as at the newest judged commit: add-then-revert stales no page (#3771)."""
     tip = git("rev-list", "--no-walk=sorted", "-n1", *judged, cwd=root, check=False)
     return bool(tip) and not git("diff", "--name-only", tip, "HEAD", "--", *mine, cwd=root, check=False)
 
@@ -210,8 +209,7 @@ def problems(root, base):
 
 
 def from_base(root, base):
-    """With a base, the base-branch commits merged in since it, as parents to skip: judged in their own goal, so only the
-    branch's own changes stale its pages."""
+    """With a base, the base-branch commits merged in since it, as parents to skip (judged in their own goal)."""
     if not base:
         return []
     name = config(root).get("base") or "main"
@@ -240,18 +238,18 @@ def guarded(root, page):
 
 
 def feature_pages(root):
-    """The existing mapped pages other than Home, guides and the generated ones."""
+    """The existing mapped pages but Home, guides and generated ones."""
     return [page for page in sorted(read_map(root)) if PAGE.match(page) and page != "Home" and page not in pageformat.GENERATED
             and os.path.exists(page_file(root, page)) and not guide(root, page)]
 
 
 def counts(root):
-    """Numbers the docs state that the repo can check, as (COUNT, file, detail) rows."""
+    """Numbers the docs state that the repo can check: (COUNT, file, detail)."""
     return counting.counts(root, wiki_dir(root), read_map(root), config(root).get("criteria"))
 
 
 def contract(root):
-    """Criteria contract trouble as (kind, page, detail); off unless config has "criteria": true."""
+    """Criteria contract trouble as (kind, page, detail); off unless "criteria": true."""
     if not config(root).get("criteria"):
         return []
     found, names = [], feature_pages(root)
@@ -270,9 +268,8 @@ def cmd_criteria(args):
     folder = os.path.join(root, wiki_dir(root))
     if args.page not in read_map(root) or args.page == "Home":
         sys.exit("REFUSED: %s has no criteria. Fix: use a page listed in .loop/docs.tsv, not Home." % args.page)
-    held = ""
-    if os.path.exists(os.path.join(folder, args.page + ".md")):
-        held = slurp(os.path.join(folder, args.page + ".md"))
+    path = os.path.join(folder, args.page + ".md")
+    held = slurp(path) if os.path.exists(path) else ""
     own = re.findall(r"^- ([A-Z]{2,5})-\d+: ", held, re.M)
     prefix = PREFIXES.get(args.page) or (own[0] if own else re.sub(r"[^A-Z]", "", args.page.upper())[:3].ljust(2, "X"))
     used = [0]
@@ -380,7 +377,7 @@ def cmd_automation(_args):
 
 
 def cmd_prompts(_args):
-    """One line per routine: the whole prompt its scheduler holds, a pointer to its Runbook."""
+    """One line per routine: the prompt its scheduler holds, pointing to its Runbook."""
     root = top()
     parts = re.sub(r"(\.git)?/*$", "", git("remote", "get-url", "origin", cwd=root, check=False)).replace(":", "/").split("/")
     repo = "/".join(parts[-2:]) if len(parts) > 1 else os.path.basename(root)
@@ -440,7 +437,7 @@ def main():
 
 
 def alone(root, folder, repo=""):
-    """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
+    """stands_alone for each wiki page but Tests, and each skill doc; Home's diagram."""
     import audit, milestones, prdcopy
     out, sites = [], milestones.origins(root)
     files = [(n[:-3], os.path.join(root, folder, n)) for n in sorted(os.listdir(os.path.join(root, folder))) if n.endswith(".md") and n != "Tests.md"]

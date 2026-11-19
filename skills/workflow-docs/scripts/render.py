@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The Tests renderings (DOC-9, DOC-10) from the regression rows, and the file reading pageformat.py needs. criteria.py render
-calls render(); docs.py check calls generated() and front(); setup runs `render.py blocks`. Runs git only."""
+calls render(); docs.py check calls generated(), front(); setup runs `render.py blocks`. Git only."""
 import importlib
 import json
 import os
@@ -13,7 +13,7 @@ import criteria as cr
 import pageformat as pf
 from deployments import link_of, regroup, topics_of
 
-os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above) sets the rest, stdin included
+os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal (criteria, imported above, sets the rest)
 
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 TESTS = ("Test", "Kind", "Guards", "Checks", "Last result")
@@ -38,12 +38,12 @@ def tests_format(held={}):
 
 
 def ran_of(root):
-    """{row: (status, date, " FLAKY" if the 5th cell names a commit, REG-9)}."""
+    """{row: (status, date, " FLAKY" if the 5th cell names a commit)} (REG-9)."""
     return {row[0]: (row[1], row[2], " FLAKY" if (row + [""] * 5)[4] else "") for row in cr.tsv(root, "regression-runs.tsv")}
 
 
 def table(root, ids, linked):
-    """A page's Tests table for the requirements `ids` ((id, text) pairs)."""
+    """A page's Tests table for the requirements `ids` ((id, text))."""
     ran, rows, fmt = ran_of(root), {row[0]: row for row in cr.tsv(root, "regression.tsv")}, tests_format()
     issues = fmt.issues_of(root) if fmt else {}
     fields = (lambda row: fmt.fields(row[:8], {}, ran, issues, True)) if fmt else (lambda row: plain(row, ran))
@@ -51,19 +51,18 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else from a milestone URL in text; ''."""
+    """OWNER/REPO from the origin remote, else a milestone URL in text; ''."""
     return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
 
 
 def tests_page(root):
-    """The full Tests page (DOC-10), from tests.py's entries and the runs file's 4th column."""
+    """The full Tests page (DOC-10), from tests.py's entries and the runs file."""
     fmt = tests_format()
     groups = fmt.entries(root, markdown=True) if fmt else []
     return full_page(groups, {row[0]: row[3] for row in cr.tsv(root, "regression-runs.tsv")}, repo_of(root), workflow_file(root))
 
 
 def put(path, text):
-    """Write text via a temp file renamed into place."""
     temp = "%s.%d.tmp" % (path, os.getpid())
     with open(temp, "w") as fh:
         fh.write(text)
@@ -77,7 +76,7 @@ def render(args):
     clash = clashes([row[0] for row in cr.tsv(root, "regression.tsv") if row[1] != "draft"])
     if clash:
         sys.exit("REFUSED: two rows would share one Tests anchor: %s. Fix: rename one row id." % "; ".join(clash))
-    # blocks first: a Tests rewrite keeps them
+    # blocks first, so a Tests rewrite keeps them
     stale = ["%s (%s block)" % x for x in (refresh(root, args.check) if config_of(root).get("criteria") and not getattr(args, "tables", False) else [])]
     out, idsof = [], lambda ls: [(m.group(1), m.group(4)) for _, m in cr.criteria_of(ls) if m]
     for rel in cr.pages(root):
@@ -88,7 +87,7 @@ def render(args):
         parts = cr.sections(text)
         url = link_of(text, counting.sources(root).get(slug, ""))
         base = text
-        if url:  # link form: ids come from the copy in .loop/prd (else the linked PRD, read now); the PRD block is refreshed from the copy
+        if url:  # link form: ids from the .loop/prd copy (else the linked PRD); its PRD block is refreshed from the copy
             import prdcopy
             body, _ = prdcopy.read(root, slug, url)
             if body is None or not parts or parts[-1][0] != "Tests":
@@ -98,10 +97,10 @@ def render(args):
             base = prdcopy.with_block(top, body) + mid + rest if prdcopy.copy_of(root, slug) else text
         else:
             if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"], rules["revs"])] != rules["sections"] or parts[-1][0] != "Tests":
-                continue  # a Runbook after Tests would be cut off: leave it to the check
+                continue  # a Runbook after Tests would be cut off: the check handles it
             ids = idsof(dict(parts)[rules["sections"][1]])
         out.append((rel, text, base.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
-    for step in (0, 1):  # the pages first: the Tests page is then built from what they now say
+    for step in (0, 1):  # pages first: the Tests page is built from what they say now
         if step and out:
             rel = os.path.join(cr.folder_of(root), "Tests.md")
             out = [(rel, read(os.path.join(root, rel)), tests_page(root))]
@@ -126,7 +125,7 @@ def read(path):
 
 
 def generated(root):
-    """(STALE, Tests, first differing line) when the Tests page differs from a fresh render."""
+    """(STALE, Tests, first differing line) when Tests differs from a fresh render."""
     rel = os.path.join(cr.folder_of(root), "Tests.md")
     held = read(os.path.join(root, rel))
     if held is None:
@@ -155,7 +154,7 @@ def front(root, names):
 
 
 def home_fresh(root, names):
-    """True when Home needs no rewrite: its generated blocks match a fresh render and it passes DOC-4 (#4608)."""
+    """True when Home needs no rewrite: blocks match a fresh render and it passes DOC-4 (#4608)."""
     folder, rel = os.path.join(root, cr.folder_of(root)), os.path.join(cr.folder_of(root), "Home.md")
     text = read(os.path.join(root, rel))
     return text is not None and not [x for x in refresh(root, True) if x[0] == rel] and not pf.home(
@@ -167,7 +166,7 @@ def test_slug(name):
 
 
 def plain(row, ran):
-    """The fields tests.py would give: test, kind, guards, checks, runs, result, seen."""
+    """tests.py's fields: test, kind, guards, checks, runs, result, seen."""
     status, day = ran.get(row[0], ("not run", ""))[:2]
     guard = row[7] if row[6] == "defect" else row[3]
     return [row[0], row[6] if row[6] in ("defect", "workflow") else "requirement", guard or "-", row[5] or "-", row[1], (status + " " + day).strip(),
@@ -190,7 +189,7 @@ def tests_table(ids, linked, defects, rows, fields, ran):
 
 
 def run_cell(value, repo, day="", flow="regression.yml"):
-    """A URL is its Actions run; empty, that day's CI runs; a sha, its commit; else local."""
+    """A URL is its Actions run; empty, that day's CI; a sha, its commit; else local."""
     if re.match(r"^https?://\S+$", value):
         return "[run](%s)" % value
     if re.match(r"^[0-9a-f]{7,40}$", value):
@@ -201,7 +200,7 @@ def run_cell(value, repo, day="", flow="regression.yml"):
 
 
 def full_page(groups, runs, repo, flow="regression.yml"):
-    """docs/wiki/Tests.md: per feature '## <Feature>' and a full table whose first cell is the anchor pages link to."""
+    """docs/wiki/Tests.md: a '## <Feature>' and full table per feature; the first cell is the anchor."""
     out = [pf.MARKER, "# Tests", ""]
     for feature, lines in groups:
         rows = []
@@ -226,7 +225,6 @@ def clashes(names):
     return out
 
 
-# the Settings and Automation blocks on Home, the README's template line
 SKILLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TEMPLATE_REPO = "jcl2018/agent-workflow-template"  # last resort
 MARKS = ("settings", "automation", "template")
@@ -318,13 +316,14 @@ def front_files(root, insert=False):
     both = [("settings", settings_block(root)), ("automation", counting.automation_block(root))]
     if re.search(r"^## Features\s*$", text, re.M) or (block_re("settings").search(text) and not insert):
         out.append((home, both))
-    if os.path.exists(os.path.join(root, "README.md")):
-        out.append(("README.md", [("template", template_line(root))] + [b for b in both if block_re(b[0]).search(read(os.path.join(root, "README.md")) or "")]))
+    readme = read(os.path.join(root, "README.md"))
+    if readme is not None:
+        out.append(("README.md", [("template", template_line(root))] + [b for b in both if block_re(b[0]).search(readme)]))
     return out
 
 
 def refresh(root, check=False, insert=False):
-    """Write the blocks (check: only list): [(rel, name)] stale; missing ones only with insert."""
+    """Write the blocks (check: only list): [(rel, name)] stale; missing only with insert."""
     stale = []
     for rel, blocks in front_files(root, insert):
         held = read(os.path.join(root, rel)) or ""
@@ -343,7 +342,7 @@ def refresh(root, check=False, insert=False):
 
 
 def stale_blocks(root):
-    """(STALE, Settings|Automation|README line, where and fix) per block unlike a fresh render."""
+    """(STALE, Settings|Automation|README line, where, fix) per block unlike a fresh render."""
     names = dict(settings="Settings", automation="Automation", template="README line", topics="Topics")
     return [("STALE", names[name], "%s differs from a fresh render. Fix: /workflow-docs render" % where) for where, name in refresh(root, True)]
 
@@ -380,7 +379,7 @@ def perm_needs(root, routine, page):
 
 
 def mirror_of(path):
-    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; not owned if another file is there."""
+    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; unowned if another file is there."""
     try:
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().replace("\r\n", "\n").split("\n")
@@ -413,7 +412,7 @@ def part(text, name):
 
 
 def blocks(body):
-    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
+    """{heading: {field: text}} per '### ' block of a section (indented lines continue a field)."""
     found, cur, last = {}, None, None
     for line in body.splitlines():
         if line.startswith("### "):
@@ -428,8 +427,9 @@ def blocks(body):
 
 
 def delivered(text):
-    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
-    block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
+    """(header line, [(component, kind, cell count)]) of the What's delivered table."""
+    key = "\n### What's delivered\n"
+    block = text.split(key, 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if key in text else ""
     lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
     out = []
     for line in lines[2:]:

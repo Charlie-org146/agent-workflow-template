@@ -253,7 +253,7 @@ KEPT
       CRITERIA_MAX_DEFAULT,SHEET,criteria_max,rules || exit 1
     exit 0;;
   size-140) # issue 140: docs.py's page map moved unchanged into counting.py; it stays under health's size warning
-    python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/docs.py counting map_path,read_map,write_map || exit 1
+    python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/docs.py counting map_path,read_map,sources,write_map || exit 1
     exit 0;;
   size-141) # issue 141: regression.py's row and page readers moved unchanged into runs.py; under health's size warning
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-regression/scripts/regression.py runs \
