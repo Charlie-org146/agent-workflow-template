@@ -15,3 +15,11 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-monitoring/scripts/layers.py redteam input` in this repo.
+   Expect: it prints `RED-TEAM INPUT <time>`, the board sections, one `STATUS <machine> (N min old)` line per machine and a request for `A:`, `I:` and exactly one `R:` line.
+2. Write `A: assumption one`, `I: idle work one` and `R: the biggest risk` on three lines in a file and run `python3 skills/workflow-monitoring/scripts/layers.py redteam record <file>`.
+   Expect: three lines `ROUTE ops-findings: A: ...`, `ROUTE TOP-DECISION (proposed): I: ...` and `ROUTE TOP-DECISION (proposed): R: ...`; `git status` shows no change and one JSON file appears in `.git/loop/redteam/`.
+3. Run the record command again with a file holding two `R:` lines.
+   Expect: `REFUSED: the reply has 2 R: lines`, and no new file in `.git/loop/redteam/`.
+4. Run `python3 skills/workflow-monitoring/scripts/layers.py redteam due`, then again with `--eta <time 30 minutes from now as YYYY-MM-DDTHH:MM:SSZ>`.
+   Expect: `RED-TEAM ok: last pass N minutes ago` just after a pass, and `RED-TEAM DUE: the release ETA is in 29 minutes ...` once the last pass is over 20 minutes old.
