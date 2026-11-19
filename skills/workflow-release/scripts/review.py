@@ -6,9 +6,9 @@ usage: review.py record SLUG
        review.py promote vX --owner-record ID [--ref REF] [--suite-from RUN]
        review.py revert vX
 
-With "review_hold": true, merge.py merges only after the operation session ran record on the pull request's head (else REVIEW_HOLD).
---suite-from RUN reads REL-3's suite from a regression workflow run on the gate ref that completed with every shard reported,
-nothing UNRUN and every row logged, else refuses "suite run does not cover the candidate"; the run id goes in loop/gate/vX.json.
+With "review_hold": true, merge.py merges only a head the operation session ran record on (else REVIEW_HOLD).
+--suite-from RUN takes REL-3's suite from a completed regression run on the gate ref with every shard reported, nothing UNRUN
+and every row logged; else "suite run does not cover the candidate". The run id goes in loop/gate/vX.json.
 """
 import glob
 import importlib
@@ -94,7 +94,7 @@ def proven(top):
 
 
 def tsv(*path):
-    """A tab file's rows, padded to five fields; [] if missing."""
+    """Tab-file rows, padded; [] if missing."""
     try:
         return [l.rstrip("\n").split("\t") + [""] * 5 for l in open(os.path.join(*path)) if l[0] != "#"]
     except OSError:
@@ -185,14 +185,13 @@ ROW = re.compile(r"(?:^|Z )(PASS|FAIL|KNOWN|NOTRUN|ENV|SKIPPED) (\S+)", re.M)
 
 
 def ci_text(work, run, sha):
-    """(a run's log, why it does not cover sha)."""
-    info = json.loads(release.run(["gh", "run", "view", run, "--json", "headSha,status"], cwd=work).stdout or "{}")
+    """(a run's log, why it misses sha)."""
+    info = json.loads(release.run(["gh", "run", "view", run, "--json", "headSha,status,workflowName"], cwd=work).stdout or "{}")
     text = release.run(["gh", "run", "view", run, "--log"], cwd=work).stdout if info.get("status") == "completed" else ""
-    got = (re.findall(r"SHARDS (\d+) of (\d+) reported\. UNRUN (\d+)", text) or [("0", "1", "1")])[-1]
     seen = {r for _, r in ROW.findall(text)}
     gone = [r[0] for r in tsv(work, ".loop", "regression.tsv") if r[1] in ("land", "nightly") and r[0] not in seen]
-    return text, ("another commit" if info.get("headSha") != sha else "not completed" if not text else "cut by budget"
-                  if got[0] != got[1] or got[2] != "0" else "%d rows are unlogged" % len(gone) if gone else "")
+    return text, ("another commit or workflow" if (info.get("headSha"), info.get("workflowName")) != (sha, "regression") else "not completed" if not text else "cut by budget"
+                  if not re.search(r"SHARDS (\d+) of \1 reported\. UNRUN 0\b", text) else "%d rows are unlogged" % len(gone) if gone else "")
 
 
 def check_suite(work, red, run="", sha=""):
@@ -215,7 +214,7 @@ def check_health(work):
 
 
 def gate_refusals(top, cfg, ver, ref, suite=True, run=""):
-    """([(check, subject, keys)], facts): the five checks on ref, saved to loop/gate/vX.json."""
+    """([(check, subject, keys)], facts) of the checks on ref."""
     work, moved, base = tempfile.mkdtemp(prefix="gate-"), waivers(top, "moved"), release.base_of(top, cfg)
     got = gh_json("issue", "list", "--milestone", "v%d.0" % ver, "--state", "open")
     out = [("issues", "#%d %s" % (i["number"], i["title"][:60]), ["#%d" % i["number"]]) for i in got or [] if "#%d" % i["number"] not in moved]
@@ -236,12 +235,12 @@ def gate_refusals(top, cfg, ver, ref, suite=True, run=""):
             release.run(["git", "worktree", "remove", "--force", work], cwd=top)
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(common_of(top), "gate"), exist_ok=True)
-    json.dump({"ref": ref, "at": release.now(), "suite_run": run, "refusals": out}, open(os.path.join(common_of(top), "gate", "v%d.json" % ver), "w"))
+    json.dump({"ref": ref, "at": release.now(), "suite_run": run if suite else "", "refusals": out}, open(os.path.join(common_of(top), "gate", "v%d.json" % ver), "w"))
     return out, facts
 
 
 def frozen(top, head, slug):
-    """REL-5: after a major's rc tag a goal merges only if its goal file names a gate subject."""
+    """REL-5: after an rc tag a goal merges only if its goal file names a gate subject."""
     live = sorted({int(m.group(1)) for m in map(RC.match, release.git("tag", "--list", "v*.0.0-rc.*", cwd=top, check=False).split())
                    if m and not OK(["refs/tags/v%s.0.0" % m.group(1)], top)})
     if not live:
@@ -334,6 +333,8 @@ def gate_cli(args):
         sys.exit("REFUSED: give the major as vX, for example v2.")
     ver, top = int(spec.group(1)), release.git("rev-parse", "--show-toplevel")
     cfg, opt = release.read_config(top), lambda flag: rest[rest.index(flag) + 1] if flag in rest[:-1] else ""
+    if "--suite-from" in rest and not opt("--suite-from"):
+        sys.exit("REFUSED: --suite-from needs a run id.")
     if args[0] != "gate" and worker():
         sys.exit("REFUSED (REVIEW_ROLE): only the operation session does this, on the owner's words.")
     if args[0] == "revert":

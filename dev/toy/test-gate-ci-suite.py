@@ -71,7 +71,7 @@ def log(rows, summary=SHARDS):
 
 
 GOOD = [("PASS", "a"), ("PASS", "broken-row"), ("PASS", "stale-row"), ("SKIPPED", "skipped-row")]
-RUNS = {}  # run id -> (head sha, status, log)
+RUNS = {}  # run id -> (head sha, status, log) or (head sha, status, log, workflow name)
 real_run = subprocess.run
 
 
@@ -80,8 +80,9 @@ def fake_run(args, *a, **k):
         if args[1:3] == ["issue", "list"]:
             return subprocess.CompletedProcess(args, 0, "[]", "")
         if args[1:3] == ["run", "view"] and args[3] in RUNS:
-            head, status, text = RUNS[args[3]]
-            return subprocess.CompletedProcess(args, 0, json.dumps({"headSha": head, "status": status}) if "--json" in args else text, "")
+            head, status, text, *flow = RUNS[args[3]]
+            info = {"headSha": head, "status": status, "workflowName": (flow or ["regression"])[0]}
+            return subprocess.CompletedProcess(args, 0, json.dumps(info) if "--json" in args else text, "")
         return subprocess.CompletedProcess(args, 1, "", "not found")
     return real_run(args, *a, **k)
 
@@ -154,7 +155,18 @@ RUNS["107"] = (sha, "completed", log(GOOD, ""))
 code, said = gate("107")
 check("a run with no shard summary line refuses: " + NO, code == 1 and NO in said, said)
 code, said = gate("999")
-check("a run gh cannot read refuses: " + NO, code == 1 and NO in said, said)
+check("a run gh cannot read refuses: " + NO, code == 1 and NO in said and "another commit or workflow" in said, said)
+RUNS["108"] = (sha[:12], "completed", log(GOOD))
+code, said = gate("108")
+check("a run whose head is only a prefix of the candidate's commit refuses: " + NO, code == 1 and NO in said, said)
+RUNS["109"] = (sha, "completed", log(GOOD), "nightly-other")
+code, said = gate("109")
+check("a run of another workflow on the same commit refuses: " + NO, code == 1 and NO in said and "another commit or workflow" in said, said)
+ran.clear()
+code, said = call("gate", "v2", "--ref", sha, "--suite-from")
+check("--suite-from with no run id refuses and does not start the local suite", code != 0 and "needs a run id" in said and not ran, said + str(ran))
+code, said = gate("100", "--no-suite")
+check("--no-suite with --suite-from records no run id, since none was read", json.load(open(os.path.join(common, "loop", "gate", "v2.json"))).get("suite_run") == "", said)
 
 open(os.path.join(common, "loop", "owner-words.tsv"), "w").write(TAB.join(("o1", "t", "operation", "promote v2.0.0", "v2.0.0")) + "\n")
 code, said = call("promote", "v2", "--owner-record", "o1", "--ref", sha, "--suite-from", "102")
