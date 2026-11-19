@@ -151,6 +151,9 @@ def render(root=None, at=None, stamp=None):
             if len(parts) >= 6:
                 out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
+    filed = auto.since(root, stamp, "findings.log")  # OPS-1: what the operation layer filed since the last check-in
+    if filed:
+        out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]
     gone = mend.archived_since(folder, stamp)
     if gone:
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]
