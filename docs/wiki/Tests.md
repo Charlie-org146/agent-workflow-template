@@ -365,6 +365,7 @@
 | <a id="t-depth-marker-rows-4557"></a>depth-marker-rows-4557 | defect | #4557 | not run | - | local | 2026-11-19 |
 | <a id="t-record-ci-skip"></a>record-ci-skip | requirement | DEL-1 | not run | - | local | 2026-11-19 |
 | <a id="t-record-ci-full"></a>record-ci-full | requirement | DEL-1 | not run | - | local | 2026-11-19 |
+| <a id="t-record-ci-adopter"></a>record-ci-adopter | requirement | DEL-1 | not run | - | local | 2026-11-19 |
 
 ## Documentation
 
