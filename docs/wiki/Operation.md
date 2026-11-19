@@ -57,6 +57,10 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - On start the operation session runs a self-check and lists what is missing, each with its fix.
   - It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached.
   - agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's.
+- OPS-24: **Unreviewed** A release has a target time and a freeze point that I set
+  - I set the release's target time and its freeze time in my own words; the operation session proposes both from the forecast (CHK-11) and never sets them itself.
+  - At the freeze, a goal with no MERGE-GO is marked "next release" on the board and in STATUS, keeps the front of the next release's queue, and is not cancelled.
+  - A failing row is never waived by the freeze: it is fixed by a goal already in the release or by a gate fix, or the release moves.
 
 ### Non-functional
 
@@ -167,6 +171,12 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | r2 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. <br> agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-23 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
+### OPS-24
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | A release has a target time and a freeze point that I set <br> I set the release's target time and its freeze time in my own words; the operation session proposes both from the forecast (CHK-11) and never sets them itself. <br> At the freeze, a goal with no MERGE-GO is marked "next release" on the board and in STATUS, keeps the front of the next release's queue, and is not cancelled. <br> A failing row is never waived by the freeze: it is fixed by a goal already in the release or by a gate fix, or the release moves. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -223,6 +233,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | OPS-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
 | - | requirement | OPS-18 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | OPS-23 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. Given an agent_command with the two-token --allowedTools form, when the defaults check runs, then it reports it and applying it stays the owner's. | PASS 2026-11-19 |
+| - | requirement | OPS-24 | no passing test | not enforced |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | OPS-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | OPS-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | OPS-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |

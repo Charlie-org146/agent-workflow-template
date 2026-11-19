@@ -40,6 +40,14 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 - CHK-9: **Unreviewed** I can answer and steer from my phone or mail
   - I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way.
   - A reply counts as my words only when it comes from my own address or signed-in session.
+- CHK-10: **Unreviewed** Every goal's STATUS carries an ETA, and a slip is reported at once
+  - A worker line in STATUS carries eta, eta_basis (measured or steps) and slip, the minutes since its eta was last reported.
+  - A slip of more than 15 minutes sends STATUS at once and adds one line under Issues: the goal, its old eta, its new eta and the cause.
+  - A slip that moves a goal past the freeze is a Needs-you line with a recommendation.
+- CHK-11: **Unreviewed** The finish is forecast from measured merge pace, not step estimates
+  - The forecast is the last merge plus the goals still to merge times the median of the last 5 gaps between merges, with the quartiles as a band; with fewer than 3 gaps it says there is no measured pace yet.
+  - The pace counts MERGE-GO and CI waits, because they are real time on the single merge slot.
+  - The board prints the measured forecast as Finish and the step estimate on a second labelled line.
 
 ### Non-functional
 
@@ -113,6 +121,18 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-18 | I can answer and steer from my phone or mail <br> I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way. <br> A reply counts as my words only when it comes from my own address or signed-in session. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
+
+### CHK-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Every goal's STATUS carries an ETA, and a slip is reported at once <br> A worker line in STATUS carries eta, eta_basis (measured or steps) and slip, the minutes since its eta was last reported. <br> A slip of more than 15 minutes sends STATUS at once and adds one line under Issues: the goal, its old eta, its new eta and the cause. <br> A slip that moves a goal past the freeze is a Needs-you line with a recommendation. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
+
+### CHK-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | The finish is forecast from measured merge pace, not step estimates <br> The forecast is the last merge plus the goals still to merge times the median of the last 5 gaps between merges, with the quartiles as a band; with fewer than 3 gaps it says there is no measured pace yet. <br> The pace counts MERGE-GO and CI waits, because they are real time on the single merge slot. <br> The board prints the measured forecast as Finish and the step estimate on a second labelled line. | migration r1; date from the run day | o183: "start release-readiness, release-eta and merge-queue for v2.1. (owner ~23:53) and For some" |
 
 ## Tests
 
@@ -225,6 +245,8 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | - | requirement | CHK-6 | no passing test | not enforced |
 | [blockers-first](Tests#t-blockers-first) | requirement | CHK-7 | Given owner items holding up different numbers of goals, when the check-in is written, then each says what it holds up and whether it is on the critical path, the one holding up the most is first, and the Stop hook refuses a reply that does not. | PASS 2026-11-14 |
 | - | requirement | CHK-9 | no passing test | not enforced |
+| - | requirement | CHK-10 | no passing test | not enforced |
+| - | requirement | CHK-11 | no passing test | not enforced |
 | [mon9-board-fast](Tests#t-mon9-board-fast) | requirement | CHK-8 | Given 12 goals with pull requests and a slow GitHub, when the board is built, then it takes under 10 seconds. | PASS 2026-11-10 |
 | [held-stale-next](Tests#t-held-stale-next) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a session goal with an old failure report and a newer session report, when the live board prints, then its next line is the newer report. | PASS 2026-11-10 |
 | [held-shows-held](Tests#t-held-shows-held) | defect | [#102](https://github.com/jcl2018/agent-workflow-template/issues/102) closed (2026-11-10) | Given a running goal with no worker (session reassigned, worktree kept), when the live board prints, then it is listed as held, not running and not as a background worker. | PASS 2026-11-10 |

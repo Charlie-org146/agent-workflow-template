@@ -58,6 +58,7 @@ Each requirement and how it is delivered:
 - OPS-18: The operation session keeps running unattended. Example, from the unattended-sends-warn test: given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message.
 - OPS-20: Every ready goal gets its own worker. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session, in parallel. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. (no test yet)
 - OPS-23: The operation session keeps itself running. On start the operation session runs a self-check and lists what is missing, each with its fix. It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. (no test yet)
+- OPS-24: A release has a target time and a freeze point that I set. I tell the operation session the target and freeze times in my own words, and it records them with `layers.py status --target T --freeze T`; goals with no recorded MERGE-GO (`--go SLUG`) at the freeze show as next release. Example, from the release-eta test: given a freeze that has passed, when STATUS is built, then a goal with no MERGE-GO is marked next release and one with it is not.
 
 ### Skill: workflow-monitoring
 - **Say:** "Run the operation session"
