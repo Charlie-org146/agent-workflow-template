@@ -15,6 +15,9 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 for sub in ("workflow-docs", "workflow-delivery", "workflow-regression"):
     sys.path.insert(0, os.path.join(root, "skills", sub, "scripts"))
 os.environ["LOOP_ROLE"] = "worker"
+# the toy repo's own commits, and the lane prep's commit in a subprocess, need an identity a CI runner does not have
+for _k, _v in (("GIT_AUTHOR_NAME", "t"), ("GIT_AUTHOR_EMAIL", "t@t"), ("GIT_COMMITTER_NAME", "t"), ("GIT_COMMITTER_EMAIL", "t@t")):
+    os.environ[_k] = _v
 sys.dont_write_bytecode = True
 import criteria  # noqa: E402
 import docs  # noqa: E402
