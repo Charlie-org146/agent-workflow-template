@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
+Review: **Unreviewed** <!-- kept known-red-w4b-docs-wording@a9875635 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
