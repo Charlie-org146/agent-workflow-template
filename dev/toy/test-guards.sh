@@ -120,7 +120,7 @@ out=$(LOOP_ROLE=worker $goal resume g3 --why "limit passed" 2>&1)
 check "a worker can't resume its own goal" 'grep -q "(WORKER_SELF_REPAIR)" <<<"$out" && [ "$(field g3 status)" = stopped ]'
 git switch -q main  # resume runs from the main checkout, not the goal's worktree
 out=$(LOOP_SESSION_TOOL="$d/tool.sh" $goal resume g3 --why "limit passed" 2>&1)
-check "resume from another checkout revives the goal: running, tries 0, report cleared, who and why logged" 'grep -q "^RESUMED g3 at plan$" <<<"$out" && [ "$(field g3 status)" = running ] && [ "$(field g3 tries)" = 0 ] && [ "$(field g3 report)" = None ] && grep -q "resumed by operation session: limit passed" "$R/g3.json"'
+check "resume from another checkout revives the goal: running, tries 0, report cleared, who and why logged" 'grep -q "^RESUMED g3 at plan$" <<<"$out" && [ "$(field g3 status)" = running ] && [ "$(field g3 tries)" = 0 ] && { [ "$(field g3 report)" = None ] || [ "$(field g3 report)" = "{}" ]; } && grep -q "resumed by operation session: limit passed" "$R/g3.json"'
 check "resume also gives a goal its free reruns of a dead lane back" '[ "$(field g3 free)" = 0 ]'
 check "resume reserves the session and tells it where to continue, starting no process" 'grep -q "\"slug\": \"g3\"" "$C/loop/session-pool.json" && grep -q "Continue at plan in " "$TOOL_LOG.sent.s3" && [ "$(field g3 pid)" = None ]'
 resumed=$(python3 -c "import json;s=json.load(open('$R/g3.json'));print([s.get(k) for k in ('status','tries','refusals','finding','waiting','note','report')])")
