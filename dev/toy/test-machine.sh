@@ -7,8 +7,8 @@
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
-toy_smtp=$(printf 'toy-%s-%04d' pass 0)
 . "$here/dev/toy/reap.sh"
+toy_smtp=$(printf 'toy-%s-%04d' pass 0)
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 no() { echo "FAIL ${only:-machine}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
