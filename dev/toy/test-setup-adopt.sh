@@ -129,6 +129,13 @@ if want set1-docs-format; then
   echo "$out" | grep -vE '^UNWRITTEN' | grep -q . && no "a gap other than unwritten: $(echo "$out" | grep -vE '^UNWRITTEN' | head -3)"
   grep -q '^## How to use' README.md && grep -q 'wiki/How-to-use-Engine)' README.md || no "README has no link to the Engine How-to-use page"
   grep -q 'HOM-1' docs/wiki/*.md .loop/regression.tsv && no "Home still carries HOM-1"
+  # negative control: once Home is written, the same filter keeps the missing diagram a failure
+  printf '<!-- workflow-docs -->\n# Home\n\nThis is the written front page of the toy engine repo, with enough words to count as written.\n' > docs/wiki/Home.md
+  out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
+  grep -q '^UNWRITTEN Home' <<<"$out" && out=$(grep -v '^HOME Home: DOC-4 no system diagram' <<<"$out")
+  echo "$out" | grep -q '^UNWRITTEN Home' && no "control: Home still counts as unwritten: $out"
+  echo "$out" | grep -q '^HOME Home: DOC-4 no system diagram' || no "control: a written Home with no diagram passed: $out"
+  echo "PASS set1-docs-format: negative control, a written Home with no diagram still fails DOC-4"
   echo "PASS set1-docs-format: no format gap after adoption, only unwritten pages"
 fi
 
