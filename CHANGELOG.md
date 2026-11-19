@@ -1,5 +1,51 @@
 # Changelog
 
+## v1.0.87 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.86 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.85 - 2026-11-19
+
+- Main-red size rows: skill-kept reads the moved review rule, monitoring and release SKILL.md under 150 lines, setup.py under 19,000 bytes
+- regression.py and lanes.py under 19,000 bytes (docstring prose only)
+- checkin.py under 19,000 bytes: shown() and gather() move unchanged into board_lines.py and are imported back (TOP-DECISION 57)
+- runs.py under 19,000 bytes: its docstring detail moves into the regression references (runs.py notes)
+- Health scripts under 19,000 bytes: report, rules, automation and controls keep their code and printed strings; the docstring detail moves into the health references (notes)
+- Merge main into known-red-w8-size
+- Pages kept after the checkin.py move and the health references notes (stamp lines only)
+- Health references back to main's text (Principles maps them); the health docstrings keep their facts instead of pointing at notes; design and plan follow
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main (v1.0.81) into known-red-w8-size; defects.py back under 19,000 bytes (docstring only)
+- Merge main (v1.0.82) into known-red-w8-size
+- Pages kept again after the merge of main (stamp lines only)
+- Merge main (v1.0.84, w11's docs trims) into known-red-w8-size
+- Lane: re-render the Tests tables
+- pr: record issue states and the lane's results
+
+### How to verify
+
+1. Run `python3 dev/toy/test-trim-monitoring.py` and `python3 -B dev/toy/split-check.py . skills/workflow-regression/scripts/regression.py runs chosen,clean,criteria_ids,criterion_rows,done_lines,lines_of,today path_of`.
+   Expect: the first prints PASS lines including `PASS negative control` and exits 0; the second prints nothing and exits 0.
+2. Measure the scripts: `python3 -c "import glob; print([f for d in ('health','regression','release') for f in glob.glob('skills/workflow-%s/scripts/*.py' % d) if len(open(f,'rb').read().replace(b'\r\n',b'\n'))>19000])"`, then check `skills/workflow-setup/scripts/setup.py` and `skills/workflow-monitoring/scripts/checkin.py`.
+   Expect: `[]`; setup.py is 18,991 bytes and checkin.py 18,096. The workflow-docs scripts stay over until w11 lands.
+3. Count the lines of every `skills/*/SKILL.md`.
+   Expect: each is under 150 (monitoring 149, release 149).
+4. Run `python3 skills/workflow-docs/scripts/docs.py check`, `python3 skills/workflow-docs/scripts/entry.py check` and `python3 skills/workflow-release/scripts/wiki.py prepare known-red-w8-size`.
+   Expect: DOCS OK: 16 pages, ENTRY OK and WIKI CURRENT; docs/wiki/Principles.md, .loop/docs.tsv and skills/workflow-health/references/commands.md are identical to main.
+
 ## v1.0.84 - 2026-11-19
 
 - Docs scripts under 19,000 bytes: prose trims and two cohesive moves

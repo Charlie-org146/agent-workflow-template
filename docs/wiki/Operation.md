@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 
@@ -33,23 +33,24 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - It never stops a running goal to re-plan, and every change is logged with its reason.
 - OPS-11: **Unreviewed** Full auto mode
   - Full auto is off in a new repo until I turn it on.
-  - With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words.
+  - With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, or anything that contradicts my words. A merge is not a safety class.
   - Those wait for me.
   - A safety class is judged by what the action does, not by a word in its name.
-  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's.
+  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only.
+  - Caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21).
 - OPS-12: **Unreviewed** Session pool
   - The operation session keeps a pool of idle worker sessions, sized by one setting, and hands each ready goal one from the pool.
   - When the pool runs low it asks me to fill it, at the desktop.
   - When I've chosen app sessions, a goal never falls back to a background worker: it waits and says so.
-- OPS-13: **Unreviewed** Two layers per pod
-  - One operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session.
+- OPS-13: **Unreviewed** Three layers per pod
+  - Operation-top is the owner's only session and governs every pod. A machine session governs every repo in its pod directly, talks to each worker, and reports up to top. A worker has one goal and one worktree and talks only to its machine session; there is no per-repo operation session.
   - Several pods may run at once, independently.
 - OPS-15: **Unreviewed** Pods coordinate through shared state
   - Every goal records the pod that owns it, and only that pod starts, answers, merges or resumes it; other pods see it read-only.
 - OPS-16: **Unreviewed** Fill every free slot at once
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold.
   - A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit.
-  - Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets, while the caps stay the owner's.
+  - Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets within the caps, and the caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21).
 - OPS-18: **Unreviewed** I say it once
   - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again.
   - A record covers only the IDs it lists.
@@ -120,6 +121,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Full auto mode <br> Full auto is off in a new repo until I turn it on. <br> With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, or anything that contradicts my words. A merge is not a safety class. <br> Those wait for me. <br> A safety class is judged by what the action does, not by a word in its name. <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only. <br> Caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21). | TOP-DECISION 65: a merge is not a safety class; caps are operation-top's to decide; GRD-21 still needs the owner's words. owner, typed in operation-top at about 23:28, relayed verbatim: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3." | o141: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3. (owner, typed in" |
 | r2 | 2026-11-18 | Full auto mode <br> Full auto is off in a new repo until I turn it on. <br> With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. <br> Those wait for me. <br> A safety class is judged by what the action does, not by a word in its name. <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-11 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Full auto mode <br> Full auto is off in a new repo until I turn it on. <br> With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. <br> Those wait for me. <br> A safety class is judged by what the action does, not by a word in its name. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
@@ -133,6 +135,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Three layers per pod <br> Operation-top is the owner's only session and governs every pod. A machine session governs every repo in its pod directly, talks to each worker, and reports up to top. A worker has one goal and one worktree and talks only to its machine session; there is no per-repo operation session. <br> Several pods may run at once, independently. | TOP-DECISION 65: consistent with OPS-1's three layers. owner, typed in operation-top at about 23:28, relayed verbatim: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3." | o143: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3. (owner, typed in" |
 | r1 | 2026-11-18 | Two layers per pod <br> One operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session. <br> Several pods may run at once, independently. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-15
@@ -145,6 +148,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Fill every free slot at once <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. <br> A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. <br> Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets within the caps, and the caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21). | TOP-DECISION 65: the same cap wording as OPS-11. owner, typed in operation-top at about 23:28, relayed verbatim: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3." | o142: "approve OPS-11 r3, OPS-16 r3, OPS-13 r2, CHK-1 r3. (owner, typed in" |
 | r2 | 2026-11-18 | Fill every free slot at once <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. <br> A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. <br> Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets, while the caps stay the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-16 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Fill every free slot at once <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. <br> A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
