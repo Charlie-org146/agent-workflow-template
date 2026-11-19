@@ -1,8 +1,8 @@
 """Row settings-render-tables: a lane's render rewrites the Tests tables and nothing else (#3777).
 
-Copies the repo to a scratch git repo, makes the Settings block on Home stale (the state a lane finds when the scripts it
-runs are older than the page; the README is principles-only and carries no automation row), then checks that
-`criteria.py render --tables` leaves Home and README as they were and that a plain `render` still repairs Home. Same on every platform; exit 0 when both hold."""
+Copies the repo to a scratch git repo, makes the Settings block on Home stale (the README is principles-only since v1.0.69 and holds no tables) (the state a lane finds when the
+scripts it runs are older than the page), then checks that `criteria.py render --tables` leaves the page as it was
+and that a plain `render` still repairs them. Same on every platform; exit 0 when both hold."""
 import os
 import shutil
 import subprocess
@@ -32,9 +32,8 @@ def main():
             elif os.path.exists(src):
                 shutil.copy(src, scratch)
         run("git", "init", "-q", cwd=scratch)
-        home = os.path.join(scratch, "docs", "wiki", "Home.md")
-        pages = [os.path.join(scratch, "README.md"), home]
-        for page in [home]:
+        pages = [os.path.join(scratch, "docs", "wiki", "Home.md")]
+        for page in pages:
             text = read(page)
             if "| `automation` |" not in text:
                 print("FAIL: %s has no automation row to make stale" % page)
@@ -46,7 +45,7 @@ def main():
         criteria = os.path.join(scratch, "skills", "workflow-docs", "scripts", "criteria.py")
         tables = run(sys.executable, criteria, "render", "--tables", cwd=scratch)
         if tables.returncode or [read(page) for page in pages] != before:
-            print("FAIL: render --tables changed README.md or Home.md (exit %d): %s" % (tables.returncode, tables.stdout + tables.stderr))
+            print("FAIL: render --tables changed Home.md (exit %d): %s" % (tables.returncode, tables.stdout + tables.stderr))
             return 1
         full = run(sys.executable, criteria, "render", cwd=scratch)
         if full.returncode or read(home) == before[1]:
@@ -56,7 +55,7 @@ def main():
         if "Traceback" in audit.stderr:
             print("FAIL: docs.py audit raised: %s" % audit.stderr[-300:])
             return 1
-        print("OK: render --tables left README.md and Home.md alone; a plain render repaired them")
+        print("OK: render --tables left Home.md alone; a plain render repaired it")
         return 0
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
