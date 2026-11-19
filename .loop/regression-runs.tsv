@@ -90,7 +90,7 @@ checkin-passes-hook	PASS	2026-11-10
 ci-bad-target	PASS	2026-11-10	
 ci-issue-backlog	PASS	2026-11-10	
 ci-levels-setting	PASS	2026-11-10	
-ci-summary	PASS	2026-11-12	
+ci-summary	PASS	2026-11-19	
 ci-target-input	PASS	2026-11-10	
 config-holds-topics	PASS	2026-11-14	
 config-lane-duplicate-key	PASS	2026-11-15	
@@ -341,12 +341,12 @@ list-link-ids	PASS	2026-11-13
 list-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 list-tsv-raw	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 live-board-arrows	PASS	2026-11-12	
-live-board-cadence	PASS	2026-11-12	
+live-board-cadence	PASS	2026-11-19	
 live-board-flow	PASS	2026-11-12	
 live-board-header	PASS	2026-11-12	
 live-board-issues	PASS	2026-11-12	
 live-board-leftouts	PASS	2026-11-12	
-live-board-no-oneline	PASS	2026-11-12	
+live-board-no-oneline	PASS	2026-11-19	
 local-row-env	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lock-in-report	PASS	2026-11-19	
 ls-plist	FAIL	2026-11-13	
@@ -395,7 +395,7 @@ milestone-wording-unreviewed	PASS	2026-11-12
 milestones-once	PASS	2026-11-19	
 mon-stray-runs	PASS	2026-11-14	
 mon10-replan	PASS	2026-11-10	
-mon11-full-auto	PASS	2026-11-10	
+mon11-full-auto	PASS	2026-11-19	
 mon12-pool	PASS	2026-11-10	
 mon13-two-layers	PASS	2026-11-12	
 mon14-checkin-goal-lines	PASS	2026-11-16	
@@ -404,6 +404,7 @@ mon14-repo-blocks	PASS	2026-11-12
 mon15-merge-lock	PASS	2026-11-12	
 mon15-pod-owner	PASS	2026-11-12	
 mon16-checkin-grouped	PASS	2026-11-18	
+mon16-machine-line	PASS	2026-11-19	
 mon4-checkin-no-board	PASS	2026-11-10	
 mon5-checkin-machine-line	PASS	2026-11-16	
 mon5-for-cell-sentence	PASS	2026-11-16	
@@ -526,7 +527,7 @@ reply-hook-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 reply-hook-install	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 reply-hook-mon5-wording	PASS	2026-11-16	
 reply-hook-off	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-reply-hook-scope	PASS	2026-11-10	
+reply-hook-scope	PASS	2026-11-19	
 repo-full-suite-limit	PASS	2026-11-11	
 repo-narrow-178	PASS	2026-11-12	
 report-done-final	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -544,7 +545,7 @@ reviewed-lock	PASS	2026-11-19
 roadmap-closed-drops	PASS	2026-11-15	
 row-timeout-holds	PASS	2026-11-11	
 run-kind-filter	PASS	2026-11-10	
-run-ledger	PASS	2026-11-12	
+run-ledger	PASS	2026-11-19	
 runs-keep	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-partial	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 runs-same-day	PASS	2026-11-10	
@@ -678,6 +679,7 @@ toy-no-leftovers	PASS	2026-11-12
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
+unattended-sends-warn	PASS	2026-11-19	
 unproven-blocks	PASS	2026-11-19	
 unread-closes-none	PASS	2026-11-19	
 unread-not-green	PASS	2026-11-19	

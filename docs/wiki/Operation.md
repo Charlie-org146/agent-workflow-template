@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept known-red-sessions@c8f9d9fc -->
+Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 
@@ -18,12 +18,14 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 - OPS-1: **Unreviewed** One command starts the operation session
   - One command starts the operation session and drives the whole process the same way every time.
   - It governs only: it never builds.
+  - Three layers. Top is the owner's only session: governance only, the only reader of the owner and the only publisher of the board and the Loop Board, every 5 minutes. A machine session (one per machine) assigns goals, schedules sessions and memory, runs auto, check-ins, dry-runs and merges, and reports up to top. A worker has one goal and one worktree and talks only to its machine session.
 - OPS-20: **Unreviewed** Every ready goal gets its own worker
   - The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session, in parallel.
   - A goal waits only on goals it truly depends on; sharing files is not a reason to wait.
 - OPS-2: **Unreviewed** Live communication
   - A worker reports each change of step or status as it happens, and its result when it ends; the operation session sends a worker its answer or a follow-up.
   - Background processes are used only when a session can't be started or reached, and the board says so.
+  - Messages and fields. STATUS (machine to top, on change and every 30 minutes) carries main per repo, PR numbers, running, parked and idle sessions with reasons, and worker lines; PR per goal; merges; needs-owner with the exact words to answer and a recommendation. ASK, OWNER-WORDS and PRIORITY go between top and machine; MERGE-REQUEST and MERGE-GO go machine to machine, copied to top. A worker never talks to top or to another machine.
 - OPS-6: **Unreviewed** Clean up after every goal
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
 - OPS-10: **Unreviewed** Re-plan at every check-in
@@ -34,6 +36,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words.
   - Those wait for me.
   - A safety class is judged by what the action does, not by a word in its name.
+  - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's.
 - OPS-12: **Unreviewed** Session pool
   - The operation session keeps a pool of idle worker sessions, sized by one setting, and hands each ready goal one from the pool.
   - When the pool runs low it asks me to fill it, at the desktop.
@@ -46,12 +49,14 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 - OPS-16: **Unreviewed** Fill every free slot at once
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold.
   - A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit.
+  - Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets, while the caps stay the owner's.
 - OPS-18: **Unreviewed** I say it once
   - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again.
   - A record covers only the IDs it lists.
 - OPS-23: **Unreviewed** The operation session keeps itself running
   - On start the operation session runs a self-check and lists what is missing, each with its fix.
   - It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached.
+  - agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's.
 
 ### Non-functional
 
@@ -77,12 +82,14 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | One command starts the operation session <br> One command starts the operation session and drives the whole process the same way every time. <br> It governs only: it never builds. <br> Three layers. Top is the owner's only session: governance only, the only reader of the owner and the only publisher of the board and the Loop Board, every 5 minutes. A machine session (one per machine) assigns goals, schedules sessions and memory, runs auto, check-ins, dry-runs and merges, and reports up to top. A worker has one goal and one worktree and talks only to its machine session. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-1 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | One command starts the operation session <br> One command starts the operation session and drives the whole process the same way every time. <br> It governs only: it never builds. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-2
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Live communication <br> A worker reports each change of step or status as it happens, and its result when it ends; the operation session sends a worker its answer or a follow-up. <br> Background processes are used only when a session can't be started or reached, and the board says so. <br> Messages and fields. STATUS (machine to top, on change and every 30 minutes) carries main per repo, PR numbers, running, parked and idle sessions with reasons, and worker lines; PR per goal; merges; needs-owner with the exact words to answer and a recommendation. ASK, OWNER-WORDS and PRIORITY go between top and machine; MERGE-REQUEST and MERGE-GO go machine to machine, copied to top. A worker never talks to top or to another machine. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-2 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Live communication <br> A worker reports each change of step or status as it happens, and its result when it ends; the operation session sends a worker its answer or a follow-up. <br> Background processes are used only when a session can't be started or reached, and the board says so. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-6
@@ -113,6 +120,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Full auto mode <br> Full auto is off in a new repo until I turn it on. <br> With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. <br> Those wait for me. <br> A safety class is judged by what the action does, not by a word in its name. <br> Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-11 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Full auto mode <br> Full auto is off in a new repo until I turn it on. <br> With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a merge on another machine, or anything that contradicts my words. <br> Those wait for me. <br> A safety class is judged by what the action does, not by a word in its name. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-12
@@ -137,6 +145,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Fill every free slot at once <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. <br> A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. <br> Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets, while the caps stay the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-16 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | Fill every free slot at once <br> When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. <br> A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-18
@@ -155,6 +164,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. <br> agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-23 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ## Tests
@@ -178,7 +188,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [session-holds-slot](Tests#t-session-holds-slot) | requirement | OPS-1 | Given a goal in a worker session, when the parallel limit is counted, then it counts against the limit. | PASS 2026-11-12 |
 | [scripts-a-monitoring-under-19000](Tests#t-scripts-a-monitoring-under-19000) | requirement | OPS-1 | Given the workflow-monitoring scripts (board_report.py folded into board_log.py, whose --help exits 0), when their sizes are counted in LF bytes, then each is under 19,000 bytes. | PASS 2026-11-15 |
 | - | requirement | OPS-20 | no passing test | not enforced |
-| [worker-reports](Tests#t-worker-reports) | requirement | OPS-2 | Given a merged goal, when the board is shown, then it shows its pull request. | PASS 2026-11-19 |
+| [worker-reports](Tests#t-worker-reports) | requirement | OPS-2 | Given a merged goal, when the board is shown, then it shows its pull request. Given a goal with a PR, when a machine sends STATUS, then the worker line carries the PR number, and parked and idle sessions carry reasons. | PASS 2026-11-19 |
 | [worker-reports-live](Tests#t-worker-reports-live) | requirement | OPS-2 | Given a report to a running worker, when goal.py next runs, then the report reaches its agent once. | PASS 2026-11-09 |
 | [session-reports](Tests#t-session-reports) | requirement | OPS-2 | Given a worker session's step report, when it arrives, then it is recorded on its goal. | PASS 2026-11-12 |
 | [session-fallback](Tests#t-session-fallback) | requirement | OPS-2 | Given no session can be started, when a goal runs, then it falls back to a background process and the board says so. | PASS 2026-11-12 |
@@ -190,7 +200,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [guards-null-report-bind-mend](Tests#t-guards-null-report-bind-mend) | requirement | OPS-2 | Given a failed or stopped goal restarted by a worker bind or by mend, when its record is written, then report is an empty record, never null. | not run |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | OPS-6 | Given a goal whose pull request merged, when its worker reports merged, then its session goes back to the pool (archived above pool_size) and its worktree and branch are removed. | PASS 2026-11-10 |
 | [mon10-replan](Tests#t-mon10-replan) | requirement | OPS-10 | Given ready, mergeable and splittable goals, when the operation session re-plans, then each start, merge and split is logged once with its reason, shown in the check-in, and no running goal is stopped. | PASS 2026-11-10 |
-| [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | OPS-11 | Given full auto on and a standing owner rule recorded, when a worker asks a recommended question, then the recommendation is sent with the rule record and logged; money, security, destructive-kind, unknown-kind and safety-class-word questions wait; turning it off applies at the next decision. | PASS 2026-11-10 |
+| [mon11-full-auto](Tests#t-mon11-full-auto) | requirement | OPS-11 | Given full auto on and a standing owner rule recorded, when a worker asks a recommended question, then the recommendation is sent with the rule record and logged; money, security, destructive-kind, unknown-kind and safety-class-word questions wait; turning it off applies at the next decision. Given owner words relayed from top, when they are in a safety class or come from a peer, then they are refused, else counted. | PASS 2026-11-19 |
 | [auto-owner-words-wait](Tests#t-auto-owner-words-wait) | requirement | OPS-11 | Given full auto on and a standing owner rule recorded, when a question asks for the owner's words (an un-review, a criteria_max raise), then it is answered with its recommendation and not held for an owner-words record (o118, which supersedes #4287). | PASS 2026-11-17 |
 | [mon12-pool](Tests#t-mon12-pool) | requirement | OPS-12 | Given a session pool, when it runs low, then the check-in asks to create every missing session in one step; pool.py add fills it, no pool hides the ask, and a full pool makes ready goals wait with the fix. | PASS 2026-11-10 |
 | [set13-hooks-once-bullet](Tests#t-set13-hooks-once-bullet) | requirement | OPS-12 | Given a repo where setup runs the reply and govern hook commands several times, when it finishes, then each hook is installed exactly once (the SET-13 bullet on hooks; the app-session, pool and model bullets are not covered by this row). | PASS 2026-11-19 |
@@ -203,17 +213,16 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | OPS-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
 | [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | OPS-15 | Given a goal whose pull request merged, when the pr queue is read, then its ticket and beat are removed and it holds nobody. | not run |
 | [merge-leaves-queue-4343](Tests#t-merge-leaves-queue-4343) | requirement | OPS-15 | Given a merged goal, when merge.py finishes the merge, then its pr-queue ticket and beat are gone. | not run |
-| [mon16-machine-line](Tests#t-mon16-machine-line) | requirement | OPS-16 | Given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows. | not run |
+| [mon16-machine-line](Tests#t-mon16-machine-line) | requirement | OPS-16 | Given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows. Given a goal budget above the owner's cap, when the defaults check runs, then it is reported; only the owner raises a cap. | PASS 2026-11-19 |
 | [mon16-memory-floor](Tests#t-mon16-memory-floor) | requirement | OPS-16 | Given free commit memory under min_free_memory_gb, when goals are ready, then none starts and each is held as memory low. | not run |
 | [mon16-checkout-ff](Tests#t-mon16-checkout-ff) | requirement | OPS-16 | Given a main checkout behind origin/main, when the pass runs, then the check-in asks a free worker to fast-forward it. | not run |
 | [mon16-checkin-grouped](Tests#t-mon16-checkin-grouped) | requirement | OPS-16 | Given a check-in, when it prints, then the Machine line follows the headline and each repo block is grouped by release milestone, then feature, with each goal's marker, time left and machine, and a docs.tsv row with a third column is read by its first two. | PASS 2026-11-18 |
-| [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | OPS-18 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. | not run |
 | [unattended-loop-recreate](Tests#t-unattended-loop-recreate) | requirement | OPS-18 | Given a check-in loop with under a day left, when the status is read, then it says RECREATE. | not run |
 | [unattended-standing-worker-refused](Tests#t-unattended-standing-worker-refused) | requirement | OPS-18 | Given a worker session, when it adds a standing instruction, then it is refused. | not run |
 | [unattended-selfcheck-missing](Tests#t-unattended-selfcheck-missing) | requirement | OPS-18 | Given a main checkout behind origin, when the start-up self-check runs, then it lists it as MISSING with its fix (the routine-rules line runs audit.py permissions check). | not run |
 | [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | OPS-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
 | - | requirement | OPS-18 | no passing test | not enforced |
-| - | requirement | OPS-23 | no passing test | not enforced |
+| [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | OPS-23 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. Given an agent_command with the two-token --allowedTools form, when the defaults check runs, then it reports it and applying it stays the owner's. | PASS 2026-11-19 |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | OPS-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | OPS-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | OPS-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
