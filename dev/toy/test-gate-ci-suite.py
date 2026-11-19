@@ -88,8 +88,9 @@ def fake_run(args, *a, **k):
 
 
 def call(*argv):
-    out, old = io.StringIO(), os.getcwd()
+    out, old, role = io.StringIO(), os.getcwd(), os.environ.get("LOOP_ROLE")
     os.chdir(repo)
+    os.environ["LOOP_ROLE"] = ""  # promote is the operation session's: a lane or a worker shell must not refuse it
     sys.argv = ["x"] + list(argv)
     subprocess.run = fake_run
     try:
@@ -102,6 +103,7 @@ def call(*argv):
     finally:
         subprocess.run = real_run
         os.chdir(old)
+        os.environ["LOOP_ROLE"] = role or ""
     return code, out.getvalue()
 
 
