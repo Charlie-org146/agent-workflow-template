@@ -1,7 +1,7 @@
 # The 11 workflow-docs scripts go under the 19,000-byte target by trims and cohesive splits only, behaviour unchanged, no scattering, net files 0 or fewer in the package listing (package cap 100 holds), so the v2.0 gate's full suite has no size FAIL (TOP-DECISION 55 and 57, o195 no waivers)
 
 - Slug: known-red-w11-docs-size
-- Touches: not declared
+- Touches: skills/workflow-docs/scripts/audit.py, skills/workflow-docs/scripts/counting.py, skills/workflow-docs/scripts/criteria.py, skills/workflow-docs/scripts/deployments.py, skills/workflow-docs/scripts/docs.py, skills/workflow-docs/scripts/entry.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/pageformat.py, skills/workflow-docs/scripts/prd.py, skills/workflow-docs/scripts/prdcopy.py, skills/workflow-docs/scripts/render.py, skills/workflow-docs/scripts, .loop/regression.tsv, docs/wiki/Tests.md, docs/wiki/Documentation.md, docs/wiki/How-to-use-Documentation.md
 - ETA: 225 active minutes (estimate 177m plus a 25% margin, rough)
 
 ## Done lines
