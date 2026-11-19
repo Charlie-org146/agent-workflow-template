@@ -386,7 +386,7 @@ def notrun_todo(root, slug, ids, live):
 
 def owed_record(root, args, today, read_rows):
     rows, runner, row_id = read_rows(root), (args.runner or "").strip(), args.id
-    live = args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"))
+    live = args.live
     if row_id not in rows:
         sys.exit("REFUSED: no row %s. Fix: add it first." % row_id)
     if not runner or "\t" in runner or "\n" in runner:
