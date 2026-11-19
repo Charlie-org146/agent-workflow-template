@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept known-red-w4b-docs-wording@33d4539f -->
+Review: **Unreviewed** <!-- kept known-red-w4b-docs-wording@c2470d39 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
