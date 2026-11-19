@@ -154,4 +154,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept plan-red-team-core@f02d830a -->
+<!-- kept known-red-waves-batch@3411a49f -->
