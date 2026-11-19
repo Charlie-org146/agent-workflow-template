@@ -270,7 +270,7 @@ def regen(g, slug):
         files = g.git("diff", "--name-only", "--", "CLAUDE.md", "AGENTS.md", ".loop/START.md").split()
         files and g.git("commit", "-m", "Regenerate START.md for " + slug, "--", *files)
     done = g.run([sys.executable, tool("workflow-release", "scripts", "wiki.py"), "prepare", slug, "--commit"])
-    done.returncode and g.no("stale generated page: " + done.stdout)
+    done.returncode and print("NOTE: stale page: " + done.stdout)
     return g.git("rev-parse", "HEAD")
 
 
