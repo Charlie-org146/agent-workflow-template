@@ -173,8 +173,7 @@ None
 | - | requirement | REL-1 | no passing test | not enforced |
 | [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | REL-2 | Given a milestone with an open issue the owner has not moved by name, when review.py gate runs, then it refuses naming the issue; an issue with a waiver whose owner record names it does not refuse. | not run |
 | - | requirement | REL-2 | no passing test | not enforced |
-| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. | not run |
-| [gate-ci-suite](Tests#t-gate-ci-suite) | requirement | REL-3 | Given a GitHub Actions run of the regression workflow, when review.py gate or promote takes it with --suite-from, then it refuses unless the run is on the gate ref, completed, fully reported with nothing UNRUN and logging every land or nightly row, and it refuses exactly the rows that are not PASS without a waiver. | not run |
+| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. Also, given a CI run that is for another commit, unfinished, cut by budget or missing rows, when the gate takes it with --suite-from, then it refuses as not covering the candidate. | not run |
 | - | requirement | REL-3 | no passing test | not enforced |
 | [rel-checks-refused](Tests#t-rel-checks-refused) | requirement | REL-4 | Given a failing health check, a requirement that is not Reviewed or a stale wiki page, when the gate runs, then it refuses naming the check, the requirement or the page. | not run |
 | - | requirement | REL-4 | no passing test | not enforced |
