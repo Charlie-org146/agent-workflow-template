@@ -45,8 +45,7 @@ Without the switch it refuses, and the owner merges. `ask`, `cut` and `leave` be
 
 ## `merge <slug>`
 
-`MERGED <url> into main` means it merged. `REFUSED` means the switch is off, the goal has no finished pull request, or
-the pull request isn't open.
+`MERGED <url> into main` means it merged. `REFUSED` means the switch is off, the goal has no finished pull request, or the pull request isn't open.
 
 ## 1. Ask
 
