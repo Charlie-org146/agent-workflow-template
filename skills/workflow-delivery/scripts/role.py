@@ -330,6 +330,9 @@ def undo(top, paths):
             run("checkout", "-q", "HEAD", "--", path)
 
 
+NO_PUSH = "REFUSED: the bookkeeping commit did not land, so nothing was pushed (a head that moves after CI starts, #5178). Fix: remove the cause above, then run goal.py pr again."
+
+
 def record(state, base):
     top = git_out("rev-parse", "--show-toplevel")
     if top:
@@ -355,12 +358,14 @@ def record(state, base):
                     print("NOTE: the bookkeeping commit failed: %s; those files were put back (a new file stays, untracked), so "
                           "the next pr run derives them again" % ((done.stderr or done.stdout).strip().splitlines() or ["?"])[-1])
                     undo(top, changed)
+                    sys.exit(NO_PUSH)
         except subprocess.TimeoutExpired as error:
             print("NOTE: the bookkeeping step timed out (%s); nothing more committed" % " ".join(error.cmd[:3]))
             lock = os.path.join(top, git_out("rev-parse", "--git-path", "index.lock"))
             if error.cmd[0] == "git" and os.path.exists(lock):
                 os.remove(lock)
             undo(top, changed)
+            sys.exit(NO_PUSH)
     state["pr_lane"] = lane_part(state.get("slug", ""))
     head = git_out("rev-parse", "HEAD")
     state["pr_head"] = head
