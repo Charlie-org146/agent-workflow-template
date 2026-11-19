@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py
+# reads: skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/board_status.py skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/machines.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/sessions.py
 """MON-1, MON-2, MON-5, MON-11, MON-16 (three layers): top builds one board from every machine's STATUS and is the only
 publisher, a machine prints one line, the relay rule, the budget and agent_command checks, and the reply hook's machine mode."""
 import json
@@ -9,11 +9,23 @@ import subprocess
 import sys
 import tempfile
 import time
+import types
 
 here = os.path.dirname(os.path.abspath(__file__))
 scripts = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts")
 sys.path.insert(0, scripts)
-import layers  # noqa: E402
+import board_lines  # noqa: E402
+import board_status  # noqa: E402
+import govern_hook  # noqa: E402
+import machines  # noqa: E402
+import notify  # noqa: E402
+
+# The old layers.py was split by cohesion: the name each piece went to is the one place this table says so.
+layers = types.SimpleNamespace(
+    board=board_lines.board, collect=board_lines.collect, publish_board=board_lines.publish_board,
+    defaults=govern_hook.defaults, check_allowed=govern_hook.check_allowed, check_budgets=govern_hook.check_budgets,
+    relay=govern_hook.relay, send=notify.send, one_line=machines.one_line, role=machines.role,
+    machine_reply=board_status.machine_reply, machines=machines)
 
 fails = 0
 

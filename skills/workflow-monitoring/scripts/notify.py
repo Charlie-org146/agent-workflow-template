@@ -6,23 +6,24 @@ usage: notify.py send [--checkin FILE] [--root DIR]   what operate.py runs after
        notify.py ready [--root DIR]                   operate.py start: the readiness table of a new operation session (MON-1)
        notify.py timer [created] [--root DIR]         operate.py timer: the check-in timer to show the owner; created records it (MON-5)
 
-Off unless `notify_email` is true in this machine's flow file (`$LOOP_FLOW` or ~/.workflow-loop/flow.json); off, it
-prints nothing and sends nothing. The events: each numbered item under Needs you in the check-in (default
-<git common dir>/loop/checkin.txt, which operate.py writes), a goal stopped or failed, a goal past its hard ETA, and a
-goal merged and released. One mail per event, naming the goal and what to do, through workflow-health's mail.py
-(digest_mail picks the sender) with the variables in the schedule's mail.env (`$LOOP_MAIL_ENV`, else
-`$LOOP_SCHEDULE_HOME`/mail.env, else ~/.workflow-loop/schedule/mail.env), outside the repo. The keys already sent are
-kept in <git common dir>/loop/notified.json, so a repeat sends nothing; the first run there records every current event
-and sends none. No printed line or kept file holds the address.
+Off unless `notify_email` is true in this machine's flow file (`$LOOP_FLOW` or ~/.workflow-loop/flow.json); off, it prints nothing
+and sends nothing. Events: each numbered Needs you item in the check-in (default <git common dir>/loop/checkin.txt, written by
+operate.py), a goal stopped or failed, past its hard ETA, or merged and released. One mail per event through workflow-health's
+mail.py (digest_mail picks the sender) with the variables in the schedule's mail.env (`$LOOP_MAIL_ENV`, else `$LOOP_SCHEDULE_HOME`/
+mail.env, else ~/.workflow-loop/schedule/mail.env), outside the repo. Sent keys are kept in <git common dir>/loop/notified.json: a
+repeat sends nothing, and the first run records every current event and sends none. No printed line or kept file holds the address.
+It also builds and sends this machine's STATUS to top (MON-2).
 """
 import argparse
 import datetime
+import hashlib
 import importlib
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 
 # Match the subprocess prompt guard used throughout the delivery tools (DEL-10).
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -30,6 +31,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import auto  # noqa: E402
+import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
 import machines  # noqa: E402
@@ -39,8 +41,60 @@ SECRETS = ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAI
 HEAD = re.compile(r"^[\s>#*_`-]*([A-Za-z ]+?)[\s:*_`]*(?:\(\d+\))?\s*$")
 
 
+def number(url):
+  found = re.search(r"(\d+)\s*$", str(url or ""))
+  return int(found.group(1)) if found else 0
+
+
+def build(common, cfg, now=None):
+  """This machine's STATUS as data, from its run records and session pool."""
+  folder, workers, merges, parked, idle, needs = os.path.join(common, "loop"), [], [], [], [], []
+  for name in sorted(os.listdir(os.path.join(folder, "runs"))) if os.path.isdir(os.path.join(folder, "runs")) else []:
+    run = machines.read_json(os.path.join(folder, "runs", name)) if name.endswith(".json") else {}
+    if not run.get("slug") or graph.foreign(run) or run.get("external"):
+      continue
+    slug, status, pr = run["slug"], run.get("status"), number(run.get("pr"))
+    if status in ("running", "waiting", "failed", "stopped", "done") and not (status == "done" and run.get("step") == "release"):
+      workers.append({"slug": slug, "step": run.get("step"), "status": status, "pr": pr})
+    if status == "done" and run.get("step") == "release":
+      merges.append({"slug": slug, "pr": pr})
+    ask = run.get("waiting") or {}
+    if status == "waiting" and ask.get("ask"):
+      needs.append({"slug": slug, "words": ask.get("ask"), "recommend": ask.get("recommend") or "", "options": ask.get("words") or []})
+    if status in ("failed", "stopped") or run.get("held"):
+      parked.append({"slug": slug, "reason": "%s at %s" % (status if status in ("failed", "stopped") else "held", run.get("step") or "no step")})
+  pool = graph.read_pool(os.path.join(folder, "session-pool.json"))[0] or {}
+  for sid, item in sorted(pool.items()):
+    if isinstance(item, dict) and item.get("state") == "free":
+      idle.append({"session": item.get("name") or sid, "reason": "free in the pool, no ready goal"})
+  root = os.path.dirname(common) if os.path.basename(common) == ".git" else os.getcwd()
+  base = cfg.get("base") or "main"
+  main = {os.path.basename(root): machines.sh("rev-parse", "--short", "origin/" + base, cwd=root) or "unknown"}
+  return {"machine": machines.me(), "at": now if now is not None else time.time(), "main": main, "workers": workers,
+    "merges": merges, "parked": parked, "idle": idle, "needs_owner": needs}
+
+
+def fingerprint(status):
+  return hashlib.sha1(json.dumps({k: v for k, v in status.items() if k != "at"}, sort_keys=True).encode()).hexdigest()
+
+
+def send(common, cfg, force=False, now=None):
+  """Send STATUS to top on change and every 30 minutes; returns (STATUS, 'sent'|'no change')."""
+  now = now if now is not None else time.time()
+  status, mark = build(common, cfg, now), os.path.join(common, "loop", "status-sent.json")
+  bs.mark_role(common)
+  last = machines.read_json(mark)
+  if not force and last.get("sha") == fingerprint(status) and now - float(last.get("at") or 0) < machines.STALE_SECONDS:
+    return status, "no change"
+  machines.write(os.path.join(common, "loop", "status", status["machine"] + ".json"), status)
+  machines.write(mark, {"sha": fingerprint(status), "at": now})
+  if machines.shared():
+    machines.write_ref(machines.REF + status["machine"], status, machines.read_ref(machines.REF + status["machine"])[1])
+  return status, "sent"
+
+
 def mailer():
-  """workflow-health's mail.py (it brings rounds.py), loaded only when there is something to send."""
+  """workflow-health's mail.py, loaded only when there is something to send."""
   sys.path.insert(1, HEALTH)
   return importlib.import_module("mail")  # another skill's script: no static import, so the package scan sees none
 
@@ -49,13 +103,7 @@ def say(text):
   print("NOTIFY: " + (sys.modules["mail"].scrub(text) if "mail" in sys.modules else str(text)))
 
 
-def read_json(path):
-  try:
-    with open(path) as handle:
-      data = json.load(handle)
-      return data if isinstance(data, dict) else {}
-  except (OSError, ValueError):
-    return {}
+read_json = machines.read_json
 
 
 def flow_path():
@@ -210,7 +258,7 @@ def cmd_send(args):
 
 
 def approve(args, path, top, common):
-  """monitor.py plan approve: the owner's plan (plan-round.json) written into the queue lines. Needs an owner-words record; any refusal changes nothing."""
+  """monitor.py plan approve: the owner's plan (plan-round.json) written into the queue lines; any refusal changes nothing."""
   keys = ("release", "machine", "agent")
   plan = read_json(path)
   plan = plan if isinstance(plan, dict) else {}
@@ -254,7 +302,7 @@ def cmd_status(args):
 
 
 def timer_lines(folder, cadence):
-  """MON-5: Needs you text for a check-in timer that is missing, or stale (the cadence changed); [] when fine or the cadence is off."""
+  """MON-5: Needs you text for a check-in timer that is missing or stale; [] when fine or the cadence is off."""
   if str(cadence) == "off":
     return []
   seen = str(read_json(os.path.join(folder, "timer.json")).get("cadence") or "")

@@ -144,7 +144,8 @@
     "reply",
     "snapshot",
     "take",
-    "turn"
+    "turn",
+    "defaults"
   ],
   "writes": [
     ".loop/config.json, .loop/queue.md, .loop/findings.md, .loop/goals/<slug>.md in the repo",

@@ -14,9 +14,11 @@ import re
 import statistics
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import machines  # noqa: E402
 import board_page  # noqa: E402
 # board_log sets the no-prompt guard (GIT_TERMINAL_PROMPT and the rest) before any git or gh process starts.
 from board_log import (COMMON, FLOW, HOLD, STEPS, UNHOLD, active_minutes, after, current, flow_seconds, git, goal_file,  # noqa: E402,F401
@@ -28,6 +30,30 @@ from board_model import (CANDIDATES, CELLS, LABELS, MIN_BACKTEST, MODEL, SIMILAR
                          steps_for, table)
 
 ASKING = ("waiting", "failed", "stopped")
+
+
+LINE = re.compile(r"^\W*\d{1,2}:\d{2}\b.*\b(STATUS sent|no change)\b", re.I)
+
+
+def mark_role(common, sid=""):
+    """Record that this operation session runs as a machine, for reply_hook.py's machine mode."""
+    sid = sid or os.environ.get("CLAUDE_SESSION_ID", "")
+    if re.match(r"^[A-Za-z0-9_-]{1,128}$", sid):
+        machines.write(os.path.join(common, "loop", "reply-hook", sid + ".role"), {"role": "machine"})
+
+
+def machine_reply(text, common, now=None):
+    """MON-5 machine mode: what a machine session's check-in is missing. It is one line, the time then 'STATUS sent' or
+    'no change', and it is only right once STATUS went to top within 30 minutes."""
+    lines = [l for l in str(text or "").splitlines() if l.strip()]
+    if len(lines) != 1 or not LINE.match(lines[0]):
+        return ["a machine check-in is one line: the time, then 'STATUS sent' or 'no change'"]
+    path = os.path.join(common, "loop", "status", machines.me() + ".json")
+    try:
+        sent = (now if now is not None else time.time()) - os.path.getmtime(path) <= machines.STALE_SECONDS + 300
+    except OSError:
+        sent = False
+    return [] if sent else ["STATUS has not gone to top in the last 30 minutes; run machines.py status first"]
 
 
 def timed(text, what="%r"):

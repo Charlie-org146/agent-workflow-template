@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """What the live board draws, in one module (three were merged to keep the skill package under its file cap):
 
-1. The Dependencies graph (issues 94 and 123):
-The live board's Dependencies section as a graph a phone can read (issues 94 and 123): running and queued goals, top
-to bottom, one band per depth, at most 60 columns, with a legend. Pure functions; imported, not run.
+1. The Dependencies graph (issues 94 and 123): running and queued goals, top to bottom, one band per depth, at most 60 columns,
+with a legend. Pure functions; imported, not run.
 
   [>] running   [=] holding or paused   [ ] queued   [?] waiting on you   [!] stuck
 
@@ -11,29 +10,24 @@ Goals that wait on nothing come first, packed side by side; each later band list
 (`[ ] c <- a, b`), so a goal that waits on several is drawn once with every arrow. A `|` / `v` joins the bands. A goal in
 a cycle carries `(cycle)` and the cycle is drawn once, never followed. No goals: `- (none)`.
 
-2. Issues lines a phone can read (issue 97):
-Issues lines a phone can read (issue 97). A stopped or failed goal is shown by its cause in plain words, never by
-the agent's raw output, and goals stopped by one cause share one line: "usage limit: 4 goals paused until Nov 11
-16:00; they resume by themselves" (only where resume_on_limit is on). While every live goal is paused by one cause, the finish says "paused until ...".
-Pure functions; imported by live_board.py, not run.
+2. Issues lines a phone can read (issue 97): a stopped or failed goal is shown by its cause in plain words, never by the agent's
+raw output, and goals stopped by one cause share one line: "usage limit: 4 goals paused until Nov 11 16:00; they resume by
+themselves" (only where resume_on_limit is on). While every live goal is paused by one cause, the finish says "paused until ...".
 
   cause(run)          (key, words, until): the plain cause of a failed or stopped goal
   stuck(runs)         the Issues lines for failed and stopped goals, grouped by cause, each with its fix
   paused(runs)        "paused until <when>" when all live goals wait out one usage limit, else ""
 
-3. Pull request states and the health verdict, fast (MON-9):
-Pull request states for the board, fast (MON-9: the board builds in under 10 seconds). gh is asked in parallel, each
-call bounded, and a MERGED answer is kept in <git common dir>/loop/pr-states.json for good (OPEN and CLOSED can change,
-so they are asked each time, all at once). The file is written whole through a temp file and os.replace, so
-a reader never sees half of it; when two writers race, the last one wins and a lost answer is only asked again.
+3. Pull request states and the health verdict, fast (MON-9: the board builds in under 10 seconds). gh is asked in parallel, each
+call bounded, and a MERGED answer is kept in <git common dir>/loop/pr-states.json for good (OPEN and CLOSED can change, so they are
+asked each time). The file is written whole through a temp file and os.replace; when two writers race, the last one wins.
 Imported by live_board.py, board.py and pool.py, not run.
 
   states(runs, root)  {slug: MERGED|CLOSED|OPEN|""} for each done, unmerged run with a pull request
   state(url, root)    one pull request's state ("" when gh can't say)
 
-4. The per-goal budget and decided-depth lines, and the private-name Issues lines (DEL-8, DEL-6, DEL-9):
-Imported by live_board.py (as bb); were board_budget.py.
-
+4. The per-goal budget and decided-depth lines, and the private-name Issues lines (DEL-8, DEL-6, DEL-9): imported by live_board.py
+(as bb); were board_budget.py.
 """
 import concurrent.futures
 import importlib.util
@@ -46,6 +40,7 @@ import sys
 import time
 import board_page
 import board_status as bs
+import machines
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
@@ -53,6 +48,52 @@ WIDTH = 60
 MARKS = {"running": ">", "held": "=", "paused": "=", "holding": "=", "awaiting merge": "=", "done": "=", "queued": " ",
          "waiting": "?", "failed": "!", "stopped": "!", "stuck": "!", "silent": "!", "freezing": ">", "merged": "x"}
 LEGEND = "[>] running [=] holding [ ] queued [?] you [!] stuck"
+
+
+def collect(common):
+    """Every machine's latest STATUS: the local status folder, then each published ref (the newer wins)."""
+    found, folder = {}, os.path.join(common, "loop", "status")
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        item = machines.read_json(os.path.join(folder, name)) if name.endswith(".json") else {}
+        if item.get("machine"):
+            found[item["machine"]] = item
+    if machines.shared():
+        for ref in (machines.sh("ls-remote", "origin", machines.REF + "*") or "").splitlines():
+            peer = machines.read_ref(ref.split()[-1])[0]
+            if peer and peer.get("machine") and float(peer.get("at") or 0) >= float((found.get(peer["machine"]) or {}).get("at") or 0):
+                found[peer["machine"]] = peer
+    return [found[k] for k in sorted(found)]
+
+
+def board(statuses, now=None):
+    """Top's board order: Needs you, stale STATUS call-outs, Running, PRs, Merges, Parked and idle, Main. One board for all machines."""
+    now, out = now if now is not None else time.time(), []
+    ages = {s["machine"]: int((now - float(s.get("at") or 0)) // 60) for s in statuses}
+    needs = [(s["machine"], n) for s in statuses for n in s.get("needs_owner", [])]
+    out.append("Needs you" + (" (%d)" % len(needs) if needs else ""))
+    out += ["  %d. [%s/%s] %s -> recommended: %s" % (i, m, n.get("slug"), n.get("words"), n.get("recommend") or "none") for i, (m, n) in enumerate(needs, 1)] or ["  Nothing needs you"]
+    stale = [m for m, a in sorted(ages.items()) if a * 60 > machines.STALE_SECONDS]
+    out += ["STALE: %s STATUS is %d minutes old (over 30)" % (m, ages[m]) for m in stale]
+    sections = (("Running", lambda s: ["%s/%s %s %s" % (s["machine"], w["slug"], w.get("step"), w.get("status")) for w in s.get("workers", []) if w.get("status") == "running"]),
+                ("PRs", lambda s: ["%s/%s #%s" % (s["machine"], w["slug"], w["pr"]) for w in s.get("workers", []) if w.get("pr")]),
+                ("Merges", lambda s: ["%s/%s #%s" % (s["machine"], m["slug"], m.get("pr")) for m in s.get("merges", [])]),
+                ("Parked and idle", lambda s: ["%s/%s parked: %s" % (s["machine"], p["slug"], p["reason"]) for p in s.get("parked", [])]
+                 + ["%s/%s idle: %s" % (s["machine"], i["session"], i["reason"]) for i in s.get("idle", [])]),
+                ("Main", lambda s: ["%s %s %s" % (s["machine"], r, v) for r, v in sorted((s.get("main") or {}).items())]))
+    for title, lines in sections:
+        rows = [row for s in statuses for row in lines(s)]
+        out.append(title + (" (%d)" % len(rows) if rows else ""))
+        out += ["  " + row for row in rows] or ["  none"]
+    return "\n".join(out)
+
+
+def publish_board(common, cfg, now=None):
+    """Top only: build, write and return the one board (its file is what Loop Board publishing reads)."""
+    text = board(collect(common), now)
+    write_text = os.path.join(common, "loop", "top-board.txt")
+    with open(write_text, "w", encoding="utf-8") as handle:
+        handle.write(text + "\n")
+    return text
 
 
 def box(node, cut):
@@ -131,8 +172,7 @@ def cause(run):
 
 def stuck(runs, auto_resume=False):
     """Grouped lines: one per cause shared by two or more goals, one per goal otherwise. auto_resume is the repo's
-    resume_on_limit, so the fix says what really happens after a usage limit. Each line pair stays short;
-    live_board.fit wraps anything over 60 columns at word boundaries."""
+    resume_on_limit, so the fix says what really happens after a usage limit."""
     groups = {}
     for run in runs:
         if run.get("status") in ("failed", "stopped"):
@@ -253,8 +293,8 @@ finally:
 
 
 def health(root, script):
-    """workflow-health's last verdict with its age ("green, 2h ago"), never run inline: the board stays fast. A verdict
-    older than HEALTH_TTL starts one detached refresh (a lock file keeps it to one); none yet reads "unknown (checking)"."""
+    """workflow-health's last verdict with its age ("green, 2h ago"), never run inline. One older than HEALTH_TTL starts
+    one detached refresh; none yet reads "unknown (checking)"."""
     path = cache_path(root).replace("pr-states.json", "health-verdict.json")
     if not path:
         return "unknown"

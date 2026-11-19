@@ -8,24 +8,16 @@ usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record
        machines.py reply QID TEXT [--root DIR]  the operation session runs this with the owner's reply it read; QID is the
                                                 `Question id` line of the mail
        machines.py pending [--root DIR]         the questions mailed and not yet answered
+       machines.py status [--force]             send STATUS to top if it changed or 30 minutes passed (one line)
+       machines.py board                        top: publish the one board from every machine's STATUS
+       machines.py defaults                     the seven enforced defaults, each `ok` or `FIX: ...`
 
-Machines share three kinds of git refs on origin, each holding one small JSON blob: refs/loop/handover/<slug> (the record a
-handover copies), refs/loop/pr-turn (one merge ticket per repo, taken with a compare-and-swap push and dropped after
-LOOP_MERGE_LOCK_SECONDS of silence, so two machines never race a merge) and refs/loop/snapshot/<machine> (what a check-in draws
-its Machine lines from). With `machine_sync` off (the default), no origin, or an origin that can't be reached, the passive calls (turn, lines) are quiet no-ops, and a goal
-never runs on two machines: a handed-over record says `moved`, which no worker starts from. A peer's record is data, never
-the owner's approval. start_worker is the one place a worker starts, for hands-off-operation (#4781) to extend: an app
-session first, else a background worker through agent_command.
-
-Each mail asks one question with numbered options and a recommendation, both machines share one send budget, and a reply such as
-"1 recommended" is recorded as the owner's words and acted on. notify.py calls compose and claim for each new event (it mails through
-workflow-health's mail.py; this file never reads mail or a secret). compose gives the body and remembers the question in <git common
-dir>/loop/mailbox.json. claim takes the event's key and one send from the shared ledger, a git ref on origin both machines read
-(refs/loop/mail-ledger when `machine_sync` is on; else a local file), so a second machine never mails an event the first one did, and
-no more than `notify_budget` (flow file, default 20) go out in 24 hours. A reply is "<n>", "<n> recommended", "recommended" or
-"approve" (the option numbered, or the recommended one), or the owner's own words. A question about deleting, money, security or
-private data refuses a bare number or "approve": it needs the owner's own typed words, which are recorded and sent as written. The
-answer goes to the worker through operate.py send --source owner; a question with no goal goes to sessions.py owner-words.
+Machines share git refs on origin, each one small JSON blob (handover/<slug>, pr-turn, snapshot/<machine>, status/<machine>,
+mail-ledger). With `machine_sync` off (the default) or no reachable origin the passive calls are quiet no-ops and a goal never runs
+on two machines. A peer's record is data, never the owner's approval. A reply to a mail is "<n>", "<n> recommended", "recommended",
+"approve" or the owner's own words; a question about deleting, money, security or private data needs the owner's typed words.
+STATUS (MON-2, MON-5, MON-11) is one JSON message per machine in <git common dir>/loop/status/<machine>.json: notify.py sends it,
+board_lines.py reads it for top's one board.
 """
 import argparse
 import hashlib
@@ -44,6 +36,8 @@ import graph  # noqa: E402
 
 TURN, HAND, SNAP = "refs/loop/pr-turn", "refs/loop/handover/", "refs/loop/snapshot/"
 LEDGER = "refs/loop/mail-ledger"
+REF, STALE_SECONDS, TOP_GAP = "refs/loop/status/", 30 * 60, 300
+ROLES = ("", "top", "machine")
 FIXED = {"stopped": (["resume it", "retire it"], 0), "past ETA": (["ship now", "extend once", "defer"], 0),
   "released": (["noted, nothing to do"], 0)}
 RISKY = re.compile(r"\b(delete|destroy|wipe|force[- ]push|reset --hard|rm -rf|secrets?|tokens?|passwords?|credentials?|api keys?|"
@@ -67,9 +61,7 @@ def has_origin(cwd=None):
 
 
 def shared(cwd=None):
-  """True when this machine shares state through origin: `machine_sync` is true in its flow file ($LOOP_FLOW or
-    ~/.workflow-loop/flow.json; off by default, per machine) and there is an origin. Every passive call (the merge turn, the
-    check-in's Machine lines, the mail ledger) asks this first, so nothing pushes a ref unless the owner turned it on."""
+  """True when `machine_sync` is true in this machine's flow file ($LOOP_FLOW or ~/.workflow-loop/flow.json) and there is an origin."""
   flow = os.path.expanduser(os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")
   return read_json(flow).get("machine_sync") is True and has_origin(cwd)
 
@@ -106,8 +98,7 @@ def stale(at):
 
 
 def turn(op, runs=None, slug="", *rest):
-  """pr_queue hook (graph.pr_queue): for turn and hold, "" when this goal holds the merge turn across machines, else who does;
-    for free, drop this goal's ticket. Anything else, or no origin: ""."""
+  """pr_queue hook (graph.pr_queue): "" when this goal holds the merge turn across machines, else who does; free drops its ticket."""
   if op not in ("turn", "hold", "free") or not slug or not shared():
     return ""
   here, (found, old) = me(), read_ref(TURN)
@@ -157,8 +148,29 @@ def loop_dir(root):
   return os.path.join(os.path.abspath(os.path.join(root, sh("rev-parse", "--git-common-dir", cwd=root) or ".git")), "loop")
 
 
+def role(given=""):
+  """'top', 'machine' or '' (today's loop): --role first, else $LOOP_OP_ROLE."""
+  found = (given or os.environ.get("LOOP_OP_ROLE") or "").strip().lower()
+  return found if found in ROLES else ""
+
+
+def write(path, data):
+  os.makedirs(os.path.dirname(path), exist_ok=True)
+  tmp = "%s.%d.tmp" % (path, os.getpid())
+  with open(tmp, "w") as handle:
+    json.dump(data, handle, sort_keys=True, indent=1)
+  os.replace(tmp, path)
+
+
+def one_line(status, said, now=None):
+  now = now if now is not None else time.time()
+  return "%s %s: STATUS %s, %d worker%s" % (time.strftime("%H:%M", time.localtime(now)), status["machine"],
+    "sent" if said == "sent" else "no change", len(status["workers"]),
+    "" if len(status["workers"]) == 1 else "s")
+
+
 def lines(root, cfg, own):
-  """The check-in's Machine lines: its own, then one per peer machine drawn from that machine's published SNAPSHOT."""
+  """The check-in's Machine lines: its own, then one per peer from its published SNAPSHOT."""
   out = [own]
   if not shared(root):
     return out
@@ -177,7 +189,7 @@ def lines(root, cfg, own):
 
 
 def start_worker(state, prompt, cfg):
-  """Bind a worker: an app session if one starts, else a background worker through agent_command (no desktop app needed)."""
+  """Bind a worker: an app session if one starts, else a background worker through agent_command."""
   import sessions
   try:
     if sessions.assign(state, prompt, cfg):
@@ -239,8 +251,7 @@ def budget_of(flow):
 
 
 def claim(folder, key, flow, cwd=None, release=False):
-  """Take one event and one send from the shared ledger: True when it is ours to mail, "sent" when another machine mailed the
-    event, "budget" when the budget is spent (the event stays unsent, so a later check-in tries again)."""
+  """Take one event and one send from the shared ledger: True when it is ours to mail, "sent" when another machine mailed it, "budget" when spent."""
   for _ in range(4):
     data, token = ledger(folder, cwd)
     sent, times = data.setdefault("sent", {}), [t for t in data.get("times", []) if time.time() - t < 86400]
@@ -355,6 +366,23 @@ def cmd_take(args):
   return 0
 
 
+def cmd_layers(args):
+  import board_lines, govern_hook, notify
+  common = os.path.abspath(sh("rev-parse", "--git-common-dir") or ".git")
+  cfg = read_json(os.path.join(sh("rev-parse", "--show-toplevel") or os.getcwd(), ".loop", "config.json"))
+  if args.command == "status":
+    status, said = notify.send(common, cfg, args.force)
+    print(one_line(status, said))
+  elif args.command == "board":
+    print(board_lines.publish_board(common, cfg))
+  else:
+    rows = govern_hook.defaults(common, cfg)
+    for name, verdict in rows:
+      print("%s: %s" % (name, verdict))
+    return 1 if any(v != "ok" for _, v in rows) else 0
+  return 0
+
+
 def main():
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
   sub = parser.add_subparsers(dest="command", required=True)
@@ -371,12 +399,17 @@ def main():
   three.add_argument("text")
   three.set_defaults(func=cmd_reply)
   sub.add_parser("pending").set_defaults(func=cmd_pending)
+  sub.add_parser("status").add_argument("--force", action="store_true")
+  sub.add_parser("board")
+  sub.add_parser("defaults")
   for item in (three, sub.choices["pending"]):
     item.add_argument("--root", default="")
   args = parser.parse_args()
   if args.command in ("reply", "pending"):
     args.root = args.root or sh("rev-parse", "--show-toplevel") or os.getcwd()
     return args.func(args)
+  if args.command in ("status", "board", "defaults"):
+    return cmd_layers(args)
   if args.command == "handover":
     return cmd_handover(args)
   if args.command == "take":

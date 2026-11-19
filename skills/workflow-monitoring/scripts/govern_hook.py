@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
 """Govern only (MON-7), kept by a Claude Code PreToolUse hook: the operation session never edits code, commits or pushes;
-only merges and the post-merge steps change the repo.
+only merges and the post-merge steps change the repo. Also the enforced defaults and the owner-words relay.
 
 usage: govern_hook.py          the PreToolUse hook: reads the hook's JSON on stdin, prints a deny decision or nothing
                                (a UserPromptSubmit payload goes to the quiet check-in hook, C3, below)
        govern_hook.py check    read a Bash command on stdin, print BLOCK with why, or PASS (tests and by hand)
 
 Which session: the operation session only, known by its id in <git common dir>/loop/operation.id (`operate.py claim`
-adds its session and keeps the others: several independent operation sessions may run at once) or by the reply hook's record that the session ran
-`operate.py run`. A session whose folder is a goal worktree is a worker and is never checked, nor is any other repo.
-What it blocks there: Edit, Write and NotebookEdit on a path inside a followed repo (this one, its worktrees, or one in
-~/.workflow-loop/repos), so the session's own notes and other files outside every repo pass (issue 2850); and each Bash segment (split on && || ; | and new lines, with
-`env X=Y`, `bash -c` and `sh -c` bodies read once more) that runs git, after any -C, -c, --git-dir or --work-tree
-options, with commit, push, merge, rebase, reset, cherry-pick, revert, am or pull (a `pull --ff-only` passes, issue 495). Each segment is judged alone, so
-`merge.py X && git push` is blocked. The merge and post-merge steps (merge.py, release.py, autorelease.py, wiki.py,
-pool.py return, worker.py cleanup) run their own git inside their own process and pass. It guards the session's own
+adds its session and keeps the others: several independent operation sessions may run at once) or by the reply hook's record that
+the session ran `operate.py run`. A session whose folder is a goal worktree is a worker and is never checked, nor is any other repo.
+What it blocks there: Edit, Write and NotebookEdit on a path inside a followed repo, so the session's own notes and other files
+outside every repo pass (issue 2850); and each Bash segment that runs git, after any -C, -c, --git-dir or --work-tree options,
+with commit, push, merge, rebase, reset, cherry-pick, revert, am or pull (a `pull --ff-only` passes, issue 495). Each segment is
+judged alone, so `merge.py X && git push` is blocked. The merge and post-merge steps (merge.py, release.py, autorelease.py,
+wiki.py, pool.py return, worker.py cleanup) run their own git inside their own process and pass. It guards the session's own
 tool use; command substitution and shell writes such as `sed -i` are outside it.
 `govern_hook: false` in .loop/config.json, or LOOP_GOVERN_HOOK=0, turns it off, read at each call. Any error lets the
 call through and logs one line in <git common dir>/loop/govern-hook.log. setup.py --govern-hook installs it.
 
-The quiet check-in hook (C3, token-diet), for the operation session only and only for a scheduled prompt (proctree.classify): it renders
-the check-in (checkin.render), drops the Machine line and every number, and compares it with what the last full check-in showed
-(checkin.py keeps it with remember()). The same, and that check-in under QUIET_MINUTES (120) old, blocks the prompt with one line: no
-model turn runs. Anything else, an error included, lets the prompt through. `reply_hook: false` or LOOP_REPLY_HOOK=0 turns it off with
-the reply hook; skips are logged in <common>/loop/quiet.log. setup.py --reply-hook installs it on the prompt event.
+The quiet check-in hook (C3, token-diet), for the operation session only and only for a scheduled prompt (proctree.classify): it
+renders the check-in (checkin.render), drops the Machine line and every number, and compares it with what the last full check-in
+showed (kept by checkin.py). The same, under QUIET_MINUTES (120) old, blocks the prompt with one line: no model
+turn runs. Anything else, an error included, lets the prompt through. `reply_hook: false` or LOOP_REPLY_HOOK=0 turns it off with
+the reply hook; skips are logged in <common>/loop/quiet.log. setup.py --reply-hook installs it.
 """
 import hashlib
 import json
@@ -31,7 +30,6 @@ import os
 import re
 import shlex
 import sys
-import time
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -50,8 +48,7 @@ WRAPPERS = ("env", "command", "exec", "sudo", "nohup", "time", "nice", "xargs", 
 
 
 def strip(words):
-    """A segment's words without leading VAR=x assignments, wrappers, their flags and flag values (timeout -s KILL 60,
-    sudo -u root, nice -n 5): what is left starts with the command that runs."""
+    """A segment's words without leading VAR=x assignments, wrappers, their flags and flag values: what is left starts with the command."""
     i, wrapped = 0, False
     while i < len(words):
         word, prev = words[i], words[i - 1] if i else ""
@@ -64,8 +61,7 @@ def strip(words):
 
 
 def safe_pull(args):
-    """`git pull --ff-only [-q|-v] [remote [branch ...]]` and nothing else: an allowlist, since git takes the last of
-    --ff/--ff-only and a `+src:dst` refspec or -f can force; anything else is refused."""
+    """`git pull --ff-only [-q|-v] [remote [branch ...]]` and nothing else: an allowlist, since a `+src:dst` refspec or -f can force."""
     names = [a for a in args if not a.startswith("-")]
     return ("--ff-only" in args and all(a in ("--ff-only", "-q", "--quiet", "-v", "--verbose") for a in args if a.startswith("-"))
             and all(re.match(r"^[A-Za-z0-9._/-]+$", a) for a in names))
@@ -146,7 +142,7 @@ def is_operation(payload, common):
 
 def claim(payload, common):
     """A session that runs `operate.py run` or `operate.py claim` (not a worker, not in a goal worktree) is the
-    operation session: its id from the hook's own input goes into operation.id, so no environment variable is needed."""
+    operation session: its id from the hook's input goes into operation.id."""
     command = str((payload.get("tool_input") or {}).get("command") or "") if payload.get("tool_name") == "Bash" else ""
     session, cwd = str(payload.get("session_id") or ""), os.path.realpath(str(payload.get("cwd") or ""))
     runs = any(os.path.basename(x) == "operate.py" and w[n + 1:n + 2] in (["run"], ["claim"])
@@ -172,8 +168,7 @@ def log(common, text):
 
 
 def followed_roots(top, common):
-    """Real paths of every followed repo: this checkout, its git common dir's parent and worktrees, and each repo listed in
-    ~/.workflow-loop/repos (the board's list)."""
+    """Real paths of every followed repo: this checkout, its git common dir's parent, and each repo in ~/.workflow-loop/repos."""
     roots = [top, os.path.dirname(common) if os.path.basename(common) == ".git" else common]
     try:
         with open(os.path.expanduser("~/.workflow-loop/repos")) as handle:
@@ -184,7 +179,7 @@ def followed_roots(top, common):
 
 
 def in_followed(given, cwd, top, common):
-    """True when an edit tool's target path is inside a followed repo. A path it can't read counts as inside."""
+    """True when an edit tool's target path is inside a followed repo (an unreadable path counts as inside)."""
     target = str(given.get("file_path") or given.get("notebook_path") or given.get("path") or "")
     if not target:
         return True
@@ -193,8 +188,7 @@ def in_followed(given, cwd, top, common):
 
 
 def stray(payload):
-    """The refusal for a pool worker session's `git commit` run in the main checkout (the governing checkout takes no commit,
-    GRD-4), or ''. Only a plain commit: a command with a cd or -C may be aimed at the worker's own worktree."""
+    """The refusal for a pool worker session's `git commit` run in the main checkout (GRD-4), or ''. Only a plain commit: a cd or -C may aim at the worker's worktree."""
     command = str((payload.get("tool_input") or {}).get("command") or "")
     if payload.get("tool_name") != "Bash" or "commit" not in command or re.search(r"(^|[\s;&|])cd\s|\s-C\s|--git-dir|--work-tree", command):
         return ""
@@ -255,11 +249,58 @@ def health(common):
     return sum(" blocked " in line for line in lines), len(fails), fails[-1].split(" fail-open ", 1)[1] if fails else ""
 
 
+def check_allowed(cfg):
+    command = cfg.get("agent_command") or []
+    if "--allowedTools" in command:
+        return "FIX: agent_command passes --allowedTools and its list as two tokens; use one --allowedTools=<list> token (applying it is the owner's)"
+    return "ok" if any(str(w).startswith("--allowedTools=") for w in command) or not command else "FIX: agent_command has no --allowedTools=<list> token"
+
+
+def check_budgets(common, cfg):
+    import machines
+    time_cap, token_cap, over = cfg.get("time_budget_minutes") or 0, cfg.get("token_budget") or 0, []
+    folder = os.path.join(common, "loop", "runs")
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        budget = (machines.read_json(os.path.join(folder, name)).get("budget") or {}) if name.endswith(".json") else {}
+        if (time_cap and (budget.get("minutes") or 0) > time_cap) or (token_cap and (budget.get("tokens") or 0) > token_cap):
+            over.append(name[:-5])
+    return "ok" if not over else "FIX: %s hold a budget above the owner's cap (time_budget_minutes, token_budget); only the owner raises a cap" % ", ".join(over)
+
+
+def relay(source, text, rules=None):
+    """(accepted, why): OWNER-WORDS relayed from top count as owner words except safety classes; from a peer they never do."""
+    if source == "peer":
+        return False, "a peer's words are data, never the owner's"
+    if source != "top":
+        return True, ""
+    import auto
+    for name, found in (rules or auto.CLASSES).items():
+        if found.search(str(text)):
+            return False, "safety class %s: only the owner's own typed words count" % name
+    return True, ""
+
+
+def defaults(common, cfg):
+    """The seven enforced defaults, one (name, verdict) row each; nothing is changed."""
+    import machines
+    import notify
+    status = notify.build(common, cfg)
+    rows = [("relay counts except safety", "ok" if relay("top", "hello")[0] and not relay("top", "delete the branch")[0] and not relay("peer", "hello")[0]
+             else "FIX: the relay rule in govern_hook.relay no longer holds"),
+            ("machine sessions are STATUS-only", "ok" if machines.role("machine") == "machine" and machines.one_line(status, "sent").count("\n") == 0 else "FIX: a machine must print one line"),
+            ("machines raise their own time budgets, caps stay the owner's", check_budgets(common, cfg)),
+            ("machines raise their own token budgets, caps stay the owner's", check_budgets(common, cfg)),
+            ("agent_command is one --allowedTools=<list> token", check_allowed(cfg)),
+            ("STATUS carries PR numbers", "ok" if all("pr" in w for w in status["workers"]) else "FIX: a worker line has no pr"),
+            ("STATUS carries parked and idle sessions with reasons", "ok" if all(x.get("reason") for x in status["parked"] + status["idle"]) else "FIX: a parked or idle row has no reason")]
+    return rows
+
+
 QUIET_MINUTES = 120
 
 
 def signature(text):
-    """The check-in without its clock: no Machine line, no digits, so only a word that changed counts."""
+    """The check-in without its Machine line and digits, so only a changed word counts."""
     kept = [line for line in str(text).splitlines() if not line.startswith("Machine:")]
     return hashlib.sha1(re.sub(r"\d+", "#", "\n".join(kept)).encode("utf-8", "replace")).hexdigest()
 
