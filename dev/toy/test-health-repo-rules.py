@@ -94,7 +94,8 @@ with tempfile.TemporaryDirectory() as tmp:
         # refs: an id listed under a page's ### Retired resolves through its marker; an id no page defines or retires still fails
         r = os.path.join(tmp, "refs")
         os.makedirs(os.path.join(r, "docs", "wiki"))
-        for name, body in (("One", "## Requirements\n\n- AB-1: **Unreviewed** Live.\n  - It lives.\n\n## Revisions\n\n### Retired\n\n- AB-3: moved to AB-1\n"),
+        for name, body in (("One", "## Requirements\n\n- AB-1: **Unreviewed** Live.\n  - It lives.\n\n## Revisions\n\n### AB-1\n\n| rev | date | text | why | record |\n|---|---|---|---|---|\n| r1 | 2026-11-19 | Live <br> History names AB-7. | why | o1: \"x\" |\n\n### Retired\n\n- AB-3: moved to AB-1\n"),
+                           ("Home", "# Home\n\n| Requirement | Text |\n|---|---|\n| AB-1 | the row names AB-8 |\n"),
                            ("Two", "## Requirements\n\n- AB-2: **Unreviewed** Also live. See AB-3 and AB-9.\n  - It lives.\n")):
             with open(os.path.join(r, "docs", "wiki", name + ".md"), "w") as handle:
                 handle.write("# %s\n\n%s" % (name, body))
@@ -103,6 +104,8 @@ with tempfile.TemporaryDirectory() as tmp:
         dangling = {x["subject"] for x in found if x["rule"] == "refs" and x["state"] == "FAIL"}
         check("AB-3" not in dangling and "AB-9" in dangling,
               "a retired id resolves through its moved-to marker, and an id no page defines or retires still fails refs")
+        check("AB-7" not in dangling and "AB-8" in dangling,
+              "an id only in a Revisions row (history) passes refs, and an id in a Home row still fails")
     if run_it('control'):
         # control: the break runs on a copy, and the control fires only when the command then fails
         b = os.path.join(tmp, "b")

@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""The automatic release, called by merge.py: run the owner's routines, then after the merge bump the version once,
-write the CHANGELOG entry, push that commit to the base branch and create a published GitHub release.
-
-No draft, no question. Every failure is recorded on the goal as `release_error` (shown under Issues).
-The bump is patch unless the owner recorded one (`goal.py set SLUG --bump minor|major`, read through workflow-delivery's
-fit.py). The release commit and notes pass the private-name scan (workflow-delivery's private.py; missing or broken
-refuses, PRIVATE_MODULE) before any push. A protected base (a `pull_request` rule, or a push refused for protection)
-takes the release pull request instead (merge.py).
-"""
+"""The automatic release, called by merge.py: routines, then after the merge one version bump, the CHANGELOG entry, a push
+to the base and a published GitHub release. Failures: `release_error`. The commit and notes pass the private-name scan
+first (PRIVATE_MODULE); a protected base takes the release pull request (merge.py)."""
 import datetime
 import importlib.util
 import json
@@ -21,7 +15,7 @@ import tempfile
 import release
 import wiki  # noqa: E402
 
-# a prompt from git or gh must fail, not block
+# no prompt may block
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -33,7 +27,7 @@ LOADED = {}
 
 
 def sibling(name):
-    """(module, None), or (None, refusal) when the workflow-delivery module is missing or broken."""
+    """(module, None), or (None, refusal) when the workflow-delivery module is broken."""
     if name not in LOADED:
         path = os.path.join(SIBLING, name + ".py")
         try:
@@ -42,14 +36,14 @@ def sibling(name):
             spec.loader.exec_module(module)
         except Exception as error:  # noqa: BLE001
             return None, ("workflow-delivery's %s.py could not be loaded from %s (%s: %s); nothing was pushed or merged"
-                          % (name, path, type(error).__name__, "no such file" if isinstance(error, OSError) else str(error)[:120]),
-                          "reinstall the skills, or put workflow-delivery beside workflow-release, then run it again", "PRIVATE_MODULE")
+                          % (name, path, type(error).__name__, str(error)[:80]),
+                          "reinstall the skills, then run it again", "PRIVATE_MODULE")
         LOADED[name] = module
     return LOADED[name], None
 
 
 def private_check(top, base, texts, pushed=False, head="HEAD"):
-    """None when the push may go on, else (why, fix, code). base None scans only texts."""
+    """None when the push may go on, else (why, fix, code)."""
     private, stop = sibling("private")
     if stop:
         return stop
@@ -75,13 +69,9 @@ def notes_text(state):
 
 
 def protected(top, base):
-    """True when the base has a pull_request rule; a 403/404 or no rule says nothing."""
+    """True when the base has a pull_request rule."""
     got = sh(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], cwd=top)
-    try:
-        rules = json.loads(got.stdout) if got.returncode == 0 else []
-    except ValueError:
-        return False
-    return isinstance(rules, list) and any(isinstance(r, dict) and r.get("type") == "pull_request" for r in rules)
+    return got.returncode == 0 and '"type":"pull_request"' in got.stdout.replace(" ", "")
 
 
 def sh(args, cwd=None):
@@ -92,7 +82,7 @@ def sh(args, cwd=None):
 
 
 def sh_text(args, text, flag="--body-file", cwd=None):
-    """Run gh with a long text in a temp file passed as flag, never on the command line."""
+    """Run gh with a long text in a temp file flag."""
     with tempfile.NamedTemporaryFile("w", suffix=".md", prefix="gh-text-", delete=False, encoding="utf-8", newline="\n") as f:
         f.write(text)
     try:
@@ -102,27 +92,27 @@ def sh_text(args, text, flag="--body-file", cwd=None):
 
 
 def fail(state, text):
-    state["release_error"] = text if len(text) <= 400 else text[:330] + " ... " + text[-65:]  # keeps the (CODE)
+    state["release_error"] = text if len(text) <= 400 else text[:330] + " ... " + text[-65:]
     report, note = state.get("report"), ""
-    if not isinstance(report, dict):  # a goal reset leaves report null
+    if not isinstance(report, dict):
         note = "" if report is None else "(the stored report was a %s and was reset) " % type(report).__name__
         report = state["report"] = {}
     report["text"] = ("%s %sRelease failed: %s" % (str(report.get("text") or ""), note, text)).strip()[:600]
-    if state.get("release") != "merged":  # the pull request is still open: resume can revive it
+    if state.get("release") != "merged":
         state["status"] = "failed"
     release.save(state, "release failed: " + text[:200])
     sys.exit("REFUSED: " + text)
 
 
 def reopen(state, code):
-    """A merge refused because the head or base moved sends the goal back to its pr step."""
+    """A merge refused for a moved head or base sends the goal back to pr."""
     state.update(status="running", step="pr")
     release.save(state, "merge refused (exit %d): run goal.py pr, then merge.py again" % code)
     return code
 
 
 def mergeable(state):
-    """merge.py's gate: a finished goal with its pull request, or one left failed with a release_error."""
+    """merge.py's gate: a finished goal with its pull request, or one failed with a release_error."""
     return bool(state.get("pr")) and (state.get("status") == "done" or (state.get("status") == "failed" and bool(state.get("release_error"))))
 
 
@@ -132,7 +122,7 @@ def mark_merged(state):
 
 
 def run_routines(top, cfg, state):
-    """Routines come from the base branch: a pull request cannot add a command the merge runs."""
+    """Routines come from the base branch: a pull request cannot add one."""
     shown = sh(["git", "show", "origin/%s:.loop/config.json" % cfg.get("base", "main")], cwd=top)
     try:
         routines = (json.loads(shown.stdout) if shown.returncode == 0 else cfg).get("routines") or []
@@ -156,7 +146,7 @@ def stage_notes(top, state, cfg):
 
 
 def stage_part(top, state):
-    """The bump, read on every run until the release commit exists (goal.py set --bump binds)."""
+    """The bump, read on every run until the release commit exists."""
     if not state.get("release_part") or not (state.get("release_pushed") or state.get("release_pr")):
         part, reason = release.auto_need(top, state)
         state["release_part"], state["release_reason"] = ("patch", "a docs or test change") if part == "leave" else (part, reason)
@@ -169,8 +159,7 @@ def drop(top, tree, temp):
 
 
 def push_release_commit(top, cfg, state, part, to_branch=False):
-    """(version, release commit sha); (None, stderr) when the base refused the push for protection. to_branch pushes
-    to release/vX-<slug> instead (force-updating only it)."""
+    """(version, sha); (None, stderr) when the base refused the push for protection. to_branch pushes release/vX-<slug>."""
     base, slug = cfg.get("base", "main"), state["slug"]
     temp = tempfile.mkdtemp(prefix="release-")
     tree = os.path.join(temp, "tree")
@@ -219,24 +208,32 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
 
 
 def restatus(top, cfg, state, head):
-    """Post the pr lane's result for a head that moved only by wiki pages."""
+    """Post the pr lane's result for a head moved only by wiki pages."""
     module, stop = sibling("private")
     if not stop:
         module.pr_result(top, cfg.get("base", "main"), head, state["branch"], True)
 
 
+STAMPS = ("VERSION", "CHANGELOG.md", ".loop/regression-runs.tsv", ".loop/regression-issues.tsv")
+ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
+
+
+def tems(top, old, new, extra="", allow=None):
+    """Tree equal modulo stamps: old to new only adds or edits regular files at STAMPS paths (and extra, and allow's);
+    code, a symlink, a rename or a delete breaks it."""
+    done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
+    rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
+    return done.returncode == 0 and bool(rows) and all(
+        m and (m[1] in STAMPS or m[1] == extra or bool(allow and allow(m[1]))) for m in rows)
+
+
 def carried(top, cfg, state, sha):
-    """True when the goal's pr lane passed (statuses ok) and the release head only moves the version file and the
-    CHANGELOG over its parent: the tested tree plus the bump, so the pass carries over (#3870)."""
-    if state.get("statuses") != "ok":
-        return False
-    done = sh(["git", "diff", "--name-only", sha + "^", sha], cwd=top)
-    names = set(done.stdout.split())
-    return done.returncode == 0 and bool(names) and names <= {cfg.get("version_file") or "VERSION", "CHANGELOG.md"}
+    """The pr lane passed and the head is its parent plus stamps (tems): the pass carries (#3870)."""
+    return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION")
 
 
 def lane_at(top, cfg, sha):
-    """(exit code or None, output) of the affected rows at sha in a detached copy."""
+    """(exit code or None, output) of the affected rows at sha."""
     temp = tempfile.mkdtemp(prefix="release-status-")
     tree, code, text = os.path.join(temp, "tree"), None, "could not check out the release head"
     try:
@@ -254,10 +251,7 @@ def lane_at(top, cfg, sha):
 
 
 def release_statuses(top, cfg, state, branch, sha):
-    """Post the lane's result for the release PR's head under every required check's name, never a failure the head did
-    not earn: a bump-only head carries the goal's pass; otherwise the affected rows run and only rows that ran and failed
-    post failure. A lane that could not run posts nothing (release_status untested). Success is final;
-    release_status_why names the cause."""
+    """Post the lane's result for the release PR's head under each required check's name; a bump-only head carries the goal's pass."""
     module, stop = sibling("private")
     if stop or not sha or state.get("release_status") == "success":
         return
@@ -265,7 +259,7 @@ def release_statuses(top, cfg, state, branch, sha):
     if sh(["git", "cat-file", "-e", sha + "^{commit}"], cwd=top).returncode:
         sh(["git", "fetch", "-q", "origin", branch], cwd=top)
     if carried(top, cfg, state, sha):
-        print("CARRIED the goal's passing lane to the release head %s (it only moves the version and changelog)" % sha[:12])
+        print("CARRIED the goal's passing lane to the release head %s (stamps only)" % sha[:12])
         ok = True
     else:
         code, text = lane_at(top, cfg, sha)
@@ -284,15 +278,32 @@ def release_statuses(top, cfg, state, branch, sha):
 RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_REQUIRED")
 
 
+def go_gate(top, base, info, go):
+    """None, or the refusal, unless the PR head is the GO's and every required check is green on it (#5171)."""
+    head = str(info.get("headRefOid"))
+    if len(go) < 7 or not head.startswith(go):
+        return "REFUSED (GO_HEAD): the GO was for %s, the PR head is %s. Nothing merged." % (go[:12], head[:12])
+    module, stop = sibling("private")
+    got = None if stop else module.required_checks(top, base)
+    end = lambda c: str(c.get("conclusion") or c.get("state") or "").upper()
+    seen = {str(c.get("name") or c.get("context")): "CI_PENDING" if end(c) in ("", "PENDING", "EXPECTED") or str(c.get("status") or "COMPLETED").upper() != "COMPLETED"
+            else "CI_RED" if end(c) in RED else "" for c in info.get("statusCheckRollup") or [] if isinstance(c, dict)}
+    need = sorted(set(got[0]) | set(got[1]) or seen) if got is not None else ["the required checks"]
+    for code in ("CI_RED", "CI_PENDING", "CI_MISSING"):
+        names = [n for n in need if seen.get(n, "CI_MISSING") == code] or (["no check reported"] if code == "CI_MISSING" and not need else [])
+        if names:
+            return "REFUSED (%s): %s on head %s. Nothing merged. Fix: wait for CI green on the head, then merge.py again." % (
+                code, ", ".join(names), head[:12])
+
+
 def status_held(state, url, number, seen=None):
-    """Refuse, naming the cause, when the release PR's head has no passing status (RELEASE_STATUS_FAILED, _UNTESTED) or a
-    required check is red (RELEASE_CHECKS_FAILED): a merge past a red check is never advised (issue 3870)."""
+    """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) when the release PR head has no passing status or a red check."""
     red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
            if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
     why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
     if red and not why:
-        fail(state, "the release PR %s (#%s) can't merge: required checks failed: %s. Nothing needs the owner's merge, and none "
-             "may be merged past a red check; fix the cause and run merge.py %s again (RELEASE_CHECKS_FAILED)"
+        fail(state, "the release PR %s (#%s) can't merge: required checks failed: %s. Nothing needs the owner's merge; "
+             "fix the cause and run merge.py %s again (RELEASE_CHECKS_FAILED)"
              % (url, number, ", ".join(sorted(set(red))[:8]), state["slug"]))
     if not why:
         return
@@ -312,8 +323,8 @@ def create_release(top, cfg, state, version, target):
         if info.get("targetCommitish") == target:
             print("ADOPTED the existing release %s at %s" % (tag, target[:12]))
             return info.get("url") or ""
-        fail(state, "a GitHub release %s already exists at %s, not at this goal's release commit %s; nothing new was "
-             "created. Fix: look at it (gh release view %s) and keep or delete it, then run merge.py %s (RELEASE_EXISTS)"
+        fail(state, "a GitHub release %s already exists at %s, not at this goal's release commit %s; nothing was created. "
+             "Fix: keep or delete it (gh release view %s), then run merge.py %s (RELEASE_EXISTS)"
              % (tag, info.get("targetCommitish") or "another target", target[:12], tag, state["slug"]))
     made = sh_text(["gh", "release", "create", tag, "--title", tag, "--target", target], text, "--notes-file", top)
     if made.returncode:
@@ -323,7 +334,7 @@ def create_release(top, cfg, state, version, target):
 
 
 def finish(top, cfg, state):
-    """After the merge. Each step records itself, so a retry repeats only what did not finish."""
+    """After the merge; each step records itself."""
     if state.get("release") == "cut" and state.get("release_url"):
         print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
         return
