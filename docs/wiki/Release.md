@@ -20,7 +20,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - A goal's release never bumps a major; a major exists only after the gate passes.
 - REL-2: **Unreviewed** A major's milestone is closed out
   - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue.
-- REL-3: **Unreviewed** The full suite passes on the candidate
+- REL-3: **Reviewed 2026-11-19** The full suite passes on the candidate <!-- reviewed 84cc9929 -->
   - The gate runs the whole nightly suite on the release candidate.
   - Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses.
   - The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result.

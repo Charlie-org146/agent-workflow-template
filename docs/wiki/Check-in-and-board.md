@@ -19,31 +19,31 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
   - Report, dashboard and "where do things stand?" print the live board in one fixed layout: issues first with their fix, then running goals with progress and time left, then queued goals and dependencies.
   - Merged work and history are left out, and a stuck worker stays at the top until I answer.
   - Top's 5-minute board order is: Issues and needs-owner first, then Running goals, Queued goals, dependency arrows, per-machine STATUS with a call-out for any STATUS over 30 minutes old, then one finish time. Only top publishes it; a machine session prints one line and sends STATUS.
-- CHK-2: **Unreviewed** A check-in on a cadence, in one layout
+- CHK-2: **Reviewed 2026-11-19** A check-in on a cadence, in one layout <!-- reviewed 7e0b4701 -->
   - The operation session checks in on a set cadence, 30 minutes by default, and at once when a worker reports something new.
   - Every full check-in has the same layout: headline, machine line, all sessions, dependencies, needs you, coming up.
   - A hook blocks a reply that doesn't follow it.
   - A machine session's check-in is one line (the time plus 'STATUS sent' or 'no change') once STATUS went to top; top keeps the full layout. The hook accepts the one-line form only in machine mode.
-- CHK-3: **Unreviewed** Notify me by mail
+- CHK-3: **Reviewed 2026-11-19** Notify me by mail <!-- reviewed 4df52c2b -->
   - When notification is on for this machine, each check-in mails me once per new event, such as a new Needs you item or a goal that stopped or passed its ETA.
-- CHK-4: **Unreviewed** A check-in with nothing new costs nothing
+- CHK-4: **Reviewed 2026-11-19** A check-in with nothing new costs nothing <!-- reviewed a329666c -->
   - A scheduled check-in that is the same as the last full one, apart from its machine line and numbers, is one line, printed without a model turn, for at most two hours in a row.
   - Each check-in logs the tokens the operation session spent.
-- CHK-5: **Unreviewed** Dependency map
+- CHK-5: **Reviewed 2026-11-19** Dependency map <!-- reviewed 4509058e -->
   - The check-in's dependency map is grouped by repo, then by release.
   - Each goal shows its status, expected time left and machine; each release shows its expected time and how many goals haven't started; only live goals are drawn.
-- CHK-6: **Unreviewed** What a check-in shows of other machines
+- CHK-6: **Reviewed 2026-11-19** What a check-in shows of other machines <!-- reviewed 9193fdbd -->
   - A check-in lists this machine's goals in full and, for every other machine, one row per goal with its agent, step and status from that machine's latest report.
   - It never asks me another machine's questions.
-- CHK-7: **Unreviewed** Blockers first
+- CHK-7: **Reviewed 2026-11-19** Blockers first <!-- reviewed 8fe12cb1 -->
   - Each item under Needs you says what it holds up and whether it is on the critical path to the next release, and items are sorted with the one holding up the most goals first.
-- CHK-9: **Unreviewed** I can answer and steer from my phone or mail
+- CHK-9: **Reviewed 2026-11-19** I can answer and steer from my phone or mail <!-- reviewed eebd294e -->
   - I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way.
   - A reply counts as my words only when it comes from my own address or signed-in session.
 
 ### Non-functional
 
-- CHK-8: **Unreviewed** Fast board
+- CHK-8: **Reviewed 2026-11-19** Fast board <!-- reviewed 03068839 -->
   - The live board builds and prints in under 10 seconds on this repo.
 
 ## Non-goals

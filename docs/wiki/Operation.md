@@ -15,20 +15,20 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 ### Functional
 
-- OPS-1: **Unreviewed** One command starts the operation session
+- OPS-1: **Reviewed 2026-11-19** One command starts the operation session <!-- reviewed 0f96904c -->
   - One command starts the operation session and drives the whole process the same way every time.
   - It governs only: it never builds.
   - Three layers. Top is the owner's only session: governance only, the only reader of the owner and the only publisher of the board and the Loop Board, every 5 minutes. A machine session (one per machine) assigns goals, schedules sessions and memory, runs auto, check-ins, dry-runs and merges, and reports up to top. A worker has one goal and one worktree and talks only to its machine session.
-- OPS-20: **Unreviewed** Every ready goal gets its own worker
+- OPS-20: **Reviewed 2026-11-19** Every ready goal gets its own worker <!-- reviewed 1fbae93b -->
   - The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session, in parallel.
   - A goal waits only on goals it truly depends on; sharing files is not a reason to wait.
-- OPS-2: **Unreviewed** Live communication
+- OPS-2: **Reviewed 2026-11-19** Live communication <!-- reviewed 8f0f8ca8 -->
   - A worker reports each change of step or status as it happens, and its result when it ends; the operation session sends a worker its answer or a follow-up.
   - Background processes are used only when a session can't be started or reached, and the board says so.
   - Messages and fields. STATUS (machine to top, on change and every 30 minutes) carries main per repo, PR numbers, running, parked and idle sessions with reasons, and worker lines; PR per goal; merges; needs-owner with the exact words to answer and a recommendation. ASK, OWNER-WORDS and PRIORITY go between top and machine; MERGE-REQUEST and MERGE-GO go machine to machine, copied to top. A worker never talks to top or to another machine.
-- OPS-6: **Unreviewed** Clean up after every goal
+- OPS-6: **Reviewed 2026-11-19** Clean up after every goal <!-- reviewed 5afdec09 -->
   - When a goal merges, its worker session is given the next ready goal or archived, and its worktree and branch are removed.
-- OPS-10: **Unreviewed** Re-plan at every check-in
+- OPS-10: **Reviewed 2026-11-19** Re-plan at every check-in <!-- reviewed 5433371a -->
   - At each check-in the operation session re-reads every goal's progress and re-plans to finish soonest: it merges goals that do the same thing, splits a goal that blocks others, and puts the critical path first.
   - It never stops a running goal to re-plan, and every change is logged with its reason.
 - OPS-11: **Unreviewed** Full auto mode
@@ -37,32 +37,32 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - Those wait for me.
   - A safety class is judged by what the action does, not by a word in its name.
   - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only; caps stay the owner's.
-- OPS-12: **Unreviewed** Session pool
+- OPS-12: **Reviewed 2026-11-19** Session pool <!-- reviewed 3405433f -->
   - The operation session keeps a pool of idle worker sessions, sized by one setting, and hands each ready goal one from the pool.
   - When the pool runs low it asks me to fill it, at the desktop.
   - When I've chosen app sessions, a goal never falls back to a background worker: it waits and says so.
 - OPS-13: **Unreviewed** Two layers per pod
   - One operation session governs every repo in its pod directly and talks to each worker, with no per-repo operation session.
   - Several pods may run at once, independently.
-- OPS-15: **Unreviewed** Pods coordinate through shared state
+- OPS-15: **Reviewed 2026-11-19** Pods coordinate through shared state <!-- reviewed e2b1603f -->
   - Every goal records the pod that owns it, and only that pod starts, answers, merges or resumes it; other pods see it read-only.
 - OPS-16: **Unreviewed** Fill every free slot at once
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold.
   - A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit.
   - Make every machine busy and be aggressive about time and token: a machine raises its own time and token budgets, while the caps stay the owner's.
-- OPS-18: **Unreviewed** I say it once
+- OPS-18: **Reviewed 2026-11-19** I say it once <!-- reviewed 2888b9cd -->
   - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again.
   - A record covers only the IDs it lists.
-- OPS-23: **Unreviewed** The operation session keeps itself running
+- OPS-23: **Reviewed 2026-11-19** The operation session keeps itself running <!-- reviewed 07b97eff -->
   - On start the operation session runs a self-check and lists what is missing, each with its fix.
   - It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached.
   - agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's.
 
 ### Non-functional
 
-- OPS-7: **Unreviewed** Govern only
+- OPS-7: **Reviewed 2026-11-19** Govern only <!-- reviewed da6f1852 -->
   - A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo.
-- OPS-8: **Unreviewed** No silent worker
+- OPS-8: **Reviewed 2026-11-19** No silent worker <!-- reviewed 68d94ecf -->
   - A worker with no report for 30 minutes shows under Needs you.
 
 ## Non-goals

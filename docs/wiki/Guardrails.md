@@ -61,8 +61,8 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 - GRD-20: **Unreviewed** The package always passes Agensi's rules
   - No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits.
   - A failure names the rule and the file.
-- GRD-21: **Unreviewed** Our package limits are never looser than Agensi's
-  - One table on this page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read.
+- GRD-21: **Reviewed 2026-11-19** Our package limits are never looser than Agensi's <!-- reviewed b6709793 -->
+  - One table on How-to-use-Guardrails states each package limit: Agensi's figure, ours, and the date Agensi's page was last read.
   - Ours may be tighter, never looser.
   - Raising one of ours takes my own words, and health warns when the last read is over 30 days old.
 - GRD-22: **Unreviewed** A goal learns at qa that it doesn't fit
@@ -230,6 +230,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Our package limits are never looser than Agensi's <br> One table on How-to-use-Guardrails states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. <br> Ours may be tighter, never looser. <br> Raising one of ours takes my own words, and health warns when the last read is over 30 days old. | owner approved r2: only the location clause changes to How-to-use-Guardrails | o151: "reviewed Operation and Check-in-and-board except OPS-11, OPS-13, OPS-16, CHK-1; approve GRD-21 r2" |
 | r1 | 2026-11-18 | Our package limits are never looser than Agensi's <br> One table on this page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. <br> Ours may be tighter, never looser. <br> Raising one of ours takes my own words, and health warns when the last read is over 30 days old. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### GRD-22
