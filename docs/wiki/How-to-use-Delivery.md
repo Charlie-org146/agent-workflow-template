@@ -111,6 +111,8 @@ and run a first goal, or to see where every file lives, read the rest of this RE
 
 Delivery subprocesses fail instead of waiting for terminal prompts, including routed agent commands and their login checks.
 
+The pull request's own record commit (the regression run and issue files, with re-rendered wiki tables) never sends a goal back to pr: a commit that moves only stamp files, or stamp files plus wiki pages, is tree-equal modulo stamps to the tested head and carries its pass. Any code path, symlink, rename or delete breaks that match. See the Release page for the rule.
+
 Each requirement and how it is delivered:
 
 - DEL-1: The loop. Example, from the no-done-line-refused test: given a goal with no done line, when it is started, then it is refused.

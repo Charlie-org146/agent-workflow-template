@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-release/scripts/autorelease.py skills/workflow-release/scripts/merge.py
+# reads: skills/workflow-release/scripts/autorelease.py skills/workflow-release/scripts/merge.py skills/workflow-monitoring/scripts/operate.py
 """Defect 3870: merge.py posts a failing status on a release head it never tested, then asks the owner for a manual merge.
 
 A release head that only moves the version and changelog carries the goal's passing lane (no lane runs); a head whose lane
@@ -111,6 +111,40 @@ with tempfile.TemporaryDirectory() as tmp:
     check(not posted and state["release_status"] == "untested", "a lane that exits 1 with no failed row (unproven rows only) is untested, not a failure")
     state = release(top, code, {"slug": "g", "statuses": "ok", "release_status": "success"}, lane(1, "FAIL row-b\n"))
     check(not ran and not posted, "a head already at success is left alone")
+
+    # Slice B (merge-queue-b): one tree-equal-modulo-stamps compare, shared by carried(), the release head and operate.py wiki-only.
+    tems = lambda old, new, **kw: autorelease.tems(top, old, new, **kw)  # noqa: E731
+    stamps = commit(top, {".loop/regression-runs.tsv": "run\n", ".loop/regression-issues.tsv": "issue\n"}, "pr: record")
+    check(tems(code, stamps) and autorelease.carried(top, {}, {"statuses": "ok"}, stamps),
+          "TEMS: a commit that only edits the stamp files is tree-equal and carries the goal's pass")
+    mixed = commit(top, {"src/a.txt": "c\n", ".loop/regression-runs.tsv": "run2\n"}, "code and a stamp")
+    check(not tems(stamps, mixed) and not autorelease.carried(top, {}, {"statuses": "ok"}, mixed),
+          "TEMS negative control: a code change next to a stamp breaks equality")
+    git(top, "rm", "-q", "src/a.txt")
+    git(top, "commit", "-q", "-m", "delete code")
+    gone = git(top, "rev-parse", "HEAD")
+    check(not tems(mixed, gone), "TEMS negative control: deleting a code file breaks equality")
+    commit(top, {"src/move.txt": "m\n"}, "a file to move")
+    before_move = git(top, "rev-parse", "HEAD")
+    git(top, "mv", "-f", "src/move.txt", "VERSION")
+    git(top, "commit", "-q", "-m", "rename a code file onto a stamp path")
+    check(not tems(before_move, git(top, "rev-parse", "HEAD")), "TEMS negative control: a rename into a stamp path breaks equality")
+    before_link = git(top, "rev-parse", "HEAD")
+    try:
+        os.remove(os.path.join(top, "CHANGELOG.md"))
+        os.symlink("elsewhere", os.path.join(top, "CHANGELOG.md"))
+        git(top, "add", "-A")
+        git(top, "commit", "-q", "-m", "changelog as a symlink")
+        check(not tems(before_link, git(top, "rev-parse", "HEAD")), "TEMS negative control: a symlink at a stamp path breaks equality")
+    except (OSError, NotImplementedError):
+        check(True, "TEMS negative control: a symlink at a stamp path breaks equality (this platform has no symlinks; skipped)")
+    operate = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts", "operate.py")
+    wiki_only = lambda old, new: subprocess.run([sys.executable, operate, "wiki-only", old, new], cwd=top, capture_output=True, text=True).returncode  # noqa: E731
+    git(top, "checkout", "-q", "-B", "wk", gone)
+    page = commit(top, {"docs/wiki/Page.md": "p\n", ".loop/regression-issues.tsv": "issue2\n"}, "wiki page plus a stamp")
+    check(wiki_only(gone, page) == 0, "operate.py wiki-only accepts a wiki page together with a stamp file (the pr record commit)")
+    codey = commit(top, {"src/b.py": "1\n", "docs/wiki/Page.md": "q\n"}, "wiki page plus code")
+    check(wiki_only(page, codey) == 1, "operate.py wiki-only negative control: a code file next to a wiki page still refuses")
 
     red = {"statusCheckRollup": [{"name": "stories", "conclusion": "FAILURE"}, {"context": "Cloudflare Pages", "state": "ERROR"},
                                   {"name": "lint", "conclusion": "SUCCESS"}, {"name": "slow", "status": "IN_PROGRESS"}]}
