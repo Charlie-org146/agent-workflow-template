@@ -31,7 +31,8 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria']
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median` | `python3 scripts/calc.py median` |\n| `/toy mean` | `python3 scripts/calc.py mean` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
-printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Sums up the numbers of the toy calculator. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://example.test/milestone/1 |\n' > docs/wiki/Home.md
+printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Sums up the numbers of the toy calculator. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |\n' > docs/wiki/Home.md
+printf '\n<!-- diagram:begin -->\n## System diagram\n\n```text\n[OPERATION SESSION] --assigns a goal--> [WORKER]\n[WORKER] --runs each step--> (staging, then production)\n[MACHINE] --runs a routine, with a guard--> [WORKER]\n\nLegend: a box is a part of the loop; --text--> a flow of data or control; (text) a part outside it.\n```\n<!-- diagram:end -->\n' >> docs/wiki/Home.md
 printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |\n' >> README.md
 repo=$PWD; mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
 <!-- workflow-docs -->
@@ -58,6 +59,14 @@ The toy calculator prints the median of the numbers given.
 - **Reads:** the list given
 - **Writes:** nothing
 - **Exit codes:** 0 printed
+
+### System diagram
+
+```text
+[Command: calc.py | the toy repo] --prints one line--> (the screen)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
 
 ## Links
 
@@ -127,7 +136,7 @@ PY
 }
 check() { $docs check 2>&1; }
 MS=""; page "$USAGE"
-MS="Milestone: https://example.test/milestone/1"; page "$USAGE"; git add -A; git commit -qm "Toy PRD" >/dev/null
+MS="Milestone: https://github.com/toy/repo/milestone/1"; page "$USAGE"; git add -A; git commit -qm "Toy PRD" >/dev/null
 
 echo "== 1. the sections, in order, and nothing else"
 check | grep -q "DOCS OK" && ok "a PRD page passes" || bad "PRD page: $(check)"
@@ -325,7 +334,7 @@ grep -q "^Delivery refused: sections are Overview, Tests" <<<"$out" && [ "$rc" =
 git checkout -q -- .
 
 echo "== 11. revisions: migrate, revise, retire and the REVISION and IDS checks"
-git checkout -q -- .; git switch -q main 2>/dev/null; MS="Milestone: https://example.test/milestone/1"
+git checkout -q -- .; git switch -q main 2>/dev/null; MS="Milestone: https://github.com/toy/repo/milestone/1"
 REQS='### Functional
 
 - DEL-1: **Unreviewed** The calculator prints a median.

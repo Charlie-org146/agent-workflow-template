@@ -107,7 +107,7 @@ grep -q "^PR https://example.test/pull/1$" <<<"$out" && ok "goal.py pr opens the
 
 echo "== health file: one tagged issue per finding, on no milestone"
 rm -f "$FAKE_GH_DIR/issues.json"; f0=$fails; git switch -q main
-mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3400)" > skills/x/scripts/near.py
+mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3450)" > skills/x/scripts/near.py
 git add -A; git commit -qm "A near-limit script"
 out=$($health preview --group size); echo "$out"
 grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\]$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
