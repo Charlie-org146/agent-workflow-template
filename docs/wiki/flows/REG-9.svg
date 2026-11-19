@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 366" width="440" role="img" aria-label="Flow of REG-9 Honest results: trigger, what the loop does, the check that proves it, the result">
+<title>REG-9 Honest results</title>
+<style>
+.f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
+.f-s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
+.f-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.f-you{fill:#e4eeff;stroke:#3b6fd6}
+.f-step{fill:#f3f5f8;stroke:#8a94a3}
+.f-gate{fill:#fff4d6;stroke:#c08a00}
+.f-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.f-find{fill:#fde9e7;stroke:#c5483f}
+.f-bg{fill:#ffffff}
+.f-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.f-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.f-t{fill:#eef2f6}.f-h,.f-x{fill:#a3afbf}.f-s{fill:#e1e7ee}
+.f-step{fill:#222b36;stroke:#5c6b7d}.f-you{fill:#162a4f;stroke:#6d9bf0}
+.f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
+.f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
+}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
+<rect width="440" height="366" class="f-bg"/>
+<text x="12" y="22" class="f-t">REG-9 Honest results</text>
+<rect x="12" y="40" width="416" height="73" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="24" y="56" class="f-h">TRIGGER</text>
+<text x="24" y="72" class="f-s">Given a row whose result flips on one clean commit and</text>
+<text x="24" y="87" class="f-s">runner; when it runs FAIL, PASS, PASS and later PASS,</text>
+<text x="24" y="102" class="f-s">FAIL, FAIL</text>
+<path d="M220 113 L220 125" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="125" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="24" y="141" class="f-h">WHAT THE LOOP DOES</text>
+<text x="24" y="157" class="f-s">Every test has been seen failing once, or shows as</text>
+<text x="24" y="172" class="f-s">unproven. A test that fails then passes on the same</text>
+<text x="24" y="187" class="f-s">commit is marked flaky, never silently retried.</text>
+<path d="M220 198 L220 210" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="210" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="24" y="226" class="f-h">THE CHECK THAT PROVES IT</text>
+<text x="24" y="242" class="f-s">flaky-marked (PASS 2026-11-10); 2 more tests</text>
+<path d="M220 253 L220 265" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="265" width="416" height="73" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="24" y="281" class="f-h">RESULT</text>
+<text x="24" y="297" class="f-s">Each run prints the FLAKY line with the raw result kept,</text>
+<text x="24" y="312" class="f-s">exits by that result, the flag stays sticky in</text>
+<text x="24" y="327" class="f-s">regression-runs.tsv, tests.py list, health's TESTS bloc…</text>
+<text x="12" y="358" class="f-x">Regression | v0.1.3</text>
+</svg>

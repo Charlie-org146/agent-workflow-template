@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 321" width="440" role="img" aria-label="Flow of SET-5 A self-describing workspace: trigger, what the loop does, the check that proves it, the result">
+<title>SET-5 A self-describing workspace</title>
+<style>
+.f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
+.f-s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
+.f-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.f-you{fill:#e4eeff;stroke:#3b6fd6}
+.f-step{fill:#f3f5f8;stroke:#8a94a3}
+.f-gate{fill:#fff4d6;stroke:#c08a00}
+.f-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.f-find{fill:#fde9e7;stroke:#c5483f}
+.f-bg{fill:#ffffff}
+.f-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.f-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.f-t{fill:#eef2f6}.f-h,.f-x{fill:#a3afbf}.f-s{fill:#e1e7ee}
+.f-step{fill:#222b36;stroke:#5c6b7d}.f-you{fill:#162a4f;stroke:#6d9bf0}
+.f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
+.f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
+}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
+<rect width="440" height="321" class="f-bg"/>
+<text x="12" y="22" class="f-t">SET-5 A self-describing workspace</text>
+<rect x="12" y="40" width="416" height="43" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="24" y="56" class="f-h">TRIGGER</text>
+<text x="24" y="72" class="f-s">Given an adopted repo; when a PRD page's Problem changes</text>
+<path d="M220 83 L220 95" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="95" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="24" y="111" class="f-h">WHAT THE LOOP DOES</text>
+<text x="24" y="127" class="f-s">Every adopted repo has one entry page any new session</text>
+<text x="24" y="142" class="f-s">reads first: how the parts fit together, which features</text>
+<text x="24" y="157" class="f-s">exist and how to use them.</text>
+<path d="M220 168 L220 180" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="180" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="24" y="196" class="f-h">THE CHECK THAT PROVES IT</text>
+<text x="24" y="212" class="f-s">entry-stale (PASS 2026-11-12); 2 more tests</text>
+<path d="M220 223 L220 235" class="f-a" marker-end="url(#ah)"/>
+<rect x="12" y="235" width="416" height="58" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="24" y="251" class="f-h">RESULT</text>
+<text x="24" y="267" class="f-s">The entry point check and the docs check fail STALE</text>
+<text x="24" y="282" class="f-s">until docs.py audit regenerates it</text>
+<text x="12" y="313" class="f-x">Setup | v0.1.3</text>
+</svg>
