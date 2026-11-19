@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.0.84 - 2026-11-19
+
+- Docs scripts under 19,000 bytes: prose trims and two cohesive moves
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main into loop/known-red-w11-docs-size
+- Lane: re-render the Tests tables
+- Merge main into loop/known-red-w11-docs-size
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/known-red-w11-docs-size
+- Lane: re-render the Tests tables
+- Merge remote-tracking branch 'origin/main' into loop/known-red-w11-docs-size
+- Lane: re-render the Tests tables
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.83 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.82 - 2026-11-19
 
 - No code changes

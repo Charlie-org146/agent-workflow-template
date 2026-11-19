@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17): the repo's GitHub milestones against an external Milestones page, opt-in (`milestones_source` in config),
-via `docs.py sync`; a delta or CONFLICT is posted once and nothing is overwritten (`--accept milestones:TITLE=repo|source`).
-Also DOC-19 how-to checks and DOC-20 revisions (revise, retire, migrate, guard)."""
+"""Milestone sync (DOC-17): the repo's GitHub milestones against an external Milestones page, opt-in (`milestones_source`
+in config), via `docs.py sync`; a delta or CONFLICT is posted once, nothing is overwritten (`--accept milestones:TITLE=repo|source`).
+Also DOC-19 how-to checks and DOC-20 revisions."""
 import json
 import os
 import re
@@ -10,6 +10,7 @@ from os.path import join
 
 import counting
 import criteria as cr
+from counting import origins  # noqa: F401
 import pageformat as pf
 import prd
 import render
@@ -22,7 +23,6 @@ API = "repos/{owner}/{repo}/milestones"
 
 
 def parse(text):
-    """{title: 'state | due'} of the `- TITLE: state | due` lines; the first of a repeated title wins."""
     found = {}
     for raw in text.splitlines():
         match = LINE.match(raw.strip())
@@ -32,7 +32,6 @@ def parse(text):
 
 
 def repo_side():
-    """({title: text}, {title: number}, None) of the milestones, or (None, None, why)."""
     ok, text = post("LOOP_GH", "api", API + "?state=all&per_page=100", "--paginate")
     if not ok:
         return None, None, text[:100]
@@ -54,7 +53,6 @@ def repo_side():
 
 
 def backlog(page, held={}):
-    """DOC-17: the milestone "Backlog: PAGE" for a page's delta issues, created when missing, "" when gh cannot list or make it."""
     title = "Backlog: " + page
     if title not in held:
         have = repo_side()[0]
@@ -63,7 +61,6 @@ def backlog(page, held={}):
 
 
 def to_repo(title, number, text):
-    """(ok, why) of making milestone `title` read `text`."""
     state, _, due = text.partition(" | ")
     args = ["-f", "title=" + title, "-f", "state=" + state, "-F" if due == "no due" else "-f", "due_on=null" if due == "no due" else "due_on=%sT00:00:00Z" % due[4:]]
     return post("LOOP_GH", "api", "-X", "PATCH" if number else "POST", "%s/%s" % (API, number) if number else API, *args)
@@ -167,7 +164,6 @@ def sync(root, args):
     return 0
 
 
-# --- How-to-use Kinds (DOC-19) ---
 ROUTINE = "Scheduled routine"
 KINDS = {
     "Site/URL": ["URLs", "Served by", "Check", "Deploy"],
@@ -183,7 +179,6 @@ ADDRESS = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 
 
 def kinds(name, text, on_page=()):
-    """DOC-19: (kind, page, detail) findings for a How-to-use page's What's delivered table and the block each row needs."""
     out, bad = [], lambda why: out.append(("HOWTO", name, "DOC-19 %s" % why))
     header, table = render.delivered(text)
     if header != render.KHEAD:
@@ -221,7 +216,6 @@ def kinds(name, text, on_page=()):
     return out
 
 
-# --- DOC-20: revisions (criteria.py revise, retire, migrate, guard) ---
 NINE = ("Delivery", "Setup", "Regression", "Automation", "Documentation", "Guardrails", "Health", "Machines", "Monitoring")
 
 
@@ -264,7 +258,6 @@ def slug_of(args):
 
 
 def revise(args):
-    """DOC-20: revise a requirement's text or retire it, keeping the earlier text as a row."""
     root, key = cr.git("rev-parse", "--show-toplevel"), args.id
     for rel in cr.pages(root):
         text = cr.slurp(join(root, rel))
@@ -326,7 +319,6 @@ def migrate(args):
 
 
 def guard(args):
-    """DOC-20: GUARD OK, or exit 1 naming a Reviewed requirement changed with no done line or owner record."""
     root = cr.git("rev-parse", "--show-toplevel")
     base = args.base or next((r for r in ("origin/main", "main") if cr.git("rev-parse", "--verify", "-q", r, check=False)), "origin/main")
     if not cr.git("rev-parse", "--verify", "-q", base + "^{commit}", check=False):
@@ -370,21 +362,7 @@ def add_parsers(sub):
             item.add_argument("--text", default=""), item.add_argument("--text-file", default="")]
 
 
-def origins(root):
-    """The repo's own sites: `public_origins` in config and scripts/public-origins.json."""
-    out = counting.config_of(root).get("public_origins")
-    out = list(out) if isinstance(out, list) else []
-    try:
-        with open(join(root, "scripts", "public-origins.json"), encoding="utf-8") as handle:
-            data = json.load(handle)
-        out += data.get("origins", []) if isinstance(data, dict) else data
-    except (OSError, ValueError, TypeError, AttributeError):
-        pass
-    return tuple(x.rstrip("/") for x in out if isinstance(x, str) and x.startswith("https://"))
-
-
 from audit import home_diagram  # noqa: E402,F401
 from entry import unlisted  # noqa: E402,F401
-from docs import alone  # noqa: E402,F401
 from prd import diagram  # noqa: E402,F401
-from prdcopy import stands_alone  # noqa: E402,F401
+from prdcopy import alone, stands_alone  # noqa: E402,F401
