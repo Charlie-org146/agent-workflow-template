@@ -17,55 +17,55 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-1: **Unreviewed** One visible set of guardrails
+- GRD-1: **Reviewed 2026-11-19** One visible set of guardrails <!-- reviewed 7d8feb17 -->
   - This page lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on.
   - It points to the requirement that owns each one and restates none of the owner's text.
-- GRD-2: **Unreviewed** Budgets and caps stop a runaway
+- GRD-2: **Reviewed 2026-11-19** Budgets and caps stop a runaway <!-- reviewed eaa123cb -->
   - Time, token and test budgets stop a goal or a step before it runs away.
   - Goal budgets and the ETA are Delivery's (DEL-7, DEL-17); test-run and preparation budgets and the test caps are Regression's (REG-7, REG-11, REG-14).
-- GRD-3: **Unreviewed** Nothing private is committed
+- GRD-3: **Reviewed 2026-11-19** Nothing private is committed <!-- reviewed 6745d93e -->
   - Every commit, push and pull request passes the private-name scan, and local settings and private values are never written into a repo.
   - A line in the list may be scoped to public repos or to named repos; an unscoped line applies everywhere.
-- GRD-4: **Unreviewed** A worker writes only its own goal's work
+- GRD-4: **Reviewed 2026-11-19** A worker writes only its own goal's work <!-- reviewed 35f42874 -->
   - A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands.
   - Only the operation session can do the rest.
-- GRD-5: **Unreviewed** Nothing is written to GitHub without --live
+- GRD-5: **Reviewed 2026-11-19** Nothing is written to GitHub without --live <!-- reviewed 5710c2bf -->
   - Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit --live switch; a token in the environment does not turn writing on.
-- GRD-6: **Unreviewed** The base branch is protected
+- GRD-6: **Reviewed 2026-11-19** The base branch is protected <!-- reviewed 5dcf2d72 -->
   - The base branch refuses direct and force pushes, and a pull request merges only when the repo's required checks pass.
   - I set those rules on the platform; setup never edits them, and health reads that they are set.
-- GRD-7: **Unreviewed** CI spends minutes only on runs that matter
+- GRD-7: **Reviewed 2026-11-19** CI spends minutes only on runs that matter <!-- reviewed 1a6472ec -->
   - A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code.
-- GRD-8: **Unreviewed** A step far past its usual is flagged while it runs
+- GRD-8: **Reviewed 2026-11-19** A step far past its usual is flagged while it runs <!-- reviewed df020074 -->
   - A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs.
-- GRD-9: **Unreviewed** Health proves every guardrail
+- GRD-9: **Reviewed 2026-11-19** Health proves every guardrail <!-- reviewed 16a0d8c0 -->
   - Each guardrail has a health rule that reads whether it is present and working, and each rule has a negative control run against a deliberately broken copy.
   - A guardrail its rule can't read shows as unread, never as passing.
-- GRD-10: **Unreviewed** Setup installs the whole set
+- GRD-10: **Reviewed 2026-11-19** Setup installs the whole set <!-- reviewed 938db03d -->
   - Adopting a repo installs every guardrail on this page with its default setting and lists each one installed, and health judges a freshly adopted repo on the same rules as the template.
-- GRD-12: **Unreviewed** Nothing starts under the memory floor
+- GRD-12: **Reviewed 2026-11-19** Nothing starts under the memory floor <!-- reviewed 3e6c0665 -->
   - No goal or test lane starts while free memory is below one setting, 3 GB by default and stated here only.
   - A machine may set its own value locally.
   - A lane already running is never stopped.
-- GRD-15: **Unreviewed** Token counts are real or say unread
+- GRD-15: **Reviewed 2026-11-19** Token counts are real or say unread <!-- reviewed c454ce51 -->
   - Each step's tokens are read from its session record when the step is recorded.
   - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget.
-- GRD-16: **Unreviewed** No commit skips the hooks
+- GRD-16: **Reviewed 2026-11-19** No commit skips the hooks <!-- reviewed 654b84ac -->
   - A commit or push that skips the repo's hooks is refused by the loop's own commands and flagged by health.
-- GRD-17: **Unreviewed** Too many CI runs raise an alarm
+- GRD-17: **Reviewed 2026-11-19** Too many CI runs raise an alarm <!-- reviewed 0702a791 -->
   - Runs or minutes per day past a set limit raise one alarm, and each round shows the Actions minutes it used.
-- GRD-18: **Unreviewed** Windows-safe
+- GRD-18: **Reviewed 2026-11-19** Windows-safe <!-- reviewed fa183c6f -->
   - A pull request that adds a POSIX-only call without its guard fails its checks, and long text for an issue, comment, pull request or release note is always passed to gh in a file, so nothing breaks on native Windows.
-- GRD-19: **Unreviewed** A page stays small enough to review
+- GRD-19: **Reviewed 2026-11-19** A page stays small enough to review <!-- reviewed 04b19863 -->
   - A feature page holds at most the number of requirements one setting allows, and health's Size group reports a page over it.
-- GRD-20: **Unreviewed** The package always passes Agensi's rules
+- GRD-20: **Reviewed 2026-11-19** The package always passes Agensi's rules <!-- reviewed f5b21830 -->
   - No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits.
   - A failure names the rule and the file.
-- GRD-21: **Unreviewed** Our package limits are never looser than Agensi's
+- GRD-21: **Reviewed 2026-11-19** Our package limits are never looser than Agensi's <!-- reviewed 129d1807 -->
   - One table on this page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read.
   - Ours may be tighter, never looser.
   - Raising one of ours takes my own words, and health warns when the last read is over 30 days old.
-- GRD-22: **Unreviewed** A goal learns at qa that it doesn't fit
+- GRD-22: **Reviewed 2026-11-19** A goal learns at qa that it doesn't fit <!-- reviewed a845978a -->
   - A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes.
   - The refusal says how much room is left and what would free it.
 

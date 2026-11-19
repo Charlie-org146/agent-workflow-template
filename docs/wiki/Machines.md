@@ -16,34 +16,34 @@ Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
 ## Requirements
 
 ### Functional
-- MCH-1: **Unreviewed** One command sets a machine up
+- MCH-1: **Reviewed 2026-11-19** One command sets a machine up <!-- reviewed b6207fa5 -->
   - A second Mac or Windows machine reaches this one's setup from a git clone and one command: a dry run lists everything first, then apply installs the skill links, the hooks and the empty private files.
   - Every item has a Windows form or is named as not yet possible.
-- MCH-2: **Unreviewed** A new machine or account reaches a working operation session and its peer link from one command
+- MCH-2: **Reviewed 2026-11-19** A new machine or account reaches a working operation session and its peer link from one command <!-- reviewed df224cf2 -->
   - Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied.
-- MCH-3: **Unreviewed** Backup and restore are commands
+- MCH-3: **Reviewed 2026-11-19** Backup and restore are commands <!-- reviewed ae46fda3 -->
   - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused.
-- MCH-4: **Unreviewed** Goals move between machines, with one owner and one merge order
+- MCH-4: **Reviewed 2026-11-19** Goals move between machines, with one owner and one merge order <!-- reviewed 6ebe593c -->
   - Each goal has one owning machine. `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused.
   - With the private setting `machine_sync` on (off by default, per machine), each repo has one merge order across machines: a goal takes a merge ticket on origin before its pr lane, and a second machine's goal waits for it (a holder silent for 30 minutes is dropped).
   - SNAPSHOT is structured data a machine publishes to origin, and a check-in draws one Machine line per machine from it, not from message text; a moved goal shows once, under the machine that holds it. A peer's record is data, never the owner's approval.
-- MCH-5: **Unreviewed** One email stream: every update and question by mail, answered by reply
+- MCH-5: **Reviewed 2026-11-19** One email stream: every update and question by mail, answered by reply <!-- reviewed 656bb6b7 -->
   - Each new Needs-you item, stopped or late goal and merged release sends one mail (when `notify_email` is on) with numbered options and a recommendation, through one mailer and one send budget both machines share (`notify_budget` a day, default 20); a second machine never mails an event the first one did.
   - A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words.
-- MCH-6: **Unreviewed** Phone-first: starting a worker never needs the desktop app
+- MCH-6: **Reviewed 2026-11-19** Phone-first: starting a worker never needs the desktop app <!-- reviewed b635274b -->
   - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend.
   - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works.
-- MCH-7: **Unreviewed** Prerequisites first
+- MCH-7: **Reviewed 2026-11-19** Prerequisites first <!-- reviewed 40f469fa -->
   - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix.
-- MCH-8: **Unreviewed** A goal started on another machine can be adopted
+- MCH-8: **Reviewed 2026-11-19** A goal started on another machine can be adopted <!-- reviewed 601b0ce2 -->
   - A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release.
   - A branch that isn't pushed, or a goal with no done line or pull request, is refused.
-- MCH-9: **Unreviewed** A machine keeps its private data to itself
+- MCH-9: **Reviewed 2026-11-19** A machine keeps its private data to itself <!-- reviewed 3521a993 -->
   - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report.
   - A new machine gets empty private files and asks me to fill them.
-- MCH-10: **Unreviewed** A drifted machine says so
+- MCH-10: **Reviewed 2026-11-19** A drifted machine says so <!-- reviewed 748dedc0 -->
   - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks.
-- MCH-11: **Unreviewed** No routine stops to ask
+- MCH-11: **Reviewed 2026-11-19** No routine stops to ask <!-- reviewed f7fbdacc -->
   - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing.
 
 ### Non-functional

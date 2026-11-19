@@ -13,21 +13,21 @@ Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
 ## Requirements
 
 ### Functional
-- INT-1: **Unreviewed** One contract for every integration
+- INT-1: **Reviewed 2026-11-19** One contract for every integration <!-- reviewed 57161341 -->
   - Anything outside the repo that the loop works with, a document, a tracker, a mailbox, a chat, an agent or a deploy target, is an integration declared in one registry: what it carries, which way it flows, where its secrets live and the health rule that proves it is connected. It is opt-in per repo or page.
-- INT-2: **Unreviewed** The repo stays the source of truth
+- INT-2: **Reviewed 2026-11-19** The repo stays the source of truth <!-- reviewed 469b6829 -->
   - Every check, test and publish reads the repo's own copy and never the outside system. An integration that can't be reached says not connected, changes nothing and never breaks the loop.
-- INT-3: **Unreviewed** A difference is a delta, never a silent overwrite
+- INT-3: **Reviewed 2026-11-19** A difference is a delta, never a silent overwrite <!-- reviewed 3972408c -->
   - Where both sides can change the same thing, sync compares them with what they last agreed on. Each difference is a delta naming what changed and on which side, and it stays open until someone accepts one side's text. It is posted on the feature's Backlog milestone.
-- INT-4: **Unreviewed** Nothing leaves without my say
+- INT-4: **Reviewed 2026-11-19** Nothing leaves without my say <!-- reviewed 3b5ea971 -->
   - An integration reads by default. It writes outside only behind an explicit switch and, for shared text, an accepted delta. I attach each connector myself with the narrowest access, and its secrets live outside the repo.
-- INT-5: **Unreviewed** Every integration is visible
+- INT-5: **Reviewed 2026-11-19** Every integration is visible <!-- reviewed a573ecbd -->
   - The board shows each integration's connection state and its open deltas as waiting on me, with the words to accept either side, and health counts an open delta or an unreadable integration as a finding, never as passing.
-- INT-6: **Unreviewed** A new system is an adapter, not a rewrite
+- INT-6: **Reviewed 2026-11-19** A new system is an adapter, not a rewrite <!-- reviewed 871cec77 -->
   - Adding a system means one reader or writer, one registry row and one How-to page. No loop code changes, and an adopted repo gets it by declaring it, not by building it.
-- INT-7: **Unreviewed** PRDs kept in an outside document
+- INT-7: **Reviewed 2026-11-19** PRDs kept in an outside document <!-- reviewed 9c9640b5 -->
   - A PRD lives in the repo by default. A page can opt in to keep step with an outside document, in Notion or behind a link, under this contract; the repo's copy stays the one every check reads.
-- INT-8: **Unreviewed** Milestones kept in step with an outside page
+- INT-8: **Reviewed 2026-11-19** Milestones kept in step with an outside page <!-- reviewed 31469dc4 -->
   - A repo can keep its GitHub milestones in step with an outside Milestones page under this contract, opt-in by one setting.
 
 ### Non-functional

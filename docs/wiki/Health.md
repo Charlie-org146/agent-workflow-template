@@ -27,7 +27,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 ## Requirements
 
 ### Functional
-- HLT-2: **Unreviewed** The rules
+- HLT-2: **Reviewed 2026-11-19** The rules <!-- reviewed 572ed701 -->
   - Health checks twelve fixed rule groups, each from a stated angle, and each belongs to one of the principles the README shows. The report gives one verdict for each principle, red when any of its groups fails, and every principle has at least one rule that can fail. Adding a group means retiring one. Each group's rules are listed in How-to.
   - After the twelve groups the report prints one PRINCIPLE line for each of the eight principles, from the groups under it (the list is in this skill's commands reference): red when any of its groups fails, and principle 8 prints UNREAD until its Attention group exists; UNREAD is never green.
   - Health checks exactly these groups, each with the angle its tests take:
@@ -48,39 +48,39 @@ How to use: [How-to-use-Health](How-to-use-Health)
   - An owed proof (`.loop/regression-owed.tsv`) is not a seen-red failure; it warns once it is older than 7 days and never fails.
   - The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`).
   - A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one.
-- HLT-3: **Unreviewed** Formal report with one findings table
+- HLT-3: **Reviewed 2026-11-19** Formal report with one findings table <!-- reviewed 1466bccf -->
   - The report lists every group it ran, then one findings table sorted by feature, then each rule marked pass, warn, fail or unread with its fix, then one verdict.
   - A rule that can't read its data is never shown as passing.
-- HLT-4: **Unreviewed** Findings become issues
+- HLT-4: **Reviewed 2026-11-19** Findings become issues <!-- reviewed 58288af2 -->
   - Each finding is one GitHub issue tagged with its group and its feature.
   - A preview lists what would be opened, updated, closed or reopened, and nothing is written until I confirm.
   - A repeat updates its issue, a fix closes it and a return reopens it, never a duplicate.
-- HLT-5: **Unreviewed** Repo review
+- HLT-5: **Reviewed 2026-11-19** Repo review <!-- reviewed 64b3686d -->
   - A reviewer, separate from the rules and never part of the verdict, reads every page, issue, test and the code, feature by feature, and reports conflicts, gaps, drift, weak tests and savings, ending with ranked next steps per feature.
   - Wording changes it suggests are applied only by me.
-- HLT-6: **Unreviewed** Every rule can fire
+- HLT-6: **Reviewed 2026-11-19** Every rule can fire <!-- reviewed 32fa7b1b -->
   - Every health rule has a negative control that proves it can fire.
-- HLT-8: **Unreviewed** Triage
+- HLT-8: **Reviewed 2026-11-19** Triage <!-- reviewed fa76af73 -->
   - Open findings are shown per feature with their kind, age and count.
   - When I close a batch, each is closed with my words as the reason, and it isn't refiled unless the evidence changes.
-- HLT-10: **Unreviewed** Every feature has a Backlog milestone
+- HLT-10: **Reviewed 2026-11-19** Every feature has a Backlog milestone <!-- reviewed a4de2071 -->
   - Every feature has one standing Backlog milestone, and "Backlog: Other" holds what fits no feature.
   - Adoption creates the missing ones, and health warns for each that is absent.
-- HLT-11: **Unreviewed** Health keeps the repo lean
+- HLT-11: **Reviewed 2026-11-19** Health keeps the repo lean <!-- reviewed 642495ff -->
   - Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them.
   - It warns on a script over 19,000 bytes and fails one at 20 KB.
-- HLT-12: **Unreviewed** A filed finding becomes work
+- HLT-12: **Reviewed 2026-11-19** A filed finding becomes work <!-- reviewed dfe35a82 -->
   - When the next goals are planned, the open defect and backlog issues are read by feature and goals are proposed from them, most blocking first, so a filed finding is picked up or closed with my words, never left unseen.
-- HLT-13: **Unreviewed** Conflicts and orphans are findings
+- HLT-13: **Reviewed 2026-11-19** Conflicts and orphans are findings <!-- reviewed 3030c1cb -->
   - Health flags two requirements that conflict or repeat, and any test, script or goal that names no requirement.
   - Each is settled by a revision that merges, retires or rewords, or by a removal.
 
 ### Non-functional
-- HLT-1: **Unreviewed** Deterministic and read-only
+- HLT-1: **Reviewed 2026-11-19** Deterministic and read-only <!-- reviewed 42516361 -->
   - The rule check gives the same answer twice on an unchanged repo and changes nothing; it writes only reports and GitHub issues.
-- HLT-7: **Unreviewed** Fast check
+- HLT-7: **Reviewed 2026-11-19** Fast check <!-- reviewed 6c149ff5 -->
   - The rule check, run without its controls, finishes in under 60 seconds on this repo.
-- HLT-9: **Unreviewed** Evidence or nothing
+- HLT-9: **Reviewed 2026-11-19** Evidence or nothing <!-- reviewed 2545c53b -->
   - Every review finding names its feature and cites its evidence: a page and requirement ID, a file and line, a test or an issue.
   - A finding without evidence is dropped, and nothing is filed twice.
 

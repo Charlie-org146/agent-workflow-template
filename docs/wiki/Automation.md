@@ -15,26 +15,26 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Unreviewed** Routines run where they can run fully
+- AUT-1: **Reviewed 2026-11-19** Routines run where they can run fully <!-- reviewed b2521857 -->
   - Health runs on my always-on machine for every repo; regression runs in GitHub Actions for a public repo and on that machine for a private one. Each report says where it ran, and a routine missed while the machine was off runs once at the next tick and says it was missed.
-- AUT-2: **Unreviewed** Regression on a schedule
+- AUT-2: **Reviewed 2026-11-19** Regression on a schedule <!-- reviewed 9128feaf -->
   - The full regression suite runs on the schedule set in the repo's settings, every 4 hours by default, and on every release tag; I can also start it by hand. The report names every test it skipped and why.
-- AUT-3: **Unreviewed** Health on a schedule
+- AUT-3: **Reviewed 2026-11-19** Health on a schedule <!-- reviewed 89d69911 -->
   - Health runs on my always-on machine on the schedule, after the latest finished regression run, with all its rule groups and the repo review. It uses my own login, and when the login has expired the report says so and the next round tries again.
-- AUT-4: **Unreviewed** A digest by email
+- AUT-4: **Reviewed 2026-11-19** A digest by email <!-- reviewed 92a1f5c6 -->
   - After each round, one email goes to the address I set: what ran, its results, and the new, still-open and fixed issues grouped by feature, each with its link and the request to give the agent. The same digest is posted on a pinned issue.
 
-- AUT-9: **Unreviewed** Every routine declares what it may do
+- AUT-9: **Reviewed 2026-11-19** Every routine declares what it may do <!-- reviewed adc00e9a -->
   - Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules.
-- AUT-10: **Unreviewed** A private repo needs no Actions check to merge
+- AUT-10: **Reviewed 2026-11-19** A private repo needs no Actions check to merge <!-- reviewed 1c333823 -->
   - No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses.
 
 ### Non-functional
-- AUT-5: **Unreviewed** Under my control
+- AUT-5: **Reviewed 2026-11-19** Under my control <!-- reviewed 0c9d56a6 -->
   - Each routine can be turned off or rescheduled in one setting. Without the secrets it needs, a routine runs, writes nothing and says what is missing.
-- AUT-6: **Unreviewed** Private address
+- AUT-6: **Reviewed 2026-11-19** Private address <!-- reviewed 1d372530 -->
   - The email address and the mail key live only in one local secrets file outside git, shared by both mailers and read only by the local runner. They never appear in the repo, logs, issues or the digest, and mail goes only to the one address I set.
-- AUT-7: **Unreviewed** Bounded cost
+- AUT-7: **Reviewed 2026-11-19** Bounded cost <!-- reviewed d7168507 -->
   - A round finishes within 45 minutes, and each report shows how long the round took.
 
 ## Non-goals

@@ -26,39 +26,39 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 ## Requirements
 
 ### Functional
-- REG-1: **Unreviewed** Three kinds of tests
+- REG-1: **Reviewed 2026-11-19** Three kinds of tests <!-- reviewed a554abcb -->
   - Every Reviewed requirement has at least one requirement test, every whole flow has an end-to-end workflow test on a toy repo, and every fixed issue has a defect test. A requirement with no passing test shows as not enforced.
-- REG-2: **Unreviewed** Test format
+- REG-2: **Reviewed 2026-11-19** Test format <!-- reviewed b26d3a89 -->
   - Every test is listed in one fixed format, grouped by feature, wherever tests are shown: its kind, what it guards, what it checks and its last result.
 - REG-3: **Reviewed 2026-11-10** One command, three places <!-- reviewed 6fb19e03 -->
   - One command runs the suite the same way for me, the loop and GitHub Actions.
-- REG-4: **Unreviewed** When tests run
+- REG-4: **Reviewed 2026-11-19** When tests run <!-- reviewed 6e361de7 -->
   - In the loop a goal runs only the tests its change affects plus its own new ones, and they run again on the merged result before a pull request merges. The full suite runs on the schedule and on every release, never on every goal, and I can run any part at any time.
-- REG-5: **Unreviewed** Failures go to GitHub
+- REG-5: **Reviewed 2026-11-19** Failures go to GitHub <!-- reviewed 9c74e5c0 -->
   - Each failing test has one labelled issue, updated while it fails and closed when it passes. Known failures don't block, and nothing is written without --live.
-- REG-6: **Unreviewed** Every fixed issue leaves a test
+- REG-6: **Reviewed 2026-11-19** Every fixed issue leaves a test <!-- reviewed ec3d8601 -->
   - A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. A reopened issue's test is marked failing until it passes again.
-- REG-13: **Unreviewed** One machine's failure is not the goal's failure
+- REG-13: **Reviewed 2026-11-19** One machine's failure is not the goal's failure <!-- reviewed 92403fb1 -->
   - A test that fails on one machine but passes on CI is filed as an issue and is not counted as a failure of the goal.
-- REG-15: **Unreviewed** Coverage is measured in one place
+- REG-15: **Reviewed 2026-11-19** Coverage is measured in one place <!-- reviewed 552cac2f -->
   - Each requirement's coverage step, from Stated to Fresh, is computed from the latest full run on main and shown beside it on its page. One test may prove several requirements. Nothing else is a source.
-- REG-16: **Unreviewed** Coverage never drops silently
+- REG-16: **Reviewed 2026-11-19** Coverage never drops silently <!-- reviewed bd3061d7 -->
   - A goal that would remove the only proof of a Reviewed requirement is refused at qa, and a release that lowers coverage needs my words.
 
 ### Non-functional
-- REG-7: **Unreviewed** Fast in the loop
+- REG-7: **Reviewed 2026-11-19** Fast in the loop <!-- reviewed 94d6ea1c -->
   - Every in-loop test run stays within a time budget, 15 minutes by default and never lower. A run that would go past it runs what fits and defers the rest to the full suite, naming how many. It is the only time limit on a lane.
-- REG-8: **Unreviewed** Controllable
+- REG-8: **Reviewed 2026-11-19** Controllable <!-- reviewed a7b77412 -->
   - Which tests run where, the schedule, the time limits and how many test lanes run at once are settings.
-- REG-9: **Unreviewed** Honest results
+- REG-9: **Reviewed 2026-11-19** Honest results <!-- reviewed 2d8b797c -->
   - Every test has been seen failing once, or shows as unproven. A test that fails then passes on the same commit is marked flaky, never silently retried.
-- REG-10: **Unreviewed** Tests a machine can't run
+- REG-10: **Reviewed 2026-11-19** Tests a machine can't run <!-- reviewed 71cdeb88 -->
   - A test this machine can't run is skipped with its reason and never counted as seen failing. Its failing proof is recorded as owed, runs on a machine that can, and is written back with that machine and commit. An owed proof never blocks the goal, its merge or the release.
-- REG-11: **Unreviewed** Preparation is budgeted too
+- REG-11: **Reviewed 2026-11-19** Preparation is budgeted too <!-- reviewed 1a828dd3 -->
   - The work before a lane's first test, preparing, planning and waiting for a slot, has its own budget, 15 minutes by default and never lower. A lane that reaches it stops, says which part ran long, and can be rerun.
-- REG-12: **Unreviewed** Lanes don't disturb each other
+- REG-12: **Reviewed 2026-11-19** Lanes don't disturb each other <!-- reviewed 7da0b9b0 -->
   - Test lanes running side by side never share files or ports or time each other out, and a lane over its limit says so.
-- REG-14: **Unreviewed** Caps on tests and suite time
+- REG-14: **Reviewed 2026-11-19** Caps on tests and suite time <!-- reviewed b638d1f3 -->
   - The number of tests and the full-suite time are capped by settings. A goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or I raise the cap in my own words. The suite time is measured from the latest full run.
 
 ## Non-goals

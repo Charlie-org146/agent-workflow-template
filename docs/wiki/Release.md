@@ -15,43 +15,43 @@ How to use: [How-to-use-Release](How-to-use-Release)
 
 ### Functional
 
-- REL-1: **Unreviewed** A version number says what changed
+- REL-1: **Reviewed 2026-11-19** A version number says what changed <!-- reviewed be0f0ee3 -->
   - A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone.
   - A goal's release never bumps a major; a major exists only after the gate passes.
-- REL-2: **Unreviewed** A major's milestone is closed out
+- REL-2: **Reviewed 2026-11-19** A major's milestone is closed out <!-- reviewed 992f3be5 -->
   - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue.
-- REL-3: **Unreviewed** The full suite passes on the candidate
+- REL-3: **Reviewed 2026-11-19** The full suite passes on the candidate <!-- reviewed d4c89cf1 -->
   - The gate runs the whole nightly suite on the release candidate.
   - Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses.
-- REL-4: **Unreviewed** Health, review and pages pass on the candidate
+- REL-4: **Reviewed 2026-11-19** Health, review and pages pass on the candidate <!-- reviewed 210d6254 -->
   - The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails.
-- REL-5: **Unreviewed** A candidate admits only gate fixes
+- REL-5: **Reviewed 2026-11-19** A candidate admits only gate fixes <!-- reviewed cc7d2874 -->
   - From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals.
-- REL-6: **Unreviewed** Promotion tags, snapshots and reports
+- REL-6: **Reviewed 2026-11-19** Promotion tags, snapshots and reports <!-- reviewed 8651d648 -->
   - Promoting a major runs only from the operation session with my record naming that version and every gate check passing.
   - It tags the major, keeps a snapshot branch, and mails a state report as the release notes.
-- REL-7: **Unreviewed** A major can be reverted
+- REL-7: **Reviewed 2026-11-19** A major can be reverted <!-- reviewed 86a7884b -->
   - revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it.
-- REL-8: **Unreviewed** Promotion and waivers are my words
+- REL-8: **Reviewed 2026-11-19** Promotion and waivers are my words <!-- reviewed afb418cb -->
   - Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject.
-- REL-9: **Unreviewed** The merge's wiki check refuses only for what the goal changed
+- REL-9: **Reviewed 2026-11-19** The merge's wiki check refuses only for what the goal changed <!-- reviewed b1b08f38 -->
   - `merge.py` refuses a DOC-19 or DOC-4 finding on a page the goal's diff changes (a How-to-use page counts as changed when its feature page is), a page the diff made stale, and a stale generated block or table (the Tests tables, START.md); the same findings on a page the goal leaves alone never refuse it, and a page only merge.py's own re-render of the Tests tables changed counts as left alone.
   - Each such untouched page gets one issue on its feature's "Backlog: <Feature>" milestone (Home and skill docs on "Backlog: Documentation"), made when missing and not again while one is open; the prepare step lists them as left for health and files nothing, and a gh that cannot file leaves the merge going and says so.
   - On the base branch itself every finding counts.
-- REL-10: **Unreviewed** Every goal ends with a release
+- REL-10: **Reviewed 2026-11-19** Every goal ends with a release <!-- reviewed 81f20b6a -->
   - With auto_merge on, a finished goal is merged and released automatically: version bump, release note, published release and wiki.
   - With auto_merge off it makes a draft release and merges nothing.
   - Any failure shows under Needs you.
-- REL-11: **Unreviewed** A merge is never refused late or left half done
+- REL-11: **Reviewed 2026-11-19** A merge is never refused late or left half done <!-- reviewed 83b64be4 -->
   - A merge is refused only for a page the goal's own change made stale, and the pull-request checks catch that before a merge slot is spent.
   - If the merge lands but the release fails, the goal reads "merged, release owed", and a second run finishes it without merging twice.
-- REL-12: **Unreviewed** A review hold before auto merge
+- REL-12: **Reviewed 2026-11-19** A review hold before auto merge <!-- reviewed 0920bd9b -->
   - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review.
-- REL-13: **Unreviewed** Fast merge queue
+- REL-13: **Reviewed 2026-11-19** Fast merge queue <!-- reviewed 343a63a7 -->
   - Pull requests merge one at a time per repo, across machines.
   - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together.
   - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next.
-- REL-14: **Unreviewed** Every release is noted
+- REL-14: **Reviewed 2026-11-19** Every release is noted <!-- reviewed e68d2a52 -->
   - Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6).
 
 ### Non-functional

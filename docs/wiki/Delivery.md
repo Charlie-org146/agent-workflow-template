@@ -15,34 +15,34 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Requirements
 
 ### Functional
-- DEL-1: **Unreviewed** The loop
+- DEL-1: **Reviewed 2026-11-19** The loop <!-- reviewed c440f7e8 -->
   - I give one sentence and its done lines, and a worker runs it unattended through freeze, idea, plan, build, review, qa, ship, pull request and release.
   - Each step maps to a skill I choose.
   - It won't start until the flow is set up.
   - Review is the only gate a person has to pass.
-- DEL-2: **Unreviewed** Done lines are frozen
+- DEL-2: **Reviewed 2026-11-19** Done lines are frozen <!-- reviewed b52a8a69 -->
   - Done lines can't change once the goal starts; a change means a new goal.
-- DEL-3: **Unreviewed** It only stops for me when it must
+- DEL-3: **Reviewed 2026-11-19** It only stops for me when it must <!-- reviewed a1527d67 -->
   - A decision that is mine waits under Needs you, or is auto-approved and logged where the repo allows.
   - Plan and review run at full depth unless the repo or I choose condensed.
   - Tests never shrink.
-- DEL-4: **Unreviewed** The pull request is the record
+- DEL-4: **Reviewed 2026-11-19** The pull request is the record <!-- reviewed 178f325a -->
   - Every pull request carries the done lines, the plan, how to verify by hand, and each step's result.
-- DEL-17: **Unreviewed** A goal's ETA is a hard limit
+- DEL-17: **Reviewed 2026-11-19** A goal's ETA is a hard limit <!-- reviewed 6312b8c9 -->
   - Every goal records an ETA when it is frozen.
   - Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer.
   - Decisions a goal can foresee are asked once, up front, each with a recommendation.
   - Time spent waiting for a queue, for memory or for me does not count.
-- DEL-18: **Unreviewed** Everything goes through a goal
+- DEL-18: **Reviewed 2026-11-19** Everything goes through a goal <!-- reviewed 6a0a9551 -->
   - Every change to a repo's main branch arrives through a goal: its pull request and its release commit.
   - Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for.
-- DEL-19: **Unreviewed** Every goal serves a requirement
+- DEL-19: **Reviewed 2026-11-19** Every goal serves a requirement <!-- reviewed 4769ca73 -->
   - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true.
   - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal.
   - A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through.
 
 ### Non-functional
-- DEL-7: **Unreviewed** It survives failure
+- DEL-7: **Reviewed 2026-11-19** It survives failure <!-- reviewed 0d16d801 -->
   - A failed step is retried, and after three failed tries the goal stops with a reason.
   - A stopped or crashed goal resumes from its last recorded step.
   - Past its time or token budget a goal starts no new step and waits under Needs you; only my recorded words raise a limit.
@@ -53,9 +53,9 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
   - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen.
   - A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows.
-- DEL-14: **Unreviewed** Every goal feeds back what it found
+- DEL-14: **Reviewed 2026-11-19** Every goal feeds back what it found <!-- reviewed c6dd98cb -->
   - When a goal ships, each finding it did not fix is filed once: a break of a Reviewed requirement as an issue labelled defect, and an improvement, idea or saving as an issue labelled backlog on its feature's Backlog milestone.
-- DEL-16: **Unreviewed** Each step runs on the agent I pick
+- DEL-16: **Reviewed 2026-11-19** Each step runs on the agent I pick <!-- reviewed b7211537 -->
   - A private setting maps each step and goal size to an agent profile.
   - A missing or signed-out agent falls back to the default with a warning.
   - The run record names the agent, model and tokens of every step.
