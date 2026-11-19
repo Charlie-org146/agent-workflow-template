@@ -78,6 +78,8 @@ Each refusal ends with one of these codes; the line also gives the fix and what 
 | `OWNER_RECORD` | `promote` was given an owner-words record that doesn't name `vX.0.0`, or the tag exists; nothing changed | the operation session records the owner's words with `--ids vX.0.0` |
 | `PROMOTE_PUSH` | `promote` could not fast-forward main or push; the local tag and branch are removed | merge or rebase the rc on main, then promote again |
 
+Stamp-only commits carry a recorded pass. `autorelease.tems(top, old, new)` is the one compare: two commits are equal modulo stamps only when `git diff --raw --no-renames` shows regular files added or edited at the `STAMPS` paths (`VERSION` or the repo's version file, `CHANGELOG.md`, `.loop/regression-runs.tsv`, `.loop/regression-issues.tsv`); any other path, a symlink, a rename or a delete breaks it. A release head that differs from its parent only by stamps carries the goal's passing lane, and `operate.py wiki-only` (HEAD_MOVED) accepts stamp files and wiki pages together through the same compare.
+
 The package for Agensi is a skill pack: one ZIP with all seven skills, and the shared file contract under `shared/`.
 
 ### Example
