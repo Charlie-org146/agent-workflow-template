@@ -438,6 +438,7 @@ operate-10-under-load	PASS	2026-11-11
 operate-all	PASS	2026-11-09	
 operate-toy-no-check	PASS	2026-11-13	
 operate-wakes-on-report	PASS	2026-11-09	
+ops-findings-filed	PASS	2026-11-19	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
 package-gate-head	FAIL	2026-11-16	
 package-hang-bound	PASS	2026-11-12	

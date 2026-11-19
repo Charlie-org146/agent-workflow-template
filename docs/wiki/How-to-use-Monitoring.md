@@ -134,3 +134,5 @@ Each requirement and how it is delivered:
 
 
 <!-- kept plan-red-team-core@6edef587 -->
+
+<!-- kept ops-findings-v20@f363371f -->
