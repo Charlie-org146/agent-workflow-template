@@ -306,7 +306,7 @@ None
 | - | requirement | GRD-18 | no passing test | not enforced |
 | - | requirement | GRD-19 | no passing test | not enforced |
 | - | requirement | GRD-20 | no passing test | not enforced |
-| - | requirement | GRD-21 | no passing test | not enforced |
+| [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-21 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
 | - | requirement | GRD-22 | no passing test | not enforced |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
