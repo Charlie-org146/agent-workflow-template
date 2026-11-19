@@ -410,7 +410,7 @@ needs-you-stuck	PASS	2026-11-18
 never-merges	PASS	2026-11-09	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
-no-done-line-refused	PASS	2026-11-18	
+no-done-line-refused	PASS	2026-11-19	
 no-flow-refused	PASS	2026-11-18	
 no-line-in-governor	PASS	2026-11-18	
 no-pid-left-alone	PASS	2026-11-09	
@@ -498,7 +498,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
-refuse-replace	PASS	2026-11-18	
+refuse-replace	PASS	2026-11-19	
 refused-unmet	PASS	2026-11-12	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
