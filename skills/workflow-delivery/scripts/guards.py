@@ -314,8 +314,8 @@ def plan_gate(g, state):
     why = ("no recorded review of the current plan" if not seen else "the plan changed since its last review" if seen.get("sha") != sha else "") * new
     why = why or ("the red team recorded a break of principle %s: %s" % (left[0]["principle"], left[0]["text"][:200]) if left else "")
     if why:
-        sys.stderr.write("REFUSED (no try used): %s. Fix: record a fresh review (machines.py plan-review, plan-record) or, for a break, the "
-                         "owner's words and machines.py plan-accept SLUG N --owner-record ID (PLAN_BREAK)\n" % why)
+        sys.stderr.write("REFUSED (no try used): %s. Fix: record a fresh review (notify.py plan-review, plan-record) or, for a break, the "
+                         "owner's words and notify.py plan-accept SLUG N --owner-record ID (PLAN_BREAK)\n" % why)
         sys.exit(2)
 
 

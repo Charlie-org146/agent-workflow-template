@@ -5,9 +5,6 @@ usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record
        machines.py take SLUG                    on the new machine: fetch the branch and record, bind a worker
        machines.py snapshot [--publish]         this machine's structured SNAPSHOT (JSON); --publish shares it
        machines.py turn                         who holds the cross-machine merge turn
-       machines.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID   the red team's pre-build
-                    plan review (HLT-2): the reviewer's input; record its A/R/B<n>/C lines with a timestamp under <git common dir>/loop/redteam/;
-                    the owner accepts a principle break by an owner-words.tsv record. goal.py step build refuses without a clean review.
 
 Machines share three kinds of git refs on origin, each holding one small JSON blob: refs/loop/handover/<slug> (the record a
 handover copies), refs/loop/pr-turn (one merge ticket per repo, taken with a compare-and-swap push and dropped after
@@ -18,10 +15,8 @@ the owner's approval. start_worker is the one place a worker starts, for hands-o
 session first, else a background worker through agent_command.
 """
 import argparse
-import hashlib
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -210,124 +205,7 @@ def cmd_take(args):
     return 0
 
 
-ASK = ("Red-team this plan against every principle. Reply with lines only, no edits and no decisions: `A: <an unverified assumption>`, "
-       "`R: <a risk>`, `B<n>: <how the plan breaks principle n>` (n is its number above) and `C: <a cheaper path>`.")
-
-
-def sha_of(path):
-    try:
-        with open(path, "rb") as handle:
-            return hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest()
-    except OSError:
-        return ""
-
-
-def loop_dir(root):
-    out = subprocess.run(["git", "rev-parse", "--git-common-dir"], capture_output=True, text=True, cwd=root).stdout.strip() or ".git"
-    return os.path.join(os.path.abspath(os.path.join(root, out)), "loop")
-
-
-def principles(root):
-    try:
-        with open(os.path.join(root, "docs", "wiki", "Principles.md"), encoding="utf-8") as handle:
-            text = handle.read()
-    except OSError:
-        text = ""
-    return text, [int(n) for n in re.findall(r"^## (\d+)\. ", text, re.M)] or list(range(1, 9))
-
-
-def plan_input(root, slug):
-    """The red-team reviewer's input for one goal: its goal file, design and plan, the principles, and the request. Reads only."""
-    goals, parts = os.path.join(root, ".loop", "goals", slug), []
-    if not os.path.exists(goals + ".plan.md"):
-        sys.exit("REFUSED: %s has no plan to red-team. Fix: run the plan step first." % slug)
-    for title, path in (("GOAL", goals + ".md"), ("DESIGN", goals + ".design.md"), ("PLAN", goals + ".plan.md")):
-        if not os.path.exists(path):
-            continue
-        with open(path, encoding="utf-8") as handle:
-            parts.append("== %s ==\n%s" % (title, handle.read().strip()))
-    return "\n\n".join(["RED-TEAM PLAN INPUT " + slug] + parts + ["== PRINCIPLES ==\n" + principles(root)[0].strip(), ASK])
-
-
-def plan_parse(text, nums):
-    """{'A': [...], 'R': [...], 'C': [...], 'B': [(n, text)]}; refuses a B line with no principle number, or one the principles lack."""
-    got = {"A": [], "R": [], "C": [], "B": []}
-    for line in str(text or "").splitlines():
-        found = re.match(r"^\W*([ARC]|B\s*\d*)\s*:\s*(\S.*)$", line)
-        if not found:
-            continue
-        key, words = found.group(1)[0], found.group(2).strip()
-        if key == "B":
-            n = re.sub(r"\D", "", found.group(1))
-            if not n or int(n) not in nums:
-                sys.exit("REFUSED: a principle break must name its principle, B<n> with n one of %s. Fix: send `B<n>: <break>`; nothing was recorded." % nums)
-            got["B"].append((int(n), words))
-        else:
-            got[key].append(words)
-    return got
-
-
-def jwrite(path, data):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path + ".tmp", "w") as handle:
-        json.dump(data, handle, indent=1, sort_keys=True)
-    os.replace(path + ".tmp", path)
-
-
-def plan_record(root, slug, text, now=None):
-    """Write the findings with a timestamp under <git common dir>/loop/redteam/ (never a repo file); returns the break lines.
-    plan-<slug>.json is the gate's view of the newest review: the plan's sha and each break with the owner record that accepted it."""
-    now, got, red = now if now is not None else time.time(), plan_parse(text, principles(root)[1]), os.path.join(loop_dir(root), "redteam")
-    stamp, sha = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now)), sha_of(os.path.join(root, ".loop", "goals", slug + ".plan.md"))
-    breaks = [{"principle": n, "text": w, "accepted": ""} for n, w in got["B"]]
-    jwrite(os.path.join(red, "plan-%s-%s.json" % (slug, stamp)), {"slug": slug, "at": now, "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
-           "assumptions": got["A"], "risks": got["R"], "cheaper": got["C"], "breaks": breaks, "plan_sha": sha})
-    jwrite(os.path.join(red, "plan-%s.json" % slug), {"sha": sha, "reviewed": stamp, "breaks": breaks})
-    return ["BREAK principle %d: %s" % item for item in got["B"]] or ["NO BREAKS"]
-
-
-def plan_accept(root, slug, n, record):
-    """The operation session's: the owner accepts principle n's break on the plan as it stands, by an owner-words.tsv record."""
-    try:
-        with open(os.path.join(loop_dir(root), "owner-words.tsv"), encoding="utf-8") as handle:
-            known = {row.split("\t")[0] for row in handle}
-    except OSError:
-        known = set()
-    path = os.path.join(loop_dir(root), "redteam", "plan-%s.json" % slug)
-    seen = read_json(path)
-    if record not in known:
-        sys.exit("REFUSED: %s is not an owner-words.tsv record. Fix: the operation session records the owner's words first (sessions.py owner-words)." % record)
-    if seen.get("sha") != sha_of(os.path.join(root, ".loop", "goals", slug + ".plan.md")) or not [b for b in seen.get("breaks", []) if b["principle"] == n]:
-        sys.exit("REFUSED: no break of principle %d on the plan as it stands. Fix: record a fresh review of this plan first." % n)
-    for item in seen["breaks"]:
-        item["accepted"] = record if item["principle"] == n else item["accepted"]
-    jwrite(path, seen)
-    return "ACCEPTED principle %d for %s by %s" % (n, slug, record)
-
-
-def plan_main(argv):
-    parser = argparse.ArgumentParser(prog="machines.py")
-    parser.add_argument("command", choices=["plan-review", "plan-record", "plan-accept"])
-    parser.add_argument("slug")
-    parser.add_argument("arg", nargs="?", default="")
-    parser.add_argument("--owner-record", default="")
-    parser.add_argument("--root", default="")
-    args = parser.parse_args(argv)
-    root = args.root or subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or os.getcwd()
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", args.slug) or (args.command == "plan-accept" and not args.arg.isdigit()):
-        sys.exit("REFUSED: usage: machines.py plan-review SLUG | plan-record SLUG FILE|- | plan-accept SLUG N --owner-record ID (a goal slug, a principle number)")
-    if args.command == "plan-review":
-        print(plan_input(root, args.slug))
-    elif args.command == "plan-record":
-        print("\n".join(plan_record(root, args.slug, sys.stdin.read() if args.arg == "-" else open(args.arg, encoding="utf-8").read())))
-    else:
-        print(plan_accept(root, args.slug, int(args.arg), args.owner_record))
-    return 0
-
-
 def main():
-    if sys.argv[1:2] and sys.argv[1].startswith("plan-"):
-        return plan_main(sys.argv[1:])
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     one = sub.add_parser("handover")
