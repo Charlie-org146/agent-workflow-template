@@ -11,7 +11,7 @@ Brings a second Mac or Windows machine to the same working setup as the one you 
 |---|---|---|---|
 | `machine.py` | Command | Plans, applies and checks a second machine's setup. | `python3 dev/machine.py` (a dry run), then `machine.py apply --repo <your repo>`. |
 | `machines.py` | Command | Hands a goal to the other machine, holds the cross-machine merge turn and publishes the SNAPSHOT a check-in draws its Machine lines from. | `machines.py handover SLUG --to MACHINE`, then on the other machine `machines.py take SLUG`. |
-| `machines.py reply` | Command | Reads the owner's reply to a mailed question and records it as the owner's words. | `machines.py reply QID "1 recommended"`; `machines.py pending` lists open questions. |
+| `machines.py reply` | Command | Reads the owner's reply to a mailed question and records it as the owner's words. Before v2.0 this was `mailbox.py reply`. | `machines.py reply QID "1 recommended"`; `machines.py pending` lists open questions. |
 | `setup.py desk` | Command | Lists, runs once and checks every setup step that needs a desk. | `setup.py desk list`, `desk run`, `desk done STEP`, `desk check`. |
 | health-regression | Scheduled routine | The scheduled health and regression round a second machine runs every 4 hours. | `machine.py apply` registers it; its Runbook is below. |
 
