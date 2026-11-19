@@ -19,6 +19,8 @@ unset GH_TOKEN GITHUB_TOKEN GITHUB_STEP_SUMMARY GITHUB_ENV GITHUB_OUTPUT GITHUB_
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup
+rm -f "$FAKE_GH_DIR/calls.log"  # setup prints its prerequisites checklist with gh auth status; the dry run below counts only the run's own gh calls
+python3 -c "import json;c=json.load(open('.loop/config.json'));c['min_free_memory_gb']=0;json.dump(c,open('.loop/config.json','w'),indent=2)"  # a lane never waits for memory on the machine running the toy
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
