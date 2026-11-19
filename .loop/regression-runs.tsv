@@ -664,7 +664,7 @@ tests-page-run-link	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-page-stale	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-row-shape	PASS	2026-11-12	
-tests-seen-failing	PASS	2026-11-18	
+tests-seen-failing	FAIL	2026-11-19	
 tests-table-columns	PASS	2026-11-12	
 tests-table-stale	PASS	2026-11-18	
 tiers-deleted-qa-pr	PASS	2026-11-10	
