@@ -62,7 +62,7 @@ Each requirement and how it is delivered:
   - The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over.
   - Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off.
   - Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit.
-  - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 3), and gives up after four times the lane's time limit; a lane already running is never stopped.
+  - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped.
 
 ### Skill: workflow-regression
 - **Say:** "Add a test for DEL-1 that runs the delivery toy suite"
@@ -108,4 +108,4 @@ The scheduled regression routine's Runbook lives in the [Regression](Regression)
 - PRD page: [Regression](Regression)
 - Backlog: [Backlog: Regression](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gap-wave1-small@88387483 -->
+<!-- kept readme-conformance@26f57c19 -->
