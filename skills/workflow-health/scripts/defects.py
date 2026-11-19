@@ -3,13 +3,8 @@
 
 Closed: a merged goal says it fixed it ("fixes #35", "fixes finding:SLUG" in .loop/goals/*.md), or a line of
 .loop/findings.md is marked [closed]. A defect row's link holds the issue URL or finding:SLUG. Reads files only (no gh call).
-Also holds the Traceability and Consistency rules (report.py) and the shared page reader (read-only):
-  row-requirement  a regression row whose goal names no requirement on any page and is not a done line slug:N (FAIL)
-  ids-unique       a requirement id defined on two pages (FAIL)
-  refs             a page naming an id of a known prefix that no page defines (FAIL)
-  usage-readme     a /workflow-<skill> <verb> in the README that no skill's Command map names (WARN)
-  migration        migration_gaps (below) as WARN rows, the same gaps setup.py migration-check prints
-Each rule's negative control is in CONTROLS (controls.py runs it).
+Also the Traceability and Consistency rules (report.py) and the shared page reader: row-requirement, ids-unique, refs,
+usage-readme, migration. Each rule's negative control is in CONTROLS (controls.py runs it).
 """
 import glob
 import importlib
@@ -134,9 +129,20 @@ def ids_unique(root):
             for key, names in sorted(defined(root).items()) if len(names) > 1]
 
 
+def retired(root):
+    """Ids a page lists under `### Retired`: each resolves through its moved-to marker (DOC-20)."""
+    out = set()
+    for text in pages(root).values():
+        for part in re.findall(r"^### Retired\n\n((?:- .*\n?)+)", text, re.M):
+            out.update(LINE.findall(part))
+    return out
+
+
 def refs(root):
     known = defined(root)
-    prefixes = {key.split("-")[0] for key in known}
+    live = set(known)
+    known = dict.fromkeys(live | retired(root), 1)
+    prefixes = {key.split("-")[0] for key in live}
     out, seen = [], set()
     for name, text in pages(root).items():
         for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", text):

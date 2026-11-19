@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Unreviewed** <!-- kept known-red-w8-size@2c3106bb -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
@@ -314,3 +314,4 @@ None
 | [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | PASS 2026-11-19 |
 | [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GraphQL issue list times out, when a regression run is live, then it reads the REST pages and keeps one open issue per failing row. | not run |
 | [issues-both-down-nochange](Tests#t-issues-both-down-nochange) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given both issue reads time out, when a regression run is live, then no issue is opened, commented or closed. | not run |
+| [quiet-plain-import-4892](Tests#t-quiet-plain-import-4892) | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | Given the quiet hook's remember(), when dev/package.py scans govern_hook.py, then it has no __import__ call and remember() still writes the signature held() reads back (issue 4892). | not run |

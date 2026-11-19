@@ -114,12 +114,7 @@ two files and reports the error. Report it too. Don't retry with other flags.
 
 ## A major: `gate`, `promote`, `revert` (REL-1 to REL-8)
 
-A major ships only through `review.py gate vX`, which refuses naming each open milestone issue (unless an owner waiver `moved`
-names it), each red or known-red suite row (unless a `red` waiver names its issue), a health failure, an Unreviewed
-requirement and a stale page. Waivers are lines `kind<TAB>subject<TAB>detail<TAB>owner record` in the git folder's
-`loop/release-waivers.tsv`, and count only when that owner-words record names the subject. `promote vX --owner-record ID` (operation
-session only; the record must name `vX.0.0`) tags `vX.0.0`, keeps `release/vX`, moves main and mails the state report; from a major's
-rc tag until the tag exists `merge.py` refuses any goal naming no gate failure (`FROZEN`). `revert vX` opens a PR back to the snapshot.
+A major ships only through `review.py gate vX`, then `promote vX` (operation session only) and `revert vX`; the waivers and refusals are in [references/commands.md](references/commands.md#a-major-gate-promote-and-revert).
 
 ## Refusals
 Every refusal and its fix is in [references/commands.md](references/commands.md).

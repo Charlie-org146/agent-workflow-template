@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept known-red-w8-size@2c3106bb -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
@@ -204,7 +204,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 | [machine-guide-monitoring](Tests#t-machine-guide-monitoring) | requirement | CHK-2 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held-line conventions, and the check-in routine file is only a pointer to it. | not run |
 | [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-2 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
 | [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | CHK-2 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
-| [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-2 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, GRD-14). | not run |
+| [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-2 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, DEL-17). | not run |
 | [notify-new-events](Tests#t-notify-new-events) | requirement | CHK-2 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |
 | [notify-operate-runs](Tests#t-notify-operate-runs) | requirement | CHK-2 | Given an operation pass, when it prints the check-in, then it saves it and runs notify.py send. | not run |
 | [notify-one-mail-per-event](Tests#t-notify-one-mail-per-event) | requirement | CHK-2 | Given a stopped goal that also shows under Needs you, when notify runs, then one mail goes out for it, not two. | not run |
