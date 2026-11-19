@@ -1,15 +1,7 @@
 """The twelve health groups (HLT-2) and the formal health report (HLT-3), plus health.py's commands other than check.
 
-Groups: each has its angle, in report order, plus Mine. Every rule is in one group with one name; a row's family is its
-group's slug, its rule label the rule's name (older labels map through LABELS). Exactly twelve groups.
-
-Report (pure formatting; check, judge, review): a header naming every group run and any skipped, the findings table
-(findings), each group in the fixed order under its angle with every rule it checked (PASS, WARN, FAIL or UNREAD, a fix on
-each non-pass), then one verdict. A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
-
-Commands (each takes the health module h): review, judge, preview, file, triage. Refusals print REFUSED[code], exit 2:
-[group] unknown group (health.py), [file] file with no group, [gh] issues can't be listed (nothing written), [review] a
---review FILE that isn't a saved review --json, [why] and [cap] from triage.
+A rule with no row passes only when its function ran; else it is UNREAD (HLT-3).
+Commands: review, judge, preview, file, triage; a refusal prints REFUSED[code] and exits 2.
 """
 import json
 import os
@@ -48,7 +40,7 @@ RULES_OF = {g[0]: g[3] for g in GROUPS + (MINE, REPO)}
 GROUP_OF = {rule: g[0] for g in GROUPS for rule in g[3]}
 RULES = tuple(rule for g in GROUPS for rule in g[3])  # every rule; each needs a negative control (controls.py)
 ALIASES = {"criteria": "requirements", "cost": "performance"}  # older --group names, kept for one release
-# Older row labels -> the rule they speak for, within their group.
+# older row labels -> their rule
 LABELS = {"sync": "rows", "done-lines": "done", "open": "findings", "run": "waiting", "merged": "branches",
           "branch": "branches", "time": "cost", "tokens": "cost", "limit": "scripts"}
 
@@ -60,8 +52,7 @@ MATRIX_V1 = (("Claude Code on Windows", (("claude-app", "windows"), ("claude-cli
 
 
 def matrix(root):
-    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv (dev/toy/matrix-smoke.py) within 7 days; no file,
-    no rows. Never ran: WARN pending. No pass in time: WARN not proven, FAIL for a V1-required cell."""
+    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv within 7 days."""
     from defects import row
     from rules import days_since
     try:
@@ -90,14 +81,14 @@ FUNCTIONS = {"matrix": matrix}  # health.py reads this like the other rule modul
 
 
 def bare_agent(command):
-    """True for a claude or codex command that grants its agent no tools (so it stops at its first permission prompt)."""
+    """True for a claude or codex command that grants its agent no tools."""
     allows = {"claude": ("--allowedtools", "--allowed-tools", "--permission-mode"), "codex": ("-s", "--sandbox", "--full-auto")}
     name = os.path.basename(command[0]) if isinstance(command, list) and command and isinstance(command[0], str) else ""
     return name in allows and not any(str(a).lower().split("=")[0] in allows[name] or str(a).lower().startswith("--dangerous") for a in command[1:])
 
 
 def agent_tools(root):
-    """agent-tools: WARN when the repo's agent_command, or the flow file's command without allowed_tools, grants no tools."""
+    """agent-tools: WARN when the agent command grants no tools."""
     from defects import row
     held = lambda path: json.load(open(path)) if os.path.exists(path) else {}
     try:
@@ -121,7 +112,7 @@ def rule_of(item):
     rules = RULES_OF.get(family, ())
     if label in rules:
         return label
-    if family == "docs":  # docs.py's kinds (stale, missing, ...) all speak for docs-check
+    if family == "docs":  # docs.py's kinds all speak for docs-check
         return "docs-check"
     if family == "requirements" and item.get("subject") == "done-lines":
         return "done"
@@ -141,8 +132,7 @@ def line_of(item):
 
 
 def complete(rows, ran, ran_rules=None):
-    """Rows plus one for each rule of a group that ran and gave none: PASS when its function ran, UNREAD when its source
-    could not be read or it did not run."""
+    """Rows plus one per rule of a group that ran and gave none: PASS if its function ran, else UNREAD."""
     out = list(rows)
     blind = {SOURCE[rule_of(item)] for item in rows if item["state"] == "UNREAD" and rule_of(item) in SOURCE}
     for name in ran:
@@ -162,12 +152,12 @@ def complete(rows, ran, ran_rules=None):
 
 
 def groups(rows, asked):
-    """(ran, skipped): groups run in order, and (name, why) for each not run."""
+    """(ran, skipped), in order."""
     ran, skipped = [], []
     for name in ORDER:
         mine = [item for item in rows if item["family"] == name]
         if name == "repo" and all(item["state"] == "INFO" for item in mine):
-            continue  # no repo rules: the header and headings read as they did before the repo layer
+            continue  # no repo rules: as before the repo layer
         if asked and name not in asked:
             skipped.append((name, "not asked"))
         elif name == "mine" and mine and all(item["state"] == "INFO" for item in mine):
@@ -178,7 +168,7 @@ def groups(rows, asked):
 
 
 def build(rows, asked=None, ran_rules=None):
-    """(lines, counts, green, verdict, ran, skipped, rows) for the fixed template."""
+    """(lines, counts, green, verdict, ran, skipped, rows)."""
     ran, skipped = groups(rows, asked)
     rows = complete(rows, [name for name in ran if name not in ("mine", "repo")], ran_rules)
     counts = {state: sum(1 for item in rows if item["state"] == state) for state in ("PASS", "WARN", "FAIL", "UNREAD")}
@@ -197,7 +187,7 @@ def build(rows, asked=None, ran_rules=None):
 
 
 def findings(rows, root, numbers, only=None):
-    """The findings table (HLT-3): a row per WARN, FAIL or UNREAD finding, by feature (Other last), group, severity."""
+    """The findings table (HLT-3), by feature, group, severity."""
     import issues as IS
     try:
         from file import REPORT_ONLY as quiet
@@ -229,7 +219,7 @@ def refuse(code, text):
 
 
 def cmd_judge(h, args):
-    """The check report, then the judge section. The verdict and exit code are the check's, whatever the judge says."""
+    """The check report, then the judge section; the verdict is the check's."""
     root = h.repo_root()
     rows = h.gather(root, None)
     text, _, green, _, _ = h.report(rows)
@@ -247,13 +237,13 @@ def cmd_judge(h, args):
         steps = judge.suggestions(root, rows)[1]
         print("judge: " + judge.VIA[0])
         print("\n".join(judge.render(found, steps)) if not why else "JUDGE UNAVAILABLE: " + why)
-    except Exception as error:  # the judge is advice: nothing it does may change the verdict
+    except Exception as error:  # the judge is advice only
         print("JUDGE UNAVAILABLE: %s" % str(error)[:120])
     return 0 if green else 1
 
 
 def cmd_review(h, args):
-    """The per-feature repo review. Writes nothing; exit 0 whatever it finds (it is never part of the verdict)."""
+    """The per-feature repo review; writes nothing, exit 0."""
     root = h.repo_root()
     review = h.sibling_module("judge") or refuse("review", "judge.py is not installed beside health.py")
     names = h.sibling_module("issues").features(root)
@@ -269,7 +259,7 @@ def cmd_review(h, args):
 
 
 def plan_for(h, root, asked, with_judge, only=None, saved=None):
-    """(file module, acts, groups) for the groups asked; exit 2 when file.py or gh can't be used."""
+    """(file module, acts, groups); exit 2 when file.py or gh can't be used."""
     filing = h.sibling_module("file") or refuse("file", "file.py is not installed beside health.py")
     groups = list(asked) if asked is not None else list(filing.DEFAULT)
     ran = set()
@@ -293,7 +283,7 @@ def plan_for(h, root, asked, with_judge, only=None, saved=None):
 
 
 def cmd_preview(h, args):
-    """What file would do. Writes nothing and never runs Mine's private commands unless mine is named."""
+    """What file would do; writes nothing."""
     root = h.repo_root()
     asked = h.groups_of(args.group)
     if args.live:
@@ -327,7 +317,7 @@ def cmd_triage(h, args):
 
 
 def answer_flag(item):
-    """--judge-answer FILE: the reply an in-session subagent gave to the judge prompt (session first; see judge.py)."""
+    """--judge-answer FILE: an in-session subagent's reply to the judge prompt."""
     item.add_argument("--judge-answer", dest="judge_answer", type=saved_answer, help="the session judge's saved reply")
 
 
@@ -338,7 +328,6 @@ def saved_answer(path):
 
 
 def add(sub, h):
-    """Add these commands to health.py's parser."""
     item = sub.add_parser("review", help="the per-feature repo review; writes nothing")
     item.add_argument("--feature")
     item.add_argument("--json", action="store_true")

@@ -46,6 +46,7 @@ import sys
 import time
 import board_page
 import board_status as bs
+import graph
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
@@ -370,3 +371,28 @@ def issues(root, runs=()):
             out += ["- %s: a finding stayed local: %s" % (run["slug"], said[:200]),
                     "    fix: %s" % (fix[:200] or "remove what the scan found, then push the finding commit")]
     return out
+
+
+def shown(run):
+    return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
+
+
+def gather(root, at, stamp=None):
+    import live_board as lb  # lazy: live_board imports this module
+    folder, cfg = lb.loop_dir(root), bs.read_json(os.path.join(root, ".loop", "config.json")) or {}
+    runs = lb.load(root)
+    found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
+    taken = graph.assigned(found)
+    landed = states(runs, root, graph.merged)
+    stat = {r["slug"]: "merged" if landed.get(r["slug"]) == "MERGED" else "held" if (s := graph.classify(r, taken, at, cfg)) == "silent" and r.get("step") == "pr" else s for r in runs}
+    since = graph.parse_at(stamp)
+    new = lambda r: stat[r["slug"]] == "merged" and bool(since) and (graph.parse_at(r.get("updated")) or since) > since
+    live = [r for r in runs if (stat[r["slug"]] != "retired" and (stat[r["slug"]] != "merged" or new(r))) and shown(r)]
+    away = {}
+    for r in live:
+        if graph.foreign(r):
+            count, last, _ = away.get(graph.foreign(r), (0, None, ""))
+            away[graph.foreign(r)] = (count + 1, max([t for t in (last, graph.last_spoke(r)) if t] or [None]), r.get("machine") or "")
+    live = [r for r in live if not graph.foreign(r)]
+    return dict(away=away, name=os.path.basename(root), root=root, cfg=cfg, folder=folder, runs=runs, found=found, why=why, taken=taken,
+                states=stat, live=live, queue=bs.queued(root, runs))
