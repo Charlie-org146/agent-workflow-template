@@ -8,7 +8,7 @@ usage: goal.py <command> <slug> [options]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
   pr SLUG
-step, record and pr refuse outside a worker.
+step, record and pr: workers only.
   wait SLUG --ask TEXT --words W [--words W]
   answer SLUG
   finding SLUG TEXT [--requirement ID]
@@ -232,6 +232,7 @@ def cmd_new(args):
 
 def cmd_step(args):
     state = load(args.slug)
+    args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
     if args.tokens:
