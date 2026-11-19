@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept main-red-cleanups@b64c5a2e -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept known-red-docs-release2@0483a6dc7 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -135,7 +135,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-19 |
-| [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-12 |
+| [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-19 |
 | [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards. | PASS 2026-11-12 |
 | [aut-old-issue-relabel](Tests#t-aut-old-issue-relabel) | requirement | AUT-1 | Given an open failing-test issue without the defect label, when the test fails again, then the issue gains the defect label. | PASS 2026-11-12 |
 | [aut-issue-list-fails](Tests#t-aut-issue-list-fails) | requirement | AUT-1 | Given a page of the open regression issues cannot be read, when the scheduled regression runs, then it changes no issue rather than open duplicates. | PASS 2026-11-12 |
