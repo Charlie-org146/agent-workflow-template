@@ -54,11 +54,9 @@ def read(path, default=""):
 
 
 def config(root):
-    try:
-        found = json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
-    except ValueError:
-        found = {}
-    return found if isinstance(found, dict) else {}
+    """.loop/config.json as committed when a local skip-worktree edit holds the file, else as the working copy."""
+    import counting
+    return counting.config_of(root)
 
 
 def cell(text):
