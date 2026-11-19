@@ -33,7 +33,7 @@ git add -A; git commit -qm "rows" ; git push -q origin main
 C=$(cd "$(git rev-parse --git-common-dir)" && pwd); R="$C/loop/runs"
 field() { python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get(sys.argv[2]))" "$R/$1.json" "$2"; }
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 >/dev/null; $goal record "$1" "$2" --file "$R/$1.$2.txt"; }
-flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
+flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; python3 "$here/dev/toy/fillverify.py" "$1"; }
 other="$T/other"; git clone -q "$T/origin.git" "$other"; git -C "$other" config user.email t@example.test; git -C "$other" config user.name Toy
 mainmoves() { ( cd "$other" && git pull -q origin main && "$@" && git add -A && git commit -qm "Main moves" && git push -q origin main ); }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, `goal.py set`, `queue`, the PR body and `fit.py owed`."""
+"""What a goal decides at freeze and reads later: size, depth, budget, set, queue, the PR body, owed."""
 import importlib.util
 import json
 import os
@@ -90,13 +90,12 @@ def budget(seen, cfg):
 
 
 def tokens():
-    """The token functions, which live in proctree.py (one identical copy in each skill)."""
     import proctree
     return proctree
 
 
 def spent_tokens(run, live=False):
-    """Fresh tokens (input + cache writes + output) a goal spent, from its measured steps, plus the open window if asked."""
+    """Fresh tokens a goal spent."""
     value = run.get("tokens") if isinstance(run.get("tokens"), dict) else {}
     tok = tokens()
     steps = [tok.fresh(n) for key, n in value.items() if key != "total"]
@@ -144,6 +143,7 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
                      "with --owner-record ID (ETA_PAST)" % (spent, auto.eta_minutes(seen), slug))
     for name, spent in (("minutes", active_minutes(state, at, cfg)),("tokens", spent_tokens(state, bool(held["tokens"])))):
         if held[name] and spent >= held[name]:
+            save and monitor("mend", True).budget_wait(state, name, spent, held[name], save)
             sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                      "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
 
@@ -292,7 +292,7 @@ def frozen_fields(g, args, lines, touches):
 
 
 def plan_ahead(state, runs, step):
-    """The owner answered the pre-flight plan item 'approve ahead' (#4535): a pending plan takes the recommended answers."""
+    """The plan item was answered approve ahead (#4535)."""
     return step == "plan" and view(state, runs).get("preflight_answers", {}).get("answers", {}).get("plan") == "approve ahead"
 
 
@@ -322,6 +322,8 @@ def pr_text(g, state):
     base, cfg = g.base_ref(state), g.config()
     body = pr_body(g.read(g.goal_file(state["slug"])), view(state, g.state_dir()), cfg, role.setting_of(cfg),
                           "", regen_warnings(g.root(), base))
+    body, empty = monitor("mend", True).pr_extra(g.goal_file(state["slug"]), body)
+    empty and guards.refuse_no_try(state, empty, "fill in Verify by hand", "VERIFY_EMPTY", g.save)
     found = private.scan(g.root(), base, {"pr-title": state["goal"][:70], "pr-body": body})
     stop = private.refusal(found, base) or private.cannot(g.root(), base)
     if stop:

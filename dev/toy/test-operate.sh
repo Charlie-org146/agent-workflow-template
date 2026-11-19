@@ -176,7 +176,7 @@ check "the operation checkout never ran a goal step" '[ "$(cut -d" " -f2 "$FAKE_
 echo "== the latest base is merged before the pull request"
 git switch -q main
 # A goal made with --here is refused in the repo's main checkout, so each runs in a worktree of its own.
-flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
+flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; python3 "$here/dev/toy/fillverify.py" "$1"; }
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 >/dev/null; $goal record "$1" "$2" --file "$C/loop/runs/$1.$2.txt"; }
 wt() { git worktree add -q -b "loop/$1" "$T/wt-$1" HEAD; }
 wt s1; wt s2

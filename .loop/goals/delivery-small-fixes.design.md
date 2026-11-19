@@ -1,0 +1,3 @@
+# Design: delivery-small-fixes
+Five small gaps (G20). 1: the PR body carries the plan text and pr refuses an empty Verify by hand (one hook in fit.pr_text, helper in mend.py). 2: a budget stop sets the goal waiting with the raise command (helper in mend.py, one call in fit.budget_stop). 3: mend gives a fresh session only when the failure was an unusable session or tool (mend.one_pass condition). 4: machine check prints a GAP when the skills checkout is behind origin (dev/machine_ops.py, one line in machine.gaps). 5: rows seen red, scripts under 19,000.
+Rejected: editing goal.py or guards.py (capped, held by other goals).

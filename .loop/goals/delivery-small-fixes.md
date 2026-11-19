@@ -17,3 +17,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In a scratch goal whose Verify by hand is only the empty comment, run `goal.py pr SLUG`.
+   Expect: REFUSED (no try used): Verify by hand is still the empty comment (VERIFY_EMPTY).
+2. Fill in one numbered step with an Expect: line and a plan file `.loop/goals/SLUG.plan.md`, run `goal.py pr SLUG` again.
+   Expect: the PR body has a `## Plan` block with the plan text.
+3. Run `python3 dev/machine.py check` on a machine whose skills checkout is behind origin.
+   Expect: a `GAP skills-checkout:` line with `-> run: git -C ... pull`.
+

@@ -54,6 +54,24 @@ if want machine-check-gaps; then
   ready "$h" "$d/b/repo" || no "ready failed"
   $M check --home "$h" --repo "$d/b/repo" | grep -q '^MACHINE OK' || no "a set-up machine did not pass"
   echo "PASS: a fresh machine fails with each gap named and a set-up machine passes, and check writes nothing"
+  gap=$(python3 - "$here" "$d" <<'PY'
+import os, subprocess, sys
+sys.path.insert(0, sys.argv[1] + "/dev")
+import machine_ops as m
+d = os.path.join(sys.argv[2], "skgap")
+env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+run = lambda *a, cwd=d: subprocess.run(a, cwd=cwd, env=env, capture_output=True, check=True)
+os.makedirs(d); run("git", "init", "-q", "-b", "main", "up"); up = os.path.join(d, "up")
+open(os.path.join(up, "f"), "w").write("1"); run("git", "add", "f", cwd=up); run("git", "commit", "-qm", "one", cwd=up)
+run("git", "clone", "-q", "up", "ck"); m.CLONE = os.path.join(d, "ck")
+same = m.skills_gap()
+open(os.path.join(up, "f"), "w").write("2"); run("git", "commit", "-qam", "two", cwd=up)
+behind = m.skills_gap()
+print("SAME" if not same else "BAD-same", "GAP" if behind and behind[0].startswith("GAP skills-checkout:") and "-> run:" in behind[0] else "BAD-behind")
+PY
+)
+  [ "$gap" = "SAME GAP" ] || no "the skills checkout gap: $gap"
+  echo "PASS: a skills checkout level with origin has no gap, and one behind origin prints a GAP line with its fix"
 fi
 
 # done 3: the operation guide carries the conventions; the check-in routine file is only a pointer.

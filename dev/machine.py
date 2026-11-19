@@ -8,11 +8,10 @@ usage: machine.py [plan|apply|check] [--repo DIR] [--platform mac|windows] [--ho
   apply               installs the skill links, hooks, private-names file, mailer and one scheduled task per repo
                       (<repo>-health-regression, every 4 hours) plus the repo's own machine_setup items
   check               lists each gap as "GAP item: what -> run: fix"; writes nothing; exit 0 only with no gap
-                      also the operation session (its routine and task) and the peer link (peer.json: machine labels only)
+                      also the operation session, the peer link and a skills checkout behind origin
   backup DIR          copies the restorable machine state (never a secret or a private-names list) to DIR
   restore DIR         puts a backup back on a new machine or account, then names what is still yours to do
-  record-task         notes that you registered task NAME in the app with permission mode MODE (the app's own
-                      setting is the truth)
+  record-task         notes that you registered task NAME in the app with permission mode MODE
 A value (secret, owner address, home path) is never written: a text that holds one is refused.
 Windows: py -3 dev\\machine.py (the same verbs; Windows forms are marked unverified).
 """
@@ -30,7 +29,7 @@ CLONE = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))  # this fil
 SK = os.path.join(CLONE, "skills")
 sys.path.insert(0, os.path.join(SK, "workflow-setup", "scripts"))
 import seed  # noqa: E402
-from machine_ops import (git, repo_of, inside, read, in_repo, hook_gap, hook_do, peer_gap, backup, restore, checklist, tasks_of, WIN, cadence)  # noqa: E402
+from machine_ops import (skills_gap, git, repo_of, inside, read, in_repo, hook_gap, hook_do, peer_gap, backup, restore, checklist, tasks_of, WIN, cadence)  # noqa: E402
 NO_PROMPT = ("bypass",)  # permission modes that never stop to ask
 MODEL = "claude-sonnet-5-5"
 UD = "Us" + "ers"  # spelled in two parts so this file holds no home path itself
@@ -285,6 +284,7 @@ def gaps(c, its):
     for mail in ("mail.env", "mail-to"):
         if not os.path.exists(os.path.join(c.loop, mail)):
             out.append("GAP %s: the owner-only mail file is missing -> run: see checklist step 1" % mail)
+    out += skills_gap()
     pointer = read(os.path.join(c.routines, "operation-checkin.md"))
     if pointer is not None and (len(pointer.splitlines()) > 3 or "commands.md" not in pointer):
         out.append("GAP check-in: the routine file holds more than a pointer -> run: delete it, then machine.py apply")
