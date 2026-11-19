@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.0.75 - 2026-11-19
+
+- Design: regroup-guardrails
+- Regroup Guardrails, Health, Operation and Check-in and board with the v2 rewrite text through the revision tooling
+- Keep Monitoring as moved-to markers; Operation is a new page with OPS ids
+- Review fixes: test-pods reads Operation too; Home says Monitoring holds markers
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge prd-revisions into regroup-guardrails
+- Merge main into regroup-guardrails
+- Restamp the Operation and Check-in pages after main's compaction
+- Merge prd-principles into regroup-guardrails
+- Merge gate-rerender into regroup-guardrails
+- Merge regroup-delivery into regroup-guardrails
+- Retire GRD-14 as moved to DEL-17 and move DEL-17's eta rows
+- Merge regroup-regression into regroup-guardrails; retire GRD-11 and GRD-13 as moved to REG-10 and REG-14
+- Merge main into regroup-guardrails
+- Merge prd-principles into regroup-guardrails
+- Merge regroup-delivery into regroup-guardrails
+- Merge main into regroup-guardrails
+- Merge regroup-regression into regroup-guardrails
+- Lane: re-render the Tests tables
+- Merge regroup-delivery into regroup-guardrails
+- Merge regroup-regression into regroup-guardrails
+- Lane: re-render the Tests tables
+- Merge main into regroup-guardrails
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main (the v1.0.72 revert) into regroup-guardrails; Monitoring keeps its moved-to markers
+- Lane: re-render the Tests tables
+- Merge regroup-regression (14a9a4b2) into regroup-guardrails
+- Lane: re-render the Tests tables
+- Merge main into regroup-guardrails
+- Restamp the Operation, Check-in and Monitoring pages after main v1.0.74
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Put the pages this goal does not own back to main's text (stamp lines only)
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Open `docs/wiki/Operation.md` and `docs/wiki/Check-in-and-board.md`.
+   Expect: Operation holds OPS-1 to OPS-23 and Check-in and board holds CHK-1 to CHK-9, each with a Revisions table starting at r1.
+2. Open `docs/wiki/Monitoring.md`, section Revisions, and read the Retired list.
+   Expect: MON-1 to MON-19 each read "moved to" an OPS or CHK ID, and the page has no live requirement.
+3. Run `python3 skills/workflow-docs/scripts/criteria.py guard origin/main regroup-guardrails` and `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: GUARD OK, and no REVISION, IDS, LINK or HOWTO line (the Guardrails CAP line goes once GRD-11, GRD-13 and GRD-14 retire as moved).
+4. Open `docs/wiki/Home.md`.
+   Expect: rows for Monitoring, Operation and Check-in-and-board, each Build loop, each on milestone 6.
+
 ## v1.0.74 - 2026-11-19
 
 - Regression, Automation, Documentation, Integrations carry the v2 rewrite text through the revision tooling
