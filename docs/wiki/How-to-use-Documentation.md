@@ -130,4 +130,4 @@ Each requirement and how it is delivered:
 
 <!-- kept doc4-doc18-conflict@06ce732b -->
 
-<!-- kept readme-principles-table4@52c76acb -->
+<!-- kept readme-principles-table4@24c3c984 -->
