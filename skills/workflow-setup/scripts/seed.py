@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Plan and write the rest of an adoption: feature pages, criteria, regression rows and workflow.
+"""Plan and write the rest of an adoption: feature pages, criteria, regression rows, workflow.
 
-usage: seed.py [--repo DIR]     (setup.py imports this; run alone it prints the plan)
+usage: seed.py [--repo DIR]   (alone it prints the plan)
 """
 import argparse
 import importlib.util
@@ -43,13 +43,13 @@ def stub(name, py, priv, setup):
 
 
 def call_of(text):
-    """The private.py path a hook's text names (ours or the owner's own call), else None."""
+    """The private.py path a hook names, else None."""
     found = MARK in text and re.search(r"S='([^']*)'", text) or re.search(r"([^'\"\s]*private\.py)['\"]? +hook ", text)
     return found.group(1) if found else None
 
 
 def hook_state(path):
-    """installed (calls an existing private.py), stale (calls one that is gone), foreign (no call) or missing."""
+    """installed, stale (private.py gone), foreign (no call) or missing."""
     try:
         with open(path, errors="replace") as handle:
             target = call_of(handle.read())
@@ -59,7 +59,7 @@ def hook_state(path):
 
 
 def hooks_dir(repo):
-    """(the folder git reads hooks from, whether core.hooksPath chose it)."""
+    """(hooks folder, whether core.hooksPath chose it)."""
     out = lambda *a: subprocess.run(["git", "-C", repo] + list(a), capture_output=True, text=True).stdout.strip()
     custom = out("config", "--get", "core.hooksPath")
     if custom:
@@ -68,7 +68,7 @@ def hooks_dir(repo):
 
 
 def list_state(priv):
-    """(state word, private.py check's own line): the list's words, never a pattern."""
+    """(state word, private.py check line), never a pattern."""
     if not priv:
         return "unknown", "PRIVATE LIST: unknown, workflow-delivery is not beside workflow-setup"
     done = subprocess.run([sys.executable, priv, "check"], capture_output=True, text=True)
@@ -108,7 +108,7 @@ def git_hooks(repo, remove=False, adopting=False):
             return refuse("workflow-delivery (private.py) is not beside workflow-setup", "install the skills together")
         if any(ch in priv + setup + py for ch in "'\n%"):
             return refuse("a path holds a quote, newline or percent sign", "move the skills to a folder without one")
-        inside = os.path.join(os.sep + "loop", "worktrees") + os.sep  # a goal's worktree goes away when the goal ends
+        inside = os.path.join(os.sep + "loop", "worktrees") + os.sep
         if inside in priv + os.sep or inside in os.path.realpath(repo) + os.sep:
             return refuse("private.py or the repo is inside a goal's worktree", "run setup.py --git-hooks from an installed copy of the skills")
         os.makedirs(folder, exist_ok=True)
@@ -143,7 +143,7 @@ prefixes, pick, summary_of, mapping = survey.prefixes, survey.pick, survey.summa
 
 
 def decide(repo, config, found):
-    """The plan: a list of (verb, path, note, action) with action None for skip and no fit."""
+    """The plan: (verb, path, note, action) acts; None for skip and no fit."""
     acts, wiki = [], found["wiki"]
     seen, old = out(repo, "workflow-delivery", "private.py", "visibility"), survey.read(repo, ".loop/config.json")
     kept, live = json.loads(old or "{}").get("regression_runs"), {"private": "mac", "public": "actions"}.get(seen)
@@ -240,7 +240,7 @@ FORCED = []
 
 
 def put(repo, path, text):
-    """Write text to repo/path, keeping CRLF when the file already uses it."""
+    """Write text, keeping CRLF if the file uses it."""
     full = os.path.join(repo, path)
     crlf = os.path.exists(full) and "\r\n" in open(full, newline="").read()
     os.makedirs(os.path.dirname(full), exist_ok=True)
@@ -249,7 +249,7 @@ def put(repo, path, text):
 
 
 def apply(repo, config, found, acts):
-    """Write what decide() planned."""
+    """Write the plan."""
     touched, wiki = [], found["wiki"]
     used = prefixes(repo, found)
     rows, pf = [], agents.docs_format()
@@ -288,7 +288,7 @@ def apply(repo, config, found, acts):
                     title, problem = "# " + name, text
             tool(repo, "workflow-docs", "prd.py", "skeleton", path, "--title", title, "--problem", problem.strip() or PLACEHOLDER,
                  "--requirement", criterion)
-            how = os.path.join(os.path.dirname(path), "How-to-use-%s.md" % name)  # DOC-18: its page too, unwritten like the PRD page
+            how = os.path.join(os.path.dirname(path), "How-to-use-%s.md" % name)
             if not survey.read(repo, how):
                 put(repo, how, "%s\n# How to use %s\n\n## What it's for\n\n%s\n" % (survey.MARKER, name.replace("-", " "), PLACEHOLDER))
                 touched.append(how)
@@ -302,7 +302,7 @@ def apply(repo, config, found, acts):
             tool(repo, "workflow-regression", "regression.py", "add", "%s-checks" % tag.lower(), "--level", "land", "--command",
                  " && ".join(config["checks"]), "--goal", "%s-1" % tag, "--describe",
                  "Given the %s change, when the repo's checks run, then they pass." % name)
-        if not rows and any(a[3] == "rows" for a in acts):  # no page of its own: one row still runs the repo's checks
+        if not rows and any(a[3] == "rows" for a in acts):
             tool(repo, "workflow-regression", "regression.py", "add", "repo-checks", "--level", "land", "--command", " && ".join(config["checks"]),
                  "--goal", "-", "--describe", "Given the repo, when its checks run, then they pass.")
         touched.append(".loop/regression.tsv")
