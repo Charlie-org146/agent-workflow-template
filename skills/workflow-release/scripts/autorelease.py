@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""The automatic release, called by merge.py: routines, then after the merge one version bump, the CHANGELOG entry, a push
-to the base and a published GitHub release. Failures: `release_error`. The commit and notes pass the private-name scan
-first (PRIVATE_MODULE); a protected base takes the release pull request (merge.py)."""
+"""The automatic release, called by merge.py: routines, then after the merge a version bump, the CHANGELOG entry, a push to
+the base and a published GitHub release. Failures: `release_error`. Commit and notes pass the private-name scan first
+(PRIVATE_MODULE); a protected base takes a release pull request."""
 import datetime
 import importlib.util
 import json
@@ -27,7 +27,7 @@ LOADED = {}
 
 
 def sibling(name):
-    """(module, None), or (None, refusal) when the workflow-delivery module is broken."""
+    """(module, None), or (None, refusal) if the delivery module is broken."""
     if name not in LOADED:
         path = os.path.join(SIBLING, name + ".py")
         try:
@@ -112,7 +112,7 @@ def reopen(state, code):
 
 
 def mergeable(state):
-    """merge.py's gate: a finished goal with its pull request, or one failed with a release_error."""
+    """merge.py's gate: a finished goal with its PR, or one failed with a release_error."""
     return bool(state.get("pr")) and (state.get("status") == "done" or (state.get("status") == "failed" and bool(state.get("release_error"))))
 
 
@@ -159,7 +159,7 @@ def drop(top, tree, temp):
 
 
 def push_release_commit(top, cfg, state, part, to_branch=False):
-    """(version, sha); (None, stderr) when the base refused the push for protection. to_branch pushes release/vX-<slug>."""
+    """(version, sha); (None, stderr) if the base refused the push (protection). to_branch pushes release/vX-<slug>."""
     base, slug = cfg.get("base", "main"), state["slug"]
     temp = tempfile.mkdtemp(prefix="release-")
     tree = os.path.join(temp, "tree")
@@ -201,7 +201,7 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
             if PROTECTED.search(pushed.stderr):
                 print("NOTE: origin/%s refused the push for protection; the release goes through a pull request" % base)
                 return None, pushed.stderr
-            # another goal moved the base first: redo the bump on top of it
+            # another goal moved the base: redo the bump on top
         fail(state, "push to %s was rejected %d times: %s" % (base, PUSH_TRIES, pushed.stderr.strip()[-200:]))
     finally:
         drop(top, tree, temp)
@@ -219,8 +219,7 @@ ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
 
 
 def tems(top, old, new, extra="", allow=None):
-    """Tree equal modulo stamps: old to new only adds or edits regular files at STAMPS paths (and extra, and allow's);
-    code, a symlink, a rename or a delete breaks it."""
+    """Tree equal modulo stamps: old to new only adds or edits regular files at STAMPS paths (and extra, allow's)."""
     done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
     rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
     return done.returncode == 0 and bool(rows) and all(
@@ -228,7 +227,7 @@ def tems(top, old, new, extra="", allow=None):
 
 
 def carried(top, cfg, state, sha):
-    """The pr lane passed and the head is its parent plus stamps (tems): the pass carries (#3870)."""
+    """The pr lane passed and the head is its parent plus stamps: the pass carries (#3870)."""
     return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION")
 
 
@@ -251,7 +250,7 @@ def lane_at(top, cfg, sha):
 
 
 def release_statuses(top, cfg, state, branch, sha):
-    """Post the lane's result for the release PR's head under each required check's name; a bump-only head carries the goal's pass."""
+    """Post the lane's result for the release PR's head under each required check's name; a bump-only head carries the pass."""
     module, stop = sibling("private")
     if stop or not sha or state.get("release_status") == "success":
         return
@@ -265,7 +264,7 @@ def release_statuses(top, cfg, state, branch, sha):
         code, text = lane_at(top, cfg, sha)
         rows = re.findall(r"^FAIL (\S+)", text, re.M)
         ok = code == 0
-        if not ok and not rows:  # nothing ran and failed: don't blame an untested head
+        if not ok and not rows:  # nothing failed: don't blame an untested head
             state["release_status"], state["release_status_why"] = "untested", "the lane at the release head %s produced no result: %s" % (
                 sha[:12], " ".join((text or "(no output)").split())[-160:])
             return print("RELEASE_STATUS untested: " + state["release_status_why"])
@@ -279,7 +278,7 @@ RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_
 
 
 def main_reds(top, base, info, red):
-    """[failing rows, log URLs] of the red checks if every failing row is a known main red (known file or main's last run), else None."""
+    """(failing rows, log URLs) of the red checks if all failing rows are known main reds, else None."""
     show = lambda f: [x.split("\t") for x in sh(["git", "show", "origin/%s:.loop/%s" % (base, f)], cwd=top).stdout.splitlines()]
     known = {x[0] for x in show("regression-known.tsv")} | {x[0] for x in show("regression-runs.tsv") if x[1:2] == ["FAIL"]}
     rows, urls = set(), []
@@ -296,7 +295,7 @@ def main_reds(top, base, info, red):
 
 
 def go_gate(top, base, info, go):
-    """None, or the refusal, unless the PR head is the GO's and every required check is green on it (#5171)."""
+    """None, or the refusal, unless the PR head is the GO's and every required check is green (#5171)."""
     head = str(info.get("headRefOid"))
     if len(go) < 7 or not head.startswith(go):
         return "REFUSED (GO_HEAD): the GO was for %s, the PR head is %s. Nothing merged." % (go[:12], head[:12])
@@ -317,7 +316,7 @@ def go_gate(top, base, info, go):
 
 
 def status_held(state, url, number, seen=None):
-    """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) when the release PR head has no passing status or a red check."""
+    """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head has no passing status or a red check."""
     red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
            if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
     why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
@@ -335,7 +334,7 @@ def create_release(top, cfg, state, version, target):
     tag, text = "v" + version, notes_text(state)
     check(state, top, None, {"release notes": text})
     seen = sh(["gh", "release", "view", tag, "--json", "targetCommitish,url"], cwd=top)
-    if seen.returncode == 0:  # a crash after create is adopted, one elsewhere is not ours
+    if seen.returncode == 0:  # a crash after create is adopted; one elsewhere is not ours
         try:
             info = json.loads(seen.stdout)
         except ValueError:
