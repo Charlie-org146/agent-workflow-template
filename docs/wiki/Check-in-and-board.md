@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept known-red-w8-size@13e10ab3 -->
+Review: **Unreviewed** <!-- kept known-red-w4b-docs-wording@8e09bb24 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
