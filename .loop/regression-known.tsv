@@ -36,4 +36,4 @@ ls-scheduled-rule	red on main f3a20557: test-local-schedule.sh scheduledrule fai
 ls-size-budget	red on main f3a20557: test-local-schedule.sh size fails 'the package holds at most 99 files'; see #5343
 operate-wait-99	red on main f3a20557: test-operate.sh fails the same two asserts as operate-all; see #5343
 package-caps-held	red on main f3a20557: test-package-caps.py finds the real tree ships 104 files, at most 100; see #5343
-review-findings-skill-lines	red on main f3a20557: docs.py check --own prints REVISION Documentation DOC-1 r8 changed since the base; see #5343
+runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
