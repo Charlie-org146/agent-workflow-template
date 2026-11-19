@@ -36,146 +36,146 @@ from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F40
 ME = sys.modules[__name__]
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 try:
-    _spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(SKILLS, "workflow-monitoring", "scripts", "graph.py"))
-    pods = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(pods)
+  _spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(SKILLS, "workflow-monitoring", "scripts", "graph.py"))
+  pods = importlib.util.module_from_spec(_spec)
+  _spec.loader.exec_module(pods)
 except Exception:
-    pods = None
+  pods = None
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
-    os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 MAX_TRIES = 3
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,50}$")
 def no(text):
-    sys.exit("REFUSED: " + text)
+  sys.exit("REFUSED: " + text)
 
 
 def run(args, cwd=None, check=False):
-    done = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
-    if check and done.returncode:
-        no("%s: %s" % (" ".join(args), done.stderr.strip()))
-    return done
+  done = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+  if check and done.returncode:
+    no("%s: %s" % (" ".join(args), done.stderr.strip()))
+  return done
 
 
 def git(*args, check=True):
-    return run(["git"] + list(args), check=check).stdout.strip()
+  return run(["git"] + list(args), check=check).stdout.strip()
 
 
 def read(path):
-    with open(path) as handle:
-        return handle.read()
+  with open(path) as handle:
+    return handle.read()
 
 
 def write(path, text, mode="w"):
-    with open(path, mode) as handle:
-        handle.write(text)
+  with open(path, mode) as handle:
+    handle.write(text)
 
 
 now = guards.now
 
 
 def state_dir():
-    common = os.path.abspath(git("rev-parse", "--git-common-dir"))
-    path = os.path.join(common, "loop", "runs")
-    os.makedirs(path, exist_ok=True)
-    return path
+  common = os.path.abspath(git("rev-parse", "--git-common-dir"))
+  path = os.path.join(common, "loop", "runs")
+  os.makedirs(path, exist_ok=True)
+  return path
 
 
 def state_path(slug):
-    return os.path.join(state_dir(), slug + ".json")
+  return os.path.join(state_dir(), slug + ".json")
 
 
 SEEN = {}
 
 
 def load(slug):
-    try:
-        state = json.loads(read(state_path(slug)))
-    except OSError:
-        no("no goal named %s. Fix: start it with new." % slug)
-    SEEN[slug] = json.dumps(state)
-    return state
+  try:
+    state = json.loads(read(state_path(slug)))
+  except OSError:
+    no("no goal named %s. Fix: start it with new." % slug)
+  SEEN[slug] = json.dumps(state)
+  return state
 
 
 def save(state, note=None):
-    state["updated"] = now()
-    if note:
-        state.setdefault("log", []).append("%s %s" % (state["updated"], note))
-    path, slug = state_path(state["slug"]), state["slug"]
-    with open(path + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            disk = json.loads(read(path))
-        except (OSError, ValueError):
-            disk = {}
-        was = json.loads(SEEN.get(slug, "{}"))
-        merged = dict(disk, **{k: v for k, v in state.items() if k not in was or was[k] != v})
-        merged = {k: v for k, v in merged.items() if k in state or k not in was}
-        have = disk.get("log") or []
-        merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
-        role.report(disk, merged, state["updated"])
-        temp = path + ".%d.tmp" % os.getpid()
-        write(temp, json.dumps(merged, indent=2))
-        os.replace(temp, path)
-    state.clear()
-    state.update(merged)
-    SEEN[slug] = json.dumps(merged)
+  state["updated"] = now()
+  if note:
+    state.setdefault("log", []).append("%s %s" % (state["updated"], note))
+  path, slug = state_path(state["slug"]), state["slug"]
+  with open(path + ".lock", "w") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+      disk = json.loads(read(path))
+    except (OSError, ValueError):
+      disk = {}
+    was = json.loads(SEEN.get(slug, "{}"))
+    merged = dict(disk, **{k: v for k, v in state.items() if k not in was or was[k] != v})
+    merged = {k: v for k, v in merged.items() if k in state or k not in was}
+    have = disk.get("log") or []
+    merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
+    role.report(disk, merged, state["updated"])
+    temp = path + ".%d.tmp" % os.getpid()
+    write(temp, json.dumps(merged, indent=2))
+    os.replace(temp, path)
+  state.clear()
+  state.update(merged)
+  SEEN[slug] = json.dumps(merged)
 
 
 def root():
-    return git("rev-parse", "--show-toplevel")
+  return git("rev-parse", "--show-toplevel")
 
 
 def config():
-    path = os.path.join(root(), ".loop", "config.json")
-    try:
-        return json.loads(read(path))
-    except (OSError, ValueError):
-        no("no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
+  path = os.path.join(root(), ".loop", "config.json")
+  try:
+    return json.loads(read(path))
+  except (OSError, ValueError):
+    no("no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
 
 
 def goal_file(slug):
-    return os.path.join(root(), ".loop", "goals", slug + ".md")
+  return os.path.join(root(), ".loop", "goals", slug + ".md")
 
 
 def done_lines(slug):
-    try:
-        return guards.done_lines(ME, root(), slug)
-    except OSError:
-        no("no goal file for %s here. Fix: run this from the goal's worktree." % slug)
+  try:
+    return guards.done_lines(ME, root(), slug)
+  except OSError:
+    no("no goal file for %s here. Fix: run this from the goal's worktree." % slug)
 
 
 def done_sha(lines):
-    return hashlib.sha256("\n".join(lines).encode()).hexdigest()
+  return hashlib.sha256("\n".join(lines).encode()).hexdigest()
 
 
 def frozen(state):
-    if done_sha(done_lines(state["slug"])) != state["done_sha"]:
-        fail_stop(state, "The done lines changed after they were frozen. A wrong done line needs a new goal.")
+  if done_sha(done_lines(state["slug"])) != state["done_sha"]:
+    fail_stop(state, "The done lines changed after they were frozen. A wrong done line needs a new goal.")
 
 
 def held(slug):
-    state = load(slug)
-    frozen(state)
-    return state
+  state = load(slug)
+  frozen(state)
+  return state
 
 
 def base_ref(state):
-    base = config()["base"]
-    if run(["git", "rev-parse", "--verify", "--quiet", "origin/" + base]).returncode == 0:
-        return "origin/" + base
-    return base
+  base = config()["base"]
+  if run(["git", "rev-parse", "--verify", "--quiet", "origin/" + base]).returncode == 0:
+    return "origin/" + base
+  return base
 
 
 def fail_stop(state, text):
-    guards.fail_stop(ME, state, text)
+  guards.fail_stop(ME, state, text)
 
 
 def failed_try(state, why, step="build", fix="fix it, then run the step again"):
-    queue("free", state["slug"])  # a failed try gives the merge slot back
-    guards.failed_try(ME, state, why, step, fix)
+  queue("free", state["slug"])  # a failed try gives the merge slot back
+  guards.failed_try(ME, state, why, step, fix)
 
 
 cmd_wait = lambda args: guards.cmd_wait(ME, args)
@@ -187,212 +187,212 @@ cmd_touches = lambda args: guards.cmd_touches(ME, args)
 
 
 def valid(args):
-    SLUG.match(args.slug) or no("bad slug. Fix: lowercase letters, digits and dashes.")
-    args.done or no("no done lines. Fix: give at least one --done.")
-    flow_set() or no(NO_FLOW)
+  SLUG.match(args.slug) or no("bad slug. Fix: lowercase letters, digits and dashes.")
+  args.done or no("no done lines. Fix: give at least one --done.")
+  flow_set() or no(NO_FLOW)
 
 
 def cmd_new(args):
-    slug = args.slug
-    if not args.here:
-        no("one session governs. Fix: use workflow-monitoring go, or --here if no agent can run it.")
-    valid(args)
-    fit.main_here(ME, args)
-    if os.path.exists(state_path(slug)):
-        no("%s already exists. Fix: pick a new slug." % slug)
-    cfg = config()
-    fit.nag(ME, args)
-    touches = [item.strip() for item in args.touches.split(",") if item.strip()]
-    branch = "loop/" + slug
-    current = git("branch", "--show-current")
-    if current == cfg["base"]:
-        git("switch", "-c", branch)
-    elif current != branch:
-        no("on branch %s. Fix: go to %s or %s first." % (current, cfg["base"], branch))
-    lines = ["%d. %s" % (index, " ".join(line.split())) for index, line in enumerate(args.done, 1)]
-    fields = fit.frozen_fields(ME, args, lines, touches)
-    path = goal_file(slug)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
-                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
-    git("add", path)
-    git("commit", "-m", "Goal: %s" % slug, "--", path)
-    state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
-             "branch": branch, "worktree": root(), "touches": touches, "pid": None, "pr": "",
-             "batch": bool(os.environ.get("LOOP_BATCH")), "done_sha": done_sha(lines),
-             "release": args.release, "waiting": None, "finding": "", "log": []}
-    state.update(fields)
-    guards.stamp(state, "idea")
-    pods and pods.stamp(state)
-    save(state, "frozen %d done lines" % len(lines))
-    print("FROZEN %s branch=%s step=idea" % (slug, branch))
-    fit.bind_here(ME, slug)
-    return 0
+  slug = args.slug
+  if not args.here:
+    no("one session governs. Fix: use workflow-monitoring go, or --here if no agent can run it.")
+  valid(args)
+  fit.main_here(ME, args)
+  if os.path.exists(state_path(slug)):
+    no("%s already exists. Fix: pick a new slug." % slug)
+  cfg = config()
+  fit.nag(ME, args)
+  touches = [item.strip() for item in args.touches.split(",") if item.strip()]
+  branch = "loop/" + slug
+  current = git("branch", "--show-current")
+  if current == cfg["base"]:
+    git("switch", "-c", branch)
+  elif current != branch:
+    no("on branch %s. Fix: go to %s or %s first." % (current, cfg["base"], branch))
+  lines = ["%d. %s" % (index, " ".join(line.split())) for index, line in enumerate(args.done, 1)]
+  fields = fit.frozen_fields(ME, args, lines, touches)
+  path = goal_file(slug)
+  os.makedirs(os.path.dirname(path), exist_ok=True)
+  write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
+      touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
+  git("add", path)
+  git("commit", "-m", "Goal: %s" % slug, "--", path)
+  state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
+    "branch": branch, "worktree": root(), "touches": touches, "pid": None, "pr": "",
+    "batch": bool(os.environ.get("LOOP_BATCH")), "done_sha": done_sha(lines),
+    "release": args.release, "waiting": None, "finding": "", "log": []}
+  state.update(fields)
+  guards.stamp(state, "idea")
+  pods and pods.stamp(state)
+  save(state, "frozen %d done lines" % len(lines))
+  print("FROZEN %s branch=%s step=idea" % (slug, branch))
+  fit.bind_here(ME, slug)
+  return 0
 
 
 def cmd_step(args):
-    state = load(args.slug)
-    fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
-    state["step"] = args.name
-    if args.tokens:
-        fit.tokens().add(state, args.name, args.tokens)
-    save(state, args.name + (": " + args.note if args.note else ""))
-    print("STEP %s %s" % (args.slug, args.name))
-    return 0
+  state = load(args.slug)
+  fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
+  state["step"] = args.name
+  if args.tokens:
+    fit.tokens().add(state, args.name, args.tokens)
+  save(state, args.name + (": " + args.note if args.note else ""))
+  print("STEP %s %s" % (args.slug, args.name))
+  return 0
 
 
 def next_step(state):
-    left = [step for step in FLOW if step not in state.get("flow", {})]
-    return "flow.py %s %s" % (state["slug"], left[0]) if left else "pr"
+  left = [step for step in FLOW if step not in state.get("flow", {})]
+  return "flow.py %s %s" % (state["slug"], left[0]) if left else "pr"
 
 
 def nxt(args, state):
-    return "NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state)
+  return "NEXT: " + ("build, then " * (args.step == "plan")) + next_step(state)
 
 
 def cmd_record(args):
-    slug, step = args.slug, args.step
-    state = held(slug)
-    guards.waiting_gate(ME, state)
-    add_tokens(state, step, args.tokens, True)
-    ran = os.path.join(state_dir(), "%s.%s.ran" % (slug, step))
-    if args.in_session:
-        args.file = role.session_reply(state, slug, step, args.file, state_dir(), FLOW)
-    lane = role.need_lane(state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
-    if lane:
-        guards.refuse_no_try(state, *lane, save)
-    reply = os.path.realpath(args.file)
-    if reply != os.path.realpath(os.path.join(state_dir(), "%s.%s.txt" % (slug, step))) or not os.path.exists(ran):
-        guards.refuse_no_try(state, "%s wasn't run by flow.py" % step, "run flow.py %s %s until it prints NEXT" % (
-            slug, step), guards.NOT_RUN_BY_FLOW, save)
-    text = read(reply)
-    found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b[ :.-]*(.*)$", text, re.M | re.I)
-    result, why = (found[-1][0].lower(), found[-1][1].strip()) if found else ("", "")
-    why = why if why or step not in ("qa", "ship") else role.lane_note(state_dir(), slug, step)
-    pending = guards.pending_items(text)
-    session = args.in_session or state.get("worker") == "session"
-    if not result and not pending and session:
-        guards.refuse_no_try(state, "the %s reply has no STEP line" % step, "end the reply with the DEPTH line and a "
-                             "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
-    stamp, cfg = "", config()
-    wait = pending or result == "pending"
-    auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)), result in ("done", "skipped")
-    if ok or auto:
-        stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
-        for line in skipped:
-            state.setdefault("log", []).append("%s rule %s" % (now(), line))
-        if ask:
-            guards.hold(state, ask[:600])
-            save(state, "%s waits for the owner (no try used): %s" % (step, ask[:200]))
-            print("WAITING %s (no try used): %s" % (slug, ask))
-            return 0
-        if refusal:
-            guards.refuse_no_try(state, refusal[0], refusal[1], refusal[2], save)
-    os.remove(ran)
-    if ok or wait:
-        guards.clear_refusals(state)
-    if ok or auto:
-        fit.keep(ME, state, step, text)
-    if auto:
-        took = "; ".join(pending) or why or "the step's pending gate"
-        state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
-        state["step"] = role.after(step)
-        state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": now()}
-        guards.advance(ME, state)
-        save(state, "%s auto-approved: %s" % (step, took[:300]))
-        print("AUTO-APPROVED %s %s: %s" % (slug, step, took))
-        print(nxt(args, state))
-        return 0
-    if wait:
-        state["flow"][step] = "pending"
-        ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
-        guards.hold(state, ask[:600])
-        save(state, "%s pending: %s" % (step, ask[:200]))
-        print("WAITING %s: %s" % (slug, ask))
-        return 0
-    if ok:
-        state["flow"][step] = result + (" in session" if args.in_session else "") + (": " + why[:120] if why else "") + stamp
-        state["step"] = role.after(step)
-        guards.advance(ME, state)
-        save(state, "%s %s" % (step, state["flow"][step]))
-        print("RECORDED %s %s" % (step, state["flow"][step]))
-        tool = os.path.join(SKILLS, "workflow-health", "scripts", "milestone.py")
-        if step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):
-            print(run([sys.executable, tool, "leftovers", reply, "--goal", slug, "--live"]).stdout.strip())
-        print(nxt(args, state))
-        return 0
-    failed_try(state, "%s %s" % (step, "failed: " + why[:200] if result else "gave no STEP line"), step,
-               "fix the cause, then run flow.py %s %s again" % (slug, step))
-    return 1
+  slug, step = args.slug, args.step
+  state = held(slug)
+  guards.waiting_gate(ME, state)
+  add_tokens(state, step, args.tokens, True)
+  ran = os.path.join(state_dir(), "%s.%s.ran" % (slug, step))
+  if args.in_session:
+    args.file = role.session_reply(state, slug, step, args.file, state_dir(), FLOW)
+  lane = role.need_lane(state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
+  if lane:
+    guards.refuse_no_try(state, *lane, save)
+  reply = os.path.realpath(args.file)
+  if reply != os.path.realpath(os.path.join(state_dir(), "%s.%s.txt" % (slug, step))) or not os.path.exists(ran):
+    guards.refuse_no_try(state, "%s wasn't run by flow.py" % step, "run flow.py %s %s until it prints NEXT" % (
+        slug, step), guards.NOT_RUN_BY_FLOW, save)
+  text = read(reply)
+  found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b[ :.-]*(.*)$", text, re.M | re.I)
+  result, why = (found[-1][0].lower(), found[-1][1].strip()) if found else ("", "")
+  why = why if why or step not in ("qa", "ship") else role.lane_note(state_dir(), slug, step)
+  pending = guards.pending_items(text)
+  session = args.in_session or state.get("worker") == "session"
+  if not result and not pending and session:
+    guards.refuse_no_try(state, "the %s reply has no STEP line" % step, "end the reply with the DEPTH line and a "
+      "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
+  stamp, cfg = "", config()
+  wait = pending or result == "pending"
+  auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)), result in ("done", "skipped")
+  if ok or auto:
+    stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
+    for line in skipped:
+      state.setdefault("log", []).append("%s rule %s" % (now(), line))
+    if ask:
+      guards.hold(state, ask[:600])
+      save(state, "%s waits for the owner (no try used): %s" % (step, ask[:200]))
+      print("WAITING %s (no try used): %s" % (slug, ask))
+      return 0
+    if refusal:
+      guards.refuse_no_try(state, refusal[0], refusal[1], refusal[2], save)
+  os.remove(ran)
+  if ok or wait:
+    guards.clear_refusals(state)
+  if ok or auto:
+    fit.keep(ME, state, step, text)
+  if auto:
+    took = "; ".join(pending) or why or "the step's pending gate"
+    state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
+    state["step"] = role.after(step)
+    state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": now()}
+    guards.advance(ME, state)
+    save(state, "%s auto-approved: %s" % (step, took[:300]))
+    print("AUTO-APPROVED %s %s: %s" % (slug, step, took))
+    print(nxt(args, state))
+    return 0
+  if wait:
+    state["flow"][step] = "pending"
+    ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
+    guards.hold(state, ask[:600])
+    save(state, "%s pending: %s" % (step, ask[:200]))
+    print("WAITING %s: %s" % (slug, ask))
+    return 0
+  if ok:
+    state["flow"][step] = result + (" in session" if args.in_session else "") + (": " + why[:120] if why else "") + stamp
+    state["step"] = role.after(step)
+    guards.advance(ME, state)
+    save(state, "%s %s" % (step, state["flow"][step]))
+    print("RECORDED %s %s" % (step, state["flow"][step]))
+    tool = os.path.join(SKILLS, "workflow-health", "scripts", "milestone.py")
+    if step == "ship" and re.search(r"^\W*FILE\s", text, re.M | re.I) and os.path.exists(tool):
+      print(run([sys.executable, tool, "leftovers", reply, "--goal", slug, "--live"]).stdout.strip())
+    print(nxt(args, state))
+    return 0
+  failed_try(state, "%s %s" % (step, "failed: " + why[:200] if result else "gave no STEP line"), step,
+    "fix the cause, then run flow.py %s %s again" % (slug, step))
+  return 1
 
 
 def queue(op, *args):
-    return pods.pr_queue(op, state_dir(), *args) if pods else ""
+  return pods.pr_queue(op, state_dir(), *args) if pods else ""
 
 
 def cmd_pr(args):
-    slug, cfg = args.slug, config()
-    state, base = held(slug), cfg["base"]
-    fit.budget_stop(slug, state, state_dir(), cfg, save=save)
-    guards.waiting_gate(ME, state)
-    left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
-    if left:
-        no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
-    waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
-    queue("preflight", ME, state)
-    pods and pods.pr_queue("join", ME, state)
-    if ahead := queue("turn", slug):
-        waited or save(state, "waiting: pr queue, behind " + ahead)
-        print("WAITING pr queue: %s first; run pr again" % ahead)
-        return 0
-    waited and save(state, "pr queue: its turn")
-    queue("hold", slug)
-    what, detail = role.sync(base)
-    if what == "merged":
-        state = held(slug)
-    round_stop(ME, state, what)
-    if what == "conflict":
-        why, fix = "merging %s conflicts in: %s" % (base, detail), "merge %s yourself, resolve the conflicts, commit, then pr" % base
-        return queue("moved", ME, state, why, fix) or failed_try(state, why, "build", fix) or 1
-    if what == "dirty":
-        no("the merge was refused: %s. Fix: commit or remove the changes, then run pr again." % detail)
-    if what == "merged":
-        print("MERGED %s into the branch" % detail)
-    guards.sync_touches(goal_file(slug), guards.touches_of(state_dir(), state))
-    if git("status", "--porcelain", "--", goal_file(slug)):
-        git("commit", "-m", "Goal: %s touches" % slug, "--", goal_file(slug))
-    head = git("rev-parse", "HEAD")
-    owed = fit.owed(root(), read(goal_file(slug)))
-    if owed:
-        no("no passing defect test, seen failing, for %s. Fix: regression.py add --category defect --link ..., then red." % ", ".join(owed))
-    role.requirement_gate(ME, slug)
-    if git("status", "--porcelain", "--", "."):
-        print("NOTE: uncommitted files stay out of the PR")
-    head = role.bump_version(ME, state, head)
-    gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
-    print(line)
-    if gate == "running":
-        return 0
-    if gate == "fail":
-        if queue("ahead", base):
-            return queue("moved", ME, state, "lane failed while %s moved" % base, "run pr")
-        return fit.pr_fail(ME, state, head, line, ids)
-    role.record(state, base)
-    known = run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
-    info = json.loads(known.stdout) if not known.returncode else {}
-    body = fit.pr_text(ME, state)
-    state["step"] = "pr"
-    save(state, "pr")
-    url = fit.pr_open(ME, state, base, info, body)
-    state.update(pr=url, statuses="ok" if private.pr_result(root(), base, git("rev-parse", "HEAD"), state["branch"], True) else "failed")
-    state.update(step="release", status="done")
-    save(state, "pull request " + url)
-    print("PR " + url)
-    print("NEXT: " + ("workflow-release merges it: merge.py %s" % slug if cfg.get("auto_merge") is True and state.get("release") != "ask"
-                      else "workflow-release asks cut or leave. The loop never merges."))
-    if state["statuses"] == "failed":
-        print("NEXT: the pull request will not merge until the status posts; run private.py statuses --head %s --ok" % head)
-    return 5 * (state["statuses"] == "failed")
+  slug, cfg = args.slug, config()
+  state, base = held(slug), cfg["base"]
+  fit.budget_stop(slug, state, state_dir(), cfg, save=save)
+  guards.waiting_gate(ME, state)
+  left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
+  if left:
+    no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
+  waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+  queue("preflight", ME, state)
+  pods and pods.pr_queue("join", ME, state)
+  if ahead := queue("turn", slug):
+    waited or save(state, "waiting: pr queue, behind " + ahead)
+    print("WAITING pr queue: %s first; run pr again" % ahead)
+    return 0
+  waited and save(state, "pr queue: its turn")
+  queue("hold", slug)
+  what, detail = role.sync(base)
+  if what == "merged":
+    state = held(slug)
+  round_stop(ME, state, what)
+  if what == "conflict":
+    why, fix = "merging %s conflicts in: %s" % (base, detail), "merge %s yourself, resolve the conflicts, commit, then pr" % base
+    return queue("moved", ME, state, why, fix) or failed_try(state, why, "build", fix) or 1
+  if what == "dirty":
+    no("the merge was refused: %s. Fix: commit or remove the changes, then run pr again." % detail)
+  if what == "merged":
+    print("MERGED %s into the branch" % detail)
+  guards.sync_touches(goal_file(slug), guards.touches_of(state_dir(), state))
+  if git("status", "--porcelain", "--", goal_file(slug)):
+    git("commit", "-m", "Goal: %s touches" % slug, "--", goal_file(slug))
+  head = git("rev-parse", "HEAD")
+  owed = fit.owed(root(), read(goal_file(slug)))
+  if owed:
+    no("no passing defect test, seen failing, for %s. Fix: regression.py add --category defect --link ..., then red." % ", ".join(owed))
+  role.requirement_gate(ME, slug)
+  if git("status", "--porcelain", "--", "."):
+    print("NOTE: uncommitted files stay out of the PR")
+  head = role.bump_version(ME, state, head)
+  gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
+  print(line)
+  if gate == "running":
+    return 0
+  if gate == "fail":
+    if queue("ahead", base):
+      return queue("moved", ME, state, "lane failed while %s moved" % base, "run pr")
+    return fit.pr_fail(ME, state, head, line, ids)
+  role.record(state, base)
+  known = run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
+  info = json.loads(known.stdout) if not known.returncode else {}
+  body = fit.pr_text(ME, state)
+  state["step"] = "pr"
+  save(state, "pr")
+  url = fit.pr_open(ME, state, base, info, body)
+  state.update(pr=url, statuses="ok" if private.pr_result(root(), base, git("rev-parse", "HEAD"), state["branch"], True) else "failed")
+  state.update(step="release", status="done")
+  save(state, "pull request " + url)
+  print("PR " + url)
+  print("NEXT: " + ("workflow-release merges it: merge.py %s" % slug if cfg.get("auto_merge") is True and state.get("release") != "ask"
+      else "workflow-release asks cut or leave. The loop never merges."))
+  if state["statuses"] == "failed":
+    print("NEXT: the pull request will not merge until the status posts; run private.py statuses --head %s --ok" % head)
+  return 5 * (state["statuses"] == "failed")
 
 
 cmd_finding = lambda args: guards.cmd_finding(ME, args)
@@ -400,61 +400,61 @@ cmd_show = lambda args: fit.cmd_show(ME, args)
 
 
 def cmd_resume(args):
-    pods and pods.refuse(load(args.slug) or {})
-    return guards.cmd_resume(ME, args)
+  pods and pods.refuse(load(args.slug) or {})
+  return guards.cmd_resume(ME, args)
 
-    return 0
+  return 0
 
 
 def main():
-    outcap("goal.py")
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="command", required=True)
-    def add(name, func, *options):
-        item = sub.add_parser(name)
-        item.add_argument("slug")
-        item.set_defaults(func=func)
-        for flag, kinds in options:
-            item.add_argument(flag, **kinds)
-    goal = (("--goal", {"required": True}), ("--done", {"action": "append", "default": []}),
-            ("--touches", {"default": ""}))
-    add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--here", {"action": "store_true"}))
-    add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
-    add("adopt", cmd_adopt)
-    add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
-    add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
-        ("--tokens", {"default": ""}))
-    add("wait", cmd_wait, ("--ask", {"required": True}), ("--words", {"action": "append", "required": True}))
-    add("finding", cmd_finding, ("text", {}), ("--requirement", {"default": ""}))
-    add("resume", cmd_resume, ("--why", {"required": True}), ("--by", {"default": "operation session"}))
-    add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
-    add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),
-        ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--eta-extend", {"type": int}),
-        ("--eta-choice", {"choices": ("ship", "defer")}), ("--preflight", {"default": ""}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
-    for name, func in (("pr", cmd_pr), ("answer", cmd_answer), ("show", cmd_show)):
-        add(name, func)
-    args = parser.parse_args()
-    if args.command in ("step", "record", "pr"):
-        role.guard(args.command, args.slug)
-        role.inbox(os.path.abspath(git("rev-parse", "--git-common-dir")), args.slug)
-    return args.func(args)
+  outcap("goal.py")
+  parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+  sub = parser.add_subparsers(dest="command", required=True)
+  def add(name, func, *options):
+    item = sub.add_parser(name)
+    item.add_argument("slug")
+    item.set_defaults(func=func)
+    for flag, kinds in options:
+      item.add_argument(flag, **kinds)
+  goal = (("--goal", {"required": True}), ("--done", {"action": "append", "default": []}),
+    ("--touches", {"default": ""}))
+  add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--here", {"action": "store_true"}))
+  add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
+  add("adopt", cmd_adopt)
+  add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
+  add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
+    ("--tokens", {"default": ""}))
+  add("wait", cmd_wait, ("--ask", {"required": True}), ("--words", {"action": "append", "required": True}))
+  add("finding", cmd_finding, ("text", {}), ("--requirement", {"default": ""}))
+  add("resume", cmd_resume, ("--why", {"required": True}), ("--by", {"default": "operation session"}))
+  add("touches", cmd_touches, ("--add", {"required": True}), ("--why", {"required": True}))
+  add("set", cmd_set, ("--depth", {"choices": ("full", "condensed")}), ("--bump", {"choices": ("minor", "major")}),
+    ("--budget-minutes", {"type": int}), ("--budget-tokens", {"type": int}), ("--eta-extend", {"type": int}),
+    ("--eta-choice", {"choices": ("ship", "defer")}), ("--preflight", {"default": ""}), ("--owner-record", {"default": ""}), ("--why", {"required": True}))
+  for name, func in (("pr", cmd_pr), ("answer", cmd_answer), ("show", cmd_show)):
+    add(name, func)
+  args = parser.parse_args()
+  if args.command in ("step", "record", "pr"):
+    role.guard(args.command, args.slug)
+    role.inbox(os.path.abspath(git("rev-parse", "--git-common-dir")), args.slug)
+  return args.func(args)
 
 
 add_tokens = routing.add_tokens
 
 
 def round_stop(g, state, what):
-    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
-    if what not in ("merged", "conflict"):
-        return
-    over = count > limit
-    state["merge_rounds"] = 0 if over else count
-    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
-    over and guards.hold(state, ask)
-    g.save(state, ask if over else None)
-    over and g.no(ask)
+  limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
+  limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
+  if what not in ("merged", "conflict"):
+    return
+  over = count > limit
+  state["merge_rounds"] = 0 if over else count
+  ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
+  over and guards.hold(state, ask)
+  g.save(state, ask if over else None)
+  over and g.no(ask)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+  sys.exit(main())

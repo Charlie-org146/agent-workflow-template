@@ -9,19 +9,19 @@ from slots import ROUTINE_STEP, SUMMARY_JOB
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
-    os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 BUDGET_MINUTES = 30  # REG-7, AUT-7
 SHARDS = 8  # REG-4, REG-7
 
 
 ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE",
-            "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
-            "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
+  "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
+  "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 
 
 def row_env():
-    return {k: v for k, v in os.environ.items() if k not in ROW_DROP}
+  return {k: v for k, v in os.environ.items() if k not in ROW_DROP}
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.
@@ -310,39 +310,39 @@ UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@B
 
 
 def render(cron, levels="nightly"):
-    with open(os.path.join(HERE, "tests.py")) as handle:
-        source = handle.read()
-    bad = [token for token in UNSAFE if token in source]
-    if bad:
-        sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
-    body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
-    with open(os.path.join(HERE, "runs.py")) as handle:
-        tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
-    schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
-    return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
-        .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \
-        .replace("@TESTS@", body).replace("@ROWTAIL@", tail)
+  with open(os.path.join(HERE, "tests.py")) as handle:
+    source = handle.read()
+  bad = [token for token in UNSAFE if token in source]
+  if bad:
+    sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
+  body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
+  with open(os.path.join(HERE, "runs.py")) as handle:
+    tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
+  schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
+  return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
+    .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \
+    .replace("@TESTS@", body).replace("@ROWTAIL@", tail)
 
 
 def write(root, default):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            cfg = json.load(handle)
-    except (OSError, ValueError):
-        cfg = {}
-    cfg = cfg if isinstance(cfg, dict) else {}
-    cron, levels = cfg.get("regression_cron") or default, cfg.get("ci_levels") or "nightly"
-    if levels not in ("land", "nightly"):
-        sys.exit("REFUSED: ci_levels is %r, not land or nightly. Fix: edit .loop/config.json." % (levels,))
-    if cron != "off" and not (isinstance(cron, str) and re.fullmatch(r"[0-9A-Za-z*/,\- ]+", cron) and len(cron.split()) == 5):
-        sys.exit("REFUSED: regression_cron is not five cron fields or off. Fix: edit .loop/config.json.")
-    path = os.path.join(root, ".github", "workflows", "regression.yml")
-    if os.path.exists(path):
-        with open(path) as handle:
-            if not handle.read().startswith("# Written by workflow-regression"):
-                sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as handle:
-        handle.write(render(cron, levels))
-    print("WROTE " + path)
-    return 0
+  try:
+    with open(os.path.join(root, ".loop", "config.json")) as handle:
+      cfg = json.load(handle)
+  except (OSError, ValueError):
+    cfg = {}
+  cfg = cfg if isinstance(cfg, dict) else {}
+  cron, levels = cfg.get("regression_cron") or default, cfg.get("ci_levels") or "nightly"
+  if levels not in ("land", "nightly"):
+    sys.exit("REFUSED: ci_levels is %r, not land or nightly. Fix: edit .loop/config.json." % (levels,))
+  if cron != "off" and not (isinstance(cron, str) and re.fullmatch(r"[0-9A-Za-z*/,\- ]+", cron) and len(cron.split()) == 5):
+    sys.exit("REFUSED: regression_cron is not five cron fields or off. Fix: edit .loop/config.json.")
+  path = os.path.join(root, ".github", "workflows", "regression.yml")
+  if os.path.exists(path):
+    with open(path) as handle:
+      if not handle.read().startswith("# Written by workflow-regression"):
+        sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
+  os.makedirs(os.path.dirname(path), exist_ok=True)
+  with open(path, "w") as handle:
+    handle.write(render(cron, levels))
+  print("WROTE " + path)
+  return 0

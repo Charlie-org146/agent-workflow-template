@@ -33,302 +33,302 @@ DEFAULT_SIZE = 20
 
 
 def config():
-    top = se.git("rev-parse", "--show-toplevel")
-    return se.read(os.path.join(top, ".loop", "config.json"), {}) if top else {}
+  top = se.git("rev-parse", "--show-toplevel")
+  return se.read(os.path.join(top, ".loop", "config.json"), {}) if top else {}
 
 
 def size_of(cfg):
-    try:
-        return max(1, int(cfg.get("pool_size") or DEFAULT_SIZE))
-    except (TypeError, ValueError):
-        return DEFAULT_SIZE
+  try:
+    return max(1, int(cfg.get("pool_size") or DEFAULT_SIZE))
+  except (TypeError, ValueError):
+    return DEFAULT_SIZE
 
 
 def counts(found):
-    entries = [item for item in found.values() if isinstance(item, dict) and item.get("state") in ("free", "busy")]
-    free = sum(item["state"] == "free" for item in entries)
-    return free, len(entries) - free, len(entries)
+  entries = [item for item in found.values() if isinstance(item, dict) and item.get("state") in ("free", "busy")]
+  free = sum(item["state"] == "free" for item in entries)
+  return free, len(entries) - free, len(entries)
 
 
 def status_line(found, cfg):
-    free, busy, total = counts(found)
-    return "pool: %d free, %d busy, %d total (target %d)" % (free, busy, total, size_of(cfg))
+  free, busy, total = counts(found)
+  return "pool: %d free, %d busy, %d total (target %d)" % (free, busy, total, size_of(cfg))
 
 
 def board_line(found, root):
-    """The pool line under the live board's Running goals."""
-    try:
-        return status_line(found, se.read(os.path.join(root, ".loop", "config.json"), {}))
-    except Exception:
-        return ""
+  """The pool line under the live board's Running goals."""
+  try:
+    return status_line(found, se.read(os.path.join(root, ".loop", "config.json"), {}))
+  except Exception:
+    return ""
 
 
 def side_path():
-    return os.path.join(se.base(), "pool.json")
+  return os.path.join(se.base(), "pool.json")
 
 
 def need(found, cfg, ready):
-    """(K, declined): sessions to create now: pool_size - total when free sessions are fewer than ready goals."""
-    free, _, total = counts(found)
-    k = max(size_of(cfg) - total, 0) if free < ready else 0
-    if k and graph.memory_room() == 0:
-        k = 0
-    side = se.read(side_path(), {})
-    declined = side.get("declined")
-    if k == 0 and declined is not None:
-        side.pop("declined")
-        se.write(side_path(), side)
-        declined = None
-    return k, isinstance(declined, int) and k <= declined
+  """(K, declined): sessions to create now: pool_size - total when free sessions are fewer than ready goals."""
+  free, _, total = counts(found)
+  k = max(size_of(cfg) - total, 0) if free < ready else 0
+  if k and graph.memory_room() == 0:
+    k = 0
+  side = se.read(side_path(), {})
+  declined = side.get("declined")
+  if k == 0 and declined is not None:
+    side.pop("declined")
+    se.write(side_path(), side)
+    declined = None
+  return k, isinstance(declined, int) and k <= declined
 
 
 def ask_lines(found, cfg, ready):
-    """The pool's Needs you lines: the fill ask, or a ready goal's wait."""
-    k, declined = need(found, cfg, ready)
-    free, busy, total = counts(found)
-    if k and not declined:
-        return ['- the session pool is low: %d free for %d ready goal%s; create %d session%s?' % (
-            free, ready, "" if ready == 1 else "s", k, "" if k == 1 else "s"),
-            '    fix: type "fill pool" (the operation session creates all %d in one step, then pool.py add ID ...) or "no pool"' % k]
-    if ready > free:
-        why = "pool full (%d of %d busy)" % (busy, size_of(cfg)) if not k else "pool fill declined"
-        return ["- %d ready goal%s wait for a session: %s" % (ready - free, "" if ready - free == 1 else "s", why),
-                '    fix: free a session (sessions.py free SLUG), raise pool_size, or type "fill pool"']
-    return []
+  """The pool's Needs you lines: the fill ask, or a ready goal's wait."""
+  k, declined = need(found, cfg, ready)
+  free, busy, total = counts(found)
+  if k and not declined:
+    return ['- the session pool is low: %d free for %d ready goal%s; create %d session%s?' % (
+        free, ready, "" if ready == 1 else "s", k, "" if k == 1 else "s"),
+      '    fix: type "fill pool" (the operation session creates all %d in one step, then pool.py add ID ...) or "no pool"' % k]
+  if ready > free:
+    why = "pool full (%d of %d busy)" % (busy, size_of(cfg)) if not k else "pool fill declined"
+    return ["- %d ready goal%s wait for a session: %s" % (ready - free, "" if ready - free == 1 else "s", why),
+      '    fix: free a session (sessions.py free SLUG), raise pool_size, or type "fill pool"']
+  return []
 
 
 def attempt_ok(state, attempt):
-    """False when a report names an attempt older than the run's own."""
-    try:
-        return attempt in (None, "") or int(attempt) >= int(state.get("attempt") or 0)
-    except (TypeError, ValueError):
-        return True
+  """False when a report names an attempt older than the run's own."""
+  try:
+    return attempt in (None, "") or int(attempt) >= int(state.get("attempt") or 0)
+  except (TypeError, ValueError):
+    return True
 
 
 def stale(state, args):
-    """sessions.py report's guards: refuse a --recommend not in --words; record an older attempt's report without applying it."""
-    if args.attempt not in (None, "") and not str(args.attempt).isdigit():
-        sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
-    if args.recommend and args.recommend not in args.words:
-        sys.exit("REFUSED: --recommend %r is not one of --words. Fix: pass it as a --words too; nothing was changed." % args.recommend)
-    if attempt_ok(state, args.attempt):
-        return False
-    state.setdefault("reports", []).append({"at": se.now(), "step": args.step or "-", "status": "stale", "text": "attempt %s" % args.attempt})
-    se.save(state, "report from old attempt %s recorded, not applied (the run is on attempt %s)" % (args.attempt, state.get("attempt")))
-    return True
+  """sessions.py report's guards: refuse a --recommend not in --words; record an older attempt's report without applying it."""
+  if args.attempt not in (None, "") and not str(args.attempt).isdigit():
+    sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
+  if args.recommend and args.recommend not in args.words:
+    sys.exit("REFUSED: --recommend %r is not one of --words. Fix: pass it as a --words too; nothing was changed." % args.recommend)
+  if attempt_ok(state, args.attempt):
+    return False
+  state.setdefault("reports", []).append({"at": se.now(), "step": args.step or "-", "status": "stale", "text": "attempt %s" % args.attempt})
+  se.save(state, "report from old attempt %s recorded, not applied (the run is on attempt %s)" % (args.attempt, state.get("attempt")))
+  return True
 
 
 def remember(item, slug):
-    """Keep who a session was freed from."""
-    item.setdefault("history", []).append({"slug": slug, "at": se.now()})
-    del item["history"][:-10]
+  """Keep who a session was freed from."""
+  item.setdefault("history", []).append({"slug": slug, "at": se.now()})
+  del item["history"][:-10]
 
 
 def quarantine():
-    """Move malformed entries graph.read_pool set aside into session-pool.bad.json."""
-    bad = graph.LAST_BAD.pop(se.pool_path(), {})
-    if bad:
-        path = os.path.join(se.base(), "session-pool.bad.json")
-        kept = se.read(path, {})
-        kept.update(bad)
-        se.write(path, kept)
-    return sorted(bad)
+  """Move malformed entries graph.read_pool set aside into session-pool.bad.json."""
+  bad = graph.LAST_BAD.pop(se.pool_path(), {})
+  if bad:
+    path = os.path.join(se.base(), "session-pool.bad.json")
+    kept = se.read(path, {})
+    kept.update(bad)
+    se.write(path, kept)
+  return sorted(bad)
 
 
 def remove_tree(slug, state):
-    """The merged goal's worktree (never forced) and branch; one line each."""
-    said, tree = [], state.get("worktree") or ""
-    common = os.path.realpath(os.path.join(se.base(), ".."))
-    listed = subprocess.run(["git", "worktree", "list", "--porcelain"], capture_output=True, text=True).stdout.splitlines()
-    main = next((line[9:] for line in listed if line.startswith("worktree ")), "")
-    if main and os.path.isdir(main):
-        os.chdir(main)
-    if tree and os.path.isdir(tree) and os.path.realpath(tree).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
-        done = subprocess.run(["git", "worktree", "remove", tree], capture_output=True, text=True)
-        said.append("removed worktree %s" % os.path.basename(tree) if done.returncode == 0 else
-                    "KEPT worktree %s: %s" % (os.path.basename(tree), (done.stderr.strip().splitlines() or ["git refused"])[-1]))
-    branch, base = "loop/" + slug, config().get("base") or "main"
-    if se.git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch):
-        try:
-            subprocess.run(["git", "fetch", "-q", "origin"], capture_output=True, timeout=60)
-        except (OSError, subprocess.SubprocessError):
-            pass
-        base = "origin/" + base if se.git("rev-parse", "--verify", "--quiet", "origin/" + base) else base
-        inside = subprocess.run(["git", "merge-base", "--is-ancestor", "refs/heads/" + branch, base], capture_output=True).returncode == 0
-        done = subprocess.run(["git", "branch", "-D", branch], capture_output=True, text=True) if inside else None
-        said.append("deleted branch %s" % branch if done and done.returncode == 0 else
-                    "KEPT branch %s: %s" % (branch, "it has commits not in %s" % base if not inside else "checked out somewhere"))
-    return said
+  """The merged goal's worktree (never forced) and branch; one line each."""
+  said, tree = [], state.get("worktree") or ""
+  common = os.path.realpath(os.path.join(se.base(), ".."))
+  listed = subprocess.run(["git", "worktree", "list", "--porcelain"], capture_output=True, text=True).stdout.splitlines()
+  main = next((line[9:] for line in listed if line.startswith("worktree ")), "")
+  if main and os.path.isdir(main):
+    os.chdir(main)
+  if tree and os.path.isdir(tree) and os.path.realpath(tree).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
+    done = subprocess.run(["git", "worktree", "remove", tree], capture_output=True, text=True)
+    said.append("removed worktree %s" % os.path.basename(tree) if done.returncode == 0 else
+      "KEPT worktree %s: %s" % (os.path.basename(tree), (done.stderr.strip().splitlines() or ["git refused"])[-1]))
+  branch, base = "loop/" + slug, config().get("base") or "main"
+  if se.git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch):
+    try:
+      subprocess.run(["git", "fetch", "-q", "origin"], capture_output=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+      pass
+    base = "origin/" + base if se.git("rev-parse", "--verify", "--quiet", "origin/" + base) else base
+    inside = subprocess.run(["git", "merge-base", "--is-ancestor", "refs/heads/" + branch, base], capture_output=True).returncode == 0
+    done = subprocess.run(["git", "branch", "-D", branch], capture_output=True, text=True) if inside else None
+    said.append("deleted branch %s" % branch if done and done.returncode == 0 else
+      "KEPT branch %s: %s" % (branch, "it has commits not in %s" % base if not inside else "checked out somewhere"))
+  return said
 
 
 def return_session(slug, merged=False):
-    """Give the goal's busy sessions back (archive above pool_size); a merge also removes its tree."""
-    cfg, said, state = config(), [], se.load(slug)
-    merged = merged or bool(state.get("pr") and prs.state(state["pr"], se.git("rev-parse", "--show-toplevel") or ".") == "MERGED")
-    with se.locked():
-        found = se.pool()
-        for sid, item in sorted(found.items()):
-            if item.get("slug") == slug and item.get("state") == "busy":
-                _, _, total = counts(found)
-                item["state"] = "archive" if total > size_of(cfg) else "free"
-                if merged:
-                    item.update(freed_from=slug, freed_at=se.now())
-                remember(item, slug)
-                said.append("%s session %s" % ("ARCHIVE" if item["state"] == "archive" else "POOLED", item.get("name") or sid))
-        se.save_pool(found)
-    if merged:
-        said += remove_tree(slug, state)
-    return said
+  """Give the goal's busy sessions back (archive above pool_size); a merge also removes its tree."""
+  cfg, said, state = config(), [], se.load(slug)
+  merged = merged or bool(state.get("pr") and prs.state(state["pr"], se.git("rev-parse", "--show-toplevel") or ".") == "MERGED")
+  with se.locked():
+    found = se.pool()
+    for sid, item in sorted(found.items()):
+      if item.get("slug") == slug and item.get("state") == "busy":
+        _, _, total = counts(found)
+        item["state"] = "archive" if total > size_of(cfg) else "free"
+        if merged:
+          item.update(freed_from=slug, freed_at=se.now())
+        remember(item, slug)
+        said.append("%s session %s" % ("ARCHIVE" if item["state"] == "archive" else "POOLED", item.get("name") or sid))
+    se.save_pool(found)
+  if merged:
+    said += remove_tree(slug, state)
+  return said
 
 
 def cmd_status(args):
-    found = se.pool()
-    print(status_line(found, config()))
-    archive = [item.get("name") or sid for sid, item in found.items() if item.get("state") == "archive"]
-    if archive:
-        print("ARCHIVE: " + ", ".join(sorted(archive)) + " (archive with the app, then sessions.py list drops them)")
-    return 0
+  found = se.pool()
+  print(status_line(found, config()))
+  archive = [item.get("name") or sid for sid, item in found.items() if item.get("state") == "archive"]
+  if archive:
+    print("ARCHIVE: " + ", ".join(sorted(archive)) + " (archive with the app, then sessions.py list drops them)")
+  return 0
 
 
 def cmd_need(args):
-    found, cfg = se.pool(), config()
-    k, declined = need(found, cfg, args.ready)
-    print("NEED %d%s" % (k, " (declined)" if declined else ""))
-    for line in ask_lines(found, cfg, args.ready):
-        print(line)
-    return 0
+  found, cfg = se.pool(), config()
+  k, declined = need(found, cfg, args.ready)
+  print("NEED %d%s" % (k, " (declined)" if declined else ""))
+  for line in ask_lines(found, cfg, args.ready):
+    print(line)
+  return 0
 
 
 def cmd_add(args):
-    with se.locked():
-        found = se.pool()
-        for sid in args.ids:
-            if found.get(sid, {}).get("state") == "busy":
-                sys.exit("REFUSED: session %s is busy with %s; nothing was added." % (sid, found[sid].get("slug")))
-        new = [sid for sid in dict.fromkeys(args.ids) if (found.get(sid) or {}).get("state") != "free"]
-        for sid in new:
-            found[sid] = dict(found.get(sid) or {}, name=found.get(sid, {}).get("name") or "worker · idle", state="free", since=se.now())
-        se.save_pool(found)
-        print("POOLED %d session(s); %s" % (len(new), status_line(found, config())))
-    return 0
+  with se.locked():
+    found = se.pool()
+    for sid in args.ids:
+      if found.get(sid, {}).get("state") == "busy":
+        sys.exit("REFUSED: session %s is busy with %s; nothing was added." % (sid, found[sid].get("slug")))
+    new = [sid for sid in dict.fromkeys(args.ids) if (found.get(sid) or {}).get("state") != "free"]
+    for sid in new:
+      found[sid] = dict(found.get(sid) or {}, name=found.get(sid, {}).get("name") or "worker · idle", state="free", since=se.now())
+    se.save_pool(found)
+    print("POOLED %d session(s); %s" % (len(new), status_line(found, config())))
+  return 0
 
 
 def cmd_archive(args):
-    import mend
-    cfg, tool, n = config(), se.tool(config()), 0
-    for sid, name, why in mend.to_archive(se.pool(), os.path.join(se.base(), "runs"), se.git("rev-parse", "--show-toplevel"), True, os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "")):
-        if "pressure" not in why or lim.memory_hold(cfg):
-            n += archived(sid, name, why, bool(tool) and se.call(tool, "archive", sid) is not None)
-    print("ARCHIVED %d" % n)
-    return 0
+  import mend
+  cfg, tool, n = config(), se.tool(config()), 0
+  for sid, name, why in mend.to_archive(se.pool(), os.path.join(se.base(), "runs"), se.git("rev-parse", "--show-toplevel"), True, os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "")):
+    if "pressure" not in why or lim.memory_hold(cfg):
+      n += archived(sid, name, why, bool(tool) and se.call(tool, "archive", sid) is not None)
+  print("ARCHIVED %d" % n)
+  return 0
 
 
 def archived(sid, name, why, done=True):
-    """Drop an archived session from the pool and log it in archived.tsv; without done, the operation session archives it."""
-    with se.locked():
-        found = se.pool()
-        found.pop(sid, None) if done else found.get(sid, {}).update(state="archive")
-        se.save_pool(found)
-    if not done:
-        return print("ARCHIVE-NOW %s (%s): archive it, then pool.py archived %s" % (name, why, sid)) or 0
-    with open(os.path.join(se.base(), "archived.tsv"), "a") as handle:
-        handle.write("%s\t%s\t%s\t%s\n" % (se.now(), sid, name, why))
-    print("ARCHIVED %s (%s)" % (name, why))
-    return 1
+  """Drop an archived session from the pool and log it in archived.tsv; without done, the operation session archives it."""
+  with se.locked():
+    found = se.pool()
+    found.pop(sid, None) if done else found.get(sid, {}).update(state="archive")
+    se.save_pool(found)
+  if not done:
+    return print("ARCHIVE-NOW %s (%s): archive it, then pool.py archived %s" % (name, why, sid)) or 0
+  with open(os.path.join(se.base(), "archived.tsv"), "a") as handle:
+    handle.write("%s\t%s\t%s\t%s\n" % (se.now(), sid, name, why))
+  print("ARCHIVED %s (%s)" % (name, why))
+  return 1
 
 
 def cmd_decline(args):
-    k, _ = need(se.pool(), config(), args.ready)
-    side = se.read(side_path(), {})
-    side["declined"] = k
-    se.write(side_path(), side)
-    print("DECLINED %d: the pool ask stays hidden until more than %d sessions are missing" % (k, k))
-    return 0
+  k, _ = need(se.pool(), config(), args.ready)
+  side = se.read(side_path(), {})
+  side["declined"] = k
+  se.write(side_path(), side)
+  print("DECLINED %d: the pool ask stays hidden until more than %d sessions are missing" % (k, k))
+  return 0
 
 
 def cmd_return(args):
-    se.bad_slug(args.slug)
-    state = se.load(args.slug)
-    merged = graph.merged(state) or (state.get("report") or {}).get("status") == "merged"
-    for line in return_session(args.slug, merged) or ["NOTHING TO RETURN for %s" % args.slug]:
-        print(line)
-    return 0
+  se.bad_slug(args.slug)
+  state = se.load(args.slug)
+  merged = graph.merged(state) or (state.get("report") or {}).get("status") == "merged"
+  for line in return_session(args.slug, merged) or ["NOTHING TO RETURN for %s" % args.slug]:
+    print(line)
+  return 0
 
 
 def pr_order(runs, keep=""):
-    """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = retry heartbeat).
+  """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = retry heartbeat).
     A goal (but keep) not running or waiting, not at pr, merged, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
-    folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
-    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
-        path = os.path.join(folder, name)
-        try:
-            if "." in name:
-                continue
-            joined, age = int(open(path).read()), time.time() - os.path.getmtime(path + ".beat" if os.path.exists(path + ".beat") else path)
-            if name != keep and (age > limit or (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE
-                                 or run.get("step") not in ("checks", "pr") or run.get("release") in ("merged", "cut")):
-                for gone in (path, path + ".beat"):
-                    os.path.exists(gone) and os.unlink(gone)
-                continue
-            line.append((joined, name, int(age)))
-        except (OSError, ValueError):
-            continue
-    return sorted(line)
+  folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
+  for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+    path = os.path.join(folder, name)
+    try:
+      if "." in name:
+        continue
+      joined, age = int(open(path).read()), time.time() - os.path.getmtime(path + ".beat" if os.path.exists(path + ".beat") else path)
+      if name != keep and (age > limit or (run := se.read(os.path.join(runs, name + ".json"), {})).get("status") not in graph.LIVE
+        or run.get("step") not in ("checks", "pr") or run.get("release") in ("merged", "cut")):
+        for gone in (path, path + ".beat"):
+          os.path.exists(gone) and os.unlink(gone)
+        continue
+      line.append((joined, name, int(age)))
+    except (OSError, ValueError):
+      continue
+  return sorted(line)
 
 
 def pr_join(g, state):
-    """A goal asking for its pr turn is at pr (saved first, so pr_order keeps its ticket, #4523)."""
-    if state.get("step") not in ("checks", "pr"):
-        state["step"] = "pr"
-        g.save(state, "at pr: joining the queue")
+  """A goal asking for its pr turn is at pr (saved first, so pr_order keeps its ticket, #4523)."""
+  if state.get("step") not in ("checks", "pr"):
+    state["step"] = "pr"
+    g.save(state, "at pr: joining the queue")
 
 
 def pr_turn(runs, slug):
-    """Join the queue; "" when it is slug's turn, else the earlier goal ahead whose touches overlap its own (DEL-15)."""
-    folder = os.path.join(os.path.dirname(runs), "pr-queue")
-    os.makedirs(folder, exist_ok=True)
-    mine = os.path.join(folder, slug)
-    if not os.path.exists(mine):
-        tmp = "%s.%d.tmp" % (mine, os.getpid())
-        with open(tmp, "w") as handle:
-            handle.write(str(time.time_ns()))
-        try:
-            os.link(tmp, mine)
-        except OSError:
-            pass
-        os.unlink(tmp)
-    with open(mine + ".beat", "a"):
-        os.utime(mine + ".beat")
-    line = pr_order(runs, slug)
-    at = dict((n, j) for j, n, _ in line).get(slug)
-    if at is None:
-        return line[0][1] if line else "the queue"
+  """Join the queue; "" when it is slug's turn, else the earlier goal ahead whose touches overlap its own (DEL-15)."""
+  folder = os.path.join(os.path.dirname(runs), "pr-queue")
+  os.makedirs(folder, exist_ok=True)
+  mine = os.path.join(folder, slug)
+  if not os.path.exists(mine):
+    tmp = "%s.%d.tmp" % (mine, os.getpid())
+    with open(tmp, "w") as handle:
+      handle.write(str(time.time_ns()))
+    try:
+      os.link(tmp, mine)
+    except OSError:
+      pass
+    os.unlink(tmp)
+  with open(mine + ".beat", "a"):
+    os.utime(mine + ".beat")
+  line = pr_order(runs, slug)
+  at = dict((n, j) for j, n, _ in line).get(slug)
+  if at is None:
+    return line[0][1] if line else "the queue"
 
-    def paths(n):
-        return [str(t).strip("/") for t in se.read(os.path.join(runs, n + ".json"), {}).get("touches") or []]
-    ours = paths(slug)
-    ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
+  def paths(n):
+    return [str(t).strip("/") for t in se.read(os.path.join(runs, n + ".json"), {}).get("touches") or []]
+  ours = paths(slug)
+  ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
         x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in paths(n)))]
-    return min(ahead)[1] if ahead else ""
+  return min(ahead)[1] if ahead else ""
 
 
 def pr_ahead(runs, base):
-    """True when origin/<base> holds commits this branch lacks."""
-    subprocess.run(["git", "fetch", "origin", base], capture_output=True)
-    return subprocess.run(["git", "merge-base", "--is-ancestor", "origin/" + base, "HEAD"], capture_output=True).returncode != 0
+  """True when origin/<base> holds commits this branch lacks."""
+  subprocess.run(["git", "fetch", "origin", base], capture_output=True)
+  return subprocess.run(["git", "merge-base", "--is-ancestor", "origin/" + base, "HEAD"], capture_output=True).returncode != 0
 
 
 def pr_moved(runs, g, state, why, fix):
-    """A try lost to main moving counts in state["moved"] (max_moved, default 5), not in tries."""
-    state["moved"] = state.get("moved", 0) + 1
-    most = int(g.config().get("max_moved") or 5)
-    if state["moved"] > most:
-        g.failed_try(state, why, "build", fix)
-        return True
-    state["step"] = "build"
-    g.save(state, "main moved, try not counted (%d of %d)" % (state["moved"], most))
-    print("TRY NOT COUNTED (main moved: %d of %d; past %d it counts): %s\nNEXT: %s" % (state["moved"], most, most, why, fix))
+  """A try lost to main moving counts in state["moved"] (max_moved, default 5), not in tries."""
+  state["moved"] = state.get("moved", 0) + 1
+  most = int(g.config().get("max_moved") or 5)
+  if state["moved"] > most:
+    g.failed_try(state, why, "build", fix)
     return True
+  state["step"] = "build"
+  g.save(state, "main moved, try not counted (%d of %d)" % (state["moved"], most))
+  print("TRY NOT COUNTED (main moved: %d of %d; past %d it counts): %s\nNEXT: %s" % (state["moved"], most, most, why, fix))
+  return True
 
 
 VERB = r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)\s+"
@@ -337,73 +337,73 @@ FIXES = re.compile(VERB + r"(?:issue\s+)?#(\d+)|" + VERB + r"finding:([a-z0-9][a
 
 
 def _rows(root):
-    try:
-        with open(os.path.join(root, ".loop", "regression.tsv")) as handle:
-            cells = [line.rstrip("\n").split("\t") + [""] * 8 for line in handle if line.strip() and line[0] != "#"]
-    except OSError:
-        return []
-    return [(c[0], c[2], c[4], c[7]) for c in cells if c[6] == "defect"]
+  try:
+    with open(os.path.join(root, ".loop", "regression.tsv")) as handle:
+      cells = [line.rstrip("\n").split("\t") + [""] * 8 for line in handle if line.strip() and line[0] != "#"]
+  except OSError:
+    return []
+  return [(c[0], c[2], c[4], c[7]) for c in cells if c[6] == "defect"]
 
 
 def _has(link, ref):
-    return re.search(r"(?:issues/|#)%s\b" % re.escape(ref), link) if ref.isdigit() else re.search(r"finding:%s(?![\w-])" % re.escape(ref), link)
+  return re.search(r"(?:issues/|#)%s\b" % re.escape(ref), link) if ref.isdigit() else re.search(r"finding:%s(?![\w-])" % re.escape(ref), link)
 
 
 def _before(root):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            base = json.load(handle).get("base") or "main"
-    except (OSError, ValueError):
-        base = "main"
-    git = lambda *a: subprocess.run(("git",) + a, cwd=root, capture_output=True, text=True, env=dict(os.environ, LC_ALL="C"))
-    found = next((x for x in (git("merge-base", "HEAD", ref).stdout.strip() for ref in ("origin/" + base, base)) if x), "")
-    shown = git("show", found + ":.loop/regression.tsv") if found else None
-    if not shown or shown.returncode and "exists on disk" not in shown.stderr and "does not exist" not in shown.stderr:
-        return None
-    return {c[0]: (c + [""] * 5)[4] for c in (line.split("\t") for line in shown.stdout.splitlines()) if c[0][:1] not in ("", "#")}
+  try:
+    with open(os.path.join(root, ".loop", "config.json")) as handle:
+      base = json.load(handle).get("base") or "main"
+  except (OSError, ValueError):
+    base = "main"
+  git = lambda *a: subprocess.run(("git",) + a, cwd=root, capture_output=True, text=True, env=dict(os.environ, LC_ALL="C"))
+  found = next((x for x in (git("merge-base", "HEAD", ref).stdout.strip() for ref in ("origin/" + base, base)) if x), "")
+  shown = git("show", found + ":.loop/regression.tsv") if found else None
+  if not shown or shown.returncode and "exists on disk" not in shown.stderr and "does not exist" not in shown.stderr:
+    return None
+  return {c[0]: (c + [""] * 5)[4] for c in (line.split("\t") for line in shown.stdout.splitlines()) if c[0][:1] not in ("", "#")}
 
 
 def pr_owed(runs, root, text):
-    owe, old = [], _before(root)
-    for number, finding in FIXES.findall(text):
-        ref = number or finding.lower()
-        if not any(SEEN.match(seen) and _has(link, ref) and (old is None or old.get(name) != seen)
-                   and subprocess.run(command, shell=True, cwd=root, capture_output=True).returncode == 0
-                   for name, command, seen, link in _rows(root)):
-            owe.append(("#" if number else "finding ") + ref)
-    return owe
+  owe, old = [], _before(root)
+  for number, finding in FIXES.findall(text):
+    ref = number or finding.lower()
+    if not any(SEEN.match(seen) and _has(link, ref) and (old is None or old.get(name) != seen)
+      and subprocess.run(command, shell=True, cwd=root, capture_output=True).returncode == 0
+      for name, command, seen, link in _rows(root)):
+      owe.append(("#" if number else "finding ") + ref)
+  return owe
 
 
 def cmd_pr_list(args):
-    for number, (joined, name, age) in enumerate(pr_order(os.path.join(se.base(), "runs")), 1):
-        print("%d %s joined=%d heartbeat=%ds ago" % (number, name, joined, age))
-    return 0
+  for number, (joined, name, age) in enumerate(pr_order(os.path.join(se.base(), "runs")), 1):
+    print("%d %s joined=%d heartbeat=%ds ago" % (number, name, joined, age))
+  return 0
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("status")
-    for name in ("need", "decline"):
-        item = sub.add_parser(name)
-        item.add_argument("--ready", type=int, default=0, help="ready goals waiting for a session")
-    item = sub.add_parser("add")
-    item.add_argument("ids", nargs="+")
-    item = sub.add_parser("return")
-    item.add_argument("slug")
-    sub.add_parser("archive")
-    item = sub.add_parser("archived")
-    item.add_argument("id")
-    item.add_argument("--why", default="archived with the app")
-    sub.add_parser("pr_turn").add_argument("--list", action="store_true", required=True, help="print the pr queue in its one order")
-    item = sub.add_parser("usage")
-    item.add_argument("percent", type=float)
-    args = parser.parse_args()
-    try:
-        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "archive": cmd_archive, "archived": lambda a: archived(a.id, (se.pool().get(a.id) or {}).get("name") or a.id, a.why) - 1, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
-    except se.PoolUnreadable as error:
-        sys.exit("REFUSED: " + graph.pool_fix(error))
+  parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+  sub = parser.add_subparsers(dest="cmd", required=True)
+  sub.add_parser("status")
+  for name in ("need", "decline"):
+    item = sub.add_parser(name)
+    item.add_argument("--ready", type=int, default=0, help="ready goals waiting for a session")
+  item = sub.add_parser("add")
+  item.add_argument("ids", nargs="+")
+  item = sub.add_parser("return")
+  item.add_argument("slug")
+  sub.add_parser("archive")
+  item = sub.add_parser("archived")
+  item.add_argument("id")
+  item.add_argument("--why", default="archived with the app")
+  sub.add_parser("pr_turn").add_argument("--list", action="store_true", required=True, help="print the pr queue in its one order")
+  item = sub.add_parser("usage")
+  item.add_argument("percent", type=float)
+  args = parser.parse_args()
+  try:
+    return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "archive": cmd_archive, "archived": lambda a: archived(a.id, (se.pool().get(a.id) or {}).get("name") or a.id, a.why) - 1, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
+  except se.PoolUnreadable as error:
+    sys.exit("REFUSED: " + graph.pool_fix(error))
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+  sys.exit(main())

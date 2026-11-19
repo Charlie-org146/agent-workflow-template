@@ -37,131 +37,131 @@ import narrow  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 FIX = {
-    "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' to the comment block at the top of {file}",
-    "LANES-DECL-PLACE": "move the # reads: line into the comment block at the top of {file}",
-    "LANES-DECL-PATTERN": "declare each file, or the skill folder the script globs (e.g. skills/x/scripts/)",
-    "LANES-DECL-ESCAPE": "declare repo-relative paths only",
-    "LANES-DECL-MISSING": "fix the path or remove it from # reads: in {file}",
-    "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs instead of the folder",
-    "LANES-DECL-GLOB": "declare the globbed folder itself in {file}'s # reads: line (a new file there must rerun it)",
-    "LANES-DECL-FOLDER": "add the files {file} runs from that folder to its # reads: line",
-    "LANES-DECL-TREE": "add skills/ to the # reads: line of {file} (it stays wide: it reads every skill)",
+  "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' to the comment block at the top of {file}",
+  "LANES-DECL-PLACE": "move the # reads: line into the comment block at the top of {file}",
+  "LANES-DECL-PATTERN": "declare each file, or the skill folder the script globs (e.g. skills/x/scripts/)",
+  "LANES-DECL-ESCAPE": "declare repo-relative paths only",
+  "LANES-DECL-MISSING": "fix the path or remove it from # reads: in {file}",
+  "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs instead of the folder",
+  "LANES-DECL-GLOB": "declare the globbed folder itself in {file}'s # reads: line (a new file there must rerun it)",
+  "LANES-DECL-FOLDER": "add the files {file} runs from that folder to its # reads: line",
+  "LANES-DECL-TREE": "add skills/ to the # reads: line of {file} (it stays wide: it reads every skill)",
 }
 TEST = re.compile(r"(?<![\w./-])(dev/toy/test-[\w-]+\.sh)")
 
 
 def usage(message):
-    sys.stderr.write("lanes_cli.py: %s\n" % message)
-    sys.exit(2)
+  sys.stderr.write("lanes_cli.py: %s\n" % message)
+  sys.exit(2)
 
 
 def top(given):
-    if given:
-        return os.path.abspath(given)
-    done = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-    if done.returncode:
-        usage("not inside a git repo; run from the repo or pass --root DIR")
-    return done.stdout.strip()
+  if given:
+    return os.path.abspath(given)
+  done = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+  if done.returncode:
+    usage("not inside a git repo; run from the repo or pass --root DIR")
+  return done.stdout.strip()
 
 
 def rows_of(root, level):
-    path = os.path.join(root, ".loop", "regression.tsv")
-    if not os.path.isfile(path):
-        usage("no .loop/regression.tsv under %s; run from the repo or pass --root" % root)
-    rows = []
-    with open(path) as handle:
-        for number, line in enumerate(handle, 1):
-            cells = line.rstrip("\n").split("\t")
-            if not line.strip() or line.startswith("#"):
-                continue
-            if len(cells) < 3:
-                raise ValueError(".loop/regression.tsv:%d has fewer than 3 columns" % number)
-            if level == "all" or cells[1] == level:
-                rows.append({"id": cells[0], "level": cells[1], "command": cells[2]})
-    return rows
+  path = os.path.join(root, ".loop", "regression.tsv")
+  if not os.path.isfile(path):
+    usage("no .loop/regression.tsv under %s; run from the repo or pass --root" % root)
+  rows = []
+  with open(path) as handle:
+    for number, line in enumerate(handle, 1):
+      cells = line.rstrip("\n").split("\t")
+      if not line.strip() or line.startswith("#"):
+        continue
+      if len(cells) < 3:
+        raise ValueError(".loop/regression.tsv:%d has fewer than 3 columns" % number)
+      if level == "all" or cells[1] == level:
+        rows.append({"id": cells[0], "level": cells[1], "command": cells[2]})
+  return rows
 
 
 def relative(root, path):
-    here = os.path.realpath(os.getcwd())
-    base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root from outside it
-    full = os.path.realpath(os.path.join(base, path))
-    rel = os.path.relpath(full, os.path.realpath(root))
-    if rel.startswith(".."):
-        usage("path outside the repo: %s" % path)
-    return rel
+  here = os.path.realpath(os.getcwd())
+  base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root from outside it
+  full = os.path.realpath(os.path.join(base, path))
+  rel = os.path.relpath(full, os.path.realpath(root))
+  if rel.startswith(".."):
+    usage("path outside the repo: %s" % path)
+  return rel
 
 
 def picked(root, rows, path, cache):
-    """The rows a deleted or unmapped file selects: those that name it, and those that reach the runner."""
-    return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
-            or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
+  """The rows a deleted or unmapped file selects: those that name it, and those that reach the runner."""
+  return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
+    or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
 
 
 def affected(root, rows, paths, cache):
-    """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
-    ids, notes, real = set(), [], False
-    for row in rows:
-        lanes.closure(root, row["command"], cache)
-        if cache.get(("why", row["command"])):
-            notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
-    for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
-        if not os.path.exists(os.path.join(root, path)) and not any(
-                path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
-            ids |= picked(root, rows, path, cache)
-            notes.append("DELETED %s: the rows that name it and the runners" % path)
-            real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
-            continue
-        if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
-            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
-        else:
-            hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
-        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
-            path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
-        if not hit and not no_effect and not any(lanes.hits(path, lanes.closure(root, r["command"], cache)[0])
-                                                 for r in rows):
-            ids |= picked(root, rows, path, cache)
-            notes.append("UNMAPPED %s: the rows that name it and the runners; no row reads it (add it to a script's "
-                         "# reads: if one should)" % path)
-            real = real or not no_effect
-            continue
-        ids, real = ids | hit, real or not no_effect
-    if real:  # root runners rerun on a real change; a change only to NO_EFFECT files (a release's VERSION) reaches none
-        ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
-    return sorted(ids), notes
+  """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
+  ids, notes, real = set(), [], False
+  for row in rows:
+    lanes.closure(root, row["command"], cache)
+    if cache.get(("why", row["command"])):
+      notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
+  for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
+    if not os.path.exists(os.path.join(root, path)) and not any(
+      path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
+      ids |= picked(root, rows, path, cache)
+      notes.append("DELETED %s: the rows that name it and the runners" % path)
+      real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
+      continue
+    if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
+      hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
+    else:
+      hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
+    no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
+      path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
+    if not hit and not no_effect and not any(lanes.hits(path, lanes.closure(root, r["command"], cache)[0])
+      for r in rows):
+      ids |= picked(root, rows, path, cache)
+      notes.append("UNMAPPED %s: the rows that name it and the runners; no row reads it (add it to a script's "
+        "# reads: if one should)" % path)
+      real = real or not no_effect
+      continue
+    ids, real = ids | hit, real or not no_effect
+  if real:  # root runners rerun on a real change; a change only to NO_EFFECT files (a release's VERSION) reaches none
+    ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
+  return sorted(ids), notes
 
 
 def check(root, scripts, cache):
-    """Every header problem of the test scripts as (code, file, line, what), LANES-DECL-NONE for a missing header."""
-    out = []
-    for rel in scripts:
-        paths, problems = narrow.header(root, rel, cache)
-        if paths is None and not problems:
-            out.append(("LANES-DECL-NONE", rel, 1, "test script has no # reads: header"))
-            continue
-        out += problems + narrow.narrow(root, [rel], cache)[1]
-    return sorted(set(out), key=lambda p: (p[1], p[2], p[0], p[3]))
+  """Every header problem of the test scripts as (code, file, line, what), LANES-DECL-NONE for a missing header."""
+  out = []
+  for rel in scripts:
+    paths, problems = narrow.header(root, rel, cache)
+    if paths is None and not problems:
+      out.append(("LANES-DECL-NONE", rel, 1, "test script has no # reads: header"))
+      continue
+    out += problems + narrow.narrow(root, [rel], cache)[1]
+  return sorted(set(out), key=lambda p: (p[1], p[2], p[0], p[3]))
 
 
 def chain(parent, path):
-    links = [path]
-    while parent.get(links[-1]) and parent[links[-1]] not in links:
-        links.append(parent[links[-1]])
-    return " -> ".join(reversed(links))
+  links = [path]
+  while parent.get(links[-1]) and parent[links[-1]] not in links:
+    links.append(parent[links[-1]])
+  return " -> ".join(reversed(links))
 
 
 def merge_runs(root):
-    """The lane record's row results, with any flaky flag (tiers.py flaky_apply), into regression-runs.tsv."""
-    import runs
-    import slots
-    record, _ = lanes.load(lanes.record_path(root), root)
-    rows = (record or {}).get("rows") or {}
-    done = [dict({"id": key, "state": value.get("status")}, **{k: value[k] for k in ("flaky",) if k in value})
-            for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
-    if done:
-        day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
-        slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
-    return 0
+  """The lane record's row results, with any flaky flag (tiers.py flaky_apply), into regression-runs.tsv."""
+  import runs
+  import slots
+  record, _ = lanes.load(lanes.record_path(root), root)
+  rows = (record or {}).get("rows") or {}
+  done = [dict({"id": key, "state": value.get("status")}, **{k: value[k] for k in ("flaky",) if k in value})
+    for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
+  if done:
+    day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+    slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
+  return 0
 
 
 
@@ -221,79 +221,79 @@ MATRIX_JOB = """
 
 
 def workflow(root, given, write_main):
-    """regression.py workflow: where the regression runs decides what is written. A public repo gets regression.yml and
+  """regression.py workflow: where the regression runs decides what is written. A public repo gets regression.yml and
     regression-pr.yml (the affected rows on a pull request or push); a private repo or an unreadable visibility gets nothing."""
-    cfg = tiers.config(root)
-    where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
-    if not where:
-        probe = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py")
-        seen = subprocess.run([sys.executable, probe, "visibility"], cwd=root, capture_output=True, text=True).stdout.strip() if os.path.exists(probe) else ""
-        where = seen if seen in ("private", "public") else "unknown"
-    base = os.path.join(root, ".github", "workflows")
-    if where != "public":
-        print("NOT WRITTEN: " + ("this repo is private; its regression runs on the Mac (local schedule)" if where == "private" else
-              "the repo's visibility could not be read, so a workflow that could block a private repo is not written. Fix: gh auth login, then run this again"))
-        for name in ("regression.yml", "regression-pr.yml"):
-            if where == "private" and os.path.exists(os.path.join(base, name)) and open(os.path.join(base, name)).read().startswith(OURS):
-                print("REMOVABLE: .github/workflows/%s is ours and a private repo's regression runs on the Mac; git rm it when you choose" % name)
-        return 0
-    code = write_main()
-    main_path = os.path.join(base, "regression.yml")
-    if os.path.exists(main_path) and open(main_path).read().startswith(OURS) and "  matrix-smoke:" not in open(main_path).read():
-        open(main_path, "a").write(MATRIX_JOB)
-    path = os.path.join(base, "regression-pr.yml")
-    if not os.path.exists(os.path.join(root, "skills", "workflow-regression", "scripts", "regression.py")):
-        print("NOT WRITTEN: regression-pr.yml needs skills/workflow-regression/ in this repo (an adopting repo without it keeps the embedded runner)")
-    elif os.path.exists(path) and not open(path).read().startswith(OURS):
-        sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
-    else:
-        os.makedirs(base, exist_ok=True)
-        open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", str(cfg.get("ci_levels") or "nightly")))
-        print("WROTE " + path)
-    return code
+  cfg = tiers.config(root)
+  where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
+  if not where:
+    probe = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py")
+    seen = subprocess.run([sys.executable, probe, "visibility"], cwd=root, capture_output=True, text=True).stdout.strip() if os.path.exists(probe) else ""
+    where = seen if seen in ("private", "public") else "unknown"
+  base = os.path.join(root, ".github", "workflows")
+  if where != "public":
+    print("NOT WRITTEN: " + ("this repo is private; its regression runs on the Mac (local schedule)" if where == "private" else
+        "the repo's visibility could not be read, so a workflow that could block a private repo is not written. Fix: gh auth login, then run this again"))
+    for name in ("regression.yml", "regression-pr.yml"):
+      if where == "private" and os.path.exists(os.path.join(base, name)) and open(os.path.join(base, name)).read().startswith(OURS):
+        print("REMOVABLE: .github/workflows/%s is ours and a private repo's regression runs on the Mac; git rm it when you choose" % name)
+    return 0
+  code = write_main()
+  main_path = os.path.join(base, "regression.yml")
+  if os.path.exists(main_path) and open(main_path).read().startswith(OURS) and "  matrix-smoke:" not in open(main_path).read():
+    open(main_path, "a").write(MATRIX_JOB)
+  path = os.path.join(base, "regression-pr.yml")
+  if not os.path.exists(os.path.join(root, "skills", "workflow-regression", "scripts", "regression.py")):
+    print("NOT WRITTEN: regression-pr.yml needs skills/workflow-regression/ in this repo (an adopting repo without it keeps the embedded runner)")
+  elif os.path.exists(path) and not open(path).read().startswith(OURS):
+    sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
+  else:
+    os.makedirs(base, exist_ok=True)
+    open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", str(cfg.get("ci_levels") or "nightly")))
+    print("WROTE " + path)
+  return code
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="lanes_cli.py")
-    sub = parser.add_subparsers(dest="cmd", required=True)
-    for name in ("affected", "deps", "check", "merge-runs"):
-        item = sub.add_parser(name)
-        item.add_argument("--root")
-    sub.choices["affected"].add_argument("--level", default="land", choices=("land", "nightly", "all"))
-    sub.choices["affected"].add_argument("paths", nargs="+", metavar="PATH")
-    sub.choices["deps"].add_argument("command")
-    sub.choices["deps"].add_argument("--why", metavar="PATH")
-    sub.choices["check"].add_argument("scripts", nargs="*", metavar="SCRIPT")
-    args = parser.parse_args()
-    root, cache = top(args.root), {}
-    if args.cmd == "merge-runs":
-        return merge_runs(root)
-    if args.cmd == "affected":
-        rows = rows_of(root, args.level)
-        ids, notes = affected(root, rows, [relative(root, p) for p in args.paths], cache)
-        print("AFFECTED %d of %d rows (%s)" % (len(ids), len(rows), ", ".join(ids)))
-        print("\n".join(sorted(set(notes)))) if notes else None
-        return 0
-    if args.cmd == "deps":
-        deps, always = lanes.closure(root, args.command, cache)
-        if args.why:
-            target = relative(root, args.why)
-            parent = cache.get(("chain", args.command), {})
-            reached = lanes.hits(target, deps)
-            print(chain(parent, target) if reached and target in parent else
-                  ("%s (wide mapping)" % target if reached else "NOT REACHED %s" % target))
-            return 0
-        print("\n".join(sorted(deps)))
-        if always:
-            print("ALWAYS %s: %s" % (args.command, cache.get(("why", args.command)) or "names no repo path or the "
-                                                                                      "whole repo"))
-        return 0
-    scripts = [relative(root, s) for s in args.scripts] or sorted(
-        {m for r in rows_of(root, "all") for m in TEST.findall(r["command"])})
-    problems = check(root, scripts, cache)
-    for code, rel, line, what in problems:
-        print("%s %s:%d: %s\nfix: %s" % (code, rel, line, what, FIX.get(code, "").format(file=rel)))
-    return 1 if problems else 0
+  parser = argparse.ArgumentParser(prog="lanes_cli.py")
+  sub = parser.add_subparsers(dest="cmd", required=True)
+  for name in ("affected", "deps", "check", "merge-runs"):
+    item = sub.add_parser(name)
+    item.add_argument("--root")
+  sub.choices["affected"].add_argument("--level", default="land", choices=("land", "nightly", "all"))
+  sub.choices["affected"].add_argument("paths", nargs="+", metavar="PATH")
+  sub.choices["deps"].add_argument("command")
+  sub.choices["deps"].add_argument("--why", metavar="PATH")
+  sub.choices["check"].add_argument("scripts", nargs="*", metavar="SCRIPT")
+  args = parser.parse_args()
+  root, cache = top(args.root), {}
+  if args.cmd == "merge-runs":
+    return merge_runs(root)
+  if args.cmd == "affected":
+    rows = rows_of(root, args.level)
+    ids, notes = affected(root, rows, [relative(root, p) for p in args.paths], cache)
+    print("AFFECTED %d of %d rows (%s)" % (len(ids), len(rows), ", ".join(ids)))
+    print("\n".join(sorted(set(notes)))) if notes else None
+    return 0
+  if args.cmd == "deps":
+    deps, always = lanes.closure(root, args.command, cache)
+    if args.why:
+      target = relative(root, args.why)
+      parent = cache.get(("chain", args.command), {})
+      reached = lanes.hits(target, deps)
+      print(chain(parent, target) if reached and target in parent else
+        ("%s (wide mapping)" % target if reached else "NOT REACHED %s" % target))
+      return 0
+    print("\n".join(sorted(deps)))
+    if always:
+      print("ALWAYS %s: %s" % (args.command, cache.get(("why", args.command)) or "names no repo path or the "
+          "whole repo"))
+    return 0
+  scripts = [relative(root, s) for s in args.scripts] or sorted(
+    {m for r in rows_of(root, "all") for m in TEST.findall(r["command"])})
+  problems = check(root, scripts, cache)
+  for code, rel, line, what in problems:
+    print("%s %s:%d: %s\nfix: %s" % (code, rel, line, what, FIX.get(code, "").format(file=rel)))
+  return 1 if problems else 0
 
 
 
@@ -302,68 +302,68 @@ def main():
 
 
 def _slots():
-    import slots
-    return slots
+  import slots
+  return slots
 
 
 def free_gb():
-    """Free virtual memory in GB (Windows: the free page file; macOS: free, inactive and speculative pages; Linux: MemAvailable),
+  """Free virtual memory in GB (Windows: the free page file; macOS: free, inactive and speculative pages; Linux: MemAvailable),
     LOOP_FREE_GB to fake it, None when it can't be read (a lane is then never held)."""
-    try:
-        if os.environ.get("LOOP_FREE_GB"):
-            return float(os.environ["LOOP_FREE_GB"])
-        if os.name == "nt":
-            import ctypes
-            class Status(ctypes.Structure):
-                _fields_ = [("size", ctypes.c_ulong), ("load", ctypes.c_ulong)] + [(n, ctypes.c_ulonglong) for n in ("tp", "ap", "tpf", "apf", "tv", "av", "ae")]
-            held = Status()
-            held.size = ctypes.sizeof(held)
-            ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(held))
-            return held.apf / 2 ** 30
-        if sys.platform == "darwin":
-            text = subprocess.run(["vm_stat"], capture_output=True, text=True).stdout
-            page = int(re.search(r"page size of (\d+)", text).group(1))
-            return sum(int(m) for m in re.findall(r"Pages (?:free|inactive|speculative):\s+(\d+)", text)) * page / 2 ** 30
-        return int(re.search(r"MemAvailable:\s+(\d+) kB", open("/proc/meminfo").read()).group(1)) / 2 ** 20
-    except Exception:
-        return None
+  try:
+    if os.environ.get("LOOP_FREE_GB"):
+      return float(os.environ["LOOP_FREE_GB"])
+    if os.name == "nt":
+      import ctypes
+      class Status(ctypes.Structure):
+        _fields_ = [("size", ctypes.c_ulong), ("load", ctypes.c_ulong)] + [(n, ctypes.c_ulonglong) for n in ("tp", "ap", "tpf", "apf", "tv", "av", "ae")]
+      held = Status()
+      held.size = ctypes.sizeof(held)
+      ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(held))
+      return held.apf / 2 ** 30
+    if sys.platform == "darwin":
+      text = subprocess.run(["vm_stat"], capture_output=True, text=True).stdout
+      page = int(re.search(r"page size of (\d+)", text).group(1))
+      return sum(int(m) for m in re.findall(r"Pages (?:free|inactive|speculative):\s+(\d+)", text)) * page / 2 ** 30
+    return int(re.search(r"MemAvailable:\s+(\d+) kB", open("/proc/meminfo").read()).group(1)) / 2 ** 20
+  except Exception:
+    return None
 
 
 def wait_memory(root):
-    """A lane about to run rows waits while free memory is below min_free_memory_gb (default 4, 0 is off); a lane already running is
+  """A lane about to run rows waits while free memory is below min_free_memory_gb (default 4, 0 is off); a lane already running is
     never stopped. Each wait is logged in <git common dir>/loop/memory-waits.log for the check-in and health; past 4x the lane's
     time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
-    try:
-        need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 4)
-    except (OSError, ValueError, AttributeError):
-        need = 4
-    need = need if isinstance(need, (int, float)) and not isinstance(need, bool) and need > 0 else 0
-    began, told = time.time(), 0.0
-    cap = float(os.environ.get("LOOP_MEMORY_WAIT_SECONDS") or 4 * _slots().time_limit(root)[0])
-    while need:
-        free = free_gb()
-        if free is None or free >= need:
-            return
-        if time.time() - told > 300:
-            told = time.time()
-            line = "LANE_MEMORY: %.1f GB free, min_free_memory_gb is %g; this lane waits and starts when memory frees (a lane already running is not stopped)" % (free, need)
-            print(line, flush=True)
-            try:
-                done = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True)
-                with open(os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip())), "loop", "memory-waits.log"), "a") as log:
-                    log.write("%s %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), line))
-            except OSError:
-                pass
-        if time.time() - began > cap:
-            _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
-            sys.exit(_slots().EXIT_ENV)
-        time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
+  try:
+    need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 4)
+  except (OSError, ValueError, AttributeError):
+    need = 4
+  need = need if isinstance(need, (int, float)) and not isinstance(need, bool) and need > 0 else 0
+  began, told = time.time(), 0.0
+  cap = float(os.environ.get("LOOP_MEMORY_WAIT_SECONDS") or 4 * _slots().time_limit(root)[0])
+  while need:
+    free = free_gb()
+    if free is None or free >= need:
+      return
+    if time.time() - told > 300:
+      told = time.time()
+      line = "LANE_MEMORY: %.1f GB free, min_free_memory_gb is %g; this lane waits and starts when memory frees (a lane already running is not stopped)" % (free, need)
+      print(line, flush=True)
+      try:
+        done = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True)
+        with open(os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip())), "loop", "memory-waits.log"), "a") as log:
+          log.write("%s %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), line))
+      except OSError:
+        pass
+    if time.time() - began > cap:
+      _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
+      sys.exit(_slots().EXIT_ENV)
+    time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except (OSError, ValueError) as error:
-        if os.environ.get("LANES_DEBUG") == "1":
-            raise
-        sys.stderr.write("lanes_cli.py: unexpected error: %s (LANES_DEBUG=1 for the trace)\n" % error)
-        sys.exit(1)
+  try:
+    sys.exit(main())
+  except (OSError, ValueError) as error:
+    if os.environ.get("LANES_DEBUG") == "1":
+      raise
+    sys.stderr.write("lanes_cli.py: unexpected error: %s (LANES_DEBUG=1 for the trace)\n" % error)
+    sys.exit(1)
