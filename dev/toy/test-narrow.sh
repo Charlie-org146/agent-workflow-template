@@ -151,8 +151,8 @@ git checkout -q -- skills/k/scripts/k.py
 echo "== check-reads.sh: runtime reads outside a row's closure fail the trace"
 c="$d/trace"; mkdir -p "$c/dev/toy" "$c/skills/workflow-regression/scripts" "$c/skills/a/scripts" "$c/.loop"
 cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here/skills/workflow-regression/scripts/lanes.py" "$here/skills/workflow-regression/scripts/narrow.py" \
-  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$here/skills/workflow-regression/scripts/tiers.py" "$here/skills/workflow-regression/scripts/slots.py" \
-  "$c/skills/workflow-regression/scripts/"  # lanes_cli.py imports tiers, and lanes.py imports slots
+  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$here/skills/workflow-regression/scripts/tiers.py" \
+  "$here/skills/workflow-regression/scripts/slots.py" "$c/skills/workflow-regression/scripts/"
 for f in a b c e; do printf 'NAME = "%s"\nopen(__file__).read()\n' "$f" > "$c/skills/a/scripts/$f.py"; done
 printf 'import os\nopen(os.path.join(os.path.dirname(__file__), "c" + ".py")).read()\n' > "$c/skills/a/scripts/g.py"
 printf 'import os, shutil, subprocess, sys, tempfile\nt = tempfile.mkdtemp(); shutil.copy(os.path.join(os.path.dirname(__file__), "e" + ".py"), t + "/x.py")\nsubprocess.run(["python3", t + "/x.py"], check=True)\n' > "$c/skills/a/scripts/k.py"
@@ -207,5 +207,20 @@ sed 's/while \[ "\$i" -lt "\$countn" \]/while [ "$i" -lt "$((countn - 1))" ]/' "
 dropped2=$(cd "$c" && bash dev/toy/check-reads-drop.sh --count-check 3 2>&1); drc2=$?
 check "negative control: a dropped shard (the last one never listed) fails the count check" '[ $drc2 = 1 ] && grep -q "^SHARDS DIFFER: the full list has 7 commands, the 3 shards 5" <<<"$dropped2" && grep -q "dev/t3.sh" <<<"$dropped2"'
 rm -f "$c/dev/toy/check-reads-drop.sh"
+# Value: protects=the shard jobs' results are read as one verdict: every shard's trace file is there, each traced its whole slice, none
+# failed, and a run with no trace files says NOT RUN, never PASS; fails_when=--collect passes a missing, short or failed shard, or
+# reports a repo with no artifacts as green; why_new=CI runs ~16 trace jobs and the lanes-trace row must not trust a lost one;
+# seam=check-reads.sh --collect DIR N over DIR/trace-I.txt; no_claim=CI wiring (the PC's matrix goal)
+col="$d/collect"; rm -rf "$col"; mkdir -p "$col/ok" "$col/missing" "$col/short" "$col/failed"
+for dir in ok missing short failed; do for i in 0 1 2; do
+  k=$(cd "$c" && bash dev/toy/check-reads.sh --list --shard "$i/3" | wc -l | tr -d ' '); printf 'PASS x\nALL TRACED: %s commands\n' "$k" > "$col/$dir/trace-$i.txt"
+done; done
+rm "$col/missing/trace-2.txt"; printf 'ALL TRACED: 1 commands\n' > "$col/short/trace-1.txt"; printf 'LANES-TRACE-UNDECLARED r2 skills/a/scripts/c.py\n1 of 2 commands FAILED\n' > "$col/failed/trace-1.txt"
+okc=$(cd "$c" && bash dev/toy/check-reads.sh --collect "$col/ok" 3 2>&1); okrc=$?
+check "check-reads --collect passes when every shard traced its whole slice and none failed" '[ $okrc = 0 ] && grep -qx "COLLECTED OK: 3 shards traced 7 commands, none failed" <<<"$okc"'
+for dir in missing short failed; do eval "$dir=\$(cd \"\$c\" && bash dev/toy/check-reads.sh --collect \"\$col/$dir\" 3 2>&1); ${dir}rc=\$?"; done
+check "negative control: --collect fails a missing shard file, a short count and a failed shard, naming the shard" '[ $missingrc = 1 ] && grep -q "shard 2: trace-2.txt is missing" <<<"$missing" && [ $shortrc = 1 ] && grep -q "shard 1: traced 1 of 2 commands" <<<"$short" && [ $failedrc = 1 ] && grep -q "shard 1: " <<<"$failed" && ! grep -q "COLLECTED OK" <<<"$missing$short$failed"'
+none=$(cd "$c" && bash dev/toy/check-reads.sh --collect "$col/nowhere" 3 2>&1); nonerc=$?
+check "check-reads --collect with no trace files says NOT RUN and exits 3, never PASS" '[ $nonerc = 3 ] && grep -q "^NOT RUN: no trace files in" <<<"$none" && ! grep -qE "OK|PASS" <<<"$none"'
 
 [ $fails = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

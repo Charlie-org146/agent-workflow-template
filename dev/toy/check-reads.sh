@@ -12,20 +12,42 @@
 # unique commands whose position in the list is I modulo N (I from 0), so N shards of ~1/N the work each cover the list once.
 # --list prints the selected "ids<TAB>command" lines and replays nothing. --count-check N proves the N shards' lists together
 # equal the full list (same commands, each once); it fails naming a command a shard dropped or doubled.
+# --collect DIR N reads DIR/trace-I.txt (a shard's output) for I below N as one verdict: COLLECTED OK (exit 0), FAIL lines naming
+# a missing, short or failed shard (exit 1), or NOT RUN when DIR holds no trace file at all (exit 3), never a pass.
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
-level=land; shard=""; list=0; countn=""
+level=land; shard=""; list=0; countn=""; coll=""; colln=""
 while [ $# -gt 0 ]; do
   case $1 in
     --level) level=$2; shift 2 ;;
     --shard) shard=$2; shift 2 ;;
     --list) list=1; shift ;;
     --count-check) countn=$2; shift 2 ;;
+    --collect) coll=$2; colln=${3:-}; shift $(( $# < 3 ? $# : 3 )) ;;
     *) break ;;
   esac
 done
 case "$shard" in ""|[0-9]*/[0-9]*) ;; *) echo "check-reads: --shard wants I/N, e.g. 0/16"; exit 2 ;; esac
 if [ -n "$shard" ] && [ "${shard%/*}" -ge "${shard#*/}" ] || [ "${shard#*/}" = 0 ]; then echo "check-reads: --shard I/N needs 0 <= I < N"; exit 2; fi
+if [ -n "$coll" ]; then  # the shard jobs' results, DIR/trace-I.txt for each I below N, read as one verdict
+  case "$colln" in ""|*[!0-9]*|0) echo "check-reads: --collect wants DIR N, e.g. traces 16"; exit 2 ;; esac
+  found=0; i=0; while [ "$i" -lt "$colln" ]; do [ -f "$coll/trace-$i.txt" ] && found=$((found + 1)); i=$((i + 1)); done
+  [ "$found" = 0 ] && { echo "NOT RUN: no trace files in $coll (the shard jobs did not run here), so nothing is proven"; exit 3; }
+  bad=0; total=0; i=0
+  while [ "$i" -lt "$colln" ]; do
+    f="$coll/trace-$i.txt"; want=$(bash "$0" --level "$level" --list --shard "$i/$colln" "$@" | grep -c .)
+    if [ ! -f "$f" ]; then echo "FAIL shard $i: trace-$i.txt is missing"; bad=$((bad + 1))
+    elif grep -qE "commands FAILED|^LANES-TRACE-|^FAIL " "$f"; then echo "FAIL shard $i: its trace holds a failure: $(grep -E 'commands FAILED|^LANES-TRACE-|^FAIL ' "$f" | head -1 | cut -c1-160)"; bad=$((bad + 1))
+    else got=$(sed -n 's/^ALL TRACED: \([0-9]*\) commands$/\1/p' "$f" | tail -1)
+      if [ "$got" != "$want" ]; then echo "FAIL shard $i: traced ${got:-none} of $want commands"; bad=$((bad + 1)); else total=$((total + got)); fi
+    fi
+    i=$((i + 1))
+  done
+  full=$(bash "$0" --level "$level" --list "$@" | grep -c .)
+  [ "$bad" = 0 ] && [ "$total" = "$full" ] && { echo "COLLECTED OK: $colln shards traced $total commands, none failed"; exit 0; }
+  [ "$bad" = 0 ] && echo "FAIL: the shards traced $total commands, the full list has $full"
+  echo "COLLECT FAILED: $bad shard(s) of $colln"; exit 1
+fi
 if [ -n "$countn" ]; then
   tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
   bash "$0" --level "$level" --list "$@" | sort > "$tmp/full"; : > "$tmp/union"; i=0
