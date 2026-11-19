@@ -141,9 +141,9 @@ No private name, path, address or key leaves the machine, and automation gets on
 | [MCH-9 A machine keeps its private data to itself](https://github.com/jcl2018/agent-workflow-template/wiki/Machines) | Machines | 🟩 v1.0.70 | 4/5 | Each machine's private files stay outside the repo and are never copied elsewhere. | [MCH-9 flow](docs/wiki/flows/MCH-9.svg) |
 | [OPS-7 Govern only](https://github.com/jcl2018/agent-workflow-template/wiki/Operation) | Operation | 🟩 v0.1.2 | 3/5 | A check-in never edits code, commits or pushes; only merges change the repo. | [OPS-7 flow](docs/wiki/flows/OPS-7.svg) |
 
-## 5. Reproducible and portable (enforce score 3/5)
+## 5. Reproducible, portable and adoptable (enforce score 3/5)
 
-The same inputs give the same result, on any machine, in any repo and on any agent: it works installed fresh, plugs into other systems through adapters, and survives a failure without losing work.
+The same inputs give the same result, on any machine, in any repo and on any agent: it works installed fresh, plugs into other systems through adapters, survives a failure without losing work, and any repo adopts the template cleanly, byte for byte, its README showing the template's principles and design logic as written.
 
 ![Reproducible and portable](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-07-it-works-installed-fresh.svg?raw=true)
 
