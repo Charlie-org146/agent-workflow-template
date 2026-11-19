@@ -324,7 +324,8 @@ def prep(top, cfg, log):
         paths.append(".loop/regression-runs.tsv")
     if not paths:
         return "", None
-    proc = subprocess.Popen(["git", "commit", "--only", "-q", "-m", "Lane: re-render the Tests tables", "--"] + paths,
+    who = [] if git("config", "user.name").stdout.strip() and git("config", "user.email").stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=loop@localhost"]  # CI has no author
+    proc = subprocess.Popen(["git"] + who + ["commit", "--only", "-q", "-m", "Lane: re-render the Tests tables", "--"] + paths,
                             cwd=top, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=subprocess.DEVNULL,
                             start_new_session=True)
     try:

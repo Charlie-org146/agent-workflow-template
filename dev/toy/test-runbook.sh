@@ -15,14 +15,14 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
-mkdir -p "$T/r" && git -C "$here" ls-files -co --exclude-standard skills docs .loop README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
+mkdir -p "$T/r" && git -C "$here" ls-files -co --exclude-standard skills docs .loop .claude/settings.json README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
   tar -C "$here" -cf - -T - | tar -C "$T/r" -xf -
 cd "$T/r" || exit 1
 git init -q && git add -A && git -c user.email=t@example.test -c user.name=Toy commit -qm base
 python3 skills/workflow-docs/scripts/criteria.py render >/dev/null 2>&1
 git add -A && git -c user.email=t@example.test -c user.name=Toy commit -qm render
 D="python3 skills/workflow-docs/scripts/docs.py check"
-P=docs/wiki/Setup.md; cp "$P" "$T/setup.orig"; cp .loop/routines.tsv "$T/routines.orig"
+P=docs/wiki/Setup.md; cp "$P" "$T/setup.orig"; cp .loop/routines.tsv "$T/routines.orig"; cp .loop/permissions.tsv "$T/permissions.orig"; cp .claude/settings.json "$T/settings.orig"
 BASE=$($D 2>&1 | sort)  # the copy's own check output (another page may be CHANGED for its owner): a good change adds nothing to it
 GOOD='### setup-nightly
 - **Serves:** SET-1, SET-7.
@@ -41,7 +41,9 @@ i = s.index("\n## Requirements")
 open(p, "w").write(s[:i] + "\n## Runbook\n\n" + body + "\n" + s[i:])
 PY
 }
-reset() { cp "$T/setup.orig" "$P"; cp "$T/routines.orig" .loop/routines.tsv; }
+reset() { cp "$T/setup.orig" "$P"; cp "$T/routines.orig" .loop/routines.tsv; cp "$T/permissions.orig" .loop/permissions.tsv; cp "$T/settings.orig" .claude/settings.json; }
+# a routine added to the registry also declares its permissions (the PERMISSIONS check refuses an undeclared one)
+declare() { printf 'setup-nightly\tallow\tBash(python3 skills/workflow-docs/scripts/docs.py:*)\tthe check\n' >> .loop/permissions.tsv; python3 skills/workflow-docs/scripts/audit.py permissions write >/dev/null 2>&1; }
 out() { $D 2>&1; }
 without() { printf '%s\n' "$GOOD" | grep -v "^- \*\*$1:\*\*"; }
 
@@ -104,7 +106,7 @@ PY
 case_registry() {
   reset; printf 'setup-nightly\tSetup\n' >> .loop/routines.tsv
   check "a routine in the registry with no runbook on its page is refused" 'out | grep -qF "Setup:1: Runbook: DOC-16 a '"'"'### setup-nightly'"'"' runbook"'
-  place "$GOOD"; check "the same routine passes once its page carries the runbook" '[ "$(out | sort)" = "$BASE" ]'
+  place "$GOOD"; declare; check "the same routine passes once its page carries the runbook" '[ "$(out | sort)" = "$BASE" ]'
   reset; printf 'setup-nightly\tSetup\nsetup-nightly\tSetup\n' >> .loop/routines.tsv; place "$GOOD"
   check "a routine listed twice in the registry is refused" 'out | grep -qF "routines.tsv:" && out | grep -qF "each routine once"'
   reset; printf '# comment\n' >> .loop/routines.tsv; printf 'setup-nightly\tSetup\n' >> .loop/routines.tsv; place "  ### setup-nightly
