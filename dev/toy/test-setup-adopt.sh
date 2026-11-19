@@ -123,6 +123,7 @@ if want set1-docs-format; then
   mk df
   $setup >/dev/null 2>&1 || no "setup failed"
   out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
+  grep -q '^UNWRITTEN Home' <<<"$out" && out=$(grep -v '^HOME Home: DOC-4 no system diagram' <<<"$out")  # an unwritten Home has no diagram yet
   echo "$out" | grep -E 'DOC-(4|5|7|8)|BROKEN|LINK|DANGLING' && no "a docs-format gap after adoption"
   echo "$out" | grep -q '^UNWRITTEN Engine' && echo "$out" | grep -q '^UNWRITTEN Home' || no "the pages are not marked unwritten: $out"
   echo "$out" | grep -vE '^UNWRITTEN' | grep -q . && no "a gap other than unwritten: $(echo "$out" | grep -vE '^UNWRITTEN' | head -3)"

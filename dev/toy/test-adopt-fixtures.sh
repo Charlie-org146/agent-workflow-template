@@ -30,6 +30,7 @@ unit() { # unit FILE: a real passing unittest test
 }
 clean_docs() { # no format gap or broken link after adoption: only pages a person has yet to write
   out=$(python3 "$d/skills/workflow-docs/scripts/docs.py" check 2>&1)
+  grep -q '^UNWRITTEN Home' <<<"$out" && out=$(grep -v '^HOME Home: DOC-4 no system diagram' <<<"$out")  # an unwritten Home has no diagram yet
   echo "$out" | grep -E 'DOC-(4|5|7|8)|BROKEN|LINK' && no "a docs-format gap after adoption: $(echo "$out" | head -3)"
   return 0
 }

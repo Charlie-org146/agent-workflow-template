@@ -1,4 +1,8 @@
 # id	status	date	run	flaky
+adopt-fixture-bare-agent	FAIL	2026-11-19	
+adopt-fixture-ci-gitignore	FAIL	2026-11-19	
+adopt-fixture-existing-checks	FAIL	2026-11-19	
+adopt-fixture-feature-milestones	FAIL	2026-11-19	
 adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
 adopt-refuses-unpushed	PASS	2026-11-18		49a1eff1174e
 adopt-replaces-stale	PASS	2026-11-16		81436ab36362
@@ -9,6 +13,7 @@ adopt-set-4	FAIL	2026-11-12
 adopt-set-5	FAIL	2026-11-12	
 adoption-golden	PASS	2026-11-13	
 affected-quiet-release	PASS	2026-11-11	
+agent-routing	FAIL	2026-11-19	
 agents-wire	PASS	2026-11-12	
 app-refuses-headless-4184	PASS	2026-11-14	
 attempt-114	PASS	2026-11-10	
@@ -181,7 +186,7 @@ docs-only	PASS	2026-11-09
 docs-scripts-import-by-name	PASS	2026-11-15	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
-entry-adopt	SKIPPED	2026-11-16	
+entry-adopt	FAIL	2026-11-19	
 entry-stale	PASS	2026-11-12	
 estimates-shown	PASS	2026-11-18	
 every-row-described	FAIL	2026-11-15	
@@ -569,6 +574,7 @@ session-reports	PASS	2026-11-12
 session-reuse	PASS	2026-11-12	
 session-tool-helper	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 session-tool-timeout	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+set1-docs-format	FAIL	2026-11-19	
 set13-hooks-once	PASS	2026-11-19	
 set13-hooks-once-bullet	PASS	2026-11-19	
 set8-health	PASS	2026-11-19	
@@ -582,13 +588,14 @@ settings-overridden	PASS	2026-11-12
 settings-publish-refresh	PASS	2026-11-12	
 settings-read-fresh	PASS	2026-11-12	
 settings-reference	PASS	2026-11-12	
-settings-reference-fresh	PASS	2026-11-16	
+settings-reference-fresh	PASS	2026-11-19	
 settings-refresh	PASS	2026-11-12	
 settings-render-fresh	FAIL	2026-11-17	
 settings-stale	PASS	2026-11-12	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
+setup-fit	FAIL	2026-11-19	
 setup-owner-words-up-front	PASS	2026-11-15	
 setup-refusal-writes-120	PASS	2026-11-18	
 size-139	PASS	2026-11-12	
