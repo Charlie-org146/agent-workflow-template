@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept known-red-waves-batch@3411a49f -->
+Review: **Unreviewed** <!-- kept readme-conformance@4dc22cf7 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
