@@ -32,5 +32,3 @@ rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,
 skill-refusals-in-references	red on main 9d93ceb3: workflow-release SKILL.md is 150 lines, the row needs under 150 (#4971)
 release-criteria-known-skip	red on main 9d93ceb3: test-release-criteria.py fails 5 checks, see #4989
 sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
-settings-render-tables	red on main since v1.0.69: prd-principles made the README principles-only, so dev/render_tables_check.py finds no automation row in it; the lane already holds the open issue, see #5031
-runbook-repo	red on main since at least 87504617 (main nightly run 44357340394): dev/toy/test-runbook.sh wants anthropic_api_key, judge_command and "not run on the runner" in Health.md's health-round runbook, which never carried them; the lane already holds the open issue, see #4120
