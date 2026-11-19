@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/ skills/workflow-health/scripts/ skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py dev/toy/fakegh/ .loop/docs.tsv skills/workflow-setup/scripts/seed.py
-# Test the round's mail, feature grouping and round cost with a stub gh, a local Cloudflare stub and a local SMTP stub.
+# Test the round mail, feature grouping and round cost with stub gh, a Cloudflare stub and an SMTP stub.
 # usage: test-automation-email.sh GROUP   (mail secrets retry mailtest digest rounds file regression, or all)
 # Exits 0 only when every case in the group passes, so each regression row runs one group.
 set -u
