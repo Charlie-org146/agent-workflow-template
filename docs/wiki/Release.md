@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
+Review: **Unreviewed** <!-- kept gap-wave1-small@54ea2436 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
