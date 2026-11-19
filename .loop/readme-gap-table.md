@@ -1,23 +1,23 @@
 # README conformance: gap table
 
-Built for goal `readme-conformance`. Source of truth: the consolidated README at `origin/loop/requirements-consolidate` (a82f5669): 43 requirements, 228 distinct bullets (each bullet shows under up to four features; counted once here). Checked against main `f5b4228a` (v1.0.89; the passes read v1.0.87 and v1.0.88, and v1.0.89 only touches fit.py, narrow.py, merge.py and test rows) by reading code, tests, settings and pages.
+Built for goal `readme-conformance`. Source of truth: the consolidated README (requirements-consolidate, #5268; now README.md on main, text of tip a82f5669): 43 requirements, 228 distinct bullets (each bullet shows under up to four features; counted once here). Checked against main `d3c935a9` (v1.0.90; the passes read v1.0.87 and v1.0.88; v1.0.89 and v1.0.90 changed fit.py, narrow.py, merge.py, pageformat.py, render.py, prdcopy.py, judge.py, defects.py, commands.md and test rows only) by reading code, tests, settings and pages.
 
-**Result:** 136 done, 64 partial, 27 missing, 1 n/a (a definition with nothing to build). 91 gaps in 21 clusters; 4 close when requirements-consolidate merges and MCH-1.7 closes when gap-cheap-fixes merges; G09, G10, G12, G13 and part of G16 are goals the README already names.
+**Result:** 140 done, 61 partial, 26 missing, 1 n/a (a definition with nothing to build). 87 gaps in 21 clusters; the 4 DOC-1 bullets the consolidation left open closed with requirements-consolidate (#5268, v1.0.90); MCH-1.7 closes when gap-cheap-fixes merges; G09, G10, G12, G13 and part of G16 are goals the README already names.
 
-This table changes no requirement text and adds no shipped file. Re-run it as a delta once requirements-consolidate merges: the README text, `pageformat.py`, `render.py`, `commands.md` and the goal files change there; no behaviour does.
+This table changes no requirement text and adds no shipped file. Re-run it as a delta when the README or the code moves; requirements-consolidate (#5268) is already in.
 
 ## How the table was made
 
 - Six read-only passes by feature (Delivery and Check-in; Operation, Automation, Integrations; Regression and Health; Guardrails; Setup, Machines, Release; Documentation) each read the code a bullet asks for. A bullet is `done` only with code (file:line) plus a test row or a page; a row that is red, known-red or `not run` on its page counts as no passing test.
 - I re-checked by grep the rows I quote in the cluster list (DEL-19.1/19.2, DEL-3.4, DEL-9.3 with two mail secrets files, MCH-1.5, MCH-1.7 with five `--body` calls, DEL-1.2, DEL-7.3, AUT-1.2, GRD-5.1) and the changes below. Of the 19 rows where two passes disagreed, those decided by grep are above; the rest take the stricter reading.
 - The first pass ran on README tip 1eb62f15; the first table was on fc691448. Between those two tips the README differs in: OPS-11 (a merge is no longer a safety class), OPS-16.3, CHK-1.2 (new board layout), HLT-2.20 and HLT-2.21 (plan-red-team and the hourly reviewer), OPS-1.10 to OPS-1.12 and HLT-4.9 (ops-findings), DOC-2.6 (delegated approvals). Those rows were re-audited by hand here.
-- The README tip moved while I worked: fc691448 (first audit) to a82f5669 (PR #5268). The table is on a82f5669. The delta is small: the steward-merge safety class is now named in DEL-3.2, CHK-1.2 names a frozen board template, two planned bullets were added (DEL-1.9, REL-13.5) and a few tags and wordings changed. The commit 2f27d9ea that operation-top named is not on origin; if it differs from a82f5669, re-run as a delta.
+- The README moved while I worked: fc691448 (first audit), a82f5669, then merged to main in #5268 (v1.0.90; main's README is a82f5669's text, no later change). The table is on main v1.0.90. The delta is small: the steward-merge safety class is now named in DEL-3.2, CHK-1.2 names a frozen board template, two planned bullets were added (DEL-1.9, REL-13.5) and a few tags and wordings changed. The commit 2f27d9ea that operation-top named is not on origin; if it differs from a82f5669, re-run as a delta.
 - A pass could not run toys on Windows (one hit a temp-folder PermissionError); for rows without a run record it read the toy the row runs. Pages show 'not run' for most land rows: that is a missing run record, not a red row.
 
-## What the consolidation PR already closes
+## What the consolidation PR (#5268, merged in v1.0.90) closed
 
-- DOC-1.3, DOC-1.8, DOC-1.9, DOC-1.12: the two-part README and Home, the Flow-link and requirement-coverage checks (`pageformat.py` HEAD1/HEAD2, `frontdoor`) are on the branch only. Closes on merge; no goal needed.
-- The eight-versus-six principles mismatch (HLT-2.4, the README principle list read by `pageformat.py`): `commands.md` changes to six on the branch. The Attention group (principle 6) still reads UNREAD afterwards: that stays HLT-2.3.
+- DOC-1.3, DOC-1.8, DOC-1.9, DOC-1.12: the two-part README and Home, the Flow-link and requirement-coverage checks (`pageformat.py` HEAD1/HEAD2, `frontdoor`) were on the branch only and are now on main (checked on the merged tree: DOCS OK).
+- The eight-versus-six principles mismatch (HLT-2.4, the README principle list read by `pageformat.py`): `commands.md` is six on main. The Attention group (principle 6) still reads UNREAD afterwards: that stays HLT-2.3.
 - OPS-11 wording (a merge is not a safety class; caps are operation-top's): the README now matches main's Operation page. The code still has the steward-merge class: DEL-3.2 in G05.
 - MCH-1.7 (five command-line `--body` calls) is in flight in goal `gap-cheap-fixes` (PC); it stays partial here until that merges.
 - DOC-1.17 (an adopter's README shows the template principles) is NOT closed: the branch checks only where a repo ships the principle list.
@@ -168,16 +168,16 @@ The run: 1,055 passed, 81 failed, 30 known, 106 skipped of 1,273 rows (28m 29s; 
 | REG-9.5 | REG-16 | missing | Searched role.py, goal.py, release scripts: qa refuses only on test caps (role.py:253); nothing checks the only proof of a Reviewed requirement or... | qa refusal for removing the only proof; release gate on lowered coverage | 5227 | G11 |
 | DOC-1.1 | DOC-1 | done | criteria.py section order, pageformat.py problem()/bullets(); rows prd-section-order, prd-nongoal... | - | - | - |
 | DOC-1.2 | DOC-14 | done | deployments.py:19 EMAIL, :83 recipients group-not-address; rows deploy-table-refused, deploy-sect... | - | - | - |
-| DOC-1.3 | DOC-4 | partial | pageformat.py:105-158 home() (4-col table, optional Topic), Home.md has System diagram, Settings, Automation; rows home-topic-column, home-header-both | Home does not carry the README's two parts (principle tables, requirements by topic); Home is one features table | - | C00 |
+| DOC-1.3 | DOC-4 | done | main README.md and docs/wiki/Home.md carry 'Requirements by feature' (two parts); pageformat.py:1... | - | - | - |
 | DOC-1.4 | DOC-15 | done | render.py:274 overridden marker; rows settings-overridden, settings-stale, settings-publish-refresh | - | - | - |
 | DOC-1.5 | DOC-15 | done | counting.py:278-334 automation_block, audit.live via docs.py automation; rows automation-cron-wor... | - | - | - |
 | DOC-1.6 | DOC-15 | done* | render.py:281-287 template_line, setup settings.py:74 template_repo; rows settings-template-line,... | "adoption entry points to all three" not checkable (no definition of the three) | - | - |
 | DOC-1.7 | DOC-15 | done | counting.py (18,916 B) holds automation_block, render.py (18,928 B) the rest; rows docs-block-spl... | - | - | - |
-| DOC-1.8 | DOC-23 | missing | main README.md is title, template line, wiki link, then eight principles each with sentence, diagram and "Enforced by" IDs | no two-part split, no per-principle requirement tables, no Part 2 of full texts; eight principles, not six | - | C00 |
-| DOC-1.9 | DOC-23 | partial | pageformat.py:159-180 frontdoor: other section, sentence off by a word, cited ID neither real nor planned, Home needs How-to link (:105); row forma... | no checks for table columns, requirement missing from Part 2, empty Part 2 text, Flow link target; no adopter principle rule | - | C00 |
+| DOC-1.8 | DOC-23 | done | main README.md is the title, the wiki Home link and six principles in two parts (v1.0.90, #5268);... | - | - | - |
+| DOC-1.9 | DOC-23 | done | pageformat.py:140-180 frontdoor: grid columns, Flow link target, requirement coverage, Home How-t... | - | - | - |
 | DOC-1.10 | DOC-18 | done | deployments.py:326 PARTS, criteria.py:203-215; rows doc18-howto-skeleton, doc18-review-link-line,... | - | - | - |
 | DOC-1.11 | DOC-18 | done | deployments.py:337 mapped() (How-to has no docs.tsv row), audit.py:258,376 restamp; rows doc18-ho... | - | - | - |
-| DOC-1.12 | DOC-18 | partial | Home links each How-to page (pageformat.py:136; rows home-howto-linksonly, home-howto-linksonly-control) | README holds only principles on main, not "requirements by feature" (Part 2 absent) | - | C00 |
+| DOC-1.12 | DOC-18 | done | Home links each How-to page (pageformat.py:136; rows home-howto-linksonly, home-howto-linksonly-c... | - | - | - |
 | DOC-1.13 | DOC-19 | done | deployments.py howto()/prdcopy.py checks; rows doc19-item-missing, doc19-item-unknown, doc19-kind... | - | - | - |
 | DOC-1.14 | DOC-19 | partial | counting.py:269-278 origins() (public-origins.json, public_origins), prdcopy.py:346-363 NEAR allows milestones, releases, wiki, README blob; rows d... | the repo's own GitHub blob/raw image URLs are reported "outside this repo" | 5078 | G02 |
 | DOC-1.15 | DOC-6 | partial | test-command-reference.py (row command-reference-complete) checks each map verb appears in SKILL.md or commands.md; row ls-usage-steps (health only) | no check that every real command is in the map, nor that each has success output, refusals and exit codes | - | G18 |
