@@ -1042,7 +1042,7 @@
 | <a id="t-depth-setup"></a>depth-setup | requirement | SET-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-depth-reference"></a>depth-reference | requirement | SET-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-depth-fill-repo-help"></a>depth-fill-repo-help | requirement | SET-2 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
-| <a id="t-migration-clean"></a>migration-clean | requirement | SET-16 | not run | - | local | 2026-11-12 |
+| <a id="t-migration-clean"></a>migration-clean | requirement | SET-16 | not run | - | local | 2026-11-19 |
 | <a id="t-migration-gaps-pr"></a>migration-gaps-pr | requirement | SET-16 | not run | - | local | 2026-11-12 |
 | <a id="t-migration-gaps-state"></a>migration-gaps-state | requirement | SET-16 | not run | - | local | 2026-11-12 |
 | <a id="t-migration-flags"></a>migration-flags | requirement | SET-16 | not run | - | local | 2026-11-12 |
