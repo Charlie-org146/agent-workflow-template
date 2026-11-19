@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.0.81 - 2026-11-19
+
+- v2-health-green: SKILL.md files under 150 lines, caps for v2.0, quiet-import row on GRD-20
+- health refs: an id listed under ### Retired resolves through its marker; toy negative control
+- Repoint stray references to retired ids; repo-rules-run seen red
+- v2-health-green: #4557 defect row (red proof owed from another runner), re-render
+- v2-health-green: drop the duplicate aut-regression-off-written row so the rows cap holds
+- v2-health-green: record the Mac's seen-red proof for depth-marker-rows-4557; health is green
+- Restamp four pages whose mapped code this goal changed
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main into v2-health-green
+- Lane: re-render the Tests tables
+- Lane: re-render the Tests tables
+- Merge main (3a2d721f) into v2-health-green
+- Merge main (0e822d1c) into v2-health-green
+- Restamp Machines
+- Lane: re-render the Tests tables
+
+### How to verify
+
+1. Run `python3 skills/workflow-health/scripts/health.py check` from the repo root.
+   Expect: the last line is `HEALTH: green` and no row is FAIL.
+2. Run `wc -l skills/workflow-monitoring/SKILL.md skills/workflow-release/SKILL.md`.
+   Expect: both are under 150 lines.
+3. Open `.loop/config.json`.
+   Expect: `criteria_max` is 23 and `max_suite_seconds` is 2800.
+4. Open `docs/wiki/Guardrails.md`, section Revisions, Retired list.
+   Expect: GRD-11, GRD-13 and GRD-14 still read "moved to" REG-10, REG-14 and DEL-17, and health does not call them undefined.
+5. Run `grep -c depth-marker-rows-4557 .loop/regression.tsv .loop/regression-red.tsv`.
+   Expect: one row in each: the #4557 defect test and its seen-red proof.
+
 ## v1.0.80 - 2026-11-19
 
 - No code changes
