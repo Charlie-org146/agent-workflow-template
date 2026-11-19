@@ -16,3 +16,13 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In a repo with a goal `g` that has a plan, run `python3 skills/workflow-monitoring/scripts/mailbox.py plan-review g`.
+   Expect: it prints the goal, design and plan, the eight principles and a request for `A:`, `R:`, `B<n>:` and `C:` lines.
+2. Put `B3: the plan contradicts a page` and `A: an assumption` in a file and run `mailbox.py plan-record g FILE`.
+   Expect: `BREAK principle 3: the plan contradicts a page`, `git status` unchanged, and one `plan-g-<time>.json` in `.git/loop/redteam/`. A `B9:` or `B:` line prints `REFUSED` and records nothing.
+3. Run `python3 skills/workflow-delivery/scripts/goal.py step g build` as a worker (LOOP_ROLE=worker).
+   Expect: `REFUSED (no try used): the red team recorded a break of principle 3 ...` and exit 2.
+4. Have the operation session record the owner's words, then run `mailbox.py plan-accept g 3 --owner-record <id>` and step build again.
+   Expect: `STEP g build`. Changing the plan file instead prints `NOTE: the plan changed since the red team ran` and the step runs.
+5. Run `python3 skills/workflow-monitoring/scripts/layers.py redteam input`, record `A:`, `I:`, `R:` lines with `layers.py redteam record FILE`, then `layers.py redteam due`.
+   Expect: three ROUTE lines (the A item as a `mailbox.py finding` command, the others as a proposed TOP-DECISION) and `RED-TEAM ok: last pass 0 minutes ago`.
