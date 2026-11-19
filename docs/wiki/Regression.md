@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept regroup-guardrails@c97dfe1a -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept lanes-known-data@e2a6b99e -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -277,6 +277,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [config-lane-unparseable](Tests#t-config-lane-unparseable) | requirement | REG-4 | Given a .loop/config.json that no longer parses, when the affected rows are chosen, then every row that reads it reruns (fail wide) (#4321). | PASS 2026-11-15 |
 | [config-lane-duplicate-same](Tests#t-config-lane-duplicate-same) | requirement | REG-4 | Given .loop/config.json with a duplicate key whose last value is the one json.load returns (the guard-fixes case), when the other duplicate is removed, then no row is affected, since every reader sees the same config (#4321). | PASS 2026-11-15 |
 | [private-checks-classify](Tests#t-private-checks-classify) | requirement | REG-4 | Given a private repo's required checks, when they are classified, then a regression-only job, plain script jobs and a third-party-action job are told apart (#4537). | not run |
+| [lanes-known-flip](Tests#t-lanes-known-flip) | requirement | REG-4 | Given an edit to the known list that flips one row, when the affected rows are asked for, then that row is selected and the rows that merely read the table are not. | not run |
 | [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-18 |
 | [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
 | [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-18 |
