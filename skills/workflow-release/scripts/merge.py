@@ -255,7 +255,7 @@ def leave_queue(path, slug):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("slug", nargs="+")
-    parser.add_argument("--batch", action="store_true", help="merge 2-3 green goals as one")
+    parser.add_argument("--batch", action="store_true", help="2-3 goals as one")
     parser.add_argument("--go-head", metavar="SHA", help="GO for this head only")
     args = parser.parse_args()
     top, common = (run(["git", "rev-parse", opt]).stdout.strip() for opt in ("--show-toplevel", "--git-common-dir"))
@@ -270,10 +270,11 @@ def main():
         sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
     if args.batch or len(args.slug) > 1:
         if not (args.batch and cfg.get("merge_batch") is True):
-            sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing was merged.")
+            sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing merged.")
         pods and pods.merge_lock(os.path.abspath(common))
-        sys.path.append(MON)
-        import machines
+        spec = importlib.util.spec_from_file_location("batch", os.path.join(MON, "machines.py"))
+        machines = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(machines)
         return machines.batch(top, common, cfg, args.slug, args.go_head, sys.modules[__name__])
     slug = args.slug[0]
     runs = os.path.join(os.path.abspath(common), "loop", "runs")
