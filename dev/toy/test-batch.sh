@@ -76,7 +76,7 @@ for f in skills/workflow-monitoring/references/commands.md skills/workflow-monit
   check "$f says the operation session governs only" 'grep -qiE "governance only|one session governs" "$here/$f" && grep -qiE "runs neither|never runs" "$here/$f"'
 done
 check "the test runs as a regression row" 'grep -q "test-batch.sh" "$here/.loop/regression.tsv"'
-page="$here/docs/wiki/Monitoring.md"
+page="$here/docs/wiki/Operation.md"
 for id in no-line-in-governor skill-says-governs; do
   check "$id is a test named in the Tests" 'sed -n "/^## Tests/,\$p" "$page" | grep -qF "| [$id](Tests#t-$id) |"'
 done

@@ -116,7 +116,7 @@ $(printf '%s\n' "$GOOD" | sed 1d)"
 }
 
 case_locked() {
-  M=docs/wiki/Monitoring.md; cp "$M" "$T/mon.orig"
+  M=docs/wiki/Operation.md; cp "$M" "$T/mon.orig"
   python3 - "$M" "$GOOD" <<'PY'
 import sys
 p, body = sys.argv[1], sys.argv[2]
@@ -124,13 +124,13 @@ s = open(p).read()
 i = s.index("\n## Requirements")
 open(p, "w").write(s[:i] + "\n## Runbook\n\n" + body + "\n" + s[i:])
 PY
-  check "a Reviewed page that gains a Runbook is not locked, marked changed or called out of order" 'grep -q "^## Runbook" "$M" && [ "$(out | grep -E "^(LOCKED|CHANGED|SECTIONS) Monitoring" | sort)" = "$(grep -E "^(LOCKED|CHANGED|SECTIONS) Monitoring" <<<"$BASE")" ]'
+  check "a Reviewed page that gains a Runbook is not locked, marked changed or called out of order" 'grep -q "^## Runbook" "$M" && [ "$(out | grep -E "^(LOCKED|CHANGED|SECTIONS) Operation" | sort)" = "$(grep -E "^(LOCKED|CHANGED|SECTIONS) Operation" <<<"$BASE")" ]'
   python3 - "$M" <<'PY'
 import sys
 p = sys.argv[1]; s = open(p).read()
 open(p, "w").write(s.replace("\n## Runbook\n", "\n## Requirements\n", 1))
 PY
-  check "positive control: the same page with its sections broken is called out" 'out | grep -q "^SECTIONS Monitoring"'
+  check "positive control: the same page with its sections broken is called out" 'out | grep -q "^SECTIONS Operation"'
   cp "$T/mon.orig" "$M"
 }
 
