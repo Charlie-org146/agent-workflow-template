@@ -137,7 +137,14 @@
     "resolve",
     "archive",
     "archived",
-    "timer"
+    "timer",
+    "done",
+    "handover",
+    "pending",
+    "reply",
+    "snapshot",
+    "take",
+    "turn"
   ],
   "writes": [
     ".loop/config.json, .loop/queue.md, .loop/findings.md, .loop/goals/<slug>.md in the repo",

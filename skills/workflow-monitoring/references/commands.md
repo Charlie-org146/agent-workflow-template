@@ -209,7 +209,7 @@ loosen permissions, edit done lines or change `agent_command`.
   `mail.py`, with the variables in the schedule's `mail.env`; sent keys stay in `<common>/loop/notified.json`, so a
   repeat sends nothing, and the first run records a baseline and sends none. Prints `NOTIFY:` lines only, never the
   address. `notify.py status` says whether it is on, whether mail.env is there, and how many events it has seen.
-- `mailbox.py reply QID TEXT | pending` (email-first, #4785): each mail `notify.py` sends carries numbered options, the
+- `machines.py reply QID TEXT | pending` (email-first, #4785): each mail `notify.py` sends carries numbered options, the
   recommendation and a `Question id`; both machines share one ledger (`refs/loop/mail-ledger` on origin, else a local file)
   and one send budget (`notify_budget`, default 20 in 24 hours). The operation session runs `reply` with the owner's reply it
   read: "1", "1 recommended" or "approve" pick an option, the owner's own words are taken as written, and the answer goes

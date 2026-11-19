@@ -7,7 +7,6 @@ usage: setup.py [--repo DIR] [--branch NAME] [--dry-run] [--bare] [--from REPO [
        setup.py migration-check [--repo DIR] [--pr] [--offline]   every gap to the current template, each with its fix; writes nothing
 """
 import argparse
-import errno
 import json
 import os
 import re
@@ -15,11 +14,11 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import agents  # noqa: E402
-import desk  # noqa: E402
 import seed  # noqa: E402
 import settings  # noqa: E402
 import survey  # noqa: E402
@@ -39,11 +38,7 @@ One goal a line. Other lines are ignored. Example:
 FINDINGS = "# Findings\n\nOpen findings, one line each.\n"
 
 
-def git(repo, *args, check=True):
-    done = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True)
-    if check and done.returncode:
-        sys.exit("REFUSED: git %s: %s" % (" ".join(args), done.stderr.strip()))
-    return "" if done.returncode else done.stdout.strip()
+git = agents.git
 
 
 def base_branch(repo):
@@ -56,31 +51,9 @@ def base_branch(repo):
     return git(repo, "branch", "--show-current") or "main"
 
 
-def survey_agent():
-    """The agent commands this machine has. Permissions stay as the user set them."""
-    if shutil.which("claude"):
-        return ["claude", "-p"]
-    if shutil.which("codex"):
-        return ["codex", "exec"]
-    return []
-
-
-ALLOWS = {"claude": ("--allowedtools", "--allowed-tools", "--permission-mode"),
-          "codex": ("-s", "--sandbox", "--full-auto")}
-ADD = {"claude": ["--allowedTools", "Bash,Read,Write,Edit"], "codex": ["--full-auto"]}
-
-
-def bare_agent(command):
-    """The line to add when the agent command grants no tools, else None."""
-    name = os.path.basename(command[0]) if command else ""
-    if name in ALLOWS and not any(a.lower().split("=")[0] in ALLOWS[name] or a.lower().startswith("--dangerous") for a in command[1:]):
-        return '"agent_command": %s' % json.dumps(command + ADD[name])
-    return None
-
-
 def merged(repo, old, borrowed=None):
     """The config: values already there win, then values borrowed with --from, the survey fills the rest."""
-    agent = survey_agent()
+    agent = survey.survey_agent()
     config = settings.repo_defaults()
     files = git(repo, "ls-files").splitlines()
     config.update(base=base_branch(repo), checks=survey.checks(repo, files)[0], agent_command=agent)
@@ -100,35 +73,6 @@ except AttributeError:
     pass
 
 
-def measure(repo):
-    """(the check's lines, why not): workflow-health's check beside this skill, without the owner's private rules."""
-    py = agents.sibling("workflow-health", "health.py")
-    if os.environ.get("LOOP_NO_HEALTH") == "1" or not py:
-        return None, "skipped by --no-health" if py else "workflow-health is not beside workflow-setup"
-    try:
-        done = subprocess.run([sys.executable, py, "check", "--skip", "mine"], cwd=repo, capture_output=True, text=True,
-                              timeout=int(os.environ.get("LOOP_HEALTH_LIMIT") or 120))
-    except subprocess.TimeoutExpired:
-        return None, "the check ran past its time limit"
-    lines = done.stdout.splitlines()
-    return (lines, "") if any(l.startswith("HEALTH:") for l in lines) else (None, "the check did not finish (exit %d)" % done.returncode)
-
-
-def verdict(lines, why, failed):
-    """Print each FAIL, WARN and UNREAD line, then ADOPTION VERDICT last; True when it is not green."""
-    if lines is None:
-        print("ADOPTION VERDICT: not measured (%s)" % why)
-        return True
-    gaps = list(dict.fromkeys(l for l in lines if l.split(" ", 1)[0] in ("FAIL", "WARN", "UNREAD")))
-    print("\n".join(update.mask(l) for l in gaps))
-    head = next(l for l in lines if l.startswith("HEALTH:"))
-    n = [int(x) for x in re.findall(r"(\d+) (?:warn|fail|unread)", head)]
-    bad = not head.startswith("HEALTH: green") or bool(failed)
-    print("ADOPTION VERDICT: " + ("GAPS (%d warn, %d fail, %d unread, %d steps failed)" % (*n, len(failed)) if bad else
-                                  "GREEN" + (" (%d warn, listed above)" % n[0] if n and n[0] else "")))
-    return bad
-
-
 def undo(tx, why, code=1):
     """Roll the adoption back, then say why (or that it is half undone, exit 4). Nothing stays written."""
     bad = tx.rollback()
@@ -138,7 +82,8 @@ def undo(tx, why, code=1):
 
 def adopt(args, repo):
     missing = [n for n, m in (("Txn", sync), ("precheck", survey), ("borrow", survey), ("guard_staged", update), ("private_value", settings),
-                              ("docs_format", agents)) if not hasattr(m, n)]
+                              ("docs_format", agents), ("bare_agent", agents), ("survey_agent", survey), ("measure", seed), ("verdict", update),
+                              ("fill_private_line", settings)) if not hasattr(m, n)]
     if missing:
         print("REFUSED: the setup scripts are mixed versions, %s is missing (SETUP_MIXED_VERSION). Fix: run update; nothing written." % missing[0])
         return 1
@@ -173,7 +118,7 @@ def adopt(args, repo):
     for cmd in old.get("checks", []):
         if survey.runs_tests(repo, files, cmd):
             print("NOTE: %s finds no test files" % cmd)
-    start, why = (None, "skipped for --bare") if args.bare else measure(repo)
+    start, why = (None, "skipped for --bare") if args.bare else seed.measure(repo)
     print(start_line := "HEALTH START: " + (next(l for l in start if l.startswith("HEALTH:"))[8:] if start else "not measured (%s)" % why))
     acts = seed.decide(repo, config, found)
     if args.bare:
@@ -186,7 +131,7 @@ def adopt(args, repo):
     hooks = not (args.bare or args.no_git_hooks or os.environ.get("LOOP_NO_GIT_HOOKS") == "1")
     if hooks:
         print("hooks: pre-commit, commit-msg and pre-push (the private-name scan, written to the git hooks folder after the commit)")
-    bare = None if args.bare else bare_agent(config["agent_command"])
+    bare = None if args.bare else agents.bare_agent(config["agent_command"])
     if bare:
         print("GAP: agent_command %s grants no tools, so a background agent stops at its first permission prompt. Fix: add to .loop/config.json: %s"
               % (config["agent_command"], bare))
@@ -267,7 +212,7 @@ def adopt(args, repo):
         post = git(repo, "rev-parse", "--short", "HEAD")
     if hooks:
         update.step("git hooks", "python3 setup.py --git-hooks", lambda: seed.git_hooks(repo, adopting=True), failed)
-    update.step("private settings", "python3 settings.py fill-private", fill_private, failed)
+    update.step("private settings", "python3 settings.py fill-private", settings.fill_private_line, failed)
     if post and not args.bare:
         update.step("issue filing", "workflow-health file --group adoption --open-only", lambda: survey.file_issues(repo, args.no_issues, len(kinds) + bool(bare)), failed)
     if post:
@@ -275,17 +220,87 @@ def adopt(args, repo):
         print("NEXT: review the branch, then merge it into %s" % config["base"])
     if args.bare:
         return 0
-    return 3 if verdict(*measure(repo), failed) and args.strict else 0
+    return 3 if update.verdict(*seed.measure(repo), failed) and args.strict else 0
 
 
-def fill_private():
-    try:
-        print("PRIVATE settings added to %s: %s" % (settings.private_path(), ", ".join(settings.fill_private()) or "none missing"))
-    except OSError as error:
-        if error.errno not in (errno.EACCES, errno.EPERM, errno.EROFS):
-            raise
-        print("PRIVATE_NOT_WRITTEN: private settings not written (%s). The repo adoption goes on. Fix: allow writes to %s and run setup.py again; "
-              "go is refused until they exist." % (error.strerror or type(error).__name__, os.path.dirname(settings.private_path())))
+DESK_DOC = """Phone-first onboarding (#4805): list every setup step that needs a desk, run each once up front, and check that a phone-only
+session can start a goal.
+
+usage: setup.py desk list [--repo DIR]         each desk-only step with its state (done, listed, open)
+       setup.py desk run [--repo DIR]          verify what can be verified, print each open desk step once with how to do it
+       setup.py desk done STEP [STEP ...]      record that you did a desk step (the app's own setting is the truth)
+       setup.py desk check [--repo DIR]        DESK OK when nothing is left at the desk and a phone-only start works; else one GAP line each
+
+A phone over Remote Control can read check-ins and mail, answer, approve and start goals, but the app refuses session starts from
+it, so everything the app needs trusted, approved or signed in must be done once at the desk. Steps a file can prove (private
+names file, mail.env present, the agent command on the PATH, Codex login) are verified by `run`, never read: only whether the file
+exists. The rest are recorded with `done`. The record is machine-local (`$LOOP_DESK_HOME`, else ~/.workflow-loop/desk.json) and
+holds step names and times only. With `workers: app` in the repo config a goal waits for a bound session when the app refuses
+one, so check lists that too. Writes nothing in the repo.
+"""
+
+
+def desk_list(args):
+    found = sync.desk_load()
+    for step in sync.DESK_STEPS:
+        print("DESK %s [%s]: %s" % (step[0], sync.desk_state(step, found), step[1]))
+    return 0
+
+
+def desk_run(args):
+    found, left = sync.desk_load(), 0
+    for step in sync.DESK_STEPS:
+        now = sync.desk_state(step, found)
+        if now == "done":
+            print("DESK %s: done" % step[0])
+            continue
+        left += 1
+        if now == "open":
+            found[step[0]] = {"listed": time.strftime("%Y-%m-%d %H:%M")}
+            print("DESK %s: %s. Do: %s. Then: setup.py desk done %s" % (step[0], step[1], step[2], step[0]))
+        else:
+            print("DESK %s: still open (listed once already). Then: setup.py desk done %s" % (step[0], step[0]))
+    sync.desk_save(found)
+    print("DESK: %d step(s) open at the desk" % left if left else "DESK OK: every desk step is done")
+    return 0
+
+
+def desk_done(args):
+    found, names = sync.desk_load(), [s[0] for s in sync.DESK_STEPS]
+    bad = [n for n in args.steps if n not in names]
+    if bad:
+        print("REFUSED: unknown desk step %s; steps are %s. Nothing was recorded." % (", ".join(bad), ", ".join(names)))
+        return 2
+    for name in args.steps:
+        found[name] = {"done": time.strftime("%Y-%m-%d %H:%M")}
+    sync.desk_save(found)
+    print("RECORDED: %s" % ", ".join(args.steps))
+    return 0
+
+
+def desk_check(args):
+    found = sync.desk_load()
+    gaps = ["GAP %s: %s -> %s" % (s[0], s[1], s[2]) for s in sync.DESK_STEPS if sync.desk_state(s, found) != "done"]
+    gaps += ["GAP " + g for g in survey.phone_start(git(args.repo, "rev-parse", "--show-toplevel", check=False) or os.path.abspath(args.repo))]
+    if gaps:
+        print("\n".join(gaps))
+        return 1
+    print("DESK OK: nothing left to do at the desk; a phone-only session can start a goal")
+    return 0
+
+
+def desk_main(argv):
+    parser = argparse.ArgumentParser(description=DESK_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name, func in (("list", desk_list), ("run", desk_run), ("check", desk_check)):
+        item = sub.add_parser(name)
+        item.add_argument("--repo", default=".")
+        item.set_defaults(func=func)
+    item = sub.add_parser("done")
+    item.add_argument("steps", nargs="+")
+    item.set_defaults(func=desk_done)
+    args = parser.parse_args(argv)
+    return args.func(args)
 
 
 def main():
@@ -324,4 +339,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(desk.main(sys.argv[2:]) if sys.argv[1:2] == ["desk"] else agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())
+    sys.exit(desk_main(sys.argv[2:]) if sys.argv[1:2] == ["desk"] else agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())

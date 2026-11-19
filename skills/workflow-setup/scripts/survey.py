@@ -338,6 +338,32 @@ def precheck(repo, branch):
         return "REFUSED: branch %s has commits HEAD lacks (SETUP_BRANCH_DIVERGED). Fix: git switch %s, or git branch -D %s; nothing written." % ((branch,) * 3)
 
 
+def survey_agent():
+    """The agent commands this machine has. Permissions stay as the user set them."""
+    if shutil.which("claude"):
+        return ["claude", "-p"]
+    if shutil.which("codex"):
+        return ["codex", "exec"]
+    return []
+
+
+def phone_start(repo):
+    """Gaps that stop a phone-only session from starting a goal: no agent command, or an app-only worker rule."""
+    try:
+        with open(os.path.join(repo, ".loop", "config.json")) as handle:
+            cfg = json.load(handle)
+    except (OSError, ValueError):
+        return ["no .loop/config.json: run setup first"]
+    out = []
+    command = cfg.get("agent_command") or []
+    if not command or not shutil.which(str(command[0])):
+        out.append("phone-start: agent_command is missing or not on the PATH, so no background worker can start without the app")
+    if cfg.get("workers") == "app":
+        out.append("phone-start: workers is app, so a goal waits for a bound session when the app refuses a start from the phone; "
+                   "clear workers in .loop/config.json for a background worker through agent_command")
+    return out
+
+
 def file_issues(repo, no_issues, count=0):
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin"))
     py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-health", "scripts", "health.py")

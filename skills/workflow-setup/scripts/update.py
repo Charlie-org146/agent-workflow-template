@@ -144,6 +144,21 @@ def step(name, fix, run, failed):
         print("NOTE: %s failed; the adoption is committed on the branch. Fix: %s (SETUP_STEP)" % (name, fix))
 
 
+def verdict(lines, why, failed):
+    """Print each FAIL, WARN and UNREAD line, then ADOPTION VERDICT last; True when it is not green."""
+    if lines is None:
+        print("ADOPTION VERDICT: not measured (%s)" % why)
+        return True
+    gaps = list(dict.fromkeys(l for l in lines if l.split(" ", 1)[0] in ("FAIL", "WARN", "UNREAD")))
+    print("\n".join(mask(l) for l in gaps))
+    head = next(l for l in lines if l.startswith("HEALTH:"))
+    n = [int(x) for x in re.findall(r"(\d+) (?:warn|fail|unread)", head)]
+    bad = not head.startswith("HEALTH: green") or bool(failed)
+    print("ADOPTION VERDICT: " + ("GAPS (%d warn, %d fail, %d unread, %d steps failed)" % (*n, len(failed)) if bad else
+                                  "GREEN" + (" (%d warn, listed above)" % n[0] if n and n[0] else "")))
+    return bad
+
+
 def refuse(why, code, fix):
     print("REFUSED: %s (%s). Fix: %s" % (why, code, fix), file=sys.stderr)
     sys.exit(2)

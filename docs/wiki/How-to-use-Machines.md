@@ -11,7 +11,7 @@ Brings a second Mac or Windows machine to the same working setup as the one you 
 |---|---|---|---|
 | `machine.py` | Command | Plans, applies and checks a second machine's setup. | `python3 dev/machine.py` (a dry run), then `machine.py apply --repo <your repo>`. |
 | `machines.py` | Command | Hands a goal to the other machine, holds the cross-machine merge turn and publishes the SNAPSHOT a check-in draws its Machine lines from. | `machines.py handover SLUG --to MACHINE`, then on the other machine `machines.py take SLUG`. |
-| `mailbox.py` | Command | Reads the owner's reply to a mailed question and records it as the owner's words. | `mailbox.py reply QID "1 recommended"`; `mailbox.py pending` lists open questions. |
+| `machines.py reply` | Command | Reads the owner's reply to a mailed question and records it as the owner's words. | `machines.py reply QID "1 recommended"`; `machines.py pending` lists open questions. |
 | `setup.py desk` | Command | Lists, runs once and checks every setup step that needs a desk. | `setup.py desk list`, `desk run`, `desk done STEP`, `desk check`. |
 | health-regression | Scheduled routine | The scheduled health and regression round a second machine runs every 4 hours. | `machine.py apply` registers it; its Runbook is below. |
 
@@ -20,7 +20,7 @@ Brings a second Mac or Windows machine to the same working setup as the one you 
 ```text
 [Command: machine.py | the second machine] --plans, applies and checks its setup--> [Scheduled routine: health-regression | the second machine]
 [Command: machines.py | either machine] --goal handover, merge turn and SNAPSHOT refs--> (origin)
-[Command: mailbox.py | the operation session] --the owner's reply recorded with source owner--> (the goal's worker)
+[Command: machines.py reply | the operation session] --the owner's reply recorded with source owner--> (the goal's worker)
 [Command: setup.py desk | this machine] --lists and checks desk-only steps, records completion--> (machine-local desk record)
 [Scheduled routine: health-regression | the second machine] --runs health and regression each round--> (GitHub issues and digest)
 
@@ -36,7 +36,7 @@ Say these to the agent; each feature page has the exact commands.
 | "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints no gap. |
 | "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
 | "Move a goal to the other machine" | `machines.py handover SLUG --to MACHINE` pushes the branch and the record and marks it moved here; `machines.py take SLUG` on that machine binds a worker. |
-| "Answer by email" | Reply "1", "1 recommended" or "approve"; the operation session runs `mailbox.py reply QID TEXT`, which records your words with `--source owner`. A risky step needs your own words. |
+| "Answer by email" | Reply "1", "1 recommended" or "approve"; the operation session runs `machines.py reply QID TEXT`, which records your words with `--source owner`. A risky step needs your own words. |
 | "Make this machine phone-ready" | `setup.py desk run` prints each desk-only step once; `desk done STEP` records it; `desk check` prints DESK OK when nothing is left. |
 | "Back up or restore this machine" | `machine.py backup DIR` copies the restorable state to a folder outside every repo; `machine.py restore DIR` puts it back on a new machine or account. Secrets and private-names lists are never copied; both name them. |
 | "Set up the operation session and peer link" | `machine.py apply --repo <your repo> [--peer NAME]` also writes the operation session's routine and task, its hooks and `peer.json`; then do the owner steps it prints. |
@@ -66,8 +66,8 @@ Each requirement and how it is delivered:
 - **Writes:** `handover` pushes the branch and a record ref and marks the old record moved; `take` writes the new record and worktree and starts a worker.
 - **Exit codes:** 0 when it moved or showed; nonzero with a `REFUSED:` line, nothing moved.
 
-### Command: mailbox.py
-- **Command:** `python3 skills/workflow-monitoring/scripts/mailbox.py reply QID TEXT | pending`
+### Command: machines.py reply
+- **Command:** `python3 skills/workflow-monitoring/scripts/machines.py reply QID TEXT | pending`
 - **Dry run:** `pending` lists open questions and writes nothing.
 - **Reads:** the mailed questions kept beside the repo's loop records; it never reads mail or a secret.
 - **Writes:** `reply` records the owner's words through `operate.py send --source owner` (or `sessions.py owner-words`) and drops the question.

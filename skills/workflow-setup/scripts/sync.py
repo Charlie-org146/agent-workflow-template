@@ -44,7 +44,7 @@ class Txn:
         return os.readlink(full) if os.path.islink(full) else hashlib.sha1(open(full, "rb").read()).hexdigest() if os.path.isfile(full) else None
 
     def begin(self):
-        """Copy the folders, then journal HEAD, the branches, the index tree and each file's hash."""
+        """Copy the folders and journal the repo's state."""
         shutil.rmtree(self.dir, ignore_errors=True)
         for n, top in enumerate(self.tops):
             full = os.path.join(self.repo, top)
@@ -65,7 +65,7 @@ class Txn:
         return sorted(r for r in set(have) | set(self.files()) if self.state(r) != have.get(r))
 
     def rollback(self):
-        """Undo the adoption: the paths not restored, or None when the branch moved (it was committed; kept)."""
+        """Undo the adoption: the paths not restored, or None when it was committed."""
         j, bad = self.j, []
         try:
             subprocess.run(["pkill", "-KILL", "-P", str(os.getpid())], capture_output=True)
@@ -107,7 +107,7 @@ class Txn:
 
     @classmethod
     def recover(cls, repo):
-        """Roll back an interrupted run from its journal; the line to print, or None."""
+        """Roll back an interrupted run; the line to print, or None."""
         try:
             j = json.load(open(os.path.join(git(repo, "rev-parse", "--absolute-git-dir"), "workflow-setup-txn", "journal.json")))
         except (OSError, ValueError):
@@ -133,7 +133,7 @@ def git(repo, *args, check=True):
 
 
 def base_config(repo):
-    """The base branch's .loop/config.json ({} when none)."""
+    """The base branch's .loop/config.json, or {}."""
     try:
         own = json.load(open(os.path.join(repo, ".loop", "config.json")))["base"]
     except (OSError, ValueError, KeyError, TypeError):
@@ -154,14 +154,14 @@ def branch(version):
 
 
 def state(repo, base, name):
-    """none, unmerged or merged: the update branch against the base branch."""
+    """none, unmerged or merged: the update branch against base."""
     if not git(repo, "rev-parse", "--verify", "--quiet", "refs/heads/" + name, check=False):
         return "none"
     return "merged" if subprocess.run(["git", "-C", repo, "merge-base", "--is-ancestor", name, base]).returncode == 0 else "unmerged"
 
 
 def report(repo, cfg, target):
-    """Print the REPO line; True when the repo is behind or waits on a merge."""
+    """Print the REPO line; True when behind or waiting on a merge."""
     if not cfg:
         print("REPO: %s has no .loop/config.json on its base branch (merge the setup branch first)" % os.path.basename(repo))
         return False
@@ -179,19 +179,15 @@ def report(repo, cfg, target):
 def stamp_version(path, version):
     with open(path) as handle:
         held = json.load(handle)
-    held["template_version"] = version
-    with open(path, "w") as handle:
-        json.dump(held, handle, indent=2)
-        handle.write("\n")
+    settings.write_json(path, dict(held, template_version=version))
 
 
 def write_tree(tree, version):
-    """Write the repo half inside the worktree; return the paths to commit."""
+    """Write the repo half in the worktree; the paths to commit."""
     config = os.path.join(tree, ".loop", "config.json")
     settings.fill_repo(config)
     stamp_version(config, version)
-    paths = [".loop/config.json"] + agents.apply(tree)
-    return paths
+    return [".loop/config.json"] + agents.apply(tree)
 
 
 def apply_repo(repo, cfg, target, wrote_skills):
@@ -313,8 +309,7 @@ def draft(skills, old, fixes):
 
 
 def save(repo, title, body):
-    common = subprocess.run(["git", "-C", repo, "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
-    path = os.path.join(repo, common, "loop", "propose-%s.md" % hashlib.sha256(title.encode()).hexdigest()[:8])
+    path = os.path.join(repo, git(repo, "rev-parse", "--git-common-dir", check=False), "loop", "propose-%s.md" % hashlib.sha256(title.encode()).hexdigest()[:8])
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as handle:
         handle.write("%s\n\n%s" % (title, body))
@@ -364,6 +359,43 @@ def run(skills, old, fixes, template, repo, file_issue):
     print("REFUSED: gh couldn't file the issue (PROPOSE_GH). Fix: edit %s, then gh issue create --repo %s --title \"%s\" "
           "--body-file %s" % (path, template, title, path), file=sys.stderr)
     return 2
+
+
+DESK_HOME = os.path.expanduser(os.environ.get("LOOP_DESK_HOME") or "~/.workflow-loop")
+# (id, what, how, a proof: paths under DESK_HOME, or None when only the owner can say)
+DESK_STEPS = (
+    ("trust-folders", "trust the project folder and the worktree folders in the app",
+     "open the repo and its .git/loop/worktrees folder once in the app and choose Trust", None),
+    ("permission-modes", "give each scheduled task a permission mode that never asks (bypass)",
+     "in the app, set the mode on each task, then machine.py record-task NAME bypass", None),
+    ("tool-preapprovals", "pre-approve the tools each scheduled task uses (Run now once)",
+     "press Run now on each task and allow its tools, so a scheduled check-in never stops to ask", None),
+    ("private-names", "create the private-names file",
+     "run `python3 dev/machine.py apply` from the template clone (it writes an empty one)", "private-names"),
+    ("mail-env", "put the mail settings in mail.env, outside the repo",
+     "run `python3 dev/machine.py apply`, then fill the file it names (keys stay out of the repo)", "mail.env|schedule/mail.env"),
+    ("codex-login", "sign in to Codex, if Codex is an agent here",
+     "run `codex login` at the desk", "AUTO:codex"),
+)
+
+
+def desk_load():
+    found = settings.load(os.path.join(DESK_HOME, "desk.json"))
+    return found if isinstance(found, dict) else {}
+
+
+def desk_save(found):
+    os.makedirs(DESK_HOME, exist_ok=True)
+    with open(os.path.join(DESK_HOME, "desk.json"), "w") as handle:
+        json.dump(found, handle, indent=1, sort_keys=True)
+
+
+def desk_state(step, found):
+    """done (a file proves it, or the owner said so), listed or open."""
+    name, proof = step[0], step[3]
+    ok = (not shutil.which("codex") or os.path.exists(os.path.expanduser("~/.codex/auth.json"))) if proof == "AUTO:codex" else \
+        proof and any(os.path.exists(os.path.join(DESK_HOME, part)) for part in proof.split("|"))
+    return "done" if ok or found.get(name, {}).get("done") else "listed" if name in found else "open"
 
 
 def main():

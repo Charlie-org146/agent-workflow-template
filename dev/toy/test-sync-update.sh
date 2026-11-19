@@ -40,7 +40,7 @@ tmpl() {
   find "$1" -name __pycache__ -prune -exec rm -rf {} +
   echo "$2" > "$1/VERSION"; printf '# Changelog\n\n## v%s - 2026-01-01\n\n- change %s\n\n## v1.0.0 - 2026-01-01\n\n- first\n' "$2" "$2" > "$1/CHANGELOG.md"
   [ -n "${3:-}" ] && printf '%s\n' "$3" >> "$1/skills/workflow-setup/SKILL.md"
-  python3 "$here/dev/package.py" --root "$1" --out "$1.zip" >/dev/null || exit 1
+  pk=$(python3 "$here/dev/package.py" --root "$1" --out "$1.zip" 2>&1) || { printf 'package.py refused the template copy:\n%s\n' "$pk" >&2; exit 1; }
   (cd "$(dirname "$1")" && rm -rf "src/tmpl-v$2" && mkdir -p src && cp -R "$1" "src/tmpl-v$2" && cd src && zip -qr "$1-src.zip" "tmpl-v$2")
 }
 install() { rm -rf "$1"; mkdir -p "$1" "$1.x"; unzip -qo "$2" -d "$1.x"; cp -R "$1.x/skills/." "$1/"; cp -R "$1.x/shared/." "$1/"; }

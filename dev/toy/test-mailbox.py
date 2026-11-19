@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/mailbox.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/operate.py
+# reads: skills/workflow-monitoring/scripts/machines.py skills/workflow-monitoring/scripts/notify.py skills/workflow-monitoring/scripts/operate.py
 """email-first (#4785, #4671): a new Needs-you item and a merged release each give one mail with numbered options and a
 recommendation; two machines share one ledger and one send budget; a reply such as "1 recommended" is recorded as the owner's
 words (--source owner) and acted on; a risky question needs the owner's own typed words. A local Cloudflare stub is the fake mailer."""
@@ -14,7 +14,7 @@ import threading
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MON = os.path.join(HERE, "..", "..", "skills", "workflow-monitoring", "scripts")
-NOTIFY, MAILBOX = os.path.join(MON, "notify.py"), os.path.join(MON, "mailbox.py")
+NOTIFY, MAILBOX = os.path.join(MON, "notify.py"), os.path.join(MON, "machines.py")
 FAILS, POSTS = [], []
 
 
