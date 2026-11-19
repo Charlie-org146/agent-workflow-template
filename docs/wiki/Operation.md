@@ -233,7 +233,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | OPS-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
 | - | requirement | OPS-18 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | OPS-23 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. Given an agent_command with the two-token --allowedTools form, when the defaults check runs, then it reports it and applying it stays the owner's. | PASS 2026-11-19 |
-| - | requirement | OPS-24 | no passing test | not enforced |
+| [release-freeze-marks](Tests#t-release-freeze-marks) | requirement | OPS-24 | Given the owner's freeze has passed, when STATUS is built, then a goal with no MERGE-GO is marked next release and one with a recorded MERGE-GO is not. | PASS 2026-11-19 |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | OPS-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | OPS-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | OPS-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
