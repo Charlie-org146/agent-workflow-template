@@ -167,30 +167,41 @@ import os, re
 rows = re.findall(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", open("skills/workflow-health/references/commands.md").read().partition("## The principles")[2], re.M)
 out = ["# toy", "", "[the wiki](https://github.com/toy/repo/wiki/Home)", ""]
 for n, name, sentence in rows:
-    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Features | Release | Score | Summary | Flow |", "|---|---|---|---|---|---|", "| [DEL-1](x) | Delivery | v1.0 | 4/5 | one line (absorbs GRD-3) | [flow](https://github.com/toy/repo/blob/main/docs/wiki/flows/DEL-1.svg?raw=true) |", "| [DEL-9](x) | Delivery | v2.1 (planned) | 3 | one line | |", "", "Release means first appearance.", ""]
+    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Summary | Feature | Version | Flow |", "|---|---|---|---|---|", "| [DEL-1](x) | one line (absorbs GRD-3) | Delivery | v1.0 | [flow](https://github.com/toy/repo/blob/main/docs/wiki/flows/DEL-1.svg?raw=true) |", "| [DEL-9](x) | one line | Delivery | v2.0 (planned) | |", ""]
+live = re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", "".join(open("docs/wiki/" + f).read() for f in sorted(os.listdir("docs/wiki")) if f.endswith(".md") and not f.startswith(("How-to-use-", "Tests"))), re.M)
+out += ["## Requirements by feature", "", "### Build loop", "", "#### Delivery", "", "[How to use Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery)", "", "| Requirement | Complete text |", "|---|---|"] + ["| [%s title](x) | its complete text |" % i for i in live] + [""]
 open("README.md", "w").write("\n".join(out))
 os.makedirs("docs/wiki/flows", exist_ok=True); open("docs/wiki/flows/DEL-1.svg", "w").write("<svg/>")
 PY
 git add -A; git commit -qm "principles README"
 check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
-edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score 3/5)"; check | grep -q "^FORMAT README" && bad "enforce score heading: $(check | grep '^FORMAT README')" || ok "DOC-23 a principle heading with its enforce score passes"; reset
-edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score x/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a principle heading with a bad enforce score fails" || bad "readme bad enforce score"; reset
+edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score 3/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a principle heading with a score after its name fails" || bad "readme score heading"; reset
 edit README.md "## 3. Fast, cheap and small" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
 printf '\n## Not yet covered\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; check | grep -q "^FORMAT README" && bad "not yet covered: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Not yet covered' table passes"; reset
 printf '\n## Not yet covered\n\n| Requirement | Feature | Why |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 its Reason table" && ok "DOC-23 a 'Not yet covered' table with another header fails" || bad "not yet covered header"; reset
 printf '\n## Open conflicts for the owner\n\n- SET-1 against SET-7: open.\n' >> README.md; check | grep -q "^FORMAT README" && bad "open conflicts: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Open conflicts' note passes"; reset
 printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
 edit README.md "tests come from the requirements" "tests come from the requirements, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
-edit README.md "v2.1 (planned)" "v1.0"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is planned (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset
+edit README.md "v2.0 (planned)" "v1.0"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is planned (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset
 python3 - <<'PY'
 import re; t = open("README.md").read(); i = t.index("## 3. "); j = t.index("## 4. "); open("README.md", "w").write(t[:i] + re.sub(r"^\|.*\n", "", t[i:j], flags=re.M) + t[j:])
 PY
 has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle with no requirements table fails" || bad "readme no table"; reset
-edit README.md "| 4/5 |" "| 9/5 |"; has "^FORMAT README:[0-9]*: Principles: DOC-23 a Score from 1 to 5 (got '9/5')" && ok "DOC-23 a Score outside 1 to 5 fails" || bad "readme bad score"; reset
+python3 - <<'PY'
+import re; t = open("README.md").read(); open("README.md", "w").write(re.sub(r"^\| \[DEL-1 title\]\(x\).*\n", "", t, count=1, flags=re.M))
+PY
+has "^FORMAT README:[0-9]*: Principles: DOC-23 every requirement," && ok "DOC-23 a requirement missing from the by-feature part fails" || bad "readme part 2 missing"; reset
+edit README.md "| its complete text |" "|  |"; has "^FORMAT README:[0-9]*: Principles: DOC-23 every requirement," && ok "DOC-23 a by-feature row with no text fails" || bad "readme part 2 text"; reset
+python3 - <<'PY'
+t = open("README.md").read(); i = t.index("## Requirements by feature"); open("README.md", "w").write(t[:i])
+PY
+has "^FORMAT README:[0-9]*: Principles: DOC-23 every requirement," && ok "DOC-23 a README with no by-feature part fails" || bad "readme part 2 gone"; reset
 printf '\n## Proposed cuts\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | repeats another |\n' >> README.md; check | grep -q "^FORMAT README" && bad "proposed cuts: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Proposed cuts' section passes"; reset
 edit README.md "flows/DEL-1.svg" "flows/DEL-X.svg"; has "^FORMAT README:[0-9]*: Principles: DOC-23 a Flow link to a file in docs/wiki/flows" && ok "DOC-23 a Flow link to a missing diagram fails" || bad "readme missing flow"; reset
 edit README.md "[the wiki](https://github.com/toy/repo/wiki/Home)" "nothing"; has "^FORMAT README:[0-9]*: Principles: DOC-23 the title and one link to the wiki Home" && ok "DOC-23 a README with no Home link fails" || bad "readme home"; reset
 cp README.md docs/wiki/Principles.md; edit docs/wiki/Principles.md "tests come from the requirements" "tests come from the requirements, quietly"; has "^FORMAT Principles:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a Principles page with a sentence off by a word fails" || bad "principles page"; reset
+printf '<!-- workflow-docs -->\n' > docs/wiki/Home.md; sed 1,3d README.md >> docs/wiki/Home.md; check | grep -q "^FORMAT Home" && bad "two-part Home: $(check | grep '^FORMAT Home')" || ok "DOC-4 a Home of the principles' tables and the requirements by feature passes"
+edit docs/wiki/Home.md "[How to use Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery)" ""; has "^FORMAT Home:[0-9]*: Principles: DOC-23 every requirement," && ok "DOC-4 a Home part without a feature's How-to link fails" || bad "home part 2 link"; reset
 git rm -rq --cached skills/workflow-health >/dev/null; rm -rf skills/workflow-health; check | grep -q "^FORMAT README" && bad "adopter README" || ok "DOC-23 a repo without the shipped list keeps its own README unchecked"; reset; git reset -q --hard HEAD~1
 
 echo "== DOC-6 each skill's commands are in its command reference; a Usage section is gone"
