@@ -3,7 +3,7 @@
 # reads: skills/workflow-release/scripts/review.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/release.py docs/wiki/Release.md
 """release-gate (REL-1 to REL-9, issue 4914): a major ships only through `review.py gate`; `promote` tags vX.0.0, keeps release/vX,
 writes the state report and mails it; a cut rc freezes the merge; `revert` opens a pull request back to the snapshot; a goal never
-bumps a major; the Release page holds REL-1 to REL-9, Unreviewed; the scripts stay under their size caps.
+bumps a major; the Release page holds REL-1 to REL-14, Unreviewed; the scripts stay under their size caps.
 
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
 process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major]  (one leg: only its checks decide the exit)"""
@@ -315,10 +315,10 @@ except SystemExit as stop:
 check("release.bump refuses a major: it ships only through review.py promote", "MAJOR_GATE" in refused and "review.py promote" in refused, refused, "major")
 check("release.bump still bumps a minor and a patch", release.bump("1.0.54", "minor") == "1.1.0" and release.bump("1.0.54", "patch") == "1.0.55", "", "major")
 
-# 7. the page (REL-1 to REL-9) and the sizes
+# 7. the page (REL-1 to REL-14) and the sizes
 text = open(os.path.join(root, "docs", "wiki", "Release.md"), encoding="utf-8").read() if os.path.exists(os.path.join(root, "docs", "wiki", "Release.md")) else ""
 ids = re.findall(r"^- (REL-\d+): \*\*(Unreviewed|Reviewed[^*]*)\*\*", text, re.M)
-check("the Release page holds REL-1 to REL-9, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 10)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "major")
+check("the Release page holds REL-1 to REL-14, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 15)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "major")
 over = []
 for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:
