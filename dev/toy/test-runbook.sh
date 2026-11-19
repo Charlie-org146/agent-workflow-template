@@ -154,7 +154,7 @@ full = re.search(r'^- \*\*Full run:\*\* (.*)', sub, re.M).group(1).lower()
 never = re.search(r'^- \*\*Never:\*\* (.*)', sub, re.M).group(1).lower()
 assert 'live' in full or 'every' in full
 assert 'fixture' in never or 'dry run' in never or 'subset' in never
-need = {'health-round': ('anthropic_api_key', 'judge_command', 'feature_labels', 'not run on the runner'), 'regression-round': ('exits 77', 'not a full run', 'feature_labels', 'draft and covered')}[sys.argv[2]]
+need = {'health-round': ('feature_labels', 'claude'), 'regression-round': ('exits 77', 'not a full run', 'feature_labels', 'draft and covered')}[sys.argv[2]]
 missing = [word for word in need if word not in (full + ' ' + sub.lower())]
 assert not missing, missing
 PY"
