@@ -73,10 +73,16 @@ grep -q "^RELEASED v0.1.2" <<<"$out" && [ "$(state brk release_part)" = patch ] 
   && ok "breaking released as a patch, named in the reason" || bad "breaking"
 (cd "$here" && python3 - <<'PY'
 import sys; sys.path.insert(0, "skills/workflow-release/scripts")
-import autorelease as a
-assert a.next_version("1.2.3", "major") == "2.0.0" and a.next_version("0.4.1", "major") == "0.5.0" and a.next_version("1.2.3", "patch") == "1.2.4"
+import release
+refused = ""
+try:
+    release.bump("1.2.3", "major")
+except SystemExit as stop:
+    refused = str(stop)
+assert "MAJOR_GATE" in refused and "review.py promote" in refused, refused
+assert release.bump("1.2.3", "minor") == "1.3.0" and release.bump("1.2.3", "patch") == "1.2.4" and release.bump("0.4.1", "patch") == "0.4.2"
 PY
-) && ok "major after 1.0, minor before" || bad "next_version"
+) && ok "a goal never bumps a major (MAJOR_GATE); minor and patch still bump" || bad "release.bump"
 
 echo "== 3. a failing routine refuses the merge and shows under Needs you"
 python3 - <<'PY'

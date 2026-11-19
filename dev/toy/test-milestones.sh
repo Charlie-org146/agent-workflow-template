@@ -105,22 +105,23 @@ grep -q "^PR https://example.test/pull/1$" <<<"$out" && ok "goal.py pr opens the
   && ok "no milestone is read, made or set for the pull request" || bad "pr milestone: $(cat "$FAKE_GH_DIR/calls.log")"
 [ "$fails" = "$f0" ] && echo "PASS milestone-freeform:pr-no-milestone"
 
-echo "== health file: one tagged issue per finding, on no milestone"
+echo "== health file: one tagged issue per finding, a WARN a backlog item on its Backlog milestone"
 rm -f "$FAKE_GH_DIR/issues.json"; f0=$fails; git switch -q main
-mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3450)" > skills/x/scripts/near.py
+mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3400)" > skills/x/scripts/near.py
 git add -A; git commit -qm "A near-limit script"
 out=$($health preview --group size); echo "$out"
-grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\] as defect$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
+grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\] as backlog on Backlog: Calc$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
   && ok "preview: only WOULD lines, nothing written" || bad "run dry"
 : > "$FAKE_GH_DIR/calls.log"; out=$($health file --group size); echo "$out"
 [ -s "$FAKE_GH_DIR/calls.log" ] || bad "FAIL milestone-freeform:health-file: calls.log absent, real gh may have run. Fix: put dev/toy/fakegh first on PATH"
-python3 - <<'PYEND' && ok "file: one issue on no milestone, labelled, with the hidden marker" || bad "issue created"
+python3 - <<'PYEND' && ok "file: one backlog issue on Backlog: Calc, labelled, with the hidden marker" || bad "issue created"
 import json, os, re
 issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
-assert len(issues) == 1 and not issues[0]["milestone"]
+assert len(issues) == 1 and issues[0]["milestone"]["title"] == "Backlog: Calc", issues
+assert "backlog" in [l["name"] for l in issues[0]["labels"]], issues[0]["labels"]
 assert re.search(r"<!-- loop-health size:skills/x/scripts/near.py:scripts evidence=[0-9a-f]{8} placed= -->", issues[0]["body"])
 PYEND
-grep -q -e "--label health --label health:size --label defect --label feature:Calc --body" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
+grep -q -e "--label health --label health:size --label backlog --label feature:Calc --milestone Backlog: Calc --body" "$FAKE_GH_DIR/calls.log" && grep -q -e "^api repos/{owner}/{repo}/milestones -f title=Backlog: Calc$" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size, backlog and its feature, on Backlog: Calc made first: the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
 out=$($health file --group size); echo "$out"
 grep -q "^SAME #1" <<<"$out" && [ "$(python3 -c "import json,os;print(len(json.load(open(os.environ['FAKE_GH_DIR']+'/issues.json'))))")" = 1 ] && ok "a repeat opens no second issue" || bad "duplicate"
 python3 -c "print('# pad\n' * 3500)" > skills/x/scripts/near.py; git commit -qam "Bigger"
