@@ -24,10 +24,6 @@ Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
   - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. [MCH-10]
   - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane and checks, so main cannot break native Windows unseen. [DEL-12, GRD-18]
   - A long pull request body, issue text, comment or release notes always goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows. [DEL-12, GRD-18]
-- MCH-2: **Unreviewed** A new machine or account reaches a working operation session and its peer link from one command
-  - Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied.
-- MCH-3: **Unreviewed** Backup and restore are commands
-  - `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused.
 - MCH-4: **Unreviewed** One owner and one merge order per goal
   - Each goal has one owning machine (it records the pod that owns it), and only that owner starts, answers, merges or resumes it; others see it read-only. [MCH-4, OPS-15]
   - `machines.py handover SLUG --to MACHINE` pushes its branch, copies its record to origin and marks it `moved` on the old machine with no worker; `machines.py take SLUG` on the new machine fetches the branch and binds a worker, so a goal never runs on two machines and a second take is refused. [MCH-4]
@@ -40,21 +36,6 @@ Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
   - A reply such as "1 recommended" or "approve" is read by the operation session with `mailbox.py reply`, recorded as the owner's words with `--source owner` and sent to the worker. A step that deletes, spends money or touches security or private data refuses a bare number or approve and needs the owner's own typed words. [MCH-5]
   - I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way. A reply counts as my words only when it comes from my own address or signed-in session. [CHK-9]
   - After each round, one email goes to the address I set: what ran, its results, and the new, still-open and fixed issues grouped by feature, each with its link and the request to give the agent. The same digest is posted on a pinned issue. [AUT-4]
-- MCH-6: **Unreviewed** Phone-first: starting a worker never needs the desktop app
-  - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend.
-  - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works.
-- MCH-7: **Unreviewed** Prerequisites first
-  - Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix.
-- MCH-8: **Unreviewed** A goal started on another machine can be adopted
-  - A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release.
-  - A branch that isn't pushed, or a goal with no done line or pull request, is refused.
-- MCH-9: **Unreviewed** A machine keeps its private data to itself
-  - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report.
-  - A new machine gets empty private files and asks me to fill them.
-- MCH-10: **Unreviewed** A drifted machine says so
-  - The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks.
-- MCH-11: **Unreviewed** No routine stops to ask
-  - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing.
 
 ### Non-functional
 
@@ -71,6 +52,17 @@ None
 
 ## Revisions
 
+### Retired
+
+- MCH-10: moved to MCH-1
+- MCH-11: moved to AUT-9
+- MCH-2: moved to MCH-1
+- MCH-3: moved to DEL-7
+- MCH-6: moved to AUT-9
+- MCH-7: moved to MCH-1
+- MCH-8: moved to MCH-4
+- MCH-9: moved to DEL-9
+
 ### MCH-1
 
 | rev | date | text | why | approved |
@@ -83,12 +75,14 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | A new machine or account reaches a working operation session and its peer link from one command <br> Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied. | consolidation (TOP-DECISION 89): absorbed into MCH-1 | o309: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A new machine or account reaches a working operation session and its peer link from one command <br> Given a fresh clone on a new machine, when `machine.py apply` runs (setup machine), then the operation session (its start routine and task, and the reply and govern hooks in the repo's machine-local settings), its scheduled tasks and the peer link (`~/.workflow-loop/peer.json`, holding this machine's and its peer's labels only; `--peer NAME`, default the other platform) exist, and `check` names any that is missing. The output ends with only the owner-only items left: the mail files, the private-names lists, account logins, the permission mode and registering tasks in the app; they are named, never created or copied. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### MCH-3
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Backup and restore are commands <br> `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. | consolidation (TOP-DECISION 89): absorbed into DEL-7 | o303: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Backup and restore are commands <br> `machine.py backup DIR` copies the restorable state (machine record, peer link, flow file, routine files and scheduled task folders) to a folder no repo holds, and `machine.py restore DIR` puts it back on a new machine or account; neither ever copies or creates a secret or a private-names list, and both end by naming those owner-only items. A folder inside a repo, or one with no manifest, is refused. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### MCH-4
@@ -109,36 +103,42 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Phone-first: starting a worker never needs the desktop app <br> When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. <br> `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. | consolidation (TOP-DECISION 89): absorbed into AUT-9 | o301: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Phone-first: starting a worker never needs the desktop app <br> When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. <br> `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### MCH-7
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Prerequisites first <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix. | consolidation (TOP-DECISION 89): absorbed into MCH-1 | o310: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Prerequisites first <br> Before it writes anything, setup prints one checklist of what this machine needs: git, python3, gh signed in as me, real symlinks and a supported platform, each marked present or missing with its fix. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### MCH-8
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | A goal started on another machine can be adopted <br> A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release. <br> A branch that isn't pushed, or a goal with no done line or pull request, is refused. | consolidation (TOP-DECISION 89): absorbed into MCH-4 | o312: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A goal started on another machine can be adopted <br> A goal started on another machine can be adopted here from its pushed branch, frozen goal file and open pull request; qa, ship and the pull request run again here before release. <br> A branch that isn't pushed, or a goal with no done line or pull request, is refused. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### MCH-9
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | A machine keeps its private data to itself <br> Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. <br> A new machine gets empty private files and asks me to fill them. | consolidation (TOP-DECISION 89): absorbed into DEL-9 | o292: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A machine keeps its private data to itself <br> Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. <br> A new machine gets empty private files and asks me to fill them. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### MCH-10
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | A drifted machine says so <br> The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. | consolidation (TOP-DECISION 89): absorbed into MCH-1 | o308: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A drifted machine says so <br> The machine check lists one line per gap between this machine and the expected setup, such as a skills checkout that is behind or a clone with no hooks. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ### MCH-11
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | No routine stops to ask <br> Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. | consolidation (TOP-DECISION 89): absorbed into AUT-9 | o300: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | No routine stops to ask <br> Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. | migration r1; date from the run day | o47: "Yes, start it end." |
 
 ## Tests
@@ -146,6 +146,7 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [machine-apply-installs](Tests#t-machine-apply-installs) | requirement | MCH-1 | Given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks. | not run |
+| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-1 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
 | [machine-operation-guide](Tests#t-machine-operation-guide) | requirement | MCH-1 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held lines, and the check-in routine file is only a pointer. | not run |
 | [machine-new-machine-docs](Tests#t-machine-new-machine-docs) | requirement | MCH-1 | Given the Machines page and README, when read, then the New machine steps are there and linked from the README and SET-11 and SET-12 are Unreviewed. | PASS 2026-11-16 |
 | [machine-rows-listed](Tests#t-machine-rows-listed) | requirement | MCH-1 | Given the machine rows, when the Setup Tests table is read, then every row is listed. | not run |
@@ -154,22 +155,26 @@ None
 | [machine-custom-items](Tests#t-machine-custom-items) | requirement | MCH-1 | Given a repo with allow, routine and secret custom items, when apply and check run, then they are applied, listed and checked, and a repo without items gets nothing. | not run |
 | [machine-mailer](Tests#t-machine-mailer) | requirement | MCH-1 | Given the mailer, when it runs, then it reads only the local files, prints no secret, sends only to the one configured address and refuses any other. | not run |
 | [machine-caps](Tests#t-machine-caps) | requirement | MCH-1 | Given the package, when scripts are measured, then machine.py is under the byte cap and stays out of the package: it lives in dev/, never under skills/ (other goals may add their own scripts there). | PASS 2026-11-16 |
-| [machine-operation-peer](Tests#t-machine-operation-peer) | requirement | MCH-2 | Given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist, check names them when missing, and the output names only the owner-only items left. | PASS 2026-11-17 |
-| [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | MCH-3 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
+| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | MCH-1 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
+| [machine-operation-peer](Tests#t-machine-operation-peer) | requirement | MCH-1 | Given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist, check names them when missing, and the output names only the owner-only items left. | PASS 2026-11-17 |
+| [adopt-record-qa](Tests#t-adopt-record-qa) | requirement | MCH-4 | Given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded. | PASS 2026-11-16 FLAKY |
+| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | MCH-4 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | PASS 2026-11-18 FLAKY |
+| [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | MCH-4 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
 | [machines-handover](Tests#t-machines-handover) | requirement | MCH-4 | Given two machines sharing origin, when goals hand over, contend for the merge turn and publish snapshots, then ownership moves once with the pushed branch and no old worker, duplicate starts are refused, one merge order holds, stale turns expire and structured snapshots draw both Machine lines with each goal shown once. Covers #4787. | PASS 2026-11-18 |
+| [aut-digest-create](Tests#t-aut-digest-create) | requirement | MCH-5 | Given no digest issue yet, when the first round ends, then the Automation digest issue is created and pinned. | PASS 2026-11-12 |
+| [aut-digest-format](Tests#t-aut-digest-format) | requirement | MCH-5 | Given open defect and health issues, when a round ends, then one comment mentions the owner and lists what ran, the new issues and a request per open issue. | PASS 2026-11-12 |
+| [aut-digest-rounds](Tests#t-aut-digest-rounds) | requirement | MCH-5 | Given a previous digest, when the next round ends, then its comment lists the new, still-open and fixed issues on the same digest issue. | PASS 2026-11-12 |
+| [aut-digest-rerun](Tests#t-aut-digest-rerun) | requirement | MCH-5 | Given a round already posted, when the same run is rerun, then nothing is posted twice. | PASS 2026-11-12 |
+| [aut-digest-no-title](Tests#t-aut-digest-no-title) | requirement | MCH-5 | Given an issue whose title holds instructions, when the digest is written, then the request names the issue only by number and link. | PASS 2026-11-12 |
+| [aut-digest-org](Tests#t-aut-digest-org) | requirement | MCH-5 | Given a repo owned by an organisation, when the digest is written, then it says no one is notified and how to set digest_owner. | PASS 2026-11-12 |
+| [aut-digest-pin-fails](Tests#t-aut-digest-pin-fails) | requirement | MCH-5 | Given the repo cannot pin another issue, when the first round ends, then it warns and still posts the digest. | PASS 2026-11-12 |
+| [aut-digest-comment-fails](Tests#t-aut-digest-comment-fails) | requirement | MCH-5 | Given a round whose digest comment fails, when the run ends, then no state is saved, so its rerun posts the comment. | PASS 2026-11-12 |
+| [aut-digest-list-fails](Tests#t-aut-digest-list-fails) | requirement | MCH-5 | Given gh cannot list the issues, when a round ends, then the digest posts nothing and says why. | PASS 2026-11-12 |
+| [aut-email-mail](Tests#t-aut-email-mail) | requirement | MCH-5 | Given this run's digest comment, when the email step runs, then one mail with the comment's text goes out and the comment is marked mailed, and a rerun, a look-alike comment, a refusal or an unknown outcome never sends a second one. | PASS 2026-11-12 |
+| [aut-email-retry](Tests#t-aut-email-retry) | requirement | MCH-5 | Given a provider that throttles once, when the round's mail is sent, then it is retried once, and only when the provider cannot have accepted it. | PASS 2026-11-12 |
+| [aut-email-test](Tests#t-aut-email-test) | requirement | MCH-5 | Given the mail secrets, when mail.py test runs by hand, then one test mail goes out touching no issue, and a missing secret or mail off fails the run. | PASS 2026-11-12 |
+| [aut-email-digest](Tests#t-aut-email-digest) | requirement | MCH-5 | Given open issues with and without milestones, when a round ends, then the digest groups the new, still-open and fixed issues by feature with the cost and email rows, shows a milestone title as a suffix, and an older or repeated run never posts twice. | PASS 2026-11-12 |
 | [mailbox-two-mails](Tests#t-mailbox-two-mails) | requirement | MCH-5 | Given two machines and a fake mailer, when new Needs-you items, stopped goals and merged releases are mailed and answered, then numbered options and recommendations use one deduplicated stream and shared send budget, deferred events retry, replies record owner words with source owner once, and risky replies require typed words. Covers #4785 and #4671. | PASS 2026-11-18 |
-| [desk-lists](Tests#t-desk-lists) | requirement | MCH-6 | Given desk-only onboarding and no app session, when steps are listed, run and checked, then every step is listed once, gaps and invalid steps are refused, DESK OK requires completed setup and agent_command, and a background worker starts through agent_command while workers app keeps its bound-session rule. Covers #4805. | PASS 2026-11-18 |
-| [adopt-prerequisites](Tests#t-adopt-prerequisites) | requirement | MCH-7 | Given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap. | not run |
-| - | requirement | MCH-7 | no passing test | not enforced |
-| [adopt-record-qa](Tests#t-adopt-record-qa) | requirement | MCH-8 | Given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded. | PASS 2026-11-16 FLAKY |
-| [adopt-refuses-unpushed](Tests#t-adopt-refuses-unpushed) | requirement | MCH-8 | Given a branch that is not on origin, when goal.py adopt runs, then it is refused in one line and no run record is written. | PASS 2026-11-18 FLAKY |
-| [adopt-replaces-stale](Tests#t-adopt-replaces-stale) | requirement | MCH-8 | Given a run record here that is running with no pid and no recorded step, when goal.py adopt runs, then it replaces the record and logs it; given a record with a pid, then adopt refuses and leaves it unchanged. | PASS 2026-11-16 FLAKY |
-| [machine-no-private](Tests#t-machine-no-private) | requirement | MCH-9 | Given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | PASS 2026-11-17 FLAKY |
-| [machine-check-gaps](Tests#t-machine-check-gaps) | requirement | MCH-10 | Given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK. | not run |
-| - | requirement | MCH-10 | no passing test | not enforced |
-| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | MCH-11 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | not run |
-| - | requirement | MCH-11 | no passing test | not enforced |
 | [machines-handover-4787](Tests#t-machines-handover-4787) | defect | [#4787](https://github.com/jcl2018/agent-workflow-template/issues/4787) closed (2026-11-18) | Given the missing machine ownership, handover, merge order and structured snapshots, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
 | [mailbox-two-mails-4785](Tests#t-mailbox-two-mails-4785) | defect | [#4785](https://github.com/jcl2018/agent-workflow-template/issues/4785) closed (2026-11-18) | Given the missing one shared mail stream, send budget, numbered recommendations and owner replies, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
 | [mailbox-two-mails-4671](Tests#t-mailbox-two-mails-4671) | defect | [#4671](https://github.com/jcl2018/agent-workflow-template/issues/4671) closed (2026-11-18) | Given the missing one shared mail stream, send budget, numbered recommendations and owner replies, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
-| [desk-lists-4805](Tests#t-desk-lists-4805) | defect | [#4805](https://github.com/jcl2018/agent-workflow-template/issues/4805) closed (2026-11-18) | Given the missing desk onboarding and background worker fallback, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
