@@ -279,7 +279,7 @@ $reg sync >/dev/null || true; python3 "$here/skills/workflow-regression/scripts/
 $reg add del-2b --level land --command "true" --goal DEL-2 --describe "$gwt" >/dev/null
 $cri render >/dev/null; git add -A; git commit -qm "Passing row" >/dev/null
 mv .loop/docs.tsv "$d/docs.tsv.away"
-(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.criteria_trouble('$PWD_REPO', {}))") | grep -q '^\[\]$' && ok "no docs.tsv: criteria are ignored" || bad "no docs.tsv"
+(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.criteria_trouble('$PWD_REPO', {})[0])") | grep -q '^\[\]$' && ok "no docs.tsv: criteria are ignored" || bad "no docs.tsv"
 
 mv "$d/docs.tsv.away" .loop/docs.tsv
 $rel cut crit | grep -q "^DRAFT" && ok "cut with every row passing" || bad "cut passing"
@@ -310,6 +310,7 @@ usage_page() { # USAGE-BODY: Delivery with a Usage section between Problem and R
   $cri render >/dev/null
 }
 good; setmax unset
+git add docs/wiki; git commit -qm "One criterion" >/dev/null; git push -q origin main  # the base now holds only DEL-1: IDS-MISSING compares with it
 $docs check | grep -q "DOCS OK" && ok "a page with no commands passes without a Usage section" || bad "no usage passes"
 page Delivery "$one
 - DEL-2: **Unreviewed** The calculator prints a mean."

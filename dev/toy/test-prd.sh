@@ -48,6 +48,14 @@ The toy calculator prints the median of the numbers given.
 |---|---|---|---|
 | `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
 
+### System diagram
+
+```text
+[Command: calc.py | the toy repo] --prints one line--> (the screen)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
 ## How to reach or run it
 
 - DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
@@ -59,14 +67,6 @@ The toy calculator prints the median of the numbers given.
 - **Reads:** the list given
 - **Writes:** nothing
 - **Exit codes:** 0 printed
-
-### System diagram
-
-```text
-[Command: calc.py | the toy repo] --prints one line--> (the screen)
-
-Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
-```
 
 ## Links
 
@@ -313,15 +313,15 @@ $prd new Qq "x" --paths calc.py --prefix DEL 2>&1 | grep -q "REFUSED: --prefix D
 git checkout -q -- .; rm -f docs/wiki/Delight.md
 
 echo "== 10. convert turns old pages into PRD pages"
-printf '<!-- workflow-docs -->\n# Delivery\n\nMilestone: https://example.test/m/2\n\n## Summary\n\nThe toy calculator, an old page.\n\n## Criteria\n\n%s\n\n## Tests\n\n' "$REQS" > $P
+printf '<!-- workflow-docs -->\n# Delivery\n\nMilestone: https://github.com/toy/repo/milestone/2\n\n## Summary\n\nThe toy calculator, an old page.\n\n## Criteria\n\n%s\n\n## Tests\n\n' "$REQS" > $P
 cp $P "$d/old.md"; out=$($prd convert); grep -q "^Delivery converted (dry run)" <<<"$out" && cmp -s $P "$d/old.md" && ok "convert without --write changes nothing" || bad "dry convert"
 $prd convert --write | grep -q "^Delivery converted$" && ok "convert --write converts an old page" || bad "convert"
-grep -v '^$' $P | sed -n '3,5p' | tr '\n' '~' | grep -q "^Milestone: https://example.test/m/2~Review: \*\*Unreviewed\*\*~## Problem~$" && grep -q "^- DEL-1: \*\*Unreviewed\*\* The calculator prints a median.$" $P && ok "Summary becomes Problem, Criteria Requirements, lines and stamps kept, Review under Milestone" || bad "converted shape"
+grep -v '^$' $P | sed -n '3,5p' | tr '\n' '~' | grep -q "^Milestone: https://github.com/toy/repo/milestone/2~Review: \*\*Unreviewed\*\*~## Problem~$" && grep -q "^- DEL-1: \*\*Unreviewed\*\* The calculator prints a median.$" $P && ok "Summary becomes Problem, Criteria Requirements, lines and stamps kept, Review under Milestone" || bad "converted shape"
 $prd convert --write | grep -q "^Delivery skipped$" && ok "converting twice changes nothing" || bad "twice"
 $cri render >/dev/null; out=$(check)
 grep -q "^UNWRITTEN Delivery" <<<"$out" && ! grep -q "^SECTIONS" <<<"$out" && ok "a converted page is UNWRITTEN until its placeholder drafts are replaced" || bad "convert unwritten: $out"
 sed -i.bak 's/^- Write this page from what is really in the repo\./- A real draft line./' $P; rm $P.bak
-! check | grep -v "^FORMAT" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
+! check | grep -vE "^(FORMAT|HOWTO)" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write | grep -q "^Delivery completed$" && grep -q "^## Requirements$" $P && grep -q "^## Success metrics$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a half-converted page is completed" || bad "completed"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P

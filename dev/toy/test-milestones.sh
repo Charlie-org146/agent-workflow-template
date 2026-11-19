@@ -110,7 +110,7 @@ rm -f "$FAKE_GH_DIR/issues.json"; f0=$fails; git switch -q main
 mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3450)" > skills/x/scripts/near.py
 git add -A; git commit -qm "A near-limit script"
 out=$($health preview --group size); echo "$out"
-grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\]$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
+grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Calc\] as defect$" <<<"$out" && [ ! -f "$FAKE_GH_DIR/issues.json" ] \
   && ok "preview: only WOULD lines, nothing written" || bad "run dry"
 : > "$FAKE_GH_DIR/calls.log"; out=$($health file --group size); echo "$out"
 [ -s "$FAKE_GH_DIR/calls.log" ] || bad "FAIL milestone-freeform:health-file: calls.log absent, real gh may have run. Fix: put dev/toy/fakegh first on PATH"
@@ -120,7 +120,7 @@ issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
 assert len(issues) == 1 and not issues[0]["milestone"]
 assert re.search(r"<!-- loop-health size:skills/x/scripts/near.py:scripts evidence=[0-9a-f]{8} placed= -->", issues[0]["body"])
 PYEND
-grep -q -e "--label health --label health:size --label feature:Calc$" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
+grep -q -e "--label health --label health:size --label defect --label feature:Calc$" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
 out=$($health file --group size); echo "$out"
 grep -q "^SAME #1" <<<"$out" && [ "$(python3 -c "import json,os;print(len(json.load(open(os.environ['FAKE_GH_DIR']+'/issues.json'))))")" = 1 ] && ok "a repeat opens no second issue" || bad "duplicate"
 python3 -c "print('# pad\n' * 3500)" > skills/x/scripts/near.py; git commit -qam "Bigger"
