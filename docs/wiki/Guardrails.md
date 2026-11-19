@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
@@ -17,9 +17,6 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-3: **Unreviewed** Nothing private is committed
-  - Every commit, push and pull request passes the private-name scan, and local settings and private values are never written into a repo.
-  - A line in the list may be scoped to public repos or to named repos; an unscoped line applies everywhere.
 - GRD-4: **Unreviewed** Each session writes only what its role allows
   - A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands. Only the operation session can do the rest. [GRD-4]
   - A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo. [OPS-7]
@@ -37,8 +34,6 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - Each step's tokens are read from its session record when the step is recorded. [GRD-15]
   - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget. [GRD-15]
   - A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. [GRD-8]
-- GRD-18: **Unreviewed** Windows-safe
-  - A pull request that adds a POSIX-only call without its guard fails its checks, and long text for an issue, comment, pull request or release note is always passed to gh in a file, so nothing breaks on native Windows.
 - GRD-20: **Unreviewed** The package always fits Agensi's rules
   - No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20]
   - One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21]
@@ -72,10 +67,12 @@ None
 - GRD-15: moved to GRD-8
 - GRD-16: moved to GRD-6
 - GRD-17: moved to GRD-7
+- GRD-18: moved to MCH-1
 - GRD-19: moved to HLT-11
 - GRD-2: Retired
 - GRD-21: moved to GRD-20
 - GRD-22: moved to GRD-20
+- GRD-3: moved to DEL-9
 - GRD-9: moved to HLT-2
 
 ### GRD-1
@@ -98,6 +95,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | Nothing private is committed <br> Every commit, push and pull request passes the private-name scan, and local settings and private values are never written into a repo. <br> A line in the list may be scoped to public repos or to named repos; an unscoped line applies everywhere. | consolidation (TOP-DECISION 89): absorbed into DEL-9 | o414: "consolidate the requirements ... absorb some requirements into the existing one requirement" |
 | r2 | 2026-11-18 | Nothing private is committed <br> Every commit, push and pull request passes the private-name scan, and local settings and private values are never written into a repo. <br> A line in the list may be scoped to public repos or to named repos; an unscoped line applies everywhere. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-15 | Nothing private is committed, and no commit skips the hooks that check it <br> Private-name scan on every commit and push: DEL-9. <br> A commit or push that skips the repo's hooks (a no-verify flag, an empty hooks path) is refused by the loop's own commands and flagged by health (Delivery, new). <br> Where the scanned names live: SET-8 (SET-2 for the private layer). <br> A private-name line may be scoped with `@public` or `@repos=a,b`, so a private repo can hold a name a public one must never show; an unscoped line applies everywhere (Delivery, DEL-9). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -211,6 +209,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Windows-safe <br> A pull request that adds a POSIX-only call without its guard fails its checks, and long text for an issue, comment, pull request or release note is always passed to gh in a file, so nothing breaks on native Windows. | consolidation (TOP-DECISION 89): absorbed into MCH-1 | o416: "consolidate the requirements ... absorb some requirements into the existing one requirement" |
 | r1 | 2026-11-18 | Windows-safe <br> A pull request that adds a POSIX-only call without its guard fails its checks, and long text for an issue, comment, pull request or release note is always passed to gh in a file, so nothing breaks on native Windows. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### GRD-19
@@ -245,18 +244,6 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | GRD-3 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
-| [set8-hooks](Tests#t-set8-hooks) | requirement | GRD-3 | Given a repo with the hooks setup installs, when a staged change adds a private line, then git commit refuses naming the file and line and never the text, and nothing is committed. | PASS 2026-11-19 |
-| [set8-setup-commit](Tests#t-set8-setup-commit) | requirement | GRD-3 | Given an adoption whose staged file holds a private line, when setup runs, then it refuses before its own commit, naming the place, and commits nothing. | PASS 2026-11-19 |
-| [del9-hooks](Tests#t-del9-hooks) | requirement | GRD-3 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
-| [set8-local-setting-refused](Tests#t-set8-local-setting-refused) | requirement | GRD-3 | Given a private-home key in the config the adoption would commit, when setup runs, then it refuses naming the key and the line, never the value, and writes nothing. | PASS 2026-11-19 |
-| [set8-private-value-refused](Tests#t-set8-private-value-refused) | requirement | GRD-3 | Given a home path or a local setting value on a line the adoption adds, when setup runs, then it refuses naming file and line and never the value, while text the repo already had, a short value and a template default pass. | PASS 2026-11-19 |
-| [set8-health](Tests#t-set8-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed or removed, when health runs its hooks rule, then the row appears in the Security and privacy group with its PASS or WARN text, and a wrong group, which prints no hooks row, fails the row. | PASS 2026-11-19 |
-| [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | GRD-3 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
-| [grd3-hooks-health](Tests#t-grd3-hooks-health) | requirement | GRD-3 | Given a repo with the private-name hooks installed, when health runs, then it passes the hooks rule. | not run |
-| [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | GRD-3 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
-| [private-names-scoped](Tests#t-private-names-scoped) | requirement | GRD-3 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | PASS 2026-11-19 |
-| [machine-guardrail-private](Tests#t-machine-guardrail-private) | requirement | GRD-3 | Given a repo routine holding an address or home path, when machine apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | not run |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | GRD-4 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [grd4-touches](Tests#t-grd4-touches) | requirement | GRD-4 | Given a worker session, when it tries to widen its goal's touches, then the command refuses. | not run |
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
@@ -276,9 +263,7 @@ None
 | - | requirement | GRD-7 | no passing test | not enforced |
 | [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | GRD-8 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
 | - | requirement | GRD-8 | no passing test | not enforced |
-| - | requirement | GRD-18 | no passing test | not enforced |
 | [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
-| [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | PASS 2026-11-19 |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs git pull --ff-only (also with -C and a remote), then the govern hook lets it through. | PASS 2026-11-12 |
 | [pull-plain-blocked](Tests#t-pull-plain-blocked) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs a plain git pull, -r, --rebase=merges, --no-ff, --ff-only with --rebase or --ff, a +refspec or -f, then the govern hook still refuses it (negative control). | PASS 2026-11-12 |
 | [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GraphQL issue list times out, when a regression run is live, then it reads the REST pages and keeps one open issue per failing row. | not run |

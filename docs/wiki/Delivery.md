@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -52,9 +52,6 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - The list may scope a line to public repos (`@public REGEX`) or to named repos (`@repos=a,b REGEX`); a line with no scope applies to every repo. [DEL-9, GRD-3]
   - The email address and the mail key live only in one local secrets file outside git, shared by both mailers and read only by the local runner. They never appear in the repo, logs, issues or the digest, and mail goes only to the one address I set. [AUT-6]
   - Each machine's private files, the private-name lists, mail settings, secrets and local overrides, stay outside the repo and are never copied to another machine, a log or a report. A new machine gets empty private files and asks me to fill them. [MCH-9]
-- DEL-12: **Reviewed 2026-11-13** Windows-safe on merge <!-- reviewed b8e35707 -->
-  - A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen.
-  - A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows.
 
 ## Non-goals
 - It doesn't decide what to build.
@@ -72,6 +69,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 - DEL-10: moved to MCH-4
 - DEL-11: moved to MCH-4
+- DEL-12: moved to MCH-1
 - DEL-13: moved to REL-12
 - DEL-14: moved to HLT-4
 - DEL-15: moved to REL-13
@@ -170,6 +168,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Windows-safe on merge <br> A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen. <br> A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows. | consolidation (TOP-DECISION 89): absorbed into MCH-1 | o415: "consolidate the requirements ... absorb some requirements into the existing one requirement" |
 | r1 | 2026-11-13 | Windows-safe on merge <br> A pull request that adds a POSIX-only call without its guard (fcntl, os.getuid, os.killpg, signal.SIGHUP, os.kill(pid, 0)) fails its lane, so main cannot break native Windows unseen. <br> A long pull request body, issue text or release notes goes to gh in a file (`--body-file`, `--notes-file`), never on the command line, so a pull request with a body over 32,000 characters opens on native Windows. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### DEL-13
@@ -356,14 +355,24 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | DEL-7 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
 | [routing-timeout-tree](Tests#t-routing-timeout-tree) | requirement | DEL-7 | Given a routed agent that has started a child and passes its timeout, when routing stops it, then the agent and its child are both gone, and the old subprocess.run(timeout) leaves the child running. | not run |
 | [aut-email-secrets](Tests#t-aut-email-secrets) | requirement | DEL-9 | Given the mail settings in the schedule's mail.env, when the tick runs, then they reach only the mail step and never a log, the summary, an issue or the digest comment, a mail.env of the wrong mode sends nothing, and without it nothing is written and the digest says why. | PASS 2026-11-12 |
+| [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | DEL-9 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
 | [del9-scan-sites](Tests#t-del9-scan-sites) | requirement | DEL-9 | Given the delivery, release and monitoring scripts, when any function pushes or writes to GitHub, then it calls the private-name scan first. | not run |
 | [del9-lane-part-no-path](Tests#t-del9-lane-part-no-path) | requirement | DEL-9 | Given a lane record whose LANE line ends with a local log path, when the pull request body's lane part is built, then it keeps the LANE line, the before-rows parts and the rows and drops the log path, so the private-name scan does not refuse every pull request from a machine whose home folder is on the list. | not run |
+| [set8-hooks](Tests#t-set8-hooks) | requirement | DEL-9 | Given a repo with the hooks setup installs, when a staged change adds a private line, then git commit refuses naming the file and line and never the text, and nothing is committed. | PASS 2026-11-19 |
+| [set8-setup-commit](Tests#t-set8-setup-commit) | requirement | DEL-9 | Given an adoption whose staged file holds a private line, when setup runs, then it refuses before its own commit, naming the place, and commits nothing. | PASS 2026-11-19 |
+| [del9-hooks](Tests#t-del9-hooks) | requirement | DEL-9 | Given the pre-push hook and a branch whose commit holds a private line, when it is pushed, then the hook refuses naming file and line, and nothing reaches the remote. | PASS 2026-11-12 |
+| [set8-local-setting-refused](Tests#t-set8-local-setting-refused) | requirement | DEL-9 | Given a private-home key in the config the adoption would commit, when setup runs, then it refuses naming the key and the line, never the value, and writes nothing. | PASS 2026-11-19 |
+| [set8-private-value-refused](Tests#t-set8-private-value-refused) | requirement | DEL-9 | Given a home path or a local setting value on a line the adoption adds, when setup runs, then it refuses naming file and line and never the value, while text the repo already had, a short value and a template default pass. | PASS 2026-11-19 |
+| [set8-health](Tests#t-set8-health) | requirement | DEL-9 | Given a repo with the private-name hooks installed or removed, when health runs its hooks rule, then the row appears in the Security and privacy group with its PASS or WARN text, and a wrong group, which prints no hooks row, fails the row. | PASS 2026-11-19 |
 | [machine-no-private](Tests#t-machine-no-private) | requirement | DEL-9 | Given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | PASS 2026-11-17 FLAKY |
+| [grd3-private-commit](Tests#t-grd3-private-commit) | requirement | DEL-9 | Given a staged line holding a private name, when git commit runs with the installed hook, then it is refused naming the file and line and the commit does not happen. | not run |
+| [grd3-hooks-health](Tests#t-grd3-hooks-health) | requirement | DEL-9 | Given a repo with the private-name hooks installed, when health runs, then it passes the hooks rule. | not run |
 | [health-mail-env-named](Tests#t-health-mail-env-named) | requirement | DEL-9 | Given LOOP_MAIL_ENV, when the tick looks for the mail secrets, then it reads that file, else mail.env in the schedule home. | PASS 2026-11-14 |
 | [health-mail-env-windows](Tests#t-health-mail-env-windows) | requirement | DEL-9 | Given a mail.env on Windows, when the tick runs, then it is not refused as MAIL_ENV_MODE (Windows has no file modes), while a group-readable file on a posix machine still is. | PASS 2026-11-17 |
-| [windows-safe-posix-names](Tests#t-windows-safe-posix-names) | requirement | DEL-12 | Given a script under skills/*/scripts, when it names fcntl outside the lock shim, os.getuid, os.killpg, os.getpgrp, os.O_NOFOLLOW, signal.SIGHUP, os.kill(pid, 0) or os.WNOHANG with no guard, then the lane fails naming its file and line, and the real tree passes (issue 2871). | not run |
-| - | requirement | DEL-12 | no passing test | not enforced |
+| [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | DEL-9 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
+| [private-names-scoped](Tests#t-private-names-scoped) | requirement | DEL-9 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | PASS 2026-11-19 |
+| [machine-guardrail-private](Tests#t-machine-guardrail-private) | requirement | DEL-9 | Given a repo routine holding an address or home path, when machine apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value. | not run |
 | [scripts-no-hang](Tests#t-scripts-no-hang) | defect | [#35](https://github.com/jcl2018/agent-workflow-template/issues/35) closed (2026-11-09) | Given a script with no terminal, when it needs a prompt, then it fails with an error instead of hanging. | PASS 2026-11-12 |
 | [wiki-release-pycache](Tests#t-wiki-release-pycache) | defect | [#58](https://github.com/jcl2018/agent-workflow-template/issues/58) closed (2026-11-09) | Given python leaves cache files behind, when a goal merges, then its wiki pages are still published. | PASS 2026-11-18 |
 | [worker-runs-release](Tests#t-worker-runs-release) | defect | [PR 61](https://github.com/jcl2018/agent-workflow-template/pull/61) merged (2026-11-09) | Given a worker that ends with its pull request waiting, when it finishes, then it runs the release step itself. | PASS 2026-11-18 |
@@ -398,4 +407,4 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
 | [held-time-3878](Tests#t-held-time-3878) | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) closed (2026-11-15) | Given a goal held 772 minutes and active 20 minutes, when a new step starts at a 300 minute budget, then it is not refused (#3878). | PASS 2026-11-14 |
 | [pr-body-no-home-3841](Tests#t-pr-body-no-home-3841) | defect | [#3841](https://github.com/jcl2018/agent-workflow-template/issues/3841) closed (2026-11-14) | Given lane records that name a Unix or Windows home folder, when goal.py pr builds the lane part of the pull request body, then no home folder or user name is in it (issue 3841). | PASS 2026-11-14 |
-| [prd-no-dunder-import-3800](Tests#t-prd-no-dunder-import-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the scripts under skills/*/scripts (prd.py and render.py relock and render through importlib), when the package Safety rule scans them, then none holds __import__ (issue 3800). | PASS 2026-11-16 |
+| [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | PASS 2026-11-19 |

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept known-red-w11-docs-size@f6549ee1 -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -36,7 +36,7 @@ None
 - MON-12: moved to OPS-16
 - MON-13: moved to OPS-1
 - MON-14: moved to CHK-1
-- MON-15: moved to OPS-15
+- MON-15: moved to MCH-4
 - MON-16: moved to OPS-16
 - MON-17: moved to CHK-1
 - MON-18: moved to DEL-3

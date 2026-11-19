@@ -48,7 +48,6 @@ Each requirement and how it is delivered:
 
 - OPS-1: Roles, start and planning. One command starts the operation session and drives the whole process the same way every time. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session in the app, renamed worker · <goal>, running in parallel; it never builds. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. When a worker session finishes, the operation session gives it the next ready goal, renaming it again. Example, from the dependency-held test: given a goal that depends on an unmerged goal, when the queue runs, then it is held until that goal merges.
 - OPS-2: Live communication. Operation and workers talk through session messages: a worker reports each change of step or status as it happens, and its result when it ends (merged, failed or waiting, with the pull request); the operation session sends a worker its answer or a follow-up. Background processes are used only when the app can't start or reach a session, and the board says so. Example, from the worker-reports test: given a merged goal, when the board is shown, then it shows its pull request.
-- OPS-15: Pods coordinate through shared state, not messages: every goal records its owning pod and only that pod starts, answers, merges or resumes it; other pods show it read-only as owned by that pod; merges into one repo's main are serialized across pods by a short lock. Example, from the mon15-pod-owner test: given another pod's goal, when a pod acts on it, then it is refused naming the owner and shown owned by that pod.
 - OPS-16: Fill every free slot at once; speed comes before tokens, within the guardrails. Example, from the mon16-machine-line test: given a check-in, when it is written, then a Machine line shows free RAM, free commit memory, CPU and how many goal starts memory allows.
 
 ### Skill: workflow-monitoring
@@ -87,4 +86,4 @@ Each requirement and how it is delivered:
 - PRD page: [Operation](Operation)
 - Backlog: [Backlog: Operation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept three-level-ops-reland@695c4bf2 -->
+<!-- kept known-red-w8-size@90e0f6a3 -->

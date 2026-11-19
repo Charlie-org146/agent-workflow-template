@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept known-red-w11-docs-size@f6549ee1 -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -66,7 +66,7 @@ None
 - SET-12: moved to SET-1
 - SET-13: moved to OPS-16
 - SET-14: moved to SET-1
-- SET-15: moved to GRD-3
+- SET-15: moved to DEL-9
 - SET-16: moved to SET-4
 - SET-17: moved to HLT-4
 - SET-18: moved to SET-1
@@ -76,7 +76,7 @@ None
 - SET-3: moved to SET-10
 - SET-5: moved to SET-2
 - SET-7: moved to SET-1
-- SET-8: moved to GRD-3
+- SET-8: moved to DEL-9
 - SET-9: moved to SET-1
 
 ### SET-1
@@ -328,8 +328,8 @@ None
 | [pr-statuses-only-lane-3840](Tests#t-pr-statuses-only-lane-3840) | defect | [#3840](https://github.com/jcl2018/agent-workflow-template/issues/3840) closed (2026-11-14) | Given required checks whose jobs do more than the lane, or that no workflow job names, when goal.py pr posts statuses, then only a check whose job runs only the lane's regression command gets one and each other is printed as BLOCKS (issue 3840). | PASS 2026-11-14 |
 | [migration-runs](Tests#t-migration-runs) | defect | 3821 | Given a public repo (actions, regression.yml present) and a private repo (mac), when migration-check runs, then only the wrong settings and a private repo's leftover regression.yml are gaps. | not run |
 | [skill-size-116](Tests#t-skill-size-116) | defect | [#116](https://github.com/jcl2018/agent-workflow-template/issues/116) closed (2026-11-10) | Given the package's skills, when each SKILL.md is counted, then every one is under 150 lines, so test-board passes. | PASS 2026-11-10 |
-| [size-139](Tests#t-size-139) | defect | [#139](https://github.com/jcl2018/agent-workflow-template/issues/139) open (2026-11-16) | Given criteria.py's page rules moved into deployments.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on criteria. | failing (issue reopened) 2026-11-16 |
-| [size-140](Tests#t-size-140) | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) open (2026-11-14) | Given docs.py's page map moved into counting.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on docs. | failing (issue reopened) 2026-11-15 |
+| [size-139](Tests#t-size-139) | defect | [#139](https://github.com/jcl2018/agent-workflow-template/issues/139) closed (2026-11-19) | Given criteria.py's page rules moved into deployments.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on criteria. | PASS 2026-11-12 |
+| [size-140](Tests#t-size-140) | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) closed (2026-11-19) | Given docs.py's page map moved into counting.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on docs. | PASS 2026-11-12 |
 | [size-141](Tests#t-size-141) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/141) open (2026-11-17) | Given regression.py's row and page readers moved into runs.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on regression. | failing (issue reopened) 2026-11-17 |
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
 | [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 100 files, no Safety or Disclosure failure (issue 3800). | not run |

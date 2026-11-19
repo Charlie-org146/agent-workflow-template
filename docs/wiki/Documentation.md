@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept readme-principles-table4@108cd31e -->
+Review: **Unreviewed** <!-- kept gate-health-verdict@bba85b80 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -418,7 +418,7 @@ None
 | [docs-guide-page-issue-125](Tests#t-docs-guide-page-issue-125) | defect | [#125](https://github.com/jcl2018/agent-workflow-template/issues/125) closed (2026-11-11) | Given a guide-marked wiki page, when docs check runs, then it passes with no PRD sections, Home row or README section. | PASS 2026-11-10 |
 | [docs-merged-base-issue-156](Tests#t-docs-merged-base-issue-156) | defect | [#156](https://github.com/jcl2018/agent-workflow-template/issues/156) closed (2026-11-11) | Given a branch that merged the base branch, when docs check runs with --base, then the base's commits don't make its page stale. | PASS 2026-11-10 |
 | [merge-main-own-finding](Tests#t-merge-main-own-finding) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main from another goal, when it checks the wiki, then the page is a FINDING and the goal still merges. | not run |
-| [skill-lines-release-4172](Tests#t-skill-lines-release-4172) | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) open (2026-11-17) | Given the release skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4172). | failing (issue reopened) 2026-11-18 |
+| [skill-lines-release-4172](Tests#t-skill-lines-release-4172) | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-19) | Given the release skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4172). | not run |
 | [skill-lines-docs-4171](Tests#t-skill-lines-docs-4171) | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | Given the docs skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 4171). | not run |
 | [skill-lines-regression-3983](Tests#t-skill-lines-regression-3983) | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3983). | not run |
 | [skill-lines-regression-3815](Tests#t-skill-lines-regression-3815) | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) closed (2026-11-14) | Given the regression skill's SKILL.md, when its lines are counted, then it is under the 150 line cap (health's skill-lines rule, issue 3815). | not run |
