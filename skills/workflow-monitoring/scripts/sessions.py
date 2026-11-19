@@ -247,8 +247,8 @@ def cmd_owner_words(args):
         sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
     if not args.text.strip() or not ids:
         sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
-    import layers
-    ok, why = layers.relay(args.via, args.text)
+    import govern_hook
+    ok, why = govern_hook.relay(args.via, args.text)
     if not ok:
         sys.exit("REFUSED: %s. Nothing was written." % why)
     where = auto.owner_words_path()

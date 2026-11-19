@@ -395,9 +395,9 @@ def decide(payload, session, common):
         log(common, "layout-trigger unread %s: %s" % (session, error))
     found = None if isinstance(payload.get("last_assistant_message"), str) else tail
     text = final_reply(payload, found or [])
-    if text is not None and os.path.exists(base + ".role"):  # a machine session: its one-line check-in (layers.machine_reply)
-        import layers
-        wrong = layers.machine_reply(text, common)
+    if text is not None and os.path.exists(base + ".role"):  # a machine session: its one-line check-in (board_status.machine_reply)
+        import board_status
+        wrong = board_status.machine_reply(text, common)
     else:
         wrong = problems(text) + left_out(text, payload.get("cwd")) + shown(text, payload.get("cwd")) if text is not None else []
     try:
@@ -449,8 +449,8 @@ def main(argv):
             return 2
         wrong = problems(text) + left_out(text, os.getcwd()) + shown(text, os.getcwd())
         if os.environ.get("LOOP_OP_ROLE") == "machine":  # machine mode: one line once STATUS went to top
-            import layers
-            wrong = layers.machine_reply(text, layers.os.path.abspath(layers.machines.sh("rev-parse", "--git-common-dir") or ".git"))
+            import board_status
+            wrong = board_status.machine_reply(text, board_status.os.path.abspath(board_status.machines.sh("rev-parse", "--git-common-dir") or ".git"))
         for line in wrong:
             print(line)
         return 1 if wrong else 0

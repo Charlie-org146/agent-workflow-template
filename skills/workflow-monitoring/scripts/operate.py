@@ -42,8 +42,10 @@ if not sys.stdin or not sys.stdin.isatty():
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import graph  # noqa: E402
-import layers  # noqa: E402
-CFG = lambda top: layers.read(os.path.join(top, ".loop", "config.json"))
+import board_lines  # noqa: E402
+import machines  # noqa: E402
+import notify  # noqa: E402
+CFG = lambda top: machines.read_json(os.path.join(top, ".loop", "config.json"))
 DONE = "NOTHING LEFT TO OPERATE: no goal is queued, running or waiting. Nothing was merged."
 
 
@@ -143,11 +145,11 @@ def behind_ask(common, base="main"):
 
 
 def one_pass(top, common, args):
-    who = layers.role(args.role)
+    who = machines.role(args.role)
     if who == "top":
-        print(graph.localize(layers.publish_board(common, CFG(top))))
+        print(graph.localize(board_lines.publish_board(common, CFG(top))))
         script("board_page.py", cwd=top)
-        return str(layers.TOP_GAP), True
+        return str(machines.TOP_GAP), True
     moved = refresh(common)
     moved and print(moved)
     ask = behind_ask(common)
@@ -174,7 +176,7 @@ def one_pass(top, common, args):
         if code or "ARCHIVE-NOW" in said:
             print(graph.localize(said.strip()))
     text = graph.localize(script("checkin.py", cwd=top)[1].rstrip())
-    print(layers.one_line(*layers.send(common, CFG(top))) if who == "machine" else text)
+    print(machines.one_line(*notify.send(common, CFG(top))) if who == "machine" else text)
     try:
         with open(os.path.join(folder, "checkin.txt"), "w", encoding="utf-8") as handle:
             handle.write(text + chr(10))
@@ -367,7 +369,7 @@ def main():
     item.add_argument("--max", type=int, default=0)
     item.add_argument("--skill-dir", default="")
     item.add_argument("--board", action="store_true", help="also print the live board each pass (where do things stand)")
-    item.add_argument("--role", default="", choices=list(layers.ROLES), help="top or machine")
+    item.add_argument("--role", default="", choices=list(machines.ROLES), help="top or machine")
     sub.add_parser("start")
     sub.add_parser("timer").add_argument("created", nargs="?", default="", choices=["", "created"])
     item = sub.add_parser("send")
