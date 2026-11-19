@@ -116,4 +116,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept hands-off-operation@f100bbe6 -->
+<!-- kept known-red-w6-pods-machine@05ecae36 -->
