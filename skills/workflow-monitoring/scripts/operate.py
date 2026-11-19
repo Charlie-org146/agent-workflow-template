@@ -287,8 +287,16 @@ def run(args, cwd=None):
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
 
 
+def tems(*args, **kwargs):
+    """workflow-release's one compare, autorelease.tems."""
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts"))
+    import autorelease
+    return autorelease.tems(*args, **kwargs)
+
+
 def wiki_only(top, old, new):
-    """True when NEW descends from OLD and every commit between only adds or edits .md pages in the base branch's wiki folder, no SKILL.md."""
+    """True when NEW descends from OLD and the diff is only stamp files, .md pages in the base branch's wiki folder (no
+    SKILL.md) and README.md outside its generated blocks, as tems checks (no symlink, rename, delete)."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -297,17 +305,13 @@ def wiki_only(top, old, new):
         folder = (json.loads(shown.stdout).get("wiki_dir") if shown.returncode == 0 else None) or "docs/wiki"
     except (ValueError, AttributeError):
         folder = "docs/wiki"
-    done = run(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
-    rows = [(line.split("\t")[0].split(), line.split("\t")[1:]) for line in done.stdout.split("\n") if line]
-    return not done.returncode and bool(rows) and all(
-        len(m) == 5 and len(p) == 1 and m[4] in ("A", "M") and m[1] != "120000"  # no symlink
-        and ((p[0].startswith(str(folder).rstrip("/") + "/") and p[0].endswith(".md") and os.path.basename(p[0]) != "SKILL.md")
-             or (p[0] == "README.md" and m[4] == "M" and readme_blocks_only(top, old, new)))
-        for m, p in rows)
+    page = lambda p: (p.startswith(str(folder).rstrip("/") + "/") and p.endswith(".md") and os.path.basename(p) != "SKILL.md"
+                      ) or (p == "README.md" and readme_blocks_only(top, old, new))
+    return tems(top, old, new, allow=page)
 
 
 def readme_blocks_only(top, old, new):
-    """True when README.md reads the same at OLD and NEW outside its generated Settings, Automation and template blocks."""
+    """True when README.md reads the same at OLD and NEW outside its generated blocks."""
     bare = lambda ref: re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", "", run(["git", "show", ref + ":README.md"], cwd=top).stdout, flags=re.S)
     return bare(old) == bare(new)
 

@@ -2,11 +2,10 @@
 """The automatic release, called by merge.py: run the owner's routines, then after the merge bump the version once,
 write the CHANGELOG entry, push that commit to the base branch and create a published GitHub release.
 
-No draft, no question. Every failure is recorded on the goal as `release_error` (shown under Issues).
-The bump is patch unless the owner recorded one (`goal.py set SLUG --bump minor|major`, read through workflow-delivery's
-fit.py). The release commit and notes pass the private-name scan (workflow-delivery's private.py; missing or broken
-refuses, PRIVATE_MODULE) before any push. A protected base (a `pull_request` rule, or a push refused for protection)
-takes the release pull request instead (merge.py).
+No draft, no question; a failure is recorded on the goal as `release_error` (under Issues). The bump is patch unless the
+owner recorded one (`goal.py set SLUG --bump minor|major`, read through fit.py). The release commit and notes pass the
+private-name scan (private.py; missing or broken refuses, PRIVATE_MODULE) before any push. A protected base takes the
+release pull request instead (merge.py).
 """
 import datetime
 import importlib.util
@@ -21,7 +20,7 @@ import tempfile
 import release
 import wiki  # noqa: E402
 
-# a prompt from git or gh must fail, not block
+# no prompt may block
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -49,7 +48,7 @@ def sibling(name):
 
 
 def private_check(top, base, texts, pushed=False, head="HEAD"):
-    """None when the push may go on, else (why, fix, code). base None scans only texts."""
+    """None when the push may go on, else (why, fix, code); base None scans texts only."""
     private, stop = sibling("private")
     if stop:
         return stop
@@ -75,7 +74,7 @@ def notes_text(state):
 
 
 def protected(top, base):
-    """True when the base has a pull_request rule; a 403/404 or no rule says nothing."""
+    """True when the base has a pull_request rule (a 403/404 says nothing)."""
     got = sh(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], cwd=top)
     try:
         rules = json.loads(got.stdout) if got.returncode == 0 else []
@@ -92,7 +91,7 @@ def sh(args, cwd=None):
 
 
 def sh_text(args, text, flag="--body-file", cwd=None):
-    """Run gh with a long text in a temp file passed as flag, never on the command line."""
+    """Run gh with a long text in a temp file."""
     with tempfile.NamedTemporaryFile("w", suffix=".md", prefix="gh-text-", delete=False, encoding="utf-8", newline="\n") as f:
         f.write(text)
     try:
@@ -115,7 +114,7 @@ def fail(state, text):
 
 
 def reopen(state, code):
-    """A merge refused because the head or base moved sends the goal back to its pr step."""
+    """A merge refused because the head or base moved sends the goal back to pr."""
     state.update(status="running", step="pr")
     release.save(state, "merge refused (exit %d): run goal.py pr, then merge.py again" % code)
     return code
@@ -132,7 +131,7 @@ def mark_merged(state):
 
 
 def run_routines(top, cfg, state):
-    """Routines come from the base branch: a pull request cannot add a command the merge runs."""
+    """Routines come from the base branch, never from a pull request."""
     shown = sh(["git", "show", "origin/%s:.loop/config.json" % cfg.get("base", "main")], cwd=top)
     try:
         routines = (json.loads(shown.stdout) if shown.returncode == 0 else cfg).get("routines") or []
@@ -169,8 +168,8 @@ def drop(top, tree, temp):
 
 
 def push_release_commit(top, cfg, state, part, to_branch=False):
-    """(version, release commit sha); (None, stderr) when the base refused the push for protection. to_branch pushes
-    to release/vX-<slug> instead (force-updating only it)."""
+    """(version, release sha); (None, stderr) when the base refused the push for protection. to_branch pushes to
+    release/vX-<slug> instead (force-updating only it)."""
     base, slug = cfg.get("base", "main"), state["slug"]
     temp = tempfile.mkdtemp(prefix="release-")
     tree = os.path.join(temp, "tree")
@@ -219,20 +218,30 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
 
 
 def restatus(top, cfg, state, head):
-    """Post the pr lane's result for a head that moved only by wiki pages."""
+    """Post the pr lane's result for a head moved only by wiki pages."""
     module, stop = sibling("private")
     if not stop:
         module.pr_result(top, cfg.get("base", "main"), head, state["branch"], True)
 
 
+STAMPS = ("VERSION", "CHANGELOG.md", ".loop/regression-runs.tsv", ".loop/regression-issues.tsv")
+
+
+ROW = re.compile(r":(?:000000|100644|100755) (?:100644|100755) \w+ \w+ [AM]\t(.+)")
+
+
+def tems(top, old, new, extra="", allow=None):
+    """Tree equal modulo stamps: old to new only adds or edits regular files at STAMPS paths (plus extra, plus what
+    allow accepts); code, a symlink, a rename or a delete breaks it. operate.py shares it."""
+    done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
+    rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
+    return done.returncode == 0 and bool(rows) and all(
+        m and (m[1] in STAMPS or m[1] == extra or bool(allow and allow(m[1]))) for m in rows)
+
+
 def carried(top, cfg, state, sha):
-    """True when the goal's pr lane passed (statuses ok) and the release head only moves the version file and the
-    CHANGELOG over its parent: the tested tree plus the bump, so the pass carries over (#3870)."""
-    if state.get("statuses") != "ok":
-        return False
-    done = sh(["git", "diff", "--name-only", sha + "^", sha], cwd=top)
-    names = set(done.stdout.split())
-    return done.returncode == 0 and bool(names) and names <= {cfg.get("version_file") or "VERSION", "CHANGELOG.md"}
+    """The goal's pr lane passed and the head is its parent plus stamps (tems): the pass carries (#3870)."""
+    return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION")
 
 
 def lane_at(top, cfg, sha):
@@ -255,9 +264,8 @@ def lane_at(top, cfg, sha):
 
 def release_statuses(top, cfg, state, branch, sha):
     """Post the lane's result for the release PR's head under every required check's name, never a failure the head did
-    not earn: a bump-only head carries the goal's pass; otherwise the affected rows run and only rows that ran and failed
-    post failure. A lane that could not run posts nothing (release_status untested). Success is final;
-    release_status_why names the cause."""
+    not earn: a stamps-only head carries the goal's pass; else the affected rows run and only rows that ran and failed post
+    failure. A lane that could not run posts nothing (untested). Success is final; release_status_why names the cause."""
     module, stop = sibling("private")
     if stop or not sha or state.get("release_status") == "success":
         return
@@ -265,7 +273,7 @@ def release_statuses(top, cfg, state, branch, sha):
     if sh(["git", "cat-file", "-e", sha + "^{commit}"], cwd=top).returncode:
         sh(["git", "fetch", "-q", "origin", branch], cwd=top)
     if carried(top, cfg, state, sha):
-        print("CARRIED the goal's passing lane to the release head %s (it only moves the version and changelog)" % sha[:12])
+        print("CARRIED the goal's passing lane to the release head %s (stamps only)" % sha[:12])
         ok = True
     else:
         code, text = lane_at(top, cfg, sha)
@@ -286,7 +294,7 @@ RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_
 
 def status_held(state, url, number, seen=None):
     """Refuse, naming the cause, when the release PR's head has no passing status (RELEASE_STATUS_FAILED, _UNTESTED) or a
-    required check is red (RELEASE_CHECKS_FAILED): a merge past a red check is never advised (issue 3870)."""
+    required check is red (RELEASE_CHECKS_FAILED): never advise a merge past a red check (3870)."""
     red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
            if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
     why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
@@ -323,7 +331,7 @@ def create_release(top, cfg, state, version, target):
 
 
 def finish(top, cfg, state):
-    """After the merge. Each step records itself, so a retry repeats only what did not finish."""
+    """After the merge. Each step records itself; a retry repeats only what did not finish."""
     if state.get("release") == "cut" and state.get("release_url"):
         print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
         return
