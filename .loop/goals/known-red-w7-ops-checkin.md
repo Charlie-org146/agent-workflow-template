@@ -13,4 +13,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-operate.sh`.
+   Expect: it ends with ALL PASS.
+2. Run `bash dev/toy/test-scan-sites.sh`.
+   Expect: it lists only operate.py:apply as unscanned until the operate.py scan call lands; after that, ALL PASS.
+3. Run `python3 skills/workflow-regression/scripts/regression.py run operate-10-under-load`.
+   Expect: PASS operate-10-under-load.
