@@ -203,6 +203,9 @@ check "check-reads --shard 1/3 replays only its slice (r2 and r5), not the rest"
 sed 's/if position % count == index:/if position % count == index and not (count > 1 and position == 2):/' "$c/dev/toy/check-reads.sh" > "$c/dev/toy/check-reads-drop.sh"
 dropped=$(cd "$c" && bash dev/toy/check-reads-drop.sh --count-check 3 2>&1); drc=$?
 check "negative control: a shard that drops a command fails the count check, naming the command" '[ $drc = 1 ] && grep -q "^SHARDS DIFFER: the full list has 7 commands, the 3 shards 6" <<<"$dropped" && grep -q "dev/t3.sh" <<<"$dropped"'
+sed 's/while \[ "\$i" -lt "\$countn" \]/while [ "$i" -lt "$((countn - 1))" ]/' "$c/dev/toy/check-reads.sh" > "$c/dev/toy/check-reads-drop.sh"
+dropped2=$(cd "$c" && bash dev/toy/check-reads-drop.sh --count-check 3 2>&1); drc2=$?
+check "negative control: a dropped shard (the last one never listed) fails the count check" '[ $drc2 = 1 ] && grep -q "^SHARDS DIFFER: the full list has 7 commands, the 3 shards 5" <<<"$dropped2" && grep -q "dev/t3.sh" <<<"$dropped2"'
 rm -f "$c/dev/toy/check-reads-drop.sh"
 
 [ $fails = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
