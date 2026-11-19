@@ -134,4 +134,4 @@ Each requirement and how it is delivered:
 
 <!-- kept plan-red-team-core@6edef587 -->
 
-<!-- kept readme-conformance@f96ea00d -->
+<!-- kept gap-wave1-small@1aecea23 -->

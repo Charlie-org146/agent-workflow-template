@@ -202,7 +202,16 @@ loosen permissions, edit done lines or change `agent_command`.
 ### Check-in, re-plan, full auto, pool and govern hook
 
 - `checkin.py [--since ISO]`: the check-in `operate.py run` prints each pass, in the reply hook's layout (headline, All
-  sessions, Re-plan and Auto-answered when there are any, Dependencies, Needs you, Coming up). Read-only.
+  sessions, Re-plan, Auto-answered and Findings filed when there are any, Dependencies, Needs you, Coming up). Read-only.
+- `mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-1): the top or a
+  machine session files a process finding it made while scheduling, merging or deciding, by default and without asking, as
+  an issue labelled `backlog` and `ops-finding` on `Backlog: <PAGE>` (`Backlog: Other` when no page matches), its body
+  naming REF (the TOP-DECISION or record that found it). It prints `FILED #N on <milestone>: <title>` and appends the line
+  to `<common>/loop/findings.log`, which the check-in's Findings filed section lists since the last check-in. Refuses (exit
+  1) `REPEATS open issue #N` (the same normalised title, or the same IDs in the title and half its words; the open issues
+  are read first and an unreadable list files nothing); (exit 2) a finding with no title or no `--found`, one holding a
+  private value, or one in a safety class (`auto.CLASSES`) unless `--owner-words oN` names an owner record that lists
+  `*`, `ops-findings`, the page or an ID in the title. Separate from the delivery loop's own findings (`goal.py finding`).
 - `notify.py send [--checkin FILE]` (MON-5): `operate.py run` saves each check-in to `<common>/loop/checkin.txt` and runs
   it. Off unless the private setting `notify_email` is true on this machine. It mails one message per new event (a
   Needs you item, a stopped or failed goal, a goal past its ETA, a goal merged and released) through workflow-health's

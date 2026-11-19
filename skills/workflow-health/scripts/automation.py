@@ -222,9 +222,9 @@ def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None
 
 def cmd_digest(args):
     cfg, in_actions = config(args.root), os.environ.get("GITHUB_ACTIONS") == "true"
-    live = bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")) or args.live
+    live = args.live
     if in_actions and not live:
-        print("DIGEST: no GH_TOKEN in this step, so nothing was posted. Fix: give the step GH_TOKEN: the job's token.")
+        print("DIGEST: no --live in this step, so nothing was posted. Fix: pass --live (with GH_TOKEN: the job's token).")
         return 1
     if live:
         for label in LABELS + ("automation",):  # a label that doesn't exist yet would make its listing fail
@@ -272,7 +272,7 @@ def cmd_digest(args):
         if cost.get("over"):
             print("::warning::" + rounds.line(cost))
     if not live:
-        print(comment + "DRY RUN: no GH_TOKEN, so nothing was posted.")
+        print(comment + "DRY RUN: no --live, so nothing was posted.")
         return 0
     if number is None:
         gh("label", "create", "automation", "--description", "The Automation digest")  # an existing one keeps its colour
