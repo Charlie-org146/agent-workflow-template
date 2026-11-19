@@ -203,7 +203,7 @@ loosen permissions, edit done lines or change `agent_command`.
 
 - `checkin.py [--since ISO]`: the check-in `operate.py run` prints each pass, in the reply hook's layout (headline, All
   sessions, Re-plan, Auto-answered and Findings filed when there are any, Dependencies, Needs you, Coming up). Read-only.
-- `mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-25): the top or a
+- `mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-1): the top or a
   machine session files a process finding it made while scheduling, merging or deciding, by default and without asking, as
   an issue labelled `backlog` and `ops-finding` on `Backlog: <PAGE>` (`Backlog: Other` when no page matches), its body
   naming REF (the TOP-DECISION or record that found it). It prints `FILED #N on <milestone>: <title>` and appends the line

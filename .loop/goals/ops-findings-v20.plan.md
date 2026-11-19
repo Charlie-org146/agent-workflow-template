@@ -7,15 +7,15 @@
 2. `skills/workflow-monitoring/scripts/checkin.py`: in `render`, list `auto.since(root, stamp, "findings.log")` as
    "Findings filed (operation layer)". Checked: `auto.since` takes a log name.
 3. `skills/workflow-monitoring/SKILL.md` (Command map row) and `references/commands.md`.
-4. `docs/wiki/Operation.md` (OPS-25 and its Revisions table), `How-to-use-Operation.md`, Tests tables via `criteria.py render`.
-5. `dev/toy/test-checkin-view.py`: the new cases. `.loop/regression.tsv`: add `ops25-findings-filed`, fold
+4. `docs/wiki/Operation.md` (OPS-1 and its Revisions table), `How-to-use-Operation.md`, Tests tables via `criteria.py render`.
+5. `dev/toy/test-checkin-view.py`: the new cases. `.loop/regression.tsv`: add `ops-findings-filed`, fold
    `mon5-for-cell-sentence` into `mon5-checkin-machine-line` (same goal CHK-2, same toy file): net 0.
 6. Red proof for the new row, then the lane, then the pull request.
 
 ## Test for each done line
 
 1. Filing and the duplicate negative controls: "a finding is filed on the feature", "the same normalised title is refused",
-   "the same IDs and most of the words is refused" (row `ops25-findings-filed`, seen red with the repeat check broken).
+   "the same IDs and most of the words is refused" (row `ops-findings-filed`, seen red with the repeat check broken).
 2. "the check-in lists the findings filed since the last check-in" and the safety negative controls ("no owner's words",
    "owner's words that list other IDs").
 3. Net rows: 1,299 before, 1,299 after; `mailbox.py` and `checkin.py` under 19,000 bytes; no new shipped file.

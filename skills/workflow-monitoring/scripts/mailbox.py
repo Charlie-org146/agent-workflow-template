@@ -6,7 +6,7 @@ usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this 
                                                  `Question id` line of the mail
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
        mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                                OPS-25: file a finding of top or a machine session, without asking, as an ops-finding
+                                                OPS-1: file a finding of top or a machine session, without asking, as an ops-finding
                                                 issue on "Backlog: PAGE" ("Other" if no page matches); REF is the TOP-DECISION or
                                                 record that found it. Refuses a repeat of an open issue and a safety-class finding
                                                 with no owner's words.
@@ -162,7 +162,7 @@ def covered(root, record, title, page):
 
 
 def file_finding(root, args):
-    """(exit code, line): file one finding of the operation layer (OPS-25); nothing is filed when any check refuses."""
+    """(exit code, line): file one finding of the operation layer (OPS-1); nothing is filed when any check refuses."""
     import auto
     title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
     if not title or not args.found.strip():
