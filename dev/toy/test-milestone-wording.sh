@@ -24,6 +24,8 @@ for page, ids in pages.items():
     if not (head.startswith("**Unreviewed**") or head.startswith("**Reviewed ")):
         bad.append("%s has no Review line" % page)
     for key in ids:
+        if re.search(r"^- %s: moved to " % key, text, re.M):  # consolidated into a survivor; its wording is checked there
+            continue
         m = re.search(r"^- %s: (\*\*[^*]+\*\*) (.*?)\n((?:  .*\n)*)" % key, text, re.M)
         if not m:
             bad.append("%s is missing" % key)

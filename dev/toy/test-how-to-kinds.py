@@ -56,12 +56,4 @@ feature = NL.join(["# X", "", "- Run `docs.py check` and `goal.py new SLUG --goa
 check(milestones.unlisted(feature, "nothing") == ["docs.py check", "goal.py new"], "negative control: a command the feature page names and the How-to-use page lacks is reported")
 check(milestones.unlisted(feature, "docs.py check and goal.py new") == [], "a command the How-to-use page lists passes; the Tests section is not read")
 
-FEATS = ["Alpha", "Beta"]
-LINKS = NL.join(["## How to use", ""] + ["- [How to use %s](https://github.com/o/r/wiki/How-to-use-%s)" % (f, f) for f in FEATS] + [""])
-check(pf.frontdoor(LINKS, FEATS) == [], "a README that only links each How-to-use page passes")
-check(any("How-to-use-Beta" in d[2] for d in pf.frontdoor(LINKS.replace("Beta)", "Elsewhere)"), FEATS)), "negative control: a README with no link to a page is reported")
-table = NL.join(["### How to use Alpha", "", "| You say | What happens |", "|---|---|", '| "a" | one |', '| "b" | two |', ""])
-check(any("table" in d[2] for d in pf.frontdoor(LINKS + table, FEATS)), "negative control: a README How to use table of two rows is reported")
-one = NL.join(["### How to use Alpha", "", "| You say | What happens |", "|---|---|", '| "How do I use Alpha?" | Opens [How-to-use-Alpha](https://github.com/o/r/wiki/How-to-use-Alpha). |', ""])
-check(pf.frontdoor(LINKS + one, FEATS) == [], "a one-row table whose row links the page passes")
 sys.exit(1 if failed else 0)

@@ -114,11 +114,9 @@ Delivery subprocesses fail instead of waiting for terminal prompts, including ro
 Each requirement and how it is delivered:
 
 - DEL-1: The loop. Example, from the no-done-line-refused test: given a goal with no done line, when it is started, then it is refused.
-- DEL-2: Frozen done lines. Example, from the frozen-done-lines test: given a running goal, when a frozen done line is changed, then the goal stops.
 - DEL-3: Decisions. Example, from the pending-waits test: given a step that leaves a decision for the owner, when it ends, then the goal stops and waits.
-- DEL-4: The pull request. Example, from the cut-needs-verify test: given no Verify by hand steps, when a release is cut, then it is refused.
+- DEL-7: Work survives failure and moves by backup. A failed step is resumed from its recorded step, never from the start; `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.
 - DEL-17: A goal's ETA is a hard limit.
-- DEL-18: Everything goes through a goal.
 - DEL-19: Every goal serves a requirement.
 
 ### Skill: workflow-delivery
@@ -154,4 +152,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gate-health-verdict@5d094f65 -->
+<!-- kept known-red-waves-batch@3411a49f -->
