@@ -87,16 +87,9 @@ The consistency group counts definitions in Requirements sections; How-to items 
 Each requirement and how it is delivered:
 
 - HLT-2: The rules. Example, from the size-fail test: given a script over 20 KB, when health runs, then it is a FAIL with a fix.
-- HLT-3: Formal report with one findings table. Example, from the health-findings-table test: given a health run with findings from at least three groups, when the report prints, then findings are one table with feature, group, rule, severity, finding and issue columns, every row naming a feature page or Other, and the digest shows the same table. Another example, from the unread-not-green test: given a health rule that cannot be read, when health runs, then it is never shown green.
 - HLT-4: Findings become issues tagged with their group and their feature. Example, from the health-feature-always test: given findings filed by health.py file, when issues are created or updated, then each carries its feature label whatever feature_labels says, and a finding with no feature is filed under Other. Another example
 , from the no-token-would test: given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing.
-- HLT-5: Repo review. Example, from the judge-section-format test: given the judge, when it runs, then it prints its three reviews in a section marked as suggestions.
-- HLT-6: Health keeps itself honest and the repo lean. Example, from the hlt6-controls-fire test: given every health rule, when health check runs its controls, then each rule's negative control makes it fire.
-- HLT-8: Triage. Example, from the hlt8-triage test: given open health findings, when triage runs, then it lists them per feature by kind, count and age, and a closed batch carries the owner's words and is not refiled until its evidence changes.
-- HLT-10: Every feature has a Backlog milestone. Every feature has one standing Backlog milestone, and "Backlog: Other" holds what fits no feature. Adoption creates the missing ones, and health warns for each that is absent. (no test yet)
 - HLT-11: Health keeps the repo lean. Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. It warns on a script over 19,000 bytes and fails one at 20 KB. (no test yet)
-- HLT-12: A filed finding becomes work. When the next goals are planned, the open defect and backlog issues are read by feature and goals are proposed from them, most blocking first, so a filed finding is picked up or closed with my words, never left unseen. (no test yet)
-- HLT-13: Conflicts and orphans are findings. Health flags two requirements that conflict or repeat, and any test, script or goal that names no requirement. Each is settled by a revision that merges, retires or rewords, or by a removal. (no test yet)
 
 ### Skill: workflow-health
 - **Say:** "How healthy is this repo?"
