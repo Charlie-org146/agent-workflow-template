@@ -1358,7 +1358,7 @@
 | <a id="t-auto-planning-check"></a>auto-planning-check | requirement | done line auto-planning:5 | not run | - | local | 2026-11-17 |
 | <a id="t-home-sandbox-4859"></a>home-sandbox-4859 | defect | [#4859](https://github.com/jcl2018/agent-workflow-template/issues/4859) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-done-agent-routing-1"></a>done-agent-routing-1 | workflow | done line agent-routing:1 | not run | - | local | no |
-| <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | not run | - | local | 2026-11-17 |
+| <a id="t-del-16-on-page"></a>del-16-on-page | workflow | done line del-16:1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-17 |
 | <a id="t-del-16-linked"></a>del-16-linked | workflow | done line del-16:2 | not run | - | local | 2026-11-17 |
 | <a id="t-done-docs-gate-scope-1"></a>done-docs-gate-scope-1 | workflow | done line docs-gate-scope:1 | not run | - | local | no |
 | <a id="t-done-docs-gate-scope-2"></a>done-docs-gate-scope-2 | workflow | done line docs-gate-scope:2 | not run | - | local | no |
