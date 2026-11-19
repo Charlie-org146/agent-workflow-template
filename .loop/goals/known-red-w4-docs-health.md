@@ -13,4 +13,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Open the pull request's regression run (the full-suite shards) and look up each of the eleven rows named in done line 1.
+   Expect: each shows PASS, none shows FAIL.
+2. Open .loop/regression-known.tsv and compare the row count of .loop/regression.tsv with main.
+   Expect: regression-known.tsv gained no row, and regression.tsv has no more rows than main.
