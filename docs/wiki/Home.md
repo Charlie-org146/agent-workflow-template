@@ -77,7 +77,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
 | `review_depth` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
 | `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
-| `criteria_max` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `21` |
+| `criteria_max` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `23` |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
@@ -96,7 +96,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. | set "eta_margin_percent" in .loop/config.json | `25` | default |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
 | `max_regression_rows` | Most rows the regression table may hold; a goal adding rows past it is refused at qa. | set "max_regression_rows" in .loop/config.json | `1200` | **overridden:** `1300` |
-| `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. | set "max_suite_seconds" in .loop/config.json | `1900` | default |
+| `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. | set "max_suite_seconds" in .loop/config.json | `1900` | **overridden:** `2800` |
 | `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; rows past it wait for the full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
 | `prep_budget_minutes` | Minutes a lane may spend before its first test row, 15 or more; a lane past it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
 | `step_budget_minutes` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes what it has. | set "step_budget_minutes" in .loop/config.json | `30` | default |
