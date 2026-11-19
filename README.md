@@ -114,4 +114,6 @@ Taken out of the tables above; the owner decides.
 
 ## Open conflicts for the owner
 
-- SET-1 against SET-7: Byte-for-byte adoption of template files sits beside 'adapts what is there instead of overwriting' and 'nothing existing is overwritten': when a repo already has a file the template installs, the text does not say which wins Status: open, owner to decide (suggested reading: template-owned files are installed byte for byte; repo-owned files are adapted, never overwritten).
+None open.
+
+- SET-1 against SET-7: resolved (owner, o192): files the template owns install exactly; the repo's own files are adapted, never overwritten.
