@@ -194,7 +194,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 skills/workflow-regression/scripts/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 dev/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}
       - if: steps.rec.outcome == 'failure'
         run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
 """

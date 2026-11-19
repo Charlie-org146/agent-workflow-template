@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-regression/scripts/recordonly.py skills/workflow-regression/scripts/lanes_cli.py
+# reads: dev/recordonly.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-delivery/scripts/role.py
 """record-ci (DEL-1): CI skips the affected rows only for goal.py pr's record commit on a parent whose check passed.
 
@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
+sys.path.insert(0, os.path.join(root, "dev"))
 import recordonly  # noqa: E402
 
 SUBJECT = recordonly.SUBJECT
