@@ -57,7 +57,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - On start the operation session runs a self-check and lists what is missing, each with its fix.
   - It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached.
   - agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's.
-- OPS-24: **Unreviewed** A release has a target time and a freeze point that I set
+- OPS-24: **Reviewed 2026-11-19** A release has a target time and a freeze point that I set <!-- reviewed d7170fdb -->
   - I set the release's target time and its freeze time in my own words; the operation session proposes both from the forecast (CHK-11) and never sets them itself.
   - At the freeze, a goal with no MERGE-GO is marked "next release" on the board and in STATUS, keeps the front of the next release's queue, and is not cancelled.
   - A failing row is never waived by the freeze: it is fixed by a goal already in the release or by a gate fix, or the release moves.

@@ -40,11 +40,11 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 - CHK-9: **Unreviewed** I can answer and steer from my phone or mail
   - I can answer any question under Needs you by replying to its mail or from my phone, with the same words a typed answer takes, and start, stop or reorder goals the same way.
   - A reply counts as my words only when it comes from my own address or signed-in session.
-- CHK-10: **Unreviewed** Every goal's STATUS carries an ETA, and a slip is reported at once
+- CHK-10: **Reviewed 2026-11-19** Every goal's STATUS carries an ETA, and a slip is reported at once <!-- reviewed 51e23cb0 -->
   - A worker line in STATUS carries eta, eta_basis (measured or steps) and slip, the minutes since its eta was last reported.
   - A slip of more than 15 minutes sends STATUS at once and adds one line under Issues: the goal, its old eta, its new eta and the cause.
   - A slip that moves a goal past the freeze is a Needs-you line with a recommendation.
-- CHK-11: **Unreviewed** The finish is forecast from measured merge pace, not step estimates
+- CHK-11: **Reviewed 2026-11-19** The finish is forecast from measured merge pace, not step estimates <!-- reviewed bc4f0330 -->
   - The forecast is the last merge plus the goals still to merge times the median of the last 5 gaps between merges, with the quartiles as a band; with fewer than 3 gaps it says there is no measured pace yet.
   - The pace counts MERGE-GO and CI waits, because they are real time on the single merge slot.
   - The board prints the measured forecast as Finish and the step estimate on a second labelled line.
