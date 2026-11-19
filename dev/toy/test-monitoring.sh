@@ -3,6 +3,9 @@
 # reads: skills/workflow-monitoring/scripts/board_page.py skills/workflow-monitoring/scripts/graph.py
 # reads: skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/monitor.py
 # reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-setup/scripts/setup.py
+# reads: skills/workflow-monitoring/scripts/proctree.py skills/workflow-monitoring/scripts/replan.py skills/workflow-monitoring/scripts/worker.py
+# reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/board_log.py
+# reads: skills/workflow-monitoring/scripts/board_model.py skills/workflow-monitoring/scripts/board_status.py
 # Proves workflow-monitoring on a throwaway toy repo with a fake agent. No model is called and gh is faked.
 # usage: test-monitoring.sh [DIR]
 # test-goal.sh covers go, watch, mend and usage limits. This covers what it doesn't: a killed agent, overlapping goals,
@@ -160,8 +163,13 @@ touch "$FAKE_AGENT/hold-late"
 $W go "Add late" --done "late" --touches late.py --slug late >/dev/null
 python3 -c "import os;print(os.spawnlp(os.P_NOWAIT,'sh','sh','-c','exec python3 -c \"import os,time;os.setsid();time.sleep(60)\"'))" > "$T/mpid"; sleep 0.3
 kill -9 -- "-$(field late pid)" 2>/dev/null; mender=$(cat "$T/mpid")
-sets late "pid=$mender" 'mended=true' 'status="running"'
+# the mender's record carries its process start (relaunch stores it), so a reused pid is never signalled
+started=$(python3 -c 'import json, sys; sys.path.insert(0, sys.argv[1]); import proctree; print(json.dumps(proctree.pstart(int(sys.argv[2]))))' "$here/skills/workflow-monitoring/scripts" "$mender")
+sets late "pid=$mender" 'mended=true' 'status="running"' 'pstart="not-this-process"'
 echo loop/late >> "$FAKE_AGENT/merged"
+python3 "$here/skills/workflow-monitoring/scripts/mend.py" > "$T/m2"
+check "a pid whose recorded start is not the process's is left alone (a reused pid)" 'sleep 0.3; kill -0 "$mender" 2>/dev/null && [ "$(field late status)" = running ]'
+sets late "pstart=$started"
 python3 "$here/skills/workflow-monitoring/scripts/mend.py" > "$T/m2"
 check "a mender running after its goal lands is stopped" 'sleep 0.3; ! kill -0 "$mender" 2>/dev/null && [ "$(field late status)" = done ]'
 sets late 'status="done"'
@@ -172,10 +180,10 @@ kill -9 -- "-$(field slow pid)" 2>/dev/null; sleep 0.3; rm -f "$FAKE_AGENT/promp
 $W watch --once >/dev/null
 check "a failed goal waits before a mender starts" 'sleep 0.3; [ ! -e "$FAKE_AGENT/prompt-slow" ] && [ "$(field slow status)" = failed ] && [ "$(field slow mended)" = None ]'
 sets slow 'status="done"' 
-mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$T/lone/"
+mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$here/skills/workflow-monitoring/scripts/proctree.py" "$here/skills/workflow-monitoring/scripts/replan.py" "$here/skills/workflow-monitoring/scripts/worker.py" "$here/skills/workflow-monitoring/scripts/sessions.py" "$here/skills/workflow-monitoring/scripts/auto.py" "$here/skills/workflow-monitoring/scripts/board_log.py" "$here/skills/workflow-monitoring/scripts/board_model.py" "$here/skills/workflow-monitoring/scripts/board_page.py" "$here/skills/workflow-monitoring/scripts/board_status.py" "$T/lone/"  # watch.py and what it imports, but no mend.py
 check "watch.py alone runs, and says it mended nothing" 'python3 "$T/lone/watch.py" watch --once | grep -q "mend.py isn.t beside"'
 check "watch.py alone refuses resume, and says why" 'python3 "$T/lone/watch.py" resume late 2>&1 | grep -q "needs mend.py"'
-cp "$here/skills/workflow-monitoring/scripts/board.py" "$T/lone/"  # graph.py is beside it already
+rm -f "$T/lone/board_page.py"; cp "$here/skills/workflow-monitoring/scripts/board.py" "$T/lone/"  # no board_page.py beside board.py
 check "board.py alone refuses a run command, and says why" 'python3 "$T/lone/board.py" note late hi 2>&1 | grep -q "needs board_page.py"'
 check "board.py alone still writes a board" 'python3 "$T/lone/board.py" board --out "$T/lone/b" | grep -q "^JSON "'
 
