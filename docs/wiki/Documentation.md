@@ -75,6 +75,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - The docs check prints DOCS OK on the main branch after every merge.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
 - No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
+- A repo whose PRD pages are link-form is never held at merge by the unmigrated-Revisions note: it counts only local pages and is a note, not trouble.
 
 ## Revisions
 
