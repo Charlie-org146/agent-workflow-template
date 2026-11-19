@@ -7,6 +7,7 @@ unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a rea
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 . "$here/dev/toy/reap.sh"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
+export HOME="$d/home"; mkdir -p "$HOME"; export USERPROFILE="$HOME"  # setup writes ~/.workflow-loop/repos; the owner's real folder is never touched (the guard in reap.sh fails the test if it is)
 no() { echo "FAIL ${only:-adopt}: $1"; exit 1; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 setup="python3 $here/skills/workflow-setup/scripts/setup.py"

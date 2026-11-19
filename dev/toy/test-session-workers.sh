@@ -44,7 +44,7 @@ TOOL
 chmod +x "$T/tool.sh"; export TOOL_LOG="$T/tool.log"
 python3 - "$T/agent.sh" <<'PY'
 import json, sys
-c = json.load(open(".loop/config.json")); c["agent_command"] = ["bash", sys.argv[1]]; c["parallel"] = 0; c["mend"] = False; c["auto_merge"] = False
+c = json.load(open(".loop/config.json")); c["agent_command"] = ["bash", sys.argv[1]]; c["parallel"] = 0; c["mend"] = False; c["auto_merge"] = False; c["min_free_memory_gb"] = 0
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 git commit -qam "Agent"; git push -q origin main

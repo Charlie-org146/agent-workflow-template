@@ -110,15 +110,7 @@ Every operation-session check-in reply has one layout: a headline, All sessions,
 
 ## Statuses
 
-| `status` | Means |
-|---|---|
-| `queued` | Not started |
-| `running` | Its agent is at work |
-| `waiting` | Stopped until the user answers; `waiting.words` are the exact words |
-| `done` | Has a pull request |
-| `stopped` | Stopped itself after 3 failed tries, finding filed |
-| `failed` | The worker's agent ended without finishing (never set for a goal with no pid) |
-| `retired` | Superseded; set by `board.py retire`, and `watch` and `resume` leave it alone |
+A goal's `status` is queued, running, waiting, done, stopped, failed or retired; what each means is in [references/commands.md](references/commands.md#statuses).
 
 ## Rules
 

@@ -121,6 +121,7 @@ del5-merge-forwards-checkout	PASS	2026-11-15
 del5-patch-default	PASS	2026-11-12	
 del5-release-pr	PASS	2026-11-12	
 del8-floor-step	PASS	2026-11-18	
+del8-session-tokens	PASS	2026-11-19	
 del9-hooks	PASS	2026-11-12	
 del9-merge-refuses	PASS	2026-11-12	
 del9-pr-refuses	PASS	2026-11-18	
@@ -424,7 +425,7 @@ no-line-in-governor	PASS	2026-11-19
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-19	
 no-row-fail	PASS	2026-11-19	
-no-token-dry-run	PASS	2026-11-12	
+no-token-dry-run	PASS	2026-11-19	
 no-token-would	PASS	2026-11-12	
 notify-new-events	PASS	2026-11-18	
 notion-app-link-unread	PASS	2026-11-13	
