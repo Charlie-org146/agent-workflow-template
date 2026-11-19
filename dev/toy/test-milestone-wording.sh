@@ -3,8 +3,8 @@
 # reads: .loop/regression.tsv
 # Test the milestone-freeform wording and rows: DOC-4, DOC-10, HLT-2, HLT-4, AUT-2, AUT-3 and SET-1 say a milestone is
 # optional (Unreviewed after the owner's un-review, or later re-reviewed with the same text), none says an issue or a pull
-# request must have one (DOC-10 keeps a standing "Backlog: <Feature>" milestone per feature and HLT-4 puts a defect on no
-# milestone), and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
+# request must have one (DOC-10 keeps a standing "Backlog: <Feature>" milestone per feature; the v2 rewrite of HLT-4 left
+# the defect-on-no-milestone rule to the hlt4-feature-milestones and backlog-defect-home rows), and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
@@ -34,8 +34,6 @@ for page, ids in pages.items():
                 bad.append("%s says %r" % (key, phrase))
         if key == "DOC-4" and "stays optional" not in block and "only when i put it there" not in block:  # the owner moved the rule here from DOC-10 in the v2 rewrite (o160); DOC-4 also says "optional Topic column", so the phrase is "stays optional"
             bad.append("%s does not say a milestone is optional" % key)
-        if key == "HLT-4" and "on no milestone" not in block:
-            bad.append("%s does not say a defect is on no milestone" % key)
 print("; ".join(bad) or "CLEAN")
 PY
 )
