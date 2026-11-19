@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-regression/scripts/recordonly.py skills/workflow-regression/scripts/lanes_cli.py
+# reads: skills/workflow-delivery/scripts/role.py
 """record-ci (DEL-1): CI skips the affected rows only for goal.py pr's record commit on a parent whose check passed.
 
 `python3 dev/toy/test-record-ci.py skip` proves the skips (and that the workflow template wires the step in);
@@ -59,6 +60,7 @@ if mode == "skip":
     check("a record commit on a parent with a passing check skips the rows", code == 0 and line == "RECORD-ONLY " + parent)
     code, line = decide([{"name": "affected", "status": "completed", "conclusion": "cancelled"}] + GREEN)
     check("one passing affected run among several is enough", code == 0)
+    check("recordonly.py names the subject role.py gives the record commit", SUBJECT in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "role.py")).read())
     text = open(os.path.join(root, "skills", "workflow-regression", "scripts", "lanes_cli.py")).read()
     check("the workflow template runs recordonly.py and skips the rows on RECORD-ONLY", "recordonly.py" in text and "steps.rec.outcome == 'failure'" in text and "checks: read" in text)
 elif mode == "full":
