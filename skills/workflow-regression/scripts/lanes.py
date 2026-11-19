@@ -42,7 +42,7 @@ CD_SKILLS = re.compile(r"cd\s+\"?\$\{?here\}?\"?\s*[;&|\n][^\n]*?(?<![\w./$-])sk
 
 
 def modules(text):
-    """Module names a Python text imports: `from x import ...`, and every name of `import a, b as c`."""
+    """Module names a text imports: `from x import ...` and each name of `import a, b as c`."""
     return {name.split()[0] for frm, imp in IMPORT.findall(text) for name in ([frm] if frm else imp.split(",")) if name.strip()}
 
 
@@ -70,7 +70,7 @@ def record_path(root):
 
 
 def load(path, root):
-    """(record, why it can't be used) — why is '' for a usable record, else the FULL reason."""
+    """(record, why it can't be used): why is '' for a usable record."""
     if not path or not os.path.exists(path):
         return None, "no record"
     try:
@@ -107,7 +107,6 @@ def save(path, root, command, results, head, at, fresh, base=None):
 
 
 def descendants(root_pid):
-    """Every live descendant pid of root_pid (ps)."""
     out = subprocess.run(["ps", "-A", "-o", "pid=,ppid="], capture_output=True, text=True).stdout
     kids = {}
     for line in out.splitlines():
@@ -150,7 +149,6 @@ def run_row(command, cwd, env, timeout):
 
 
 def dirty(root):
-    """Paths git status lists, the loop's bookkeeping files aside."""
     out = git(root, "status", "--porcelain", "--no-renames", "--untracked-files=all") or ""
     paths = [line[3:].strip('"') for line in out.splitlines()]
     return [p for p in paths if not p.startswith(BOOKKEEPING)]
@@ -204,7 +202,7 @@ def read(root, rel, cache):
 
 
 def scan(root, rel, cache):
-    """The repo paths one file names (wide); each file is read once per plan."""
+    """The repo paths one file names (wide); read once per plan."""
     files = cache.setdefault(None, {})
     if rel not in files:
         text = read(root, rel, cache) or ""
@@ -257,7 +255,6 @@ def closure(root, command, cache):
 
 
 def raw_closure(root, command, cache):
-    """What closure reads: the deps as the narrow and wide walks name them."""
     if ("closure", command) in cache:
         return cache["closure", command]
     found, whole = references(root, command, "", wide=False)
@@ -321,7 +318,6 @@ def deleted(root, commit):
 
 
 def table(root, commit, name, memo):
-    """The rows of a .loop table at a commit, as {id: line}."""
     if (commit, name) not in memo:
         text = git(root, "show", "%s:.loop/%s" % (commit, name)) or ""
         memo[commit, name] = {line.split("\t")[0]: line for line in text.splitlines() if line.strip() and line[0] != "#"}
