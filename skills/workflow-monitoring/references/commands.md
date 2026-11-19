@@ -805,3 +805,15 @@ because the template, main or a regression row moved (`audit.py rerender`). A fi
 line to its generated part that a fresh render lacks and the render touches nothing outside that part; a hand edit inside a
 block, or any other difference, is put back and stays STALE for the worker. `operate.py wiki-only` accepts README.md in that commit
 when only its generated blocks changed.
+
+## Statuses
+
+| `status` | Means |
+|---|---|
+| `queued` | Not started |
+| `running` | Its agent is at work |
+| `waiting` | Stopped until the user answers; `waiting.words` are the exact words |
+| `done` | Has a pull request |
+| `stopped` | Stopped itself after 3 failed tries, finding filed |
+| `failed` | The worker's agent ended without finishing (never set for a goal with no pid) |
+| `retired` | Superseded; set by `board.py retire`, and `watch` and `resume` leave it alone |

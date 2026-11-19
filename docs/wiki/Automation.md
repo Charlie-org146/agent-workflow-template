@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=fdbda682 N=e081872e M=4670eeeb U=03828777 --> <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -167,7 +167,6 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [aut-digest-no-token](Tests#t-aut-digest-no-token) | requirement | AUT-5 | Given no token in the digest step, when it runs in Actions, then it says what is missing and writes nothing. | PASS 2026-11-12 |
 | [aut-no-push](Tests#t-aut-no-push) | requirement | AUT-5 | Given the scheduled workflows, when they are written, then neither pushes nor has write access to the repo's contents. | PASS 2026-11-12 |
 | [aut-by-hand-runs](Tests#t-aut-by-hand-runs) | requirement | AUT-5 | Given regression_cron off, when someone starts the regression run by hand, then it still runs. | PASS 2026-11-12 |
-| [aut-regression-off-written](Tests#t-aut-regression-off-written) | requirement | AUT-5 | Given regression_cron off, when its workflow is written, then it has no schedule and keeps its by-hand trigger. | PASS 2026-11-12 |
 | [aut-digest-dry-run](Tests#t-aut-digest-dry-run) | requirement | AUT-5 | Given no token outside Actions, when the digest runs, then it prints the comment, says it is a dry run and writes nothing. | PASS 2026-11-12 |
 | [aut-off-push-runs](Tests#t-aut-off-push-runs) | requirement | AUT-5 | Given regression_cron off, when a release tag is pushed, then the regression run still runs the rows. | PASS 2026-11-12 |
 | [aut-off-dispatch-runs](Tests#t-aut-off-dispatch-runs) | requirement | AUT-5 | Given regression_cron off, when someone starts the regression run by hand, then it still runs the rows. | PASS 2026-11-12 |

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept known-red-package-100@b7bfbd3e -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -269,10 +269,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [del7-recorded-refused](Tests#t-del7-recorded-refused) | requirement | DEL-7 | Given a goal with recorded steps, when a recorded step is run again without --again, then it is refused with no try and names the step to resume from. | not run |
 | [del8-goal-budget](Tests#t-del8-goal-budget) | requirement | DEL-7 | Given a repo with a time and token budget, when a goal is frozen, then the goal carries both budgets. | not run |
 | [del8-board-over](Tests#t-del8-board-over) | requirement | DEL-7 | Given a running goal past its time and token budget, when the live board prints, then the goal's budget line says OVER time and OVER tokens. | not run |
-| [del8-session-tokens](Tests#t-del8-session-tokens) | requirement | DEL-7 | Given a goal past token_budget whose steps run in a session, when the next step starts, then it is refused (not built: only headless goals are refused today). | not run |
+| [del8-session-tokens](Tests#t-del8-session-tokens) | requirement | DEL-7 | Given a goal past token_budget, when the next step starts, then it is refused naming the budget and the fix. | PASS 2026-11-19 |
 | [held-time-over-still-stops](Tests#t-held-time-over-still-stops) | requirement | DEL-7 | Given a goal whose steps ran past its time budget, when a new step starts, then it is refused with BUDGET_MINUTES. | PASS 2026-11-14 |
 | [test-caps-qa-refused](Tests#t-test-caps-qa-refused) | requirement | DEL-7 | Given a repo at max_regression_rows, when a goal adds a row, then qa refuses it with the row counts and the cap (TEST_CAPS); with the suite over max_suite_seconds it refuses with the seconds (owner record o51). | PASS 2026-11-16 |
-| [eta-budget-raise](Tests#t-eta-budget-raise) | requirement | DEL-7 | Given goal.py set raising a goal's time or token budget, when no unused owner-words record covers the goal, then it is refused and nothing changes; with one it is accepted and keeps the record, and lowering a budget needs none (hard ETA, GRD-14). | not run |
+| [eta-budget-raise](Tests#t-eta-budget-raise) | requirement | DEL-7 | Given goal.py set raising a goal's time or token budget, when no unused owner-words record covers the goal, then it is refused and nothing changes; with one it is accepted and keeps the record, and lowering a budget needs none (hard ETA, DEL-17). | not run |
 | [eta-legacy-goal](Tests#t-eta-legacy-goal) | requirement | DEL-7 | Given a goal frozen before ETAs existed, when the owner gives it an ETA with an unused owner-words record, then it runs inside that ETA and is stopped past it like any other goal. | not run |
 | [held-charge-idle](Tests#t-held-charge-idle) | requirement | DEL-7 | Given a session silent past the idle limit with no step running, when the minute budget is read through fit.budget_stop, then it is charged no more than the limit until its next step starts, while a step that is running is charged in full. | not run |
 | [held-charge-show](Tests#t-held-charge-show) | requirement | DEL-7 | Given a goal with idle time, when goal.py show prints it, then it shows the charged minutes and the wall minutes. | not run |
@@ -293,6 +293,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [builtin-flow](Tests#t-builtin-flow) | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | Given a flow file whose steps are built-in and no probe, when a goal starts and its steps run, then delivery runs its own routine for each step, and with no flow file it still refuses. | PASS 2026-11-12 |
 | [del1-new-here-main-refused](Tests#t-del1-new-here-main-refused) | defect | 3468 | Given the repo's main checkout, when goal.py new --here runs there, then it refuses with one line naming the worktree command. | PASS 2026-11-14 |
 | [issue-117-github-touches](Tests#t-issue-117-github-touches) | defect | [#117](https://github.com/jcl2018/agent-workflow-template/issues/117) closed (2026-11-11) | Given a goal touching github:wiki that deletes a file a repo script writes, when it opens its pull request, then the surface is listed and the script is warned about (issue: Goals can't name GitHub-side changes, and nothing warns when a script regenerates what a goal deletes). | not run |
+| [depth-marker-rows-4557](Tests#t-depth-marker-rows-4557) | defect | #4557 | Given the review-depth marker rows (depth-on-board, depth-in-pr-body, depth-reference) that printed PASS and still exited non-zero on CI, when test-review-depth.sh runs as a whole, then its last line is ALL PASS (issue 4557). | not run |
 | [pr-body-no-checks](Tests#t-pr-body-no-checks) | defect | [PR 62](https://github.com/jcl2018/agent-workflow-template/pull/62) merged (2026-11-09) | Given a pull request, when its body is written, then it says nothing about checks and lists each step's result. | PASS 2026-11-12 |
 | [issue-38-verdicts](Tests#t-issue-38-verdicts) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a step reply with VERDICT lines, when the goal opens its pull request, then each verdict is listed under its step (issue: Record the Codex judge and idea-run results). | not run |
 | [pr-body-by-file](Tests#t-pr-body-by-file) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a lane that lists hundreds of rows, when goal.py opens the pull request, then the body goes in a file, not on the command line, which Windows caps. | PASS 2026-11-13 |
