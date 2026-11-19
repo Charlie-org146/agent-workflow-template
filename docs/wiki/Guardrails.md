@@ -17,7 +17,7 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-1: **Unreviewed** One visible set of guardrails
+- GRD-1: **Reviewed 2026-11-19** One visible set of guardrails <!-- reviewed 6c6cd397 -->
   - This page's How-to-use page, How-to-use-Guardrails, lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on.
   - It points to the requirement that owns each one and restates none of the owner's text.
 - GRD-2: **Unreviewed** Budgets and caps stop a runaway
