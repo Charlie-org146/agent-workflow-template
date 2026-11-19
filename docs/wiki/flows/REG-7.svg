@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 366" width="440" role="img" aria-label="Flow of REG-7 Fast in the loop: trigger, what the loop does, the check that proves it, the result">
-<title>REG-7 Fast in the loop</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 406" width="440" role="img" aria-label="Flow of REG-7 Test lanes and suite stay within budgets">
+<title>REG-7 Test lanes and suite stay within budgets</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
 .f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
@@ -26,30 +26,32 @@
 @media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="366" class="f-bg"/>
-<text x="12" y="22" class="f-t">REG-7 Fast in the loop</text>
-<rect x="12" y="40" width="416" height="73" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="24" y="56" class="f-h">TRIGGER</text>
-<text x="24" y="72" class="f-s">Given a toy repo; when regression.py run nightly runs</text>
-<text x="24" y="87" class="f-s">plainly and other runs name a row, land, --kind or</text>
-<text x="24" y="102" class="f-s">--reuse</text>
-<path d="M220 113 L220 125" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="125" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="24" y="141" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="157" class="f-s">Every in-loop test run stays within a time budget, 15</text>
-<text x="24" y="172" class="f-s">minutes by default and never lower. A run that would go</text>
-<text x="24" y="187" class="f-s">past it runs what fits and defers the rest to the full…</text>
-<path d="M220 198 L220 210" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="210" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
-<text x="24" y="226" class="f-h">THE CHECK THAT PROVES IT</text>
-<text x="24" y="242" class="f-s">suite-time-recorded (PASS 2026-11-10); 23 more tests</text>
-<path d="M220 253 L220 265" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="265" width="416" height="73" rx="8" class="f-ok" stroke-width="1.2"/>
-<text x="24" y="281" class="f-h">RESULT</text>
-<text x="24" y="297" class="f-s">Only the plain run appends a full line to the git common</text>
-<text x="24" y="312" class="f-s">dir's suite-times.tsv and prints SUITE_TIME, health</text>
-<text x="24" y="327" class="f-s">reads it, regression.yml uploads CI's line as artifact…</text>
-<text x="12" y="358" class="f-x">Regression | r2 reworded: one lane limit (your decision, o39) (since v0.1.2)</text>
-<rect x="2" y="2" width="436" height="362" rx="6" fill="none" class="k-v20"/>
-<rect x="371" y="8" width="57" height="18" rx="9" class="p-v20"/><text x="400" y="21" text-anchor="middle" class="f-pill">v2.0 r2</text>
+<rect width="440" height="406" class="f-bg"/>
+<text x="12" y="22" class="f-t">REG-7 Test lanes and suite stay within budgets</text>
+<rect x="12.0" y="42" width="416.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="220.0" y="62" text-anchor="middle" class="f-s">Lane starts</text>
+<rect x="12.0" y="103" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="123" text-anchor="middle" class="f-s">Preparation over 15 minutes?</text>
+<rect x="12.0" y="164" width="203.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="113.5" y="184" text-anchor="middle" class="f-s">Stops, names slow part</text>
+<rect x="225.0" y="164" width="203.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="326.5" y="184" text-anchor="middle" class="f-s">Runs what fits in budget</text>
+<rect x="12.0" y="225" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="245" text-anchor="middle" class="f-s">Defers rest, names count</text>
+<rect x="12.0" y="286" width="416.0" height="31" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="220.0" y="306" text-anchor="middle" class="f-s">Goal exceeds test caps?</text>
+<rect x="12.0" y="347" width="416.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="220.0" y="367" text-anchor="middle" class="f-s">Refused at qa</text>
+<path d="M220.0 73.0 L220.0 103.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 134.0 L113.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="160.8" y="153.0" text-anchor="end" class="f-x">yes</text>
+<path d="M220.0 134.0 L326.5 164.0" class="f-a" marker-end="url(#ah)"/>
+<text x="279.2" y="153.0" text-anchor="start" class="f-x">no</text>
+<path d="M326.5 195.0 L220.0 225.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 256.0 L220.0 286.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 317.0 L220.0 347.0" class="f-a" marker-end="url(#ah)"/>
+<text x="226.0" y="336.0" text-anchor="start" class="f-x">yes</text>
+<text x="12" y="398" class="f-x">Regression | v0.1.2, v2.0</text>
+<rect x="2" y="2" width="436" height="402" rx="6" fill="none" class="k-v20"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v20"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
 </svg>

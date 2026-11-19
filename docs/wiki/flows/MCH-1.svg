@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 336" width="440" role="img" aria-label="Flow of MCH-1 One command sets a machine up: trigger, what the loop does, the check that proves it, the result">
-<title>MCH-1 One command sets a machine up</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 380" width="440" role="img" aria-label="Flow of MCH-1 Any Mac or Windows machine sets up identically">
+<title>MCH-1 Any Mac or Windows machine sets up identically</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
 .f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
@@ -26,28 +26,30 @@
 @media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="336" class="f-bg"/>
-<text x="12" y="22" class="f-t">MCH-1 One command sets a machine up</text>
-<rect x="12" y="40" width="416" height="43" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="24" y="56" class="f-h">TRIGGER</text>
-<text x="24" y="72" class="f-s">Given a clone and a toy home; when machine plan runs</text>
-<path d="M220 83 L220 95" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="95" width="416" height="73" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="24" y="111" class="f-h">WHAT THE LOOP DOES</text>
-<text x="24" y="127" class="f-s">A second Mac or Windows machine reaches this one's setup</text>
-<text x="24" y="142" class="f-s">from a git clone and one command: a dry run lists</text>
-<text x="24" y="157" class="f-s">everything first, then apply installs the skill links…</text>
-<path d="M220 168 L220 180" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="180" width="416" height="43" rx="8" class="f-gate" stroke-width="1.2"/>
-<text x="24" y="196" class="f-h">THE CHECK THAT PROVES IT</text>
-<text x="24" y="212" class="f-s">machine-apply-installs (not run); 8 more tests</text>
-<path d="M220 223 L220 235" class="f-a" marker-end="url(#ah)"/>
-<rect x="12" y="235" width="416" height="73" rx="8" class="f-ok" stroke-width="1.2"/>
-<text x="24" y="251" class="f-h">RESULT</text>
-<text x="24" y="267" class="f-s">It writes nothing, and when apply runs, then it links</text>
-<text x="24" y="282" class="f-s">the skills and writes the private-names file, the</text>
-<text x="24" y="297" class="f-s">mailer, the hooks and the tasks</text>
-<text x="12" y="328" class="f-x">Machines | r2 reworded (since v1.0.26)</text>
-<rect x="2" y="2" width="436" height="332" rx="6" fill="none" class="k-v20"/>
-<rect x="371" y="8" width="57" height="18" rx="9" class="p-v20"/><text x="400" y="21" text-anchor="middle" class="f-pill">v2.0 r2</text>
+<rect width="440" height="380" class="f-bg"/>
+<text x="12" y="22" class="f-t">MCH-1 Any Mac or Windows machine sets up</text>
+<text x="12" y="42" class="f-t">identically</text>
+<rect x="12.0" y="62" width="203.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="113.5" y="82" text-anchor="middle" class="f-s">Fresh clone on Mac or Windows</text>
+<rect x="225.0" y="62" width="203.0" height="31" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="326.5" y="82" text-anchor="middle" class="f-s">PR adds unguarded POSIX call</text>
+<rect x="12.0" y="123" width="203.0" height="46" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="113.5" y="143" text-anchor="middle" class="f-s">Prerequisites checklist with</text>
+<text x="113.5" y="158" text-anchor="middle" class="f-s">fixes</text>
+<rect x="225.0" y="123" width="203.0" height="46" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="326.5" y="143" text-anchor="middle" class="f-s">Lane fails, main protected</text>
+<rect x="12.0" y="199" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="219" text-anchor="middle" class="f-s">Dry run, then apply</text>
+<rect x="12.0" y="260" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="280" text-anchor="middle" class="f-s">Session, tasks, peer link exist</text>
+<rect x="12.0" y="321" width="416.0" height="31" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="220.0" y="341" text-anchor="middle" class="f-s">Owner-only items named, not created</text>
+<path d="M113.5 93.0 L113.5 123.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M113.5 169.0 L220.0 199.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 230.0 L220.0 260.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M220.0 291.0 L220.0 321.0" class="f-a" marker-end="url(#ah)"/>
+<path d="M326.5 93.0 L326.5 123.0" class="f-a" marker-end="url(#ah)"/>
+<text x="12" y="372" class="f-x">Machines, Delivery, Guardrails | v0.27.55, v2.0</text>
+<rect x="2" y="2" width="436" height="376" rx="6" fill="none" class="k-v20"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v20"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
 </svg>
