@@ -120,7 +120,7 @@ issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
 assert len(issues) == 1 and not issues[0]["milestone"]
 assert re.search(r"<!-- loop-health size:skills/x/scripts/near.py:scripts evidence=[0-9a-f]{8} placed= -->", issues[0]["body"])
 PYEND
-grep -q -e "--label health --label health:size --label defect --label feature:Calc$" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
+grep -q -e "--label health --label health:size --label defect --label feature:Calc --body" "$FAKE_GH_DIR/calls.log" && ! grep -qi "milestone\|backlog" "$FAKE_GH_DIR/calls.log" && ok "labelled health, health:size and its feature: no milestone made or set, the feature label even while feature_labels is off" || bad "label: $(cat "$FAKE_GH_DIR/calls.log")"
 out=$($health file --group size); echo "$out"
 grep -q "^SAME #1" <<<"$out" && [ "$(python3 -c "import json,os;print(len(json.load(open(os.environ['FAKE_GH_DIR']+'/issues.json'))))")" = 1 ] && ok "a repeat opens no second issue" || bad "duplicate"
 python3 -c "print('# pad\n' * 3500)" > skills/x/scripts/near.py; git commit -qam "Bigger"

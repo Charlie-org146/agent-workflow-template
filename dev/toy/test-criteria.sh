@@ -310,7 +310,7 @@ usage_page() { # USAGE-BODY: Delivery with a Usage section between Problem and R
   $cri render >/dev/null
 }
 good; setmax unset
-git add docs/wiki; git commit -qm "One criterion" >/dev/null; git push -q origin main  # the base now holds only DEL-1: IDS-MISSING compares with it
+git add docs/wiki; git commit -qm "One criterion" >/dev/null; git push -q -f origin HEAD:main  # the base now holds only DEL-1: IDS-MISSING compares with it
 $docs check | grep -q "DOCS OK" && ok "a page with no commands passes without a Usage section" || bad "no usage passes"
 page Delivery "$one
 - DEL-2: **Unreviewed** The calculator prints a mean."
