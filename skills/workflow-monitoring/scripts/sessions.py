@@ -15,7 +15,7 @@ usage: sessions.py <command> [options]
                             one); without it the pull request waits. merged is checked with gh. An ended goal's session
                             goes back to the pool. Done is final (KEPT), but merged still frees the session.
   send SLUG TEXT            send a worker session the owner's answer or a follow-up (operate.py send does this)
-  owner-words TEXT --ids A,B  record the owner's exact message for the IDs it covers (auto.py); not in a worker
+  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for the IDs it covers (auto.py); not in a worker
   list                      the sessions this repo knows, with their goals
 
 A session tool does the talking: the command in `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL, called as
@@ -247,11 +247,15 @@ def cmd_owner_words(args):
         sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
     if not args.text.strip() or not ids:
         sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
+    import layers
+    ok, why = layers.relay(args.via, args.text)
+    if not ok:
+        sys.exit("REFUSED: %s. Nothing was written." % why)
     where = auto.owner_words_path()
     os.makedirs(os.path.dirname(where), exist_ok=True)
     count = len(auto.owner_rows())
     with open(where, "a", encoding="utf-8") as handle:
-        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), os.environ.get("LOOP_OPERATION_SESSION") or "operation",
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation",
                                               json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
     print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
     return 0
@@ -397,6 +401,7 @@ def main():
     item = sub.add_parser("owner-words")
     item.add_argument("text")
     item.add_argument("--ids", default="")
+    item.add_argument("--from", dest="via", default="owner", choices=["owner", "top", "peer"], help="top: relayed owner words (not safety classes); peer: refused")
     sub.add_parser("list")
     args = parser.parse_args()
     try:

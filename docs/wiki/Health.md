@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Unreviewed** <!-- kept ci-shards-unrun0@df48decb -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
@@ -187,9 +187,9 @@ How to use: [How-to-use-Health](How-to-use-Health)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [size-fail](Tests#t-size-fail) | requirement | HLT-2 | Given a script over 20 KB, when health runs, then it is a FAIL with a fix. | PASS 2026-11-18 |
+| [size-fail](Tests#t-size-fail) | requirement | HLT-2 | Given a script over 20 KB, when health runs, then it is a FAIL with a fix. | PASS 2026-11-19 |
 | [stale-page-row](Tests#t-stale-page-row) | requirement | HLT-2 | Given a stale wiki page, when health runs, then it shows as a docs row naming the page. | PASS 2026-11-12 |
-| [no-row-fail](Tests#t-no-row-fail) | requirement | HLT-2 | Given a criterion with no test row, when health runs, then it is a FAIL. | PASS 2026-11-18 |
+| [no-row-fail](Tests#t-no-row-fail) | requirement | HLT-2 | Given a criterion with no test row, when health runs, then it is a FAIL. | PASS 2026-11-19 |
 | [defect-health](Tests#t-defect-health) | requirement | HLT-2 | Given a closed issue or finding with no defect test, when health runs, then it is flagged. | PASS 2026-11-12 |
 | [cost-time-warn](Tests#t-cost-time-warn) | requirement | HLT-2 | Given a goal over its time budget, when health runs, then it is a Cost warning naming its slowest steps. | PASS 2026-11-12 |
 | [cost-unread-tokens](Tests#t-cost-unread-tokens) | requirement | HLT-2 | Given no tokens recorded, when the Performance rule runs, then it prints INFO and leaves the token check out, never red. | PASS 2026-11-12 |
@@ -206,18 +206,18 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [machine-health-rule](Tests#t-machine-health-rule) | requirement | HLT-2 | Given a toy home with the skills installed and none of the machine setup, when health's Adoption group runs, then it lists a machine WARN for each gap dev/machine.py check names. | not run |
 | [test-caps-health](Tests#t-test-caps-health) | requirement | HLT-2 | Given a table under, near and over max_regression_rows, when health runs, then it passes under 90%, warns from 90% and fails over the cap; a cap of 0 turns the rule off. | PASS 2026-11-16 |
 | [test-caps-controls](Tests#t-test-caps-controls) | requirement | HLT-2 | Given a fixture over each cap, when the rows-cap and suite-cap controls run, then each rule fires (a negative control for each, GRD-9). | PASS 2026-11-16 |
-| [eta-health-rules](Tests#t-eta-health-rules) | requirement | HLT-2 | Given the hard ETA's three health rules (eta-missing, eta-extended, eta-overrun), when health lists its rules and controls, then each rule is there with a negative control that fires (hard ETA, GRD-14); the rules read workflow-monitoring beside health and say UNREAD without it. | not run |
+| [eta-health-rules](Tests#t-eta-health-rules) | requirement | HLT-2 | Given the hard ETA's three health rules (eta-missing, eta-extended, eta-overrun), when health lists its rules and controls, then each rule is there with a negative control that fires (hard ETA, DEL-17); the rules read workflow-monitoring beside health and say UNREAD without it. | not run |
 | [size-warn-band](Tests#t-size-warn-band) | requirement | HLT-2 | Given a script of 18,900 bytes, when health's size rule runs, then it raises no warning: the warning sits at the 19,000-byte target, not at 90% of the 20 KB limit (#4370, #4560). | not run |
 | [size-warn-over](Tests#t-size-warn-over) | requirement | HLT-2 | Given a script of 19,100 bytes, when health's size rule runs, then it warns, and a script over the 20,480-byte limit still fails (#4370, #4560). | not run |
 | [size-warn-control](Tests#t-size-warn-control) | requirement | HLT-2 | Given scripts in the old warning band, 18,432 to 19,000 bytes, when health's size rule runs, then nothing is raised (negative control, #4370, #4560). | not run |
 | [trim-monitoring-4-size](Tests#t-trim-monitoring-4-size) | requirement | HLT-2 | Given workflow-monitoring's checkin.py, auto.py, replan.py and pool.py, when health's size rule measures them as git stores them, then each is at or under the 19,000-byte target (trim-monitoring-4). | not run |
-| [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-18 |
+| [unread-not-green](Tests#t-unread-not-green) | requirement | HLT-3 | Given a health rule that cannot be read, when health runs, then it is never shown green. | PASS 2026-11-19 |
 | [report-header](Tests#t-report-header) | requirement | HLT-3 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
 | [health-findings-table](Tests#t-health-findings-table) | requirement | HLT-3 | Given a health run with findings from at least three groups, when the report prints, then findings are one table with feature, group, rule, severity, finding and issue columns, every row naming a feature page or Other, and the digest shows the same table. | PASS 2026-11-17 |
 | [no-token-would](Tests#t-no-token-would) | requirement | HLT-4 | Given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing. | PASS 2026-11-12 |
-| [fixed-closes](Tests#t-fixed-closes) | requirement | HLT-4 | Given a finding with an open issue, when the finding is fixed, then its issue is closed. | PASS 2026-11-18 |
-| [repeat-no-second](Tests#t-repeat-no-second) | requirement | HLT-4 | Given a finding with an open issue, when the finding repeats, then no second issue is opened. | PASS 2026-11-18 |
-| [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-18 |
+| [fixed-closes](Tests#t-fixed-closes) | requirement | HLT-4 | Given a finding with an open issue, when the finding is fixed, then its issue is closed. | PASS 2026-11-19 |
+| [repeat-no-second](Tests#t-repeat-no-second) | requirement | HLT-4 | Given a finding with an open issue, when the finding repeats, then no second issue is opened. | PASS 2026-11-19 |
+| [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-19 |
 | [preview-writes-nothing](Tests#t-preview-writes-nothing) | requirement | HLT-4 | Given findings in several groups, when health preview runs, then it lists each issue it would open, update, close or reopen with its tag and makes no write call. | PASS 2026-11-10 |
 | [file-one-group](Tests#t-file-one-group) | requirement | HLT-4 | Given open issues in several groups, when health files only the docs group, then only the docs issue is closed and no other group's issue changes. | PASS 2026-11-10 |
 | [hlt4-feature-milestones](Tests#t-hlt4-feature-milestones) | requirement | HLT-4 | Given findings about a feature and about none, when they are previewed and filed, then each is a tagged issue on no milestone, a repeat updates, a fix closes, a return reopens, an old marker moves, and an issue that names the subject is linked once instead of duplicated. | not run |
@@ -256,8 +256,8 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | - | requirement | HLT-11 | no passing test | not enforced |
 | - | requirement | HLT-12 | no passing test | not enforced |
 | - | requirement | HLT-13 | no passing test | not enforced |
-| [same-lines](Tests#t-same-lines) | requirement | HLT-1 | Given an unchanged repo, when health runs twice, then both runs print the same lines. | PASS 2026-11-18 |
-| [check-writes-nothing](Tests#t-check-writes-nothing) | requirement | HLT-1 | Given a repo, when the health check runs, then it writes no file and makes no commit. | PASS 2026-11-18 |
+| [same-lines](Tests#t-same-lines) | requirement | HLT-1 | Given an unchanged repo, when health runs twice, then both runs print the same lines. | PASS 2026-11-19 |
+| [check-writes-nothing](Tests#t-check-writes-nothing) | requirement | HLT-1 | Given a repo, when the health check runs, then it writes no file and makes no commit. | PASS 2026-11-19 |
 | [hlt1-same-answer](Tests#t-hlt1-same-answer) | requirement | HLT-1 | Given an unchanged repo, when health checks it twice, then both print the same lines and no file changes. | not run |
 | [hlt7-fast-check](Tests#t-hlt7-fast-check) | requirement | HLT-7 | Given this repo, when health checks it without controls, then it finishes in under 60 seconds, and a check past 60 seconds warns. | PASS 2026-11-12 |
 | [hlt9-evidence-or-nothing](Tests#t-hlt9-evidence-or-nothing) | requirement | HLT-9 | Given review findings, when they are checked and filed, then each names its feature and cited evidence, one with no verifiable evidence is dropped, and nothing is filed twice. | PASS 2026-11-10 |
