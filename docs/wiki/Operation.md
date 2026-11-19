@@ -58,10 +58,6 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - On start the operation session runs a self-check and lists what is missing, each with its fix.
   - It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached.
   - agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's.
-- OPS-24: **Unreviewed** The operation layer files its own findings
-  - A process finding the top or a machine session makes while scheduling, merging or deciding is filed by default, without asking, as an issue labelled ops-finding on the owning feature's Backlog milestone, linking the TOP-DECISION or record that found it.
-  - A finding that repeats an open issue (the same normalised title, or the same IDs in the title) is refused, not filed twice; the check-in lists what was filed since the last check-in.
-  - A safety-class finding is filed only with the owner's words. The delivery loop's own findings stay separate.
 
 ### Non-functional
 
@@ -175,12 +171,6 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | r2 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. <br> agent_command passes the tool list as one --allowedTools=<list> token; a check reports the two-token form, and applying the fix stays the owner's. | three-level-ops re-landed: its three-layer, machine-session and STATUS rule, ported onto OPS-23 from the old Monitoring requirement | o80: "Yes, I want you to handle all of the questions except the" |
 | r1 | 2026-11-18 | The operation session keeps itself running <br> On start the operation session runs a self-check and lists what is missing, each with its fix. <br> It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
-### OPS-24
-
-| rev | date | text | why | approved |
-|---|---|---|---|---|
-| r1 | 2026-11-19 | The operation layer files its own findings <br> A process finding the top or a machine session makes while scheduling, merging or deciding is filed by default, without asking, as an issue labelled ops-finding on the owning feature's Backlog milestone, linking the TOP-DECISION or record that found it. <br> A finding that repeats an open issue (the same normalised title, or the same IDs in the title) is refused, not filed twice; the check-in lists what was filed since the last check-in. <br> A safety-class finding is filed only with the owner's words. The delivery loop's own findings stay separate. | new requirement for the ops-findings goal (v2.1, TOP-DECISION 88) | o220: "add a v2.1 goal so the operation layer files its own process findings to each feature's backlog automatically, by default, separate from the delivery loop (ops-findings)" |
-
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -238,7 +228,6 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 | [unattended-checkin-line](Tests#t-unattended-checkin-line) | requirement | OPS-18 | Given the check-in, when it prints Coming up, then an Operation line carries the sends left, the loop's expiry and the standing instructions. | not run |
 | - | requirement | OPS-18 | no passing test | not enforced |
 | [unattended-sends-warn](Tests#t-unattended-sends-warn) | requirement | OPS-23 | Given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message. Given an agent_command with the two-token --allowedTools form, when the defaults check runs, then it reports it and applying it stays the owner's. | PASS 2026-11-19 |
-| - | requirement | OPS-24 | no passing test | not enforced |
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | OPS-7 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-10 |
 | [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | OPS-7 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
 | [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | OPS-7 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
