@@ -1,14 +1,7 @@
-"""Read and write .loop/regression-runs.tsv: each row's last run as id, status, date, run, flaky.
+"""Read and write .loop/regression-runs.tsv (each row's last run), a local `regression.py run`'s GitHub issues (sync_issues) and the
+in-loop test time budget (budget, fit, execute).
 
-run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day
-runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's result flipped on (tiers.py
-flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
-record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
-
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body,
-dry-run (WOULD lines) unless live; actions.py keeps the CI copy. The time budget of an in-loop test run lives here too (budget, fit,
-execute): a --reuse run (qa, ship and pull-request lanes) stops at test_budget_minutes (default 15, floor 15), runs rows in tier
-order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite.
+The formats, the --reuse budget rules and why per-result evidence stays out of the tsv: references/commands.md, "runs.py notes".
 """
 import datetime
 import glob
@@ -43,14 +36,12 @@ QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")  # `| g
 
 
 def again(command):
-    """The command with each `| grep -q PATTERN` made `| cat`, or None when it has none."""
     loud = QUIET.sub("| cat", command)
     return loud if loud != command else None
 
 
 def shown(run, command, code, text):
-    """A failing row's last LAST lines, never empty; a row that printed nothing runs once more with its quiet stage loud (run is
-    the caller's (code, text) runner)."""
+    """A failing row's last LAST lines, never empty; run is the caller's (code, text) runner."""
     if not text.strip() and again(command):
         text = run(again(command))[1]
     lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
@@ -102,7 +93,6 @@ def gh(*args, body=None):
 
 
 def read_issues():
-    """(issues, ""): the GraphQL list, else REST pages of 100 without comments; (None, error) when both fail."""
     rest = ("api", "--paginate", "repos/{owner}/{repo}/issues?state=all&labels=regression&per_page=100", "--jq",
             ".[] | select(.pull_request == null) | {number, state: (.state | ascii_upcase), body, labels}")
     for args in (("issue", "list", "--label", "regression", "--state", "all", "--limit", str(ISSUE_LIMIT),
