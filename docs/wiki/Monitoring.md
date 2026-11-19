@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept merge-queue-c@1d308b4a -->
+Review: **Unreviewed** <!-- kept known-red-docs-release2@4178e0fc -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
