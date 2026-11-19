@@ -23,7 +23,7 @@ delivery loop already has its own findings (`goal.py finding`, `milestone.py lef
 2. The check-in prints `Findings filed (operation layer):` from `findings.log` since the last check-in. A finding in a
    safety class (`auto.CLASSES`) is refused unless `--owner-words oN` names an owner record that lists `*`, `ops-findings`,
    the page or an ID in the title. Negative controls: no words, words that list other IDs.
-3. Requirement OPS-24 (Operation page, Unreviewed) goes to the operation session before the commit is pushed; it merges only
+3. Requirement OPS-25 (Operation page, Unreviewed) goes to the operation session before the commit is pushed; it merges only
    after the v2.0 tag; no new shipped file; one regression row added and two folded into one (net 0).
 
 ## Open questions

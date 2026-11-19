@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
         deps = GOOD.replace("[>] first-goal ~40m left pc", text).replace("[>] first-goal\n", "first-goal\n")
         wrong = reply_hook.shown(reply(deps.replace(text, text.replace("[>] ", "") if drop == "marker" else text)), root)
         check(any("first-goal" in w for w in wrong), "negative control: a goal with no %s is flagged by name" % drop)
-    # OPS-24: the operation layer files its own findings (layers.finding), and the check-in lists them
+    # OPS-25: the operation layer files its own findings (layers.finding), and the check-in lists them
     import argparse
     import layers
     calls, opened = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}]

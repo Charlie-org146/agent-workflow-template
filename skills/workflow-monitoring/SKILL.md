@@ -138,5 +138,5 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-monitoring reply-status` | `python3 scripts/reply_hook.py status` |
 | `/workflow-monitoring fill-pool ID...` | `python3 scripts/pool.py add ID...` |
 | `/workflow-monitoring start` | `python3 scripts/operate.py start` (readiness table, MON-1); `timer [created]` shows and records the check-in timer (MON-5); `pool.py archive` archives released workers' sessions (MON-6) |
-| `/workflow-monitoring finding TITLE --feature PAGE --found REF` | `python3 scripts/layers.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-24: files the operation layer's own finding on the feature's Backlog milestone) |
+| `/workflow-monitoring finding TITLE --feature PAGE --found REF` | `python3 scripts/layers.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-25: files the operation layer's own finding on the feature's Backlog milestone) |
 | `/workflow-monitoring adopt [OWNER/NAME ...]` | `python3 scripts/board.py repos adopt [--recent N] [--into DIR] [OWNER/NAME ...]` |

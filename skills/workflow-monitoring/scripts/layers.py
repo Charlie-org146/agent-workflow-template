@@ -5,7 +5,7 @@ usage: layers.py status [--force]   a machine: send its STATUS to top when it ch
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
        layers.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                    OPS-24: file a finding of top or a machine session, without asking, as an ops-finding issue on
+                                    OPS-25: file a finding of top or a machine session, without asking, as an ops-finding issue on
                                     "Backlog: PAGE" ("Other" if no page matches); REF is the TOP-DECISION or record that found it.
                                     Refuses a repeat of an open issue and a safety-class finding with no owner's words.
 
@@ -255,7 +255,7 @@ def covered(root, record, title, page):
 
 
 def file_finding(root, args):
-    """(exit code, line): file one finding of the operation layer (OPS-24); nothing is filed when any check refuses."""
+    """(exit code, line): file one finding of the operation layer (OPS-25); nothing is filed when any check refuses."""
     import auto
     title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
     if not title or not args.found.strip():
