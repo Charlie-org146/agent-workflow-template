@@ -3,7 +3,7 @@
 
 How to use: [How-to-use-Integrations](How-to-use-Integrations)
 
-Review: **Unreviewed** <!-- kept readme-conformance@85f0f353 -->
+Review: **Unreviewed** <!-- kept readme-conformance@a43136b1 -->
 
 ## Problem
 - The loop works with systems outside the repo, such as documents, trackers, mail, chat, agents and deploy targets, and each one is wired in its own way, so a new system means rebuilding something.
