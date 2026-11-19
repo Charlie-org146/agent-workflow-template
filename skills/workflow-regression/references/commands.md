@@ -52,7 +52,7 @@ workflow
   that always runs writes the run summary: one header with totals and the run time, then one table per feature, or the
   plain results if that fails. Rows run with no GitHub token and none of the runner's own files in their environment
   (`regression.py run` too), and the checkout uses `persist-credentials: false`.
-- `tests.py list` prints every test in one fixed format, grouped by feature (`--markdown` tables, `--tsv` lines,
+- `regression.py list` prints every test in one fixed format, grouped by feature (`--markdown` tables, `--tsv` lines,
   `--kind requirement|workflow|defect` only that kind);
   `summary` writes the GitHub run summary from a run's results; `issues --write` records each defect test's issue or
   pull request state. The wiki Tests lines and the health report use the same fields.
@@ -168,10 +168,10 @@ Status: built and proven: Refuse to replace another workflow; Write the nightly 
 Stops for the owner: none.
 Proof: toy tests run its inline block. On this repo a manual run on GitHub passed all 64 rows; the first run failed 2 and opened 2 issues, and the passing run closed them. The nightly and tag triggers haven't fired yet.
 
-#### `tests.py`: `list [--markdown|--tsv]`, `summary`, `issues [--write]`
+#### `regression.py`: `list [--markdown|--tsv]`, `summary`, `issues [--write]`
 
 ```bash
-python3 scripts/tests.py list
+python3 scripts/regression.py list
 ```
 
 Every test in one fixed format, grouped by feature: the wiki page that holds the requirement a row guards, in page
@@ -363,7 +363,7 @@ part is advice and never blocks.
 | NO LANE | lane.py | 3 | `lane-wait` found no lane for this HEAD | start one with `role.py lane SLUG NAME` |
 | UNMAPPED | tiers.py | — | a changed or deleted path no row declares (Note) | declare it in the `# reads:` header of the row that tests it, or let pr run the full suite once |
 | KILLED | regression.py | — | a signal stopped a row: `KILLED <row>: signal <name> (pid <n>)` (Note) | see the lane log |
-| FLAKY | regression.py | per result | a row gave different results on the same clean commit, runner and python (Note): the raw result counts, the flag stays on that commit (regression-runs.tsv's flaky column, tests.py list, health's TESTS block) and the row is never reused | find the nondeterminism in the row's command; FLAKY clears when a later commit's clean run passes |
+| FLAKY | regression.py | per result | a row gave different results on the same clean commit, runner and python (Note): the raw result counts, the flag stays on that commit (regression-runs.tsv's flaky column, regression.py list, health's TESTS block) and the row is never reused | find the nondeterminism in the row's command; FLAKY clears when a later commit's clean run passes |
 | SUITE_TIME | regression.py / CI run step | — | a plain full run's time (`regression.py run nightly`, or a CI run whose target is nightly), appended to `<git common dir>/loop/suite-times.tsv` for health's REG-7 check; CI keeps its line as artifact `suite-time`, which the scheduled health job downloads with a `ci` column | none |
 | REFUSED (BAD_TARGET) | CI run step | 1 | the run-by-hand `target` input is not land, nightly or a row id: `REFUSED (BAD_TARGET): bad target "<value>": use land, nightly or a row id from regression.py list. Fix: rerun the workflow with one of those`; no row ran | rerun the workflow with one of those |
 | REFUSED (BASE_MOVED) | merge.py | 2 | the base moved in paths this goal's rows reach since the pr lane, or it can't tell (the planner or `git diff` failed): an unknown never merges | `goal.py pr SLUG`, then `merge.py SLUG` |
@@ -431,7 +431,7 @@ Writes `.github/workflows/regression.yml`: rows run on `regression_cron` (4-hour
 `v*` tags and by hand; each failing row's issue is labeled `regression` and `defect`, names what it guards and, with `feature_labels` on, carries its `feature:<Page>` label (no milestone is read, made or set); a failed write fails the step (`FILE_FAILED`). It refuses to replace a workflow it didn't write. The job has 90 minutes. Each row runs in its own process group
 with a 15-minute limit, and starts only if that full limit still fits the job's time; a row that doesn't fit is
 skipped, reported `SKIPPED`, and fails with an issue. Each row's result is saved as it ends, and a last step that
-always runs writes the run summary: one header with totals and the run time, then one table per feature (`tests.py
-summary`); if that fails, the plain results still reach the summary. Rows (here too, under `regression.py run`) run with no GitHub token and none of the
+always runs writes the run summary: one header with totals and the run time, then one table per feature (`regression.py
+summary`, which the workflow carries as `tests.py`); if that fails, the plain results still reach the summary. Rows (here too, under `regression.py run`) run with no GitHub token and none of the
 runner's own files (`GITHUB_STEP_SUMMARY`, `GITHUB_ENV`, `GITHUB_OUTPUT`, `GITHUB_PATH`, `GITHUB_STATE`) in their
 environment, so no row inherits the real summary (this stops accidents, not a hostile row), and the checkout keeps no token in its git config.

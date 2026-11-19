@@ -1,28 +1,14 @@
 #!/usr/bin/env python3
-"""The goal tier of `regression.py run land --reuse --tier goal` (REG-4), and `--kind`.
+"""The goal tier of `regression.py run land --reuse --tier goal` (REG-4), and `--kind`. Imported by regression.py, not run.
 
-Imported by regression.py, not run. A goal lane plans from the branch's lane record only when its merge-base with the base
-branch is the current one, else from the merge-base. It runs the rows whose closure reaches a file changed since then
-(lanes.py's closure), rows added or changed in .loop/regression.tsv, rows that run tools on the repo root (lanes.ROOT_RUN),
-a usable record's FAIL rows and any flaky row (never reused). After a base merge the record is not usable, and the rows
-the merge changed run too. A path no row maps, or a deleted one, is a Note at every lane: it picks the rows that name it
-and the runners (REG-7), never a full run. With no merge-base every row is a candidate (FULL); a lane with no plan takes a
-lane slot. The run stays within test_budget_minutes (runs.py): rows past it are left to the scheduled full suite. Each
-selected row's reason is printed (SELECTED lines) and summed in one ROWS line for the LANE line.
-
-FLAKY (REG-9), flaky_apply: a row whose result flipped on the same clean commit, runner and python version. Each result
-keeps its raw PASS/FAIL; the mark is a separate sticky `flaky` flag (the commit it flipped on). The previous result is the
-row in the branch's lane record (lanes.py: commit, clean, host, python). Two results on the same commit, both clean, from
-the same host and python count, in either order, and the mark stays on that commit until a later clean run passes. A dirty
-tree, `regression.py red`, another runner or an older record never marks. The exit status follows the actual result, and a
-flaky row is never reused (lanes.plan, tiers.reason). workflow-regression/references/commands.md.
-
-Plan cache: each row's closure is kept per branch in <git common dir>/loop/plans/, keyed by HEAD, the rows file, the planner's
-code, LANES_WIDE and the loop's uncommitted files. A dirty tree, or a plan that read an ignored or outside-repo file, never
-uses or saves it; LANES_NO_CACHE=1 turns it off. First output line: `PLAN_CACHE: <state>` (commands.md).
+A goal lane runs the rows whose closure reaches a file changed since the branch's merge-base, rows added or changed in
+.loop/regression.tsv, root runners, a usable record's FAIL rows and any flaky row; a path no row maps is a Note, never a full
+run (REG-7). FLAKY (REG-9): a row whose result flipped on the same clean commit, host and python keeps its raw PASS/FAIL and a
+sticky `flaky` flag. Plan cache: <git common dir>/loop/plans/; LANES_NO_CACHE=1 turns it off (references/commands.md).
 """
 import hashlib
 import json
+import math
 import os
 import platform
 import socket
@@ -31,15 +17,13 @@ import sys
 
 import lanes
 import narrow
-
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
-if not sys.stdin or not sys.stdin.isatty():
-  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+from lanes import guard
+from narrow import features, md_table, refuse
+from slots import KIND, OTHER, RUNS, SEEN, STATES, cell, issues_of, key_of, tsv  # slots sets GIT_TERMINAL_PROMPT
 
 KNOWN = ".loop/regression-known.tsv"
 KINDS = {"requirement": "criterion", "workflow": "workflow", "defect": "defect"}
-BASE = None  # the merge-base this run planned from: lanes.save writes it into the record
+BASE = None
 
 
 def kinds(rows, kind):
@@ -48,7 +32,7 @@ def kinds(rows, kind):
 
 
 def target(root, args):
-  """S23: a goal lane plans from goal_levels: land (default), or nightly for land and nightly rows."""
+  """A goal lane plans from goal_levels: land (default), or nightly for land and nightly rows."""
   return "nightly" if args.tier and args.target == "land" and config(root).get("goal_levels") == "nightly" else args.target
 
 
@@ -69,7 +53,7 @@ def merge_base(root, base):
 
 
 def usable(root, record, base):
-  """F4 record usability: (record or None, usable); usable only when its merge-base equals the current one."""
+  """(record or None, usable): usable only when its merge-base equals the current one."""
   old, _ = lanes.load(record, root)
   return old, bool(old and base and old.get("merge_base") == base)
 
@@ -93,13 +77,13 @@ def status(root):
   """git status lines with unquoted non-ASCII paths, or None when git failed."""
   try:
     out = lanes.git(root, "-c", "core.quotepath=false", "status", "--porcelain", "--no-renames", "--untracked-files=all")
-  except UnicodeError:  # a locale that cannot decode a path: no cache
+  except UnicodeError:
     return None
   return None if out is None else out.splitlines()
 
 
 def loop_state(root, lines):
-  """A digest of the loop's uncommitted files (lanes.BOOKKEEPING): lanes.dirty ignores them, so the key hashes them."""
+  """A digest of the loop's uncommitted files (lanes.BOOKKEEPING), which lanes.dirty ignores."""
   digest = hashlib.sha256()
   for line in sorted(lines or []):
     if line[3:].strip('"').startswith(lanes.BOOKKEEPING):
@@ -118,7 +102,7 @@ def clean(lines):
 
 
 def unsafe(root, cache):
-  """Why the plan must not be saved, or None: it read a file outside the repo (a symlink) or an ignored one."""
+  """Why the plan must not be saved, or None: it read a file outside the repo or an ignored one."""
   names, top = set(cache.get("text", ())), os.path.realpath(root)
   for item, value in cache.items():
     if isinstance(item, tuple) and item[0] in ("closure", "walk"):
@@ -136,7 +120,7 @@ def unsafe(root, cache):
 
 
 def key(root, lines=None):
-  """(sha256 hex, parts) of the plan cache's key: schema, planner code, HEAD, the row file, LANES_WIDE, the loop's files."""
+  """(sha256 hex, parts) of the plan cache's key."""
   lines = status(root) if lines is None else lines
   try:
     with open(os.path.join(root, lanes.TABLE), "rb") as handle:
@@ -149,13 +133,13 @@ def key(root, lines=None):
 
 
 def plan_file(record):
-  """The record's path with its tests folder swapped for plans: the cache file of that branch."""
+  """The record's path with its tests folder swapped for plans."""
   folder, name = os.path.split(record)
   return os.path.join(os.path.dirname(folder), "plans", name)
 
 
 def lead(root, picked, record, cache):
-  """Decide the cache state, print its PLAN_CACHE line first and seed cache; (file, key) when a miss may be saved."""
+  """Print the PLAN_CACHE line and seed the cache; (file, key) when a miss may be saved."""
   off = os.environ.get("LANES_NO_CACHE", "").lower() in ("1", "true", "yes")
   lines = status(root) if record and not off else None
   left = [line for line in lines or [] if not line[3:].strip('"').startswith(lanes.BOOKKEEPING)]
@@ -168,14 +152,14 @@ def lead(root, picked, record, cache):
 
 
 def moved(root, old, base):
-  """What the base brought in since the record's merge-base (a base merge): those rows rerun on the merged result."""
+  """What the base brought in since the record's merge-base: those rows rerun."""
   was = (old or {}).get("merge_base")
   out = lanes.git(root, "diff", "--name-only", "--no-renames", was, base) if was and base and was != base else ""
   return (out or "").split()
 
 
 def ancestor(root, commit, memo):
-  """lanes.ancestor once per commit per plan: most rows of a full record share one commit."""
+  """lanes.ancestor once per commit per plan."""
   cache = memo.setdefault("anc", {})
   if commit not in cache:
     cache[commit] = lanes.ancestor(root, commit)
@@ -186,7 +170,7 @@ def since(root, row, old, ok, base, memo):
   """(commit to compare the row's table line with, paths changed for this row)."""
   prior = (old or {}).get("rows", {}).get(row["id"])
   seen = bool(prior) and ancestor(root, prior["commit"], memo)
-  if seen and ok:  # a usable record: only what changed since this row last ran
+  if seen and ok:
     return prior["commit"], changed(root, prior["commit"], memo)
   extra = changed(root, prior["commit"], memo) if seen else []
   return base, sorted(set(changed(root, base, memo)) | set(extra) | set(memo["moved"]))
@@ -212,7 +196,7 @@ def reason(root, row, old, ok, base, cache, memo):
   if lanes.table(root, at, "regression.tsv", memo).get(row["id"]) != memo["tsv"].get(row["id"]):
     return "new row"
   found = next((p for p in paths if hit(root, row, p, at, cache, memo)), None)
-  prior = ok and old["rows"].get(row["id"])  # DEL-15: main-only rows are reused
+  prior = ok and old["rows"].get(row["id"])
   if found and prior and ancestor(root, prior["commit"], memo) and not any(hit(root, row, p, base, cache, memo) for p in changed(root, base, memo)):
     return ""
   if found:
@@ -229,23 +213,21 @@ def quiet(path, gone):
 
 
 def unmapped(root, picked, base, cache):
-  """F4 unmapped rule: (paths no row maps, deleted paths) the goal changed since the merge-base."""
+  """(paths no row maps, deleted paths) the goal changed since the merge-base."""
   gone = lanes.deleted(root, base)
   deps = [lanes.closure(root, row["command"], cache)[0] for row in picked]
   return [p for p in lanes.changed(root, base) or [] if not quiet(p, gone) and not any(lanes.hits(p, d) for d in deps)], gone
 
 
 def notes(loose, gone):
-  """The advisory UNMAPPED lines (DX-15, DX-18): a path no row maps, or a deleted one, picks the rows that name it and the
-    runners, never a full run (REG-7); whatever the time budget leaves is the scheduled full suite's."""
+  """The advisory UNMAPPED lines (DX-15, DX-18): the rows naming a path no row maps, and the runners."""
   return ["UNMAPPED %s: no row declares it. Note: the rows that name it and the runners run; declare it in the "
     "# reads: header of the row that tests it to map it" % p for p in loose] + [
     "UNMAPPED %s: deleted. Note: the rows that name it and the runners run" % p for p in gone]
 
 
 def picks(root, picked, paths, old, ok, cache, memo):
-  """{row id: why} for the rows a path no row maps (or a deleted one) selects: those naming it, and the runners. A row
-    picks it up only while that path is among its changes since it last ran, so a lane after it reuses the result."""
+  """{row id: why} for the rows a path no row maps (or a deleted one) selects."""
   found = {}
   for row in picked:
     mine = [p for p in paths if p in since(root, row, old, ok, BASE, memo)[1]]
@@ -257,7 +239,7 @@ def picks(root, picked, paths, old, ok, cache, memo):
 
 
 def rank(because):
-  """Run order (#531): new or changed rows, reruns, rows that reach a changed file, then root runners and picks."""
+  """Run order (#531): new or changed rows, reruns, reaches, then root runners and picks."""
   return 0 if because.startswith("new row") else 1 if because.startswith(("failure", "skipped")) else 3 if because.startswith(
     ("root runner", "names")) else 2
 
@@ -282,14 +264,14 @@ def plan(root, picked, record):
       why[rid] = why[rid] or because
   why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
   todo = [row["id"] for row in picked if why[row["id"]]]
-  todo.sort(key=lambda rid: rank(why[rid]))  # the goal's own new and changed rows first, then reruns, reaches, the picks last
+  todo.sort(key=lambda rid: rank(why[rid]))
   reused = [rid for rid in why if ok and rid in old["rows"] and not why[rid]]
   print("\n".join(lines)) if lines else None
   summary(picked, todo, why, len(loose) + len(gone), (full, text), old if ok else None)
   failed = None
   if saved:
     again = status(root)
-    if clean(again) and key(root, again) == now:  # nothing changed while the plan ran
+    if clean(again) and key(root, again) == now:
       failed = unsafe(root, cache) or narrow.store(saved, now, cache)
   print("PLAN_CACHE: not saved (%s)" % failed) if failed else None
   return todo, reused, old if ok else None, full
@@ -313,9 +295,7 @@ def summary(picked, todo, why, count, full, old):
 
 
 def suite_time(root, args, head, results, day):
-  """REG-7 (S14, S25): only the plain full run `regression.py run nightly` (no row id, --reuse, --tier or --kind)
-    appends `<sha> TAB full TAB <seconds> TAB <date>` to <git common dir>/loop/suite-times.tsv, outside the worktree so
-    it never dirties a lane, and prints SUITE_TIME; health's milestone.py reads the newest line."""
+  """REG-7: a plain full `run nightly` appends `<sha> TAB full TAB <seconds> TAB <date>` to loop/suite-times.tsv and prints SUITE_TIME."""
   if args.target != "nightly" or args.reuse or args.tier or args.kind or not results:
     return
   seconds = int(round(sum(item["seconds"] for item in results)))
@@ -331,7 +311,7 @@ def runner():
 
 
 def previous(record):
-  """The lane record's rows as written, with no schema or code check: the same commit means the same code."""
+  """The lane record's rows as written (the same commit means the same code)."""
   try:
     with open(record) as handle:
       rows = json.load(handle).get("rows")
@@ -344,7 +324,7 @@ def compare(prev, state, head, clean):
   """The row's flaky flag after this result: the commit it flipped on, or ''."""
   prev = prev if isinstance(prev, dict) else {}
   mark = str(prev.get("flaky") or "")
-  if not clean or state == "SKIPPED" or prev.get("status") == "SKIPPED":  # a skip is no flip
+  if not clean or state == "SKIPPED" or prev.get("status") == "SKIPPED":
     return mark
   if prev.get("commit") == head and prev.get("clean") == "yes" and (prev.get("host"), prev.get("python")) == runner():
     if mark == head or (prev.get("status") == "PASS") != (state == "PASS"):
@@ -357,7 +337,7 @@ def word(passed):
 
 
 def flaky_apply(record, results, head, clean):
-  """Give each result its commit, clean, host, python and (on a clean tree) flaky fields; return the FLAKY lines."""
+  """Give each result its commit, clean, host, python and flaky fields; return the FLAKY lines."""
   rows, (host, python), lines = previous(record) if record else {}, runner(), []
   for item in results:
     item.update(commit=head, clean="yes" if clean else "no", host=host, python=python)
@@ -370,3 +350,67 @@ def flaky_apply(record, results, head, clean):
       lines.append("FLAKY %s: %s on %s (same clean tree; runner %s, python %s). Note: the result counts as %s; "
         "the row is never reused while flaky" % (item["id"], seen, head[:12], host, python, word(now)))
   return lines
+
+
+# <tests
+def fields(row, found, ran, issues, markdown=False, raw=False):
+  """The one fixed format for one row: test, kind, guards, checks, runs, result, seen failing."""
+  status, day, flag = (tuple(ran.get(row[0], ("not run", ""))) + ("",))[:3]
+  known = issues.get(row[7], ()) if row[6] == "defect" else ()
+  if len(known) > 2 and known[2] and known[0] == "open" and not (status == "PASS" and day > known[2][:10]):
+    status, day = "failing (issue reopened)", known[2][:10]
+  return [cell(item, raw) for item in (row[0], KIND.get(row[6] or "criterion", row[6]), guard(row, found, issues, markdown),
+      row[5] or "-", RUNS.get(row[1], row[1] or "-"), (status + " " + day).strip() + flag,
+      row[4] if SEEN.match(row[4]) else "no")]
+
+
+def entries(root, results=None, markdown=False, raw=False):
+  """[(feature, [fields])] in page order, then Other; draft rows left out; with results, only the rows that ran."""
+  titles, found = features(root)
+  ran = {row[0]: ((row + [""] * 5)[1:3] + [" FLAKY" if (row + [""] * 5)[4] else ""]) for row in tsv(root, "regression-runs.tsv")
+    if len(row) > 1}
+  if results is not None:
+    ran = {name: (state, "", "") for name, state in results.items()}
+  issues, groups = issues_of(root), {}
+  rows = {row[0]: (row + [""] * 8)[:8] for row in tsv(root, "regression.tsv")}
+  order = [name for name in rows if rows[name][1] != "draft"] if results is None else list(results)
+  for name in order:
+    row = rows.get(name) or [name, "", "", "-", "", "", "-", ""]
+    key = key_of(row)
+    groups.setdefault(found[key][0] if key in found else OTHER, []).append(fields(row, found, ran, issues, markdown, raw))
+  return [(title, groups[title]) for title in titles + [OTHER] if title in groups]
+
+
+def cmd_summary(args):
+  try:
+    took = float(args.took)
+    if took < 0 or not math.isfinite(took):
+      raise ValueError
+  except ValueError:
+    return refuse("--took %r is not a number of seconds. Fix: pass the run's seconds, e.g. --took 95" % args.took)
+  try:
+    with open(args.results) as handle:
+      raw = handle.read().splitlines()
+  except OSError as err:
+    return refuse("can't read the results file %s: %s. Fix: pass the file the run wrote" % (args.results, err.strerror))
+  results = {}
+  for number, line in enumerate(raw, 1):
+    if not line.strip() or line.startswith("#"):
+      continue
+    parts = line.split("\t")
+    if len(parts) != 2 or parts[1] not in STATES:
+      return refuse("%s:%d is %r, not id<TAB>state with a state in %s. Fix: correct that line"
+        % (args.results, number, line[:80], ", ".join(STATES)))
+    results[parts[0]] = parts[1]
+  count = {state: sum(1 for value in results.values() if value == state) for state in STATES}
+  minutes, seconds = divmod(int(round(took)), 60)
+  out = ["## Regression: %d passed, %d failed, %d known, %d skipped of %d, in %dm %02ds"
+    % (count["PASS"], count["FAIL"], count["KNOWN"], count["SKIPPED"], len(results), minutes, seconds), ""]
+  for feature, lines in entries(args.root, results, markdown=True):
+    out += ["### " + feature, ""] + md_table(("Test", "Kind", "Guards", "Checks", "Result"),
+      [x[:4] + [x[5]] for x in lines]) + [""]
+  print("\n".join(out).rstrip("\n"))
+  return 0
+
+
+# tests>

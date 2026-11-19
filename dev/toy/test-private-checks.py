@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# reads: skills/workflow-regression/scripts/tests.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/fit.py
+# reads: skills/workflow-regression/scripts/proctree.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/fit.py
 """Proves a private repo's required checks (#4537): the pr step runs and posts a status for each required check whose job is plain
 `run:` steps, names each one it can't satisfy (a third-party action) and stops before the PR opens, never posts a failing job
 green, and a repo requiring only the regression check passes as before. Fixture repos only; gh is stubbed."""
@@ -13,7 +13,7 @@ here = os.environ.get("TOY_HERE") or os.path.dirname(os.path.dirname(os.path.dir
 sys.path.insert(0, os.path.join(here, "skills", "workflow-delivery", "scripts"))
 sys.path.insert(0, os.path.join(here, "skills", "workflow-regression", "scripts"))
 import private  # noqa: E402
-import tests  # noqa: E402
+import proctree  # noqa: E402
 
 fails = []
 
@@ -64,18 +64,18 @@ with tempfile.TemporaryDirectory() as top:
     os.makedirs(os.path.join(top, ".github", "workflows"))
     with open(os.path.join(top, ".github", "workflows", "ci.yml"), "w", newline="\n") as handle:
         handle.write(WORKFLOW)
-    reg, local, no = tests.classify(top, ["regression", "checks", "scan", "badcheck"])
+    reg, local, no = proctree.classify_jobs(top, ["regression", "checks", "scan", "badcheck"])
     check("a regression-only job, plain script jobs and a third-party-action job are told apart",
           reg == ["regression"] and sorted(local) == ["badcheck", "checks"] and no == ["scan"])
     check("a block `run: |` job keeps all its lines", local["checks"] == ["echo plain > made.txt\ntest -f made.txt"])
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        posted = tests.lane_checks(top, ["regression", "checks"])
+        posted = proctree.lane_checks(top, ["regression", "checks"])
     check("the pr step runs a plain job's steps here and posts its status with the regression one",
           posted == ["regression", "checks"] and os.path.exists(os.path.join(top, "made.txt")) and "BLOCKS" not in out.getvalue())
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        posted = tests.lane_checks(top, ["badcheck", "scan"])
+        posted = proctree.lane_checks(top, ["badcheck", "scan"])
     check("a plain job whose step fails is never posted green, and the third-party one is named",
           posted == [] and "BLOCKS: badcheck fails run here" in out.getvalue() and "BLOCKS: scan cannot be run here" in out.getvalue())
     stop = refusal(top, ["regression", "checks", "scan"])

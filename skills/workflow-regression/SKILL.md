@@ -112,7 +112,7 @@ The `workflow` command and the job it writes are in [references/commands.md](ref
 
 ## Test listing
 
-`scripts/tests.py` (`list`, `summary`, `issues`) prints every test in one format by feature, for the wiki, health and the run summary: `references/commands.md`.
+`scripts/regression.py` (`list`, `summary`, `issues`, `fixes`) prints every test in one format by feature, for the wiki, health and the run summary: `references/commands.md`.
 
 ## Rules
 
@@ -135,5 +135,5 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-regression run land` | `python3 scripts/regression.py run land` |
 | `/workflow-regression sync` | `python3 scripts/regression.py sync` |
 | `/workflow-regression workflow` | `python3 scripts/regression.py workflow` |
-| `/workflow-regression list` | `python3 scripts/tests.py list` |
-| `/workflow-regression issues` | `python3 scripts/tests.py issues --write` |
+| `/workflow-regression list` | `python3 scripts/regression.py list` |
+| `/workflow-regression issues` | `python3 scripts/regression.py issues --write` |

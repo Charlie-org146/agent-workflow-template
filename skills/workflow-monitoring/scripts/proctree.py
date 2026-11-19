@@ -15,6 +15,7 @@ fresh (input + cache writes + output, the budget's unit) and total (adds cache r
 subagents are left out, and nothing raises: an unreadable transcript measures nothing. tokens[step] is a measure {input, cache_read, cache_write,
 output, calls, model, peak} or an int an older step reported. And the operation session's own turns (MON-5): classify, asked, needs_layout and
 op_append, which adds a row to <git common dir>/loop/op-tokens.tsv, the tokens since the last row by trigger (scheduled, peer, human, hook-retry).
+And lane_checks, classify_jobs and run_steps (lane.py, private.py): the required checks the pr step can post a status for.
 """
 import atexit
 import glob
@@ -29,14 +30,14 @@ import time
 import zlib
 from collections import Counter
 
-os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # a child that asks for a password fails instead of waiting
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 if os.name == "nt":
   import ctypes
 
   def _k32():
     k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    k32.OpenProcess.restype = ctypes.c_void_p  # a HANDLE: pointer-sized, never truncated to an int
+    k32.OpenProcess.restype = ctypes.c_void_p
     k32.CloseHandle.argtypes = [ctypes.c_void_p]
     k32.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong)]
     k32.GetProcessTimes.argtypes = [ctypes.c_void_p] + [ctypes.POINTER(ctypes.c_ulonglong)] * 4
@@ -52,12 +53,12 @@ if os.name == "nt":
     except (TypeError, ValueError):
       return False
     k32 = _k32()
-    handle = k32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    handle = k32.OpenProcess(0x1000, False, pid)
     if not handle:
-      return ctypes.get_last_error() == 5  # access denied: it runs, as EPERM on POSIX
+      return ctypes.get_last_error() == 5
     code = ctypes.c_ulong()
     try:
-      return bool(k32.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259  # STILL_ACTIVE
+      return bool(k32.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == 259
     finally:
       k32.CloseHandle(handle)
 
@@ -66,7 +67,7 @@ if os.name == "nt":
     handle = k32.OpenProcess(0x1000, False, int(pid))
     if not handle:
       return ""
-    times = [ctypes.c_ulonglong() for _ in range(4)]  # creation, exit, kernel, user
+    times = [ctypes.c_ulonglong() for _ in range(4)]
     try:
       return str(times[0].value) if k32.GetProcessTimes(handle, *[ctypes.byref(t) for t in times]) else ""
     finally:
@@ -81,7 +82,7 @@ else:
   def kill(pid, sig=signal.SIGKILL):
     try:
       os.killpg(pid, sig)  # posix-only branch
-    except OSError:  # already gone
+    except OSError:
       pass
 
   def probe(pid):
@@ -204,7 +205,6 @@ def outcap_free(on):
     sys.stdout.free = on
 
 
-# --- tokens measured from a session's own transcript (DEL-16): per step for a worker, per trigger for the operation session
 FIELDS = ("input", "cache_read", "cache_write", "output")
 ID = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 
@@ -318,7 +318,6 @@ def live(state):
   return fresh(got) if got else 0
 
 
-# --- the operation session's own turns (MON-5, C3, C4): classify each by what started it; op_append adds a row to op-tokens.tsv
 TRIGGERS = ("scheduled", "peer", "human", "hook-retry")
 HEADER = "# time\tsession\tcontext\t" + "\t".join(TRIGGERS) + "\ttotal"
 PEER = ("finished a turn", "Another Claude session", "<task-notification", "<cross-session-message", "side-sessions-event",
@@ -405,6 +404,61 @@ def op_append(root, now=None):
   with open(table, "a", encoding="utf-8", newline="\n") as handle:
     handle.write((HEADER + "\n" if new else "") + line + "\n")
   return line
+
+
+def run_steps(body):
+  """The `run:` commands of one job body (a `run: |` block read to its last indented line)."""
+  out, lines = [], body.split("\n")
+  for n, line in enumerate(lines):
+    found = re.match(r"(\s*)(?:- )?run:[ \t]*(.*)$", line)
+    if found:
+      cmd = found.group(2) if not re.match(r"[|>][-+]?$", found.group(2)) else ""
+      indent = len(found.group(1)) + (2 if "- run" in line else 0)
+      for more in lines[n + 1:]:
+        if more.strip() and len(more) - len(more.lstrip()) <= indent:
+          break
+        cmd += "\n" + more.strip()
+      out.append(cmd.strip())
+  return out
+
+
+def classify_jobs(top, contexts):
+  """(regression, local, cannot): jobs that only run regression.py (#3840), jobs of plain `run:` steps the pr step can run here, and the rest."""
+  jobs, flows = [], os.path.join(top, ".github", "workflows")
+  for name in os.listdir(flows) if os.path.isdir(flows) else []:
+    jobs += re.findall(r"^  ([\w-]+):\n((?:    .*\n|\n)*)", open(os.path.join(flows, name), errors="replace").read() + "\n", re.M)
+  reg, loc, no = [], {}, []
+  for c in contexts:
+    body = next((b for j, b in jobs if c in (j, *re.findall(r"^    name:\s*(.+?)\s*$", b, re.M))), "")
+    run = run_steps(body)
+    if not run or re.search(r"uses:\s*(?!actions/)\S|secrets\.|matrix", body):
+      no.append(c)
+    elif all("regression.py" in r for r in run):
+      reg.append(c)
+    else:
+      loc[c] = run
+  return reg, loc, no
+
+
+def lane_checks(top, contexts):
+  """The required checks the pr step posts a status for: regression-only jobs (#3840) and plain jobs whose steps pass here (#4537)."""
+  reg, loc, no = classify_jobs(top, contexts)
+  ok = list(reg)
+  for c, run in loc.items():
+    for cmd in run:
+      try:
+        bad = subprocess.run(["sh", "-c", cmd], cwd=top, capture_output=True, timeout=900).returncode
+      except (OSError, subprocess.TimeoutExpired):
+        bad = 1
+      if bad:
+        print("BLOCKS: %s fails run here: %s (BLOCKS)" % (c, cmd.splitlines()[0][:80]))
+        break
+    else:
+      ok.append(c)
+  for c in no:
+    print("BLOCKS: %s cannot be run here (a third-party action, secret or matrix), so no status posts (BLOCKS)" % c)
+  return ok
+
 
 
 if __name__ == "__main__":

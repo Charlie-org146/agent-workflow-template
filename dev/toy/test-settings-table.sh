@@ -3,7 +3,7 @@
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
 # reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the Settings and Automation blocks on Home and the README: one overridden setting shows exactly that one marked, the
 # README names and links the template repo with no local path, a changed setting makes check say STALE and render or publish

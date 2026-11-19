@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
-"""The narrow half of lanes.py's row mapping: a test script's `# reads:` header and what its entry points reach.
+"""The narrow half of lanes.py's row mapping: a test script's `# reads:` header and what its entry points reach. Imported by lanes.py.
 
-Imported by lanes.py, not run. A header is `# reads: <path> [<path>...]` lines in the leading comment block: repo-relative
-paths, a trailing / for a folder. Shell files add the paths they name, Python files their same-folder imports and quoted
-file names (and quoted module names with importlib.import_module); anything unresolved reruns the row always.
+A header is `# reads: <path>...` lines in the leading comment block (repo-relative, a trailing / for a folder); shell files add the
+paths they name, Python files their same-folder imports and quoted file names; anything unresolved reruns the row always.
 """
 import collections
+import glob
 import json
 import os
 import re
+import sys
 import time
 import zlib
 
 import lanes
+from slots import linked_prd
 
 
 CONFIG = ".loop/config.json"
-LIMIT = 32000000  # characters of file text held at once; a dropped text is read again
+LIMIT = 32000000
 
 
 class Texts(dict):
@@ -51,7 +53,7 @@ def names(text, path):
 
 
 def flat(text, out=None, path=()):
-  """config.json as a Counter of (key path, value), the last duplicate winning; None if unparseable."""
+  """config.json as a Counter of (key path, value); None if unparseable."""
   if out is None:
     try:
       return flat(json.loads(text, object_pairs_hook=list), collections.Counter())
@@ -66,7 +68,7 @@ def flat(text, out=None, path=()):
 
 
 def config_hit(root, commit, command, cache):
-  """Whether a config.json change since commit can affect a row: it reaches it and names a changed key."""
+  """Whether a config.json change since commit can affect a row."""
   if ("cfg", commit) not in cache:
     old, now = (flat(t or "") for t in (lanes.git(root, "show", commit + ":" + CONFIG), lanes.read(root, CONFIG, cache)))
     cache["cfg", commit] = None if old is None or now is None else {k for p, _ in (old - now) + (now - old) for k in p[-1:]}
@@ -134,7 +136,7 @@ def warm(path, key, picked, cache):
 
 
 def store(path, key, cache):
-  """Write every row closure the plan holds (atomic; files over 30 days pruned). The error class name or None."""
+  """Write every row closure the plan holds (atomic; files over 30 days pruned)."""
   rows = {}
   for item in [k for k in cache if isinstance(k, tuple) and k[0] == "closure"]:
     deps, always = cache[item]
@@ -207,7 +209,7 @@ def header(root, rel, cache):
 
 
 def scan(root, rel, cache):
-  """(files, folders) one file reaches, unwidened: shell, named paths; Python, same-folder imports and quoted names."""
+  """(files, folders) one file reaches, unwidened."""
   key = ("narrow", rel)
   if key in cache:
     return cache[key]
@@ -256,7 +258,7 @@ def scan(root, rel, cache):
 
 
 def wholes(root, text, base, bound):
-  """Skill folders a shell text reads as a whole (ls, grep -r, cp -R, "$d"); cd, mkdir and PYTHONPATH read nothing."""
+  """Skill folders a shell text reads as a whole (ls, grep -r, cp -R, "$d")."""
   out = set()
   for line in lanes.HERE_FORMS.sub("$here/", text).split("\n"):
     entered = set()
@@ -344,7 +346,7 @@ def narrow(root, seeds, cache):
 
 
 def suggest(root, rid):
-  """regression.py reads ROW: a `# reads:` header for the row's script from its newest trace in <git dir>/lanes-trace.tsv."""
+  """regression.py reads ROW: a `# reads:` header for the row's script from its newest trace."""
   rows = [line.split("\t") for line in (lanes.read(root, lanes.TABLE, {}) or "").splitlines() if line[:1] != "#"]
   command = next((cells[2] for cells in rows if len(cells) > 2 and cells[0] == rid), None)
   if command is None:
@@ -369,3 +371,41 @@ def suggest(root, rid):
     out[-1] += " " + path
   print("\n".join(out) if out != ["# reads:"] else "# reads: (the trace saw no skill file read)")
   return 0
+
+
+# <tests
+def refuse(text):
+  sys.stderr.write("REFUSED: %s\n" % text)
+  return 2
+
+
+def md_table(header, lines):
+  return ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)] + ["| " + " | ".join(x) + " |" for x in lines]
+
+
+def features(root):
+  """(page titles in page order, {requirement id: (title, words)}); an id on two pages stays with the first."""
+  try:
+    with open(os.path.join(root, ".loop", "config.json")) as handle:
+      folder = json.load(handle).get("wiki_dir") or "docs/wiki"
+  except (OSError, ValueError):
+    folder = "docs/wiki"
+  titles, found = [], {}
+  for name in sorted(glob.glob(os.path.join(root, folder, "*.md"))):
+    with open(name) as handle:
+      text = re.sub(r"(?ms)^```.*?^```[^\n]*$", "", handle.read())
+    head = re.search(r"^# (.+)$", text, re.M)
+    title = head.group(1).strip() if head else os.path.basename(name)[:-3]
+    part = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", text, maxsplit=1)
+    if len(part) < 2:
+      part = re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", "\n" + linked_prd(root, os.path.basename(name)[:-3], text), maxsplit=1)
+    if len(part) < 2:
+      continue
+    titles.append(title)
+    for key, words in re.findall(r"^- ([A-Z]{2,5}-\d+): (.*)$", part[1].split("\n## ", 1)[0], re.M):
+      words = re.sub(r"<!--.*?-->", "", re.sub(r"^\*\*(?:Reviewed|Unreviewed)[^*]*\*\*\s*", "", words)).strip()
+      found.setdefault(key, (title, words))
+  return titles, found
+
+
+# tests>

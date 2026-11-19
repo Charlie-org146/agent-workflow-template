@@ -37,7 +37,7 @@ grep -q "^known-row	KNOWN$" results.tsv && ok "a known failure is recorded KNOWN
 cd "$top"; rm -rf "$r"
 
 echo "== the one test format, grouped by feature (two features, requirement and defect tests)"
-tests="python3 -B $here/skills/workflow-regression/scripts/tests.py"
+tests="python3 -B $here/skills/workflow-regression/scripts/regression.py"
 r=$(mktemp -d); cd "$r" && git init -q && mkdir -p .loop docs/wiki
 printf '# Alpha\n\n## Requirements\n\n- AAA-1: **Reviewed 2026-11-01** Alpha words. <!-- reviewed 1 -->\n' > docs/wiki/Alpha.md
 printf '# Beta\n\n## Requirements\n\n- BBB-1: **Unreviewed** Beta words.\n' > docs/wiki/Beta.md
@@ -98,14 +98,14 @@ grep -q "could not be written" sum.md && grep -qxF '| a1 | MAYBE |' sum.md && ok
 rm -f "$run"; : > sum.md
 RUNNER_TEMP="$r" GITHUB_STEP_SUMMARY="$r/sum.md" SHARDS=4 PATH="$g:$PATH" bash -e step.sh >/dev/null 2>&1
 grep -q "could not be written" sum.md && ok "with no results file at all, the summary still says so" || bad "summary with no results"
-c=$(mktemp -d); cp -R "$here/skills" "$c/"; echo '# ${{ github.token }}' >> "$c/skills/workflow-regression/scripts/tests.py"
+c=$(mktemp -d); cp -R "$here/skills" "$c/"; python3 -c 'import sys; p = sys.argv[1]; s = open(p).read(); open(p, "w").write(s.replace("# tests>\n", "# ${{ github.token }}\n# tests>\n", 1))' "$c/skills/workflow-regression/scripts/slots.py"
 python3 -B -c "import sys; sys.path.insert(0, '$c/skills/workflow-regression/scripts'); import actions; actions.render('17 */4 * * *')" 2>err.txt; rc=$?
 [ $rc != 0 ] && grep -q "^REFUSED: tests.py contains \${{" err.txt && ok "the workflow refuses to carry a tests.py Actions would read" || bad "render guard"
-rm "$c/skills/workflow-regression/scripts/tests.py"
+rm "$c/skills/workflow-regression/scripts/regression.py" "$c/skills/workflow-regression/scripts/lanes_cli.py"
 out=$(python3 -B "$c/skills/workflow-health/scripts/health.py" check 2>/dev/null)
 python3 -B -c "import sys; sys.path.insert(0, '$c/skills/workflow-docs/scripts'); import render; assert render.tests_format() is None" 2>err.txt
 awk '/^TESTS$/{t=1; next} t && /^$/{exit} t' <<<"$out" | grep -q "^NOTE: the test list is unavailable" && tail -1 <<<"$out" | grep -q '^HEALTH: ' \
-  && grep -q "^NOTE: .*tests.py not found or broken (FileNotFoundError); Tests use a plain shape" err.txt && ok "without tests.py, health and the wiki say so and keep working" || bad "missing tests.py"
+  && grep -q "^NOTE: .*lanes_cli.py not found or broken (FileNotFoundError); Tests use a plain shape" err.txt && ok "without tests.py, health and the wiki say so and keep working" || bad "missing tests.py"
 rm -rf "$c"
 out=$(python3 -B "$here/skills/workflow-health/scripts/health.py" check 2>/dev/null)
 t=$(awk '/^TESTS$/{t=1; next} t && /^$/{exit} t' <<<"$out")
@@ -127,7 +127,7 @@ awk '/^### Other$/{o=1; next} /^### /{o=0} o' <<<"$sum" | grep -q '^| zz-gone | 
 #   fails_when=a failing tests.py breaks the report or hides its stderr, or a group run lists tests; why_new=only a missing
 #   tests.py was checked; seam=none; no_claim=real tests.py failure modes (a stub script stands in)
 c=$(mktemp -d); cp -R "$here/skills" "$c/"
-printf '#!/usr/bin/env python3\nimport sys\nsys.stderr.write("STUB-BROKEN: cannot read regression.tsv\\n")\nsys.exit(3)\n' > "$c/skills/workflow-regression/scripts/tests.py"
+printf '#!/usr/bin/env python3\nimport sys\nsys.stderr.write("STUB-BROKEN: cannot read regression.tsv\\n")\nsys.exit(3)\n' > "$c/skills/workflow-regression/scripts/regression.py"
 out=$(python3 -B "$c/skills/workflow-health/scripts/health.py" check 2>/dev/null)
 awk '/^TESTS$/{t=1; next} t && /^$/{exit} t' <<<"$out" | grep -qxF "NOTE: the test list is unavailable (STUB-BROKEN: cannot read regression.tsv)" \
   && tail -1 <<<"$out" | grep -q '^HEALTH: ' && ok "when tests.py fails, health shows its error in the TESTS block and the verdict stays last" || bad "failing tests.py: $out"

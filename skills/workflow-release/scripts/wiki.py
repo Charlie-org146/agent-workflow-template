@@ -14,7 +14,7 @@ publishes nothing on a hit (wiki_error names it). A wiki with no first page can'
 and run merge.py again. A repo without .loop/docs.tsv has no wiki: both do nothing.
 
 Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
-(REG-6), from tests.py fixes; a missing or failing tests.py gives "Fixes: unknown/not listed", never a failure.
+(REG-6), from regression.py fixes; a missing or failing regression.py gives "Fixes: unknown/not listed", never a failure.
 """
 import argparse
 import glob
@@ -35,7 +35,7 @@ DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "wor
 CRITERIA = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts",
     "criteria.py"))
 TESTS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-regression",
-    "scripts", "tests.py"))
+    "scripts", "regression.py"))
 
 
 def top_of():
@@ -216,7 +216,7 @@ def fixes_lines(top, start=None):
     text=True)
   if done.returncode:
     first = ((done.stderr or done.stdout).strip().splitlines() or ["exit %d" % done.returncode])[0]
-    return ["Fixes: not listed (%s). Note: issue states are unchanged; run tests.py fixes --since %s by hand"
+    return ["Fixes: not listed (%s). Note: issue states are unchanged; run regression.py fixes --since %s by hand"
       % (first[:200], start)]
   return [line for line in done.stdout.splitlines() if line.startswith("Fixes #")]
 

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """Reuse a branch's last regression run: the test record, and which rows a change since then can affect.
 
-Imported by regression.py (`run ... --reuse`) and lanes_cli.py (`affected`, `deps`, `check`). The record lives in
-<git common dir>/loop/tests/<branch>-<sha8>.json: {schema, runner, worktree, command, at, commit,
-rows: {id: {status: PASS|FAIL|KNOWN, seconds, commit, clean, host, python, flaky}}}. A row is reused only when it
-passed (or is a known failure) on HEAD or an ancestor and nothing it reads changed since; what this file can't map reruns.
-A test script with `# reads: <path>...` lines in its leading comments is mapped narrowly (declared entry points plus
-what they reach); one without keeps the wide mapping; LANES_WIDE=1 forces wide everywhere.
+Imported by regression.py and lanes_cli.py. The record is <git common dir>/loop/tests/<branch>-<sha8>.json. A row is reused only
+when it passed (or is a known failure) on HEAD or an ancestor and nothing it reads changed since; what this file can't map reruns.
+A script with `# reads:` lines in its leading comments is mapped narrowly; LANES_WIDE=1 forces wide everywhere.
 """
 import hashlib
 import json
@@ -16,12 +13,7 @@ import subprocess
 import sys
 
 import narrow
-from slots import fcntl
-
-# A prompt from git must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
-if not sys.stdin or not sys.stdin.isatty():
-  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+from slots import fcntl, key_of  # slots sets GIT_TERMINAL_PROMPT
 
 SCHEMA = 1
 RUNS_FILE = ".loop/regression-runs.tsv"
@@ -42,7 +34,7 @@ CD_SKILLS = re.compile(r"cd\s+\"?\$\{?here\}?\"?\s*[;&|\n][^\n]*?(?<![\w./$-])sk
 
 
 def modules(text):
-  """Module names a Python text imports: `from x import ...`, and every name of `import a, b as c`."""
+  """Module names a Python text imports."""
   return {name.split()[0] for frm, imp in IMPORT.findall(text) for name in ([frm] if frm else imp.split(",")) if name.strip()}
 
 
@@ -123,16 +115,16 @@ def descendants(root_pid):
 
 
 def run_row(command, cwd, env, timeout):
-  """(code, output, pid, signal) for one row's shell; signal names what stopped it, else None. A timeout kills it, returns 124."""
+  """(code, output, pid, signal) for one row's shell; signal names what stopped it, else None."""
   import signal as sig
   import tempfile
   with tempfile.TemporaryFile("w+", errors="replace") as log:
-    win = os.name == "nt"  # a row is a bash line
+    win = os.name == "nt"
     proc = subprocess.Popen(["bash", "-c", command] if win else command, shell=not win, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT)
     try:
       code, tail = proc.wait(timeout=timeout), ""
     except subprocess.TimeoutExpired:
-      if os.name == "nt":  # taskkill /T takes the tree
+      if os.name == "nt":
         import proctree
         proctree.kill(proc.pid)
       for pid in [] if os.name == "nt" else [proc.pid] + descendants(proc.pid):
@@ -174,7 +166,7 @@ def widen(path):
 
 
 def references(root, text, folder, wide=True, memo=None):
-  """Repo paths a text names (folders end /) and whether it names the whole repo; wide=False: no widening."""
+  """Repo paths a text names (folders end /) and whether it names the whole repo."""
   memo = {} if memo is None else memo
   text = HERE_FORMS.sub("$here/", text)
   text = text if wide else re.sub(r"""(["'])/(skills|dev)/""", r"\1\2/", text)
@@ -305,14 +297,13 @@ def touches(root, command, path, cache):
 
 
 def reads_table(root, command, cache):
-  """Whether a row reads .loop/regression.tsv: a narrow row only when its closure names it, its command runs regression.py,
-    or a script it reaches runs tools from the repo root; a wide row when it reaches regression.py at all."""
+  """Whether a row reads .loop/regression.tsv."""
   deps, _ = closure(root, command, cache)
   return cache.get(("table", command), hits(RUNNER, deps))
 
 
 def deleted(root, commit):
-  """Deleted paths (release and loop files aside) since commit or in the worktree: a vanished file drops edges."""
+  """Deleted paths (release and loop files aside) since commit or in the worktree."""
   out = (git(root, "diff", "--name-status", "--no-renames", "%s..HEAD" % commit) or "").splitlines()
   out += (git(root, "status", "--porcelain", "--no-renames") or "").splitlines()
   gone = [line.split("\t")[-1] if "\t" in line else line[3:].strip('"') for line in out
@@ -340,7 +331,7 @@ def named_in(root, rel, path, cache):
 
 
 def names_any(root, command, paths, cache, skip=""):
-  """Whether a row's command, or a file it reaches, names one of paths (a file gone from the tree can't be mapped by reach)."""
+  """Whether a row's command, or a file it reaches, names one of paths."""
   deps, _ = closure(root, command, cache)
   files = [p for p in deps if p.replace("\\", "/") != skip and not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
   for path in paths:
@@ -350,8 +341,7 @@ def names_any(root, command, paths, cache, skip=""):
 
 
 def plan(root, selected, record, current_tsv, current_known):
-  """(to_run ids in tier order, reused ids, notes, why no row could be reused or ''). A deleted or unmapped file picks the
-    rows that name it and the rows that reach the runner."""
+  """(to_run ids in tier order, reused ids, notes, why no row could be reused or '')."""
   rows, cache, notes, memo = record["rows"], {}, [], {}
   every = [r["id"] for r in selected]
   failed = [r["id"] for r in selected if rows.get(r["id"], {}).get("status") == "FAIL"]
@@ -396,3 +386,42 @@ def plan(root, selected, record, current_tsv, current_known):
     notes.append("UNMAPPED %s: ran the rows that name them and the runners (%d)" % (" ".join(names[:5]), len(pick)))
     hot += pick
   return hot + rest, reuse, notes, ""
+
+
+# <tests
+def gh_run(*args):
+  try:
+    return subprocess.run(("gh",) + args, capture_output=True, text=True, timeout=60)
+  except (OSError, subprocess.SubprocessError) as err:
+    return subprocess.CompletedProcess(args, 1, "", str(err))
+
+
+def guard(row, found, issues, markdown):
+  """What a test guards: a defect's issue link and state, else the requirement's ID and words."""
+  link = row[7]
+  if row[6] == "defect" and link:
+    number = re.search(r"/(issues|pull)/(\d+)$", link)
+    if not number:
+      return link.replace("finding:", "finding ", 1)
+    state, day = issues.get(link, ("state unknown", ""))[:2]
+    name = ("#" if number.group(1) == "issues" else "PR ") + number.group(2)
+    shown = "[%s](%s)" % (name, link) if markdown else "%s %s" % (name, link)
+    return "%s %s%s" % (shown, state.lower(), " (%s)" % day if day else "")
+  key = key_of(row)
+  if key:
+    return "%s: %s" % (key, found[key][1]) if key in found else key
+  return "done line " + row[3] if re.match(r"^[\w-]+:\d+$", row[3]) else "-"
+
+
+def reopened(link):
+  """The newest time the issue was reopened, or "" (REG-6)."""
+  parts = re.match(r"^https?://[^/]+/([^/]+)/([^/]+)/issues/(\d+)$", link)
+  if not parts:
+    return ""
+  done = gh_run("api", "--paginate", "repos/%s/%s/issues/%s/events" % parts.groups(), "--jq",
+    '.[] | select(.event == "reopened") | .created_at')
+  value = (done.stdout.split() or [""])[-1]
+  return value if done.returncode == 0 and re.match(r"^\d{4}-\d\d-\d\dT", value) else ""
+
+
+# tests>

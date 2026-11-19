@@ -273,7 +273,7 @@ def git_out(*args):
 
 
 def issues(top):
-    tests = os.path.join(REG, "tests.py")
+    tests = os.path.join(REG, "regression.py")
     if not os.path.exists(tests) or not os.path.exists(os.path.join(top, ".loop", "regression.tsv")):
         return
     try:

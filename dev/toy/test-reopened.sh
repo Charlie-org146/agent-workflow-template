@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-regression/scripts/tests.py skills/workflow-setup/scripts/setup.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-setup/scripts/setup.py
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # REG-6: a reopened issue's defect test shows failing until it passes again. tests.py issues takes the reopen time from
@@ -29,7 +29,7 @@ case "$1" in
 esac
 G
 chmod +x bin/gh; export PATH="$d/bin:$PATH"
-T="python3 $here/skills/workflow-regression/scripts/tests.py"
+T="python3 $here/skills/workflow-regression/scripts/regression.py"
 STUB_STATE=OPEN STUB_REOPENED=$'2025-12-01T09:00:00Z\n2026-02-01T10:00:00Z' $T issues --write >/dev/null  # two pages: the newest wins
 out=$($T list --tsv)
 grep -qF "failing (issue reopened) 2026-02-01" <<<"$out" && grep -q "issues/7	open	.*	2026-02-01T10:00:00Z" .loop/regression-issues.tsv \

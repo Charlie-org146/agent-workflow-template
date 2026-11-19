@@ -5,7 +5,7 @@
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/audit.py
 # reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test link-form feature pages and Home's Topic column (DOC-1, DOC-2, DOC-4 proposals): a page holding "PRD: <link>" plus
 # the generated sections passes when the linked PRD is readable and its ids drive the Tests table; an unreadable link
@@ -199,7 +199,7 @@ out=$(check); grep -q "^UNREAD Delivery: .*MCP connector" <<<"$out" && ok "a Not
 LOOP_PRD_READER="$rd" $cri render >/dev/null
 out=$(LOOP_PRD_READER="$rd" check); grep -q "^DOCS OK" <<<"$out" && ok "a Notion link read through the reader passes" || bad "reader: $out"
 $reg add list-ids --level land --command true --goal DEL-1 --describe "Given a link-form page, when the tests are listed, then its ids show." --category criterion >/dev/null
-out=$(LOOP_PRD_READER="$rd" python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "DEL-1" <<<"$out" && ok "tests.py list reads a link-form page's ids" || bad "tests list: $out"
+out=$(LOOP_PRD_READER="$rd" python3 "$here/skills/workflow-regression/scripts/regression.py" list 2>&1); grep -q "DEL-1" <<<"$out" && ok "tests.py list reads a link-form page's ids" || bad "tests list: $out"
 cat >> $P <<'EOF'
 
 ## Problem

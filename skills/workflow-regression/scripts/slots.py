@@ -1,45 +1,46 @@
 #!/usr/bin/env python3
-"""Lane slots and row-file locks. Imported by regression.py and lanes_cli.py; not a command. workflow-delivery's
-lanekit.py holds exact copies of the pieces its lane.py uses (lanekit.COPIED, and EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL), and
-dev/toy/test-lane-control.sh fails when a copy differs from the function here: change both together.
+"""Lane slots and row-file locks. Imported by regression.py and lanes_cli.py; not a command.
 
-The pool: `lane_limit` slots per machine (flow file, default 2, 0 is unlimited; LOOP_LANE_LIMIT overrides it) in
-~/.workflow-loop/lanes (or $LOOP_LANES_DIR), a folder that must be yours and closed to others. Only a FULL lane takes a
-slot, after it has planned; AFFECTED, REUSED, by-id and red runs never wait. It limits concurrent FULL regression lanes,
-best effort, not the machine's load. Waiting lanes are served first in, first out by ticket files. A holder keeps a
-flock on its slot file and its ticket, so a dead process frees both; slot files are never unlinked. A run inside a
-slot holder (`_LOOP_LANE_HELD` names that slot, still locked by that pid) takes none, so a nested run never waits on
-its own parent. `_LOOP_LANE_*` variables are internal: the lane sets them.
-Row files (.loop/regression.tsv, .loop/regression-runs.tsv) are edited under locks in <git common dir>/loop/locks,
-which serializes writers across every worktree of a repo. controls.py (throwaway control repos) and setup's seed write
-them without the lock.
-Exit codes, shared with lane.py: 0 pass, 1 fail, 2 lane-wait timeout, 3 no lane, 4 a hand run's slot wait timed out,
-5 LANE_STALE, 124 time limit. Messages: workflow-regression/references/commands.md.
+workflow-delivery's lanekit.py holds exact copies of lanekit.COPIED and EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL; dev/toy/test-lane-control.sh
+fails when a copy differs from the function here: change both together. Only a FULL lane takes a slot of the pool in
+~/.workflow-loop/lanes (or $LOOP_LANES_DIR), first in, first out by ticket files; row files are edited under locks in
+<git common dir>/loop/locks. Exit codes, shared with lane.py: 0 pass, 1 fail, 2 lane-wait timeout, 3 no lane, 4 a hand run's
+slot wait timed out, 5 LANE_STALE, 124 time limit (references/commands.md).
 """
+import time
+# <tests
+import argparse
+import datetime
 import glob
 import json
+import math
 import os
 import re
 import subprocess
 import sys
-import time
+import tempfile
+# No terminal, no waiting: a prompt from git or gh must fail, not block.
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+if not sys.stdin or not sys.stdin.isatty():
+  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+# tests>
 try:
   import fcntl
-except ImportError:  # native Windows: msvcrt byte-range locks under flock's names
+except ImportError:
   import msvcrt
   import types
 
   def _flock(handle, op):
     fd = handle if isinstance(handle, int) else handle.fileno()
     here = os.lseek(fd, 0, 1)
-    os.lseek(fd, 0x7FFFFFFF, 0)  # one byte far past any content: readers never block
+    os.lseek(fd, 0x7FFFFFFF, 0)
     try:
       while True:
         try:
           return msvcrt.locking(fd, msvcrt.LK_UNLCK if op & 8 else msvcrt.LK_NBLCK, 1)
         except OSError:
           if op & 8:
-            return  # unlock of a lock not held: a no-op, as with flock
+            return
           if op & 4:
             raise BlockingIOError("locked")
           time.sleep(0.05)
@@ -47,9 +48,6 @@ except ImportError:  # native Windows: msvcrt byte-range locks under flock's nam
       os.lseek(fd, here, 0)
 
   fcntl = types.SimpleNamespace(LOCK_SH=1, LOCK_EX=2, LOCK_NB=4, LOCK_UN=8, flock=_flock)
-
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL = 4, 5, 6, 2.0
 
@@ -79,7 +77,7 @@ def _flow():
 
 
 def limit():
-  """Lane slots on this machine: LOOP_LANE_LIMIT, else the flow file's lane_limit, else 2; 0 is unlimited."""
+  """Lane slots: LOOP_LANE_LIMIT, else the flow file's lane_limit, else 2; 0 is unlimited."""
   raw, source = os.environ.get("LOOP_LANE_LIMIT"), "LOOP_LANE_LIMIT"
   if raw is None:
     raw, source = _flow().get("lane_limit"), flow_file()
@@ -199,7 +197,7 @@ def _counter(pool):
 
 
 def _ticket(pool, label):
-  """Take a ticket: created as .tmp, flocked by its holder, renamed into place, all under the counter lock."""
+  """Take a ticket: flocked by its holder, renamed into place under the counter lock."""
   with _counter(pool) as lock:
     fcntl.flock(lock, fcntl.LOCK_EX)
     lock.seek(0)
@@ -247,7 +245,7 @@ def _slot(pool, count, label):
 
 
 def started():
-  """Mark the lane's start once: a row's nested run sees the outer lane's marker and leaves its clock alone."""
+  """Mark the lane's start once: a nested run leaves the outer lane's clock alone."""
   path = os.environ.get("_LOOP_LANE_STARTED")
   if path and not os.path.exists(path):
     open(path, "w").close()
@@ -336,7 +334,7 @@ def _lock_path(root, name):
 
 
 def edit(root, name, change):
-  """Run change() under the row file's lock: it re-reads and writes the file itself, so no writer loses another's edit."""
+  """Run change() under the row file's lock; it re-reads and writes the file itself."""
   path = _lock_path(root, name)
   try:
     handle = open(path, "w")
@@ -377,7 +375,6 @@ def rows_line(text, ran, log):
     count, parts, reused, max(int(count) - ran, 0), loose, log)
 
 
-# The summary job of the regression workflow: one combined summary after every shard (REG-4, REG-7); actions.py embeds it.
 SUMMARY_JOB = r"""  summary:
     needs: regression
     if: always()
@@ -449,3 +446,69 @@ ROUTINE_STEP = r"""      - name: Check the routine
             echo "::warning::$said"; echo "$said" >> "$GITHUB_STEP_SUMMARY"
           fi
 """
+
+
+# <tests
+ID = re.compile(r"^[A-Z]{2,5}-\d+$")
+SEEN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+KIND = {"criterion": "requirement", "workflow": "workflow", "defect": "defect"}
+RUNS = {"land": "both", "nightly": "nightly", "covered": "by a person"}
+STATES = ("PASS", "FAIL", "SKIPPED", "KNOWN")
+COLUMNS = ("Test", "Kind", "Guards", "Checks", "Runs", "Last result", "Seen failing")
+OTHER = "Other"
+
+
+def tsv(root, name):
+  path = os.path.join(root, ".loop", name)
+  if not os.path.exists(path):
+    return []
+  with open(path) as handle:
+    return [line.rstrip("\n").split("\t") for line in handle if line.strip() and not line.startswith("#")]
+
+
+def cell(text, raw=False):
+  """One table cell: whitespace collapsed, | escaped."""
+  text = " ".join(str(text).split()) or "-"
+  return text if raw else text.replace("|", "\\|")
+
+
+def root_of(given):
+  return given or subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or os.getcwd()
+
+
+def linked_prd(root, page, text):
+  """The linked PRD's text for a link-form page; '' when there is none."""
+  try:
+    with open(os.path.join(root, ".loop", "prd", page + ".md"), encoding="utf-8") as handle:
+      copy = handle.read()
+    if "\n## Requirements" in copy:
+      return copy
+  except OSError:
+    pass
+  try:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("prd_reader", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "deployments.py"))
+    if os.path.dirname(spec.origin) not in sys.path:
+      sys.path.insert(0, os.path.dirname(spec.origin))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    with open(os.path.join(root, ".loop", "docs.tsv")) as handle:
+      cols = {x.split("\t")[0]: x.rstrip("\n").split("\t") for x in handle if x.strip() and x[0] != "#"}
+    source = mod.link_of(text, (cols.get(page, []) + ["", "", ""])[2].strip())
+    return (importlib.import_module("prd").read_link(source)[0] or "") if source else ""
+  except Exception:
+    return ""
+
+
+def key_of(row):
+  """The requirement a row guards (its goal or id, when an ID); '-' guards none."""
+  return "" if row[3] == "-" else next((item for item in (row[3], row[0]) if ID.match(item)), "")
+
+
+def issues_of(root):
+  """{link: (state, date, reopened_at)}."""
+  return {row[0]: (row[1], row[2] if len(row) > 2 else "", row[3] if len(row) > 3 else "")
+    for row in tsv(root, "regression-issues.tsv") if len(row) > 1}
+
+
+# tests>

@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
-"""The Actions workflow regression.py writes: runs the rows on a schedule, one issue per failing row."""
+"""The Actions workflow regression.py writes."""
 import json
 import os
 import re
 import sys
 
-from slots import ROUTINE_STEP, SUMMARY_JOB
+from slots import ROUTINE_STEP, SUMMARY_JOB  # slots sets GIT_TERMINAL_PROMPT
 
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
-if not sys.stdin or not sys.stdin.isatty():
-  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
-
-BUDGET_MINUTES = 30  # REG-7, AUT-7
-SHARDS = 8  # REG-4, REG-7
+BUDGET_MINUTES = 30
+SHARDS = 8
 
 
 ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE",
@@ -309,15 +305,21 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@BUDGET@", "@ROWTAIL@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
 
 
+TESTS_IN = ("slots", "narrow", "lanes", "tiers", "runs", "lanes_cli", "regression")
+TESTS_MAIN = "parser = argparse.ArgumentParser()\ntests_commands(parser.add_subparsers(dest='command', required=True))\nargs = parser.parse_args()\nsys.exit(args.func(args))\n"
+
+
 def render(cron, levels="nightly"):
-  with open(os.path.join(HERE, "tests.py")) as handle:
-    source = handle.read()
+  text = "".join(open(os.path.join(HERE, name + ".py")).read() for name in TESTS_IN)
+  source = "".join(re.findall(r"^# <tests\n(.*?)^# tests>\n", text, re.S | re.M)) + TESTS_MAIN
   bad = [token for token in UNSAFE if token in source]
   if bad:
     sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
-  body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
+  def pad(lines):
+    return "\n".join(("          " + x).rstrip() for x in lines)
+  body = pad(source.rstrip("\n").split("\n"))
   with open(os.path.join(HERE, "runs.py")) as handle:
-    tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
+    tail = pad(handle.read().split("# rowtail:")[1].split("\n")[1:-1])
   schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
   return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
     .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \

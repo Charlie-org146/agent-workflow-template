@@ -105,7 +105,7 @@ HEALTH (inside the health copy; the scripts live in {scripts}/workflow-health/sc
 
 REGRESSION (inside the regression copy; scripts in {scripts}/workflow-regression/scripts):
 5. (on Windows set LOOP_LANE_LIMIT=0 in the shell first) LOOP_LANE_LIMIT=0 {py} <scripts>/regression.py run nightly > ~/.workflow-loop/routines/logs/{name}.log 2>&1 (start it in the background, then check the log every few minutes until its RESULT line appears). NEVER finish this run, send the email or end the session while that suite is still running, and never start a second suite in the same copy. Keep the RESULT line and every FAIL and KNOWN row with its id and one-line reason.
-6. {py} <scripts>/tests.py issues --write ; if it refuses, keep the refusal line and go on.
+6. {py} <scripts>/regression.py issues --write ; if it refuses, keep the refusal line and go on.
 
 EMAIL: write the body to a temporary file, then send ONE email with {py} ~/.workflow-loop/routines/send-mail.py --subject "<subject>" --body-file <file> (SMTP, unattended; never use a mail tool that stops for approval). Subject: "{repo} health + regression: <verdict> / <passed>-<failed> - <date and time>". Body, in order: the HEALTH verdict line; rule findings new, still open and fixed, each with its issue link and a one-line fix; kept judge suggestions and review findings, highest impact first, each with evidence and fix; the regression RESULT line and each failing or known test with id, one-line reason and issue link; any step that could not run, and why.
 

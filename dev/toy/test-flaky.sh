@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py
 # reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/runs.py
-# reads: skills/workflow-regression/scripts/tests.py skills/workflow-health/scripts/health.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-health/scripts/health.py
 # Proves FLAKY (REG-9, tiers.py flaky_apply) on a throwaway repo with a fake gh: a row whose result flips on the same clean commit
 # and runner is marked with the raw result kept, the exit following that result, a sticky flag shown by tests.py list
 # and health's TESTS block, never reused, and cleared by a later commit's clean pass; a dirty tree, another runner or a
@@ -24,7 +24,7 @@ git add -A && git commit -qm toy
 record() { ls "$(git rev-parse --git-common-dir)"/loop/tests/*.json; }
 go() { echo "$1" > "$FLIP"; out=$($reg run f 2>&1); rc=$?; }
 flag() { awk -F'\t' '$1 == "f" { print $5 }' .loop/regression-runs.tsv; }
-listed() { python3 "$here/skills/workflow-regression/scripts/tests.py" list --root . | grep -c "FLAKY"; }
+listed() { python3 "$here/skills/workflow-regression/scripts/regression.py" list --root . | grep -c "FLAKY"; }
 next() { git commit -q --allow-empty -m "$1"; }
 head12() { git rev-parse HEAD | cut -c1-12; }
 

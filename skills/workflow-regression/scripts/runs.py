@@ -1,14 +1,8 @@
 """Read and write .loop/regression-runs.tsv: each row's last run as id, status, date, run, flaky.
 
-run is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day
-runs on two branches write identical lines and merge cleanly. flaky is empty, or the commit a row's result flipped on (tiers.py
-flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane
-record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
-
-It also holds a local `regression.py run`'s GitHub issues (sync_issues): one issue per failing row, keyed by a marker in its body,
-dry-run (WOULD lines) unless live; actions.py keeps the CI copy. The time budget of an in-loop test run lives here too (budget, fit,
-execute): a --reuse run (qa, ship and pull-request lanes) stops at test_budget_minutes (default 15, floor 15), runs rows in tier
-order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite.
+run is the Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are set, else empty; flaky is empty or the
+commit a result flipped on (tiers.py, REG-9). Also here: a local run's GitHub issues (sync_issues) and the in-loop time budget
+(budget, fit, execute): test_budget_minutes, default 15, floor 15; rows past it are recorded LEFT.
 """
 import datetime
 import glob
@@ -22,35 +16,31 @@ import time
 
 import actions
 import lanes
-
-# A prompt from gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
-if not sys.stdin or not sys.stdin.isatty():
-  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+from narrow import refuse
+from slots import SEEN, tsv  # slots sets GIT_TERMINAL_PROMPT
 
 NAME = "regression-runs.tsv"
 HEADER = "# id\tstatus\tdate\trun\tflaky\n"
 ISSUE_LIMIT = 1000
-WAITS = (0, 5, 20)  # seconds before each of three tries
+WAITS = (0, 5, 20)
 SKIP_CODE = 77
-START_CODES = (3221225794, 3221225495, 3221225773)  # Windows: DLL init failed, no memory, commit limit
+START_CODES = (3221225794, 3221225495, 3221225773)
 LABELS = ("regression", "defect")
 MARK = "<!-- loop-regression %s -->"
 
 # rowtail:begin (actions.py copies this block into the workflow)
-LAST = 40  # output lines an issue carries (defect 3789)
-QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")  # `| grep -q PATTERN` hides its stream
+LAST = 40
+QUIET = re.compile(r"\|\s*grep\s+-\w*q\w*\s+(?:\"[^\"]*\"|'[^']*'|\S+)")
 
 
 def again(command):
-  """The command with each `| grep -q PATTERN` made `| cat`, or None when it has none."""
+  """The command with each `| grep -q PATTERN` made `| cat`, else None."""
   loud = QUIET.sub("| cat", command)
   return loud if loud != command else None
 
 
 def shown(run, command, code, text):
-  """A failing row's last LAST lines, never empty; a row that printed nothing runs once more with its quiet stage loud (run is
-    the caller's (code, text) runner)."""
+  """A failing row's last LAST lines; a silent row reruns once loud."""
   if not text.strip() and again(command):
     text = run(again(command))[1]
   lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
@@ -82,7 +72,7 @@ def write(root, results, date, sha):
   ran, run = read(root), where()
   for item in results:
     if item["state"] == "SKIPPED" and ran.get(item["id"], "--")[1] in ("PASS", "FAIL"):
-      continue  # a skip says nothing against the last result
+      continue
     flag = item["flaky"] if "flaky" in item else ran.get(item["id"], [""] * 5)[4]
     ran[item["id"]] = [item["id"], item["state"] if item["state"] in ("PASS", "SKIPPED") else "FAIL", date, run, flag[:12]]
   with open(path(root), "w") as handle:
@@ -125,7 +115,7 @@ def sync_issues(results, live, day):
     if issues is None:
       print("NOTE: can't read issues, so none changed: " + err.strip()[:200])
       return
-    if len(issues) >= ISSUE_LIMIT and "comments" in issues[0]:  # REST pages are never cut off
+    if len(issues) >= ISSUE_LIMIT and "comments" in issues[0]:
       print("NOTE: the issue list may be cut off at %d, so none changed" % ISSUE_LIMIT)
       return
   for item in results:
@@ -210,7 +200,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
     got = first[key] if remaining < 1 else lanes.run_row(by[key]["command"], root, env, cap)
     code, text, pid, signal = got
-    if code in START_CODES and key not in first:  # could not start: rerun it last (#4639)
+    if code in START_CODES and key not in first:
       first[key] = got
       keep.append(key)
       continue
@@ -296,7 +286,6 @@ def lines_of(root, name):
     if os.path.exists(path_of(root, name)) else {}
 
 
-# regression.py red --off-platform (REG-10)
 OFF_WINDOWS = re.compile(r"\b(win(dows)?(32|64)?|msys\d*|mingw\d*|cygwin)\b|\b(msys|mingw)\w*", re.I)
 OFF_SHA = re.compile(r"^[0-9a-f]{7,40}$")
 
@@ -411,3 +400,27 @@ def owed_record(root, args, today, read_rows):
       out.write("\t".join((row_id, today(), runner, issue)) + "\n")
     print("OWED %s: red proof owed on %s (to-do %s). The goal goes on." % (row_id, runner, issue or "not opened"))
   return 0
+
+
+# <tests
+def cmd_fixes(args):
+  """The release notes' proof lines (REG-6): defect rows added or proved this range, passing now."""
+  shown = subprocess.run(["git", "show", "%s:.loop/regression.tsv" % args.since], cwd=args.root, capture_output=True,
+    text=True, env=dict(os.environ, LC_ALL="C"))
+  if shown.returncode and "exists on disk, but not in" not in shown.stderr and "does not exist" not in shown.stderr:
+    return refuse("cannot read .loop/regression.tsv at %s: %s" % (args.since, shown.stderr.strip()[:200]))
+  old = {cells[0]: cells for cells in (line.split("\t") for line in shown.stdout.splitlines()) if cells[0] and cells[0][0] != "#"}
+  ran = {row[0]: row[1:2] for row in tsv(args.root, "regression-runs.tsv")}
+  origin = subprocess.run(["git", "remote", "get-url", "origin"], cwd=args.root, capture_output=True, text=True).stdout
+  repo = re.search(r"github\.com[:/]([^/\s]+/[^/\s]+?)(?:\.git)?\s*$", origin)
+  for row in tsv(args.root, "regression.tsv"):
+    row = (row + [""] * 8)[:8]
+    found = re.match(r"^https?://\S+/issues/(\d+)$", row[7])
+    found = found if not repo or re.match(r"^https?://github\.com/%s/issues/" % re.escape(repo.group(1)), row[7], re.I) else None
+    before = (old.get(row[0], []) + [""] * 8)[4]
+    if row[6] == "defect" and found and SEEN.match(row[4]) and row[4] != before and ran.get(row[0]) == ["PASS"]:
+      print("Fixes #%s: test %s, seen failing %s, passing" % (found.group(1), row[0], row[4]))
+  return 0
+
+
+# tests>

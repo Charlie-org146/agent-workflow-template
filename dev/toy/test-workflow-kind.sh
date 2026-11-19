@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-docs/scripts/criteria.py
 # reads: skills/workflow-docs/scripts/render.py skills/workflow-health/scripts/health.py
 here=$(cd "$(dirname "$0")/../.." && pwd)
@@ -17,7 +17,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 reg="python3 -B $here/skills/workflow-regression/scripts/regression.py"
-tests="python3 -B $here/skills/workflow-regression/scripts/tests.py"
+tests="python3 -B $here/skills/workflow-regression/scripts/regression.py"
 cri="python3 -B $here/skills/workflow-docs/scripts/criteria.py"
 cd "$d" && git init -q -b main && git config user.email t@example.test && git config user.name Toy
 mkdir -p .loop docs/wiki

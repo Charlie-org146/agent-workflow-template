@@ -4,7 +4,7 @@
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
 # reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the page format (DOC-4..DOC-10): for each rule a bad page fails naming the page, section and rule and a good
 # page passes; sub-bullets and the two requirement groups; the generated Tests page; the runs file's run column; the
@@ -242,10 +242,10 @@ import os, sys
 here = sys.argv[1]
 for sub in ("workflow-regression", "workflow-health", "workflow-docs"):
     sys.path.insert(0, os.path.join(here, "skills", sub, "scripts"))
-import tests, judge, criteria, audit
+import narrow, judge, criteria, audit
 want = ["DEL-1", "DEL-2"]
 parts = dict(criteria.sections(open("docs/wiki/Delivery.md").read()))
-got = [sorted(tests.features(".")[1]), sorted(i for i, _ in judge.criteria(".", "Delivery")),
+got = [sorted(narrow.features(".")[1]), sorted(i for i, _ in judge.criteria(".", "Delivery")),
        sorted(m.group(1) for _, m in criteria.criteria_of(parts["Requirements"]) if m)]
 print(all(g == want for g in got) and not [l for l, m in criteria.criteria_of(parts["Requirements"]) if not m], got)
 PY

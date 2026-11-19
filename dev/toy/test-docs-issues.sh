@@ -3,7 +3,7 @@
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py
 # reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/references/commands.md
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the docs fixes for four issues: a guide page skips the PRD contract (125), the audit takes a page's own
 # Milestone line, found or not (130), the LOCKED hints never say review and --user needs the owner's

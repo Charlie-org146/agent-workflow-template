@@ -5,7 +5,7 @@
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prdcopy.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/audit.py
 # reads: skills/workflow-docs/references/commands.md skills/workflow-health/scripts/judge.py
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tests.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # Test the repo's copy of an external PRD (DOC-17): docs.py sync adopts a source's PRD into .loop/prd/PAGE.md in the repo's layout, a page with a
 # source then passes the docs check, the audit and the rows with no reader and shows the PRD as a generated block, an addition on either side is a
@@ -202,14 +202,14 @@ grep -qx -- '- DEL-1: \*\*Reviewed 2026-11-10\*\* Functional: The calculator pri
 grep -q "^## Non-goals" $COPY && grep -q "^No charts." $COPY && grep -q "^## Success metrics" $COPY && ok "the copy holds the four sections" || bad "sections: $(cat $COPY)"
 
 echo "== a page with a copy passes with no reader, and shows the PRD as a generated block"
-out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "^FEATURE Delivery" <<<"$out" && ! grep -q "^FEATURE Other" <<<"$out" && ok "the rows' listing groups the page's rows under it from the copy, before any block, with no reader" || bad "tests list before the block: $out"
+out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/regression.py" list 2>&1); grep -q "^FEATURE Delivery" <<<"$out" && ! grep -q "^FEATURE Other" <<<"$out" && ok "the rows' listing groups the page's rows under it from the copy, before any block, with no reader" || bad "tests list before the block: $out"
 $cri render >/dev/null
 grep -q "^<!-- prd:begin -->" $P && grep -q "^## Requirements" $P && grep -q "DEL-3: \*\*Unreviewed\*\* Functional: It rejects" $P && grep -q "^## Problem" $P && grep -q "^<!-- prd:end -->" $P \
   && ok "render writes Problem, Requirements, Non-goals and Success metrics as a block generated from the copy" || bad "block: $(cat $P)"
 grep -q "DEL-1" $P && ok "the Tests table lists the copy's ids" || bad "tests table: $(cat $P)"
 out=$(env -u LOOP_PRD_READER $docs check 2>&1); grep -q "^DOCS OK" <<<"$out" && ! grep -qE "^(UNREAD|LINK)" <<<"$out" && ok "an opted-in page with a copy passes the docs check with no reader: no UNREAD, no LINK" || bad "no reader: $out"
 out=$(env -u LOOP_PRD_READER $docs audit --dry-run 2>&1); grep -qE "^(UNREAD|LINK)" <<<"$out" && bad "audit with no reader: $out" || ok "the audit with no reader reports no UNREAD or LINK"
-out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/tests.py" list 2>&1); grep -q "DEL-1" <<<"$out" && ok "the rows' listing sees the copy's ids with no reader" || bad "tests list: $out"
+out=$(env -u LOOP_PRD_READER python3 "$here/skills/workflow-regression/scripts/regression.py" list 2>&1); grep -q "DEL-1" <<<"$out" && ok "the rows' listing sees the copy's ids with no reader" || bad "tests list: $out"
 edit $P "It rejects an empty list." "It rejects nothing."
 out=$(env -u LOOP_PRD_READER $docs check 2>&1); grep -q "^STALE Delivery: its PRD block differs from .loop/prd/Delivery.md" <<<"$out" && ok "a hand-edited block is STALE, naming the copy" || bad "block edit: $out"
 $cri render >/dev/null; grep -q "It rejects an empty list." $P && ok "render puts the copy's text back" || bad "re-render: $(cat $P)"

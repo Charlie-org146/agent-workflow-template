@@ -4,10 +4,9 @@
 usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered;
-                                TEXT says what the test checks; C is criterion (default), workflow (an
-                                end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
-                                issue URL or finding:SLUG it keeps fixed
+                                add or replace a row. L is land, nightly, draft or covered; TEXT says what the
+                                test checks; C is criterion (default), workflow (an end-to-end flow on a toy repo)
+                                or defect, and a defect row needs L, the issue URL or finding:SLUG it keeps fixed
   sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows (a criterion's row has its id as id or goal)
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
@@ -22,10 +21,15 @@ usage: regression.py <command> [options]
   workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
                                 a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
+  list [--markdown|--tsv] [--kind K]   every test, one group per feature, in one fixed format
+  summary --results FILE --took S      a GitHub run summary: totals, the run time, then one table per feature
+  issues [--write]                     each defect test's issue or pull request state, by gh; --write records them
+                                       in .loop/regression-issues.tsv for the wiki and health
+  fixes --since REF                    one "Fixes #N: test ROW ..." line per issue fixed since REF (REG-6)
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
-Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test
-commands, and nothing else.
+Rows: .loop/regression.tsv (id, level, command, goal, seen_red, description, category, link); results: .loop/regression-runs.tsv.
+Known failures (.loop/regression-known.tsv: id, reason) never block; a row never seen failing does. Issues dry-run unless --live;
+a token in the environment writes nothing. It runs git, gh and your test commands only.
 """
 import argparse
 import datetime
@@ -37,22 +41,19 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+from lanes_cli import cmd_issues, cmd_list
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
-
-# A prompt from git or gh must fail, not block.
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
-if not sys.stdin or not sys.stdin.isatty():
-  os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+from slots import KIND, SEEN, root_of  # slots sets GIT_TERMINAL_PROMPT
+from tiers import cmd_summary
+cmd_fixes = runs.cmd_fixes
 
 LEVELS = ("land", "nightly", "draft", "covered")
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,60}$")
 FIELDS = ("id", "level", "command", "goal", "seen_red", "description", "category", "link")
-SEEN = re.compile(r"\d{4}-\d{2}-\d{2}$")
 HEADER = "# " + "\t".join(FIELDS) + "\n"
 CRON = "17 */4 * * *"
 def run(args, cwd=None):
@@ -90,7 +91,7 @@ def read_rows(root):
 
 
 def edit_rows(root, change):
-  """Re-read the rows, apply this command's change and write, under the table's lock (slots.edit)."""
+  """Apply the change to the re-read rows under the table's lock."""
   def apply():
     rows = read_rows(root)
     change(rows)
@@ -126,7 +127,7 @@ def cmd_add(args):
 
 
 def active(root, slug):
-  """A goal still being built: its run record exists and is not done, failed, retired or stopped."""
+  """A goal still being built: its run record is not done, failed, retired or stopped."""
   common = os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")
   try:
     with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -330,6 +331,30 @@ def cmd_workflow(args):
   return lanes_cli.workflow(top(), args.visibility, lambda: actions.write(top(), CRON))
 
 
+# <tests
+def tests_commands(sub):
+  item = sub.add_parser("list")
+  shape = item.add_mutually_exclusive_group()
+  shape.add_argument("--markdown", action="store_true")
+  shape.add_argument("--tsv", action="store_true")
+  item.add_argument("--kind", choices=tuple(KIND.values()))
+  item.set_defaults(func=cmd_list)
+  item = sub.add_parser("summary")
+  item.add_argument("--results", required=True)
+  item.add_argument("--took", required=True)
+  item.set_defaults(func=cmd_summary)
+  item = sub.add_parser("fixes")
+  item.add_argument("--since", required=True)
+  item.set_defaults(func=cmd_fixes)
+  item = sub.add_parser("issues")
+  item.add_argument("--write", action="store_true")
+  item.set_defaults(func=cmd_issues)
+  for name in ("list", "summary", "fixes", "issues"):
+    sub.choices[name].add_argument("--root", default="", type=root_of)
+
+# tests>
+
+
 def main():
   parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
   sub = parser.add_subparsers(dest="command_name", required=True)
@@ -371,6 +396,7 @@ def main():
   item = sub.add_parser("reads")
   item.add_argument("id")
   item.set_defaults(func=lambda a: lanes.narrow.suggest(top(), a.id))
+  tests_commands(sub)
   args = parser.parse_args()
   return args.func(args)
 

@@ -7,16 +7,14 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py merge-runs [--root DIR]
 
 affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
-          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps
-          the file: the rows that name it and the runners are picked, never a full run. No record is
-          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it.
+          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps the file: the rows that name it
+          and the runners are picked, never a full run. No record is read.
 deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
           from the command to PATH, or NOT REACHED.
 check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
           `<CODE> <file>:<line>: <what>` line and a `fix:` line each. Exit 0 clean, 1 problems.
-merge-runs  merge the branch's lane record's row results (PASS or FAIL, with any flaky flag) into
-          .loop/regression-runs.tsv under slots.py's row lock (DX-19); workflow-delivery's goal.py pr runs it, by path,
-          before its bookkeeping commit. Writes nothing when the record has no results; exit 1 on an error.
+merge-runs  merge the branch's lane record's row results into .loop/regression-runs.tsv under slots.py's row lock (DX-19);
+          goal.py pr runs it, by path. Writes nothing when the record has no results; exit 1 on an error.
 The root is the git top level of the current directory unless --root is given. Usage errors exit 2 on stderr;
 LANES_DEBUG=1 shows the full trace of an unexpected error. Read-only, except merge-runs.
 """
@@ -27,14 +25,17 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tiers
 import lanes  # noqa: E402
 import narrow  # noqa: E402
-
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+from lanes import gh_run, reopened  # noqa: E402
+from narrow import md_table  # noqa: E402
+from slots import COLUMNS, issues_of, tsv  # noqa: E402; slots sets GIT_TERMINAL_PROMPT
+from tiers import entries, fields  # noqa: E402,F401
 
 FIX = {
   "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' to the comment block at the top of {file}",
@@ -83,7 +84,7 @@ def rows_of(root, level):
 
 def relative(root, path):
   here = os.path.realpath(os.getcwd())
-  base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root from outside it
+  base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root
   full = os.path.realpath(os.path.join(base, path))
   rel = os.path.relpath(full, os.path.realpath(root))
   if rel.startswith(".."):
@@ -92,27 +93,27 @@ def relative(root, path):
 
 
 def picked(root, rows, path, cache):
-  """The rows a deleted or unmapped file selects: those that name it, and those that reach the runner."""
+  """The rows a deleted or unmapped file selects: those naming it, and the runners."""
   return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
     or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
 
 
 def affected(root, rows, paths, cache):
-  """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
+  """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record."""
   ids, notes, real = set(), [], False
   for row in rows:
     lanes.closure(root, row["command"], cache)
     if cache.get(("why", row["command"])):
       notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
-  for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
+  for path in [p.replace("\\", "/") for p in paths]:
     if not os.path.exists(os.path.join(root, path)) and not any(
       path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
       ids |= picked(root, rows, path, cache)
       notes.append("DELETED %s: the rows that name it and the runners" % path)
-      real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
+      real = True
       continue
-    if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
-      hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
+    if path in (lanes.TABLE, ".loop/regression-known.tsv"):
+      hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
     else:
       hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
     no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
@@ -125,13 +126,13 @@ def affected(root, rows, paths, cache):
       real = real or not no_effect
       continue
     ids, real = ids | hit, real or not no_effect
-  if real:  # root runners rerun on a real change; a change only to NO_EFFECT files (a release's VERSION) reaches none
+  if real:
     ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
   return sorted(ids), notes
 
 
 def check(root, scripts, cache):
-  """Every header problem of the test scripts as (code, file, line, what), LANES-DECL-NONE for a missing header."""
+  """Every header problem of the test scripts as (code, file, line, what)."""
   out = []
   for rel in scripts:
     paths, problems = narrow.header(root, rel, cache)
@@ -150,7 +151,7 @@ def chain(parent, path):
 
 
 def merge_runs(root):
-  """The lane record's row results, with any flaky flag (tiers.py flaky_apply), into regression-runs.tsv."""
+  """The lane record's row results, with any flaky flag, into regression-runs.tsv."""
   import runs
   import slots
   record, _ = lanes.load(lanes.record_path(root), root)
@@ -194,7 +195,6 @@ jobs:
 OURS = "# Written by workflow-regression"
 
 
-# The Linux cell of the agent x machine matrix (health rule matrix): the same smoke set every machine runs, and its record as an artifact.
 MATRIX_JOB = """
   matrix-smoke:
     if: github.event_name != 'workflow_dispatch' || inputs.target == ''
@@ -221,8 +221,7 @@ MATRIX_JOB = """
 
 
 def workflow(root, given, write_main):
-  """regression.py workflow: where the regression runs decides what is written. A public repo gets regression.yml and
-    regression-pr.yml (the affected rows on a pull request or push); a private repo or an unreadable visibility gets nothing."""
+  """regression.py workflow: where the regression runs decides what is written."""
   cfg = tiers.config(root)
   where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
   if not where:
@@ -297,8 +296,6 @@ def main():
 
 
 
-# The memory floor (GRD-2): free_gb reads the machine's free memory, and wait_memory holds a lane that is about to run rows
-# while it is below min_free_memory_gb.
 
 
 def _slots():
@@ -307,8 +304,7 @@ def _slots():
 
 
 def free_gb():
-  """Free virtual memory in GB (Windows: the free page file; macOS: free, inactive and speculative pages; Linux: MemAvailable),
-    LOOP_FREE_GB to fake it, None when it can't be read (a lane is then never held)."""
+  """Free virtual memory in GB (LOOP_FREE_GB fakes it), None when it can't be read (a lane is then never held)."""
   try:
     if os.environ.get("LOOP_FREE_GB"):
       return float(os.environ["LOOP_FREE_GB"])
@@ -330,9 +326,7 @@ def free_gb():
 
 
 def wait_memory(root):
-  """A lane about to run rows waits while free memory is below min_free_memory_gb (default 4, 0 is off); a lane already running is
-    never stopped. Each wait is logged in <git common dir>/loop/memory-waits.log for the check-in and health; past 4x the lane's
-    time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
+  """A lane about to run rows waits while free memory is below min_free_memory_gb (default 4, 0 is off)."""
   try:
     need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 4)
   except (OSError, ValueError, AttributeError):
@@ -358,6 +352,55 @@ def wait_memory(root):
       _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
       sys.exit(_slots().EXIT_ENV)
     time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
+
+
+# <tests
+def cmd_list(args):
+  out = []
+  for feature, lines in entries(args.root, markdown=args.markdown, raw=args.tsv):
+    lines = [each for each in lines if each[1] == (args.kind or each[1])]
+    if not lines:
+      continue
+    if args.tsv:
+      out += ["\t".join([feature] + each) for each in lines]
+    elif args.markdown:
+      out += ["### " + feature, ""] + md_table(COLUMNS, lines) + [""]
+    else:
+      out += ["FEATURE " + feature] + [" | ".join(each[:6]) + " | seen failing " + each[6] for each in lines]
+  print("\n".join(out).rstrip("\n") if out else "NO TESTS")
+  return 0
+
+
+def cmd_issues(args):
+  probe = gh_run("auth", "status")
+  if probe.returncode:
+    cause = (probe.stderr or probe.stdout).strip().splitlines()
+    sys.stderr.write("ISSUES: cannot read issues (gh: %s). Fix: gh auth login, or set GH_TOKEN\n"
+      % (cause[0][:120] if cause else "not available"))
+    return 1
+  old, day, out, rows = issues_of(args.root), datetime.date.today().isoformat(), {}, tsv(args.root, "regression.tsv")
+  for row in rows:
+    link = row[7] if len(row) > 7 else ""
+    kind = re.match(r"^https?://\S+/(issues|pull)/\d+$", link)
+    if row[6:7] != ["defect"] or not kind or link in out:
+      continue
+    done = gh_run("issue" if kind.group(1) == "issues" else "pr", "view", link, "--json", "state", "-q", ".state")
+    state = done.stdout.strip().lower()
+    kept = (old.get(link, ()) + ("unknown", day, ""))[:3] if link in old else ("unknown", day, "")
+    new = kept if done.returncode or not state or state == kept[0] else (state, day, kept[2])
+    out[link] = new[:2] + (reopened(link) or new[2],) if kind.group(1) == "issues" and state == "open" else new
+    print("ISSUE %s %s" % (link, out[link][0]))
+  if args.write and rows:
+    path = os.path.join(args.root, ".loop", "regression-issues.tsv")
+    fd, new = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".regression-issues.")
+    with os.fdopen(fd, "w") as handle:
+      handle.write("# link\tstate\tdate\treopened_at\n" + "".join("%s\t%s\t%s\t%s\n" % (k, *v) for k, v in sorted(out.items())))
+    os.replace(new, path)
+  return 0
+
+
+# tests>
+
 
 if __name__ == "__main__":
   try:

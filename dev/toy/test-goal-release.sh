@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/fit.py
 # reads: skills/workflow-delivery/scripts/flow.py skills/workflow-regression/scripts/regression.py
-# reads: skills/workflow-regression/scripts/tests.py skills/workflow-release/scripts/merge.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-release/scripts/merge.py
 # reads: skills/workflow-release/scripts/autorelease.py skills/workflow-release/scripts/wiki.py
 # reads: skills/workflow-setup/scripts/setup.py
 here=$(cd "$(dirname "$0")/../.." && pwd)

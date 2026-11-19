@@ -36,12 +36,7 @@ flow_spec = lanekit._flow  # the flow file as a dict
 
 
 def lane_checks(top, contexts):
-  import importlib.util as u
-  sys.path.insert(0, REG)
-  spec = u.spec_from_file_location("tests", os.path.join(REG, "tests.py"))
-  tests = u.module_from_spec(spec)
-  spec.loader.exec_module(tests)
-  return tests.lane_checks(top, contexts)
+  return proctree.lane_checks(top, contexts)
 
 def lane_argv(seconds=0):
   return ["python3", os.path.join(REG, "regression.py"), "run", "land", "--reuse", "--tier", "goal"] + (

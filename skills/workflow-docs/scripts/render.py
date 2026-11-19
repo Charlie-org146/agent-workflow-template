@@ -18,11 +18,11 @@ os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 TESTS = ("Test", "Kind", "Guards", "Checks", "Last result")
 FULL = ("Test", "Kind", "Guards", "Result", "Date", "Run", "Seen failing")
-FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regression", "scripts", "tests.py")
+FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regression", "scripts", "lanes_cli.py")
 
 
 def tests_format(held={}):
-    """tests.py loaded once; None, with a NOTE, if missing or broken."""
+    """lanes_cli.py loaded once; None, with a NOTE, if missing or broken."""
     import importlib.util as iu
     if "m" not in held:
         sys.dont_write_bytecode, held["m"] = True, None
@@ -56,7 +56,7 @@ def repo_of(root, text=""):
 
 
 def tests_page(root):
-    """The full Tests page (DOC-10), from tests.py's entries and the runs file's 4th column."""
+    """The full Tests page (DOC-10), from lanes_cli's entries and the runs file's 4th column."""
     fmt = tests_format()
     groups = fmt.entries(root, markdown=True) if fmt else []
     return full_page(groups, {row[0]: row[3] for row in cr.tsv(root, "regression-runs.tsv")}, repo_of(root), workflow_file(root))
@@ -167,7 +167,7 @@ def test_slug(name):
 
 
 def plain(row, ran):
-    """The fields tests.py would give: test, kind, guards, checks, runs, result, seen."""
+    """The fields lanes_cli would give: test, kind, guards, checks, runs, result, seen."""
     status, day = ran.get(row[0], ("not run", ""))[:2]
     guard = row[7] if row[6] == "defect" else row[3]
     return [row[0], row[6] if row[6] in ("defect", "workflow") else "requirement", guard or "-", row[5] or "-", row[1], (status + " " + day).strip(),
