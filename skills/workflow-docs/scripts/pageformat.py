@@ -174,11 +174,11 @@ def frontdoor(page, text, listing, ids, kind="README"):
         sec = more.pop(0) if more and more[0][0].startswith("Requirements by feature") else ("", 1, [])
         rows = [(n, cells(x)) for n, x in sec[2] if x.startswith("|") and not RULE.match(x.strip()) and cells(x) != HEAD2]
         seen = [r for _, c in rows for r in IDREF.findall(c[0])[:1]]
-        wrong = [i for i in ids if IDREF.fullmatch(i) and seen.count(i) != 1] + [i for i in seen if i not in ids] + [c[0] for _, c in rows if len(c) != 2 or not c[1]]
+        wrong = [i for i in ids if IDREF.fullmatch(i) and i not in seen] + [i for i in seen if i not in ids] + [c[0] for _, c in rows if len(c) != 2 or not c[1]]
         links = "".join(x for _, x in sec[2])
-        hw = lambda x: "How-to-use-" + x[4:].strip().replace(" ", "-")
-        wrong += [hw(x) for _, x in sec[2] if kind == "Home" and x.startswith("### ") and hw(x) not in links]
-        sec[0] and not wrong or fail(sec[1], "every requirement once, and on Home a How-to link per feature", "%d wrong: %s" % (len(wrong), ", ".join(wrong[:3]) or "no section"), "regenerate it")
+        hw = lambda x: "How-to-use-" + x[5:].strip().replace(" ", "-")
+        wrong += [hw(x) for _, x in sec[2] if kind == "Home" and x.startswith("#### ") and hw(x) not in links]
+        sec[0] and not wrong or fail(sec[1], "every requirement, and on Home a How-to link per feature", "%d wrong: %s" % (len(wrong), ", ".join(wrong[:3]) or "no section"), "regenerate it")
     while more and more[0][0].startswith(("Not yet covered", "Proposed cuts", "Open conflicts")):
         more[0][0].startswith("Open") or grid(more[0][2], ["Requirement", "Feature", "Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
         more = more[1:]
