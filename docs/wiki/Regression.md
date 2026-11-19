@@ -200,7 +200,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-2 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-19 |
 | [one-link](Tests#t-one-link) | requirement | REG-2 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-19 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-2 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-19 |
-| [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-2 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-12 |
+| [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-2 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-19 |
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-2 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
 | [describe-needed](Tests#t-describe-needed) | requirement | REG-2 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-12 |
 | [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-2 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-12 |
@@ -278,7 +278,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [config-lane-duplicate-same](Tests#t-config-lane-duplicate-same) | requirement | REG-4 | Given .loop/config.json with a duplicate key whose last value is the one json.load returns (the guard-fixes case), when the other duplicate is removed, then no row is affected, since every reader sees the same config (#4321). | PASS 2026-11-15 |
 | [private-checks-classify](Tests#t-private-checks-classify) | requirement | REG-4 | Given a private repo's required checks, when they are classified, then a regression-only job, plain script jobs and a third-party-action job are told apart (#4537). | not run |
 | [known-no-block](Tests#t-known-no-block) | requirement | REG-5 | Given a known failure, when the run happens, then it does not block the run or open an issue. | PASS 2026-11-19 |
-| [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-12 |
+| [no-token-dry-run](Tests#t-no-token-dry-run) | requirement | REG-5 | Given no GitHub token, when a run happens, then it only prints what it would do. | PASS 2026-11-19 |
 | [one-issue](Tests#t-one-issue) | requirement | REG-5 | Given a failing test, when the run reports it, then one GitHub issue is opened. | PASS 2026-11-19 |
 | [known-recorded](Tests#t-known-recorded) | requirement | REG-5 | Given a known failure, when the GitHub run runs it, then its result is recorded KNOWN, not FAIL. | PASS 2026-11-10 |
 | [reg-defect-label](Tests#t-reg-defect-label) | requirement | REG-5 | Given a failing test, when a local live run reports it, then its issue is labelled defect. | PASS 2026-11-12 |
