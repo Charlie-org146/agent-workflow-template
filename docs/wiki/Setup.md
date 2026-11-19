@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=cc0441f6 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept known-red-w2-adopt-setup@8304dac1 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -235,7 +235,7 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | [setup-both-halves](Tests#t-setup-both-halves) | requirement | SET-1 | Given a repo, when setup runs, then it writes the repo half and, outside the repo, the private half. | PASS 2026-11-12 |
 | [set1-health-bracket](Tests#t-set1-health-bracket) | requirement | SET-1 | Given an adoption, when setup runs, then HEALTH START comes before the first write line, ADOPTION VERDICT is the last line, and a verdict that is not green lists each gap with its fix. | not run |
 | [set1-no-fit-filed](Tests#t-set1-no-fit-filed) | requirement | SET-1 | Given two pages with their own sections, when setup runs, then one findings line lists both and one issue tagged adoption is filed through the stand-in, matching preview, and a second run files none. | not run |
-| [set1-docs-format](Tests#t-set1-docs-format) | requirement | SET-1 | Given a fresh adoption, when the docs check runs, then no Home, front door, requirement or problem format gap and no broken link remains, only pages still to be written. | not run |
+| [set1-docs-format](Tests#t-set1-docs-format) | requirement | SET-1 | Given a fresh adoption, when the docs check runs, then no Home, front door, requirement or problem format gap and no broken link remains, only pages still to be written. | FAIL 2026-11-19 |
 | [repo-rules-setup](Tests#t-repo-rules-setup) | requirement | SET-1 | Given a repo adopted or updated by setup, when settings fill-repo runs, then an empty commented .loop/health-rules.json exists once and an edited one is kept. | not run |
 | [setup-owner-words-up-front](Tests#t-setup-owner-words-up-front) | requirement | SET-1 | Given a repo, when setup runs, then its first output says that un-reviewing a locked requirement needs the owner's own sentence, not a relayed letter or an agent (#2874). | PASS 2026-11-15 |
 | [test-caps-settings](Tests#t-test-caps-settings) | requirement | SET-1 | Given settings.py, when the settings are read, then max_regression_rows and max_suite_seconds are repo settings with defaults the template passes today. | PASS 2026-11-16 |
@@ -263,12 +263,12 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 | - | requirement | SET-4 | no passing test | not enforced |
 | [adopt-set-5](Tests#t-adopt-set-5) | requirement | SET-5 | Given SET-5, when the toy adopt test runs, then the design guide is installed and setup's .loop/START.md holds the opener and every part. | FAIL 2026-11-12 |
 | [entry-stale](Tests#t-entry-stale) | requirement | SET-5 | Given an adopted repo, when a PRD page's Problem changes, then the entry point check and the docs check fail STALE until docs.py audit regenerates it. | PASS 2026-11-12 |
-| [entry-adopt](Tests#t-entry-adopt) | requirement | SET-5 | Given a repo, when setup adopts it, then .loop/START.md holds the first-five-minutes list and every part: loop, release, operation and workers, docs, regression, health, settings and features. | SKIPPED 2026-11-16 |
-| [adopt-fixture-existing-checks](Tests#t-adopt-fixture-existing-checks) | requirement | SET-6 | Given a repo whose config lists its own checks (pull request 83), when setup adopts it, then the written config keeps every check and the seeded row runs all of them. | not run |
-| [adopt-fixture-ci-gitignore](Tests#t-adopt-fixture-ci-gitignore) | requirement | SET-6 | Given CI tests and a .gitignore blocking *.tsv, when setup adopts the repo, then the exception lines are written, the loop files are committed and the check comes from CI. | not run |
-| [adopt-fixture-bare-agent](Tests#t-adopt-fixture-bare-agent) | requirement | SET-6 | Given a bare agent_command and no CI, when setup adopts the repo, then it adopts with exit 0, names the gap with its fix and leaves the agent command alone. | not run |
-| [adopt-fixture-feature-milestones](Tests#t-adopt-fixture-feature-milestones) | requirement | SET-6 | Given features that are roadmap milestones and not folders, when setup adopts the repo, then they become pages and no milestone is made or read. | not run |
-| [setup-fit](Tests#t-setup-fit) | requirement | SET-6 | Given a repo with CI tests, a bare agent command, its own feature list and a blocking .gitignore, when setup adopts it, then it adopts with gaps, and an older setup.py beside the new modules still works. | not run |
+| [entry-adopt](Tests#t-entry-adopt) | requirement | SET-5 | Given a repo, when setup adopts it, then .loop/START.md holds the first-five-minutes list and every part: loop, release, operation and workers, docs, regression, health, settings and features. | FAIL 2026-11-19 |
+| [adopt-fixture-existing-checks](Tests#t-adopt-fixture-existing-checks) | requirement | SET-6 | Given a repo whose config lists its own checks (pull request 83), when setup adopts it, then the written config keeps every check and the seeded row runs all of them. | FAIL 2026-11-19 |
+| [adopt-fixture-ci-gitignore](Tests#t-adopt-fixture-ci-gitignore) | requirement | SET-6 | Given CI tests and a .gitignore blocking *.tsv, when setup adopts the repo, then the exception lines are written, the loop files are committed and the check comes from CI. | FAIL 2026-11-19 |
+| [adopt-fixture-bare-agent](Tests#t-adopt-fixture-bare-agent) | requirement | SET-6 | Given a bare agent_command and no CI, when setup adopts the repo, then it adopts with exit 0, names the gap with its fix and leaves the agent command alone. | FAIL 2026-11-19 |
+| [adopt-fixture-feature-milestones](Tests#t-adopt-fixture-feature-milestones) | requirement | SET-6 | Given features that are roadmap milestones and not folders, when setup adopts the repo, then they become pages and no milestone is made or read. | FAIL 2026-11-19 |
+| [setup-fit](Tests#t-setup-fit) | requirement | SET-6 | Given a repo with CI tests, a bare agent command, its own feature list and a blocking .gitignore, when setup adopts it, then it adopts with gaps, and an older setup.py beside the new modules still works. | FAIL 2026-11-19 |
 | [matrix-health-rule](Tests#t-matrix-health-rule) | requirement | SET-6 | Given a record of smoke runs, when health checks, then a cell with no pass in 7 days reads not proven (WARN) and a V1-required cell with none is a FAIL. | PASS 2026-11-13 |
 | [matrix-smoke-record](Tests#t-matrix-smoke-record) | requirement | SET-6 | Given a smoke run, when it ends, then it appends a dated line with agent, OS, machine, commit and result that health reads as proof of that cell. | PASS 2026-11-13 |
 | [matrix-never-run-warns](Tests#t-matrix-never-run-warns) | requirement | SET-6 | Given a cell of the agent-by-machine matrix that has never run, when health checks, then it reads WARN pending: no run recorded and never FAIL; only a cell that ran and failed, or whose last run is too old, fails. | not run |
