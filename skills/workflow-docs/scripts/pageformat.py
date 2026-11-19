@@ -14,7 +14,7 @@ OTHER = "Other"  # the topic of a feature none lists
 
 
 def topic_of(name, topics):
-    """The topic that lists this page; OTHER when none does."""
+    """The topic that lists this page."""
     return next((topic for topic, pages in topics.items() if name in pages), OTHER)
 
 
@@ -27,7 +27,6 @@ ME = re.compile(r"\b(I|[Mm]y|[Mm]e)\b")
 
 
 def is_guide(text):
-    """Whether a page's text marks it a guide: no PRD contract, no Home row."""
     return GUIDE in (text or "").splitlines()
 
 
@@ -49,18 +48,15 @@ def sentences(text):
 
 
 def slug(text):
-    """GitHub's heading anchor."""
     return re.sub(r"[^\w\- ]", "", text.strip().lower()).replace(" ", "-")
 
 
 def owner_repo(text):
-    """OWNER/REPO from a GitHub remote or milestone URL, or ''."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?(?:/milestone/\d+|/?$)", text.strip(), re.M)
     return found.group(1) if found else ""
 
 
 def parts(text):
-    """[(name, line number, [(number, line)])] for the head ('') and each level-2 section, outside fences."""
     out, fenced = [("", 1, [])], False
     for number, line in enumerate(text.splitlines(), 1):
         fenced = fenced != line.startswith("```")
@@ -80,7 +76,6 @@ def table(header, rows):
 
 
 def tables(numbered):
-    """[(line, header cells, [(line, cells)])] per run of '|' lines, plus the other lines."""
     found, other, last = [], [], None
     for number, line in numbered:
         if line.startswith("|"):
@@ -104,12 +99,10 @@ def anchors(readme):
 
 
 def unblocked(text):
-    """text with the generated Settings, Automation and template blocks (render.py) blanked, line numbers kept."""
     return re.sub(r"<!-- (settings|automation|template|diagram):begin -->\n.*?<!-- \1:end -->\n", lambda m: "\n" * m.group(0).count("\n"), text, flags=re.S)
 
 
 def home(text, features, existing, readme, repo, topics=None):
-    """DOC-4: the marker, '# title', '## Features' and one table HOME, a row per feature page, nothing else."""
     out, seen, keys, last = [], [], anchors(readme), -1
     lines = list(enumerate(unblocked(text).splitlines(), 1))
     body = [(n, x) for n, x in lines if x.strip() and x.strip() != MARKER]
@@ -164,7 +157,6 @@ IDREF = re.compile(r"\b([A-Z]{2,5}-\d+)\b( \(planned)?")
 
 
 def frontdoor(page, text, listing, ids, readme=True):
-    """DOC-23: the README and Principles page hold the health list's principles, each: sentence, diagram, 'Enforced by:' IDs."""
     want, out = LIST.findall(listing.partition("## The eight principles")[2]), []
     fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
     head, secs = parts(unblocked(text))[0], parts(unblocked(text))[1:]
@@ -193,7 +185,6 @@ ROUTINE = re.compile(r"^[a-z][a-z0-9-]*$")
 
 
 def runbook(page, name, lines, fields):
-    """DOC-16: one '### routine' subsection per routine, each holding every field as '- **Field:** text', nothing else."""
     out, subs, cur, titles = [], [], None, set()
     for number, line in lines:
         if not line.strip():
@@ -235,7 +226,6 @@ ROW_NAMED = re.compile(r"Deployments row:\s*`?([^`;,.)\n]+?)`?\s*(?=[;,.)]|$)")
 
 
 def linked(page, name, runbook, deploy):
-    """DOC-16: a routine's 'Deployments row: NAME' output must name an existing first cell of a Deployments table row."""
     rows = {c.strip().strip("`") for _, line in deploy for c in line.split("|")[1:2] if line.lstrip().startswith("|")}
     out, text = [], ""
     for number, line in runbook + [(0, "")]:  # the sentinel flushes the last Output
@@ -256,7 +246,6 @@ GROUPS = ["Functional", "Non-functional"]
 
 
 def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
-    """DOC-7: Requirements is '### Functional' then '### Non-functional', each with requirement lines and '  - ' sub-bullets, or 'None'."""
     out, held, groups = [], [], []
     say = lambda number, what, got, fix: out.append(bad(page, number, name, 7, what, short(got), fix))
     for number, line in lines:
@@ -296,7 +285,6 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
 
 
 def problem(page, name, lines, most, banned):
-    """DOC-8: 1 to `most` bullets, one in the first person, no code (backticks, paths, extensions, banned words)."""
     out, said = [], [(n, x) for n, x in lines if x.strip()]
     first = said[0][0] if said else 1
     for number, line in said:
@@ -316,7 +304,6 @@ def problem(page, name, lines, most, banned):
 
 
 def stale(page, name, start, lines, fresh):
-    """DOC-9: the first line where the Tests section differs from a fresh render, as a TESTS finding, or None."""
     have = [(n, x) for n, x in lines if x.strip()] + [(start, "end")]
     want = [x for x in fresh if x.strip()]
     at = next((i for i, line in enumerate(want + [None]) if i >= len(have) - 1 or have[i][1] != line), None)
@@ -353,7 +340,6 @@ def revs(lines):
 
 
 def revcheck(page, live, lines, base):
-    """DOC-20: REVISION and IDS findings; base is None or (ids, Revisions lines or None)."""
     out = []
     bad = lambda code, why: out.append(("REVISION" if code[0] == "R" else "IDS", page, "[%s] %s" % (code, why)))
     tab, ret, errs = revs(lines or [])

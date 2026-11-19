@@ -25,13 +25,10 @@ def path_of(root, page):
 
 
 def tidy(line):
-    """A line with the html a Notion export writes (b, i, u, code, br) as markdown."""
     return re.sub(r"</?[iu]>|<br\s*/?>", "", re.sub(r"</?b>", "**", re.sub(r"</?code>", "`", line)))
 
 
 def item_line(ident, rest, first=""):
-    """(`- ID: **Reviewed DATE** Kind: title`, whether the first sub-bullet was the title) from what follows an id: the kind stays in
-    the title, the mark comes before or after it, and an id line with no title takes its first sub-bullet, as Notion writes it."""
     rest = " ".join(re.sub(r"<!--.*?-->", " ", rest).replace("|", " ").split())
     kind, mark = KIND.match(rest), "Unreviewed"
     rest = rest[kind.end():] if kind else rest
@@ -48,9 +45,6 @@ def item_line(ident, rest, first=""):
 
 
 def normalise(text):
-    """{section: [lines]} of a source in the repo's layout: `NL-1 Functional: (Reviewed 2026-11-10) text`, or Notion's `**NL-1**
-    Functional: (Reviewed ...)` over a `Functional: text` sub-bullet, becomes `- NL-1: **Reviewed 2026-11-10** Functional: text`; a
-    `New requirements` heading adds to Requirements; other headings (Runbook, Deployments) and anything before the first are skipped."""
     out, mine, seen, fenced = {name: [] for name in HEADS}, None, set(), False
     lines = [tidy(x) for x in text.replace("\r\n", "\n").split("\n")]
     for number, line in enumerate(lines):
@@ -80,7 +74,6 @@ def normalise(text):
 
 
 def sections(parts, sep="\n\n"):
-    """The four sections as `## Name` and their lines, an empty one with a placeholder."""
     return sep.join("## %s\n%s" % (name, "\n".join(parts.get(name) or [EMPTY.get(name, "None")])) for name in HEADS)
 
 
@@ -101,7 +94,6 @@ def split(text):
 
 
 def copy_of(root, page):
-    """The copy's text when .loop/prd/PAGE.md exists and names at least one requirement, else None."""
     try:
         with open(path_of(root, page), encoding="utf-8") as handle:
             text = handle.read()
@@ -111,12 +103,10 @@ def copy_of(root, page):
 
 
 def block(copy):
-    """The generated part of the wiki page: the copy's four sections between the prd markers."""
     return "%s\n%s\n%s\n" % (BEGIN, sections(split(copy)), END)
 
 
 def with_block(text, copy):
-    """text with its prd block set to the copy's: replaced where it stands, else put before the first section."""
     fresh, held = block(copy), re.search(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", text, re.S)
     if held:
         return text[:held.start()] + fresh + text[held.end():]
@@ -125,14 +115,12 @@ def with_block(text, copy):
 
 
 def read(root, page, source):
-    """(PRD text, None) of a page that has a source: its copy when there is one, else the source read now (never a guess)."""
     import prd
     copy = copy_of(root, page)
     return (copy, None) if copy else prd.read_link(source)
 
 
 def set_item(copy, ident, lines):
-    """The copy with requirement `ident` set to `lines` (its line and sub-bullets), appended when new, removed when None."""
     parts, kept, placed = split(copy), [], False
     ahead = parts.get("Requirements", [])
     skip = False
@@ -154,8 +142,6 @@ def set_item(copy, ident, lines):
 
 
 def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
-    """Trouble for a page with a source, as (kind, page, detail): ids come from its copy, else the source read now (UNREAD when neither
-    reads); the four PRD sections may stand on the page only as the block generated from the copy."""
     import criteria
     import deployments as D
     import pageformat as pf
@@ -200,7 +186,6 @@ def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
 
 
 def texts(lines):
-    """{id: plain text} of requirement lines (marks and sub-bullets left out), the way both sides are compared."""
     from entry import requirements
     return requirements("\n".join(lines))
 
@@ -220,7 +205,6 @@ def blocks_of(lines):
 
 
 def mark_of(line):
-    """The review mark of a requirement line (`Reviewed 2026-11-10` or `Unreviewed`), or empty."""
     found = re.match(r"^- [A-Z]{2,5}-\d+: \*\*(.*?)\*\* ", line)
     return found.group(1) if found else ""
 
@@ -363,8 +347,6 @@ NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|rele
 
 
 def stands_alone(page, text, repo="", sites=()):
-    """DOC-19: outside Tests and Deployments a page holds no URL but this repo's milestone, releases, wiki and README (or a site in `sites`),
-    no owner/repo#N, no machine path."""
     out, skip = [], False
     for number, line in enumerate(text.splitlines(), 1):
         skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
@@ -373,4 +355,17 @@ def stands_alone(page, text, repo="", sites=()):
             near = NEAR.match(hit)
             if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
                 out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
+    return out
+
+
+def alone(root, folder, repo=""):
+    import audit, counting
+    out, sites = [], counting.origins(root)
+    files = [(n[:-3], os.path.join(root, folder, n)) for n in sorted(os.listdir(os.path.join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
+    files += [(os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/"), os.path.join(d, n)) for d, _, ns in sorted(os.walk(os.path.join(root, "skills")))
+              for n in sorted(ns) if n.endswith(".md")]
+    for name, path in files:
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        out += stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
     return out

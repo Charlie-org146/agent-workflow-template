@@ -6,23 +6,20 @@ usage: docs.py <command> [options]
   survey                       show the wiki's pages and this repo's page map
   add PAGE --paths A,B         add a page and the paths it describes
   check [--base REF] [--own]   list missing, stale, unmapped and unwritten pages, wrong counts, broken criteria and
-                               unpublishable images; exit 1 if any. --own: a stale page this branch doesn't touch is a FINDING
+                               unpublishable images; exit 1 if any. --own: a stale page this branch leaves is a FINDING
   audit [--base REF] [--dry-run]
-                               the one command: check every required doc, fix what is mechanical, list wording to rewrite
+                               check every required doc, fix what is mechanical, list wording to rewrite
   criteria PAGE                print the requirement format and the next free id for a page
   publish [--dry-run] [--adopt PAGE]
                                copy the pages to the wiki, commit and push
   sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]
-                               report each difference between an external PRD and .loop/prd/PAGE.md as a DELTA, post it for review, write an accepted side
+                               report each difference between an external PRD and .loop/prd/PAGE.md as a DELTA
   restore                      revert the last publish, if nothing came after it
-  automation                   each routine's live state here: a workflow's newest run, a launch agent loaded or not
+  automation                   each routine's live state: a workflow's newest run, a launch agent loaded or not
 
-With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the page
-format (FORMAT lines) and that the generated Tests page matches a fresh render.
-
-Publish never deletes a page, refuses to replace one without this tool's marker unless --adopt names it, and copies the
-images its pages embed. It runs git and nothing else.
-"""
+With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the
+page format and a Tests page that matches a fresh render. Publish never deletes a page, refuses to replace one without
+this tool's marker unless --adopt names it, and copies the images its pages embed. It runs git only."""
 import argparse
 import json
 import os
@@ -63,7 +60,6 @@ def git(*args, cwd=None, check=True):
 
 
 def identity(cwd):
-    """git -c options giving a commit an author where none is configured (CI); a real identity is kept."""
     if git("config", "user.email", cwd=cwd, check=False):
         return []
     return ["-c", "user.name=workflow-docs", "-c", "user.email=workflow-docs@users.noreply.github.com"]
@@ -164,14 +160,11 @@ def cmd_add(args):
 
 
 def netless(root, judged, mine):
-    """True when the paths read the same at HEAD as at the newest commit already judged: commits that add then revert a
-    change stale no page (issue 3771)."""
     tip = git("rev-list", "--no-walk=sorted", "-n1", *judged, cwd=root, check=False)
     return bool(tip) and not git("diff", "--name-only", tip, "HEAD", "--", *mine, cwd=root, check=False)
 
 
 def problems(root, base):
-    """Each page's trouble as (kind, page, detail)."""
     found = []
     folder = wiki_dir(root)
     rows = deployments.mapped(root, read_map(root), folder)
@@ -188,7 +181,7 @@ def problems(root, base):
         if PLACEHOLDER in text or (len(text.replace(MARKER, "").split()) < 10 and not deployments.linked(root, page, text)):
             found.append(("UNWRITTEN", page, rel))
         if page == "Home" and render.home_fresh(root, feature_pages(root)):
-            continue  # a DOC-4 Home holds only generated text: fresh, a changed mapped path leaves nothing to restate (#4608)
+            continue  # DOC-4 Home: generated only (#4608)
         seen = git("rev-list", "--no-merges", "HEAD", "--", rel, cwd=root, check=False).split()
         if not seen:
             continue
@@ -210,8 +203,6 @@ def problems(root, base):
 
 
 def from_base(root, base):
-    """With a base, the base-branch commits merged in since it, as parents to skip: judged in their own goal, so only the
-    branch's own changes stale its pages."""
     if not base:
         return []
     name = config(root).get("base") or "main"
@@ -233,25 +224,21 @@ def guide(root, page):
 
 
 def guarded(root, page):
-    """The page's first requirement or Review line, shortened; '' when none."""
     hit = next((x for x in slurp(page_file(root, page)).splitlines()
                 if criteria.LINE.match(x) or x.startswith("Review: ")), "")
     return pageformat.short(hit) if hit else ""
 
 
 def feature_pages(root):
-    """The existing mapped pages other than Home, guides and the generated ones."""
     return [page for page in sorted(read_map(root)) if PAGE.match(page) and page != "Home" and page not in pageformat.GENERATED
             and os.path.exists(page_file(root, page)) and not guide(root, page)]
 
 
 def counts(root):
-    """Numbers the docs state that the repo can check, as (COUNT, file, detail) rows."""
     return counting.counts(root, wiki_dir(root), read_map(root), config(root).get("criteria"))
 
 
 def contract(root):
-    """Criteria contract trouble as (kind, page, detail); off unless config has "criteria": true."""
     if not config(root).get("criteria"):
         return []
     found, names = [], feature_pages(root)
@@ -381,7 +368,6 @@ def cmd_automation(_args):
 
 
 def cmd_prompts(_args):
-    """One line per routine: the whole prompt its scheduler holds, a pointer to its Runbook."""
     root = top()
     parts = re.sub(r"(\.git)?/*$", "", git("remote", "get-url", "origin", cwd=root, check=False)).replace(":", "/").split("/")
     repo = "/".join(parts[-2:]) if len(parts) > 1 else os.path.basename(root)
@@ -438,20 +424,6 @@ def main():
         item.set_defaults(func=func)
     args = parser.parse_args()
     return args.func(args)
-
-
-def alone(root, folder, repo=""):
-    """stands_alone for each wiki page but Tests and each skill doc; Home's diagram too."""
-    import audit, milestones, prdcopy
-    out, sites = [], milestones.origins(root)
-    files = [(n[:-3], os.path.join(root, folder, n)) for n in sorted(os.listdir(os.path.join(root, folder))) if n.endswith(".md") and n != "Tests.md"]
-    files += [(os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/"), os.path.join(d, n)) for d, _, ns in sorted(os.walk(os.path.join(root, "skills")))
-              for n in sorted(ns) if n.endswith(".md")]
-    for name, path in files:
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
-        out += prdcopy.stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
-    return out
 
 
 if __name__ == "__main__":

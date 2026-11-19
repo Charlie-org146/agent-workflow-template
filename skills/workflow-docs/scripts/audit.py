@@ -62,7 +62,6 @@ def scenarios(root):
 
 
 def missing(root, command):
-    """Whether a script the row's command names is gone; after `cd DIR &&` its path is read from DIR (#4502)."""
     cd = re.match(r"\s*cd\s+(\S+)\s*(?:&&|;)", command)
     base = cd.group(1) if cd and os.path.isdir(join(root, cd.group(1))) else ""
     return any(not os.path.exists(join(root, base, f)) for f in cr.SCRIPT_FILE.findall(command))
@@ -154,7 +153,6 @@ def own_touched(root, ref, paths, head="HEAD"):
 
 
 def own_split(root, found, notes, rows, name="main", head="HEAD"):
-    """(found, notes) with STALE lines of untouched pages moved to notes as FINDING. head: the goal's branch."""
     ref = own_base(root, name)
     if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
         return found, notes  # no base, or on the base branch
@@ -194,7 +192,6 @@ def live(root):
 
 
 def owned(root, rel, body, rule):
-    """True when every requirement line is owner-reviewed or explained by a revision row, and none of main's was dropped."""
     name = rule["sections"][1]
     shown = cr.git("show", "origin/main:" + rel, check=False)
     main = [(line, tuple(below), m.group(1)) for line, m, below in cr.blocks(dict(cr.sections(shown)).get(name) or []) if m]
@@ -217,7 +214,6 @@ def owned(root, rel, body, rule):
 
 
 def relock(root, slug="", only=()):
-    """Relock (DOC-2): re-stamp a page changed only by another goal's reviewed line; with slug, a page stale by code alone."""
     rule, done = cr.rules(), []
     for rel in cr.pages(root):
         if only and os.path.basename(rel)[:-3] not in only:
@@ -269,7 +265,6 @@ from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
 
 
 def regions(rel, text):
-    """(outside, inside) of a page's generated part: the README or Home blocks, the whole Tests page, a feature page's Tests section."""
     name, text = os.path.basename(rel), text.replace(chr(13) + chr(10), chr(10))
     if name in ("README.md", "Home.md"):
         return counting.BLOCK.sub("", text), "".join(m.group(0) for m in counting.BLOCK.finditer(text))
@@ -280,10 +275,6 @@ def regions(rel, text):
 
 
 def rerender(root, base):
-    """DOC-19 (#4632): re-render the generated blocks and tables of a goal's branch that differ from a fresh render only because
-    something else moved (the template, main, a row). A file is kept only when the branch added no line to its generated part
-    that the fresh render lacks (a hand edit does) and the render touched nothing outside it; any other file is put back, still
-    STALE for the worker. Returns the files rewritten."""
     folder = docs.wiki_dir(root)
     files = [rel for rel in ["README.md"] + sorted("%s/%s" % (folder, n) for n in os.listdir(join(root, folder)) if n.endswith(".md"))
              if os.path.isfile(join(root, rel))]

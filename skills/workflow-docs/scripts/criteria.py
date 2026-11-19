@@ -4,26 +4,22 @@
 usage: criteria.py <command> [options]
 
   review ID|PAGE [...] --user [--date D]
-                               mark requirements, or a whole PRD, Reviewed with today's date (or D); --user means the
-                               owner's own words said so
+                               mark requirements, or a whole PRD, Reviewed today (or on D); --user: the owner's own
+                               words said so
   unreview ID|PAGE [...] --user
-                               mark them Unreviewed again, so their wording may change. With no terminal, both need
-                               LOOP_OWNER_WORDS, the owner's own words that said to; each change is logged with them
-                               in reviews.tsv in the repo's .git/loop folder
-  review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID (deployments.py)
+                               mark them Unreviewed, so their wording may change. With no terminal, both need
+                               LOOP_OWNER_WORDS, the owner's own words; each change is logged with them in .git/loop/reviews.tsv
+  review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID
   render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs;
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
-                               README blocks alone (a lane uses it: it never rewrites a page it only measures)
+                               README blocks alone
 
-A feature page is a short PRD (references/commands.md): a Review line, then Problem, Requirements,
-Non-goals, Success metrics and Tests. Requirements hold up to criteria_max lines (default CRITERIA_MAX_DEFAULT,
-.loop/config.json). A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text', with '  - '
-sub-bullets under it that are not requirements; a Reviewed line ends with <!-- reviewed HASH -->, seal_of its text and
-sub-bullets, and docs.py check fails when either changes. An argument shaped like an ID (two to
-five capitals, a dash, a number) is a requirement; any other is a page, whose PRD review prd.py writes. A regression row
-whose goal column is '-' proves no requirement yet and is left out. render writes each page's Tests table and the full
-Tests page (render.py), each via a temp file renamed into place, printing WROTE per file.
-It runs git and nothing else.
+A feature page is a short PRD (references/commands.md): Review, Problem, Requirements, Non-goals, Success metrics, Tests.
+A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text <!-- reviewed HASH -->' (seal_of its text
+and sub-bullets; docs.py check fails when either changes), at most criteria_max lines (default
+CRITERIA_MAX_DEFAULT, .loop/config.json). An argument shaped like an ID is a requirement; any other is a page, whose PRD
+review prd.py writes. A row whose goal is '-' proves no requirement yet and is left out. render writes each Tests table and
+the full Tests page (render.py), printing WROTE per file. It runs git only.
 """
 import argparse
 import datetime
@@ -46,7 +42,9 @@ GOAL = re.compile(r"^[a-z0-9][a-z0-9-]*:\d+$")  # slug:N
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
 SCRIPT_FILE = re.compile(r"[\w./-]*\w\.(?:py|sh|bash|zsh|js|mjs|cjs|ts|rb|pl|php|ps1|bat)\b", re.I)
-from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, link_of, link_page, owner_words, rules, slurp  # noqa: E402,F401
+import deployments  # noqa: E402
+from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, rules  # noqa: E402,F401
+link_of, link_page, owner_words, slurp = deployments.link_of, deployments.link_page, deployments.owner_words, deployments.slurp
 
 
 def git(*args, check=True):
@@ -68,7 +66,6 @@ def sha(text):
 
 
 def put(path, source, have, base):
-    """Write a PRD's repo copy (SYNC_MARK, `- ID: text` lines) and its baseline .base (`ID<TAB>sha8` of the agreed text)."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
@@ -77,7 +74,6 @@ def put(path, source, have, base):
 
 
 def subs(lines, number):
-    """The indented sub-bullet lines under line `number`."""
     out = []
     for line in lines[number + 1:]:
         if not line.strip() or not line[:1].isspace():
@@ -87,7 +83,6 @@ def subs(lines, number):
 
 
 def seal_of(text, below=()):
-    """A requirement's seal: of its text and sub-bullet lines joined by newlines."""
     return seal("\n".join([text] + list(below)))
 
 
@@ -109,7 +104,6 @@ def pages(root):
 
 
 def sections(text):
-    """The page's level-2 sections as (name, lines), outside code fences."""
     found, fenced = [], False
     for line in text.splitlines():
         if line.startswith("```"):
@@ -130,7 +124,6 @@ def tsv(root, name):
 
 
 def test_rows(root):
-    """Requirement and workflow tests {criterion: [row id]}, plus loose ones."""
     linked, loose = {}, []
     for row in tsv(root, "regression.tsv"):
         if row[6] == "defect":
@@ -152,7 +145,6 @@ def test_rows(root):
 
 
 def done_count(root, slug):
-    """Numbered done lines in .loop/goals/SLUG.md (0 if no such goal)."""
     try:
         with open(os.path.join(root, ".loop", "goals", slug + ".md")) as fh:
             part = fh.read().split("## Done lines", 1)[-1].split("\n## ", 1)[0]
@@ -162,7 +154,6 @@ def done_count(root, slug):
 
 
 def defect_rows(root):
-    """Defect tests as {criterion they guard: [row id]}; goal '-' belongs to no page."""
     found = {}
     for row in tsv(root, "regression.tsv"):
         if row[6] == "defect" and row[1] != "draft" and ID.match(row[3]):
@@ -181,18 +172,15 @@ def cmd_render(args):
 
 
 def criteria_of(lines):
-    """(line, LINE match or None) per requirement line; indented lines, group headings and a group's 'None' are not requirements."""
     return [(line, match) for line, match, _ in blocks(lines)]
 
 
 def blocks(lines):
-    """criteria_of plus each line's sub-bullets."""
     return [(line, LINE.match(line), subs(lines, number)) for number, line in enumerate(lines)
             if line.strip() and not line[:1].isspace() and not line.startswith("### ") and line.strip() != "None"]
 
 
 def contract(root, names, seen):
-    """Page contract trouble for these pages, as (kind, page, detail). `seen` maps ids to pages."""
     import counting
     import deployments
     import pageformat as pf
@@ -294,7 +282,6 @@ def contract(root, names, seen):
 
 
 def base_of(page, body, rule):
-    """(ids, Revisions lines or None) of a page at origin/main (or main), None when neither exists."""
     ref = next((r for r in ("origin/main", "main") if git("rev-parse", "--verify", "-q", r, check=False)), None)
     shown = git("show", "%s:%s/%s.md" % (ref, folder_of(git("rev-parse", "--show-toplevel")), page), check=False) if ref else None
     old = dict(sections(shown or ""))
@@ -302,7 +289,6 @@ def base_of(page, body, rule):
 
 
 def rewrite(root, change):
-    """Run change(match, subs) over every criterion line. It returns a new line, or None to leave it."""
     touched, names = [], []
     for rel in pages(root):
         text = slurp(os.path.join(root, rel))
@@ -329,7 +315,6 @@ def today():
 
 
 def mark_all(args, make, page_change):
-    """Validate every argument, then change the review lines; nothing is written unless all are good."""
     if not args.user:
         sys.exit("REFUSED: only the owner changes a review. Fix: pass --user when their own words said to.")
     words = " ".join(os.environ.get("LOOP_OWNER_WORDS", "").split())
