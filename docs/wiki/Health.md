@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/4
 
-Review: **Unreviewed** <!-- kept regroup-regression@1ad116b7 -->
+Review: **Unreviewed** <!-- kept regroup-guardrails@c97dfe1a -->
 
 How to use: [How-to-use-Health](How-to-use-Health)
 
@@ -49,35 +49,40 @@ How to use: [How-to-use-Health](How-to-use-Health)
   - The Performance group also warns for a goal waiting after more than `max_merge_rounds` merge rounds, more live goals than `max_active_goals`, weekly plan usage above `plan_pause_percent`, and lanes that waited for free memory (`min_free_memory_gb`).
   - A page that opted in to syncing with an external PRD adds a Docs FAIL row for each open delta, an inconsistency until one side's text is accepted; a repo or page with no external source never gets one.
 - HLT-3: **Unreviewed** Formal report with one findings table
-  - A header listing every group it ran (and any skipped), then one findings table, then each group with every rule marked pass, warn, fail or unread with its fix, then one verdict. A rule that can't read its data is never shown as passing.
-  - The findings table holds every warn, fail and unread finding, one row each, with the columns feature, group, rule, severity, finding and issue, sorted by feature. Every row names a feature page, or Other when the finding fits none; the issue column names the open issue filed for it, or says it is not filed; a check of every group reads the open health issues for that column, while `check --group` only uses a list already read. `file` prints the table again naming the issues it filed, and the digest shows that same table.
-- HLT-4: **Unreviewed** Findings become issues tagged with their group and their feature
-  - Each finding, from a rule or from the review, is one GitHub issue tagged with its group or kind and with the feature it is about, `feature:<Page>`, or `feature:Other` when it fits no feature, whatever feature_labels says (that setting governs regression issues only). A FAIL (except a performance one) and a review conflict is a defect, labelled `defect`, on no milestone; every other finding (a WARN, a performance FAIL, a drift, weak-test or saving finding, a review gap, an unread rule) is a backlog item, labelled `backlog`, on its feature's milestone "Backlog: <Feature>", or on "Backlog: Other" when it fits no feature. An issue I move to another milestone stays there.
-  - A preview lists exactly what would be opened, updated, closed or reopened, and nothing is written until I confirm or name the groups or features to file, behind an explicit `--live`.
-  - A repeat updates its issue, a fix closes it, a return reopens it, and an existing open issue that already covers a finding is linked, not duplicated.
-  - A finding's issue body and comment are passed to gh in a file (`--body-file`), never on the command line.
-  - Health reads only the issues a command needs, a page of 100 at a time: triage the open health issues, `file` the health issues and the open ones. A repo with thousands of issues lists within the time limit, and a page that fails, or a listing past 20,000 issues, refuses with one line naming it.
-- HLT-5: **Reviewed 2026-11-10** Repo review <!-- reviewed 28f88bd6 -->
-  - A reviewer, separate from the rules and never part of the verdict, reads every PRD page, the README, milestones, open issues, tests and code, feature by feature, and reports:
-  - Conflicts: two requirements that contradict each other, or a page that breaks a reviewed rule (for example DOC-1's Problem length).
-  - Gaps: a feature with no non-functional requirement where one is expected (performance, safety, privacy), an untested requirement, an open issue that fits no requirement, a done line with no test.
-  - Drift: code or Usage that does something its PRD doesn't say, or a requirement the code no longer meets.
-  - Weak tests: a test that doesn't really prove what it claims, misses a case or tests the wrong thing.
-  - Savings: where skill steps, prompts, scripts, waits and retries could cut time or tokens, ranked by size.
-  - It ends with ranked next steps per feature. Wording changes it suggests are only applied by me.
-- HLT-6: **Reviewed 2026-11-10** Health keeps itself honest and the repo lean <!-- reviewed 25886c54 -->
-  - Every health rule has a negative control that proves it can fire; the check flags a land test run over its time budget and names the slowest rows to move to nightly; and it flags stale worktrees and branches that exist only on this machine.
-- HLT-8: **Reviewed 2026-11-10** Triage <!-- reviewed 6ae689c8 -->
-  - Open findings are shown per feature with their kind, age and count, so I can see where the repo is weakest.
-  - When I close a batch (for example "won't fix the docs findings older than a week"), each is closed with my words as the reason, and the review doesn't refile it unless the evidence changes.
+  - The report lists every group it ran, then one findings table sorted by feature, then each rule marked pass, warn, fail or unread with its fix, then one verdict.
+  - A rule that can't read its data is never shown as passing.
+- HLT-4: **Unreviewed** Findings become issues
+  - Each finding is one GitHub issue tagged with its group and its feature.
+  - A preview lists what would be opened, updated, closed or reopened, and nothing is written until I confirm.
+  - A repeat updates its issue, a fix closes it and a return reopens it, never a duplicate.
+- HLT-5: **Unreviewed** Repo review
+  - A reviewer, separate from the rules and never part of the verdict, reads every page, issue, test and the code, feature by feature, and reports conflicts, gaps, drift, weak tests and savings, ending with ranked next steps per feature.
+  - Wording changes it suggests are applied only by me.
+- HLT-6: **Unreviewed** Every rule can fire
+  - Every health rule has a negative control that proves it can fire.
+- HLT-8: **Unreviewed** Triage
+  - Open findings are shown per feature with their kind, age and count.
+  - When I close a batch, each is closed with my words as the reason, and it isn't refiled unless the evidence changes.
+- HLT-10: **Unreviewed** Every feature has a Backlog milestone
+  - Every feature has one standing Backlog milestone, and "Backlog: Other" holds what fits no feature.
+  - Adoption creates the missing ones, and health warns for each that is absent.
+- HLT-11: **Unreviewed** Health keeps the repo lean
+  - Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them.
+  - It warns on a script over 19,000 bytes and fails one at 20 KB.
+- HLT-12: **Unreviewed** A filed finding becomes work
+  - When the next goals are planned, the open defect and backlog issues are read by feature and goals are proposed from them, most blocking first, so a filed finding is picked up or closed with my words, never left unseen.
+- HLT-13: **Unreviewed** Conflicts and orphans are findings
+  - Health flags two requirements that conflict or repeat, and any test, script or goal that names no requirement.
+  - Each is settled by a revision that merges, retires or rewords, or by a removal.
 
 ### Non-functional
-- HLT-1: **Reviewed 2026-11-10** Deterministic and read-only <!-- reviewed 3dd44499 -->
-  - The rule check gives the same answer twice on an unchanged repo and changes nothing; only file writes, and only GitHub issues.
-- HLT-7: **Reviewed 2026-11-10** Fast check <!-- reviewed 4a290e53 -->
-  - The rule check without controls finishes in under 60 seconds.
-- HLT-9: **Reviewed 2026-11-10** Evidence or nothing <!-- reviewed 43ca94e2 -->
-  - Every review finding names its feature and cites its evidence (a page and requirement ID, a file and line, a test row or an issue link); a finding without evidence is dropped, and nothing is filed twice.
+- HLT-1: **Unreviewed** Deterministic and read-only
+  - The rule check gives the same answer twice on an unchanged repo and changes nothing; it writes only reports and GitHub issues.
+- HLT-7: **Unreviewed** Fast check
+  - The rule check, run without its controls, finishes in under 60 seconds on this repo.
+- HLT-9: **Unreviewed** Evidence or nothing
+  - Every review finding names its feature and cites its evidence: a page and requirement ID, a file and line, a test or an issue.
+  - A finding without evidence is dropped, and nothing is filed twice.
 
 ## Non-goals
 - It never changes code, pages or requirements; it reports and files issues.
@@ -95,6 +100,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Deterministic and read-only <br> The rule check gives the same answer twice on an unchanged repo and changes nothing; it writes only reports and GitHub issues. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Deterministic and read-only <br> The rule check gives the same answer twice on an unchanged repo and changes nothing; only file writes, and only GitHub issues. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-2
@@ -108,43 +114,74 @@ How to use: [How-to-use-Health](How-to-use-Health)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Formal report with one findings table <br> The report lists every group it ran, then one findings table sorted by feature, then each rule marked pass, warn, fail or unread with its fix, then one verdict. <br> A rule that can't read its data is never shown as passing. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-18 | Formal report with one findings table <br> A header listing every group it ran (and any skipped), then one findings table, then each group with every rule marked pass, warn, fail or unread with its fix, then one verdict. A rule that can't read its data is never shown as passing. <br> The findings table holds every warn, fail and unread finding, one row each, with the columns feature, group, rule, severity, finding and issue, sorted by feature. Every row names a feature page, or Other when the finding fits none; the issue column names the open issue filed for it, or says it is not filed; a check of every group reads the open health issues for that column, while `check --group` only uses a list already read. `file` prints the table again naming the issues it filed, and the digest shows that same table. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-4
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Findings become issues <br> Each finding is one GitHub issue tagged with its group and its feature. <br> A preview lists what would be opened, updated, closed or reopened, and nothing is written until I confirm. <br> A repeat updates its issue, a fix closes it and a return reopens it, never a duplicate. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-18 | Findings become issues tagged with their group and their feature <br> Each finding, from a rule or from the review, is one GitHub issue tagged with its group or kind and with the feature it is about, `feature:<Page>`, or `feature:Other` when it fits no feature, whatever feature_labels says (that setting governs regression issues only). A FAIL (except a performance one) and a review conflict is a defect, labelled `defect`, on no milestone; every other finding (a WARN, a performance FAIL, a drift, weak-test or saving finding, a review gap, an unread rule) is a backlog item, labelled `backlog`, on its feature's milestone "Backlog: <Feature>", or on "Backlog: Other" when it fits no feature. An issue I move to another milestone stays there. <br> A preview lists exactly what would be opened, updated, closed or reopened, and nothing is written until I confirm or name the groups or features to file, behind an explicit `--live`. <br> A repeat updates its issue, a fix closes it, a return reopens it, and an existing open issue that already covers a finding is linked, not duplicated. <br> A finding's issue body and comment are passed to gh in a file (`--body-file`), never on the command line. <br> Health reads only the issues a command needs, a page of 100 at a time: triage the open health issues, `file` the health issues and the open ones. A repo with thousands of issues lists within the time limit, and a page that fails, or a listing past 20,000 issues, refuses with one line naming it. | migration r1; date from the run day | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-5
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Repo review <br> A reviewer, separate from the rules and never part of the verdict, reads every page, issue, test and the code, feature by feature, and reports conflicts, gaps, drift, weak tests and savings, ending with ranked next steps per feature. <br> Wording changes it suggests are applied only by me. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Repo review <br> A reviewer, separate from the rules and never part of the verdict, reads every PRD page, the README, milestones, open issues, tests and code, feature by feature, and reports: <br> Conflicts: two requirements that contradict each other, or a page that breaks a reviewed rule (for example DOC-1's Problem length). <br> Gaps: a feature with no non-functional requirement where one is expected (performance, safety, privacy), an untested requirement, an open issue that fits no requirement, a done line with no test. <br> Drift: code or Usage that does something its PRD doesn't say, or a requirement the code no longer meets. <br> Weak tests: a test that doesn't really prove what it claims, misses a case or tests the wrong thing. <br> Savings: where skill steps, prompts, scripts, waits and retries could cut time or tokens, ranked by size. <br> It ends with ranked next steps per feature. Wording changes it suggests are only applied by me. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-6
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Every rule can fire <br> Every health rule has a negative control that proves it can fire. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Health keeps itself honest and the repo lean <br> Every health rule has a negative control that proves it can fire; the check flags a land test run over its time budget and names the slowest rows to move to nightly; and it flags stale worktrees and branches that exist only on this machine. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-7
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Fast check <br> The rule check, run without its controls, finishes in under 60 seconds on this repo. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Fast check <br> The rule check without controls finishes in under 60 seconds. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-8
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Triage <br> Open findings are shown per feature with their kind, age and count. <br> When I close a batch, each is closed with my words as the reason, and it isn't refiled unless the evidence changes. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Triage <br> Open findings are shown per feature with their kind, age and count, so I can see where the repo is weakest. <br> When I close a batch (for example "won't fix the docs findings older than a week"), each is closed with my words as the reason, and the review doesn't refile it unless the evidence changes. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### HLT-9
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Evidence or nothing <br> Every review finding names its feature and cites its evidence: a page and requirement ID, a file and line, a test or an issue. <br> A finding without evidence is dropped, and nothing is filed twice. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Evidence or nothing <br> Every review finding names its feature and cites its evidence (a page and requirement ID, a file and line, a test row or an issue link); a finding without evidence is dropped, and nothing is filed twice. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### HLT-10
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Every feature has a Backlog milestone <br> Every feature has one standing Backlog milestone, and "Backlog: Other" holds what fits no feature. <br> Adoption creates the missing ones, and health warns for each that is absent. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
+
+### HLT-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Health keeps the repo lean <br> Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. <br> It warns on a script over 19,000 bytes and fails one at 20 KB. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
+
+### HLT-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | A filed finding becomes work <br> When the next goals are planned, the open defect and backlog issues are read by feature and goals are proposed from them, most blocking first, so a filed finding is picked up or closed with my words, never left unseen. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
+
+### HLT-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-18 | Conflicts and orphans are findings <br> Health flags two requirements that conflict or repeat, and any test, script or goal that names no requirement. <br> Each is settled by a revision that merges, retires or rewords, or by a removal. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ## Tests
 
@@ -213,6 +250,10 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [hlt6-controls-lean](Tests#t-hlt6-controls-lean) | requirement | HLT-6 | Given every rule and a stale loop worktree, when health checks, then each control fires and the worktree is flagged with the command that removes it, which health never runs. | not run |
 | [hlt8-triage](Tests#t-hlt8-triage) | requirement | HLT-8 | Given open health findings, when triage runs, then it lists them per feature by kind, count and age, and a closed batch carries the owner's words and is not refiled until its evidence changes. | PASS 2026-11-10 |
 | [hlt8-triage-one-issue](Tests#t-hlt8-triage-one-issue) | requirement | HLT-8 | Given two open health findings, when triage --close --issue N runs with --yes, then only that issue closes, with the owner's words, and a number that is not an open finding closes nothing. | not run |
+| - | requirement | HLT-10 | no passing test | not enforced |
+| - | requirement | HLT-11 | no passing test | not enforced |
+| - | requirement | HLT-12 | no passing test | not enforced |
+| - | requirement | HLT-13 | no passing test | not enforced |
 | [same-lines](Tests#t-same-lines) | requirement | HLT-1 | Given an unchanged repo, when health runs twice, then both runs print the same lines. | PASS 2026-11-18 |
 | [check-writes-nothing](Tests#t-check-writes-nothing) | requirement | HLT-1 | Given a repo, when the health check runs, then it writes no file and makes no commit. | PASS 2026-11-18 |
 | [hlt1-same-answer](Tests#t-hlt1-same-answer) | requirement | HLT-1 | Given an unchanged repo, when health checks it twice, then both print the same lines and no file changes. | not run |
