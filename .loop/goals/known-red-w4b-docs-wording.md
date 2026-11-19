@@ -13,4 +13,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-milestone-wording.sh` from the repo root.
+   Expect: it prints `PASS milestone-freeform:milestone-wording-unreviewed` and `PASS milestone-freeform:milestone-rows-seen-red`, and no FAIL line.
+2. Run `grep -c doc1-sync-pointer .loop/regression.tsv docs/wiki/Documentation.md docs/wiki/Tests.md`.
+   Expect: 0 in each file. The row was retired, not waived: DOC-1 revision r2 (2026-11-18) removed the `docs.py sync` sub-bullet it checked, and the sync behaviour now lives in DOC-17. The PR body carries this evidence.
+3. Run `git diff main -- docs/wiki` on the PR head.
+   Expect: only the removed doc1-sync-pointer Tests lines; no requirement or Reviewed line on any feature page changes.
