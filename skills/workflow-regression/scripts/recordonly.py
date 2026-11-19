@@ -75,6 +75,8 @@ def decide(head="HEAD", wait=WAIT, nap=30):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        sys.exit(print(__doc__))
     code, line = decide(*sys.argv[1:2])
     print(line)
     sys.exit(code)
