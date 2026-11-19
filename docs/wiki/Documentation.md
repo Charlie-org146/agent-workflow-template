@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -275,12 +275,12 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [prd-new](Tests#t-prd-new) | requirement | DOC-1 | Given a one-line idea, when prd new runs with --paths, then it drafts a mapped, Unreviewed PRD page that stays UNWRITTEN until its drafts are written. | PASS 2026-11-10 |
 | [prd-convert](Tests#t-prd-convert) | requirement | DOC-1 | Given old Summary and Criteria pages, when convert runs, then they become PRD pages with the same IDs and stamps, a half-converted page is completed, and a second run changes nothing. | PASS 2026-11-10 |
 | [prd-repo-green](Tests#t-prd-repo-green) | requirement | DOC-1 | Given this repo, when its docs check and health run, then nothing fails but a page whose Usage changed since the owner's review. | PASS 2026-11-10 |
-| [format-bullets](Tests#t-format-bullets) | requirement | DOC-1 | Given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-7. | PASS 2026-11-10 |
+| [format-bullets](Tests#t-format-bullets) | requirement | DOC-1 | Given a requirement with no sub-bullet, when the docs check runs, then it fails naming the page, Requirements and DOC-1. | PASS 2026-11-10 |
 | [format-orphan-bullet](Tests#t-format-orphan-bullet) | requirement | DOC-1 | Given a sub-bullet with no requirement above it, when the docs check runs, then it is refused. | PASS 2026-11-10 |
 | [format-groups](Tests#t-format-groups) | requirement | DOC-1 | Given Requirements without the Functional or Non-functional heading, when the docs check runs, then it fails. | PASS 2026-11-10 |
 | [format-groups-read](Tests#t-format-groups-read) | requirement | DOC-1 | Given a reviewed requirement under either group, when a sub-bullet is added, then it is still read and the check reports LOCKED. | PASS 2026-11-10 |
-| [format-problem](Tests#t-format-problem) | requirement | DOC-1 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-8. | PASS 2026-11-18 |
-| [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-1 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-9. | PASS 2026-11-18 |
+| [format-problem](Tests#t-format-problem) | requirement | DOC-1 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-1. | PASS 2026-11-18 |
+| [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-1 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-1. | PASS 2026-11-18 |
 | [cap-default-10](Tests#t-cap-default-10) | requirement | DOC-1 | Given no criteria_max in the config, when the cap is read, then it is 10 in both the docs check and setup. | PASS 2026-11-10 |
 | [format-key](Tests#t-format-key) | requirement | DOC-1 | Given a template rules block whose format key leaves out problem, when the docs check runs, then the Problem check is off. | PASS 2026-11-10 |
 | [problem-plural](Tests#t-problem-plural) | requirement | DOC-1 | Given a Problem with a banned word in the plural, when the docs check runs, then it fails. | PASS 2026-11-18 |
@@ -299,11 +299,11 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [docs-scripts-under-19000](Tests#t-docs-scripts-under-19000) | requirement | DOC-1 | Given the workflow-docs scripts, when their LF sizes are measured, then none is over 19,000 bytes. | not run |
 | [template-in-commands](Tests#t-template-in-commands) | requirement | DOC-1 | Given the docs skill, when its page rules are read, then they live in references/commands.md and no separate template file ships. | not run |
 | [docs-scripts-import-by-name](Tests#t-docs-scripts-import-by-name) | requirement | DOC-1 | Given the docs scripts, when render.py and prd.py load a sibling script, then they import it by name through importlib and never call __import__. | PASS 2026-11-15 |
-| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-18 |
-| [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-18 |
-| [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-12 |
-| [unreview-lifts](Tests#t-unreview-lifts) | requirement | DOC-2 | Given a reviewed criterion, when it is unreviewed, then its lock is lifted. | PASS 2026-11-12 |
-| [lock-in-report](Tests#t-lock-in-report) | requirement | DOC-2 | Given a reviewed criterion that changed, when the report is printed, then it names that criterion. | PASS 2026-11-12 |
+| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-19 |
+| [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-19 |
+| [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-19 |
+| [unreview-lifts](Tests#t-unreview-lifts) | requirement | DOC-2 | Given a reviewed criterion, when it is unreviewed, then its lock is lifted. | PASS 2026-11-19 |
+| [lock-in-report](Tests#t-lock-in-report) | requirement | DOC-2 | Given a reviewed criterion that changed, when the report is printed, then it names that criterion. | PASS 2026-11-19 |
 | [prd-lock-four](Tests#t-prd-lock-four) | requirement | DOC-2 | Given a reviewed PRD, when Problem, Requirements, Non-goals or Success metrics changes, then the docs check fails with LOCKED naming each section. Also, a requirement revised through the docs tooling keeps its earlier text as a numbered revision, newest first; a page with no Revisions section passes; a line differing from its newest row, a duplicate number or a changed old row fails. | PASS 2026-11-18 |
 | [usage-section-not-changed](Tests#t-usage-section-not-changed) | requirement | DOC-2 | Given a reviewed PRD, when a Usage section is added, then the check says USAGE, never CHANGED or LOCKED, and exits 1. | not run |
 | [prd-review-args](Tests#t-prd-review-args) | requirement | DOC-2 | Given review or unreview with no --user, a bad ID, a bad page or a bad date, when it runs, then it refuses and changes nothing. | PASS 2026-11-10 |

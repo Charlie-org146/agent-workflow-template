@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept principle-diagrams-safari@6397242e -->
+Review: **Unreviewed** <!-- kept v2-health-green@8f6e0749 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -23,6 +23,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
 - REL-3: **Unreviewed** The full suite passes on the candidate
   - The gate runs the whole nightly suite on the release candidate.
   - Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses.
+  - The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result.
 - REL-4: **Unreviewed** Health, review and pages pass on the candidate
   - The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails.
 - REL-5: **Unreviewed** A candidate admits only gate fixes
@@ -88,6 +89,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | The full suite passes on the candidate <br> The gate runs the whole nightly suite on the release candidate. <br> Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. | a CI run of the regression workflow is an accepted suite source for the gate (TOP-DECISION 36) | o191: "TOP-DECISION 36 under the owner's delegation (o168), ~18:12: freeze gate-ci-suite on a" |
 | r2 | 2026-11-18 | The full suite passes on the candidate <br> The gate runs the whole nightly suite on the release candidate. <br> Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. | v2 rewrite: on main since v1.0.61 (release-gate), Unreviewed; text condensed from the page; covers the draft's earlier REL-6 (o44). | o47: "Yes, start it end." |
 | r1 | 2026-11-18 | The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue <br> The gate runs the whole nightly suite on a checkout of the candidate, not the goal lane. <br> A row that fails, could not run or is on the known-red list refuses, naming the row, unless a `red` waiver gives its issue and its owner record names the row; a suite that did not run refuses. <br> A suite that runs past `max_suite_seconds` is not itself a refusal (health reports that cap); the gate waits up to four hours (`LOOP_GATE_SECONDS`), and a run a time budget stopped with rows left refuses, since rows that did not run prove nothing. | migration r1; date from the run day | o51: "Yes to both" |
 
@@ -171,7 +173,7 @@ None
 | - | requirement | REL-1 | no passing test | not enforced |
 | [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | REL-2 | Given a milestone with an open issue the owner has not moved by name, when review.py gate runs, then it refuses naming the issue; an issue with a waiver whose owner record names it does not refuse. | not run |
 | - | requirement | REL-2 | no passing test | not enforced |
-| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. | not run |
+| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. Also, given a CI run that is for another commit, unfinished, cut by budget or missing rows, when the gate takes it with --suite-from, then it refuses as not covering the candidate. | not run |
 | - | requirement | REL-3 | no passing test | not enforced |
 | [rel-checks-refused](Tests#t-rel-checks-refused) | requirement | REL-4 | Given a failing health check, a requirement that is not Reviewed or a stale wiki page, when the gate runs, then it refuses naming the check, the requirement or the page. | not run |
 | - | requirement | REL-4 | no passing test | not enforced |

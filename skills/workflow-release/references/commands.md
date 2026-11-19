@@ -220,3 +220,12 @@ Each refusal says `REFUSED:` and a fix. Common ones:
 | Tag already exists | Ask the user which version to use |
 
 `release.py show <slug>` prints the `release` field, and the version and draft URL after a cut.
+
+## A major: gate, promote and revert
+
+A major ships only through `review.py gate vX`, which refuses naming each open milestone issue (unless an owner waiver `moved`
+names it), each red or known-red suite row (unless a `red` waiver names its issue), a health failure, an Unreviewed
+requirement and a stale page. Waivers are lines `kind<TAB>subject<TAB>detail<TAB>owner record` in the git folder's
+`loop/release-waivers.tsv`, and count only when that owner-words record names the subject. `promote vX --owner-record ID` (operation
+session only; the record must name `vX.0.0`) tags `vX.0.0`, keeps `release/vX`, moves main and mails the state report; from a major's
+rc tag until the tag exists `merge.py` refuses any goal naming no gate failure (`FROZEN`). `revert vX` opens a PR back to the snapshot.

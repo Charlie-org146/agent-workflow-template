@@ -13,7 +13,7 @@ usage: criteria.py <command> [options]
   review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID (deployments.py)
   render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs;
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
-                               README blocks alone (a lane uses it: it must never rewrite a page it only measures)
+                               README blocks alone (a lane uses it: it never rewrites a page it only measures)
 
 A feature page is a short PRD (references/commands.md): a Review line, then Problem, Requirements,
 Non-goals, Success metrics and Tests. Requirements hold up to criteria_max lines (default CRITERIA_MAX_DEFAULT,
@@ -22,7 +22,7 @@ sub-bullets under it that are not requirements; a Reviewed line ends with <!-- r
 sub-bullets, and docs.py check fails when either changes. An argument shaped like an ID (two to
 five capitals, a dash, a number) is a requirement; any other is a page, whose PRD review prd.py writes. A regression row
 whose goal column is '-' proves no requirement yet and is left out. render writes each page's Tests table and the full
-Tests page (render.py), each to a temp file renamed into place, printing WROTE per file.
+Tests page (render.py), each via a temp file renamed into place, printing WROTE per file.
 It runs git and nothing else.
 """
 import argparse
@@ -329,7 +329,7 @@ def today():
 
 
 def mark_all(args, make, page_change):
-    """Validate every argument, then change the requirement and PRD review lines; nothing is written unless every argument is good."""
+    """Validate every argument, then change the review lines; nothing is written unless all are good."""
     if not args.user:
         sys.exit("REFUSED: only the owner changes a review. Fix: pass --user when their own words said to.")
     words = " ".join(os.environ.get("LOOP_OWNER_WORDS", "").split())
