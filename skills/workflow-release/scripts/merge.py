@@ -4,14 +4,14 @@
 usage: merge.py SLUG
 
 Refuses unless `"auto_merge": true` is in .loop/config.json, the goal is done and its pull request is open. Then it runs the
-base's routines (refusing if one fails), merges, and releases (autorelease.py; failure: `release_error`). Where .loop/docs.tsv
+base's routines (refusing on a failure), merges, and releases (autorelease.py; failure: `release_error`). Where .loop/docs.tsv
 maps pages, it first refuses while one is stale, passing a DOC-19 or DOC-4 finding on a page the goal did not change to an
 issue instead, and after the merge publishes the wiki (wiki.py; refused: `wiki_error`). With "review_hold": true it
 refuses REVIEW_HOLD until review.py records a review of the head. Before merging it scans the branch and notes for private
-names, and holds the merge (REQUIREMENT_MISSING) while a criterion row the goal adds names a requirement ID no base wiki page
-names, where the base's pages use that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo); refuses another pod's goal.
+names, and holds the merge (REQUIREMENT_MISSING) while a criterion row the goal adds names a requirement ID no base page
+names, where the base uses that prefix (else a NOTE). Takes <common>/loop/merge.lock (one per repo); refuses another pod's goal.
 
-Also here, the release pull request (`merge.advance`, called by autorelease.py): it pushes
+Also here, the release pull request (`merge.advance`, for autorelease.py): it pushes
 `release/vX-<slug>`, opens `Release vX (<slug>)` and merges it with `gh pr merge --merge`, never `--admin`; `gh pr view` decides
 each outcome (codes: references/commands.md).
 """
@@ -48,10 +48,10 @@ def file_issue(top, page, texts):
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+    sys.path.append(os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts"))  # for graph's proctree import
     try:
-        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "graph.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(sys.path[-1], "graph.py"))
+        spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
         return mod
     except Exception:
         return None
@@ -85,7 +85,7 @@ def reach(top, paths):
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
-OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
+OPERATE = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "operate.py")
 
 
 def base_moved(state, cfg, top):
@@ -280,7 +280,7 @@ def main():
     if pods:
         pods.refuse(state)
         pods.pr_queue("wait", os.path.join(os.path.abspath(common), "loop", "runs"), slug)  # an earlier pr lane holds the slot
-        pods.merge_lock(os.path.abspath(common))  # one merge per repo at a time, across pods
+        pods.merge_lock(os.path.abspath(common))  # one merge per repo, across pods
     wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())  # #3867
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
