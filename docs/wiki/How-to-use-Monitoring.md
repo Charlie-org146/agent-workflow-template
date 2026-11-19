@@ -132,4 +132,8 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-email-phone@9a67a8ff -->
 
+<<<<<<< HEAD
 <!-- kept gap-wave1-small@dfc1acc5 -->
+=======
+<!-- kept plan-red-team-core@6edef587 -->
+>>>>>>> origin/main
