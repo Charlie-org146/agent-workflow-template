@@ -15,4 +15,11 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `grep -rn '"--body",' skills` from the repo root.
+   Expect: no output; merge.py, milestones.py and prdcopy.py pass the body with `--body-file`, `-`.
+2. Run `grep -rn goal_lane_minutes skills .loop/config.json`.
+   Expect: only references and docs text (health's commands.md); no code, no setting, no config key.
+3. Open `skills/workflow-health/scripts/rules.py`, function `requirements_per_page`.
+   Expect: both defaults are 10, the same as the settings default.
+4. Run `wc -c` on the changed scripts (merge.py, milestones.py, prdcopy.py, defects.py, rules.py, lane.py).
+   Expect: each is under 19,000 bytes, and the row table holds the same number of rows as main.
