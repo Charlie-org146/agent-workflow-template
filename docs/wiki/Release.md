@@ -197,4 +197,5 @@ None
 | - | requirement | REL-12 | no passing test | not enforced |
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
+| [merge-batch-config-on](Tests#t-merge-batch-config-on) | requirement | REL-13 | Given the template's .loop/config.json, when merge_batch is read, then it is true, so merge.py --batch no longer refuses several goals. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |

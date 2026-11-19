@@ -1021,6 +1021,7 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-merge-batch-config-on"></a>merge-batch-config-on | requirement | REL-13 | not run | - | local | 2026-11-19 |
 
 ## Setup
 
