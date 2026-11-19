@@ -15,3 +15,12 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `bash dev/toy/test-migration.sh clean | tail -1; bash dev/toy/test-deployments.sh | tail -1; bash dev/toy/test-docs-link.sh | tail -1`.
+   Expect: each last line is `ALL PASS`.
+2. Run `bash dev/toy/test-pods.sh layers twopods | tail -1; bash dev/toy/test-pods.sh lock | tail -1; bash dev/toy/test-pods.sh owner | tail -1`.
+   Expect: each last line is `ALL PASS`.
+3. Run `bash dev/toy/test-docs-format.sh | tail -1; bash dev/toy/test-plan-cache.sh identity | tail -1; bash dev/toy/test-plan-cache.sh key | tail -1`.
+   Expect: each last line is `ALL PASS`.
+4. Run `python3 skills/workflow-docs/scripts/docs.py check | tail -1; wc -c skills/workflow-regression/scripts/narrow.py skills/workflow-release/scripts/merge.py`.
+   Expect: `DOCS OK: 16 pages`, and both files under 19,000 bytes.
