@@ -2,8 +2,8 @@
 
 ## Build steps
 
-1. `skills/workflow-monitoring/scripts/layers.py`: add `file_finding` (with `gh`, `norm`, `ids_of`, `repeat_of`, `covered`) and the
-   `finding` command in `main`. Checked: `layers.main` exists and `auto.CLASSES`, `auto.owner_rows`, `auto.loop_dir`, `auto.stamp` exist.
+1. `skills/workflow-monitoring/scripts/mailbox.py`: add `file_finding` (with `gh`, `norm`, `ids_of`, `repeat_of`, `covered`) and the
+   `finding` subcommand in `main`. Checked: `mailbox.main` exists and `auto.CLASSES`, `auto.owner_rows`, `auto.loop_dir`, `auto.stamp` exist.
 2. `skills/workflow-monitoring/scripts/checkin.py`: in `render`, list `auto.since(root, stamp, "findings.log")` as
    "Findings filed (operation layer)". Checked: `auto.since` takes a log name.
 3. `skills/workflow-monitoring/SKILL.md` (Command map row) and `references/commands.md`.
@@ -18,11 +18,11 @@
    "the same IDs and most of the words is refused" (row `ops25-findings-filed`, seen red with the repeat check broken).
 2. "the check-in lists the findings filed since the last check-in" and the safety negative controls ("no owner's words",
    "owner's words that list other IDs").
-3. Net rows: 1,299 before, 1,299 after; `layers.py` and `checkin.py` under 19,000 bytes; no new shipped file.
+3. Net rows: 1,299 before, 1,299 after; `mailbox.py` and `checkin.py` under 19,000 bytes; no new shipped file.
 
 ## What could break
 
-The size rows (layers.py is 18.8 KB), the reply hook (the new section name is not read as a header: it has a parenthesis), and
+The size rows (mailbox.py is 14.2 KB), the reply hook (the new section name is not read as a header: it has a parenthesis), and
 the docs check (a new requirement needs a how-to item and a scenario row; both added).
 
 ## Out of scope

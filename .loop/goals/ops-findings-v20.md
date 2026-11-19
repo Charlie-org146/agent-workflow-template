@@ -1,7 +1,7 @@
 # The operation layer (top and machine sessions) files every process finding it makes while scheduling, merging or deciding as an issue on the owning feature's Backlog milestone, by default, without asking, deduped against open issues, linking the decision or record that found it, and the check-in lists what was filed; separate from the delivery loop's own findings (v2.0 per owner o236, TOP-DECISION 95)
 
 - Slug: ops-findings-v20
-- Touches: not declared
+- Touches: skills/workflow-monitoring/scripts/mailbox.py, skills/workflow-monitoring/scripts/checkin.py, skills/workflow-monitoring/SKILL.md, skills/workflow-monitoring/references/commands.md, docs/wiki/Operation.md, docs/wiki/Tests.md, docs/wiki/How-to-use-Operation.md, .loop/regression.tsv, dev/toy/test-checkin-view.py
 - ETA: 220 active minutes (estimate 176m plus a 25% margin, rough)
 
 ## Done lines
@@ -16,7 +16,7 @@ Frozen. A wrong done line needs a new goal.
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
 
-1. Run `python3 skills/workflow-monitoring/scripts/layers.py finding "Slot hand-out order was guessed" --feature Operation --found "TOP-DECISION 88" --dry-run`.
+1. Run `python3 skills/workflow-monitoring/scripts/mailbox.py finding "Slot hand-out order was guessed" --feature Operation --found "TOP-DECISION 88" --dry-run`.
    Expect: it prints `WOULD file on Backlog: Operation: Slot hand-out order was guessed (found by TOP-DECISION 88; dry run)` and files nothing.
 2. Run the same command with the title of an open issue (for example the title of #5170) and no `--dry-run`.
    Expect: it prints `REFUSED: repeats open issue #5170 (...)` and exits 1; no issue is created.

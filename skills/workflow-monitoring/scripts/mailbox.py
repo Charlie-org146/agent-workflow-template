@@ -5,6 +5,11 @@ send budget, and a reply such as "1 recommended" is recorded as the owner's word
 usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply it read; QID is the
                                                  `Question id` line of the mail
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
+       mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
+                                                OPS-25: file a finding of top or a machine session, without asking, as an ops-finding
+                                                issue on "Backlog: PAGE" ("Other" if no page matches); REF is the TOP-DECISION or
+                                                record that found it. Refuses a repeat of an open issue and a safety-class finding
+                                                with no owner's words.
 
 notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
 secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
@@ -124,6 +129,82 @@ def claim(folder, key, flow, cwd=None, release=False):
     return "budget"
 
 
+def gh(args, root):
+    try:
+        return subprocess.run(["gh"] + args, cwd=root, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as error:
+        return subprocess.CompletedProcess(args, 127, "", str(error))
+
+
+def norm(title):
+    return " ".join(re.sub(r"[^a-z0-9#-]+", " ", str(title).lower()).split())
+
+
+def ids_of(title):
+    return set(re.findall(r"#\d+|\b[A-Z]{2,5}-\d+\b", str(title)))
+
+
+def repeat_of(title, open_issues):
+    """The open issue a finding repeats: same normalised title, or same IDs in the title and half its words."""
+    mine, ids = set(norm(title).split()), ids_of(title)
+    for item in open_issues:
+        theirs = set(norm(item["title"]).split())
+        if norm(item["title"]) == norm(title) or (ids and ids == ids_of(item["title"]) and len(mine & theirs) * 2 >= len(mine | theirs)):
+            return item["number"], item["title"]
+    return None
+
+
+def covered(root, record, title, page):
+    """True when the owner-words record lists *, ops-findings, the page or an ID in the title."""
+    import auto
+    row = next((r for r in auto.owner_rows(root) if r[0] == record), None)
+    return bool(row) and bool(({"*", "ops-findings", page} | ids_of(title)) & set(row[4].split(",")))
+
+
+def file_finding(root, args):
+    """(exit code, line): file one finding of the operation layer (OPS-25); nothing is filed when any check refuses."""
+    import auto
+    title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
+    if not title or not args.found.strip():
+        return 2, "REFUSED: give a title and --found (the TOP-DECISION or record that found it). Nothing was filed."
+    if (len(home) > 1 and home in title + text) or re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", title + text):
+        return 2, "REFUSED: the finding holds a private value. Nothing was filed."
+    try:
+        with open(os.path.join(root, ".loop", "docs.tsv"), encoding="utf-8") as handle:
+            pages = [l.split("\t")[0].strip() for l in handle if l.strip() and l[0] != "#"]
+    except OSError:
+        pages = []
+    page = next((p for p in pages if p.lower() == args.feature.strip().lower() and p != "Home"), "Other")
+    for name, found in auto.CLASSES.items():
+        if found.search(title + " " + text) and not (args.owner_words and covered(root, args.owner_words, title, page)):
+            return 2, "REFUSED: safety class %s needs the owner's words (--owner-words oN listing %s or an ID in the title). Nothing was filed." % (name, page)
+    done = gh(["issue", "list", "--state", "open", "--limit", "500", "--json", "number,title"], root)
+    try:
+        same = repeat_of(title, json.loads(done.stdout)) if not done.returncode else 0
+    except ValueError:
+        same = 0
+    if same == 0:
+        return 1, "REFUSED: could not read the open issues, so nothing was filed (%s)" % done.stderr.strip()[:100]
+    if same:
+        return 1, "REFUSED: repeats open issue #%d (%s). Nothing was filed." % same
+    stone = "Backlog: " + page
+    if args.dry_run:
+        return 0, "WOULD file on %s: %s (found by %s; dry run)" % (stone, title, args.found)
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "..", "workflow-health", "scripts", "milestone.py"), "new", stone, "--live"],
+                   cwd=root, capture_output=True, text=True, timeout=60)  # kept when it exists
+    for label in ("backlog", "ops-finding"):
+        gh(["label", "create", label, "--description", "Filed by the operation layer"], root)
+    body = "<!-- loop-ops-finding %s -->\n\n%s\n\nFound by %s (operation layer).\n" % (hashlib.sha1(norm(title).encode()).hexdigest()[:12], text or title, args.found)
+    done = gh(["issue", "create", "--title", title, "--label", "backlog,ops-finding", "--milestone", stone, "--body", body], root)
+    if done.returncode:
+        return 1, "FAILED: %s" % done.stderr.strip()[:160]
+    number = re.search(r"/issues/(\d+)", done.stdout)
+    line = "FILED #%s on %s: %s (found by %s)" % (number.group(1) if number else "?", stone, title, args.found)
+    with open(os.path.join(auto.loop_dir(root), "findings.log"), "a", encoding="utf-8") as handle:
+        handle.write("%s | %s\n" % (auto.stamp(), line))
+    return 0, line
+
+
 def say(text):
     print("MAILBOX: " + text)
 
@@ -165,6 +246,12 @@ def cmd_reply(args):
     return 0
 
 
+def cmd_finding(args):
+    code, line = file_finding(args.root, args)
+    say(line)
+    return code
+
+
 def cmd_pending(args):
     asked = read_json(os.path.join(lb.loop_dir(args.root), "mailbox.json"))
     for key in sorted(asked):
@@ -181,6 +268,12 @@ def main():
     one.add_argument("text")
     one.set_defaults(func=cmd_reply)
     sub.add_parser("pending").set_defaults(func=cmd_pending)
+    one = sub.add_parser("finding")
+    one.add_argument("title")
+    for name in ("feature", "found", "text", "owner-words"):
+        one.add_argument("--" + name, default="")
+    one.add_argument("--dry-run", action="store_true")
+    one.set_defaults(func=cmd_finding)
     for item in sub.choices.values():
         item.add_argument("--root", default="")
     args = parser.parse_args()

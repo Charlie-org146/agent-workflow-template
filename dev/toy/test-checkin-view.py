@@ -102,19 +102,19 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
         deps = GOOD.replace("[>] first-goal ~40m left pc", text).replace("[>] first-goal\n", "first-goal\n")
         wrong = reply_hook.shown(reply(deps.replace(text, text.replace("[>] ", "") if drop == "marker" else text)), root)
         check(any("first-goal" in w for w in wrong), "negative control: a goal with no %s is flagged by name" % drop)
-    # OPS-25: the operation layer files its own findings (layers.finding), and the check-in lists them
+    # OPS-25: the operation layer files its own findings (mailbox.py finding), and the check-in lists them
     import argparse
-    import layers
+    import mailbox
     calls, opened = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}]
     def fake(args, cwd):
         calls.append(args)
         out = json.dumps(opened) if args[:2] == ["issue", "list"] else "https://github.com/o/r/issues/6001\n"
         return subprocess.CompletedProcess(args, 0, out, "")
-    layers.gh = fake
+    mailbox.gh = fake
     subprocess.run = (lambda real: lambda a, *k, **kw: subprocess.CompletedProcess(a, 0, "", "") if "milestone.py" in " ".join(map(str, a)) else real(a, *k, **kw))(subprocess.run)
     with open(os.path.join(root, ".loop", "docs.tsv"), "w") as f:
         f.write("Operation\tskills/workflow-monitoring\n")
-    make = lambda title, **kw: layers.file_finding(root, argparse.Namespace(**dict(dict(title=title, feature="operation", found="TOP-DECISION 88", text="", owner_words="", dry_run=False), **kw)))
+    make = lambda title, **kw: mailbox.file_finding(root, argparse.Namespace(**dict(dict(title=title, feature="operation", found="TOP-DECISION 88", text="", owner_words="", dry_run=False), **kw)))
     code, line = make("Slot hand-out order was guessed")
     creates = [c for c in calls if c[:2] == ["issue", "create"]]
     check(code == 0 and len(creates) == 1 and "Backlog: Operation" in creates[0] and "backlog,ops-finding" in creates[0] and "TOP-DECISION 88" in creates[0][-1],

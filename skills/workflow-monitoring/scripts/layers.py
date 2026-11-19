@@ -4,10 +4,6 @@
 usage: layers.py status [--force]   a machine: send its STATUS to top when it changed or 30 minutes passed (prints the one line)
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
-       layers.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                    OPS-25: file a finding of top or a machine session, without asking, as an ops-finding issue on
-                                    "Backlog: PAGE" ("Other" if no page matches); REF is the TOP-DECISION or record that found it.
-                                    Refuses a repeat of an open issue and a safety-class finding with no owner's words.
 
 STATUS is one JSON message per machine in <git common dir>/loop/status/<machine>.json, also published as
 refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, its time, main per repo, one line per worker (step,
@@ -18,7 +14,6 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 
@@ -222,82 +217,6 @@ def defaults(common, cfg):
     return rows
 
 
-def gh(args, root):
-    try:
-        return subprocess.run(["gh"] + args, cwd=root, capture_output=True, text=True, timeout=60)
-    except (OSError, subprocess.SubprocessError) as error:
-        return subprocess.CompletedProcess(args, 127, "", str(error))
-
-
-def norm(title):
-    return " ".join(re.sub(r"[^a-z0-9#-]+", " ", str(title).lower()).split())
-
-
-def ids_of(title):
-    return set(re.findall(r"#\d+|\b[A-Z]{2,5}-\d+\b", str(title)))
-
-
-def repeat_of(title, open_issues):
-    """The open issue a finding repeats: same normalised title, or same IDs in the title and half its words."""
-    mine, ids = set(norm(title).split()), ids_of(title)
-    for item in open_issues:
-        theirs = set(norm(item["title"]).split())
-        if norm(item["title"]) == norm(title) or (ids and ids == ids_of(item["title"]) and len(mine & theirs) * 2 >= len(mine | theirs)):
-            return item["number"], item["title"]
-    return None
-
-
-def covered(root, record, title, page):
-    """True when the owner-words record lists *, ops-findings, the page or an ID in the title."""
-    import auto
-    row = next((r for r in auto.owner_rows(root) if r[0] == record), None)
-    return bool(row) and bool(({"*", "ops-findings", page} | ids_of(title)) & set(row[4].split(",")))
-
-
-def file_finding(root, args):
-    """(exit code, line): file one finding of the operation layer (OPS-25); nothing is filed when any check refuses."""
-    import auto
-    title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
-    if not title or not args.found.strip():
-        return 2, "REFUSED: give a title and --found (the TOP-DECISION or record that found it). Nothing was filed."
-    if (len(home) > 1 and home in title + text) or re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", title + text):
-        return 2, "REFUSED: the finding holds a private value. Nothing was filed."
-    try:
-        with open(os.path.join(root, ".loop", "docs.tsv"), encoding="utf-8") as handle:
-            pages = [l.split("\t")[0].strip() for l in handle if l.strip() and l[0] != "#"]
-    except OSError:
-        pages = []
-    page = next((p for p in pages if p.lower() == args.feature.strip().lower() and p != "Home"), "Other")
-    for name, found in auto.CLASSES.items():
-        if found.search(title + " " + text) and not (args.owner_words and covered(root, args.owner_words, title, page)):
-            return 2, "REFUSED: safety class %s needs the owner's words (--owner-words oN listing %s or an ID in the title). Nothing was filed." % (name, page)
-    done = gh(["issue", "list", "--state", "open", "--limit", "500", "--json", "number,title"], root)
-    try:
-        same = repeat_of(title, json.loads(done.stdout)) if not done.returncode else 0
-    except ValueError:
-        same = 0
-    if same == 0:
-        return 1, "REFUSED: could not read the open issues, so nothing was filed (%s)" % done.stderr.strip()[:100]
-    if same:
-        return 1, "REFUSED: repeats open issue #%d (%s). Nothing was filed." % same
-    stone = "Backlog: " + page
-    if args.dry_run:
-        return 0, "WOULD file on %s: %s (found by %s; dry run)" % (stone, title, args.found)
-    subprocess.run([sys.executable, os.path.join(HERE, "..", "..", "workflow-health", "scripts", "milestone.py"), "new", stone, "--live"],
-                   cwd=root, capture_output=True, text=True, timeout=60)  # kept when it exists
-    for label in ("backlog", "ops-finding"):
-        gh(["label", "create", label, "--description", "Filed by the operation layer"], root)
-    body = "<!-- loop-ops-finding %s -->\n\n%s\n\nFound by %s (operation layer).\n" % (hashlib.sha1(norm(title).encode()).hexdigest()[:12], text or title, args.found)
-    done = gh(["issue", "create", "--title", title, "--label", "backlog,ops-finding", "--milestone", stone, "--body", body], root)
-    if done.returncode:
-        return 1, "FAILED: %s" % done.stderr.strip()[:160]
-    number = re.search(r"/issues/(\d+)", done.stdout)
-    line = "FILED #%s on %s: %s (found by %s)" % (number.group(1) if number else "?", stone, title, args.found)
-    with open(os.path.join(auto.loop_dir(root), "findings.log"), "a", encoding="utf-8") as handle:
-        handle.write("%s | %s\n" % (auto.stamp(), line))
-    return 0, line
-
-
 def main(argv):
     common = os.path.abspath(machines.sh("rev-parse", "--git-common-dir") or ".git")
     root = machines.sh("rev-parse", "--show-toplevel") or os.getcwd()
@@ -312,16 +231,6 @@ def main(argv):
         for name, verdict in rows:
             print("%s: %s" % (name, verdict))
         return 1 if any(v != "ok" for _, v in rows) else 0
-    elif argv[:1] == ["finding"]:
-        import argparse
-        parser = argparse.ArgumentParser(prog="layers.py finding")
-        parser.add_argument("title")
-        for name in ("feature", "found", "text", "owner-words"):
-            parser.add_argument("--" + name, default="")
-        parser.add_argument("--dry-run", action="store_true")
-        code, line = file_finding(root, parser.parse_args(argv[1:]))
-        print(line)
-        return code
     else:
         print(__doc__.strip())
         return 2

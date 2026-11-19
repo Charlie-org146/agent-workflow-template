@@ -58,7 +58,7 @@ Each requirement and how it is delivered:
 - OPS-18: The operation session keeps running unattended. Example, from the unattended-sends-warn test: given 16 cross-session sends with no owner message, when the check-in reads the count, then it warns and asks for any owner message.
 - OPS-20: Every ready goal gets its own worker. The operation session plans queued goals as a dependency graph and gives every goal whose dependencies are met its own worker session, in parallel. A goal waits only on goals it truly depends on; sharing files is not a reason to wait. (no test yet)
 - OPS-23: The operation session keeps itself running. On start the operation session runs a self-check and lists what is missing, each with its fix. It re-creates its check-in timer before the timer expires, and warns before the app's limit on unanswered messages is reached. (no test yet)
-- OPS-25: The operation layer files its own findings. Run `/workflow-monitoring finding TITLE --feature PAGE --found REF` (`layers.py finding`); the check-in's Findings filed section lists what was filed since the last one. Example, from the ops25-findings-filed test: given a finding whose title repeats an open issue, when it is filed, then it is refused and nothing is created.
+- OPS-25: The operation layer files its own findings. Run `/workflow-monitoring finding TITLE --feature PAGE --found REF` (`mailbox.py finding`); the check-in's Findings filed section lists what was filed since the last one. Example, from the ops25-findings-filed test: given a finding whose title repeats an open issue, when it is filed, then it is refused and nothing is created.
 
 ### Skill: workflow-monitoring
 - **Say:** "Run the operation session"
