@@ -116,6 +116,13 @@ def active_minutes(state, at=None, cfg=None):
         return 0
 
 
+def wall_minutes(state):
+    try:
+        return monitor("board_log", True).wall_minutes(state)
+    except Exception:  # no workflow-monitoring beside this skill
+        return 0
+
+
 def monitor(name, paths=False):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", name + ".py")
     paths and sys.path.insert(0, os.path.dirname(path))
@@ -239,7 +246,7 @@ def cmd_adopt(g, args):
 def cmd_show(g, args):
     state = g.load(args.slug)
     state["resume_at"] = resume_at(state, g.guards.moved_since_plan(g, state))
-    state["minutes"] = {"charged": active_minutes(state, None, g.config()), "wall": monitor("board_log", True).wall_minutes(state)}
+    state["minutes"] = {"charged": active_minutes(state, None, g.config()), "wall": wall_minutes(state)}
     for step, held in (state.get("tokens") or {}).items():  # first, so the output cap never cuts them
         if isinstance(held, dict):
             print("TOKENS %s: %s, %s calls, %s, peak context %s" % (step, ", ".join("%s %s" % (k, format(int(held.get(k) or 0), ",")) for k in (

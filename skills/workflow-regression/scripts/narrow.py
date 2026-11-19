@@ -106,10 +106,12 @@ def warm(path, key, picked, cache):
     digest, parts = key
     try:
         with open(path, "rb") as handle:
-            inflate = zlib.decompressobj()
-            text = inflate.decompress(handle.read(), 64 << 20)
-            assert inflate.eof and not inflate.unconsumed_tail
-            data = json.loads(text)
+            inflate, chunks, size, packed = zlib.decompressobj(), [], 0, handle.read()
+            while packed and size <= 64 << 20 and not inflate.eof:  # 1 MB at a time: a bomb stops at 64 MB, never one big buffer
+                chunks.append(inflate.decompress(packed, 1 << 20))
+                size, packed = size + len(chunks[-1]), inflate.unconsumed_tail
+            assert inflate.eof and not inflate.unconsumed_tail and size <= 64 << 20
+            data = json.loads(b"".join(chunks))
         paths, rows, was = data["paths"], data["rows"], data["parts"]
         assert data["v"] == 1 and isinstance(data["key"], str) and isinstance(rows, dict) and isinstance(paths, list)
         assert isinstance(was, list) and len(was) == len(parts) and all(sound(p) for p in paths)

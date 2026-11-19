@@ -48,13 +48,17 @@ def file_issue(top, page, texts):
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+    folder = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
+    sys.path.insert(0, folder)  # graph.py imports its sibling proctree
     try:
-        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts", "graph.py"))
+        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(folder, "graph.py"))
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         return mod
     except Exception:
         return None
+    finally:
+        sys.path.remove(folder)
 
 
 pods = _pods()
