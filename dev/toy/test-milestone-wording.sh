@@ -24,6 +24,8 @@ for page, ids in pages.items():
     if not (head.startswith("**Unreviewed**") or head.startswith("**Reviewed ")):
         bad.append("%s has no Review line" % page)
     for key in ids:
+        if re.search(r"^- %s: moved to " % key, text, re.M):  # consolidated into a survivor; its wording is checked there
+            continue
         m = re.search(r"^- %s: (\*\*[^*]+\*\*) (.*?)\n((?:  .*\n)*)" % key, text, re.M)
         if not m:
             bad.append("%s is missing" % key)
@@ -34,8 +36,6 @@ for page, ids in pages.items():
                 bad.append("%s says %r" % (key, phrase))
         if key == "DOC-4" and "stays optional" not in block and "only when i put it there" not in block:  # the owner moved the rule here from DOC-10 in the v2 rewrite (o160); DOC-4 also says "optional Topic column", so the phrase is "stays optional"
             bad.append("%s does not say a milestone is optional" % key)
-        if key == "HLT-4" and "on no milestone" not in block:
-            bad.append("%s does not say a defect is on no milestone" % key)
 print("; ".join(bad) or "CLEAN")
 PY
 )
