@@ -2,6 +2,7 @@
 # reads: skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/guards.py
 # reads: skills/workflow-delivery/scripts/role.py skills/workflow-regression/scripts/regression.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/tiers.py
+# reads: skills/workflow-regression/scripts/lanes_cli.py
 # Proves regression.py run --reuse: a goal's suite runs once, then later runs reuse it, rerun only the rows a change can
 # affect, and never reuse a failing or missing run. Then delivery's lanes: qa runs the lane before the qa skill (through
 # the flow file's test_record prefix), record refuses qa without it, and pr reruns only what a base merge and the goal
@@ -128,6 +129,14 @@ awk -F'\t' 'BEGIN {OFS = FS} $1 == "b" {$6 = "B again."} {print}' .loop/regressi
 git commit -qam "Edit row b again"
 fresh; out=$($reg run land --reuse); echo "$out"
 check "a regression.tsv edit also reruns a row that reaches regression.py" '[ "$(ran)" = "b f " ]'
+# Value: protects=an edit to regression-known.tsv selects only the rows whose known line changed, and a flipped row still is;
+# fails_when=affected goes back to picking every row that reads the table, or drops the flipped row; why_new=known edits
+# selected ~1,200 rows; seam=none; no_claim=a record's failed rows (plan(), not affected)
+git checkout -q -- .loop/regression-known.tsv  # the run above dropped b, now fixed, from the file; b is on the list since this branch added it
+printf 'a\tflipped\n' >> .loop/regression-known.tsv
+out=$(python3 "$here/skills/workflow-regression/scripts/lanes_cli.py" affected --root . -- .loop/regression-known.tsv); echo "$out"
+check "a known-list edit selects the row whose known status flipped and not the row that reads the table" 'grep -q "^AFFECTED 2 of [0-9]* rows (a, b)" <<<"$out"'
+git checkout -q -- .loop/regression-known.tsv
 grep -v "^f	" .loop/regression.tsv > "$d/rows" && cat "$d/rows" > .loop/regression.tsv && git rm -rqf skills && git commit -qam "Drop row f"
 # Value: protects=a python row reruns when a module it imports changes, not everything; fails_when=scan stops following
 # imports; why_new=only shell sourcing is tested; seam=none; no_claim=packages or relative imports (same-folder module only)

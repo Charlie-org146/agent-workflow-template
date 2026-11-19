@@ -9,7 +9,8 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
 affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
           that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps
           the file: the rows that name it and the runners are picked, never a full run. No record is
-          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it.
+          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it. An edit to
+          .loop/regression-known.tsv picks only the rows whose line differs from the merge-base or base tip.
 deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
           from the command to PATH, or NOT REACHED.
 check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
@@ -97,9 +98,23 @@ def picked(root, rows, path, cache):
             or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
 
 
+def known_changed(root):
+    """Ids whose line in regression-known.tsv differs between the working table and the merge-base or the base tip (added,
+    removed or reason changed); None when neither can be resolved, so the caller keeps the wide rule."""
+    name = tiers.config(root).get("base") or "main"
+    ats = [at for at in (tiers.merge_base(root, name), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
+                                                       for ref in ("origin/" + name, name)]) if at][:2]
+    if not ats:
+        return None
+    now, memo = tiers.current(root, "regression-known.tsv"), {}
+    return {rid for at in ats for rid in set(now) | set(lanes.table(root, at, "regression-known.tsv", memo))
+            if lanes.table(root, at, "regression-known.tsv", memo).get(rid) != now.get(rid)}
+
+
 def affected(root, rows, paths, cache):
     """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
     ids, notes, real = set(), [], False
+    known = known_changed(root) if ".loop/regression-known.tsv" in paths else None
     for row in rows:
         lanes.closure(root, row["command"], cache)
         if cache.get(("why", row["command"])):
@@ -111,7 +126,9 @@ def affected(root, rows, paths, cache):
             notes.append("DELETED %s: the rows that name it and the runners" % path)
             real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
             continue
-        if path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
+        if path == ".loop/regression-known.tsv" and known is not None:  # only the rows whose known status changed
+            hit = {r["id"] for r in rows} & known
+        elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
