@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,7 +64,7 @@ jobs:
           REGRESSION_TARGET: ${{ inputs.target }}
           REGRESSION_CLEANUP: ${{ inputs.cleanup }}
           REGRESSION_LEVELS: "nightly"
-          REGRESSION_SHARD: "${{ matrix.shard }}/8"
+          REGRESSION_SHARD: "${{ matrix.shard }}/16"
         run: |
           here=$(mktemp -d)  # what each row guards, read before any row runs
           cat > "$here/tests.py" <<'TESTS_PY_EOF'
@@ -670,7 +670,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-          SHARDS: "8"
+          SHARDS: "16"
         run: |
           here=$(mktemp -d)
           cat > "$here/tests.py" <<'TESTS_PY_EOF'
