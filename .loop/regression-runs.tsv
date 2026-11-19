@@ -661,7 +661,7 @@ test-caps-settings	PASS	2026-11-16
 tests-last-run	PASS	2026-11-19	
 tests-links-workflow-3839	PASS	2026-11-14	
 tests-not-enforced	PASS	2026-11-19	
-tests-own-folder	PASS	2026-11-13	
+tests-own-folder	PASS	2026-11-19	
 tests-page-run-link	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-page-stale	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
