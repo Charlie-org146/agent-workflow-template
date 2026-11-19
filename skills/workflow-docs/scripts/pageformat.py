@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""The page format (DOC-4..DOC-23): the checks docs.py runs on Home, the README and feature pages. Pure: text in, findings out.
-A finding: ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>). Fix: <how>"); CHECKS says which run."""
+"""The page format (DOC-4..DOC-23): checks docs.py runs on Home, the README and feature pages; text in, findings out."""
 import os
 import re
 
@@ -14,7 +13,6 @@ OTHER = "Other"
 
 
 def topic_of(name, topics):
-    """The topic that lists this page."""
     return next((topic for topic, pages in topics.items() if name in pages), OTHER)
 
 
@@ -149,7 +147,7 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
-TABLE = "Requirement Feature Release Summary Flow".split()
+TABLE = "Requirement Feature Release Score Summary Flow".split()
 IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
@@ -179,10 +177,11 @@ def frontdoor(page, text, listing, ids, readme=True):
         if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
             fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
         for number, c in rows:
-            m = re.search(r"flows/[^)/?#\s]+", c[4])
-            "planned" in c[2] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[4]), "add the diagram")
+            m = re.search(r"flows/[^)/?#\s]+", c[5])
+            re.fullmatch(r"[1-5](/5)?", c[3].strip()) or fail(number, "a Score from 1 to 5", short(c[3]), "set it")
+            "planned" in c[2] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
     more = secs[len(want):]
-    if more and more[0][0].startswith("Not yet covered"):
+    while more and more[0][0].startswith(("Not yet covered", "Proposed cuts")):
         grid(more[0][2], TABLE[:2] + ["Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
         more = more[1:]
     if more:
