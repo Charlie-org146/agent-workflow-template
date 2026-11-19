@@ -192,7 +192,7 @@ A repo that adopts the template gets the same loop, checks and guardrails, with 
 | [GRD-10 Setup installs the whole set](Guardrails) | Guardrails | v0.27.1 | Setup installs the whole set | [Guardrails flow](How-to-use-Guardrails#system-diagram) |
 | [MCH-1 One command sets a machine up](Machines) | Machines | v1.0.26 | One command sets a machine up | [Machines flow](How-to-use-Machines#system-diagram) |
 | [MCH-7 Prerequisites first](Machines) | Machines | v1.0.70 | Prerequisites first | [Machines flow](How-to-use-Machines#system-diagram) |
-| [DEL-12 Windows-safe on merge](Delivery) | Delivery | ? | Windows-safe on merge | [Delivery flow](How-to-use-Delivery#system-diagram) |
+| [DEL-12 Windows-safe on merge](Delivery) | Delivery | v0.27.55 | Windows-safe on merge | [Delivery flow](How-to-use-Delivery#system-diagram) |
 | [GRD-18 Windows-safe](Guardrails) | Guardrails | v1.0.75 | Windows-safe | [Guardrails flow](How-to-use-Guardrails#system-diagram) |
 | [MCH-2 A new machine or account reaches a working operation session and its peer link from one command](Machines) | Machines | v1.0.57 | A new machine or account reaches a working operation session and its peer link from one command | [Machines flow](How-to-use-Machines#system-diagram) |
 | [MCH-3 Backup and restore are commands](Machines) | Machines | v1.0.57 | Backup and restore are commands | [Machines flow](How-to-use-Machines#system-diagram) |
