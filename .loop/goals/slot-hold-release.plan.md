@@ -12,3 +12,10 @@ A run record unreadable or absent: the slot keeps blocking as today. A goal re-r
 
 ## Out of scope
 goal.py, pool.py, graph.merge_lock, batch merging.
+
+## Review changes (red-team pass)
+- A slot is ignored only when the other goal's record shows the lane finished: `status == "done"` and a `pr` URL (goal.py sets them together at the end of pr); a rerun that is `running` keeps blocking.
+- The record is read per entry in its own try; an unreadable record keeps the slot blocking, and the loop is never aborted by it.
+- The refusal in `pr_wait` is measured from the wait's own start, so it fires when a holder keeps its slot fresh (a running lane or a waiting merge.py, which refreshes its own slot); the toy keeps the holder's slot fresh to exercise it.
+- Not covered: a `merge.py` that holds `graph.merge_lock` (a different mechanism, graph.py, outside the touches); reported to the owner of the batch as a follow-up.
+- Widen row `merge-batch-split` with `out=$(...)` so the toy runs once; measure bytes with LF only.
