@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept main-red-cleanups@b64c5a2e -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept go-head-main-reds@5afa0314a -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
