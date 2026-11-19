@@ -14,4 +14,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints DOCS OK: 16 pages.
+2. Run `python3 skills/workflow-release/scripts/review.py gate v2 --no-suite --ref HEAD` and count its GATE REFUSED lines.
+   Expect: 122 lines, none naming a Setup or Documentation requirement (156 before).
+3. Run `git diff main -- docs/wiki` and read it.
+   Expect: 34 lines changed in Setup.md and Documentation.md, each only swapping Unreviewed for Reviewed 2026-11-19 plus its seal; no wording changes.
