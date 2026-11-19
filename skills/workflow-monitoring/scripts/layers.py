@@ -218,9 +218,6 @@ def defaults(common, cfg):
 
 
 def main(argv):
-    if argv[:1] in (["--help"], ["-h"]):
-        print(__doc__.strip())
-        return 0
     common = os.path.abspath(machines.sh("rev-parse", "--git-common-dir") or ".git")
     root = machines.sh("rev-parse", "--show-toplevel") or os.getcwd()
     cfg = read(os.path.join(root, ".loop", "config.json"))
