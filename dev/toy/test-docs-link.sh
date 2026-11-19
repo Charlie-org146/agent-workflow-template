@@ -37,6 +37,14 @@ write_howto() { cat > docs/wiki/How-to-use-Delivery.md <<'EOF'
 
 It prints the median of the numbers given.
 
+### System diagram
+
+```text
+[Playbook: Calculator | the agent session]
+
+Legend: a box is Kind, Component and where it runs.
+```
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |
@@ -60,7 +68,7 @@ EOF
 }
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup
-python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; c.pop('criteria_max', None); json.dump(c, open('.loop/config.json', 'w'), indent=2)"
+python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; c['public_origins'] = ['https://app.notion.com']; c.pop('criteria_max', None); json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median LIST` | `python3 scripts/calc.py median LIST` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
@@ -87,6 +95,19 @@ cat > $H <<'EOF'
 | Feature | What it does | How to use | Milestone |
 |---|---|---|---|
 | [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |
+
+<!-- diagram:begin -->
+## System diagram
+
+```text
+ [OPERATION SESSION | the toy machine] -> [WORKER SESSIONS | one worker per goal, each step in turn]
+ [STAGING | none] -> [PRODUCTION | main]
+ [MACHINES | the toy machine] run [SCHEDULED ROUTINES | none]
+ guard: a failing step stops
+
+Legend: [box] a part and where it runs; -> a flow of work; guard a rule that refuses.
+```
+<!-- diagram:end -->
 EOF
 cat >> README.md <<'EOF'
 

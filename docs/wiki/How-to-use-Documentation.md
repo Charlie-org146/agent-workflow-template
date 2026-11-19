@@ -77,20 +77,7 @@ Rollback is reverting that commit.
 Each requirement and how it is delivered:
 
 - DOC-1: PRD template. Example, from the stale-found test: given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale; and, from the format-bullets test, a requirement with no sub-bullet fails the check naming the page and Requirements.
-- DOC-2: The PRD is mine. Example, from the review-dated test: given a criterion, when it is reviewed, then it is marked Reviewed with the date.
-- DOC-3: Tests follow on their own. Example, from the untested-listed test: given a Reviewed criterion with no test or a test that no longer matches, when the check runs, then it is listed.
-- DOC-4: Home is one table. Example, from the format-home test: given a Home page with a line outside its Features table, when the docs check runs, then it fails naming Home, Features and DOC-4.
-- DOC-6: Each skill's commands are documented. Example, from the command-reference-complete test: given each skill's SKILL.md Command map, when the reference is read, then every verb in the map has its syntax in the skill's SKILL.md or references/commands.md.
-- DOC-10: One Tests page. Example, from the milestones-once test: given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists.
-- DOC-14: A feature page lists what it ships. Example, from the deploy-section-optional test: given a feature page with no Deployments section, a good Page table, a good Delivery table or both, when the docs check runs, then it passes, and a Deployments section before Success metrics is refused as out of order.
-- DOC-16: A runbook for each routine. Example, from the runbook-good test: given a feature page with a well-formed Runbook section after its Problem, when the docs check runs, then it passes, and a Runbook placed before Problem is refused as out of order.
-- DOC-15: Home shows how the repo is set up and what runs by itself. Example, from the settings-overridden test: given a toy repo with one overridden setting, when render runs, then Home's Settings table marks exactly that one overridden with its value.
-- DOC-18: Every feature page has a How-to-use page for its users. Example, from the doc18-howto-missing test: given a feature page with no How-to-use page, when docs check runs, then it reports the feature, and a feature with a How-to-use page on the skeleton passes.
-- DOC-19: One How-to item per functional requirement. Example, from the doc19-item-missing test: given a feature page with three functional requirements and a How-to-use page with items for two, when docs check runs, then it fails naming the missing ID, and with all three items it passes.
-- DOC-20: Reviewed text is revised, never rewritten. Example, from the revision tests: given a Reviewed requirement and an owner record that lists the goal and the page, when I run `criteria.py revise DOC-4 --text "New wording" --why "the owner asked" --owner-record o30`, then it prints `REVISED DOC-4 r1->r2 (now Unreviewed, awaits review)`, the page's Revisions section shows r2 above r1 with the date, reason and record, and no other requirement changes. `criteria.py retire DOC-6 --as merged:DOC-1 --why "same rule" --owner-record o30` prints `RETIRED DOC-6 as merged into DOC-1` and keeps the ID under Retired; `criteria.py migrate --page Documentation --owner-record o30` gives each requirement its first revision and a second run changes nothing. A refusal starts with a code (REV-NOOP, REV-RECORD, REV-ROW, IDS-MISSING, IDS-REUSE, REV-GONE) and says nothing was written; `docs.py check` prints a NOTE for a page not yet migrated.
-- DOC-21: A code change alone never un-reviews a page. When only the code or settings a page describes changed and none of its own text did, the next merge re-stamps the page's review with the goal's slug and asks for no words from me; a change that leaves the code's syntax tree the same, comments and docstrings only, does not make the page stale.
-- DOC-22: The PRD is read-only while a goal builds. Example, from the guard tests: given a goal that rewords a Reviewed requirement no done line names, when `goal.py pr` runs, then it prints `GUARD REFUSED DOC-1 (Documentation): text changed` with the worker fix and the owner fix and pushes nothing; `goal.py finding GOAL "DOC-1 gap" --requirement DOC-1` files the gap on the feature's Backlog milestone and the goal goes on, and `criteria.py guard` runs the same check by hand and prints GUARD OK.
-- DOC-23: The README is the principles. Example, from the format-frontdoor test: given a README holding only its title, the eight principles and one link to the wiki Home, when the docs check runs, then it passes, and a README with any other section fails naming it.
+- DOC-2: The PRD is mine. Example, from the review-dated test: given a criterion, when it is reviewed, then it is marked Reviewed with the date. Also: `criteria.py revise DOC-4 --text "New wording" --why "the owner asked" --owner-record o30`. Also: `criteria.py retire DOC-6 --as merged:DOC-1 --why "same rule" --owner-record o30`. Also: `criteria.py migrate --page Documentation --owner-record o30`. Also: `goal.py pr`. Also: `goal.py finding GOAL "DOC-1 gap" --requirement DOC-1`. Also: `criteria.py guard`.
 
 ### Skill: workflow-docs
 - **Say:** "Check the docs"
@@ -130,4 +117,4 @@ Each requirement and how it is delivered:
 
 <!-- kept doc4-doc18-conflict@06ce732b -->
 
-<!-- kept merge-queue-c@a7052287 -->
+<!-- kept requirements-consolidate@0066850c -->

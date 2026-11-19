@@ -326,7 +326,7 @@ check("release.bump still bumps a minor and a patch", release.bump("1.0.54", "mi
 # 7. the page (REL-1 to REL-9) and the sizes
 text = open(os.path.join(root, "docs", "wiki", "Release.md"), encoding="utf-8").read() if os.path.exists(os.path.join(root, "docs", "wiki", "Release.md")) else ""
 ids = re.findall(r"^- (REL-\d+): \*\*(Unreviewed|Reviewed[^*]*)\*\*", text, re.M)
-check("the Release page holds REL-1 to REL-9, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 10)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "major")
+check("the Release page holds its live requirements (REL-3, REL-12, REL-13 after the consolidation), none missing", [i for i, _ in ids] == ["REL-3", "REL-12", "REL-13"], str(ids), "major")
 over = []
 for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:

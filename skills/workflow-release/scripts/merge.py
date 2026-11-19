@@ -2,13 +2,13 @@
 """Merge a finished goal's pull request into the base branch, then release. usage: merge.py SLUG [--go-head SHA]
        merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]
 
-Refuses unless "auto_merge" is true, the goal is done and its pull request open. Runs the base's routines, merges
+Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges
 (`gh pr merge --match-head-commit`), releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py;
 refused: `wiki_error`); a stale wiki page, REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse
 first. --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green.
 
---batch (setting merge_batch, off by default): monitoring/machines.py `batch` merges 2-3 green goals as one (commands.md).
-Also here, the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
+--batch (setting merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
+Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
 """
 import argparse
 import datetime
@@ -44,10 +44,10 @@ def file_issue(top, page, texts):
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+    sys.path.append(MON)  # graph's proctree
     try:
         spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(MON, "graph.py"))
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
         return mod
     except Exception:
         return None
