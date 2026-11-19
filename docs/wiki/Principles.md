@@ -2,7 +2,7 @@
 <!-- workflow-docs guide -->
 # Principles
 
-Six principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. Each table has one row per consolidated requirement: a summary that names the requirements it absorbs, its feature, the version that introduced it and a link to its own flow diagram. A row marked v2.0 (planned) or v2.0 (in progress) is work with no requirement ID yet. The README and Home show the same six, then every requirement with its complete text by topic and feature (43 requirements, 36 Reviewed).
+Six principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. Each table has one row per consolidated requirement: a summary that names the requirements it absorbs, its feature, the version that introduced it and a link to its own flow diagram. A row marked v2.0 (planned) or v2.0 (in progress) is work with no requirement ID yet. The README and Home show the same six, then every requirement with its complete text by topic and feature (43 requirements).
 
 ![How principles, health and features fit](principles-overview.svg)
 
