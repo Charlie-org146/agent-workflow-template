@@ -1,7 +1,7 @@
 # Health is green on main for the v2.0.0 gate: every requirement reference resolves, the known traceability gaps are closed, the SKILL.md files fit, and the caps are set for v2.0 (TOP-DECISION 37)
 
 - Slug: v2-health-green
-- Touches: docs/wiki/Roadmap.md, docs/wiki/Delivery.md, docs/wiki/Documentation.md, docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Home.md, docs/wiki/Check-in-and-board.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/Integrations.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Tests.md, skills/workflow-monitoring/SKILL.md, skills/workflow-release/SKILL.md, skills/workflow-monitoring/references, skills/workflow-release/references, .loop/regression.tsv, .loop/config.json, skills/workflow-health/scripts/defects.py
+- Touches: docs/wiki/Roadmap.md, docs/wiki/Delivery.md, docs/wiki/Documentation.md, docs/wiki/Guardrails.md, docs/wiki/Health.md, docs/wiki/Home.md, docs/wiki/Check-in-and-board.md, docs/wiki/How-to-use-Documentation.md, docs/wiki/Integrations.md, docs/wiki/Monitoring.md, docs/wiki/Regression.md, docs/wiki/Automation.md, docs/wiki/Tests.md, skills/workflow-monitoring/SKILL.md, skills/workflow-release/SKILL.md, skills/workflow-monitoring/references, skills/workflow-release/references, .loop/regression.tsv, .loop/config.json, skills/workflow-health/scripts/defects.py, docs/wiki/How-to-use-Guardrails.md, docs/wiki/How-to-use-Health.md, docs/wiki/How-to-use-Machines.md, docs/wiki/Machines.md
 - ETA: 225 active minutes (estimate 178m plus a 25% margin)
 
 ## Done lines
@@ -16,4 +16,13 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-health/scripts/health.py check` from the repo root.
+   Expect: the last line is `HEALTH: green` and no row is FAIL.
+2. Run `wc -l skills/workflow-monitoring/SKILL.md skills/workflow-release/SKILL.md`.
+   Expect: both are under 150 lines.
+3. Open `.loop/config.json`.
+   Expect: `criteria_max` is 23 and `max_suite_seconds` is 2800.
+4. Open `docs/wiki/Guardrails.md`, section Revisions, Retired list.
+   Expect: GRD-11, GRD-13 and GRD-14 still read "moved to" REG-10, REG-14 and DEL-17, and health does not call them undefined.
+5. Run `grep -c depth-marker-rows-4557 .loop/regression.tsv .loop/regression-red.tsv`.
+   Expect: one row in each: the #4557 defect test and its seen-red proof.
