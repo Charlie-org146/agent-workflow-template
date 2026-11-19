@@ -29,29 +29,29 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `review_depth` | `full` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `criteria` | `true` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
-| `criteria_max` | `10` | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
+| `criteria_max` | `10` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. |
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
-| `step_limit` | `0` | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. |
-| `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
-| `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
-| `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. |
-| `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
+| `step_limit` | `0` | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. |
+| `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns. |
+| `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
+| `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
-| `topics` | `{}` | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. |
-| `ci_levels` | `nightly` | Target of the scheduled and tag regression runs: nightly (every row) or land. |
+| `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
+| `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |
 | `plan_pause_percent` | `80` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
-| `min_free_memory_gb` | `4` | Free GB below which no lane or goal starts; 0 off. |
-| `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. |
+| `min_free_memory_gb` | `3` | Free GB below which no lane or goal starts; 0 off. |
+| `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
 | `token_budget` | `0` | Tokens a goal may spend before no new step starts; 0 means none. |
-| `max_regression_rows` | `1200` | Most rows the regression table may hold; a goal adding rows past it is refused at qa. |
-| `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. |
-| `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; rows past it wait for the full suite. |
-| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row, 15 or more; a lane past it stops. |
-| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more; a step at its limit finishes what it has. |
+| `max_regression_rows` | `1200` | Most rows the regression table may hold; qa refuses a goal that adds more. |
+| `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. |
+| `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |
+| `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
+| `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more. |
 | `stale_branch_days` | `14` | Days a local branch on no remote may sit before health lists it. |
 | `mend` | `false` | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | `120` | Seconds a failed goal waits before a mender starts. |
@@ -59,17 +59,18 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `resume_on_limit` | `false` | true lets watch resume a goal that hit a usage limit. |
 | `limit_wait` | `1800` | Seconds to wait after a usage limit before resuming. |
 | `watch_interval` | `20` | Seconds between rounds of watch. |
-| `agent_files` | `["CLAUDE.md", "AGENTS.md"]` | Agent entry files setup wires the workflow-loop block into; [] turns wiring off. |
-| `template_repo` | `(empty)` | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
+| `agent_files` | `["CLAUDE.md", "AGENTS.md"]` | Agent entry files setup wires the loop block into; [] turns wiring off. |
+| `template_repo` | `(empty)` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
+| `milestones_source` | `(empty)` | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `reply_hook` | `true` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
-| `govern_hook` | `true` | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
-| `full_auto` | `false` | Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait. |
-| `pool_size` | `20` | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. |
+| `govern_hook` | `true` | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
+| `full_auto` | `false` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
+| `pool_size` | `20` | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
 | `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
-| `workers` | `(empty)` | app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start. |
+| `workers` | `(empty)` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. |
 
 ## Private settings
 
@@ -80,18 +81,18 @@ Outside the repo, never committed: `~/.workflow-loop/flow.json` (or `$LOOP_FLOW`
 | `command` | `["claude", "-p"]` | Flow file: the agent command that runs each flow step unattended. |
 | `allowed_tools` | `[]` | Flow file: tools a step's agent may use, passed as --allowedTools; empty adds nothing. |
 | `model` | `(empty)` | Flow file: the model a step's agent uses, passed as --model; empty keeps the command's own. |
-| `suite` | `{"idea": "built-in", "plan": "built-in", "review": "built-in", "qa": "built-in", "ship": "built-in"}` | Flow file: the skill for each step; built-in runs delivery's own routine until you name your own. |
+| `suite` | `{"idea": "built-in", "plan": "built-in", "review": "built-in", "qa": "built-in", "ship": "built-in"}` | Flow file: the skill for each step; built-in runs delivery's own routine. |
 | `steps` | `{}` | Flow file: a skill for any one step, replacing the suite's. |
 | `overrides` | `{}` | Flow file: per step {skill, model, allowed_tools} that replace the defaults above. |
 | `env` | `{}` | Flow file: environment that puts the skills in their unattended mode. |
 | `probe` | `[]` | Flow file: a command that prints probe_expect when the skills run unattended. |
 | `probe_expect` | `unattended` | Flow file: the word the probe must print. |
-| `leak_prefixes` | `[]` | Flow file: case-insensitive regexes the package scan blocks in any file or file name, as your leak hook does. |
+| `leak_prefixes` | `[]` | Flow file: case-insensitive regexes the package scan blocks in any file or file name. |
 | `full_markers` | `{}` | Flow file: per step, strings a full plan or review reply must contain, e.g. {"review": ["..."]}. |
 | `limit` | `2700` | Flow file: seconds one flow step may run. |
-| `lane_limit` | `2` | Flow file: full regression lanes that may run at once on this machine; more wait their turn (0 is unlimited). |
+| `lane_limit` | `2` | Flow file: full regression lanes at once on this machine; more wait (0 is unlimited). |
 | `rules` | `[]` | Health file: your own health rules, each {name, command, fix}. |
 | `repos` | `[]` | Followed repos: one path a line in the repos file, shown on the board. |
-| `notify_email` | `false` | Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine. |
+| `notify_email` | `false` | Flow file: true mails you each new check-in event through mail.py; per machine. |
 | `machine_sync` | `false` | Sync machines. |
 | `notify_budget` | `20` | Daily mail budget. |
