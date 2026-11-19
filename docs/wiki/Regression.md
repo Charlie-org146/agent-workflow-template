@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=580ab976 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept extra-cols-links@6fa3fab4 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=9afd9bd3 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept regroup-regression@1ad116b7 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -26,46 +26,40 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 ## Requirements
 
 ### Functional
-- REG-1: **Reviewed 2026-11-10** Three kinds of tests <!-- reviewed a26a0b86 -->
-  - Requirement tests: one or more for every Reviewed requirement, functional and non-functional alike.
-  - Workflow tests: end-to-end runs of a whole flow on a toy repo (for example a goal from freeze to release), proving the steps work together.
-  - Defect tests: one for every issue, finding or bug that gets fixed, proving it stays fixed.
-  - A requirement with no passing test shows as not enforced; a fix isn't finished until its defect test exists and passes.
-- REG-2: **Reviewed 2026-11-10** Test format <!-- reviewed cb11400e -->
-  - Every test is listed in one fixed format, grouped by feature, wherever tests are shown (the wiki, the GitHub run summary, the health report): its kind, what it guards (the requirement, the workflow, or the issue with its state), what it checks in one plain line, when it runs, its last result and date, and whether it has been seen failing once.
+- REG-1: **Unreviewed** Three kinds of tests
+  - Every Reviewed requirement has at least one requirement test, every whole flow has an end-to-end workflow test on a toy repo, and every fixed issue has a defect test. A requirement with no passing test shows as not enforced.
+- REG-2: **Unreviewed** Test format
+  - Every test is listed in one fixed format, grouped by feature, wherever tests are shown: its kind, what it guards, what it checks and its last result.
 - REG-3: **Reviewed 2026-11-10** One command, three places <!-- reviewed 6fb19e03 -->
   - One command runs the suite the same way for me, the loop and GitHub Actions.
-- REG-4: **Reviewed 2026-11-10** When tests run <!-- reviewed b1a6fd25 -->
-  - In the loop, each goal runs only the rows affected by its changes plus its own new rows, at qa; ship and release reuse that run when no code changed since.
-  - Before a pull request merges, the affected rows run again on the merged result.
-  - The full suite (every requirement, workflow and defect test) runs in GitHub Actions on the Automation schedule (every few hours by default) and on every release, never on every goal.
-  - I can run the full suite or any part of it at any time.
-- REG-5: **Reviewed 2026-11-13** Failures go to GitHub <!-- reviewed 1e395838 -->
-  - One labeled issue per failing test, updated while it fails and closed when it passes; known failures don't block; it only previews unless `--live` is given, and the scheduled workflows pass `--live`.
-- REG-6: **Reviewed 2026-11-10** Every fixed issue leaves a test <!-- reviewed 9f5b8594 -->
-  - A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes.
-  - Each release note lists the issues it fixed, each with its defect test, so every version carries the regressions for what it fixed.
-  - A reopened issue's test is marked failing until it passes again.
+- REG-4: **Unreviewed** When tests run
+  - In the loop a goal runs only the tests its change affects plus its own new ones, and they run again on the merged result before a pull request merges. The full suite runs on the schedule and on every release, never on every goal, and I can run any part at any time.
+- REG-5: **Unreviewed** Failures go to GitHub
+  - Each failing test has one labelled issue, updated while it fails and closed when it passes. Known failures don't block, and nothing is written without --live.
+- REG-6: **Unreviewed** Every fixed issue leaves a test
+  - A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. A reopened issue's test is marked failing until it passes again.
+- REG-13: **Unreviewed** One machine's failure is not the goal's failure
+  - A test that fails on one machine but passes on CI is filed as an issue and is not counted as a failure of the goal.
+- REG-15: **Unreviewed** Coverage is measured in one place
+  - Each requirement's coverage step, from Stated to Fresh, is computed from the latest full run on main and shown beside it on its page. One test may prove several requirements. Nothing else is a source.
+- REG-16: **Unreviewed** Coverage never drops silently
+  - A goal that would remove the only proof of a Reviewed requirement is refused at qa, and a release that lowers coverage needs my words.
 
 ### Non-functional
-- REG-7: **Reviewed 2026-11-14** Fast in the loop <!-- reviewed 80d60ba6 -->
-  - Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't.
-  - The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over.
-  - Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off.
-  - Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit.
-  - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped.
-- REG-8: **Reviewed 2026-11-10** Controllable <!-- reviewed e39ec809 -->
-  - Which levels run where, the GitHub schedule, the time limits and how many test lanes run at once are settings.
-  - Lanes running side by side never share files or ports or time each other out, and a lane over its limit says so.
-- REG-9: **Reviewed 2026-11-10** Honest results <!-- reviewed 194b357d -->
-  - Every test has been seen failing once, or shows as unproven.
-  - A test that fails then passes on the same commit is marked flaky, never silently retried.
-- REG-10: **Reviewed 2026-11-13** Red proof for rows a platform can't run <!-- reviewed fe76007f -->
-  - A row whose red proof needs another machine can be recorded owed (`red ID --owed --runner R`): it reads PENDING instead of UNPROVEN, one to-do issue labelled `other-machine` opens on the row's feature milestone, and neither the goal's pr lane nor the release waits for it. A real red proof clears it.
-  - A row the local platform can't run (the bash toy rows on native Windows exit 77) is skipped with its reason and is never counted as seen failing: a skip, on any platform, never sets the seen-failing date.
-  - Its red proof runs on a capable runner (Linux or macOS, in CI or a session), and the result is written back to the row with the runner and the commit it ran on; a Windows runner can't be named.
-  - A pull request that adds such a row lists the exact red commands still owed, so the proof is run and written back before the row counts as proven.
-  - A loop run that fails only on rows both skipped on this platform and unproven (qa or ship) waits for the off-platform proof, naming the rows and the red commands, and spends no failed try; a real failure still does.
+- REG-7: **Unreviewed** Fast in the loop
+  - Every in-loop test run stays within a time budget, 15 minutes by default and never lower. A run that would go past it runs what fits and defers the rest to the full suite, naming how many. It is the only time limit on a lane.
+- REG-8: **Unreviewed** Controllable
+  - Which tests run where, the schedule, the time limits and how many test lanes run at once are settings.
+- REG-9: **Unreviewed** Honest results
+  - Every test has been seen failing once, or shows as unproven. A test that fails then passes on the same commit is marked flaky, never silently retried.
+- REG-10: **Unreviewed** Tests a machine can't run
+  - A test this machine can't run is skipped with its reason and never counted as seen failing. Its failing proof is recorded as owed, runs on a machine that can, and is written back with that machine and commit. An owed proof never blocks the goal, its merge or the release.
+- REG-11: **Unreviewed** Preparation is budgeted too
+  - The work before a lane's first test, preparing, planning and waiting for a slot, has its own budget, 15 minutes by default and never lower. A lane that reaches it stops, says which part ran long, and can be rerun.
+- REG-12: **Unreviewed** Lanes don't disturb each other
+  - Test lanes running side by side never share files or ports or time each other out, and a lane over its limit says so.
+- REG-14: **Unreviewed** Caps on tests and suite time
+  - The number of tests and the full-suite time are capped by settings. A goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or I raise the cap in my own words. The suite time is measured from the latest full run.
 
 ## Non-goals
 - The owner never writes or manages tests; the loop does.
@@ -83,12 +77,14 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Three kinds of tests <br> Every Reviewed requirement has at least one requirement test, every whole flow has an end-to-end workflow test on a toy repo, and every fixed issue has a defect test. A requirement with no passing test shows as not enforced. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Three kinds of tests <br> Requirement tests: one or more for every Reviewed requirement, functional and non-functional alike. <br> Workflow tests: end-to-end runs of a whole flow on a toy repo (for example a goal from freeze to release), proving the steps work together. <br> Defect tests: one for every issue, finding or bug that gets fixed, proving it stays fixed. <br> A requirement with no passing test shows as not enforced; a fix isn't finished until its defect test exists and passes. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-2
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Test format <br> Every test is listed in one fixed format, grouped by feature, wherever tests are shown: its kind, what it guards, what it checks and its last result. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Test format <br> Every test is listed in one fixed format, grouped by feature, wherever tests are shown (the wiki, the GitHub run summary, the health report): its kind, what it guards (the requirement, the workflow, or the issue with its state), what it checks in one plain line, when it runs, its last result and date, and whether it has been seen failing once. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-3
@@ -101,43 +97,86 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | When tests run <br> In the loop a goal runs only the tests its change affects plus its own new ones, and they run again on the merged result before a pull request merges. The full suite runs on the schedule and on every release, never on every goal, and I can run any part at any time. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | When tests run <br> In the loop, each goal runs only the rows affected by its changes plus its own new rows, at qa; ship and release reuse that run when no code changed since. <br> Before a pull request merges, the affected rows run again on the merged result. <br> The full suite (every requirement, workflow and defect test) runs in GitHub Actions on the Automation schedule (every few hours by default) and on every release, never on every goal. <br> I can run the full suite or any part of it at any time. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-5
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Failures go to GitHub <br> Each failing test has one labelled issue, updated while it fails and closed when it passes. Known failures don't block, and nothing is written without --live. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | Failures go to GitHub <br> One labeled issue per failing test, updated while it fails and closed when it passes; known failures don't block; it only previews unless `--live` is given, and the scheduled workflows pass `--live`. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-6
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Every fixed issue leaves a test <br> A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. A reopened issue's test is marked failing until it passes again. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Every fixed issue leaves a test <br> A goal that fixes an issue adds that issue's defect test, seen failing on the old code and passing on the fix, before the issue closes. <br> Each release note lists the issues it fixed, each with its defect test, so every version carries the regressions for what it fixed. <br> A reopened issue's test is marked failing until it passes again. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-7
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Fast in the loop <br> Every in-loop test run stays within a time budget, 15 minutes by default and never lower. A run that would go past it runs what fits and defers the rest to the full suite, naming how many. It is the only time limit on a lane. | v2 rewrite (prd-rewrite-to-10): changed: one lane limit (your decision, o39). | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-14 | Fast in the loop <br> Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't. <br> The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over. <br> Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off. <br> Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit. <br> A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-8
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Controllable <br> Which tests run where, the schedule, the time limits and how many test lanes run at once are settings. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Controllable <br> Which levels run where, the GitHub schedule, the time limits and how many test lanes run at once are settings. <br> Lanes running side by side never share files or ports or time each other out, and a lane over its limit says so. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-9
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Honest results <br> Every test has been seen failing once, or shows as unproven. A test that fails then passes on the same commit is marked flaky, never silently retried. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-10 | Honest results <br> Every test has been seen failing once, or shows as unproven. <br> A test that fails then passes on the same commit is marked flaky, never silently retried. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
 ### REG-10
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-18 | Tests a machine can't run <br> A test this machine can't run is skipped with its reason and never counted as seen failing. Its failing proof is recorded as owed, runs on a machine that can, and is written back with that machine and commit. An owed proof never blocks the goal, its merge or the release. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | Red proof for rows a platform can't run <br> A row whose red proof needs another machine can be recorded owed (`red ID --owed --runner R`): it reads PENDING instead of UNPROVEN, one to-do issue labelled `other-machine` opens on the row's feature milestone, and neither the goal's pr lane nor the release waits for it. A real red proof clears it. <br> A row the local platform can't run (the bash toy rows on native Windows exit 77) is skipped with its reason and is never counted as seen failing: a skip, on any platform, never sets the seen-failing date. <br> Its red proof runs on a capable runner (Linux or macOS, in CI or a session), and the result is written back to the row with the runner and the commit it ran on; a Windows runner can't be named. <br> A pull request that adds such a row lists the exact red commands still owed, so the proof is run and written back before the row counts as proven. <br> A loop run that fails only on rows both skipped on this platform and unproven (qa or ship) waits for the off-platform proof, naming the rows and the red commands, and spends no failed try; a real failure still does. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
+
+### REG-11
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Preparation is budgeted too <br> The work before a lane's first test, preparing, planning and waiting for a slot, has its own budget, 15 minutes by default and never lower. A lane that reaches it stops, says which part ran long, and can be rerun. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
+
+### REG-12
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Lanes don't disturb each other <br> Test lanes running side by side never share files or ports or time each other out, and a lane over its limit says so. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
+
+### REG-13
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | One machine's failure is not the goal's failure <br> A test that fails on one machine but passes on CI is filed as an issue and is not counted as a failure of the goal. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
+
+### REG-14
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Caps on tests and suite time <br> The number of tests and the full-suite time are capped by settings. A goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or I raise the cap in my own words. The suite time is measured from the latest full run. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
+
+### REG-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Coverage is measured in one place <br> Each requirement's coverage step, from Stated to Fresh, is computed from the latest full run on main and shown beside it on its page. One test may prove several requirements. Nothing else is a source. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
+
+### REG-16
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-14 | Coverage never drops silently <br> A goal that would remove the only proof of a Reviewed requirement is refused at qa, and a release that lowers coverage needs my words. | migration r1; date from the Review line | o155: "start regroup 3 and 4" |
 
 ## Tests
 
@@ -176,7 +215,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [summary-refuses](Tests#t-summary-refuses) | requirement | REG-2 | Given a malformed results file or run time, when the run summary is asked for, then it is refused with the line to fix. | PASS 2026-11-10 |
 | [issue-states](Tests#t-issue-states) | requirement | REG-2 | Given defect tests linked to an issue and a pull request, when their states are read, then each state is recorded with its date, and nothing is written when gh cannot read them. | PASS 2026-11-10 |
 | [health-lists-tests](Tests#t-health-lists-tests) | requirement | REG-2 | Given a repo's tests, when the health check runs, then its report lists the tests grouped by feature in the same format, before its verdict. | PASS 2026-11-10 |
-| [reg2-wording](Tests#t-reg2-wording) | requirement | REG-2 | Given the owner's REG-2 wording approved in the operation session on 2026-11-10, when the Regression page is read, then REG-2 carries it, Reviewed 2026-11-10 and sealed. | FAIL 2026-11-10 |
+| [reg2-wording](Tests#t-reg2-wording) | requirement | REG-2 | Given the owner's REG-2 wording approved in the operation session on 2026-11-10, when the Regression page is read, then REG-2 keeps it as its first revision r1, dated 2026-11-10. | FAIL 2026-11-10 |
 | [issue-keeps-state](Tests#t-issue-keeps-state) | requirement | REG-2 | Given a defect test's link gh cannot read, when issue states are read, then its last recorded state is kept. | PASS 2026-11-10 |
 | [summary-no-results](Tests#t-summary-no-results) | requirement | REG-2 | Given the rows never ran, when the summary step runs under the GitHub shell, then the run summary still says the grouped summary could not be written. | PASS 2026-11-10 |
 | [summary-render-guard](Tests#t-summary-render-guard) | requirement | REG-2 | Given tests.py holds text GitHub Actions would evaluate, when the workflow is written, then it is refused. | PASS 2026-11-10 |
@@ -252,6 +291,9 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [rowtail-block-in-workflow](Tests#t-rowtail-block-in-workflow) | requirement | REG-5 | Given the row-output code that runs.py keeps, when regression.py workflow renders the GitHub workflow, then the workflow carries that code once and needs no separate rowtail module. | not run |
 | [release-lists-fixes](Tests#t-release-lists-fixes) | requirement | REG-6 | Given a goal that proved a defect row linked to an issue, when its release is cut, then the CHANGELOG and the release notes list the issue with its test. | PASS 2026-11-12 |
 | [reopened-shows-failing](Tests#t-reopened-shows-failing) | requirement | REG-6 | Given a defect row whose issue was closed and then reopened, when tests are listed, then it shows failing (issue reopened) until the issue closes or a later run passes. | PASS 2026-11-11 |
+| - | requirement | REG-13 | no passing test | not enforced |
+| - | requirement | REG-15 | no passing test | not enforced |
+| - | requirement | REG-16 | no passing test | not enforced |
 | [suite-time-recorded](Tests#t-suite-time-recorded) | requirement | REG-7 | Given a toy repo, when regression.py run nightly runs plainly and other runs name a row, land, --kind or --reuse, then only the plain run appends a full line to the git common dir's suite-times.tsv and prints SUITE_TIME, health reads it, regression.yml uploads CI's line as artifact suite-time and health.yml's fetch step adds it with the ci column or continues without one. | PASS 2026-11-10 |
 | [health-timing](Tests#t-health-timing) | requirement | REG-7 | Given a goal lane over goal_lane_minutes or a full suite over 30 minutes, when health checks, then it warns naming the limit, and with no suite time it says how to get one. | PASS 2026-11-11 |
 | [lane-over-minutes](Tests#t-lane-over-minutes) | requirement | REG-7 | Given a goal lane that runs longer than goal_lane_minutes, when it ends, then its LANE line says '; over N min (goal_lane_minutes)'. | PASS 2026-11-11 |
@@ -295,6 +337,9 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [pr-real-fail-costs-try](Tests#t-pr-real-fail-costs-try) | requirement | REG-10 | Given a pr lane with a real FAIL or an unproven row that ran, when goal.py pr sees it, then it is a failed try. | PASS 2026-11-13 |
 | [mac-rows-skip-77](Tests#t-mac-rows-skip-77) | requirement | REG-10 | Given the macOS-only local-schedule toy, when it runs on a host that is not macOS, then it exits 77 with its reason, so its rows are SKIPPED and open no issue. | PASS 2026-11-13 |
 | [machine-local-owed](Tests#t-machine-local-owed) | requirement | REG-10 | Given a row whose red proof needs another platform, when it is recorded owed, then it reads PENDING not UNPROVEN, a to-do issue is planned on its milestone, and a real red proof clears it. | not run |
+| - | requirement | REG-11 | no passing test | not enforced |
+| - | requirement | REG-12 | no passing test | not enforced |
+| - | requirement | REG-14 | no passing test | not enforced |
 | [workflow-goal-to-release](Tests#t-workflow-goal-to-release) | workflow | REG-1 | Given a toy goal that fixes an issue, when it runs from goal.py new through its flow, its defect row seen failing, goal.py pr, merge.py and the automatic release, then the published release note and the CHANGELOG list Fixes #N with its defect test. | PASS 2026-11-10 |
 | [summary-only-real-rows](Tests#t-summary-only-real-rows) | defect | [#92](https://github.com/jcl2018/agent-workflow-template/issues/92) closed (2026-11-10) | Given a row that writes to the run summary, env or outputs like a toy test, when the GitHub run runs it, then nothing it writes reaches the real summary, env or outputs. | PASS 2026-11-10 |
 | [toy-no-leftovers](Tests#t-toy-no-leftovers) | defect | [#100](https://github.com/jcl2018/agent-workflow-template/issues/100) closed (2026-11-11) | Given a toy test that starts stand-in agents, when it passes, fails, is interrupted or its pipe closes, then no process it started is left running. | PASS 2026-11-12 |
