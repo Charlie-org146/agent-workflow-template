@@ -15,7 +15,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 ### Functional
 
-- OPS-1: **Unreviewed** The operation session governs, re-plans and cleans up
+- OPS-1: **Reviewed 2026-11-19** The operation session governs, re-plans and cleans up <!-- reviewed 88c0021f -->
   - One command starts the operation session and drives the whole process the same way every time. It governs only: it never builds. [OPS-1]
   - Three layers. Top is the owner's only session: governance only, the only reader of the owner and the only publisher of the board and the Loop Board, every 5 minutes. A machine session (one per machine) assigns goals, schedules sessions and memory, runs auto, check-ins, dry-runs and merges, and reports up to top. A worker has one goal and one worktree and talks only to its machine session. [OPS-1]
   - A machine session governs every repo in its pod directly; there is no per-repo operation session. Several pods may run at once, independently. [OPS-13]

@@ -33,7 +33,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - Each skill's command map names every command, and its command reference gives each command's exact syntax, what it prints on success, and each refusal with its message and exit code. [DOC-6]
   - A change to code or settings a page describes never needs my words when none of the page's own text changed, and a comments-only change doesn't make the page stale. [DOC-21]
   - Conflict note: the DOC-23 rule that an adopting repo keeps its own README is resolved by the owner (2026-11-19): an adopted repo's README shows the template's principles as written, byte for byte, plus its own product principles if it has any (see SET-1, principle 5). [DOC-23]
-- DOC-2: **Unreviewed** Only my words review or revise the PRD
+- DOC-2: **Reviewed 2026-11-19** Only my words review or revise the PRD <!-- reviewed a46ce85a -->
   - Only I mark a page or a requirement Reviewed, in my own recorded words. After that its text does not change unless I un-review it, and a recorded message counts only for the pages or IDs it lists. [DOC-2]
   - The PRD is read-only while a goal builds: a goal never edits a Reviewed requirement while it builds, and a page has one writer at a time on any machine. [DOC-22]
   - A gap a goal finds is filed as a finding on the feature's Backlog milestone and becomes a revision only when I approve it. A goal that changes a requirement states the new text in its done lines, approved before it starts. [DOC-22]
