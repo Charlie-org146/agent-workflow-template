@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """The lane's kit, imported by lane.py and goal.py; not a command. Parts:
-1. Copies of the slots.py pieces lane.py uses (COPIED, flow_file ... rows_line): each must match
-   workflow-regression/scripts/slots.py exactly; dev/toy/test-lane-control.sh fails on drift.
-2. The one commit a lane may make before it starts (prep, generated): re-rendered Tests tables and run dates, else LANE_DIRTY;
-   a refused or hung commit starts nothing (LANE_PREP_FAILED).
-3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, then pr_lane, pr_head
-   and pr_base for merge.py's checks.
+1. COPIED (flow_file ... rows_line): copies of slots.py pieces; they must match workflow-regression/scripts/slots.py (test-lane-control.sh).
+2. prep, generated: the one commit a lane may make first (re-rendered Tests tables), else LANE_DIRTY or LANE_PREP_FAILED.
+3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, pr_lane, pr_head, pr_base.
 4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a stopped step left.
-5. Who may signal a lane: pstart/same, audit (runs/kills.log) and died/death (LANE_DIED).
+5. pstart/same, audit (runs/kills.log), died/death (LANE_DIED): who may signal a lane.
 """
 import glob
 import json
@@ -324,7 +321,7 @@ def prep(top, cfg, log):
         paths.append(".loop/regression-runs.tsv")
     if not paths:
         return "", None
-    who = [] if git("config", "user.name").stdout.strip() and git("config", "user.email").stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=loop@localhost"]  # CI has no author
+    who = [] if git("config", "user.email").stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=loop@localhost"]
     proc = subprocess.Popen(["git"] + who + ["commit", "--only", "-q", "-m", "Lane: re-render the Tests tables", "--"] + paths,
                             cwd=top, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, stdin=subprocess.DEVNULL,
                             start_new_session=True)

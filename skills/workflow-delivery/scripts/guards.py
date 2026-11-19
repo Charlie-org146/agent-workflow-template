@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Goals stop only for real failures: format rules bind steps started after them (RULES, state["rules_at"]), refusals and
-dead lanes cost no try, the operation repairs (resume, touches, findings). Imported by goal.py; `guards.py known` prints the
-rule ids as JSON. <runs>/<slug>.extra.json holds touches and findings, added under an flock."""
+"""Goals stop only for real failures: format rules bind later steps (RULES), refusals and dead lanes cost no try, the operation
+repairs (resume, touches, findings). Imported by goal.py; `guards.py known` prints the rule ids. <runs>/<slug>.extra.json holds touches and findings."""
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -50,7 +50,6 @@ def named(rule):
 
 
 def check_record(state, step, text, cfg, result):
-    """(stamp, refusal (why, fix, code), ask, skipped rules)."""
     skipped = []
 
     def held(rule):
@@ -128,7 +127,6 @@ def clear_refusals(state):
 
 
 def add_tokens(state, step, given, measure=False):
-    """A worker's tokens for a step (GRD-2, DEL-16): measured from its transcript when asked; unknown adds nothing."""
     import proctree
     proctree.add(state, step, given, measure)
 
@@ -138,7 +136,6 @@ def hold(state, ask):
 
 
 def revive(state, how, by, why):
-    """The one revival of a failed or stopped goal (sessions.py bind keeps the same fields). Returns the log line."""
     state.update(status="running", tries=0, free=0, refusals=0, finding="", waiting=None, note=None, report={})
     return "%s by %s: %s" % (how, by, " ".join(why.split())) if why else "%s by %s" % (how, by)
 
@@ -160,7 +157,6 @@ def extra(runs, slug):
 
 
 def add_extra(runs, slug, key, item, line, setting=False):
-    """Append item to the sidecar's key (or set it, with setting) and line to its log, under an exclusive lock."""
     with open(os.path.join(runs, slug + ".extra.lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         data = extra(runs, slug)
@@ -186,7 +182,6 @@ def touches_of(runs, state):
 
 
 def check_path(path, have):
-    """None when PATH may widen touches, else the reason."""
     if path.startswith("github:"):
         if path[7:] not in fit.SURFACES:
             return "%r isn't a GitHub surface (one of github:%s)" % (path, ", github:".join(fit.SURFACES))
@@ -198,7 +193,6 @@ def check_path(path, have):
 
 
 def sync_touches(goal_file, touches):
-    """Rewrite the goal file's '- Touches:' line; True when it changed."""
     try:
         with open(goal_file) as handle:
             text = handle.read()
@@ -304,6 +298,27 @@ def waiting_gate(g, state):
         sys.exit(2)
 
 
+PLAN_RULE_AT = "2026-11-19T10:45:00Z"  # cut-over: goals frozen before it need no review
+
+
+def plan_gate(g, state):
+    """Red team (HLT-2): a goal frozen after PLAN_RULE_AT needs a review of its current plan; a recorded break blocks until accepted."""
+    slug, plan = state["slug"], g.goal_file(state["slug"])[:-3] + ".plan.md"
+    if not os.path.exists(os.path.join(g.root(), "docs", "wiki", "Principles.md")):
+        return
+    path = os.path.join(os.path.dirname(g.state_dir()), "redteam", "plan-%s.json" % slug)
+    seen = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+    sha = hashlib.sha1(open(plan, "rb").read().replace(b"\r\n", b"\n")).hexdigest() if os.path.exists(plan) else ""
+    left = [b for b in seen.get("breaks", []) if not b.get("accepted")]
+    new = ((state.get("log") or [""])[0].split(" ")[0]) > PLAN_RULE_AT
+    why = ("no recorded review of the current plan" if not seen else "the plan changed since its last review" if seen.get("sha") != sha else "") * new
+    why = why or ("the red team recorded a break of principle %s: %s" % (left[0]["principle"], left[0]["text"][:200]) if left else "")
+    if why:
+        sys.stderr.write("REFUSED (no try used): %s. Fix: record a fresh review (notify.py plan-review, plan-record) or, for a break, the "
+                         "owner's words and notify.py plan-accept SLUG N --owner-record ID (PLAN_BREAK)\n" % why)
+        sys.exit(2)
+
+
 def advance(g, state):
     left = [step for step in g.FLOW if step not in state.get("flow", {})]
     if left:
@@ -390,7 +405,6 @@ def done_lines(g, tree, slug):
 
 
 def moved_since_plan(g, state, tree="."):
-    """True when a commit landed after the plan was recorded; None if unknown."""
     head = state.get("plan_head")
     if not head:
         return None
