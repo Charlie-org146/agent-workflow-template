@@ -29,8 +29,6 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - A worker reports each change of step or status as it happens, and its result when it ends; the operation session sends a worker its answer or a follow-up. [OPS-2]
   - Background processes are used only when a session can't be started or reached, and the board says so. [OPS-2]
   - Messages and fields. STATUS (machine to top, on change and every 30 minutes) carries main per repo, PR numbers, running, parked and idle sessions with reasons, and worker lines; PR per goal; merges; needs-owner with the exact words to answer and a recommendation. ASK, OWNER-WORDS and PRIORITY go between top and machine; MERGE-REQUEST and MERGE-GO go machine to machine, copied to top. A worker never talks to top or to another machine. [OPS-2]
-- OPS-15: **Unreviewed** Pods coordinate through shared state
-  - Every goal records the pod that owns it, and only that pod starts, answers, merges or resumes it; other pods see it read-only.
 - OPS-16: **Unreviewed** Every ready goal starts within capacity limits
   - When goals are ready and slots, sessions and memory are free, every one starts in the same pass; budgets still hold. [OPS-16]
   - A ready goal waits while live goals, weekly plan usage or free memory are past their limits, and the check-in names the limit. [OPS-16]
@@ -62,6 +60,7 @@ None
 - OPS-11: moved to DEL-3
 - OPS-12: moved to OPS-16
 - OPS-13: moved to OPS-1
+- OPS-15: moved to MCH-4
 - OPS-18: moved to DEL-3
 - OPS-20: moved to OPS-16
 - OPS-23: moved to OPS-1
@@ -141,6 +140,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-19 | Pods coordinate through shared state <br> Every goal records the pod that owns it, and only that pod starts, answers, merges or resumes it; other pods see it read-only. | consolidation (TOP-DECISION 89): absorbed into MCH-4 | o417: "consolidate the requirements ... absorb some requirements into the existing one requirement" |
 | r1 | 2026-11-18 | Pods coordinate through shared state <br> Every goal records the pod that owns it, and only that pod starts, answers, merges or resumes it; other pods see it read-only. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
 ### OPS-16
@@ -213,13 +213,6 @@ None
 | [session-tool-timeout](Tests#t-session-tool-timeout) | requirement | OPS-2 | Given a hung session tool, when its timeout passes, then it is cut off and the goal falls back to a background process at once. | PASS 2026-11-10 |
 | [session-tool-helper](Tests#t-session-tool-helper) | requirement | OPS-2 | Given a helper process the session tool leaves running, when the call returns, then the helper never holds it up. | PASS 2026-11-10 |
 | [guards-null-report-bind-mend](Tests#t-guards-null-report-bind-mend) | requirement | OPS-2 | Given a failed or stopped goal restarted by a worker bind or by mend, when its record is written, then report is an empty record, never null. | not run |
-| [mon15-pod-owner](Tests#t-mon15-pod-owner) | requirement | OPS-15 | Given another pod's goal, when a pod acts on it, then it is refused naming the owner and shown owned by that pod. | PASS 2026-11-12 |
-| [mon15-merge-lock](Tests#t-mon15-merge-lock) | requirement | OPS-15 | Given two pods merging into one main, when they run together, then the lock serializes them. | PASS 2026-11-12 |
-| [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | OPS-15 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |
-| [pr-queue-order](Tests#t-pr-queue-order) | requirement | OPS-15 | Given three goals asking for their pr turn in one repo, when they ask oldest first, then the first runs its lane and the others are told who is ahead; a goal that left the pr step, a stopped holder and a ticket older than 30 minutes each give their place to the next. | not run |
-| [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | OPS-15 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
-| [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | OPS-15 | Given a goal whose pull request merged, when the pr queue is read, then its ticket and beat are removed and it holds nobody. | not run |
-| [merge-leaves-queue-4343](Tests#t-merge-leaves-queue-4343) | requirement | OPS-15 | Given a merged goal, when merge.py finishes the merge, then its pr-queue ticket and beat are gone. | not run |
 | [mon12-pool](Tests#t-mon12-pool) | requirement | OPS-16 | Given a session pool, when it runs low, then the check-in asks to create every missing session in one step; pool.py add fills it, no pool hides the ask, and a full pool makes ready goals wait with the fix. | PASS 2026-11-10 |
 | [config-memory-key-once](Tests#t-config-memory-key-once) | requirement | OPS-16 | Given this repo's config, when min_free_memory_gb is read, then the key is there once as a positive number and the settings table registers it. | not run |
 | [set13-hooks-once-bullet](Tests#t-set13-hooks-once-bullet) | requirement | OPS-16 | Given a repo where setup runs the reply and govern hook commands several times, when it finishes, then each hook is installed exactly once (the SET-13 bullet on hooks; the app-session, pool and model bullets are not covered by this row). | PASS 2026-11-19 |
@@ -243,7 +236,6 @@ None
 | [who-merges-report](Tests#t-who-merges-report) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given two goals at pr with auto_merge on, when a session report arrives for one, then merge.py runs for neither, and merge.py for one goal merges only that goal. | not run |
 | [who-merges-fallback](Tests#t-who-merges-fallback) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given a goal the operation holds and an unheld goal, both done at pr with auto_merge on, when the worker exits, then merge.py runs only for the unheld goal. | not run |
 | [who-merges-hold-flag](Tests#t-who-merges-hold-flag) | defect | [#3868](https://github.com/jcl2018/agent-workflow-template/issues/3868) closed (2026-11-13) | Given a goal reported with --hold, when the worker exits, then merge.py does not run for it, whatever the report's wording says. | not run |
-| [pr-order-one-queue](Tests#t-pr-order-one-queue) | defect | [#3922](https://github.com/jcl2018/agent-workflow-template/issues/3922) closed (2026-11-14) | Given three goals retrying their pr turn in a loop, when each asks, then every goal sees one order by first-join time, a retry touches only the heartbeat, and no goal without a readable ticket counts as first. | not run |
 | [slot-pool-112](Tests#t-slot-pool-112) | defect | [#112](https://github.com/jcl2018/agent-workflow-template/issues/112) closed (2026-11-11) | Given a held session goal whose session was freed, when slots are counted, then it holds none and a queued goal can start. | PASS 2026-11-10 |
 | [attempt-114](Tests#t-attempt-114) | defect | [#114](https://github.com/jcl2018/agent-workflow-template/issues/114) closed (2026-11-11) | Given a goal re-bound to a new session, when the old worker reports, then the report is recorded but not applied, and the freed session keeps its history. | PASS 2026-11-10 |
 | [pool-edges-122](Tests#t-pool-edges-122) | defect | [#122](https://github.com/jcl2018/agent-workflow-template/issues/122) closed (2026-11-11) | Given a malformed pool entry and a retired goal with a busy session, when the pool is read, then the entry is set aside without blocking and the session is named and freed. | PASS 2026-11-10 |

@@ -39,13 +39,11 @@ Say these to the agent in the operation session; each feature page has the exact
 
 Each requirement and how it is delivered:
 
-- GRD-3: Nothing private is committed, and no commit skips the hooks that check it. Example, from the del9-pr-refuses test: given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text.
 - GRD-4: A worker writes only its own goal's work, never shared loop state or its own limits. Example, from the grd4-touches test: given a worker session, when it tries to widen its goal's touches, then the command refuses.
 - GRD-5: Nothing is written to GitHub without an explicit `--live`. Example, from the grd5-regression-dry test: given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call.
 - GRD-6: The base branch is protected and merges only with its required checks green. Example, from the grd6-head-moved test: given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged.
 - GRD-7: CI spends minutes only on runs that matter, and too many runs raise an alarm. Example, from the grd7-round-cost test: given a scheduled round, when its digest is posted, then the round cost shows its minutes and Actions minutes.
 - GRD-8: A step far past its usual tokens or time is flagged while it runs. Example, from the grd8-silent-worker test: given a worker silent past silent_minutes, when the board prints, then it shows under Needs you.
-- GRD-18: Windows-safe. A pull request that adds a POSIX-only call without its guard fails its checks, and long text for an issue, comment, pull request or release note is always passed to gh in a file, so nothing breaks on native Windows. (no test yet)
 - GRD-20: The package always passes Agensi's rules. No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. (no test yet)
 
 ### Command: goal.py show

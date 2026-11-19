@@ -66,7 +66,7 @@ None
 - SET-12: moved to SET-1
 - SET-13: moved to OPS-16
 - SET-14: moved to SET-1
-- SET-15: moved to GRD-3
+- SET-15: moved to DEL-9
 - SET-16: moved to SET-4
 - SET-17: moved to HLT-4
 - SET-18: moved to SET-1
@@ -76,7 +76,7 @@ None
 - SET-3: moved to SET-10
 - SET-5: moved to SET-2
 - SET-7: moved to SET-1
-- SET-8: moved to GRD-3
+- SET-8: moved to DEL-9
 - SET-9: moved to SET-1
 
 ### SET-1
