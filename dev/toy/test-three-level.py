@@ -192,6 +192,9 @@ with tempfile.TemporaryDirectory() as tmp:
         lines = machines.plan_record(tmp, "g", "A: the plan trusts main\nR: lane waits\nB3: the plan contradicts a page\nC: reuse the old toy\n", now)
     finally:
         builtins.open, subprocess.run = real_open, real_run
+    os.rename(os.path.join(tmp, ".loop", "goals", "g.design.md"), os.path.join(tmp, ".loop", "goals", "g.design.bak"))
+    check("plan v1" in machines.plan_input(tmp, "g") and "design text" not in machines.plan_input(tmp, "g"), "a goal with no design file still gets its plan reviewed")
+    os.rename(os.path.join(tmp, ".loop", "goals", "g.design.bak"), os.path.join(tmp, ".loop", "goals", "g.design.md"))
     check("plan v1" in asked and "design text" in asked and "3. The docs are true" in asked and "B<n>" in asked, "the plan review input holds the goal's design and plan, the principles and the request")
     saved = layers.read(os.path.join(red, ls()[0]))
     check(saved["time"] == layers.iso(now) and saved["assumptions"] == ["the plan trusts main"] and saved["risks"] == ["lane waits"] and saved["cheaper"] == ["reuse the old toy"]

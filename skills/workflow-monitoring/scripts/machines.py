@@ -242,6 +242,8 @@ def plan_input(root, slug):
     if not os.path.exists(goals + ".plan.md"):
         sys.exit("REFUSED: %s has no plan to red-team. Fix: run the plan step first." % slug)
     for title, path in (("GOAL", goals + ".md"), ("DESIGN", goals + ".design.md"), ("PLAN", goals + ".plan.md")):
+        if not os.path.exists(path):
+            continue
         with open(path, encoding="utf-8") as handle:
             parts.append("== %s ==\n%s" % (title, handle.read().strip()))
     return "\n\n".join(["RED-TEAM PLAN INPUT " + slug] + parts + ["== PRINCIPLES ==\n" + principles(root)[0].strip(), ASK])
