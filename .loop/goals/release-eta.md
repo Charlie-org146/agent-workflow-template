@@ -15,3 +15,11 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-release-eta.py`.
+   Expect: every line is PASS and the last line is ALL PASS (the pace of the night's gaps 44, 49, 22 and 20 minutes is 33, a slip over 15 minutes sends STATUS, a goal with no MERGE-GO is next release after the freeze).
+2. Run `python3 skills/workflow-monitoring/scripts/layers.py status --target 2026-11-19T02:00 --freeze 2026-11-19T01:00` in a repo with a few merges, then `python3 skills/workflow-monitoring/scripts/layers.py board` with LOOP_OP_ROLE=top.
+   Expect: the board prints a Release line with the target, the freeze and a forecast band (or "no measured pace yet" with fewer than 3 merge gaps).
+3. Read OPS-24 on the Operation page and CHK-10 and CHK-11 on the Check-in-and-board page.
+   Expect: each is Unreviewed with one revision row (owner record o183), awaiting the owner's review.
+
