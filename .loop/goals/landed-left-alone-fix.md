@@ -14,3 +14,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `bash dev/toy/test-monitoring.sh 2>&1 | grep -E "a mender running after its goal lands|a pid whose recorded start|landed goal with an empty pr"`.
+   Expect: three `PASS:` lines.
+2. Run `bash dev/toy/test-monitoring.sh | tail -1`.
+   Expect: `ALL PASS`.
+3. Run `python3 skills/workflow-regression/scripts/regression.py run landed-left-alone | tail -2`.
+   Expect: `PASS landed-left-alone` and `RESULT 1 passed`.
