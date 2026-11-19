@@ -62,7 +62,7 @@ if mode == "skip":
     check("one passing affected run among several is enough", code == 0)
     check("recordonly.py names the subject role.py gives the record commit", SUBJECT in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "role.py")).read())
     text = open(os.path.join(root, "skills", "workflow-regression", "scripts", "lanes_cli.py")).read()
-    check("the workflow template runs recordonly.py and skips the rows on RECORD-ONLY", "recordonly.py" in text and "steps.rec.outcome == 'failure'" in text and "checks: read" in text)
+    check("the workflow template runs recordonly.py and skips the rows on RECORD-ONLY", "recordonly.py" in text and "steps.rec.outputs.skip != 'true'" in text and "checks: read" in text)
 elif mode == "full":
     parent = repo()
     commit(SUBJECT, x_dot_py="2\n")
@@ -83,6 +83,21 @@ elif mode == "full":
     recordonly.runs_of = lambda sha: GREEN
     code = recordonly.decide(merge, wait=0, nap=0)[0]
     check("a merge commit runs the rows", code == 1)
+elif mode == "adopter":  # a repo without dev/recordonly.py: the step must not fail, and the rows must run
+    import shutil
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
+    import lanes_cli
+    if not shutil.which("bash"):
+        sys.exit(77)
+    text = lanes_cli.NARROW.replace("@BASE@", "main").replace("@LEVELS@", "nightly")
+    run = text.split("id: rec")[1].split("run: |\n")[1].split("      - if:")[0]
+    script = "\n".join(line[10:] for line in run.split("\n")).replace("${{ github.event.pull_request.head.sha || github.sha }}", "HEAD")
+    top = tempfile.mkdtemp()
+    out = os.path.join(top, "out")
+    done = subprocess.run(["bash", "-e", "-c", script], cwd=top, env=dict(os.environ, GITHUB_OUTPUT=out), capture_output=True, text=True)
+    check("without dev/recordonly.py the step exits 0", done.returncode == 0)
+    check("and it reports skip=false, so the rows run", open(out).read().strip() == "skip=false")
+    check("and the rows step runs unless skip is true", "- if: steps.rec.outputs.skip != 'true'" in text and "continue-on-error" not in text)
 else:
-    sys.exit("usage: test-record-ci.py skip|full")
+    sys.exit("usage: test-record-ci.py skip|full|adopter")
 sys.exit(1 if fails else 0)

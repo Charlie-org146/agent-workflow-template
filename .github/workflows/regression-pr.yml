@@ -24,9 +24,11 @@ jobs:
         with:
           python-version: "3.12"
       - id: rec
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 dev/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}
-      - if: steps.rec.outcome == 'failure'
+        run: |
+          s=false
+          if [ -f dev/recordonly.py ] && python3 dev/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}; then s=true; fi
+          echo "skip=$s" >> "$GITHUB_OUTPUT"
+      - if: steps.rec.outputs.skip != 'true'
         run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --timeout 900
