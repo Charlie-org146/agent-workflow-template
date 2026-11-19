@@ -2,17 +2,10 @@
 """Post one digest comment per round, and run the local schedule that makes the rounds.
 
 usage: automation.py local install [--load] | register | uninstall | status [--json] | plist | tick [--scheduled] [--dry-run] [--repo P]
-                                         the one launch agent on this Mac (workflows.py); install registers this repo and writes
-                                         the agent, printing the launchctl line that loads it (--load runs it); the tick runs
-                                         health with the judge for every repo and the full regression for a private repo
        automation.py digest [--owner L]  post this round's comment on the pinned Automation digest issue
        automation.py workflow            removed: health no longer runs in GitHub Actions (exit 2)
 
-The digest lists what ran (regression's latest run, health's verdict, the round's cost, the email, when the schedule last ran and
-a MISSED line after a gap), then per feature the new, still-open and fixed issues labelled regression or health since the last comment,
-each open one with its link (and its milestone, when it has one) and the request to give the agent; it mentions digest_owner (default:
-the repo owner). Its state lives in the digest issue's body (rounds.py), so a rerun of the same run posts nothing twice and an older run
-never overwrites a newer one. Outside a tick with no GH_TOKEN it only prints the comment.
+What `local` does and what the digest lists: references/commands.md, "automation.py notes".
 """
 import argparse
 import datetime
