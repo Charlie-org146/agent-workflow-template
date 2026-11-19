@@ -81,7 +81,7 @@ def main():
 
 
 def proven(top):
-    """Row ids with a PASS on this commit in a lane record (loop/tests/*.json); regression-runs.tsv is not trusted."""
+    """Row ids with a PASS on this commit in a lane record (loop/tests/*.json); not regression-runs.tsv."""
     head = release.git("rev-parse", "HEAD", cwd=top, check=False)
     found = set()
     for path in glob.glob(os.path.join(common_of(top), "tests", "*.json")):
@@ -131,7 +131,6 @@ def criteria(top, cfg, doc_rows, fails):
     return out, left
 
 
-# ---- the hard-release gate (REL-1 to REL-8) ----
 RC = re.compile(r"^v(\d+)\.0\.0-rc\.\d+$")
 NL = chr(10)
 OK = lambda args, cwd: release.run(["git", "rev-parse", "-q", "--verify"] + args, cwd=cwd).returncode == 0  # noqa: E731
@@ -210,7 +209,7 @@ def check_suite(work, red, run="", sha=""):
 def check_health(work):
     text = run_in(work, "workflow-health/scripts/health.py", "check")
     verdict = ([l for l in text.splitlines() if l.startswith("HEALTH:")] or ["HEALTH: not run"])[-1]
-    return ([] if verdict == "HEALTH: green" else [("health", verdict, ["health"])]), verdict
+    return ([] if re.fullmatch(r"HEALTH: green( \(\d+ pass, \d+ warn, 0 fail, 0 unread\))?", verdict) else [("health", verdict, ["health"])]), verdict
 
 
 def gate_refusals(top, cfg, ver, ref, suite=True, run=""):
