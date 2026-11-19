@@ -38,7 +38,7 @@ See where things stand, or pick up a failed goal:
 ```
 
 `mend` and `resume_on_limit` in `.loop/config.json` let `watch` give a failed goal one fresh agent, and continue after a
-usage limit. Both are off until you turn them on. Background agents need the tools you allow in `agent_command`.
+usage limit; `mend` does so only when the failure was an unusable session or tool, and a goal stopped at its budget waits under Needs you with the command that raises it. Both are off until you turn them on. Background agents need the tools you allow in `agent_command`.
 
 Run the operation session with one command. It plans queued goals as a dependency graph (`depends-on` on a queue line,
 at most `parallel` workers at once, no waiting for shared files), starts every goal whose dependencies are merged, watches

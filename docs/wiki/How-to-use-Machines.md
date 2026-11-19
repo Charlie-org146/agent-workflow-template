@@ -34,7 +34,7 @@ Say these to the agent; each feature page has the exact commands.
 | You say | What happens |
 |---|---|
 | "Set up a second machine" | New machine, in order: git clone the template and link the skills, `machine.py` (a dry run), `machine.py apply --repo <your repo>`, the owner steps it prints, then `machine.py check` prints no gap. |
-| "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing; health's Adoption group shows the same list. |
+| "Check this machine against my setup" | `machine.py check` lists each gap with a one-line fix and writes nothing, including a skills checkout behind origin; health's Adoption group shows the same list. |
 | "Move a goal to the other machine" | `machines.py handover SLUG --to MACHINE` pushes the branch and the record and marks it moved here; `machines.py take SLUG` on that machine binds a worker. |
 | "Answer by email" | Reply "1", "1 recommended" or "approve"; the operation session runs `mailbox.py reply QID TEXT`, which records your words with `--source owner`. A risky step needs your own words. |
 | "Make this machine phone-ready" | `setup.py desk run` prints each desk-only step once; `desk done STEP` records it; `desk check` prints DESK OK when nothing is left. |
