@@ -217,7 +217,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [defect-health](Tests#t-defect-health) | requirement | HLT-2 | Given a closed issue or finding with no defect test, when health runs, then it is flagged. | PASS 2026-11-12 |
 | [cost-time-warn](Tests#t-cost-time-warn) | requirement | HLT-2 | Given a goal over its time budget, when health runs, then it is a Cost warning naming its slowest steps. | PASS 2026-11-12 |
 | [cost-unread-tokens](Tests#t-cost-unread-tokens) | requirement | HLT-2 | Given no tokens recorded, when the Performance rule runs, then it prints INFO and leaves the token check out, never red. | PASS 2026-11-12 |
-| [report-header](Tests#t-report-header) | requirement | HLT-2 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-10 |
+| [report-header](Tests#t-report-header) | requirement | HLT-2 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-19 |
 | [hlt6-controls-fire](Tests#t-hlt6-controls-fire) | requirement | HLT-2 | Given every health rule, when health check runs its controls, then each rule's negative control makes it fire. | PASS 2026-11-10 |
 | [hlt6-cannot-fire](Tests#t-hlt6-cannot-fire) | requirement | HLT-2 | Given a rule broken so it can never report, when health check runs its controls, then that rule is reported as one that cannot fire, with how to look. | PASS 2026-11-10 |
 | [hlt6-refused](Tests#t-hlt6-refused) | requirement | HLT-2 | Given a new rule with no negative control, when health.py starts, then it refuses before any report and names the control to add. | PASS 2026-11-10 |
@@ -266,9 +266,9 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [fixed-closes](Tests#t-fixed-closes) | requirement | HLT-4 | Given a finding with an open issue, when the finding is fixed, then its issue is closed. | PASS 2026-11-19 |
 | [repeat-no-second](Tests#t-repeat-no-second) | requirement | HLT-4 | Given a finding with an open issue, when the finding repeats, then no second issue is opened. | PASS 2026-11-19 |
 | [unread-closes-none](Tests#t-unread-closes-none) | requirement | HLT-4 | Given a rule that could not be read, when health runs, then none of its issues are closed. | PASS 2026-11-19 |
-| [judge-section-format](Tests#t-judge-section-format) | requirement | HLT-4 | Given the judge, when it runs, then it prints its three reviews in a section marked as suggestions. | PASS 2026-11-12 |
-| [judge-verdict-unchanged](Tests#t-judge-verdict-unchanged) | requirement | HLT-4 | Given a failing or garbage judge, when health runs, then the verdict and exit code are unchanged. | PASS 2026-11-12 |
-| [judge-needs-you](Tests#t-judge-needs-you) | requirement | HLT-4 | Given suggested criterion wording, when the board is printed, then it is listed under Needs you for the owner to apply. | PASS 2026-11-12 |
+| [judge-section-format](Tests#t-judge-section-format) | requirement | HLT-4 | Given the judge, when it runs, then it prints its three reviews in a section marked as suggestions. | PASS 2026-11-19 |
+| [judge-verdict-unchanged](Tests#t-judge-verdict-unchanged) | requirement | HLT-4 | Given a failing or garbage judge, when health runs, then the verdict and exit code are unchanged. | PASS 2026-11-19 |
+| [judge-needs-you](Tests#t-judge-needs-you) | requirement | HLT-4 | Given suggested criterion wording, when the board is printed, then it is listed under Needs you for the owner to apply. | PASS 2026-11-19 |
 | [preview-writes-nothing](Tests#t-preview-writes-nothing) | requirement | HLT-4 | Given findings in several groups, when health preview runs, then it lists each issue it would open, update, close or reopen with its tag and makes no write call. | PASS 2026-11-10 |
 | [file-one-group](Tests#t-file-one-group) | requirement | HLT-4 | Given open issues in several groups, when health files only the docs group, then only the docs issue is closed and no other group's issue changes. | PASS 2026-11-10 |
 | [known-recorded](Tests#t-known-recorded) | requirement | HLT-4 | Given a known failure, when the GitHub run runs it, then its result is recorded KNOWN, not FAIL. | PASS 2026-11-10 |

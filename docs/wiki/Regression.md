@@ -225,14 +225,14 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [milestones-once](Tests#t-milestones-once) | requirement | REG-4 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-19 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-4 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-19 |
 | [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-4 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-19 |
-| [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-4 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-12 |
-| [describe-needed](Tests#t-describe-needed) | requirement | REG-4 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-12 |
-| [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-4 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-12 |
-| [every-row-described](Tests#t-every-row-described) | requirement | REG-4 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | FAIL 2026-11-15 |
-| [untested-listed](Tests#t-untested-listed) | requirement | REG-4 | Given a Reviewed criterion with no test or a test that no longer matches, when the check runs, then it is listed. | PASS 2026-11-12 |
-| [release-note-found](Tests#t-release-note-found) | requirement | REG-4 | Given a release with no release note, when the check runs, then it is found. | PASS 2026-11-12 |
+| [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-4 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-19 |
+| [describe-needed](Tests#t-describe-needed) | requirement | REG-4 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-19 |
+| [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-4 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-19 |
+| [every-row-described](Tests#t-every-row-described) | requirement | REG-4 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | PASS 2026-11-19 |
+| [untested-listed](Tests#t-untested-listed) | requirement | REG-4 | Given a Reviewed criterion with no test or a test that no longer matches, when the check runs, then it is listed. | PASS 2026-11-19 |
+| [release-note-found](Tests#t-release-note-found) | requirement | REG-4 | Given a release with no release note, when the check runs, then it is found. | PASS 2026-11-19 |
 | [defect-categories](Tests#t-defect-categories) | requirement | REG-4 | Given the test rows, when they are checked, then every row has a category, defect rows link their issue, and the page shows defect tests apart. | FAIL 2026-11-12 |
-| [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-4 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-12 |
+| [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-4 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-19 |
 | [lanes-reuse](Tests#t-lanes-reuse) | requirement | REG-4 | Given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. | PASS 2026-11-10 |
 | [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run. | PASS 2026-11-10 |
 | [lanes-failing](Tests#t-lanes-failing) | requirement | REG-4 | Given a run with a failing test, when a later run happens, then it is never reused. | PASS 2026-11-10 |
@@ -240,8 +240,8 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [lanes-ship-reuses](Tests#t-lanes-ship-reuses) | requirement | REG-4 | Given nothing changed since the qa run, when ship runs, then it reuses the qa run. | PASS 2026-11-10 |
 | [lanes-qa-record](Tests#t-lanes-qa-record) | requirement | REG-4 | Given the qa step, when it runs the tests, then it records the run with the exact command ship checks. | PASS 2026-11-10 |
 | [lanes-pr-affected](Tests#t-lanes-pr-affected) | requirement | REG-4 | Given the base merged before the pull request, when tests run, then only the affected tests rerun. | PASS 2026-11-10 |
-| [prd-scenarios](Tests#t-prd-scenarios) | requirement | REG-4 | Given regression rows linked to a requirement, when the Tests are rendered, then each row is a Given/When/Then scenario with its test, result and date, and a plain description is flagged. | PASS 2026-11-10 |
-| [prd-untested](Tests#t-prd-untested) | requirement | REG-4 | Given a PRD the owner reviewed whose requirement has no test, when the docs audit runs, then it lists that requirement as UNTESTED. | PASS 2026-11-10 |
+| [prd-scenarios](Tests#t-prd-scenarios) | requirement | REG-4 | Given regression rows linked to a requirement, when the Tests are rendered, then each row is a Given/When/Then scenario with its test, result and date, and a plain description is flagged. | PASS 2026-11-19 |
+| [prd-untested](Tests#t-prd-untested) | requirement | REG-4 | Given a PRD the owner reviewed whose requirement has no test, when the docs audit runs, then it lists that requirement as UNTESTED. | PASS 2026-11-19 |
 | [lanes-headers](Tests#t-lanes-headers) | requirement | REG-4 | Given the repo's test scripts, when their # reads: headers are checked, then every script a row names has a valid header. | FAIL 2026-11-10 |
 | [lanes-declared](Tests#t-lanes-declared) | requirement | REG-4 | Given scripts that declare the files they run, when one skill's file changes, then only the rows whose closure reaches it rerun. | PASS 2026-11-10 |
 | [lanes-folder-var](Tests#t-lanes-folder-var) | requirement | REG-4 | Given a file run through a folder variable set in another file, when that file changes, then its row still reruns. | PASS 2026-11-10 |
