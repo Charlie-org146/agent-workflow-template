@@ -1,6 +1,6 @@
-# Design: setup-retire-moved
+# Design: setup-retire-rows
 
-Status: APPROVED (unattended, recommended answers taken; owner records o73, o74)
+Status: APPROVED (unattended, recommended answers taken; owner records o73, o89)
 
 ## Problem
 Setup (docs/wiki/Setup.md) still holds 21 live requirements. The v2 rewrite (prd-rewrite-to-10, Setup section) keeps 17 there and moves four to other pages: SET-8 and SET-15 are merged into GRD-3 (Guardrails), SET-17 into HLT-10 (Health), SET-13 into OPS-12 (Operation, with MON-12). Until Setup retires them, criteria_max has to stay at the temporary 21 (o48).
@@ -11,7 +11,7 @@ Setup (docs/wiki/Setup.md) still holds 21 live requirements. The v2 rewrite (prd
 3. The result must have every page at 19 or fewer live requirements on the main it merges into; if any page would exceed 19 the goal stops and reports.
 
 ## Approaches
-- A (recommended): merge both branches in order, then `criteria.py retire` each of SET-8, SET-13, SET-15, SET-17 on Setup with `--owner-record o74`, point leftover test rows and How-to items at the new IDs, set criteria_max to 19 with owner record o73, re-render generated blocks.
+- A (recommended): merge both branches in order, then `criteria.py retire` each of SET-8, SET-13, SET-15, SET-17 on Setup with `--owner-record o89`, point leftover test rows and How-to items at the new IDs, set criteria_max to 19 with owner record o73, re-render generated blocks.
 - B: edit Setup.md by hand. Rejected: the revision tooling is the rule and the locks refuse hand edits of Reviewed lines.
 - C: keep 21 and retire later. Rejected by the done lines.
 
@@ -22,3 +22,6 @@ Merge origin/loop/regroup-regression then origin/loop/regroup-guardrails (no reb
 - Reviewed lines (SET-13, SET-8, SET-15, SET-17 are Reviewed): retire must go through the tooling with the owner record; criteria.py retire keeps the earlier text as a row.
 - Guardrails may hit 19+ once GRD-3 absorbs SET-8/SET-15 and the regroup adds GRD-20..22 (page cap 19; GRD has 22 in the rewrite: this is why caps are the owner's).
 - The local 2.0 lane floor must be dropped for START.md renders and put back; never committed.
+
+## Replaced goal
+This replaces setup-retire-moved (TOP-DECISION 37): criteria_max is set by v2-health-green, so it is left exactly as main has it (21); the other design stands. The retirements were redone under owner record o89 so the requirement guard accepts them under this goal's slug.
