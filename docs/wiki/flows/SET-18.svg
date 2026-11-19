@@ -19,6 +19,11 @@
 .f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
 .f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
 }
+
+.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-v21{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
+.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-v21{fill:#8a5cd6}
+.f-pill{font:700 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}
+@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-v21{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-v21{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
 <rect width="440" height="371" class="f-bg"/>
@@ -44,5 +49,7 @@
 <text x="24" y="302" class="f-s">It adopts and commits with exit 0, names each gap,</text>
 <text x="24" y="317" class="f-s">writes the exception line, and a failed step after the</text>
 <text x="24" y="332" class="f-s">commit is a note and a gap</text>
-<text x="12" y="363" class="f-x">Setup | v1.0.26</text>
+<text x="12" y="363" class="f-x">Setup | since v1.0.26</text>
+<rect x="2" y="2" width="436" height="367" rx="6" fill="none" class="k-shipped"/>
+<rect x="315" y="8" width="113" height="18" rx="9" class="p-shipped"/><text x="372" y="21" text-anchor="middle" class="f-pill">SHIPPED v1.0.26</text>
 </svg>
