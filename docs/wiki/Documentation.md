@@ -72,7 +72,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is INT-8.)
 
 ## Success metrics
-- The docs check prints DOCS OK on the main branch after every merge.
+- The docs check prints DOCS OK on the main branch after every merge, and a link-form PRD page never holds a merge on the unmigrated-Revisions note.
 - Every requirement shows at least one passing Given/When/Then test, or is marked not enforced.
 - No reviewed PRD or requirement changes on the main branch without the owner un-reviewing it first, and a requirement edited in Notion or in the repo shows as a delta on the next sync, never an overwrite, until one side's text is accepted.
 
@@ -420,7 +420,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 | [format-frontdoor](Tests#t-format-frontdoor) | requirement | DOC-23 | Given a README of the eight principles, a section off the list, a ninth section, a sentence off by a word, a cited ID that is neither real nor planned, no Home link or, on the Principles page, a sentence off by a word, when the docs check runs, then the first passes and each other fails naming README and DOC-23; a repo without the shipped list keeps its own README. | PASS 2026-11-18 |
 | - | requirement | DOC-21 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | DOC-11 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-19 |
-| [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-10 |
+| [publish-restore](Tests#t-publish-restore) | requirement | DOC-11 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-19 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | DOC-11 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
 | [publish-tables-handwritten](Tests#t-publish-tables-handwritten) | requirement | DOC-11 | Given a stale hand-written page, when the wiki publish re-renders the generated tables, then that page is still reported stale and the publish still refuses. | PASS 2026-11-13 |
 | [docs-check-speed](Tests#t-docs-check-speed) | requirement | DOC-12 | Given this repo, when the docs check runs, then it finishes in under 30 seconds. | PASS 2026-11-12 |

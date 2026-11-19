@@ -216,7 +216,7 @@ def docs_trouble(top, base, fix=False, whole=False):
     done = run([sys.executable, DOCS, "audit", "--base", "" if whole else base] + ([] if fix and not whole else ["--dry-run"]), top)
     if done.returncode and not done.stdout.strip():
         return ["the docs audit failed: " + (done.stderr.strip().splitlines() or ["no output"])[-1]]
-    return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS"))] * bool(done.returncode)
+    return [l for l in done.stdout.splitlines() if not l.startswith(("UNTESTED", "SKIP", "MILESTONE", "DOCS", "NOTE"))] * bool(done.returncode)
 
 
 def untouched(top, base, lines, filer=None):

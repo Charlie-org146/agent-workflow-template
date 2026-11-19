@@ -333,7 +333,7 @@
 | <a id="t-runs-partial"></a>runs-partial | requirement | DOC-10 | FAIL | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-runs-upgrade"></a>runs-upgrade | requirement | DOC-10 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-runs-keep"></a>runs-keep | requirement | DOC-10 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-publish-restore"></a>publish-restore | requirement | DOC-11 | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
+| <a id="t-publish-restore"></a>publish-restore | requirement | DOC-11 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
 | <a id="t-docs-check-speed"></a>docs-check-speed | requirement | DOC-12 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-docs-check-same"></a>docs-check-same | requirement | DOC-13 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-docs-guide-page-issue-125"></a>docs-guide-page-issue-125 | defect | [#125](https://github.com/jcl2018/agent-workflow-template/issues/125) closed (2026-11-11) | PASS | 2026-11-10 | [60def83](https://github.com/jcl2018/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
@@ -780,8 +780,8 @@
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-unproven-blocks"></a>unproven-blocks | requirement | REG-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-07 |
-| <a id="t-known-no-block"></a>known-no-block | requirement | REG-5 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-07 |
+| <a id="t-unproven-blocks"></a>unproven-blocks | requirement | REG-2 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-07 |
+| <a id="t-known-no-block"></a>known-no-block | requirement | REG-5 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-07 |
 | <a id="t-no-token-dry-run"></a>no-token-dry-run | requirement | REG-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-07 |
 | <a id="t-tests-seen-failing"></a>tests-seen-failing | requirement | REG-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-07 |
 | <a id="t-one-issue"></a>one-issue | requirement | REG-5 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-07 |
@@ -1019,7 +1019,7 @@
 | <a id="t-gate-issue-not-doubled"></a>gate-issue-not-doubled | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-issue-on-feature-backlog"></a>gate-issue-on-feature-backlog | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-gh-failure-safe"></a>gate-gh-failure-safe | requirement | REL-9 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | REL-9 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | REL-9 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
 | <a id="t-gate-nonascii-page-refused"></a>gate-nonascii-page-refused | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-feature-edit-refuses"></a>gate-feature-edit-refuses | requirement | REL-9 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-list-failure-no-create"></a>gate-list-failure-no-create | requirement | REL-9 | not run | - | local | 2026-11-18 |
