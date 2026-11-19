@@ -54,7 +54,7 @@
 <path d="M220.0 134.0 L326.5 164.0" class="f-a" marker-end="url(#ah)"/>
 <path d="M326.5 195.0 L362.0 225.0" class="f-a" marker-end="url(#ah)"/>
 <text x="350.2" y="214.0" text-anchor="start" class="f-x">yes</text>
-<text x="12" y="291" class="f-x">Delivery, Operation, Check in and board | v1.0.28, v2.0 planned</text>
-<rect x="2" y="2" width="436" height="295" rx="6" fill="none" class="k-planned"/>
-<rect x="336" y="8" width="92" height="18" rx="9" class="p-planned"/><text x="382" y="21" text-anchor="middle" class="f-pill">v2.0 PLANNED</text>
+<text x="12" y="291" class="f-x">Delivery, Operation, Check in and board | v1.0.28, v2.0</text>
+<rect x="2" y="2" width="436" height="295" rx="6" fill="none" class="k-v2.0"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v2.0"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
 </svg>

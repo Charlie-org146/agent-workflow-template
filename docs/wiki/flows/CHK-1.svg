@@ -53,7 +53,7 @@
 <text x="160.8" y="275.0" text-anchor="end" class="f-x">no</text>
 <path d="M220.0 256.0 L326.5 286.0" class="f-a" marker-end="url(#ah)"/>
 <text x="279.2" y="275.0" text-anchor="start" class="f-x">yes</text>
-<text x="12" y="352" class="f-x">Check in and board | v0.1.2, v2.0, v2.0 planned</text>
-<rect x="2" y="2" width="436" height="356" rx="6" fill="none" class="k-planned"/>
-<rect x="336" y="8" width="92" height="18" rx="9" class="p-planned"/><text x="382" y="21" text-anchor="middle" class="f-pill">v2.0 PLANNED</text>
+<text x="12" y="352" class="f-x">Check in and board | v0.1.2, v2.0</text>
+<rect x="2" y="2" width="436" height="356" rx="6" fill="none" class="k-v2.0"/>
+<rect x="392" y="8" width="36" height="18" rx="9" class="p-v2.0"/><text x="410" y="21" text-anchor="middle" class="f-pill">v2.0</text>
 </svg>
