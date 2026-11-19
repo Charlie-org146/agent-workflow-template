@@ -18,7 +18,7 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 ### Functional
 
 - GRD-1: **Unreviewed** One visible set of guardrails
-  - This page lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on.
+  - This page's How-to-use page, How-to-use-Guardrails, lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on.
   - It points to the requirement that owns each one and restates none of the owner's text.
 - GRD-2: **Unreviewed** Budgets and caps stop a runaway
   - Time, token and test budgets stop a goal or a step before it runs away.
@@ -96,6 +96,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-19 | One visible set of guardrails <br> This page's How-to-use page, How-to-use-Guardrails, lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on. <br> It points to the requirement that owns each one and restates none of the owner's text. | top-decision 44: the generated guardrail list lives on How-to-use-Guardrails, where tables are allowed, because the feature page format holds no table (DOC-1) | o109: "Yes, I want you to handle all of the questions except the" |
 | r2 | 2026-11-18 | One visible set of guardrails <br> This page lists every guardrail with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on. <br> It points to the requirement that owns each one and restates none of the owner's text. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | One visible set of guardrails, each with its protection, owner, setting and health check <br> This page is an index: it lists every guardrail the template has or needs, each with what it protects against, where it is enforced, the setting that controls it and the health rule that proves it is on. <br> Each guardrail points to the requirement id that owns it (DEL-8, REG-7, DEL-9, SET-8, MON-7, MON-8) and says "new" where none does yet; the page restates none of the owner's text, which holds the exact wording. <br> A guardrail counts as on only when its Tests row here passes; until then it reads not enforced. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
 
@@ -242,7 +243,7 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [grd1-guardrail-list](Tests#t-grd1-guardrail-list) | requirement | GRD-1 | Given the Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check (not built: the page is a definition only). | not run |
+| [grd1-guardrail-list](Tests#t-grd1-guardrail-list) | requirement | GRD-1 | Given the How-to-use-Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check. | not run |
 | [config-holds-topics](Tests#t-config-holds-topics) | requirement | GRD-1 | Given the repo's config, when the settings are shown, then topics is held in the committed config. | PASS 2026-11-14 |
 | [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | GRD-2 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
 | [del8-step-stops](Tests#t-del8-step-stops) | requirement | GRD-2 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |

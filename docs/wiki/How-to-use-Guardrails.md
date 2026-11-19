@@ -25,6 +25,31 @@ Lists every guardrail the template has or needs, each with what it protects agai
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
 ```
 
+### Guardrail list
+
+Each guardrail with what it protects against, the requirement that owns it ("new" where this page's own requirement is the only one), the setting that controls it and the health rule that proves it is on ("none yet" where no rule reads it). The exact wording is in the owner's requirement; whether a guardrail is on is in the Tests table of the Guardrails page.
+
+| Guardrail | Protects against | Owner | Setting | Health check |
+|---|---|---|---|---|
+| GRD-2 | A goal or step running away in time, tokens or tests | DEL-7, DEL-17, REG-7, REG-11, REG-14 | `time_budget_minutes`, `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `prep_budget_minutes`, `max_merge_rounds`, `max_active_goals` | Performance |
+| GRD-3 | A private name, local setting or private value committed or pushed | DEL-9, SET-8, SET-2 | `leak_prefixes` (private flow file) | Security and privacy: `private`, `scan-hook` |
+| GRD-4 | A worker widening its own goal, resuming itself or changing its own budget | OPS-7 | `govern_hook`, `workers` | none yet |
+| GRD-5 | A write to GitHub that nobody asked for | AUT-5, HLT-4, REG-5 | none: `--live` is the switch | none yet |
+| GRD-6 | A direct or force push to the base branch, or a merge with failing required checks | SET-1 | set on the platform, not in the repo | none yet |
+| GRD-7 | CI minutes spent on a superseded or no-code run | AUT-7 | `ci_levels` | none yet: the round digest shows the minutes it used |
+| GRD-8 | A step running far past its usual tokens or time unseen | OPS-8, CHK-1, REG-8 | `silent_minutes` | none yet: the board shows it under Needs you |
+| GRD-9 | A guardrail that is off or broken without anyone seeing | HLT-2, HLT-3, HLT-6 | none | Controls |
+| GRD-10 | A repo adopted without the whole set | SET-1 | none | Adoption |
+| GRD-12 | A goal or test lane starting while free memory is low | OPS-16 | `min_free_memory_gb` | Performance |
+| GRD-15 | An unread token count taken for an unspent budget | GRD-15 (new) | `token_budget` | none yet |
+| GRD-16 | A commit or push that skips the repo's hooks | GRD-16 (new) | none | none yet |
+| GRD-17 | Too many CI runs or Actions minutes in a day | GRD-17 (new) | none yet | none yet |
+| GRD-18 | A POSIX-only call, or long text passed on a command line, breaking native Windows | GRD-18 (new) | none | none yet |
+| GRD-19 | A feature page too large to review | GRD-19 (new) | `criteria_max` | Size: `requirements-per-page` |
+| GRD-20 | A release package that fails Agensi's rules | GRD-20 (new) | none | none yet |
+| GRD-21 | A package limit of ours looser than Agensi's | GRD-21 (new) | none | none yet |
+| GRD-22 | A goal that outgrows a package limit, learned only at release | GRD-22 (new) | none | none yet |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -39,7 +64,7 @@ Say these to the agent in the operation session; each feature page has the exact
 
 Each requirement and how it is delivered:
 
-- GRD-1: One visible set of guardrails, each with its protection, owner, setting and health check. Example, from the grd1-guardrail-list test: given the Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check (not built: the page is a definition only).
+- GRD-1: One visible set of guardrails, each with its protection, owner, setting and health check, in the Guardrail list on this page. Example, from the grd1-guardrail-list test: given the How-to-use-Guardrails page, when it is read, then it lists every guardrail with its protection, owner, setting and health check.
 - GRD-2: Time and token budgets stop a goal or a step before it runs away. Example, from the reg7-budget-leaves test: given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left.
 - GRD-3: Nothing private is committed, and no commit skips the hooks that check it. Example, from the del9-pr-refuses test: given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text.
 - GRD-4: A worker writes only its own goal's work, never shared loop state or its own limits. Example, from the grd4-touches test: given a worker session, when it tries to widen its goal's touches, then the command refuses.
