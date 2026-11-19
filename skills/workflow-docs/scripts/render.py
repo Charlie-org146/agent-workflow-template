@@ -50,7 +50,7 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else from a milestone URL in text; ''."""
+    """OWNER/REPO from the origin remote, else a milestone URL."""
     return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
 
 
@@ -140,22 +140,22 @@ def front(root, names):
     """DOC-4 on Home, DOC-23 on the README and Principles page."""
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
+    listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
+    ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+    ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
+    own = "## The principles" in listing
     if "home" in on and home is not None:
         existing = {name[:-3] for name in os.listdir(folder) if name.endswith(".md")}
-        out += pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
-    listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
-    if "frontdoor" in on and "## The eight principles" in listing:
-        ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+):", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+        out += pf.frontdoor("Home", home, listing, ids, "Home") if own else pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
+    if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
-        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, False) if page else [])
+        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, "Principles") if page else [])
     return out
 
 
 def home_fresh(root, names):
-    folder, rel = os.path.join(root, cr.folder_of(root)), os.path.join(cr.folder_of(root), "Home.md")
-    text = read(os.path.join(root, rel))
-    return text is not None and not [x for x in refresh(root, True) if x[0] == rel] and not pf.home(
-        text, names, {n[:-3] for n in os.listdir(folder) if n.endswith(".md")}, read(os.path.join(root, "README.md")) or "", repo_of(root, text), topics_of(root))
+    rel = os.path.join(cr.folder_of(root), "Home.md")
+    return read(os.path.join(root, rel)) is not None and not [x for x in refresh(root, True) if x[0] == rel] and not [x for x in front(root, names) if x[1].startswith("Home")]
 
 
 def test_slug(name):
@@ -238,7 +238,7 @@ def workflow_file(root):
 
 
 def reference():
-    """[(name, default, meaning)] from `settings.py reference`; [] if unreadable."""
+    """[(name, default, meaning)] from settings.py reference."""
     path = os.path.join(SKILLS, "workflow-setup", "scripts", "settings.py")
     done = subprocess.run([sys.executable, path, "reference"], capture_output=True, text=True) if os.path.exists(path) else None
     rows, on = [], False
@@ -315,7 +315,7 @@ def front_files(root, insert=False):
 
 
 def refresh(root, check=False, insert=False):
-    """Write the blocks (check: only list): [(rel, name)] stale; missing ones only with insert."""
+    """Write the blocks (check: only list): [(rel, name)] stale."""
     stale = []
     for rel, blocks in front_files(root, insert):
         held = read(os.path.join(root, rel)) or ""
