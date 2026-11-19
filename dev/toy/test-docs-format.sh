@@ -163,12 +163,13 @@ check | grep -q "^FORMAT Home" && bad "good Home" || ok "DOC-4 a Home of one fea
 echo "== DOC-23 the README is the principles"
 mkdir -p skills/workflow-health/references; cp "$here/skills/workflow-health/references/commands.md" skills/workflow-health/references/commands.md
 python3 - <<'PY'
-import re
+import os, re
 rows = re.findall(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", open("skills/workflow-health/references/commands.md").read().partition("## The eight principles")[2], re.M)
 out = ["# toy", "", "[the wiki](https://github.com/toy/repo/wiki/Home)", ""]
 for n, name, sentence in rows:
-    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Feature | Release | Summary | Flow |", "|---|---|---|---|---|", "| [DEL-1](x) | Delivery | v1.0 | one line | ![flow](f.svg) |", "| [DEL-9](x) | Delivery | v2.1 (planned) | one line | |", "", "Release means first appearance.", ""]
+    out += ["## %s. %s" % (n, name), "", sentence, "", "![%s](principle-0%s-x.svg)" % (name, n), "", "| Requirement | Feature | Release | Summary | Flow |", "|---|---|---|---|---|", "| [DEL-1](x) | Delivery | v1.0 | one line | [flow](https://github.com/toy/repo/blob/main/docs/wiki/flows/DEL-1.svg?raw=true) |", "| [DEL-9](x) | Delivery | v2.1 (planned) | one line | |", "", "Release means first appearance.", ""]
 open("README.md", "w").write("\n".join(out))
+os.makedirs("docs/wiki/flows", exist_ok=True); open("docs/wiki/flows/DEL-1.svg", "w").write("<svg/>")
 PY
 git add -A; git commit -qm "principles README"
 check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
@@ -182,6 +183,7 @@ python3 - <<'PY'
 import re; t = open("README.md").read(); i = t.index("## 3. "); j = t.index("## 4. "); open("README.md", "w").write(t[:i] + re.sub(r"^\|.*\n", "", t[i:j], flags=re.M) + t[j:])
 PY
 has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle with no requirements table fails" || bad "readme no table"; reset
+edit README.md "flows/DEL-1.svg" "flows/DEL-X.svg"; has "^FORMAT README:[0-9]*: Principles: DOC-23 a Flow link to a file in docs/wiki/flows" && ok "DOC-23 a Flow link to a missing diagram fails" || bad "readme missing flow"; reset
 edit README.md "[the wiki](https://github.com/toy/repo/wiki/Home)" "nothing"; has "^FORMAT README:[0-9]*: Principles: DOC-23 the title and one link to the wiki Home" && ok "DOC-23 a README with no Home link fails" || bad "readme home"; reset
 cp README.md docs/wiki/Principles.md; edit docs/wiki/Principles.md "Everything else it decides" "Everything else it decides, quietly"; has "^FORMAT Principles:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a Principles page with a sentence off by a word fails" || bad "principles page"; reset
 git rm -rq --cached skills/workflow-health >/dev/null; rm -rf skills/workflow-health; check | grep -q "^FORMAT README" && bad "adopter README" || ok "DOC-23 a repo without the shipped list keeps its own README unchecked"; reset; git reset -q --hard HEAD~1

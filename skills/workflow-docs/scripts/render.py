@@ -50,7 +50,7 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else from a milestone URL in text; ''."""
+    """OWNER/REPO from the origin remote, else a milestone URL."""
     return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
 
 
@@ -146,6 +146,7 @@ def front(root, names):
     listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
     if "frontdoor" in on and "## The eight principles" in listing:
         ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+):", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+        ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
         page = read(os.path.join(folder, "Principles.md"))
         out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, False) if page else [])
     return out
@@ -238,7 +239,7 @@ def workflow_file(root):
 
 
 def reference():
-    """[(name, default, meaning)] from `settings.py reference`; [] if unreadable."""
+    """[(name, default, meaning)] from settings.py reference."""
     path = os.path.join(SKILLS, "workflow-setup", "scripts", "settings.py")
     done = subprocess.run([sys.executable, path, "reference"], capture_output=True, text=True) if os.path.exists(path) else None
     rows, on = [], False
@@ -315,7 +316,7 @@ def front_files(root, insert=False):
 
 
 def refresh(root, check=False, insert=False):
-    """Write the blocks (check: only list): [(rel, name)] stale; missing ones only with insert."""
+    """Write the blocks (check: only list): [(rel, name)] stale."""
     stale = []
     for rel, blocks in front_files(root, insert):
         held = read(os.path.join(root, rel)) or ""

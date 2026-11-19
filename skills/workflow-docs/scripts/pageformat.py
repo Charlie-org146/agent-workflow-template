@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""The page format (DOC-4..DOC-23): the checks docs.py check runs on Home, the README and each feature page. Pure: text in, findings out.
-A finding is ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>). Fix: <how>"); CHECKS (the template's `format` key) says which run."""
+"""The page format (DOC-4..DOC-23): the checks docs.py runs on Home, the README and feature pages. Pure: text in, findings out.
+A finding: ("FORMAT", "<Page>:<line>", "<Section>: DOC-n <what> (got <value>). Fix: <how>"); CHECKS says which run."""
 import os
 import re
 
-GENERATED = {"Tests"}  # pages render writes: not a feature page
+GENERATED = {"Tests"}  # render writes it
 GUIDE = "<!-- workflow-docs guide -->"  # a guide page: mapped, kept fresh, not a feature page
 CHECKS = ("home", "frontdoor", "usage", "bullets", "problem", "tests", "deployments", "runbook")  # deployments: deployments.py
 BANNED = "script, function, regex, json, tsv, stdout"
 MARKER = "<!-- workflow-docs -->"
 HOME = ("Feature", "What it does", "How to use", "Milestone")
-OTHER = "Other"  # the topic of a feature none lists
+OTHER = "Other"
 
 
 def topic_of(name, topics):
@@ -127,7 +127,7 @@ def home(text, features, existing, readme, repo, topics=None):
         if topics:
             order, held = topic_order(topics), topic_of(name, topics)
             if topic != held or order.index(held) < last:
-                out.append(bad("Home", number, "Features", 4, "the Topic cell names the page's topic, rows grouped by topic",
+                out.append(bad("Home", number, "Features", 4, "the Topic cell names the page's topic",
                                short(topic or ""), "write %s and keep topics together, in setting order" % held))
             last = max(last, order.index(held)) if held in order else last
         if name not in features:
@@ -178,6 +178,9 @@ def frontdoor(page, text, listing, ids, readme=True):
         ok, rows, other = grid(lines, TABLE)
         if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
             fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
+        for number, c in rows:
+            m = re.search(r"flows/[^)/?#\s]+", c[4])
+            "planned" in c[2] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[4]), "add the diagram")
     more = secs[len(want):]
     if more and more[0][0].startswith("Not yet covered"):
         grid(more[0][2], TABLE[:2] + ["Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
@@ -244,7 +247,7 @@ def linked(page, name, runbook, deploy):
             for named in map(str.strip, ROW_NAMED.findall(text)):
                 if named not in rows:
                     out.append(bad(page, at, name, 16, "the Deployments row the Output names exists", short(named),
-                                   "name a row of the Deployments tables, or drop the Deployments row clause"))
+                                   "name a Deployments table row, or drop the clause"))
             text = ""
     return out
 
@@ -265,7 +268,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
             held[-1][2].append((number, line[4:]))
         elif line.startswith("  - ") or line[:1].isspace():
             say(number, "a sub-bullet is '  - ' (two spaces) right under a requirement line", line,
-                "indent it by exactly two spaces under its requirement")
+                "indent it two spaces under its requirement")
         elif strict and (not groups or (line.strip() != "None" and not line_re.match(line))):
             say(number, "only requirement lines, their sub-bullets or 'None' under ### Functional and ### Non-functional",
                 line, "move it into a requirement, or remove it")
@@ -275,7 +278,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
                 groups[-1][3 if line.strip() == "None" else 2] += 1
     if strict and [g[1] for g in groups] != groups_want:
         say(groups[0][0] if groups else 1, "Requirements is '### Functional' then '### Non-functional'",
-            ", ".join(g[1] for g in groups) or "none", "group the requirements under exactly those two headings, in order")
+            ", ".join(g[1] for g in groups) or "none", "use exactly those two headings, in order")
     for number, title, reqs, nones in groups if strict else []:
         if (reqs and nones) or nones > 1 or not (reqs or nones):
             say(number, "a group holds requirements or the single line 'None'", "%d requirements, %d None" % (reqs, nones),
@@ -287,7 +290,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
             say(number, "%s has at least one sub-bullet" % match.group(1), "none", "split its wording into '  - ' bullets under it")
         if match.group(2) == "Unreviewed" and len(words(match.group(4))) > 20:
             say(number, "an Unreviewed requirement line is at most 20 words", "%d words" % len(words(match.group(4))),
-                "make it a title and move the detail into sub-bullets")
+                "make it a title, details in sub-bullets")
     return out
 
 
@@ -301,11 +304,11 @@ def problem(page, name, lines, most, banned):
             (w for w in banned if re.search(r"\b%ss?\b" % re.escape(w), line, re.I)), None)
         if hit:
             out.append(bad(page, number, name, 8, "the problem is said without code internals", short(hit),
-                           "say what goes wrong for the person, not how the code works"))
+                           "say what goes wrong for the person"))
     if not 1 <= len(said) <= most:
         out.append(bad(page, first, name, 8, "1 to %d bullets" % most, "%d lines" % len(said), "say the problem in 1 to %d bullets" % most))
     if said and not any(ME.search(line) for _, line in said):
-        out.append(bad(page, first, name, 8, "at least one bullet in the first person (I, my, me)", "none",
+        out.append(bad(page, first, name, 8, "at least one bullet in the first person", "none",
                        "say it from the user's side: 'I can't ...'"))
     return out
 
