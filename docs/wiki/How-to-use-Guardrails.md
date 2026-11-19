@@ -89,6 +89,24 @@ Each requirement and how it is delivered:
 
 ## URLs and deployments
 
+**Package limits**
+
+Each package limit Agensi states on its packaging page, next to ours in `dev/package.py`. Ours may be tighter, never looser: `dev/toy/test-package-caps.py` fails when this table is missing or a figure of ours is above Agensi's. Agensi's page gives no unit for MB and KB, so both columns use the same binary units (1 MB is 1,048,576 bytes and 1 KB is 1,024 bytes), as `dev/package.py` does.
+
+| Limit | Agensi's figure | Ours | Date Agensi's page was read |
+|---|---|---|---|
+| Files per package (upload from an agent) | 100 files | 100 files (MAX_FILES) | 2026-11-18 |
+| Package size (upload from an agent; the page does not say per file or in total) | 5 MB | 5 MB for the whole package, failing at 5 MB or more (MAX_BYTES) | 2026-11-18 |
+| Files the buyer's agent receives besides SKILL.md | 200 files | 100 files in all, SKILL.md files included (MAX_FILES) | 2026-11-18 |
+| Text the buyer's agent receives per listing | 6,000,000 characters | 5,242,880 characters, the 5 MB package cap of text (MAX_BYTES) | 2026-11-18 |
+| Script size (a guideline on Agensi's page) | 20 KB | 20 KB, failing at 20,480 bytes (MAX_SCRIPT) | 2026-11-18 |
+| ZIP size (upload from the website) | 50 MB | 5 MB (MAX_BYTES) | 2026-11-18 |
+| Files per package (upload from the website) | 1,000 files | 100 files (MAX_FILES) | 2026-11-18 |
+| Skills per pack (upload from the website) | 50 skills | no cap of its own; at most 100 files | 2026-11-18 | <!-- not-a-count -->
+| File content | text files only | text only: a file that is not UTF-8 text fails | 2026-11-18 |
+| Executables and bundled dependencies | not allowed | not allowed: an executable bit, compiled files and dependency folders fail | 2026-11-18 |
+| Listing fields (summary, tags, keywords, use_cases) | no limit stated | summary 300 characters, tags 10, keywords 10, use_cases 8 | 2026-11-18 |
+
 - Wiki: [Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/Guardrails)
 - Milestone: [Guardrails](https://github.com/jcl2018/agent-workflow-template/milestone/11)
 - Releases: https://github.com/jcl2018/agent-workflow-template/releases
