@@ -325,10 +325,12 @@ def apply(slug, branch):
             config = json.load(handle)
         base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
-        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
-        again = run([sys.executable, os.path.join(docs, "audit.py"), "rerender", base], tree).stdout.strip()
-        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
-        said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
+        py = lambda script, *rest: run([sys.executable, os.path.join(docs, script), *rest], tree).stdout
+        stale = lambda: sorted({l.split()[1].rstrip(":") for l in py("docs.py", "check", "--own", "origin/" + base).splitlines() if l.startswith("STALE ")})
+        pages = stale()
+        again = py("audit.py", "rerender", base).strip()
+        pages = stale() if again else pages
+        said = "\n".join(x for x in (again, pages and py("audit.py", "restamp", slug, *pages).strip()) if x)
         if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
             run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
             pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
