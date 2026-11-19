@@ -64,7 +64,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check(not os.path.exists(os.path.join(runs, "..", "pr-slots", "a")), "and its slot file is gone")
     graph.pr_queue("free", runs, "b")
     graph.pr_queue("hold", runs, "c")
-    os.environ.update(LOOP_SLOT_POLL="0.05", LOOP_MERGE_LOCK_SECONDS="1")
+    os.environ.update(LOOP_SLOT_POLL="0.05", LOOP_MERGE_LOCK_SECONDS="2")
     record("c", status="running")
     graph.pr_queue("hold", runs, "d")
     live = [True]
@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory() as tmp:
         graph.pr_queue("wait", runs, "d")
         check(False, "a wait behind a running lane refuses past LOOP_MERGE_LOCK_SECONDS")
     except SystemExit as error:
-        check("REFUSED" in str(error) and "c" in str(error), "a wait behind a running lane refuses past LOOP_MERGE_LOCK_SECONDS, naming it: %s" % error)
+        check("REFUSED" in str(error) and "c's pr lane" in str(error), "a wait behind a running lane refuses past LOOP_MERGE_LOCK_SECONDS, naming it: %s" % error)
     live[0] = False
 if not failed:
     print("PASS: #5309: a finished lane releases the merge slot")
