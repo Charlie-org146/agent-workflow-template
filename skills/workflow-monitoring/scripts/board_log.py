@@ -6,6 +6,7 @@ board_status.py; it imports only graph.py and the standard library (`board_log.p
 """
 import argparse
 import datetime
+import hashlib
 import json
 import math
 import os
@@ -37,6 +38,25 @@ def read_json(path):
             return json.load(handle)
     except (OSError, ValueError):
         return None
+
+
+def red_dir(root):
+    return os.path.join(os.path.abspath(os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")), "loop", "redteam")
+
+
+def plan_sha(root, slug):
+    try:
+        return hashlib.sha1(open(os.path.join(root, ".loop", "goals", slug + ".plan.md"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+    except OSError:
+        return ""
+
+
+def principles(root):
+    try:
+        text = open(os.path.join(root, "docs", "wiki", "Principles.md"), encoding="utf-8").read()
+    except OSError:
+        text = ""
+    return text, [int(n) for n in re.findall(r"^## (\d+)\. ", text, re.M)] or list(range(1, 9))
 
 
 def stamp(text):
