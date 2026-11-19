@@ -30,7 +30,8 @@ grep -q "^check-1" .loop/regression.tsv && ok "added a row" || bad "add"
 git add -A; git commit -qm "Rows"
 out=$($reg run land); rc=$?; echo "$out"
 [ $rc = 1 ] && grep -q "^UNPROVEN check-1" <<<"$out" && ok "unproven row blocks" || bad "unproven"
-grep -q "^WOULD" <<<"$out" && [ ! -e "$FAKE_GH_DIR/calls.log" ] && ok "no token: dry run, no gh call" || bad "dry run"
+# the issue-state refresh probes `gh auth status` first (REG-6); that read-only probe is the only gh call a token-less dry run may make
+grep -q "^WOULD" <<<"$out" && { [ ! -e "$FAKE_GH_DIR/calls.log" ] || ! grep -qvx "auth status" "$FAKE_GH_DIR/calls.log"; } && ok "no token: dry run, no gh call" || bad "dry run"
 printf 'dash-1\tland\ttrue\tREG-9\t-\tA row dated with a dash.\tcriterion\t\n' >> .loop/regression.tsv
 printf 'text-1\tland\ttrue\tREG-9\tn/a\tA row dated with words.\tcriterion\t\n' >> .loop/regression.tsv
 $reg sync | grep -q "^UNPROVEN dash-1" && $reg run dash-1 | grep -q "^UNPROVEN dash-1" && ok "a seen-failing date of - is unproven" || bad "a - date counted as seen failing"
@@ -209,7 +210,7 @@ grep -q "^# unrun " "$d/results2.tsv" && ok "a row skipped for job time is recor
 : > "$d/all-shards.tsv"
 N=$(cd "$here/skills/workflow-regression/scripts" && python3 -c "import actions; print(actions.SHARDS)")
 for n in $(seq 0 $((N - 1))); do : > "$d/shard$n.tsv"; REGRESSION_SHARD="$n/$N" REGRESSION_RESULTS="$d/shard$n.tsv" python3 ci-block.py --live >/dev/null 2>&1; grep -v '^#' "$d/shard$n.tsv" >> "$d/all-shards.tsv"; done
-once=$(cut -f1 "$d/all-shards.tsv" | sort | uniq -d | wc -l); total=$(cut -f1 "$d/all-shards.tsv" | wc -l); wantedn=$(grep -v '^#' "$d/results4.tsv" | wc -l)
+once=$(cut -f1 "$d/all-shards.tsv" | sort | uniq -d | wc -l | tr -d ' '); total=$(cut -f1 "$d/all-shards.tsv" | wc -l | tr -d ' '); wantedn=$(grep -v '^#' "$d/results4.tsv" | wc -l | tr -d ' ')
 [ "$once" = 0 ] && [ "$total" = "$wantedn" ] && ok "all the shards run every wanted row once ($total rows)" || bad "shard split: $once repeated, $total of $wantedn"
 yml=.github/workflows/regression.yml
 grep -q "shard: \[0, 1, 2, 3, 4, 5, 6, 7\]" $yml && grep -q "^  summary:" $yml && grep -A1 "^  summary:" $yml | grep -q "needs: regression" && ! grep -q "Write the run summary, one table per feature" $yml \
