@@ -198,7 +198,7 @@ def contract(root, names, seen):
     import pageformat as pf
     import prd
     import render
-    found, rule, unread, moves, done = [], rules(), False, [], 0
+    found, rule, unread, moves, done, local = [], rules(), False, [], 0, 0
     limit, on = criteria_max(root), rule["format"]
     linked, loose = test_rows(root)
     head, books = rule["sections"], {page: [] for page in names}
@@ -217,6 +217,7 @@ def contract(root, names, seen):
             got = link_page(root, page, text, link, parts, numbered, rule, seen, linked, set(on))
             unread, found = unread or any(x[0] == "UNREAD" for x in got), found + got
             continue
+        local += 1
         want = head[:1] + [rule["runbook"]] * (rule["runbook"] in have) + head[1:]
         if rule["deploy"] in have:
             want = want[:-1] + [rule["deploy"]] + want[-1:]
@@ -281,8 +282,8 @@ def contract(root, names, seen):
                   for x in render.clashes([row[0] for row in tsv(root, "regression.tsv") if row[1] != "draft"])]
     found += [("IDS", p, "[IDS-MISSING] %s: %s is no requirement" % (k, v)) for p, k, v in moves for t in re.findall(r"[A-Z]{2,5}-\d+$", v) if t not in seen]
     found += [("IDS", seen[k], "[IDS-REUSE] %s is Retired on %s" % (k, p)) for p, k, v in moves if v == "Retired" and k in seen]
-    if 0 < done < len(names):
-        found.append(("NOTE", "Revisions", "%d page(s) have no Revisions section (unmigrated)" % (len(names) - done)))
+    if 0 < done < local:
+        found.append(("NOTE", "Revisions", "%d page(s) have no Revisions section (unmigrated)" % (local - done)))
     found += [("LINK", "regression", text) for text in loose]
     for key in sorted(set(defect_rows(root)) - set(seen)):
         found.append(("LINK", "regression", "defect tests guard %s, which no page has" % key))

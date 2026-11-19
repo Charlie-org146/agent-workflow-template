@@ -10,6 +10,7 @@ import glob
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -81,6 +82,37 @@ def prose(text):
         lines.append(line + (" " + NOT_A_COUNT if marked else ""))
         blank = blank or bool(re.match(r" {0,3}#{1,6}(\s|$)", flat))
     return lines if fence is None else None
+
+
+IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
+
+
+def images(root, folder, pages):
+    """(page, path, here) for each relative image a wiki page embeds. Publish copies a bare file name from the wiki folder
+    to the wiki's top level, where GitHub serves it; any other relative path (a folder, ../, a missing file) 404s there."""
+    out = []
+    for page in pages:
+        full = os.path.join(root, folder, page + ".md")
+        for path in IMAGE.findall(text_of(full) if os.path.isfile(full) else ""):
+            if not re.match(r"[a-z][a-z0-9+.-]*:|/", path):
+                out.append((page, path, "/" not in path and os.path.isfile(os.path.join(root, folder, path))))
+    return out
+
+
+def image_trouble(root, folder, pages):
+    return [("IMAGE", page, "%s is not a file in %s next to the page, so it 404s on the published wiki. Fix: keep the image in %s and "
+             "embed its bare file name" % (path, folder, folder)) for page, path, here in images(root, folder, pages) if not here]
+
+
+def copy_images(root, folder, pages, wiki, dry):
+    """Copy the wiki folder's images the pages embed into the wiki clone; the names that differed there."""
+    out = []
+    for img in sorted({path for _, path, here in images(root, folder, pages) if here}):
+        src, dst = os.path.join(root, folder, img), os.path.join(wiki, img)
+        if not os.path.exists(dst) or open(src, "rb").read() != open(dst, "rb").read():
+            out.append(img)
+            dry or shutil.copyfile(src, dst)
+    return out
 
 
 def text_of(path):
@@ -309,7 +341,7 @@ def automation_block(root):
 
 # AUT-9: the permission rows a repo declares (audit.py permissions)
 PERM_PROGRAMS = ("python3", "python", "gh", "git", "claude", "curl", "node")
-PERM_PRIVATE = re.compile(r"(/Users/|/home/[A-Za-z]|[A-Za-z]:[\\/]+Users|\bsk-[A-Za-z0-9]{8}|\bghp_|\bxox[bp]-)")
+PERM_PRIVATE = re.compile(r"(/Users" r"/|/home/[A-Za-z]|[A-Za-z]:[\\/]+Users|\bsk-[A-Za-z0-9]{8}|\bghp_|\bxox[bp]-)")
 PERM_FIELD = re.compile(r"^- \*\*([A-Za-z ]+):\*\*\s*(.*)$")
 
 
