@@ -15,3 +15,12 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: it prints DOCS OK.
+2. Run `python3 skills/workflow-docs/scripts/criteria.py guard origin/main requirements-consolidate`.
+   Expect: it prints GUARD OK.
+3. Open docs/wiki/Home.md and README.md.
+   Expect: each lists the 43 requirements under the six principles, and none of the retired IDs (for example GRD-3, DEL-12, OPS-15) appears as live.
+4. Open docs/wiki/Regression.md and look up REG-2.
+   Expect: it reads "moved to REG-4" and its Revisions history is still there.
+
