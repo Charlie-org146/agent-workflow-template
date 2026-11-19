@@ -1,7 +1,7 @@
 # Three small README gaps close: the five leftover --body command-line calls become --body-file (MCH-1.7), goal_lane_minutes stops being a second lane limit beside the lane budget (REG-7.1), and criteria_max's default matches the README (TOP-DECISION 128, readme-conformance)
 
 - Slug: gap-cheap-fixes
-- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/prdcopy.py, skills/workflow-delivery/scripts/lane.py, skills/workflow-health/scripts/milestone.py, skills/workflow-health/scripts/rules.py, skills/workflow-setup/scripts/settings.py, skills/workflow-setup/scripts/survey.py, skills/workflow-setup/references/settings.md, skills/workflow-regression/references/commands.md, skills/workflow-health/references/commands.md, .loop/regression.tsv, .loop/config.json, .loop/START.md
+- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/prdcopy.py, skills/workflow-delivery/scripts/lane.py, skills/workflow-health/scripts/milestone.py, skills/workflow-health/scripts/rules.py, skills/workflow-setup/scripts/settings.py, skills/workflow-setup/scripts/survey.py, skills/workflow-setup/references/settings.md, skills/workflow-regression/references/commands.md, skills/workflow-health/references/commands.md, .loop/regression.tsv, .loop/config.json, .loop/START.md, dev/toy/test-tiers.sh, dev/toy/test-timing.sh, dev/toy/test-docs-format.sh, docs/wiki/Home.md, docs/wiki/Delivery.md, docs/wiki/Documentation.md, docs/wiki/Regression.md, docs/wiki/Tests.md, skills/workflow-health/scripts/defects.py, dev/toy/test-migration.sh
 - ETA: 220 active minutes (estimate 176m plus a 25% margin, rough)
 
 ## Done lines
