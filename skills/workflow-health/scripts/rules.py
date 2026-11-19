@@ -1,31 +1,12 @@
-"""Freshness, Tests and Adoption rules (report.py). Read-only; dates are days, so one day's runs print the same lines.
+"""Freshness, Tests and Adoption rules (report.py), plus Security and privacy, Size, Performance and Hygiene rules.
+Read-only; dates are days, so one day's runs print the same lines.
 
-  nightly           the newest recorded nightly run is older than a day (WARN; INFO with no nightly row)
-  unreleased        commits after the newest v* tag, the oldest over 3 days old (WARN; INFO with no tag)
-  finding-age       an open health issue older than 30 days (WARN; INFO without gh)
-  skipped           a row recorded SKIPPED for over 7 days (WARN)
-  network           a land row whose command reaches the network: curl, wget or http(s):// (WARN; fakegh is fine)
-  config            .loop/config.json does not parse, or has no base (FAIL)
-  checks-run-tests  the regression workflow exists but no land row does (WARN)
-  template-version  VERSION is not the newest CHANGELOG heading (WARN), or template_version is missing or older (WARN: migrate)
-  scheduled         the regression or health workflow is missing, or has no schedule (WARN)
-  machine           a gap machine.py check lists
-  no-fit            an open [adoption] line in .loop/findings.md, written by setup: one WARN row each (report.py)
-  agent-tools       agent_command (or the flow file's command) grants its agent no tools (WARN) (report.py)
-  prompt-pointer    a scheduled-task prompt holds more than the Runbook pointer (WARN)
-  milestones        a GitHub repo lacks a standing Backlog milestone, one per feature page and Other (WARN; INFO without a list)
-Security and privacy, Size, Performance check-time and Hygiene idle-sessions rules (also read-only):
-  private                tracked files matching a leak pattern (leak_patterns in the private flow file): FAIL with
-                         file:line and the pattern's number only, never the matched text; INFO with no pattern set
-  scan-hook              no commit scan hook (core.hooksPath or hooks/pre-commit): WARN; INFO in CI
-  workflow-permissions   a workflow with no top-level permissions: (WARN)
-  skill-lines            a SKILL.md of 150 lines or more (FAIL)
-  requirements-per-page  a page with more requirements than criteria_max (default 6) (FAIL)
-  check-time             the check, up to its Performance group, past 60 seconds (WARN; no number on a pass)
-  idle-sessions          a busy worker session whose goal has ended (WARN; INFO with no pool)
-  eta-missing, eta-extended, eta-overrun   the hard ETA (GRD-14): a live goal with no ETA (WARN); an extension with no
-                         covering owner record, or a goal a step past its ETA not waiting for the owner (FAIL)
-  auto-safety, auto-record   full auto (MON-11): an AUTO answer in a safety class, or with no standing owner rule record (FAIL)
+Freshness: nightly (newest run over a day old), unreleased (commits over 3 days past the newest v* tag), finding-age (open health
+issue over 30 days), skipped (SKIPPED over 7 days). Tests: network (a land row reaching the network), config (config.json unparsable
+or no base: FAIL), checks-run-tests, template-version, scheduled, machine. Adoption: no-fit, agent-tools, prompt-pointer, milestones.
+Security, Size, Performance, Hygiene: private (a leak pattern: FAIL, never the text), scan-hook, workflow-permissions, skill-lines
+(150 lines: FAIL), requirements-per-page (over criteria_max: FAIL), check-time (over 60 s), idle-sessions, eta-missing, eta-extended,
+eta-overrun (GRD-14), auto-safety, auto-record (MON-11).
 """
 import datetime
 import glob
