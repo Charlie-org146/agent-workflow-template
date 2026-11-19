@@ -43,9 +43,8 @@ frozen goal file there, and launches the agent, detached, with its output in `<g
 prompt says to stop at the pull request and never merge. A batch answers `leave` by itself, never `cut`. A goal marked
 `release: ask` waits for the user.
 
-A goal waits only on goals it `depends-on`, never because it shares files: before its pull request a goal merges the
-latest base; a conflict with it is not a counted try (it has its own cap, `max_moved`). A failed goal never
-stops the others.
+A goal waits only on goals it `depends-on`, never because it shares files: before its pull request a goal merges the latest
+base; a conflict with it is not a counted try (it has its own cap, `max_moved`). A failed goal never stops the others.
 
 ### Mending and usage limits
 
@@ -69,9 +68,8 @@ Then it prints:
 - `QUEUED, NOT STARTED`: each queued goal and what holds it (a conflict with another goal or full slots), or that
   `watch` can start it.
 
-Give the user the waiting section first, with the words exactly as printed. When the user answers, send it with
-`operate.py send <slug> "<answer>"`, run `goal.py answer <slug>` in that worktree, and do what it says (`cut` or
-`leave`: use `workflow-release`).
+Give the user the waiting section first, with the words exactly as printed. When the user answers, send it with `operate.py send
+<slug> "<answer>"`, run `goal.py answer <slug>` in that worktree, and do what it says (`cut` or `leave`: use `workflow-release`).
 
 ## `dashboard [--out FILE]`
 
