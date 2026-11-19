@@ -132,4 +132,5 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-email-phone@9a67a8ff -->
 
-<!-- kept known-red-w4b-docs-wording@f518561a -->
+
+<!-- kept plan-red-team-core@6edef587 -->
