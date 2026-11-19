@@ -348,6 +348,8 @@ part is advice and never blocks.
 | RUNNING / WAITING | lane.py | 0 | still planning or running / waiting for a lane slot or a sibling lane of the goal | run the same command again, or `role.py lane-wait SLUG NAME` |
 | LANE_WAIT | slots.py | — | all lane slots are busy; names the holders | none: it starts when one frees (`LOOP_LANE_LIMIT=0` skips the pool for one run) |
 | MEMORY_WAIT, LANE_ENV | lanes_cli.py, regression.py / lane.py | 6 | a lane gave up waiting for memory, or most of its rows could not start (Windows 0xC0000142 and like codes are rerun once, after the other rows, and a row still dying is ENV, not FAIL); it is the machine's, so no try is counted (guards.py, up to 10) | run again when memory frees |
+| LANE_MEMORY | lanes_cli.py | — | free memory is under `min_free_memory_gb`; the line names the free GB and the floor | none: the lane waits and starts when memory frees (a lane already running is not stopped) |
+| LANE_OWED | fit.py | — | a goal's rows were skipped on this platform and never seen failing; names the rows | prove them on another runner: `regression.py red ID --break CMD`, then `regression.py red ID --off-platform --runner NAME --commit SHA`, then answer go on |
 | LANE_WAIT_TIMEOUT | slots.py / lane.py | 4 / 2 | a hand run off a terminal waited 4x its time limit for a slot (4); `lane-wait --timeout` ran out while the lane keeps running (2) | run again later |
 | LANE_SLOTS_UNAVAILABLE | slots.py | — | the lanes folder can't be used; the lane runs without a slot | `chmod 700` it, or set `LOOP_LANES_DIR` |
 | LANE_STALE | slots.py | 5 | HEAD or the worktree changed while the lane waited; no rows ran | run the same command again |
