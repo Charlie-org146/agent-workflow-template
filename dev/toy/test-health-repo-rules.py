@@ -91,6 +91,18 @@ with tempfile.TemporaryDirectory() as tmp:
               "a repo rule runs in the report with its group and its exit as PASS, WARN, FAIL or UNREAD")
         check(bool(got["r-warn"]) and got["r-warn"].get("feature") == "Health" and got["r-pass"].get("feature") == "Docs",
               "a repo rule's row carries its feature")
+        # refs: an id listed under a page's ### Retired resolves through its marker; an id no page defines or retires still fails
+        r = os.path.join(tmp, "refs")
+        os.makedirs(os.path.join(r, "docs", "wiki"))
+        for name, body in (("One", "## Requirements\n\n- AB-1: **Unreviewed** Live.\n  - It lives.\n\n## Revisions\n\n### Retired\n\n- AB-3: moved to AB-1\n"),
+                           ("Two", "## Requirements\n\n- AB-2: **Unreviewed** Also live. See AB-3 and AB-9.\n  - It lives.\n")):
+            with open(os.path.join(r, "docs", "wiki", name + ".md"), "w") as handle:
+                handle.write("# %s\n\n%s" % (name, body))
+        repo(r)
+        found, _ = rows(r, "consistency")
+        dangling = {x["subject"] for x in found if x["rule"] == "refs" and x["state"] == "FAIL"}
+        check("AB-3" not in dangling and "AB-9" in dangling,
+              "a retired id resolves through its moved-to marker, and an id no page defines or retires still fails refs")
     if run_it('control'):
         # control: the break runs on a copy, and the control fires only when the command then fails
         b = os.path.join(tmp, "b")
