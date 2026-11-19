@@ -29,11 +29,12 @@ How to use: [How-to-use-Release](How-to-use-Release)
 - REL-12: **Reviewed 2026-11-19** Merges wait only on gates I set <!-- reviewed 73d3745e -->
   - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12]
   - No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10]
-- REL-13: **Unreviewed** Fast merge queue
+- REL-13: **Reviewed 2026-11-19** Fast merge queue <!-- reviewed c78fb36c -->
   - Pull requests merge one at a time per repo, across machines. [REL-13]
   - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13]
   - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13]
   - (v2.0 planned) merge-queue: a merge queue (named only).
+  - (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13]
 
 ### Non-functional
 
@@ -164,6 +165,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.0 planned) merge-queue: a merge queue (named only). <br> (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13] | merge-queue-b stamp bullet (TOP-DECISION 113) | o419: "approved by operation-top under owner delegation (DOC-2, o371); TOP-DECISION 113: add the" |
 | r3 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.0 planned) merge-queue: a merge queue (named only). | consolidation (TOP-DECISION 89): second revision (TOP-DECISIONs 91, 94, 95) | o360: "I want to merge the 2.1 into 2.0 ... (owner ~01:35, o355)" |
 | r2 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.1 planned) merge-queue: a merge queue (named only). | consolidation (TOP-DECISION 89) | o289: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. | migration r1; date from the run day | o47: "Yes, start it end." |
