@@ -1,7 +1,7 @@
 # Before build, a fresh-context reviewer red-teams each goal's plan against every principle and lists unverified assumptions, risks, principle breaks and cheaper paths; a principle break blocks the build until the plan changes or the owner accepts the break in their own words; the reviewer never edits, merges or decides; a second hourly pass reviews the board and both machines' STATUS (owner o222, o237; TOP-DECISION 94, 98, 100)
 
 - Slug: plan-red-team-core
-- Touches: skills/workflow-monitoring/scripts/layers.py, dev/toy/test-three-level.py, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Health.md, docs/wiki/Tests.md, skills/workflow-delivery/scripts/flow.py, DECISIONS.md, skills/workflow-delivery/scripts/goal.py, skills/workflow-delivery/scripts/guards.py, skills/workflow-monitoring/scripts/mailbox.py, dev/toy/test-guards.sh, dev/toy/test-goal.sh
+- Touches: skills/workflow-monitoring/scripts/layers.py, dev/toy/test-three-level.py, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Health.md, docs/wiki/Tests.md, skills/workflow-delivery/scripts/flow.py, DECISIONS.md, skills/workflow-delivery/scripts/goal.py, skills/workflow-delivery/scripts/guards.py, skills/workflow-monitoring/scripts/mailbox.py, dev/toy/test-guards.sh, dev/toy/test-goal.sh, skills/workflow-monitoring/scripts/machines.py
 - ETA: 220 active minutes (estimate 175m plus a 25% margin, rough)
 
 ## Done lines
