@@ -205,10 +205,7 @@ jobs:
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
-          if [ "${{ matrix.shard }}" = tree ]; then
-            for k in 0 1 2 3 4 5 6 7; do LOOP_PR_SHARD=$k/8 $R --tree --timeout 200 & p="$p $!"; done
-            r=0; for i in $p; do wait $i || r=1; done; exit $r
-          fi
+          [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200
           LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget 120 --timeout 200
       - if: always()
         uses: actions/upload-artifact@v4
