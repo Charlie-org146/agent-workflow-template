@@ -98,4 +98,34 @@ try:
     print("PASS: #TD231: negative control: without merge=union the same merges conflict")
 finally:
     shutil.rmtree(cwd, ignore_errors=True)
+
+# An old-order branch merged around a sorted one keeps both orders under union: the identical rows collapse, nothing is refused.
+for AUTOCRLF in ("false",):
+    cwd = tempfile.mkdtemp(prefix="rowsmerge-")
+    try:
+        git(cwd, "init", "-q", "-b", "main")
+        put(cwd, ".gitattributes", ATTRS)
+        put(cwd, ROWS, "# id\tlevel\tcommand\nrow-c\tland\ttrue\nrow-a\tland\ttrue\nrow-b\tland\ttrue\n")
+        put(cwd, ISSUES, "# link\tstate\nhttps://x/issues/1\tclosed\n")
+        git(cwd, "add", "-A")
+        git(cwd, "commit", "-q", "-m", "base")
+        git(cwd, "checkout", "-q", "-b", "sorted", "main")
+        regression.sort_tables(cwd)
+        git(cwd, "commit", "-q", "-am", "sorted")
+        git(cwd, "checkout", "-q", "-b", "old", "main")
+        put(cwd, ROWS, open(os.path.join(cwd, ROWS), newline="").read() + "row-d\tland\ttrue\n")
+        git(cwd, "commit", "-q", "-am", "old order plus a row")
+        out = set()
+        for order in (("sorted", "old"), ("old", "sorted")):
+            if not merged(cwd, order):
+                sys.exit("FAIL: an old-order branch and a sorted one conflicted under union: %s" % (order,))
+            regression.sort_tables(cwd)
+            out.add(tables(cwd))
+        text = next(iter(out))[0].decode().replace("\r\n", "\n")
+        if len(out) != 1 or text.count("row-a\t") != 1 or "row-d\t" not in text:
+            sys.exit("FAIL: the old-order merge left %d tables or a duplicate row:\n%s" % (len(out), text))
+        print("PASS: #TD231: an old-order branch merged around a sorted one leaves no duplicate and sort refuses nothing")
+    finally:
+        shutil.rmtree(cwd, ignore_errors=True)
+
 print("PASS: #TD231: rows added by separate goals merge in any order and release sorts them to one byte order")

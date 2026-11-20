@@ -4,15 +4,15 @@
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
                                 add or replace a row; C is criterion (default), workflow or defect (needs --link)
   sync [--write]                list done lines and criteria with no row, and rows with no description or seen red
-  criteria                      run each wiki criterion's row; print an UNMET line per missing, draft or failing
-  red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
+  criteria                      run each criterion's row; print an UNMET line per missing, draft or failing
+  red ID --break CMD            copy HEAD, run CMD to break it, record that the test fails
   red ID --owed --runner R [--live]
                                 machine R owes the proof: a to-do issue; the goal goes on (PENDING)
   red ID --off-platform --runner R --commit SHA
                                 a row this platform skips (exit 77) failed on runner R at SHA
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
                                 run rows, keep one issue per failing row; --tier goal plans a goal lane
-  sort [--check]                sort both tables by id in LF (merge=union leaves any order); refuse duplicates
+  sort [--check]                sort both tables by id in LF; refuse one id on two rows
   workflow [--visibility V]     a public repo: write regression.yml and regression-pr.yml
   reads ROW                     suggest a # reads: header for ROW's script from the check-reads trace
 
@@ -319,12 +319,12 @@ def cmd_run(args):
 
 
 def sort_tables(root, check=False):
-    """Sort both tables by id in LF; refuse a duplicate id."""
+    """Sort both tables by id in LF; drop identical rows; refuse an id on two rows."""
     for name in ("regression.tsv", "regression-issues.tsv"):
         path = path_of(root, name)
         text = open(path, newline="").read() if os.path.exists(path) else ""
         lines = text.replace("\r\n", "\n").split("\n")
-        rows = sorted(l for l in lines if l[:1] not in ("", "#"))
+        rows = sorted({l for l in lines if l[:1] not in ("", "#")})
         keys = [r.split("\t")[0] for r in rows]
         dup = {k for i, k in enumerate(keys[1:]) if k == keys[i]}
         if dup:
