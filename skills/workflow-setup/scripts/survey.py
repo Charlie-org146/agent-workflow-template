@@ -14,6 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import settings  # noqa: E402
+import sync  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -370,6 +371,35 @@ def main():
     config.setdefault("base", "main")
     config.setdefault("checks", [])
     print(found_line(survey(repo, config), config))
+    return 0
+
+
+def desk_phone(repo):
+    """Gaps that stop a phone-only session from starting a goal: no agent command, or an app-only worker rule."""
+    try:
+        with open(os.path.join(repo, ".loop", "config.json")) as handle:
+            cfg = json.load(handle)
+    except (OSError, ValueError):
+        return ["no .loop/config.json: run setup first"]
+    out = []
+    command = cfg.get("agent_command") or []
+    if not command or not shutil.which(str(command[0])):
+        out.append("phone-start: agent_command is missing or not on the PATH, so no background worker can start without the app")
+    if cfg.get("workers") == "app":
+        out.append("phone-start: workers is app, so a goal waits for a bound session when the app refuses a start from the phone; "
+                              "clear workers in .loop/config.json for a background worker through agent_command")
+    return out
+
+
+def desk_check(args):
+    found = sync.desk_load()
+    gaps = ["GAP %s: %s -> %s" % (s[0], s[1], s[2]) for s in sync.DESK_STEPS if sync.desk_state(s, found) != "done"]
+    top = subprocess.run(["git", "-C", args.repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or os.path.abspath(args.repo)
+    gaps += ["GAP " + g for g in desk_phone(top)]
+    if gaps:
+        print(chr(10).join(gaps))
+        return 1
+    print("DESK OK: nothing left to do at the desk; a phone-only session can start a goal")
     return 0
 
 

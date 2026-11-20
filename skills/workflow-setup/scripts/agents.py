@@ -354,6 +354,29 @@ def readme_with(text, names, pf, repo=""):
     return text[:end].rstrip("\n") + "\n" + block + "\n" + ("\n" + text[end:] if end < len(text) else "")
 
 
+def desk_list(args):
+    import sync
+    found = sync.desk_load()
+    for step in sync.DESK_STEPS:
+        print("DESK %s [%s]: %s" % (step[0], sync.desk_state(step, found), step[1]))
+    return 0
+
+
+def desk_done(args):
+    import sync
+    import time
+    found, names = sync.desk_load(), [s[0] for s in sync.DESK_STEPS]
+    bad = [n for n in args.steps if n not in names]
+    if bad:
+        print("REFUSED: unknown desk step %s; steps are %s. Nothing was recorded." % (", ".join(bad), ", ".join(names)))
+        return 2
+    for name in args.steps:
+        found[name] = {"done": time.strftime("%Y-%m-%d %H:%M")}
+    sync.desk_save(found)
+    print("RECORDED: %s" % ", ".join(args.steps))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=("wire",))
