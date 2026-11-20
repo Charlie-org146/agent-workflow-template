@@ -147,7 +147,6 @@ def scheduled(root):
 
 
 def no_fit(root):
-    """no-fit: each open `- [adoption] <kind>: <subjects>. Fix: <fix>` line of .loop/findings.md is one WARN row."""
     try:
         text = open(os.path.join(root, ".loop", "findings.md")).read()
     except OSError:
@@ -161,7 +160,6 @@ POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Run
 
 
 def prompt_pointer(root):
-    """prompt-pointer: WARN for each scheduled-task prompt (a routine's runs: claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -182,8 +180,6 @@ def prompt_pointer(root):
 
 
 def milestones(root):
-    """milestones: a WARN for each standing "Backlog: <Feature>" milestone (and Other) a GitHub repo lacks (DOC-10, SET-17). No
-    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES (JSON titles) stands in for gh."""
     if "github.com" not in (git_raw(root, "remote", "get-url", "origin") or ""):
         return []
     import milestone
@@ -314,14 +310,16 @@ def merge_time(root):
     try:
         file = os.environ.get("LOOP_HEALTH_MERGES")
         text = open(file).read() if file else subprocess.run(
-            ["gh", "pr", "list", "--state", "merged", "--limit", "20", "--json", "mergedAt,statusCheckRollup"],
+            ["gh", "pr", "list", "--state", "merged", "--limit", "20", "--json", "mergedAt,statusCheckRollup,headRefName"],
             cwd=root, capture_output=True, text=True, timeout=60, check=True).stdout
-        gaps = []
-        for item in json.loads(text):
+        prs, gaps = json.loads(text), []
+        rel = {p["headRefName"].split("-", 1)[-1]: p["mergedAt"] for p in prs if p["headRefName"].startswith("release/")}
+        for item in prs:
             end = stamp(item["mergedAt"])
             ends = [stamp(c["completedAt"]) for c in item.get("statusCheckRollup") or [] if str(c.get("completedAt") or "0")[:4] > "2000"]
             ends = [e for e in ends if e <= end]
-            gaps += [(end - max(ends)).total_seconds() / 60] if ends else []
+            if ends and not item["headRefName"].startswith("release/"):  # to the release PR's merge when there is one
+                gaps.append((stamp(rel.get(item["headRefName"].split("/", 1)[-1], item["mergedAt"])) - max(ends)).total_seconds() / 60)
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
         return [row("UNREAD", "performance", "merge", "check-time", "MERGE-TIME can't be read (gh pr list)", "gh auth login", "merge")]
     if not gaps:

@@ -194,10 +194,25 @@ for r in rules.merge_time("."):
     print(r["state"], r["detail"])
 PY
 }
-mk() { printf '[{"mergedAt": "2026-11-19T10:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T09:50:00Z"}]}, {"mergedAt": "2026-11-19T11:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T10:35:00Z"}]}]' > "$1"; }
+mk() { printf '[{"headRefName": "loop/a", "mergedAt": "2026-11-19T10:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T09:50:00Z"}]}, {"headRefName": "loop/b", "mergedAt": "2026-11-19T11:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T10:35:00Z"}]}]' > "$1"; }
 mk "$d/m.json"; out=$(mt "$d/m.json")
 check "merged PRs whose checks finished 10 and 25 minutes before main: WARN, MERGE-TIME median 18 min (target 15)" '[ "$out" = "WARN MERGE-TIME median 18 min (target 15)" ]'
 sed -i 's/10:35:00Z/10:50:00Z/' "$d/m.json"; out=$(mt "$d/m.json")
 check "negative control: both merges 10 minutes after the last check stay under the target (INFO, not WARN)" '[ "$out" = "INFO MERGE-TIME median 10 min (target 15)" ]'
 out=$(mt "$d/missing.json"); check "data that cannot be read gives UNREAD, never green" '[ "${out%% *}" = UNREAD ]'
+mk "$d/m.json"; sed -i 's/^\[/[{"headRefName": "release\/v1.0.1-a", "mergedAt": "2026-11-19T10:08:00Z", "statusCheckRollup": []}, /' "$d/m.json"; out=$(mt "$d/m.json")
+check "MERGE-TIME runs to the release: a PR merged at 10:00 and released at 10:08 counts 18 minutes, the release PR itself is not counted (median of 18 and 25 is 22)" '[ "$out" = "WARN MERGE-TIME median 22 min (target 15)" ]'
+# DEL-20: the release commit (VERSION and CHANGELOG.md on its parent) is tree-equal modulo stamps, so its pass carries and its queue run is the short path
+git switch -q main 2>/dev/null; git checkout -q -b rel "$base" 2>/dev/null || git checkout -q -b rel; printf '1.0.1
+' > VERSION; printf '# Changelog
+' > CHANGELOG.md; git add VERSION CHANGELOG.md; git commit -qm "Release v1.0.1"
+tems() { python3 - "$M" "$1" "$2" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1]); import autorelease
+print(autorelease.tems(".", sys.argv[2], sys.argv[3]))
+PY
+}
+check "a release commit (VERSION and CHANGELOG.md on its parent) qualifies as a record-only commit: tree equal modulo stamps" '[ "$(tems HEAD~1 HEAD)" = True ]'
+echo more >> src/a.txt; git commit -qam "code with the release"
+check "negative control: a release commit that also changes code does not qualify" '[ "$(tems HEAD~2 HEAD)" = False ]'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
