@@ -53,7 +53,7 @@ def last_at(root):
     return (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at")
 
 
-def grouped(blocks, at=None, tags=None):
+def grouped(blocks, at=None, tags=None, loop=None):
     out, edges, marks = [], [], {name: {item["slug"]: item.get("mark") for item in items} for name, items in blocks}
     key = lambda item: (item.get("release") or "no release", item.get("feature") or "no feature")
     every = {}
@@ -67,7 +67,7 @@ def grouped(blocks, at=None, tags=None):
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
         for release in sorted({key(item)[0] for item in items}):
-            out += ["-- %s --" % bs.release_header(release, every[release], at)]
+            out += ["-- %s --" % bs.release_header(release, every[release], at, loop)]
             for feature in sorted({key(item)[1] for item in items if key(item)[0] == release}):
                 out += ["  %s:" % feature]
                 out += ["    " + goal_line(item) for item in items if key(item) == (release, feature)]
@@ -231,7 +231,7 @@ def render(root=None, at=None, stamp=None):
     keys = lambda name, slug: slug if name == mine["name"] else "%s/%s" % (name, slug)
     edges = {keys(n, i["slug"]): [d if "/" in d else keys(n, d) for d in i["depends"]] for n, items in blocks for i in items}
     needs, tags = graph.rank(needs, edges, {keys(n, i["slug"]) for n, items in blocks for i in items if i["mark"] != "queued"})
-    out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags})
+    out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags}, folder)
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
     out += ["", "Coming up"] + ([operation] if operation else [])
