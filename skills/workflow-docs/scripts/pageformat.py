@@ -135,7 +135,7 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
-HEAD1, HEAD2 = "Requirement Summary Follows Feature Version Flow".split(), ["Requirement", "Complete text"]
+HEAD1, HEAD2 = "Requirement Summary Follows Feature Adoption Confidence".split(), ["Requirement", "Complete text"]
 IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
@@ -149,10 +149,10 @@ def frontdoor(page, text, listing, ids, kind="README"):
         rows = tabs[0][2] if ok else []
         for number, c in rows:
             for found in IDREF.findall(c[0]):
-                found in ids or "planned" in c[4] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
+                found in ids or fail(number, "an ID that exists", found, "remove it")
         return ok, rows, other
 
-    head, *secs = [x for x in parts(unblocked(text)) if x[0] != "System design"]
+    head, *secs = [x for x in parts(unblocked(text)) if x[0] not in ("What this is", "System design")]
     extra = [x for x in head[2][1:] if x[1].strip()]
     if kind == "README" and (len(extra) != 1 or "/wiki/Home" not in extra[0][1]):
         fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one wiki Home link")
@@ -165,9 +165,9 @@ def frontdoor(page, text, listing, ids, kind="README"):
         if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
             fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
         for number, c in rows:
-            m = re.search(r"flows/[^)/?#\s]+", c[5])
+            m = re.search(r"flows/[^)/?#\s]+", c[0])
             c[2] or fail(number, "a Follows cell", "none", "add it")
-            (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
+            (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[0]), "add the diagram")
     more = secs[len(want):]
     if kind != "Principles":
         sec = more.pop(0) if more and more[0][0].startswith("Requirements by feature") else ("", 1, [])
@@ -178,9 +178,6 @@ def frontdoor(page, text, listing, ids, kind="README"):
         hw = lambda x: "How-to-use-" + x[5:].strip().replace(" ", "-")
         wrong += [hw(x) for _, x in sec[2] if kind == "Home" and x.startswith("#### ") and hw(x) not in links]
         sec[0] and not wrong or fail(sec[1], "every requirement, and on Home a How-to link per feature", "%d wrong: %s" % (len(wrong), ", ".join(wrong[:3]) or "no section"), "regenerate it")
-    while more and more[0][0].startswith(("Not yet covered", "Proposed cuts", "Open conflicts")):
-        more[0][0].startswith("Open") or grid(more[0][2], ["Requirement", "Feature", "Reason"])[0] or fail(more[0][1], "its Reason table", "none", "add it")
-        more = more[1:]
     if more:
         fail(more[0][1], "no section after the principles", short(more[0][0]), "move it to the wiki")
     return out
