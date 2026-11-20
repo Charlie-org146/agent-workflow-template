@@ -212,9 +212,6 @@ on:
   pull_request:
   merge_group:
     types: [checks_requested]
-  push:
-    branches-ignore:
-      - "@BASE@"
 permissions:
   contents: read
 concurrency:
@@ -222,6 +219,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   affected:
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -233,6 +231,19 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
+  small:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 90 --timeout 60
 """
 OURS = "# Written by workflow-regression"
 

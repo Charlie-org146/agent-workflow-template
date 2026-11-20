@@ -24,6 +24,7 @@
   "max_suite_seconds": 2800,
   "auto_approve": true,
   "auto_merge": true,
+  "merge_queue": false,
   "regression_cron": "17 */4 * * *",
   "health_cron": "47 */4 * * *",
   "judge_env": "ANTHROPIC_API_KEY",
