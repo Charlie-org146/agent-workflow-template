@@ -481,6 +481,7 @@
 | <a id="t-links-origins-sources"></a>links-origins-sources | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-entry-committed-config"></a>entry-committed-config | requirement | DOC-1 | not run | - | local | 2026-11-19 |
+| <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 
 ## Guardrails
 

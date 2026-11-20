@@ -353,7 +353,7 @@ Syntax, what each prints, and each refusal with its message and exit code.
 
 ## The principles
 
-The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principles 6 and 7 read UNREAD until their Attention and References groups exist.
+The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principles 6, 7 and 8 read UNREAD until their Attention, References and Honesty groups exist.
 
 | # | Principle | Sentence | Groups |
 |---|---|---|---|
@@ -364,3 +364,4 @@ The one list the README, the Principles page and health's roll-up read (DOC-23, 
 | 5 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent; any repo adopts the template cleanly, byte for byte, and its README shows the template's principles and design logic as written; it plugs into other systems through adapters, and survives a failure without losing work. | adoption |
 | 6 | Autonomous, and you decide only what's yours | It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours. | attention |
 | 7 | Standard, not home-made | Every requirement follows a specific, named industry tool, standard or production system with a proven record, and uses that tool itself wherever one can run here; where it can't, it copies the proven design and says why. | references |
+| 8 | Honest, verified and on time | Every claim the loop makes is backed by evidence it just read, every report and plan is checked by an adversarial reviewer before you rely on it, and every ETA is a commitment: a miss is recorded with its cause, never quietly moved. | honesty |

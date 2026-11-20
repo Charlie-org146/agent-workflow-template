@@ -11,6 +11,7 @@ import sys
 import counting
 import criteria as cr
 import pageformat as pf
+import sections
 from deployments import link_of, regroup, topics_of
 
 os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above) sets the rest, stdin included
@@ -22,7 +23,6 @@ FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regressio
 
 
 def tests_format(held={}):
-    """tests.py loaded once."""
     import importlib.util as iu
     if "m" not in held:
         sys.dont_write_bytecode, held["m"] = True, None
@@ -61,7 +61,6 @@ def tests_page(root):
 
 
 def put(path, text):
-    """Write text via a temp file renamed into place."""
     temp = "%s.%d.tmp" % (path, os.getpid())
     with open(temp, "w") as fh:
         fh.write(text)
@@ -150,7 +149,7 @@ def front(root, names):
     if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
         out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, "Principles") if page else [])
-    return out
+    return out + (own and home is not None and sections.run(folder, readme, home, names) or [])
 
 
 def home_fresh(root, names):
@@ -184,7 +183,6 @@ def tests_table(ids, linked, defects, rows, fields, ran):
 
 
 def run_cell(value, repo, day="", flow="regression.yml"):
-    """A URL is its Actions run."""
     if re.match(r"^https?://\S+$", value):
         return "[run](%s)" % value
     if re.match(r"^[0-9a-f]{7,40}$", value):
@@ -219,7 +217,6 @@ def clashes(names):
     return out
 
 
-# the Settings and Automation blocks on Home, the README's template line
 SKILLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TEMPLATE_REPO = "jcl2018/agent-workflow-template"  # last resort
 MARKS = ("settings", "automation", "template")
@@ -311,7 +308,7 @@ def front_files(root, insert=False):
         out.append((home, both))
     if os.path.exists(os.path.join(root, "README.md")):
         out.append(("README.md", [("template", template_line(root))] + [b for b in both if block_re(b[0]).search(read(os.path.join(root, "README.md")) or "")]))
-    return out
+    return out + sections.targets(root, cr.folder_of(root), read, block_re, both)
 
 
 def refresh(root, check=False, insert=False):
