@@ -42,6 +42,11 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - Operation-top may approve requirement wording on my behalf after reading it, except safety classes; it lists each approval in the next check-in, and I can revert any. An approval record then reads 'approved by operation-top under owner delegation (DOC-2 rN)'. [DOC-2]
 - DOC-24: **Unreviewed** Every requirement names what it follows
   - Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source, and a verdict, adopted or adapted. General guidance is not a reference. [DOC-24]
+- DOC-25: **Unreviewed** Every page has the same fixed sections, and README and Home match
+  - The README and the wiki Home have exactly these sections, in this order, and nothing else: the title with its one-paragraph introduction; System design, one diagram showing how the principles connect; one section per principle, with its sentence and its requirements table and no diagram of its own; Requirements by feature. An adopted repo adds one section before the principles for the template's principles it inherits. [DOC-25]
+  - Every requirement row in a principle's table links to that requirement's own workflow figure. A row with no figure fails the docs check. [DOC-25]
+  - Every wiki page has the sections of its kind, in this order. A feature page: Problem, Runbook where the feature has one, Requirements, Non-goals, Success metrics, Revisions, Tests. A How-to-use page: What it's for, How to reach or run it, URLs and deployments, Automations and schedules where it has them, Runbooks where it has them, Links. Principles: one section per principle, each with its own diagram. Tests: one section per feature, then Other. Roadmap: the sections it has today. [DOC-25]
+  - The docs check fails a page with a missing, extra, renamed or out-of-order section, and fails when the README and Home differ in their sections or in a principle's sentence or table. [DOC-25]
 
 
 
@@ -282,6 +287,12 @@ None
 |---|---|---|---|---|
 | r1 | 2026-11-19 | Every requirement names what it follows <br> Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source, and a verdict, adopted or adapted. General guidance is not a reference. [DOC-24] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
 
+### DOC-25
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Every page has the same fixed sections, and README and Home match <br> The README and the wiki Home have exactly these sections, in this order, and nothing else: the title with its one-paragraph introduction; System design, one diagram showing how the principles connect; one section per principle, with its sentence and its requirements table and no diagram of its own; Requirements by feature. An adopted repo adds one section before the principles for the template's principles it inherits. [DOC-25] <br> Every requirement row in a principle's table links to that requirement's own workflow figure. A row with no figure fails the docs check. [DOC-25] <br> Every wiki page has the sections of its kind, in this order. A feature page: Problem, Runbook where the feature has one, Requirements, Non-goals, Success metrics, Revisions, Tests. A How-to-use page: What it's for, How to reach or run it, URLs and deployments, Automations and schedules where it has them, Runbooks where it has them, Links. Principles: one section per principle, each with its own diagram. Tests: one section per feature, then Other. Roadmap: the sections it has today. [DOC-25] <br> The docs check fails a page with a missing, extra, renamed or out-of-order section, and fails when the README and Home differ in their sections or in a principle's sentence or table. [DOC-25] | doc-sections (TD258): README and Home share one section list and every wiki page has its kind's sections; wording approved by the owner as drafted (o483). | o483: "ye s" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -424,6 +435,7 @@ None
 | [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
 | [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
 | - | requirement | DOC-24 | no passing test | not enforced |
+| - | requirement | DOC-25 | no passing test | not enforced |
 | [docs-counts-issue-39](Tests#t-docs-counts-issue-39) | defect | [#39](https://github.com/jcl2018/agent-workflow-template/issues/39) closed (2026-11-09) | Given counts in the docs that drift from the code, when the docs check runs, then it fails (issue 39). | PASS 2026-11-12 |
 | [docs-count-word-gap-issue-104](Tests#t-docs-count-word-gap-issue-104) | defect | [#104](https://github.com/jcl2018/agent-workflow-template/issues/104) closed (2026-11-10) | Given a wrong skills count with a word such as "workflow-ready" or an extra space before the noun, when the docs check runs, then it fails, and a part such as "other" is not read. | PASS 2026-11-12 |
 | [docs-count-indented-code-issue-105](Tests#t-docs-count-indented-code-issue-105) | defect | [#105](https://github.com/jcl2018/agent-workflow-template/issues/105) closed (2026-11-10) | Given a count inside a 4-space indented code block, when the docs check runs, then it is skipped while the same indent inside a list item is still read. | PASS 2026-11-12 |
