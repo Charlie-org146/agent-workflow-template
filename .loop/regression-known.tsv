@@ -102,13 +102,6 @@ migration-v1	fails on main since v1.0.100; see #5329
 migration-writes-nothing	fails on main since v1.0.100; see #5319
 merge-wiki-rename-refused	fails on main since v1.0.102; see #4125
 setup-fit	fails on main since v1.0.102; see #4972
-doc18-howto-restamp	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5389
-doc19-item-missing	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5388
-doc19-item-unknown	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5385
-doc19-runbook-plain	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5390
-home-guard-catches-leak	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5387
-restamp-marks-3867	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5386
-apply-rerender-howto	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5391
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
