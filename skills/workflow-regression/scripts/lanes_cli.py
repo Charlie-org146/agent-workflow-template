@@ -6,18 +6,15 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py check [--root DIR] [SCRIPT...]
        lanes_cli.py merge-runs [--root DIR]
 
-affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
-          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps the file: the rows that name
-          it and the runners are picked, never a full run. No record is read, so failed rows, ancestry and edited table
-          rows are outside it. .loop/regression-known.tsv picks only the rows whose line differs from the base.
-deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
-          from the command to PATH, or NOT REACHED.
+affected  `AFFECTED n of m rows (ids)` for a change to PATH, plus `ALWAYS <id>: <reason>` for rows that run on every
+          change and `UNMAPPED`/`DELETED <path>` when no row maps the file (the rows that name it and the runners are
+          picked, never a full run). No record is read; .loop/regression-known.tsv picks only rows whose line differs.
+deps      a row command's dependency paths, then `ALWAYS <command>: <reason>`; --why prints the chain to PATH.
 check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row names), one
           `<CODE> <file>:<line>: <what>` and a `fix:` line each. Exit 0 clean, 1 problems.
-merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock;
-          goal.py pr runs it before its bookkeeping commit. Writes nothing without results; exit 1 on an error.
-The root is the git top level of the current directory unless --root is given. Usage errors exit 2; LANES_DEBUG=1
-shows the full trace. Read-only, except merge-runs.
+merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock; goal.py pr
+          runs it before its bookkeeping commit. Exit 1 on an error.
+The root is the git top level unless --root is given. Usage errors exit 2; LANES_DEBUG=1 shows the full trace.
 """
 import argparse
 import datetime
@@ -97,8 +94,7 @@ def picked(root, rows, path, cache):
 
 
 def table_changed(root, name):
-    """Ids whose line in .loop/<name> (regression.tsv or regression-known.tsv) differs between the working table and the
-    merge-base or base tip (added, removed, changed); None if neither resolves, so the caller keeps the wide rule."""
+    """Ids whose line in .loop/<name> differs between the working table and the merge-base or base tip; None if neither resolves."""
     base = tiers.config(root).get("base") or "main"
     ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
                                                        for ref in ("origin/" + base, base)]) if at][:2]
@@ -110,7 +106,7 @@ def table_changed(root, name):
 
 
 def affected(root, rows, paths, cache):
-    """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
+    """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record."""
     ids, notes, real = set(), [], False
     known = table_changed(root, "regression-known.tsv") if ".loop/regression-known.tsv" in paths else None
     edited = table_changed(root, "regression.tsv") if lanes.TABLE in paths else None
@@ -196,10 +192,14 @@ concurrency:
   group: regression-pr-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  affected:
+  shard:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -208,7 +208,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
+      - run: |
+          git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
+          LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 240 --timeout 120
+  affected:
+    needs: shard
+    if: always() && github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: test "${{ needs.shard.result }}" = success
   small:
     if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
@@ -331,7 +340,6 @@ def main():
 
 
 
-# The memory floor (GRD-2): wait_memory holds a lane about to run rows while free_gb is below min_free_memory_gb.
 
 
 def _slots():
@@ -340,8 +348,7 @@ def _slots():
 
 
 def free_gb():
-    """Free memory in GB (Windows: free page file; macOS: free, inactive, speculative pages; Linux: MemAvailable); LOOP_FREE_GB
-    fakes it, None when unreadable (a lane is then never held)."""
+    """Free memory in GB (LOOP_FREE_GB fakes it); None when unreadable, and a lane is then never held."""
     try:
         if os.environ.get("LOOP_FREE_GB"):
             return float(os.environ["LOOP_FREE_GB"])
