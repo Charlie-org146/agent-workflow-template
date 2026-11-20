@@ -15,4 +15,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/check-row-merge.py origin/main`.
+   Expect: "checks before 600, after 600; lost 0, added 0" and exit 0.
+2. Run `grep -c . .loop/regression.tsv` on this branch and on origin/main.
+   Expect: this branch has 116 lines fewer.

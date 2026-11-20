@@ -10,23 +10,17 @@
 | <a id="t-schedule-setting"></a>schedule-setting | requirement | AUT-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-08 |
 | <a id="t-bad-schedule-refused"></a>bad-schedule-refused | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-08 |
 | <a id="t-publish-restore"></a>publish-restore | requirement | AUT-5 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
-| <a id="t-aut-defect-issue"></a>aut-defect-issue | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-regression-off"></a>aut-regression-off | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
+| <a id="t-aut-defect-issue"></a>aut-defect-issue | requirement | AUT-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-10 |
+| <a id="t-aut-regression-off"></a>aut-regression-off | requirement | AUT-5 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-10 |
 | <a id="t-aut-off-by-hand"></a>aut-off-by-hand | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-no-token"></a>aut-digest-no-token | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-no-push"></a>aut-no-push | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-by-hand-runs"></a>aut-by-hand-runs | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-old-issue-relabel"></a>aut-old-issue-relabel | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-issue-list-fails"></a>aut-issue-list-fails | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-ls-private-tick"></a>ls-private-tick | requirement | AUT-1 | not run | - | local | 2026-11-12 |
 | <a id="t-ls-public-tick"></a>ls-public-tick | requirement | AUT-1 | not run | - | local | 2026-11-12 |
 | <a id="t-ls-missed-run"></a>ls-missed-run | requirement | AUT-1 | not run | - | local | 2026-11-12 |
 | <a id="t-st-pass"></a>st-pass | requirement | AUT-1 | not run | - | local | 2026-11-12 |
 | <a id="t-st-fail-never-success"></a>st-fail-never-success | requirement | AUT-1 | not run | - | local | 2026-11-12 |
-| <a id="t-aut-digest-dry-run"></a>aut-digest-dry-run | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-off-push-runs"></a>aut-off-push-runs | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-off-dispatch-runs"></a>aut-off-dispatch-runs | requirement | AUT-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-regression-schedule-mismatch"></a>aut-regression-schedule-mismatch | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-email-file"></a>aut-email-file | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-aut-email-regression"></a>aut-email-regression | requirement | AUT-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-runbook-good"></a>runbook-good | requirement | AUT-1 | not run | - | local | 2026-11-12 |
@@ -142,10 +136,7 @@
 | <a id="t-mon14-reply-repo-blocks"></a>mon14-reply-repo-blocks | requirement | CHK-1 | not run | - | local | 2026-11-13 |
 | <a id="t-mon14-reply-deps-whole"></a>mon14-reply-deps-whole | requirement | CHK-1 | not run | - | local | 2026-11-13 |
 | <a id="t-mon-stray-runs"></a>mon-stray-runs | requirement | CHK-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
-| <a id="t-mon14-map-finish"></a>mon14-map-finish | requirement | CHK-1 | not run | - | local | 2026-11-13 |
-| <a id="t-mon14-map-arrows"></a>mon14-map-arrows | requirement | CHK-1 | not run | - | local | 2026-11-13 |
-| <a id="t-mon14-map-live-only"></a>mon14-map-live-only | requirement | CHK-1 | not run | - | local | 2026-11-13 |
-| <a id="t-mon14-map-times"></a>mon14-map-times | requirement | CHK-1 | not run | - | local | 2026-11-13 |
+| <a id="t-mon14-map-finish"></a>mon14-map-finish | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
 | <a id="t-machine-local-checkin"></a>machine-local-checkin | requirement | CHK-1 | not run | - | local | 2026-11-13 |
 | <a id="t-held-time-session-hold"></a>held-time-session-hold | requirement | CHK-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-13 |
 | <a id="t-roadmap-closed-drops"></a>roadmap-closed-drops | requirement | CHK-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
@@ -162,10 +153,6 @@
 | <a id="t-budget-fair-base-moved"></a>budget-fair-base-moved | requirement | CHK-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-budget-fair-failed-stays"></a>budget-fair-failed-stays | requirement | CHK-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-budget-fair-held-time"></a>budget-fair-held-time | requirement | CHK-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
-| <a id="t-mon14-merged-since-once"></a>mon14-merged-since-once | requirement | CHK-1 | not run | - | local | 2026-11-15 |
-| <a id="t-mon14-merged-before-dropped"></a>mon14-merged-before-dropped | requirement | CHK-1 | not run | - | local | 2026-11-15 |
-| <a id="t-mon5-pr-merged-closes"></a>mon5-pr-merged-closes | requirement | CHK-1 | not run | - | local | 2026-11-15 |
-| <a id="t-mon5-merged-pr-retires"></a>mon5-merged-pr-retires | requirement | CHK-1 | not run | - | local | 2026-11-15 |
 | <a id="t-mon17-this-pod-only"></a>mon17-this-pod-only | requirement | CHK-1 | not run | - | local | 2026-11-15 |
 | <a id="t-review-board-shows-wait"></a>review-board-shows-wait | requirement | CHK-1 | not run | - | local | 2026-11-15 |
 | <a id="t-machine-guide-monitoring"></a>machine-guide-monitoring | requirement | CHK-1 | not run | - | local | 2026-11-16 |
@@ -349,18 +336,10 @@
 | <a id="t-machine-backup-restore"></a>machine-backup-restore | requirement | DEL-7 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-routing-timeout-tree"></a>routing-timeout-tree | requirement | DEL-7 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-untouched-not-refused"></a>gate-untouched-not-refused | requirement | DEL-1 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
-| <a id="t-gate-untouched-filed-once"></a>gate-untouched-filed-once | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-one-issue-per-page"></a>gate-one-issue-per-page | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-generated-still-refused"></a>gate-generated-still-refused | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-changed-page-refused"></a>gate-changed-page-refused | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-base-branch-counts"></a>gate-base-branch-counts | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-issue-not-doubled"></a>gate-issue-not-doubled | requirement | DEL-1 | not run | - | local | 2026-11-18 |
+| <a id="t-gate-untouched-filed-once"></a>gate-untouched-filed-once | requirement | DEL-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-18 |
 | <a id="t-gate-issue-on-feature-backlog"></a>gate-issue-on-feature-backlog | requirement | DEL-1 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-gh-failure-safe"></a>gate-gh-failure-safe | requirement | DEL-1 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-pending-scoped"></a>gate-pending-scoped | requirement | DEL-1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
-| <a id="t-gate-nonascii-page-refused"></a>gate-nonascii-page-refused | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-feature-edit-refuses"></a>gate-feature-edit-refuses | requirement | DEL-1 | not run | - | local | 2026-11-18 |
-| <a id="t-gate-list-failure-no-create"></a>gate-list-failure-no-create | requirement | DEL-1 | not run | - | local | 2026-11-18 |
 | <a id="t-depth-marker-rows-4557"></a>depth-marker-rows-4557 | defect | #4557 | not run | - | local | 2026-11-19 |
 
 ## Documentation
@@ -370,12 +349,12 @@
 | <a id="t-stale-found"></a>stale-found | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-publish-refused-stale"></a>publish-refused-stale | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-stale-merge-order"></a>stale-merge-order | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
-| <a id="t-page-shape"></a>page-shape | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
+| <a id="t-page-shape"></a>page-shape | requirement | DOC-1 | FAIL | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-criteria-no-scripts"></a>criteria-no-scripts | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-tests-not-enforced"></a>tests-not-enforced | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-tests-last-run"></a>tests-last-run | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-tests-table-stale"></a>tests-table-stale | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
-| <a id="t-review-dated"></a>review-dated | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
+| <a id="t-review-dated"></a>review-dated | requirement | DOC-2 | FAIL | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-review-owner-only"></a>review-owner-only | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-reviewed-lock"></a>reviewed-lock | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-unreview-lifts"></a>unreview-lifts | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
@@ -493,28 +472,7 @@
 | <a id="t-doc19-readme-links"></a>doc19-readme-links | requirement | DOC-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-home-howto-linksonly"></a>home-howto-linksonly | requirement | DOC-1 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-home-howto-linksonly-control"></a>home-howto-linksonly-control | requirement | DOC-1 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
-| <a id="t-doc19-diagram-passes"></a>doc19-diagram-passes | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-diagram-missing"></a>doc19-diagram-missing | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-diagram-row-box"></a>doc19-diagram-row-box | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-diagram-extra-box"></a>doc19-diagram-extra-box | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-diagram-legend"></a>doc19-diagram-legend | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-diagram-where"></a>doc19-diagram-where | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-own-links"></a>doc19-alone-own-links | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-issue"></a>doc19-alone-issue | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-ci"></a>doc19-alone-ci | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-host"></a>doc19-alone-host | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-other-repo"></a>doc19-alone-other-repo | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-foreign-ref"></a>doc19-alone-foreign-ref | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-path"></a>doc19-alone-path | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-unix-path"></a>doc19-alone-unix-path | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-exempt"></a>doc19-alone-exempt | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-alone-files"></a>doc19-alone-files | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc4-home-diagram-ok"></a>doc4-home-diagram-ok | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc4-home-diagram-missing"></a>doc4-home-diagram-missing | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc4-home-diagram-part"></a>doc4-home-diagram-part | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc4-home-diagram-unread"></a>doc4-home-diagram-unread | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-skill-schedule-unlisted"></a>doc19-skill-schedule-unlisted | requirement | DOC-1 | not run | - | local | 2026-11-17 |
-| <a id="t-doc19-skill-schedule-listed"></a>doc19-skill-schedule-listed | requirement | DOC-1 | not run | - | local | 2026-11-17 |
+| <a id="t-doc19-diagram-passes"></a>doc19-diagram-passes | requirement | DOC-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-17 |
 | <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-1 | not run | - | local | 2026-11-17 |
 | <a id="t-links-own-site-passes"></a>links-own-site-passes | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-links-unlisted-site-fails"></a>links-unlisted-site-fails | requirement | DOC-1 | not run | - | local | 2026-11-18 |
@@ -622,13 +580,9 @@
 | <a id="t-capture-row-mac"></a>capture-row-mac | defect | [#3789](https://github.com/jcl2018/agent-workflow-template/issues/3789) closed (2026-11-13) | not run | - | local | 2026-11-13 |
 | <a id="t-issues-one-open-ci"></a>issues-one-open-ci | requirement | HLT-4 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
 | <a id="t-issues-one-open-local"></a>issues-one-open-local | requirement | HLT-4 | not run | - | local | 2026-11-13 |
-| <a id="t-backlog-milestones-made"></a>backlog-milestones-made | requirement | HLT-4 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-13 |
-| <a id="t-backlog-setup-makes"></a>backlog-setup-makes | requirement | HLT-4 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-13 |
-| <a id="t-backlog-adoption-warns"></a>backlog-adoption-warns | requirement | HLT-4 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-13 |
-| <a id="t-backlog-item-home"></a>backlog-item-home | requirement | HLT-4 | not run | - | local | 2026-11-13 |
+| <a id="t-backlog-milestones-made"></a>backlog-milestones-made | requirement | HLT-4 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-13 |
 | <a id="t-backlog-defect-home"></a>backlog-defect-home | requirement | HLT-4 | not run | - | local | 2026-11-13 |
 | <a id="t-backlog-leftovers-filed"></a>backlog-leftovers-filed | requirement | HLT-4 | PASS 2026-11-16 FLAKY | - | local | 2026-11-13 |
-| <a id="t-backlog-leftovers-once"></a>backlog-leftovers-once | requirement | HLT-4 | not run | - | local | 2026-11-13 |
 | <a id="t-repo-rules-run"></a>repo-rules-run | requirement | HLT-2 | not run | - | local | 2026-11-19 |
 | <a id="t-repo-rules-control"></a>repo-rules-control | requirement | HLT-2 | not run | - | local | 2026-11-13 |
 | <a id="t-repo-rules-refuse"></a>repo-rules-refuse | requirement | HLT-2 | not run | - | local | 2026-11-13 |
@@ -667,63 +621,22 @@
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-13 |
-| <a id="t-sync-first-adopts"></a>sync-first-adopts | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-14 |
-| <a id="t-sync-repo-delta"></a>sync-repo-delta | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-14 |
-| <a id="t-sync-source-delta"></a>sync-source-delta | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-14 |
-| <a id="t-sync-both-sides"></a>sync-both-sides | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-14 |
-| <a id="t-sync-dry-run-drift"></a>sync-dry-run-drift | requirement | INT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-14 |
-| <a id="t-sync-delta-no-overwrite"></a>sync-delta-no-overwrite | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-owns-only"></a>sync-owns-only | requirement | INT-2 | not run | - | local | 2026-11-14 |
+| <a id="t-sync-not-connected"></a>sync-not-connected | requirement | INT-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-14 |
 | <a id="t-sync-delta-posted"></a>sync-delta-posted | requirement | INT-2 | not run | - | local | 2026-11-17 |
-| <a id="t-sync-posts-once"></a>sync-posts-once | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-accept-source"></a>sync-accept-source | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-accept-repo"></a>sync-accept-repo | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-agree-after-accept"></a>sync-agree-after-accept | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-open-lists"></a>sync-open-lists | requirement | INT-2 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-health-delta"></a>sync-health-delta | requirement | INT-2 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-board-delta"></a>sync-board-delta | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-no-writer-posted"></a>sync-no-writer-posted | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-sync-accept-no-writer"></a>sync-accept-no-writer | requirement | INT-2 | not run | - | local | 2026-11-14 |
 | <a id="t-sync-no-gh"></a>sync-no-gh | requirement | INT-2 | not run | - | local | 2026-11-14 |
-| <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-repo-delta"></a>milestone-sync-repo-delta | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-source-delta"></a>milestone-sync-source-delta | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-conflict"></a>milestone-sync-conflict | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-no-overwrite"></a>milestone-sync-no-overwrite | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-accept-source"></a>milestone-sync-accept-source | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-accept-repo"></a>milestone-sync-accept-repo | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-not-connected"></a>milestone-sync-not-connected | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-generic"></a>milestone-sync-generic | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-reopen"></a>milestone-sync-reopen | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-dropped-source"></a>milestone-sync-dropped-source | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-milestone-sync-accept-fails"></a>milestone-sync-accept-fails | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-normalised"></a>prd-copy-normalised | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-no-reader"></a>prd-copy-no-reader | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-block"></a>prd-copy-block | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-block-stale"></a>prd-copy-block-stale | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-sync-source-add"></a>prd-sync-source-add | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-sync-repo-add"></a>prd-sync-repo-add | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-sync-conflict"></a>prd-sync-conflict | requirement | INT-2 | not run | - | local | 2026-11-15 |
+| <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | INT-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
+| <a id="t-prd-copy-no-reader"></a>prd-copy-no-reader | requirement | INT-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
 | <a id="t-prd-sync-no-reader"></a>prd-sync-no-reader | requirement | INT-2 | not run | - | local | 2026-11-15 |
 | <a id="t-prd-copy-no-source"></a>prd-copy-no-source | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-old-layout"></a>prd-copy-old-layout | requirement | INT-2 | not run | - | local | 2026-11-15 |
-| <a id="t-prd-copy-notion-shape"></a>prd-copy-notion-shape | requirement | INT-2 | not run | - | local | 2026-11-15 |
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 
 ## Machines
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-aut-digest-create"></a>aut-digest-create | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-format"></a>aut-digest-format | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-rounds"></a>aut-digest-rounds | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-rerun"></a>aut-digest-rerun | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-no-title"></a>aut-digest-no-title | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-org"></a>aut-digest-org | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-pin-fails"></a>aut-digest-pin-fails | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-comment-fails"></a>aut-digest-comment-fails | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-aut-digest-list-fails"></a>aut-digest-list-fails | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
+| <a id="t-aut-digest-create"></a>aut-digest-create | requirement | MCH-5 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-10 |
 | <a id="t-aut-email-mail"></a>aut-email-mail | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-email-retry"></a>aut-email-retry | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-aut-email-test"></a>aut-email-test | requirement | MCH-5 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
@@ -774,20 +687,10 @@
 | <a id="t-one-way-to-run"></a>one-way-to-run | requirement | OPS-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-operate-all"></a>operate-all | requirement | OPS-1 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-09 |
 | <a id="t-worker-reports-live"></a>worker-reports-live | requirement | OPS-2 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-08 |
-| <a id="t-session-assign"></a>session-assign | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-rename"></a>session-rename | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-reuse"></a>session-reuse | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-reports"></a>session-reports | requirement | OPS-2 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-fallback"></a>session-fallback | requirement | OPS-2 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-steps-in-session"></a>steps-in-session | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
+| <a id="t-session-assign"></a>session-assign | requirement | OPS-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-09 |
+| <a id="t-session-reports"></a>session-reports | requirement | OPS-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-09 |
 | <a id="t-session-board-issue98"></a>session-board-issue98 | defect | [#98](https://github.com/jcl2018/agent-workflow-template/issues/98) closed (2026-11-09) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-record-in-session"></a>record-in-session | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-holds-slot"></a>session-holds-slot | requirement | OPS-1 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
 | <a id="t-session-answer"></a>session-answer | requirement | OPS-2 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-09 |
-| <a id="t-session-quiet"></a>session-quiet | requirement | OPS-2 | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-09 |
-| <a id="t-session-ended-waiting"></a>session-ended-waiting | requirement | OPS-2 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
-| <a id="t-session-tool-timeout"></a>session-tool-timeout | requirement | OPS-2 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
-| <a id="t-session-tool-helper"></a>session-tool-helper | requirement | OPS-2 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-report-done-final"></a>report-done-final | defect | [#108](https://github.com/jcl2018/agent-workflow-template/issues/108) closed (2026-11-10) | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-09 |
 | <a id="t-guards-resume"></a>guards-resume | defect | [#149](https://github.com/jcl2018/agent-workflow-template/issues/149) closed (2026-11-11) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-guards-worker-role"></a>guards-worker-role | defect | [#121](https://github.com/jcl2018/agent-workflow-template/issues/121) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
@@ -876,27 +779,8 @@
 | <a id="t-lanes-trace"></a>lanes-trace | requirement | REG-4 | FAIL | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-lanes-table"></a>lanes-table | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-summary-only-real-rows"></a>summary-only-real-rows | defect | [#92](https://github.com/jcl2018/agent-workflow-template/issues/92) closed (2026-11-10) | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-groups"></a>summary-groups | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-fields"></a>summary-fields | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-escapes"></a>summary-escapes | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-header"></a>summary-header | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-step"></a>summary-step | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-fallback"></a>summary-fallback | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-refuses"></a>summary-refuses | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-issue-states"></a>issue-states | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-health-lists-tests"></a>health-lists-tests | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-reg2-wording"></a>reg2-wording | requirement | REG-4 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-18 |
-| <a id="t-issue-keeps-state"></a>issue-keeps-state | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-no-results"></a>summary-no-results | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-render-guard"></a>summary-render-guard | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-tests-py-missing"></a>tests-py-missing | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-local-row-env"></a>local-row-env | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-list-tsv-raw"></a>list-tsv-raw | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-list-no-tests"></a>list-no-tests | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-summary-unknown-row"></a>summary-unknown-row | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-issues-no-rows"></a>issues-no-rows | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-health-tests-error"></a>health-tests-error | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
-| <a id="t-health-group-no-tests"></a>health-group-no-tests | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
+| <a id="t-local-row-env"></a>local-row-env | requirement | REG-4 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-10 |
 | <a id="t-tests-page-stale"></a>tests-page-stale | requirement | REG-4 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-10 |
 | <a id="t-tests-page-run-link"></a>tests-page-run-link | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-runs-sha"></a>runs-sha | requirement | REG-4 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
