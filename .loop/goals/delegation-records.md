@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-delegated-records.py`.
+   Expect: 10 PASS: a delegated record is written (TD number, DOC-2 revision, asking words), revise and review accept it for a wording change, both refuse a safety-class change (even with --user), a plain record with no --user is refused as before, and the check-in lists the record.
+2. Run `sessions.py owner-words "<the owner's asking words>" --ids SLUG,ID --from top --delegated TD465 --doc2 r6` in a scratch repo.
+   Expect: `OWNER-WORDS oN covers SLUG,ID`; with words naming a safety class, REFUSED.
