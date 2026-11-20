@@ -1,0 +1,18 @@
+# A ready pull request is on main within 5 minutes (new requirement REL-15, owner words o486: merging must not take 45 minutes, the target is under 5). From the moment a pull request is ready (reviewed, its own checks green on its head) to its commit on main takes 5 minutes or less; a merge of one pull request never makes another ready one re-run its lane or CI; health prints the median and slowest of the last 20 merges and fails one over 5 minutes. This goal is the first of three (rel-15-queue, then rel-15-release, then rel-15-select) and covers the merge path. It adds REL-15 to the Release feature page and to principle 3's table (Follows: GitHub merge queue; v2.0 planned), with the delegation record approved by operation-top under owner delegation (DOC-2, o486), goal rel-15-queue; the page text says that the PR-head affected run counts for the rest of the checks, that the queue's merge_group run is a fixed small tier within a 3-minute budget, and that the wiki publish after the merge is not inside the 5 minutes. merge.py gets a queue setting in .loop/config.json, off until the owner turns the queue on: with it on, moved = not queue and base_moved(...), so a pull request is not refused or re-run because main moved after another merge (the moved-base re-run is the 41 minutes), and merge.py waits for MERGED after gh pr merge enqueues and prints MERGED only then. regression-pr.yml runs a fixed small tier within a 3-minute budget on merge_group and stops running a second, duplicate push run for pull-request branches, so each head gets one CI run. Health's merge time is the pull request's mergedAt minus the time its head's last required check went green. The repository is owned by an organization now (read 01:07), so the queue can be proved live once the owner enables it in the ruleset; building and testing do not need it. It takes over the PC's merge-queue goal (its one line moved = not queue and base_moved and two merge-guard toy cases)
+
+- Slug: rel-15-queue
+- Touches: skills/workflow-release/scripts/merge.py, .github/workflows/regression-pr.yml, docs/wiki/Release.md
+- ETA: 525 active minutes (estimate 420m plus a 25% margin)
+
+## Done lines
+
+Frozen. A wrong done line needs a new goal.
+
+1. Given the Release feature page and principle 3's table, then both state REL-15, the table row names its delegation record (approved by operation-top under owner delegation, DOC-2, o486, goal rel-15-queue) and Follows: GitHub merge queue, the page says the PR-head affected run counts for the rest, the merge_group run is a fixed small tier within 3 minutes and the wiki publish after merge is outside the 5 minutes, and the docs check passes
+2. Given a repo whose .loop/config.json turns the queue setting on, when merge.py merges a goal whose base moved after its lane, then it does not refuse for the moved base and it prints MERGED only after gh reports the pull request merged; with the setting off, the moved-base refusal is unchanged; two toy cases in the merge guard prove both
+3. Given the regression workflow, when a merge_group run starts, then it runs a fixed small tier whose job timeout is 3 minutes or less, and when a pull-request branch is pushed, then one CI run starts for that head, not two (a toy or workflow check proves both)
+4. Given health, then it prints the median and slowest of the last 20 merges, each taken as the pull request's mergedAt minus the time its head's last required check went green, and fails when one is over 5 minutes, with a negative control for a slow merge; the goal adds no regression row that fails on current main
+
+## Verify by hand
+
+<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->

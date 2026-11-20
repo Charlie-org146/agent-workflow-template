@@ -1,0 +1,2 @@
+# selection-goal-files plan
+1. lanes.py: RECORDS (.loop/goals/, .loop/kept/) joins NO_EFFECT; touches() sends record paths to declared() (the row command's paths plus the `# reads:` of the scripts it names; wide .loop/ and script text excluded). 2. Trim duplicated code in lanes.py so it ends smaller than main; lanes_cli.py unchanged. 3. Toy block in dev/toy/test-lanes.sh (no new row; rows stay at 1,300). 4. Lane prep (render --tables, restamp-own), docs check, caps guard. 5. Push through goal.py pr; the PR's own CI is the test.

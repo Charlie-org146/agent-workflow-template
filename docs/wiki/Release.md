@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept lanes-table-data@5b6cb2663 -->
+Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -35,6 +35,11 @@ How to use: [How-to-use-Release](How-to-use-Release)
   - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13]
   - (v2.0 planned) merge-queue: a merge queue (named only).
   - (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13]
+- REL-15: **Unreviewed** A ready pull request is on main within 5 minutes
+  - From the moment a pull request is ready (reviewed, its own checks green on its head) to its commit on main takes 5 minutes or less, and a merge of one pull request never makes another ready one re-run its lane or CI. [REL-15]
+  - The affected run on the pull request's head counts for the rest of the checks: the merge_group run is a fixed small tier that finishes within 5 minutes, and a pushed pull-request branch starts one CI run, not two. The wiki publish after the merge is outside the 5 minutes. [REL-15]
+  - With the merge_queue setting on, merge.py leaves a moved base to GitHub's merge queue, and prints MERGED only after gh reports the pull request merged; with it off the moved-base refusal is unchanged. [REL-15]
+  - (v2.0 planned) Health prints the median and slowest of the last 20 merges and fails one over 5 minutes. [REL-15]
 
 ### Non-functional
 
@@ -177,6 +182,12 @@ None
 | r2 | 2026-11-19 | Every release is noted <br> Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). | consolidation (TOP-DECISION 89): absorbed into DEL-1 | o226: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every release is noted <br> Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### REL-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-20 | A ready pull request is on main within 5 minutes <br> From the moment a pull request is ready (reviewed, its own checks green on its head) to its commit on main takes 5 minutes or less, and a merge of one pull request never makes another ready one re-run its lane or CI. [REL-15] <br> The affected run on the pull request's head counts for the rest of the checks: the merge_group run is a fixed small tier that finishes within 5 minutes, and a pushed pull-request branch starts one CI run, not two. The wiki publish after the merge is outside the 5 minutes. [REL-15] <br> With the merge_queue setting on, merge.py leaves a moved base to GitHub's merge queue, and prints MERGED only after gh reports the pull request merged; with it off the moved-base refusal is unchanged. [REL-15] <br> (v2.0 planned) Health prints the median and slowest of the last 20 merges and fails one over 5 minutes. [REL-15] | merging must not take 45 minutes; the target is under 5 | o486: "approved by operation-top under owner delegation (DOC-2, o486), goal rel-15-queue" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -198,3 +209,6 @@ None
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |
+| [rel-ci-release](Tests#t-rel-ci-release) | requirement | REL-15 | Given merge_queue on, when finish() runs after a merge, then the release is made by release.yml on push to main, finish() pushes no commit and opens no pull request, and the part is a release label (patch by default). | not run |
+| [rel-update-asset](Tests#t-rel-update-asset) | requirement | REL-15 | Given a release with a package asset, when update downloads it, then it uses the asset, and with no asset it falls back to the source archive. | not run |
+| - | requirement | REL-15 | no passing test | not enforced |
