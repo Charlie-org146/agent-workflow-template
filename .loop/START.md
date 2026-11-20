@@ -24,7 +24,7 @@ One session governs and the others build: the operation session assigns goals, w
 
 ## Docs
 
-Feature pages live in `docs/wiki`, one PRD page per feature with numbered requirements, at most 23 each. The criteria contract is `true`. The docs command finds stale pages, and the release step rewrites them.
+Feature pages live in `docs/wiki`, one PRD page per feature with numbered requirements, at most 24 each. The criteria contract is `true`. The docs command finds stale pages, and the release step rewrites them.
 
 ## Regression
 
@@ -69,7 +69,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
-| `criteria_max` | 23 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
+| `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
@@ -100,6 +100,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
+| `public_origins` | ["https://12factor.net", "https://adr.github.io", "https://agentskills.io", "https://cncf.io", "https://containers.dev", "https://copier.readthedocs.io", "https://csrc.nist.gov", "https://diataxis.fr", "https://docs.cucumber.io", "https://docs.github.com", "https://docs.gitlab.com", "https://docs.openstack.org", "https://docs.renovatebot.com", "https://docs.sonarsource.com", "https://dora.dev", "https://eslint.org", "https://github.com/actions/stale", "https://github.com/bors-ng/bors-ng", "https://github.com/gitleaks/gitleaks", "https://github.com/ossf/scorecard", "https://github.com/twpayne/chezmoi", "https://jestjs.io", "https://kubernetes.io", "https://modelcontextprotocol.io", "https://npmjs.com", "https://nx.dev", "https://opengitops.dev", "https://playwright.dev", "https://pre-commit.com", "https://reproducible-builds.org", "https://semver.org", "https://sre.google", "https://support.pagerduty.com", "https://temporal.io", "https://testing.googleblog.com", "https://ubuntu.com", "https://www.agensi.io", "https://www.atlassian.com", "https://www.conventionalcommits.org", "https://www.finops.org", "https://www.thoughtworks.com", "https://www.uber.com", "https://www.writethedocs.org"] |  |
 | `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs; off is off. |
 | `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
