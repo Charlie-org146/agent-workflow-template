@@ -1,0 +1,2 @@
+# win-killpg design
+Problem: update.py stop() calls os.killpg unguarded, which does not exist on Windows (#5467). Fix: follow workflows.py stop(): taskkill /T /F /PID on Windows, os.killpg marked posix-only elsewhere, keep ProcessLookupError. The commit() caller had its own nt branch; it now just calls stop(), with SIGKILL falling back through getattr so Windows never names signal.SIGKILL. Done line: win-posix-calls-gone passes; no new row, no other file.

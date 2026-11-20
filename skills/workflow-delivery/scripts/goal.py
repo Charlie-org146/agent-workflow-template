@@ -33,7 +33,7 @@ fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
 
-ME = sys.modules[__name__]
+ME = sys.modules.setdefault("goal", sys.modules[__name__])
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 try:
     _spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(SKILLS, "workflow-monitoring", "scripts", "graph.py"))
@@ -116,7 +116,7 @@ def save(state, note=None):
         have = disk.get("log") or []
         merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
         role.report(disk, merged, state["updated"])
-        temp = path + ".%d.tmp" % os.getpid()
+        temp = path + ".tmp"
         write(temp, json.dumps(merged, indent=2))
         os.replace(temp, path)
     state.clear()
@@ -174,7 +174,7 @@ def fail_stop(state, text):
 
 
 def failed_try(state, why, step="build", fix="fix it, then run the step again"):
-    queue("free", state["slug"])  # a failed try gives the merge slot back
+    queue("free", state["slug"])
     guards.failed_try(ME, state, why, step, fix)
 
 
