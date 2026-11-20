@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 """The goal tier of `regression.py run land --reuse --tier goal` (REG-4), and `--kind`.
 
-Imported by regression.py, not run. A goal lane plans from the branch's lane record only when its merge-base with the base
-branch is the current one, else from the merge-base. It runs the rows whose closure reaches a file changed since then
-(lanes.py's closure), rows added or changed in .loop/regression.tsv, rows that run tools on the repo root (lanes.ROOT_RUN),
-a usable record's FAIL rows and any flaky row (never reused). After a base merge the record is not usable, and the rows
-the merge changed run too. A path no row maps, or a deleted one, is a Note at every lane: it picks the rows that name it
-and the runners (REG-7), never a full run. With no merge-base every row is a candidate (FULL); a lane with no plan takes a
-lane slot. The run stays within test_budget_minutes (runs.py): rows past it are left to the scheduled full suite. Each
-selected row's reason is printed (SELECTED lines) and summed in one ROWS line for the LANE line.
+Imported by regression.py, not run. A goal lane plans from the branch's lane record when its merge-base with the base branch
+is the current one, else from the merge-base. It runs the rows whose closure reaches a file changed since then (lanes.py's
+closure), rows added or changed in .loop/regression.tsv, rows that run tools on the repo root (lanes.ROOT_RUN), a usable
+record's FAIL rows and any flaky row. After a base merge the record is not usable, and the rows the merge changed run too. A
+path no row maps, or a deleted one, is a Note: it picks the rows that name it and the runners (REG-7), never a full run. With
+no merge-base every row is a candidate (FULL). The run stays within test_budget_minutes (runs.py): rows past it are left to
+the scheduled full suite, and the rows run closest to the change first (closeness, TD476). Each selected row's reason is
+printed (SELECTED lines) and summed in one ROWS line.
 
-FLAKY (REG-9), flaky_apply: a row whose result flipped on the same clean commit, runner and python version. Each result
-keeps its raw PASS/FAIL; the mark is a separate sticky `flaky` flag (the commit it flipped on). The previous result is the
-row in the branch's lane record (lanes.py: commit, clean, host, python). Two results on the same commit, both clean, from
-the same host and python count, in either order, and the mark stays on that commit until a later clean run passes. A dirty
-tree, `regression.py red`, another runner or an older record never marks. The exit status follows the actual result, and a
-flaky row is never reused (lanes.plan, tiers.reason). loop-files.md.
-
-Plan cache: each row's closure is kept per branch in <git common dir>/loop/plans/, keyed by HEAD, the rows file, the planner's
-code, LANES_WIDE and the loop's uncommitted files. A dirty tree, or a plan that read an ignored or outside-repo file, never
-uses or saves it; LANES_NO_CACHE=1 turns it off. First output line: `PLAN_CACHE: <state>` (commands.md).
+FLAKY (REG-9), flaky_apply: a row whose result flipped on the same clean commit, runner and python version gets a sticky
+`flaky` flag and is never reused (lanes.plan, tiers.reason); a dirty tree, `regression.py red`, another runner or an older
+record never marks, and a later clean pass clears it. Plan cache: each row's closure is kept per branch in <git common
+dir>/loop/plans/, keyed by HEAD, the rows file, the planner's code, LANES_WIDE and the loop's uncommitted files; a dirty tree,
+or a plan that read an ignored or outside-repo file, never uses or saves it; LANES_NO_CACHE=1 turns it off (PLAN_CACHE line).
+Both: workflow-regression/references/commands.md.
 """
 import hashlib
 import json
 import os
 import platform
+import re
 import socket
 import subprocess
 import sys
@@ -136,7 +133,7 @@ def unsafe(root, cache):
 
 
 def key(root, lines=None):
-    """(sha256 hex, parts) of the plan cache's key: schema, planner code, HEAD, the row file, LANES_WIDE, the loop's files."""
+    """(sha256 hex, parts) of the plan cache's key (module docstring)."""
     lines = status(root) if lines is None else lines
     try:
         with open(os.path.join(root, lanes.TABLE), "rb") as handle:
@@ -155,7 +152,7 @@ def plan_file(record):
 
 
 def lead(root, picked, record, cache):
-    """Decide the cache state, print its PLAN_CACHE line first and seed cache; (file, key) when a miss may be saved."""
+    """Print the PLAN_CACHE line first and seed cache; (file, key) when a miss may be saved."""
     off = os.environ.get("LANES_NO_CACHE", "").lower() in ("1", "true", "yes")
     lines = status(root) if record and not off else None
     left = [line for line in lines or [] if not line[3:].strip('"').startswith(lanes.BOOKKEEPING)]
@@ -168,7 +165,7 @@ def lead(root, picked, record, cache):
 
 
 def moved(root, old, base):
-    """What the base brought in since the record's merge-base (a base merge): those rows rerun on the merged result."""
+    """What the base brought in since the record's merge-base: those rows rerun on the merged result."""
     was = (old or {}).get("merge_base")
     out = lanes.git(root, "diff", "--name-only", "--no-renames", was, base) if was and base and was != base else ""
     return (out or "").split()
@@ -236,16 +233,14 @@ def unmapped(root, picked, base, cache):
 
 
 def notes(loose, gone):
-    """The advisory UNMAPPED lines (DX-15, DX-18): a path no row maps, or a deleted one, picks the rows that name it and the
-    runners, never a full run (REG-7); whatever the time budget leaves is the scheduled full suite's."""
+    """The advisory UNMAPPED lines (DX-15, DX-18): such a path picks the rows that name it and the runners (REG-7)."""
     return ["UNMAPPED %s: no row declares it. Note: the rows that name it and the runners run; declare it in the "
             "# reads: header of the row that tests it to map it" % p for p in loose] + [
             "UNMAPPED %s: deleted. Note: the rows that name it and the runners run" % p for p in gone]
 
 
 def picks(root, picked, paths, old, ok, cache, memo):
-    """{row id: why} for the rows a path no row maps (or a deleted one) selects: those naming it, and the runners. A row
-    picks it up only while that path is among its changes since it last ran, so a lane after it reuses the result."""
+    """{row id: why} for the rows an unmapped or deleted path selects: those naming it, and the runners."""
     found = {}
     for row in picked:
         mine = [p for p in paths if p in since(root, row, old, ok, BASE, memo)[1]]
@@ -262,8 +257,21 @@ def rank(because):
         ("root runner", "names")) else 2
 
 
+def closeness(root, picked, base, times, cache=None):
+    """{row id: (0 it names changed files, 1 its requirement is in the diff, 2 the rest; most changed files first; seconds)}."""
+    paths = lanes.changed(root, base) or [] if base else []
+    diff = (lanes.git(root, "diff", "-U0", "--no-renames", base) or "") if paths else ""
+    out = {}
+    for row in picked:
+        have = lanes.declared(root, row["command"], {} if cache is None else cache)
+        count = sum(any(p == d or d.endswith("/") and d.count("/") > 2 and p.startswith(d) for d in have) for p in paths)
+        near = 0 if count else 1 if row.get("goal") and re.search(r"\b%s\b" % re.escape(row["goal"]), diff) else 2
+        out[row["id"]] = (near, -count, (times.get(row["id"]) or {}).get("seconds") or 0)
+    return out
+
+
 def plan(root, picked, record):
-    """(to run ids in tier order, reused ids, usable record or None, why no plan or ''); prints its plan lines."""
+    """(to run ids in tier order, reused ids, usable record or None, why no plan or '')."""
     global BASE
     name = config(root).get("base") or "main"
     BASE = merge_base(root, name)
@@ -282,7 +290,8 @@ def plan(root, picked, record):
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
     todo = [row["id"] for row in picked if why[row["id"]]]
-    todo.sort(key=lambda rid: rank(why[rid]))  # the goal's own new and changed rows first, then reruns, reaches, the picks last
+    near = closeness(root, picked, BASE, old["rows"] if ok else {}, cache)
+    todo.sort(key=lambda rid: (rank(why[rid]), near[rid]))  # then closeness (TD476)
     reused = [rid for rid in why if ok and rid in old["rows"] and not why[rid]]
     print("\n".join(lines)) if lines else None
     summary(picked, todo, why, len(loose) + len(gone), (full, text), old if ok else None)
@@ -313,9 +322,8 @@ def summary(picked, todo, why, count, full, old):
 
 
 def suite_time(root, args, head, results, day):
-    """REG-7 (S14, S25): only the plain full run `regression.py run nightly` (no row id, --reuse, --tier or --kind)
-    appends `<sha> TAB full TAB <seconds> TAB <date>` to <git common dir>/loop/suite-times.tsv, outside the worktree so
-    it never dirties a lane, and prints SUITE_TIME; health's milestone.py reads the newest line."""
+    """REG-7: only the plain full run `regression.py run nightly` appends `<sha> TAB full TAB <seconds> TAB <date>` to <git common
+    dir>/loop/suite-times.tsv and prints SUITE_TIME; health's milestone.py reads the newest line."""
     if args.target != "nightly" or args.reuse or args.tier or args.kind or not results:
         return
     seconds = int(round(sum(item["seconds"] for item in results)))
@@ -357,7 +365,7 @@ def word(passed):
 
 
 def flaky_apply(record, results, head, clean):
-    """Give each result its commit, clean, host, python and (on a clean tree) flaky fields; return the FLAKY lines."""
+    """Give each result its commit, clean, host, python and flaky fields; return the FLAKY lines."""
     rows, (host, python), lines = previous(record) if record else {}, runner(), []
     for item in results:
         item.update(commit=head, clean="yes" if clean else "no", host=host, python=python)
