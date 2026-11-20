@@ -15,7 +15,7 @@ keeps its raw PASS/FAIL; the mark is a separate sticky `flaky` flag (the commit 
 row in the branch's lane record (lanes.py: commit, clean, host, python). Two results on the same commit, both clean, from
 the same host and python count, in either order, and the mark stays on that commit until a later clean run passes. A dirty
 tree, `regression.py red`, another runner or an older record never marks. The exit status follows the actual result, and a
-flaky row is never reused (lanes.plan, tiers.reason). workflow-regression/references/commands.md.
+flaky row is never reused (lanes.plan, tiers.reason). loop-files.md.
 
 Plan cache: each row's closure is kept per branch in <git common dir>/loop/plans/, keyed by HEAD, the rows file, the planner's
 code, LANES_WIDE and the loop's uncommitted files. A dirty tree, or a plan that read an ignored or outside-repo file, never

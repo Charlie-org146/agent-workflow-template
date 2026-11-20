@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: dev/toy/plan-fixture.py dev/toy/plan-golden.txt skills/workflow-regression/scripts/ skills/workflow-regression/references/commands.md
+# reads: dev/toy/plan-fixture.py dev/toy/plan-golden.txt skills/workflow-regression/scripts/ skills/loop-files.md
 # reads: dev/package.py dev/toy/reap.sh
 # Proves the lane planner's cost and its row set (issue 710): `golden` the planned rows equal the v0.27.6 planner's on fixture
 # repos; `calls` planning git calls and os.walk calls stay flat as rows grow. More modes arrive with the cache (identity,
@@ -440,7 +440,7 @@ m_sizes() {
   if [ -n "$count" ] && [ "$count" -le 99 ]; then ok "package.py passes with $count files"; else fail "package.py" "PASS with <= 99 files" "$(tail -3 <<<"$out")"; fi
   # Value: protects=the owner can look up every PLAN_CACHE state in commands.md; fails_when=a state token the planner prints is missing from its Plan cache section; why_new=tokens are the owner's only view of the cache; seam=none; no_claim=the table's wording
   local section missing="" token
-  section=$(awk '/^## Plan cache/ {on = 1; next} /^## / {on = 0} on' "$here/skills/workflow-regression/references/commands.md")
+  section=$(awk '/^## Plan cache/ {on = 1; next} /^## / {on = 0} on' "$here/skills/loop-files.md")
   for token in "hit (N rows)" "miss (absent)" "miss (corrupt)" "miss (key-head)" "miss (key-rows)" "miss (key-runner)" "miss (key-wide)" "miss (key-loop)" \
     "miss (partial M of N)" "dirty (N paths, cache not used)" "dirty (git status failed" "not saved (ignored file read)" "not saved (symlink outside repo)" "off (LANES_NO_CACHE=1)" "none (no branch)" "not saved (<error class>)" \
     LANES_NO_CACHE "loop/plans"; do

@@ -420,7 +420,7 @@ on a goal a step past its ETA that is not waiting for the owner's choice (workfl
 The release bump is patch: a removed file or a BREAKING commit is named in the reason, never a silent major (issue 170).
 Minor or major only when the operation recorded it with `goal.py set SLUG --bump` (it does so right after freezing a goal
 whose text or queue line says minor or major; `new` prints a WARN when the text names one). The release side is in
-`skills/workflow-release/references/commands.md`.
+`skills/loop-files.md` (Release: commands and flows).
 
 ### Budgets (DEL-8)
 
