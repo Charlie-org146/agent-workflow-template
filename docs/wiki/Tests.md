@@ -430,6 +430,7 @@
 | <a id="t-links-origins-sources"></a>links-origins-sources | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-entry-committed-config"></a>entry-committed-config | requirement | DOC-1 | not run | - | local | 2026-11-19 |
+| <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 
 ## Guardrails
 
@@ -828,6 +829,8 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-ci-release"></a>rel-ci-release | requirement | REL-15 | not run | - | local | 2026-11-20 |
+| <a id="t-rel-update-asset"></a>rel-update-asset | requirement | REL-15 | not run | - | local | 2026-11-20 |
 
 ## Setup
 
