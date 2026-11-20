@@ -731,7 +731,7 @@
 | <a id="t-mon15-pod-owner"></a>mon15-pod-owner | requirement | MCH-4 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-mon15-merge-lock"></a>mon15-merge-lock | requirement | MCH-4 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-machine-apply-installs"></a>machine-apply-installs | requirement | MCH-1 | not run | - | local | 2026-11-12 |
-| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-12 |
+| <a id="t-machine-check-gaps"></a>machine-check-gaps | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-operation-guide"></a>machine-operation-guide | requirement | MCH-1 | not run | - | local | 2026-11-12 |
 | <a id="t-machine-new-machine-docs"></a>machine-new-machine-docs | requirement | MCH-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-12 |
 | <a id="t-machine-rows-listed"></a>machine-rows-listed | requirement | MCH-1 | not run | - | local | 2026-11-12 |
