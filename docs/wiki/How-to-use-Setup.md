@@ -160,6 +160,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `cadence` | Minutes between operation check-ins, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
 | `auto_approve` | true approves what a flow step leaves for the owner, logged auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |
 | `auto_merge` | true lets the release step merge a goal's PR and publish. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
+| `merge_queue` | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. | set "merge_queue" in .loop/config.json | `false` | default |
 | `merge_batch` | true lets merge.py --batch merge 2-3 green goals as one. | set "merge_batch" in .loop/config.json | `false` | **overridden:** `true` |
 | `review_hold` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. | set "review_hold" in .loop/config.json | `false` | default |
 | `pr_bumps_version` | true moves the last version number once on a goal's branch. | set "pr_bumps_version" in .loop/config.json | `false` | default |
@@ -178,7 +179,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `criteria_max` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `24` |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
-| `step_limit` | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
+| `step_limit` | Seconds a flow step may run when the flow file sets none; 0 is built-in. | set "step_limit" in .loop/config.json | `0` | default |
 | `goal_lane_minutes` | Minutes a goal's regression lane may take before health warns. | set "goal_lane_minutes" in .loop/config.json | `10` | default |
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). | set "goal_levels" in .loop/config.json | `land` | default |
 | `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
@@ -189,12 +190,12 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `240` | default |
 | `max_merge_rounds` | Merge rounds goal.py pr may take before it waits. | set "max_merge_rounds" in .loop/config.json | `8` | default |
 | `max_active_goals` | Goals live at once (or parallel, if smaller); 0 is none. | set "max_active_goals" in .loop/config.json | `20` | default |
-| `plan_pause_percent` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
+| `plan_pause_percent` | Weekly plan % above which no goal starts; 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
 | `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `3` | default |
-| `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. | set "eta_margin_percent" in .loop/config.json | `25` | default |
+| `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300. | set "eta_margin_percent" in .loop/config.json | `25` | default |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
-| `max_regression_rows` | Most rows the regression table may hold; qa refuses a goal that adds more. | set "max_regression_rows" in .loop/config.json | `1200` | **overridden:** `1300` |
-| `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. | set "max_suite_seconds" in .loop/config.json | `1900` | **overridden:** `2800` |
+| `max_regression_rows` | Most rows the regression table may hold; qa refuses a goal over it. | set "max_regression_rows" in .loop/config.json | `1200` | **overridden:** `1300` |
+| `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. | set "max_suite_seconds" in .loop/config.json | `1900` | **overridden:** `2800` |
 | `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
 | `prep_budget_minutes` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
 | `step_budget_minutes` | Minutes one review or ship step may take, 15 or more. | set "step_budget_minutes" in .loop/config.json | `30` | default |
@@ -233,4 +234,4 @@ Every repo setting from the template's settings reference, with this repo's valu
 <!-- kept machine-email-phone@9a67a8ff -->
 <!-- kept safety-fixes@585daa17 -->
 
-<!-- kept gap-wave1-small@dfc1acc5 -->
+<!-- kept rel-15-queue@88a93af7b -->

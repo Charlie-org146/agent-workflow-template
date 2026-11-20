@@ -72,7 +72,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
-| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
+| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
 | `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
 | `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns. |
@@ -87,16 +87,17 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
 | `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before it waits. |
-| `max_regression_rows` | 1300 | Most rows the regression table may hold; qa refuses a goal that adds more. |
-| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. |
+| `max_regression_rows` | 1300 | Most rows the regression table may hold; qa refuses a goal over it. |
+| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
 | `merge_batch` | true | true lets merge.py --batch merge 2-3 green goals as one. |
+| `merge_queue` | false | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. |
 | `milestones_source` | (empty) | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
-| `plan_pause_percent` | 80 | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
+| `plan_pause_percent` | 80 | Weekly plan % above which no goal starts; 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
@@ -114,7 +115,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `smtp_port` | 465 | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `stale_branch_days` | 14 | Days a local branch on no remote may sit before health lists it. |
 | `step_budget_minutes` | 30 | Minutes one review or ship step may take, 15 or more. |
-| `step_limit` | 0 | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. |
+| `step_limit` | 0 | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
 | `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
 | `template_version` | 0.27.29 |  |
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |

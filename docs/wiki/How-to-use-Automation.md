@@ -90,4 +90,4 @@ Health and regression, then each `automation` entry in `.loop/config.json`; to a
 - PRD page: [Automation](Automation)
 - Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gap-wave1-small@ce3b97f3 -->
+<!-- kept rel-15-queue@352b3bec9 -->
