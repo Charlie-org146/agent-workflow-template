@@ -6,6 +6,7 @@ to that session like `sessions.py bind SLUG self` and says BOUND; outside an app
 usage: test-new-binds.py [in|out]"""
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -98,5 +99,28 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
     json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
     code, said = bind()
     check("a trusted parent folder lets it through", code == 0 and "w1" in said)
+if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bound sessions and worktree entries whose folder is gone
+    repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
+    loop, tree = os.path.join(repo, ".git", "loop"), os.path.join(repo, "tree")
+    os.makedirs(os.path.join(loop, "runs"), exist_ok=True)
+    os.makedirs(tree)
+    json.dump({"slug": "g", "status": "running", "session": {"id": "w1"}, "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+    claude = os.path.join(repo, ".claude.json")
+    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo)
+
+    def selfcheck():
+        done = subprocess.run([sys.executable, os.path.join(scripts, "unattended.py"), "selfcheck"], cwd=repo, capture_output=True, text=True, env=env)
+        return done.stdout
+
+    check("negative control: with no ~/.claude.json no folder is called untrusted", "folder trust" not in selfcheck())
+    json.dump({"projects": {os.path.join(repo, "elsewhere"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
+    check("a bound session whose worktree has no trust entry is MISSING folder trust, with its slug", "MISSING folder trust: g" in selfcheck())
+    json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
+    check("a trusted parent clears it", "folder trust" not in selfcheck())
+    check("negative control: with every folder present no worktree is called gone", "MISSING worktrees" not in selfcheck())
+    gone = os.path.join(repo, "gone")
+    subprocess.run(["git", "-C", repo, "worktree", "add", "-q", "--detach", gone], check=True)
+    shutil.rmtree(gone)
+    check("a worktree entry whose folder is gone is MISSING worktrees, with the fix", "MISSING worktrees: 1 entries whose folder is gone. Fix: git worktree prune" in selfcheck())
 print("PASS: goal.py new binds an app session's goal" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)

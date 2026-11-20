@@ -203,7 +203,7 @@ def main_line():
 
 
 def selfcheck():
-    found = [line for line in [mode_line()] + routine_lines() + [main_line()] if line]
+    found = [line for line in [mode_line()] + routine_lines() + [main_line()] + __import__("board_log").restart_lines(common()) if line]
     print("\n".join(found) if found else "SELFCHECK OK")
     return 1 if any(line.startswith("MISSING") for line in found) else 0
 
