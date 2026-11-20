@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=7fd28a75 N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -22,9 +22,9 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
-- SET-10: **Reviewed 2026-11-20** One versioned package; every agent runs one loop <!-- reviewed c112b139 -->
+- SET-10: **Unreviewed** One versioned package; every agent runs one loop
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
-  - Steps map to agents, with a warned fallback and recorded tokens. [SET-10]
+  - Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10]
 
 ### Non-functional
 
@@ -143,6 +143,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-20 | One versioned package; every agent runs one loop <br> One versioned skills package works out of the box in Claude Code and Codex. [SET-10] <br> Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10] | TD439, restored under delegation (DOC-2, o486): dropped by omission; its row guards it | o662: "Then I want u to fix this merge time issuee first. I" |
 | r4 | 2026-11-20 | One versioned package; every agent runs one loop <br> One versioned skills package works out of the box in Claude Code and Codex. [SET-10] <br> Steps map to agents, with a warned fallback and recorded tokens. [SET-10] | readme-six: the owner-approved final README (o514) | o582: "yes build it" |
 | r3 | 2026-11-19 | One versioned package; every agent runs one loop <br> The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. The size and listing rules the package must pass are Guardrails' (GRD-20 to GRD-22, principle 3). [SET-3] <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. [SET-10] <br> A private setting maps each step and goal size to an agent profile. A missing or signed-out agent falls back to the default with a warning. The run record names the agent, model and tokens of every step. [DEL-16] | consolidation (TOP-DECISION 89) | o304: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | The right format for every agent <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
@@ -270,7 +271,7 @@ None
 | [set7-second-run-nothing](Tests#t-set7-second-run-nothing) | requirement | SET-1 | Given an adopted repo with a working config nobody committed, when setup runs again, then it prints NO CHANGE, adds no commit, leaves a clean tree and keeps the config's own values. | not run |
 | [set9-from-borrows](Tests#t-set9-from-borrows) | requirement | SET-1 | Given an adopted repo as the model, when setup runs with --from, then it borrows the portable settings and page shape, holds auto_merge and reply_hook until --allow, keeps its own base and agent command, changes nothing on a second run and never writes to the model. | not run |
 | [set9-from-no-values](Tests#t-set9-from-no-values) | requirement | SET-1 | Given a model value holding a home path or an email, when setup runs with --from, then the value is skipped and appears in no output and no written file. | not run |
-| [adoption-golden](Tests#t-adoption-golden) | requirement | SET-1 | Given the golden first adoption, when its fixture and SET-11 are read, then the fixture holds steps 1 to 8 in order, each with a check, golden result and fix, no machine path or account, and SET-11 names it and its first-mismatch stop. | PASS 2026-11-13 |
+| [adoption-golden](Tests#t-adoption-golden) | requirement | SET-1 | Given the golden first adoption, when its fixture is read, then it holds steps 1 to 8 in order, each with a check, golden result and fix, and no machine path or account (the replay against it, stopping at the first mismatch, is adopt-replay-strict). | PASS 2026-11-13 |
 | [grd10-install-hooks](Tests#t-grd10-install-hooks) | requirement | SET-1 | Given a repo being adopted, when setup runs by default, then it installs the three private-name hooks after its commit. | not run |
 | [migration-v1](Tests#t-migration-v1) | requirement | SET-1 | Given a toy repo missing a feature the template carries (Usage dropped, .loop/health-rules.json, routine Runbook pointers, hooks once, a node or python the repo asks for), when migration-check runs, then it names each with its code and fix, or an OWNER STEP with the exact install command, and exits 1 only for a gap; with everything present it exits 0. | PASS 2026-11-16 |
 | [repo-rules-setup](Tests#t-repo-rules-setup) | requirement | SET-1 | Given a repo adopted or updated by setup, when settings fill-repo runs, then an empty commented .loop/health-rules.json exists once and an edited one is kept. | not run |
