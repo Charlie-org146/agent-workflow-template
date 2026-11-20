@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-docs-sections.sh | grep -E "no DEL-19|negative control: with DEL-19|ALL PASS"`.
+   Expect: PASS for a repo with no DEL-19 (What this is kept, rows with no Follows tag read "not measured", never 0%), PASS for the negative control with DEL-19 and tags (percentages stay), and ALL PASS.
+2. Run `python3 skills/workflow-docs/scripts/criteria.py render --check`.
+   Expect: TABLES OK, so the template's own README, Home and Principles render exactly as before.
