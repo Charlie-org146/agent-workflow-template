@@ -4,12 +4,20 @@
 usage: layers.py status [--force]   a machine: send its STATUS to top when it changed or 30 minutes passed (prints the one line)
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
+       layers.py redteam input|record FILE|-|due [--eta ISO]   the red-team pass (HLT-2): the reviewer's input; record its three lists
+                                    (A: assumptions, I: idle work, R: the one biggest risk) with routes; is a pass due
 
 STATUS is one JSON message per machine in <git common dir>/loop/status/<machine>.json, also published as
 refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, its time, main per repo, one line per worker (step,
 status, PR number), the merges, the parked and idle sessions each with a reason, and needs-owner items with the exact words
 and a recommendation. Top is the only role that publishes the board; a machine prints one line. Imported by operate.py.
+
+Red-team (HLT-2): every hour and within an hour of a release ETA, a fresh-context reviewer session is given `redteam input` (the board
+and each machine's latest STATUS) and answers `A:`, `I:` and `R:` lines. `redteam record` stores them with a timestamp in
+<git common dir>/loop/redteam/ (never a repo file) and prints one route per item: A to ops-findings, I and R to operation-top as a
+proposed TOP-DECISION. It reads, records and prints: it never edits, merges, files or sends. The ETA is --eta or loop/release-eta.json ({"at": epoch}).
 """
+import calendar
 import hashlib
 import json
 import os
@@ -167,10 +175,68 @@ def board(statuses, now=None):
 def publish_board(common, cfg, now=None):
     """Top only: build, write and return the one board (its file is what Loop Board publishing reads)."""
     text = board(collect(common), now)
+    said = due(common, now)
+    text += (chr(10) + said) * said.startswith("RED-TEAM DUE")
     write_text = os.path.join(common, "loop", "top-board.txt")
     with open(write_text, "w", encoding="utf-8") as handle:
         handle.write(text + "\n")
     return text
+
+
+RED, RED_GAP, RED_NEAR, RED_FRESH = "redteam", 3600, 3600, 1200
+ROUTES = {"A": "ops-findings", "I": "TOP-DECISION (proposed)", "R": "TOP-DECISION (proposed)"}
+ASK = ("Reply with lines only, no edits and no decisions: `A: <an unverified assumption>` (any number), `I: <work idle capacity could start now>`"
+       " (any number), and exactly one `R: <the single biggest risk to the release time>`.")
+
+
+def iso(now):
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+
+
+def reviewer_input(common, now=None):
+    """The red-team reviewer's input: the board, one line per machine's latest STATUS, and the request. It only reads."""
+    now, found = now if now is not None else time.time(), collect(common)
+    rows = ["STATUS %s (%d min old): %s" % (s["machine"], (now - float(s.get("at") or 0)) // 60, json.dumps(
+        {k: v for k, v in s.items() if k not in ("machine", "at")}, sort_keys=True, separators=(",", ":"))) for s in found]
+    return chr(10).join(["RED-TEAM INPUT " + iso(now), "", board(found, now), ""] + rows + ["", ASK])
+
+
+def parse_reply(text):
+    """{'A': [...], 'I': [...], 'R': [...]} from a reviewer's lines; refuses unless there is exactly one R line."""
+    lists = {"A": [], "I": [], "R": []}
+    for line in str(text or "").splitlines():
+        found = re.match(r"^\W*([AIR])\s*[:.)]\s*(\S.*)$", line)
+        if found:
+            lists[found.group(1)].append(found.group(2).strip())
+    if len(lists["R"]) != 1:
+        sys.exit("REFUSED: the reply has %d R: lines, and a red-team pass names exactly one biggest risk. Fix: send one `R: <risk>` line; nothing was recorded." % len(lists["R"]))
+    return lists
+
+
+def record(common, text, now=None):
+    """Store the three lists with a timestamp under <common>/loop/redteam/ and return one route line per item (nothing is sent or filed)."""
+    now, lists = now if now is not None else time.time(), parse_reply(text)
+    routes = [{"kind": k, "item": item, "to": ROUTES[k], "state": "proposed"} for k in "AIR" for item in lists[k]]
+    write(os.path.join(common, "loop", RED, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now)) + ".json"),
+          {"at": now, "time": iso(now), "assumptions": lists["A"], "idle": lists["I"], "risk": lists["R"][0], "routes": routes})
+    file = "python3 skills/workflow-monitoring/scripts/mailbox.py finding %s --feature <PAGE> --found redteam/" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
+    return ["ROUTE ops-findings: " + file % json.dumps(r["item"][:100]) if r["kind"] == "A" else "ROUTE %s: %s: %s" % (r["to"], r["kind"], r["item"]) for r in routes]
+
+
+def due(common, now=None, eta=None):
+    """`RED-TEAM DUE: why` when no pass is recorded, the last is over an hour old, or a release ETA is within an hour and the last pass is over 20 minutes old."""
+    now, folder = now if now is not None else time.time(), os.path.join(common, "loop", RED)
+    last = max([float(read(os.path.join(folder, n)).get("at") or 0) for n in (os.listdir(folder) if os.path.isdir(folder) else []) if re.fullmatch(r"\d{8}T\d{6}Z\.json", n)] or [0])
+    if eta is None:
+        eta = read(os.path.join(common, "loop", "release-eta.json")).get("at")
+    age = int((now - last) // 60)
+    if not last:
+        return "RED-TEAM DUE: no pass recorded"
+    if now - last > RED_GAP:
+        return "RED-TEAM DUE: the last pass was %d minutes ago (over 60)" % age
+    if eta and 0 <= float(eta) - now <= RED_NEAR and now - last > RED_FRESH:
+        return "RED-TEAM DUE: the release ETA is in %d minutes and the last pass was %d minutes ago (over 20)" % ((float(eta) - now) // 60, age)
+    return "RED-TEAM ok: last pass %d minutes ago" % age
 
 
 def check_allowed(cfg):
@@ -231,6 +297,15 @@ def main(argv):
         for name, verdict in rows:
             print("%s: %s" % (name, verdict))
         return 1 if any(v != "ok" for _, v in rows) else 0
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["input"]:
+        print(reviewer_input(common))
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["record"] and len(argv) > 2:
+        print(chr(10).join(record(common, sys.stdin.read() if argv[2] == "-" else open(argv[2], encoding="utf-8").read())))
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["due"]:
+        eta = None
+        if "--eta" in argv[2:]:
+            eta = calendar.timegm(time.strptime(argv[argv.index("--eta") + 1], "%Y-%m-%dT%H:%M:%SZ"))
+        print(due(common, eta=eta))
     else:
         print(__doc__.strip())
         return 2

@@ -41,28 +41,28 @@ TABLE = [
     ("smtp_port", REPO, 465, "465 (TLS) or 587 (STARTTLS) for digest_mail smtp."),
     ("review_depth", REPO, "full", "full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run."),
     ("criteria", REPO, True, "true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests)."),
-    ("criteria_max", REPO, 10, "Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it."),
+    ("criteria_max", REPO, 10, "Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it."),
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
-    ("step_limit", REPO, 0, "Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit."),
-    ("goal_levels", REPO, "land", "Row levels a goal lane plans from: land, or nightly for land and nightly rows."),
-    ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac."),
-    ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted."),
+    ("step_limit", REPO, 0, "Seconds one flow step may run when the flow file sets none; 0 is the built-in limit."),
+    ("goal_levels", REPO, "land", "Row levels a goal lane plans from: land, or nightly (land and nightly rows)."),
+    ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it."),
+    ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
     ("automation", REPO, [], "Routines the Automation table lists: {name, does, cadence, runs}."),
-    ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column."),
-    ("ci_levels", REPO, "nightly", "Target of the scheduled and tag regression runs: nightly (every row) or land."),
+    ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column."),
+    ("ci_levels", REPO, "nightly", "Target of scheduled and tag regression runs: nightly (every row) or land."),
     ("time_budget_minutes", REPO, 240, "Active minutes before no new step starts; 0 is none."),
     ("max_merge_rounds", REPO, 8, "Merge rounds goal.py pr may take before it waits."),
     ("max_active_goals", REPO, 20, "Goals live at once (or parallel, if smaller); 0 is none."),
     ("plan_pause_percent", REPO, 80, "Weekly plan % above which no goal starts (pool.py usage N); 0 is off."),
-    ("min_free_memory_gb", REPO, 4, "Free GB below which no lane or goal starts; 0 off."),
-    ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen."),
+    ("min_free_memory_gb", REPO, 3, "Free GB below which no lane or goal starts; 0 off."),
+    ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen."),
     ("token_budget", REPO, 0, "Tokens a goal may spend before no new step starts; 0 means none."),
-    ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; a goal adding rows past it is refused at qa."),
-    ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa."),
-    ("test_budget_minutes", REPO, 15, "Minutes one in-loop test run may take, 15 or more; rows past it wait for the full suite."),
-    ("prep_budget_minutes", REPO, 15, "Minutes a lane may spend before its first test row, 15 or more; a lane past it stops."),
-    ("step_budget_minutes", REPO, 30, "Minutes one review or ship step may take, 15 or more; a step at its limit finishes what it has."),
+    ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; qa refuses a goal that adds more."),
+    ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more."),
+    ("test_budget_minutes", REPO, 15, "Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite."),
+    ("prep_budget_minutes", REPO, 15, "Minutes a lane may spend before its first test row, 15 or more; past it, it stops."),
+    ("step_budget_minutes", REPO, 30, "Minutes one review or ship step may take, 15 or more."),
     ("stale_branch_days", REPO, 14, "Days a local branch on no remote may sit before health lists it."),
     ("mend", REPO, False, "true lets watch start a fresh agent for a failed goal."),
     ("mend_wait", REPO, 120, "Seconds a failed goal waits before a mender starts."),
@@ -70,34 +70,35 @@ TABLE = [
     ("resume_on_limit", REPO, False, "true lets watch resume a goal that hit a usage limit."),
     ("limit_wait", REPO, 1800, "Seconds to wait after a usage limit before resuming."),
     ("watch_interval", REPO, 20, "Seconds between rounds of watch."),
-    ("agent_files", REPO, ["CLAUDE.md", "AGENTS.md"], "Agent entry files setup wires the workflow-loop block into; [] turns wiring off."),
-    ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from, when the installed package names none."),
+    ("agent_files", REPO, ["CLAUDE.md", "AGENTS.md"], "Agent entry files setup wires the loop block into; [] turns wiring off."),
+    ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from, if the package names none."),
+    ("milestones_source", REPO, "", "Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows."),
     ("reply_hook", REPO, True, "false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session."),
-    ("govern_hook", REPO, True, "false turns off the govern-only hook: edits, commits and pushes are refused in the operation session."),
-    ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait."),
-    ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more."),
+    ("govern_hook", REPO, True, "false turns off the govern-only hook (edits, commits, pushes refused in the operation session)."),
+    ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait."),
+    ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; low, the operation session asks you for more."),
     ("silent_minutes", REPO, 30, "Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides."),
     ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),
     ("health_skill_lines", REPO, 150, "SKILL.md line cap health fails."),
     ("feature_labels", REPO, False, "true tags each health and regression issue feature:<Page>, creating the label."),
-    ("workers", REPO, "", "app: no background process starts, a goal no session took waits for sessions.py bind; auto: a background agent when no session can start."),
+    ("workers", REPO, "", "app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start."),
     ("command", PRIVATE, ["claude", "-p"], "Flow file: the agent command that runs each flow step unattended."),
     ("allowed_tools", PRIVATE, [], "Flow file: tools a step's agent may use, passed as --allowedTools; empty adds nothing."),
     ("model", PRIVATE, "", "Flow file: the model a step's agent uses, passed as --model; empty keeps the command's own."),
     ("suite", PRIVATE, {"idea": "built-in", "plan": "built-in", "review": "built-in", "qa": "built-in", "ship": "built-in"},
-     "Flow file: the skill for each step; built-in runs delivery's own routine until you name your own."),
+     "Flow file: the skill for each step; built-in runs delivery's own routine."),
     ("steps", PRIVATE, {}, "Flow file: a skill for any one step, replacing the suite's."),
     ("overrides", PRIVATE, {}, "Flow file: per step {skill, model, allowed_tools} that replace the defaults above."),
     ("env", PRIVATE, {}, "Flow file: environment that puts the skills in their unattended mode."),
     ("probe", PRIVATE, [], "Flow file: a command that prints probe_expect when the skills run unattended."),
     ("probe_expect", PRIVATE, "unattended", "Flow file: the word the probe must print."),
-    ("leak_prefixes", PRIVATE, [], "Flow file: case-insensitive regexes the package scan blocks in any file or file name, as your leak hook does."),
+    ("leak_prefixes", PRIVATE, [], "Flow file: case-insensitive regexes the package scan blocks in any file or file name."),
     ("full_markers", PRIVATE, {}, "Flow file: per step, strings a full plan or review reply must contain, e.g. {\"review\": [\"...\"]}."),
     ("limit", PRIVATE, 2700, "Flow file: seconds one flow step may run."),
-    ("lane_limit", PRIVATE, 2, "Flow file: full regression lanes that may run at once on this machine; more wait their turn (0 is unlimited)."),
+    ("lane_limit", PRIVATE, 2, "Flow file: full regression lanes at once on this machine; more wait (0 is unlimited)."),
     ("rules", PRIVATE, [], "Health file: your own health rules, each {name, command, fix}."),
     ("repos", PRIVATE, [], "Followed repos: one path a line in the repos file, shown on the board."),
-    ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py, to mail.env's address; per machine."),
+    ("notify_email", PRIVATE, False, "Flow file: true mails you each new check-in event through mail.py; per machine."),
     ("machine_sync", PRIVATE, False, "Sync machines."),
     ("notify_budget", PRIVATE, 20, "Daily mail budget."),
 ]
@@ -175,7 +176,6 @@ def private_path():
 
 
 def fill_private(path=None):
-    """Add each missing flow-file setting with its default and help line."""
     path = path or private_path()
     held = load(path)
     added = [k for k in FLOW_KEYS if k not in held]
@@ -258,12 +258,14 @@ def show(repo, as_json):
 
 
 def fill_repo(path):
-    """Add each missing repo setting, with its default and _help line."""
     held = load(path)
     most = held.get("criteria_max", 10)
     if isinstance(most, bool) or not isinstance(most, int) or not 1 <= most <= 50:
         sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (most, path))
     check_depth(held, path)
+    source = held.get("milestones_source", "")
+    if source and not re.fullmatch(r"url:\S+|mcp:(?!notion:)\w[\w-]*:\S+|mcp:notion:[0-9a-f]{32}", str(source)):
+        sys.exit("REFUSED: milestones_source is %r in %s. Fix: url:<link>, mcp:<server>:<id>, mcp:notion:<32 hex>." % (source, path))
     added = [k for k in repo_defaults() if k not in held]
     merged = dict(held, **{k: v for k, v in repo_defaults().items() if k not in held})
     merged["_help"] = repo_help(held)

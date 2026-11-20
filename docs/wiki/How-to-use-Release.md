@@ -98,4 +98,4 @@ Each requirement and how it is delivered:
 - PRD page: [Release](Release)
 - Backlog: [Backlog: Release](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept requirements-consolidate@2fa96827 -->
+<!-- kept known-red-docs-release2@20a7ff2d -->

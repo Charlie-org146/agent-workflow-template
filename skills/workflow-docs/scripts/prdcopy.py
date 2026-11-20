@@ -343,7 +343,7 @@ def sync(root, dry=False, accept=(), opened=False):
 
 
 AWAY = re.compile(r"https?://[^\s`'\")>\]]+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
-NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/(?:README\.md|docs/wiki/flows/[\w.-]+\.svg)|/?(?:#|$))")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/(?:blob|raw)/[^/]+/[^\s?#]+\.(?:png|jpe?g|gif|svg|webp)(?:[?#]|$)|/?(?:#|$))")
 
 
 def stands_alone(page, text, repo="", sites=()):

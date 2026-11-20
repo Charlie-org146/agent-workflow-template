@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept merge-queue-c@1d308b4a -->
+Review: **Unreviewed** <!-- kept merge-private-lane-import@45fb2810 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
@@ -215,10 +215,9 @@ None
 | [mon17-this-pod-only](Tests#t-mon17-this-pod-only) | requirement | CHK-1 | Given goals of two pods, when the check-in is written, then only this pod's goals are listed and the other pod gets one line. | not run |
 | [review-board-shows-wait](Tests#t-review-board-shows-wait) | requirement | CHK-1 | Given a goal held by review_hold, when the live board lists its Issues, then it says merge waiting on review and names the review.py command. | not run |
 | [machine-guide-monitoring](Tests#t-machine-guide-monitoring) | requirement | CHK-1 | Given the operation guide, when it is read, then it holds the check-in layout, full-auto rules, decision log and held-line conventions, and the check-in routine file is only a pointer to it. | not run |
-| [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-1 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes. | PASS 2026-11-16 |
+| [mon5-checkin-machine-line](Tests#t-mon5-checkin-machine-line) | requirement | CHK-1 | Given a check-in reply with no Machine line, when the reply hook checks it, then it flags it, and a reply with the Machine line and every goal line passes; and given an All sessions row whose for cell is only a slug or issue number, then it flags that row. | PASS 2026-11-16 |
 | [mon14-checkin-goal-lines](Tests#t-mon14-checkin-goal-lines) | requirement | CHK-1 | Given a Dependencies goal with no status marker, time left or machine, when the reply hook checks the check-in, then it flags the goal by name. | PASS 2026-11-16 |
 | [mon14-release-eta](Tests#t-mon14-release-eta) | requirement | CHK-1 | Given a check-in whose release header has no release ETA, when the reply hook checks it, then it flags it, and a header with the ETA and its counts passes. | PASS 2026-11-16 |
-| [mon5-for-cell-sentence](Tests#t-mon5-for-cell-sentence) | requirement | CHK-1 | Given an All sessions row whose for cell is only a slug or issue number, when the reply hook checks the check-in, then it flags that row. | PASS 2026-11-16 |
 | [eta-checkin-table](Tests#t-eta-checkin-table) | requirement | CHK-1 | Given goals with and without an ETA, when the check-in's All sessions table is built, then each goal's time left cell also shows its ETA clock time, ETA passed, or no ETA (a goal frozen before ETAs reads no ETA until the owner gives it one; hard ETA, DEL-17). | not run |
 | [held-charge-pauses](Tests#t-held-charge-pauses) | requirement | CHK-1 | Given a goal that runs 30 minutes, is paused 300 minutes (goal.py wait, or a session report that says waiting or paused) and runs 20 more, when the minute budget is read through fit.budget_stop, then it is charged 50, and the same goal running 350 minutes with no pause is charged 350 and stopped by a smaller budget. | not run |
 | [notify-new-events](Tests#t-notify-new-events) | requirement | CHK-1 | Given a fake mailer and notification settings, when notification runs, then each new event names its goal and owner action once, repeated or disabled events send nothing, the first run only records a baseline, no address is printed or kept, and the private setting defaults off. | PASS 2026-11-18 |

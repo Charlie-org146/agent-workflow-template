@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Live-board estimate candidates, time-ordered selection, and per-goal predictions. Scores are kept in MODEL per set of
 runs; a goal file edited inside one long-lived process is not seen until a run changes. Never imports board_status.py."""
+import json
 import math
 import os
 import statistics
@@ -365,3 +366,17 @@ def estimate_text(found):
     if not high:
         return "<1m left"
     return "%s to %s left%s" % (span(low), span(high), ", rough" if rough else "")
+
+
+def plan_accept(root, slug, n, record):
+    """The owner accepts a break of principle n on the plan as it stands, by an owner-words.tsv record."""
+    import board_log as bl
+    path, owner = os.path.join(bl.red_dir(root), "plan-%s.json" % slug), os.path.join(os.path.dirname(bl.red_dir(root)), "owner-words.tsv")
+    seen = bl.read_json(path) or {}
+    hit = [b for b in seen.get("breaks", []) if b["principle"] == n and seen.get("sha") == bl.plan_sha(root, slug)]
+    if not hit or not os.path.exists(owner) or record not in {r.split("\t")[0] for r in open(owner, encoding="utf-8")}:
+        sys.exit("REFUSED: needs an owner-words.tsv record and a break of principle %d on the plan as it stands" % n)
+    for b in hit:
+        b["accepted"] = record
+    json.dump(seen, open(path, "w"), indent=1)
+    return "ACCEPTED principle %d for %s by %s" % (n, slug, record)
