@@ -451,7 +451,6 @@
 | <a id="t-launchctl-missing-unknown"></a>launchctl-missing-unknown | requirement | DOC-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-merge-main-own-finding"></a>merge-main-own-finding | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-criteria-in-references"></a>skill-criteria-in-references | requirement | DOC-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
-| <a id="t-doc1-sync-pointer"></a>doc1-sync-pointer | requirement | DOC-1 | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-release-4172"></a>skill-lines-release-4172 | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) closed (2026-11-19) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-docs-4171"></a>skill-lines-docs-4171 | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-lines-regression-3983"></a>skill-lines-regression-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) closed (2026-11-14) | not run | - | local | 2026-11-14 |
