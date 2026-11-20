@@ -317,13 +317,13 @@ def sync(root, dry=False, accept=(), opened=False):
                 kind_of(side).title(), page, ident, what(side), r or "-", s or "-", page, ident)
             row = held.get(key) or [side, "", "0", ""]
             if row[1] and row[3] != sha(text):
-                post("LOOP_GH", "issue", "comment", row[1], "--body", text)
+                post("LOOP_GH", "issue", "comment", row[1], "--body-file", "-", input=text)
                 row[2] = "0"
             elif not row[1]:
                 from milestones import backlog
-                home = backlog(page)  # "Backlog: PAGE", made when missing, never the bare page name (DOC-17)
+                home = backlog(page)  # Backlog: PAGE (DOC-17)
                 for stone in ([["--milestone", home]] if home else []) + [[]]:
-                    ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (kind_of(side), page, ident, what(side)), "--body", text, *stone)
+                    ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (kind_of(side), page, ident, what(side)), "--body-file", "-", *stone, input=text)
                     if ok:
                         break
                 if not ok:
