@@ -308,6 +308,7 @@
 | <a id="t-rel-ci-release"></a>rel-ci-release | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-rel-update-asset"></a>rel-update-asset | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-queue-use"></a>queue-use | requirement | DEL-17 | not run | - | local | 2026-11-20 |
+| <a id="t-follows-adoption"></a>follows-adoption | requirement | DEL-21 | not run | - | local | 2026-11-20 |
 
 ## Documentation
 
