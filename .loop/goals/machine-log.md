@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-machine-log.py`.
+   Expect: PASS for 2 workers from 2 live sessions and 7 stale busy records, the one-line count "2 workers", the parked stale line, both negative controls, and PASS for the fake-clock heartbeat (status file never over 60 s old).
+2. Run `python3 skills/workflow-monitoring/scripts/layers.py status` twice a minute apart, and `ls -l --time-style=full-iso` the status file under the git common dir's loop/status.
+   Expect: the worker count is the live sessions only, and the file's `at` is current.
