@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-setup/scripts/desk.py skills/workflow-setup/scripts/setup.py skills/workflow-monitoring/scripts/machines.py
+# reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/sync.py skills/workflow-setup/scripts/settings.py skills/workflow-monitoring/scripts/machines.py
 """phone-first (#4805): onboarding lists every desk-only step and runs each once; check says DESK OK only when nothing is left
 at the desk and a phone-only start works; a goal no app session can take starts as a background worker through agent_command."""
 import json
