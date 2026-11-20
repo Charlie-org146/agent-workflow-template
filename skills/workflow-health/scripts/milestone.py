@@ -191,7 +191,7 @@ def cmd_move(args):
 
 
 # ---- the cost rule (was cost.py), imported by health.py and judge.py: a goal over its time or token budget warns, naming
-# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: the newest full suite over SUITE_LIMIT. Local files only: no model, no network. workflow-regression/references/commands.md.
+# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: the newest full suite over SUITE_LIMIT. Local files only: no model, no network. loop-files.md.
 RECENT = 10
 NAMED = 3
 
