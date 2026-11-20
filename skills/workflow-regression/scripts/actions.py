@@ -52,6 +52,7 @@ jobs:
     timeout-minutes: @BUDGET@
     strategy:
       fail-fast: false
+      max-parallel: 6
       matrix:
         shard: @MATRIX@
     steps:

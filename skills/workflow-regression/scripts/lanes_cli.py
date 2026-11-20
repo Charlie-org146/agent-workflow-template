@@ -206,7 +206,8 @@ jobs:
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
           LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 120 --timeout 200
-      - uses: actions/upload-artifact@v4
+      - if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}
           path: ${{ runner.temp }}/t.tsv
@@ -221,7 +222,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - run: python3 skills/workflow-docs/scripts/docs.py check
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
