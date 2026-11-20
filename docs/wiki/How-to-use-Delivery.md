@@ -120,6 +120,7 @@ Each requirement and how it is delivered:
 - DEL-7: Work survives failure and moves by backup. A failed step is resumed from its recorded step, never from the start; `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.
 - DEL-17: A goal's ETA is a hard limit.
 - DEL-19: Every goal serves a requirement.
+- DEL-21: Adopt a standard tool by default (v2.0 planned). Each requirement's Follows cell says whether it adopts the standard tool or adapts the proven design with a one-line reason. Example: a requirement with no reference is replaced by its industry-standard counterpart or cut.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"
