@@ -56,23 +56,26 @@ if only in ("", "in"):
 if only in ("", "out"):
     said, state = freeze(fresh(), "")
     check("outside an app session nothing is bound and nothing is said about it", state.get("slug") == "g" and not state.get("session") and "BOUND" not in said)
-if only in ("", "operation"):  # #5616: the governing session is never a worker, and the pool never counts it as free
+if only in ("", "operation"):  # #5616: the governing session is never a worker, whatever id it goes by, and the pool never counts it as free
     repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
     loop = os.path.join(repo, ".git", "loop")
     os.makedirs(loop, exist_ok=True)
-    json.dump({"op-toy": {"state": "free", "name": "operation"}, "w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
-    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo)
+    json.dump({"local_app-toy": {"state": "free", "name": "operation"}, "w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "LOOP_POD", "LOOP_ROLE"))}
+    env.update(HOME=repo, USERPROFILE=repo)
 
-    def tool(*args):
-        done = subprocess.run([sys.executable] + list(args), cwd=repo, capture_output=True, text=True, env=env)
+    def tool(*args, **more):
+        done = subprocess.run([sys.executable] + list(args), cwd=repo, capture_output=True, text=True, env=dict(env, **more))
         return done.returncode, done.stdout + done.stderr
 
-    check("negative control: with no operation.id the pool counts both sessions free", "2 free" in tool(os.path.join(scripts, "pool.py"), "status")[1])
-    open(os.path.join(loop, "operation.id"), "w").write("op-toy\n")
-    check("an id in operation.id is not counted as free", "1 free" in tool(os.path.join(scripts, "pool.py"), "status")[1])
-    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "op-toy")
-    check("bind refuses the governing session's id", code != 0 and "never a worker" in said and "op-toy" in said)
-    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "w1")
+    check("negative control: before it claims, the pool counts both sessions free", "2 free" in tool(os.path.join(scripts, "pool.py"), "status", LOOP_ROLE="worker")[1])
+    code, said = tool(os.path.join(scripts, "operate.py"), "claim", CLAUDE_CODE_SESSION_ID="cli-toy", CLAUDE_CODE_HOST_SESSION_ID="local_app-toy")
+    ids = open(os.path.join(loop, "operation.id")).read().split()
+    check("operate.py claim registers both ids of the operation session, its CLI id and its app id (they differ)", code == 0 and {"cli-toy", "local_app-toy"} <= set(ids))
+    check("the app id is not counted as free", "1 free" in tool(os.path.join(scripts, "pool.py"), "status", LOOP_ROLE="worker")[1])
+    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "local_app-toy", LOOP_ROLE="worker")
+    check("bind refuses the operation session's app id", code != 0 and "never a worker" in said and "local_app-toy" in said)
+    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "w1", LOOP_ROLE="worker")
     check("and still binds an ordinary session", code == 0 and "w1" in said)
 if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.json is refused, and the file is never written
     repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
@@ -97,6 +100,8 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
     code, said = bind()
     check("a worktree with no trust entry is refused: ask the owner to trust it", code != 0 and "ask the owner to trust" in said and tree in said)
     check("and ~/.claude.json is read only: it is byte for byte as it was", open(claude).read() == before)
+    done = subprocess.run([sys.executable, os.path.join(scripts, "sessions.py"), "assign", "g", "--text", "go"], cwd=tree, capture_output=True, text=True, env=env)
+    check("assign refuses the same untrusted worktree", done.returncode != 0 and "ask the owner to trust" in done.stdout + done.stderr)
     json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
     code, said = bind()
     check("a trusted parent folder lets it through", code == 0 and "w1" in said)
