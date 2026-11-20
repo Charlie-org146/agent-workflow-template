@@ -190,7 +190,7 @@ The check-in loop, repeated every `cadence` minutes, or every hour when nothing 
 3. Run `board --since <the last board.json>`, then the page step.
 4. With an Artifact tool, publish `board-artifact.html` unedited to the same URL each time; otherwise give the owner the
    `board.html` path.
-5. Reply in the check-in layout: a headline of what slipped, Your move, Red team, Release goals, Task queue, Workers and, last, Shipped (a field the last
+5. Reply in the check-in layout: a headline of what slipped, Your move, Red team, Release goals, Merge queue, Task queue, Workers and, last, Shipped (a field the last
    board didn't have, or `gh` failing to answer, is not a change). The reply hook (`setup.py --reply-hook`) blocks a reply
    in any other layout; see the Operation session section at the end of this file.
 6. Wait `NEXT_DELAY` seconds and repeat; `none` means the owner turned the loop off, so stop.

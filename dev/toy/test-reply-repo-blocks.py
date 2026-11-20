@@ -19,7 +19,7 @@ def check(ok, text):
 
 
 def reply(deps):
-    return "One goal moved." + "\n\n## Your move\n1. Release? Options: cut, leave. Recommended: leave.\n\n## Red team\n- none\n\n## Release goals\n- none\n\n## Task queue\n- none\n\n## Workers\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps + "\n\n## Shipped\n- none\n"
+    return "One goal moved." + "\n\n## Your move\n1. Release? Options: cut, leave. Recommended: leave.\n\n## Red team\n- none\n\n## Release goals\n- none\n\n## Merge queue\n- none\n\n## Task queue\n- none\n\n## Workers\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps + "\n\n## Shipped\n- none\n"
 
 
 good = reply("```\n== toy ==\n[>] alpha\n |\n[ ] beta\n```")

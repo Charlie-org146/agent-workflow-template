@@ -7,7 +7,7 @@ usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
 
 A check-in reply passes with one headline line of what slipped (a Machine line and one line per other pod may follow), then
 the sections Your move (numbered items, only the owner's, most-blocking first, each saying what it holds up with a goal count,
-or "blocks nothing", MON-19; or "Nothing needs you" or none), Red team, Release goals, Task queue, Workers and, last, Shipped
+or "blocks nothing", MON-19; or "Nothing needs you" or none), Red team, Release goals, Merge queue, Task queue, Workers and, last, Shipped
 (CHK-1's board order), each heading on its own line with something under it; any may say none.
 
 Only a reply to a scheduled check-in, or to the owner asking for one (check-in, status, report, board, where do things
@@ -31,7 +31,7 @@ import time
 # No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
-SECTIONS = ("Your move", "Red team", "Release goals", "Task queue", "Workers", "Shipped")  # CHK-1 board order, after a one-line headline
+SECTIONS = ("Your move", "Red team", "Release goals", "Merge queue", "Task queue", "Workers", "Shipped")  # CHK-1 board order, after a one-line headline
 NOTHING = "Nothing needs you"
 
 TRIES = 3
@@ -50,7 +50,7 @@ COUNT = re.compile(r"\s*\(\s*\d+\s*\)$")
 MARKS = re.compile(r"[*#`_]")
 TEMPLATE = ("Write the check-in reply in this layout (CHK-1: the board's order): one headline line of what slipped; then, each heading on its "
             "own line, Your move (only the owner's items, each numbered, most-blocking first, saying what it holds up or 'blocks nothing', or "
-            "'Nothing needs you' or none); Red team; Release goals; Task queue; Workers; and last, Shipped. Any section may say none.")
+            "'Nothing needs you' or none); Red team; Release goals; Merge queue; Task queue; Workers; and last, Shipped. Any section may say none.")
 
 
 def git(cwd, *args):
@@ -299,7 +299,7 @@ def problems(text):
             spots[name] = at = spot
     if not spots:
         return ["it is not in the check-in layout (CHK-1: the headline line of what slipped, then Your move, Red team, Release goals, "
-                "Task queue, Workers and Shipped); missing all six sections (issue 321)"]
+                "Merge queue, Task queue, Workers and Shipped); missing all seven sections (issue 321)"]
     found = ["missing section %s%s" % (name, " (or it is out of order)" if any(heading(l) == name.lower() for l in lines) else "")
              for name in SECTIONS if name not in spots]
     first = min(spots.values())

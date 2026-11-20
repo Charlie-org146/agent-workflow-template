@@ -38,6 +38,9 @@ good = """Two goals moved; one needs you.
 ## Release goals
 - alpha: one line, one bar, about 18:10
 
+## Merge queue
+- none
+
 ## Task queue
 - alpha: running, 20m on main, my ETA
 
@@ -169,7 +172,7 @@ R="$T/repo"
 python3 "$H" check "$F/good.txt" > "$F/check-good.out"; cg=$?
 check "check passes a reply in the check-in layout" '[ $cg = 0 ] && [ ! -s "$F/check-good.out" ]'
 python3 "$H" check "$F/old.txt" > "$F/check-old.out"; co=$?
-check "a reply in the old layout (All sessions, Dependencies, Needs you, Coming up) is blocked and names the board order" '[ $co = 1 ] && grep -q "missing all six sections" "$F/check-old.out" && grep -q "Your move, Red team, Release goals, Task queue, Workers and Shipped" "$F/check-old.out"'
+check "a reply in the old layout (All sessions, Dependencies, Needs you, Coming up) is blocked and names the board order" '[ $co = 1 ] && grep -q "missing all seven sections" "$F/check-old.out" && grep -q "Your move, Red team, Release goals, Merge queue, Task queue, Workers and Shipped" "$F/check-old.out"'
 python3 "$H" check "$F/none.txt" >/dev/null; cnn=$?
 check "an empty Your move may say none" '[ $cnn = 0 ]'
 for name in noboard nosection order noheadline twoheadlines emptyneeds; do

@@ -311,7 +311,7 @@ case_reply321() {  # issue 321: a scheduled check-in answered with one line is b
   p() { printf '{"session_id":"%s","cwd":"%s","transcript_path":"%s","stop_hook_active":false}' "$1" "$2" "$T/t321.jsonl"; }
   out=$(p op9 "$R" | python3 "$S/reply_hook.py")
   check "#321: the operation session's one-line check-in reply is blocked" 'echo "$out" | grep -q "\"decision\": \"block\""'
-  check "#321: the block names the six missing sections" 'echo "$out" | grep -q "Your move, Red team, Release goals, Task queue, Workers and Shipped"'
+  check "#321: the block names the seven missing sections" 'echo "$out" | grep -q "Your move, Red team, Release goals, Merge queue, Task queue, Workers and Shipped"'
   check "#321: another session's one-line reply is not checked" '[ -z "$(p other "$R" | python3 "$S/reply_hook.py")" ]'
 }
 
