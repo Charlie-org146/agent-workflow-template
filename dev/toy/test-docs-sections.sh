@@ -25,6 +25,9 @@ feat=$'# F\n\n## Problem\n\n## Requirements\n\n## Non-goals\n\n## Success metric
 want "a feature page of the fixed sections passes" feature "$feat" ""
 want "a feature page with Non-goals missing fails" feature "$(sub $'## Non-goals\n\n' "" "$feat")" "Non-goals"
 want "a feature page with an optional Runbook before Requirements passes" feature "$(sub '## Requirements' $'## Runbook\n\n## Requirements' "$feat")" ""
+want "a feature page with an optional Deployments before Revisions passes" feature "$(sub '## Revisions' $'## Deployments\n\n## Revisions' "$feat")" ""
+want "a feature page with Deployments after Revisions fails" feature "$(sub '## Tests' $'## Deployments\n\n## Tests' "$feat")" "Deployments"
+want "a feature page with Deployments before Success metrics fails" feature "$(sub '## Success metrics' $'## Deployments\n\n## Success metrics' "$feat")" "Deployments"
 want "a How-to-use page without Links fails" howto $'# H\n\n## What it\'s for\n\n## How to reach or run it\n\n## URLs and deployments\n' "Links"
 want "a Tests page with Other last passes" tests $'# T\n\n## Delivery\n\n## Health\n\n## Other\n' ""
 prin=$'# P\n\n## 1. One\n\n## 2. Two\n'
