@@ -54,7 +54,7 @@ MATRIX_V1 = (("Claude Code on Windows", (("claude-app", "windows"), ("claude-cli
 
 
 def matrix(root):
-    """matrix: a cell of agent x machine needs a pass in .loop/matrix-runs.tsv within 7 days."""
+    """matrix: an agent x machine cell needs a pass in .loop/matrix-runs.tsv in 7 days."""
     from defects import row
     from rules import days_since
     try:

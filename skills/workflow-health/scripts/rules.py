@@ -1,5 +1,5 @@
-"""Freshness, Tests, Adoption, Security, Size, Performance and Hygiene rules, plus principle-map (every Reviewed requirement sits
-under a principle and every principle holds one). Read-only; dates are days, so one day's runs print the same lines."""
+"""Freshness, Tests, Adoption, Security, Size, Performance and Hygiene rules, plus principle-map. Read-only; dates are days, so
+one day's runs print the same lines."""
 import datetime
 import glob
 import importlib.util
@@ -155,7 +155,7 @@ def no_fit(root):
             for m, line in found if m and not line.rstrip().endswith("[closed]")]
 
 
-POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Runbook section \S+ and follow it exactly\.$")  # docs.py prompts
+POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Runbook section \S+ and follow it exactly\.$")
 
 
 def prompt_pointer(root):
@@ -238,12 +238,12 @@ def private(root):
     out = []
     for number, pattern in enumerate(wanted, 1):
         hits = git_raw(root, "grep", "-n", "-I", "-E", "-e", pattern, "--", ".", ":(exclude).git")
-        if hits is None:  # git grep exits 128 on a bad pattern: never a silent pass
+        if hits is None:  # a bad pattern: never a silent pass
             out.append(row("UNREAD", "security", "pattern %d" % number, "private", "leak pattern %d is not a valid regex" % number,
                            "fix leak_patterns in the private flow file"))
             continue
         for line in hits.splitlines():
-            where = ":".join(line.split(":", 2)[:2])  # file:line, never the text
+            where = ":".join(line.split(":", 2)[:2])  # never the text
             out.append(row("FAIL", "security", where, "private", "matches leak pattern %d" % number,
                            "remove it from the file and from history", where))
     return out
@@ -273,9 +273,9 @@ def workflow_permissions(root):
 
 
 def skill_lines(root):
-    out, cap = [], setting(root, "health_skill_lines", SKILL_LINES)  # a repo's own cap (config.json)
+    out, cap = [], setting(root, "health_skill_lines", SKILL_LINES)
     for path in sorted(glob.glob(os.path.join(root, "skills", "*", "SKILL.md"))):
-        with open(path, "rb") as handle:  # LF lines, as git holds them
+        with open(path, "rb") as handle:
             count = len(handle.read().replace(b"\r\n", b"\n").splitlines())
         if count >= cap:
             name = os.path.relpath(path, root)
@@ -329,7 +329,7 @@ def idle_sessions(root):
 
 
 ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
-HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # the ETA ledger and the run records' wrong statements (HLT-4)
+HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # HLT-4
 
 
 def eta(root, name):
@@ -374,9 +374,10 @@ def reviewed(root, mark="Reviewed"):
 def principle_map(root):
     plan, done = pmap(root), reviewed(root)
     under = {i for ids in plan.values() for i in ids}
-    return ([row("FAIL", "requirements", i, "principle-map", "%s is Reviewed under no principle" % i, "add it to Principles.md") for i in sorted(done - under)] * bool(plan)
-            + [row("FAIL", "requirements", i, "principle-map", "Principles.md lists %s, no live requirement (stale)" % i, "regenerate it") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
-            + [row("FAIL", "requirements", "principle " + n, "principle-map", "principle %s has no Reviewed requirement" % n, "add one") for n, ids in sorted(plan.items()) if not done & set(ids)])
+    bad = lambda i, why, fix: row("FAIL", "requirements", i, "principle-map", why, fix)
+    return ([bad(i, "%s is Reviewed under no principle" % i, "add it to Principles.md") for i in sorted(done - under)] * bool(plan)
+            + [bad(i, "Principles.md lists %s, no live requirement (stale)" % i, "regenerate it") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
+            + [bad("principle " + n, "principle %s has no Reviewed requirement" % n, "add one") for n, ids in sorted(plan.items()) if not done & set(ids)])
 
 
 def principle_review(root):

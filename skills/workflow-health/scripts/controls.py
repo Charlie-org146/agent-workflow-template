@@ -372,12 +372,13 @@ CONTROLS.update({name: ("hygiene", name, f_eta(name)) for name in ("eta-missing"
 CONTROLS.update({name: ("hygiene", name, f_auto) for name in ("auto-safety", "auto-record")})
 CONTROLS.update({name: ("hygiene", name, f_honest(name)) for name in ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")})
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-for _m in ("defects", "rules"):
-    try:
-        CONTROLS.update(importlib.import_module(_m).CONTROLS)
-    except ImportError:
-        pass
-sys.path.pop(0)
+try:
+    CONTROLS.update(importlib.import_module("defects").CONTROLS)
+    CONTROLS.update(importlib.import_module("rules").CONTROLS)
+except ImportError:
+    pass
+finally:
+    sys.path.pop(0)
 LEAK = "PLANTED-SECRET"
 
 
@@ -448,6 +449,7 @@ def run(rules, here):
 
 
 def repo_control(root, rule):
+    """The Controls row for one repo rule: its break runs on a private copy, then its command must exit 1 or 2."""
     name, folder = rule["name"], tempfile.mkdtemp(prefix="health-control-")
     copy, fix = os.path.join(folder, "repo"), "fix the rule's break in .loop/health-rules.json"
     try:
