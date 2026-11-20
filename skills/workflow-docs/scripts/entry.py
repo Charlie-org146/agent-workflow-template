@@ -28,7 +28,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILLS = os.path.dirname(os.path.dirname(HERE))
 TEMPLATES = os.path.join(os.path.dirname(HERE), "references", "commands.md")
-REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")
+REFERENCE = os.path.join(SKILLS, "loop-files.md")
 ENTRY = os.path.join(".loop", "START.md")
 OPEN, CLOSE = "<!-- workflow-loop -->", "<!-- /workflow-loop -->"
 AGENT_FILES = ["CLAUDE.md", "AGENTS.md"]
