@@ -38,7 +38,7 @@ after `goal.py pr`. It asks nothing, and it publishes the release (no draft):
 
 **Bump rule:** patch by default. Minor or major only when the operation recorded the goal's bump with
 `goal.py set SLUG --bump minor|major`. A removed file or a `BREAKING` commit is named in the reason, never a major on
-its own. Every refusal ends with a code; `references/commands.md` has the codes table.
+its own. Every refusal ends with a code; the codes table is in the Release section of `loop-files.md` (`../` here, `shared/` in a pack).
 
 Any release failure, a failed merge included, is recorded on the goal as `release_error` and shows under Issues.
 Without the switch it refuses, and the owner merges. `ask`, `cut` and `leave` below are the manual path.
@@ -114,10 +114,10 @@ two files and reports the error. Report it too. Don't retry with other flags.
 
 ## A major: `gate`, `promote`, `revert` (REL-1 to REL-8)
 
-A major ships only through `review.py gate vX`, then `promote vX` (operation session only) and `revert vX`; the waivers and refusals are in [references/commands.md](references/commands.md#a-major-gate-promote-and-revert).
+A major ships only through `review.py gate vX`, then `promote vX` (operation session only) and `revert vX`; the waivers and refusals are in [loop-files.md](../loop-files.md#a-major-gate-promote-and-revert) (`shared/` in a pack).
 
 ## Refusals
-Every refusal and its fix is in [references/commands.md](references/commands.md).
+Every refusal and its fix is in [loop-files.md](../loop-files.md) (`shared/` in a pack), under Release: commands and flows.
 
 ## Rules
 

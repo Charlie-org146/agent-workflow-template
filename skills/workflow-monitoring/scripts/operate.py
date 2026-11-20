@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
-"""The one command that runs the operation session's loop, the same way every time. No model is in the loop.
+"""The one command that runs the operation session's loop, the same way every time, with no model in it.
 
 usage: operate.py <command> [options]
 
   run [--once] [--poll S] [--max N] [--skill-dir DIR] [--board]
-      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; uncommitted work left alone; one line when it moved or
-      could not), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel; mends and
-      resumes if the config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and pool.py archive
-      (MON-6: ARCHIVE-NOW lines are for this session to run with its archive tool), prints the check-in (checkin.py) and mails its
-      new events (notify.py). The live board prints only for report, dashboard and "where do things stand" (MON-4; --board adds it).
-      It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued, and stops when nothing is queued,
-      running or waiting, or when the cadence is off. --once makes one pass.
+      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; uncommitted work left alone; one line when it
+      moved or could not), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel;
+      mends and resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and
+      pool.py archive (MON-6: ARCHIVE-NOW lines are for its archive tool), prints the check-in (checkin.py) and
+      mails its new events (notify.py). The live board prints only for report, dashboard and "where do things stand"
+      (MON-4; --board adds it). It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued,
+      and stops when nothing is queued, running or waiting, or the cadence is off. --once makes one pass.
   run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
-  start     the readiness table of a new operation session (session tool, workers, skills, hooks, memory, pool), each row ok or its fix;
-            it starts no goal and no background worker (notify.py ready)
-  timer [created]   show the check-in timer for the owner's yes (interval, steps, what it never does); `created` records it (notify.py timer)
+  start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool), each row ok or
+            its fix; it starts no goal or worker (notify.py ready)
+  timer [created]   show the check-in timer for the owner's yes; `created` records it (notify.py timer)
   send SLUG TEXT [--source owner|auto]
-      send a worker an answer or a follow-up (worker.py send); it sees it the next time it runs goal.py. An answer to a waiting
-      question is kept in <git common dir>/loop/answers.jsonl with its source (auto.py reads it)
+      send a worker an answer or follow-up (worker.py send); it sees it the next time it runs goal.py. An answer to a
+      waiting question is kept in <git common dir>/loop/answers.jsonl with its source (auto.py reads it)
   claim [--id ID]
-      add this session ($CLAUDE_SESSION_ID or --id) to loop/operation.id for the govern hook (MON-7), in this repo and every repo it
-      follows (MON-13); several operation sessions may run at once; refused in a worker
+      add this session ($CLAUDE_SESSION_ID or --id) to loop/operation.id for the govern hook (MON-7), in this repo and every
+      repo it follows (MON-13); several may run at once; refused in a worker
 
 An LLM asked to run the operation session runs `operate.py run` and nothing else. It never merges.
 """
@@ -35,7 +35,6 @@ import sys
 import tempfile
 import time
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -59,7 +58,6 @@ def script(name, *args, cwd=None):
 
 
 def signature(top, common):
-    """What a worker's report or a new queue line changes: the run records, the inbox and the queue file."""
     files = glob.glob(os.path.join(common, "loop", "runs", "*.json")) + [os.path.join(top, ".loop", "queue.md")]
     found = {}
     for path in files:
@@ -85,7 +83,7 @@ RUNS = ".loop/regression-runs.tsv"
 
 
 def fast_forward(root, base):
-    """merge --ff-only; a dirty lane record RUNS is stashed under a tag and applied back by its sha (never a bare pop)."""
+    """merge --ff-only; a dirty RUNS is stashed under a tag and applied back by sha, never a bare pop."""
     tag, sha = "operate-forward-%d" % os.getpid(), ""
     if RUNS in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].replace("\\", "/") and fgit(root, "stash", "push", "-m", tag, "--", RUNS)[0] == 0:
         sha = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%H %gs")[1].splitlines() if l.endswith(tag)), "")
@@ -101,7 +99,6 @@ def fast_forward(root, base):
 
 
 def refresh(common, base="main"):
-    """One line when the main checkout moved or could not, else ''."""
     common = os.path.abspath(common)
     root = os.path.dirname(common) if os.path.basename(common) == ".git" else ""
     if not root or not os.path.isdir(root):
@@ -125,7 +122,7 @@ def refresh(common, base="main"):
 
 
 def behind_ask(common, base="main"):
-    """When the main checkout is behind origin/<base> (the govern hook blocks its own pull), the line asks a free worker to fast-forward it; '' when current."""
+    """When the main checkout is behind origin/<base>, the line asks a free worker to fast-forward it; '' when current."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -221,13 +218,16 @@ def cmd_run(args):
         if delay == "none":
             print("CADENCE OFF: the owner turned the loop off. Stop.")
             return 0
-        stop = time.time() + int(delay)
+        stop, beat = time.time() + int(delay), 0
         while time.time() < stop and signature(top, common) == seen:
+            if layers.role(args.role) == "machine" and time.time() - beat >= 30:  # the status file stays under a minute old (TD430)
+                beat = time.time()
+                layers.beat(common, layers.build(common, CFG(top)))
             time.sleep(args.poll)
 
 
 def remember(slug, text, source):
-    """Keep an answer to a waiting question (slug, its question key, the words, who answered) for auto.py."""
+    """Keep an answer to a waiting question for auto.py."""
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
     try:
         with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -241,7 +241,7 @@ def remember(slug, text, source):
 
 
 def add_id(base, sid):
-    """Add sid to <base>/loop/operation.id, keeping the sessions already there; a repo that can't be written is skipped."""
+    """Add sid to <base>/loop/operation.id, keeping the others; an unwritable repo is skipped."""
     path = os.path.join(base, "loop", "operation.id")
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -258,7 +258,7 @@ def add_id(base, sid):
 
 
 def cmd_claim(args):
-    """MON-13: this session joins the operation sessions of this repo and every repo it follows; the others stay."""
+    """MON-13: this session joins this repo's operation sessions and those of every repo it follows."""
     sid = args.id or os.environ.get("CLAUDE_SESSION_ID", "")
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
     if os.environ.get("LOOP_ROLE") == "worker" or os.path.realpath(os.getcwd()).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
@@ -274,8 +274,8 @@ def cmd_claim(args):
 
 
 def cmd_send(args):
-    """The inbox always carries it; a goal in a worker session is also sent it by session message, which wakes it."""
-    graph.refuse(graph.load_run(args.slug))  # another pod's goal is not ours to answer
+    """The inbox carries it; a worker session is also sent it by session message."""
+    graph.refuse(graph.load_run(args.slug))
     remember(args.slug, args.text, args.source)
     code, said = script("worker.py", "send", args.slug, args.text)
     print(graph.localize(said.strip()))
@@ -289,7 +289,6 @@ def run(args, cwd=None):
 
 
 def tems(*args, **kwargs):
-    """workflow-release's autorelease.tems, loaded by path."""
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts")
     sys.path.append(here)
     spec = importlib.util.spec_from_file_location("autorelease", os.path.join(here, "autorelease.py"))
@@ -315,7 +314,6 @@ def wiki_only(top, old, new):
 
 
 def readme_blocks_only(top, old, new):
-    """True when README.md reads the same at OLD and NEW outside its generated blocks."""
     bare = lambda ref: re.sub(r"<!-- (settings|automation|template):begin -->\n.*?<!-- \1:end -->\n", "", run(["git", "show", ref + ":README.md"], cwd=top).stdout, flags=re.S)
     return bare(old) == bare(new)
 
@@ -332,9 +330,10 @@ def apply(slug, branch):
             config = json.load(handle)
         base, folder = config.get("base") or "main", config.get("wiki_dir") or "docs/wiki"
         docs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts")
-        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
+        stale = lambda: sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")})
+        pages = stale()
         again = run([sys.executable, os.path.join(docs, "audit.py"), "rerender", base], tree).stdout.strip()
-        pages = sorted({l.split()[1].rstrip(":") for l in run([sys.executable, os.path.join(docs, "docs.py"), "check", "--own", "origin/" + base], tree).stdout.splitlines() if l.startswith("STALE ")}) if again else pages
+        pages = stale() if again else pages
         said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
         if said and run(["git", "add", "-A", "--", folder, "README.md"], tree).returncode == 0:
             run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
@@ -348,7 +347,7 @@ def apply(slug, branch):
 
 
 def cmd_forward(args):
-    """merge.py / wiki.py: move this main checkout to origin/BASE (exit 0 when it moved)."""
+    """merge.py / wiki.py: move this checkout to origin/BASE."""
     line = refresh(fgit(os.getcwd(), "rev-parse", "--path-format=absolute", "--git-common-dir")[1], args.base)
     print(line)
     return 0 if "FAST-FORWARDED" in line else 1
@@ -360,7 +359,7 @@ def cmd_wiki_only(args):
 
 
 def cmd_apply(args):
-    """merge.py: re-stamp the pages stale on origin/BRANCH (#3867) and push the commit."""
+    """merge.py: re-stamp the pages stale on origin/BRANCH and push the commit."""
     return apply(args.slug, args.branch)
 
 

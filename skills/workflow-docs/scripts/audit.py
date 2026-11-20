@@ -149,13 +149,13 @@ def own_base(root, name):
 def own_touched(root, ref, paths, head="HEAD"):
     """True when the goal's diff (merge-base of ref, to head) touches a path."""
     out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
-    return out is None or bool(out)  # no answer: the goal's own
+    return out is None or bool(out)
 
 
 def own_split(root, found, notes, rows, name="main", head="HEAD"):
     ref = own_base(root, name)
     if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
-        return found, notes  # no base, or on the base branch
+        return found, notes
     keep, moved = [], []
     for item in found:
         if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
@@ -369,10 +369,10 @@ HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "m
 
 
 def home_diagram(text):
-    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    """DOC-4: Home has the System design, or a diagram block naming each part of the loop."""
     fence = prd.FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
     if not fence:
-        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
+        return [] if "\n## System design\n" in text else [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
     low = fence.group(1).lower()
     return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
 

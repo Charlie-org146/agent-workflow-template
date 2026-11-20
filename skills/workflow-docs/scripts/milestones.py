@@ -145,10 +145,10 @@ def sync(root, args):
             title, side, r or "-", s or "-", title)
         row = held.get(key) or [side, "", "0", ""]
         if row[1] and row[3] != sha(text):
-            post("LOOP_GH", "issue", "comment", row[1], "--body", text)
+            post("LOOP_GH", "issue", "comment", row[1], "--body-file", "-", input=text)
             row[2] = "0"
         elif not row[1]:
-            ok, made = post("LOOP_GH", "issue", "create", "--title", "DELTA milestones %s: %s changed" % (title, side), "--body", text)
+            ok, made = post("LOOP_GH", "issue", "create", "--title", "DELTA milestones %s: %s changed" % (title, side), "--body-file", "-", input=text)
             if not ok:
                 print("not connected: milestones %s (gh): %s" % (title, made[:100]))
                 continue
@@ -186,7 +186,7 @@ def kinds(name, text, on_page=()):
     if not table:
         bad("What's delivered holds no row. Fix: add a row for each component, with its Kind")
     reach, books_here = render.blocks(render.part(text, "How to reach or run it")), render.blocks(render.part(text, "Runbooks"))
-    wanted = set()
+    wanted = {"Settings", "When something goes wrong"}
     for component, kind, cells in table:
         if cells != 4:
             bad("row '%s' has %d cells, not 4" % (component, cells))
@@ -211,7 +211,7 @@ def kinds(name, text, on_page=()):
         if ADDRESS.search(" ".join(found.values())):
             bad("block '%s' holds an address. Fix: name a role, not a person" % component)
     for heading in list(reach) + list(books_here):
-        if heading not in wanted and heading != "When something goes wrong":
+        if heading not in wanted:
             bad("block '%s' has no row in What's delivered. Fix: add its row or remove the block" % heading)
     return out
 
@@ -283,6 +283,8 @@ def revise(args):
         body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
         if not (body and body[0].strip()) or "\n" in args.text:
             no("REV-NOOP", "empty text or a line break (use --text-file)")
+        if cr.delegated(root, args.owner_record, " ".join(body)) is False:
+            no("REV-RECORD", "a delegated record can't revise this: its text or the asking words are in a safety class, or DOC-2 lacks its revision. Fix: the owner's own words")
         subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
         fresh = pf.unit(body[0].strip(), subs)
         if fresh == old:

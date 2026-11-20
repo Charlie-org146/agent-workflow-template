@@ -276,7 +276,7 @@ def mine_rows(root):
 def cost_rows(root):
     cost = sibling_module("milestone")
     limits = sibling_module("file")
-    return (cost.cost_rows(root, HERE) + limits.limit_rows(root) + cost.timing_rows(root)) if cost and limits else \
+    return (cost.cost_rows(root, HERE) + limits.limit_rows(root) + cost.timing_rows(root) + cost.queue_rows(root)) if cost and limits else \
         [row("UNREAD", "cost", "milestone.py", "cost", "milestone.py or file.py is missing")]
 
 

@@ -31,7 +31,8 @@ python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria']
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median` | `python3 scripts/calc.py median` |\n| `/toy mean` | `python3 scripts/calc.py mean` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
-printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Sums up the numbers of the toy calculator. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://example.test/milestone/1 |\n' > docs/wiki/Home.md
+printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Sums up the numbers of the toy calculator. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |\n' > docs/wiki/Home.md
+printf '\n<!-- diagram:begin -->\n## System diagram\n\n```text\n[OPERATION SESSION] --assigns a goal--> [WORKER]\n[WORKER] --runs each step--> (staging, then production)\n[MACHINE] --runs a routine, with a guard--> [WORKER]\n\nLegend: a box is a part of the loop; --text--> a flow of data or control; (text) a part outside it.\n```\n<!-- diagram:end -->\n' >> docs/wiki/Home.md
 printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |\n' >> README.md
 repo=$PWD; mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
 <!-- workflow-docs -->
@@ -46,6 +47,14 @@ The toy calculator prints the median of the numbers given.
 | Component | Kind | What it is | How a user uses it |
 |---|---|---|---|
 | `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+### System diagram
+
+```text
+[Command: calc.py | the toy repo] --prints one line--> (the screen)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
 
 ## How to reach or run it
 
@@ -127,7 +136,7 @@ PY
 }
 check() { $docs check 2>&1; }
 MS=""; page "$USAGE"
-MS="Milestone: https://example.test/milestone/1"; page "$USAGE"; git add -A; git commit -qm "Toy PRD" >/dev/null
+MS="Milestone: https://github.com/toy/repo/milestone/1"; page "$USAGE"; git add -A; git commit -qm "Toy PRD" >/dev/null
 
 echo "== 1. the sections, in order, and nothing else"
 check | grep -q "DOCS OK" && ok "a PRD page passes" || bad "PRD page: $(check)"
@@ -267,8 +276,8 @@ for sub in ("workflow-release", "workflow-regression", "workflow-health", "workf
 import release, regression, judge, criteria
 root, out = os.getcwd(), []
 release.doc_rows = lambda top: ["Alpha", "Beta"]
-release.run = lambda *a, **k: type("R", (), {"returncode": 0})()
-out.append(sorted(x.split()[0] for x in release.criteria_trouble(root, {})))
+release.run = lambda *a, **k: type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+out.append(sorted(x.split()[0] for x in release.criteria_trouble(root, {})[0]))
 out.append(sorted(regression.criteria_ids(root)))
 out.append(sorted(i for p in ("Alpha", "Beta") for i, _ in judge.criteria(root, p)))
 seen = {}
@@ -304,15 +313,15 @@ $prd new Qq "x" --paths calc.py --prefix DEL 2>&1 | grep -q "REFUSED: --prefix D
 git checkout -q -- .; rm -f docs/wiki/Delight.md
 
 echo "== 10. convert turns old pages into PRD pages"
-printf '<!-- workflow-docs -->\n# Delivery\n\nMilestone: https://example.test/m/2\n\n## Summary\n\nThe toy calculator, an old page.\n\n## Criteria\n\n%s\n\n## Tests\n\n' "$REQS" > $P
+printf '<!-- workflow-docs -->\n# Delivery\n\nMilestone: https://github.com/toy/repo/milestone/2\n\n## Summary\n\nThe toy calculator, an old page.\n\n## Criteria\n\n%s\n\n## Tests\n\n' "$REQS" > $P
 cp $P "$d/old.md"; out=$($prd convert); grep -q "^Delivery converted (dry run)" <<<"$out" && cmp -s $P "$d/old.md" && ok "convert without --write changes nothing" || bad "dry convert"
 $prd convert --write | grep -q "^Delivery converted$" && ok "convert --write converts an old page" || bad "convert"
-grep -v '^$' $P | sed -n '3,5p' | tr '\n' '~' | grep -q "^Milestone: https://example.test/m/2~Review: \*\*Unreviewed\*\*~## Problem~$" && grep -q "^- DEL-1: \*\*Unreviewed\*\* The calculator prints a median.$" $P && ok "Summary becomes Problem, Criteria Requirements, lines and stamps kept, Review under Milestone" || bad "converted shape"
+grep -v '^$' $P | sed -n '3,5p' | tr '\n' '~' | grep -q "^Milestone: https://github.com/toy/repo/milestone/2~Review: \*\*Unreviewed\*\*~## Problem~$" && grep -q "^- DEL-1: \*\*Unreviewed\*\* The calculator prints a median.$" $P && ok "Summary becomes Problem, Criteria Requirements, lines and stamps kept, Review under Milestone" || bad "converted shape"
 $prd convert --write | grep -q "^Delivery skipped$" && ok "converting twice changes nothing" || bad "twice"
 $cri render >/dev/null; out=$(check)
 grep -q "^UNWRITTEN Delivery" <<<"$out" && ! grep -q "^SECTIONS" <<<"$out" && ok "a converted page is UNWRITTEN until its placeholder drafts are replaced" || bad "convert unwritten: $out"
 sed -i.bak 's/^- Write this page from what is really in the repo\./- A real draft line./' $P; rm $P.bak
-! check | grep -v "^FORMAT" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
+! check | grep -vE "^(FORMAT|HOWTO)" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write | grep -q "^Delivery completed$" && grep -q "^## Requirements$" $P && grep -q "^## Success metrics$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a half-converted page is completed" || bad "completed"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P
@@ -325,7 +334,7 @@ grep -q "^Delivery refused: sections are Overview, Tests" <<<"$out" && [ "$rc" =
 git checkout -q -- .
 
 echo "== 11. revisions: migrate, revise, retire and the REVISION and IDS checks"
-git checkout -q -- .; git switch -q main 2>/dev/null; MS="Milestone: https://example.test/milestone/1"
+git checkout -q -- .; git switch -q main 2>/dev/null; MS="Milestone: https://github.com/toy/repo/milestone/1"
 REQS='### Functional
 
 - DEL-1: **Unreviewed** The calculator prints a median.

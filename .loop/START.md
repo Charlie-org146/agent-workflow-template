@@ -60,11 +60,11 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 
 | Setting | Value | What it does |
 |---|---|---|
-| `agent_command` | ["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"] | The command that runs a goal in the background; the prompt is its last argument. |
-| `agent_files` | ["CLAUDE.md", "AGENTS.md"] | Agent entry files setup wires the loop block into; [] turns wiring off. |
+| `agent_command` | 4 entries in config.json | The command that runs a goal in the background; the prompt is its last argument. |
+| `agent_files` | 2 entries in config.json | Agent entry files setup wires the loop block into; [] turns wiring off. |
 | `auto_approve` | true | true approves what a flow step leaves for the owner, logged auto-approved. |
 | `auto_merge` | true | true lets the release step merge a goal's PR and publish. |
-| `automation` | [{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}] | Routines the Automation table lists: {name, does, cadence, runs}. |
+| `automation` | 3 entries in config.json | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `base` | main | The branch goals start from and pull requests target. |
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
@@ -72,10 +72,9 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
-| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
+| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
 | `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
-| `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns. |
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
@@ -87,35 +86,36 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
 | `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before it waits. |
-| `max_regression_rows` | 1300 | Most rows the regression table may hold; qa refuses a goal that adds more. |
-| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. |
+| `max_regression_rows` | 1300 | Most rows the regression table may hold; qa refuses a goal over it. |
+| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
 | `merge_batch` | true | true lets merge.py --batch merge 2-3 green goals as one. |
+| `merge_queue` | false | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. |
 | `milestones_source` | (empty) | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
-| `plan_pause_percent` | 80 | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
+| `plan_pause_percent` | 80 | Weekly plan % above which no goal starts; 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
-| `public_origins` | ["https://12factor.net", "https://adr.github.io", "https://agentskills.io", "https://cncf.io", "https://containers.dev", "https://copier.readthedocs.io", "https://csrc.nist.gov", "https://diataxis.fr", "https://docs.cucumber.io", "https://docs.github.com", "https://docs.gitlab.com", "https://docs.openstack.org", "https://docs.renovatebot.com", "https://docs.sonarsource.com", "https://dora.dev", "https://eslint.org", "https://github.com/actions/stale", "https://github.com/bors-ng/bors-ng", "https://github.com/gitleaks/gitleaks", "https://github.com/ossf/scorecard", "https://github.com/twpayne/chezmoi", "https://jestjs.io", "https://kubernetes.io", "https://modelcontextprotocol.io", "https://npmjs.com", "https://nx.dev", "https://opengitops.dev", "https://playwright.dev", "https://pre-commit.com", "https://reproducible-builds.org", "https://semver.org", "https://sre.google", "https://support.pagerduty.com", "https://temporal.io", "https://testing.googleblog.com", "https://ubuntu.com", "https://www.agensi.io", "https://www.atlassian.com", "https://www.conventionalcommits.org", "https://www.finops.org", "https://www.thoughtworks.com", "https://www.uber.com", "https://www.writethedocs.org"] |  |
+| `public_origins` | 55 entries in config.json |  |
 | `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs; off is off. |
 | `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `resume_on_limit` | false | true lets watch resume a goal that hit a usage limit. |
 | `review_depth` | full | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `review_hold` | false | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
-| `risky_paths` | ["^\\.github/", "(^\|/)auth", "(^\|/)migrations?/", "(^\|/)(schema\|data)\\b"] | Regexes for paths whose goals need extra care. |
+| `risky_paths` | 4 entries in config.json | Regexes for paths whose goals need extra care. |
 | `routines` | none | Commands the release step runs on the base before it merges. |
 | `silent_minutes` | 30 | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
 | `smtp_host` | smtp.gmail.com | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). |
 | `smtp_port` | 465 | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `stale_branch_days` | 14 | Days a local branch on no remote may sit before health lists it. |
 | `step_budget_minutes` | 30 | Minutes one review or ship step may take, 15 or more. |
-| `step_limit` | 0 | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. |
-| `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
+| `step_limit` | 0 | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
+| `template_repo` | Charlie-org146/agent-workflow-template | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
 | `template_version` | 0.27.29 |  |
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |
 | `time_budget_minutes` | 240 | Active minutes before no new step starts; 0 is none. |

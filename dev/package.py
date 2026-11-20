@@ -33,6 +33,7 @@ import zipfile
 SHIPPED = ["skills", "listing.json", "README.md", "LICENSE"]
 BAD_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", "vendor"}
 MAX_FILES, MAX_BYTES, MAX_SCRIPT = 100, 5000000, 20 * 1024
+STATIC = False
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"gh[pousr]_[A-Za-z0-9]{30,}", r"sk-[A-Za-z0-9]{20,}", r"xox[baprs]-[A-Za-z0-9-]{10,}",
            r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"(?i)(api[_-]?key|secret|password)\s*[:=]\s*['\"][^'\"\s]{8,}"]
 OBFUSCATION = [r"base64\.b64decode", r"b64decode", r"\bexec\s*\(", r"\beval\s*\(", r"\bmarshal\b", r"\bpickle\b",
@@ -289,6 +290,8 @@ def check_scripts(root, files):
             fail("Scripts", "%s imports %s, which is not in the standard library" % (rel, name))
         if re.search(r"skills/|\.\./", text.replace("../loop-files.md", "")) and re.search(r"open\([^)]*(skills/|\.\./)", text):
             fail("Scripts", "%s opens another package file" % rel)
+        if STATIC:
+            continue
         with tempfile.TemporaryDirectory() as lone:  # a copy of its own scripts folder only: siblings, nothing else
             waiting["lone"] = lone
             wait_on("the copy of %s's folder" % rel)
@@ -439,7 +442,10 @@ def main():
     parser.add_argument("--root", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     parser.add_argument("--out", default=None)
     parser.add_argument("--timeout", type=int, default=None, help="hard bound in seconds (default PACKAGE_TIMEOUT, else 300)")
+    parser.add_argument("--static", action="store_true", help="the static rules only (no --help pass, no ZIP): what a pull request check runs")
     args = parser.parse_args()
+    global STATIC
+    STATIC = args.static
     sys.stdout.reconfigure(errors="backslashreplace")  # a FAIL line quoting text the console code page lacks still prints
     try:
         seconds = args.timeout if args.timeout is not None else int(os.environ.get("PACKAGE_TIMEOUT") or 300)
@@ -469,6 +475,9 @@ def main():
     if failures:
         print("REFUSED: %d rule failure(s); no ZIP built" % len(failures))
         return 1
+    if STATIC:
+        print("PASS: %d files, the static rules hold" % len(files))
+        return 0
     out = args.out or "dist/agent-workflow-template-v%s.zip" % version
     wait_on("writing the ZIP " + out)
     build(root, files, out, version)

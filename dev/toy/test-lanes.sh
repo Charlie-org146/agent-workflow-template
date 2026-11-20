@@ -140,6 +140,20 @@ printf 'a\tflipped\n' >> .loop/regression-known.tsv
 out=$(python3 "$here/skills/workflow-regression/scripts/lanes_cli.py" affected --root . -- .loop/regression-known.tsv); echo "$out"
 check "a known-list edit selects the row whose known status flipped and not the row that reads the table" 'grep -q "^AFFECTED 2 of [0-9]* rows (a, b)" <<<"$out"'
 git checkout -q -- .loop/regression-known.tsv
+# Value: protects=a goal file or kept fragment selects only the rows whose command or declared reads name it, no root runner, while
+# a code change beside them still selects its rows and the root runner; fails_when=record files count as code again (a row naming only
+# the wide .loop/ is picked); why_new=a typical pull request selected ~1,270 rows for its goal file;
+# seam=none; no_claim=rows reaching a record file only through a script's text
+printf 'w\tland\tls .loop/ >/dev/null; echo w >> "$TOY_LOG"\tX-1\t2026-01-01\tW.\tcriterion\t\n' >> .loop/regression.tsv
+printf 'k\tland\tcat .loop/kept/x.tsv >/dev/null; echo k >> "$TOY_LOG"\tX-1\t2026-01-01\tK.\tcriterion\t\n' >> .loop/regression.tsv
+printf 'r\tland\tls "$here" >/dev/null; echo r >> "$TOY_LOG"\tX-1\t2026-01-01\tR.\tcriterion\t\n' >> .loop/regression.tsv
+mkdir -p .loop/goals .loop/kept; echo x > .loop/goals/x.md; echo x > .loop/kept/x.tsv
+cli="python3 $here/skills/workflow-regression/scripts/lanes_cli.py affected --root ."
+out=$($cli -- .loop/goals/x.md .loop/kept/x.tsv | head -1); echo "$out"
+check "a goal file and a kept fragment select only the row naming it, not the wide .loop/ row or the root runner" 'grep -q "^AFFECTED 1 of [0-9]* rows (k)" <<<"$out"'
+out=$($cli -- .loop/goals/x.md dev/a.sh | head -1); echo "$out"
+check "a code change beside a record file still selects its rows and the root runner" 'grep -qE "[(, ]a[,)]" <<<"$out" && grep -qE "[(, ]d[,)]" <<<"$out" && grep -qE "[(, ]r[,)]" <<<"$out"'
+git checkout -q -- .loop/regression.tsv; rm -rf .loop/goals .loop/kept
 grep -v "^[fg]	" .loop/regression.tsv > "$d/rows" && cat "$d/rows" > .loop/regression.tsv && git rm -rqf skills && git commit -qam "Drop rows f and g"
 # Value: protects=a python row reruns when a module it imports changes, not everything; fails_when=scan stops following
 # imports; why_new=only shell sourcing is tested; seam=none; no_claim=packages or relative imports (same-folder module only)

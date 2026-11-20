@@ -33,7 +33,6 @@ def plain(text):
     return LOCAL_PATH.sub(lambda m: m.group(0).split("/")[-1] if m.group(0).count("/") > 2 else "~", text)
 
 
-HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT = "~/.workflow-loop/private-names"
 LIMIT, WIDTH = 60, 4096
 PRIVATE_NAME, PRIVATE_LIST = "PRIVATE_NAME", "PRIVATE_LIST"
@@ -331,7 +330,7 @@ def pr_result(top, base, head, branch, ok):
 
 
 def cannot(top, base):
-    """A refusal (why, fix, code) when the base requires a check no local status can satisfy, else None."""
+    """A refusal (why, fix, code) if the base requires a check no local status can satisfy."""
     got = repo_is_private(top) and required_checks(top, base)
     if not got or not got[0]:
         return None

@@ -10,7 +10,7 @@
 # reads: skills/workflow-monitoring/scripts/worker.py skills/workflow-setup/scripts/setup.py
 # Proves the operation loop with a stand-in agent: the dependency-graph planner, the base merge before a pull request, the one
 # operate command, the worker guard, live reports and follow-ups, the status block and token records. No model is called.
-# usage: test-operate.sh [DIR]
+# usage: test-operate.sh [DIR]   TOY_GROUP=timing runs only the polling sections (waits, status, reports, follow-up, worker guard) and TOY_GROUP=loop those plus the operate loop, for the load toys
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 unset LOOP_ROLE  # these tests act as the operation session; workers get LOOP_ROLE=worker where they need it
@@ -76,19 +76,21 @@ PY
 printf 'Shared\tshared.py\n' > .loop/docs.tsv
 git add -A; git commit -qm "Agent"; git push -q origin main
 
+if [ "${TOY_GROUP:-all}" = all ]; then  # TOY_GROUP=timing runs only the polling sections: what a busy machine slows (issue 99)
 echo "== OPS-1 carries the v2 wording"
-ops1_ok() {  # an Operation page holds the consolidated OPS-1 (Reviewed, "governs, re-plans and cleans up"), its first bullet and a newest revision row of that text
-  grep -Eq '^- OPS-1: \*\*Reviewed [0-9-]+\*\* The operation session governs, re-plans and cleans up' "$1" \
-    && grep -q '^  - One command starts the operation session and drives the whole process the same way every time\.' "$1" \
-    && awk '/^### OPS-1$/ {on = 1; next} /^### / {on = 0} on' "$1" | grep -Eq '^\| r[0-9]+ \| [0-9-]+ \| The operation session governs, re-plans and cleans up <br>'
+ops1_ok() {  # an Operation page holds OPS-1 as the approved rewrite (Reviewed, "One operation session governs the loop for me"), its Layers bullet and a newest revision row of that text
+  grep -Eq '^- OPS-1: \*\*Reviewed [0-9-]+\*\* One operation session governs the loop for me' "$1" \
+    && grep -q '^  - \*\*Layers:\*\* top, one session per machine, workers; top only governs\. \[OPS-1\]' "$1" \
+    && awk '/^### OPS-1$/ {on = 1; next} /^### / {on = 0} on' "$1" | grep -Eq '^\| r[0-9]+ \| [0-9-]+ \| One operation session governs the loop for me <br>'
 }
 ops1_page="$here/docs/wiki/Operation.md"
-check "OPS-1 is the consolidated rewrite on the Operation page, with its revision" 'ops1_ok "$ops1_page"'
+check "OPS-1 is the approved rewrite on the Operation page, with its revision" 'ops1_ok "$ops1_page"'
 sed 's/^- OPS-1: .*$//' "$ops1_page" > "$T/ops1-none.md"
-sed 's/^- OPS-1: \*\*Reviewed [0-9-]*\*\* The operation session governs.*$/- OPS-1: **Unreviewed** One command starts the operation session/' "$ops1_page" > "$T/ops1-old.md"
+sed 's/^- OPS-1: \*\*Reviewed [0-9-]*\*\* One operation session governs.*$/- OPS-1: **Unreviewed** One command starts the operation session/' "$ops1_page" > "$T/ops1-old.md"
 sed 's/^### OPS-1$/### OPS-1x/' "$ops1_page" > "$T/ops1-norev.md"
-sed 's/^| r\([0-9]*\) | \([0-9-]*\) | The operation session governs, re-plans and cleans up/| r\1 | \2 | One command starts the operation session/' "$ops1_page" > "$T/ops1-revold.md"
+sed 's/^| r\([0-9]*\) | \([0-9-]*\) | One operation session governs the loop for me/| r\1 | \2 | One command starts the operation session/' "$ops1_page" > "$T/ops1-revold.md"
 check "negative control: a page with no OPS-1 line, the pre-consolidation OPS-1 line, no OPS-1 revision, or an old revision text each fails" '! ops1_ok "$T/ops1-none.md" && ! ops1_ok "$T/ops1-old.md" && ! ops1_ok "$T/ops1-norev.md" && ! ops1_ok "$T/ops1-revold.md" && ! cmp -s "$ops1_page" "$T/ops1-none.md"'
+fi
 
 echo "== a goal waits only for the goals it depends on"
 touch "$FAKE_AGENT/hold-a" "$FAKE_AGENT/hold-c"
@@ -143,6 +145,7 @@ for step in idea plan review qa ship; do
 done
 check "a worker is not refused" 'env LOOP_ROLE=worker python3 "$D/goal.py" step nosuch build 2>&1 | grep -q "no goal named nosuch"'
 
+[ "${TOY_GROUP:-all}" = timing ] && { [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }; exit; }
 echo "== one operate command runs the loop"
 $BO cadence 2 >/dev/null
 $BA add night --goal "Add g" --done "g works" --slug g >/dev/null
@@ -184,6 +187,7 @@ timeout 30 $OP run --poll 0.1 2>&1 | grep -q "^CADENCE OFF" && ok "with the cade
 rm "$FAKE_AGENT/hold-h"; $BO cadence 10 >/dev/null
 check "the operation checkout never ran a goal step" '[ "$(cut -d" " -f2 "$FAKE_AGENT/ran-a")" = worker ] && [ "$(cut -d" " -f3 "$FAKE_AGENT/ran-a")" != "$T/repo" ]'
 
+[ "${TOY_GROUP:-all}" = loop ] && { [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }; exit; }  # TOY_GROUP=loop: the polling sections and the operate loop
 echo "== the latest base is merged before the pull request"
 git switch -q main
 # A goal made with --here is refused in the repo's main checkout, so each runs in a worktree of its own.

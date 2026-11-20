@@ -26,6 +26,7 @@ TABLE = [
     ("cadence", REPO, "30", "Minutes between operation check-ins, 1 to 60, or off."),
     ("auto_approve", REPO, False, "true approves what a flow step leaves for the owner, logged auto-approved."),
     ("auto_merge", REPO, False, "true lets the release step merge a goal's PR and publish."),
+    ("merge_queue", REPO, False, "true: GitHub's merge queue checks a moved base; merge.py waits for MERGED."),
     ("merge_batch", REPO, False, "true lets merge.py --batch merge 2-3 green goals as one."),
     ("review_hold", REPO, False, "true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record."),
     ("pr_bumps_version", REPO, False, "true moves the last version number once on a goal's branch."),
@@ -44,8 +45,7 @@ TABLE = [
     ("criteria_max", REPO, 10, "Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it."),
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
-    ("step_limit", REPO, 0, "Seconds one flow step may run when the flow file sets none; 0 is the built-in limit."),
-    ("goal_lane_minutes", REPO, 10, "Minutes a goal's regression lane may take before health warns."),
+    ("step_limit", REPO, 0, "Seconds a flow step may run when the flow file sets none; 0 is built-in."),
     ("goal_levels", REPO, "land", "Row levels a goal lane plans from: land, or nightly (land and nightly rows)."),
     ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it."),
     ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
@@ -55,12 +55,12 @@ TABLE = [
     ("time_budget_minutes", REPO, 240, "Active minutes before no new step starts; 0 is none."),
     ("max_merge_rounds", REPO, 8, "Merge rounds goal.py pr may take before it waits."),
     ("max_active_goals", REPO, 20, "Goals live at once (or parallel, if smaller); 0 is none."),
-    ("plan_pause_percent", REPO, 80, "Weekly plan % above which no goal starts (pool.py usage N); 0 is off."),
+    ("plan_pause_percent", REPO, 80, "Weekly plan % above which no goal starts; 0 is off."),
     ("min_free_memory_gb", REPO, 3, "Free GB below which no lane or goal starts; 0 off."),
-    ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen."),
+    ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300."),
     ("token_budget", REPO, 0, "Tokens a goal may spend before no new step starts; 0 means none."),
-    ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; qa refuses a goal that adds more."),
-    ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more."),
+    ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; qa refuses a goal over it."),
+    ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it."),
     ("test_budget_minutes", REPO, 15, "Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite."),
     ("prep_budget_minutes", REPO, 15, "Minutes a lane may spend before its first test row, 15 or more; past it, it stops."),
     ("step_budget_minutes", REPO, 30, "Minutes one review or ship step may take, 15 or more."),
@@ -152,6 +152,23 @@ def load(path):
             return json.load(handle)
     except (OSError, ValueError):
         return {}
+
+
+DESK_DOC = """Phone-first onboarding (#4805): list every setup step that needs a desk, run each once up front, and check that a phone-only
+session can start a goal.
+
+usage: setup.py desk list [--repo DIR]         each desk-only step with its state (done, listed, open)
+       setup.py desk run [--repo DIR]          verify what can be verified, print each open desk step once with how to do it
+       setup.py desk done STEP [STEP ...]      record that you did a desk step (the app's own setting is the truth)
+       setup.py desk check [--repo DIR]        DESK OK when nothing is left at the desk and a phone-only start works; else one GAP line each
+
+A phone over Remote Control can read check-ins and mail, answer, approve and start goals, but the app refuses session starts from
+it, so everything the app needs trusted, approved or signed in must be done once at the desk. Steps a file can prove (private
+names file, mail.env present, the agent command on the PATH, Codex login) are verified by `run`, never read: only whether the file
+exists. The rest are recorded with `done`. The record is machine-local (`$LOOP_DESK_HOME`, else ~/.workflow-loop/desk.json) and
+holds step names and times only. With `workers: app` in the repo config a goal waits for a bound session when the app refuses
+one, so check lists that too. Writes nothing in the repo.
+"""
 
 
 HEALTH_RULES = {"_comment": "rules: [{name, group (a health group or repo), feature, command (words; exit 0 pass, 2 warn, 1 fail), fix, "

@@ -52,19 +52,17 @@ Say these to the agent in the operation session; each feature page has the exact
 | You say | What happens |
 |---|---|
 | "Show me every guardrail" | You get the Guardrails page: each guardrail with what it protects against, the feature that owns it, its setting, and whether its Tests row says it is enforced. |
-| "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes, goal_lane_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
-| "Check the budgets" | Health's performance group runs: it warns on any of the last 10 finished goals over its time or token budget, a goal's test lane over goal_lane_minutes, and a full suite over 30 minutes. |
+| "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
+| "Check the budgets" | Health's performance group runs: it warns on any of the last 10 finished goals over its time or token budget, and a full suite over 30 minutes. |
 | "Which guardrails aren't enforced yet?" | Each guardrail whose Tests row reads not enforced is listed with the feature that owns the missing part. |
 | "Will machine setup write my address into a repo?" | No: `machine.py apply` refuses a routine or item holding an address or home path, names the line and kind, and writes nothing. |
 
 Each requirement and how it is delivered:
 
-- GRD-4: A worker writes only its own goal's work, never shared loop state or its own limits. Example, from the grd4-touches test: given a worker session, when it tries to widen its goal's touches, then the command refuses.
+- GRD-4: A worker writes only its own goal's work, never shared loop state or its own limits. Example, from the grd4-touches test: given a worker session, when it tries to widen its goal's touches, then the command refuses. Also (was AUT-9): Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. Also: `setup.py desk` lists every desk-only setup step once and `desk check` ends with DESK OK when none is left. Also: `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
 - GRD-5: Nothing is written to GitHub without an explicit `--live`. Example, from the grd5-regression-dry test: given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call.
 - GRD-6: The base branch is protected and merges only with its required checks green. Example, from the grd6-head-moved test: given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged.
-- GRD-7: CI spends minutes only on runs that matter, and too many runs raise an alarm. Example, from the grd7-round-cost test: given a scheduled round, when its digest is posted, then the round cost shows its minutes and Actions minutes.
-- GRD-8: A step far past its usual tokens or time is flagged while it runs. Example, from the grd8-silent-worker test: given a worker silent past silent_minutes, when the board prints, then it shows under Needs you.
-- GRD-20: The package always passes Agensi's rules. No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. (no test yet)
+- GRD-20: The package always passes Agensi's rules. No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. (no test yet) Also (was HLT-11): Health keeps the repo lean. Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. It warns on a script over 19,000 bytes and fails one at 20 KB. (no test yet)
 
 ### Command: goal.py show
 - **Command:** `python3 skills/workflow-delivery/scripts/goal.py show SLUG`
@@ -89,7 +87,7 @@ Each requirement and how it is delivered:
 
 ### API/file contract: .loop/config.json
 - **Path:** `.loop/config.json`
-- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `goal_lane_minutes`, `silent_minutes` and `criteria_max`.
+- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `silent_minutes` and `criteria_max`.
 - **Example:** `"criteria_max": 19` is this repo's cap on a page's requirements.
 - **Writer:** workflow-setup writes the defaults; the owner edits a value.
 - **Reader:** the guards, the lanes, docs check and health.
@@ -123,4 +121,4 @@ Each package limit Agensi states on its packaging page, next to ours in `dev/pac
 - PRD page: [Guardrails](Guardrails)
 - Backlog: [Backlog: Guardrails](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept principle-7-readme@73f72fa01 -->
+<!-- kept queue-smoke@7132b5722 -->

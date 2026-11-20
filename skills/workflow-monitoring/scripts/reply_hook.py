@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The operation session's reply format, kept by a Claude Code Stop hook instead of a prompt rule (MON-5).
+"""The operation session's reply format, kept by a Claude Code Stop hook, not a prompt rule (MON-5).
 
 usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
        reply_hook.py check FILE|-  print what a reply is missing (exit 0 clean, 1 with problems, 2 unreadable)
@@ -7,18 +7,18 @@ usage: reply_hook.py              the Stop hook: reads the hook's JSON on stdin
 
 A check-in reply passes with one headline line (a Machine line and one line per other pod may follow), then the sections
 All sessions (a table), Dependencies (a graph with an `== repo ==` block per repo naming every goal, MON-14), Needs you
-(numbered items, most-blocking first, each saying what it holds up with a goal count, or "blocks nothing", MON-19; or
+(numbered items, most-blocking first, each with a goal count of what it holds up, or "blocks nothing", MON-19; or
 "Nothing needs you") and, last, Coming up, each heading on its own line with something under it.
 
 Only a reply to a scheduled check-in, or to the owner asking for one (check-in, status, report, board, where do things
-stand), must have the layout; a reply to a peer message, a task notification or other talk is not checked, and should be
-1-3 lines (proctree.needs_layout; a turn it can't read is checked).
+stand), needs the layout; a reply to a peer message, a task notification or other talk is not checked and should be 1-3
+lines (proctree.needs_layout; a turn it can't read is checked).
 
 Only the operation session is checked: one named in <common>/loop/operation.id, or whose latest signal is an unrefused
-'operate.py run|claim'. A worker (a flow step, 'goal.py step|record|pr', or a cwd in <common>/loop/worktrees/) is never
-checked, nor a session in a repo with no .loop/config.json. "reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0,
-turns it off. A failing reply is blocked with a reason; the third block in a row is let through and logged in
-<common>/loop/reply-hook/log, as is any error. setup.py --reply-hook installs it.
+'operate.py run|claim'. A worker ('goal.py step|record|pr', a flow step, or a cwd in <common>/loop/worktrees/) is never
+checked, nor is a repo with no .loop/config.json. "reply_hook": false in .loop/config.json, or LOOP_REPLY_HOOK=0, turns it
+off. A failing reply is blocked with a reason; the third block in a row is let through and logged, with any error, in
+<common>/loop/reply-hook/log. setup.py --reply-hook installs it.
 """
 import json
 import os
@@ -28,10 +28,9 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
-SECTIONS = ("All sessions", "Dependencies", "Needs you", "Coming up")  # in order
+SECTIONS = ("All sessions", "Dependencies", "Needs you", "Coming up")
 NOTHING = "Nothing needs you"
 
 TRIES = 3
@@ -60,7 +59,6 @@ def git(cwd, *args):
 
 
 def repo_of(cwd):
-    """(top, common dir, config) of the repo at cwd, or None without a .loop config."""
     if not cwd or not os.path.isdir(cwd):
         return None
     top = git(cwd, "rev-parse", "--show-toplevel")
@@ -114,7 +112,7 @@ def off(config):
 
 
 def entries(path, tail=0, start=0):
-    """(main-chain entries, end offset) of the transcript: from byte start, or only its last tail bytes. Sidechains and a last line still being written are left out."""
+    """(main-chain entries, end offset) of the transcript; sidechains and a half-written last line are left out."""
     found = []
     with open(path, "rb") as handle:
         size = os.path.getsize(path)
@@ -151,8 +149,8 @@ def flat(content):
 
 
 def refused(text, error=False):
-    """Whether a command did not run: its first output line (after an 'Exit code N' line) starts REFUSED, or it is an
-    error with no exit code (denied). One that ran and failed, timed out or was stopped did run."""
+    """Whether a command did not run: its first output line (after 'Exit code N') starts REFUSED, or it is an error with
+    no exit code (denied). One that failed, timed out or was stopped did run."""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if lines and re.match(r"^Exit code -?\d+$", lines[0]):
         lines = lines[1:]
@@ -162,7 +160,6 @@ def refused(text, error=False):
 
 
 def runs(found):
-    """([(command, refused)] per Bash call with a result, offset of the first call still waiting)."""
     results = {}
     for entry in found:
         if entry.get("type") == "user":
@@ -189,7 +186,6 @@ def words_of(line):
 
 
 def runner(part, i):
-    """Whether part[i], a .py word, is run: by python, uv run, or as ./x.py."""
     if i == 0 and (part[i].startswith("./") or "/" in part[i]):
         return True
     before = part[:i]
@@ -203,7 +199,6 @@ def runner(part, i):
 
 
 def calls(command, depth=0):
-    """(script, subcommand) for each python script a shell command runs."""
     found = []
     for line in command.splitlines():
         try:
@@ -227,7 +222,6 @@ def calls(command, depth=0):
 
 
 def subcommand(rest, known):
-    """The first word that isn't a flag or a flag's value."""
     skip = False
     for word in rest:
         if word.startswith("-"):
@@ -247,7 +241,7 @@ def signal(script, sub):
 
 
 def kind(found, known=""):
-    """(the session's kind: its latest signal among non-refused commands, else known; offset of the first Bash call still waiting)."""
+    """(the session's kind: its latest signal among non-refused commands, else known; offset of the first call still waiting)."""
     done, waiting = runs(found)
     for command, no in done:
         if not no:
@@ -257,7 +251,6 @@ def kind(found, known=""):
 
 
 def final_reply(payload, found):
-    """The final assistant message's text, or None when unconfirmed (the hook passes)."""
     if isinstance(payload.get("last_assistant_message"), str):
         return payload["last_assistant_message"] or None
     chat = [e for e in found if e.get("type") in ("user", "assistant")]
@@ -278,12 +271,10 @@ def bare(line):
 
 
 def heading(line):
-    """A line as a heading: marks, trailing colon and count dropped, case ignored."""
     return COUNT.sub("", bare(line).rstrip(":").strip()).rstrip(":").strip().lower()
 
 
 def problems(text):
-    """What a check-in reply is missing, one line each; empty means it passes."""
     lines, fenced, inside = [], [], False
     for line in str(text or "").splitlines():
         if FENCE_ALONE.match(line):
@@ -321,7 +312,6 @@ def problems(text):
 
 
 def shown(text, cwd):
-    """MON-5, MON-14: Machine line, release headers, goal lines and the for cell; the checks live in board_status."""
     import board_status
     return board_status.check_view(text, cwd)
 
@@ -387,7 +377,7 @@ def decide(payload, session, common):
     if known != "operation":
         return None
     tail = entries(path, TAIL)[0] if path and os.path.exists(path) else []
-    try:  # C4: only a scheduled or asked-for check-in needs the layout; a peer message or other talk may answer in 1-3 lines
+    try:
         import proctree
         if tail and not proctree.needs_layout(tail):
             return None
@@ -395,7 +385,7 @@ def decide(payload, session, common):
         log(common, "layout-trigger unread %s: %s" % (session, error))
     found = None if isinstance(payload.get("last_assistant_message"), str) else tail
     text = final_reply(payload, found or [])
-    if text is not None and os.path.exists(base + ".role"):  # a machine session: its one-line check-in (layers.machine_reply)
+    if text is not None and os.path.exists(base + ".role"):
         import layers
         wrong = layers.machine_reply(text, common)
     else:
@@ -448,7 +438,7 @@ def main(argv):
             print("REFUSED: cannot read %s (%s). Fix: name a readable file, or - for stdin." % (argv[1], error.strerror))
             return 2
         wrong = problems(text) + left_out(text, os.getcwd()) + shown(text, os.getcwd())
-        if os.environ.get("LOOP_OP_ROLE") == "machine":  # machine mode: one line once STATUS went to top
+        if os.environ.get("LOOP_OP_ROLE") == "machine":
             import layers
             wrong = layers.machine_reply(text, layers.os.path.abspath(layers.machines.sh("rev-parse", "--git-common-dir") or ".git"))
         for line in wrong:

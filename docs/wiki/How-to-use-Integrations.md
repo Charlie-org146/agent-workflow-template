@@ -37,8 +37,6 @@ Say these to the agent in the operation session; the feature page has the rules.
 Each requirement and how it is delivered:
 
 - INT-1: One contract for every integration. An integration is declared by a page's PRD source in `.loop/docs.tsv` or by `milestones_source` in `.loop/config.json`, and each is opt-in; the single registry is not built yet.
-- INT-2: The repo stays the source of truth. Every check reads the repo's copy, and `docs.py sync` against a source it cannot reach prints `not connected: ...`, changes nothing and exits 0.
-- INT-7: PRDs kept in an outside document. A page opts in by its PRD source in `.loop/docs.tsv`, and the repo's copy at `.loop/prd/PAGE.md` stays the one every check reads.
 
 ### Skill: workflow-docs
 - **Say:** "What differs from Notion?"
@@ -68,4 +66,4 @@ Each requirement and how it is delivered:
 - PRD page: [Integrations](Integrations)
 - Backlog: [Backlog: Integrations](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gap-wave1-small@75ea8f0e -->
+<!-- kept gap-cheap-fixes@c917e3165 -->

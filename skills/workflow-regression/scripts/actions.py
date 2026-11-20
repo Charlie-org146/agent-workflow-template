@@ -17,7 +17,7 @@ SHARDS = 16  # REG-4, REG-7
 
 ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE",
             "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
-            "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
+            "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 
 
 def row_env():
@@ -27,9 +27,7 @@ def row_env():
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.
 name: regression
 on:
-@SCHEDULE@  push:
-    tags: ["v*"]
-  workflow_dispatch:
+@SCHEDULE@  workflow_dispatch:
     inputs:
       target:
         description: "land, nightly or a row id; empty runs @LEVELS@ (the ci_levels setting)"
@@ -46,7 +44,7 @@ permissions:
   issues: write
   pull-requests: read
 concurrency:
-  group: regression-${{ github.ref }}  # one run per ref
+  group: regression-${{ github.ref }}
   cancel-in-progress: true  # GRD-7
 jobs:
   regression:
@@ -54,6 +52,7 @@ jobs:
     timeout-minutes: @BUDGET@
     strategy:
       fail-fast: false
+      max-parallel: 6
       matrix:
         shard: @MATRIX@
     steps:

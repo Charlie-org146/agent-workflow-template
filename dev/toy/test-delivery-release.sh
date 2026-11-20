@@ -4,7 +4,7 @@
 # reads: skills/workflow-release/scripts/autorelease.py skills/workflow-release/scripts/merge.py
 # reads: skills/workflow-release/scripts/release.py
 # reads: skills/workflow-release/scripts/wiki.py skills/workflow-setup/scripts/setup.py
-# reads: skills/workflow-release/SKILL.md skills/workflow-release/references/commands.md skills/ skills/workflow-release/scripts/
+# reads: skills/workflow-release/SKILL.md skills/loop-files.md skills/ skills/workflow-release/scripts/
 # The release half of delivery-prd (DEL-5, DEL-9, issues 129, 134, 154, 170) on a throwaway toy repo, with a
 # test-local gh shim (dev/toy/release-gh.py) around dev/toy/fakegh and a pre-receive hook in the toy origin that stands in for a protected main.
 # usage: test-delivery-release.sh [CASE]   CASE: patch removed bump protected rules review pending nomatch crash
@@ -288,7 +288,7 @@ fi
 
 if want docs; then
   echo "== #129: the docs say merge.py publishes"
-  S="$here/skills/workflow-release/SKILL.md"; C="$here/skills/workflow-release/references/commands.md"
+  S="$here/skills/workflow-release/SKILL.md"; C="$here/skills/loop-files.md"
   ! grep -iE "merge\.py[^.]*\bdrafts? (a|the) release" "$S" "$C" && grep -q "publishes the release (no draft)" "$S" && grep -q "publishes the release (no draft)" "$C" \
     && grep -q "release PR" "$S" && grep -q "goal.py set SLUG --bump" "$S" && [ "$(wc -l < "$S")" -lt 150 ] \
     && ok "#129: the docs say merge.py publishes (no draft) and only cut drafts" || bad "#129: docs"

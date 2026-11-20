@@ -169,7 +169,7 @@ POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Run
 
 
 def prompt_pointer(root):
-    """prompt-pointer: WARN for each scheduled-task prompt (a routine's runs: claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
+    """prompt-pointer: WARN for each scheduled-task prompt (claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -191,7 +191,7 @@ def prompt_pointer(root):
 
 def milestones(root):
     """milestones: a WARN for each standing "Backlog: <Feature>" milestone (and Other) a GitHub repo lacks (DOC-10, SET-17). No
-    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES (JSON titles) stands in for gh."""
+    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES stands in for gh."""
     if "github.com" not in (git_raw(root, "remote", "get-url", "origin") or ""):
         return []
     import milestone
@@ -204,7 +204,7 @@ def milestones(root):
 
 
 def machine(root):
-    """machine: each gap workflow-setup's machine.py check lists, one WARN with its fix."""
+    """machine: each gap workflow-setup's machine.py lists, one WARN with its fix."""
     tool = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "dev", "machine.py")
     if os.environ.get("CI") or not os.path.isdir(os.path.expanduser("~/.claude/skills/workflow-health")) or not os.path.exists(tool):
         return []
@@ -300,9 +300,9 @@ def skill_lines(root):
 def requirements_per_page(root):
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
-            limit = int(json.load(handle).get("criteria_max", 6))
+            limit = int(json.load(handle).get("criteria_max", 10))
     except (OSError, ValueError, TypeError, AttributeError):
-        limit = 6
+        limit = 10
     return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (len(LINE.findall(text)), limit),
                 "merge requirements, or raise criteria_max", name)
             for name, text in pages(root).items() if len(LINE.findall(text)) > limit]
@@ -338,10 +338,21 @@ def idle_sessions(root):
         if status in ("done", "merged"):
             out.append(row("WARN", "hygiene", sid, "idle-sessions", "busy with %s, which is %s" % (item["slug"], status),
                            "sessions.py free %s" % item["slug"], sid))
+    try:
+        with open(os.path.join(loop, "app-sessions.json")) as handle:
+            live = json.load(handle)
+        live = live.get("ids") if isinstance(live, dict) else live
+        ghosts = sum(sid.startswith("local_") and sid not in live for sid in pool) if live else None
+    except (OSError, ValueError, TypeError):
+        ghosts = None
+    if ghosts is not None:
+        out.append(row("WARN" if ghosts else "PASS", "hygiene", "ghosts", "idle-sessions", "%d pool ids the app lacks" % ghosts,
+                       "pool.py reconcile" * bool(ghosts), "ghosts"))
     return out
 
 
 ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
+HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # the ETA ledger and the run records' wrong statements (HLT-4)
 
 
 def eta(root, name):
@@ -356,6 +367,9 @@ def eta(root, name):
         spec.loader.exec_module(module)
     finally:
         sys.path.pop(0)
+    if name in HONEST:
+        import file as filing
+        return filing.honesty(root, name, module)
     return [row(level, "hygiene", text.split()[0], name, text, "sessions.py owner-words with --ids full-auto-rule, or goal.py set with an owner record")
             for rule, level, text in module.eta_rows(root) + module.auto_rows(root) if rule == name]
 
@@ -365,5 +379,5 @@ GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permiss
              "idle-sessions": idle_sessions}
 
 
-GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA})
+GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA + HONEST})
 FUNCTIONS.update(GUARD_FUNCTIONS)

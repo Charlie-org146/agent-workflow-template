@@ -332,10 +332,10 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:
         if name.endswith(".py"):
             size = len(open(os.path.join(dirpath, name), "rb").read().replace(b"\r\n", b"\n"))
-            cap = 19495 if name == "checkin.py" else 19000
+            cap = 19495 if name == "checkin.py" else 20480  # TD482: review/merge/release follow GRD-20 (warn over 19,000, fail over 20,480); checkin.py is a no-growth line, kept
             if size > cap and name in ("review.py", "merge.py", "release.py", "checkin.py"):
                 over.append("%s %d" % (name, size))
-check("review.py, merge.py and release.py stay under 19,000 bytes, and checkin.py at or under 19,495", not over, ", ".join(over), "major")
+check("review.py, merge.py and release.py are within GRD-20 (none over 20,480 bytes), and checkin.py at or under 19,495", not over, ", ".join(over), "major")
 added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
 check("no file is added to the shipped package", not added.strip(), added, "major")
 sys.exit(1 if fails else 0)
