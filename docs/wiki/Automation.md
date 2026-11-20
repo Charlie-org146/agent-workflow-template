@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept queue-smoke@1dd26367f -->
+Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept ci-5min@61f7b5d0e -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -136,15 +136,13 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 |---|---|---|---|---|
 | [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-20 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-20 |
-| [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards. | PASS 2026-11-12 |
+| [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given the AUT-1 cases of test-automation.sh, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | PASS 2026-11-20 |
 | [aut-old-issue-relabel](Tests#t-aut-old-issue-relabel) | requirement | AUT-1 | Given an open failing-test issue without the defect label, when the test fails again, then the issue gains the defect label. | PASS 2026-11-12 |
-| [aut-issue-list-fails](Tests#t-aut-issue-list-fails) | requirement | AUT-1 | Given a page of the open regression issues cannot be read, when the scheduled regression runs, then it changes no issue rather than open duplicates. | PASS 2026-11-12 |
 | [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given a toy repo whose regression_runs is mac and one failing row, when the tick runs, then health runs, the regression runs live, one issue is filed for the failing row, the digest is posted and the tick says REGRESSION: runs on the Mac. | not run |
 | [ls-public-tick](Tests#t-ls-public-tick) | requirement | AUT-1 | Given a toy repo whose regression_runs is actions, when the tick runs, then health runs, no regression runs the tick says REGRESSION: runs in GitHub Actions and the newest suite-time artifact is fetched into the git common dir. | not run |
 | [ls-missed-run](Tests#t-ls-missed-run) | requirement | AUT-1 | Given a registry whose last run is older than the interval plus an hour, when the digest is composed, then it says Last ran and MISSED, a recent last run says no MISSED, a repo whose tick started 20 minutes after another's is still due at the next fire, a run id of 12 digits not starting 20 is an Actions id, and one coalesced fire after sleep makes every overdue repo due. | not run |
 | [st-pass](Tests#t-st-pass) | requirement | AUT-1 | Given a private repo whose rules require two checks and a lane that passed, when the pr lane posts, then one success per required check is posted with a description naming the local run and no target_url. | not run |
 | [st-fail-never-success](Tests#t-st-fail-never-success) | requirement | AUT-1 | Given a lane that failed, when it posts, then only failure is posted, only for a head already on the remote, never success, and an unpushed head posts nothing. | not run |
-| [aut-regression-schedule-mismatch](Tests#t-aut-regression-schedule-mismatch) | requirement | AUT-1 | Given a regression schedule that differs from the config, when the routine runs, then it names the difference and the command that fixes it. | PASS 2026-11-12 |
 | [aut-email-file](Tests#t-aut-email-file) | requirement | AUT-1 | Given health findings, when the scheduled health run files them, then each is tagged with its group on no milestone (and with its feature when feature_labels is on), no open issue is duplicated, and an issue the owner put on a milestone stays. | PASS 2026-11-12 |
 | [aut-email-regression](Tests#t-aut-email-regression) | requirement | AUT-1 | Given a failing test, when the scheduled regression runs, then its defect issue is filed with no milestone read, made or set, tagged with its feature when feature_labels is on, the suite runs every 4 hours and on every release tag, and a failed filing fails the run. | PASS 2026-11-12 |
 | [runbook-good](Tests#t-runbook-good) | requirement | AUT-1 | Given a feature page with a well-formed Runbook section after its Problem, when the docs check runs, then it passes, and a Runbook placed before Problem is refused as out of order. | not run |
@@ -172,14 +170,10 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-20 |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | AUT-5 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-19 |
-| [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given regression_cron off, when the regression workflow runs, then it writes nothing and says the routine is off. | PASS 2026-11-12 |
+| [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given the AUT-5 cases of test-automation.sh, when it runs once, then it prints every PASS line the 5 merged rows checked and no FAIL line. | PASS 2026-11-20 |
 | [aut-off-by-hand](Tests#t-aut-off-by-hand) | requirement | AUT-5 | Given regression_cron off, when its workflow is written, then it has no schedule and can still be started by hand. | PASS 2026-11-12 |
-| [aut-digest-no-token](Tests#t-aut-digest-no-token) | requirement | AUT-5 | Given no token in the digest step, when it runs in Actions, then it says what is missing and writes nothing. | PASS 2026-11-12 |
 | [aut-no-push](Tests#t-aut-no-push) | requirement | AUT-5 | Given the scheduled workflows, when they are written, then neither pushes nor has write access to the repo's contents. | PASS 2026-11-12 |
 | [aut-by-hand-runs](Tests#t-aut-by-hand-runs) | requirement | AUT-5 | Given regression_cron off, when someone starts the regression run by hand, then it still runs. | PASS 2026-11-12 |
-| [aut-digest-dry-run](Tests#t-aut-digest-dry-run) | requirement | AUT-5 | Given no token outside Actions, when the digest runs, then it prints the comment, says it is a dry run and writes nothing. | PASS 2026-11-12 |
-| [aut-off-push-runs](Tests#t-aut-off-push-runs) | requirement | AUT-5 | Given regression_cron off, when a release tag is pushed, then the regression run still runs the rows. | PASS 2026-11-12 |
-| [aut-off-dispatch-runs](Tests#t-aut-off-dispatch-runs) | requirement | AUT-5 | Given regression_cron off, when someone starts the regression run by hand, then it still runs the rows. | PASS 2026-11-12 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | AUT-5 | Given a merged head whose generated Tests tables are stale, when the wiki publish prepares its tree, then it re-renders them and the Tests page is no longer stale. | PASS 2026-11-13 |
 | [publish-tables-handwritten](Tests#t-publish-tables-handwritten) | requirement | AUT-5 | Given a stale hand-written page, when the wiki publish re-renders the generated tables, then that page is still reported stale and the publish still refuses. | PASS 2026-11-13 |
 | [capture-row-ci](Tests#t-capture-row-ci) | defect | [#3789](https://github.com/jcl2018/agent-workflow-template/issues/3789) closed (2026-11-13) | Given a failing row that ends in grep -q and prints nothing, when the scheduled workflow files its issue, then the body holds the row's last 40 output lines, not an empty block (#3789). | FAIL 2026-11-13 |
