@@ -435,6 +435,18 @@ None
 | [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
 | [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
 | - | requirement | DOC-24 | no passing test | not enforced |
+| [sections-missing](Tests#t-sections-missing) | requirement | DOC-25 | Given a README with no System design section, when the docs check runs, then it fails naming the section it wanted. | not run |
+| [sections-extra](Tests#t-sections-extra) | requirement | DOC-25 | Given a README with a section after Requirements by feature, when the docs check runs, then it fails. | not run |
+| [sections-renamed](Tests#t-sections-renamed) | requirement | DOC-25 | Given a README whose System design section is renamed, when the docs check runs, then it fails naming the section it wanted. | not run |
+| [sections-order](Tests#t-sections-order) | requirement | DOC-25 | Given a README with System design after principle 1, when the docs check runs, then it fails. | not run |
+| [sections-adopted](Tests#t-sections-adopted) | requirement | DOC-25 | Given an adopted README with the template principles section after the principles, when the docs check runs, then it fails. | not run |
+| [sections-feature](Tests#t-sections-feature) | requirement | DOC-25 | Given a feature page with no Non-goals section, when the docs check runs, then it fails naming Non-goals. | not run |
+| [sections-howto](Tests#t-sections-howto) | requirement | DOC-25 | Given a How-to-use page with no Links section, when the docs check runs, then it fails naming Links. | not run |
+| [sections-principles](Tests#t-sections-principles) | requirement | DOC-25 | Given a Principles page with a section that is not a principle, when the docs check runs, then it fails. | not run |
+| [sections-tests](Tests#t-sections-tests) | requirement | DOC-25 | Given a Tests page with Other before a feature section, when the docs check runs, then it fails. | not run |
+| [sections-home-extra](Tests#t-sections-home-extra) | requirement | DOC-25 | Given a Home with a section the README lacks, when the docs check runs, then it fails. | not run |
+| [sections-sentence](Tests#t-sections-sentence) | requirement | DOC-25 | Given a README and a Home whose principle text differs, when the docs check runs, then it fails naming the principle. | not run |
+| [sections-no-figure](Tests#t-sections-no-figure) | requirement | DOC-25 | Given a Part 1 row marked planned with no figure, when the docs check runs, then it fails naming the Flow link. | not run |
 | - | requirement | DOC-25 | no passing test | not enforced |
 | [docs-counts-issue-39](Tests#t-docs-counts-issue-39) | defect | [#39](https://github.com/jcl2018/agent-workflow-template/issues/39) closed (2026-11-09) | Given counts in the docs that drift from the code, when the docs check runs, then it fails (issue 39). | PASS 2026-11-12 |
 | [docs-count-word-gap-issue-104](Tests#t-docs-count-word-gap-issue-104) | defect | [#104](https://github.com/jcl2018/agent-workflow-template/issues/104) closed (2026-11-10) | Given a wrong skills count with a word such as "workflow-ready" or an extra space before the noun, when the docs check runs, then it fails, and a part such as "other" is not read. | PASS 2026-11-12 |

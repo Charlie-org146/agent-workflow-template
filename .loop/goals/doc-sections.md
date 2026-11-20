@@ -17,3 +17,13 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-docs-sections.sh | tail -2`.
+   Expect: the last line is `ALL PASS`.
+2. Run `python3 skills/workflow-docs/scripts/docs.py check | grep -c "^FORMAT"`.
+   Expect: it prints 0.
+3. Run `diff <(grep "^## " README.md) <(grep "^## " docs/wiki/Home.md)`.
+   Expect: no output; both list System design, the eight principles and Requirements by feature, in that order.
+4. Open `docs/wiki/system-design.svg` in a browser.
+   Expect: one diagram of the owner, the loop's parts and the outside systems it uses.
+5. Rename `## Non-goals` to `## Out of scope` in docs/wiki/Delivery.md and run `python3 skills/workflow-docs/scripts/docs.py check | grep Delivery`.
+   Expect: a Sections line naming Delivery, DOC-25 and Non-goals. Undo the rename afterwards.
