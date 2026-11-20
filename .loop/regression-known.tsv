@@ -5,7 +5,6 @@ adopt-set-5	fails on clean main since v0.27.17; fixed by render-readme-guard
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-repo-narrow	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
-plan-sizes	fails on clean main since v0.27.17; fixed by package-cap-3
 pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
 sync-check-preview	fails on clean main since v0.27.17; fixed by package-cap-3
 sync-board-lag	fails on clean main since v0.27.17; fixed by package-cap-3
@@ -17,7 +16,6 @@ package-passes-3800	fails on main v1.0.48: govern_hook.py calls __import__, whic
 scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.py and guards.py are over 19,000; issue 4892
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (19,636 bytes), checkin.py (19,444), operate.py (19,262) and reply_hook.py (19,386) are over the 19,000 warn line (owner record o39)
-docs-block-split	19,000-byte size rows to retire per o39 (render.py is over 19,000 and under the 20,480 fail line), see #4653
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
 sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
 no-flow-refused	red on main (in-session flow.py path, see #4852)
@@ -110,7 +108,6 @@ apply-rerender-howto	fails on main since v1.0.110; fixed by kept-fragments-reds;
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
-scripts-c-regression-under-19000	fails on main since v1.0.107; fixed by kept-reds-5; see #5373
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
 apply-rerender-hand-edit	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); fixed by kept-reds-2; see #4995
