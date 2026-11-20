@@ -139,7 +139,7 @@ def front(root, names):
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
     listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
-    ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+    ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+): (?:\*\*|moved to )", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
     ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
     own = "## The principles" in listing
     if "home" in on and home is not None:
