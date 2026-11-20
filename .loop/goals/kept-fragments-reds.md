@@ -1,7 +1,7 @@
 # Seven regression rows went red on main at v1.0.110 (run 44676371830), first seen at the release of #5380 kept-fragments: apply-rerender-howto, doc18-howto-restamp, doc19-item-missing, doc19-item-unknown, doc19-runbook-plain, home-guard-catches-leak, restamp-marks-3867. For each, decide read-only whether its test asserts the old stamp behaviour that #5380 changed on purpose (then update the test and name the requirement it proves) or #5380 broke something real (then fix the code). No test is weakened to pass (TD247)
 
 - Slug: kept-fragments-reds
-- Touches: dev/toy, .loop/regression.tsv, skills/workflow-docs/scripts
+- Touches: dev/toy, .loop/regression.tsv, skills/workflow-docs/scripts, skills/workflow-monitoring/scripts
 - ETA: 385 active minutes (estimate 308m plus a 25% margin)
 
 ## Done lines
