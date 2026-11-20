@@ -133,4 +133,9 @@ out=$(python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affecte
 check "a change only to NO_EFFECT files (a release's VERSION) reaches no root runner; a real change still does" 'grep -qx "AFFECTED 0 of 3 rows ()" <<<"$out" && grep -q "^AFFECTED 2 of 3 rows (tb, tc)" <<<"$out"'
 # merge batching (merge-queue C): its own toy, folded in here so it adds no regression row
 out=$(bash "$here/dev/toy/test-merge-batch.sh" 2>&1 | tail -4); check "merge.py --batch: off by default, one release per batch, a red, conflicting, safety, major or stale-GO case never merges (dev/toy/test-merge-batch.sh)" 'grep -qx "ALL PASS" <<<"$out"'
+# #5306: private.py finds lane with no PYTHONPATH, loaded by path as merge.py does, from a checkout and an installed skills copy
+cp -r "$here/skills" "$d/inst"
+lane_import() { (cd "$d" && env -u PYTHONPATH python3 -B -c 'import importlib.util as u,sys;s=u.spec_from_file_location("private",sys.argv[1]);m=u.module_from_spec(s);s.loader.exec_module(m);import importlib;importlib.import_module("lane");print("LANE OK")' "$1/workflow-delivery/scripts/private.py" 2>&1); }
+out=$(lane_import "$here/skills")$(lane_import "$d/inst")
+check "private.py pr_result imports lane without PYTHONPATH from a checkout and an installed skills folder (no ModuleNotFoundError)" '[ "$(grep -c "^LANE OK" <<<"$out")" = 2 ] && ! grep -q ModuleNotFoundError <<<"$out"'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
