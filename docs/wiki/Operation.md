@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept merge-queue-ci@a94a2f1a4 -->
+Review: **Unreviewed** <!-- kept principle-7-readme@6991b3397 -->
 
 How to use: [How-to-use-Operation](How-to-use-Operation)
 

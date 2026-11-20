@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=98612a96 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept merge-queue-ci@a94a2f1a4 -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=98612a96 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept principle-7-readme@6991b3397 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
