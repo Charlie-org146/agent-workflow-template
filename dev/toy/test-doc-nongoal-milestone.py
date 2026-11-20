@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# reads: docs/wiki/Documentation.md
 """The Documentation page does not call milestone sync left for later while DOC-17 syncs milestones (#4546).
 
 usage: test-doc-nongoal-milestone.py [PAGE]   PAGE defaults to docs/wiki/Documentation.md next to this repo

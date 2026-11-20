@@ -110,6 +110,23 @@ check "a script that runs tools on the repo's own files reruns on every change" 
 printf 'import os, helper\n' > "$n/skills/b/scripts/b2.py"; printf '#!/bin/bash\n# reads: skills/b/scripts/b2.py\npython3 skills/b/scripts/b2.py\n' > "$n/dev/tl.sh"
 check "every module of an import list is followed" '$L deps --root "$n" "bash dev/tl.sh" | grep -qx "skills/b/scripts/helper.py"'
 check "affected picks the rows naming a deleted file, never a full run, and a table edit is never unmapped" '$L affected --root "$n" skills/a/scripts/nope.py | grep -q "^DELETED skills/a/scripts/nope.py: the rows that name it" && ! $L affected --root "$n" .loop/regression.tsv | grep -q UNMAPPED'
+# Value: protects=a Python test's # reads: header narrows its row as a shell test's does, so a batch.py change stops
+# rerunning every row that merely names a skill; fails_when=header() skips .py files again, a header is trusted past what
+# the script quotes, or a missing declared file stops being a finding; why_new=Python tests had headers nothing read, so
+# 879 of 1233 land rows reran on one change; seam=none; no_claim=real repo tests (toy stand-ins)
+p="$d/narrowpy"; mkdir -p "$p/skills/a/scripts" "$p/skills/b/scripts" "$p/dev/toy" "$p/.loop"
+printf 'X = 1\n' > "$p/skills/a/scripts/a.py"; printf 'import b2\n' > "$p/skills/b/scripts/b.py"; printf 'Y = 1\n' > "$p/skills/b/scripts/b2.py"
+printf 'Z = 1\n' > "$p/skills/b/scripts/quoted.py"
+printf '#!/usr/bin/env python3\n# reads: skills/a/scripts/a.py\nimport subprocess\nsubprocess.run(["python3", "skills/a/scripts/a.py"])\n' > "$p/dev/toy/test-pa.py"  # lanes: no read (toy repo file)
+printf '#!/usr/bin/env python3\n# reads: skills/b/scripts/b.py\nimport subprocess\nsubprocess.run(["python3", "skills/b/scripts/b.py"])\n' > "$p/dev/toy/test-pb.py"  # lanes: no read (toy repo file)
+printf '#!/usr/bin/env python3\n# reads: skills/a/scripts/a.py\nimport subprocess\nsubprocess.run(["python3", "skills/b/scripts/quoted.py"])\n' > "$p/dev/toy/test-pq.py"  # lanes: no read (toy repo file)
+printf '#!/usr/bin/env python3\n# reads: skills/a/scripts/gone.py\n' > "$p/dev/toy/test-pm.py"  # lanes: no read (toy repo file)
+printf '# id\tlevel\tcommand\n' > "$p/.loop/regression.tsv"
+for r in pa pb pq; do printf '%s\tland\tpython3 dev/toy/test-%s.py\n' $r $r >> "$p/.loop/regression.tsv"; done
+affp() { $L affected --root "$p" "$@" | head -1 | sed 's/^AFFECTED [0-9]* of [0-9]* rows (\(.*\))$/\1/'; }
+check "a Python test's header narrows its row: a change to one skill's file reruns only the tests that declare or quote it" '[ "$(affp skills/a/scripts/a.py)" = "pa, pq" ] && [ "$(affp skills/b/scripts/b2.py)" = "pb" ] && [ "$(affp skills/b/scripts/quoted.py)" = "pq" ]'
+out=$($L check --root "$p" dev/toy/test-pa.py dev/toy/test-pm.py); rc=$?
+check "a Python test's header is checked: a declared file that does not exist is a finding, a good header is clean" '[ $rc = 1 ] && grep -q "^LANES-DECL-MISSING dev/toy/test-pm.py:2: declared path does not exist: skills/a/scripts/gone.py" <<<"$out" && ! grep -q "test-pa.py" <<<"$out"'
 # Value: protects=headerless rows keep today's mapping exactly; fails_when=the shared helpers change wide behavior;
 # why_new=parity oracle for the refactor (E7); seam=LANES_WIDE; no_claim=none beyond protects
 w2=$(LANES_WIDE=1 $L affected --root "$n" skills/a/scripts/a.py 2>&1)
@@ -151,7 +168,8 @@ git checkout -q -- skills/k/scripts/k.py
 echo "== check-reads.sh: runtime reads outside a row's closure fail the trace"
 c="$d/trace"; mkdir -p "$c/dev/toy" "$c/skills/workflow-regression/scripts" "$c/skills/a/scripts" "$c/.loop"
 cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here/skills/workflow-regression/scripts/lanes.py" "$here/skills/workflow-regression/scripts/narrow.py" \
-  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$c/skills/workflow-regression/scripts/"
+  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$here/skills/workflow-regression/scripts/tiers.py" \
+  "$here/skills/workflow-regression/scripts/slots.py" "$c/skills/workflow-regression/scripts/"
 for f in a b c e; do printf 'NAME = "%s"\nopen(__file__).read()\n' "$f" > "$c/skills/a/scripts/$f.py"; done
 printf 'import os\nopen(os.path.join(os.path.dirname(__file__), "c" + ".py")).read()\n' > "$c/skills/a/scripts/g.py"
 printf 'import os, shutil, subprocess, sys, tempfile\nt = tempfile.mkdtemp(); shutil.copy(os.path.join(os.path.dirname(__file__), "e" + ".py"), t + "/x.py")\nsubprocess.run(["python3", t + "/x.py"], check=True)\n' > "$c/skills/a/scripts/k.py"

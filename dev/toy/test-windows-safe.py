@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/ skills/workflow-docs/scripts/ skills/workflow-health/scripts/ skills/workflow-monitoring/scripts/
-# reads: skills/workflow-regression/scripts/ skills/workflow-release/scripts/ skills/workflow-setup/scripts/
+# reads: skills/
 # Issue 2871: a script under skills/*/scripts that names a POSIX-only call (fcntl, os.getuid, os.killpg, os.getpgrp,
 # os.O_NOFOLLOW, signal.SIGHUP, os.kill(pid, 0), os.WNOHANG) without a guard breaks native Windows, and nothing on a Linux
 # lane saw it. A name is guarded when its line or one of the 3 lines above holds hasattr(, getattr(, os.name, sys.platform,

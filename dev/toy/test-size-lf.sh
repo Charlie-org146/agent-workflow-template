@@ -1,6 +1,4 @@
 #!/bin/bash
-here=$(cd "$(dirname "$0")/../.." && pwd)
-. "$here/dev/toy/reap.sh"
 # windows: ok
 # reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/rules.py dev/package.py
 # Issue 3125: a Windows CRLF checkout gets the same size verdicts as Linux. A 20,000-byte script (20,3xx on disk
@@ -9,6 +7,8 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 # Value: protects=health and the package check agree between Windows and Linux (issue 3125); fails_when=a size or
 # line rule reads the CRLF working tree; why_new=no row wrote CRLF files before judging them; seam=none;
 # no_claim=a real Windows checkout
+here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 set -u
 fails=0
 ok() { echo "PASS: $1"; }

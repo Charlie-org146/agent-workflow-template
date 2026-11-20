@@ -1,6 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/guards.py skills/workflow-delivery/scripts/role.py
 # reads: skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/lane.py
+# reads: skills/workflow-delivery/scripts/
 # Proves that goal.py pr never spends one of its 3 tries on something that is not the goal's fault: a conflict caused only by main
 # moving in generated files (a Tests page, the regression rows) is mended and merged with no try; a real conflict still costs one;
 # a lane that died with no exit status (killed from outside) reruns free, bounded at 3, and a real failure still costs a try; and

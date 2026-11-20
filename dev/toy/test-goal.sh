@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/references/commands.md skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/guards.py skills/workflow-delivery/scripts/role.py
-# reads: skills/workflow-monitoring/scripts/monitor.py
+# reads: skills/workflow-monitoring/scripts/monitor.py skills/workflow-monitoring/scripts/batch.py
 # reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-release/scripts/merge.py
 # reads: skills/workflow-setup/scripts/setup.py
 # Test the skill flow, the queue command, version bumps and the governing watch with a fake agent. No model is called.

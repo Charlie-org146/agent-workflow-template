@@ -3,6 +3,7 @@
 # reads: skills/workflow-health/scripts/rules.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # reads: skills/workflow-delivery/scripts/private.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl docs/wiki/Health.md
+# reads: skills/workflow-health/scripts/
 # The local schedule (local-schedule done lines 1 to 6): one user launch agent, a registry outside every repo, a tick that runs
 # health with the judge and, for a private repo, the full regression, then posts the digest. No launchctl, no network, no real
 # claude: launchctl, gh and the judge are fakes and every home is a temp folder. usage: test-local-schedule.sh [PART]

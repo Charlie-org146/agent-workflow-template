@@ -4,6 +4,7 @@
 # reads: skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-delivery/scripts/private.py
 # reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/entry.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl
 # reads: docs/wiki/Setup.md
+# reads: skills/
 # One command judges a repo's migration (migration-check done lines 1 to 11): toy repos with a bare origin and a bare wiki beside
 # them. No network, launchd or gh: gh and launchctl are fakes, every home is a temp folder, and nothing is written outside the temp.
 # usage: test-migration.sh [PART]   no part runs every part. Test-only overrides: LOOP_TEST=1 with LOOP_INSTALLED_VERSION,

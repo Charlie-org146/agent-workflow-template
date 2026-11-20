@@ -1,6 +1,4 @@
 #!/bin/bash
-here=$(cd "$(dirname "$0")/../.." && pwd)
-. "$here/dev/toy/reap.sh"
 # windows: ok
 # reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/auto.py
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/deployments.py
@@ -9,6 +7,8 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 # Value: protects=only the owner's recorded words change a review, for the IDs they name (DOC-2); fails_when=a worker
 # writes a record, a record covers an ID it does not list, or a record is used twice for one command; why_new=a worker
 # needed the owner to type in its own chat; seam=none; no_claim=that the operation session quotes the owner truthfully
+here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_OWNER_WORDS
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
