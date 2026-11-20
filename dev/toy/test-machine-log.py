@@ -8,7 +8,9 @@ live: 2 workers hold a busy pool entry and spoke a minute ago; 7 more pool entri
 and one goal reads running with no pool entry and no pid: the status lists 2 workers and the one-line count says 2.
 heartbeat: operate.py's wait loop, on a fake clock, rewrites the status file at least every 30 seconds, so `at` is never over 60 s old.
 Each has a negative control: a stale-blind build counts 9 and a loop with no heartbeat leaves the file old."""
+import contextlib
 import datetime
+import io
 import json
 import os
 import sys
@@ -92,7 +94,7 @@ class Clock:
 
 
 def run_loop(beating):
-    ages, passes = [], [0]
+    ages, passes, printed = [], [0], io.StringIO()
     with tempfile.TemporaryDirectory() as tmp:
         common = fixture(tmp)
         path = os.path.join(common, "loop", "status", "m.json")
@@ -120,16 +122,18 @@ def run_loop(beating):
         if not beating:
             layers.beat = lambda com, status: None if clock.now > NOW else real[7](com, status)
         try:
-            operate.cmd_run(type("A", (), {"role": "machine", "once": False, "poll": 5.0, "board": False})())
+            with contextlib.redirect_stdout(printed):
+                operate.cmd_run(type("A", (), {"role": "machine", "once": False, "poll": 5.0, "board": False})())
         except SystemExit:
             pass
         finally:
             operate.time, layers.time, operate.one_pass, operate.signature, layers.role, operate.git, operate.CFG, layers.beat, layers.machines.me = real
-    return ages
+    return ages, printed.getvalue()
 
 
-good = run_loop(True)
+good, said = run_loop(True)
+check(said == "", "the heartbeat adds no check-in output or board message: the wait loop printed nothing between passes (%r)" % said[:40])
 check(good and max(good) <= 60, "with an operation session running, the status file is never over 60 s old on a fake clock (oldest %.0f s over %d polls)" % (max(good or [0]), len(good)))
-bad = run_loop(False)
+bad, _ = run_loop(False)
 check(bad and max(bad) > 60, "negative control: a wait loop that never rewrites the file leaves it over 60 s old (oldest %.0f s)" % max(bad or [0]))
 sys.exit(1 if fails else 0)
