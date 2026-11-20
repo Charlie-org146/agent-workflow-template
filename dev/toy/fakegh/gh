@@ -4,6 +4,7 @@ d=${FAKE_GH_DIR:?}; mkdir -p "$d"
 args=(); while [ $# -gt 0 ]; do if [ "$1" = --body-file ]; then args+=(--body "$(cat "$2")"); shift 2; else args+=("$1"); shift; fi; done; set -- "${args[@]}"  # a text in a file reads as --body TEXT
 echo "$*" >> "$d/calls.log"
 here=$(cd "$(dirname "$0")" && pwd)
+if [ "$1 $2" = "api graphql" ] && [ -n "${FAKE_GH_GRAPHQL:-}" ]; then cat "$FAKE_GH_GRAPHQL"; exit 0; fi  # the merge-queue use query: a prepared answer
 if [ "$1" = api ] && [[ "$*" == *labels=regression* ]]; then  # the open regression issues, one JSON object a line, as gh api --paginate --jq gives them
   [ -z "${FAKE_GH_PAGE_FAIL:-}" ] || { echo "HTTP 502: a page failed" >&2; exit 1; }
   FAKE_GH_ARGS="$*" python3 -c '

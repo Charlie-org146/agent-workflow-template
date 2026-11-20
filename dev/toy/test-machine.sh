@@ -1,7 +1,7 @@
 #!/bin/bash
 # windows: ok
 # reads: dev/machine.py dev/machine_ops.py docs/wiki/Machines.md README.md
-# reads: skills/workflow-monitoring/references/commands.md skills/workflow-regression/scripts/actions.py
+# reads: skills/loop-files.md skills/workflow-regression/scripts/actions.py
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
 # usage: test-machine.sh [ROW-ID]   no ID runs every case. No model, no network and no real mail are used.
@@ -58,7 +58,7 @@ fi
 
 # done 3: the operation guide carries the conventions; the check-in routine file is only a pointer.
 if want machine-operation-guide; then
-  g="$here/skills/workflow-monitoring/references/commands.md"; t="$here/dev/machine-templates.md"
+  g="$here/skills/loop-files.md"; t="$here/dev/machine-templates.md"
   for s in "Operation session" "Check-in, re-plan, full auto"; do grep -q "^#.*$s" "$g" || no "commands.md has no section $s"; done
   for s in mailer health-regression checkin; do grep -q "^\`\`\`text template=$s" "$t" || no "machine-templates.md has no $s template"; done
   grep -q "time left and ETA" "$g" || no "commands.md check-in layout has no time left and ETA"
