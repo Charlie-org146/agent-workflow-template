@@ -46,7 +46,6 @@ TABLE = [
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
     ("step_limit", REPO, 0, "Seconds a flow step may run when the flow file sets none; 0 is built-in."),
-    ("goal_lane_minutes", REPO, 10, "Minutes a goal's regression lane may take before health warns."),
     ("goal_levels", REPO, "land", "Row levels a goal lane plans from: land, or nightly (land and nightly rows)."),
     ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it."),
     ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
