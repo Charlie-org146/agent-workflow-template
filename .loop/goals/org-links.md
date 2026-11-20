@@ -14,4 +14,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In a copy of the repo whose origin is https://github.com/Charlie-org146/agent-workflow-template.git, run `python3 skills/workflow-docs/scripts/criteria.py render --check`.
+   Expect: it prints TABLES OK and exits 0.
+2. Run `grep -c Charlie-org146 README.md docs/wiki/Home.md docs/wiki/Tests.md`.
+   Expect: each file shows at least one generated link to the organization (the hand-written wiki links in the README still use the old name, which GitHub redirects).
