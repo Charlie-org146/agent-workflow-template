@@ -4,6 +4,7 @@
 """checkout: the operation loop moves a main checkout that is behind origin with --ff-only, says so in one line, and
 never makes a merge commit or touches uncommitted work; it says so when it cannot."""
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -56,11 +57,15 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(work, ".loop", "queue.md"), "a") as f:
         f.write("uncommitted line\n")
     line = fresh.refresh(common)
-    check(line.startswith("CHECKOUT FAST-FORWARDED main by 3 commits"), "checkout: a checkout 3 behind moves and says so (%s)" % line)
-    check(git(work, "rev-parse", "HEAD") == git(other, "rev-parse", "HEAD") and len(git(work, "log", "--merges", "--oneline").splitlines()) == 0,
-          "checkout: it is at origin's commit with no merge commit")
+    check(line == "root is dirty: .loop/queue.md; not advanced", "checkout: a root with uncommitted work is not advanced, and one line names the file (%s)" % line)
+    check(git(work, "rev-parse", "HEAD") != git(other, "rev-parse", "HEAD"), "checkout: and it stayed behind")
     with open(os.path.join(work, ".loop", "queue.md")) as f:
         check("uncommitted line" in f.read(), "checkout: the uncommitted .loop/queue.md is left alone")
+    git(work, "checkout", "-q", "--", ".loop/queue.md")
+    line = fresh.refresh(common)
+    check(line.startswith("CHECKOUT FAST-FORWARDED main by 3 commits"), "checkout: the same checkout, clean, 3 behind, moves and says so (%s)" % line)
+    check(git(work, "rev-parse", "HEAD") == git(other, "rev-parse", "HEAD") and len(git(work, "log", "--merges", "--oneline").splitlines()) == 0,
+          "checkout: it is at origin's commit with no merge commit")
     check("\n" not in line, "checkout: the report is one line")
 
     commit(other, "a.txt", "two\n")
@@ -81,7 +86,11 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(work, "a.txt"), "a") as f:
         f.write("my uncommitted change\n")
     line = fresh.refresh(common)
-    check(line.startswith("CHECKOUT NOT FAST-FORWARDED") and "git refused" in line, "checkout: git refusing over uncommitted work is reported (%s)" % line)
+    check(line == "root is dirty: a.txt; not advanced", "checkout: a dirty root over the incoming files is not advanced either (%s)" % line)
     with open(os.path.join(work, "a.txt")) as f:
         check("my uncommitted change" in f.read(), "checkout: and the uncommitted change survives")
+merge = open(os.path.join(here, "..", "..", "skills", "workflow-release", "scripts", "merge.py")).read()
+seen = lambda text: re.search(r'print\("MERGED %s into %s".*\n\s+print\(run\(\[sys.executable, OPERATE, "forward", base\]', text)
+check(bool(seen(merge)), "checkout: merge.py moves the root right after it prints MERGED (operate.py forward)")
+check(not seen(merge.replace('"forward"', '"nothing"')), "checkout: negative control: without that call the check fails")
 sys.exit(1 if failed else 0)
