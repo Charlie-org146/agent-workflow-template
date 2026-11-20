@@ -165,7 +165,7 @@ def worker_of(run, taken=None):
         return "session %s" % ((run.get("session") or {}).get("name") or "worker · " + run["slug"])
     if taken and run["slug"] in taken:
         return "session %s" % (taken[run["slug"]].get("name") or taken[run["slug"]]["id"])
-    return "background" + (" (%s)" % plain(run["worker_why"], 80) if run.get("worker_why") else "")
+    return "background" + (" · codex" if run.get("agent") == "codex" else "") + (" (%s)" % plain(run["worker_why"], 80) if run.get("worker_why") else "")
 
 
 def is_held(run, taken):
