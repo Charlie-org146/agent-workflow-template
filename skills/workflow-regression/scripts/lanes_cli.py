@@ -88,7 +88,7 @@ def picked(root, rows, path, cache):
 
 
 def table_changed(root, name):
-    """Ids whose line in .loop/<name> differs from the merge-base or base tip; None if neither resolves."""
+    """Ids whose line in .loop/<name> differs from the merge-base or base tip; None if neither."""
     base = tiers.config(root).get("base") or "main"
     ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
             for ref in ("origin/" + base, base)]) if at][:2]
@@ -100,7 +100,7 @@ def table_changed(root, name):
 
 
 def affected(root, rows, paths, cache):
-    """(rerun ids, notes) for a change to paths: plan()'s rules without a record."""
+    """(rerun ids, notes) for a change to paths: plan()'s rules, no record."""
     ids, notes, real = set(), [], False
     known = table_changed(root, "regression-known.tsv") if ".loop/regression-known.tsv" in paths else None
     edited = table_changed(root, "regression.tsv") if lanes.TABLE in paths else None
@@ -138,7 +138,7 @@ def affected(root, rows, paths, cache):
 
 
 def check(root, scripts, cache):
-    """Every header problem of the test scripts as (code, file, line, what), LANES-DECL-NONE for a missing header."""
+    """Every header problem of the test scripts as (code, file, line, what); LANES-DECL-NONE for no header."""
     out = []
     for rel in scripts:
         paths, problems = narrow.header(root, rel, cache)
@@ -230,8 +230,8 @@ jobs:
           path: s
       - run: |
           awk '$3 != "SEL"' s/*/t.tsv | sort -k1,1 -k3,3r | awk '!k[$1]++' > all.tsv
-          echo "LEFT over the per-row limit, not failed: $(awk '$3 == "LEFT" {print $1}' all.tsv | paste -sd, -)"
-          awk '$3 ~ /^(RAN|LEFT)$/ {print $1}' s/*/t.tsv | sort > ran.txt
+          echo "LEFT (row limit or budget), not failed: $(awk '$3 == "LEFT" || $3 == "CUT" {print $1}' all.tsv | paste -sd, -)"
+          awk '$3 ~ /^(RAN|LEFT|CUT)$/ {print $1}' s/*/t.tsv | sort > ran.txt
           echo "run twice: $(uniq -d ran.txt | paste -sd, -)"
           for id in $(awk '$3 != ""' s/*/t.tsv | cut -f1 | sort -u | comm -23 - <(uniq ran.txt)); do python3 skills/workflow-regression/scripts/regression.py run "$id" --timeout 200 || bad=1; done
           test -z "$bad"
@@ -254,6 +254,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: test ! -f dev/package.py || python3 dev/package.py --static
       - run: find skills -name '*.py' -exec python3 -m py_compile {} +
       - run: python3 skills/workflow-docs/scripts/criteria.py render --check
 """
@@ -371,7 +372,7 @@ def _slots():
 
 
 def free_gb():
-    """Free memory in GB (LOOP_FREE_GB fakes it); None when unreadable, and a lane is then never held."""
+    """Free memory in GB (LOOP_FREE_GB fakes it); None when unreadable: a lane is then never held."""
     try:
         if os.environ.get("LOOP_FREE_GB"):
             return float(os.environ["LOOP_FREE_GB"])
@@ -394,8 +395,7 @@ def free_gb():
 
 def wait_memory(root):
     """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a running lane is
-    never stopped. Waits are logged in <git common dir>/loop/memory-waits.log; past 4x the lane's time limit
-    (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
+    never stopped. Waits are logged in <git common dir>/loop/memory-waits.log; past 4x the lane's limit it exits 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 3)
     except (OSError, ValueError, AttributeError):

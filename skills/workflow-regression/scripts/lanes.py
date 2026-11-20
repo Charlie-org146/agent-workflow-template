@@ -194,6 +194,15 @@ def references(root, text, folder, wide=True, memo=None):
     return found, whole
 
 
+TREE = re.compile(r"(?m)^(?!\s*#).*(?:bash|python3?|\bsh\b|subprocess|spec_from_file_location)[^\n]*?(?:dev/package\.py|\"package\.py\"|test-tree\.sh)")
+
+
+def whole(root, row, cache):
+    """A whole-tree row (TD494): its command is dev/package.py or a script (a wrapper like tree-once.sh too) that runs package.py or test-tree.sh."""
+    named = references(root, row["command"], "", wide=False)[0]
+    return any(p == "dev/package.py" or TREE.search(read(root, p, cache) or "") for p in named if not p.endswith("/"))
+
+
 def read(root, rel, cache):
     return cache.setdefault("text", narrow.Texts()).load(root, rel)
 

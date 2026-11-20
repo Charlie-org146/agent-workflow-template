@@ -58,8 +58,8 @@ jobs:
           path: s
       - run: |
           awk '$3 != "SEL"' s/*/t.tsv | sort -k1,1 -k3,3r | awk '!k[$1]++' > all.tsv
-          echo "LEFT over the per-row limit, not failed: $(awk '$3 == "LEFT" {print $1}' all.tsv | paste -sd, -)"
-          awk '$3 ~ /^(RAN|LEFT)$/ {print $1}' s/*/t.tsv | sort > ran.txt
+          echo "LEFT (row limit or budget), not failed: $(awk '$3 == "LEFT" || $3 == "CUT" {print $1}' all.tsv | paste -sd, -)"
+          awk '$3 ~ /^(RAN|LEFT|CUT)$/ {print $1}' s/*/t.tsv | sort > ran.txt
           echo "run twice: $(uniq -d ran.txt | paste -sd, -)"
           for id in $(awk '$3 != ""' s/*/t.tsv | cut -f1 | sort -u | comm -23 - <(uniq ran.txt)); do python3 skills/workflow-regression/scripts/regression.py run "$id" --timeout 200 || bad=1; done
           test -z "$bad"
@@ -82,5 +82,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: test ! -f dev/package.py || python3 dev/package.py --static
       - run: find skills -name '*.py' -exec python3 -m py_compile {} +
       - run: python3 skills/workflow-docs/scripts/criteria.py render --check
