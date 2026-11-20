@@ -1,7 +1,7 @@
 """Read and write .loop/regression-runs.tsv (each row's last run), a local `regression.py run`'s GitHub issues (sync_issues) and the
 in-loop test time budget (budget, fit, execute).
 
-The formats, the --reuse budget rules and why per-result evidence stays out of the tsv: references/commands.md, "runs.py notes".
+The formats, the --reuse budget rules and why per-result evidence stays out of the tsv: loop-files.md, "runs.py notes".
 """
 import datetime
 import glob

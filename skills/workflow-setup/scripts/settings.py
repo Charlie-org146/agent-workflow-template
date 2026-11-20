@@ -154,6 +154,23 @@ def load(path):
         return {}
 
 
+DESK_DOC = """Phone-first onboarding (#4805): list every setup step that needs a desk, run each once up front, and check that a phone-only
+session can start a goal.
+
+usage: setup.py desk list [--repo DIR]         each desk-only step with its state (done, listed, open)
+       setup.py desk run [--repo DIR]          verify what can be verified, print each open desk step once with how to do it
+       setup.py desk done STEP [STEP ...]      record that you did a desk step (the app's own setting is the truth)
+       setup.py desk check [--repo DIR]        DESK OK when nothing is left at the desk and a phone-only start works; else one GAP line each
+
+A phone over Remote Control can read check-ins and mail, answer, approve and start goals, but the app refuses session starts from
+it, so everything the app needs trusted, approved or signed in must be done once at the desk. Steps a file can prove (private
+names file, mail.env present, the agent command on the PATH, Codex login) are verified by `run`, never read: only whether the file
+exists. The rest are recorded with `done`. The record is machine-local (`$LOOP_DESK_HOME`, else ~/.workflow-loop/desk.json) and
+holds step names and times only. With `workers: app` in the repo config a goal waits for a bound session when the app refuses
+one, so check lists that too. Writes nothing in the repo.
+"""
+
+
 HEALTH_RULES = {"_comment": "rules: [{name, group (a health group or repo), feature, command (words; exit 0 pass, 2 warn, 1 fail), fix, "
                 "break (a command that makes it fail)}]. off: {default rule: reason}.", "rules": [], "off": {}}
 

@@ -15,11 +15,11 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import agents  # noqa: E402
-import desk  # noqa: E402
 import seed  # noqa: E402
 import settings  # noqa: E402
 import survey  # noqa: E402
@@ -39,11 +39,7 @@ One goal a line. Other lines are ignored. Example:
 FINDINGS = "# Findings\n\nOpen findings, one line each.\n"
 
 
-def git(repo, *args, check=True):
-    done = subprocess.run(["git", "-C", repo] + list(args), capture_output=True, text=True)
-    if check and done.returncode:
-        sys.exit("REFUSED: git %s: %s" % (" ".join(args), done.stderr.strip()))
-    return "" if done.returncode else done.stdout.strip()
+git = agents.git
 
 
 def base_branch(repo):
@@ -323,5 +319,37 @@ def main():
     return adopt(args, repo)
 
 
+def desk_run(args):
+    found, left = sync.desk_load(), 0
+    for step in sync.DESK_STEPS:
+        now = sync.desk_state(step, found)
+        if now == "done":
+            print("DESK %s: done" % step[0])
+            continue
+        left += 1
+        if now == "open":
+            found[step[0]] = {"listed": time.strftime("%Y-%m-%d %H:%M")}
+            print("DESK %s: %s. Do: %s. Then: setup.py desk done %s" % (step[0], step[1], step[2], step[0]))
+        else:
+            print("DESK %s: still open (listed once already). Then: setup.py desk done %s" % (step[0], step[0]))
+    sync.desk_save(found)
+    print("DESK: %d step(s) open at the desk" % left if left else "DESK OK: every desk step is done")
+    return 0
+
+
+def desk_main(argv):
+    parser = argparse.ArgumentParser(description=settings.DESK_DOC, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name, func in (("list", agents.desk_list), ("run", desk_run), ("check", survey.desk_check)):
+        item = sub.add_parser(name)
+        item.add_argument("--repo", default=".")
+        item.set_defaults(func=func)
+    item = sub.add_parser("done")
+    item.add_argument("steps", nargs="+")
+    item.set_defaults(func=agents.desk_done)
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
 if __name__ == "__main__":
-    sys.exit(desk.main(sys.argv[2:]) if sys.argv[1:2] == ["desk"] else agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())
+    sys.exit(desk_main(sys.argv[2:]) if sys.argv[1:2] == ["desk"] else agents.migration_check(sys.argv[2:]) if sys.argv[1:2] == ["migration-check"] else main())
