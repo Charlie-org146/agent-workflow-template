@@ -32,8 +32,6 @@ def first_gap(toks, found):
     i = 0
     for t in toks:
         pat, hit = t[1:] if t[0] in "?+" else t, lambda p: i < len(found) and re.fullmatch(p, found[i][1])
-        if t == "*":
-            return None
         if not hit(pat):
             if t[0] == "?":
                 continue
