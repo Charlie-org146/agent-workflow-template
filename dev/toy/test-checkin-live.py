@@ -5,7 +5,8 @@
 
 2 goals hold a busy pool entry and spoke a minute ago; 38 more hold a busy entry but have been silent for hours, and 2 read running with
 no pool entry and no pid: 2 running and 40 parked on line 1 and 40 rows marked parked, the status file's live-worker count agrees (2).
-A goal waiting on the owner for hours still counts under waiting on you. Negative control: with graph.live always true the same records
+A goal waiting on the owner for hours still counts under waiting on you (its session is in the pool, or it has none: a background worker);
+a waiting record is parked, in the same count, only when provably over: its pull request merged, the goal retired, or its bound session gone from the pool. Negative control: with graph.live always true the same records
 read 42 running and nothing parked, as the check-in did before. usage: test-checkin-live.py"""
 import datetime
 import json
@@ -59,6 +60,11 @@ def fixture(tmp):
     pool["s-ask"] = {"state": "busy", "slug": "ask", "name": "worker ask"}
     runs["ask"] = {"slug": "ask", "status": "waiting", "step": "plan", "goal": "ask (DEL-1)", "updated": iso(NOW - 5 * 3600),
                    "waiting": {"ask": "Which way?", "recommend": "A", "words": ["A", "B"]}}
+    base = {"status": "waiting", "step": "plan", "updated": iso(NOW - 5 * 3600), "waiting": {"ask": "Which way?", "recommend": "A", "words": ["A", "B"]}}
+    runs["bg"] = dict(base, slug="bg", goal="bg (DEL-1)")  # a background worker's question: no session, no pool entry, still a real question
+    runs["merged"] = dict(base, slug="merged", goal="merged (DEL-1)", release="merged", session={"id": "x", "name": "worker merged"})
+    runs["retired"] = dict(base, slug="retired", goal="retired (DEL-1)", retired={"reason": "moved on"})
+    runs["nosession"] = dict(base, slug="nosession", goal="nosession (DEL-1)", session={"id": "gone", "name": "worker nosession"})  # bound session not in the pool
     for slug, run in runs.items():
         write(os.path.join(common, "loop", "runs", slug + ".json"), run)
     write(os.path.join(common, "loop", "session-pool.json"), pool)
@@ -81,17 +87,23 @@ with tempfile.TemporaryDirectory() as tmp:
     root, common = fixture(tmp)
     line, lines = first_line(root)
     print(line)
-    check(line.startswith("2 running, 1 waiting on you, 0 queued, 40 parked;"), "line 1 counts 2 running and shows the 40 stale records once as parked")
-    check(sum("| parked |" in row for row in lines) == 40 and sum("| running |" in row for row in lines) == 2,
+    check(line.startswith("2 running, 2 waiting on you, 0 queued, 43 parked;"),
+          "line 1 counts 2 running and 2 waiting, and shows the 40 stale running and the 3 provably-over waiting records once as parked")
+    check(sum("| parked |" in row for row in lines) == 43 and sum("| running |" in row for row in lines) == 2,
           "the All sessions rows mark the 40 stale records parked and the 2 live ones running")
-    check(any("| waiting |" in row and "ask" in row for row in lines), "a goal waiting on the owner for 5 hours is still listed as waiting, never parked")
+    check(any("| waiting |" in row and "ask (" in row for row in lines) and any("| waiting |" in row and "bg (" in row for row in lines),
+          "a goal waiting on the owner for 5 hours, in the pool or with no session at all, is still listed as waiting, never parked")
+    check(not any("| waiting |" in row and any(n + " (" in row for n in ("merged", "retired", "nosession")) for row in lines),
+          "a waiting record with its pull request merged, retired, or its session gone is parked, not asked about")
     status = layers.build(common, {}, NOW)
     live = layers.live_count(status)
-    check(live == 3 and int(line.split(" running")[0]) + 1 == live, "the status file's live-worker count (%d: 2 running and the 1 waiting) agrees with line 1" % live)
+    check(live == 4 and int(line.split(" running")[0]) + 2 == live, "the status file's live-worker count (%d: 2 running and the 2 waiting) agrees with line 1" % live)
+    asked = {n["slug"] for n in status["needs_owner"]}
+    check({"ask", "bg"} <= asked and not asked & {"merged", "retired", "nosession"}, "the status file asks the owner about the 2 live questions and not about the parked waiting records (%s)" % sorted(asked))
     check(sum(w["status"] == "running" for w in status["workers"]) == int(line.split(" running")[0]), "the status file and the check-in agree on the running count")
     real = graph.live
     graph.live = lambda *a, **k: True  # negative control: every record counts, as the check-in did before
     blind, _ = first_line(root)
     graph.live = real
-    check(blind.startswith("42 running, 1 waiting on you, 0 queued;") and "parked" not in blind, "negative control: counting every record reads 42 running and nothing parked (%s)" % blind.split(";")[0])
+    check(blind.startswith("42 running, 5 waiting on you, 0 queued;") and "parked" not in blind, "negative control: counting every record reads 42 running and nothing parked (%s)" % blind.split(";")[0])
 sys.exit(1 if failed else 0)

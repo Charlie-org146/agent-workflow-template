@@ -113,10 +113,11 @@ def render(root=None, at=None, stamp=None):
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
     counts = lambda *names: sum(g["states"][r["slug"]] in names for g in pod for r in g["live"] if not graph.foreign(r))
     # TD481: a running goal counts only while graph.live holds (a slot, spoken within silent_minutes), as the status file counts it; the rest are parked
-    leftover = lambda g, r: g["states"][r["slug"]] in ("running", "held", "silent") and not graph.live(r, g["taken"], at, g["cfg"])
+    leftover = lambda g, r: g["states"][r["slug"]] in ("running", "held", "silent", "waiting") and not graph.live(r, g["taken"], at, g["cfg"])
     parked = sum(leftover(g, r) for g in pod for r in g["live"] if not graph.foreign(r))
+    parked_asks = sum(leftover(g, r) and g["states"][r["slug"]] == "waiting" for g in pod for r in g["live"] if not graph.foreign(r))
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent") - parked, counts("waiting", "failed", "stopped"),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent") - parked + parked_asks, counts("waiting", "failed", "stopped") - parked_asks,
                                                               sum(len(g["queue"]) for g in pod), ", %d parked" % parked if parked else "", pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg))]
     for g in pod:

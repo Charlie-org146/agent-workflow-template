@@ -258,8 +258,13 @@ def holds_slot(run, taken=None):
 
 
 def live(run, taken, at, cfg=None):
-    """A live session, not a leftover record (TD430, TD481): only a running goal can be a leftover; it counts when it holds a slot
-    and has spoken within silent_minutes. Waiting, failed, stopped and done goals are always live. Layers and the check-in share this."""
+    """A live session, not a leftover record (TD430, TD481). A running goal counts when it holds a slot and has spoken within
+    silent_minutes. A waiting goal is a leftover only when provably over (retired, its pull request merged or closed, or its bound
+    session gone from the pool), however silent: a real question stays. Failed, stopped and done goals are always live."""
+    if run.get("status") == "waiting":
+        report = (run.get("report") or {}).get("status")
+        return not (run.get("retired") or run.get("release") in ("merged", "cut", "closed") or report in ("merged", "closed")
+                    or (taken is not None and run.get("session") and run.get("slug") not in taken))
     return run.get("status") != "running" or (holds_slot(run, taken) and (silent_for(run, at) or 0) <= silent_limit(cfg))
 
 
