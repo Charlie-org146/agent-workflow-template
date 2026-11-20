@@ -23,6 +23,7 @@ package-win-parity-1397	PASS	2026-11-20
 package-win-stdin-1397	PASS	2026-11-20	
 port-base-windows	PASS	2026-11-20	
 reg2-wording	PASS	2026-11-20	
+release-head-status	PASS	2026-11-20	
 repeat-no-second	PASS	2026-11-20	
 reply-hook-mon5-wording	PASS	2026-11-20	
 stop-takes-tree	PASS	2026-11-20	
