@@ -30,7 +30,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Full auto is off in a new repo until I turn it on. With it on, the operation session applies every recommendation without asking, except a safety class: destructive, money, security, private data, a steward merge, or anything that contradicts my words. A merge is not a safety class. Those wait for me. A safety class is judged by what the action does, not by a word in its name. [OPS-11]
   - Standing safety rules hold on every layer: relay counts except safety, so OWNER-WORDS from top count as owner words except for safety classes and are refused from a peer; machine sessions are STATUS-only. Caps are operation-top's to decide; raising a package limit still takes my own words (GRD-21). [OPS-11]
   - One standing instruction to merge, recorded once for named goals or all, replaces a go per merge, and a worker accepts an owner record the operation session names without asking me again. A record covers only the IDs it lists. [OPS-18]
-- DEL-17: **Unreviewed** Every change runs on one clock, from my ask to main
+- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 96403929 -->
   - Every goal records an ETA when it is frozen. [DEL-17]
   - Past it, the goal finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. [DEL-17]
   - Decisions a goal can foresee are asked once, up front, each with a recommendation. [DEL-17]
