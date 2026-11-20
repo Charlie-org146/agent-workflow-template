@@ -8,8 +8,8 @@ import os
 import re
 
 KINDS = {
-    'front': ('System design', '+\\d+\\. .+', 'Requirements by feature'),
-    'front-adopted': ('System design', "The template's principles", '+\\d+\\. .+', 'Requirements by feature'),
+    'front': ('What this is', 'System design', '+\\d+\\. .+', 'Requirements by feature'),
+    'front-adopted': ('What this is', 'System design', "The template's principles", '+\\d+\\. .+', 'Requirements by feature'),
     'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', 'Revisions', 'Tests'),
     'howto': ("What it's for", 'How to reach or run it', 'URLs and deployments', '?Automations and schedules', '?Runbooks', 'Links'),
     'principles': ('+\\d+\\. .+',),
@@ -73,9 +73,64 @@ def targets(root, folder, read, block_re, both):
     return out
 
 
+OLD = "Requirement Summary Follows Feature Version Flow".split()
+NEW = "Requirement Summary Follows Feature Adoption Confidence".split()
+SPLIT = re.compile(r"(?<!\\)\|")
+
+
+def adoption(follows):
+    """The share of a row's Follows tags that say adopted (adapted and own count 0)."""
+    tags = re.findall(r"\b(adopted|adapted|own)\b", follows)
+    return round(100 * tags.count("adopted") / len(tags)) if tags else 0
+
+
+def tables(text):
+    """DOC-25: each principle table in the new columns, Adoption computed from Follows, the figure link in the Requirement cell, one score line under it."""
+    lines, out, i = text.split("\n"), [], 0
+    while i < len(lines):
+        head = [c.strip() for c in SPLIT.split(lines[i].strip()[1:-1])] if lines[i].startswith("| Requirement | Summary") else []
+        if head not in (OLD, NEW):
+            out.append(lines[i]); i += 1; continue
+        out += ["| " + " | ".join(NEW) + " |", lines[i + 1]]; scores = []; i += 2
+        while i < len(lines) and lines[i].startswith("|"):
+            c = [x.strip() for x in SPLIT.split(lines[i].strip()[1:-1])]
+            if head == OLD:
+                c = [c[0] + " (" + c[5] + ")"] + c[1:4] + ["", ""]
+            c[4] = "%d%%" % adoption(c[2]); scores.append(adoption(c[2]))
+            out.append("| " + " | ".join(c) + " |"); i += 1
+        while i < len(lines) and (lines[i] == "" or lines[i].startswith("Adoption: ")):
+            i += 1
+        out += ["", "Adoption: %d%% (the average of this principle's rows)." % round(sum(scores) / len(scores)), ""]
+    return "\n".join(out)
+
+
+def what(page):
+    """The What this is section, written from DEL-19's text on the Delivery page."""
+    found = re.search(r"^- DEL-19: .*\n((?:  - .*\n?)*)", page or "", re.M)
+    return "## What this is\n\n" + " ".join(re.sub(r"\s*\[[A-Z]{3}-\d+\]$", "", b[4:]) for b in (found[1].splitlines() if found else [])) + "\n"
+
+
+def fresh(text, folder, read):
+    """README, Home or Principles with its generated parts current; text with no System design section is left alone."""
+    text = tables(text)
+    if "\n## System design" not in text:
+        return text
+    block = what(read(os.path.join(folder, "Delivery.md")))
+    return re.sub(r"\n## What this is\n.*?(?=\n## )", lambda _: "\n" + block.rstrip("\n") + "\n", text, 1, re.S) if "\n## What this is\n" in text else text.replace("\n## System design", "\n" + block + "\n## System design", 1)
+
+
+def pages(root, folder, listed):
+    """The front pages whose generated parts (tables, What this is) the render keeps, if not listed already."""
+    have = [rel for rel, _ in listed]
+    return [(rel, []) for rel in ("README.md", folder + "/Home.md", folder + "/Principles.md") if rel not in have and os.path.exists(os.path.join(root, rel))]
+
+
 def run(folder, readme, home, names):
     """DOC-25 findings for the README, Home and every wiki page, by the page's kind."""
-    out = check("README", "front-adopted" if "## The template's principles" in readme else "front", readme) + check("Home", "front", home) + same(readme, home)
+    out = [("FORMAT", "%s:%d" % (n, i), "Sections: DOC-25 the principle tables have the columns %s (no Version, no Flow). Fix: run /workflow-docs render" % " | ".join(NEW))
+           for n, t in (("README", readme), ("Home", home), ("Principles", open(os.path.join(folder, "Principles.md"), encoding="utf-8").read() if os.path.exists(os.path.join(folder, "Principles.md")) else ""))
+           for i, x in enumerate(t.splitlines(), 1) if x.startswith("| Requirement | Summary") and "| Version | Flow |" in x]
+    out += check("README", "front-adopted" if "## The template's principles" in readme else "front", readme) + check("Home", "front", home) + same(readme, home)
     for page in sorted(x[:-3] for x in os.listdir(folder) if x.endswith(".md")):
         kind = "howto" if page.startswith("How-to-use-") else {"Principles": "principles", "Tests": "tests", "Roadmap": "roadmap"}.get(page, "feature" if page in names else "")
         out += check(page, kind, open(os.path.join(folder, page + ".md"), encoding="utf-8").read()) if kind else []
