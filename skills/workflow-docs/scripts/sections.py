@@ -10,7 +10,7 @@ import re
 KINDS = {
     'front': ('What this is', 'System design', '+\\d+\\. .+', 'Requirements by feature'),
     'front-adopted': ('What this is', 'System design', "The template's principles", '+\\d+\\. .+', 'Requirements by feature'),
-    'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', 'Revisions', 'Tests'),
+    'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', '?Deployments', 'Revisions', 'Tests'),
     'howto': ("What it's for", 'How to reach or run it', 'URLs and deployments', '?Automations and schedules', '?Runbooks', 'Links'),
     'principles': ('+\\d+\\. .+',),
     'tests': ('+(?!Other$).+', 'Other'),

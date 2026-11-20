@@ -19,3 +19,5 @@ Frozen. A wrong done line needs a new goal.
    Expect: DOCS OK: 16 pages, with no STALE line, and the same with a copy whose origin is the old jcl2018 URL.
 2. In that copy run `python3 skills/workflow-docs/scripts/criteria.py render` and `git status --short`.
    Expect: nothing changed, so How-to-use-Automation and Tests render the same links with no origin as with the organization origin.
+
+D1 had two causes (the template_repo fallback and the missing optional Deployments slot in sections.py's section order, a tool regression from #5455); both fixed in this PR, TD411.
