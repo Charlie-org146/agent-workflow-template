@@ -162,8 +162,13 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
         os.makedirs(os.path.join(repo, ".loop", "kept"), exist_ok=True)
         write(repo, ".loop/kept/x.tsv", "A\tabc\n")
         write(repo, ".loop/kept/x.md", "no\n")
+    def nested():
+        os.makedirs(os.path.join(repo, ".loop", "kept", "x"), exist_ok=True)
+        write(repo, ".loop/kept/x/y.tsv", "A\tabc\n")
+    branch("six", nested)
     branch("five", other)
     git("fetch", "-q", "origin", cwd=repo)
     check(run(sys.executable, OPERATE, "wiki-only", "origin/main", "origin/loop/five", cwd=repo, ok=False).returncode != 0, "negative control: a head that also adds a non-.tsv file under .loop/kept stays refused")
+    check(run(sys.executable, OPERATE, "wiki-only", "origin/main", "origin/loop/six", cwd=repo, ok=False).returncode != 0, "negative control: a nested .loop/kept/x/y.tsv stays refused (exactly one level)")
 
 sys.exit(1 if failed else 0)

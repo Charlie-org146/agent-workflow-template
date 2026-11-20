@@ -299,8 +299,7 @@ def tems(*args, **kwargs):
 
 
 def wiki_only(top, old, new):
-    """True when NEW descends from OLD and the diff is only stamp files, wiki .md pages (no SKILL.md), kept fragments and
-    README.md outside its generated blocks."""
+    """True when NEW descends from OLD and the diff is only stamp files, wiki .md pages (no SKILL.md), kept fragments and README.md outside its blocks."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -310,7 +309,7 @@ def wiki_only(top, old, new):
     except (ValueError, AttributeError):
         folder = "docs/wiki"
     page = lambda p: (p.startswith(str(folder).rstrip("/") + "/") and p.endswith(".md") and os.path.basename(p) != "SKILL.md"
-                      ) or (p.startswith(".loop/kept/") and p.endswith(".tsv")) or (p == "README.md" and readme_blocks_only(top, old, new))
+                      ) or (p.startswith(".loop/kept/") and p.endswith(".tsv") and p.count("/") == 2) or (p == "README.md" and readme_blocks_only(top, old, new))
     return tems(top, old, new, allow=page)
 
 
