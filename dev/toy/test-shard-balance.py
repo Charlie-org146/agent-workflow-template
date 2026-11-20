@@ -78,6 +78,23 @@ def run(shard):
 code0, out0 = run("0/2")
 code1, out1 = run("1/2")
 plain, outp = run("")
+# The first push of a PR has no times file at all: no row is in it, every row is marked, none twice.
+def fresh(shard):
+    extra = dict(env, LOOP_PR_SHARD=shard, LOOP_ROW_TIMES=os.path.join(here, "none." + shard[0]))
+    done = subprocess.run([sys.executable, REG, "run", "land", "--timeout", "2"], cwd=here, env=extra, capture_output=True, text=True)
+    return done.stdout + done.stderr, open(extra["LOOP_ROW_TIMES"]).read() if os.path.exists(extra["LOOP_ROW_TIMES"]) else ""
+
+
+o0, f0 = fresh("0/2")
+o1, f1 = fresh("1/2")
+marks = [line.split("\t") for f in (f0, f1) for line in f.splitlines()]
+ran = sorted(m[0] for m in marks if m[2] in ("RAN", "LEFT"))
+check("Traceback" not in o0 + o1 and ran == ["bad", "fast", "slow"] and sorted(m[0] for m in marks) == ["bad", "bad", "fast", "fast", "slow", "slow"],
+      "with no times file every shard marks every selected row and each row is RAN in exactly one shard (%s)" % ran)
+budget = subprocess.run([sys.executable, REG, "run", "land", "--reuse", "--budget", "1", "--timeout", "30"], cwd=here, env=dict(env, LOOP_PR_SHARD="0/1"),
+                        capture_output=True, text=True)
+check("BUDGET" in budget.stdout and "LEFT" in budget.stdout and "FAIL slow" not in budget.stdout and "Traceback" not in budget.stdout + budget.stderr,
+      "rows left under the shard's time budget are LEFT and not failed (exit %d)" % budget.returncode)
 check(code0 == 0 and "LEFT 1 over the 2 s row limit, not failed: slow" in out0 and "SPLIT 0/2: 1 of 3 rows" in out0,
       "a PR shard names a row cut off by the per-row limit as LEFT and does not fail (exit %d)" % code0)
 check(code1 == 1 and "FAIL bad" in out1 and "PASS fast" in out1 and "LEFT" not in out1,

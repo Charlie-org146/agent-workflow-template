@@ -320,7 +320,8 @@ def cmd_run(args):
     if path:
         rows = merged(path, results, late, args.timeout)
         for key in every:  # RAN: this shard's rows, SEL: the rest
-            rows.setdefault(key, [0, ""])[1] = rows[key][1] or ("RAN" if key in todo + cut else "SEL")
+            row = rows.setdefault(key, [0, ""])
+            row[1] = row[1] or ("RAN" if key in todo + cut else "SEL")
         open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
