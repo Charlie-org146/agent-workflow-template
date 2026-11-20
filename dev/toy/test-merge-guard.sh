@@ -138,4 +138,17 @@ cp -r "$here/skills" "$d/inst"
 lane_import() { (cd "$d" && env -u PYTHONPATH python3 -B -c 'import importlib.util as u,sys;s=u.spec_from_file_location("private",sys.argv[1]);m=u.module_from_spec(s);s.loader.exec_module(m);import importlib;importlib.import_module("lane");print("LANE OK")' "$1/workflow-delivery/scripts/private.py" 2>&1); }
 out=$(lane_import "$here/skills")$(lane_import "$d/inst")
 check "private.py pr_result imports lane without PYTHONPATH from a checkout and an installed skills folder (no ModuleNotFoundError)" '[ "$(grep -c "^LANE OK" <<<"$out")" = 2 ] && ! grep -q ModuleNotFoundError <<<"$out"'
+# REL-15: with merge_queue on, GitHub's queue checks a moved base, so merge.py skips BASE_MOVED and prints MERGED only once gh reports the pull request merged
+git push -q origin loop/g
+qgo() {  # QUEUE-SETTING [ENV=VALUE...]: merge.py on the goal whose base moved in a path its rows reach
+  printf '{"auto_merge": true, "base": "main", "merge_queue": %s}\n' "$1" > .loop/config.json; shift
+  echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"branch\": \"loop/g\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"
+  rm -f "$FAKE_GH_DIR/enqueued"; env LOOP_QUEUE_WAIT=10 FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$head FAKE_GH_ROLLUP="$ok1" "$@" python3 "$M/merge.py" g --go-head "$head" 2>&1; }
+out=$(qgo true FAKE_GH_QUEUE=1); rc=$?
+check "queue on: a base that moved in paths the goal reaches does not refuse BASE_MOVED, and MERGED prints once gh reports the pull request merged" '[ $rc = 0 ] && ! grep -q BASE_MOVED <<<"$out" && grep -q "^MERGED https://example.test/pull/1 into main" <<<"$out" && [ -e "$FAKE_GH_DIR/enqueued" ]'
+out=$(qgo true); rc=$?
+check "queue on, negative control: gh never reports the pull request merged, so no MERGED is printed and the goal is not marked merged" '[ $rc != 0 ] && ! grep -q "^MERGED" <<<"$out" && grep -q "the merge queue has not merged https://example.test/pull/1" <<<"$out" && ! grep -q BASE_MOVED <<<"$out"'
+out=$(qgo false FAKE_GH_QUEUE=1); rc=$?
+check "queue off: the same moved base still refuses BASE_MOVED (exit 2) and nothing is enqueued" '[ $rc = 2 ] && grep -q "^REFUSED (BASE_MOVED)" <<<"$out" && [ ! -e "$FAKE_GH_DIR/enqueued" ]'
+printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/11
 
-Review: **Unreviewed** <!-- kept lanes-table-data@5b6cb2663 -->
+Review: **Unreviewed** <!-- kept queue-smoke@7132b5722 -->
 
 How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
@@ -249,13 +249,11 @@ None
 | [grd4-resume](Tests#t-grd4-resume) | requirement | GRD-4 | Given a stopped goal, when its own worker tries to resume it, then the command refuses with WORKER_SELF_REPAIR. | not run |
 | [grd4-budget](Tests#t-grd4-budget) | requirement | GRD-4 | Given a worker session, when it tries to set its own goal's budget, then the command refuses. | not run |
 | [grd4-govern](Tests#t-grd4-govern) | requirement | GRD-4 | Given the operation session governing goals, when workers build, then the governing checkout gets no commit. | not run |
-| [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | GRD-4 | Given the operation session, when it writes a file outside every followed repo, then the govern hook lets it through. | not run |
-| [mon16-edit-inside-refused](Tests#t-mon16-edit-inside-refused) | requirement | GRD-4 | Given the operation session, when it edits a file inside a followed repo, then the govern hook refuses it. | not run |
+| [mon16-notes-pass](Tests#t-mon16-notes-pass) | requirement | GRD-4 | Given the GRD-4 cases of test-govern-notes.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [grd4-worker-commit-main-refused](Tests#t-grd4-worker-commit-main-refused) | requirement | GRD-4 | Given a pool worker session, when it runs git commit in the main checkout, then the govern hook refuses it; a worktree commit and other sessions pass. | PASS 2026-11-15 |
 | [grd5-regression-dry](Tests#t-grd5-regression-dry) | requirement | GRD-5 | Given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call. | not run |
 | [grd5-health-close](Tests#t-grd5-health-close) | requirement | GRD-5 | Given open findings, when triage close runs without --yes, then it lists them and writes nothing. | not run |
-| [issues-live-only-ci](Tests#t-issues-live-only-ci) | requirement | GRD-5 | Given a GitHub token and no --live, when the workflow's issue step runs, then it prints WOULD lines and writes no issue, comment or label. | not run |
-| [issues-live-only-local](Tests#t-issues-live-only-local) | requirement | GRD-5 | Given a GitHub token and no --live, when regression.py run reaches an issue write, then it prints WOULD and makes no gh write. | not run |
+| [issues-live-only-ci](Tests#t-issues-live-only-ci) | requirement | GRD-5 | Given the GRD-5 cases of test-regression-issues.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
@@ -266,6 +264,5 @@ None
 | [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs git pull --ff-only (also with -C and a remote), then the govern hook lets it through. | PASS 2026-11-12 |
 | [pull-plain-blocked](Tests#t-pull-plain-blocked) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs a plain git pull, -r, --rebase=merges, --no-ff, --ff-only with --rebase or --ff, a +refspec or -f, then the govern hook still refuses it (negative control). | PASS 2026-11-12 |
-| [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GraphQL issue list times out, when a regression run is live, then it reads the REST pages and keeps one open issue per failing row. | not run |
-| [issues-both-down-nochange](Tests#t-issues-both-down-nochange) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given both issue reads time out, when a regression run is live, then no issue is opened, commented or closed. | not run |
+| [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GRD-5 cases of test-regression-issues.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [quiet-plain-import-4892](Tests#t-quiet-plain-import-4892) | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | Given the quiet hook's remember(), when dev/package.py scans govern_hook.py, then it has no __import__ call and remember() still writes the signature held() reads back (issue 4892). | not run |

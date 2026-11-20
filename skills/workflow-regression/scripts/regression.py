@@ -4,26 +4,24 @@
 usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered;
-                                TEXT says what the test checks; C is criterion (default), workflow (an
-                                end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
-                                issue URL or finding:SLUG it keeps fixed
+                                add or replace a row. L is land, nightly, draft or covered; TEXT says what the
+                                test checks; C is criterion (default), workflow (a flow run on a toy repo) or defect
+                                (needs L, the issue URL or finding:SLUG it keeps fixed)
   sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
   red ID --owed --runner R [--live]
                                 machine R owes the proof: a to-do issue on its milestone; the goal goes on (PENDING)
   red ID --off-platform --runner R --commit SHA
-                                a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it
-                                (runs.py). A Windows runner is refused; a skip sets no seen red
+                                a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it (runs.py)
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
                                 run rows (of one kind), then keep one issue per failing row;
                                 --tier goal plans a goal lane; a plain run nightly records its time (SUITE_TIME)
   workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
+                                a change reaches, split by recorded time over 6 shards); a private repo: nothing (it runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
+Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason; a known failure never blocks, a row never seen failing does.
 Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test
 commands, and nothing else.
 """
@@ -90,7 +88,7 @@ def read_rows(root):
 
 
 def edit_rows(root, change):
-    """Re-read the rows, apply this command's change and write, under the table's lock (slots.edit)."""
+    """Re-read the rows, apply this change and write, under the table's lock (slots.edit)."""
     def apply():
         rows = read_rows(root)
         change(rows)
@@ -101,6 +99,10 @@ def edit_rows(root, change):
 
 def new(**kw):
     return {name: kw.get(name, "") for name in FIELDS}
+
+
+def draft(key, goal):
+    return new(id=key, level="draft", command="echo write a test", goal=goal)
 
 
 def known(root):
@@ -126,7 +128,7 @@ def cmd_add(args):
 
 
 def active(root, slug):
-    """A goal still being built: its run record exists and is not done, failed, retired or stopped."""
+    """A goal still being built: its run record is not done, failed, retired or stopped."""
     common = os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")
     try:
         with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -160,7 +162,7 @@ def cmd_sync(args):
         if not found:
             missing.append((key, "", "criterion has no regression row"))
             if args.write:
-                rows[key] = drafted[key] = new(id=key, level="draft", command="echo write a test", goal=key)
+                rows[key] = drafted[key] = draft(key, key)
     for slug, number, line in missing:
         if not number:
             print("GAP %s %s" % (slug, line))
@@ -168,7 +170,7 @@ def cmd_sync(args):
         print("GAP %s:%s %s" % (slug, number, line[:100]))
         if args.write:
             key = "%s-%s" % (slug, number)
-            rows[key] = drafted[key] = new(id=key, level="draft", command="echo write a test", goal="%s:%s" % (slug, number))
+            rows[key] = drafted[key] = draft(key, "%s:%s" % (slug, number))
     if drafted:
         edit_rows(root, lambda current: [current.setdefault(k, v) for k, v in drafted.items()])
     drafts = [row["id"] for row in rows.values() if row["level"] == "draft"]
@@ -200,7 +202,7 @@ def cmd_criteria(_args):
             unmet.append("%s (no regression row)" % key)
         for row in found:
             if row["level"] == "draft" or (row["level"] != "covered" and subprocess.run(["sh", "-c", row["command"]], cwd=root,
-                                                                                   capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
+        capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
                 unmet.append("%s (row %s is a draft or failing)" % (key, row["id"]))
     print("\n".join(unmet))
     return 1 if unmet else 0
@@ -222,11 +224,11 @@ def cmd_red(args):
     tree = os.path.join(temp, "tree")
     git("worktree", "add", "--detach", "--quiet", tree, "HEAD", cwd=root)
     try:
-        broke = subprocess.run(args.break_it, shell=True, cwd=tree, capture_output=True, encoding="utf-8", errors="replace")
+        shell = dict(shell=True, cwd=tree, capture_output=True, encoding="utf-8", errors="replace")
+        broke = subprocess.run(args.break_it, **shell)
         if broke.returncode:
             sys.exit("REFUSED: the break command failed: " + broke.stderr.strip()[:300])
-        done = subprocess.run(row["command"], shell=True, cwd=tree, capture_output=True, encoding="utf-8", errors="replace", env=actions.row_env(),
-                              timeout=args.timeout)
+        done = subprocess.run(row["command"], env=actions.row_env(), timeout=args.timeout, **shell)
     finally:
         run(["git", "worktree", "remove", "--force", tree], cwd=root)
         shutil.rmtree(temp, ignore_errors=True)
@@ -241,6 +243,28 @@ def cmd_red(args):
     print("SEEN RED %s on %s" % (args.id, today()))
     runs.owed_clear(root, args.id, args.live)
     return 0
+
+
+def merged(path, results=(), left=(), limit=0):
+    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results (LEFT: the limit)."""
+    rows = {}
+    try:
+        rows.update({c[0]: [float(c[1]), ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
+    except (OSError, ValueError):
+        pass
+    rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
+    return rows
+
+
+def split(ids, times, n):
+    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median; deterministic."""
+    seen = sorted(times[k] for k in ids if k in times)
+    weight, load, shards = {k: times.get(k, seen[len(seen) // 2] if seen else 1) for k in ids}, [0] * n, [[] for _ in range(n)]
+    for key in sorted(ids, key=lambda k: (-weight[k], k)):
+        j = min(range(n), key=lambda x: (load[x], x))
+        shards[j].append(key)
+        load[j] += weight[key]
+    return shards
 
 
 def cmd_run(args):
@@ -263,7 +287,7 @@ def cmd_run(args):
         old, why = lanes.load(record, root)
         if old:
             todo, reused, notes, why = lanes.plan(root, picked, old, lines_of(root, "regression.tsv"),
-                                                  lines_of(root, "regression-known.tsv"))
+                lines_of(root, "regression-known.tsv"))
             print("\n".join(notes)) if notes else None
         if why:
             print("FULL: " + why)
@@ -272,16 +296,33 @@ def cmd_run(args):
         else:
             ids = ", ".join(todo[:10]) + (", +%d more" % (len(todo) - 10) if len(todo) > 10 else "")
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
-                                                       " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
+                " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
+    i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
+    est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
+    path = os.environ.get("LOOP_ROW_TIMES", "")
+    every = todo
+    if n > 1:
+        mine = split(todo, {k: v[0] for k, v in merged(path).items() if v[0] > 0}, n)
+        print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
+        todo = [key for key in todo if key in mine[i]]
     if todo and args.target in ("land", "nightly"):
         lanes_cli.wait_memory(root)
     if todo and args.target in ("land", "nightly") and (why or not args.reuse):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
-    est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     limit = (args.budget or runs.budget(root)) if args.reuse else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
+    late = [r["id"] for r in results if n > 1 and r["state"] == "FAIL" and r["rc"] == 124]
+    results, cut = [r for r in results if r["id"] not in late], cut + late
+    if late:
+        print("LEFT %d over the %d s row limit, not failed: %s" % (len(late), args.timeout, ", ".join(late)))
+    if path:
+        rows = merged(path, results, late, args.timeout)
+        for key in every:  # RAN: this shard's rows, SEL: the rest
+            row = rows.setdefault(key, [0, ""])
+            row[1] = row[1] or ("RAN" if key in todo + cut else "SEL")
+        open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
     if not args.reuse and results:
@@ -315,10 +356,11 @@ def cmd_run(args):
     failed = [item["id"] for item in results if item["state"] == "FAIL"]
     kept = [old["rows"][key]["status"] for key in reused]
     passed = sum(item["state"] == "PASS" for item in results) + kept.count("PASS")
+    skipped = sum(item["state"] == "SKIPPED" for item in results)
     print("RESULT %d passed%s, %d known, %d failed, %d unproven%s" % (
         passed, " (%d reused)" % len(reused) if args.reuse else "",
         sum(item["state"] == "KNOWN" for item in results) + kept.count("KNOWN"), len(failed), len(never),
-        ", %d skipped" % sum(item["state"] == "SKIPPED" for item in results) if any(item["state"] == "SKIPPED" for item in results) else ""))
+        ", %d skipped" % skipped if skipped else ""))
     if cannot:
         print("NOTRUNNABLE %d: %s" % (len(cannot), ", ".join(cannot)))
     if env:

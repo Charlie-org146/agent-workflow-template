@@ -88,7 +88,7 @@ if only in ("", "restamp"):
     check("the page is stale before the merge", stale() == ["A"])
     done = audit.relock(repo, "my-goal", ["A"])
     commit("Wiki: re-stamp pages for my-goal")
-    check("restamp marks the page kept by the goal (%s)" % done, done == ["A"] and "kept my-goal" in open(os.path.join(repo, "docs/wiki/A.md")).read())
+    check("restamp records the page in the goal's own kept fragment (%s)" % done, done == ["A"] and open(os.path.join(repo, ".loop/kept/my-goal.tsv")).read().startswith("A	"))
     check("and the page is no longer stale (%s)" % stale(), not stale())
     log = open(os.path.join(repo, ".git", "loop", "reviews.tsv")).read()
     check("and the reviews log names the goal's slug", "restamp\tA\tmy-goal" in log)
