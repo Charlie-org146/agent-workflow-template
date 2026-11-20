@@ -10,16 +10,14 @@ usage: criteria.py <command> [options]
                                mark them Unreviewed, so their wording may change. With no terminal, both need
                                LOOP_OWNER_WORDS, the owner's own words; each change is logged with them in .git/loop/reviews.tsv
   review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID
-  render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs;
-                               --check only says which pages are stale; --tables leaves the Settings, Automation and
-                               README blocks alone
+  render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs (not while
+                               lane fragments wait for the release); --check lists the stale; --tables leaves the blocks
 
 A feature page is a short PRD (references/commands.md): Review, Problem, Requirements, Non-goals, Success metrics, Tests.
 A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text <!-- reviewed HASH -->' (seal_of its text
 and sub-bullets; docs.py check fails when either changes), at most criteria_max lines (default
 CRITERIA_MAX_DEFAULT, .loop/config.json). An argument shaped like an ID is a requirement; any other is a page, whose PRD
-review prd.py writes. A row whose goal is '-' proves no requirement yet and is left out. render writes each Tests table and
-the full Tests page (render.py), printing WROTE per file. It runs git only.
+review prd.py writes. A row whose goal is '-' proves no requirement yet and is left out. It runs git only.
 """
 import argparse
 import datetime
@@ -166,6 +164,10 @@ def table(root, ids, linked):
     return render.table(root, ids, linked)
 
 
+def waiting(root):
+    return __import__("render").pending(root)
+
+
 def cmd_render(args):
     import render
     return render.render(args)
@@ -259,7 +261,7 @@ def contract(root, names, seen):
             found += deployments.howto_runbook(root, page, rule, books[page])
         if "problem" in on:
             found += pf.problem(page, head[0], numbered[head[0]][1], rule["problem_lines"], rule["banned"])
-        if "tests" in on:
+        if "tests" in on and not waiting(root):
             found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], table(root, ids, linked))] if x]
     if "runbook" in on:
         found += deployments.owed(root, books, rule["runbook"])

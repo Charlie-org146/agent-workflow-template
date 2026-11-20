@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The Tests renderings (DOC-9, DOC-10) from the regression rows, and the file reading pageformat.py needs. criteria.py render
-calls render(); docs.py check calls generated() and front(); setup runs `render.py blocks`. Runs git only."""
+"""The Tests renderings (DOC-9, DOC-10) and the blocks: criteria.py render calls render(); docs.py check, generated() and front()."""
+import glob
 import importlib
 import json
 import os
@@ -13,7 +13,7 @@ import criteria as cr
 import pageformat as pf
 from deployments import link_of, regroup, topics_of
 
-os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above) sets the rest, stdin included
+os.environ["GIT_TERMINAL_PROMPT"] = "0"
 
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 TESTS = ("Test", "Kind", "Guards", "Checks", "Last result")
@@ -40,6 +40,11 @@ def tests_format(held={}):
 def ran_of(root):
     """{row: (status, date, " FLAKY" if the 5th cell names a commit, REG-9)}."""
     return {row[0]: (row[1], row[2], " FLAKY" if (row + [""] * 5)[4] else "") for row in cr.tsv(root, "regression-runs.tsv")}
+
+
+def pending(root):
+    """Lane fragments not yet folded in: the release renders the tables."""
+    return sorted(glob.glob(os.path.join(root, ".loop", "lane-results", "*.tsv")))
 
 
 def table(root, ids, linked):
@@ -78,7 +83,7 @@ def render(args):
     # blocks first: a Tests rewrite keeps them
     stale = ["%s (%s block)" % x for x in (refresh(root, args.check) if config_of(root).get("criteria") and not getattr(args, "tables", False) else [])]
     out, idsof = [], lambda ls: [(m.group(1), m.group(4)) for _, m in cr.criteria_of(ls) if m]
-    for rel in cr.pages(root):
+    for rel in [] if pending(root) else cr.pages(root):
         slug = os.path.basename(rel)[:-3]
         if slug in pf.GENERATED:
             continue
@@ -86,7 +91,7 @@ def render(args):
         parts = cr.sections(text)
         url = link_of(text, counting.sources(root).get(slug, ""))
         base = text
-        if url:  # link form: ids come from the copy in .loop/prd (else the linked PRD, read now); the PRD block is refreshed from the copy
+        if url:  # link form: ids from the .loop/prd copy
             import prdcopy
             body, _ = prdcopy.read(root, slug, url)
             if body is None or not parts or parts[-1][0] != "Tests":
@@ -96,10 +101,10 @@ def render(args):
             base = prdcopy.with_block(top, body) + mid + rest if prdcopy.copy_of(root, slug) else text
         else:
             if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"], rules["revs"])] != rules["sections"] or parts[-1][0] != "Tests":
-                continue  # a Runbook after Tests would be cut off: leave it to the check
+                continue
             ids = idsof(dict(parts)[rules["sections"][1]])
         out.append((rel, text, base.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
-    for step in (0, 1):  # the pages first: the Tests page is then built from what they now say
+    for step in (0, 1):
         if step and out:
             rel = os.path.join(cr.folder_of(root), "Tests.md")
             out = [(rel, read(os.path.join(root, rel)), tests_page(root))]
@@ -126,6 +131,8 @@ def read(path):
 def generated(root):
     rel = os.path.join(cr.folder_of(root), "Tests.md")
     held = read(os.path.join(root, rel))
+    if pending(root):
+        return []
     if held is None:
         return [("STALE", "Tests", "no %s. Fix: /workflow-docs render" % rel)]
     have, want = held.splitlines(), tests_page(root).splitlines()
@@ -219,7 +226,6 @@ def clashes(names):
     return out
 
 
-# the Settings and Automation blocks on Home, the README's template line
 SKILLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TEMPLATE_REPO = "jcl2018/agent-workflow-template"  # last resort
 MARKS = ("settings", "automation", "template")
