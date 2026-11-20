@@ -14,4 +14,9 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `git diff origin/main --stat`.
+   Expect: `.loop/regression-known.tsv` changed with 79 insertions and 0 deletions, plus this goal's own record files.
+2. Run `git diff origin/main -- .loop/regression-known.tsv | grep '^+[^+]' | cut -c2- | cut -f1 | sort | comm -3 - <(gh run view 44680897573 --log-failed | grep -oE '#### FAIL +[A-Za-z0-9_.-]+' | awk '{print $3}' | sort -u)`.
+   Expect: it prints nothing (the added ids equal the 79 ids that failed in run 44680897573).
+3. Run `grep -c 'fixed by' .loop/regression-known.tsv`.
+   Expect: it prints 14, one for each row with a fix goal in flight.
