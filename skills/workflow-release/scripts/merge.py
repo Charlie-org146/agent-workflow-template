@@ -332,7 +332,7 @@ def main():
         if why:
             print(why, file=sys.stderr)
             return 4 if "GO_HEAD" in why else 5
-        moved = base_moved(state, cfg, top)
+        moved = not queue and base_moved(state, cfg, top)
         if moved:
             print(moved[1], file=sys.stderr)
             return ar.reopen(state, moved[0])

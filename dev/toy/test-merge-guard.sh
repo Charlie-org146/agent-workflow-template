@@ -182,6 +182,11 @@ print(autorelease.protected(".", "main"))
 PY
 ); }
 check "a ruleset with only a merge_queue rule is protected, so the release goes through a release pull request, never a direct push" '[ "$(prot on)" = True ] && [ "$(prot off)" = False ]'
+gstate() { rm -f "$Q/state"; echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"; }
+gstate; out=$(export PATH="$Q/bin:$PATH" QUEUE=on HEADNOW=$head LOOP_QUEUE_POLL=0.01; python3 "$M/merge.py" g 2>&1)
+check "under a merge queue a base that moved in the goal's paths is no BASE_MOVED: the merge-group run replaces it, the merge goes on" '! grep -q BASE_MOVED <<<"$out" && grep -q PRIVATE_LIST <<<"$out"'
+gstate; out=$(export PATH="$Q/bin:$PATH" QUEUE=off HEADNOW=$head; python3 "$M/merge.py" g 2>&1)
+check "negative control: with no queue the same base move still refuses BASE_MOVED" 'grep -q "REFUSED (BASE_MOVED)" <<<"$out"'
 printf '{"auto_merge": true, "merge_batch": true, "base": "main"}\n' > .loop/config.json
 out=$(export PATH="$Q/bin:$PATH" QUEUE=on; python3 "$M/merge.py" g h --batch 2>&1); rc=$?
 check "merge.py --batch under a queue refuses in one line pointing to the queue and merges nothing" '[ $rc != 0 ] && grep -q "^REFUSED: main has a merge queue" <<<"$out" && [ "$(grep -c . <<<"$out")" = 1 ]'
