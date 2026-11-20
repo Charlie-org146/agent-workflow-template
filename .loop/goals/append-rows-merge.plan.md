@@ -20,11 +20,16 @@ The sort belongs where release really commits to the base: `autorelease.push_rel
 2. `regression.py`: `cmd_sort` (`sort`, run in the repo given by cwd): read both tables with `newline=""`, normalise to LF, keep `#` header lines first, key = first cell,
    refuse and exit 1 naming every duplicate key, else write the rows sorted by (key, line) in byte order with LF endings, only when they changed.
    Run before any `add`, since `read_rows` collapses a duplicate id silently today.
-3. `autorelease.py` `push_release_commit`: before `files = [...]`, run `regression.py sort` in `tree`, add both tables to `files` when changed; a refusal calls `fail`
-   with its message. Add `.loop/regression.tsv` to `STAMPS` so the release-PR path's tree-equal-modulo-stamps check accepts the sorted table.
-   (autorelease.py is not in this goal's declared touches and is pc-w3's file: agree the hook line with pc-w3 and ask operation-pc to add it to touches.)
-4. Size, counted in LF bytes: regression.py has 148 bytes of room, autorelease.py 55 (18,945 today; pc-w3's own target for it is 18,915): trim comments and
-   docstrings in each by at least what steps 2 and 3 add, and never end above main. wiki.py is no longer touched.
+3. `autorelease.py` `push_release_commit`: inside the `PUSH_TRIES` loop, after the `worktree add` and before `files = [...]` (each retry re-checks out the base), import
+   `regression` and call a short `regression.sort_tables(tree)` (the logic lives in regression.py); put both tables into `files` before `git add`, and only when the sort changed
+   them (the commit is path-limited); a refusal calls `fail` with its message. Do NOT add regression.tsv to `STAMPS` (it would let `carried` pass a stale lane for a row-only PR head):
+   pass it through the existing `extra`/`allow` argument of the tree-equal check for the release-PR path only. The sort writes LF and compares normalised text, so no spurious diff.
+   autorelease.py is pc-w3's file and outside this goal's declared touches: agree the hook line with pc-w3, and ask operation-pc to amend the Touches (see the owner decision).
+   A release happens only on `cut` (done line 1 says "after release"); a goal that is left or has no release step leaves its table as merged.
+   A duplicate id found at release blocks that release and every later one, because the base is shared: the fix is by hand on main (keep one row), then `merge.py SLUG`.
+   Preferred, if merge.py may be touched: `regression.py sort --check` (refuse duplicates, write nothing) before `gh pr merge`, so a duplicate never merges.
+4. Size, counted in LF bytes: trim FIRST, then add. regression.py has 148 bytes of room and autorelease.py 55 (18,945; pc-w3 targets 18,915); the hook needs about 150 to 200 bytes in
+   autorelease.py, so trim at least that in comments and docstrings of the same file, never end above main, and remeasure after each step. wiki.py is no longer touched.
 5. Toy `dev/toy/test-append-rows-merge.py` (python, runs on native Windows): a temp git repo with the attributes and three branches each adding a row to
    regression.tsv and a link to regression-issues.tsv; merge in all six orders: no conflict; after `sort` the six files are byte-identical, run once with
    `core.autocrlf=true`; a row both sides edit makes a duplicate id and sort refuses naming it; negative control: without `.gitattributes` the merge conflicts.
@@ -46,4 +51,4 @@ The sort belongs where release really commits to the base: `autorelease.push_rel
 Changing readers of the tables, the towncrier design, results-render's own changes, `regression-runs.tsv` and the other tables, any requirement text.
 
 ## Decisions for the owner
-None.
+Amend this goal's Touches to add skills/workflow-release/scripts/autorelease.py (and merge.py for the early duplicate check); the frozen goal file lists neither.
