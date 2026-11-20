@@ -14,4 +14,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Open principle 3 in README.md.
+   Expect: the sentence "Every change runs on one clock from my ask to main, ..." and exactly four rows: DEL-17 (absorbing REG-7, GRD-7, GRD-8, REL-13, REL-15), HLT-7, GRD-20 (absorbing HLT-11) and OPS-16.
+2. Open "The clock, from my ask to main (DEL-17)" in docs/wiki/How-to-use-Delivery.md.
+   Expect: one table with the normal goal and the small fix side by side, the limit of every step, the token rule, and the rules that hold across the clock.
