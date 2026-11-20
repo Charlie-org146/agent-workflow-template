@@ -4,26 +4,26 @@
 usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered; TEXT says what the
-                                test checks; C is criterion (default), workflow (a flow run on a toy repo) or defect
-                                (needs L, the issue URL or finding:SLUG it keeps fixed)
-  sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows
-  criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
-  red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
+      add or replace a row. L is land, nightly, draft or covered; TEXT says what it checks;
+      C is criterion (default), workflow (a flow run on a toy repo) or defect (L is the issue URL or finding:SLUG)
+  sync [--write]                list done lines and criteria with no row, rows with no description or never seen red; --write drafts
+  criteria                      run each wiki criterion's row; print an UNMET line for each missing, draft or failing
+  red ID --break CMD            copy HEAD, break it with CMD, and record that the test fails there
   red ID --owed --runner R [--live]
-                                machine R owes the proof: a to-do issue on its milestone; the goal goes on (PENDING)
+      machine R owes the proof: a to-do issue on its milestone; the goal goes on
   red ID --off-platform --runner R --commit SHA
-                                a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it (runs.py)
+      a row this platform skips (exit 77) was seen failing on runner R at SHA: record it (runs.py)
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
-                                run rows (of one kind), then keep one issue per failing row;
-                                --tier goal plans a goal lane; a plain run nightly records its time (SUITE_TIME)
-  workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, split by recorded time over 6 shards); a private repo: nothing (it runs on the Mac)
-  reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
+      run rows (of one kind), keep one issue per failing row; --tier goal plans a goal lane (--tree: its
+      whole-tree rows only); a plain run nightly records its time (SUITE_TIME)
+  workflow [--visibility V]
+      a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows a change
+      reaches: 8 shards by recorded time, a tree job); a private repo: nothing (runs on the Mac)
+  reads ROW                     suggest a # reads: header for ROW's script
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason; a known failure never blocks, a row never seen failing does.
-Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test
-commands, and nothing else.
+Rows: .loop/regression.tsv (id, level, command, goal, seen_red, description, category, link). Each run records status, date and run in
+.loop/regression-runs.tsv (runs.py; the wiki Tests tables show it). Known failures: .loop/regression-known.tsv (id, reason); they never
+block, a row never seen failing does. Issues dry-run unless --live; a token in the environment writes nothing. Only git, gh and your tests run.
 """
 import argparse
 import datetime
@@ -119,9 +119,9 @@ def cmd_add(args):
     def change(rows):
         old = rows.get(args.id, {})
         rows[args.id] = new(id=args.id, level=args.level, command=clean(args.command), goal=clean(args.goal),
-                            category=args.category, link=clean(args.link),
-                            seen_red=old.get("seen_red", "") if old.get("command") == args.command else "",
-                            description=clean(args.describe if args.describe is not None else old.get("description", "")))
+            category=args.category, link=clean(args.link),
+            seen_red=old.get("seen_red", "") if old.get("command") == args.command else "",
+            description=clean(args.describe if args.describe is not None else old.get("description", "")))
     edit_rows(root, change)
     print("ROW %s %s: %s" % (args.id, args.level, args.command))
     return 0
@@ -246,10 +246,10 @@ def cmd_red(args):
 
 
 def merged(path, results=(), left=(), limit=0):
-    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results (LEFT: the limit)."""
+    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results."""
     rows = {}
     try:
-        rows.update({c[0]: [float(c[1]), ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
+        rows.update({c[0]: [float(c[1]), "CUT" if c[2:3] == ["CUT"] else ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
     except (OSError, ValueError):
         pass
     rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
@@ -257,7 +257,7 @@ def merged(path, results=(), left=(), limit=0):
 
 
 def split(ids, times, n):
-    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median; deterministic."""
+    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median."""
     seen = sorted(times[k] for k in ids if k in times)
     weight, load, shards = {k: times.get(k, seen[len(seen) // 2] if seen else 1) for k in ids}, [0] * n, [[] for _ in range(n)]
     for key in sorted(ids, key=lambda k: (-weight[k], k)):
@@ -300,9 +300,13 @@ def cmd_run(args):
     i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     path = os.environ.get("LOOP_ROW_TIMES", "")
-    every = todo
+    if args.tree or n > 1:  # TD504: whole-tree rows run in the tree job only
+        tree = {r["id"] for r in picked if lanes.whole(root, r, {})}
+        todo = [k for k in todo if (k in tree) == args.tree]
+    every, seen = todo, merged(path)
+    todo.sort(key=lambda k: seen.get(k, [0, ""])[1] != "CUT")  # TD497: cut last time, first now
     if n > 1:
-        mine = split(todo, {k: v[0] for k, v in merged(path).items() if v[0] > 0}, n)
+        mine = split(todo, {k: v[0] for k, v in seen.items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
     if todo and args.target in ("land", "nightly"):
@@ -319,9 +323,9 @@ def cmd_run(args):
         print("LEFT %d over the %d s row limit, not failed: %s" % (len(late), args.timeout, ", ".join(late)))
     if path:
         rows = merged(path, results, late, args.timeout)
-        for key in every:  # RAN: this shard's rows, SEL: the rest
+        for key in every:  # RAN: this shard's, CUT: budget, SEL: others'
             row = rows.setdefault(key, [0, ""])
-            row[1] = row[1] or ("RAN" if key in todo + cut else "SEL")
+            row[1] = row[1] if row[1] == "LEFT" else "CUT" if key in cut else "RAN" if key in todo else "SEL"
         open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
@@ -405,6 +409,7 @@ def main():
     item.add_argument("--live", action="store_true")
     item.add_argument("--tier", choices=("goal",), help="a goal lane (tiers.py)")
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
+    item.add_argument("--tree", action="store_true")
     item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")
