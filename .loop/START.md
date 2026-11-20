@@ -92,7 +92,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
-| `merge_batch` | false | true lets merge.py --batch merge 2-3 green goals as one. |
+| `merge_batch` | true | true lets merge.py --batch merge 2-3 green goals as one. |
 | `milestones_source` | (empty) | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |

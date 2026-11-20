@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept pr-regen-start@35f6fbcd -->
+Review: **Unreviewed** <!-- kept go-head-main-reds@9c4df9ca0 -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -195,6 +195,6 @@ None
 | [review-worker-refused](Tests#t-review-worker-refused) | requirement | REL-12 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
 | [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | REL-12 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
 | - | requirement | REL-12 | no passing test | not enforced |
-| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
+| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |
