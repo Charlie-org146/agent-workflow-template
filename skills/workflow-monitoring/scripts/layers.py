@@ -308,7 +308,7 @@ def main(argv):
         print(due(common, eta=eta))
     else:
         print(__doc__.strip())
-        return 2
+        return 0 if argv[:1] in (["--help"], ["-h"]) else 2
     return 0
 
 

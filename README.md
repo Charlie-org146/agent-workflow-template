@@ -10,6 +10,9 @@ Built with the [Charlie-org146/agent-workflow-template](https://github.com/Charl
 
 The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. Everything in the repo is part of one of those steps or keeps them running. Main changes only through a goal's pull request. A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. Done lines never change after the freeze. "What this is" is generated from this text.
 
+In harness-engineering terms, the loop is the **harness** around the agents: everything except the model. The principles and requirements are its **guides**, which steer the agents before they act. Tests, health, CI, the merge queue and the reviewer are its **sensors**, which check what the agents produced.
+
+
 ## System design
 
 How the loop sits between its owner, its parts and the outside systems it uses; every principle below is judged against it.
