@@ -6,8 +6,10 @@ Commands: review, judge, preview, file, triage; a refusal prints REFUSED[code] a
 import json
 import os
 import re
+import subprocess
 import sys
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt (DEL-10)
 
 GROUPS = (
     ("requirements", "Requirements", "my angle: is every promise I approved proven?", ("rows", "proof", "done")),
@@ -294,22 +296,39 @@ def cmd_preview(h, args):
     return 0
 
 
+def behind(root):
+    """N when HEAD is N commits behind origin/main (fetched first, best effort), else 0: a stale checkout files nothing."""
+    for git in (["fetch", "-q", "origin", "main"], ["rev-list", "--count", "HEAD..origin/main"]):
+        try:
+            done = subprocess.run(["git"] + git, cwd=root, capture_output=True, text=True, timeout=60)
+        except (OSError, subprocess.SubprocessError):
+            return 0
+    return int(done.stdout) if done.returncode == 0 and done.stdout.strip().isdigit() else 0
+
+
 def cmd_file(h, args):
     root = h.repo_root()
     asked = h.groups_of(args.group)
     if not asked and not args.review:
         refuse("file", "file needs --group NAME[,NAME] (one of %s) or --review FILE. Run preview first." % ", ".join(h.NAMES))
     filing, acts, groups = plan_for(h, root, asked if asked else [], bool(asked) and "performance" in asked, args.feature, args.review)
-    filing.apply(filing.only_open(acts) if args.open_only else acts, root, groups)
+    late = behind(root)
+    if late:
+        print("checkout is %d commits behind origin/main: not filing" % late)
+    else:
+        filing.apply(filing.only_open(acts) if args.open_only else acts, root, groups)
     print("\n".join([""] + findings(filing.ROWS, root, h.sibling_module("issues").filed(root, True), args.feature)))
-
-    return 0
+    return 1 if late else 0
 
 
 def cmd_triage(h, args):
     triage = h.sibling_module("issues") or refuse("triage", "issues.py is not installed beside health.py")
     root = h.repo_root()
     if args.close:
+        late = args.yes and behind(root)
+        if late:
+            print("checkout is %d commits behind origin/main: not filing" % late)
+            return 1
         if not args.kind and not args.issue:
             refuse("kind", "close needs --kind (a group such as docs, or review-gap) or --issue N")
         return triage.close(root, args.kind, args.why, args.feature, args.older, args.yes, args.max, tuple(args.issue))
