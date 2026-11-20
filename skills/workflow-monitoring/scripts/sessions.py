@@ -242,11 +242,13 @@ def cmd_owner_words(args):
     ok, why = layers.relay(args.via, args.text)
     if not ok:
         sys.exit("REFUSED: %s. Nothing was written." % why)
+    if args.delegated and not (args.via == "top" and re.fullmatch(r"TD\d+", args.delegated) and re.fullmatch(r"r\d+", args.doc2)):
+        sys.exit("REFUSED: a delegated record is --from top, cites the decision (--delegated TD465) and DOC-2's revision (--doc2 r6); its text is the owner's asking words. Nothing was written.")
     where = auto.owner_words_path()
     os.makedirs(os.path.dirname(where), exist_ok=True)
     count = len(auto.owner_rows())
     with open(where, "a", encoding="utf-8") as handle:
-        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation",
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), "operation-top:delegated:%s:DOC-2:%s" % (args.delegated, args.doc2) * bool(args.delegated) or "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation",
                                               json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
     import unattended; unattended.reset()
     print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
@@ -403,6 +405,8 @@ def main():
     item.add_argument("text")
     item.add_argument("--ids", default="")
     item.add_argument("--from", dest="via", default="owner", choices=["owner", "top", "peer"], help="top: relayed owner words (not safety classes); peer: refused")
+    item.add_argument("--delegated", default="", help="TD number: the owner's asking words, approved by top under DOC-2 (not safety classes)")
+    item.add_argument("--doc2", default="", help="DOC-2's revision the delegation rests on, such as r6")
     sub.add_parser("list")
     args = parser.parse_args()
     try:

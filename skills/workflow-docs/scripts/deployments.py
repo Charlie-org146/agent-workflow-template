@@ -248,6 +248,19 @@ def criteria_max(root):
 # it counts for its IDs or pages once per command (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record (MON-11,
 # o118) counts for any page, any number of times, for unreview only (never for a review).
 
+def safety(text):
+    """The safety class (auto.CLASSES, read from workflow-monitoring, never copied) the text falls in; 'unreadable' when it can't be read."""
+    here = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "workflow-monitoring", "scripts")
+    try:
+        sys.path.insert(0, here)
+        import auto
+        return next((name for name, found in auto.CLASSES.items() if found.search(text)), "")
+    except Exception:
+        return "unreadable"
+    finally:
+        sys.path.remove(here)
+
+
 def owner_rows(path):
     try:
         with open(path, encoding="utf-8") as handle:
