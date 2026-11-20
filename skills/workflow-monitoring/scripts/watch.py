@@ -8,10 +8,10 @@ usage: watch.py <command> [options]
   watch [--max N] [--once] [--interval S]
       start queued goals whose dependencies are merged (up to parallel); mend if allowed; print what waits
   resume SLUG
-      relaunch a failed or stopped goal as a worker
+      relaunch a failed or stopped goal
 
-All take --skill-dir DIR, the skills folder.
-Run state lives in <git common dir>/loop/. It never merges.
+All take --skill-dir DIR (the skills folder).
+State lives in <git common dir>/loop/; it never merges.
 """
 import argparse
 import hashlib
@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import replan as lim  # noqa: E402
 import proctree  # noqa: E402
+from batch import agent_command  # noqa: E402
 from worker import now  # noqa: E402
 try:
     import sessions  # noqa: E402
@@ -222,7 +223,7 @@ def beside(name):
 
 
 def launch(state, prompt, cfg):
-    command = list(cfg.get("agent_command") or [])
+    command, agent = agent_command(cfg, state)
     if not command:
         sys.exit("REFUSED: no agent_command in .loop/config.json.")
     env = dict(os.environ, LOOP_BATCH="1", LOOP_ROLE="worker")
@@ -236,7 +237,7 @@ def launch(state, prompt, cfg):
             state.update(status="failed", finding="could not launch the agent: %s" % error)
             save(state, "failed: " + state["finding"])
             return
-    state.update(pid=child.pid, status="running", worker="background", bound_at=now(), attempt=int(state.get("attempt") or 0) + 1)
+    state.update(pid=child.pid, status="running", worker="background", agent=agent, bound_at=now(), attempt=int(state.get("attempt") or 0) + 1)
     save(state, "launched agent pid %d and bound it as the goal's worker" % child.pid)
 
 
@@ -414,7 +415,7 @@ def cmd_watch(args):
     while True:
         found, why = pool()
         refresh()
-        if found is None:  # unknown ownership: no mend, start or assign this pass
+        if found is None:  # unknown ownership: no mend, start, assign
             tell(seen, told)
             print(graph.pool_fix(why), flush=True)
             if args.once:
