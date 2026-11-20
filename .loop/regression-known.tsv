@@ -46,7 +46,6 @@ entry-adopt	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the o
 entry-stale	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5364
 guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4104
 hlt6-cannot-fire	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5365
-lane-control-all	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4115
 lane-messages-table	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4091
 lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4153
 lanes-trace-check	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4097
