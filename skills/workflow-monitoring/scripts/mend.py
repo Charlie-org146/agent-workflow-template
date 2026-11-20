@@ -321,7 +321,7 @@ def released(run, top):
 def reconcile(path):
     """TD489: drop local_ pool ids the app no longer has; path: {"ids": [...]} or a list (archived ones count live)."""
     import sessions as se
-    path = path or os.path.join(se.base(), "app-sessions.json")
+    path = path or os.path.join(se.base(), "app-live.json")
     live = se.read(path, {}).get("ids") or se.read(path, [])
     if not live or not all(isinstance(x, str) for x in live):
         sys.exit("REFUSED: %s is missing or has no ids. Fix: the operation session writes its sessions there." % path)

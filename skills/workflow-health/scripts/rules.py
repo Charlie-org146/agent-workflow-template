@@ -339,7 +339,7 @@ def idle_sessions(root):
             out.append(row("WARN", "hygiene", sid, "idle-sessions", "busy with %s, which is %s" % (item["slug"], status),
                            "sessions.py free %s" % item["slug"], sid))
     try:
-        with open(os.path.join(loop, "app-sessions.json")) as handle:
+        with open(os.path.join(loop, "app-live.json")) as handle:
             live = json.load(handle)
         live = live.get("ids") if isinstance(live, dict) else live
         ghosts = sum(sid.startswith("local_") and sid not in live for sid in pool) if live else None

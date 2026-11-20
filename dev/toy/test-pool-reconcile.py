@@ -59,7 +59,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
     health = lambda: [r for r in rules.idle_sessions(tmp) if r["subject"] == "ghosts"]  # noqa: E731
     check(health() == [], "health prints no ghost row until the operation session has written a list")
-    json.dump({"at": "2026-11-20T21:00:00Z", "ids": live + ["local_extra-not-in-pool"]}, open(os.path.join(loop, "app-sessions.json"), "w"))
+    json.dump({"at": "2026-11-20T21:00:00Z", "ids": live + ["local_extra-not-in-pool"]}, open(os.path.join(loop, "app-live.json"), "w"))
     shown = health()
     check(len(shown) == 1 and shown[0]["state"] == "WARN" and "5 pool ids" in shown[0]["detail"], "health shows 5 ghosts as one row: %s" % [r["detail"] for r in shown])
     before = digest(tmp, {".git/loop/session-pool.json"})

@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
-"""Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation, both machines share one
-send budget, and a reply such as "1 recommended" is recorded as the owner's words.
+"""Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation; the machines share one send
+budget; a reply like "1 recommended" is recorded as the owner's words.
 
-usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply; QID is the
-                                                 `Question id` line of the mail
+usage: mailbox.py reply QID TEXT [--root DIR]   the operation session's reply; QID: the mail's `Question id` line
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
        mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                                OPS-1: file a finding of top or a machine session, unasked, as an ops-finding
-                                                issue on "Backlog: PAGE" ("Other" if none matches); REF is the record that found it.
-                                                Refuses a repeat of an open issue and a safety-class finding with no owner's words.
+                                                OPS-1: file a session's finding as an ops-finding issue on "Backlog: PAGE" ("Other"
+                                                if none); REF found it. Refuses a repeat and a safety-class finding without owner's words.
 
-       mailbox.py watch ID --pr N [--arm]       restart-safe watcher job (TD487): the tick resumes it once its checks end;
-                                                 green with --arm queues the pull request, red records the checks (--arm: operation only)
-       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); never loaded here, that is the
-                                                 owner's. The tick runs the jobs, then checkin.py; it starts no goal
+       mailbox.py watch ID --pr N [--arm --head SHA]   watcher job (TD487; ID: the goal's slug): the tick resumes it when checks end;
+                                                 green at SHA with --arm runs merge.py ID --go-head SHA once, another head waits, red
+                                                 records the checks (--arm: operation)
+       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); not loaded here;
+                                                 the tick runs the jobs, then checkin.py; no goal
 
-notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
-secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
-and one send from the shared ledger (refs/loop/mail-ledger on origin with `machine_sync`, else a local file): a second machine
-never mails an event twice, and no more than `notify_budget` (default 20) go out in 24 hours. A reply is
-"<n>", "<n> recommended", "recommended" or "approve", or the owner's own words; a question about deleting, money, security or
-private data needs the owner's typed words, recorded as written. The answer goes to the worker through operate.py send --source
-owner; a question with no goal goes to sessions.py owner-words.
+notify.py calls compose and claim per event (mail goes through workflow-health's mail.py).
+compose gives the body and remembers the question (loop/mailbox.json). claim takes the event's key and a send from
+the shared ledger (refs/loop/mail-ledger, else a file): a second machine never mails an event twice; no
+more than `notify_budget` (20) go out in 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or the owner's
+words; a question about deleting, money, security or private data needs the owner's typed words. The answer goes to the worker via
+operate.py send --source owner (else sessions.py owner-words).
 """
 import argparse
 import hashlib
@@ -70,7 +68,7 @@ def write_json(path, data):
 
 
 def options(kind, action):
-    """([option words], index of the recommended one) for an event."""
+    """([option words], recommended index) for an event."""
     if kind in FIXED:
         return FIXED[kind]
     found = re.search(r"options?:\s*([^;\[]+)", action)
@@ -83,7 +81,7 @@ def options(kind, action):
 
 
 def compose(folder, key, kind, slug, action, repo):
-    """The mail body: event, numbered options, how to reply, question id."""
+    """The mail body: event, numbered options, reply how-to, question id."""
     words, rec = options(kind, action)
     qa = qid(key)
     pending = read_json(os.path.join(folder, "mailbox.json"))
@@ -111,8 +109,8 @@ def budget_of(flow):
 
 
 def claim(folder, key, flow, cwd=None, release=False):
-    """Take one event and one send from the shared ledger: True when ours, "sent" when another machine mailed the
-    event, "budget" when the budget is spent (the event stays unsent, so a later check-in tries again)."""
+    """Take one event and a send from the shared ledger: True when ours, "sent" when another machine mailed it, "budget"
+    when the budget is spent (the event stays unsent; a later check-in tries again)."""
     for _ in range(4):
         data, token = ledger(folder, cwd)
         sent, times = data.setdefault("sent", {}), [t for t in data.get("times", []) if time.time() - t < 86400]
@@ -167,7 +165,7 @@ def covered(root, record, title, page):
 
 
 def file_finding(root, args):
-    """(exit code, line): file one finding (OPS-1); a refusing check files nothing."""
+    """(exit code, line): file one finding (OPS-1); a refusal files nothing."""
     import auto
     title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
     if not title or not args.found.strip():
@@ -266,6 +264,7 @@ def cmd_pending(args):
 
 
 LABEL = "com.workflow-loop.tick"
+MERGE = os.path.join(HERE, "..", "..", "workflow-release", "scripts", "merge.py")
 
 
 def jobs_dir(root):
@@ -280,9 +279,11 @@ def now():
 def cmd_watch(args):
     if args.arm:
         proctree.require_operation(args.root, "an armed watcher job")
+        if not args.head:
+            sys.exit("REFUSED: an armed job names its head (--head SHA).")
     path = os.path.join(jobs_dir(args.root), re.sub(r"[^\w.-]", "_", args.id) + ".json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    write_json(path, {"id": args.id, "pr": args.pr, "arm": args.arm, "state": "waiting", "result": "", "at": now()})
+    write_json(path, {"id": args.id, "pr": args.pr, "arm": args.arm, "head": args.head, "pod": machines.graph.pod_id(), "state": "waiting", "result": "", "at": now()})
     print("WATCH %s: pull request %d" % (args.id, args.pr))
 
 
@@ -309,9 +310,11 @@ def resume(root, path):
         bad = sorted({c.get("name") or c.get("context") or "?" for c in checks if (c.get("conclusion") or c.get("state")) not in ("SUCCESS", "SKIPPED", "NEUTRAL")})
         if bad:
             job.update(state="red", result="red: " + ", ".join(bad))
-        elif job.get("arm"):
-            done = subprocess.run(["gh", "pr", "merge", str(job["pr"]), "--auto", "--merge", "--match-head-commit", got["headRefOid"]], cwd=root, capture_output=True, text=True)
-            job.update(state="armed" if done.returncode == 0 else "arm-failed", result=("armed at " + got["headRefOid"][:9]) if done.returncode == 0 else done.stderr.strip()[:200])
+        elif job.get("arm") and job.get("head") != got["headRefOid"]:
+            job["result"] = "head moved to " + got["headRefOid"][:9]
+        elif job.get("arm"):  # the job id is the goal's slug
+            done = subprocess.run([sys.executable, MERGE, job["id"], "--go-head", job["head"]], cwd=root, capture_output=True, text=True, env=dict(os.environ, LOOP_POD_ID=job.get("pod", "")))
+            job.update(state="armed" if done.returncode == 0 else "arm-failed", result=(done.stdout + done.stderr).strip()[-200:])
         else:
             job.update(state="green", result="green at " + got["headRefOid"][:9])
     job["at"] = now()
@@ -374,6 +377,7 @@ def main():
     one.add_argument("id")
     one.add_argument("--pr", type=int, required=True)
     one.add_argument("--arm", action="store_true")
+    one.add_argument("--head", default="")
     one.set_defaults(func=cmd_watch)
     for name, func in (("tick", cmd_tick), ("install", cmd_install), ("uninstall", cmd_uninstall), ("status", cmd_status)):
         sub.add_parser(name).set_defaults(func=func)
