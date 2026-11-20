@@ -11,6 +11,7 @@ usage: pool.py <command> [options]
   return SLUG         a goal ended: its sessions go back to the pool (archive above pool_size); a merged goal's worktree and branch go
   archive             archive worker sessions of released goals, and under memory pressure idle ones of retired goals (ARCHIVE-NOW
                       where the session tool can't); archived ID [--why W] records one the operation session archived with the app
+  reconcile [--app-list F]  drop ids the app no longer has (TD489)
 
 The pool file is <git common dir>/loop/session-pool.json (sessions.py owns its lock); bad entries go to session-pool.bad.json.
 """
@@ -68,7 +69,7 @@ def side_path():
 
 
 def need(found, cfg, ready):
-    """(K, declined): sessions to create now: pool_size - total when free sessions are fewer than ready goals."""
+    """(K, declined): sessions to create now (pool_size - total) when free ones are fewer than ready goals."""
     free, _, total = counts(found)
     k = max(size_of(cfg) - total, 0) if free < ready else 0
     if k and graph.memory_room() == 0:
@@ -83,7 +84,7 @@ def need(found, cfg, ready):
 
 
 def ask_lines(found, cfg, ready):
-    """The pool's Needs you lines: the fill ask, or a ready goal's wait."""
+    """The pool's Needs you lines: the fill ask, or a goal's wait."""
     k, declined = need(found, cfg, ready)
     free, busy, total = counts(found)
     if k and not declined:
@@ -106,7 +107,7 @@ def attempt_ok(state, attempt):
 
 
 def stale(state, args):
-    """sessions.py report's guards: refuse a --recommend not in --words; record an older attempt's report without applying it."""
+    """sessions.py report's guards: refuse a --recommend not in --words; record an older attempt's report unapplied."""
     if args.attempt not in (None, "") and not str(args.attempt).isdigit():
         sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
     if args.recommend and args.recommend not in args.words:
@@ -125,7 +126,7 @@ def remember(item, slug):
 
 
 def quarantine():
-    """Move malformed entries graph.read_pool set aside into session-pool.bad.json."""
+    """Move malformed entries graph.read_pool set aside to session-pool.bad.json."""
     bad = graph.LAST_BAD.pop(se.pool_path(), {})
     if bad:
         path = os.path.join(se.base(), "session-pool.bad.json")
@@ -136,7 +137,7 @@ def quarantine():
 
 
 def remove_tree(slug, state):
-    """The merged goal's worktree (never forced) and branch; one line each."""
+    """The merged goal's worktree (never forced) and branch."""
     said, tree = [], state.get("worktree") or ""
     common = os.path.realpath(os.path.join(se.base(), ".."))
     listed = subprocess.run(["git", "worktree", "list", "--porcelain"], capture_output=True, text=True).stdout.splitlines()
@@ -162,7 +163,7 @@ def remove_tree(slug, state):
 
 
 def return_session(slug, merged=False):
-    """Give the goal's busy sessions back (archive above pool_size); a merge also removes its tree."""
+    """Give the goal's busy sessions back (archive above pool_size); a merge removes its tree."""
     cfg, said, state = config(), [], se.load(slug)
     merged = merged or bool(state.get("pr") and prs.state(state["pr"], se.git("rev-parse", "--show-toplevel") or ".") == "MERGED")
     with se.locked():
@@ -224,7 +225,7 @@ def cmd_archive(args):
 
 
 def archived(sid, name, why, done=True):
-    """Drop an archived session from the pool and log it in archived.tsv; without done, the operation session archives it."""
+    """Drop an archived session from the pool and log it in archived.tsv; without done, the operation session does."""
     with se.locked():
         found = se.pool()
         found.pop(sid, None) if done else found.get(sid, {}).update(state="archive")
@@ -235,6 +236,11 @@ def archived(sid, name, why, done=True):
         handle.write("%s\t%s\t%s\t%s\n" % (se.now(), sid, name, why))
     print("ARCHIVED %s (%s)" % (name, why))
     return 1
+
+
+def cmd_reconcile(args):
+    import mend
+    return mend.reconcile(args.app_list)
 
 
 def cmd_decline(args):
@@ -256,7 +262,7 @@ def cmd_return(args):
 
 
 def pr_order(runs, keep=""):
-    """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = retry heartbeat).
+    """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = heartbeat).
     A goal (but keep) not running or waiting, not at pr, merged, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
     folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
@@ -284,7 +290,7 @@ def pr_join(g, state):
 
 
 def pr_turn(runs, slug):
-    """Join the queue; "" when it is slug's turn, else the earlier goal ahead whose touches overlap its own (DEL-15)."""
+    """Join the queue; "" on slug's turn, else the earlier goal whose touches overlap its own (DEL-15)."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
     os.makedirs(folder, exist_ok=True)
     mine = os.path.join(folder, slug)
@@ -313,13 +319,13 @@ def pr_turn(runs, slug):
 
 
 def pr_ahead(runs, base):
-    """True when origin/<base> holds commits this branch lacks."""
+    """True when origin/<base> has commits this branch lacks."""
     subprocess.run(["git", "fetch", "origin", base], capture_output=True)
     return subprocess.run(["git", "merge-base", "--is-ancestor", "origin/" + base, "HEAD"], capture_output=True).returncode != 0
 
 
 def pr_moved(runs, g, state, why, fix):
-    """A try lost to main moving counts in state["moved"] (max_moved, default 5), not in tries."""
+    """A try lost to main moving counts in state["moved"] (max_moved, default 5), not tries."""
     state["moved"] = state.get("moved", 0) + 1
     most = int(g.config().get("max_moved") or 5)
     if state["moved"] > most:
@@ -392,6 +398,7 @@ def main():
     item = sub.add_parser("return")
     item.add_argument("slug")
     sub.add_parser("archive")
+    sub.add_parser("reconcile").add_argument("--app-list", default="")
     item = sub.add_parser("archived")
     item.add_argument("id")
     item.add_argument("--why", default="archived with the app")
@@ -400,7 +407,7 @@ def main():
     item.add_argument("percent", type=float)
     args = parser.parse_args()
     try:
-        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "archive": cmd_archive, "archived": lambda a: archived(a.id, (se.pool().get(a.id) or {}).get("name") or a.id, a.why) - 1, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
+        return {"status": cmd_status, "need": cmd_need, "add": cmd_add, "decline": cmd_decline, "return": cmd_return, "archive": cmd_archive, "reconcile": cmd_reconcile, "archived": lambda a: archived(a.id, (se.pool().get(a.id) or {}).get("name") or a.id, a.why) - 1, "pr_turn": cmd_pr_list, "usage": lambda found: lim.cmd_usage(found, config())}[args.cmd](args)
     except se.PoolUnreadable as error:
         sys.exit("REFUSED: " + graph.pool_fix(error))
 

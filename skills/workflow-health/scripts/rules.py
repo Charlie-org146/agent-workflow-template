@@ -338,6 +338,15 @@ def idle_sessions(root):
         if status in ("done", "merged"):
             out.append(row("WARN", "hygiene", sid, "idle-sessions", "busy with %s, which is %s" % (item["slug"], status),
                            "sessions.py free %s" % item["slug"], sid))
+    try:
+        with open(os.path.join(loop, "app-sessions.json")) as handle:
+            live = json.load(handle)
+        ghosts = sum(sid not in live for sid in pool) if live and isinstance(live, list) else None
+    except (OSError, ValueError):
+        ghosts = None
+    if ghosts is not None:
+        out.append(row("WARN" if ghosts else "PASS", "hygiene", "ghosts", "idle-sessions", "%d pool ids the app no longer has" % ghosts,
+                       "pool.py reconcile" if ghosts else "", "ghosts"))
     return out
 
 
