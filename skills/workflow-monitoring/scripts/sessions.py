@@ -14,7 +14,7 @@ usage: sessions.py <command> [options]
                             one); without it the pull request waits. merged is checked with gh. An ended goal's session
                             returns to the pool. Done is final (KEPT); merged still frees the session.
   send SLUG[,SLUG...] TEXT  send the owner's answer: one counted message per distinct worker session
-  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for its IDs (auto.py) and reset the send count
+  owner-words TEXT --ids A,B [--from top|peer] [--delegated TDn --doc2 rN]  record the owner's exact message (or, delegated, the asking words) for its IDs
   list                      the sessions and their goals
 
 The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL rename ID NAME` and
@@ -242,14 +242,11 @@ def cmd_owner_words(args):
     ok, why = layers.relay(args.via, args.text)
     if not ok:
         sys.exit("REFUSED: %s. Nothing was written." % why)
-    where = auto.owner_words_path()
-    os.makedirs(os.path.dirname(where), exist_ok=True)
-    count = len(auto.owner_rows())
-    with open(where, "a", encoding="utf-8") as handle:
-        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation",
-                                              json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
+    if args.delegated:
+        proctree.require_operation(".", "a delegated approval")
+    count = auto.add_owner_words(args, ids)
     import unattended; unattended.reset()
-    print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
+    print("OWNER-WORDS o%d covers %s" % (count, ",".join(ids)))
     return 0
 
 
@@ -403,6 +400,8 @@ def main():
     item.add_argument("text")
     item.add_argument("--ids", default="")
     item.add_argument("--from", dest="via", default="owner", choices=["owner", "top", "peer"], help="top: relayed owner words (not safety classes); peer: refused")
+    item.add_argument("--delegated", default="", help="TDn: a delegated record (DOC-2)")
+    item.add_argument("--doc2", default="", help="DOC-2's revision, rN")
     sub.add_parser("list")
     args = parser.parse_args()
     try:

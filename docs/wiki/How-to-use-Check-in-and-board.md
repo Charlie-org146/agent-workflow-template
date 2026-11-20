@@ -9,7 +9,7 @@ Shows what is running, stuck or waiting on the owner the same way every time: th
 
 | Component | Kind | What it is | How a user uses it |
 |---|---|---|---|
-| `checkin.py` | Command | Prints the check-in: the machine, every session, the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
+| `checkin.py` | Command | Prints the check-in: the machine, every session, each repo's work as a queue (Building now, then Queue, in order), the dependency map and what needs you. | `python3 skills/workflow-monitoring/scripts/checkin.py`. |
 
 ### System diagram
 
@@ -37,6 +37,7 @@ Each requirement and how it is delivered:
 - **Reads:** the run records, the queue, the session pool and the followed repos.
 - **Writes:** nothing.
 - **Exit codes:** 0 after it prints.
+- **Reading the queue:** each repo block starts with **Building now** (one row per running goal: its PR, session, step with progress k/8, and ETA) and then **Queue, in order** (position, goal, what it waits for, ETA to start). A goal is in one block only. The order is queue.md's order; "waits for" is the loop's own reason (a goal it waits on, or "slots full"); a queued goal starts when what it waits on ends, so its ETA is that goal's end, or the first running goal's end when only a slot is missing. A row with no estimate says "ETA unknown: <what has no estimate>" and never shows a guessed time.
 
 ## URLs and deployments
 
