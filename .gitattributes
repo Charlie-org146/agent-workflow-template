@@ -1,0 +1,2 @@
+.loop/regression.tsv merge=union
+.loop/regression-issues.tsv merge=union

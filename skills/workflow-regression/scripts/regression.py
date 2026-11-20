@@ -1,31 +1,23 @@
 #!/usr/bin/env python3
 """Keep a repo's regression tests visible and enforced.
 
-usage: regression.py <command> [options]
-
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered;
-                                TEXT says what the test checks; C is criterion (default), workflow (an
-                                end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
-                                issue URL or finding:SLUG it keeps fixed
-  sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows
-  criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
+                                add or replace a row; C is criterion (default), workflow or defect (needs --link)
+  sync [--write]                list done lines and criteria with no row, and rows with no description or seen red
+  criteria                      run each wiki criterion's row; print an UNMET line per missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
   red ID --owed --runner R [--live]
-                                machine R owes the proof: a to-do issue on its milestone; the goal goes on (PENDING)
+                                machine R owes the proof: a to-do issue; the goal goes on (PENDING)
   red ID --off-platform --runner R --commit SHA
-                                a row this platform skips (exit 77) was seen failing on runner R at commit SHA: record it
-                                (runs.py). A Windows runner is refused; a skip sets no seen red
+                                a row this platform skips (exit 77) failed on runner R at SHA
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
-                                run rows (of one kind), then keep one issue per failing row;
-                                --tier goal plans a goal lane; a plain run nightly records its time (SUITE_TIME)
-  workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
-  reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
+                                run rows, keep one issue per failing row; --tier goal plans a goal lane
+  sort [--check]                sort both tables by id in LF (merge=union leaves any order); refuse duplicates
+  workflow [--visibility V]     a public repo: write regression.yml and regression-pr.yml
+  reads ROW                     suggest a # reads: header for ROW's script from the check-reads trace
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run (Actions URL or commit sha) in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason. A known failure never blocks. A row never seen failing does.
-Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test
-commands, and nothing else.
+Rows live in .loop/regression.tsv, their run status in .loop/regression-runs.tsv. Known failures
+(.loop/regression-known.tsv) never block; a row never seen failing does. Issues dry-run unless --live.
 """
 import argparse
 import datetime
@@ -90,7 +82,7 @@ def read_rows(root):
 
 
 def edit_rows(root, change):
-    """Re-read the rows, apply this command's change and write, under the table's lock (slots.edit)."""
+    """Re-read the rows, apply the change, write, under the table's lock."""
     def apply():
         rows = read_rows(root)
         change(rows)
@@ -126,7 +118,7 @@ def cmd_add(args):
 
 
 def active(root, slug):
-    """A goal still being built: its run record exists and is not done, failed, retired or stopped."""
+    """A goal still being built: its run record is not done, failed, retired or stopped."""
     common = os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")
     try:
         with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -326,6 +318,23 @@ def cmd_run(args):
     return 1 if failed or never else slots.EXIT_ENV if len(env) * 2 > len(results) else 0
 
 
+def sort_tables(root, check=False):
+    """Sort both tables by id in LF; refuse a duplicate id."""
+    for name in ("regression.tsv", "regression-issues.tsv"):
+        path = path_of(root, name)
+        text = open(path, newline="").read() if os.path.exists(path) else ""
+        lines = text.replace("\r\n", "\n").split("\n")
+        rows = sorted(l for l in lines if l[:1] not in ("", "#"))
+        keys = [r.split("\t")[0] for r in rows]
+        dup = {k for i, k in enumerate(keys[1:]) if k == keys[i]}
+        if dup:
+            sys.exit("REFUSED: duplicate %s in %s. Fix: keep one row." % (", ".join(sorted(dup)), name))
+        out = "".join(l + "\n" for l in [l for l in lines if l[:1] == "#"] + rows)
+        if text and out != text and not check:
+            open(path, "w", newline="").write(out)
+    return 0
+
+
 def cmd_workflow(args):
     return lanes_cli.workflow(top(), args.visibility, lambda: actions.write(top(), CRON))
 
@@ -365,6 +374,9 @@ def main():
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
     item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take")
     item.set_defaults(func=cmd_run)
+    item = sub.add_parser("sort")
+    item.add_argument("--check", action="store_true")
+    item.set_defaults(func=lambda a: sort_tables(top(), a.check))
     item = sub.add_parser("workflow")
     item.add_argument("--visibility", choices=("public", "private"), help="skip the probe")
     item.set_defaults(func=cmd_workflow)
