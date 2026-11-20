@@ -308,6 +308,20 @@ def reads_table(root, command, cache):
     return cache.get(("table", command), hits(RUNNER, deps))
 
 
+def names_table(root, command, cache):
+    """Whether a row is a table reader: its command, or a file it names itself (not one only reached through other files:
+    nearly every tool names the table of the repo it runs in, a toy's own copy included), names .loop/regression.tsv
+    (a script's `# reads:` line counts). A row that runs tools on this repo's own files always reruns anyway
+    (closure's second value). Reaching regression.py alone doesn't count."""
+    key = ("names_table", command)
+    if key not in cache:
+        found, _ = references(root, command, "", wide=False)
+        own = closure(root, "python3 " + RUNNER, cache)[0] | {RUNNER}
+        cache[key] = TABLE in found or TABLE in command or any(
+            TABLE in (read(root, p, cache) or "") for p in found if not p.endswith("/") and p not in own)
+    return cache[key]
+
+
 def deleted(root, commit):
     """Deleted paths (release and loop files aside) since commit or in the worktree: a vanished file drops edges."""
     out = (git(root, "diff", "--name-status", "--no-renames", "%s..HEAD" % commit) or "").splitlines()
@@ -372,7 +386,7 @@ def plan(root, selected, record, current_tsv, current_known):
         for path in since[prior["commit"]] or []:
             if path == TABLE:
                 stale = table(root, prior["commit"], "regression.tsv", memo).get(rid) != current_tsv.get(rid) \
-                    or reads_table(root, row["command"], cache)
+                    or names_table(root, row["command"], cache)
             elif path == ".loop/regression-known.tsv":
                 stale = table(root, prior["commit"], "regression-known.tsv", memo).get(rid) != current_known.get(rid)
             elif path == narrow.CONFIG:
