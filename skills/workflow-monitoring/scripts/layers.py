@@ -100,17 +100,17 @@ def build(common, cfg, now=None):
         if not run.get("slug") or graph.foreign(run) or run.get("external"):
             continue
         slug, status, pr = run["slug"], run.get("status"), number(run.get("pr"))
-        live = status != "running" or (graph.holds_slot(run, taken) and (graph.silent_for(run, at) or 0) <= graph.silent_limit(cfg))  # a live session, not a leftover record (TD430)
+        live = machines.live(run, taken, at, cfg)  # a live session, not a leftover record (TD430)
         if status in ("running", "waiting", "failed", "stopped", "done") and not (status == "done" and run.get("step") == "release"):
             workers.append({"slug": slug, "step": run.get("step"), "status": status, "pr": pr, "eta": eta_at(root, run, now)}) if live else stale.append(slug)
         if status == "done" and run.get("step") == "release":
             merges.append({"slug": slug, "pr": pr})
         ask = run.get("waiting") or {}
-        if status == "waiting" and ask.get("ask"):
+        if status == "waiting" and ask.get("ask") and live:
             needs.append({"slug": slug, "words": ask.get("ask"), "recommend": ask.get("recommend") or "", "options": ask.get("words") or []})
         if status in ("failed", "stopped") or run.get("held"):
             parked.append({"slug": slug, "reason": "%s at %s" % (status if status in ("failed", "stopped") else "held", run.get("step") or "no step")})
-    stale and parked.append({"slug": "stale", "reason": "%d running records have no live session: %s" % (len(stale), ", ".join(stale[:5]))})
+    stale and parked.append({"slug": "stale", "reason": "%d records have no live session: %s" % (len(stale), ", ".join(stale[:5]))})
     for sid, item in sorted((pool or {}).items()):
         if isinstance(item, dict) and item.get("state") == "free":
             idle.append({"session": item.get("name") or sid, "reason": "free in the pool, no ready goal"})

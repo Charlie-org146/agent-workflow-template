@@ -214,13 +214,13 @@ def owned(root, rel, body, rule):
 
 
 def keep(root, slug, pages):
-    """DOC-2: a re-stamp is a line in the goal's own .loop/kept/<slug>.tsv (no page edit), committed alone."""
+    """DOC-2: a re-stamp is a line in .loop/kept/<slug>.tsv, committed alone."""
     path, sha_ = ".loop/kept/%s.tsv" % slug, cr.git("rev-parse", "--short", "HEAD")
     os.makedirs(join(root, ".loop", "kept"), exist_ok=True)
     with open(join(root, path), "a") as handle:
         handle.writelines("%s\t%s\n" % (page, sha_) for page in pages)
     cr.git("add", "--", path)
-    cr.git("commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
+    cr.git(*docs.identity(root), "commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
 
 
 def relock(root, slug="", only=()):
@@ -247,9 +247,9 @@ def relock(root, slug="", only=()):
             done.append(os.path.basename(rel)[:-3])
         elif slug and not moved:
             held_.append(os.path.basename(rel)[:-3])
-    for page in only if slug else ():  # DOC-18: a How-to-use page has no Review line; a kept marker re-stamps it
-        rel, feature = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):]
-        held = page.startswith(docs.deployments.HOWTO) and feature in docs.read_map(root) and os.path.isfile(join(root, rel))
+    for page in only if slug else ():  # DOC-18: a How-to-use or guide page has no Review line; a kept marker re-stamps it
+        rel, feature, mapped = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):], docs.read_map(root)
+        held = os.path.isfile(join(root, rel)) and (page.startswith(docs.deployments.HOWTO) and feature in mapped or page in mapped and pf.is_guide(open(join(root, rel)).read()))
         if held and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
             held_.append(page)
     if held_:

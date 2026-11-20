@@ -77,7 +77,7 @@ for f in skills/loop-files.md skills/workflow-monitoring/SKILL.md skills/workflo
 done
 check "the test runs as a regression row" 'grep -q "test-batch.sh" "$here/.loop/regression.tsv"'
 page="$here/docs/wiki/Operation.md"
-for id in no-line-in-governor skill-says-governs; do
+for id in no-line-in-governor; do  # skill-says-governs merged into it (rows-600-c)
   check "$id is a test named in the Tests" 'sed -n "/^## Tests/,\$p" "$page" | grep -qF "| [$id](Tests#t-$id) |"'
 done
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

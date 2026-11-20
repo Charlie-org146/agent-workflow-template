@@ -1,5 +1,4 @@
-"""Freshness, Tests, Adoption, Security, Size, Performance and Hygiene rules, plus principle-map. Read-only; dates are days, so
-one day's runs print the same lines."""
+"""Freshness, Tests, Adoption, Security, Size, Performance, Hygiene and principle-map rules. Read-only."""
 import datetime
 import glob
 import importlib.util
@@ -30,7 +29,6 @@ def days_since(text):
 
 
 def last_runs(root):
-    """{row id: (status, date)} from .loop/regression-runs.tsv."""
     out = {}
     try:
         with open(os.path.join(root, ".loop", "regression-runs.tsv")) as handle:
@@ -129,7 +127,6 @@ def template_version(root):
 
 
 def scheduled(root):
-    """The regression workflow is scheduled unless regression_runs is mac."""
     out, flows = [], os.path.join(root, ".github", "workflows")
     try:
         mac = json.load(open(os.path.join(root, ".loop", "config.json"))).get("regression_runs") == "mac"
@@ -159,7 +156,6 @@ POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Run
 
 
 def prompt_pointer(root):
-    """prompt-pointer: a WARN for a scheduled-task prompt with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -238,12 +234,12 @@ def private(root):
     out = []
     for number, pattern in enumerate(wanted, 1):
         hits = git_raw(root, "grep", "-n", "-I", "-E", "-e", pattern, "--", ".", ":(exclude).git")
-        if hits is None:  # a bad pattern: never a silent pass
+        if hits is None:
             out.append(row("UNREAD", "security", "pattern %d" % number, "private", "leak pattern %d is not a valid regex" % number,
                            "fix leak_patterns in the private flow file"))
             continue
         for line in hits.splitlines():
-            where = ":".join(line.split(":", 2)[:2])  # never the text
+            where = ":".join(line.split(":", 2)[:2])
             out.append(row("FAIL", "security", where, "private", "matches leak pattern %d" % number,
                            "remove it from the file and from history", where))
     return out
@@ -325,11 +321,21 @@ def idle_sessions(root):
         if status in ("done", "merged"):
             out.append(row("WARN", "hygiene", sid, "idle-sessions", "busy with %s, which is %s" % (item["slug"], status),
                            "sessions.py free %s" % item["slug"], sid))
+    try:
+        with open(os.path.join(loop, "app-live.json")) as handle:
+            live = json.load(handle)
+        live = live.get("ids") if isinstance(live, dict) else live
+        ghosts = sum(sid.startswith("local_") and sid not in live for sid in pool) if live else None
+    except (OSError, ValueError, TypeError):
+        ghosts = None
+    if ghosts is not None:
+        out.append(row("WARN" if ghosts else "PASS", "hygiene", "ghosts", "idle-sessions", "%d pool ids the app lacks" % ghosts,
+                       "pool.py reconcile" * bool(ghosts), "ghosts"))
     return out
 
 
 ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
-HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # HLT-4
+HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")
 
 
 def eta(root, name):
@@ -375,23 +381,21 @@ def principle_map(root):
     plan, done = pmap(root), reviewed(root)
     under = {i for ids in plan.values() for i in ids}
     bad = lambda i, why, fix: row("FAIL", "requirements", i, "principle-map", why, fix)
-    return ([bad(i, "%s is Reviewed under no principle" % i, "add it to Principles.md") for i in sorted(done - under)] * bool(plan)
-            + [bad(i, "Principles.md lists %s, no live requirement (stale)" % i, "regenerate it") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
+    return ([bad(i, "%s is Reviewed under no principle" % i, "add it") for i in sorted(done - under)] * bool(plan)
+            + [bad(i, "%s is listed but not live" % i, "render") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
             + [bad("principle " + n, "principle %s has no Reviewed requirement" % n, "add one") for n, ids in sorted(plan.items()) if not done & set(ids)])
 
 
 def principle_review(root):
-    plan, done, hit = pmap(root), reviewed(root), {}
-    for item in table(root):
-        hit[item["goal"].strip()] = hit.get(item["goal"].strip(), 0) + 1
+    plan, done, goals = pmap(root), reviewed(root), [x["goal"].strip() for x in table(root)]
     return ["PRINCIPLES: Reviewed requirements, tests and weak spots per principle"] + ["principle %s: %s" % (n, ", ".join(
-        "%s (%d tests)%s" % (i, hit.get(i, 0), "" if hit.get(i) else " WEAK") for i in ids if i in done) or "NONE") for n, ids in sorted(plan.items())]
+        "%s (%d tests)%s" % (i, goals.count(i), "" if i in goals else " WEAK") for i in ids if i in done) or "NONE") for n, ids in sorted(plan.items())]
 
 
 def f_principle_map(root):
-    for name, body in (("Principles", "## 1. A\n| [AB-1 x](One) |\n## 2. B\n"), ("One", "## Requirements\n- AB-1: **Reviewed 2026-11-19** a.\n- AB-2: **Reviewed 2026-11-19** b.\n")):
+    for name, body in (("Principles", "## 1. A\n| [AB-1 x](One) |\n## 2. B\n"), ("One", "## Requirements\n- AB-1: **Reviewed**\n- AB-2: **Reviewed**\n")):
         os.makedirs(os.path.join(root, "docs", "wiki"), exist_ok=True)
-        open(os.path.join(root, "docs", "wiki", name + ".md"), "w").write("# %s\n\n%s" % (name, body))
+        open(os.path.join(root, "docs", "wiki", name + ".md"), "w").write(body)
 
 
 CONTROLS = {"principle-map": ("requirements", "principle-map", f_principle_map)}

@@ -3,8 +3,7 @@
 
 usage: mend.py [--resume SLUG] [--skill-dir DIR]
 
-With no --resume, gives a failed or stopped goal one fresh worker, and continues a goal after a usage limit. It leaves alone a goal with no pid, and a goal whose pull request has landed: that goal is marked done, and a mender still running
-on it is stopped. A failed goal waits mend_wait seconds (default 120) first, so its report-back reaches the board. Prints
+With no --resume, gives a failed or stopped goal one fresh worker, and continues a goal after a usage limit. It leaves alone a goal with no pid, and a goal whose pull request has landed (marked done; a mender still running on it is stopped). A failed goal waits mend_wait seconds (default 120) first, so its report-back reaches the board. Prints
 PENDING while a goal waits. --resume relaunches a failed or stopped goal. It never merges.
 """
 import argparse
@@ -18,7 +17,7 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal, no waiting: a git or gh prompt must fail.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -123,7 +122,7 @@ def log_tail(slug, size, mark=0):
 
 
 def landed(state):
-    """The URL of the goal's merged pull request, found by branch because a record's pr can be empty."""
+    """The URL of the goal's merged pull request, found by branch (a record's pr can be empty)."""
     target = state.get("pr") or state.get("branch")
     try:
         done = subprocess.run(["gh", "pr", "view", target, "--json", "state,url"], capture_output=True, text=True, timeout=20)
@@ -139,9 +138,9 @@ def close_landed(state, url):
 
 
 def stop_late_mender(state):
-    """A mender still running on a goal that has landed has nothing left to do, and would judge an empty diff."""
+    """A mender still running on a landed goal has nothing to do."""
     url = landed(state)
-    if url and alive(state.get("pid")) and state.get("pstart") and pstart(state["pid"]) == state["pstart"]:  # ours, not a reused pid
+    if url and alive(state.get("pid")) and state.get("pstart") and pstart(state["pid"]) == state["pstart"]:
         proctree.kill(state["pid"], signal.SIGTERM)
         close_landed(state, url)
 
@@ -157,20 +156,20 @@ MERGE = ("this repo has auto_merge on, so run its release step yourself, merge.p
 
 
 def release_text(state):
-    if config().get("auto_merge") is True and state.get("release") != "ask":  # an ask holds across a resume (#812)
+    if config().get("auto_merge") is True and state.get("release") != "ask":  # an ask holds across a resume
         return MERGE.format(slug=state["slug"])
     return ASK.format(slug=state["slug"]) if state.get("release") == "ask" else LEAVE
 
 
 def resume_text(state):
-    """Where a restarted goal goes on (fit.resume_at), its exact next command, and the worktree as it stands (D7):
-    uncommitted files and HEAD, so partial edits are reconciled. '' when workflow-delivery's fit.py is not beside us."""
+    """Where a restarted goal goes on (fit.resume_at), its exact next command, and the worktree as it stands (D7:
+    uncommitted files and HEAD). '' when workflow-delivery's fit.py is not beside us."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "fit.py")
     try:
         spec = importlib.util.spec_from_file_location("fit", path)
         fit = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(fit)
-    except Exception:  # missing or broken: the prompt goes out without the line
+    except Exception:  # missing or broken: no line in the prompt
         return ""
     tree = state.get("worktree") or os.path.join(loop_dir("worktrees"), state["slug"])
     ask = lambda *args: subprocess.run(["git", "-C", tree, *args], capture_output=True, text=True)
@@ -216,13 +215,13 @@ def relaunch(state, prompt, cfg, note):
     path = os.path.join(loop_dir("logs"), state["slug"] + ".log")
     state["log_mark"] = os.path.getsize(path) if os.path.exists(path) else 0
     state["finding"], state["waiting"], state["status"], state["report"] = "", None, "running", {}
-    if state.get("worker") == "session":  # it restarts as a background process; its session goes back to the pool
+    if state.get("worker") == "session":
         try:
             import sessions
             sessions.release(state["slug"])
         except ImportError:
             pass
-        except sessions.PoolUnreadable as error:  # unknown ownership: say so and restart nothing
+        except sessions.PoolUnreadable as error:  # unknown ownership: restart nothing
             sys.exit("REFUSED: %s not restarted: the session pool can't be read (%s)" % (state["slug"], error))
         state.update(worker="background", worker_why="restarted as a background process", session=None)
     save(state, note)
@@ -230,7 +229,7 @@ def relaunch(state, prompt, cfg, note):
 
 
 def free_to_restart(state):
-    """Read the record again, since the goal may have moved since this pass began."""
+    """Read the record again: the goal may have moved."""
     fresh = load(state["slug"]) or {}
     if fresh.get("status") not in ("failed", "stopped"):
         return False
@@ -252,7 +251,7 @@ def one_pass(cfg, skill_dir):
     pending = False
     for state in runs():
         slug = state["slug"]
-        if not state.get("pid"):  # no pid: no worker of ours ended
+        if not state.get("pid"):  # no worker of ours ended
             continue
         if state.get("status") == "running" and state.get("mended") and state.get("branch"):
             stop_late_mender(state)
@@ -299,11 +298,11 @@ def resume(slug, cfg, skill_dir):
 
 
 # ---- hands-off operation: archive (MON-6) and grouping (MON-5); callers pass paths
-DOWN = []  # set once gh gives no answer: no more lookups in this run
+DOWN = []  # set once gh gives no answer: no more lookups
 
 
 def ghj(args, cwd):
-    """One gh call as JSON, None on any doubt."""
+    """One gh call as JSON, None on doubt."""
     try:
         done = subprocess.run(["gh"] + args, cwd=cwd, capture_output=True, text=True, timeout=20)
         return json.loads(done.stdout) if done.returncode == 0 else None
@@ -312,16 +311,32 @@ def ghj(args, cwd):
 
 
 def released(run, top):
-    """Merge and published release both verified: cut with a version and url, pull request MERGED, release no draft."""
+    """Merge and release verified: cut with a version and url, pull request MERGED, release no draft."""
     if run.get("release") != "cut" or not (run.get("release_url") and run.get("release_version") and run.get("pr")):
         return False
     pr, rel = ghj(["pr", "view", run["pr"], "--json", "state"], top), ghj(["release", "view", "v%s" % run["release_version"], "--json", "isDraft"], top)
     return bool(pr and rel and pr.get("state") == "MERGED" and rel.get("isDraft") is False)
 
 
+def reconcile(path):
+    """TD489: drop local_ pool ids the app no longer has; path: {"ids": [...]} or a list (archived ones count live)."""
+    import sessions as se
+    path = path or os.path.join(se.base(), "app-live.json")
+    live = se.read(path, {}).get("ids") or se.read(path, [])
+    if not live or not all(isinstance(x, str) for x in live):
+        sys.exit("REFUSED: %s is missing or has no ids. Fix: the operation session writes its sessions there." % path)
+    with se.locked():
+        found = se.pool()
+        gone = {sid: found.pop(sid) for sid in [x for x in found if x.startswith("local_") and x not in live]}
+        se.save_pool(found) if gone else None
+    for sid, item in sorted(gone.items()):
+        print("GHOST %s (%s, %s)" % (sid, item.get("name") or "-", item.get("state")))
+    print("RECONCILED: %d ghost ids left the pool, %d stay, %d not checked (not local_)" % (len(gone), len(found), sum(not x.startswith("local_") for x in found)))
+
+
 def to_archive(found, runs_dir, top, pressure, mine=""):
-    """[(sid, name, why)] oldest first: worker sessions whose goal's merge and release are verified, and under memory pressure idle ones whose goal is retired.
-    Never a running, waiting or queued goal, an operation session or this one."""
+    """[(sid, name, why)] oldest first: worker sessions whose goal's merge and release are verified, and under memory pressure
+    idle ones of retired goals. Never a running, waiting or queued goal, an operation session or this one."""
     out = []
     for sid, item in sorted(found.items(), key=lambda kv: str(kv[1].get("since"))):
         name, last = str(item.get("name")), item.get("slug") if item.get("state") == "busy" else (item.get("history") or [{}])[-1].get("slug")
@@ -353,8 +368,8 @@ def archived_since(folder, stamp):
 
 
 def feature_of(root, text, item=None):
-    """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's feature:<Page> label, the page whose
-    docs.tsv paths cover its touches, else 'no feature'."""
+    """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's
+    feature:<Page> label, the page whose docs.tsv paths cover its touches, else 'no feature'."""
     item, wiki = item or {}, os.path.join(root, "docs", "wiki")
     pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md") and x[:-3] not in ("Home", "Tests", "Roadmap") and x[:6] != "How-to"] if os.path.isdir(wiki) else []
     prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]

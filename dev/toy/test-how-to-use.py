@@ -126,6 +126,8 @@ with tempfile.TemporaryDirectory() as tmp:
     os.makedirs(os.path.join(root, "src"))
     run = lambda *a: subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + list(a), cwd=root, check=True, capture_output=True)
     subprocess.run(["git", "init", "-q", "-b", "main", root], check=True)
+    os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")  # CI has no git identity: the re-stamp commit must bring its own
+    subprocess.run(["git", "config", "user.useConfigOnly", "true"], cwd=root, check=True)
     for name, text in ((".loop/config.json", "{}"), (".loop/docs.tsv", "A" + chr(9) + "src" + chr(10)), ("docs/wiki/A.md", PAGE), ("docs/wiki/How-to-use-A.md", GOOD),
                        ("docs/wiki/How-to-use-Ghost.md", GOOD), ("src/a.py", "x = 1" + chr(10))):
         with open(os.path.join(root, name), "w") as handle:
@@ -144,9 +146,10 @@ with tempfile.TemporaryDirectory() as tmp:
     check(audit.relock(root, "slug", ["How-to-use-A"]) == [], "negative control: a How-to-use page whose text changed since its commit stays refused")
     run("checkout", "--", "docs/wiki/How-to-use-A.md")
     check(audit.relock(root, "slug", ["How-to-use-A"]) == ["How-to-use-A"], "a stale How-to-use page whose text is as committed is re-stamped")
-    run("commit", "-q", "-am", "restamp")
-    check(not any(k == "STALE" and p == "How-to-use-A" for k, p, _ in docs.problems(root, None)), "after the re-stamp commit the page is no longer stale")
+    check(not any(k == "STALE" and p == "How-to-use-A" for k, p, _ in docs.problems(root, None)), "after the re-stamp (the kept fragment, committed by audit itself) the page is no longer stale")
     os.chdir(here)
+    for key in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM"):
+        os.environ.pop(key)
 # DOC-19 (#4657): one item per functional requirement; #4666: the DOC-16 routine shape only for a scheduled routine
 with tempfile.TemporaryDirectory() as tmp:
     root = os.path.join(tmp, "repo")
