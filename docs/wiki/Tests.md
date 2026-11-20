@@ -384,6 +384,9 @@
 | <a id="t-machines-handover-4787"></a>machines-handover-4787 | defect | [#4787](https://github.com/jcl2018/agent-workflow-template/issues/4787) closed (2026-11-18) | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-routing-timeout-tree"></a>routing-timeout-tree | requirement | MCH-1 | not run | - | local | 2026-11-18 |
 | <a id="t-restart-tick-agent"></a>restart-tick-agent | requirement | MCH-1 | not run | - | local | 2026-11-20 |
+| <a id="t-codex-fallback-start"></a>codex-fallback-start | requirement | MCH-1 | not run | - | local | 2026-11-20 |
+| <a id="t-codex-fallback-limit"></a>codex-fallback-limit | requirement | MCH-1 | not run | - | local | 2026-11-20 |
+| <a id="t-codex-guard-refuses"></a>codex-guard-refuses | requirement | MCH-1 | not run | - | local | 2026-11-20 |
 
 ## Operation
 
@@ -778,3 +781,4 @@
 | <a id="t-restart-trust-row"></a>restart-trust-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-restart-worktrees-row"></a>restart-worktrees-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |

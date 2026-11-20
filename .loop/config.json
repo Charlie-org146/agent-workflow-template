@@ -6,6 +6,16 @@
     "--model=sonnet",
     "--allowedTools=Bash,Read,Write,Edit,Skill"
   ],
+  "codex_profile": [
+    "codex",
+    "exec",
+    "--sandbox",
+    "workspace-write",
+    "-c",
+    "sandbox_workspace_write.network_access=true",
+    "-C",
+    "WORKTREE"
+  ],
   "parallel": 0,
   "risky_paths": [
     "^\\.github/",
