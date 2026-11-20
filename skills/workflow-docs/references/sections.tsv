@@ -1,0 +1,10 @@
+# DOC-25: the ## headings each page kind has, in order. One row per kind, tab separated: the kind, then one token per heading.
+# A token is a regex that matches a whole heading. A "?" prefix makes it optional, a "+" prefix one or more, "*" alone allows any headings after.
+# A page kind with a heading missing, extra, renamed or out of order fails the docs check; README and Home share one row.
+front	System design	+\d+\. .+	Requirements by feature
+front-adopted	System design	The template's principles	+\d+\. .+	Requirements by feature
+feature	Problem	?Runbook	Requirements	Non-goals	Success metrics	Revisions	Tests
+howto	What it's for	How to reach or run it	URLs and deployments	?Automations and schedules	?Runbooks	Links
+principles	+\d+\. .+
+tests	+(?!Other$).+	Other
+roadmap	+.+
