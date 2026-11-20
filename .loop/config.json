@@ -64,7 +64,7 @@
     "CLAUDE.md",
     "AGENTS.md"
   ],
-  "template_repo": "",
+  "template_repo": "Charlie-org146/agent-workflow-template",
   "reply_hook": true,
   "feature_labels": false,
   "template_version": "0.27.29",

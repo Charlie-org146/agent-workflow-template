@@ -205,7 +205,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `limit_wait` | Seconds to wait after a usage limit before resuming. | set "limit_wait" in .loop/config.json | `1800` | default |
 | `watch_interval` | Seconds between rounds of watch. | set "watch_interval" in .loop/config.json | `20` | default |
 | `agent_files` | Agent entry files setup wires the loop block into; [] turns wiring off. | set "agent_files" in .loop/config.json | `["CLAUDE.md", "AGENTS.md"]` | default |
-| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | default |
+| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | **overridden:** `Charlie-org146/agent-workflow-template` |
 | `milestones_source` | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. | set "milestones_source" in .loop/config.json | `(empty)` | default |
 | `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
 | `govern_hook` | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). | set "govern_hook" in .loop/config.json | `true` | default |

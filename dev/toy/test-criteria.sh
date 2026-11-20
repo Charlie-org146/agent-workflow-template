@@ -33,12 +33,53 @@ nocount() { local out; out=$($docs check 2>&1); ! grep -q "Traceback" <<<"$out" 
 cri="python3 $here/skills/workflow-docs/scripts/criteria.py"; mon="python3 $here/skills/workflow-monitoring/scripts/monitor.py"
 day=$(date -u +%F)
 gwt="Given the toy calculator, when it runs, then it works."
+howto() { # NAME CRITERIA-LINES: the How-to-use page that goes with a feature page (DOC-18, DOC-19)
+  local items; items=$(grep -oE '^- [A-Z]{2,5}-[0-9]+:' <<<"$2" | sed -E 's/$/ the calculator does it; run it and read the one line it prints./')
+  cat > "docs/wiki/How-to-use-$1.md" <<HOWEOF
+<!-- workflow-docs -->
+# How to use $1
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| \`calc.py\` | Command | Prints a median. | \`python3 scripts/calc.py median LIST\`. |
+
+### System diagram
+
+\`\`\`text
+[Command: calc.py | the toy repo] --prints one line--> (the screen)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+\`\`\`
+
+## How to reach or run it
+
+$items
+
+### Command: calc.py
+- **Command:** \`python3 scripts/calc.py median LIST\`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [$1]($1)
+HOWEOF
+}
 page() { # NAME CRITERIA-LINES: writes a page with an empty Tests section, then renders it unless NORENDER is set
   mkdir -p docs/wiki
   local reqs; reqs=$(sed -E 's/^(- [A-Z]{2,5}-[0-9]+: .*)$/\1\
   - It holds for every toy run./' <<<"$2")  # each requirement gets the sub-bullet DOC-7 asks for
   reqs=$(printf '### Functional\n\n%s\n\n### Non-functional\n\nNone' "$reqs")  # and the two DOC-7 groups
-  printf '<!-- workflow-docs -->\n# %s\n\nReview: **Unreviewed**\n\n## Problem\n\n- I read the %s page of the toy calculator, written for this test.\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- No other feature.\n\n## Success metrics\n\n- The toy run passes.\n\n## Tests\n\n' "$1" "$1" "$reqs" > "docs/wiki/$1.md"
+  howto "$1" "$2"  # DOC-18: the feature's How-to-use page, one item per requirement
+  printf '<!-- workflow-docs -->\n# %s\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-%s](How-to-use-%s)\n\n## Problem\n\n- I read the %s page of the toy calculator, written for this test.\n\n## Requirements\n\n%s\n\n## Non-goals\n\n- No other feature.\n\n## Success metrics\n\n- The toy run passes.\n\n## Tests\n\n' "$1" "$1" "$1" "$1" "$reqs" > "docs/wiki/$1.md"
   [ -n "${NORENDER:-}" ] || $cri render >/dev/null
 }
 python3 - <<'PY'
@@ -59,7 +100,7 @@ $docs check | grep -q "DOCS OK" && ok "a conforming page passes" || bad "conform
 $docs add Extras --paths calc.py >/dev/null; page Extras "- EXT-1: **Unreviewed** x"
 $docs check | grep -q "^PAGE Extras" && bad "a page in docs.tsv was refused" || ok "a page in docs.tsv outside the old set passes"
 $docs criteria Extras | grep -q "NEXT EXT-2" && ok "criteria numbers a listed page by its own prefix" || bad "extra page prefix"
-rm docs/wiki/Extras.md; grep -v '^Extras' .loop/docs.tsv > .loop/t && mv .loop/t .loop/docs.tsv
+rm docs/wiki/Extras.md docs/wiki/How-to-use-Extras.md; grep -v '^Extras' .loop/docs.tsv > .loop/t && mv .loop/t .loop/docs.tsv
 good; sub 's/^## Tests/## Extra/'
 $docs check | grep -q "^SECTIONS Delivery" && ok "wrong sections fail" || bad "sections"
 good; sub 's/^## Problem/## Commands/'
@@ -140,7 +181,7 @@ good; printf '\nUnlike EXT-1, the toy has twenty skills.\n\nEXT-1 alone has 3 te
 out=$($docs check 2>&1 || true)
 grep -q "^COUNT docs/wiki/Delivery.md: says twenty skills, " <<<"$out" && ! grep -q "says 3 tests\|says nineteen skills" <<<"$out" \
   && ok "a criterion id from another page does not hide a count (107)" || bad "another page's id hid a count (107): $out"
-rm docs/wiki/Extras.md; grep -v '^Extras' .loop/docs.tsv > .loop/t && mv .loop/t .loop/docs.tsv
+rm docs/wiki/Extras.md docs/wiki/How-to-use-Extras.md; grep -v '^Extras' .loop/docs.tsv > .loop/t && mv .loop/t .loop/docs.tsv
 rm -rf skills/a
 good
 
@@ -291,7 +332,7 @@ $reg sync >/dev/null || true; python3 "$here/skills/workflow-regression/scripts/
 $reg add del-2b --level land --command "true" --goal DEL-2 --describe "$gwt" >/dev/null
 $cri render >/dev/null; git add -A; git commit -qm "Passing row" >/dev/null
 mv .loop/docs.tsv "$d/docs.tsv.away"
-(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.criteria_trouble('$PWD_REPO', {}))") | grep -q '^\[\]$' && ok "no docs.tsv: criteria are ignored" || bad "no docs.tsv"
+(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.criteria_trouble('$PWD_REPO', {})[0])") | grep -q '^\[\]$' && ok "no docs.tsv: criteria are ignored" || bad "no docs.tsv"
 
 mv "$d/docs.tsv.away" .loop/docs.tsv
 $rel cut crit | grep -q "^DRAFT" && ok "cut with every row passing" || bad "cut passing"
@@ -322,6 +363,7 @@ usage_page() { # USAGE-BODY: Delivery with a Usage section between Problem and R
   $cri render >/dev/null
 }
 good; setmax unset
+git add docs/wiki; git commit -qm "One criterion" >/dev/null; git push -q -f origin HEAD:main  # the base now holds only DEL-1: IDS-MISSING compares with it
 $docs check | grep -q "DOCS OK" && ok "a page with no commands passes without a Usage section" || bad "no usage passes"
 page Delivery "$one
 - DEL-2: **Unreviewed** The calculator prints a mean."
