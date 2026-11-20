@@ -80,7 +80,7 @@ breaking-asks	PASS	2026-11-09
 budget-fair-base-moved	PASS	2026-11-15	
 budget-fair-failed-stays	PASS	2026-11-15	
 budget-fair-held-time	PASS	2026-11-15	
-builtin-flow	PASS	2026-11-12	
+builtin-flow	FAIL	2026-11-20	
 cap-default-10	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 capture-row-ci	FAIL	2026-11-13	
 changelog-bracket-no-gh	PASS	2026-11-17	

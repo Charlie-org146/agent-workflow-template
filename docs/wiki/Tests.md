@@ -217,7 +217,7 @@
 | <a id="t-guards-extra"></a>guards-extra | requirement | DEL-1 | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-mon11-full-auto"></a>mon11-full-auto | requirement | DEL-3 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-10 |
 | <a id="t-aut-email-secrets"></a>aut-email-secrets | requirement | DEL-9 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
-| <a id="t-builtin-flow"></a>builtin-flow | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
+| <a id="t-builtin-flow"></a>builtin-flow | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | FAIL | 2026-11-20 | [CI 2026-11-20](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-10 |
 | <a id="t-del8-floor-step"></a>del8-floor-step | requirement | DEL-7 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/jcl2018/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-11 |
 | <a id="t-reg7-budget-leaves"></a>reg7-budget-leaves | requirement | DEL-7 | not run | - | local | 2026-11-11 |
 | <a id="t-del8-step-stops"></a>del8-step-stops | requirement | DEL-7 | not run | - | local | 2026-11-11 |
