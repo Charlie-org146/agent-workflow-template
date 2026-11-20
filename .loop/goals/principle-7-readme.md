@@ -17,3 +17,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Open `README.md` and read its seven sections. Expect: section 7 is "Standard, not home-made", with the one sentence, its diagram and a table of DOC-24, DEL-20 and HLT-2, each marked v2.0 (planned); every other table has a Follows column.
+2. Run `python3 skills/workflow-docs/scripts/docs.py check`. Expect: `DOCS OK: 16 pages`.
+3. Run `python3 skills/workflow-health/scripts/health.py check | grep '^PRINCIPLE'`. Expect: seven lines, with principles 6 and 7 reading UNREAD.
+4. In a scratch copy of `README.md`, delete a Follows cell, then delete the whole section 7, and run the docs check on each. Expect: the first fails with "a Follows cell", the second with "section '7. Standard, not home-made'".
+5. Open the wiki Home and Principles pages. Expect: the same seven sections and Follows column, and HLT-2's text shows "seven principles".
+
