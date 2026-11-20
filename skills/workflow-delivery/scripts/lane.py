@@ -135,10 +135,6 @@ def finalize(base, held, name):
     took = (ended or now) - (began or held["started"])
     line = "LANE %s %s %d/%d in %ds" % (name, kind, ran, ran + int((reused or [0])[0]), took)
     cfg = read_json(os.path.join(rev("--show-toplevel"), ".loop", "config.json")) or {}
-    limit = cfg.get("goal_lane_minutes")
-    limit = limit if isinstance(limit, (int, float)) and not isinstance(limit, bool) and limit > 0 else 10
-    if not kind.startswith("FULL") and took > limit * 60:
-        line += "; over %g min (goal_lane_minutes)" % limit
     plan, wait, part = lanekit.timing(held, held["rc"])
     line += lanekit.budget_note(text, base, name)
     killed = re.findall(r"^KILLED (\S+): signal (\S+) \(pid (\d+)\)", text, re.M)

@@ -191,8 +191,7 @@ def cmd_move(args):
 
 
 # ---- the cost rule (was cost.py), imported by health.py and judge.py: a goal over its time or token budget warns, naming
-# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: goal lanes over goal_lane_minutes
-# and the newest full suite over SUITE_LIMIT. Local files only: no model, no network. workflow-regression/references/commands.md.
+# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: the newest full suite over SUITE_LIMIT. Local files only: no model, no network. workflow-regression/references/commands.md.
 RECENT = 10
 NAMED = 3
 
@@ -305,8 +304,7 @@ def limits(root):
     except (OSError, ValueError):
         cfg = {}
     cfg = cfg if isinstance(cfg, dict) else {}
-    num = lambda key, default: cfg[key] if isinstance(cfg.get(key), (int, float)) and cfg[key] > 0 else default  # noqa: E731
-    return num("goal_lane_minutes", 10), SUITE_LIMIT, cfg
+    return SUITE_LIMIT, cfg
 
 
 def common(root):
@@ -320,22 +318,6 @@ def read(path):
             return json.load(handle)
     except (OSError, ValueError):
         return {}
-
-
-def lane_rows(runs, lane_limit):
-    rows = []
-    for path in sorted(glob.glob(os.path.join(runs, "*-lane.last"))):
-        found = re.match(r"^(.+)\.([a-z]+)-lane\.last$", os.path.basename(path))
-        state, last = read(os.path.join(runs, found.group(1) + ".json")) if found else {}, read(path)
-        if not isinstance(state, dict) or not isinstance(last, dict) or state.get("status") in (None, "done", "failed", "retired", "stopped"):
-            continue  # a stray file, or no goal still being built
-        slug, name = found.groups()
-        took = re.search(r"^LANE \S+ (\S+) \S+ in (\d+)s", str(last.get("line", "")), re.M)
-        if took and took.group(1) != "FULL" and int(took.group(2)) > lane_limit * 60:
-            rows.append(timing_row("WARN", "goal-lane", "%s %s took %d min (limit %d, goal_lane_minutes)" % (
-                slug, name, int(took.group(2)) // 60, lane_limit), "narrow the rows (regression.py reads ROW) or raise "
-                "goal_lane_minutes"))
-    return rows
 
 
 def suite_rows(common_dir, suite_limit, cfg):
@@ -363,11 +345,11 @@ def suite_rows(common_dir, suite_limit, cfg):
 
 
 def timing_rows(root):
-    lane_limit, suite_limit, cfg = limits(root)
+    suite_limit, cfg = limits(root)
     found = common(root)
     if not found:
         return [timing_row("UNREAD", "timing", "not a git repo, so no lane or suite times")]
-    return lane_rows(os.path.join(found, "loop", "runs"), lane_limit) + suite_rows(found, suite_limit, cfg)
+    return suite_rows(found, suite_limit, cfg)
 
 
 def main():
