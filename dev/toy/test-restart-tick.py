@@ -103,6 +103,18 @@ with tempfile.TemporaryDirectory() as tmp:
     check(not any(word in body for word in ("operate.py", "watch.py", "sessions.py", "assign", "send")), "the tick's code never names operate.py, watch.py, sessions.py, assign or send")
     mail_src = open(mailbox).read()
     check("gh pr merge" not in mail_src and '"pr", "merge"' not in mail_src, "mailbox.py never merges itself: it arms through merge.py, the one merging script (test-tree.sh)")
+    merge_py = os.path.join(os.path.dirname(mailbox), "..", "..", "workflow-release", "scripts", "merge.py")
+    before = open(os.path.join(tmp, "gh.log")).read()
+    for who, extra in (("LOOP_ROLE=worker", {"LOOP_ROLE": "worker"}), ("cwd in a worker worktree", {})):
+        where = os.path.join(repo, ".git", "loop", "worktrees", "w1")
+        if not os.path.isdir(where):  # a real worktree under <common>/loop/worktrees, with the repo's config in it
+            subprocess.run(["git", "worktree", "add", "-q", "--detach", where], cwd=repo, check=True, capture_output=True)
+            os.makedirs(os.path.join(where, ".loop"), exist_ok=True)
+            with open(os.path.join(where, ".loop", "config.json"), "w") as handle:
+                json.dump({"base": "main", "auto_merge": True}, handle)
+        got = subprocess.run([sys.executable, merge_py, "--arm", "--go-head", "a" * 40, "1"], capture_output=True, text=True, env=dict(env, **extra), cwd=where if "cwd" in who else repo)
+        check(got.returncode != 0 and "worker never arms" in got.stdout + got.stderr and open(os.path.join(tmp, "gh.log")).read() == before,
+              "merge.py --arm refuses a worker (%s) and queues nothing" % who)
     # negative control: with auto_merge off, merge.py refuses and the armed job queues nothing
     with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
         json.dump({"base": "main", "auto_merge": False}, handle)

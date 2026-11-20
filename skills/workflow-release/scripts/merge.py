@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Merge a finished goal's pull request into the base branch, then release. usage: merge.py SLUG [--go-head SHA]
-       merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]      merge.py --arm PR --go-head SHA  (queue PR; mailbox.py)
+       merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]      merge.py --arm --go-head SHA PR  (queue PR; not a worker)
 
-Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges at the PR head,
+Refuses unless "auto_merge" is true and the goal is done with its PR open. Merges at the PR head,
 releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py; refused: `wiki_error`). A stale wiki page,
 REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse first. --go-head SHA: GO_HEAD unless the PR head is
-SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green. With merge_queue (off) BASE_MOVED is skipped and MERGED prints
-once gh reports it. --batch (merge_batch, off): machines.py `batch` merges 2-3 green goals as one.
+SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green. With merge_queue (off) BASE_MOVED is skipped. --batch
+(merge_batch, off): machines.py `batch` merges 2-3 green goals as one.
 """
 import argparse
 import datetime
@@ -266,7 +266,7 @@ def main():
   parser.add_argument("slug", nargs="+")
   parser.add_argument("--batch", action="store_true", help="2-3 goals as one")
   parser.add_argument("--go-head", metavar="SHA", help="GO for this head only")
-  parser.add_argument("--arm", action="store_true", help="SLUG is a pull request number: queue it at --go-head")
+  parser.add_argument("--arm", action="store_true", help="SLUG is a PR number")
   args = parser.parse_args()
   top, common = (run(["git", "rev-parse", opt]).stdout.strip() for opt in ("--show-toplevel", "--git-common-dir"))
   if not top or not common:
@@ -278,7 +278,9 @@ def main():
   wiki.where(__file__, cfg.get("base"))
   if cfg.get("auto_merge") is not True:
     sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
-  if args.arm and args.go_head:  # exactly this head, behind the auto_merge check
+  if args.arm and args.go_head:
+    if os.environ.get("LOOP_ROLE") == "worker" or "loop/worktrees" in os.getcwd():
+      sys.exit("REFUSED: a worker never arms a pull request.")
     return run(["gh", "pr", "merge", args.slug[0], "--auto", "--merge", "--match-head-commit", args.go_head], top).returncode
   if args.batch or len(args.slug) > 1:
     if not (args.batch and cfg.get("merge_batch") is True):
