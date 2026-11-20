@@ -654,6 +654,7 @@
 | <a id="t-machines-handover"></a>machines-handover | requirement | MCH-1 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-machines-handover-4787"></a>machines-handover-4787 | defect | [#4787](https://github.com/jcl2018/agent-workflow-template/issues/4787) closed (2026-11-18) | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-routing-timeout-tree"></a>routing-timeout-tree | requirement | MCH-1 | not run | - | local | 2026-11-18 |
+| <a id="t-restart-tick-agent"></a>restart-tick-agent | requirement | MCH-1 | not run | - | local | 2026-11-20 |
 
 ## Operation
 
