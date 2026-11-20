@@ -737,3 +737,7 @@
 | <a id="t-tree-rules-first"></a>tree-rules-first | requirement | done line tree-rules-first:1 | not run | - | local | 2026-11-20 |
 | <a id="t-root-ff-guard"></a>root-ff-guard | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-operation-id-not-worker"></a>operation-id-not-worker | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-defect-5619-row-run-exists"></a>defect-5619-row-run-exists | defect | [#5619](https://github.com/Charlie-org146/agent-workflow-template/issues/5619) state unknown | not run | - | local | 2026-11-20 |
+| <a id="t-defect-5605-guide-stamp"></a>defect-5605-guide-stamp | defect | [#5605](https://github.com/Charlie-org146/agent-workflow-template/issues/5605) state unknown | not run | - | local | 2026-11-20 |
+| <a id="t-defect-5386-restamp-no-identity"></a>defect-5386-restamp-no-identity | defect | [#5386](https://github.com/Charlie-org146/agent-workflow-template/issues/5386) state unknown | not run | - | local | 2026-11-20 |
+| <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
