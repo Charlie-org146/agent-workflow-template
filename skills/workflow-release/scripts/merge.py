@@ -366,6 +366,7 @@ def main():
     json.dump(state, handle, indent=2)
   os.replace(path + ".tmp", path)
   print("MERGED %s into %s" % (state["pr"], base))
+  print(run([sys.executable, OPERATE, "forward", base], top).stdout.strip())
   leave_queue(path, slug)
   ar.finish(top, cfg, state)
   if wiki.top_of():
