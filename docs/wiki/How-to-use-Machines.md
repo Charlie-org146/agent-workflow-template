@@ -46,18 +46,10 @@ The mailer check reports connection failures while keeping credentials out of it
 
 Each requirement and how it is delivered:
 
-- MCH-2: A new machine or account reaches a working operation session and its peer link from one command. Example, from the machine-operation-peer test: given a fresh clone and toy home, when machine apply runs, then the operation session, its tasks and the peer link exist and the output names only the owner-only items left.
-- MCH-3: Backup and restore are commands. Example, from the machine-backup-restore test: given a set-up home, when backup and restore run, then restorable state moves to a new home and no secret or private-names list is copied.
 - MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
-- MCH-7: Prerequisites first. Example, from the adopt-prerequisites test: given a machine where gh is not signed in, when setup runs, then it prints one checklist before writing with the exact fix for each gap.
-- MCH-8: A goal started on another machine can be adopted. Example, from the adopt-record-qa test: given a goal pushed from another machine with an open pull request, when goal.py adopt runs on its branch, then a run record exists at step qa with the pull request, idea, plan and review done on another machine and qa, ship and pr not recorded.
-- MCH-9: A machine keeps its private data to itself. Example, from the machine-no-private test: given a repo routine holding an address or home path, when apply runs, then it refuses naming the line and kind, writes nothing and never echoes the value.
-- MCH-10: A drifted machine says so. Example, from the machine-check-gaps test: given a fresh toy home, when machine check runs, then it names every gap with a fix and writes nothing, and a set-up home prints MACHINE OK.
-- MCH-11: No routine stops to ask. Example, from the machine-no-prompt-mode test: given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes.
 
 - MCH-4: Goals move between machines, with one owner and one merge order. Example, from the machines-handover test: given a goal whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved.
 - MCH-5: One email stream, answered by reply. Example, from the mailbox-two-mails test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
-- MCH-6: Phone-first: starting a worker never needs the desktop app. Example, from the desk-lists test: given every desk step done, when desk check runs, then it prints DESK OK.
 
 ### Command: machines.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/machines.py handover SLUG --to MACHINE | take SLUG | snapshot [--publish] | turn`
@@ -116,4 +108,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept known-red-lanes@42ccd82d -->
+<!-- kept ops-findings-v20@6e40968b -->

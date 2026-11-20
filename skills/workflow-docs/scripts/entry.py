@@ -11,14 +11,12 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (see references/commands.md, Entry point templates), then a
-Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
-Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
+regression, health and settings, then a
+Features table (each PRD page: name, milestone, first Problem sentence, its skills' asks) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
 holds no count, date or machine path.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
-(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
-tables are always checked. It runs git and nothing else.
+(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. Features and Settings are always checked.
 """
 import argparse
 import json
@@ -41,7 +39,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 
 def version_key(text):
-    """The first three integers of a version; unreadable is oldest."""
+    """The first three integers of a version."""
     return tuple(int(x) for x in re.findall(r"\d+", str(text or ""))[:3])
 
 
@@ -54,8 +52,11 @@ def read(path, default=""):
 
 
 def config(root):
+    # Committed file under a skip-worktree edit, else the working copy.
+    import counting
+    found = counting.config_of(root)
     try:
-        found = json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
+        found = found or json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
     except ValueError:
         found = {}
     return found if isinstance(found, dict) else {}
@@ -74,7 +75,6 @@ def show(value):
 
 
 def sentence(text):
-    """The first sentence (to the first '. ' outside backticks)."""
     ticks = 0
     for n, char in enumerate(text):
         ticks += char == "`"
@@ -89,7 +89,6 @@ def section(text, name):
 
 
 def reference():
-    """{setting: (default, explanation)} from workflow-setup's reference."""
     part = read(REFERENCE).split("## Repo settings", 1)[-1].split("\n## ", 1)[0] if os.path.exists(REFERENCE) else ""
     rows = re.findall(r"^\| `([a-z_]+)` \| `(.*?)` \| (.*?) \|$", part, re.M)
     out = {}
@@ -102,21 +101,18 @@ def reference():
 
 
 def settings(cfg):
-    """[(key, value, explanation)] per repo setting: the config's value or default, plus other keys held."""
     known, helps = reference(), cfg.get("_help") if isinstance(cfg.get("_help"), dict) else {}
     keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics: once set
     return [(k, cfg[k] if k in cfg else known[k][0], helps.get(k) or known.get(k, ("", ""))[1]) for k in keys]
 
 
 def purpose(problem):
-    """The first sentence of Problem (a leading 'Skill: ...' one is skipped)."""
     first = sentence(problem)
     rest = problem[len(first):].strip()
     return sentence(rest) if re.match(r"^Skills?:", first) and rest else first
 
 
 def owned(root, page):
-    """The skills a page describes (its .loop/docs.tsv paths)."""
     for line in read(os.path.join(root, ".loop", "docs.tsv")).splitlines():
         cells = line.split("	")
         if cells[0] == page and len(cells) > 1:
@@ -125,7 +121,6 @@ def owned(root, page):
 
 
 def commands(skill):
-    """'`/skill`: verb / verb' from the skill's Command map."""
     asks = re.findall(r"^\| `/%s ([\w-]+)" % re.escape(skill), section(read(os.path.join(SKILLS, skill, "SKILL.md")), "Command map"), re.M)
     return "`/%s`: %s" % (skill, " / ".join(dict.fromkeys(asks)) or "see its SKILL.md")
 
@@ -175,7 +170,6 @@ def render(root):
 
 
 def skills():
-    """(name, description) of each installed workflow-* skill."""
     out = []
     for name in sorted(os.listdir(SKILLS)):
         head = read(os.path.join(SKILLS, name, "SKILL.md")) if name.startswith("workflow-") else ""
@@ -201,7 +195,6 @@ BLOCK = re.compile(re.escape(OPEN) + ".*?" + re.escape(CLOSE), re.S)
 
 
 def held_block(text):
-    """The marked block, LF endings, no final newline, or None."""
     found = BLOCK.search(text)
     return found.group(0).replace("\r\n", "\n") if found else None
 
@@ -220,7 +213,6 @@ def agent_files(cfg):
 
 
 def installed():
-    """The installed template version (workflow-package.json); empty for a checkout; LOOP_INSTALLED_VERSION only with LOOP_TEST=1."""
     if os.environ.get("LOOP_TEST") == "1" and os.environ.get("LOOP_INSTALLED_VERSION"):
         return os.environ["LOOP_INSTALLED_VERSION"]
     try:
@@ -230,12 +222,10 @@ def installed():
 
 
 def ours(root):
-    """Whether root is the template's checkout."""
     return os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep)
 
 
 def lagging(root, cfg):
-    """True when installed skills are newer than the repo's template_version (never for the template's own)."""
     return not ours(root) and bool(installed()) and version_key(installed()) > version_key(cfg.get("template_version"))
 
 
@@ -243,8 +233,6 @@ NOTE = "this repo is at v%s, the template is at v%s, run the migrate goal"
 
 
 def lag(root, new=""):
-    """(line, refusal): the version nag for a repo behind the template, '' when current. The refusal is set only for
-    goal.py new (new = the slug) when both majors are known and differ; a migrate- slug is exempt."""
     want, held = installed(), config(root).get("template_version")
     if not want or ours(root):
         return "", ""
@@ -259,13 +247,13 @@ def lag(root, new=""):
 
 
 def problems(root):
-    """(kind, path, detail) for the entry point and blocks; LAG never fails."""
+    """(kind, path, detail) for the entry point and blocks."""
     cfg, found = config(root), []
     want, have = render(root), read(os.path.join(root, ENTRY), None)
     lag = lagging(root, cfg)
     fix = "Fix: python3 <workflow-docs>/scripts/entry.py write (or docs.py audit)"
     note = NOTE % (cfg.get("template_version") or "0", installed())
-    # MISSING applies once the repo holds template_version, or to the template's own checkout.
+    # MISSING: once the repo holds template_version, or in the template's own checkout.
     owed = cfg.get("criteria") and (cfg.get("template_version") or ours(root))
     if have is None:
         if owed:
@@ -321,7 +309,6 @@ def req_key(ident):
 
 
 def requirements(body):
-    """{id: text} of an external PRD: each bullet, item or table row starting with an id."""
     found = {}
     for line in body.replace("\r\n", "\n").split("\n"):
         match = REQ.match(line)
@@ -360,7 +347,6 @@ def main():
 
 
 def perm_check(root):
-    """Finding lines for each routine in .loop/routines.tsv."""
     import counting
     import render
     table, findings = counting.perm_declared(root)
@@ -393,7 +379,6 @@ NAMED = re.compile(r"`(?:python3? )?([\w./-]+\.(?:py|sh)) ([a-z][\w-]*)")
 
 
 def howto_items(name, text, feature):
-    """DOC-19: the How-to-use page holds one '- ID: how it is delivered' item per functional requirement, and none else."""
     have, top, sub = {}, "", ""
     for line in feature.splitlines():
         top, sub = (line[3:].strip(), "") if line.startswith("## ") else (top, line[4:].strip() if line.startswith("### ") else sub)
@@ -413,7 +398,6 @@ CRON = re.compile(r"`((?:[\d*/,-]+ ){4}[\w*/,-]+)`")
 
 
 def unlisted(feature, how):
-    """DOC-19: commands, skills and cron schedules the feature page names that its How-to-use page lacks."""
     body = "\n".join(x for x in feature.split("\n## Tests", 1)[0].splitlines() if not x.startswith("Milestone:"))
     names = {"%s %s" % m.groups() for m in NAMED.finditer(body)} | set(SKILL.findall(body)) | set(CRON.findall(body))
     return sorted(n for n in names if n not in how)

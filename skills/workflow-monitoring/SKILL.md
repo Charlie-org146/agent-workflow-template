@@ -43,9 +43,8 @@ frozen goal file there, and launches the agent, detached, with its output in `<g
 prompt says to stop at the pull request and never merge. A batch answers `leave` by itself, never `cut`. A goal marked
 `release: ask` waits for the user.
 
-A goal waits only on goals it `depends-on`, never because it shares files: before its pull request a goal merges the
-latest base; a conflict with it is not a counted try (it has its own cap, `max_moved`). A failed goal never
-stops the others.
+A goal waits only on goals it `depends-on`, never because it shares files: before its pull request a goal merges the latest
+base; a conflict with it is not a counted try (it has its own cap, `max_moved`). A failed goal never stops the others.
 
 ### Mending and usage limits
 
@@ -69,9 +68,8 @@ Then it prints:
 - `QUEUED, NOT STARTED`: each queued goal and what holds it (a conflict with another goal or full slots), or that
   `watch` can start it.
 
-Give the user the waiting section first, with the words exactly as printed. When the user answers, send it with
-`operate.py send <slug> "<answer>"`, run `goal.py answer <slug>` in that worktree, and do what it says (`cut` or
-`leave`: use `workflow-release`).
+Give the user the waiting section first, with the words exactly as printed. When the user answers, send it with `operate.py send
+<slug> "<answer>"`, run `goal.py answer <slug>` in that worktree, and do what it says (`cut` or `leave`: use `workflow-release`).
 
 ## `dashboard [--out FILE]`
 
@@ -140,4 +138,5 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-monitoring reply-status` | `python3 scripts/reply_hook.py status` |
 | `/workflow-monitoring fill-pool ID...` | `python3 scripts/pool.py add ID...` |
 | `/workflow-monitoring start` | `python3 scripts/operate.py start` (readiness table, MON-1); `timer [created]` shows and records the check-in timer (MON-5); `pool.py archive` archives released workers' sessions (MON-6) |
+| `/workflow-monitoring finding TITLE --feature PAGE --found REF` | `python3 scripts/mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]` (OPS-1: files the operation layer's own finding on the feature's Backlog milestone) |
 | `/workflow-monitoring adopt [OWNER/NAME ...]` | `python3 scripts/board.py repos adopt [--recent N] [--into DIR] [OWNER/NAME ...]` |

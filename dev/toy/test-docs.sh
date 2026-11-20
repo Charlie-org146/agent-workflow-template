@@ -49,7 +49,7 @@ wikifile Using-the-toy.md | grep -q "toy calculator" && ok "page on the wiki" ||
 $docs publish | grep -q "NO CHANGE" && ok "second publish is no change" || bad "second publish"
 
 echo "== a code change makes the page stale"
-printf '\n# changed\n' >> calc.py; git commit -qam "Change calc"
+printf '\nCHANGED = 1\n' >> calc.py; git commit -qam "Change calc"
 out=$($docs check || true); echo "$out"
 grep -q "^STALE Using-the-toy" <<<"$out" && ok "stale found" || bad "stale"
 $docs publish >/dev/null 2>&1 && bad "published a stale page" || ok "publish refused stale"
@@ -58,7 +58,7 @@ echo "Now covers the change too, with a little more text." >> docs/wiki/Using-th
 $docs check | grep -q "DOCS OK" && ok "updated page clean" || bad "updated"
 
 echo "== a merge never makes a page stale, whichever way it was merged, and unseen work still does"
-git switch -q -c side-a; printf '\n# side a\n' >> calc.py; git commit -qam "Side a"
+git switch -q -c side-a; printf '\nSIDE_A = 1\n' >> calc.py; git commit -qam "Side a"
 git switch -q -c side-b; echo "Now covers side a too, with a little more text." >> docs/wiki/Using-the-toy.md; git commit -qam "Page sees side a"
 git switch -q main; echo x > other.txt; git add other.txt; git commit -qm "Main moves"
 git merge -q --no-ff --no-edit side-a
@@ -66,7 +66,7 @@ git switch -q side-b; git merge -q --no-edit main
 $docs check | grep -q "DOCS OK" && ok "clean on the branch before it merges" || bad "branch before merge"
 git switch -q main; git merge -q --no-ff --no-edit side-b
 $docs check | grep -q "DOCS OK" && ok "clean after the merge, with the parents the other way round" || bad "stale after a merge"
-git switch -q -c side-c HEAD~1; printf '\n# side c\n' >> calc.py; git commit -qam "Side c"
+git switch -q -c side-c HEAD~1; printf '\nSIDE_C = 1\n' >> calc.py; git commit -qam "Side c"
 git switch -q main; git merge -q --no-ff --no-edit side-c -X ours 2>/dev/null || git commit -qam "Merge side c"
 $docs check | grep -q "^STALE Using-the-toy" && ok "work the page never saw is stale after a merge" || bad "unseen work"
 echo "Now covers side c too, with a little more text." >> docs/wiki/Using-the-toy.md; git commit -qam "Page sees side c"
@@ -96,7 +96,7 @@ export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"; rel="python3 $here/skills/workflow-release/scripts/release.py"
 git push -q origin main
 $goal new stale --here --goal "Change calc" --done "calc changed" >/dev/null
-printf '\n# again\n' >> calc.py; git commit -qam "Change calc again"
+printf '\nAGAIN = 1\n' >> calc.py; git commit -qam "Change calc again"
 python3 - <<'PY'
 p = ".loop/goals/stale.md"; t = open(p).read().replace("## Verify by hand\n", "## Verify by hand\n\n1. Open calc.py.\n   Expect: the change.\n", 1); open(p, "w").write(t)
 PY

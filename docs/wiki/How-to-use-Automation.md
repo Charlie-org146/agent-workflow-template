@@ -40,13 +40,7 @@ Say these to the agent in the operation session; each feature page has the exact
 Each requirement and how it is delivered:
 
 - AUT-1: Routines run where they can run fully. Example, from the ci-summary test: given the nightly run, when it ends, then it writes a results table to the job summary.
-- AUT-2: Regression on a schedule. Example, from the aut-defect-issue test: given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards.
-- AUT-3: Health on a schedule. Example, from the aut-email-file test: given health findings, when the scheduled health run files them, then each is tagged with its group on no milestone (and with its feature when feature_labels is on), no open issue is duplicated, and an issue the owner put on a milestone stays.
-- AUT-4: A digest by email. Example, from the aut-digest-create test: given no digest issue yet, when the first round ends, then the Automation digest issue is created and pinned.
-- AUT-9: Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1.
-- AUT-7: Bounded cost. Its budget and its limits, word for word from the page before the v2 rewrite:
-  - A round finishes within 45 minutes (the 30-minute regression budget of Regression REG-7 plus 15 for health and the digest, health starting when regression has finished, not at a fixed offset), and each report shows the round's wall time and its pass and fail counts, plus its Actions minutes when it ran in GitHub Actions, so I can slow the schedule if it costs too much.
-- AUT-10: A private repo needs no Actions check to merge. Example: given a private repo whose rules require named checks and a pull-request lane that passed, when the lane posts, then it posts those names as commit statuses itself and no GitHub Actions check is needed to merge.
+- AUT-9: Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. Also: `setup.py desk` lists every desk-only setup step once and `desk check` ends with DESK OK when none is left. Also: `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
 
 ### Command: automation.py
 - **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]` or `local status`
@@ -84,4 +78,4 @@ Regression runs every 4 hours in GitHub Actions for a public repo, or on your Ma
 - PRD page: [Automation](Automation)
 - Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept health-feature-table@b869bb8a -->
+<!-- kept gap-wave1-small@ce3b97f3 -->

@@ -15,10 +15,13 @@ the owner's approval. start_worker is the one place a worker starts, for hands-o
 session first, else a background worker through agent_command.
 """
 import argparse
+import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -74,6 +77,128 @@ def write_ref(ref, data, old="", cwd=None):
         return sh("push", "-q", lease, "origin", ":" + ref, cwd=cwd) is not None
     sha = sh("hash-object", "-w", "--stdin", cwd=cwd, data=json.dumps(data, sort_keys=True))
     return bool(sha) and sh("push", "-q", lease, "origin", "%s:%s" % (sha, ref), cwd=cwd) is not None
+
+
+# Merge batching (merge-queue C): merge.py SLUG SLUG [SLUG] --batch, only when "merge_batch" is true. M is merge.py.
+PARTS = ("patch", "minor", "major")
+
+
+def batch_file(common, bid, data=None):
+    """Read or write DATA: loop/batches/<id>.json."""
+    path = os.path.join(os.path.abspath(common), "loop", "batches", bid + ".json")
+    if data is None:
+        return read_json(path)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w") as handle:
+        json.dump(data, handle, indent=2)
+    os.replace(path + ".tmp", path)
+    return data
+
+
+def batch_ready(M, top, base, state):
+    """(PR info, "") or (None, why it merges alone)."""
+    if not M.ar.mergeable(state) or state.get("status") != "done":
+        return None, "not finished"
+    if state.get("release") == "ask" or state.get("safety") or graph.foreign(state):
+        return None, "safety class"
+    M.ar.stage_part(top, state)
+    if state.get("release_part") == "major":
+        return None, "major bump: the owner's cut"
+    got = M.run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
+    info = json.loads(got.stdout or "{}") if got.returncode == 0 else {}
+    head = str(info.get("headRefOid"))
+    why = (info.get("state") != "OPEN" and "PR not open") or (
+        state.get("pr_head") not in (None, head) and "its head moved") or M.ar.go_gate(top, base, info, head)
+    return (None, why) if why else (info, "")
+
+
+def batch_assemble(M, top, base, bid, members):
+    """(kept, alone [(slug, why)], head): member heads merged in order in a temp worktree, pushed as batch/<id>."""
+    temp = tempfile.mkdtemp(prefix="batch-")
+    tree, kept, alone, head = os.path.join(temp, "tree"), [], [], ""
+    try:
+        sh("fetch", "-q", "origin", base, cwd=top)
+        if sh("worktree", "add", "-q", "--detach", tree, "origin/" + base, cwd=top) is None:
+            return [], [(m[0], "no checkout") for m in members], ""
+        for slug, state, info in members:
+            sh("fetch", "-q", "origin", state["branch"], cwd=top)
+            if M.run(["git", "merge", "--no-ff", "-q", "-m", "Batch %s: %s" % (bid, slug), info["headRefOid"]], tree).returncode:
+                M.run(["git", "merge", "--abort"], tree)
+                alone.append((slug, "conflicts with the goals before it"))
+            else:
+                kept.append(slug)
+        head = len(kept) > 1 and sh("rev-parse", "HEAD", cwd=tree) or ""
+        if len(kept) > 1 and (not head or sh("push", "-q", "-f", "origin", "HEAD:refs/heads/batch/" + bid, cwd=tree) is None):
+            return [], [(k, "push failed") for k in kept] + alone, ""
+        return kept, alone, head
+    finally:
+        sh("worktree", "remove", "--force", tree, cwd=top)
+        shutil.rmtree(temp, ignore_errors=True)
+
+
+def batch(top, common, cfg, slugs, go, M):
+    """merge.py --batch: the exit code; a rerun repeats the unfinished phase."""
+    base, runs = cfg.get("base", "main"), os.path.join(os.path.abspath(common), "loop", "runs")
+    if not 2 <= len(slugs) <= 3 or len(set(slugs)) != len(slugs):
+        sys.exit("REFUSED: a batch is 2 or 3 goals. Nothing merged.")
+    bid = hashlib.sha1(",".join(sorted(slugs)).encode()).hexdigest()[:8]
+    rec = batch_file(common, bid)
+    say = lambda text, code=0: print(text, file=sys.stderr if code else sys.stdout) or code
+    if rec.get("phase") in ("dissolved", "released"):
+        return say("BATCH %s is %s" % (bid, rec["phase"]) + ("; merge each alone: merge.py SLUG" if rec["phase"] == "dissolved" else ""), 5 * (rec["phase"] == "dissolved"))
+    if not rec:
+        members, alone = [], []
+        for slug in slugs:
+            state = M.load(os.path.join(runs, slug + ".json"))
+            info, why = batch_ready(M, top, base, state) if state else (None, "no such goal")
+            members.append((slug, state, info)) if info else alone.append((slug, why))
+        kept, more, head = batch_assemble(M, top, base, bid, members) if len(members) > 1 else ([], [(m[0], "nothing to batch with") for m in members], "")
+        for slug, why in alone + more:
+            print("ALONE %s: %s; merge.py %s" % (slug, why, slug))
+        if len(kept) < 2:
+            return say("BATCH_NONE: fewer than 2 can be batched. Nothing merged.", 4)
+        made = M.run(["gh", "pr", "create", "--draft", "--base", base, "--head", "batch/" + bid, "--title", "Batch: " + ", ".join(kept),
+                      "--body", "One CI run for %s." % ", ".join(kept)], top)
+        if made.returncode:
+            return say("BATCH_PR_FAILED: %s" % made.stderr.strip()[-150:], 1)
+        rec = batch_file(common, bid, {"slugs": kept, "head": head, "phase": "assembled", "pr": made.stdout.strip().splitlines()[-1]})
+        return say("BATCH %s: draft %s of %s at %s. When green: merge.py %s --batch --go-head %s" % (
+            bid, rec["pr"], ", ".join(kept), head[:12], " ".join(kept), head[:12]))
+    if rec["phase"] == "assembled":
+        got = M.run(["gh", "pr", "view", rec["pr"], "--json", "state,headRefOid,statusCheckRollup"], top)
+        info = json.loads(got.stdout or "{}") if got.returncode == 0 else {}
+        if info.get("headRefOid") != rec["head"]:
+            return say("BATCH_MOVED: draft head is %s, not %s. Nothing merged." % (str(info.get("headRefOid"))[:12], rec["head"][:12]), 4)
+        why = M.ar.go_gate(top, base, info, go or rec["head"])
+        if why and "CI_RED" in why:
+            M.run(["gh", "pr", "close", rec["pr"], "--delete-branch"], top)
+            batch_file(common, bid, dict(rec, phase="dissolved"))
+            return say("BATCH_RED: batch %s dissolved; merge each alone: merge.py SLUG. %s" % (bid, why), 5)
+        if why or not go:
+            return say(why or "BATCH %s is green at %s. GO: merge.py %s --batch --go-head %s" % (bid, rec["head"][:12], " ".join(slugs), rec["head"][:12]),
+                       (4 if "GO_HEAD" in why else 5) if why else 0)
+        M.run(["gh", "pr", "ready", rec["pr"]], top)
+        done = M.run(["gh", "pr", "merge", rec["pr"], "--merge", "--match-head-commit", rec["head"]], top)
+        if done.returncode:
+            return say("BATCH_MERGE_FAILED: %s" % done.stderr.strip()[-150:], 1)
+        rec = batch_file(common, bid, dict(rec, phase="landed"))
+    states = [M.load(os.path.join(runs, s + ".json")) for s in rec["slugs"]]
+    lead = states[0]
+    lead.update(bump=max((s["release_part"] for s in states), key=PARTS.index),
+                release_bullets=list(dict.fromkeys(b for s in states for b in s.get("release_bullets") or [str(s.get("goal"))[:90]])))
+    lead.setdefault("release_steps", "No manual steps.")
+    for s in states:
+        M.ar.mark_merged(s)
+        M.release.save(s, "batch " + bid)
+        M.leave_queue(os.path.join(runs, s["slug"] + ".json"), s["slug"])
+    print("MERGED batch %s (%s) into %s" % (bid, ", ".join(rec["slugs"]), base))
+    M.ar.finish(top, cfg, lead)
+    for s in states[1:]:
+        s.update({k: lead[k] for k in ("release", "release_url", "release_version", "release_pushed", "release_target") if k in lead})
+        s.pop("release_error", None)
+        M.release.save(s, "batch " + bid)
+    batch_file(common, bid, dict(rec, phase="released"))
+    return 0
 
 
 def me():

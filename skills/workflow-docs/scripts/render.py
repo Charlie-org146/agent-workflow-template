@@ -22,7 +22,7 @@ FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regressio
 
 
 def tests_format(held={}):
-    """tests.py loaded once; None, with a NOTE, if missing or broken."""
+    """tests.py loaded once."""
     import importlib.util as iu
     if "m" not in held:
         sys.dont_write_bytecode, held["m"] = True, None
@@ -43,7 +43,6 @@ def ran_of(root):
 
 
 def table(root, ids, linked):
-    """A page's Tests table for the requirements `ids` ((id, text) pairs)."""
     ran, rows, fmt = ran_of(root), {row[0]: row for row in cr.tsv(root, "regression.tsv")}, tests_format()
     issues = fmt.issues_of(root) if fmt else {}
     fields = (lambda row: fmt.fields(row[:8], {}, ran, issues, True)) if fmt else (lambda row: plain(row, ran))
@@ -51,12 +50,11 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else from a milestone URL in text; ''."""
+    """OWNER/REPO from the origin remote, else a milestone URL."""
     return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
 
 
 def tests_page(root):
-    """The full Tests page (DOC-10), from tests.py's entries and the runs file's 4th column."""
     fmt = tests_format()
     groups = fmt.entries(root, markdown=True) if fmt else []
     return full_page(groups, {row[0]: row[3] for row in cr.tsv(root, "regression-runs.tsv")}, repo_of(root), workflow_file(root))
@@ -126,7 +124,6 @@ def read(path):
 
 
 def generated(root):
-    """(STALE, Tests, first differing line) when the Tests page differs from a fresh render."""
     rel = os.path.join(cr.folder_of(root), "Tests.md")
     held = read(os.path.join(root, rel))
     if held is None:
@@ -143,23 +140,22 @@ def front(root, names):
     """DOC-4 on Home, DOC-23 on the README and Principles page."""
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
+    listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
+    ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+    ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
+    own = "## The principles" in listing
     if "home" in on and home is not None:
         existing = {name[:-3] for name in os.listdir(folder) if name.endswith(".md")}
-        out += pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
-    listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
-    if "frontdoor" in on and "## The eight principles" in listing:
-        ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+):", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+        out += pf.frontdoor("Home", home, listing, ids, "Home") if own else pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
+    if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
-        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, False) if page else [])
+        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, "Principles") if page else [])
     return out
 
 
 def home_fresh(root, names):
-    """True when Home needs no rewrite: its generated blocks match a fresh render and it passes DOC-4 (#4608)."""
-    folder, rel = os.path.join(root, cr.folder_of(root)), os.path.join(cr.folder_of(root), "Home.md")
-    text = read(os.path.join(root, rel))
-    return text is not None and not [x for x in refresh(root, True) if x[0] == rel] and not pf.home(
-        text, names, {n[:-3] for n in os.listdir(folder) if n.endswith(".md")}, read(os.path.join(root, "README.md")) or "", repo_of(root, text), topics_of(root))
+    rel = os.path.join(cr.folder_of(root), "Home.md")
+    return read(os.path.join(root, rel)) is not None and not [x for x in refresh(root, True) if x[0] == rel] and not [x for x in front(root, names) if x[1].startswith("Home")]
 
 
 def test_slug(name):
@@ -167,7 +163,6 @@ def test_slug(name):
 
 
 def plain(row, ran):
-    """The fields tests.py would give: test, kind, guards, checks, runs, result, seen."""
     status, day = ran.get(row[0], ("not run", ""))[:2]
     guard = row[7] if row[6] == "defect" else row[3]
     return [row[0], row[6] if row[6] in ("defect", "workflow") else "requirement", guard or "-", row[5] or "-", row[1], (status + " " + day).strip(),
@@ -175,7 +170,6 @@ def plain(row, ran):
 
 
 def tests_table(ids, linked, defects, rows, fields, ran):
-    """A page's Tests table: each requirement's rows, then the workflow and defect tests."""
     out, flows = [], []
     for key, _ in ids:
         names = linked.get(key, [])
@@ -190,7 +184,7 @@ def tests_table(ids, linked, defects, rows, fields, ran):
 
 
 def run_cell(value, repo, day="", flow="regression.yml"):
-    """A URL is its Actions run; empty, that day's CI runs; a sha, its commit; else local."""
+    """A URL is its Actions run."""
     if re.match(r"^https?://\S+$", value):
         return "[run](%s)" % value
     if re.match(r"^[0-9a-f]{7,40}$", value):
@@ -201,7 +195,6 @@ def run_cell(value, repo, day="", flow="regression.yml"):
 
 
 def full_page(groups, runs, repo, flow="regression.yml"):
-    """docs/wiki/Tests.md: per feature '## <Feature>' and a full table whose first cell is the anchor pages link to."""
     out = [pf.MARKER, "# Tests", ""]
     for feature, lines in groups:
         rows = []
@@ -238,7 +231,6 @@ def block_re(name):
 
 config_of = counting.config_of
 def workflow_file(root):
-    """The regression routine's workflow file, else regression.yml (#3839)."""
     for e in counting.entries(root):
         if e.get("name") == "regression" and str(e.get("runs")).startswith("github:"):
             return e["runs"][7:] or "regression.yml"
@@ -246,7 +238,7 @@ def workflow_file(root):
 
 
 def reference():
-    """[(name, default, meaning)] from `settings.py reference`; [] if unreadable."""
+    """[(name, default, meaning)] from settings.py reference."""
     path = os.path.join(SKILLS, "workflow-setup", "scripts", "settings.py")
     done = subprocess.run([sys.executable, path, "reference"], capture_output=True, text=True) if os.path.exists(path) else None
     rows, on = [], False
@@ -296,7 +288,7 @@ def template_line(root):
 
 
 def with_blocks(text, blocks, insert=False):
-    """text with each (name, block) replaced; insert adds missing ones (template: after paragraph 1)."""
+    """text with each (name, block) replaced."""
     for name, block in blocks:
         pattern = block_re(name)
         if pattern.search(text):
@@ -312,7 +304,6 @@ def with_blocks(text, blocks, insert=False):
 
 
 def front_files(root, insert=False):
-    """[(rel, blocks)]: a DOC-4 Home gets new blocks, a README only the template line."""
     out, home = [], os.path.join(cr.folder_of(root), "Home.md")
     text = read(os.path.join(root, home)) or ""
     both = [("settings", settings_block(root)), ("automation", counting.automation_block(root))]
@@ -324,7 +315,7 @@ def front_files(root, insert=False):
 
 
 def refresh(root, check=False, insert=False):
-    """Write the blocks (check: only list): [(rel, name)] stale; missing ones only with insert."""
+    """Write the blocks (check: only list): [(rel, name)] stale."""
     stale = []
     for rel, blocks in front_files(root, insert):
         held = read(os.path.join(root, rel)) or ""
@@ -343,7 +334,6 @@ def refresh(root, check=False, insert=False):
 
 
 def stale_blocks(root):
-    """(STALE, Settings|Automation|README line, where and fix) per block unlike a fresh render."""
     names = dict(settings="Settings", automation="Automation", template="README line", topics="Topics")
     return [("STALE", names[name], "%s differs from a fresh render. Fix: /workflow-docs render" % where) for where, name in refresh(root, True)]
 
@@ -361,7 +351,6 @@ def perm_wiki_page(root, page):
 
 
 def perm_needs(root, routine, page):
-    """(tool, text) pairs the Runbook's Steps and Full run name."""
     inside, field, found = False, "", []
     for line in perm_wiki_page(root, page):
         if line.startswith("### "):
@@ -380,7 +369,6 @@ def perm_needs(root, routine, page):
 
 
 def mirror_of(path):
-    """({id: text}, owned, {id: sha8 agreed}) of a PRD's repo copy; not owned if another file is there."""
     try:
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().replace("\r\n", "\n").split("\n")
@@ -413,7 +401,6 @@ def part(text, name):
 
 
 def blocks(body):
-    """{heading: {field: text}} for each '### ' block of a section's text (indented lines continue a field)."""
     found, cur, last = {}, None, None
     for line in body.splitlines():
         if line.startswith("### "):
@@ -428,7 +415,6 @@ def blocks(body):
 
 
 def delivered(text):
-    """(header line, [(component, kind, cell count)]) of the page's What's delivered table."""
     block = text.split("\n### What's delivered\n", 1)[1].split("\n## ", 1)[0].split("\n### ", 1)[0] if "\n### What's delivered\n" in text else ""
     lines = [x.rstrip() for x in block.splitlines() if x.startswith("|")]
     out = []

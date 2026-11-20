@@ -24,6 +24,7 @@ import auto  # noqa: E402
 import board as bd  # noqa: E402
 import board_status as bs  # noqa: E402
 import board_lines  # noqa: E402
+from board_lines import gather, shown  # noqa: E402,F401
 import govern_hook  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
@@ -44,36 +45,12 @@ def cell(text, size=48):
     return lb.plain(text, size).replace("|", "/") or "-"
 
 
-def shown(run):
-    return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
-
-
 def quoted(words):
     return " / ".join('"%s"' % w for w in words)
 
 
 def last_at(root):
     return (bs.read_json(os.path.join(lb.loop_dir(root), "checkin.json")) or {}).get("at")
-
-
-def gather(root, at, stamp=None):
-    folder, cfg = lb.loop_dir(root), bs.read_json(os.path.join(root, ".loop", "config.json")) or {}
-    runs = lb.load(root)
-    found, why = graph.read_pool(os.path.join(folder, "session-pool.json"))
-    taken = graph.assigned(found)
-    landed = board_lines.states(runs, root, graph.merged)
-    states = {r["slug"]: "merged" if landed.get(r["slug"]) == "MERGED" else "held" if (s := graph.classify(r, taken, at, cfg)) == "silent" and r.get("step") == "pr" else s for r in runs}
-    since = graph.parse_at(stamp)
-    new = lambda r: states[r["slug"]] == "merged" and bool(since) and (graph.parse_at(r.get("updated")) or since) > since
-    live = [r for r in runs if (states[r["slug"]] != "retired" and (states[r["slug"]] != "merged" or new(r))) and shown(r)]
-    away = {}
-    for r in live:
-        if graph.foreign(r):
-            count, last, _ = away.get(graph.foreign(r), (0, None, ""))
-            away[graph.foreign(r)] = (count + 1, max([t for t in (last, graph.last_spoke(r)) if t] or [None]), r.get("machine") or "")
-    live = [r for r in live if not graph.foreign(r)]
-    return dict(away=away, name=os.path.basename(root), root=root, cfg=cfg, folder=folder, runs=runs, found=found, why=why, taken=taken,
-                states=states, live=live, queue=bs.queued(root, runs))
 
 
 def grouped(blocks, at=None, tags=None):
@@ -174,6 +151,9 @@ def render(root=None, at=None, stamp=None):
             if len(parts) >= 6:
                 out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
+    filed = auto.since(root, stamp, "findings.log")  # OPS-1: what the operation layer filed since the last check-in
+    if filed:
+        out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]
     gone = mend.archived_since(folder, stamp)
     if gone:
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]

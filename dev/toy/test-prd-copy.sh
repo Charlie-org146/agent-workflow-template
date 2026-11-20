@@ -56,6 +56,39 @@ cat > $H <<'EOF'
 |---|---|---|---|
 | [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |
 EOF
+cat >> $H <<'EOF'
+
+<!-- diagram:begin -->
+## System diagram
+
+The whole loop on one page: each part, where it runs, and the flows between them. Each feature's own diagram is on its How-to-use page.
+
+```text
+ THE OWNER (any machine)
+   | says a goal in one sentence, answers what waits on them, reviews pull requests
+   v
+ [OPERATION SESSION | the PC or the Mac, governs and never builds]
+   | assigns one goal each          ^ every step's result, every question
+   v                                |
+ [WORKER SESSIONS | each in its own worktree, one goal each]
+   freeze -> idea -> plan -> build -> review -> qa -> ship -> pull request -> release
+   |  guard: a step that fails 3 times stops and files a finding      |
+   |  guard: a Reviewed requirement is never edited without the owner |
+   v                                                                  v
+ [STAGING | planned: a staging branch and release candidates]  -> [PRODUCTION | main and its tagged release]
+   (the owner promotes; planned, not built)                          |
+                                                                     v
+                                                  [GITHUB WIKI | published pages, never a page it did not write]
+
+ [MACHINES | the PC and the Mac, each set up from a git clone and one command]
+   run the operation session, the workers and the scheduled routines
+ [SCHEDULED ROUTINES | the always-on machine and GitHub Actions]
+   health round --> issues and a digest mail ; regression round --> one issue per failing row
+
+Legend: [box] a part and where it runs; --> or v a flow of work; "guard" a rule that refuses; planned = not built yet.
+```
+<!-- diagram:end -->
+EOF
 cat >> README.md <<'EOF'
 
 ## How to use
@@ -68,6 +101,37 @@ Say these to the agent:
 |---|---|
 | "What is the median of 1 2 3?" | The calculator prints 2. |
 EOF
+# DOC-18: a feature page needs its How-to-use page
+cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
+<!-- workflow-docs -->
+# How to use Delivery
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+## How to reach or run it
+
+- DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
+- DEL-2: It answers within a second; run it on a short list.
+
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [Delivery](Delivery)
+HOWEOF
 cat > $P <<'EOF'
 <!-- workflow-docs -->
 # Delivery

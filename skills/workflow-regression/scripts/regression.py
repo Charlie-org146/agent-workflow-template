@@ -8,7 +8,7 @@ usage: regression.py <command> [options]
                                 TEXT says what the test checks; C is criterion (default), workflow (an
                                 end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
                                 issue URL or finding:SLUG it keeps fixed
-  sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows (a criterion's row has its id as id or goal)
+  sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
   red ID --owed --runner R [--live]
@@ -18,7 +18,7 @@ usage: regression.py <command> [options]
                                 (runs.py). A Windows runner is refused; a skip sets no seen red
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
                                 run rows (of one kind), then keep one issue per failing row;
-                                --tier goal plans a goal lane (tiers.py); a plain run nightly records its time (SUITE_TIME)
+                                --tier goal plans a goal lane; a plain run nightly records its time (SUITE_TIME)
   workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
                                 a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
@@ -239,7 +239,7 @@ def cmd_red(args):
         return 1
     edit_rows(root, lambda current: current[args.id].update(seen_red=today()) if args.id in current else None)
     print("SEEN RED %s on %s" % (args.id, today()))
-    runs.owed_clear(root, args.id, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
+    runs.owed_clear(root, args.id, args.live)
     return 0
 
 
@@ -306,7 +306,7 @@ def cmd_run(args):
     never = [key for key in runs.unproven(root, picked, SEEN) if key not in [i["id"] for i in results if i.get("notrun")]]
     if cannot:
         slug = (lanes.git(root, "rev-parse", "--abbrev-ref", "HEAD") or "").strip().split("/", 1)[-1]
-        runs.notrun_todo(root, slug, cannot, args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")))
+        runs.notrun_todo(root, slug, cannot, args.live)
     for key in never:
         print("UNPROVEN %s: never seen failing. Fix: python3 %s red %s --break \"<a command that breaks it>\"" % (
             key, os.path.abspath(__file__), key))

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The narrow half of lanes.py's row mapping: a test script's `# reads:` header and what its entry points reach.
 
-Imported by lanes.py, not run. A header is `# reads: <path> [<path>...]` lines in the leading comment block: repo-relative
-paths, a trailing / for a folder. Shell files add the paths they name, Python files their same-folder imports and quoted
-file names (and quoted module names with importlib.import_module); anything unresolved reruns the row always.
+Imported by lanes.py. A header is `# reads: <path>...` lines in the leading comment block: repo-relative paths, a
+trailing / for a folder. Shell files add the paths they name, Python files their same-folder imports and quoted file
+names (and quoted module names with importlib.import_module); anything unresolved reruns the row always.
 """
 import collections
 import json
@@ -16,11 +16,11 @@ import lanes
 
 
 CONFIG = ".loop/config.json"
-LIMIT = 32000000  # characters of file text held at once; a dropped text is read again
+LIMIT = 32000000  # characters of text held; a dropped one is re-read
 
 
 class Texts(dict):
-    """file name -> text for one run, the oldest dropped past LIMIT."""
+    """file name -> text, the oldest dropped past LIMIT."""
     def __init__(self):
         super().__init__()
         self.live, self.size = collections.OrderedDict(), 0
@@ -51,7 +51,7 @@ def names(text, path):
 
 
 def flat(text, out=None, path=()):
-    """config.json as a Counter of (key path, value), the last duplicate winning; None if unparseable."""
+    """config.json as a Counter of (key path, value), last duplicate winning; None if unparseable."""
     if out is None:
         try:
             return flat(json.loads(text, object_pairs_hook=list), collections.Counter())
@@ -66,7 +66,7 @@ def flat(text, out=None, path=()):
 
 
 def config_hit(root, commit, command, cache):
-    """Whether a config.json change since commit can affect a row: it reaches it and names a changed key."""
+    """Whether a config.json change since commit can affect a row (reaches it, names a changed key)."""
     if ("cfg", commit) not in cache:
         old, now = (flat(t or "") for t in (lanes.git(root, "show", commit + ":" + CONFIG), lanes.read(root, CONFIG, cache)))
         cache["cfg", commit] = None if old is None or now is None else {k for p, _ in (old - now) + (now - old) for k in p[-1:]}
@@ -102,13 +102,15 @@ def sound(path):
 
 
 def warm(path, key, picked, cache):
-    """Seed cache from the plan cache file at path when its key matches: `hit (N rows)` or `miss (<why>)`."""
+    """Seed cache from the plan file when its key matches: `hit (N rows)` or `miss (<why>)`."""
     digest, parts = key
     try:
         with open(path, "rb") as handle:
-            inflate = zlib.decompressobj()
-            text = inflate.decompress(handle.read(), 64 << 20)
-            assert inflate.eof and not inflate.unconsumed_tail
+            inflate, text, packed = zlib.decompressobj(), bytearray(), handle.read()
+            for _ in range(64):  # 1 MB steps
+                text += inflate.decompress(packed, 1 << 20)
+                packed = inflate.unconsumed_tail
+            assert inflate.eof and not packed
             data = json.loads(text)
         paths, rows, was = data["paths"], data["rows"], data["parts"]
         assert data["v"] == 1 and isinstance(data["key"], str) and isinstance(rows, dict) and isinstance(paths, list)
@@ -134,7 +136,7 @@ def warm(path, key, picked, cache):
 
 
 def store(path, key, cache):
-    """Write every row closure the plan holds (atomic; files over 30 days pruned). The error class name or None."""
+    """Write the plan's row closures (atomic; files over 30 days pruned). Error class name or None."""
     rows = {}
     for item in [k for k in cache if isinstance(k, tuple) and k[0] == "closure"]:
         deps, always = cache[item]
@@ -209,7 +211,7 @@ def header(root, rel, cache):
 
 
 def scan(root, rel, cache):
-    """(files, folders) one file reaches, unwidened: shell, named paths; Python, same-folder imports and quoted names."""
+    """(files, folders) one file reaches, unwidened: shell, named paths; Python, sibling imports and quoted names."""
     key = ("narrow", rel)
     if key in cache:
         return cache[key]
@@ -258,7 +260,7 @@ def scan(root, rel, cache):
 
 
 def wholes(root, text, base, bound):
-    """Skill folders a shell text reads as a whole (ls, grep -r, cp -R, "$d"); cd, mkdir and PYTHONPATH read nothing."""
+    """Skill folders a shell text reads whole (ls, grep -r, cp -R, "$d"); cd, mkdir, PYTHONPATH read nothing."""
     out = set()
     for line in lanes.HERE_FORMS.sub("$here/", text).split("\n"):
         entered = set()
@@ -346,7 +348,7 @@ def narrow(root, seeds, cache):
 
 
 def suggest(root, rid):
-    """regression.py reads ROW: a `# reads:` header for the row's script from its newest trace in <git dir>/lanes-trace.tsv."""
+    """regression.py reads ROW: a `# reads:` header from its newest trace (<git dir>/lanes-trace.tsv)."""
     rows = [line.split("\t") for line in (lanes.read(root, lanes.TABLE, {}) or "").splitlines() if line[:1] != "#"]
     command = next((cells[2] for cells in rows if len(cells) > 2 and cells[0] == rid), None)
     if command is None:

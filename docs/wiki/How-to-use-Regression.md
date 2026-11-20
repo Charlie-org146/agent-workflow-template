@@ -56,23 +56,13 @@ A row must be seen failing once before it counts. Known failures don't block, an
 Each requirement and how it is delivered:
 
 - REG-1: Three kinds of tests. Example, from the refused-unmet test: given a criterion with no test, when a release is cut, then it is refused.
-- REG-2: Test format. Example, from the unproven-blocks test: given a test never seen failing, when the run happens, then the run is blocked.
-- REG-3: One command, three places. Example, from the workflow-same-as-run test: given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues.
 - REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test.
-- REG-5: Failures go to GitHub. Example, from the known-no-block test: given a known failure, when the run happens, then it does not block the run or open an issue.
-- REG-6: Every fixed issue leaves a test. Example, from the release-lists-fixes test: given a goal that proved a defect row linked to an issue, when its release is cut, then the CHANGELOG and the release notes list the issue with its test.
 - REG-7: Fast in the loop. Its budget and its limits, word for word from the page before the v2 rewrite:
   - Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't.
   - The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over.
   - Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off.
   - Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit.
   - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped.
-- REG-11: Preparation is budgeted too. A lane whose work before its first test, preparing, planning or waiting for a slot, reaches its budget (15 minutes by default, never lower) stops, names which part ran long and can be rerun instead of started over.
-- REG-12: Lanes don't disturb each other. Lanes running side by side take separate files and ports, and a lane over its limit says so in its own line.
-- REG-13: One machine's failure is not the goal's failure. Planned, not built yet: a test that fails on one machine but passes on CI is filed as an issue and is not counted as a failure of the goal.
-- REG-14: Caps on tests and suite time. Set the test-count and suite-time caps in `.loop/config.json`; a goal that takes the repo over a cap is refused at qa unless it removes or merges as many tests as it adds, or the owner raises the cap in their own words.
-- REG-15: Coverage is measured in one place. Planned, not built yet: each requirement's coverage step, from Stated to Fresh, is computed from the latest full run on main and shown beside it on its page.
-- REG-16: Coverage never drops silently. Planned, not built yet: qa refuses a goal that would remove the only proof of a Reviewed requirement, and a release that lowers coverage waits for the owner's words.
 
 ### Skill: workflow-regression
 - **Say:** "Add a test for DEL-1 that runs the delivery toy suite"
@@ -118,4 +108,4 @@ The scheduled regression routine's Runbook lives in the [Regression](Regression)
 - PRD page: [Regression](Regression)
 - Backlog: [Backlog: Regression](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept known-red-lanes@3aef83b9 -->
+<!-- kept go-head-main-reds@751300a25 -->

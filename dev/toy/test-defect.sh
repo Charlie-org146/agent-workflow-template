@@ -47,7 +47,7 @@ toy() { # a toy repo with the loop set up, the stand-in flow and the fake gh
 real() { # a git copy of what the repo-wide checks read (skills, docs, README, the loop's tables); never the repo itself
   mkdir -p "$d/real/.loop" && cp -R "$here/skills" "$here/docs" "$here/README.md" "$d/real/" \
     && cp "$here/.loop/regression.tsv" "$here/.loop/regression-runs.tsv" "$here/.loop/regression-issues.tsv" \
-      "$here/.loop/regression-known.tsv" "$here/.loop/docs.tsv" "$here/.loop/config.json" "$d/real/.loop/" \
+      "$here/.loop/regression-known.tsv" "$here/.loop/docs.tsv" "$here/.loop/routines.tsv" "$here/.loop/config.json" "$d/real/.loop/" \
     && cp -R "$here/.loop/goals" "$d/real/.loop/" && { [ ! -d "$here/.github" ] || cp -R "$here/.github" "$d/real/"; } \
     && cd "$d/real" && git init -q && git add -A && git -c user.name=t -c user.email=t@t commit -qm copy \
     && { u=$(git -C "$here/." remote get-url origin 2>/dev/null) && git remote add origin "$u" || true; } || no "cannot copy the repo"  # the Tests page links runs to origin; "$here/." not "$here": the plain form is a root runner again (issue 172)
@@ -78,7 +78,7 @@ for page, ids in want.items():
     for key, words in ids.items():
         sealed = re.search(r"^- %s: \*\*Reviewed \d{4}-\d\d-\d\d\*\* \S.* <!-- reviewed \w+ -->$" % key, text, re.M)  # the owner's latest words, sealed
         # a requirement the v2 rewrite revised reads Unreviewed, and the owner's sealed words stay as its first revision r1
-        kept = re.search(r"^- %s: \*\*Unreviewed\*\* \S" % key, text, re.M) and re.search(r"^### %s\n\n(?:\|.*\n)+?\| r1 \| \d{4}-\d\d-\d\d \| .*o\d+: " % key, text, re.M)
+        kept = re.search(r"^- %s: (?:\*\*Unreviewed\*\* \S|moved to )" % key, text, re.M) and re.search(r"^### %s\n\n(?:\|.*\n)+?\| r1 \| \d{4}-\d\d-\d\d \| .*o\d+: " % key, text, re.M)
         assert sealed or kept, key
 PY
     out=$(real && python3 skills/workflow-docs/scripts/docs.py check 2>&1); grep -q "LOCKED" <<<"$out" && no "a reviewed criterion's seal is broken"
@@ -246,7 +246,7 @@ KEPT
       grep -q "^## Command map" "$here/skills/$skill/SKILL.md" || no "$skill/SKILL.md lost its Command map"
     done
     grep -qiE "governance only|one session governs" "$here/skills/workflow-delivery/SKILL.md" || no "workflow-delivery/SKILL.md lost its governance line"
-    grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" || no "workflow-docs/SKILL.md lost its review rule"
+    grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" "$here/skills/workflow-docs/references/commands.md" || no "workflow-docs lost its review rule (SKILL.md and its commands reference)"
     exit 0;;
   size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py; it stays under health's size warning
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/criteria.py deployments \

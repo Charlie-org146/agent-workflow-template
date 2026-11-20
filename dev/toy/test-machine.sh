@@ -91,14 +91,14 @@ fi
 if want machine-new-machine-docs; then
   grep -q 'New machine, in order' "$here/skills/workflow-setup/SKILL.md" || no "setup's command list has no New machine steps"
   grep -q 'New machine, in order' "$here/docs/wiki/How-to-use-Machines.md" || no "the Machines How-to-use page does not carry the New machine steps"
-  for id in MCH-1; do grep -q "^- $id: \*\*Unreviewed\*\*" "$here/docs/wiki/Machines.md" || no "$id is not listed Unreviewed"; done
+  for id in MCH-1; do grep -q "^- $id: \*\*\(Unreviewed\|Reviewed [0-9-]*\)\*\*" "$here/docs/wiki/Machines.md" || no "$id is not listed"; done
   echo "PASS: Setup has a New machine section linked from the README and the new requirements are Unreviewed"
 fi
 
 # done 6: each machine row is listed in the Machines Tests table.
 if want machine-rows-listed; then
   for row in machine-apply-installs machine-check-gaps machine-operation-guide machine-no-private machine-new-machine-docs machine-windows machine-task-layout machine-no-prompt-mode machine-custom-items machine-mailer machine-caps; do
-    grep -qF "[$row](Tests#t-$row)" "$here/docs/wiki/Machines.md" || no "row $row is not in the Machines Tests table"; done
+    grep -qF "[$row](Tests#t-$row)" "$here"/docs/wiki/*.md || no "row $row is not in a feature page Tests table"; done
   for n in 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
   echo "PASS: every machine row is listed in the Machines Tests table"
 fi

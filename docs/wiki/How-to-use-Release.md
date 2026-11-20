@@ -49,24 +49,16 @@ agent publishes the wiki. No release is published without you. Nothing merges wi
 | "Move issue 7 to v2.1" | After your words are recorded, a `moved` waiver names the issue, and promotion moves it to the later milestone. |
 | "Waive row stale-found, issue 9" | A `red` waiver names the row and its issue; the gate stops refusing that row. |
 | "Promote v2" | If your words name `v2.0.0` and every check passes, it tags `v2.0.0`, keeps `release/v2`, moves main and mails the state report. |
+| "Merge these goals together" | With `merge_batch` on (it is off by default), `merge.py g1 g2 [g3] --batch` puts up to 3 green goals on one draft pull request of their combined head and a GO on that head's green CI merges it with one release; a safety-class, major or conflicting goal goes alone, and a red batch dissolves to single merges. |
 | "Go back to v2" | A pull request puts main's tree back on `release/v2`; you merge it. |
+
+A commit that moves only stamp files carries the pass already recorded for the tested tree, so it needs no fresh CI run. The stamp files are `VERSION` (or the repo's version file), `CHANGELOG.md`, `.loop/regression-runs.tsv` and `.loop/regression-issues.tsv`. Two commits count as equal modulo stamps only when the diff between them adds or edits regular files at those paths: any other path, a symlink, a rename or a delete breaks the match. `merge.py` and the release head use that one compare (`tems` in `autorelease.py`), and `operate.py wiki-only` uses it too, so the record commit `goal.py pr` adds, a release bump and a wiki re-stamp keep the lane's pass.
 
 Each requirement and how it is delivered:
 
-- REL-1: A version number says what changed, and a major ships only through the gate. Example, from the rel-major-refused test: given a goal whose release would bump a major, when release.py bumps the version, then it refuses naming review.py promote.
-- REL-2: Every issue on the milestone is closed, or the owner moved it by name. Example, from the rel-open-issue-refused test: given a milestone with an open issue, when the gate runs, then it refuses naming the issue.
 - REL-3: The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue. Example, from the rel-red-row-refused test: given a known-red row with no waiver, when the gate runs, then it refuses naming the row.
-- REL-4: Health passes, every requirement is Reviewed by the owner, and no wiki page is stale. Example, from the rel-checks-refused test: given a requirement that is not Reviewed, when the gate runs, then it refuses naming the requirement and its page.
-- REL-5: Once the release candidate is cut, only fixes for gate failures enter staging. Example, from the rel-freeze-refuses test: given a cut release candidate, when a goal naming no gate failure merges, then merge.py refuses with frozen for vX.0.0.
-- REL-6: Promoting a major tags it, keeps a snapshot branch and sends a state report. Example, from the rel-promote-snapshot test: given every check green and an owner record naming the version, when promote runs, then the tag, the branch, the release notes and the mail all exist.
-- REL-7: `revert vX` puts main back on the snapshot through a pull request. Example, from the rel-revert-pr test: given release/vX, when revert runs, then a pull request to main carries the snapshot's tree.
-- REL-8: Promotion and every waiver are the owner's words, never a worker's or a peer session's. Example, from the rel-owner-only test: given a worker, when it runs promote, then it is refused and nothing changes.
-- REL-9: The merge's wiki check refuses only for what the goal changed; findings on other pages become one issue each. Example, from the gate-untouched-not-refused test: given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, when merge.py checks the wiki, then it does not refuse on them.
-- REL-10: Every goal ends with a release. Example, from the never-merges test: given auto_merge is off, when goals finish, then nothing is merged.
-- REL-11: A merge is never refused late or left half done.
 - REL-12: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
 - REL-13: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
-- REL-14: Every release is noted.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]`
@@ -106,4 +98,4 @@ Each requirement and how it is delivered:
 - PRD page: [Release](Release)
 - Backlog: [Backlog: Release](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept gate-ci-suite@e5c1b658 -->
+<!-- kept known-red-docs-release2@20a7ff2d -->

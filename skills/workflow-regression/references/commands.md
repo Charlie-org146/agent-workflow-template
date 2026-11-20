@@ -435,3 +435,13 @@ always runs writes the run summary: one header with totals and the run time, the
 summary`); if that fails, the plain results still reach the summary. Rows (here too, under `regression.py run`) run with no GitHub token and none of the
 runner's own files (`GITHUB_STEP_SUMMARY`, `GITHUB_ENV`, `GITHUB_OUTPUT`, `GITHUB_PATH`, `GITHUB_STATE`) in their
 environment, so no row inherits the real summary (this stops accidents, not a hostile row), and the checkout keeps no token in its git config.
+
+## runs.py notes
+
+Moved from the docstrings of `scripts/runs.py`, word for word where it still reads the same.
+
+`.loop/regression-runs.tsv` holds each row's last run as id, status, date, run and flaky. `run` is the GitHub Actions run URL when GITHUB_SERVER_URL, GITHUB_REPOSITORY and GITHUB_RUN_ID are all set, else empty, so same-day runs on two branches write identical lines and merge cleanly. `flaky` is empty, or the commit a row's result flipped on (tiers.py flaky_apply, REG-9); status stays the raw PASS or FAIL. Per-result evidence (commit, clean, host, python) lives in the branch's lane record in the git common dir, never here: a commit cell would differ per branch and conflict every same-day merge.
+
+It also holds a local `regression.py run`'s GitHub issues (`sync_issues`): one issue per failing row, keyed by a marker in its body, dry-run (WOULD lines) unless live; actions.py keeps the CI copy. The time budget of an in-loop test run lives here too (`budget`, `fit`, `execute`): a --reuse run (qa, ship and pull-request lanes) stops at test_budget_minutes (default 15, floor 15), runs rows in tier order while their estimated seconds fit, and records the rest LEFT for the scheduled full suite.
+
+`shown` returns a failing row's last LAST lines, never empty: a row that printed nothing runs once more with its quiet stage loud (`again` makes each `| grep -q PATTERN` of its command `| cat`, and returns None when there is none). `read_issues` returns (issues, ""): the GraphQL list, else REST pages of 100 without comments; (None, error) when both fail.

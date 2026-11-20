@@ -48,7 +48,7 @@ mkdir -p docs/wiki
 printf '<!-- workflow-docs -->\n# Calc\n\n## Criteria\n\n- REL-1: **Reviewed 2026-01-01** calc adds.\n' > docs/wiki/Calc.md
 printf 'Calc\tcalc.py\nGhost\tghost.py\n' > .loop/docs.tsv
 git add -A; git commit -qm "Map pages"
-echo "# change" >> calc.py; git commit -qam "Change calc"
+echo "CHANGE = 1" >> calc.py; git commit -qam "Change calc"
 out=$($health check --family docs); echo "$out"
 grep -q "^WARN docs Calc stale: " <<<"$out" && ok "a stale page shows as a docs row naming it" || bad "stale"
 grep -q "^FAIL docs Ghost missing: " <<<"$out" && ok "a missing page shows as a FAIL" || bad "missing"

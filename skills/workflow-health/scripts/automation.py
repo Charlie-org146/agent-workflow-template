@@ -2,17 +2,10 @@
 """Post one digest comment per round, and run the local schedule that makes the rounds.
 
 usage: automation.py local install [--load] | register | uninstall | status [--json] | plist | tick [--scheduled] [--dry-run] [--repo P]
-                                         the one launch agent on this Mac (workflows.py); install registers this repo and writes
-                                         the agent, printing the launchctl line that loads it (--load runs it); the tick runs
-                                         health with the judge for every repo and the full regression for a private repo
        automation.py digest [--owner L]  post this round's comment on the pinned Automation digest issue
        automation.py workflow            removed: health no longer runs in GitHub Actions (exit 2)
 
-The digest lists what ran (regression's latest run, health's verdict, the round's cost, the email, when the schedule last ran and
-a MISSED line after a gap), then per feature the new, still-open and fixed issues labelled regression or health since the last comment,
-each open one with its link (and its milestone, when it has one) and the request to give the agent; it mentions digest_owner (default:
-the repo owner). Its state lives in the digest issue's body (rounds.py), so a rerun of the same run posts nothing twice and an older run
-never overwrites a newer one. Outside a tick with no GH_TOKEN it only prints the comment.
+`local` drives the Mac's one launch agent; the digest lists what ran and the issues since the last comment.
 """
 import argparse
 import datetime
@@ -229,9 +222,9 @@ def compose(login, note, ran, now_open, before, run_id, titles=None, groups=None
 
 def cmd_digest(args):
     cfg, in_actions = config(args.root), os.environ.get("GITHUB_ACTIONS") == "true"
-    live = bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")) or args.live
+    live = args.live
     if in_actions and not live:
-        print("DIGEST: no GH_TOKEN in this step, so nothing was posted. Fix: give the step GH_TOKEN: the job's token.")
+        print("DIGEST: no --live in this step, so nothing was posted. Fix: pass --live (with GH_TOKEN: the job's token).")
         return 1
     if live:
         for label in LABELS + ("automation",):  # a label that doesn't exist yet would make its listing fail
@@ -279,7 +272,7 @@ def cmd_digest(args):
         if cost.get("over"):
             print("::warning::" + rounds.line(cost))
     if not live:
-        print(comment + "DRY RUN: no GH_TOKEN, so nothing was posted.")
+        print(comment + "DRY RUN: no --live, so nothing was posted.")
         return 0
     if number is None:
         gh("label", "create", "automation", "--description", "The Automation digest")  # an existing one keeps its colour

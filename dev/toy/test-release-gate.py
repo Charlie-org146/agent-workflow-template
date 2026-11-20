@@ -3,7 +3,7 @@
 # reads: skills/workflow-release/scripts/review.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/release.py docs/wiki/Release.md
 """release-gate (REL-1 to REL-9, issue 4914): a major ships only through `review.py gate`; `promote` tags vX.0.0, keeps release/vX,
 writes the state report and mails it; a cut rc freezes the merge; `revert` opens a pull request back to the snapshot; a goal never
-bumps a major; the Release page holds REL-1 to REL-9, Unreviewed; the scripts stay under their size caps.
+bumps a major; the Release page holds REL-1 to REL-14, Unreviewed; the scripts stay under their size caps.
 
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
 process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major]  (one leg: only its checks decide the exit)"""
@@ -76,7 +76,7 @@ merge.pods = None
 real_run = subprocess.run
 OPEN, CLOSED, calls, tip, merged = [], [{"number": 3, "title": "done thing"}], [], [rc], []
 SUITE = ["PASS a", "PASS b"]
-HEALTH = ["HEALTH: green"]
+HEALTH = ["HEALTH: green (12 pass, 3 warn, 0 fail, 0 unread)"]
 DOCS = []
 MAIL = [""]
 review.run_in = lambda work, script, *args: "\n".join(SUITE if "regression" in script else HEALTH)
@@ -129,7 +129,7 @@ def tags():
 def reset():
     OPEN[:] = []
     SUITE[:] = ["PASS a", "PASS b"]
-    HEALTH[:] = ["HEALTH: green"]
+    HEALTH[:] = ["HEALTH: green (12 pass, 3 warn, 0 fail, 0 unread)"]
     DOCS[:] = []
     MAIL[0] = ""
     open(page, "w").write(GOOD)
@@ -180,6 +180,14 @@ reset()
 HEALTH[:] = ["HEALTH: not green"]
 code, said = gate()
 check("a failing health check refuses", code == 1 and "(health): HEALTH: not green" in said, said, "checks")
+reset()
+for bad in ("HEALTH: not green (9 pass, 0 warn, 1 fail, 0 unread)", "HEALTH: green (9 pass, 0 warn, 2 fail, 0 unread)", "HEALTH: green (9 pass, 0 warn, 0 fail, 1 unread)", "HEALTH: greenish"):
+    HEALTH[:] = [bad]
+    code, said = gate()
+    check("a counted health verdict that is not 0 fail and 0 unread refuses: " + bad, code == 1 and "(health): " + bad in said, said, "checks")
+reset()
+code, said = gate()
+check("the real counted green verdict passes the health check", code == 0 and "(health)" not in said, said, "checks")
 reset()
 open(page, "w").write(GOOD.replace("PG-2: **Reviewed 2026-11-01**", "PG-2: **Unreviewed**"))
 git("commit", "-q", "-am", "unreviewed"); git("push", "-q", "origin", "main"); git("branch", "-f", "staging", "main")
@@ -315,10 +323,10 @@ except SystemExit as stop:
 check("release.bump refuses a major: it ships only through review.py promote", "MAJOR_GATE" in refused and "review.py promote" in refused, refused, "major")
 check("release.bump still bumps a minor and a patch", release.bump("1.0.54", "minor") == "1.1.0" and release.bump("1.0.54", "patch") == "1.0.55", "", "major")
 
-# 7. the page (REL-1 to REL-9) and the sizes
+# 7. the page (REL-1 to REL-14) and the sizes
 text = open(os.path.join(root, "docs", "wiki", "Release.md"), encoding="utf-8").read() if os.path.exists(os.path.join(root, "docs", "wiki", "Release.md")) else ""
 ids = re.findall(r"^- (REL-\d+): \*\*(Unreviewed|Reviewed[^*]*)\*\*", text, re.M)
-check("the Release page holds REL-1 to REL-9, all Unreviewed", [i for i, _ in ids] == ["REL-%d" % n for n in range(1, 10)] and {s for _, s in ids} == {"Unreviewed"}, str(ids), "major")
+check("the Release page holds its live requirements (REL-3, REL-12, REL-13 after the consolidation), none missing", [i for i, _ in ids] == ["REL-3", "REL-12", "REL-13"], str(ids), "major")
 over = []
 for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:

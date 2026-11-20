@@ -47,7 +47,7 @@ mig() {  # REPO [flags]: the check run in REPO; output on stdout and stderr, the
 cleanrepo() {  # NAME [public]: an adopted toy repo that migration-check passes: recorded mac, stamped, blocks in, task registered, wiki published
   local r; r=$(adopt "$1")
   ( cd "$r" && python3 -c "import json;p='.loop/config.json';d=json.load(open(p));d['regression_runs']='mac';d['template_version']='1.0.0';json.dump(d,open(p,'w'),indent=2)" \
-    && python3 "$SETUP/settings.py" fill-repo && git rm -q --ignore-unmatch .github/workflows/regression.yml && python3 "$DOCS/render.py" blocks && python3 "$DOCS/entry.py" write && python3 "$SETUP/agents.py" wire \
+    && python3 "$SETUP/settings.py" fill-repo && git rm -q --ignore-unmatch .github/workflows/regression.yml && python3 "$DOCS/render.py" blocks && python3 -c "p='docs/wiki/Home.md';t=open(p).read();F=chr(96)*3;open(p,'w').write(t.rstrip()+'\n\n<!-- diagram:begin -->\n## System diagram\n'+F+'text\noperation session, worker, step, staging, production, machine, routine, guard\nLegend: x\n'+F+'\n<!-- diagram:end -->\n')" && python3 "$DOCS/entry.py" write && python3 "$SETUP/agents.py" wire \
     && git add -A && git commit -qm "migrate" && git push -q origin main && python3 "$DOCS/docs.py" publish --adopt Home \
     && python3 "$HEALTH/automation.py" local install ) >/dev/null 2>&1
   echo "$r"
@@ -104,7 +104,7 @@ PY
   marks() { grep -c -e '<!-- settings:begin -->' -e '<!-- automation:begin -->' -e '<!-- template:begin -->' "$1" 2>/dev/null; }
   [ "$(marks "$r/README.md")" = 0 ] || { echo "FAIL: the strip left blocks in the README"; exit 1; }
   out=$(checkout_apply "$r"); br=$(cd "$r" && git branch --list 'workflow-update-*' | tr -d ' *'); readme=$(cd "$r" && git show "$br:README.md"); home=$(cd "$r" && git show "$br:docs/wiki/Home.md")
-  check "update --apply inserts the Settings and Automation blocks and the template line into the README" 'grep -q "<!-- settings:begin -->" <<<"$readme" && grep -q "<!-- automation:begin -->" <<<"$readme" && grep -q "<!-- template:begin -->" <<<"$readme"'
+  check "update --apply inserts the template line into the README, which holds no Settings or Automation block (those are Home's)" 'grep -q "<!-- template:begin -->" <<<"$readme" && ! grep -q -e "<!-- settings:begin -->" -e "<!-- automation:begin -->" <<<"$readme"'
   check "update --apply inserts the Settings and Automation blocks into Home" 'grep -q "<!-- settings:begin -->" <<<"$home" && grep -q "<!-- automation:begin -->" <<<"$home"'
   check "update --apply stamps template_version and declares the three routines" '( cd "$r" && git show "$br:.loop/config.json" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d[\"template_version\"] and len(d[\"automation\"]) == 3" )'
 fi
@@ -143,7 +143,7 @@ if want gaps-pr; then fresh
   gap MIG_FILES "regression.tsv" "rm .loop/regression.tsv"
   gap MIG_FILES "health.yml" "mkdir -p .github/workflows && printf 'name: health\non: schedule\n' > .github/workflows/health.yml"
   gap MIG_FILES "regression.yml" "mkdir -p .github/workflows && printf 'name: regression\non:\n  pull_request:\n' > .github/workflows/regression.yml"
-  gap MIG_CHECKS "pull_request" "mkdir -p .github/workflows && printf 'name: regression\non:\n  schedule: []\n' > .github/workflows/regression.yml"
+  gap MIG_CHECKS "pull_request" "$(cf "d['regression_runs']='actions'") && mkdir -p .github/workflows && printf 'name: regression\non:\n  schedule: []\n' > .github/workflows/regression.yml"
   gap MIG_CHECKS "land row" "printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n' > .loop/regression.tsv"
   gap MIG_BLOCKS "README.md" "python3 - <<'PY'
 import re
@@ -156,7 +156,7 @@ t = open('docs/wiki/Home.md').read()
 open('docs/wiki/Home.md', 'w').write(re.sub(r'\n*<!-- (settings|automation):begin -->\n.*?<!-- \1:end -->\n', '\n', t, flags=re.S))
 PY"
   gap MIG_RUNBOOK "Engine" "mkdir -p engine && echo x > engine/core.py && printf 'Engine\tengine\n' >> .loop/docs.tsv && printf '<!-- workflow-docs -->\n# Engine\n\nReview: **Unreviewed**\n\n## Problem\n\n- I run the toy engine, written for this test only.\n\n## Requirements\n\n### Functional\n\n- ENG-1: **Unreviewed** The engine runs.\n  - It holds for every toy run.\n\n### Non-functional\n\nNone\n\n## Non-goals\n\n- No other feature.\n\n## Success metrics\n\n- The toy run passes.\n\n## Tests\n\n' > docs/wiki/Engine.md && printf 'nightly-sync\tEngine\n' > .loop/routines.tsv"
-  gap MIG_FORMAT "Home" "echo 'A line the Home page does not know about.' >> README.md && git commit -qam 'change the README without its page'"
+  gap MIG_FORMAT "Home" "echo 'A line the Home page does not know about.' >> docs/wiki/Home.md && git commit -qam 'add a line Home does not allow'"
   # regression off: no regression.yml, no land row, no mac needed, MIG_CHECKS skipped; the repo still passes the PR-closable half
   ( cd "$r" && eval "$(cf "d['regression_cron']='off'; d['regression_runs']='actions'")" && git rm -q --cached -r . >/dev/null 2>&1; git reset -q ) >/dev/null 2>&1
   ( cd "$r" && printf '# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n' > .loop/regression.tsv ); mig "$r" --pr
@@ -231,7 +231,8 @@ if want flags; then fresh
   check "--offline drops exactly the wiki codes (the task gap stays) and its last line says the wiki was not checked" '[ $rc = 1 ] && grep -q "^GAP MIG_TASK" <<<"$out" && ! grep -q "MIG_WIKI" <<<"$out" && tail -1 <<<"$out" | grep -q "(offline: wiki not checked)$" && grep -q "^NOT CHECKED:.*wiki" <<<"$out"'
   mig "$r" --pr --offline; po=$out; mig "$r" --pr
   check "--pr with --offline is the same as --pr" '[ "$po" = "$out" ]'
-  check "the CHECKED line names the versions, platform and mode, and the DOCS line is present" 'grep -q "^CHECKED: installed v1.0.0, repo template_version 1.0.0 (working tree), platform darwin, mode offline" <<<"$out" && grep -q "^DOCS: " <<<"$out"'
+  plat=$(python3 -c "import sys; print(sys.platform)")  # the platform the check reports is the host's: darwin on a Mac, linux on CI
+  check "the CHECKED line names the versions, platform and mode, and the DOCS line is present" 'grep -q "^CHECKED: installed v1.0.0, repo template_version 1.0.0 (working tree), platform $plat, mode offline" <<<"$out" && grep -q "^DOCS: " <<<"$out"'
   mig "$r" --bogus
   check "an unknown flag exits 2 with the fix on stderr" '[ $rc = 2 ] && grep -q "Fix: run setup.py migration-check --help" <<<"$out"'
   out=$(cd "$d" && python3 "$SETUP/setup.py" migration-check --repo "$d" 2>&1 < /dev/null); rc=$?
@@ -264,13 +265,14 @@ if want writes-nothing; then fresh
   r=$(cleanrepo wn); ( cd "$r" && git stash list >/dev/null ); wikiedit "$r" "printf 'hand made\n' > Notes.md"; export TMPDIR="$d/tmp"; mkdir -p "$TMPDIR"
   cfgset "$r" "d['legacy_toy_key']=1"; printf 'scratch\n' > "$r/untracked.txt"
   state() {  # the repo's whole tree and git state, the home folder and the schedule registry, as one text
-    ( cd "$1" && git status --porcelain --ignored; git ls-files -s; git for-each-ref; git stash list; git worktree list; find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; find .git -type f -not -name '*.lock' | sort | xargs shasum 2>/dev/null | grep -v "index$"; find "$HOME" -type f | sort | xargs shasum 2>/dev/null; ls "$TMPDIR" )
+    ( cd "$1" && git status --porcelain --ignored; git ls-files -s; git for-each-ref; git stash list; git worktree list; find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum; find .git -type f -not -name '*.lock' | sort | xargs shasum 2>/dev/null | grep -v "index$"; find "$HOME" -type f -not -name calls.log | sort | xargs shasum 2>/dev/null; ls "$TMPDIR" )
   }
   before=$(state "$r"); mig "$r"; after=$(state "$r")
   check "a full online run with gaps leaves the tree, index, branches, stash, .git files, home folder and temp folder as they were" '[ $rc = 1 ] && [ "$before" = "$after" ]'
   check "the wiki clone's temp folder is gone after the run" '[ -z "$(ls "$TMPDIR" 2>/dev/null)" ]'
   mig "$r" --pr; mig "$r" --offline; after2=$(state "$r")
   check "--pr and --offline write nothing either" '[ "$before" = "$after2" ]'
+  check "gh was only read from: the fake gh's call log holds no create, edit, close, delete or write call" '! grep -qE "(^| )(create|edit|close|delete|reopen|merge|comment)( |$)|-X|--method|--input|-f |-F " "$FAKE_GH_DIR/calls.log"'
 fi
 
 # health-same: health's Adoption group runs the same check; WARN rows never turn the verdict red; the tick files them as issues.
@@ -358,7 +360,7 @@ if want major-refused; then fresh
   check "an older repo of the same major only gets the warning line: the goal is created" '[ $rc = 0 ] && grep -q "^this repo is at v1.0.0, the template is at v1.5.0, run the migrate goal" <<<"$out" && grep -q "^FROZEN warned" <<<"$out"'
   ( cd "$r" && git switch -q main ); rm -rf "$d/sk4"; cp -R "$S" "$d/sk4"; rm -rf "$d/sk4/workflow-docs"
   out=$(cd "$r" && python3 "$d/sk4/workflow-delivery/scripts/goal.py" new nonag --here --goal "g" --done "d" 2>&1 < /dev/null); rc=$?
-  check "with entry.py missing it prints a NOTE on stderr and never blocks" '[ $rc = 0 ] && grep -q "^NOTE: entry.py not found beside workflow-delivery, so the template version was not checked. Fix: reinstall the skills from one release" <<<"$out" && grep -q "^FROZEN nonag" <<<"$out"'
+  check "with entry.py missing it prints a NOTE on stderr and never blocks" '[ $rc = 0 ] && grep -q "^NOTE: entry.py is missing, so the template version was not checked. Fix: reinstall the skills" <<<"$out" && grep -q "^FROZEN nonag" <<<"$out"'
 fi
 
 # queue: the operation session queues one migrate-<repo> goal for each followed repo behind the template, once, in a safe place.
