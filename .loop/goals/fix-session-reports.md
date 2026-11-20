@@ -17,5 +17,7 @@ Frozen. A wrong done line needs a new goal.
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
 1. Run `bash dev/toy/test-session-workers.sh | tail -3`.
    Expect: ALL PASS (31 PASS, no FAIL), and no Traceback at the top of the output.
-2. Remove the `os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)` line from `seed()` in that toy and run it again.
+2. Run `bash dev/toy/test-board-held.sh | tail -1`.
+   Expect: ALL PASS (73 PASS, 0 FAIL).
+3. Remove the `os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)` line from `seed()` in that toy and run it again.
    Expect: a FileNotFoundError traceback and 13 FAIL lines (put the line back).
