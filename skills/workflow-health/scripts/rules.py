@@ -1,12 +1,4 @@
-"""Freshness, Tests and Adoption rules (report.py), plus Security and privacy, Size, Performance and Hygiene rules.
-Read-only; dates are days, so one day's runs print the same lines.
-
-Freshness: nightly (newest run over a day old), unreleased (commits over 3 days past the newest v* tag), finding-age (open health
-issue over 30 days), skipped (SKIPPED over 7 days). Tests: network (a land row reaching the network), config (config.json unparsable
-or no base: FAIL), checks-run-tests, template-version, scheduled, machine. Adoption: no-fit, agent-tools, prompt-pointer, milestones.
-Security, Size, Performance, Hygiene: private (a leak pattern: FAIL, never the text), scan-hook, workflow-permissions, skill-lines
-(150 lines: FAIL), requirements-per-page (over criteria_max: FAIL), check-time (over 60 s), idle-sessions, eta-missing, eta-extended,
-eta-overrun (GRD-14), auto-safety, auto-record (MON-11).
+"""Health rules (names and groups: report.py GROUPS). Read-only. check-time also prints MERGE-TIME: median minutes from a PR's last check to its merge, last 20 merges.
 """
 import datetime
 import glob
@@ -312,10 +304,33 @@ def check_time(root):
     start = float(os.environ.get("LOOP_HEALTH_T0") or 0) or (getattr(sys.modules.get("__main__"), "T0", [None]) or [None])[0]
     if not start:
         return [row("INFO", "performance", "check", "check-time", "not measured outside health.py check")]
-    if time.time() - start > CHECK_SECONDS:
-        return [row("WARN", "performance", "check", "check-time", "the check took over %d seconds" % CHECK_SECONDS,
-                    "find the slow rule (health.py check --group NAME)", "check")]
-    return []
+    slow = [row("WARN", "performance", "check", "check-time", "the check took over %d seconds" % CHECK_SECONDS,
+                "find the slow rule (health.py check --group NAME)", "check")] if time.time() - start > CHECK_SECONDS else []
+    return slow + merge_time(root)
+
+
+def merge_time(root):
+    stamp = lambda text: datetime.datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+    try:
+        file = os.environ.get("LOOP_HEALTH_MERGES")
+        text = open(file).read() if file else subprocess.run(
+            ["gh", "pr", "list", "--state", "merged", "--limit", "20", "--json", "mergedAt,statusCheckRollup"],
+            cwd=root, capture_output=True, text=True, timeout=60, check=True).stdout
+        gaps = []
+        for item in json.loads(text):
+            end = stamp(item["mergedAt"])
+            ends = [stamp(c["completedAt"]) for c in item.get("statusCheckRollup") or [] if str(c.get("completedAt") or "0")[:4] > "2000"]
+            ends = [e for e in ends if e <= end]
+            gaps += [(end - max(ends)).total_seconds() / 60] if ends else []
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+        return [row("UNREAD", "performance", "merge", "check-time", "MERGE-TIME can't be read (gh pr list)", "gh auth login", "merge")]
+    if not gaps:
+        return [row("INFO", "performance", "merge", "check-time", "MERGE-TIME no merged pull request with checks to measure")]
+    gaps.sort()
+    median = (gaps[len(gaps) // 2] + gaps[(len(gaps) - 1) // 2]) / 2
+    text = "MERGE-TIME median %d min (target 15)" % round(median)
+    return [row("WARN" if median > 15 else "INFO", "performance", "merge", "check-time", text,
+                "find what holds a green pull request (the queue, a slow check)", "merge")]
 
 
 def idle_sessions(root):

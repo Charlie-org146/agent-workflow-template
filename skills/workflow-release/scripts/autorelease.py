@@ -69,9 +69,9 @@ def notes_text(state):
 
 
 def protected(top, base):
-  """True when the base has a pull_request rule."""
+  """True with a pull_request or merge_queue rule."""
   got = sh(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], cwd=top)
-  return got.returncode == 0 and '"type":"pull_request"' in got.stdout.replace(" ", "")
+  return got.returncode == 0 and re.search(r'"type":"(pull_request|merge_queue)"', got.stdout.replace(" ", "")) is not None
 
 
 def sh(args, cwd=None):
@@ -201,7 +201,6 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
       if PROTECTED.search(pushed.stderr):
         print("NOTE: origin/%s refused the push for protection; the release goes through a pull request" % base)
         return None, pushed.stderr
-            # another goal moved the base: redo the bump on top
     fail(state, "push to %s was rejected %d times: %s" % (base, PUSH_TRIES, pushed.stderr.strip()[-200:]))
   finally:
     drop(top, tree, temp)

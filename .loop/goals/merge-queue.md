@@ -20,4 +20,11 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Open docs/wiki/How-to-use-Release.md and read the Playbook "Main's merge queue ruleset".
+   Expect: it lists require merge queue, merge commit, build concurrency 3, group size 1 to 3, all entries must pass, the required checks, and says the owner flips it after this change is on main.
+2. Run `bash dev/toy/test-merge-guard.sh | grep -i queue` on Linux.
+   Expect: PASS lines for the one `--merge --auto --match-head-commit` call, the dropped entry, the unreadable rules, the batch refusal and the no-queue direct merge.
+3. Run `python3 skills/workflow-health/scripts/health.py check --group performance`.
+   Expect: a `MERGE-TIME median N min (target 15)` row (WARN above 15, UNREAD if gh can't be read).
+4. Run `tr -d '' < skills/workflow-release/scripts/merge.py | wc -c`.
+   Expect: 18994 or less.

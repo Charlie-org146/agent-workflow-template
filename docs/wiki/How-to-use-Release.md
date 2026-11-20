@@ -13,6 +13,7 @@ A major version (a milestone) ships only through a hard gate: every milestone is
 | `review.py promote` | Command | Promotes a major: gate, tag `vX.0.0`, branch `release/vX`, main moved, state report published and mailed. | `python3 skills/workflow-release/scripts/review.py promote v2 --owner-record ID`. |
 | `review.py revert` | Command | Opens a pull request that puts main back on the `release/vX` snapshot. | `python3 skills/workflow-release/scripts/review.py revert v2`. |
 | `release-waivers.tsv` | API/file contract | The owner's waivers for the gate, kept in the git folder outside the repo. | The operation session adds a line after you name the issue or row in your own words. |
+| Main's merge queue ruleset | Playbook | The owner-set GitHub ruleset that makes merges go through a queue; `merge.py` enqueues when it is on. | The owner creates it from the recipe below after this change is on main. |
 
 ### System diagram
 
@@ -22,6 +23,7 @@ A major version (a milestone) ships only through a hard gate: every milestone is
 [Command: review.py gate | the operation session] --every check passes--> [Command: review.py promote | the operation session] --tag, release branch, main moved--> (GitHub)
 [Command: review.py promote | the operation session] --state report--> (the owner's mail)
 [Command: review.py revert | the operation session] --a pull request putting main back on the release branch--> (GitHub)
+[Playbook: Main's merge queue ruleset | the owner in GitHub] --the queue the release step enqueues into--> (GitHub)
 
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
 ```
@@ -87,6 +89,12 @@ Each requirement and how it is delivered:
 - **Example:** `red	stale-found	#9	o13`
 - **Writer:** the operation session, only after the owner's words naming the subject are recorded.
 - **Reader:** `review.py gate` and `promote`; a line whose record is missing or does not name the subject waives nothing.
+
+### Playbook: Main's merge queue ruleset
+- **Steps:** the owner creates a new GitHub ruleset targeting main, after this change and merge-queue-ci are on main: require a merge queue with merge method merge commit, build concurrency 3, minimum group size 1, maximum group size 3, and all entries must pass required checks; require status checks, naming exactly the checks that report on both `pull_request` and `merge_group`; add no bypass (the release goes as a release pull request through the same queue; if the owner prefers a bypass, it is listed here with these values). This tool changes no repo setting; main has no ruleset today, so until then only the local hooks guard GRD-6.
+- **Templates:** required checks: the regression-pr `affected` job (its `pull_request` and `merge_group` runs) and GitGuardian. A ruleset has one required list for the pull request and the merge-group commit, so a check that never reports on `merge_group` (GitGuardian, an app check, may not) stalls every queue entry: keep it advisory on pull requests unless it is seen on a real merge-group run.
+- **Stop rules:** with the queue on, `merge.py` enqueues the green pull request at the GO'd head (`gh pr merge --merge --auto --match-head-commit HEAD`) and waits; a dropped entry refuses `QUEUE_DEQUEUED`, unreadable rules `QUEUE_UNREADABLE`, and `merge.py --batch` refuses (GitHub builds merge groups itself). With the queue off, nothing changes.
+- **Health:** `health.py check` prints `MERGE-TIME median N min (target 15)`, the median from a pull request's last check to its merge over the last 20 merges; WARN above 15, UNREAD when it can't be read.
 
 ## URLs and deployments
 

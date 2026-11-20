@@ -138,4 +138,66 @@ cp -r "$here/skills" "$d/inst"
 lane_import() { (cd "$d" && env -u PYTHONPATH python3 -B -c 'import importlib.util as u,sys;s=u.spec_from_file_location("private",sys.argv[1]);m=u.module_from_spec(s);s.loader.exec_module(m);import importlib;importlib.import_module("lane");print("LANE OK")' "$1/workflow-delivery/scripts/private.py" 2>&1); }
 out=$(lane_import "$here/skills")$(lane_import "$d/inst")
 check "private.py pr_result imports lane without PYTHONPATH from a checkout and an installed skills folder (no ModuleNotFoundError)" '[ "$(grep -c "^LANE OK" <<<"$out")" = 2 ] && ! grep -q ModuleNotFoundError <<<"$out"'
+# merge queue (REL-13): with a ruleset that requires a queue, merge.py enqueues at the GO'd head with `--auto` and waits; a gh stand-in
+# answers the queue calls and passes everything else to the toy's fake gh
+Q="$d/q"; mkdir -p "$Q/bin"
+cat > "$Q/bin/gh" <<SHIM
+#!/bin/bash
+echo "\$*" >> "$Q/calls"; st="$Q/state"; s=\$(cat "\$st" 2>/dev/null || echo open)
+case "\$1 \$2" in
+  "api repos/"*"/rules/branches/main") case "\${QUEUE:-on}" in err) echo boom >&2; exit 1;; on) echo '[{"type": "merge_queue"}]';; *) echo '[]';; esac; exit 0;;
+  "pr view") oid="\${HEADNOW:-$head}"; case \$s in merged) echo '{"state": "MERGED", "isInMergeQueue": false, "headRefOid": "'\$oid'"}';;
+      queued) echo '{"state": "OPEN", "isInMergeQueue": true, "headRefOid": "'\$oid'"}'; echo merged > "\$st";;
+      *) echo '{"state": "OPEN", "isInMergeQueue": false, "headRefOid": "'\$oid'"}';; esac; exit 0;;
+  "pr merge") if [[ "\$*" == *--auto* ]]; then [ -n "\${QDROP:-}" ] || echo queued > "\$st"
+      else [ "\${QUEUE:-on}" = on ] && { echo "the base branch requires a merge queue" >&2; exit 1; }; echo merged > "\$st"; fi; exit 0;;
+esac
+exec "$here/dev/toy/fakegh/gh" "\$@"
+SHIM
+chmod +x "$Q/bin/gh"
+land() { rm -f "$Q/calls" "$Q/state"; (export PATH="$Q/bin:$PATH" LOOP_QUEUE_POLL=0.01 LOOP_QUEUE_GRACE=0; python3 - "$M" "$1" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1]); import merge
+print(merge.land(".", "main", "https://example.test/pull/1", sys.argv[2] or None) or "LANDED")
+PY
+); }
+out=$(QUEUE=on land "$head")
+check "a ruleset that requires a queue: one 'pr merge --merge --auto --match-head-commit <head>', never a plain merge, and it waits until the PR is merged" '[ "$out" = LANDED ] && [ "$(grep -c "^pr merge" "$Q/calls")" = 1 ] && grep -qx "pr merge https://example.test/pull/1 --merge --auto --match-head-commit $head" "$Q/calls"'
+out=$(QUEUE=on HEADNOW=deadbeefdeadbeefdeadbeef land "$head")
+check "a queued PR whose head moved refuses naming both heads" 'grep -q "left the queue: OPEN at deadbeefdead, not ${head:0:12}" <<<"$out"'
+out=$(QUEUE=on QDROP=1 land "$head")
+check "a queue entry that was dropped (still open, not queued) refuses QUEUE_DEQUEUED instead of waiting forever" 'grep -q "QUEUE_DEQUEUED" <<<"$out"'
+out=$(QUEUE=err land "$head")
+check "unreadable rules refuse QUEUE_UNREADABLE and merge nothing" 'grep -q "QUEUE_UNREADABLE" <<<"$out" && ! grep -q "^pr merge" "$Q/calls"'
+out=$(QUEUE=off land "$head")
+check "no queue required: merges directly with --match-head-commit as before, no --auto" '[ "$out" = LANDED ] && grep -qx "pr merge https://example.test/pull/1 --merge --match-head-commit $head" "$Q/calls" && ! grep -q -- "--auto" "$Q/calls"'
+rm -f "$Q/calls"; (export PATH="$Q/bin:$PATH" QUEUE=on; gh pr merge https://example.test/pull/1 --merge --match-head-commit "$head" 2>"$Q/err"); rc=$?
+check "negative control: the old direct merge fails under a queue ruleset (the case the enqueue path exists for)" '[ $rc = 1 ] && grep -q "requires a merge queue" "$Q/err"'
+prot() { (export PATH="$Q/bin:$PATH" QUEUE=$1; python3 - "$M" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1]); import autorelease
+print(autorelease.protected(".", "main"))
+PY
+); }
+check "a ruleset with only a merge_queue rule is protected, so the release goes through a release pull request, never a direct push" '[ "$(prot on)" = True ] && [ "$(prot off)" = False ]'
+printf '{"auto_merge": true, "merge_batch": true, "base": "main"}\n' > .loop/config.json
+out=$(export PATH="$Q/bin:$PATH" QUEUE=on; python3 "$M/merge.py" g h --batch 2>&1); rc=$?
+check "merge.py --batch under a queue refuses in one line pointing to the queue and merges nothing" '[ $rc != 0 ] && grep -q "^REFUSED: main has a merge queue" <<<"$out" && [ "$(grep -c . <<<"$out")" = 1 ]'
+out=$(export PATH="$Q/bin:$PATH" QUEUE=off; python3 "$M/merge.py" g h --batch 2>&1)
+check "negative control: a repo with no queue still batches (no queue refusal)" '! grep -q "merge queue" <<<"$out"'
+printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
+# MERGE-TIME (health): the median from a PR's last check to its merge, over the last 20 merges
+H="$here/skills/workflow-health/scripts"; mt() { LOOP_HEALTH_MERGES="$1" python3 - "$H" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1]); import rules
+for r in rules.merge_time("."):
+    print(r["state"], r["detail"])
+PY
+}
+mk() { printf '[{"mergedAt": "2026-11-19T10:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T09:50:00Z"}]}, {"mergedAt": "2026-11-19T11:00:00Z", "statusCheckRollup": [{"completedAt": "2026-11-19T10:35:00Z"}]}]' > "$1"; }
+mk "$d/m.json"; out=$(mt "$d/m.json")
+check "merged PRs whose checks finished 10 and 25 minutes before main: WARN, MERGE-TIME median 18 min (target 15)" '[ "$out" = "WARN MERGE-TIME median 18 min (target 15)" ]'
+sed -i 's/10:35:00Z/10:50:00Z/' "$d/m.json"; out=$(mt "$d/m.json")
+check "negative control: both merges 10 minutes after the last check stay under the target (INFO, not WARN)" '[ "$out" = "INFO MERGE-TIME median 10 min (target 15)" ]'
+out=$(mt "$d/missing.json"); check "data that cannot be read gives UNREAD, never green" '[ "${out%% *}" = UNREAD ]'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

@@ -1,23 +1,16 @@
 #!/usr/bin/env python3
-"""Merge a finished goal's pull request into the base branch, then release. usage: merge.py SLUG [--go-head SHA]
-       merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]
-
-Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges
-(`gh pr merge --match-head-commit`), releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py;
-refused: `wiki_error`); a stale wiki page, REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse
-first. --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green.
-
---batch (setting merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
-Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
+"""Merge a goal's pull request into the base, then release: merge.py SLUG [--go-head SHA];
+merge.py SLUG SLUG [SLUG] --batch (merge_batch; refused under a merge queue). `land` enqueues when the base has one.
+Refuses unless auto_merge is true and the goal is done with its PR open; commands.md lists the codes.
 """
 import argparse
-import datetime
 import importlib.util
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 
 import autorelease as ar
 import release
@@ -43,8 +36,8 @@ def file_issue(top, page, texts):
         return "no issue filed (gh)"
 
 
-def _pods():  # MON-15: workflow-monitoring's graph.py, or None
-    sys.path.append(MON)  # graph's proctree
+def _pods():
+    sys.path.append(MON)
     try:
         spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(MON, "graph.py"))
         spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
@@ -55,7 +48,6 @@ def _pods():  # MON-15: workflow-monitoring's graph.py, or None
 
 pods = _pods()
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -69,7 +61,6 @@ REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "
 
 
 def reach(top, paths):
-    """Row ids PATHS can affect, or None for all."""
     if not paths:
         return set()
     if not os.path.exists(REACH):
@@ -77,7 +68,7 @@ def reach(top, paths):
     done = run([sys.executable, "-B", REACH, "affected", "--root", top, "--"] + paths, cwd=top)
     found = re.search(r"^AFFECTED \d+ of \d+ rows \((.*)\)", done.stdout, re.M)
     if done.returncode or not found or re.search(r"^(UNMAPPED|DELETED) ", done.stdout, re.M):
-        return None  # a failing planner can't clear the merge
+        return None
     return set(found.group(1).split(", ")) - {"none", ""}
 
 
@@ -85,7 +76,6 @@ OPERATE = os.path.join(MON, "operate.py")
 
 
 def base_moved(state, cfg, top):
-    """None to go ahead, else (exit code, refusal): the base moved in paths this goal's rows reach (2), or no fetch (3)."""
     base, was, slug = cfg.get("base", "main"), state.get("pr_base"), state.get("slug", "SLUG")
     if not was and state.get("pr_head"):
         return 2, "REFUSED (BASE_MOVED): the base the pr lane ran on was not recorded. Fix: goal.py pr %s, then merge.py %s" % (
@@ -115,7 +105,6 @@ def base_moved(state, cfg, top):
 
 
 def missing_ids(top, cfg, head="HEAD"):
-    """(held, noted): requirement IDs its criterion rows add that no origin/<base> wiki page names."""
     base = "origin/" + cfg.get("base", "main")
     folder = (cfg.get("wiki_dir") or "docs/wiki").strip("/")
     added = run(["git", "diff", "-U0", base + "..." + head, "--", ".loop/regression.tsv"], cwd=top).stdout
@@ -136,8 +125,7 @@ def missing_ids(top, cfg, head="HEAD"):
     return held, [i for i in gone if i not in held]
 
 
-# ---- the release pull request (DEL-5, issues 134 and 154)
-FIELDS = "state,mergeStateStatus,reviewDecision,mergeCommit,statusCheckRollup,url,number,headRefOid"
+FIELDS = "isInMergeQueue,state,mergeStateStatus,reviewDecision,mergeCommit,statusCheckRollup,url,number,headRefOid"
 REVIEW = ("REVIEW_REQUIRED", "CHANGES_REQUESTED")
 PENDING = ("QUEUED", "IN_PROGRESS", "WAITING", "PENDING", "REQUESTED", "EXPECTED")
 KEYS = ("release_pr", "release_pr_branch", "release_pr_version", "release_pushed", "release_pr_waiting", "release_status")
@@ -148,9 +136,8 @@ def title_of(version, slug):
 
 
 def view(top, ref):
-    got = ar.sh(["gh", "pr", "view", ref, "--json", FIELDS], cwd=top)
     try:
-        seen = json.loads(got.stdout) if got.returncode == 0 else {}
+        seen = json.loads(ar.sh(["gh", "pr", "view", ref, "--json", FIELDS], cwd=top).stdout)
     except ValueError:
         seen = {}
     return seen if isinstance(seen, dict) else {}
@@ -175,11 +162,41 @@ def start(top, cfg, state):
         seen = view(top, branch)
         url = seen.get("url", "") if seen.get("state") == "OPEN" else ""
     if not url:
-        ar.fail(state, "gh pr create for %s failed: %s. Side effects: branch %s pushed, no pull request "
-                         "(partial). Fix: run merge.py %s again" % (branch, (made.stderr or "").strip()[-200:], branch, slug))
+        ar.fail(state, "gh pr create for %s failed: %s. Fix: run merge.py %s again" % (branch, (made.stderr or "").strip()[-200:], slug))
     state.update(release_pr=url, release_pr_branch=branch, release_pr_version=version)
     release.save(state, "release PR %s opened for v%s" % (url, version))
     print("RELEASE PR %s (%s)" % (url, title))
+
+
+def queue_on(top, base):
+    """True: base has a merge_queue rule; None: unreadable."""
+    got = run(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], top)
+    return None if got.returncode else '"type":"merge_queue"' in got.stdout.replace(" ", "")
+
+
+def land(top, base, url, head=None):
+    """"" once url is merged (enqueued, bound to head, under a queue), else why not."""
+    queue = queue_on(top, base)
+    bind = ["--match-head-commit", head] if head else []
+    if queue is None:
+        return "can't read the rules for %s (QUEUE_UNREADABLE)" % base
+    seen, began = view(top, url), time.time()
+    if not queue or seen.get("state") == "OPEN" and not seen.get("isInMergeQueue"):
+        done = run(["gh", "pr", "merge", url, "--merge"] + ["--auto"] * queue + bind, top)
+        if done.returncode or not queue:
+            return done.stderr.strip()[-300:] if done.returncode else ""
+    while True:
+        seen, waited = view(top, url), time.time() - began
+        state, oid = seen.get("state"), seen.get("headRefOid")
+        if state == "MERGED":
+            return ""
+        if state == "CLOSED" or head and oid not in (None, head):
+            return "left the queue: %s at %s, not %s" % (state, str(oid)[:12], head[:12])
+        if not seen.get("isInMergeQueue") and waited > int(os.environ.get("LOOP_QUEUE_GRACE") or 120):
+            return "dropped from the queue (QUEUE_DEQUEUED)"
+        if waited > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
+            return "still queued after %ds (QUEUE_TIMEOUT)" % waited
+        time.sleep(float(os.environ.get("LOOP_QUEUE_POLL") or 15))
 
 
 def pending(seen):
@@ -188,7 +205,6 @@ def pending(seen):
 
 
 def advance(top, cfg, state, again=False):
-    """(version, merge commit) once the release PR merges, else None."""
     if not state.get("release_pr"):
         start(top, cfg, state)
     url, version, slug = state["release_pr"], state["release_pr_version"], state["slug"]
@@ -196,8 +212,7 @@ def advance(top, cfg, state, again=False):
     if seen.get("state") == "OPEN":
         ar.check(state, top, None, {"release PR title": title_of(version, slug), "release notes": ar.notes_text(state)})
         ar.release_statuses(top, cfg, state, state["release_pr_branch"], seen.get("headRefOid"))
-        merged = ar.sh(["gh", "pr", "merge", url, "--merge"], cwd=top)
-        said = (merged.stderr or merged.stdout).strip()[-200:]
+        said = land(top, cfg.get("base", "main"), url)[-200:]
         seen = view(top, url)
     status, number = seen.get("state"), seen.get("number") or url.rstrip("/").split("/")[-1]
     if status == "MERGED":
@@ -225,23 +240,19 @@ def advance(top, cfg, state, again=False):
         state["release_pr_waiting"] = "checks pending on %s (#%s)" % (url, number)
         state.pop("release_error", None)
         release.save(state, "waiting: " + state["release_pr_waiting"])
-        print("WAITING %s: required checks are pending on the release PR %s; the next merge.py %s run merges it"
-              % (slug, url, slug))
+        print("WAITING %s: checks pending on the release PR %s; run merge.py again" % (slug, url))
         return None
     state["release_tries"] = state.get("release_tries", 0) + 1
     ar.status_held(state, url, number, seen)
     why = "a review is required" if seen.get("reviewDecision") in REVIEW else "it is %s, %s" % (
         status or "unreadable", seen.get("mergeStateStatus") or said or "no reason given")
-    ar.fail(state, "the release PR %s (#%s) can't merge: %s; it needs the owner to approve and merge it. Fix: "
-            "gh pr merge %s --merge, then merge.py %s. Side effects: branch %s pushed and the pull request open "
-            "(partial); try %d (RELEASE_PR_BLOCKED)" % (
-                url, number, why, number, slug, state.get("release_pr_branch"), state["release_tries"]))
+    ar.fail(state, "the release PR %s (#%s) can't merge: %s; the owner approves and merges it. Fix: gh pr merge %s --merge, "
+            "then merge.py %s; try %d (RELEASE_PR_BLOCKED)" % (url, number, why, number, slug, state["release_tries"]))
 
 
 def load(path):
     try:
-        with open(path) as handle:
-            return json.load(handle)
+        return json.load(open(path))
     except (OSError, ValueError):
         return None
 
@@ -268,7 +279,10 @@ def main():
     wiki.where(__file__, cfg.get("base"))
     if cfg.get("auto_merge") is not True:
         sys.exit("REFUSED: auto_merge is off in this repo, so the owner merges. Nothing was merged.")
+    queue = queue_on(top, base)
     if args.batch or len(args.slug) > 1:
+        if queue is not False:
+            sys.exit("REFUSED: main has a merge queue or unreadable rules; GitHub builds merge groups, so merge goals alone. Nothing merged.")
         if not (args.batch and cfg.get("merge_batch") is True):
             sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing merged.")
         pods and pods.merge_lock(os.path.abspath(common))
@@ -286,8 +300,8 @@ def main():
         sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
     if pods:
         pods.refuse(state)
-        pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
-        pods.merge_lock(os.path.abspath(common))
+        pods.pr_queue("wait", runs, slug)
+        queue or pods.merge_lock(os.path.abspath(common))
     wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
     view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
     info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
@@ -300,7 +314,7 @@ def main():
                 ar.fail(state, "stale wiki pages: %s. Fix: update %s, then run wiki.py prepare %s --commit." % (
                     ", ".join(stale), ", ".join(sorted({l.split(":")[0].split()[1] for l in stale if l.startswith("REWRITE ")})) or "them", slug))
             if run(["git", "branch", "-r", "--contains", "HEAD", "--list", "origin/*"], cwd=top).stdout.strip() == "":
-                sys.exit("REFUSED: this branch's latest commit is not on origin. Fix: run wiki.py prepare %s --commit." % slug)
+                sys.exit("REFUSED: this branch's latest commit is not on origin. Fix: wiki.py prepare %s --commit." % slug)
         if known != "OPEN":
             sys.exit("REFUSED: the pull request %s is %s, not open." % (state["pr"], known or "unknown"))
         tested = state.get("pr_head")
@@ -335,20 +349,15 @@ def main():
             ar.fail(state, "criterion rows name %s, which no wiki page on origin/%s names; nothing was merged. Fix: "
                     "merge the goal that adds their text, then merge.py %s (REQUIREMENT_MISSING)" % (", ".join(held), base, slug))
         if noted:
-            print("NOTE: no wiki page on the base names %s yet; merging anyway" % ", ".join(noted))
+            print("NOTE: no base wiki page names %s yet" % ", ".join(noted))
         ar.run_routines(top, cfg, state)
         if tested != state.get("pr_head"):
             ar.restatus(top, cfg, state, tested)
-        done = run(["gh", "pr", "merge", state["pr"], "--merge"] + (["--match-head-commit", tested] if tested else []))
-        if done.returncode:
-            ar.fail(state, "gh could not merge %s: %s" % (state["pr"], done.stderr.strip()[-300:]))
-    at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        why = land(top, base, state["pr"], tested)
+        why and ar.fail(state, "gh could not merge %s: %s" % (state["pr"], why))
+    queue and pods and pods.merge_lock(os.path.abspath(common))
     ar.mark_merged(state)
-    state["updated"] = at
-    state.setdefault("log", []).append("%s merged %s (auto_merge)" % (at, state["pr"]))
-    with open(path + ".tmp", "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(path + ".tmp", path)
+    release.save(state, "merged %s (auto_merge)" % state["pr"])
     print("MERGED %s into %s" % (state["pr"], base))
     leave_queue(path, slug)
     ar.finish(top, cfg, state)
