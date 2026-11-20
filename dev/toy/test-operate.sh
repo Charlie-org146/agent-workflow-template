@@ -10,7 +10,7 @@
 # reads: skills/workflow-monitoring/scripts/worker.py skills/workflow-setup/scripts/setup.py
 # Proves the operation loop with a stand-in agent: the dependency-graph planner, the base merge before a pull request, the one
 # operate command, the worker guard, live reports and follow-ups, the status block and token records. No model is called.
-# usage: test-operate.sh [DIR]   TOY_GROUP=timing runs only the polling sections (waits, status, reports, follow-up, worker guard), for the load toy
+# usage: test-operate.sh [DIR]   TOY_GROUP=timing runs only the polling sections (waits, status, reports, follow-up, worker guard) and TOY_GROUP=loop those plus the operate loop, for the load toys
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 unset LOOP_ROLE  # these tests act as the operation session; workers get LOOP_ROLE=worker where they need it
@@ -187,6 +187,7 @@ timeout 30 $OP run --poll 0.1 2>&1 | grep -q "^CADENCE OFF" && ok "with the cade
 rm "$FAKE_AGENT/hold-h"; $BO cadence 10 >/dev/null
 check "the operation checkout never ran a goal step" '[ "$(cut -d" " -f2 "$FAKE_AGENT/ran-a")" = worker ] && [ "$(cut -d" " -f3 "$FAKE_AGENT/ran-a")" != "$T/repo" ]'
 
+[ "${TOY_GROUP:-all}" = loop ] && { [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }; exit; }  # TOY_GROUP=loop: the polling sections and the operate loop
 echo "== the latest base is merged before the pull request"
 git switch -q main
 # A goal made with --here is refused in the repo's main checkout, so each runs in a worktree of its own.
