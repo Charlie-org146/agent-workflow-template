@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/docs.py check | grep -vc "^LINKS"`.
+   Expect: it prints 1 (only the DOCS OK line).
+2. Open README.md and look at a principle table.
+   Expect: the columns Requirement, Summary, Follows, Feature, Adoption, Confidence; the figure link inside the Requirement cell; an "Adoption: N%" line under the table; a "## What this is" section before System design.
+3. In a copy, change one principle table header back to `| Version | Flow |` and run the docs check.
+   Expect: a Sections line naming the columns Requirement | Summary | Follows | Feature | Adoption | Confidence.

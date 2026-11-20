@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""The Tests renderings (DOC-9, DOC-10) from the regression rows, and the file reading pageformat.py needs. criteria.py render
-calls render(); docs.py check calls generated() and front(); setup runs `render.py blocks`. Runs git only."""
+"""The Tests renderings (DOC-9, DOC-10) and the front-page checks and blocks; setup runs `render.py blocks`."""
 import importlib
 import json
 import os
@@ -14,7 +13,7 @@ import pageformat as pf
 import sections
 from deployments import link_of, regroup, topics_of
 
-os.environ["GIT_TERMINAL_PROMPT"] = "0"  # no terminal: criteria (imported above) sets the rest, stdin included
+os.environ["GIT_TERMINAL_PROMPT"] = "0"
 
 SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 TESTS = ("Test", "Kind", "Guards", "Checks", "Last result")
@@ -85,7 +84,7 @@ def render(args):
         parts = cr.sections(text)
         url = link_of(text, counting.sources(root).get(slug, ""))
         base = text
-        if url:  # link form: ids come from the copy in .loop/prd (else the linked PRD, read now); the PRD block is refreshed from the copy
+        if url:
             import prdcopy
             body, _ = prdcopy.read(root, slug, url)
             if body is None or not parts or parts[-1][0] != "Tests":
@@ -95,10 +94,10 @@ def render(args):
             base = prdcopy.with_block(top, body) + mid + rest if prdcopy.copy_of(root, slug) else text
         else:
             if [n for n, _ in parts if n not in (rules["usage"], rules["deploy"], rules["runbook"], rules["revs"])] != rules["sections"] or parts[-1][0] != "Tests":
-                continue  # a Runbook after Tests would be cut off: leave it to the check
+                continue
             ids = idsof(dict(parts)[rules["sections"][1]])
         out.append((rel, text, base.partition("\n## Tests")[0] + "\n## Tests\n\n" + "\n".join(table(root, ids, linked)) + "\n"))
-    for step in (0, 1):  # the pages first: the Tests page is then built from what they now say
+    for step in (0, 1):
         if step and out:
             rel = os.path.join(cr.folder_of(root), "Tests.md")
             out = [(rel, read(os.path.join(root, rel)), tests_page(root))]
@@ -308,7 +307,7 @@ def front_files(root, insert=False):
         out.append((home, both))
     if os.path.exists(os.path.join(root, "README.md")):
         out.append(("README.md", [("template", template_line(root))] + [b for b in both if block_re(b[0]).search(read(os.path.join(root, "README.md")) or "")]))
-    return out + sections.targets(root, cr.folder_of(root), read, block_re, both)
+    return out + sections.targets(root, cr.folder_of(root), read, block_re, both) + sections.pages(root, cr.folder_of(root), out)
 
 
 def refresh(root, check=False, insert=False):
@@ -321,6 +320,10 @@ def refresh(root, check=False, insert=False):
             if (found and found.group(0) != block) or (insert and not found):
                 stale.append((rel, name))
         fresh = with_blocks(held, blocks, insert)
+        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read)
+        if done != fresh:
+            stale.append((rel, "format"))
+            fresh = done
         grouped = regroup(fresh, topics_of(root)) if os.path.basename(rel) == "Home.md" else fresh
         if grouped != fresh:
             stale.append((rel, "topics"))
@@ -331,7 +334,7 @@ def refresh(root, check=False, insert=False):
 
 
 def stale_blocks(root):
-    names = dict(settings="Settings", automation="Automation", template="README line", topics="Topics")
+    names = dict(settings="Settings", automation="Automation", template="README line", topics="Topics", format="Page format")
     return [("STALE", names[name], "%s differs from a fresh render. Fix: /workflow-docs render" % where) for where, name in refresh(root, True)]
 
 
