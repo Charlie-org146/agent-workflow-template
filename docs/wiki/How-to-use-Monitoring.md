@@ -97,6 +97,7 @@ Each requirement and how it is delivered:
 ### Skill: workflow-monitoring
 - **Say:** "Run the operation session"
 - **Command:** `/workflow-monitoring operate`
+- **Pool ghosts:** `pool.py reconcile [--app-list FILE]` drops the `local_` pool ids the app no longer has; FILE is `{"at": ISO, "ids": [...]}` (or a bare list) of the app's sessions, archived ones included, written by the operation session (default `loop/app-sessions.json`). Other ids (`bg-…`, a page name) are reported as not checked and kept. A missing or empty list is refused, the app is never touched, and health shows the ghost count as one row.
 - **Restart-safe tick:** `mailbox.py install` writes the launch agent (every 300 s: the watcher jobs in `loop/watchers/`, then `checkin.py`; it starts no goal); `mailbox.py watch ID --pr N [--arm]` leaves a job the tick resumes once (`--arm` only from the operation session). It never loads the agent: the owner runs the `launchctl bootstrap` line it prints. `mailbox.py uninstall` removes the plist.
 
 ### Command: board.py
