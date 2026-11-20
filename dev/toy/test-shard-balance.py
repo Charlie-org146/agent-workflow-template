@@ -132,8 +132,8 @@ kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
 # D3 (pr-check-fast, fast-3min): 8 shards of 120 seconds; docs.py check runs once per merge, in the merge-queue job `small` on the merged
 # ref with no review log (a clone has none), so a page-level LOCKED or FORMAT line fails the merge group, not the pull request's affected job.
-check("shard: [0, 1, 2, 3, 4, 5, 6, 7]" in flow and "matrix.shard }}/8 " in flow and "--budget 120 " in flow,
-      "the PR workflow runs 8 shards with a 120-second budget each")
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in flow and "matrix.shard }}/8 " in flow and "--budget 120 " in flow,
+      "the PR workflow runs 8 shards with a 120-second budget each, and the tree cell")
 job = flow.split("\n  affected:")[1].split("\n  small:")[0]
 small = flow.split("\n  small:")[1]
 docs = "- run: python3 skills/workflow-docs/scripts/docs.py check"
