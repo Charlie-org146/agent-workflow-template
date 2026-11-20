@@ -1,41 +1,33 @@
 #!/usr/bin/env python3
-"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks.
-
-usage: checkin.py [--since ISO]
-
-  headline        goals running, waiting on you or queued, and the session pool
-  All sessions    one row per live goal: session, repo, purpose, status, progress, time left, ETA, latest
-  Re-plan, Auto-answered, Archived   what replan.py, auto.py and pool.py archive changed since the last check-in
-  Dependencies    one block per repo (MON-14), goals grouped by release then feature; goals merged since the last check-in
-  Needs you       numbered (MON-19): questions, stuck or silent goals, the pool ask, a missing or stale check-in timer
-  Coming up       each goal's next expected step and what the owner will need to do
-
---since defaults to the last check-in (<git common dir>/loop/checkin.json). Writes one row to op-tokens.tsv (proctree.op_append).
+"""The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. usage: checkin.py [--since ISO]
+Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies (per repo: Building now, Queue in order with ETAs, then goals by
+release and feature), Needs you (numbered, MON-19), Coming up. --since defaults to the last check-in (<git common dir>/loop/checkin.json).
 """
 import argparse
 import datetime
+import json
 import os
 import re
 import sys
 import textwrap
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import auto  # noqa: E402
-import board as bd  # noqa: E402
-import board_status as bs  # noqa: E402
-import board_lines  # noqa: E402
-from board_lines import gather, shown  # noqa: E402,F401
-import govern_hook  # noqa: E402
-import graph  # noqa: E402
-import live_board as lb  # noqa: E402
-import machines  # noqa: E402
-import mend  # noqa: E402
-import notify  # noqa: E402
-import pool as pl  # noqa: E402
-import replan  # noqa: E402
-import unattended  # noqa: E402
-import board_page  # noqa: E402
-from board_status import feature_of, goal_line, release_of  # noqa: E402,F401
+import auto
+import board as bd
+import board_status as bs
+import board_lines
+from board_lines import gather, shown
+import govern_hook
+import graph
+import live_board as lb
+import machines
+import mend
+import notify
+import pool as pl
+import replan
+import unattended
+import board_page
+from board_status import feature_of, goal_line, release_of
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
         "silent": "silent", "done": "awaiting merge", "queued": "queued"}
@@ -64,6 +56,7 @@ def grouped(blocks, at=None, tags=None, loop=None):
         local = [dict(item, depends=[d for d in item.get("depends") or [] if "/" not in d]) for item in items]
         out += ["== %s ==" % (name if len(name) <= 54 else name[:51] + "...")]
         out += board_lines.render(local)[:-2] if items else ["- (none)"]
+        out += board_lines.queue_view(items, at) if at else []
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
         for release in sorted({key(item)[0] for item in items}):
@@ -154,16 +147,21 @@ def render(root=None, at=None, stamp=None):
     filed = auto.since(root, stamp, "findings.log")  # OPS-1: what the operation layer filed since the last check-in
     if filed:
         out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]
+    given = [r for r in auto.owner_rows(root) if r[2].startswith("operation-top:delegated:") and r[1] > stamp]  # DOC-2 (o664): each delegated record, once
+    if given:
+        out += ["", "Delegated approvals (DOC-2, since the last check-in):"] + ["- %s %s %s %s: %s" % (r[0], r[2].split(":")[2], r[2].split(":")[4], r[4], " ".join(json.loads(r[3]).split()[:14])) for r in given[-8:]]
     gone = mend.archived_since(folder, stamp)
     if gone:
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]
     blocks = []
     for g in pod:
+        held = {w["slug"]: why for w, why in graph.ready(g["queue"], {r["slug"]: r for r in g["runs"]}, graph.parallel_of(g["cfg"]), g["taken"], g["why"])[1]}
         item = lambda r, **kw: dict(slug=r["slug"], machine=r.get("machine") or graph.machine_name(), release=release_of(g["root"], r["slug"]),
                                     feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
-                      owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at)) for r in g["live"]]
-        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at)) for q in g["queue"]]))
+                      owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at),
+                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1)) for r in g["live"]]
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"])) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
@@ -313,7 +311,6 @@ def main():
     lines = render(stamp=args.since or None)
     print("\n".join(lines))
     try:  # an op-tokens.tsv row (proctree.op_append) and what the quiet hook compares with; never fail a check-in
-        import govern_hook
         import proctree
         top = bs.git("rev-parse", "--show-toplevel")
         proctree.op_append(top)
