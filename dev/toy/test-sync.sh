@@ -2,7 +2,7 @@
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-delivery/references/commands.md
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py skills/workflow-setup/scripts/agents.py
-# reads: skills/workflow-setup/references/settings.md skills/workflow-docs/scripts/entry.py skills/workflow-docs/scripts/docs.py
+# reads: skills/loop-files.md skills/workflow-docs/scripts/entry.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/references/commands.md skills/workflow-docs/SKILL.md
 # reads: skills/workflow-delivery/SKILL.md skills/workflow-health/SKILL.md skills/workflow-monitoring/SKILL.md
 # reads: skills/workflow-regression/SKILL.md skills/workflow-release/SKILL.md skills/workflow-setup/SKILL.md
@@ -108,7 +108,7 @@ EOF
   $E write >/dev/null
   mkdir -p "$T/inst/workflow-docs/scripts" "$T/inst/workflow-docs/references" "$T/inst/workflow-setup/references"
   cp "$DO"/scripts/*.py "$T/inst/workflow-docs/scripts/"; cp "$DO/references/commands.md" "$T/inst/workflow-docs/references/"
-  cp "$DO/SKILL.md" "$T/inst/workflow-docs/"; cp "$SU/references/settings.md" "$T/inst/workflow-setup/references/"
+  cp "$DO/SKILL.md" "$T/inst/workflow-docs/"; cp "$SU/../loop-files.md" "$T/inst/"
   echo '{"version": "9.9.9", "files": {}}' > "$T/inst/workflow-package.json"
   sed -i.bak 's/One session governs and the others build:/One session governs; the others build:/' "$T/inst/workflow-docs/references/commands.md"
   out=$(python3 "$T/inst/workflow-docs/scripts/entry.py" check); code=$?

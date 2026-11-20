@@ -86,7 +86,7 @@ go back to 0), and launches a new worker told to continue from the goal file and
 ## Operation session
 
 **The operation session is for governance only: it assigns, watches and reports, and never runs `go` itself; workers
-build.** `operate.py run` loops `watch --once`, `board.py board`, `board_page.py`, `replan.py` and `auto.py pass`, prints the check-in (`checkin.py`, not the live board) every pass (`replan.py` MON-10, `auto.py` with `full_auto` MON-11, `pool.py` with `pool_size` MON-6 and MON-12, `govern_hook.py` MON-7: `references/commands.md`; goal state lives in `graph.py`), waits the `board.py cadence` gap (less when a worker reports), and stops when
+build.** `operate.py run` loops `watch --once`, `board.py board`, `board_page.py`, `replan.py` and `auto.py pass`, prints the check-in (`checkin.py`, not the live board) every pass (`replan.py` MON-10, `auto.py` with `full_auto` MON-11, `pool.py` with `pool_size` MON-6 and MON-12, `govern_hook.py` MON-7: `loop-files.md`; goal state lives in `graph.py`), waits the `board.py cadence` gap (less when a worker reports), and stops when
 nothing is left. `operate.py send SLUG "<text>"` gives a worker an answer or follow-up. `scripts/board.py` builds the progress board (`board`), keeps the check-in `cadence`, follows other repos
 (`repos add`), records a worker's latest message (`note SLUG TEXT`), retires a superseded goal (`retire SLUG --reason TEXT`) and writes a `handoff` file.
 `scripts/board_page.py` draws `board.html` and `board-artifact.html` from `board.json`, both carrying the live board.
@@ -94,7 +94,7 @@ Any command that would build, plan or run a goal step from this session (`build`
 
 `scripts/sessions.py`: `assign SLUG` (watch.py runs it: a free or new session from `session_command`, renamed
 `worker · <goal>`, sent the goal; it holds a `parallel` slot), `bind SLUG ID [--force] [--cwd DIR]` (a session started with the app's tools; before the goal is frozen it records the handoff, shown as freezing; it prints the WORKER command and the WORKTREE, and refuses a folder outside it), `free SLUG` (give back a stopped session's goal and slot),
-`list`, `send` (operate.py send uses it) and `report SLUG --step S | --status merged|failed|waiting [--pr URL | --ask Q] [--hold]` (a done goal stays done). States and messages: `references/commands.md`.
+`list`, `send` (operate.py send uses it) and `report SLUG --step S | --status merged|failed|waiting [--pr URL | --ask Q] [--hold]` (a done goal stays done). States and messages: `loop-files.md`.
 
 Batches of goals go through `scripts/batch.py` (`add`, `start`, `status`, `roadmap`). `start` begins one worker for each goal:
 `scripts/worker.py loop SLUG` runs the goal's agent in its own worktree, with `LOOP_ROLE=worker`, to the end. When the
@@ -103,12 +103,12 @@ agent ends, the worker sends its result back as a prompt message in the run reco
 `worker.py met SLUG N` marks a done line met; `worker.py send SLUG TEXT` leaves a message its agent sees next; `worker.py cleanup [--dry-run]` deletes merged `loop/*` branches no worktree has checked out (`git branch -d`, local only).
 
 `report`, `dashboard` and "where do things stand" print the live board (`scripts/live_board.py`, run by `board_status.py`; a check-in never does, MON-4), and `board-artifact.html` carries the same content, always in this format: a `LIVE BOARD` header (repo, local time, version, health); Issues (only what is open now, a stuck worker first, each with its fix in plain words and the exact words to answer);
-Running goals (a 10-cell bar with percent and a time-left range from the estimate model that backtests most accurate on finished goals, the step flow idea, plan, build, review, qa, ship, pr, release with done steps ticked and the current step in brackets, and a one-line next step), then the session pool line; Queued goals; Dependencies as a top-to-bottom graph at most 60 columns wide with a legend; and one finish time, with the model and its typical error under it. A step is stalled only past 3 times its estimate and 15 minutes; a held goal's time stops growing. Merged work, history and totals are left out. The loop is in `references/commands.md`.
-Every operation-session check-in reply has one layout: a headline, All sessions, Dependencies, Needs you and, last, Coming up (`references/commands.md`); `scripts/reply_hook.py`, a Stop hook that `workflow-setup` installs with `setup.py --reply-hook`, blocks one that doesn't (never a worker's).
+Running goals (a 10-cell bar with percent and a time-left range from the estimate model that backtests most accurate on finished goals, the step flow idea, plan, build, review, qa, ship, pr, release with done steps ticked and the current step in brackets, and a one-line next step), then the session pool line; Queued goals; Dependencies as a top-to-bottom graph at most 60 columns wide with a legend; and one finish time, with the model and its typical error under it. A step is stalled only past 3 times its estimate and 15 minutes; a held goal's time stops growing. Merged work, history and totals are left out. The loop is in `loop-files.md`.
+Every operation-session check-in reply has one layout: a headline, All sessions, Dependencies, Needs you and, last, Coming up (`loop-files.md`); `scripts/reply_hook.py`, a Stop hook that `workflow-setup` installs with `setup.py --reply-hook`, blocks one that doesn't (never a worker's).
 
 ## Statuses
 
-A goal's `status` is queued, running, waiting, done, stopped, failed or retired; what each means is in [references/commands.md](references/commands.md#statuses).
+A goal's `status` is queued, running, waiting, done, stopped, failed or retired; what each means is in [loop-files.md](../loop-files.md#statuses).
 
 ## Rules
 

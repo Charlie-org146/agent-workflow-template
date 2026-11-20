@@ -102,17 +102,17 @@ the files they name (narrowly under a `# reads:` header, below; else a skill fol
 A row whose command names no repo path always runs. `RESULT` counts reused rows (`3 passed (2 reused)`); a reused known
 failure counts as known. A reusing run writes nothing in the worktree and opens no issue: a failure shows in its exit
 status and the last 20 lines of each failing row. A plain `run` forces every row, rewrites the record and, in GitHub
-Actions, keeps the issues. `bash dev/toy/test-lanes.sh "" regression` walks every case. A goal lane adds `--tier goal` (`scripts/tiers.py`; `references/commands.md`, "Goal tier").
+Actions, keeps the issues. `bash dev/toy/test-lanes.sh "" regression` walks every case. A goal lane adds `--tier goal` (`scripts/tiers.py`; `loop-files.md`, "Goal tier").
 
 **Declare what a test script runs** in `# reads:` lines at its top (`skills/` keeps it wide), then run `scripts/lanes_cli.py
-check <script>` and `affected <file>`; `LANES_WIDE=1` forces the wide mapping. Rules: `references/commands.md`, "Narrow rows".
+check <script>` and `affected <file>`; `LANES_WIDE=1` forces the wide mapping. Rules: `loop-files.md`, "Narrow rows".
 
 ## `workflow`
-The `workflow` command and the job it writes are in [references/commands.md](references/commands.md).
+The `workflow` command and the job it writes are in [loop-files.md](../loop-files.md).
 
 ## Test listing
 
-`scripts/tests.py` (`list`, `summary`, `issues`) prints every test in one format by feature, for the wiki, health and the run summary: `references/commands.md`.
+`scripts/tests.py` (`list`, `summary`, `issues`) prints every test in one format by feature, for the wiki, health and the run summary: `loop-files.md`.
 
 ## Rules
 
