@@ -53,6 +53,30 @@ elif what == "status":
     print("\n".join(lane.lane_status(runs, slug, name)))
 PY
 poll() { python3 "$T/h.py" "$S" "$RUNS" "$1" "$2" poll; }
+mark_mtime() {  # FOLDER: slots.py there leaves an existing start mark alone; prints the mark's mtime in seconds
+  touch -t 202601010000 "$T/started.mark"
+  _LOOP_LANE_STARTED="$T/started.mark" python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import slots;slots.started()" "$1"; python3 -c "import os,sys;print(int(os.path.getmtime(sys.argv[1])))" "$T/started.mark"
+}
+mark_check() {  # the nested-run start mark (lane-start-mark-once); the same check in the whole toy and in TOY_GROUP=mark
+  git checkout -q -- . 2>/dev/null; out=$(mark_mtime "$R")
+  # Value: protects=a row's nested regression run leaves the outer lane's start mark (its clock) alone; fails_when=started() rewrites an existing mark; why_new=review finding; seam=none; no_claim=none beyond protects
+  check "a nested run never rewrites the outer lane's start mark (its clock keeps its time)" '[ "$out" = "$(python3 -c "import datetime;print(int(datetime.datetime(2026,1,1).timestamp()))")" ]'
+}
+if [ "${TOY_GROUP:-all}" = mark ]; then  # only the start-mark check, with its negative control: a started() that rewrites the mark must fail it
+  mark_check
+  rm -rf "$T/broken"; cp -R "$R" "$T/broken"
+  python3 - "$T/broken/slots.py" <<'PY'
+import sys
+text = open(sys.argv[1]).read()
+old = "    if path and not os.path.exists(path):\n        open(path, \"w\").close()"
+assert old in text, "slots.started() changed: update the negative control"
+open(sys.argv[1], "w").write(text.replace(old, "    if path:\n        open(path, \"w\").close()"))
+PY
+  out=$(mark_mtime "$T/broken")
+  check "negative control: a started() that rewrites an existing mark moves its time, so the check fails" '[ "$out" != "$(python3 -c "import datetime;print(int(datetime.datetime(2026,1,1).timestamp()))")" ]'
+  [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
+  exit
+fi
 until_done() { for _ in $(seq 600); do out=$(poll "$1" "$2"); case "$(grep -m1 -E '^(running|pass|fail)$' <<<"$out")" in running) sleep 0.3 ;; *) echo "$out"; return 0 ;; esac; done; return 1; }
 holder() { # SLOT-COUNT: hold one slot in the pool until killed; prints its pid
   python3 - "$R" "$1" >/dev/null 2>&1 <<'PY' &  # no stdout: $(holder) must not wait for its 600 s sleep
@@ -280,10 +304,7 @@ check "negative control: a lanekit.py whose check differs from slots.py's is rep
 out=same
 
 echo "== review fixes: one start mark, a finished pass is reused, the pr commit takes only its files"
-git checkout -q -- . 2>/dev/null; touch -t 202601010000 "$T/started.mark"
-out=$(_LOOP_LANE_STARTED="$T/started.mark" python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import slots;slots.started()" "$R"; python3 -c "import os,sys;print(int(os.path.getmtime(sys.argv[1])))" "$T/started.mark")
-# Value: protects=a row's nested regression run leaves the outer lane's start mark (its clock) alone; fails_when=started() rewrites an existing mark; why_new=review finding; seam=none; no_claim=none beyond protects
-check "a nested run never rewrites the outer lane's start mark (its clock keeps its time)" '[ "$out" = "$(python3 -c "import datetime;print(int(datetime.datetime(2026,1,1).timestamp()))")" ]'
+mark_check
 printf '{"attempt": "x", "head": "%s", "state": "pass", "line": "LANE qa REUSED 1/1 in 1s"}' "$(git rev-parse HEAD)" > "$RUNS/rp.qa-lane.last"
 out=$(python3 -c "import json,sys;sys.path.insert(0,sys.argv[1]);import lane;print(lane.lane(sys.argv[2],'rp','qa',{},json.load(open('.loop/config.json')),1)[:2])" "$S" "$RUNS")
 # Value: protects=a lane lane-wait already finished as a pass on this HEAD is not run again (review finding); fails_when=lane() preps and starts a new lane; why_new=lane-wait finalizes lanes; seam=none; no_claim=none beyond protects
