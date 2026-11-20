@@ -109,11 +109,5 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | - | requirement | INT-1 | no passing test | not enforced |
-| [sync-not-connected](Tests#t-sync-not-connected) | requirement | INT-2 | Given the INT-2 cases of test-docs-sync.py, when it runs once, then it prints every PASS line the 15 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | INT-2 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
-| [sync-health-delta](Tests#t-sync-health-delta) | requirement | INT-2 | Given the INT-2 cases of test-docs-sync.py, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | not run |
-| [milestone-sync-no-source](Tests#t-milestone-sync-no-source) | requirement | INT-2 | Given the INT-2 cases of test-milestone-sync.py, when it runs once, then it prints every PASS line the 12 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [prd-copy-no-reader](Tests#t-prd-copy-no-reader) | requirement | INT-2 | Given the INT-2 cases of test-prd-copy.sh, when it runs once, then it prints every PASS line the 9 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [prd-sync-no-reader](Tests#t-prd-sync-no-reader) | requirement | INT-2 | Given the INT-2 cases of test-prd-copy.sh, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
+| - | requirement | INT-2 | no passing test | not enforced |
 | - | requirement | INT-7 | no passing test | not enforced |
-| [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when INT-3 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
