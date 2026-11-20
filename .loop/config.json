@@ -69,6 +69,7 @@
   "template_version": "0.27.29",
   "regression_runs": "actions",
   "max_merge_rounds": 8,
+  "merge_batch": true,
   "max_active_goals": 20,
   "plan_pause_percent": 80,
   "health_script_bytes": 20480,
