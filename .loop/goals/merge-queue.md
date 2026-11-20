@@ -26,5 +26,5 @@ Frozen. A wrong done line needs a new goal.
    Expect: PASS lines for the one `--merge --auto --match-head-commit` call, the dropped entry, the unreadable rules, the batch refusal and the no-queue direct merge.
 3. Run `python3 skills/workflow-health/scripts/health.py check --group performance`.
    Expect: a `MERGE-TIME median N min (target 15)` row (WARN above 15, UNREAD if gh can't be read).
-4. Run `tr -d '' < skills/workflow-release/scripts/merge.py | wc -c`.
+4. Count merge.py's bytes with line ends as LF: run python3 -c "print(len(open('skills/workflow-release/scripts/merge.py','rb').read().replace(b'\r\n',b'\n')))".
    Expect: 18994 or less.
