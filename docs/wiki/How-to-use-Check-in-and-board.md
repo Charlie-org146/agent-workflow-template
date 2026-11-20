@@ -38,6 +38,7 @@ Each requirement and how it is delivered:
 - **Writes:** nothing.
 - **Exit codes:** 0 after it prints.
 - **Reading the queue:** each repo block starts with **Building now** (one row per running goal: its PR, session, step with progress k/8, and ETA) and then **Queue, in order** (position, goal, what it waits for, ETA to start). A goal is in one block only. The order is queue.md's order; "waits for" is the loop's own reason (a goal it waits on, or "slots full"); a queued goal starts when what it waits on ends, so its ETA is that goal's end, or the first running goal's end when only a slot is missing. A row with no estimate says "ETA unknown: <what has no estimate>" and never shows a guessed time.
+- **Reading line 1:** "N running, M waiting on you, K queued, P parked" counts a running goal only while it holds a slot and has spoken within silent_minutes (the rule the machine status file uses); stale records are counted once as parked. A waiting goal stays under "waiting on you" however silent, unless it is provably over (its pull request merged or closed, retired, or its session gone from the pool), when it is parked too.
 
 ## URLs and deployments
 
