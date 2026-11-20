@@ -26,8 +26,7 @@ def check(ok, text):
 
 
 def reply(deps):
-    return ("Two goals run, one is queued.\n\n## All sessions\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps +
-            "\n\n## Needs you\nNothing needs you\n\n## Coming up\n- soon\n")
+    return "Two goals run, one is queued." + "\n\n## Your move\nNothing needs you\n\n## Red team\n- none\n\n## Release goals\n- none\n\n## Task queue\n- none\n\n## Workers\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps + "\n\n## Shipped\n- none\n"
 
 
 with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home:

@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-monitoring/scripts/reply_hook.py check FILE` on a reply in the board order (a headline, then Your move, Red team, Release goals, Task queue, Workers, Shipped).
+   Expect: nothing printed apart from the Machine-line rule, which is separate; with the old layout (All sessions, Dependencies, Needs you, Coming up) it prints the "not in the check-in layout" line naming the six sections.
+2. Run `bash dev/toy/test-reply-hook.sh | grep -E "old layout|none"`.
+   Expect: PASS for the old layout blocked and named, and for an empty Your move saying none.

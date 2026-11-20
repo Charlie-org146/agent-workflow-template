@@ -190,7 +190,7 @@ The check-in loop, repeated every `cadence` minutes, or every hour when nothing 
 3. Run `board --since <the last board.json>`, then the page step.
 4. With an Artifact tool, publish `board-artifact.html` unedited to the same URL each time; otherwise give the owner the
    `board.html` path.
-5. Reply in the check-in layout: a headline, All sessions, Dependencies, Needs you and, last, Coming up (a field the last
+5. Reply in the check-in layout: a headline of what slipped, Your move, Red team, Release goals, Task queue, Workers and, last, Shipped (a field the last
    board didn't have, or `gh` failing to answer, is not a change). The reply hook (`setup.py --reply-hook`) blocks a reply
    in any other layout; see the Operation session section at the end of this file.
 6. Wait `NEXT_DELAY` seconds and repeat; `none` means the owner turned the loop off, so stop.
@@ -727,34 +727,35 @@ To pass the loop to a new session, run `board.py handoff` and give it the path.
 `scripts/reply_hook.py` is a Claude Code Stop hook that keeps step 5's reply format (MON-5). `setup.py --reply-hook`
 installs it into the repo's machine-local `.claude/settings.local.json` (git ignores it); `--remove` takes it out; a new
 session loads it. It checks only the operation session, a session whose latest signal is an `operate.py run` without a refusal, and never a worker (a session in a goal worktree, or one that ran a flow step) or a session in another repo.
-`"reply_hook": false` in `.loop/config.json`, or `LOOP_REPLY_HOOK=0`, turns it off. It checks the layout (the headline,
-then the four section headings in order, each with something under it, Needs you numbered or `Nothing needs you`), not
-whether the numbers are true. A reply that passes: It checks the session named in `loop/operation.id` (run `operate.py claim` once in the operation session) as well as one that ran `operate.py run`, so a scheduled check-in answered with one line is blocked and told the five missing parts (issue 321); a check-in prompt never offers a short reply.
+`"reply_hook": false` in `.loop/config.json`, or `LOOP_REPLY_HOOK=0`, turns it off. It checks the layout (the headline of what slipped,
+then the six section headings in the board's order (CHK-1), each with something under it or `none`, Your move numbered or `Nothing needs you`), not
+whether the numbers are true. A reply that passes: It checks the session named in `loop/operation.id` (run `operate.py claim` once in the operation session) as well as one that ran `operate.py run`, so a scheduled check-in answered with one line is blocked and told the six missing sections (issue 321); a check-in prompt never offers a short reply.
 
 ````text
 Two goals moved; one needs you.
 
-## All sessions
+## Your move
+1. Release median when it lands? Options: cut, leave. Recommended: leave.
+
+## Red team
+- biggest risk: none this hour
+
+## Release goals
+- median: one line, one bar, about 18:10
+
+## Task queue
+- median: running, 20m on main, my ETA
+
+## Workers
 | session | repo | for | status | progress | ETA | tokens left | latest |
 |---|---|---|---|---|---|---|---|
 | worker · median | my-repo | the median command | running | build | 20m | 1.2M | built, testing |
 
-## Dependencies
-```
-[>] median
- |
-[ ] stats-page
-```
-
-## Needs you
-1. Release median when it lands? Options: cut, leave. Recommended: leave.
-
-## Coming up
-- about 18:10: median opens its pull request
-- you: answer question 1 when it lands
+## Shipped
+- stats-page: merged at 17:40
 ````
 
-A reply in another layout gets: `REPLY FORMAT (MON-5): missing section Coming up; ... Write the check-in reply in this
+A reply in another layout gets: `REPLY FORMAT (MON-5): missing section Shipped; ... Write the check-in reply in this
 layout: ...`, and the session writes the reply again. The third block in a row lets the reply through and logs it in
 `<git common dir>/loop/reply-hook/log`; any error in the hook lets the reply through and logs one line.
 `reply_hook.py check FILE` prints what a reply is missing; `reply_hook.py status` says whether the hook is installed and on.

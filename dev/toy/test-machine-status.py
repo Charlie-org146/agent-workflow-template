@@ -102,6 +102,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check("elsewhere: 1 goal, last activity " in text and "far-goal" not in text and "Machine:" in text and "mine-goal" in text,
           "the check-in prints the Machine line and one line for the other pod, never its goals")
     import reply_hook  # noqa: E402
-    check(not any("headline" in p for p in reply_hook.problems(text)), "the reply hook lets the Machine and pod lines follow the headline: %s" % reply_hook.problems(text)[:1])
+    board = text.split("\nAll sessions")[0].rstrip() + "\n\n" + "\n\n".join("## %s\nnone" % s for s in reply_hook.SECTIONS) + "\n"  # the check-in's headline, Machine and pod lines, then the board order
+    check(not any("headline" in p for p in reply_hook.problems(board)), "the reply hook lets the Machine and pod lines follow the headline: %s" % reply_hook.problems(board)[:1])
     os.chdir(root)
 raise SystemExit(1 if fails else 0)
