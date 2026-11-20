@@ -69,4 +69,8 @@ with tempfile.TemporaryDirectory() as tmp:
     check("a script that fails its own --help does not fail the static rules", code == 0)
     code, out = package(tmp, "--out", os.path.join(tmp, "z.zip"))
     check("negative control: the full run does fail it (--help pass)", code == 1 and "does not run alone" in out)
+flow = open(os.path.join(root, ".github", "workflows", "regression-pr.yml")).read()
+mine = flow.partition("  affected:\n")[2].partition("  small:\n")[0]
+check("the affected job runs package.py --static outside the shard budget", "python3 dev/package.py --static" in mine)
+check("negative control: the shard job alone does not (a budget can leave its rows)", "package.py --static" not in flow.partition("  affected:\n")[0])
 sys.exit(1 if fails else 0)
