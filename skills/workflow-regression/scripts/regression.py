@@ -4,24 +4,26 @@
 usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered; TEXT says what it checks;
-                                C is criterion (default), workflow (a flow run on a toy repo) or defect (L is the issue URL or finding:SLUG)
-  sync [--write]                list done lines and criteria with no row, rows with no description or never seen red; --write drafts rows
+      add or replace a row. L is land, nightly, draft or covered; TEXT says what it checks;
+      C is criterion (default), workflow (a flow run on a toy repo) or defect (L is the issue URL or finding:SLUG)
+  sync [--write]                list done lines and criteria with no row, rows with no description or never seen red; --write drafts
   criteria                      run each wiki criterion's row; print an UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, break it with CMD, and record that the test fails there
   red ID --owed --runner R [--live]
-                                machine R owes the proof: a to-do issue on its milestone; the goal goes on
+      machine R owes the proof: a to-do issue on its milestone; the goal goes on
   red ID --off-platform --runner R --commit SHA
-                                a row this platform skips (exit 77) was seen failing on runner R at SHA: record it (runs.py)
+      a row this platform skips (exit 77) was seen failing on runner R at SHA: record it (runs.py)
   run [land|nightly|ID] [--timeout S] [--live] [--reuse [--tier goal]] [--kind requirement|workflow|defect]
-                                run rows (of one kind), then keep one issue per failing row; --tier goal plans a goal lane;
-                                a plain run nightly records its time (SUITE_TIME)
-  workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, split by recorded time over 6 shards); a private repo: nothing (runs on the Mac)
-  reads ROW                     suggest a # reads: header for ROW's script from the newest trace
+      run rows (of one kind), keep one issue per failing row; --tier goal plans a goal lane (--tree: its
+      whole-tree rows only); a plain run nightly records its time (SUITE_TIME)
+  workflow [--visibility V]
+      a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows a change
+      reaches: 8 shards by recorded time, a tree job); a private repo: nothing (runs on the Mac)
+  reads ROW                     suggest a # reads: header for ROW's script
 
-Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records a row's status, date and run in .loop/regression-runs.tsv (runs.py), shown in the wiki Tests tables. Known failures live in .loop/regression-known.tsv: id, reason; they never block, a row never seen failing does.
-Issues dry-run unless --live; a token in the environment writes nothing. It runs git, gh and your test commands only.
+Rows: .loop/regression.tsv (id, level, command, goal, seen_red, description, category, link). Each run records status, date and run in
+.loop/regression-runs.tsv (runs.py; the wiki Tests tables show it). Known failures: .loop/regression-known.tsv (id, reason); they never
+block, a row never seen failing does. Issues dry-run unless --live; a token in the environment writes nothing. Only git, gh and your tests run.
 """
 import argparse
 import datetime
@@ -117,9 +119,9 @@ def cmd_add(args):
     def change(rows):
         old = rows.get(args.id, {})
         rows[args.id] = new(id=args.id, level=args.level, command=clean(args.command), goal=clean(args.goal),
-                            category=args.category, link=clean(args.link),
-                            seen_red=old.get("seen_red", "") if old.get("command") == args.command else "",
-                            description=clean(args.describe if args.describe is not None else old.get("description", "")))
+            category=args.category, link=clean(args.link),
+            seen_red=old.get("seen_red", "") if old.get("command") == args.command else "",
+            description=clean(args.describe if args.describe is not None else old.get("description", "")))
     edit_rows(root, change)
     print("ROW %s %s: %s" % (args.id, args.level, args.command))
     return 0
@@ -298,6 +300,9 @@ def cmd_run(args):
     i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     path = os.environ.get("LOOP_ROW_TIMES", "")
+    if args.tree or n > 1:  # TD504: whole-tree rows run in the tree job only
+        tree = {r["id"] for r in picked if lanes.whole(root, r, {})}
+        todo = [k for k in todo if (k in tree) == args.tree]
     every, seen = todo, merged(path)
     todo.sort(key=lambda k: seen.get(k, [0, ""])[1] != "CUT")  # TD497: cut last time, first now
     if n > 1:
@@ -404,6 +409,7 @@ def main():
     item.add_argument("--live", action="store_true")
     item.add_argument("--tier", choices=("goal",), help="a goal lane (tiers.py)")
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
+    item.add_argument("--tree", action="store_true")
     item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")

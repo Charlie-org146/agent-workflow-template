@@ -6,15 +6,14 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py check [--root DIR] [SCRIPT...]
        lanes_cli.py merge-runs [--root DIR]
 
-affected  `AFFECTED n of m rows (ids)` for a change to PATH, plus `ALWAYS <id>: <reason>` for rows that run on every
-          change and `UNMAPPED`/`DELETED <path>` when no row maps the file (the rows naming it and the runners run,
-          never all). No record is read; .loop/regression-known.tsv picks only rows whose line differs.
-deps      a row command's dependency paths, then `ALWAYS <command>: <reason>`; --why prints the chain to PATH.
-check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row names) as
-          `<CODE> <file>:<line>: <what>` plus a `fix:` line. Exit 0 clean, 1 problems.
-merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock (goal.py pr
-          runs it before its bookkeeping commit). Exit 1 on an error.
-The root is the git top level unless --root is given. Usage errors exit 2; LANES_DEBUG=1 shows the full trace.
+affected  `AFFECTED n of m rows (ids)` for a change to PATH, plus `ALWAYS <id>: <reason>` for rows that run on every change and
+          `UNMAPPED`/`DELETED <path>` when no row maps the file (the rows naming it and the runners run). No record is read;
+          the known list picks changed lines' rows.
+deps      a row command's dependency paths, then `ALWAYS <command>: <reason>`; --why PATH prints the chain.
+check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row names) as `<CODE> <file>:<line>: <what>`
+          plus a `fix:` line. Exit 0 clean, 1 problems.
+merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock (goal.py pr). Exit 1 on error.
+The root is the git top level unless --root. Usage errors exit 2; LANES_DEBUG=1 shows the trace.
 """
 import argparse
 import json
@@ -30,14 +29,14 @@ import tiers, lanes, narrow  # noqa: E401,E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 FIX = {
-    "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' at the top of {file}",
-    "LANES-DECL-PLACE": "move the # reads: line to the top comment block of {file}",
-    "LANES-DECL-PATTERN": "declare each file, or the skill folder the script globs (e.g. skills/x/scripts/)",
+    "LANES-DECL-NONE": "add '# reads: <the files it runs>' at the top of {file}",
+    "LANES-DECL-PLACE": "move # reads: into {file}'s top comment block",
+    "LANES-DECL-PATTERN": "declare each file, or the globbed skill folder",
     "LANES-DECL-ESCAPE": "declare repo-relative paths only",
-    "LANES-DECL-MISSING": "fix the path or remove it from # reads: in {file}",
+    "LANES-DECL-MISSING": "fix or remove that path in {file}'s # reads:",
     "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs, not the folder",
-    "LANES-DECL-GLOB": "declare the globbed folder itself in {file}'s # reads: line",
-    "LANES-DECL-FOLDER": "add the files {file} runs from that folder to its # reads: line",
+    "LANES-DECL-GLOB": "declare the globbed folder in {file}'s # reads:",
+    "LANES-DECL-FOLDER": "list the files {file} runs from that folder in # reads:",
     "LANES-DECL-TREE": "add skills/ to the # reads: line of {file}",
 }
 TEST = re.compile(r"(?<![\w./-])(dev/toy/test-[\w-]+\.sh)")
@@ -52,13 +51,13 @@ def top(given):
     if given:
         return os.path.abspath(given)
     done = lanes.git(os.getcwd(), "rev-parse", "--show-toplevel")
-    return done.strip() if done else usage("not inside a git repo; run from the repo or pass --root DIR")
+    return done.strip() if done else usage("not in a git repo; run from the repo or pass --root DIR")
 
 
 def rows_of(root, level):
     path = os.path.join(root, ".loop", "regression.tsv")
     if not os.path.isfile(path):
-        usage("no .loop/regression.tsv under %s; run from the repo or pass --root" % root)
+        usage("no .loop/regression.tsv under %s; use --root" % root)
     rows = []
     with open(path) as handle:
         for number, line in enumerate(handle, 1):
@@ -189,7 +188,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -205,7 +204,12 @@ jobs:
           restore-keys: row-times-
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
-          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 120 --timeout 200
+          R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
+          if [ "${{ matrix.shard }}" = tree ]; then
+            for k in 0 1 2 3; do LOOP_PR_SHARD=$k/4 $R --tree --timeout 200 & p="$p $!"; done
+            r=0; for i in $p; do wait $i || r=1; done; exit $r
+          fi
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget 120 --timeout 200
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -291,7 +295,7 @@ def ours(path):
 
 
 def workflow(root, given, write_main):
-    """regression.py workflow: a public repo gets regression.yml and regression-pr.yml (the affected rows on a pull
+    """regression.py workflow: a public repo gets regression.yml and regression-pr.yml (the rows a change reaches on a pull
     request, a fixed smoke in the merge queue); a private or unreadable repo gets nothing."""
     cfg = tiers.config(root)
     where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
@@ -395,7 +399,7 @@ def free_gb():
 
 def wait_memory(root):
     """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a running lane is
-    never stopped. Waits are logged in <git common dir>/loop/memory-waits.log; past 4x the lane's limit it exits 6 (EXIT_ENV)."""
+    never stopped. Waits go to <git common dir>/loop/memory-waits.log; past 4x the lane's limit it exits 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 3)
     except (OSError, ValueError, AttributeError):
@@ -409,7 +413,7 @@ def wait_memory(root):
             return
         if time.time() - told > 300:
             told = time.time()
-            line = "LANE_MEMORY: %.1f GB free, min_free_memory_gb is %g; this lane waits for memory to free" % (free, need)
+            line = "LANE_MEMORY: %.1f GB free, min_free_memory_gb is %g; waiting" % (free, need)
             print(line, flush=True)
             try:
                 with open(os.path.join(os.path.abspath(os.path.join(root, (lanes.git(root, "rev-parse", "--git-common-dir") or "").strip())), "loop", "memory-waits.log"), "a") as log:
@@ -417,7 +421,7 @@ def wait_memory(root):
             except OSError:
                 pass
         if time.time() - began > cap:
-            _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
+            _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run it again when memory frees" % (time.time() - began, free, need))
             sys.exit(_slots().EXIT_ENV)
         time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
 
