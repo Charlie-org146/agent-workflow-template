@@ -332,12 +332,16 @@ def docs_format():
     return module
 
 
+DIAGRAM = ("<!-- diagram:begin -->\n```text\noperation session -> worker -> step -> staging -> production\n"
+           "machine, routine and guard run beside them; legend: -> is one goal's path\n```\n<!-- diagram:end -->\n")
+
+
 def home_page(repo, names, pf):
-    """Home in the docs format (DOC-4): marker, title, Features and one table, a row for each feature page."""
+    """Home in the docs format (DOC-4): marker, title, Features (a table row for each feature page) and the loop diagram."""
     found = re.search(r"github\.com[:/]([\w.-]+/[\w.-]+?)(?:\.git)?/?$", git(repo, "remote", "get-url", "origin", check=False))
     link = "[How to use %%s](https://github.com/%s/wiki/How-to-use-%%s)" % (found.group(1) if found else "OWNER/REPO")
     rows = [["[%s](%s)" % (n, n), PLACEHOLDER, link % (n.replace("-", " "), n), "-"] for n in names]
-    return "%s\n# %s\n\n## Features\n\n%s\n" % (pf.MARKER, os.path.basename(repo), "\n".join(pf.table(pf.HOME, rows)))
+    return "%s\n# %s\n\n## Features\n\n%s\n\n%s" % (pf.MARKER, os.path.basename(repo), "\n".join(pf.table(pf.HOME, rows)), DIAGRAM)
 
 
 def readme_with(text, names, pf, repo=""):
