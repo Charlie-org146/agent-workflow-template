@@ -17,5 +17,5 @@ Frozen. A wrong done line needs a new goal.
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
 1. Run `bash dev/toy/test-lane-control.sh | grep -E "exactly the same source|negative control: a lanekit"`.
    Expect: PASS for both lines (the copy matches slots.py, and a lanekit.py whose check differs is reported as drift).
-2. Run `python3 skills/workflow-delivery/scripts/lanekit.py` is not needed; run `python3 - <<<'import ast'` is not needed: compare the two `check` functions by eye.
+2. Compare the two `check` functions in skills/workflow-delivery/scripts/lanekit.py and skills/workflow-regression/scripts/slots.py.
    Expect: they differ in nothing, including the comment on `if os.name == "nt":`.
