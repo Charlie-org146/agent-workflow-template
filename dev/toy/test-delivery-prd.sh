@@ -40,7 +40,7 @@ git commit -qam "Config: $*"; git push -q origin main; }
 w() { LOOP_ROLE=worker "$@"; }  # goal steps run in a worker; set and touches run as the operation
 step() { git switch -q "loop/$1" 2>/dev/null; w $F "$1" "$2" --wait 5 >/dev/null 2>&1; w $F "$1" "$2" --wait 10 > "$d/flow-$1-$2" 2>&1; w $goal record "$1" "$2" --file "$R/$1.$2.txt" 2>&1; }
 new() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --done "Line $1" ${2:+--touches "$2"} 2>&1; }
-run_all() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
+run_all() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; python3 "$here/dev/toy/fillverify.py" "$1" >/dev/null 2>&1; }  # goal.py pr refuses an empty Verify by hand
 on() { [ "$case" = all ] || [ "$case" = "$1" ]; }
 
 if on depth; then
