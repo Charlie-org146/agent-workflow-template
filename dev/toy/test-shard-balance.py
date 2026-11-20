@@ -139,6 +139,7 @@ step = [x.strip()[7:] for x in job.splitlines() if x.strip() == "- run: python3 
 check(len(step) == 1 and "fetch-depth: 0" in job, "the affected job checks out the history and runs docs.py check")
 clone = tempfile.mkdtemp(prefix="pr-docs-")
 subprocess.run(["git", "clone", "-q", root, clone], check=True, capture_output=True)  # a CI checkout: origin set, no .git/loop/reviews.tsv
+subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=clone, check=True)  # the base is the pull request's own start
 good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
 check(good.returncode == 0 and "DOCS OK" in good.stdout, "a pull request whose docs pass passes the docs step (exit %d)" % good.returncode)
 setup = os.path.join(clone, "docs", "wiki", "Setup.md")
