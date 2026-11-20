@@ -69,8 +69,11 @@ if only in ("", "operation"):  # #5616: the governing session is never a worker,
         return done.returncode, done.stdout + done.stderr
 
     check("negative control: before it claims, the pool counts both sessions free", "2 free" in tool(os.path.join(scripts, "pool.py"), "status", LOOP_ROLE="worker")[1])
+    open(os.path.join(loop, "operation.id"), "w").write("other-op\n")  # another live operation session's id
     code, said = tool(os.path.join(scripts, "operate.py"), "claim", CLAUDE_CODE_SESSION_ID="cli-toy", CLAUDE_CODE_HOST_SESSION_ID="local_app-toy")
+    tool(os.path.join(scripts, "operate.py"), "claim", CLAUDE_CODE_SESSION_ID="cli-toy", CLAUDE_CODE_HOST_SESSION_ID="local_app-toy")
     ids = open(os.path.join(loop, "operation.id")).read().split()
+    check("claim appends: another operation session's id stays, and a second claim adds no duplicate", ids[0] == "other-op" and len(ids) == len(set(ids)) == 3)
     check("operate.py claim registers both ids of the operation session, its CLI id and its app id (they differ)", code == 0 and {"cli-toy", "local_app-toy"} <= set(ids))
     check("the app id is not counted as free", "1 free" in tool(os.path.join(scripts, "pool.py"), "status", LOOP_ROLE="worker")[1])
     code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "local_app-toy", LOOP_ROLE="worker")
