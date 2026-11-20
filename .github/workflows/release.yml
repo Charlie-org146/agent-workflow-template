@@ -4,7 +4,7 @@
 # (https://cli.github.com/manual/gh_release_create). VERSION and CHANGELOG.md in the repo are not written per merge; the
 # version is stamped into the package this job builds and attaches. While an issue labeled main-red is open the job holds:
 # it prints "held: main red (#N)", ends green and publishes nothing (owner o672, TD507); the first push after the last one
-# closes releases from that commit as usual.
+# closes releases from that commit as usual. An open one that the pushed commit's merged pull request closes does not hold (TD517).
 name: release
 on:
   push:
@@ -26,8 +26,13 @@ jobs:
       - id: hold
         run: |
           set -eu
-          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --label main-red --state open --json number --jq 'map("#" + (.number | tostring)) | join(", ")')
-          if [ -n "$open" ]; then echo "held: main red ($open)"; echo "held=1" >> "$GITHUB_OUTPUT"; fi
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --label main-red --state open --json number --jq '.[].number')
+          if [ -n "$open" ]; then
+            fixed=$(gh pr list --repo "$GITHUB_REPOSITORY" --search "$GITHUB_SHA" --state merged --json closingIssuesReferences --jq '.[].closingIssuesReferences[].number')
+            left=""
+            for n in $open; do case " $(echo $fixed) " in *" $n "*) ;; *) left="$left, #$n" ;; esac; done
+            if [ -n "$left" ]; then echo "held: main red (${left#, })"; echo "held=1" >> "$GITHUB_OUTPUT"; fi
+          fi
       - if: steps.hold.outputs.held != '1'
         uses: actions/checkout@v4
         with:
