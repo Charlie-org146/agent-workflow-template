@@ -771,3 +771,4 @@
 | <a id="t-pool-reconcile-ghosts"></a>pool-reconcile-ghosts | requirement | done line pool-reconcile:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-ghost-health"></a>pool-ghost-health | requirement | done line pool-reconcile:2 | not run | - | local | 2026-11-20 |
 | <a id="t-tree-rules-first"></a>tree-rules-first | requirement | done line tree-rules-first:1 | not run | - | local | 2026-11-20 |
+| <a id="t-rows-pr-full"></a>rows-pr-full | requirement | done line rows-pr-full:1 | not run | - | local | 2026-11-20 |
