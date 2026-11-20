@@ -100,6 +100,7 @@ Each requirement and how it is delivered:
 ### Command: health.py
 - **Command:** `python3 skills/workflow-health/scripts/health.py check [--group NAME]` (also `health.py review`, `health.py judge`, `health.py preview`, `health.py file`, `health.py triage`)
 - **Dry run:** `health.py check` writes no file and calls no model; `preview` lists the issues `file` would write and writes nothing.
+- **MERGE-TIME:** `health.py check` also prints `MERGE-TIME median N min (target 15)` under check-time: the median from a pull request's last check to its release over the last 20 merges, WARN above 15, UNREAD when `gh` can't be read.
 - **Reads:** the repo, its PRD pages, its tests and its issues (a check of every group reads the open health issues for the findings table's issue column; `--group` does not).
 - **Writes:** `check` writes nothing; `file` and `triage` write and close GitHub issues.
 - **Exit codes:** 0 when the verdict is green; 1 when a rule is FAIL or UNREAD.
