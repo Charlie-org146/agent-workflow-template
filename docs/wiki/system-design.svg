@@ -1,157 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 490" width="640" role="img" aria-label="System design: the owner, the eight principles, the features grouped by area, and a line from each principle to each feature it has a requirement on">
-<title>System design: the principles and the features they govern</title>
-<style>
-.f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
-.f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
-.f-s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
-.f-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
-.f-you{fill:#e4eeff;stroke:#3b6fd6}
-.f-step{fill:#f3f5f8;stroke:#8a94a3}
-.f-gate{fill:#fff4d6;stroke:#c08a00}
-.f-ok{fill:#e2f5e6;stroke:#2f8f4a}
-.f-find{fill:#fde9e7;stroke:#c5483f}
-.f-bg{fill:#ffffff}
-.f-a{stroke:#6b7686;stroke-width:1.5;fill:none}
-.f-ah{fill:#6b7686}
-@media (prefers-color-scheme: dark){
-.f-t{fill:#eef2f6}.f-h,.f-x{fill:#a3afbf}.f-s{fill:#e1e7ee}
-.f-step{fill:#222b36;stroke:#5c6b7d}.f-you{fill:#162a4f;stroke:#6d9bf0}
-.f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
-.f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
-}
-
-.f-sys{fill:#f3f5f8;stroke:#566173;stroke-dasharray:6 4}
-.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-planned{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
-.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-planned{fill:#8a5cd6}
-.f-pill{font:700 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}
-@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-planned{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-planned{fill:#7a4cc6}}
-@media (prefers-color-scheme: dark){.f-sys{fill:#181e26;stroke:#8a94a3}}
-.s1{stroke:#3b6fd6}.c1{fill:#3b6fd6}.s2{stroke:#d9822b}.c2{fill:#d9822b}.s3{stroke:#2f8f4a}.c3{fill:#2f8f4a}.s4{stroke:#c5483f}.c4{fill:#c5483f}.s5{stroke:#8a5cd6}.c5{fill:#8a5cd6}.s6{stroke:#0f8f9c}.c6{fill:#0f8f9c}.s7{stroke:#a8791a}.c7{fill:#a8791a}.s8{stroke:#cc3f7c}.c8{fill:#cc3f7c}.f-pn{font:700 9.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}.f-chip{fill:#f3f5f8;stroke:#8a94a3}.f-ln{fill:none;stroke-width:1.1;opacity:.8}.f-sm{font:400 8.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
-@media (prefers-color-scheme: dark){.s1{stroke:#6d9bf0}.c1{fill:#6d9bf0}.s2{stroke:#f0a050}.c2{fill:#f0a050}.s3{stroke:#4fb56c}.c3{fill:#4fb56c}.s4{stroke:#e0736a}.c4{fill:#e0736a}.s5{stroke:#b08cf0}.c5{fill:#b08cf0}.s6{stroke:#3fc4d2}.c6{fill:#3fc4d2}.s7{stroke:#e0b84a}.c7{fill:#e0b84a}.s8{stroke:#f07aa8}.c8{fill:#f07aa8}.f-pn{fill:#12171d}.f-chip{fill:#222b36;stroke:#5c6b7d}.f-sm{fill:#e1e7ee}}
-.s1{stroke:#3b6fd6}.c1{fill:#3b6fd6}.s2{stroke:#d9822b}.c2{fill:#d9822b}.s3{stroke:#2f8f4a}.c3{fill:#2f8f4a}.s4{stroke:#c5483f}.c4{fill:#c5483f}.s5{stroke:#8a5cd6}.c5{fill:#8a5cd6}.s6{stroke:#0f8f9c}.c6{fill:#0f8f9c}.s7{stroke:#a8791a}.c7{fill:#a8791a}.s8{stroke:#cc3f7c}.c8{fill:#cc3f7c}.f-pn{font:700 9.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}.f-chip{fill:#f3f5f8;stroke:#8a94a3}.f-ln{fill:none;stroke-width:1.1;opacity:.8}.f-sm{font:400 8.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
-@media (prefers-color-scheme: dark){.s1{stroke:#6d9bf0}.c1{fill:#6d9bf0}.s2{stroke:#f0a050}.c2{fill:#f0a050}.s3{stroke:#4fb56c}.c3{fill:#4fb56c}.s4{stroke:#e0736a}.c4{fill:#e0736a}.s5{stroke:#b08cf0}.c5{fill:#b08cf0}.s6{stroke:#3fc4d2}.c6{fill:#3fc4d2}.s7{stroke:#e0b84a}.c7{fill:#e0b84a}.s8{stroke:#f07aa8}.c8{fill:#f07aa8}.f-pn{fill:#12171d}.f-chip{fill:#222b36;stroke:#5c6b7d}.f-sm{fill:#e1e7ee}}
-</style>
-<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="640" height="490" class="f-bg"/>
-<text x="12" y="22" class="f-t">System design: how the principles and the features connect</text>
-<text x="12" y="38" class="f-x">Each line means: this principle has a requirement on this feature.</text>
-<rect x="240" y="48" width="160" height="38" rx="8" class="f-you" stroke-width="1.2"/>
-<text x="320" y="65" text-anchor="middle" class="f-s">The owner</text><text x="320" y="79" text-anchor="middle" class="f-x">any machine</text>
-<path d="M320 86 L320 114" class="f-a" marker-end="url(#ah)"/><text x="326" y="104" class="f-x">says a goal, answers what is theirs</text>
-<path d="M20.0 164 C20.0 230 20.5 230 20.5 330" class="f-ln s1"><title>Principle 1 has a requirement on Delivery</title></path>
-<path d="M38.7 164 C38.7 230 173.5 230 173.5 330" class="f-ln s1"><title>Principle 1 has a requirement on Regression</title></path>
-<path d="M57.3 164 C57.3 230 326.5 230 326.5 330" class="f-ln s1"><title>Principle 1 has a requirement on Documentation</title></path>
-<path d="M76.0 164 C76.0 230 583.5 230 583.5 330" class="f-ln s1"><title>Principle 1 has a requirement on Integrations</title></path>
-<path d="M97.0 164 C97.0 230 25.6 230 25.6 330" class="f-ln s2"><title>Principle 2 has a requirement on Delivery</title></path>
-<path d="M103.2 164 C103.2 230 69.5 230 69.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Operation</title></path>
-<path d="M109.4 164 C109.4 230 118.5 230 118.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Check in and board</title></path>
-<path d="M115.7 164 C115.7 230 185.5 230 185.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Regression</title></path>
-<path d="M121.9 164 C121.9 230 222.5 230 222.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Health</title></path>
-<path d="M128.1 164 C128.1 230 271.5 230 271.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Guardrails</title></path>
-<path d="M134.3 164 C134.3 230 338.5 230 338.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Documentation</title></path>
-<path d="M140.6 164 C140.6 230 381.5 230 381.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Automation</title></path>
-<path d="M146.8 164 C146.8 230 534.5 230 534.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Release</title></path>
-<path d="M153.0 164 C153.0 230 595.5 230 595.5 330" class="f-ln s2"><title>Principle 2 has a requirement on Integrations</title></path>
-<path d="M174.0 164 C174.0 230 30.8 230 30.8 330" class="f-ln s3"><title>Principle 3 has a requirement on Delivery</title></path>
-<path d="M183.3 164 C183.3 230 76.7 230 76.7 330" class="f-ln s3"><title>Principle 3 has a requirement on Operation</title></path>
-<path d="M192.7 164 C192.7 230 130.5 230 130.5 330" class="f-ln s3"><title>Principle 3 has a requirement on Check in and board</title></path>
-<path d="M202.0 164 C202.0 230 197.5 230 197.5 330" class="f-ln s3"><title>Principle 3 has a requirement on Regression</title></path>
-<path d="M211.3 164 C211.3 230 234.5 230 234.5 330" class="f-ln s3"><title>Principle 3 has a requirement on Health</title></path>
-<path d="M220.7 164 C220.7 230 283.5 230 283.5 330" class="f-ln s3"><title>Principle 3 has a requirement on Guardrails</title></path>
-<path d="M230.0 164 C230.0 230 552.5 230 552.5 330" class="f-ln s3"><title>Principle 3 has a requirement on Release</title></path>
-<path d="M251.0 164 C251.0 230 35.9 230 35.9 330" class="f-ln s4"><title>Principle 4 has a requirement on Delivery</title></path>
-<path d="M262.2 164 C262.2 230 83.9 230 83.9 330" class="f-ln s4"><title>Principle 4 has a requirement on Operation</title></path>
-<path d="M273.4 164 C273.4 230 295.5 230 295.5 330" class="f-ln s4"><title>Principle 4 has a requirement on Guardrails</title></path>
-<path d="M284.6 164 C284.6 230 399.5 230 399.5 330" class="f-ln s4"><title>Principle 4 has a requirement on Automation</title></path>
-<path d="M295.8 164 C295.8 230 430.5 230 430.5 330" class="f-ln s4"><title>Principle 4 has a requirement on Machines</title></path>
-<path d="M307.0 164 C307.0 230 607.5 230 607.5 330" class="f-ln s4"><title>Principle 4 has a requirement on Integrations</title></path>
-<path d="M328.0 164 C328.0 230 41.1 230 41.1 330" class="f-ln s5"><title>Principle 5 has a requirement on Delivery</title></path>
-<path d="M339.2 164 C339.2 230 91.1 230 91.1 330" class="f-ln s5"><title>Principle 5 has a requirement on Operation</title></path>
-<path d="M350.4 164 C350.4 230 307.5 230 307.5 330" class="f-ln s5"><title>Principle 5 has a requirement on Guardrails</title></path>
-<path d="M361.6 164 C361.6 230 442.5 230 442.5 330" class="f-ln s5"><title>Principle 5 has a requirement on Machines</title></path>
-<path d="M372.8 164 C372.8 230 497.5 230 497.5 330" class="f-ln s5"><title>Principle 5 has a requirement on Setup</title></path>
-<path d="M384.0 164 C384.0 230 619.5 230 619.5 330" class="f-ln s5"><title>Principle 5 has a requirement on Integrations</title></path>
-<path d="M405.0 164 C405.0 230 46.2 230 46.2 330" class="f-ln s6"><title>Principle 6 has a requirement on Delivery</title></path>
-<path d="M414.3 164 C414.3 230 98.3 230 98.3 330" class="f-ln s6"><title>Principle 6 has a requirement on Operation</title></path>
-<path d="M423.7 164 C423.7 230 142.5 230 142.5 330" class="f-ln s6"><title>Principle 6 has a requirement on Check in and board</title></path>
-<path d="M433.0 164 C433.0 230 350.5 230 350.5 330" class="f-ln s6"><title>Principle 6 has a requirement on Documentation</title></path>
-<path d="M442.3 164 C442.3 230 417.5 230 417.5 330" class="f-ln s6"><title>Principle 6 has a requirement on Automation</title></path>
-<path d="M451.7 164 C451.7 230 454.5 230 454.5 330" class="f-ln s6"><title>Principle 6 has a requirement on Machines</title></path>
-<path d="M461.0 164 C461.0 230 570.5 230 570.5 330" class="f-ln s6"><title>Principle 6 has a requirement on Release</title></path>
-<path d="M482.0 164 C482.0 230 51.4 230 51.4 330" class="f-ln s7"><title>Principle 7 has a requirement on Delivery</title></path>
-<path d="M510.0 164 C510.0 230 246.5 230 246.5 330" class="f-ln s7"><title>Principle 7 has a requirement on Health</title></path>
-<path d="M538.0 164 C538.0 230 362.5 230 362.5 330" class="f-ln s7"><title>Principle 7 has a requirement on Documentation</title></path>
-<path d="M559.0 164 C559.0 230 56.5 230 56.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Delivery</title></path>
-<path d="M570.2 164 C570.2 230 105.5 230 105.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Operation</title></path>
-<path d="M581.4 164 C581.4 230 154.5 230 154.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Check in and board</title></path>
-<path d="M592.6 164 C592.6 230 209.5 230 209.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Regression</title></path>
-<path d="M603.8 164 C603.8 230 258.5 230 258.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Health</title></path>
-<path d="M615.0 164 C615.0 230 466.5 230 466.5 330" class="f-ln s8"><title>Principle 8 has a requirement on Machines</title></path>
-<rect x="12" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="48" cy="129" r="7.5" class="c1"/><text x="48" y="132.5" text-anchor="middle" class="f-pn">1</text>
-<text x="48" y="154" text-anchor="middle" class="f-x">Docs-driven</text>
-<rect x="89" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="125" cy="129" r="7.5" class="c2"/><text x="125" y="132.5" text-anchor="middle" class="f-pn">2</text>
-<text x="125" y="149" text-anchor="middle" class="f-x">Enforced</text><text x="125" y="160" text-anchor="middle" class="f-x">and kept true</text>
-<rect x="166" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="202" cy="129" r="7.5" class="c3"/><text x="202" y="132.5" text-anchor="middle" class="f-pn">3</text>
-<text x="202" y="149" text-anchor="middle" class="f-x">Fast, cheap</text><text x="202" y="160" text-anchor="middle" class="f-x">and small</text>
-<rect x="243" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="279" cy="129" r="7.5" class="c4"/><text x="279" y="132.5" text-anchor="middle" class="f-pn">4</text>
-<text x="279" y="149" text-anchor="middle" class="f-x">Private</text><text x="279" y="160" text-anchor="middle" class="f-x">and guarded</text>
-<rect x="320" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="356" cy="129" r="7.5" class="c5"/><text x="356" y="132.5" text-anchor="middle" class="f-pn">5</text>
-<text x="356" y="149" text-anchor="middle" class="f-x">Reproducible</text><text x="356" y="160" text-anchor="middle" class="f-x">and portable</text>
-<rect x="397" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="433" cy="129" r="7.5" class="c6"/><text x="433" y="132.5" text-anchor="middle" class="f-pn">6</text>
-<text x="433" y="149" text-anchor="middle" class="f-x">Autonomous</text><text x="433" y="160" text-anchor="middle" class="f-x">you decide</text>
-<rect x="474" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="510" cy="129" r="7.5" class="c7"/><text x="510" y="132.5" text-anchor="middle" class="f-pn">7</text>
-<text x="510" y="149" text-anchor="middle" class="f-x">Standard,</text><text x="510" y="160" text-anchor="middle" class="f-x" textLength="66" lengthAdjust="spacingAndGlyphs">not home-made</text>
-<rect x="551" y="118" width="72" height="46" rx="6" class="f-chip" stroke-width="1.2"/>
-<circle cx="587" cy="129" r="7.5" class="c8"/><text x="587" y="132.5" text-anchor="middle" class="f-pn">8</text>
-<text x="587" y="149" text-anchor="middle" class="f-x">Honest and</text><text x="587" y="160" text-anchor="middle" class="f-x">verified</text>
-<rect x="15.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="38.5" y="351" text-anchor="middle" class="f-sm">Delivery</text>
-<rect x="64.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="87.5" y="351" text-anchor="middle" class="f-sm">Operation</text>
-<rect x="113.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="136.5" y="351" text-anchor="middle" class="f-sm">Board</text>
-<rect x="168.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="191.5" y="351" text-anchor="middle" class="f-sm">Regression</text>
-<rect x="217.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="240.5" y="351" text-anchor="middle" class="f-sm">Health</text>
-<rect x="266.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="289.5" y="351" text-anchor="middle" class="f-sm">Guardrails</text>
-<rect x="321.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="344.5" y="351" text-anchor="middle" class="f-sm">Docs</text>
-<rect x="376.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="399.5" y="351" text-anchor="middle" class="f-sm">Automation</text>
-<rect x="425.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="448.5" y="351" text-anchor="middle" class="f-sm">Machines</text>
-<rect x="474.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="497.5" y="351" text-anchor="middle" class="f-sm">Setup</text>
-<rect x="529.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="552.5" y="351" text-anchor="middle" class="f-sm">Release</text>
-<rect x="578.5" y="330" width="46" height="34" rx="5" class="f-step" stroke-width="1.2"/>
-<text x="601.5" y="351" text-anchor="middle" class="f-sm">Integr.</text>
-<path d="M15.5 370 L159.5 370" class="f-a" stroke-width="1"/>
-<text x="87.5" y="383" text-anchor="middle" class="f-h" style="letter-spacing:0">BUILD LOOP</text>
-<path d="M168.5 370 L312.5 370" class="f-a" stroke-width="1"/>
-<text x="240.5" y="383" text-anchor="middle" class="f-h" style="letter-spacing:0">QUALITY</text>
-<path d="M321.5 370 L367.5 370" class="f-a" stroke-width="1"/>
-<text x="344.5" y="383" text-anchor="middle" class="f-h" style="letter-spacing:0">DOCS</text>
-<path d="M376.5 370 L520.5 370" class="f-a" stroke-width="1"/>
-<text x="448.5" y="383" text-anchor="middle" class="f-h" style="letter-spacing:0">OPERATIONS</text>
-<path d="M529.5 370 L624.5 370" class="f-a" stroke-width="1"/>
-<text x="577.0" y="383" text-anchor="middle" class="f-h" style="letter-spacing:0">OTHER</text>
-<text x="12" y="112" class="f-h">THE EIGHT PRINCIPLES</text>
-<rect x="28" y="412" width="176" height="42" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="116" y="430" text-anchor="middle" class="f-s">GitHub</text><text x="116" y="445" text-anchor="middle" class="f-x">repos, wiki, Actions</text>
-<rect x="232" y="412" width="176" height="42" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="320" y="430" text-anchor="middle" class="f-s">Agent tools</text><text x="320" y="445" text-anchor="middle" class="f-x">Claude Code, Codex</text>
-<rect x="436" y="412" width="176" height="42" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="524" y="430" text-anchor="middle" class="f-s">The PC and the Mac</text><text x="524" y="445" text-anchor="middle" class="f-x">the hardware it runs on</text>
-<text x="12" y="404" class="f-h">OUTSIDE SYSTEMS</text>
-<text x="12" y="482" class="f-x">C4 model, level 1 (system context). One figure for all principles.</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 612" width="640" role="img" aria-label="System design: a grid of the eight principles by the features, a dot where the principle has a requirement on the feature">
+<title>System design: the principles and the features they have requirements on</title>
+<style>.t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}.h{font:600 9px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.04em}.s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}.x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}.n{font:400 9px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}.k{font:700 9.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#fff}.bg{fill:#fff}.you{fill:#e4eeff;stroke:#3b6fd6}.box{fill:#f3f5f8;stroke:#8a94a3}.stripe{fill:#f3f5f8}.rule{stroke:#8a94a3;stroke-width:1}.a{stroke:#6b7686;stroke-width:1.5;fill:none}.ah{fill:#6b7686}.c1{fill:#3b6fd6}.c2{fill:#d9822b}.c3{fill:#2f8f4a}.c4{fill:#c5483f}.c5{fill:#8a5cd6}.c6{fill:#0f8f9c}.c7{fill:#a8791a}.c8{fill:#cc3f7c}@media (prefers-color-scheme: dark){.t{fill:#eef2f6}.h,.x{fill:#a3afbf}.s,.n{fill:#e1e7ee}.k{fill:#12171d}.bg{fill:#12171d}.you{fill:#162a4f;stroke:#6d9bf0}.box{fill:#222b36;stroke:#5c6b7d}.stripe{fill:#181e26}.rule{stroke:#5c6b7d}.a{stroke:#9aa7b8}.ah{fill:#9aa7b8}.c1{fill:#6d9bf0}.c2{fill:#f0a050}.c3{fill:#4fb56c}.c4{fill:#e0736a}.c5{fill:#b08cf0}.c6{fill:#3fc4d2}.c7{fill:#e0b84a}.c8{fill:#f07aa8}}</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="ah"/></marker></defs>
+<rect width="640" height="612" class="bg"/>
+<text x="12" y="22" class="t">System design: how the principles and the features connect</text>
+<text x="12" y="38" class="x">C4 model, level 1 (system context): the owner, the loop, and the outside systems it uses.</text>
+<rect x="240" y="48" width="160" height="38" rx="8" class="you" stroke-width="1.2"/><text x="320" y="65" text-anchor="middle" class="s">The owner</text><text x="320" y="79" text-anchor="middle" class="x">any machine</text>
+<path d="M320 86 L320 104" class="a" marker-end="url(#ah)"/><text x="326" y="98" class="x">says a goal, answers what is theirs</text>
+<circle cx="198" cy="120" r="8" class="c1"/><text x="198" y="123.5" text-anchor="middle" class="k">1</text><text x="198" y="146" text-anchor="middle" class="n" textLength="50" lengthAdjust="spacingAndGlyphs">Docs-driven</text>
+<circle cx="254" cy="120" r="8" class="c2"/><text x="254" y="123.5" text-anchor="middle" class="k">2</text><text x="254" y="146" text-anchor="middle" class="n">Enforced</text>
+<circle cx="310" cy="120" r="8" class="c3"/><text x="310" y="123.5" text-anchor="middle" class="k">3</text><text x="310" y="146" text-anchor="middle" class="n" textLength="50" lengthAdjust="spacingAndGlyphs">Fast, cheap</text>
+<circle cx="366" cy="120" r="8" class="c4"/><text x="366" y="123.5" text-anchor="middle" class="k">4</text><text x="366" y="146" text-anchor="middle" class="n">Private</text>
+<circle cx="422" cy="120" r="8" class="c5"/><text x="422" y="123.5" text-anchor="middle" class="k">5</text><text x="422" y="146" text-anchor="middle" class="n" textLength="50" lengthAdjust="spacingAndGlyphs">Reproducible</text>
+<circle cx="478" cy="120" r="8" class="c6"/><text x="478" y="123.5" text-anchor="middle" class="k">6</text><text x="478" y="146" text-anchor="middle" class="n">Autonomous</text>
+<circle cx="534" cy="120" r="8" class="c7"/><text x="534" y="123.5" text-anchor="middle" class="k">7</text><text x="534" y="146" text-anchor="middle" class="n">Standard</text>
+<circle cx="590" cy="120" r="8" class="c8"/><text x="590" y="123.5" text-anchor="middle" class="k">8</text><text x="590" y="146" text-anchor="middle" class="n">Honest</text>
+<rect x="12" y="160" width="616" height="26" class="stripe"/>
+<text x="86" y="177" class="s" style="font-size:11px">Delivery</text>
+<circle cx="198" cy="173" r="7" class="c1"><title>Principle 1 has a requirement on Delivery</title></circle>
+<circle cx="254" cy="173" r="7" class="c2"><title>Principle 2 has a requirement on Delivery</title></circle>
+<circle cx="310" cy="173" r="7" class="c3"><title>Principle 3 has a requirement on Delivery</title></circle>
+<circle cx="366" cy="173" r="7" class="c4"><title>Principle 4 has a requirement on Delivery</title></circle>
+<circle cx="422" cy="173" r="7" class="c5"><title>Principle 5 has a requirement on Delivery</title></circle>
+<circle cx="478" cy="173" r="7" class="c6"><title>Principle 6 has a requirement on Delivery</title></circle>
+<circle cx="534" cy="173" r="7" class="c7"><title>Principle 7 has a requirement on Delivery</title></circle>
+<circle cx="590" cy="173" r="7" class="c8"><title>Principle 8 has a requirement on Delivery</title></circle>
+<text x="86" y="203" class="s" style="font-size:11px">Operation</text>
+<circle cx="254" cy="199" r="7" class="c2"><title>Principle 2 has a requirement on Operation</title></circle>
+<circle cx="310" cy="199" r="7" class="c3"><title>Principle 3 has a requirement on Operation</title></circle>
+<circle cx="366" cy="199" r="7" class="c4"><title>Principle 4 has a requirement on Operation</title></circle>
+<circle cx="422" cy="199" r="7" class="c5"><title>Principle 5 has a requirement on Operation</title></circle>
+<circle cx="478" cy="199" r="7" class="c6"><title>Principle 6 has a requirement on Operation</title></circle>
+<circle cx="590" cy="199" r="7" class="c8"><title>Principle 8 has a requirement on Operation</title></circle>
+<rect x="12" y="212" width="616" height="26" class="stripe"/>
+<text x="86" y="229" class="s" style="font-size:11px">Check-in and board</text>
+<circle cx="254" cy="225" r="7" class="c2"><title>Principle 2 has a requirement on Check in and board</title></circle>
+<circle cx="310" cy="225" r="7" class="c3"><title>Principle 3 has a requirement on Check in and board</title></circle>
+<circle cx="478" cy="225" r="7" class="c6"><title>Principle 6 has a requirement on Check in and board</title></circle>
+<circle cx="590" cy="225" r="7" class="c8"><title>Principle 8 has a requirement on Check in and board</title></circle>
+<text x="16" y="202" class="h">BUILD LOOP</text>
+<path d="M12 238 L628 238" class="rule"/>
+<text x="86" y="260" class="s" style="font-size:11px">Regression</text>
+<circle cx="198" cy="256" r="7" class="c1"><title>Principle 1 has a requirement on Regression</title></circle>
+<circle cx="254" cy="256" r="7" class="c2"><title>Principle 2 has a requirement on Regression</title></circle>
+<circle cx="310" cy="256" r="7" class="c3"><title>Principle 3 has a requirement on Regression</title></circle>
+<circle cx="590" cy="256" r="7" class="c8"><title>Principle 8 has a requirement on Regression</title></circle>
+<rect x="12" y="269" width="616" height="26" class="stripe"/>
+<text x="86" y="286" class="s" style="font-size:11px">Health</text>
+<circle cx="254" cy="282" r="7" class="c2"><title>Principle 2 has a requirement on Health</title></circle>
+<circle cx="310" cy="282" r="7" class="c3"><title>Principle 3 has a requirement on Health</title></circle>
+<circle cx="534" cy="282" r="7" class="c7"><title>Principle 7 has a requirement on Health</title></circle>
+<circle cx="590" cy="282" r="7" class="c8"><title>Principle 8 has a requirement on Health</title></circle>
+<text x="86" y="312" class="s" style="font-size:11px">Guardrails</text>
+<circle cx="254" cy="308" r="7" class="c2"><title>Principle 2 has a requirement on Guardrails</title></circle>
+<circle cx="310" cy="308" r="7" class="c3"><title>Principle 3 has a requirement on Guardrails</title></circle>
+<circle cx="366" cy="308" r="7" class="c4"><title>Principle 4 has a requirement on Guardrails</title></circle>
+<circle cx="422" cy="308" r="7" class="c5"><title>Principle 5 has a requirement on Guardrails</title></circle>
+<text x="16" y="285" class="h">QUALITY</text>
+<path d="M12 321 L628 321" class="rule"/>
+<rect x="12" y="326" width="616" height="26" class="stripe"/>
+<text x="86" y="343" class="s" style="font-size:11px">Documentation</text>
+<circle cx="198" cy="339" r="7" class="c1"><title>Principle 1 has a requirement on Documentation</title></circle>
+<circle cx="254" cy="339" r="7" class="c2"><title>Principle 2 has a requirement on Documentation</title></circle>
+<circle cx="478" cy="339" r="7" class="c6"><title>Principle 6 has a requirement on Documentation</title></circle>
+<circle cx="534" cy="339" r="7" class="c7"><title>Principle 7 has a requirement on Documentation</title></circle>
+<text x="16" y="342" class="h">DOCS</text>
+<path d="M12 352 L628 352" class="rule"/>
+<text x="86" y="374" class="s" style="font-size:11px">Automation</text>
+<circle cx="254" cy="370" r="7" class="c2"><title>Principle 2 has a requirement on Automation</title></circle>
+<circle cx="366" cy="370" r="7" class="c4"><title>Principle 4 has a requirement on Automation</title></circle>
+<circle cx="478" cy="370" r="7" class="c6"><title>Principle 6 has a requirement on Automation</title></circle>
+<rect x="12" y="383" width="616" height="26" class="stripe"/>
+<text x="86" y="400" class="s" style="font-size:11px">Machines</text>
+<circle cx="366" cy="396" r="7" class="c4"><title>Principle 4 has a requirement on Machines</title></circle>
+<circle cx="422" cy="396" r="7" class="c5"><title>Principle 5 has a requirement on Machines</title></circle>
+<circle cx="478" cy="396" r="7" class="c6"><title>Principle 6 has a requirement on Machines</title></circle>
+<circle cx="590" cy="396" r="7" class="c8"><title>Principle 8 has a requirement on Machines</title></circle>
+<text x="86" y="426" class="s" style="font-size:11px">Setup</text>
+<circle cx="422" cy="422" r="7" class="c5"><title>Principle 5 has a requirement on Setup</title></circle>
+<text x="16" y="399" class="h">OPERATIONS</text>
+<path d="M12 435 L628 435" class="rule"/>
+<rect x="12" y="440" width="616" height="26" class="stripe"/>
+<text x="86" y="457" class="s" style="font-size:11px">Release</text>
+<circle cx="254" cy="453" r="7" class="c2"><title>Principle 2 has a requirement on Release</title></circle>
+<circle cx="310" cy="453" r="7" class="c3"><title>Principle 3 has a requirement on Release</title></circle>
+<circle cx="478" cy="453" r="7" class="c6"><title>Principle 6 has a requirement on Release</title></circle>
+<text x="86" y="483" class="s" style="font-size:11px">Integrations</text>
+<circle cx="198" cy="479" r="7" class="c1"><title>Principle 1 has a requirement on Integrations</title></circle>
+<circle cx="254" cy="479" r="7" class="c2"><title>Principle 2 has a requirement on Integrations</title></circle>
+<circle cx="366" cy="479" r="7" class="c4"><title>Principle 4 has a requirement on Integrations</title></circle>
+<circle cx="422" cy="479" r="7" class="c5"><title>Principle 5 has a requirement on Integrations</title></circle>
+<text x="16" y="469" class="h">OTHER</text>
+<path d="M12 492 L628 492" class="rule"/>
+<text x="12" y="513" class="h">OUTSIDE SYSTEMS</text>
+<rect x="28" y="521" width="176" height="42" rx="8" class="box" stroke-width="1.2"/><text x="116" y="539" text-anchor="middle" class="s">GitHub</text><text x="116" y="554" text-anchor="middle" class="x">repos, wiki, Actions</text>
+<rect x="232" y="521" width="176" height="42" rx="8" class="box" stroke-width="1.2"/><text x="320" y="539" text-anchor="middle" class="s">Agent tools</text><text x="320" y="554" text-anchor="middle" class="x">Claude Code, Codex</text>
+<rect x="436" y="521" width="176" height="42" rx="8" class="box" stroke-width="1.2"/><text x="524" y="539" text-anchor="middle" class="s">The PC and the Mac</text><text x="524" y="554" text-anchor="middle" class="x">the hardware it runs on</text>
+<text x="12" y="585" class="x">Each dot means: this principle has a requirement on this feature. One figure for all principles.</text></svg>

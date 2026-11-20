@@ -35,3 +35,7 @@ Frozen. A wrong done line needs a new goal.
 - `python3 dev/package.py` refuses on main and on this branch. Main: `FAIL Size: 104 files, at most 100 allowed` and `REFUSED: 44 rule failure(s); no ZIP built`. This branch: `FAIL Size: 105 files, at most 100 allowed` and `REFUSED: 49 rule failure(s); no ZIP built`.
 - The five extra lines are `FAIL Disclosure: host en.wikipedia.org is not in listing.network`, and the same for `blogs.eclipse.org`, `research.google`, `standards.ieee.org` and `www.joelonsoftware.com`.
 - The size-trim goal brings the package back to 100 files or fewer and declares the five hosts before any release is cut.
+
+## System design figure
+
+`docs/wiki/system-design.svg` is a grid: one column per principle, one row per feature grouped by area, and a dot where the principle has a requirement on the feature (49 today), read from the Feature column of the README's principle tables. Rebuild it with `python3 dev/system-design.py`; `python3 dev/system-design.py --check` fails when it is stale. The generator is under dev/, so it is not shipped and the package file count is unchanged.
