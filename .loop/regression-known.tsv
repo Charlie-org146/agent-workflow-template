@@ -5,6 +5,7 @@ adopt-set-5	fails on clean main since v0.27.17; fixed by render-readme-guard
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 lanes-repo-narrow	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
+pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
 sync-check-preview	fails on clean main since v0.27.17; fixed by package-cap-3
 sync-board-lag	fails on clean main since v0.27.17; fixed by package-cap-3
 size-140	fails on clean main since v0.27.17: skills/workflow-docs/scripts/docs.py is 18,702 bytes, past the 90% size warning; fixed by package-cap-3 (moves a block out of docs.py)
@@ -105,10 +106,9 @@ home-guard-catches-leak	fails on main since v1.0.110 (kept-fragments, #5380); fi
 restamp-marks-3867	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5386
 apply-rerender-howto	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5391
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
+hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
 apply-rerender-hand-edit	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); fixed by kept-reds-2; see #4995
 lane-last-152	lanekit.py check() copy lacks slots.py's nt-line comment (drift: check); known red on main; see #5402
-pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
-hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
