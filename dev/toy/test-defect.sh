@@ -50,6 +50,7 @@ real() { # a git copy of what the repo-wide checks read (skills, docs, README, t
       "$here/.loop/regression-known.tsv" "$here/.loop/docs.tsv" "$here/.loop/routines.tsv" "$here/.loop/config.json" "$d/real/.loop/" \
     && cp -R "$here/.loop/goals" "$d/real/.loop/" && { [ ! -d "$here/.github" ] || cp -R "$here/.github" "$d/real/"; } \
     && cd "$d/real" && git init -q && git add -A && git -c user.name=t -c user.email=t@t commit -qm copy \
+    && git update-ref refs/remotes/origin/main HEAD && { r="$(git -C "$here/." rev-parse --git-common-dir 2>/dev/null)/loop/reviews.tsv"; [ -f "$r" ] && mkdir -p .git/loop && cp "$r" .git/loop/reviews.tsv; true; } \
     && { u=$(git -C "$here/." remote get-url origin 2>/dev/null) && git remote add origin "$u" || true; } || no "cannot copy the repo"  # the Tests page links runs to origin; "$here/." not "$here": the plain form is a root runner again (issue 172)
 }
 finish() { # finish SLUG TEXT: a goal whose flow is done, with a change committed
@@ -81,7 +82,7 @@ for page, ids in want.items():
         kept = re.search(r"^- %s: (?:\*\*Unreviewed\*\* \S|moved to )" % key, text, re.M) and re.search(r"^### %s\n\n(?:\|.*\n)+?\| r1 \| \d{4}-\d\d-\d\d \| .*o\d+: " % key, text, re.M)
         assert sealed or kept, key
 PY
-    out=$(real && python3 skills/workflow-docs/scripts/docs.py check 2>&1); grep -q "was reviewed and its wording or sub-bullets changed" <<<"$out" && no "a reviewed criterion's seal is broken"  # the criterion-level lock; the page-level one needs origin/main and the review log, which this copy lacks
+    out=$(real && python3 skills/workflow-docs/scripts/docs.py check 2>&1); grep -q "LOCKED" <<<"$out" && no "a reviewed criterion's seal is broken"
     exit 0;;
   flow-steps) # done line 3: no checks step; every step can be mapped, with a default suite and per-step overrides
     toy

@@ -37,4 +37,9 @@ Each is small, owner-visible and was accepted by the operation session (TD379, T
 
 ## Owner records used
 
-Owner words "yes build it" (o514) through records o569 to o655: revise and review of 26 requirements (o569 to o594, o613 to o638 and the later o645 to o655 for OPS-1, DEL-17, OPS-16 and GRD-20), DOC-26 (o595), and 21 retirements (o596 to o612 and o639 to o642). Additions approved by the owner (OPS-1 delays and platform limits, DEL-17 queue at full use) or by operation-top under owner delegation (DOC-2, o486: OPS-1 machine log, OPS-16 memory, GRD-20 20,480).
+Owner words "yes build it" (o514) through records o569 to o657: revise and review of 26 requirements (o569 to o594, o613 to o638 and the later o645 to o655 for OPS-1, DEL-17, OPS-16 and GRD-20), DOC-26 (o595), and 21 retirements (o596 to o612 and o639 to o642). Additions approved by the owner (OPS-1 delays and platform limits, DEL-17 queue at full use) or by operation-top under owner delegation (DOC-2, o486: OPS-1 machine log, OPS-16 memory, GRD-20 20,480).
+
+## Fixes to this goal's own change (TD399, TD415, TD416)
+
+- TD416, approved by operation-top under delegation (DOC-2, o486): CHK-1's bullet reads "**The check-in** follows the same order and opens with what slipped; a hook blocks a check-in reply in any other layout." (the hook sentence was dropped by omission); revise o656, review o657. The row reply-hook-mon5-wording stays and its grep now aims at that sentence with the same strength; reply_hook.py is untouched.
+- defect-wording: dev/toy/test-defect.sh keeps the full "any LOCKED" check; its bare copy of the repo now gets an origin/main ref and the review log (.git/loop/reviews.tsv), so the page-level lock fires only when it should. Checked by hand: the clean copy prints 0 LOCKED lines and a changed word in DEL-17 prints `LOCKED Delivery: DEL-17 was reviewed and its wording or sub-bullets changed`.
