@@ -523,18 +523,7 @@
 | <a id="t-links-origins-sources"></a>links-origins-sources | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-1 | not run | - | local | 2026-11-18 |
 | <a id="t-entry-committed-config"></a>entry-committed-config | requirement | DOC-1 | not run | - | local | 2026-11-19 |
-| <a id="t-sections-missing"></a>sections-missing | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-extra"></a>sections-extra | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-renamed"></a>sections-renamed | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-order"></a>sections-order | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-adopted"></a>sections-adopted | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-feature"></a>sections-feature | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-howto"></a>sections-howto | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-principles"></a>sections-principles | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-tests"></a>sections-tests | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-home-extra"></a>sections-home-extra | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-sentence"></a>sections-sentence | requirement | DOC-25 | not run | - | local | 2026-11-20 |
-| <a id="t-sections-no-figure"></a>sections-no-figure | requirement | DOC-25 | not run | - | local | 2026-11-20 |
+| <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 
 ## Guardrails
 
