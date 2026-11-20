@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `TOY_GROUP=mark bash dev/toy/test-lane-control.sh`.
+   Expect: PASS for the nested-run start-mark check, PASS for the negative control (a started() that rewrites an existing mark fails it), and ALL PASS, in about 3 seconds.
+2. Run `bash dev/toy/test-lane-control.sh | grep "nested run never rewrites"`.
+   Expect: the same PASS line in the whole toy, which is unchanged apart from calling the check as a function.
