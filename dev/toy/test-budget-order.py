@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py
+# reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/actions.py
 # reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/narrow.py
 """budget-order (TD476): inside a shard's time budget the selected rows run closest to the change first: rows whose command
 names a changed file, then rows for a requirement the diff touches, then the rest by measured time, shortest first. A toy
@@ -13,6 +13,7 @@ import tempfile
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
 sys.dont_write_bytecode = True
+import actions  # noqa: E402
 import runs  # noqa: E402
 import tiers  # noqa: E402
 
@@ -53,4 +54,6 @@ with tempfile.TemporaryDirectory() as tmp:
     keep, left = runs.fit(ordered, secs, 90)
     check("toy-d" in keep and sorted(keep + left) == sorted(ids), "after: the changed toy's row runs and nothing is dropped: keep %s, left %s" % (keep, left))
     check(tiers.closeness(tmp, rows, None, {}) == {k: (2, 0, 0) for k in ids}, "with no merge-base every row is the rest, in file order")
+os.environ["LOOP_ROW_TIMES"] = "/nowhere/t.tsv"  # a row that runs regression.py itself must not write this shard's times file
+check("LOOP_ROW_TIMES" not in actions.row_env(), "a row never inherits the shard's times file, so no row can overwrite its marks")
 sys.exit(1 if failed else 0)
