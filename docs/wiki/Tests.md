@@ -775,4 +775,4 @@
 | <a id="t-folder-trust-refused"></a>folder-trust-refused | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-restart-trust-row"></a>restart-trust-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-restart-worktrees-row"></a>restart-worktrees-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
-| <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | no |
+| <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
