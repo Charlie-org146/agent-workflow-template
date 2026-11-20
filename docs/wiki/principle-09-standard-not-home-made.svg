@@ -31,7 +31,7 @@
 <rect x="10" y="114" width="400" height="62" rx="20" class="d-gate" stroke-width="1.2"/>
 <text x="210.0" y="134.0" text-anchor="middle" class="d-b">Named before it is built</text>
 <text x="210.0" y="149.0" text-anchor="middle" class="d-s">Each requirement names its tool, source and verdict;</text>
-<text x="210.0" y="164.0" text-anchor="middle" class="d-s">the plan review asks if a standard exists · DOC-24, DEL-20</text>
+<text x="210.0" y="164.0" text-anchor="middle" class="d-s">the plan review asks if a standard exists · DOC-24, DEL-21</text>
 <path d="M210 176 L210 189" class="d-a" marker-end="url(#ah)"/>
 <rect x="10" y="190" width="400" height="62" rx="8" class="d-step" stroke-width="1.2"/>
 <text x="210.0" y="210.0" text-anchor="middle" class="d-b">Health checks it: References</text>

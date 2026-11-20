@@ -9,7 +9,7 @@ The template README, wiki Home and Principles page show six principles and no re
 
 ## Choices
 - Follows cell = specific name, source links and verdict. Verdicts follow the references draft; REG-7 and DOC-1 read "adapted" (strict-read correction); the strict-read rows (HLT-7, MCH-5, CHK-1, AUT-5, INT-7, DEL-1) show the recommended replacement marked v2.0 planned; REL-13 shows its rewritten text marked v2.0 planned. No requirement text changes for them.
-- New IDs: DOC-24 (Documentation) and DEL-20 (Delivery), Unreviewed, each with an r1 revision row approved under owner delegation (DOC-2 r4). The HLT-2 bullet goes in by `criteria.py revise HLT-2` with owner record o474.
+- New IDs: DOC-24 (Documentation) and DEL-21 (Delivery), Unreviewed, each with an r1 revision row approved under owner delegation (DOC-2 r4). The HLT-2 bullet goes in by `criteria.py revise HLT-2` with owner record o474.
 - Principle 7 maps to the health group `references`, which does not exist yet, so health prints `PRINCIPLE 7 ... UNREAD (references)` exactly as it does for principle 6 until the reference rule is built.
 - The diagram is `docs/wiki/principle-09-standard-not-home-made.svg` (docs, not part of the shipped package).
 - `pageformat.py` stays under 19,000 bytes (18,994) by turning two one-line functions into lambdas.
