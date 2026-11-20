@@ -130,4 +130,24 @@ if only == "health":
     os.remove(os.path.join(loop, "runs", "w.json"))
     check(rows("statement-wrong") == [], "negative control: a run record with no wrong statement is no finding")
 
+    # Value: protects=file.plan() opens an issue for a missed ETA, an unmarked one and a wrong statement, and none for a met ETA (HLT-4, done line 3); fails_when=one of the rules is in REPORT_ONLY, is not a BAD state, or a met ETA opens an issue
+    import file as filing
+
+    def acts(rule, issues=None):
+        return filing.plan(rows(rule), issues or {}, ("hygiene",), root=repo)
+
+    ledger({"key": "goal-a", "state": "missed", "settled": NOW, "names": NOW - 100, "cause": "no event by 10:00 (the goal is at qa, running)"})
+    got = acts("eta-missed")
+    check([(a["kind"], a["title"]) for a in got] == [("open", "health: hygiene goal-a eta-missed")] and "no event by 10:00" in got[0]["body"], "file.plan opens one issue for a missed ETA, naming the goal and carrying the cause")
+    ledger({"names": NOW - 1200})
+    check([a["kind"] for a in acts("eta-unmarked")] == ["open"], "file.plan opens an issue for an ETA that is neither met nor marked missed")
+    ledger({"key": "goal-a", "state": "met", "settled": NOW})
+    check(acts("eta-missed") == [] and acts("eta-unmarked") == [], "negative control: a met ETA files nothing")
+    with open(os.path.join(loop, "runs", "w.json"), "w") as handle:
+        json.dump({"slug": "w", "status": "running", "wrong": [{"said": "merged by 5", "why": "it was still in review"}]}, handle)
+    got = acts("statement-wrong")
+    check([(a["kind"], a["title"]) for a in got] == [("open", "health: hygiene w statement-wrong")] and "still in review" in got[0]["body"], "file.plan opens one issue for a statement marked wrong in a run record")
+    os.remove(os.path.join(loop, "runs", "w.json"))
+    check(acts("statement-wrong") == [], "negative control: no wrong statement files nothing")
+
 sys.exit(1 if failed else 0)
