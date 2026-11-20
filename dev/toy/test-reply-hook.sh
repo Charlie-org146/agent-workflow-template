@@ -29,12 +29,22 @@ import json, os, sys
 F = sys.argv[1]
 good = """Two goals moved; one needs you.
 
-## All sessions
+## Your move
+1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]
+
+## Red team
+- biggest risk: none this hour
+
+## Release goals
+- alpha: one line, one bar, about 18:10
+
+## Task queue
+- alpha: running, 20m on main, my ETA
+
+## Workers
 | session | repo | for | status | progress | ETA | tokens left | latest |
 |---|---|---|---|---|---|---|---|
 | worker · alpha | toy | median command | running | build | 20m | 1.2M | built, testing |
-
-## Dependencies
 ```
 == toy ==
 [>] alpha
@@ -42,27 +52,43 @@ good = """Two goals moved; one needs you.
 [ ] beta
 ```
 
+## Shipped
+- beta: merged at 17:40
+"""
+old_layout = """Two goals moved; one needs you.
+
+## All sessions
+| session | repo | for | status |
+|---|---|---|---|
+| worker · alpha | toy | median command | running |
+
+## Dependencies
+```
+== toy ==
+[>] alpha
+```
+
 ## Needs you
-1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]
+1. Release alpha? [blocks nothing]
 
 ## Coming up
 - about 18:10: alpha opens its pull request
-- you: answer question 1 when it lands
 """
 replies = {
     "good": good,
+    "old": old_layout,
     "noboard": "Two goals moved. I'll check again in 30 minutes.",
-    "nosection": good.replace("## Dependencies\n", ""),
-    "order": good.replace("## Needs you\n1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n\n", "") +
-             "\n## Needs you\n1. Release alpha?\n",
+    "nosection": good.replace("## Red team\n", ""),
+    "order": good.replace("\n## Shipped\n- beta: merged at 17:40\n", "").replace("## Workers\n", "## Shipped\n- beta: merged at 17:40\n\n## Workers\n"),
     "noheadline": good.replace("Two goals moved; one needs you.\n\n", ""),
     "twoheadlines": "Status report.\n" + good,
     "emptyneeds": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "We will see.\n"),
     "nothing": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "Nothing needs you.\n"),
-    "bold": good.replace("## All sessions", "**All sessions:**", 1),
-    "cased": good.replace("## All sessions", "## All Sessions").replace("## Needs you", "## Needs you (1)").replace(
+    "none": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "none\n"),
+    "bold": good.replace("## Your move", "**Your move:**", 1),
+    "cased": good.replace("## Your move", "## Your Move").replace("## Task queue", "## Task queue (1)").replace(
         "1. Release alpha?", "- Q1. Release alpha?"),
-    "fenced": good.replace("## Coming up\n", "```\nComing up\n```\n"),
+    "fenced": good.replace("## Shipped\n", "```\nShipped\n```\n"),
     "onefence": good.replace("[ ] beta\n```\n", "[ ] beta\n```\n```a -> b```\n"),
     "clock": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "- 10:30 standup\n"),
 }
@@ -76,7 +102,7 @@ def tool(i, command, out, error=False, code=True):
            {"type": "tool_result", "tool_use_id": "t%d" % i, "content": text, "is_error": error}]}}
     return [use, res]
 def final(text, split=False):
-    cut = text.find("\n## Needs you")  # text blocks of one message split at block boundaries, here a line end
+    cut = text.find("\n## Red team")  # text blocks of one message split at block boundaries, here a line end
     parts = [text[:cut], text[cut + 1:]] if split else [text]
     out = [{"type": "assistant", "isSidechain": False, "message": {"id": "mfinal", "role": "assistant",
             "content": [{"type": "thinking", "thinking": ""}]}}]
@@ -142,25 +168,29 @@ passed() { [ ! -s "$F/$1.out" ] && [ "$(cat "$F/$1.code")" = 0 ]; }
 R="$T/repo"
 python3 "$H" check "$F/good.txt" > "$F/check-good.out"; cg=$?
 check "check passes a reply in the check-in layout" '[ $cg = 0 ] && [ ! -s "$F/check-good.out" ]'
+python3 "$H" check "$F/old.txt" > "$F/check-old.out"; co=$?
+check "a reply in the old layout (All sessions, Dependencies, Needs you, Coming up) is blocked and names the board order" '[ $co = 1 ] && grep -q "missing all six sections" "$F/check-old.out" && grep -q "Your move, Red team, Release goals, Task queue, Workers and Shipped" "$F/check-old.out"'
+python3 "$H" check "$F/none.txt" >/dev/null; cnn=$?
+check "an empty Your move may say none" '[ $cnn = 0 ]'
 for name in noboard nosection order noheadline twoheadlines emptyneeds; do
     python3 "$H" check "$F/$name.txt" > "$F/check-$name.out"; eval "c_$name=\$?"
 done
 check "check finds a reply not in the layout" '[ $c_noboard = 1 ] && grep -q "not in the check-in layout" "$F/check-noboard.out"'
-check "check names a missing section" 'grep -q "missing section Dependencies" "$F/check-nosection.out"'
-check "check finds Coming up not last" 'grep -q "missing section Coming up (or it is out of order)" "$F/check-order.out"'
+check "check names a missing section" 'grep -q "missing section Red team" "$F/check-nosection.out"'
+check "check finds Shipped not last" 'grep -q "missing section Shipped (or it is out of order)" "$F/check-order.out"'
 check "check finds no headline line" 'grep -q "no headline line" "$F/check-noheadline.out"'
 check "check finds more than one headline line" 'grep -q "more than one line before the first section" "$F/check-twoheadlines.out"'
-check "check finds Needs you with no numbered question" 'grep -q "Needs you has no numbered question" "$F/check-emptyneeds.out"'
+check "check finds Your move with no numbered question" 'grep -q "Your move has no numbered question" "$F/check-emptyneeds.out"'
 python3 "$H" check "$F/nothing.txt" >/dev/null; cno=$?
 check "Nothing needs you passes" '[ $cno = 0 ]'
 python3 "$H" check "$F/cased.txt" >/dev/null; cc=$?
 check "headings ignore case and a count, and Q1. numbers a question" '[ $cc = 0 ]'
 python3 "$H" check "$F/fenced.txt" > "$F/check-fenced.out"
-check "a heading inside a code fence does not count" 'grep -q "missing section Coming up" "$F/check-fenced.out"'
+check "a heading inside a code fence does not count" 'grep -q "missing section Shipped" "$F/check-fenced.out"'
 python3 "$H" check "$F/onefence.txt" >/dev/null; c1=$?
 check "a one-line fence does not hide the sections after it" '[ $c1 = 0 ]'
 python3 "$H" check "$F/clock.txt" > "$F/check-clock.out"
-check "a clock time is not a numbered question" 'grep -q "Needs you has no numbered question" "$F/check-clock.out"'
+check "a clock time is not a numbered question" 'grep -q "Your move has no numbered question" "$F/check-clock.out"'
 python3 "$H" check "$F/bold.txt" >/dev/null; cb=$?
 check "a Markdown-bold heading with a colon still counts" '[ $cb = 0 ]'
 python3 "$H" check "$T/none.txt" > "$F/check-none.out"; cn=$?
@@ -168,7 +198,7 @@ check "check refuses an unreadable file with exit 2" '[ $cn = 2 ] && grep -q "^R
 
 hook s-bad op-bad "$R"
 check "an operation reply not in the layout is blocked" 'blocked s-bad'
-check "the block says what is missing and the layout to use" 'grep -q "REPLY FORMAT (MON-5): it is not in the check-in layout" "$F/s-bad.out" && grep -q "and last, Coming up" "$F/s-bad.out"'
+check "the block says what is missing and the layout to use" 'grep -q "REPLY FORMAT (MON-5): it is not in the check-in layout" "$F/s-bad.out" && grep -q "and last, Shipped" "$F/s-bad.out"'
 hook s-good op-good "$R"
 check "an operation reply in the check-in layout passes" 'passed s-good'
 hook s-msg op-bad "$R" false ", \"last_assistant_message\": $(python3 -c 'import json,sys;print(json.dumps(open(sys.argv[1]).read()))' "$F/good.txt")"

@@ -26,8 +26,7 @@ def check(ok, text):
 
 
 def reply(deps, machine="Machine: RAM 9.0 GB, commit 12.0 GB free, CPU 10%, 2 claude, 1 node; memory allows 3 goal starts"):
-    return ("Two goals run.\n" + machine + "\n\n## All sessions\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps +
-            "\n\n## Needs you\nNothing needs you\n\n## Coming up\n- soon\n")
+    return "Two goals run.\n" + machine + "\n\n## Your move\nNothing needs you\n\n## Red team\n- none\n\n## Release goals\n- none\n\n## Task queue\n- none\n\n## Workers\n| a | b |\n|---|---|\n| x | y |\n\n## Dependencies\n" + deps + "\n\n## Shipped\n- none\n"
 
 
 GOOD = "== toyrepo ==\n[>] first-goal\n-- v1.0.1 release ETA tomorrow ~20:00 (2 goals, 1 not started) --\n  Monitoring:\n    [>] first-goal ~40m left pc\n    [ ] later-goal ~? left mac"
