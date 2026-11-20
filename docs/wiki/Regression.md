@@ -234,7 +234,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [defect-categories](Tests#t-defect-categories) | requirement | REG-4 | Given the test rows, when they are checked, then every row has a category, defect rows link their issue, and the page shows defect tests apart. | FAIL 2026-11-12 |
 | [workflow-same-as-run](Tests#t-workflow-same-as-run) | requirement | REG-4 | Given the same tests, when the workflow runs and regression.py runs locally, then both end the same way and open the same issues. | PASS 2026-11-19 |
 | [lanes-reuse](Tests#t-lanes-reuse) | requirement | REG-4 | Given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. | PASS 2026-11-10 |
-| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run. | PASS 2026-11-10 |
+| [lanes-affected](Tests#t-lanes-affected) | requirement | REG-4 | Given a change, when tests run again, then only the tests that read the changed files run; an edit to the known list or the table selects only the rows whose lines changed and the rows that name the table. | PASS 2026-11-10 |
 | [lanes-failing](Tests#t-lanes-failing) | requirement | REG-4 | Given a run with a failing test, when a later run happens, then it is never reused. | PASS 2026-11-10 |
 | [lanes-missing](Tests#t-lanes-missing) | requirement | REG-4 | Given no recorded run, when tests run, then every test runs. | PASS 2026-11-10 |
 | [lanes-ship-reuses](Tests#t-lanes-ship-reuses) | requirement | REG-4 | Given nothing changed since the qa run, when ship runs, then it reuses the qa run. | PASS 2026-11-10 |
