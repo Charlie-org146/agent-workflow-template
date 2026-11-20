@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/render_tables_check.py`.
+   Expect: `OK: render --tables left README.md, Home.md and the stale blocks alone; a plain render repaired them; the control saw the rewrite`, exit 0.
+2. Run it on a clean checkout of main with the old toy.
+   Expect: `FAIL: ... Home.md has no automation row to make stale`.
