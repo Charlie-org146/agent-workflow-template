@@ -4,11 +4,13 @@
 """restart-tick (TD487): the 300 s launch agent and the watcher jobs a stopped session leaves. The installer writes a plist
 (StartInterval 300, running the tick) into a temp folder and an uninstall removes it; a fake launchctl fails the toy if the
 build ever loads, bootstraps or boots out anything. A job left by a stopped session is resumed once by the tick, with a fake
-gh: clean green and --arm queues the pull request, red records the failed checks and queues nothing. Only the operation session
-may leave an --arm job, and the tick reads and prints (checkin.py): it never runs operate.py run, watch.py or sessions.py assign."""
+gh: clean green at the job's recorded head and --arm runs merge.py's own path once (the job id is the goal's slug, --go-head the head, as
+the pod that wrote the job), another head waits, red records the failed checks and merges nothing. Only the operation session may
+leave an --arm job (it names a head), and the tick reads and prints (checkin.py): it never runs operate.py run, watch.py or sessions.py assign."""
 import json
 import os
 import plistlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -26,6 +28,14 @@ def check(ok, text):
 
 with tempfile.TemporaryDirectory() as tmp:
     bin_, agents, repo = (os.path.join(tmp, x) for x in ("bin", "agents", "repo"))
+    # a copy of the monitoring scripts beside a stub merge.py: the tick finds merge.py by its path from mailbox.py, so the stub records each call
+    tree = os.path.join(tmp, "skills")
+    shutil.copytree(os.path.dirname(mailbox), os.path.join(tree, "workflow-monitoring", "scripts"), ignore=shutil.ignore_patterns("__pycache__"))
+    os.makedirs(os.path.join(tree, "workflow-release", "scripts"))
+    with open(os.path.join(tree, "workflow-release", "scripts", "merge.py"), "w") as handle:
+        handle.write("import os, sys\nopen(os.path.join(os.environ['FAKE_DIR'], 'merge.log'), 'a').write(' '.join(sys.argv[1:]) + ' pod=' + os.environ.get('LOOP_POD_ID', '') + '\\n')\n"
+                     "sys.exit(1 if sys.argv[1] == 'failgoal' else 0)\n")
+    mailbox = os.path.join(tree, "workflow-monitoring", "scripts", "mailbox.py")
     os.makedirs(bin_)
     os.makedirs(repo)
     fake = {"gh": '#!/bin/sh\necho "$*" >> "$FAKE_DIR/gh.log"\nif [ "$1 $2" = "pr view" ]; then cat "$FAKE_DIR/pr-$3.json"; exit 0; fi\nexit 0\n',
@@ -70,35 +80,38 @@ with tempfile.TemporaryDirectory() as tmp:
     pr(6, "OPEN", [ok_, {"context": "GitGuardian", "state": "SUCCESS"}])
     pr(7, "OPEN", [ok_, {"context": "GitGuardian", "state": "FAILURE"}])
     for ident, number, arm in (("green", 1, True), ("red", 2, True), ("running", 3, True), ("report", 4, False), ("gg-pending", 5, True), ("gg-ok", 6, True), ("gg-bad", 7, True)):
-        run("watch", ident, "--pr", str(number), *(["--arm"] if arm else []))  # as a session that then stopped
+        run("watch", ident, "--pr", str(number), *(["--arm", "--head", "a" * 40] if arm else []))  # as a session that then stopped
     folder = os.path.join(repo, ".git", "loop", "watchers")
+    check(not os.path.exists(os.path.join(tmp, "merge.log")), "no job: nothing has called merge.py")
+    nohead = run("watch", "nohead", "--pr", "9", "--arm")
+    check(nohead.returncode != 0 and "--head" in nohead.stderr + nohead.stdout and not os.path.exists(os.path.join(folder, "nohead.json")),
+          "an --arm job with no head is refused and nothing is written")
+    pr(82, "OPEN", [ok_])
+    run("watch", "movedhead", "--pr", "82", "--arm", "--head", "b" * 40)  # the pull request is at another head than the job names
+    pr(83, "OPEN", [ok_])
+    run("watch", "failgoal", "--pr", "83", "--arm", "--head", "a" * 40)  # merge.py refuses it
     refused = run("watch", "workerjob", "--pr", "9", "--arm", LOOP_ROLE="worker")
     check(refused.returncode != 0 and "REFUSED" in refused.stderr + refused.stdout and not os.path.exists(os.path.join(repo, ".git", "loop", "watchers", "workerjob.json")),
           "a worker's --arm job is refused and nothing is written")
     check(run("watch", "workerjob2", "--pr", "9", LOOP_ROLE="worker").returncode == 0, "a worker may still leave a report-only job")
-    pr(80, "OPEN", [ok_])
-    pr(81, "OPEN", [ok_])
-    run("watch", "headok", "--pr", "80", "--arm", "--head", "a" * 40)  # the head the operation session saw
-    run("watch", "headbad", "--pr", "81", "--arm", "--head", "b" * 40)  # the pull request has moved to another head since
     first = run("tick")
     state = {n[:-5]: json.load(open(os.path.join(folder, n))) for n in os.listdir(folder)}
-    log = open(os.path.join(tmp, "gh.log")).read()
-    check(state["green"]["state"] == "armed" and log.count("pr merge 1 --auto --merge --match-head-commit " + "a" * 40) == 1,
-          "a clean green job with --arm is queued once at its head")
-    check(state["red"]["state"] == "red" and "small" in state["red"]["result"] and "pr merge 2" not in log, "a red job records the failed check and queues nothing")
-    check(state["running"]["state"] == "waiting" and "pr merge 3" not in log, "a job whose checks still run is left waiting")
-    check(state["report"]["state"] == "green" and "pr merge 4" not in log, "a green job without --arm is only reported")
-    check(state["gg-pending"]["state"] == "waiting" and "pr merge 5" not in log, "a status check still pending (GitGuardian) keeps the job waiting")
-    check(state["gg-ok"]["state"] == "armed" and "pr merge 6 " in log, "a status check that succeeded (GitGuardian) lets it arm")
-    check(state["gg-bad"]["state"] == "red" and "GitGuardian" in state["gg-bad"]["result"] and "pr merge 7" not in log, "a failed status check names GitGuardian and arms nothing")
+    calls = open(os.path.join(tmp, "merge.log")).read().splitlines()
+    called = lambda ident: [c for c in calls if c.split()[0] == ident]
+    check(state["green"]["state"] == "armed" and called("green") == ["green --go-head " + "a" * 40 + " pod=ops-session"],
+          "a clean green job with --arm calls merge.py's own path once, with the job's head and the pod that wrote the job")
+    check(state["red"]["state"] == "red" and "small" in state["red"]["result"] and not called("red"), "a red job records the failed check and merges nothing")
+    check(state["running"]["state"] == "waiting" and not called("running"), "a job whose checks still run is left waiting")
+    check(state["report"]["state"] == "green" and not called("report"), "a green job without --arm is only reported")
+    check(state["gg-pending"]["state"] == "waiting" and not called("gg-pending"), "a status check still pending (GitGuardian) keeps the job waiting")
+    check(state["gg-ok"]["state"] == "armed" and len(called("gg-ok")) == 1, "a status check that succeeded (GitGuardian) lets it arm")
+    check(state["gg-bad"]["state"] == "red" and "GitGuardian" in state["gg-bad"]["result"] and not called("gg-bad"), "a failed status check names GitGuardian and merges nothing")
+    check(state["movedhead"]["state"] == "waiting" and "head moved" in state["movedhead"]["result"] and not called("movedhead"),
+          "a job whose head is not the pull request's head waits, consumes nothing and calls nothing")
+    check(state["failgoal"]["state"] == "arm-failed" and len(called("failgoal")) == 1, "a job merge.py refuses is consumed as arm-failed")
     run("tick")
-    check(open(os.path.join(tmp, "gh.log")).read().count("pr merge 1") == 1, "a second tick does not queue it again")
-    log = open(os.path.join(tmp, "gh.log")).read()
-    state = {n[:-5]: json.load(open(os.path.join(folder, n))) for n in os.listdir(folder)}
-    check(state["headok"]["state"] == "armed" and log.count("pr merge 80 --auto --merge --match-head-commit " + "a" * 40) == 1,
-          "a job whose recorded head is the pull request's head arms, once, and a second tick refuses to arm it again (armed is consumed)")
-    check(state["headbad"]["state"] == "refused" and "head moved" in state["headbad"]["result"] and "pr merge 81" not in log,
-          "negative control: a job whose recorded head is not the pull request's head refuses and queues nothing")
+    check(len(called_again := [c for c in open(os.path.join(tmp, "merge.log")).read().splitlines() if c.split()[0] in ("green", "gg-ok", "failgoal")]) == 3,
+          "a second tick calls merge.py for none of them again (%d calls in all)" % len(called_again))
     check("next check-in" in first.stdout or "Coming up" in first.stdout, "the tick then prints the check-in")
     sys.path.insert(0, os.path.dirname(mailbox))
     import inspect
@@ -108,6 +121,7 @@ with tempfile.TemporaryDirectory() as tmp:
     spec.loader.exec_module(module)
     body = inspect.getsource(module.cmd_tick)
     check(not any(word in body for word in ("operate.py", "watch.py", "sessions.py", "assign", "send")), "the tick's code never names operate.py, watch.py, sessions.py, assign or send")
+    check("gh pr merge" not in open(mailbox).read() and '"pr", "merge"' not in open(mailbox).read(), "mailbox.py never merges itself: merge.py is the one merging script")
     used = open(os.path.join(tmp, "launchctl.log")).read() if os.path.exists(os.path.join(tmp, "launchctl.log")) else ""
     check(not any(word in used for word in ("bootstrap", "load", "bootout", "enable", "kickstart")), "nothing was loaded, bootstrapped or booted out: launchctl saw only %r" % used.strip())
 sys.exit(1 if failed else 0)
