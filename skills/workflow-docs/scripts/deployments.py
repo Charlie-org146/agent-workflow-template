@@ -4,6 +4,7 @@ commands.md's rules block names the section, headers and Access words, and each 
 findings out (pageformat.bad's shape); a secret-bearing value is never echoed: links read <link>, addresses <address>.
 criteria.py's page rules (rules, criteria_max, SHEET) sit at the end, moved here unchanged.
 """
+import importlib.util
 import json
 import os
 import re
@@ -253,7 +254,9 @@ def safety(text):
     here = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "workflow-monitoring", "scripts")
     try:
         sys.path.insert(0, here)
-        import auto
+        spec = importlib.util.spec_from_file_location("auto", os.path.join(here, "auto.py"))  # by path: a skill never imports another
+        auto = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(auto)
         return next((name for name, found in auto.CLASSES.items() if found.search(text)), "")
     except Exception:
         return "unreadable"
