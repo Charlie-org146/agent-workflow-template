@@ -243,6 +243,7 @@ health-mail-env-windows	PASS	2026-11-17
 health-not-enforced-fail	PASS	2026-11-10	
 health-not-enforced-warn	PASS	2026-11-10	
 health-register-no-launchd	PASS	2026-11-14	
+health-stale-checkout	PASS	2026-11-20	
 health-tests-error	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 health-timing	PASS	2026-11-11	
 health-unreviewed-warn-issue-118	PASS	2026-11-10	
