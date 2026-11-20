@@ -1,7 +1,7 @@
 # merge.py enqueues a green pull request at its GO'd head into GitHub's merge queue (`gh pr merge --merge --auto --match-head-commit <GO head>`, which queues it when main's ruleset requires a queue), waits for the queue to merge it, then cuts the release as today; with the queue off it merges as today; it records each PR's green-to-main time and health reports the median against 15 minutes (REL-13 rewritten, TD219, o282; GitHub merge queue, Uber SubmitQueue, Zuul)
 
 - Slug: merge-queue
-- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-health/scripts/rules.py, docs/wiki/Release.md, docs/wiki/How-to-use-Release.md, dev/toy/test-merge-guard.sh, .loop/regression.tsv
+- Touches: skills/workflow-release/scripts/merge.py, skills/workflow-health/scripts/rules.py, docs/wiki/Release.md, docs/wiki/How-to-use-Release.md, dev/toy/test-merge-guard.sh, .loop/regression.tsv, skills/workflow-release/scripts/autorelease.py, skills/workflow-monitoring/scripts/graph.py
 - ETA: 450 active minutes (estimate 358m plus a 25% margin)
 
 ## Done lines
