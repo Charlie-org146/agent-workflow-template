@@ -144,7 +144,7 @@ depth-on-board	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-recorded	PASS	2026-11-18	
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-setup	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-describe-needed	PASS	2026-11-19	
+describe-needed	PASS	2026-11-20	
 desk-lists	PASS	2026-11-18	
 desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
@@ -298,7 +298,7 @@ issues-phone-97	PASS	2026-11-10
 judge-needs-you	PASS	2026-11-19	
 judge-section-format	PASS	2026-11-19	
 judge-verdict-unchanged	PASS	2026-11-19	
-keeps-seen-red	PASS	2026-11-19	
+keeps-seen-red	PASS	2026-11-20	
 known-no-block	PASS	2026-11-20	
 known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 landed-left-alone	PASS	2026-11-09	
@@ -313,7 +313,7 @@ lane-ports-tmpdir	PASS	2026-11-16		b8a343107016
 lane-start-mark-once	PASS	2026-11-11	
 lane-walk-skips-node-modules	PASS	2026-11-14	
 lanes-abs-not-walked	PASS	2026-11-14	
-lanes-affected	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+lanes-affected	PASS	2026-11-20	
 lanes-always	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-check	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-declared	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -355,7 +355,6 @@ ls-plist	FAIL	2026-11-13
 mac-rows-skip-77	PASS	2026-11-13	
 machine-backup-restore	PASS	2026-11-17	
 machine-caps	PASS	2026-11-16	
-machine-check-gaps	PASS	2026-11-20	
 machine-done-12	PASS	2026-11-16	
 machine-done-5	PASS	2026-11-16	
 machine-done-7	PASS	2026-11-17		5f5595078446
