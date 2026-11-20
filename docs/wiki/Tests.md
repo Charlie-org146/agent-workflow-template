@@ -905,6 +905,8 @@
 | <a id="t-rel-promote-snapshot"></a>rel-promote-snapshot | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-revert-pr"></a>rel-revert-pr | requirement | REL-3 | not run | - | local | 2026-11-17 |
 | <a id="t-rel-owner-only"></a>rel-owner-only | requirement | REL-3 | not run | - | local | 2026-11-17 |
+| <a id="t-rel-ci-release"></a>rel-ci-release | requirement | REL-15 | not run | - | local | 2026-11-20 |
+| <a id="t-rel-update-asset"></a>rel-update-asset | requirement | REL-15 | not run | - | local | 2026-11-20 |
 
 ## Setup
 

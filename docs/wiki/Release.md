@@ -209,4 +209,6 @@ None
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
 | [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
 | - | requirement | REL-13 | no passing test | not enforced |
+| [rel-ci-release](Tests#t-rel-ci-release) | requirement | REL-15 | Given merge_queue on, when finish() runs after a merge, then the release is made by release.yml on push to main, finish() pushes no commit and opens no pull request, and the part is a release label (patch by default). | not run |
+| [rel-update-asset](Tests#t-rel-update-asset) | requirement | REL-15 | Given a release with a package asset, when update downloads it, then it uses the asset, and with no asset it falls back to the source archive. | not run |
 | - | requirement | REL-15 | no passing test | not enforced |

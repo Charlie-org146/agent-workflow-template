@@ -101,7 +101,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
-| `public_origins` | 45 entries in config.json |  |
+| `public_origins` | 46 entries in config.json |  |
 | `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs; off is off. |
 | `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
