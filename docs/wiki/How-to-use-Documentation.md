@@ -78,6 +78,7 @@ Each requirement and how it is delivered:
 
 - DOC-1: PRD template. Example, from the stale-found test: given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale; and, from the format-bullets test, a requirement with no sub-bullet fails the check naming the page and Requirements.
 - DOC-2: The PRD is mine. Example, from the review-dated test: given a criterion, when it is reviewed, then it is marked Reviewed with the date. Also: `criteria.py revise DOC-4 --text "New wording" --why "the owner asked" --owner-record o30`. Also: `criteria.py retire DOC-6 --as merged:DOC-1 --why "same rule" --owner-record o30`. Also: `criteria.py migrate --page Documentation --owner-record o30`. Also: `goal.py pr`. Also: `goal.py finding GOAL "DOC-1 gap" --requirement DOC-1`. Also: `criteria.py guard`.
+- DOC-24: Every requirement names what it follows (v2.0 planned). The README's principle tables show each requirement's Follows cell, its tool or standard, a link to its source and its verdict, for example adapted from GitHub CODEOWNERS for DOC-2. Example: a requirement row with an empty Follows cell fails the docs check.
 
 ### Skill: workflow-docs
 - **Say:** "Check the docs"

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept known-red-lanes@ef51a1bcf -->
+Review: **Unreviewed** <!-- kept principle-7-readme@6991b3397 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -40,6 +40,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19]
   - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19]
   - Done lines can't change once the goal starts; a change means a new goal. [DEL-2]
+- DEL-21: **Unreviewed** Adopt a standard tool by default
+  - Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-21]
 
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-19** Work survives failure and moves by backup <!-- reviewed 491db53a -->
@@ -228,11 +230,17 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every goal serves a requirement <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. <br> A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### DEL-21
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Adopt a standard tool by default <br> Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-21] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given a goal with no done line, when it is started, then it is refused. | PASS 2026-11-19 |
+| [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given a goal with no done line, when it is started, then it is refused. | PASS 2026-11-20 |
 | [no-flow-refused](Tests#t-no-flow-refused) | requirement | DEL-1 | Given no skill flow is set, when a goal is started, then it does not start. | PASS 2026-11-19 |
 | [cut-needs-verify](Tests#t-cut-needs-verify) | requirement | DEL-1 | Given no Verify by hand steps, when a release is cut, then it is refused. | PASS 2026-11-19 |
 | [stop-after-3-tries](Tests#t-stop-after-3-tries) | requirement | DEL-1 | Given a goal, when three tries fail, then the goal stops and files a finding. | PASS 2026-11-09 |
@@ -240,7 +248,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [pr-needs-flow](Tests#t-pr-needs-flow) | requirement | DEL-1 | Given a flow step not yet done, when a pull request is opened, then it is refused. | PASS 2026-11-09 |
 | [starts-at-idea](Tests#t-starts-at-idea) | requirement | DEL-1 | Given a new goal, when it starts, then it starts at the idea step. | PASS 2026-11-09 |
 | [steps-through-flow](Tests#t-steps-through-flow) | requirement | DEL-1 | Given a step reply, when it is recorded, then it is accepted only if the flow ran that step. | PASS 2026-11-09 |
-| [no-prompts](Tests#t-no-prompts) | requirement | DEL-1 | Given any tool, when it runs, then it never waits on a terminal prompt. | PASS 2026-11-19 |
+| [no-prompts](Tests#t-no-prompts) | requirement | DEL-1 | Given any tool, when it runs, then it never waits on a terminal prompt. | PASS 2026-11-20 |
 | [wiki-release](Tests#t-wiki-release) | requirement | DEL-1 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-19 |
 | [auto-release](Tests#t-auto-release) | requirement | DEL-1 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
 | [defect-flow-steps](Tests#t-defect-flow-steps) | requirement | DEL-1 | Given the flow, when it is checked, then it has no checks step and every step can be mapped, with a default suite and overrides. | PASS 2026-11-12 |
@@ -320,6 +328,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | DEL-17 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
 | - | requirement | DEL-17 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
+| - | requirement | DEL-21 | no passing test | not enforced |
 | [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | PASS 2026-11-18 |
 | [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | DEL-7 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
 | [del8-step-stops](Tests#t-del8-step-stops) | requirement | DEL-7 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |

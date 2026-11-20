@@ -15,8 +15,7 @@ def topic_of(name, topics):
     return next((topic for topic, pages in topics.items() if name in pages), OTHER)
 
 
-def topic_order(topics):
-    return list(topics) + [OTHER]
+topic_order = lambda topics: list(topics) + [OTHER]
 RULE = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
 PATH = re.compile(r"(?<![\w/])/[\w.-]+/")
 EXT = re.compile(r"\.(py|sh|json|tsv|md)\b")
@@ -82,8 +81,7 @@ def tables(numbered):
     return found, other
 
 
-def heading_of(page):
-    return "How to use " + page.replace("-", " ")
+heading_of = lambda page: "How to use " + page.replace("-", " ")
 
 
 def anchors(readme):
@@ -137,7 +135,7 @@ def home(text, features, existing, readme, repo, topics=None):
 
 
 LIST = re.compile(r"^\| (\d) \| ([^|]+) \| ([^|]+) \| [a-z,]+ \|$", re.M)
-HEAD1, HEAD2 = "Requirement Summary Feature Version Flow".split(), ["Requirement", "Complete text"]
+HEAD1, HEAD2 = "Requirement Summary Follows Feature Version Flow".split(), ["Requirement", "Complete text"]
 IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
@@ -151,7 +149,7 @@ def frontdoor(page, text, listing, ids, kind="README"):
         rows = tabs[0][2] if ok else []
         for number, c in rows:
             for found in IDREF.findall(c[0]):
-                found in ids or "planned" in "".join(c[3:4]) or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
+                found in ids or "planned" in c[4] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
         return ok, rows, other
 
     head, *secs = parts(unblocked(text))
@@ -167,8 +165,9 @@ def frontdoor(page, text, listing, ids, kind="README"):
         if not ok or not other or words(other[0][1]) != words(sentence) or len(other) > 3:
             fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
         for number, c in rows:
-            m = re.search(r"flows/[^)/?#\s]+", c[4])
-            "planned" in c[3] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[4]), "add the diagram")
+            m = re.search(r"flows/[^)/?#\s]+", c[5])
+            c[2] or fail(number, "a Follows cell", "none", "add it")
+            "planned" in c[4] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
     more = secs[len(want):]
     if kind != "Principles":
         sec = more.pop(0) if more and more[0][0].startswith("Requirements by feature") else ("", 1, [])
