@@ -359,7 +359,7 @@ The one list the README, the Principles page and health's roll-up read (DOC-23, 
 |---|---|---|---|
 | 1 | Documentation-driven | Principles, features, requirements and tests are written first, in that order: nothing is built that a Reviewed requirement doesn't ask for, tests come from the requirements, and the PRD changes only by your words. | traceability |
 | 2 | Enforced and kept true | Every requirement is proven and kept true: tests and health check it, the pages agree with each other and the code, and whatever falls short, conflicts or goes stale becomes work until it is fixed. | requirements,tests,controls,consistency,docs,freshness,hygiene |
-| 3 | Fast, cheap and small | Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's. | performance,size |
+| 3 | Fast, cheap and small | Every change runs on one clock from my ask to main, with a limit for each step and a token budget for each, and sizes stay inside their limits. | performance,size |
 | 4 | Private and guarded | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
 | 5 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent; any repo adopts the template cleanly, byte for byte, and its README shows the template's principles and design logic as written; it plugs into other systems through adapters, and survives a failure without losing work. | adoption |
 | 6 | Autonomous, and you decide only what's yours | It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours. | attention |
