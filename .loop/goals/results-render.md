@@ -1,7 +1,7 @@
 # Part 0b (TD231): each lane writes .loop/lane-results/<slug>.tsv instead of appending .loop/regression-runs.tsv and re-rendering the Tests tables; the release commit on main renders the Tests tables, regression-runs.tsv, .loop/START.md, Home and the settings rows from the merged tree and fragments (towncrier)
 
 - Slug: results-render
-- Touches: skills/workflow-delivery/scripts/lanekit.py, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-release/scripts/autorelease.py, skills/workflow-docs/scripts/render.py, skills/workflow-release/scripts/wiki.py, .loop/lane-results/, dev/toy/test-lanes.sh, .loop/regression.tsv
+- Touches: skills/workflow-delivery/scripts/lanekit.py, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-release/scripts/autorelease.py, skills/workflow-docs/scripts/render.py, skills/workflow-release/scripts/wiki.py, .loop/lane-results/, dev/toy/test-lanes.sh, .loop/regression.tsv, skills/workflow-delivery/scripts/role.py, skills/workflow-regression/scripts/lanes.py
 - ETA: 255 active minutes (estimate 202m plus a 25% margin)
 
 ## Done lines
