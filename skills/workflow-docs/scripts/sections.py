@@ -111,12 +111,12 @@ def what(page):
 
 
 def fresh(text, folder, read):
-    """README, Home or Principles with its generated parts current; text with no System design section is left alone."""
+    """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
     text = tables(text)
     if "\n## System design" not in text:
         return text
     block = what(read(os.path.join(folder, "Delivery.md")))
-    return re.sub(r"\n## What this is\n.*?(?=\n## )", lambda _: "\n" + block.rstrip("\n") + "\n", text, 1, re.S) if "\n## What this is\n" in text else text.replace("\n## System design", "\n" + block + "\n## System design", 1)
+    return re.sub(r"\n## What this is(?:\n\n[^\n]+(?:\n[^\n]+)*)?", lambda _: "\n" + block.rstrip("\n"), text, 1) if "\n## What this is\n" in text else text.replace("\n## System design", "\n" + block + "\n## System design", 1)
 
 
 def pages(root, folder, listed):

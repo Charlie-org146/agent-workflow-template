@@ -58,4 +58,19 @@ out=$(mig "Version | Flow")
 if echo "$out" | grep -qF "| [X-1 A](u) ([f](flows/X-1.svg)) | s | a: adopted; b: adapted | Docs | 50% |  |" && echo "$out" | grep -qF "| Adoption | Confidence |"; then echo "PASS: DOC-25 the render moves the figure link into the Requirement cell and computes Adoption from the Follows tags"; else echo "FAIL: DOC-25 migrate: $out"; fails=1; fi
 if echo "$out" | grep -qF "Adoption: 25% (the average" && echo "$out" | grep -qF "It is a loop. Done."; then echo "PASS: DOC-25 the render averages Adoption per principle and writes What this is from DEL-19"; else echo "FAIL: DOC-25 average: $out"; fails=1; fi
 if [ "$(mig "Adoption | Confidence" | grep -c "^| \[X-")" = 2 ]; then echo "PASS: DOC-25 a table already in the new columns, with a blank Confidence, is kept"; else echo "FAIL: DOC-25 new columns kept"; fails=1; fi
+# What this is: fresh() rewrites only the generated first paragraph; owner paragraphs after it stay byte for byte
+keep() { # TEXT: sections.fresh on a front page whose Delivery page has DEL-19 "Gen."
+  python3 -c '
+import sys, sections as s
+print(s.fresh(sys.argv[1], "d", lambda _: "- DEL-19: x\n  - Gen. [DEL-19]\n"), end="")' "$1"; }
+own=$'# t\n\n## What this is\n\nOld generated.\n\nOwner one.\n\nOwner two, kept.\n\n## System design\n\n## 1. One\n'
+out=$(keep "$own")
+if [ "$out" = "$(sub 'Old generated.' 'Gen.' "$own")" ]; then echo "PASS: DOC-25 a What this is with owner paragraphs after the generated one keeps them byte for byte"; else echo "FAIL: DOC-25 owner paragraphs kept: $out"; fails=1; fi
+gen=$'# t\n\n## What this is\n\nGen.\n\n## System design\n\n## 1. One\n'
+if [ "$(keep "$gen")" = "${gen%$'\n'}" ]; then echo "PASS: DOC-25 a What this is of only the generated paragraph is unchanged"; else echo "FAIL: DOC-25 generated only: $(keep "$gen")"; fails=1; fi
+if [ "$(keep "$(sub 'Gen.' 'Stale.' "$gen")")" = "${gen%$'\n'}" ]; then echo "PASS: DOC-25 a stale generated paragraph is rewritten"; else echo "FAIL: DOC-25 stale paragraph not rewritten"; fails=1; fi
+if python3 -c '
+import sys, counting
+o = counting.origins(sys.argv[1])
+sys.exit(not ("https://rework.withgoogle.com" in o and "https://www.gitguardian.com" in o and "https://example.invalid" not in o))' "$here"; then echo "PASS: DOC-19 public_origins holds the two new hosts and still refuses an unlisted one"; else echo "FAIL: DOC-19 public_origins"; fails=1; fi
 [ $fails = 0 ] && echo "ALL PASS" || { echo "FAILED"; exit 1; }
