@@ -179,6 +179,37 @@ for _ in $(seq 100); do [ -f "$FAKE_AGENT/prompt-slow" ] && break; sleep 0.1; do
 kill -9 -- "-$(field slow pid)" 2>/dev/null; sleep 0.3; rm -f "$FAKE_AGENT/prompt-slow"
 $W watch --once >/dev/null
 check "a failed goal waits before a mender starts" 'sleep 0.3; [ ! -e "$FAKE_AGENT/prompt-slow" ] && [ "$(field slow status)" = failed ] && [ "$(field slow mended)" = None ]'
+out=$(python3 - "$here" "$T" <<'PY'
+import os, sys
+sys.path.insert(0, sys.argv[1] + "/skills/workflow-monitoring/scripts")
+import mend
+res = []
+def mended(text):
+    st, calls = {"slug": "x", "pid": 1, "status": "failed", "branch": "b", "tries": 0}, []
+    mend.runs, mend.log_tail, mend.relaunch = (lambda: [st]), (lambda *a, **k: text), (lambda *a, **k: calls.append(1))
+    mend.free_to_restart, mend.too_soon, mend.save = (lambda s: True), (lambda s, c: False), (lambda *a, **k: None)
+    mend.where, mend.release_text, mend.resume_text = (lambda d: ""), (lambda s: ""), (lambda s: "")
+    mend.one_pass({"mend": True}, "d")
+    return bool(calls)
+res.append(mended("planning tool unavailable: autoplan is not installed") and mended("agent crashed") and not mended("2 tests failed: calc add is red"))
+goal = os.path.join(sys.argv[2], "g.md")
+open(goal, "w").write("# g\n\n## Verify by hand\n\n<!-- steps -->\n"); open(goal[:-3] + ".plan.md", "w").write("Step one then two.")
+mend.git = lambda *a, **k: "2026-11-20T00:00:00+00:00"  # frozen after the refusal landed
+body, why = mend.pr_extra(goal, "x\n## Result\nok")
+res.append("## Plan" in body and "Step one then two." in body and bool(why))
+mend.git = lambda *a, **k: "2026-11-01T00:00:00+00:00"  # frozen before it landed: spared
+res.append(mend.pr_extra(goal, "x")[1] == "")
+mend.git = lambda *a, **k: "2026-11-20T00:00:00+00:00"
+open(goal, "w").write("# g\n\n## Verify by hand\n\n1. Run it.\n   Expect: ok.\n")
+res.append(mend.pr_extra(goal, "x")[1] == "")
+st, note = {"slug": "x", "status": "running"}, []
+mend.budget_wait(st, "minutes", 90, 60, lambda s, n: note.append(n))
+w = st["waiting"]
+res.append(st["status"] == "waiting" and w["kind"] == "owner" and w["words"] == ["goal.py set x --budget-minutes N --why ..."] and "approve" not in str(w).lower() and bool(note))
+print("OK" if all(res) else "BAD %s" % res)
+PY
+)
+check "mend gives a fresh session only for an unusable session or tool, the PR body gets the plan, an empty Verify by hand refuses a goal frozen after the change and spares one frozen before it, and a budget stop waits with the raise command" '[ "$out" = OK ]'
 sets slow 'status="done"' 
 mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$here/skills/workflow-monitoring/scripts/proctree.py" "$here/skills/workflow-monitoring/scripts/replan.py" "$here/skills/workflow-monitoring/scripts/worker.py" "$here/skills/workflow-monitoring/scripts/sessions.py" "$here/skills/workflow-monitoring/scripts/auto.py" "$here/skills/workflow-monitoring/scripts/board_log.py" "$here/skills/workflow-monitoring/scripts/board_model.py" "$here/skills/workflow-monitoring/scripts/board_page.py" "$here/skills/workflow-monitoring/scripts/board_status.py" "$T/lone/"  # watch.py and what it imports, but no mend.py
 check "watch.py alone runs, and says it mended nothing" 'python3 "$T/lone/watch.py" watch --once | grep -q "mend.py isn.t beside"'

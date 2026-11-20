@@ -18,7 +18,6 @@ import subprocess
 import sys
 import time
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -29,6 +28,8 @@ import proctree  # noqa: E402
 from proctree import pstart  # noqa: E402,F401
 
 LIMIT = re.compile(r"(?i)usage limit|rate limit|limit reached|quota exceeded|too many requests|out of credits")
+FROZEN_AFTER = "2026-11-19T14:54:00+00:00"  # goals frozen before the empty-Verify refusal landed are spared
+UNUSABLE = re.compile(r"(?i)agent crashed|session (?:ended|died|closed|is not usable|unreachable|unavailable)|tool (?:not found|unavailable|is not installed)|could not find|command not found|no such (?:tool|skill)|planning tool")
 RESUME_PROMPT = """Use the workflow-delivery skill to continue the goal {slug} in this git worktree, on branch {branch}.
 {where}
 The goal is already frozen. Read .loop/goals/{slug}.md and run `goal.py show {slug}` to see the run record, then go on
@@ -123,7 +124,6 @@ def log_tail(slug, size, mark=0):
 
 
 def landed(state):
-    """The URL of the goal's merged pull request, found by branch because a record's pr can be empty."""
     target = state.get("pr") or state.get("branch")
     try:
         done = subprocess.run(["gh", "pr", "view", target, "--json", "state,url"], capture_output=True, text=True, timeout=20)
@@ -139,7 +139,7 @@ def close_landed(state, url):
 
 
 def stop_late_mender(state):
-    """A mender still running on a goal that has landed has nothing left to do, and would judge an empty diff."""
+    """Stop a mender still running on a landed goal."""
     url = landed(state)
     if url and alive(state.get("pid")) and state.get("pstart") and pstart(state["pid"]) == state["pstart"]:  # ours, not a reused pid
         proctree.kill(state["pid"], signal.SIGTERM)
@@ -163,8 +163,6 @@ def release_text(state):
 
 
 def resume_text(state):
-    """Where a restarted goal goes on (fit.resume_at), its exact next command, and the worktree as it stands (D7):
-    uncommitted files and HEAD, so partial edits are reconciled. '' when workflow-delivery's fit.py is not beside us."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "fit.py")
     try:
         spec = importlib.util.spec_from_file_location("fit", path)
@@ -230,7 +228,7 @@ def relaunch(state, prompt, cfg, note):
 
 
 def free_to_restart(state):
-    """Read the record again, since the goal may have moved since this pass began."""
+    """The record, read again."""
     fresh = load(state["slug"]) or {}
     if fresh.get("status") not in ("failed", "stopped"):
         return False
@@ -246,6 +244,24 @@ def too_soon(state, cfg):
     except (KeyError, ValueError):
         return False
     return (datetime.datetime.now(datetime.timezone.utc) - ended).total_seconds() < float(cfg.get("mend_wait", 120))
+
+
+def pr_extra(goal_path, body):
+    """(body plus ## Plan, why pr refuses an empty Verify by hand once frozen after FROZEN_AFTER)."""
+    read = lambda path: open(path).read().strip() if os.path.exists(path) else ""
+    plan, text = read(goal_path[:-3] + ".plan.md"), read(goal_path)
+    steps = re.sub(r"<!--.*?-->", "", text.partition("## Verify by hand")[2].split("\n## ", 1)[0], flags=re.S).strip()
+    froze = (git("log", "--diff-filter=A", "--format=%cI", "--", goal_path) or "").split()[-1:]
+    late = froze and datetime.datetime.fromisoformat(froze[0]) > datetime.datetime.fromisoformat(FROZEN_AFTER)
+    return (body.replace("\n## Result\n", "\n## Plan\n\n%s\n\n## Result\n" % plan, 1) if plan else body), "Verify by hand is still the empty comment" * bool(late and not steps)
+
+
+def budget_wait(state, name, spent, limit, save):
+    """A budget stop waits under Needs you with the raise command."""
+    word = "goal.py set %s --budget-%s N --why ..." % (state["slug"], name)
+    state["status"], state["waiting"] = "waiting", {"ask": "%s hit its %s budget (%d of %d); raise it, or leave it stopped" % (state["slug"], name, spent, limit),
+                                                    "words": [word], "recommend": word, "kind": "owner", "budget": True}
+    save(state, "budget stop: waiting under Needs you")
 
 
 def one_pass(cfg, skill_dir):
@@ -271,7 +287,7 @@ def one_pass(cfg, skill_dir):
                 state.pop("limit_seen")
                 prompt = RESUME_PROMPT.format(slug=slug, branch=state["branch"], where=where(skill_dir), release=release_text(state), resume=resume_text(state))
                 relaunch(state, prompt, cfg, "resumed after the limit")
-        elif cfg.get("mend") and not state.get("mended") and free_to_restart(state):
+        elif cfg.get("mend") and not state.get("mended") and free_to_restart(state) and UNUSABLE.search(tail):
             if too_soon(state, cfg):
                 pending = True
                 continue
@@ -312,7 +328,6 @@ def ghj(args, cwd):
 
 
 def released(run, top):
-    """Merge and published release both verified: cut with a version and url, pull request MERGED, release no draft."""
     if run.get("release") != "cut" or not (run.get("release_url") and run.get("release_version") and run.get("pr")):
         return False
     pr, rel = ghj(["pr", "view", run["pr"], "--json", "state"], top), ghj(["release", "view", "v%s" % run["release_version"], "--json", "isDraft"], top)
@@ -320,8 +335,6 @@ def released(run, top):
 
 
 def to_archive(found, runs_dir, top, pressure, mine=""):
-    """[(sid, name, why)] oldest first: worker sessions whose goal's merge and release are verified, and under memory pressure idle ones whose goal is retired.
-    Never a running, waiting or queued goal, an operation session or this one."""
     out = []
     for sid, item in sorted(found.items(), key=lambda kv: str(kv[1].get("since"))):
         name, last = str(item.get("name")), item.get("slug") if item.get("state") == "busy" else (item.get("history") or [{}])[-1].get("slug")
@@ -353,8 +366,6 @@ def archived_since(folder, stamp):
 
 
 def feature_of(root, text, item=None):
-    """A goal's feature page: the page defining the first requirement ID in its text, else its stored feature, its issue's feature:<Page> label, the page whose
-    docs.tsv paths cover its touches, else 'no feature'."""
     item, wiki = item or {}, os.path.join(root, "docs", "wiki")
     pages = [x[:-3] for x in sorted(os.listdir(wiki)) if x.endswith(".md") and x[:-3] not in ("Home", "Tests", "Roadmap") and x[:6] != "How-to"] if os.path.isdir(wiki) else []
     prefix = (re.findall(r"\b([A-Z]{2,5})-\d+\b", str(text or "")) or [""])[0]

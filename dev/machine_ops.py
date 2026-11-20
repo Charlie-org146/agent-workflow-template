@@ -16,6 +16,19 @@ def git(repo, *args):
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
+def skills_gap():
+    """['GAP skills-checkout: ...'] when the skills checkout is behind origin (reads the remote head, writes nothing), else []."""
+    head = git(CLONE, "rev-parse", "HEAD")
+    try:
+        out = subprocess.run(["git", "-C", CLONE, "ls-remote", os.environ.get("LOOP_SKILLS_ORIGIN", "origin"), "HEAD"], capture_output=True, text=True, timeout=20).stdout.split()
+    except (OSError, subprocess.SubprocessError):
+        return []
+    if not head or not out or out[0] == head:
+        return []
+    ahead = subprocess.run(["git", "-C", CLONE, "merge-base", "--is-ancestor", out[0], head], capture_output=True).returncode == 0
+    return [] if ahead else ["GAP skills-checkout: the skills checkout is behind origin -> run: git -C %s pull" % CLONE]
+
+
 def repo_of(path):
     top = git(path, "rev-parse", "--show-toplevel")
     return os.path.realpath(top) if top else ""

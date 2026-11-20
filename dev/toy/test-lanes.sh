@@ -222,6 +222,7 @@ check "ship reuses qa's run on unchanged content and runs no row" 'grep -q "^LAN
 echo "== pr: a base merge reruns only the rows it affected"
 git clone -q "$d/origin.git" "$d/other"; (cd "$d/other" && git config user.email t@example.test && git config user.name Toy \
   && printf 'ok from base\n' > src/b.txt && git commit -qam "Base changes b" && git push -q origin main)
+python3 "$here/dev/toy/fillverify.py" lg >/dev/null
 out=$($goal pr lg 2>&1); echo "$out"
 check "pr merges the base and reruns only the row the merge affected" 'grep -q "^MERGED" <<<"$out" && grep -q "^AFFECTED 1 of [0-9]* rows (b)" "$common/loop/runs/lg.pr-lane.txt" && grep -q "^PR " <<<"$out"'
 # Value: protects=a red pr lane counts a try and pushes nothing; fails_when=goal.py pr ignores or inverts the lane's fail

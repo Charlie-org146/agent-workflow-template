@@ -73,7 +73,7 @@ import sys; sys.path.insert(0, sys.argv[1] + "/skills/workflow-delivery/scripts"
 import flow; print(flow.PROMPT.format(skill="s", step="review", slug="x", branch="b", purpose="p", note="", depth=flow.depth_rule("review")))
 PY
 check "the review prompt says run the full pipeline, never condense, and write a DEPTH line" 'grep -q "review_depth is full: run the skill.s full pipeline" "$d/prompt" && grep -q "DEPTH: full. or .DEPTH: condensed" "$d/prompt"'
-out=$($goal pr full1 2>&1)
+python3 "$here/dev/toy/fillverify.py" full1 >/dev/null 2>&1; out=$($goal pr full1 2>&1)
 grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" || { echo "pr full1: $(tail -4 <<<"$out" | cut -c1-200)"; echo "pr calls: $(grep -c "^pr create" "$FAKE_GH_DIR/calls.log") pr create, depth lines: $(grep -c "depth full" "$FAKE_GH_DIR/calls.log")"; } >> "$DIAG"
 check "the pull request body lists every step with its depth" 'grep -q -- "- review: done (depth full)" "$FAKE_GH_DIR/calls.log" && grep -q -- "- idea: done (depth full)" "$FAKE_GH_DIR/calls.log"'
 

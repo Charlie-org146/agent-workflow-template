@@ -11,7 +11,7 @@ Takes one sentence and its done lines to a merged, released pull request (a draf
 |---|---|---|---|
 | `workflow-delivery` | Skill | Takes one sentence and its done lines to a pull request, unattended. | Say "Start a goal ...", then "Go"; the goal is frozen and a worker session starts it. |
 | `workflow-release` | Skill | Releases a goal once it has a pull request. | Say "Merge it" for a ready pull request. |
-| `goal.py` | Command | Holds one goal's record: its done lines, the skill flow's steps and its pull request. | `python3 skills/workflow-delivery/scripts/goal.py <command> <slug>`. |
+| `goal.py` | Command | Holds one goal's record: its done lines, the skill flow's steps and its pull request, whose body carries the plan text; `pr` refuses while Verify by hand is still empty. | `python3 skills/workflow-delivery/scripts/goal.py <command> <slug>`. |
 | `flow.py` | Command | Runs one step of a goal's skill flow (idea, plan, review, qa, ship). | `python3 skills/workflow-delivery/scripts/flow.py SLUG STEP`, again until it stops printing `RUNNING`. |
 
 ### System diagram

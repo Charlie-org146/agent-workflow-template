@@ -56,6 +56,7 @@ finish() { # finish SLUG TEXT: a goal whose flow is done, with a change committe
   $goal new "$1" --here --goal "Add $1" --done "$2" >/dev/null || no "new"
   printf '\n# %s\n' "$1" >> calc.py; git commit -qam "Add $1 to calc"
   bash "$here/dev/toy/flow-done.sh" "$1" || no "flow"
+  python3 "$here/dev/toy/fillverify.py" "$1"  # goal.py pr refuses an empty Verify by hand
 }
 
 case "$case" in
