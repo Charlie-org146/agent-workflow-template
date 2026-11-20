@@ -29,8 +29,8 @@ env = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE
 env.update(HOME=scratch, USERPROFILE=scratch, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
 
 
-def run(*cmd, cwd=None):
-    return subprocess.run(list(cmd), cwd=cwd or work, capture_output=True, text=True, env=env)
+def run(*cmd, cwd=None, more=None):
+    return subprocess.run(list(cmd), cwd=cwd or work, capture_output=True, text=True, env=dict(env, **(more or {})))
 
 
 work = os.path.join(scratch, "repo")
@@ -45,14 +45,17 @@ run("git", "init", "-q", "-b", "loop/delegation-records")
 run("git", "add", "-A")
 run("git", "commit", "-qm", "base")
 crit = os.path.join(work, "skills", "workflow-docs", "scripts", "criteria.py")
+os.makedirs(os.path.join(work, ".git", "loop"), exist_ok=True)
+open(os.path.join(work, ".git", "loop", "operation.id"), "w").write("op-session\n")
+OPERATION = {"CLAUDE_SESSION_ID": "op-session"}
 sess = os.path.join(work, "skills", "workflow-monitoring", "scripts", "sessions.py")
 text = open(os.path.join(work, "docs", "wiki", "Documentation.md")).read()
 section = text.split("### DOC-2\n", 1)[1].split("\n### ", 1)[0]
 rev = re.search(r"^\| (r\d+) \|", section, re.M).group(1)  # DOC-2's newest revision row
 
 
-def record(words, ids, *more):
-    done = run(sys.executable, sess, "owner-words", words, "--ids", ids, "--from", "top", *more)
+def record(words, ids, *more, who=None):
+    done = run(sys.executable, sess, "owner-words", words, "--ids", ids, "--from", "top", *more, more=OPERATION if who is None else who)
     return done, (re.search(r"OWNER-WORDS (o\d+)", done.stdout) or [None, ""])[1]
 
 
@@ -66,6 +69,12 @@ ask = "Please say in SET-10 that the package works in Claude Code and Codex"
 done, rid = record(ask, "delegation-records,SET-10", "--delegated", "TD465", "--doc2", rev)
 row = [r for r in open(os.path.join(work, ".git", "loop", "owner-words.tsv")).read().splitlines() if r.startswith(rid + "\t")]
 check(rid and row and "operation-top:delegated:TD465:DOC-2:%s" % rev in row[0], "a delegated record is written, citing TD465, DOC-2's revision and the asking words (%s)" % rid)
+for label, who in (("a worker session", {"CLAUDE_SESSION_ID": "op-session", "LOOP_ROLE": "worker"}), ("a session not in operation.id", {"CLAUDE_SESSION_ID": "other-session"}), ("a session with no id", {}), ("a worker that sets the operation id as LOOP_POD_ID", {"LOOP_POD_ID": "op-session", "LOOP_ROLE": "worker"})):
+    bad, none = record(ask, "delegation-records,SET-10", "--delegated", "TD465", "--doc2", rev, who=who)
+    check(bad.returncode != 0 and "operation session" in bad.stdout + bad.stderr and not none, "a delegated record from %s is REFUSED and nothing is written" % label)
+run("git", "worktree", "add", "-q", os.path.join(work, ".git", "loop", "worktrees", "w1"), "-b", "loop/w1")
+there = run(sys.executable, sess, "owner-words", ask, "--ids", "SET-10", "--from", "top", "--delegated", "TD465", "--doc2", rev, cwd=os.path.join(work, ".git", "loop", "worktrees", "w1"), more=OPERATION)
+check(there.returncode != 0 and "only an operation session" in there.stdout + there.stderr, "the operation session's id used inside a worker worktree is REFUSED")
 bad, _ = record(ask, "SET-10", "--delegated", "TD465")
 check(bad.returncode != 0 and "REFUSED" in (bad.stdout + bad.stderr), "a delegated record without DOC-2's revision is refused")
 bad, _ = record("Delete the old branches and force push", "SET-10", "--delegated", "TD465", "--doc2", rev)

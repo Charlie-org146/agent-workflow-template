@@ -242,6 +242,8 @@ def cmd_owner_words(args):
     ok, why = layers.relay(args.via, args.text)
     if not ok:
         sys.exit("REFUSED: %s. Nothing was written." % why)
+    if args.delegated:
+        proctree.require_operation(".", "a delegated approval")
     count = auto.add_owner_words(args, ids)
     import unattended; unattended.reset()
     print("OWNER-WORDS o%d covers %s" % (count, ",".join(ids)))
