@@ -92,6 +92,8 @@ only = sys.argv[1] if len(sys.argv) > 1 else ""
 os.environ.pop("LOOP_HEALTH_GH_FIXTURE", None)
 os.environ.pop("GH_TOKEN", None)
 os.environ.pop("GITHUB_TOKEN", None)
+os.environ.pop("GITHUB_ACTIONS", None)  # the digest refuses a tokenless step in Actions; this is a local fixture
+os.environ.pop("GITHUB_STEP_SUMMARY", None)
 with tempfile.TemporaryDirectory() as tmp:
     repo, d = os.path.join(tmp, "repo"), os.path.join(tmp, "gh")
     os.makedirs(d)

@@ -35,6 +35,7 @@ grep -q "/tmp\|/var/\|health-control-" <<<"$out" && bad "a control row shows a t
 broken="$d/broken/skills/workflow-health"; mkdir -p "$broken"; cp -R "$here/skills/workflow-health/scripts" "$broken/"
 for s in workflow-docs workflow-regression workflow-monitoring; do ln -s "$here/skills/$s" "$d/broken/skills/$s"; done
 sed -i.b 's/^LIMIT = 20 \* 1024$/LIMIT = 20 * 1024 * 1000/' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
+sed -i.b 's/^WARN = 19000 /WARN = 19000000 /' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
 out=$(python3 "$broken/scripts/health.py" check --group controls); rc=$?
 grep -q "^FAIL controls scripts control: cannot fire" <<<"$out" && grep -q "controls.py run scripts --keep" <<<"$out" && [ $rc = 1 ] \
   && ok "a broken rule is reported as unable to fire, with how to look" || bad "cannot fire"
@@ -53,7 +54,7 @@ grep -q '^REFUSED: rule local-branches has no negative control. Fix: add CONTROL
   && ! grep -q "^HEALTH" <<<"$out" && ok "a rule whose control is removed is refused before any report" || bad "refused removed control"
 out=$($health check --skip controls); ! grep -q "^== Controls" <<<"$out" && grep -q "skipped: .*Controls (not asked)" <<<"$out" && grep -q "^== Hygiene" <<<"$out" \
   && ok "check --skip controls leaves the group out" || bad "skip"
-out=$($health check --skip requirements,traceability,consistency,docs,freshness,tests,performance,security,size,hygiene,adoption,mine,controls); rc=$?
+out=$($health check --skip requirements,traceability,consistency,docs,freshness,tests,performance,security,size,hygiene,adoption,repo,mine,controls); rc=$?
 grep -q "^REFUSED: --skip leaves no group to check" <<<"$out" && [ $rc = 2 ] && ok "a --skip that leaves nothing is refused" || bad "skip all"
 # Value: protects=a control that crashes or whose rule cannot read is UNREAD, never a crash or a false "cannot fire";
 #   fails_when=one control's exception stops the check; why_new=review finding; seam=none; no_claim=none beyond protects
