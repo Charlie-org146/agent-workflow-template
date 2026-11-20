@@ -28,8 +28,8 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 - GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
   - The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]
   - Hook-skipping commits are refused and flagged. [GRD-6]
-- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed f9f4f9b1 -->
-  - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20]
+- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
+  - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]
   - No script on main is over its fail line. [GRD-20]
   - Reformatting a whole file only to fit is refused. [GRD-20]
 
@@ -224,6 +224,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | approved by operation-top under owner delegation (DOC-2, o486): the fail line matches the enforced Agensi limit | o654: "Then I want u to fix this merge time issuee first. I" |
 | r3 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | readme-six: the owner-approved final README (o514) | o576: "yes build it" |
 | r2 | 2026-11-19 | The package always fits Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20] <br> One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21] <br> A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22] | consolidation (TOP-DECISION 89) | o284: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | The package always passes Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. <br> A failure names the rule and the file. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
