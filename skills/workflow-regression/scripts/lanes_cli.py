@@ -178,7 +178,7 @@ def _put(path, rows):
 def merge_runs(root):
     """The lane record's PASS and FAIL rows (and any flaky flag, tiers.py flaky_apply) into .loop/lane-results/<slug>.tsv."""
     import runs
-    record, _ = lanes.load(lanes.record_path(root), root)
+    record, _ = lanes.load(lanes.record_path(root), root.replace(chr(92), "/"))
     git = lambda *a: subprocess.run(["git", *a], cwd=root, capture_output=True, text=True).stdout.strip()
     name = git("rev-parse", "--abbrev-ref", "HEAD")
     name = git("rev-parse", "--short", "HEAD") if name in ("", "HEAD") else name.replace("loop/", "", 1)
