@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept slot-hold-release@12af6e6c4 -->
+Review: **Unreviewed** <!-- kept lanes-table-data@5b6cb2663 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
@@ -126,10 +126,10 @@ None
 | [waits-first](Tests#t-waits-first) | requirement | CHK-1 | Given a live board, when the board page is opened, then it shows the live board. | PASS 2026-11-09 |
 | [no-change-quiet](Tests#t-no-change-quiet) | requirement | CHK-1 | Given a board field the old board lacked or gh not answering, when boards are compared, then it counts as no change. | PASS 2026-11-09 |
 | [board-sections](Tests#t-board-sections) | requirement | CHK-1 | Given a live board, when the board page is built, then it carries the live board's sections. | PASS 2026-11-09 |
-| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-19 |
-| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. Given two machines' STATUS, when top builds the board, then one board lists both machines' running goals. | PASS 2026-11-19 |
-| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-19 |
-| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-19 |
+| [stuck-stays-top](Tests#t-stuck-stays-top) | requirement | CHK-1 | Given a stuck goal, when the board is shown, then it stays on top until answered. | PASS 2026-11-20 |
+| [status-order](Tests#t-status-order) | requirement | CHK-1 | Given the live board, when it is printed, then it lists Issues, Running goals, Queued goals, Dependencies and Finish in that order. Given two machines' STATUS, when top builds the board, then one board lists both machines' running goals. | PASS 2026-11-20 |
+| [needs-you-stuck](Tests#t-needs-you-stuck) | requirement | CHK-1 | Given failed and waiting goals, when the board is printed, then Issues holds them with the exact words to type. | PASS 2026-11-20 |
+| [estimates-shown](Tests#t-estimates-shown) | requirement | CHK-1 | Given a running goal, when the board is printed, then it shows its time left from past runs and its step flow. | PASS 2026-11-20 |
 | [status-roadmap-features](Tests#t-status-roadmap-features) | requirement | CHK-1 | Given merged goals, when the live board is printed, then they do not appear. | PASS 2026-11-09 |
 | [operate-wakes-on-report](Tests#t-operate-wakes-on-report) | requirement | CHK-1 | Given a worker's report, when it arrives before the cadence, then operate wakes and every pass prints the full board. | PASS 2026-11-09 |
 | [status-graph-order](Tests#t-status-graph-order) | requirement | CHK-1 | Given the live board, when it is printed, then its sections come in a fixed order. | PASS 2026-11-12 |
