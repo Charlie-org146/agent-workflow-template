@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GRD-20 script size: warn at 19,000 bytes, fail at 20,480, counted as git stores them (line ends as LF).
 usage: size-check.py [--control] GLOB...   prints a WARN line for each script over 19,000 and a FAIL line for each over 20,480
-(exit 1); --control first proves a 20,481-byte fixture fails and a 20,480-byte one only warns."""
+(exit 1); --control first proves a 20,481-byte fixture fails and 20,480- and 19,500-byte ones only warn."""
 import glob
 import os
 import sys
@@ -20,13 +20,13 @@ def main(args):
     control = args[:1] == ["--control"]
     if control:
         with tempfile.TemporaryDirectory() as tmp:
-            for count, want in ((FAIL + 1, "FAIL"), (FAIL, "WARN")):
+            for count, want in ((FAIL + 1, "FAIL"), (FAIL, "WARN"), (19500, "WARN")):
                 fixture = os.path.join(tmp, "f.py")
                 with open(fixture, "wb") as handle:
                     handle.write(b"#" * (count - 1) + b"\n")
                 if verdict(fixture)[1] != want:
                     sys.exit("FAIL negative control: %d bytes should be %s" % (count, want))
-        print("PASS negative control: 20,481 bytes fails, 20,480 only warns")
+        print("PASS negative control: 20,481 bytes fails, 20,480 and 19,500 only warn")
     bad = 0
     for pattern in args[1 if control else 0:]:
         for path in sorted(glob.glob(pattern)):
