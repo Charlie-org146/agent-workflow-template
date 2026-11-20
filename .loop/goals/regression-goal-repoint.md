@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `git diff origin/main -- .loop/regression.tsv | grep -c '^+[^+]'`, then compare each changed row's columns with main's.
+   Expect: only the fourth (goal) column differs on every changed row, and no row is added or removed.
+2. Run `grep -cE $'\t(AUT-9|DEL-7|REG-1|REG-9|SET-4|SET-6|REL-3|MCH-4|MCH-5|REL-12|REL-13|GRD-7|GRD-8|REG-7|INT-2|OPS-2|REL-15|DOC-1)\t' .loop/regression.tsv`.
+   Expect: 0, no goal cell names a folded ID.

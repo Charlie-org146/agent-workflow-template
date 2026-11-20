@@ -109,14 +109,5 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | - | requirement | INT-1 | no passing test | not enforced |
-| [sync-not-connected](Tests#t-sync-not-connected) | requirement | INT-2 | Given the INT-2 cases of test-docs-sync.py, when it runs once, then it prints every PASS line the 15 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [sync-delta-posted](Tests#t-sync-delta-posted) | requirement | INT-2 | Given a new delta on a page whose backlog milestone is Backlog: <page>, when docs.py sync runs, then it posts one GitHub issue on that milestone (created first if missing, never the bare page name, even when that milestone exists) and one comment on the external page. | not run |
-| [sync-health-delta](Tests#t-sync-health-delta) | requirement | INT-2 | Given an open delta, when health checks the docs, then it reports a FAIL row of the docs rule for it. | not run |
-| [sync-board-delta](Tests#t-sync-board-delta) | requirement | INT-2 | Given an open delta, when the check-in's board is built, then it lists the delta as waiting on the owner. | not run |
-| [sync-no-gh](Tests#t-sync-no-gh) | requirement | INT-2 | Given gh that fails, when docs.py sync finds a delta, then it shows the delta, says not connected and exits 0. | not run |
-| [milestone-sync-no-source](Tests#t-milestone-sync-no-source) | requirement | INT-2 | Given the INT-2 cases of test-milestone-sync.py, when it runs once, then it prints every PASS line the 12 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [prd-copy-no-reader](Tests#t-prd-copy-no-reader) | requirement | INT-2 | Given the INT-2 cases of test-prd-copy.sh, when it runs once, then it prints every PASS line the 9 merged rows checked and no FAIL line. | PASS 2026-11-20 |
-| [prd-sync-no-reader](Tests#t-prd-sync-no-reader) | requirement | INT-2 | Given a source no reader can reach, when docs.py sync runs, then it prints not connected, exits 0 and leaves the copy as it was. | not run |
-| [prd-copy-no-source](Tests#t-prd-copy-no-source) | requirement | INT-2 | Given a page with no PRD source, when docs.py sync and render run, then the page is never visited, gets no block and raises no signal. | not run |
+| - | requirement | INT-2 | no passing test | not enforced |
 | - | requirement | INT-7 | no passing test | not enforced |
-| [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when INT-3 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
