@@ -316,7 +316,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `cadence` | Minutes between operation check-ins, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
 | `auto_approve` | true approves what a flow step leaves for the owner, logged auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |
 | `auto_merge` | true lets the release step merge a goal's PR and publish. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
-| `merge_batch` | true lets merge.py --batch merge 2-3 green goals as one. | set "merge_batch" in .loop/config.json | `false` | default |
+| `merge_batch` | true lets merge.py --batch merge 2-3 green goals as one. | set "merge_batch" in .loop/config.json | `false` | **overridden:** `true` |
 | `review_hold` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. | set "review_hold" in .loop/config.json | `false` | default |
 | `pr_bumps_version` | true moves the last version number once on a goal's branch. | set "pr_bumps_version" in .loop/config.json | `false` | default |
 | `version_file` | The file holding the version; a release bumps it, writes the changelog. | set "version_file" in .loop/config.json | `VERSION` | default |
