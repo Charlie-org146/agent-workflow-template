@@ -769,3 +769,4 @@
 | <a id="t-checkin-live-count"></a>checkin-live-count | requirement | done line checkin-live-count:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-reconcile-ghosts"></a>pool-reconcile-ghosts | requirement | done line pool-reconcile:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-ghost-health"></a>pool-ghost-health | requirement | done line pool-reconcile:2 | not run | - | local | 2026-11-20 |
+| <a id="t-release-hold-red"></a>release-hold-red | requirement | REL-15 | not run | - | local | 2026-11-20 |
