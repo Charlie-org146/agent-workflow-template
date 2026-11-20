@@ -5,24 +5,17 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py deps [--root DIR] COMMAND [--why PATH]
        lanes_cli.py check [--root DIR] [SCRIPT...]
        lanes_cli.py merge-runs [--root DIR]
+       lanes_cli.py fold [--root DIR]
 
-affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
-          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps
-          the file: the rows that name it and the runners are picked, never a full run. No record is
-          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it. An edit to
-          .loop/regression-known.tsv picks only the rows whose line differs from the merge-base or base tip.
-deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
-          from the command to PATH, or NOT REACHED.
-check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
-          `<CODE> <file>:<line>: <what>` line and a `fix:` line each. Exit 0 clean, 1 problems.
-merge-runs  merge the branch's lane record's row results (PASS or FAIL, with any flaky flag) into
-          .loop/regression-runs.tsv under slots.py's row lock (DX-19); workflow-delivery's goal.py pr runs it, by path,
-          before its bookkeeping commit. Writes nothing when the record has no results; exit 1 on an error.
-The root is the git top level of the current directory unless --root is given. Usage errors exit 2 on stderr;
-LANES_DEBUG=1 shows the full trace of an unexpected error. Read-only, except merge-runs.
+affected: `AFFECTED n of m rows (ids)`, `ALWAYS <id>: <reason>`, `UNMAPPED` or `DELETED <path>`. deps: a command's dependency paths.
+check: every `# reads:` problem, `<CODE> <file>:<line>: <what>` and a `fix:` line each; exit 1 on problems.
+merge-runs: the lane record's PASS and FAIL rows (flaky flag too) into the fragment .loop/lane-results/<slug>.tsv (DX-19).
+fold: the release step; every fragment into .loop/regression-runs.tsv (per row the later date, then line, wins), then deleted.
+Usage errors exit 2; LANES_DEBUG=1 shows a trace. The root is the git top level unless --root is given.
 """
 import argparse
 import datetime
+import glob
 import json
 import os
 import re
@@ -84,7 +77,7 @@ def rows_of(root, level):
 
 def relative(root, path):
     here = os.path.realpath(os.getcwd())
-    base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root from outside it
+    base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root
     full = os.path.realpath(os.path.join(base, path))
     rel = os.path.relpath(full, os.path.realpath(root))
     if rel.startswith(".."):
@@ -93,14 +86,11 @@ def relative(root, path):
 
 
 def picked(root, rows, path, cache):
-    """The rows a deleted or unmapped file selects: those that name it, and those that reach the runner."""
     return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
             or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
 
 
 def table_changed(root, name):
-    """Ids whose line in .loop/<name> (regression.tsv or regression-known.tsv) differs between the working table and the
-    merge-base or the base tip (added, removed or changed); None when neither can be resolved, so the caller keeps the wide rule."""
     base = tiers.config(root).get("base") or "main"
     ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
                                                        for ref in ("origin/" + base, base)]) if at][:2]
@@ -112,7 +102,6 @@ def table_changed(root, name):
 
 
 def affected(root, rows, paths, cache):
-    """(rerun ids, notes) for a change to paths: plan()'s per-path rules without a record (dependency impact only)."""
     ids, notes, real = set(), [], False
     known = table_changed(root, "regression-known.tsv") if ".loop/regression-known.tsv" in paths else None
     edited = table_changed(root, "regression.tsv") if lanes.TABLE in paths else None
@@ -120,20 +109,20 @@ def affected(root, rows, paths, cache):
         lanes.closure(root, row["command"], cache)
         if cache.get(("why", row["command"])):
             notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
-    for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
+    for path in [p.replace("\\", "/") for p in paths]:
         if not os.path.exists(os.path.join(root, path)) and not any(
                 path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
-            real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
+            real = True
             continue
-        if path == ".loop/regression-known.tsv" and known is not None:  # only the rows whose known status changed
+        if path == ".loop/regression-known.tsv" and known is not None:
             hit = {r["id"] for r in rows} & known
-        elif path == lanes.TABLE and edited is not None:  # the rows whose line changed, plus the rows that name the table
+        elif path == lanes.TABLE and edited is not None:
             hit = ({r["id"] for r in rows} & edited) | {r["id"] for r in rows if lanes.names_table(root, r["command"], cache)
-                                                        or lanes.closure(root, r["command"], cache)[1]}  # table readers, runners
-        elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
-            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
+                                                        or lanes.closure(root, r["command"], cache)[1]}
+        elif path in (lanes.TABLE, ".loop/regression-known.tsv"):
+            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
         no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
@@ -146,13 +135,12 @@ def affected(root, rows, paths, cache):
             real = real or not no_effect
             continue
         ids, real = ids | hit, real or not no_effect
-    if real:  # root runners rerun on a real change; a change only to NO_EFFECT files (a release's VERSION) reaches none
+    if real:
         ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
     return sorted(ids), notes
 
 
 def check(root, scripts, cache):
-    """Every header problem of the test scripts as (code, file, line, what), LANES-DECL-NONE for a missing header."""
     out = []
     for rel in scripts:
         paths, problems = narrow.header(root, rel, cache)
@@ -170,20 +158,52 @@ def chain(parent, path):
     return " -> ".join(reversed(links))
 
 
+LANE = os.path.join(".loop", "lane-results")
+
+
+def _read(path):
+    try:
+        with open(path) as fh:
+            return {r[0]: r for r in (x.split("\t") for x in fh.read().splitlines() if x[:1] != "#" and x.count("\t") > 2)}
+    except OSError:
+        return {}
+
+
+def _put(path, rows):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="\n") as fh:
+        fh.write("# id\tstatus\tdate\trun\tflaky\n" + "".join("\t".join(rows[k]) + "\n" for k in sorted(rows)))
+
+
 def merge_runs(root):
-    """The lane record's row results, with any flaky flag (tiers.py flaky_apply), into regression-runs.tsv."""
+    """The lane record's PASS and FAIL rows (and any flaky flag, tiers.py flaky_apply) into .loop/lane-results/<slug>.tsv."""
     import runs
-    import slots
     record, _ = lanes.load(lanes.record_path(root), root)
-    rows = (record or {}).get("rows") or {}
-    done = [dict({"id": key, "state": value.get("status")}, **{k: value[k] for k in ("flaky",) if k in value})
-            for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
-    if done:
-        day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
-        slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
+    git = lambda *a: subprocess.run(["git", *a], cwd=root, capture_output=True, text=True).stdout.strip()
+    name = git("rev-parse", "--abbrev-ref", "HEAD")
+    name = git("rev-parse", "--short", "HEAD") if name in ("", "HEAD") else name.replace("loop/", "", 1)
+    path, old = os.path.join(root, LANE, re.sub(r"[^\w.-]", "-", name) + ".tsv"), _read(os.path.join(root, ".loop", "regression-runs.tsv"))
+    mine, day = _read(path), datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    for key, value in sorted(((record or {}).get("rows") or {}).items()):
+        if value.get("status") in ("PASS", "FAIL"):
+            flag = str(value["flaky"] if "flaky" in value else (old.get(key) or [""] * 5)[4:5][0])[:12]
+            mine[key] = [key, value["status"], day, runs.where()] + [flag] * bool(flag)
+    if mine:
+        _put(path, mine)
     return 0
 
+
+def fold(root):
+    """The release step: fold every fragment into regression-runs.tsv (per row the later date, then line, wins) and delete it."""
+    files, path = sorted(glob.glob(os.path.join(root, LANE, "*.tsv"))), os.path.join(root, ".loop", "regression-runs.tsv")
+    best = _read(path)
+    for name in files:
+        for key, row in _read(name).items():
+            best[key] = max(best.get(key, row), row, key=lambda r: (r[2], r))
+        os.remove(name)
+    if files:
+        _put(path, best)
+    return 0
 
 
 NARROW = """# Written by workflow-regression (regression.py workflow). The rows a change reaches; the full suite runs on the schedule only.
@@ -215,7 +235,6 @@ jobs:
 OURS = "# Written by workflow-regression"
 
 
-# The Linux cell of the agent x machine matrix (health rule matrix): the same smoke set every machine runs, and its record as an artifact.
 MATRIX_JOB = """
   matrix-smoke:
     if: github.event_name != 'workflow_dispatch' || inputs.target == ''
@@ -242,8 +261,6 @@ MATRIX_JOB = """
 
 
 def workflow(root, given, write_main):
-    """regression.py workflow: where the regression runs decides what is written. A public repo gets regression.yml and
-    regression-pr.yml (the affected rows on a pull request or push); a private repo or an unreadable visibility gets nothing."""
     cfg = tiers.config(root)
     where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
     if not where:
@@ -277,7 +294,7 @@ def workflow(root, given, write_main):
 def main():
     parser = argparse.ArgumentParser(prog="lanes_cli.py")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    for name in ("affected", "deps", "check", "merge-runs"):
+    for name in ("affected", "deps", "check", "merge-runs", "fold"):
         item = sub.add_parser(name)
         item.add_argument("--root")
     sub.choices["affected"].add_argument("--level", default="land", choices=("land", "nightly", "all"))
@@ -287,8 +304,8 @@ def main():
     sub.choices["check"].add_argument("scripts", nargs="*", metavar="SCRIPT")
     args = parser.parse_args()
     root, cache = top(args.root), {}
-    if args.cmd == "merge-runs":
-        return merge_runs(root)
+    if args.cmd in ("merge-runs", "fold"):
+        return (merge_runs if args.cmd == "merge-runs" else fold)(root)
     if args.cmd == "affected":
         rows = rows_of(root, args.level)
         ids, notes = affected(root, rows, [relative(root, p) for p in args.paths], cache)
@@ -317,19 +334,12 @@ def main():
     return 1 if problems else 0
 
 
-
-# The memory floor (GRD-2): free_gb reads the machine's free memory, and wait_memory holds a lane that is about to run rows
-# while it is below min_free_memory_gb.
-
-
 def _slots():
     import slots
     return slots
 
 
 def free_gb():
-    """Free virtual memory in GB (Windows: the free page file; macOS: free, inactive and speculative pages; Linux: MemAvailable),
-    LOOP_FREE_GB to fake it, None when it can't be read (a lane is then never held)."""
     try:
         if os.environ.get("LOOP_FREE_GB"):
             return float(os.environ["LOOP_FREE_GB"])
@@ -351,9 +361,6 @@ def free_gb():
 
 
 def wait_memory(root):
-    """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a lane already running is
-    never stopped. Each wait is logged in <git common dir>/loop/memory-waits.log for the check-in and health; past 4x the lane's
-    time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 3)
     except (OSError, ValueError, AttributeError):
