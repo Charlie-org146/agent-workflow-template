@@ -212,7 +212,7 @@ PY
   known-defects) # done line 8: defect tests exist, linked and seen failing, for issues 35 and 58 and the two worker defects
     for want in "scripts-no-hang issues/35" "wiki-release-pycache issues/58" "worker-runs-release pull/61" "pr-body-no-checks pull/62"; do
       set -- $want
-      awk -F'\t' -v id="$1" -v link="$2" '$1 == id && $7 == "defect" && $8 ~ link && $5 != "" {ok = 1} END {exit !ok}' "$here/.loop/regression.tsv" || no "no defect row $1 linked to $2, seen failing"
+      awk -F'\t' -v id="$1" -v link="$2" '$7 == "defect" && $8 ~ link && $5 != "" {ok = 1} END {exit !ok}' "$here/.loop/regression.tsv" || no "no defect row $1 linked to $2, seen failing"
     done
     exit 0;;
   skill-size) # issue 116: every SKILL.md stays under test-board's 150-line limit

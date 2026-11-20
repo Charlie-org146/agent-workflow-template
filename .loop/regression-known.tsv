@@ -30,7 +30,6 @@ repo-narrow-178	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is t
 st-union-contexts	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4258
 stale-code-page-reviewed	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5368
 stale-groups-defect	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5362
-sync-default-source	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4966
 toy-no-leftovers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4092
 listing-names-every-command	fails on main since v1.0.82; see #4977
 del9-scan-sites	fails on main since v1.0.91; see #4129
