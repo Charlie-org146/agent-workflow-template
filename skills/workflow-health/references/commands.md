@@ -28,6 +28,7 @@ unchanged repo print the same lines.
 | Requirements (is every promise I approved proven?) | `rows` | a criterion has no regression row (FAIL) |
 | | `proof` | a row is a draft with no command or level (FAIL) |
 | | `done` | done lines of a goal still being built have no regression row, as one WARN |
+| | `principle-map` | a Reviewed requirement under no principle in Principles.md, or a principle with no Reviewed requirement (FAIL); the PRINCIPLE line also goes RED when none of its rules can fail |
 | Traceability (can I follow any work end to end?) | `defect-tests` | closed work has no defect test (FAIL) |
 | | `row-requirement` | a row guards an id no page defines and isn't a done line `slug:N` (FAIL) |
 | Consistency (do the pages agree?) | `ids-unique` | a requirement id is defined on two pages (FAIL) |

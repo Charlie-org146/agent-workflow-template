@@ -3,7 +3,6 @@
 
 usage: controls.py run RULE [--keep]   run one control and print its result (--keep keeps the fixture and prints its path)
 
-Each control builds a throwaway git repo with the one file that breaks its rule.
 """
 import hashlib
 import importlib
@@ -375,6 +374,7 @@ CONTROLS.update({name: ("hygiene", name, f_honest(name)) for name in ("eta-unmar
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 try:
     CONTROLS.update(importlib.import_module("defects").CONTROLS)
+    CONTROLS.update(importlib.import_module("rules").CONTROLS)
 except ImportError:
     pass
 finally:
