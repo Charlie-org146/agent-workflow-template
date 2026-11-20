@@ -40,7 +40,6 @@ runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine p
 adopt-fixture-bare-agent	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4956
 adopt-fixture-ci-gitignore	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4953
 adopt-fixture-feature-milestones	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4957
-agent-routing	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4943
 apply-rerender-accepted	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4994
 docs-guide-page-issue-125	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5370
 entry-adopt	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4965

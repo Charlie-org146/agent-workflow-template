@@ -187,8 +187,11 @@ with tempfile.TemporaryDirectory() as base:
     old = pids(os.path.join(base, "tree.pids"))
     left = not gone(old[1], 2)
     check(left, "negative control: subprocess.run(timeout) leaves the agent's child running: %s" % old)
-    for pid in old:
-        os.kill(pid, 9) if os.name != "nt" else proctree.kill(pid)
+    for pid in old:  # the timed-out agent is already gone; only its child is left to stop
+        try:
+            os.kill(pid, 9) if os.name != "nt" else proctree.kill(pid)
+        except ProcessLookupError:
+            pass
 
 print("FAILED: %d" % len(failed) if failed else "PASS: agent-routing")
 sys.exit(1 if failed else 0)
