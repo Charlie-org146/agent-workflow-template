@@ -38,4 +38,13 @@ for item in added[:10]:
     print("ADDED", item)
 for row in bad:
     print("NO CHECK in merged row", row)
+# rows run under /bin/sh (dash on the CI runner): every merged command must pass there, not only under bash
+dash = "/bin/dash" if __import__("os").path.exists("/bin/dash") else None
+for line in open(".loop/regression.tsv").read().splitlines():
+    cells = line.split("\t")
+    if dash and len(cells) > 3 and NEW.match(cells[2]):
+        done = subprocess.run([dash, "-c", cells[2]], capture_output=True, text=True)
+        print("dash %s %s" % ("PASS" if done.returncode == 0 else "FAIL", cells[0]))
+        if done.returncode:
+            bad.append(cells[0])
 sys.exit(1 if lost or added or bad else 0)
