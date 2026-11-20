@@ -46,6 +46,12 @@ def plain(text, size=200):
     return " ".join(words)[:size]
 
 
+def tally(pod, at):
+    """TD502: (slug, state, live) for each goal of the pod that is this machine's own; live is machines.live's word."""
+    import machines
+    return [(r["slug"], g["states"][r["slug"]], machines.live(r, g["taken"], at, g["cfg"])) for g in pod for r in g["live"] if not graph.foreign(r)]
+
+
 def health(root):
     if os.environ.get("LOOP_BOARD_HEALTH"):
         return os.environ["LOOP_BOARD_HEALTH"]

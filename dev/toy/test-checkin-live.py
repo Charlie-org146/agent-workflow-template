@@ -104,4 +104,28 @@ with tempfile.TemporaryDirectory() as tmp:
     blind, _ = first_line(root)
     machines.live = real
     check(blind.startswith("42 running, 5 waiting on you, 0 queued;") and "parked" not in blind, "negative control: counting every record reads 42 running and nothing parked (%s)" % blind.split(";")[0])
+# TD502: a failed goal with nothing live (no pid, no pool entry) is old, listed with its slug and counted apart; one a worker still holds,
+# and an open question, still wait on the owner; a waiting record with no open ask is parked, not waiting.
+with tempfile.TemporaryDirectory() as tmp2:
+    os.environ["HOME"] = os.environ["USERPROFILE"] = os.path.join(tmp2, "home")
+    os.makedirs(os.environ["HOME"])
+    root2 = os.path.join(tmp2, "toyrepo")
+    subprocess.run(["git", "init", "-q", "-b", "main", root2], check=True)
+    write(os.path.join(root2, ".loop", "config.json"), {"base": "main", "cadence": "5"})
+    write(os.path.join(root2, ".loop", "queue.md"), "")
+    common2 = os.path.join(root2, ".git")
+    ask = {"ask": "Which way?", "recommend": "A", "words": ["A", "B"]}
+    for slug, run in {"failedold": {"status": "failed"}, "failedheld": {"status": "failed"}, "asks": {"status": "waiting", "waiting": ask},
+                      "noask": {"status": "waiting", "waiting": {}}}.items():
+        write(os.path.join(common2, "loop", "runs", slug + ".json"), dict(run, slug=slug, step="plan", goal=slug + " (DEL-1)", updated=iso(NOW - 3600)))
+    write(os.path.join(common2, "loop", "session-pool.json"), {"s-failedheld": {"state": "busy", "slug": "failedheld", "name": "worker failedheld"}})
+    line2, lines2 = first_line(root2)
+    print(line2)
+    check(line2.startswith("0 running, 2 waiting on you, 0 queued, 1 parked, 1 old;"), "line 1: the open question and the failed goal a worker holds wait on the owner, the no-ask record is parked, the failed goal with nothing live is old")
+    check(any(row.startswith("Old: ") and "failedold" in row and "failedheld" not in row for row in lines2), "the old goal is listed by slug, never the held one")
+    check(sum("| stuck |" in row for row in lines2) == 2, "no record is deleted or hidden: both failed goals stay in All sessions")
+    machines.live = lambda *a, **k: True  # negative control: the old rule counts the session-less failed goal as waiting
+    blind2, _ = first_line(root2)
+    machines.live = real
+    check("old" not in blind2.split(";")[0] and "waiting on you" in blind2 and blind2.startswith("0 running, 4 waiting on you"), "negative control: the old rule counts the failed goal with nothing live as waiting on the owner (%s)" % blind2.split(";")[0])
 sys.exit(1 if failed else 0)
