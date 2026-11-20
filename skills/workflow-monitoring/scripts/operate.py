@@ -4,23 +4,23 @@
 usage: operate.py <command> [options]
 
   run [--once] [--poll S] [--max N] [--skill-dir DIR] [--board]
-      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root is not advanced: "root is dirty: FILES;
-      not advanced"; one line when it moved or could not), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel;
-      mends and resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and
-      pool.py archive (MON-6: ARCHIVE-NOW lines are for its archive tool), prints the check-in (checkin.py) and
-      mails its new events (notify.py). The live board prints only for report, dashboard and "where do things stand"
-      (MON-4; --board adds it). It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued,
-      and stops when nothing is queued, running or waiting, or the cadence is off. --once makes one pass.
-  run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
-  start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool), each row ok or
-            its fix; it starts no goal or worker (notify.py ready)
-  timer [created]   show the check-in timer for the owner's yes; `created` records it (notify.py timer)
+      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root prints "root is dirty: FILES; not
+      advanced"), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel; mends and
+      resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and pool.py archive
+      (MON-6), prints the check-in (checkin.py) and mails its new events (notify.py). The live board prints only for report,
+      dashboard and "where do things stand" (MON-4; --board adds it). It waits the gap from `board.py cadence` (less when a
+      worker reports or a goal is queued); it stops when nothing is queued, running or waiting, or the cadence is off.
+  run --role top|machine   top: one board from every STATUS; machine: its STATUS to top
+  start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool): ok or its fix
+            per row (notify.py ready)
+  timer [created]   show the check-in timer for the owner's yes; `created` records it
   send SLUG TEXT [--source owner|auto]
-      send a worker an answer or follow-up (worker.py send); it sees it the next time it runs goal.py. An answer to a
-      waiting question is kept in <git common dir>/loop/answers.jsonl with its source (auto.py reads it)
+      send a worker an answer or follow-up (worker.py send); answers to a waiting question go to
+      <git common dir>/loop/answers.jsonl (auto.py reads it)
   claim [--id ID]
-      add this session ($CLAUDE_SESSION_ID or --id) to loop/operation.id for the govern hook (MON-7), in this repo and every
-      repo it follows (MON-13); several may run at once; refused in a worker
+      add this session (each id it goes by: CLI, app, pod; or --id) to loop/operation.id for the govern hook (MON-7), in this
+      repo and every repo it follows (MON-13); refused in a worker
+  scratch GOAL   print ~/.workflow-loop/scratch/GOAL, made on first use
 
 An LLM asked to run the operation session runs `operate.py run` and nothing else. It never merges.
 """
@@ -83,7 +83,7 @@ RUNS = ".loop/regression-runs.tsv"
 
 
 def fast_forward(root, base):
-    """merge --ff-only; a dirty RUNS is stashed under a tag and applied back by sha, never a bare pop."""
+    """merge --ff-only; a dirty RUNS is stashed under a tag, applied back by sha."""
     tag, sha = "operate-forward-%d" % os.getpid(), ""
     if RUNS in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].replace("\\", "/") and fgit(root, "stash", "push", "-m", tag, "--", RUNS)[0] == 0:
         sha = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%H %gs")[1].splitlines() if l.endswith(tag)), "")
@@ -124,8 +124,19 @@ def refresh(common, base="main"):
     return "CHECKOUT FAST-FORWARDED %s by %s commits to %s" % (base, behind, fgit(root, "rev-parse", "--short", "HEAD")[1])
 
 
+def untrusted(folder):
+    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
+    try:
+        with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
+            known = json.load(handle)["projects"]
+        path = os.path.realpath(folder) + "/"
+        return "" if any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return ""
+
+
 def behind_ask(common, base="main"):
-    """When the main checkout is behind origin/<base>, the line asks a free worker to fast-forward it; '' when current."""
+    """A line asking a free worker to move the main checkout when behind origin/<base>."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -205,7 +216,7 @@ def cmd_timer(args):
 def cmd_run(args):
     top = git("rev-parse", "--show-toplevel")
     common = os.path.abspath(git("rev-parse", "--git-common-dir"))
-    if os.environ.get("CLAUDE_SESSION_ID"):
+    if any(os.environ.get(key) for key in OWN):
         cmd_claim(argparse.Namespace(id=""))
     pod = graph.pod_id()
     if pod:
@@ -230,7 +241,7 @@ def cmd_run(args):
 
 
 def remember(slug, text, source):
-    """Keep an answer to a waiting question for auto.py."""
+    """Keep a waiting question's answer for auto.py."""
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
     try:
         with open(os.path.join(common, "loop", "runs", slug + ".json")) as handle:
@@ -243,8 +254,11 @@ def remember(slug, text, source):
             handle.write(json.dumps({"slug": slug, "key": " ".join(ask.lower().split()), "words": text, "source": source}) + "\n")
 
 
+OWN = ("CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_HOST_SESSION_ID", "LOOP_POD_ID")
+
+
 def add_id(base, sid):
-    """Add sid to <base>/loop/operation.id, keeping the others; an unwritable repo is skipped."""
+    """Add sid to <base>/loop/operation.id, keeping the others."""
     path = os.path.join(base, "loop", "operation.id")
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -261,8 +275,9 @@ def add_id(base, sid):
 
 
 def cmd_claim(args):
-    """MON-13: this session joins this repo's operation sessions and those of every repo it follows."""
-    sid = args.id or os.environ.get("CLAUDE_SESSION_ID", "")
+    """MON-13: this session joins the operation sessions of this repo and those it follows."""
+    ids = {args.id} if args.id else {os.environ.get(key) for key in OWN} - {None, ""}
+    sid = args.id or os.environ.get("CLAUDE_SESSION_ID") or min(ids, default="")
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
     if os.environ.get("LOOP_ROLE") == "worker" or os.path.realpath(os.getcwd()).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
         sys.exit("REFUSED: a worker can't claim the operation session. Fix: run claim from the main checkout's operation session.")
@@ -270,14 +285,14 @@ def cmd_claim(args):
         sys.exit("REFUSED: no session id. Fix: operate.py claim --id <this session's id>.")
     import board as bd
     for base in [common] + [base for _, _, base in bd.followed() if base != common]:
-        add_id(base, sid)
+        [add_id(base, each) for each in sorted(ids)]
     print("CLAIMED operation session %s" % sid)
     print("POD %s: set LOOP_POD_ID=%s to keep this pod if the session restarts" % (sid, sid))
     return 0
 
 
 def cmd_send(args):
-    """The inbox carries it; a worker session is also sent it by session message."""
+    """The inbox carries it; a worker session gets it too."""
     graph.refuse(graph.load_run(args.slug))
     remember(args.slug, args.text, args.source)
     code, said = script("worker.py", "send", args.slug, args.text)
@@ -301,7 +316,7 @@ def tems(*args, **kwargs):
 
 
 def wiki_only(top, old, new):
-    """True when NEW descends from OLD by stamps, wiki pages (not SKILL.md), kept fragments and README.md outside its blocks."""
+    """True when NEW follows OLD by stamps, wiki pages (not SKILL.md), kept fragments, README.md outside its blocks."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -322,7 +337,7 @@ def readme_blocks_only(top, old, new):
 
 def apply(slug, branch):
     """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree, while a page's
-    reviewed text holds. The pushed commit moves the head by wiki pages only, which merge.py accepts."""
+    reviewed text holds; the pushed head differs by wiki pages only."""
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
@@ -350,19 +365,24 @@ def apply(slug, branch):
 
 
 def cmd_forward(args):
-    """merge.py / wiki.py: move this checkout to origin/BASE."""
+    """merge.py, wiki.py: move this checkout to origin/BASE."""
     line = refresh(fgit(os.getcwd(), "rev-parse", "--path-format=absolute", "--git-common-dir")[1], args.base)
     print(line)
     return 0 if "FAST-FORWARDED" in line else 1
 
 
+def cmd_scratch(args):
+    print(layers.scratch(args.goal))
+    return 0
+
+
 def cmd_wiki_only(args):
-    """merge.py: exit 0 when NEW follows OLD by wiki page commits only."""
+    """merge.py: exit 0 when NEW follows OLD by wiki commits only."""
     return 0 if wiki_only(os.getcwd(), args.old, args.new) else 1
 
 
 def cmd_apply(args):
-    """merge.py: re-stamp the pages stale on origin/BRANCH and push the commit."""
+    """merge.py: re-stamp the pages stale on origin/BRANCH and push."""
     return apply(args.slug, args.branch)
 
 
@@ -386,6 +406,7 @@ def main():
     item = sub.add_parser("claim")
     item.add_argument("--id", default="")
     sub.add_parser("forward").add_argument("base")
+    sub.add_parser("scratch").add_argument("goal")
     item = sub.add_parser("wiki-only")
     item.add_argument("old")
     item.add_argument("new")
