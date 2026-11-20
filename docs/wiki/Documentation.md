@@ -80,7 +80,7 @@ None
 - DOC-14: moved to DOC-1
 - DOC-15: moved to DOC-1
 - DOC-16: moved to AUT-1
-- DOC-17: moved to INT-2
+- DOC-17: moved to DOC-2
 - DOC-18: moved to DOC-1
 - DOC-19: moved to DOC-1
 - DOC-20: moved to DOC-2
@@ -429,6 +429,7 @@ None
 | - | requirement | DOC-24 | no passing test | not enforced |
 | [sections-controls](Tests#t-sections-controls) | requirement | DOC-25 | Given a README, Home, feature, How-to-use, Principles or Tests page with a section missing, extra, renamed or out of order, a README and Home that differ, or a Part 1 row with no figure, when the docs check runs, then it fails; and the adopted-README form passes. | not run |
 | - | requirement | DOC-25 | no passing test | not enforced |
+| - | requirement | DOC-26 | no passing test | not enforced |
 | [docs-counts-issue-39](Tests#t-docs-counts-issue-39) | defect | [#39](https://github.com/jcl2018/agent-workflow-template/issues/39) closed (2026-11-09) | Given counts in the docs that drift from the code, when the docs check runs, then it fails (issue 39). | PASS 2026-11-12 |
 | [docs-count-word-gap-issue-104](Tests#t-docs-count-word-gap-issue-104) | defect | [#104](https://github.com/jcl2018/agent-workflow-template/issues/104) closed (2026-11-10) | Given a wrong skills count with a word such as "workflow-ready" or an extra space before the noun, when the docs check runs, then it fails, and a part such as "other" is not read. | PASS 2026-11-12 |
 | [docs-count-indented-code-issue-105](Tests#t-docs-count-indented-code-issue-105) | defect | [#105](https://github.com/jcl2018/agent-workflow-template/issues/105) closed (2026-11-10) | Given a count inside a 4-space indented code block, when the docs check runs, then it is skipped while the same indent inside a list item is still read. | PASS 2026-11-12 |

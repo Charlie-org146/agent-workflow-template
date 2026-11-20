@@ -54,15 +54,15 @@ None
 
 - GRD-1: moved to HLT-2
 - GRD-10: moved to SET-1
-- GRD-11: moved to REG-9
+- GRD-11: moved to REG-4
 - GRD-12: moved to OPS-16
-- GRD-13: moved to REG-7
+- GRD-13: moved to DEL-17
 - GRD-14: moved to DEL-17
-- GRD-15: moved to GRD-8
+- GRD-15: moved to DEL-17
 - GRD-16: moved to GRD-6
-- GRD-17: moved to GRD-7
+- GRD-17: moved to DEL-17
 - GRD-18: moved to MCH-1
-- GRD-19: moved to HLT-11
+- GRD-19: moved to GRD-20
 - GRD-2: Retired
 - GRD-21: moved to GRD-20
 - GRD-22: moved to GRD-20
@@ -261,10 +261,6 @@ None
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
-| [grd7-round-cost](Tests#t-grd7-round-cost) | requirement | GRD-7 | Given a scheduled round, when its digest is posted, then the round cost shows its minutes and Actions minutes. | not run |
-| - | requirement | GRD-7 | no passing test | not enforced |
-| [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | GRD-8 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
-| - | requirement | GRD-8 | no passing test | not enforced |
 | [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs git pull --ff-only (also with -C and a remote), then the govern hook lets it through. | PASS 2026-11-12 |
 | [pull-plain-blocked](Tests#t-pull-plain-blocked) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs a plain git pull, -r, --rebase=merges, --no-ff, --ff-only with --rebase or --ff, a +refspec or -f, then the govern hook still refuses it (negative control). | PASS 2026-11-12 |

@@ -69,12 +69,12 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ### Retired
 
-- DEL-10: moved to MCH-4
-- DEL-11: moved to MCH-4
+- DEL-10: moved to MCH-1
+- DEL-11: moved to MCH-1
 - DEL-12: moved to MCH-1
-- DEL-13: moved to REL-12
+- DEL-13: moved to DEL-3
 - DEL-14: moved to HLT-4
-- DEL-15: moved to REL-13
+- DEL-15: moved to DEL-17
 - DEL-16: moved to SET-10
 - DEL-18: moved to DEL-19
 - DEL-2: moved to DEL-19
@@ -82,7 +82,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - DEL-5: moved to DEL-1
 - DEL-6: merged into DEL-3
 - DEL-7: moved to MCH-1
-- DEL-8: merged into DEL-7
+- DEL-8: merged into MCH-1
 
 ### DEL-1
 
@@ -329,45 +329,6 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | - | requirement | DEL-17 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
 | - | requirement | DEL-21 | no passing test | not enforced |
-| [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | PASS 2026-11-18 |
-| [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | DEL-7 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
-| [del8-step-stops](Tests#t-del8-step-stops) | requirement | DEL-7 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |
-| [del8-step-recorded](Tests#t-del8-step-recorded) | requirement | DEL-7 | Given a step that hit its budget, when the goal's record is read, then it names the step and what it left. | not run |
-| [del8-session-budget](Tests#t-del8-session-budget) | requirement | DEL-7 | Given a step run by the worker session, when it is asked for, then its instructions carry the step budget. | not run |
-| [del8-session-overrun](Tests#t-del8-session-overrun) | requirement | DEL-7 | Given a session-run step that took longer than its budget, when it is recorded, then the overrun and what it left are kept. | not run |
-| [del8-board](Tests#t-del8-board) | requirement | DEL-7 | Given a step or test run that hit its budget, when the monitoring report runs, then it lists the hit and what was left. | not run |
-| [del8-health](Tests#t-del8-health) | requirement | DEL-7 | Given a step or test run that hit its budget, when health runs, then it lists the hit and what was left. | not run |
-| [del8-prep-board](Tests#t-del8-prep-board) | requirement | DEL-7 | Given a lane that hit the preparation budget, when the monitoring report and health run, then both list the hit and the part that ran long in the same words as budget.py. | not run |
-| [del7-kill-resume](Tests#t-del7-kill-resume) | requirement | DEL-7 | Given a goal whose review was killed mid-step, when it is resumed, then it reruns review from its recorded plan, never from the start, and moves on to qa. | not run |
-| [del7-recorded-refused](Tests#t-del7-recorded-refused) | requirement | DEL-7 | Given a goal with recorded steps, when a recorded step is run again without --again, then it is refused with no try and names the step to resume from. | not run |
-| [del8-goal-budget](Tests#t-del8-goal-budget) | requirement | DEL-7 | Given a repo with a time and token budget, when a goal is frozen, then the goal carries both budgets. | not run |
-| [del8-board-over](Tests#t-del8-board-over) | requirement | DEL-7 | Given a running goal past its time and token budget, when the live board prints, then the goal's budget line says OVER time and OVER tokens. | not run |
-| [grd2-step-budget](Tests#t-grd2-step-budget) | requirement | DEL-7 | Given a review or ship step that reaches step_budget_minutes, when it is stopped, then it records done with what it left and costs no failed try. | not run |
-| [grd2-test-budget](Tests#t-grd2-test-budget) | requirement | DEL-7 | Given an in-loop test run that reaches test_budget_minutes, when it stops, then it runs rows in order until the budget and lists the rest for the scheduled full suite. | not run |
-| [grd2-goal-over](Tests#t-grd2-goal-over) | requirement | DEL-7 | Given a goal past its time and token budget, when the live board prints, then it flags OVER time and OVER tokens. | not run |
-| [del8-session-tokens](Tests#t-del8-session-tokens) | requirement | DEL-7 | Given a goal past token_budget, when the next step starts, then it is refused naming the budget and the fix. | PASS 2026-11-19 |
-| [tokens-unread-shown](Tests#t-tokens-unread-shown) | requirement | DEL-7 | Given a goal with no token count, when the board or the pull request shows its spend, then it says tokens unread, never 0, and a goal with a count shows the number. | not run |
-| [grd2-time-stop](Tests#t-grd2-time-stop) | requirement | DEL-7 | Given a goal past time_budget_minutes, when a step or goal.py pr is asked for, then it is refused with one line naming goal.py set. | not run |
-| [grd2-token-stop](Tests#t-grd2-token-stop) | requirement | DEL-7 | Given a goal past token_budget, when a step is asked for, then it is refused with one line naming goal.py set. | not run |
-| [grd2-tokens-unknown](Tests#t-grd2-tokens-unknown) | requirement | DEL-7 | Given a session worker that passes unknown tokens, when the step is recorded, then the goal reads tokens unread, never 0. | not run |
-| [grd2-merge-rounds](Tests#t-grd2-merge-rounds) | requirement | DEL-7 | Given a goal that merged the base eight times, when goal.py pr would merge a 9th round, then it is refused and the goal waits for the owner. | not run |
-| [grd2-active-goals](Tests#t-grd2-active-goals) | requirement | DEL-7 | Given max_active_goals live goals, when watch plans, then no new goal starts. | not run |
-| [grd2-plan-pause](Tests#t-grd2-plan-pause) | requirement | DEL-7 | Given weekly plan usage above plan_pause_percent, when the operation plans, then no new goal starts and it says why. | not run |
-| [grd2-limits-in-settings](Tests#t-grd2-limits-in-settings) | requirement | DEL-7 | Given the settings table, when it is read, then it lists the four limits with their defaults. | not run |
-| [grd2-memory-lane-waits](Tests#t-grd2-memory-lane-waits) | requirement | DEL-7 | Given free memory below min_free_memory_gb, when a lane is about to run rows, then it waits and does not start them. | not run |
-| [grd2-memory-new-goal](Tests#t-grd2-memory-new-goal) | requirement | DEL-7 | Given free memory below min_free_memory_gb, when the operation plans, then no new goal starts and the hold names LOW_MEMORY. | not run |
-| [grd2-memory-health](Tests#t-grd2-memory-health) | requirement | DEL-7 | Given lanes that waited for memory, when health runs, then its Performance group warns. | not run |
-| [held-time-over-still-stops](Tests#t-held-time-over-still-stops) | requirement | DEL-7 | Given a goal whose steps ran past its time budget, when a new step starts, then it is refused with BUDGET_MINUTES. | PASS 2026-11-14 |
-| [grd2-default-240](Tests#t-grd2-default-240) | requirement | DEL-7 | Given the settings table and this repo's config, when the default goal time budget is read, then it is 240 minutes. | not run |
-| [grd2-merge-rounds-default-8](Tests#t-grd2-merge-rounds-default-8) | requirement | DEL-7 | Given no max_merge_rounds in the config, when goal.py pr merges the base, then eight rounds are allowed. | PASS 2026-11-15 |
-| [grd2-pr-lane-holds-merge-slot](Tests#t-grd2-pr-lane-holds-merge-slot) | requirement | DEL-7 | Given a goal whose pr lane started before another's, when the other's merge.py runs, then it waits until the first merges or fails. | PASS 2026-11-15 |
-| [test-caps-qa-refused](Tests#t-test-caps-qa-refused) | requirement | DEL-7 | Given a repo at max_regression_rows, when a goal adds a row, then qa refuses it with the row counts and the cap (TEST_CAPS); with the suite over max_suite_seconds it refuses with the seconds (owner record o51). | PASS 2026-11-16 |
-| [eta-budget-raise](Tests#t-eta-budget-raise) | requirement | DEL-7 | Given goal.py set raising a goal's time or token budget, when no unused owner-words record covers the goal, then it is refused and nothing changes; with one it is accepted and keeps the record, and lowering a budget needs none (hard ETA, DEL-17). | not run |
-| [eta-legacy-goal](Tests#t-eta-legacy-goal) | requirement | DEL-7 | Given a goal frozen before ETAs existed, when the owner gives it an ETA with an unused owner-words record, then it runs inside that ETA and is stopped past it like any other goal. | not run |
-| [held-charge-idle](Tests#t-held-charge-idle) | requirement | DEL-7 | Given a session silent past the idle limit with no step running, when the minute budget is read through fit.budget_stop, then it is charged no more than the limit until its next step starts, while a step that is running is charged in full. | not run |
-| [held-charge-show](Tests#t-held-charge-show) | requirement | DEL-7 | Given a goal with idle time, when goal.py show prints it, then it shows the charged minutes and the wall minutes. | not run |
-| [machine-backup-restore](Tests#t-machine-backup-restore) | requirement | DEL-7 | Given a set-up home, when machine backup and restore run, then restorable state moves to a new home, no secret or private-names list is copied, a folder inside a repo or without a manifest is refused. | PASS 2026-11-17 |
-| [routing-timeout-tree](Tests#t-routing-timeout-tree) | requirement | DEL-7 | Given a routed agent that has started a child and passes its timeout, when routing stops it, then the agent and its child are both gone, and the old subprocess.run(timeout) leaves the child running. | not run |
 | [aut-email-secrets](Tests#t-aut-email-secrets) | requirement | DEL-9 | Given the mail settings in the schedule's mail.env, when the tick runs, then they reach only the mail step and never a log, the summary, an issue or the digest comment, a mail.env of the wrong mode sends nothing, and without it nothing is written and the digest says why. | PASS 2026-11-12 |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | DEL-9 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
@@ -417,8 +378,5 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [pr-head-audit-refuses-4208](Tests#t-pr-head-audit-refuses-4208) | defect | [#4208](https://github.com/jcl2018/agent-workflow-template/issues/4208) closed (2026-11-15) | Given a pull request whose diff makes a page stale, when merge.py's wiki.pending audits it from the main checkout, then it is still refused and main's own stale page stays a finding (issue 4208). | PASS 2026-11-15 |
 | [depth-marker-rows-4557](Tests#t-depth-marker-rows-4557) | defect | #4557 | Given the review-depth marker rows (depth-on-board, depth-in-pr-body, depth-reference) that printed PASS and still exited non-zero on CI, when test-review-depth.sh runs as a whole, then its last line is ALL PASS (issue 4557). | not run |
 | [issue-117-github-touches](Tests#t-issue-117-github-touches) | defect | [#117](https://github.com/jcl2018/agent-workflow-template/issues/117) closed (2026-11-11) | Given a goal touching github:wiki that deletes a file a repo script writes, when it opens its pull request, then the surface is listed and the script is warned about (issue: Goals can't name GitHub-side changes, and nothing warns when a script regenerates what a goal deletes). | not run |
-| [stop-takes-tree](Tests#t-stop-takes-tree) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or child stopped for a timeout or a mend, when it is stopped on any platform, then its whole process tree goes with it. | PASS 2026-11-12 |
-| [stop-tree-step-limit](Tests#t-stop-tree-step-limit) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a step or lane past its time limit, when it is stopped on any platform, then its whole process tree goes with it. | not run |
-| [held-time-3878](Tests#t-held-time-3878) | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) closed (2026-11-15) | Given a goal held 772 minutes and active 20 minutes, when a new step starts at a 300 minute budget, then it is not refused (#3878). | PASS 2026-11-14 |
 | [pr-body-no-home-3841](Tests#t-pr-body-no-home-3841) | defect | [#3841](https://github.com/jcl2018/agent-workflow-template/issues/3841) closed (2026-11-14) | Given lane records that name a Unix or Windows home folder, when goal.py pr builds the lane part of the pull request body, then no home folder or user name is in it (issue 3841). | PASS 2026-11-14 |
 | [hook-count](Tests#t-hook-count) | defect | 4345 | Given a settings.local.json with one hook entry per script, when MIG_HOOKS runs, then it reports no duplicate; with two entries it reports installed 2 times. | PASS 2026-11-19 |

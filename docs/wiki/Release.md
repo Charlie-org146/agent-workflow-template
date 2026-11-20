@@ -178,23 +178,6 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [rel-major-refused](Tests#t-rel-major-refused) | requirement | REL-3 | Given a goal whose release would bump a major, when release.py bumps the version, then it refuses naming review.py promote; a minor and a patch still bump. | not run |
-| [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | REL-3 | Given a milestone with an open issue the owner has not moved by name, when review.py gate runs, then it refuses naming the issue; an issue with a waiver whose owner record names it does not refuse. | not run |
-| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. Also, given a CI run that is for another commit, unfinished, cut by budget or missing rows, when the gate takes it with --suite-from, then it refuses as not covering the candidate. | not run |
-| [rel-checks-refused](Tests#t-rel-checks-refused) | requirement | REL-3 | Given a failing health check, a requirement that is not Reviewed or a stale wiki page, when the gate runs, then it refuses naming the check, the requirement or the page. | not run |
-| [rel-freeze-refuses](Tests#t-rel-freeze-refuses) | requirement | REL-3 | Given a cut release candidate for a major, when a goal that names no recorded gate failure merges, then merge.py refuses with frozen for vX.0.0 and merges nothing; a goal naming one, or a release already tagged, goes on. | not run |
-| [rel-promote-snapshot](Tests#t-rel-promote-snapshot) | requirement | REL-3 | Given a release candidate with every gate check green and an owner record naming the version, when promote runs, then it tags vX.0.0, keeps release/vX, moves main, publishes the state report and mails it; a refused gate makes no tag, branch or release. | not run |
-| [rel-revert-pr](Tests#t-rel-revert-pr) | requirement | REL-3 | Given release/vX, when revert vX runs, then a branch with the snapshot's tree on top of main is pushed and a pull request to main is opened, and main itself is never pushed. | not run |
-| [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-3 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
-| - | requirement | REL-3 | no passing test | not enforced |
-| [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | REL-12 | Given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review. | not run |
-| [review-recorded-merges](Tests#t-review-recorded-merges) | requirement | REL-12 | Given review_hold is on, when the operation session records a review of the head, then merge.py merges, and with the setting off merging is unchanged. | not run |
-| [review-worker-refused](Tests#t-review-worker-refused) | requirement | REL-12 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
-| [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | REL-12 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
-| - | requirement | REL-12 | no passing test | not enforced |
-| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
-| [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
-| - | requirement | REL-13 | no passing test | not enforced |
 | [rel-ci-release](Tests#t-rel-ci-release) | requirement | REL-15 | Given merge_queue on, when finish() runs after a merge, then the release is made by release.yml on push to main, finish() pushes no commit and opens no pull request, and the part is a release label (patch by default). | not run |
 | [rel-update-asset](Tests#t-rel-update-asset) | requirement | REL-15 | Given a release with a package asset, when update downloads it, then it uses the asset, and with no asset it falls back to the source archive. | not run |
 | - | requirement | REL-15 | no passing test | not enforced |
