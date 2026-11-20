@@ -44,10 +44,10 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 ### Retired
 
-- AUT-10: moved to REL-12
+- AUT-10: moved to DEL-3
 - AUT-2: moved to AUT-1
 - AUT-3: moved to AUT-1
-- AUT-4: moved to MCH-5
+- AUT-4: moved to CHK-1
 - AUT-6: moved to DEL-9
 - AUT-7: moved to HLT-7
 - AUT-8: moved to AUT-1

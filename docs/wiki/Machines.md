@@ -55,12 +55,12 @@ None
 ### Retired
 
 - MCH-10: moved to MCH-1
-- MCH-11: moved to AUT-9
+- MCH-11: moved to GRD-4
 - MCH-2: moved to MCH-1
-- MCH-3: moved to DEL-7
-- MCH-6: moved to AUT-9
+- MCH-3: moved to MCH-1
+- MCH-6: moved to GRD-4
 - MCH-7: moved to MCH-1
-- MCH-8: moved to MCH-4
+- MCH-8: moved to MCH-1
 - MCH-9: moved to DEL-9
 
 ### MCH-1

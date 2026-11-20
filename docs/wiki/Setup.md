@@ -62,17 +62,17 @@ None
 
 ### Retired
 
-- SET-11: moved to SET-6
+- SET-11: moved to SET-1
 - SET-12: moved to SET-1
 - SET-13: moved to OPS-16
 - SET-14: moved to SET-1
 - SET-15: moved to DEL-9
-- SET-16: moved to SET-4
+- SET-16: moved to SET-1
 - SET-17: moved to HLT-4
 - SET-18: moved to SET-1
-- SET-19: moved to SET-4
-- SET-20: moved to SET-4
-- SET-21: moved to SET-4
+- SET-19: moved to SET-1
+- SET-20: moved to SET-1
+- SET-21: moved to SET-1
 - SET-3: moved to SET-10
 - SET-5: moved to SET-2
 - SET-7: moved to SET-1

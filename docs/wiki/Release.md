@@ -59,16 +59,16 @@ None
 
 ### Retired
 
-- REL-1: moved to REL-3
+- REL-1: moved to DEL-1
 - REL-10: moved to DEL-1
 - REL-11: moved to DEL-1
 - REL-14: moved to DEL-1
-- REL-2: moved to REL-3
-- REL-4: moved to REL-3
-- REL-5: moved to REL-3
-- REL-6: moved to REL-3
-- REL-7: moved to REL-3
-- REL-8: moved to REL-3
+- REL-2: moved to DEL-1
+- REL-4: moved to DEL-1
+- REL-5: moved to DEL-1
+- REL-6: moved to DEL-1
+- REL-7: moved to DEL-1
+- REL-8: moved to DEL-1
 - REL-9: moved to DEL-1
 
 ### REL-1

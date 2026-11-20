@@ -67,17 +67,17 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 
 ### Retired
 
-- REG-10: moved to REG-9
+- REG-10: moved to REG-4
 - REG-11: moved to REG-7
 - REG-12: moved to REG-4
 - REG-13: moved to REG-4
 - REG-14: moved to REG-7
-- REG-15: moved to REG-9
-- REG-16: moved to REG-9
+- REG-15: moved to REG-4
+- REG-16: moved to REG-4
 - REG-2: moved to REG-4
 - REG-3: moved to REG-4
 - REG-5: moved to HLT-4
-- REG-6: moved to REG-9
+- REG-6: moved to REG-4
 - REG-8: moved to REG-4
 
 ### REG-1
