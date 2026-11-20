@@ -122,7 +122,6 @@ def mark_merged(state):
 
 
 def run_routines(top, cfg, state):
-  """Routines come from the base branch: a pull request cannot add one."""
   shown = sh(["git", "show", "origin/%s:.loop/config.json" % cfg.get("base", "main")], cwd=top)
   try:
     routines = (json.loads(shown.stdout) if shown.returncode == 0 else cfg).get("routines") or []
@@ -146,7 +145,6 @@ def stage_notes(top, state, cfg):
 
 
 def stage_part(top, state):
-  """The bump, read on every run until the release commit exists."""
   if not state.get("release_part") or not (state.get("release_pushed") or state.get("release_pr")):
     part, reason = release.auto_need(top, state)
     state["release_part"], state["release_reason"] = ("patch", "a docs or test change") if part == "leave" else (part, reason)
@@ -159,7 +157,6 @@ def drop(top, tree, temp):
 
 
 def push_release_commit(top, cfg, state, part, to_branch=False):
-  """(version, sha); (None, stderr) if the base refused the push (protection). to_branch pushes release/vX-<slug>."""
   base, slug = cfg.get("base", "main"), state["slug"]
   temp = tempfile.mkdtemp(prefix="release-")
   tree = os.path.join(temp, "tree")
@@ -184,7 +181,12 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
       day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
       open(vpath, "w").write(version + "\n")
       open(cpath, "w").write(release.changelog_text(old, version, day, state["release_bullets"], state["release_steps"]))
-      files = [version_file, "CHANGELOG.md"]
+      for tool in ("workflow-regression/scripts/lanes_cli.py fold", "workflow-docs/scripts/criteria.py render", "workflow-docs/scripts/entry.py write"):
+        script, verb = tool.split()
+        script = os.path.join(tree, "skills", script)
+        if os.path.exists(script) and (verb == "fold" or os.path.exists(os.path.join(tree, ".loop", "docs.tsv"))) and sh([sys.executable, script, verb], cwd=tree).returncode:
+          fail(state, "the release could not render the generated files (%s)" % verb)
+      files = [version_file, "CHANGELOG.md"] + [x[3:].strip('"') for x in sh(["git", "status", "--porcelain"], cwd=tree).stdout.splitlines() if x[3:].strip('"') not in (version_file, "CHANGELOG.md")]
       if sh(["git", "add", "--"] + files, cwd=tree).returncode or sh(
         ["git", "commit", "-q", "-m", "Release %s (%s)" % (tag, slug), "--"] + files, cwd=tree).returncode:
         fail(state, "could not commit the release files")
@@ -208,14 +210,13 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
 
 
 def restatus(top, cfg, state, head):
-  """Post the pr lane's result for a head moved only by wiki pages."""
   module, stop = sibling("private")
   if not stop:
     module.pr_result(top, cfg.get("base", "main"), head, state["branch"], True)
 
 
 STAMPS = ("VERSION", "CHANGELOG.md", ".loop/regression-runs.tsv", ".loop/regression-issues.tsv")
-ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
+ROW = re.compile(r":\d{6} (?:100644|100755|000000) \w+ \w+ [ADM]\t(.+)")
 
 
 def tems(top, old, new, extra="", allow=None):
@@ -228,11 +229,12 @@ def tems(top, old, new, extra="", allow=None):
 
 def carried(top, cfg, state, sha):
   """The pr lane passed and the head is its parent plus stamps: the pass carries (#3870)."""
-  return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION")
+  wiki_dir = (cfg.get("wiki_dir") or "docs/wiki").rstrip("/") + "/"
+  return state.get("statuses") == "ok" and tems(top, sha + "^", sha, cfg.get("version_file") or "VERSION",
+                                                lambda x: x.startswith((".loop/lane-results/", wiki_dir)) or x == ".loop/START.md")
 
 
 def lane_at(top, cfg, sha):
-  """(exit code or None, output) of the affected rows at sha."""
   temp = tempfile.mkdtemp(prefix="release-status-")
   tree, code, text = os.path.join(temp, "tree"), None, "could not check out the release head"
   try:
@@ -250,7 +252,6 @@ def lane_at(top, cfg, sha):
 
 
 def release_statuses(top, cfg, state, branch, sha):
-  """Post the lane's result for the release PR's head under each required check's name; a bump-only head carries the pass."""
   module, stop = sibling("private")
   if stop or not sha or state.get("release_status") == "success":
     return
@@ -278,7 +279,6 @@ RED = ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "STARTUP_FAILURE", "ACTION_
 
 
 def main_reds(top, base, info, red):
-  """(failing rows, log URLs) of the red checks if all failing rows are known main reds, else None."""
   show = lambda f: [x.split("\t") for x in sh(["git", "show", "origin/%s:.loop/%s" % (base, f)], cwd=top).stdout.splitlines()]
   known = {x[0] for x in show("regression-known.tsv")} | {x[0] for x in show("regression-runs.tsv") if x[1:2] == ["FAIL"]}
   rows, urls = set(), []
@@ -295,7 +295,6 @@ def main_reds(top, base, info, red):
 
 
 def go_gate(top, base, info, go):
-  """None, or the refusal, unless the PR head is the GO's and every required check is green (#5171)."""
   head = str(info.get("headRefOid"))
   if len(go) < 7 or not head.startswith(go):
     return "REFUSED (GO_HEAD): the GO was for %s, the PR head is %s. Nothing merged." % (go[:12], head[:12])
@@ -316,7 +315,6 @@ def go_gate(top, base, info, go):
 
 
 def status_held(state, url, number, seen=None):
-  """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head has no passing status or a red check."""
   red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
     if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
   why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
@@ -353,7 +351,6 @@ def create_release(top, cfg, state, version, target):
 
 
 def finish(top, cfg, state):
-  """After the merge; each step records itself."""
   if state.get("release") == "cut" and state.get("release_url"):
     print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
     return
