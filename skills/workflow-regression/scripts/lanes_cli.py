@@ -169,6 +169,8 @@ NARROW = """# Written by workflow-regression (regression.py workflow). The rows 
 name: regression-pr
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
   push:
     branches-ignore:
       - "@BASE@"
@@ -194,7 +196,7 @@ jobs:
 OURS = "# Written by workflow-regression"
 
 
-# The Linux cell of the agent x machine matrix (health rule matrix): the same smoke set every machine runs, and its record as an artifact.
+# The Linux cell of the agent x machine matrix: the smoke set every machine runs.
 MATRIX_JOB = """
   matrix-smoke:
     if: github.event_name != 'workflow_dispatch' || inputs.target == ''
