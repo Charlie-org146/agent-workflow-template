@@ -15,14 +15,14 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Unreviewed** Any repo adopts the template, stays current, and is proven by replay
+- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
   - One safe, idempotent command adopts any repo byte for byte. [SET-1]
   - Adopted repos hold only their own data, record their template version, take updates, flag lag, and send fixes upstream. [SET-1]
   - Adoption is proven by a step-by-step replay against the golden result. [SET-1]
-- SET-2: **Unreviewed** Layered settings and a generated entry page
+- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
-- SET-10: **Unreviewed** One versioned package; every agent runs one loop
+- SET-10: **Reviewed 2026-11-20** One versioned package; every agent runs one loop <!-- reviewed c112b139 -->
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
   - Steps map to agents, with a warned fallback and recorded tokens. [SET-10]
 

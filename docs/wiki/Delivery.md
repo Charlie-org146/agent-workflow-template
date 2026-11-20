@@ -15,33 +15,33 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Requirements
 
 ### Functional
-- DEL-1: **Unreviewed** One sentence runs unattended to a release, and a major ships only through the gate
+- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
   - A sentence and its done lines run unattended to a recorded pull request and a release made from a tag. [DEL-1]
   - A merge is refused only for the goal's own findings, never left half done. [DEL-1]
   - A major exists only after the gate: milestone closed, full suite run, health green, everything Reviewed. [DEL-1]
   - Promotion and revert need the operation session and my words. [DEL-1]
-- DEL-3: **Unreviewed** It stops only for decisions that are mine, and asks them clearly
+- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
   - My decisions wait for me or are auto-approved where allowed. [DEL-3]
   - Full auto applies everything except the safety classes. [DEL-3]
   - Merges wait only on gates I set. [DEL-3]
   - Every question to me is one decision in plain words, with a recommendation, the exact words or button that answers it, and what happens if I don't answer. [DEL-3]
   - Questions are numbered and never asked twice. [DEL-3]
   - What was decided for me is listed. [DEL-3]
-- DEL-17: **Unreviewed** Every change runs on one clock, from my ask to main
+- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed a845a332 -->
   - **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag). [DEL-17]
   - **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17]
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-17]
   - **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17]
   - A merge never makes another ready pull request re-run. [DEL-17]
   - Test count and suite time stay capped. [DEL-17]
-- DEL-19: **Unreviewed** Every change is a goal inside the loop, serving a requirement
+- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
   - The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. [DEL-19]
   - Everything in the repo is part of one of those steps or keeps them running. [DEL-19]
   - Main changes only through a goal's pull request. [DEL-19]
   - A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. [DEL-19]
   - Done lines never change after the freeze. [DEL-19]
   - "What this is" is generated from this text. [DEL-19]
-- DEL-21: **Unreviewed** Every requirement names what it follows and adopts a standard tool by default, scored
+- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
   - Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21]
   - General guidance is not a reference. [DEL-21]
   - A drop-in tool is used as it is; adapted names the design it copies and why. [DEL-21]
@@ -51,7 +51,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A change that lowers the score needs my words. [DEL-21]
 
 ### Non-functional
-- DEL-9: **Unreviewed** Nothing private is committed, shipped or copied
+- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
   - Every commit, push and pull request passes the scoped private-name scan. [DEL-9]
   - Private files, the mail address and keys stay local and are never copied. [DEL-9]
 

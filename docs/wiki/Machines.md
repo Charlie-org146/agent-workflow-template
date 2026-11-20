@@ -16,7 +16,7 @@ Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 ## Requirements
 
 ### Functional
-- MCH-1: **Unreviewed** Any machine sets up identically, and work moves between them safely
+- MCH-1: **Reviewed 2026-11-20** Any machine sets up identically, and work moves between them safely <!-- reviewed 78c0f6c5 -->
   - A fresh clone, the checklist, a dry run and an apply reach a working operation session on a Mac or on Windows. [MCH-1]
   - Each goal has one owning machine; handover and adoption move it safely. [MCH-1]
   - Failed steps retry three times and then stop with a reason; crashed goals resume. [MCH-1]

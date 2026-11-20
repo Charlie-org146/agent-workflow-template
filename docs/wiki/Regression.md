@@ -26,7 +26,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 ## Requirements
 
 ### Functional
-- REG-4: **Unreviewed** Every requirement has its tests, written and run one way, with honest results
+- REG-4: **Reviewed 2026-11-20** Every requirement has its tests, written and run one way, with honest results <!-- reviewed 206e7971 -->
   - Every Reviewed requirement, whole flow and fixed issue has its kind of test: requirement, flow or defect. [REG-4]
   - A requirement with no passing test shows "not enforced". [REG-4]
   - One format, and one command runs them everywhere. [REG-4]

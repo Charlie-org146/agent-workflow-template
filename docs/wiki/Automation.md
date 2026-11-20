@@ -15,13 +15,13 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Unreviewed** Routines run on schedule, by runbook
+- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
   - Health and regression run on schedule wherever they can run fully. [AUT-1]
   - They report where they ran and what they skipped, catch up missed runs, and follow runbooks. [AUT-1]
 
 
 ### Non-functional
-- AUT-5: **Unreviewed** Routines and publishing stay under my control
+- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
   - Each routine turns off or reschedules with one setting and writes nothing without secrets. [AUT-5]
   - Publishing never deletes or overwrites pages it didn't write, and it can be undone. [AUT-5]
 

@@ -15,7 +15,7 @@ How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
 ### Functional
 
-- CHK-1: **Unreviewed** One live board and one check-in layout show where everything stands
+- CHK-1: **Reviewed 2026-11-20** One live board and one check-in layout show where everything stands <!-- reviewed 15a0af71 -->
   - **The board** has these sections, in order, each collapsible: Your move (only my items); Red team (bottlenecks now, planning suggestions with taken or why not, the biggest risk, a verdict per principle); Release goals (short: one line, one bar, an ETA, at most five steps); Task queue (every open task by expected time on main, with a state and whose ETA it is); Workers; Shipped. [CHK-1]
   - **Every item is a card;** no tables and no plain lists. [CHK-1]
   - **The check-in** follows the same order and opens with what slipped. [CHK-1]
