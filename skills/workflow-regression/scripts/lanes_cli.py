@@ -212,7 +212,7 @@ jobs:
   small:
     if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -221,7 +221,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 120 --timeout 100
+      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 90 --timeout 60
 """
 OURS = "# Written by workflow-regression"
 
