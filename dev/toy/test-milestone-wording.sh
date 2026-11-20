@@ -3,8 +3,8 @@
 # reads: .loop/regression.tsv
 # Test the milestone-freeform wording and rows: DOC-4, DOC-10, HLT-2, HLT-4, AUT-2, AUT-3 and SET-1 say a milestone is
 # optional (Unreviewed after the owner's un-review, or later re-reviewed with the same text), none says an issue or a pull
-# request must have one (DOC-10 keeps a standing "Backlog: <Feature>" milestone per feature and HLT-4 puts a defect on no
-# milestone), and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
+# request must have one (DOC-10 keeps a standing "Backlog: <Feature>" milestone per feature; the v2 rewrite of HLT-4 left
+# the defect-on-no-milestone rule to the hlt4-feature-milestones and backlog-defect-home rows), and every other milestone-freeform row has a seen-failing date. usage: test-milestone-wording.sh
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
