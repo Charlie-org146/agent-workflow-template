@@ -32,11 +32,11 @@ def pr(number, checks, queued, merged):
         "timelineItems": {"nodes": [{"createdAt": queued}]}}
 
 
-def rows(nodes):
+def rows(nodes, since="2026-01-01T00:00:00Z"):
     path = os.path.join(d, "q.json")
     open(path, "w").write(json.dumps({"data": {"repository": {"pullRequests": {"nodes": nodes}}}}))
     os.environ["FAKE_GH_GRAPHQL"] = path
-    return milestone.queue_rows(d)
+    return milestone.queue_rows(d, since=since)
 
 
 got = rows([pr(1, "2026-01-01T10:00:00Z", "2026-01-01T10:00:08Z", "2026-01-01T10:01:00Z"),
@@ -50,6 +50,9 @@ check(got[0]["state"] == "FAIL" and "#2 (162s)" in got[0]["detail"] and got[0]["
 got = rows([pr(1, "2026-01-01T10:00:00Z", "2026-01-01T10:00:08Z", "2026-01-01T10:01:00Z"),
             pr(2, "2026-01-01T10:00:00Z", "2026-01-01T10:00:09Z", "2026-01-01T10:01:00Z")])
 check(got[0]["state"] == "PASS" and "2.0 PRs per merge" in got[0]["detail"], "two PRs merged together count as 2.0 PRs per merge")
+got = rows([pr(1, "2026-01-01T10:00:00Z", "2026-01-01T10:02:42Z", "2026-01-01T10:03:34Z")], since="2026-02-01T00:00:00Z")
+check(got[0]["state"] == "PASS" and "longest wait before the queue 162s" in got[0]["detail"] and "only info" in got[0]["detail"],
+      "a 162 s wait in a merge before the start stamp is shown as info and does not fail")
 os.environ["FAKE_GH_GRAPHQL"] = os.path.join(d, "missing.json")
 got = milestone.queue_rows(d)
 check(got[0]["state"] == "UNREAD", "an answer gh cannot read is UNREAD, never a pass")
