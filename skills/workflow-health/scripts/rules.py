@@ -169,7 +169,7 @@ POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Run
 
 
 def prompt_pointer(root):
-    """prompt-pointer: WARN for each scheduled-task prompt (a routine's runs: claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
+    """prompt-pointer: WARN for each scheduled-task prompt (claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -191,7 +191,7 @@ def prompt_pointer(root):
 
 def milestones(root):
     """milestones: a WARN for each standing "Backlog: <Feature>" milestone (and Other) a GitHub repo lacks (DOC-10, SET-17). No
-    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES (JSON titles) stands in for gh."""
+    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES stands in for gh."""
     if "github.com" not in (git_raw(root, "remote", "get-url", "origin") or ""):
         return []
     import milestone
@@ -204,7 +204,7 @@ def milestones(root):
 
 
 def machine(root):
-    """machine: each gap workflow-setup's machine.py check lists, one WARN with its fix."""
+    """machine: each gap workflow-setup's machine.py lists, one WARN with its fix."""
     tool = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "dev", "machine.py")
     if os.environ.get("CI") or not os.path.isdir(os.path.expanduser("~/.claude/skills/workflow-health")) or not os.path.exists(tool):
         return []
@@ -341,12 +341,13 @@ def idle_sessions(root):
     try:
         with open(os.path.join(loop, "app-sessions.json")) as handle:
             live = json.load(handle)
-        ghosts = sum(sid not in live for sid in pool) if live and isinstance(live, list) else None
-    except (OSError, ValueError):
+        live = live.get("ids") if isinstance(live, dict) else live
+        ghosts = sum(sid.startswith("local_") and sid not in live for sid in pool) if live else None
+    except (OSError, ValueError, TypeError):
         ghosts = None
     if ghosts is not None:
-        out.append(row("WARN" if ghosts else "PASS", "hygiene", "ghosts", "idle-sessions", "%d pool ids the app no longer has" % ghosts,
-                       "pool.py reconcile" if ghosts else "", "ghosts"))
+        out.append(row("WARN" if ghosts else "PASS", "hygiene", "ghosts", "idle-sessions", "%d pool ids the app lacks" % ghosts,
+                       "pool.py reconcile" * bool(ghosts), "ghosts"))
     return out
 
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # windows: skip
 # reads: skills/workflow-monitoring/scripts/pool.py skills/workflow-monitoring/scripts/mend.py skills/workflow-health/scripts/rules.py
-"""pool-reconcile (TD489): `pool.py reconcile` drops the pool ids the app no longer has, from a list of live ids the operation
-session writes, and changes nothing else; health shows the ghost count as one row. A pool of 3 live and 5 ghost ids: the 5 go, the 3 stay,
-every other file is byte-identical, an empty or missing list is refused and changes nothing, and health says 0 or 5."""
+"""pool-reconcile (TD489): `pool.py reconcile` drops the local_ pool ids the app no longer has, from {"at": ISO, "ids": [...]} (or a bare
+list) that the operation session writes from list_sessions with archived sessions included, and changes nothing else; health shows the
+ghost count as one row. A pool of 3 live (one archived) and 5 ghost local_ ids plus 3 ids that are not app sessions: the 5 go, the
+archived one and the 3 others stay (reported as not checked), every other file is byte-identical, an empty or missing list is refused,
+and health says 0 or 5."""
 import hashlib
 import json
 import os
@@ -40,10 +42,12 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(["git", "init", "-q", "-b", "main", tmp], check=True)
     loop = os.path.join(tmp, ".git", "loop")
     os.makedirs(os.path.join(loop, "runs"))
-    live = ["s1", "s2", "s3"]
-    ghosts = ["g1", "g2", "g3", "g4", "g5"]
-    pool = {sid: {"name": "worker · " + sid, "state": "free"} for sid in live}
-    pool.update({sid: {"name": "worker · " + sid, "state": "busy", "slug": "goal-" + sid} for sid in ghosts})
+    live = ["local_s1", "local_s2", "local_s3"]
+    ghosts = ["local_g1", "local_g2", "local_g3", "local_g4", "local_g5"]
+    others = ["bg-1", "board-artifact-page", "f08b0780abc"]
+    pool = {sid: {"name": "worker · " + sid, "state": "free"} for sid in live + others}
+    pool["local_s3"]["state"] = "archive"  # archived in the app: it can still be woken, so it counts as live
+    pool.update({sid: {"name": "worker · " + sid, "state": "busy", "slug": "goal-" + sid[6:]} for sid in ghosts})
     pool_path = os.path.join(loop, "session-pool.json")
     json.dump(pool, open(pool_path, "w"))
     with open(os.path.join(loop, "runs", "goal-g1.json"), "w") as handle:
@@ -55,7 +59,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
     health = lambda: [r for r in rules.idle_sessions(tmp) if r["subject"] == "ghosts"]  # noqa: E731
     check(health() == [], "health prints no ghost row until the operation session has written a list")
-    json.dump(live + ["extra-live-not-in-pool"], open(os.path.join(loop, "app-sessions.json"), "w"))
+    json.dump({"at": "2026-11-20T21:00:00Z", "ids": live + ["local_extra-not-in-pool"]}, open(os.path.join(loop, "app-sessions.json"), "w"))
     shown = health()
     check(len(shown) == 1 and shown[0]["state"] == "WARN" and "5 pool ids" in shown[0]["detail"], "health shows 5 ghosts as one row: %s" % [r["detail"] for r in shown])
     before = digest(tmp, {".git/loop/session-pool.json"})
@@ -67,11 +71,14 @@ with tempfile.TemporaryDirectory() as tmp:
     check(refused.returncode != 0 and json.load(open(pool_path)) == pool, "an empty list is refused: it would wipe the pool")
     done = reconcile()
     after = json.load(open(pool_path))
-    check(done.returncode == 0 and sorted(after) == live and done.stdout.count("GHOST ") == 5 and "RECONCILED: 5 ghost ids left the pool, 3 stay" in done.stdout,
+    check(done.returncode == 0 and sorted(after) == sorted(live + others) and done.stdout.count("GHOST ") == 5 and "RECONCILED: 5 ghost ids left the pool, 6 stay, 3 not checked" in done.stdout,
           "the 5 ghosts leave the pool and the 3 live ids stay: %s" % done.stdout.strip().splitlines()[-1])
+    check("local_s3" in after and after["local_s3"]["state"] == "archive", "an archived app session in the list is never dropped")
+    check(all(sid in after for sid in others) and "GHOST bg-1" not in done.stdout, "ids that are not app sessions (bg-, board-artifact-page, a bare hash) are reported as not checked and never dropped")
     now = digest(tmp, {".git/loop/session-pool.json"})
     check({k: v for k, v in now.items() if not k.endswith(".lock")} == before, "nothing outside the pool file changed (no run record, no other file; its lock aside): %s" % sorted(set(now) ^ set(before)))
     shown = health()
     check(len(shown) == 1 and shown[0]["state"] == "PASS" and "0 pool ids" in shown[0]["detail"], "health then shows 0 ghosts: %s" % [r["detail"] for r in shown])
-    check(reconcile().returncode == 0 and sorted(json.load(open(pool_path))) == live, "a second run changes nothing")
+    json.dump(live, open(os.path.join(tmp, "bare.json"), "w"))
+    check(reconcile("--app-list", os.path.join(tmp, "bare.json")).returncode == 0 and sorted(json.load(open(pool_path))) == sorted(live + others), "a bare list works and a second run changes nothing")
 sys.exit(1 if failed else 0)
