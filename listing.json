@@ -136,7 +136,7 @@
     "detect",
     "resolve",
     "archive",
-    "archived",
+    "archived", "reconcile",
     "timer", "plan-review", "plan-record", "plan-accept",
     "done",
     "handover",
