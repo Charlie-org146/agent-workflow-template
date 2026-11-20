@@ -2,7 +2,7 @@
 # reads: skills/ skills/workflow-delivery/ skills/workflow-release/
 # reads: skills/workflow-monitoring/scripts/operate.py skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/board.py
 # reads: skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/graph.py skills/workflow-monitoring/scripts/live_board.py
-# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md docs/wiki/Operation.md
+# reads: skills/workflow-monitoring/scripts/reply_hook.py skills/workflow-monitoring/scripts/govern_hook.py docs/wiki/Monitoring.md docs/wiki/Operation.md docs/wiki/Machines.md
 # reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/worker.py
 # reads: skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/board_status.py
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-release/scripts/merge.py dev/package.py
@@ -259,7 +259,9 @@ echo "== done line 1: MON-13 and MON-15 moved to OPS-13 and OPS-15 on the Operat
 out=""
 check "MON-13 is moved to OPS-1, which holds the OPS-13 revisions" 'grep -q "^- MON-13: moved to OPS-1" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- OPS-1: " "$here/docs/wiki/Operation.md" && grep -q "^### OPS-13" "$here/docs/wiki/Operation.md"' 
 check "MON-14 is retired as moved to CHK-1" 'grep -q "^- MON-14: moved to CHK-1" "$here/docs/wiki/Monitoring.md"' 
-check "MON-15 is moved to MCH-4, which holds the OPS-15 revisions" 'grep -q "^- MON-15: moved to MCH-4" "$here/docs/wiki/Monitoring.md" && grep -Eq "^- MCH-4: " "$here/docs/wiki/Machines.md" && grep -q "^### OPS-15" "$here/docs/wiki/Operation.md"' 
+mon15() { grep -q "^- MON-15: moved to MCH-1" "$1" && grep -Eq "^- MCH-1: " "$here/docs/wiki/Machines.md" && grep -q "^- OPS-15: moved to MCH-1" "$here/docs/wiki/Operation.md" && grep -q "^### OPS-15" "$here/docs/wiki/Operation.md"; }
+check "MON-15 is moved to MCH-1, which holds the OPS-15 revisions" 'mon15 "$here/docs/wiki/Monitoring.md"'
+check "negative control: a Monitoring page without MON-15's moved line fails that check" '! mon15 <(grep -v "^- MON-15: moved to" "$here/docs/wiki/Monitoring.md")'
 out=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
 check "the Operation page's review lock accepts the requirements" '! has "LOCKED Operation" && ! has "TESTS Operation"'
 fi
