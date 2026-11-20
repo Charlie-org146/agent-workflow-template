@@ -8,18 +8,18 @@ usage: docs.py <command> [options]
   check [--base REF] [--own]   list missing, stale, unmapped and unwritten pages, wrong counts, broken criteria and
                                unpublishable images; exit 1 if any. --own: a stale page this branch leaves is a FINDING
   audit [--base REF] [--dry-run]
-                               check every required doc, fix what is mechanical, list wording to rewrite
+                               check every required doc, fix the mechanical, list the rest
   criteria PAGE                print the requirement format and the next free id for a page
   publish [--dry-run] [--adopt PAGE]
                                copy the pages to the wiki, commit and push
   sync [--dry-run] [--accept PAGE:ID=repo|source] [--open]
-                               report each difference between an external PRD and .loop/prd/PAGE.md as a DELTA
-  restore                      revert the last publish, if nothing came after it
-  automation                   each routine's live state: a workflow's newest run, a launch agent loaded or not
+                               report each difference between an external PRD and .loop/prd/PAGE.md
+  restore                      revert the last publish
+  automation                   each routine's live state
 
 With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the
-page format and a Tests page that matches a fresh render. Publish never deletes a page, refuses to replace one without
-this tool's marker unless --adopt names it, and copies the images its pages embed. It runs git only."""
+page format and a fresh Tests page. Publish never deletes a page, replaces only one with this tool's marker (or --adopt),
+and copies the images its pages embed. It runs git only."""
 import argparse
 import json
 import os
@@ -183,6 +183,7 @@ def problems(root, base):
         if page == "Home" and render.home_fresh(root, feature_pages(root)):
             continue  # DOC-4 Home: generated only (#4608)
         seen = git("rev-list", "--no-merges", "HEAD", "--", rel, cwd=root, check=False).split()
+        seen += git("log", "--no-merges", "--format=%H", "-G^%s\t" % page, "HEAD", "--", ".loop/kept/", cwd=root, check=False).split()
         if not seen:
             continue
         judged = [sha for sha in seen + [base] + merged if sha]

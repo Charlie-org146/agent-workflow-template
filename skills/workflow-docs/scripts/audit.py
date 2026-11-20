@@ -149,13 +149,13 @@ def own_base(root, name):
 def own_touched(root, ref, paths, head="HEAD"):
     """True when the goal's diff (merge-base of ref, to head) touches a path."""
     out = own_git(root, "diff", "--name-only", ref + "..." + head, "--", *paths)
-    return out is None or bool(out)  # no answer: the goal's own
+    return out is None or bool(out)
 
 
 def own_split(root, found, notes, rows, name="main", head="HEAD"):
     ref = own_base(root, name)
     if not ref or own_git(root, "merge-base", "--is-ancestor", head, ref) is not None:
-        return found, notes  # no base, or on the base branch
+        return found, notes
     keep, moved = [], []
     for item in found:
         if item[0] == "STALE" and item[1] in rows and item[2][:1].isdigit() and not own_touched(root, ref, rows[item[1]], head):
@@ -213,8 +213,18 @@ def owned(root, rel, body, rule):
     return {key for _, _, key in main} <= have | set(gone)
 
 
+def keep(root, slug, pages):
+    """DOC-2: a re-stamp is a line in the goal's own .loop/kept/<slug>.tsv (no page edit), committed alone."""
+    path, sha_ = ".loop/kept/%s.tsv" % slug, cr.git("rev-parse", "--short", "HEAD")
+    os.makedirs(join(root, ".loop", "kept"), exist_ok=True)
+    with open(join(root, path), "a") as handle:
+        handle.writelines("%s\t%s\n" % (page, sha_) for page in pages)
+    cr.git("add", "--", path)
+    cr.git("commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
+
+
 def relock(root, slug="", only=()):
-    rule, done = cr.rules(), []
+    rule, done, held_ = cr.rules(), [], []
     for rel in cr.pages(root):
         if only and os.path.basename(rel)[:-3] not in only:
             continue
@@ -227,26 +237,24 @@ def relock(root, slug="", only=()):
             continue
         if not match.group(2):  # Unreviewed: a kept marker says the text still holds
             if slug and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
-                with open(join(root, rel), "w") as handle:
-                    handle.write(prd.set_review(text, "Review: **Unreviewed** <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip())))
-                done.append(os.path.basename(rel)[:-3])
+                held_.append(os.path.basename(rel)[:-3])
             continue
         now, was = prd.prints(parts, rule), dict(zip(prd.KEYS, match.group(3, 4, 5, 6, 7)))
         moved = [k for k in prd.KEYS[:4] if was[k] != now[k]]
-        if (moved == ["R"] and owned(root, rel.replace(os.sep, "/"), dict(parts), rule)) or (slug and not moved):
-            kept = " <!-- kept %s@%s -->" % (slug, cr.git("rev-parse", "--short", "HEAD").strip()) if slug else ""
+        if moved == ["R"] and owned(root, rel.replace(os.sep, "/"), dict(parts), rule):
             with open(join(root, rel), "w") as handle:
-                handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->%s" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS), kept)))
+                handle.write(prd.set_review(text, "Review: **Reviewed %s** <!-- prd %s -->" % (match.group(2), " ".join("%s=%s" % (k, now[k]) for k in prd.KEYS))))
             done.append(os.path.basename(rel)[:-3])
+        elif slug and not moved:
+            held_.append(os.path.basename(rel)[:-3])
     for page in only if slug else ():  # DOC-18: a How-to-use page has no Review line; a kept marker re-stamps it
         rel, feature = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):]
         held = page.startswith(docs.deployments.HOWTO) and feature in docs.read_map(root) and os.path.isfile(join(root, rel))
         if held and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
-            with open(join(root, rel)) as handle:
-                text = re.sub(r"\n*<!-- kept [^>]* -->\s*\Z", "", handle.read()).rstrip("\n")
-            with open(join(root, rel), "w") as handle:
-                handle.write("%s\n\n<!-- kept %s@%s -->\n" % (text, slug, cr.git("rev-parse", "--short", "HEAD").strip()))
-            done.append(page)
+            held_.append(page)
+    if held_:
+        keep(root, slug, held_)
+        done += held_
     if done:
         log = join(os.path.abspath(cr.git("rev-parse", "--git-common-dir")), "loop")
         os.makedirs(log, exist_ok=True)
@@ -361,10 +369,10 @@ HOME_PARTS = ("operation session", "worker", "step", "staging", "production", "m
 
 
 def home_diagram(text):
-    """DOC-4: Home's diagram block holds a ```text diagram naming each part of the loop."""
+    """DOC-4: Home has the System design, or a diagram block naming each part of the loop."""
     fence = prd.FENCE.search(text.partition("<!-- diagram:begin -->")[2].partition("<!-- diagram:end -->")[0])
     if not fence:
-        return [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
+        return [] if "\n## System design\n" in text else [("HOME", "Home", "DOC-4 no system diagram. Fix: add a diagram block")]
     low = fence.group(1).lower()
     return [("HOME", "Home", "DOC-4 the diagram names no %s. Fix: draw it" % p) for p in HOME_PARTS if p not in low]
 

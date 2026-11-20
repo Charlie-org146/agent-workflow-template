@@ -186,7 +186,7 @@ def kinds(name, text, on_page=()):
     if not table:
         bad("What's delivered holds no row. Fix: add a row for each component, with its Kind")
     reach, books_here = render.blocks(render.part(text, "How to reach or run it")), render.blocks(render.part(text, "Runbooks"))
-    wanted = set()
+    wanted = {"Settings", "When something goes wrong"}
     for component, kind, cells in table:
         if cells != 4:
             bad("row '%s' has %d cells, not 4" % (component, cells))
@@ -211,7 +211,7 @@ def kinds(name, text, on_page=()):
         if ADDRESS.search(" ".join(found.values())):
             bad("block '%s' holds an address. Fix: name a role, not a person" % component)
     for heading in list(reach) + list(books_here):
-        if heading not in wanted and heading != "When something goes wrong":
+        if heading not in wanted:
             bad("block '%s' has no row in What's delivered. Fix: add its row or remove the block" % heading)
     return out
 

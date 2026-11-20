@@ -113,13 +113,37 @@ Delivery subprocesses fail instead of waiting for terminal prompts, including ro
 
 The pull request's own record commit (the regression run and issue files, with re-rendered wiki tables) never sends a goal back to pr: a commit that moves only stamp files, or stamp files plus wiki pages, is tree-equal modulo stamps to the tested head and carries its pass. Any code path, symlink, rename or delete breaks that match. See the Release page for the rule.
 
+**The clock, from my ask to main (DEL-17).**
+
+Every change runs on one clock, from my ask to main. The normal goal and the small fix (one script or page, a few lines, no requirement change) run side by side:
+
+| Step | Normal goal | Small fix |
+|---|---|---|
+| Freeze, idea, plan, review, build | the goal's own ETA, frozen with it | skipped: the worker gets the whole instruction up front and changes only the files it names; 2 minutes to edit, commit and push |
+| Local tests: one lane, only the tests the change reaches, reused by qa, ship and pr while the code is unchanged | 5 minutes | 2 minutes |
+| Push and PR CI: one run per push, same test selection, parallel jobs | 5 minutes | 3 minutes |
+| Ready to main: the merge queue tests the merged result with a small fixed set, merges, and the release is made from a tag with no second pass | 5 minutes | 3 minutes |
+| **Total, after build** | **about 15 minutes** | **10 minutes from my ask** |
+| Tokens | each step has a budget from its measured usual; a step past twice its budget is flagged while it runs; a step that only waits does so in a script, not in model turns; an unread count shows "unread", never 0 | same |
+
+Rules that hold across the clock:
+
+- A merge never makes another ready pull request re-run; the queue tests the merged result.
+- A step that passes its limit says so at once. A small fix that passes one becomes a normal goal. A normal goal that reaches its ETA finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. A missed limit or ETA stays on the board as missed, with its cause (principle 8).
+- Tests the change does not reach go to the scheduled full suite, which names how many; a change to a goal's own record files reaches fewer than 20 tests; test count and suite time stay capped.
+- CI runs or minutes per day past a set limit raise one alarm.
+- Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
+
+The clock also holds what REG-7 (test runs), GRD-7 and GRD-8 (CI minutes, tokens) and REL-13 and REL-15 (the queue and the 5-minute merge) each say; those requirements stay on their pages with their tests, and DEL-17 is the row that shows them together.
+
 Each requirement and how it is delivered:
 
 - DEL-1: The loop. Example, from the no-done-line-refused test: given a goal with no done line, when it is started, then it is refused.
 - DEL-3: Decisions. Example, from the pending-waits test: given a step that leaves a decision for the owner, when it ends, then the goal stops and waits.
 - DEL-7: Work survives failure and moves by backup. A failed step is resumed from its recorded step, never from the start; `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.
-- DEL-17: A goal's ETA is a hard limit.
+- DEL-17: A goal's ETA is a hard limit, and every change runs on one clock from my ask to main (the table above).
 - DEL-19: Every goal serves a requirement.
+- DEL-21: Adopt a standard tool by default (v2.0 planned). Each requirement's Follows cell says whether it adopts the standard tool or adapts the proven design with a one-line reason. Example: a requirement with no reference is replaced by its industry-standard counterpart or cut.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"
@@ -154,4 +178,4 @@ Each requirement and how it is delivered:
 - PRD page: [Delivery](Delivery)
 - Backlog: [Backlog: Delivery](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept budget-save-merge@440b5b037 -->
+<!-- kept rel-15-queue@88a93af7b -->

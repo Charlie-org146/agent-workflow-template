@@ -5,7 +5,7 @@ Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/23
 
 How to use: [How-to-use-Machines](How-to-use-Machines)
 
-Review: **Unreviewed** <!-- kept known-red-w4b-docs-wording@dc87b3264 -->
+Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 
 
 ## Problem
@@ -166,18 +166,9 @@ None
 | [resume-ask-prompt](Tests#t-resume-ask-prompt) | requirement | MCH-4 | Given a goal set to ask and auto_merge on, when it is resumed, then its prompt asks the owner and never tells the worker to run merge.py. | not run |
 | [pr-queue-order](Tests#t-pr-queue-order) | requirement | MCH-4 | Given three goals asking for their pr turn in one repo, when they ask oldest first, then the first runs its lane and the others are told who is ahead; a goal that left the pr step, a stopped holder and a ticket older than 30 minutes each give their place to the next. | not run |
 | [pr-parallel-disjoint](Tests#t-pr-parallel-disjoint) | requirement | MCH-4 | Given goals at pr, when their touches share no path, then their lanes run at once, and a goal waits only for an earlier goal whose touches overlap. | not run |
-| [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | MCH-4 | Given a goal whose pull request merged, when the pr queue is read, then its ticket and beat are removed and it holds nobody. | not run |
-| [merge-leaves-queue-4343](Tests#t-merge-leaves-queue-4343) | requirement | MCH-4 | Given a merged goal, when merge.py finishes the merge, then its pr-queue ticket and beat are gone. | not run |
+| [queue-merged-free-4343](Tests#t-queue-merged-free-4343) | requirement | MCH-4 | Given the MCH-4 cases of test-pr-order.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [machines-handover](Tests#t-machines-handover) | requirement | MCH-4 | Given two machines sharing origin, when goals hand over, contend for the merge turn and publish snapshots, then ownership moves once with the pushed branch and no old worker, duplicate starts are refused, one merge order holds, stale turns expire and structured snapshots draw both Machine lines with each goal shown once. Covers #4787. | PASS 2026-11-18 |
-| [aut-digest-create](Tests#t-aut-digest-create) | requirement | MCH-5 | Given no digest issue yet, when the first round ends, then the Automation digest issue is created and pinned. | PASS 2026-11-12 |
-| [aut-digest-format](Tests#t-aut-digest-format) | requirement | MCH-5 | Given open defect and health issues, when a round ends, then one comment mentions the owner and lists what ran, the new issues and a request per open issue. | PASS 2026-11-12 |
-| [aut-digest-rounds](Tests#t-aut-digest-rounds) | requirement | MCH-5 | Given a previous digest, when the next round ends, then its comment lists the new, still-open and fixed issues on the same digest issue. | PASS 2026-11-12 |
-| [aut-digest-rerun](Tests#t-aut-digest-rerun) | requirement | MCH-5 | Given a round already posted, when the same run is rerun, then nothing is posted twice. | PASS 2026-11-12 |
-| [aut-digest-no-title](Tests#t-aut-digest-no-title) | requirement | MCH-5 | Given an issue whose title holds instructions, when the digest is written, then the request names the issue only by number and link. | PASS 2026-11-12 |
-| [aut-digest-org](Tests#t-aut-digest-org) | requirement | MCH-5 | Given a repo owned by an organisation, when the digest is written, then it says no one is notified and how to set digest_owner. | PASS 2026-11-12 |
-| [aut-digest-pin-fails](Tests#t-aut-digest-pin-fails) | requirement | MCH-5 | Given the repo cannot pin another issue, when the first round ends, then it warns and still posts the digest. | PASS 2026-11-12 |
-| [aut-digest-comment-fails](Tests#t-aut-digest-comment-fails) | requirement | MCH-5 | Given a round whose digest comment fails, when the run ends, then no state is saved, so its rerun posts the comment. | PASS 2026-11-12 |
-| [aut-digest-list-fails](Tests#t-aut-digest-list-fails) | requirement | MCH-5 | Given gh cannot list the issues, when a round ends, then the digest posts nothing and says why. | PASS 2026-11-12 |
+| [aut-digest-create](Tests#t-aut-digest-create) | requirement | MCH-5 | Given the MCH-5 cases of test-automation.sh, when it runs once, then it prints every PASS line the 9 merged rows checked and no FAIL line. | PASS 2026-11-20 |
 | [aut-email-mail](Tests#t-aut-email-mail) | requirement | MCH-5 | Given this run's digest comment, when the email step runs, then one mail with the comment's text goes out and the comment is marked mailed, and a rerun, a look-alike comment, a refusal or an unknown outcome never sends a second one. | PASS 2026-11-12 |
 | [aut-email-retry](Tests#t-aut-email-retry) | requirement | MCH-5 | Given a provider that throttles once, when the round's mail is sent, then it is retried once, and only when the provider cannot have accepted it. | PASS 2026-11-12 |
 | [aut-email-test](Tests#t-aut-email-test) | requirement | MCH-5 | Given the mail secrets, when mail.py test runs by hand, then one test mail goes out touching no issue, and a missing secret or mail off fails the run. | PASS 2026-11-12 |
