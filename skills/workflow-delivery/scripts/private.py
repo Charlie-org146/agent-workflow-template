@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """The private-name scan (DEL-9), run on every push or GitHub write and by setup's hooks (`hook staged | message FILE | push`),
-plus a private repo's commit statuses.
+plus a private repo's statuses.
 
 usage: private.py where | check | scan [--base REF]
        private.py visibility | required | statuses --head SHA --ok|--fail [--base B]
 
 The list: `$LOOP_PRIVATE_NAMES` or `~/.workflow-loop/private-names`, one case-blind regex per line, `#` comments;
-`@public REGEX` or `@repos=a,b REGEX` applies only to public repos or the named ones."""
+`@public REGEX` or `@repos=a,b REGEX` applies only to public or the named repos."""
 import importlib
 import json
 import os
@@ -16,6 +16,7 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 LOCAL_PATH = re.compile(r"(?<![\w/.:~])/(?:Users|home|private|var|tmp|mnt|opt|srv|root|etc|usr|Volumes)(?:/[\w.@+-]+)+")
@@ -330,7 +331,7 @@ def pr_result(top, base, head, branch, ok):
 
 
 def cannot(top, base):
-    """A refusal (why, fix, code) when a private repo's base branch requires a check no local status can satisfy (#4537), else None."""
+    """A refusal (why, fix, code) when the base requires a check no local status can satisfy, else None."""
     got = repo_is_private(top) and required_checks(top, base)
     if not got or not got[0]:
         return None
@@ -386,7 +387,7 @@ def main():
 
 
 def requirement_finding(g, args):
-    """goal.py finding --requirement ID (DOC-20): record the gap without stopping the goal, file it on its page's Backlog milestone."""
+    """goal.py finding --requirement ID (DOC-20): record the gap, file it on its page's Backlog milestone."""
     if not (re.fullmatch(r"[A-Z]{2,5}-\d+", args.requirement) and g.SLUG.match(args.slug)):
         g.no("bad requirement ID or goal name")
     page = g.git("grep", "-l", "-e", "^- %s: \\*\\*" % args.requirement, "--", "*.md", check=False).split("\n")[0]
