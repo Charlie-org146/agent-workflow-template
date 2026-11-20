@@ -63,7 +63,6 @@ def key_of(text):
 
 
 def standing(root):
-    """The latest owner-words record covering full-auto-rule, else ''."""
     rows = [r[0] for r in owner_rows(root) if RULE in r[4].split(",")]
     return rows[-1] if rows else ""
 
@@ -188,8 +187,19 @@ def owner_words_path(root="."):
     return os.path.join(loop_dir(root), "owner-words.tsv")
 
 
+def add_owner_words(args, ids):
+    """Append the owner's message as the next record (delegated: TDn, DOC-2 rN); returns its number."""
+    if args.delegated and not (args.via == "top" and re.fullmatch(r"TD\d+", args.delegated) and re.fullmatch(r"r\d+", args.doc2)):
+        sys.exit("REFUSED: a delegated record is --from top with --delegated TDn and --doc2 rN. Nothing was written.")
+    where, count = owner_words_path(), len(owner_rows()) + 1
+    os.makedirs(os.path.dirname(where), exist_ok=True)
+    who = "operation-top:delegated:%s:DOC-2:%s" % (args.delegated, args.doc2) if args.delegated else "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation"
+    with open(where, "a", encoding="utf-8") as handle:
+        handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count, stamp(), who, json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
+    return count
+
+
 def owner_rows(root="."):
-    """The owner-words records as [id, time, session, text, covers]."""
     try:
         with open(owner_words_path(root), encoding="utf-8") as handle:
             return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]

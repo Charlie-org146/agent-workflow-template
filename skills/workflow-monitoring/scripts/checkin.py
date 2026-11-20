@@ -5,6 +5,7 @@ release and feature), Needs you (numbered, MON-19), Coming up. --since defaults 
 """
 import argparse
 import datetime
+import json
 import os
 import re
 import sys
@@ -146,6 +147,9 @@ def render(root=None, at=None, stamp=None):
     filed = auto.since(root, stamp, "findings.log")  # OPS-1: what the operation layer filed since the last check-in
     if filed:
         out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]
+    given = [r for r in auto.owner_rows(root) if r[2].startswith("operation-top:delegated:") and r[1] > stamp]  # DOC-2 (o664): each delegated record, once
+    if given:
+        out += ["", "Delegated approvals (DOC-2, since the last check-in):"] + ["- %s %s %s %s: %s" % (r[0], r[2].split(":")[2], r[2].split(":")[4], r[4], " ".join(json.loads(r[3]).split()[:14])) for r in given[-8:]]
     gone = mend.archived_since(folder, stamp)
     if gone:
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]

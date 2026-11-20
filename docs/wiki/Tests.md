@@ -442,6 +442,10 @@
 | <a id="t-links-outside-links-fail"></a>links-outside-links-fail | requirement | DOC-25 | not run | - | local | 2026-11-18 |
 | <a id="t-entry-committed-config"></a>entry-committed-config | requirement | DOC-25 | not run | - | local | 2026-11-19 |
 | <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
+| <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-delegated-safety-refused"></a>delegated-safety-refused | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-delegated-in-checkin"></a>delegated-in-checkin | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-delegated-operation-only"></a>delegated-operation-only | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 
 ## Guardrails
 
