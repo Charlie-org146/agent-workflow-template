@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 
-OLD = re.compile(r'^(?P<s>(?:bash|python3) dev/toy/[A-Za-z0-9_.-]+(?: [A-Za-z0-9_-]+)?) 2>&1 \| grep -q(?P<f>[Fx]?) (?P<q>"(?:[^"\\]|\\.)*")$')
+OLD = re.compile(r'^(?P<s>(?:bash|python3) dev/toy/[A-Za-z0-9_.-]+(?: [A-Za-z0-9_-]+)?) {1,2}2>&1 \| grep -q(?P<f>[Fx]?) (?P<q>"(?:[^"\\]|\\.)*")$')
 NEW = re.compile(r'^out=\$\((?P<s>(?:bash|python3) dev/toy/[A-Za-z0-9_.-]+(?: [A-Za-z0-9_-]+)?) 2>&1\); (?P<c>.*) && ! printf "%s\\n" "\$out" \| grep -q "\^ \*FAIL"$')
 CHK = re.compile(r'printf "%s\\n" "\$out" \| grep -q(?P<f>[Fx]?) (?P<q>"(?:[^"\\]|\\.)*")')
 
