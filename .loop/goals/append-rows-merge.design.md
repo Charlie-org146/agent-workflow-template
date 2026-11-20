@@ -24,11 +24,10 @@ Approach 2. It needs no new folder, no reader change and no migration beyond one
    all six orders: no conflict each time; after `regression.py sort` the table is byte-identical across the six; a seventh branch that
    edits an existing row on two sides gives a duplicate id and the sort refuses naming it. Negative control: the same merges without the
    `.gitattributes` conflict. Same for `regression-issues.tsv` (rows keyed by link).
-2. Size: regression.py and wiki.py are over 19,000 bytes today (19,231 and 19,369), so each ends at or under main's bytes by trimming
-   comments and docstrings as much as the new code adds; no new shipped file (`.gitattributes` is repo config, not a shipped skill file);
-   net regression rows 0 (an existing row is widened); no requirement text changes.
+2. Size: counted in LF bytes regression.py is 18,852 and wiki.py 18,994 on main (not over 19,000), so the new code must fit: regression.py has 148 bytes of room and wiki.py 6, so each trims comments and docstrings to stay at or under 19,000 and not above main; no new shipped file (`.gitattributes` is repo config, not a shipped skill file); net regression rows 0 (an existing row is widened); no requirement text changes.
 
 ## Open questions
+- Limit: `merge=union` applies to git merges run locally (goal.py pr merging main, and workers); GitHub's server-side `gh pr merge` ignores it, but a PR already merged up to date with its base (BASE_MOVED discipline) merges clean there.
 - pc-w3's results-render goal also edits regression.py and wiki.py: build only after its design is fixed, and merge main once through
   goal.py pr before the slot.
 - Where release calls the sort: wiki.py `prepare` (it already commits table changes) is the plan; confirm against results-render.
