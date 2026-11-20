@@ -1,28 +1,26 @@
 #!/usr/bin/env python3
-"""Worker sessions: each goal runs in its own app session, named "worker · <goal>", and reports by session message.
+"""Worker sessions: each goal runs in its own app session, "worker · <goal>", and reports by session message.
 
 usage: sessions.py <command> [options]
 
-  assign SLUG               give a frozen goal to a worker session (watch.py does this for every goal it starts)
+  assign SLUG               give a frozen goal to a worker session (watch.py does this for each goal)
   bind SLUG ID|self [--name N] [--force] [--cwd DIR]
-                            record a session started with the app's own tools; before freezing it records the handoff
-                            (ASSIGNED), after goal.py new it binds (BOUND). --force: rebind a session freed from the goal.
-                            Prints the WORKER command and the WORKTREE (worker.py)
-  free SLUG                 give back a stopped session's goal and slot (FREED, NOTHING TO FREE)
+                            record an app-started session: ASSIGNED before freezing, BOUND after goal.py new.
+                            --force: rebind a freed session. Prints WORKER and WORKTREE
+  free SLUG                 give back a stopped session's goal and slot
   report SLUG [--step S] [--status running|waiting|merged|failed] [--pr URL] [--ask Q --words W... --recommend W
               --kind K] [--attempt N] [--text T]
                             a worker's step or result. waiting with --ask is a question (auto.py may answer a routine
                             one); without it the pull request waits. merged is checked with gh. An ended goal's session
-                            goes back to the pool. Done is final (KEPT), but merged still frees the session.
-  send SLUG TEXT            send a worker session the owner's answer or a follow-up (operate.py send does this)
-  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for the IDs it covers (auto.py); not in a worker
-  list                      the sessions this repo knows, with their goals
+                            returns to the pool. Done is final (KEPT); merged still frees the session.
+  send SLUG TEXT            send a worker the owner's answer or a follow-up (operate.py send does this)
+  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for its IDs (auto.py); not in a worker
+  list                      the sessions and their goals
 
-A session tool does the talking: the command in `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL, called as
-`TOOL start NAME` (prints the new session's id), `TOOL rename ID NAME` and `TOOL send ID TEXT`. With no tool, or one
-that fails or passes its timeout (LOOP_SESSION_TIMEOUT, 30 s), the goal falls back to a background process ("background").
-The pool lives in <git common dir>/loop/session-pool.json, read by graph.read_pool, changed under a lock, never
-written when unreadable. Nothing here merges.
+The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL start NAME` (prints the id), `TOOL rename
+ID NAME`, `TOOL send ID TEXT`. With no tool, or one that fails or times out (LOOP_SESSION_TIMEOUT, 30 s), the goal runs as
+a background process. The pool, <git common dir>/loop/session-pool.json, is changed under a lock and never written
+when unreadable. Nothing here merges.
 """
 import argparse
 import contextlib
@@ -32,11 +30,11 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.modules.setdefault("sessions", sys.modules[__name__])  # as a script, pool.py finds this module
+sys.modules.setdefault("sessions", sys.modules[__name__])
 import graph  # noqa: E402
 import proctree  # noqa: E402
 import worker  # noqa: E402
-from worker import HUNG, LAST_ERROR, call, fcntl, git, merged, now, tool  # noqa: E402  (watch.py clears sessions.HUNG)
+from worker import HUNG, LAST_ERROR, call, fcntl, git, merged, now, tool  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -49,7 +47,7 @@ SEND = ("You are the worker session for goal {slug}; this replaces any goal you 
         "answer at every question, never push from ship, and record each step with goal.py record. Send the operation "
         "session{to} a session message at each change of step or status, and your result when the goal ends (merged, "
         "failed or waiting, with the pull request).\n\n")
-FREE_TRIES = 2  # free sessions tried before a new one
+FREE_TRIES = 2
 
 
 def base():
@@ -74,7 +72,7 @@ def write(path, data):
 
 
 class PoolUnreadable(Exception):
-    """The pool can't be trusted: nothing may change it."""
+    """The pool can't be trusted."""
 
 
 def pool_path():
@@ -85,13 +83,12 @@ def pool():
     found, why = graph.read_pool(pool_path())
     if found is None:
         raise PoolUnreadable(why)
-    pool_module().quarantine()  # issue 122
+    pool_module().quarantine()
     return found
 
 
 @contextlib.contextmanager
 def locked():
-    """One read, change and write of the pool at a time."""
     os.makedirs(base(), exist_ok=True)
     with open(pool_path() + ".lock", "a") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
@@ -126,7 +123,7 @@ def name_of(slug):
 
 
 def release(slug, found=None, mark=False):
-    """Free the goal's busy sessions; return how many (the caller saves a pool it passes in). mark blocks a rebind (--force)."""
+    """Free the goal's busy sessions; return how many. mark blocks a rebind (--force)."""
     if found is None:
         with locked():
             found = pool()
@@ -143,8 +140,7 @@ def release(slug, found=None, mark=False):
 
 
 def assign(state, prompt, cfg):
-    """Give the goal to a free session, or a new one; rename it, send it the goal. False: start a background process.
-    An unreadable pool raises PoolUnreadable."""
+    """Give the goal to a free or new session, rename it, send it the goal. False: use a background process."""
     command, slug = tool(cfg), state["slug"]
     state["worker"], state["worker_why"] = "background", "no session tool is set (session_command)"
     if not command:
@@ -161,7 +157,7 @@ def assign(state, prompt, cfg):
         if not sid:
             state["worker_why"] = "the session tool timed out" if HUNG else "the session tool could not start a session"
             break
-        with locked():  # claim it before sending
+        with locked():
             found = pool()
             if reused and (found.get(sid) or {}).get("state") != "free":
                 continue
@@ -179,7 +175,7 @@ def assign(state, prompt, cfg):
             break
     if not sid:
         return False
-    with locked():  # an operator's bind during the send wins
+    with locked():
         found = pool()
         entry, current = found.get(sid) or {}, load(slug) or state
         if entry.get("slug") != slug or entry.get("state") != "busy" or current.get("bound_at") != start.get("bound_at") or (
@@ -240,7 +236,7 @@ def cmd_assign(args):
 
 
 def cmd_owner_words(args):
-    """Append the owner's message to owner-words.tsv, print OWNER-WORDS <id> <ids>; refuse a worker, no text or no ids."""
+    """Append the owner's message to owner-words.tsv, print OWNER-WORDS <id> <ids>; refuse a worker, no text or ids."""
     import auto
     ids = [item.strip() for item in args.ids.split(",") if item.strip()]
     if os.environ.get("LOOP_ROLE") == "worker":
@@ -292,10 +288,9 @@ def cmd_free(args):
 def cmd_report(args):
     state = held(args.slug)
     said = args.status
-    if pool_module().stale(state, args):  # issue 114
+    if pool_module().stale(state, args):
         return 0
     if state.get("status") == "done" and (said in ("", "running", "failed") or (said == "waiting" and args.ask) or graph.merged(state)):
-        # done is final (issue 108): record the report only
         text = args.text or "%s: %s" % ((state.get("session") or {}).get("name") or args.slug, said or "report")
         state.setdefault("reports", []).append({"at": now(), "step": args.step or state.get("step") or "-", "status": said or "-", "text": text})
         del state["reports"][:-30]
@@ -303,13 +298,13 @@ def cmd_report(args):
             state["hold_at"] = now()
         save(state, "session report kept (done is final): " + text)
         print("KEPT done for %s: report recorded, status %s not applied (done is final)." % (args.slug, said or "(none)"))
-        if said == "merged":  # issue 175
+        if said == "merged":
             print("\n".join(pool_module().return_session(args.slug, merged=True)) or "NOTHING TO FREE")
         return 0
     if said in ("merged", "failed") or (said == "waiting" and not args.ask):
-        pool()  # check the pool can be written before any change
+        pool()
     if args.hold:
-        state["hold_at"] = now()  # #3868
+        state["hold_at"] = now()
     elif args.step or args.status == "running":
         state.pop("hold_at", None)
     if args.step:
@@ -319,7 +314,7 @@ def cmd_report(args):
     pr, said = state.get("pr", ""), args.status
     ended = said in ("merged", "failed") or (said == "waiting" and not args.ask)
     if said == "waiting" and args.ask:
-        old = state.get("waiting") or {}  # the same question again keeps full auto's decision
+        old = state.get("waiting") or {}
         state.update(status="waiting", waiting=dict({"auto": old["auto"]} if old.get("auto") and old.get("ask", "").split() == args.ask.split() else {},
                      ask=args.ask, words=args.words or ["go on " + args.slug], at=now(), recommend=args.recommend, kind=args.kind))
     elif said == "failed":
@@ -327,7 +322,7 @@ def cmd_report(args):
     elif said in ("merged", "waiting"):
         if not pr:
             sys.exit("REFUSED: %s with no pull request. Fix: pass --pr URL." % said)
-        state["status"] = "done"  # a report never merges (#3868)
+        state["status"] = "done"
         said = "merged" if merged(pr) else "waiting"
         if said == "waiting" and config().get("auto_merge") is True and state.get("release") != "ask":
             print("NEXT: merge.py %s (a report never merges; the goal's own merge.py or the operation's go does)" % args.slug)
@@ -341,7 +336,7 @@ def cmd_report(args):
     del state["reports"][:-30]
     if said in ("merged", "failed", "waiting"):
         state["report"] = {"status": said, "pr": pr, "text": text, "at": now()}
-    save(state, "session report: " + text)  # saved first, so a broken pool can't lose it
+    save(state, "session report: " + text)
     if ended:
         try:
             print("\n".join(pool_module().return_session(args.slug, merged=said == "merged")))
@@ -352,7 +347,7 @@ def cmd_report(args):
 
 
 def cmd_send(args):
-    """Send the owner's answer to the goal's worker session; 1 when it has none or can't be reached."""
+    """Send the owner's answer to the worker session; 1 when none or unreachable."""
     state = held(args.slug)
     sid, command = (state.get("session") or {}).get("id"), tool(config())
     if state.get("worker") != "session" or not sid or not command:
@@ -362,7 +357,7 @@ def cmd_send(args):
         print("UNREACHED session %s for %s: the inbox carries it (%s)" % (sid, args.slug, LAST_ERROR[0]))
         return 1
     print("SENT to session %s (%s)" % (sid, (state.get("session") or {}).get("name")))
-    import unattended; unattended.sent(sid)  # MON-18: counts toward the app's 20-send cap
+    import unattended; unattended.sent(sid)  # MON-18
     return 0
 
 
@@ -373,7 +368,7 @@ def cmd_list(args):
 
 
 def main():
-    proctree.outcap("sessions.py")  # GRD-15: at most 2,000 characters of output
+    proctree.outcap("sessions.py")  # GRD-15
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
     item = sub.add_parser("assign")

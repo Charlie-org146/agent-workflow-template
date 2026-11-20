@@ -86,7 +86,7 @@ def lanes_dir():
 def check(pool):
     """Create the pool 0700; refuse one that isn't yours or that others can write (OSError names why)."""
     os.makedirs(pool, mode=0o700, exist_ok=True)
-    if os.name == "nt":
+    if os.name == "nt":  # no uid or group bits: the pool sits in the user's own profile, private by its ACL
         return
     info = os.stat(pool)
     if info.st_uid != getattr(os, "getuid", lambda: 0)() or info.st_mode & 0o022:
