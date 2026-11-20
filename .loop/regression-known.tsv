@@ -112,3 +112,4 @@ apply-rerender-hand-edit	fails on main since v1.0.72 or earlier (unverified: v1.
 lane-last-152	lanekit.py check() copy lacks slots.py's nt-line comment (drift: check); known red on main; see #5402
 pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
+plan-sizes	fails on clean main: dev/package.py refuses workflow-docs/scripts/deployments.py (imports auto, not in the standard library) so its package assertion fails; the size part passes (TD482)
