@@ -32,7 +32,7 @@ def check(name, ok):
 old = "[A](https://a.test); [B](https://b.test): adapted"
 new = s.bullets(old)
 check("an old cell with one trailing tag becomes one tagged bullet per source", new == "- [A](https://a.test): adapted<br>- [B](https://b.test): adapted")
-check("an old own tag becomes planned, and a source's own tag is kept", s.bullets("[A](u): adopted; [B](v): own today") == "- [A](u): adopted<br>- [B](v): planned")
+check("an old own tag stays own, and a source's own tag is kept", s.bullets("[A](u): adopted; [B](v): own today") == "- [A](u): adopted<br>- [B](v): own")
 check("a bullet cell is migrated to itself", s.bullets(new) == new)
 check("Adoption is the adopted lines over all lines", s.adoption("- [A](u): adopted<br>- [B](v): adapted<br>- [C](w): planned") == 33 and s.adoption("- [A](u): adopted") == 100)
 check("negative control: adapted and planned lines count 0, and no lines is not measured", s.adoption("- [A](u): adapted<br>- [B](v): planned") == 0 and s.adoption("") is None)

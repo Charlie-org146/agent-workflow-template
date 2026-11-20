@@ -80,29 +80,46 @@ UNSEEN, UNDATA = "not measured: no references recorded yet", "not measured: no d
 
 
 TAG = re.compile(r"[:] (adopted|adapted|planned|own)\b[^;<]*$")
+TAGS = "adopted|adapted|planned|own"
 
 
 def bullets(cell):
-    """DEL-21: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (own becomes planned, an untagged source takes the tag to its right)."""
+    """DEL-21: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (an untagged source takes the tag to its right)."""
     if cell.lstrip().startswith("- "):
         return cell.strip()
     parts, tag, out = [p.strip() for p in re.split(r";\s+(?![^()]*\))", cell.strip()) if p.strip()], "", []
     for part in reversed(parts):
         found = TAG.search(part)
-        tag = ("planned" if found[1] == "own" else found[1]) if found else tag
+        tag = found[1] if found else tag
         out.insert(0, "- %s%s" % (part[:found.start()] if found else part, ": " + tag if tag else ""))
     return "<br>".join(out)
 
 
 def follows(cell):
     """The (source, tag) lines of a bullet Follows cell; tag is "" when a line has none."""
-    return [(re.sub(r"[:] (adopted|adapted|planned)$", "", x[2:]), (re.search(r"[:] (adopted|adapted|planned)$", x) or [0, ""])[1]) for x in cell.split("<br>") if x.startswith("- ")]
+    return [(re.sub(r"[:] (%s)$" % TAGS, "", x[2:]), (re.search(r"[:] (%s)$" % TAGS, x) or [0, ""])[1]) for x in cell.split("<br>") if x.startswith("- ")]
 
 
 def adoption(cell):
-    """The share of a row's Follows lines tagged adopted (adapted and planned count 0); None with no lines."""
+    """The share of a row's Follows lines tagged adopted (adapted, planned and own count 0); None with no lines."""
     tags = [t for _, t in follows(cell)]
     return round(100 * tags.count("adopted") / len(tags)) if tags else None
+
+
+def latest_full(slug, ids):
+    """DEL-21: {test id: state} of the latest finished regression run on main whose results cover most tests (a full run, not a row or lane run), read from its results-* artifacts with gh; None when none can be read."""
+    import json, subprocess, tempfile
+    got = subprocess.run(["gh", "run", "list", "-R", slug, "--workflow", "regression", "--branch", "main", "--limit", "12", "--json", "databaseId,conclusion"], capture_output=True, text=True)
+    for run in (json.loads(got.stdout) if got.returncode == 0 and got.stdout.strip() else []):
+        if run["conclusion"] not in ("success", "failure"):
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["gh", "run", "download", str(run["databaseId"]), "-R", slug, "-p", "results-*", "-D", tmp], capture_output=True, text=True)
+            rows = [x.split("\t") for d, _, fs in os.walk(tmp) for f in fs for x in open(os.path.join(d, f), encoding="utf-8").read().splitlines() if x[:1] != "#"]
+        results = {x[0]: x[1] for x in rows if len(x) > 1}
+        if len(set(results) & set(ids)) * 5 >= len(ids) * 4:
+            return results
+    return None
 
 
 def confidence(row, tests, runs):
@@ -152,8 +169,9 @@ def relink(text, slug):
 
 def fresh(text, folder, read, slug="", keep=False):
     """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
-    top, ledger = os.path.dirname(os.path.dirname(folder)), lambda n: [x.split("\t") for x in (read(os.path.join(os.path.dirname(os.path.dirname(folder)), ".loop", n)) or "").splitlines()[1:]]
-    text = relink(tables(text, ledger("regression.tsv"), {x[0]: x[1] for x in ledger("regression-runs.tsv") if len(x) > 1}, keep), slug)
+    tests = [x.split("\t") for x in (read(os.path.join(os.path.dirname(os.path.dirname(folder)), ".loop", "regression.tsv")) or "").splitlines()[1:]]
+    runs = None if keep or slug.count("/") != 1 else latest_full(slug, [t[0] for t in tests])
+    text = relink(tables(text, tests, runs or {}, keep or runs is None), slug)
     if "\n## System design" not in text:
         return text
     block = what(read(os.path.join(folder, "Delivery.md")))
