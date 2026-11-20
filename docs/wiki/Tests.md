@@ -522,10 +522,10 @@
 | <a id="t-codex-ro-home"></a>codex-ro-home | requirement | SET-10 | not run | - | local | 2026-11-12 |
 | <a id="t-codex-key-commands"></a>codex-key-commands | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | not run | - | local | 2026-11-12 |
 | <a id="t-set1-health-bracket"></a>set1-health-bracket | requirement | SET-1 | not run | - | local | 2026-11-12 |
-| <a id="t-set1-docs-format"></a>set1-docs-format | requirement | SET-1 | not run | - | local | 2026-11-12 |
+| <a id="t-set1-docs-format"></a>set1-docs-format | requirement | SET-1 | not run | - | local | 2026-11-20 |
 | <a id="t-set2-layers-show"></a>set2-layers-show | requirement | SET-2 | not run | - | local | 2026-11-12 |
-| <a id="t-adopt-fixture-existing-checks"></a>adopt-fixture-existing-checks | requirement | SET-1 | not run | - | local | 2026-11-12 |
-| <a id="t-setup-fit"></a>setup-fit | requirement | SET-1 | not run | - | local | 2026-11-12 |
+| <a id="t-adopt-fixture-existing-checks"></a>adopt-fixture-existing-checks | requirement | SET-1 | not run | - | local | 2026-11-20 |
+| <a id="t-setup-fit"></a>setup-fit | requirement | SET-1 | not run | - | local | 2026-11-20 |
 | <a id="t-set9-from-no-values"></a>set9-from-no-values | requirement | SET-1 | not run | - | local | 2026-11-12 |
 | <a id="t-setup-zero-tests-119"></a>setup-zero-tests-119 | defect | [#119](https://github.com/jcl2018/agent-workflow-template/issues/119) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-setup-tsv-guard-127"></a>setup-tsv-guard-127 | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) closed (2026-11-13) | not run | - | local | 2026-11-12 |
