@@ -1251,3 +1251,5 @@
 | <a id="t-gap-milestones-source-known"></a>gap-milestones-source-known | requirement | done line gap-wave1-small:2 | not run | - | local | 2026-11-19 |
 | <a id="t-gap-token-needs-live"></a>gap-token-needs-live | requirement | done line gap-wave1-small:3 | not run | - | local | 2026-11-19 |
 | <a id="t-done-gap-wave1-small-4"></a>done-gap-wave1-small-4 | workflow | done line gap-wave1-small:4 | not run | - | local | no |
+| <a id="t-eta-ledger"></a>eta-ledger | requirement | done line eta-honesty:1 | not run | - | local | 2026-11-20 |
+| <a id="t-eta-health"></a>eta-health | requirement | done line eta-honesty:2 | not run | - | local | 2026-11-20 |
