@@ -322,6 +322,25 @@ def quiet_hook(payload):
     return 0
 
 
+def plan_record(root, slug, text, now=None):
+    """Red team (HLT-2): record a plan review's A/R/B<n>/C lines with a timestamp under <git common dir>/loop/redteam/ (never a repo file)."""
+    import board_log as bl
+    nums, got, now = bl.principles(root)[1], {"A": [], "R": [], "C": [], "B": []}, now or time.time()
+    for line in text.splitlines():
+        m = re.match(r"^\W*([ARC]|B\s*(\d*))\s*:\s*(\S.*)$", line)
+        if m and m.group(1)[0] == "B":
+            if not m.group(2) or int(m.group(2)) not in nums:
+                sys.exit("REFUSED: a break must name its principle, B<n> with n in %s; nothing was recorded" % nums)
+            got["B"].append({"principle": int(m.group(2)), "text": m.group(3), "accepted": ""})
+        elif m:
+            got[m.group(1)].append(m.group(3))
+    path = os.path.join(bl.red_dir(root), "plan-%s.json" % slug)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    json.dump({"time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)), "sha": bl.plan_sha(root, slug), "assumptions": got["A"], "risks": got["R"],
+               "cheaper": got["C"], "breaks": got["B"]}, open(path, "w"), indent=1)
+    return ["BREAK principle %d: %s" % (b["principle"], b["text"]) for b in got["B"]] or ["NO BREAKS"]
+
+
 def main(argv):
     if argv[1:2] == ["check"]:
         found = verdict(sys.stdin.read())

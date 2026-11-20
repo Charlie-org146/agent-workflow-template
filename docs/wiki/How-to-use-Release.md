@@ -49,6 +49,7 @@ agent publishes the wiki. No release is published without you. Nothing merges wi
 | "Move issue 7 to v2.1" | After your words are recorded, a `moved` waiver names the issue, and promotion moves it to the later milestone. |
 | "Waive row stale-found, issue 9" | A `red` waiver names the row and its issue; the gate stops refusing that row. |
 | "Promote v2" | If your words name `v2.0.0` and every check passes, it tags `v2.0.0`, keeps `release/v2`, moves main and mails the state report. |
+| "Merge these goals together" | With `merge_batch` on (it is off by default), `merge.py g1 g2 [g3] --batch` puts up to 3 green goals on one draft pull request of their combined head and a GO on that head's green CI merges it with one release; a safety-class, major or conflicting goal goes alone, and a red batch dissolves to single merges. |
 | "Go back to v2" | A pull request puts main's tree back on `release/v2`; you merge it. |
 
 A commit that moves only stamp files carries the pass already recorded for the tested tree, so it needs no fresh CI run. The stamp files are `VERSION` (or the repo's version file), `CHANGELOG.md`, `.loop/regression-runs.tsv` and `.loop/regression-issues.tsv`. Two commits count as equal modulo stamps only when the diff between them adds or edits regular files at those paths: any other path, a symlink, a rename or a delete breaks the match. `merge.py` and the release head use that one compare (`tems` in `autorelease.py`), and `operate.py wiki-only` uses it too, so the record commit `goal.py pr` adds, a release bump and a wiki re-stamp keep the lane's pass.
@@ -97,4 +98,4 @@ Each requirement and how it is delivered:
 - PRD page: [Release](Release)
 - Backlog: [Backlog: Release](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept requirements-consolidate@2fa96827 -->
+<!-- kept known-red-docs-release2@20a7ff2d -->

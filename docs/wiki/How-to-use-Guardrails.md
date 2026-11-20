@@ -25,6 +25,26 @@ Lists every guardrail the template has or needs, each with what it protects agai
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
 ```
 
+### Guardrail list
+
+Each guardrail with what it protects against, the requirement that owns it ("new" where this page's own requirement is the only one), the setting that controls it and the health rule that proves it is on ("none yet" where no rule reads it). The exact wording is in the owner's requirement; whether a guardrail is on is in the Tests table of the Guardrails page.
+
+| Guardrail | Protects against | Owner | Setting | Health check |
+|---|---|---|---|---|
+| DEL-7 (was GRD-2) | A goal or step running away in time, tokens or tests | DEL-7, DEL-17, REG-7, REG-11, REG-14 | `time_budget_minutes`, `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `prep_budget_minutes`, `max_merge_rounds`, `max_active_goals` | Performance |
+| DEL-9 (was GRD-3) | A private name, local setting or private value committed or pushed | DEL-9, SET-8, SET-2 | `leak_prefixes` (private flow file) | Security and privacy: `private`, `scan-hook` |
+| GRD-4 | A worker widening its own goal, resuming itself or changing its own budget | OPS-7 | `govern_hook`, `workers` | none yet |
+| GRD-5 | A write to GitHub that nobody asked for | AUT-5, HLT-4, REG-5 | none: `--live` is the switch | none yet |
+| GRD-6 (with the former GRD-16) | A direct or force push to the base branch, a merge with failing required checks, or a commit or push that skips the repo's hooks | SET-1, GRD-6 | set on the platform, not in the repo | none yet |
+| GRD-7 (with the former GRD-17) | CI minutes spent on a superseded or no-code run, or too many CI runs or Actions minutes in a day | AUT-7, GRD-7 | `ci_levels` | none yet: the round digest shows the minutes it used |
+| GRD-8 (with the former GRD-15) | A step running far past its usual tokens or time unseen, or an unread token count taken for an unspent budget | OPS-8, CHK-1, REG-8, GRD-8 | `silent_minutes`, `token_budget` | none yet: the board shows it under Needs you |
+| HLT-2 (was GRD-9) | A guardrail that is off or broken without anyone seeing | HLT-2, HLT-3, HLT-6 | none | Controls |
+| SET-1 (was GRD-10) | A repo adopted without the whole set | SET-1 | none | Adoption |
+| OPS-16 (was GRD-12) | A goal or test lane starting while free memory is low | OPS-16 | `min_free_memory_gb` | Performance |
+| MCH-1 (was GRD-18) | A POSIX-only call, or long text passed on a command line, breaking native Windows | MCH-1 | none | none yet |
+| HLT-11 (was GRD-19) | A feature page too large to review | HLT-11 | `criteria_max` | Size: `requirements-per-page` |
+| GRD-20 (with the former GRD-21 and GRD-22) | A release package that fails Agensi's rules, a package limit of ours looser than Agensi's, or a goal that outgrows a package limit, learned only at release | GRD-20 | none | none yet |
+
 ## How to reach or run it
 
 Say these to the agent in the operation session; each feature page has the exact commands.
@@ -103,4 +123,4 @@ Each package limit Agensi states on its packaging page, next to ours in `dev/pac
 - PRD page: [Guardrails](Guardrails)
 - Backlog: [Backlog: Guardrails](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept v2-health-green@696066cd -->
+<!-- kept merge-batch-on@c7193d33 -->

@@ -43,15 +43,15 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Feature | Milestone | What it is for | How to use it |
 |---|---|---|---|
 | Automation | https://github.com/jcl2018/agent-workflow-template/milestone/10 | Things break between my sessions, and I only find out when I next open one; the important checks should run on their own. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
-| Check-in-and-board | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I can see what is running, stuck or waiting on me, the same way every time, without opening each session. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / adopt |
+| Check-in-and-board | https://github.com/jcl2018/agent-workflow-template/milestone/6 | I can see what is running, stuck or waiting on me, the same way every time, without opening each session. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / finding / adopt |
 | Delivery | https://github.com/jcl2018/agent-workflow-template/milestone/1 | I have more changes to make than time to babysit them: I want to hand over one sentence and walk away. | `/workflow-delivery`: go / step / record / pr / `/workflow-release`: merge / batch / review / ask / cut / leave / gate / promote / revert |
 | Documentation | https://github.com/jcl2018/agent-workflow-template/milestone/3 | I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / relock / render / automation / prompts / entry / publish / sync / restore / milestone / `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | Guardrails | https://github.com/jcl2018/agent-workflow-template/milestone/11 | My guardrails are scattered across six features, some are promised but not built, and I can't see in one place what protects me, where it is enforced and whether it is on. | none |
 | Health | https://github.com/jcl2018/agent-workflow-template/milestone/4 | My rules, requirements and standards are spread across many pages and sometimes conflict, and I can't see where the repo falls short of its own PRDs. | `/workflow-health`: check / review / judge / preview / file / triage / local / workflow / digest / mail |
 | Integrations | none | The loop works with systems outside the repo, such as documents, trackers, mail, chat, agents and deploy targets, and each one is wired in its own way, so a new system means rebuilding something. | `/workflow-docs`: audit / check / criteria / review / unreview / prd / convert / relock / render / automation / prompts / entry / publish / sync / restore / milestone |
-| Machines | https://github.com/jcl2018/agent-workflow-template/milestone/23 | A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / adopt |
-| Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | Its requirements moved to Operation (one session governs) and Check-in and board (what I can see); this page keeps every earlier ID as a moved-to marker. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / adopt |
-| Operation | https://github.com/jcl2018/agent-workflow-template/milestone/6 | One session governs: it starts every ready goal in its own worker, passes my answers along, runs unattended and never builds. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / adopt |
+| Machines | https://github.com/jcl2018/agent-workflow-template/milestone/23 | A second machine, a Mac or a Windows PC, should reach the same working setup as the one I run on from a git clone and one command, because much of what the operation relies on lives only on one machine: the skill install, the hooks, the private-names file, the check-in prompt, the routines and the mailer. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / finding / adopt |
+| Monitoring | https://github.com/jcl2018/agent-workflow-template/milestone/6 | Its requirements moved to Operation (one session governs) and Check-in and board (what I can see); this page keeps every earlier ID as a moved-to marker. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / finding / adopt |
+| Operation | https://github.com/jcl2018/agent-workflow-template/milestone/6 | One session governs: it starts every ready goal in its own worker, passes my answers along, runs unattended and never builds. | `/workflow-monitoring`: operate / send / go / watch / resume / report / dashboard / plan / met / cleanup / selfcheck / reply-check / reply-status / fill-pool / start / finding / adopt |
 | Regression | https://github.com/jcl2018/agent-workflow-template/milestone/7 | I can't trust a requirement or a fix unless a test proves it, and every fix I've ever shipped should stay fixed without me re-checking it. | `/workflow-regression`: add / red / run / sync / workflow / list / issues |
 | Release | none | Goals keep landing fixes while a release is being deployed, so quality drifts and I can't say what a version really holds. | `/workflow-release`: merge / batch / review / ask / cut / leave / gate / promote / revert |
 | Setup | https://github.com/jcl2018/agent-workflow-template/milestone/9 | I want this toolset to be a workspace I can drop into any repo, for any agent: one install gives Claude Code, Codex or any agent that reads skills the same loop, docs, monitoring and settings, in the right format for each. | `/workflow-setup`: setup / reply-hook / govern-hook / git-hooks / settings / fill-repo / permissions / update / prerequisites / replay / connectors / machine / agents-detect / agents / desk / migration-check |
@@ -61,64 +61,66 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | Setting | Value | What it does |
 |---|---|---|
 | `agent_command` | ["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"] | The command that runs a goal in the background; the prompt is its last argument. |
-| `agent_files` | ["CLAUDE.md", "AGENTS.md"] | Agent entry files setup wires the workflow-loop block into; [] turns wiring off. |
-| `auto_approve` | true | true approves what a flow step leaves for the owner, logged as auto-approved. |
-| `auto_merge` | true | true lets the release step merge a goal's pull request and publish. |
+| `agent_files` | ["CLAUDE.md", "AGENTS.md"] | Agent entry files setup wires the loop block into; [] turns wiring off. |
+| `auto_approve` | true | true approves what a flow step leaves for the owner, logged auto-approved. |
+| `auto_merge` | true | true lets the release step merge a goal's PR and publish. |
 | `automation` | [{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}] | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `base` | main | The branch goals start from and pull requests target. |
-| `cadence` | 30 | Minutes between check-ins of the operation session, 1 to 60, or off. |
-| `ci_levels` | nightly | Target of the scheduled and tag regression runs: nightly (every row) or land. |
+| `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
+| `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `criteria_max` | 23 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
-| `digest_owner` | none | Who the digest comment mentions; empty means the repo owner (an organisation notifies none). |
-| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; a goal's ETA is fixed when it is frozen. |
+| `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
+| `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
-| `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option; safety-class ones wait. |
-| `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns and its LANE line says over. |
-| `goal_levels` | land | Row levels a goal lane plans from: land, or nightly for land and nightly rows. |
-| `govern_hook` | true | false turns off the govern-only hook: edits, commits and pushes are refused in the operation session. |
-| `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; off is off. |
+| `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
+| `goal_lane_minutes` | 10 | Minutes a goal's regression lane may take before health warns. |
+| `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
+| `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
 | `health_script_bytes` | 20480 | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
-| `judge_setup` | none | No longer read: kept so old configs stay valid. |
+| `judge_setup` | none | No longer read; old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
-| `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies where this repo is adopted. |
+| `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
-| `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before the goal waits. |
-| `max_regression_rows` | 1300 | Most rows the regression table may hold; a goal adding rows past it is refused at qa. |
-| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); a goal adding rows past it is refused at qa. |
+| `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before it waits. |
+| `max_regression_rows` | 1300 | Most rows the regression table may hold; qa refuses a goal that adds more. |
+| `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |
 | `mend_wait` | 120 | Seconds a failed goal waits before a mender starts. |
+| `merge_batch` | true | true lets merge.py --batch merge 2-3 green goals as one. |
+| `milestones_source` | (empty) | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `plan_pause_percent` | 80 | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
-| `pool_size` | 20 | Idle worker sessions the pool keeps; when it runs low the operation session asks you to create more. |
-| `pr_bumps_version` | false | true moves the last number of the version file once on a goal's branch. |
-| `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; a lane past it stops. |
+| `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
+| `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
+| `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
 | `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs; off is off. |
-| `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it and keeps a recorded mac. |
+| `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `resume_on_limit` | false | true lets watch resume a goal that hit a usage limit. |
 | `review_depth` | full | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `review_hold` | false | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
 | `risky_paths` | ["^\\.github/", "(^\|/)auth", "(^\|/)migrations?/", "(^\|/)(schema\|data)\\b"] | Regexes for paths whose goals need extra care. |
-| `routines` | none | Commands the release step runs on the base branch before it merges. |
+| `routines` | none | Commands the release step runs on the base before it merges. |
 | `silent_minutes` | 30 | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
-| `smtp_host` | smtp.gmail.com | The SMTP server digest_mail smtp sends through (with the DIGEST_SMTP_* secrets). |
+| `smtp_host` | smtp.gmail.com | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). |
 | `smtp_port` | 465 | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `stale_branch_days` | 14 | Days a local branch on no remote may sit before health lists it. |
-| `step_budget_minutes` | 30 | Minutes one review or ship step may take, 15 or more; a step at its limit finishes what it has. |
-| `step_limit` | 0 | Seconds one flow step may run when the flow file sets no limit; 0 means the built-in limit. |
-| `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, when the installed package names none. |
+| `step_budget_minutes` | 30 | Minutes one review or ship step may take, 15 or more. |
+| `step_limit` | 0 | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. |
+| `template_repo` | none | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
 | `template_version` | 0.27.29 |  |
-| `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; rows past it wait for the full suite. |
+| `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |
 | `time_budget_minutes` | 240 | Active minutes before no new step starts; 0 is none. |
 | `token_budget` | 3000000 | Tokens a goal may spend before no new step starts; 0 means none. |
-| `topics` | {"Build loop": ["Delivery", "Monitoring", "Operation", "Check-in-and-board"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]}, in this order; unlisted pages go under Other; empty means no column. |
-| `version_file` | VERSION | The file that holds the version; a release bumps it and writes the changelog. |
+| `topics` | {"Build loop": ["Delivery", "Monitoring", "Operation", "Check-in-and-board"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]} | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
+| `version_file` | VERSION | The file holding the version; a release bumps it, writes the changelog. |
 | `watch_interval` | 20 | Seconds between rounds of watch. |
 | `wiki_dir` | docs/wiki | The folder of wiki pages. |
-| `workers` | app | app: app sessions only; no background process starts; a goal no session took waits for sessions.py bind. |
+| `workers` | app | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. |

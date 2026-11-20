@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept merge-queue-b@5ce1894d -->
+Review: **Unreviewed** <!-- kept go-head-main-reds@9c4df9ca0 -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -276,7 +276,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [cut-left-listed](Tests#t-cut-left-listed) | requirement | DEL-1 | Given the cut's stop reached before some rows ran, when the cut ends, then it prints those rows as LEFT with their count and writes the same section into the release notes (#4508). | not run |
 | [cut-left-none](Tests#t-cut-left-none) | requirement | DEL-1 | Given time to run every row, when the cut ends, then nothing is LEFT and the release notes carry no LEFT section (negative control, #4508). | not run |
 | [private-checks-stop](Tests#t-private-checks-stop) | requirement | DEL-1 | Given a required check no local status can satisfy, when the pr step opens the pull request, then it names that check and stops first (#4537). | not run |
-| [lane-memory-not-counted](Tests#t-lane-memory-not-counted) | requirement | DEL-1 | Given a lane that gave up waiting for memory, when the goal records the failed try, then no counted try is used and a real failure still costs one. | not run |
+| [lane-memory-not-counted](Tests#t-lane-memory-not-counted) | requirement | DEL-1 | Given a lane that gave up waiting for memory, when the goal records the failed try, then no counted try is used and a real failure still costs one. And, given the board and each machine's STATUS, when a red-team pass runs, then it reads and records only, routes each item, and is due hourly and before a release ETA. | not run |
 | [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | DEL-1 | Given a goal whose diff changes no wiki page while other pages carry DOC-19 or DOC-4 findings, or pages only merge.py's own re-render changed, when merge.py checks the wiki, then it does not refuse on them. | PASS 2026-11-18 |
 | [gate-untouched-filed-once](Tests#t-gate-untouched-filed-once) | requirement | DEL-1 | Given those findings on untouched pages, when merge.py checks the wiki, then each page is printed as a FINDING and handed to the issue filer once. | not run |
 | [gate-one-issue-per-page](Tests#t-gate-one-issue-per-page) | requirement | DEL-1 | Given a page with several DOC-19 findings, when they are filed, then one issue carries every line. | not run |

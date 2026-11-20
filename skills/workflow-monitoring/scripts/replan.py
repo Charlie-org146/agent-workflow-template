@@ -180,8 +180,8 @@ def plan_pause(cfg):
 
 
 def memory_hold(cfg):
-    """Why no new goal starts, or '': free memory (workflow-regression's memory.free_gb, loaded by path) below min_free_memory_gb (default 4, 0 is off)."""
-    need = cfg.get("min_free_memory_gb", 4)
+    """Why no new goal starts, or '': free memory (workflow-regression's memory.free_gb, loaded by path) below min_free_memory_gb (default 3, 0 is off)."""
+    need = cfg.get("min_free_memory_gb", 3)
     if isinstance(need, bool) or not isinstance(need, (int, float)) or need <= 0:
         return ""
     try:
