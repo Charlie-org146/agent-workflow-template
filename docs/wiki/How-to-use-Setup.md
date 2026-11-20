@@ -220,14 +220,14 @@ Every repo setting from the template's settings reference, with this repo's valu
 
 ## URLs and deployments
 
-- Wiki: [Setup](https://github.com/jcl2018/agent-workflow-template/wiki/Setup)
-- Milestone: [Setup](https://github.com/jcl2018/agent-workflow-template/milestone/9)
-- Releases: https://github.com/jcl2018/agent-workflow-template/releases
+- Wiki: [Setup](https://github.com/Charlie-org146/agent-workflow-template/wiki/Setup)
+- Milestone: [Setup](https://github.com/Charlie-org146/agent-workflow-template/milestone/9)
+- Releases: https://github.com/Charlie-org146/agent-workflow-template/releases
 
 ## Links
 
 - PRD page: [Setup](Setup)
-- Backlog: [Backlog: Setup](https://github.com/jcl2018/agent-workflow-template/milestones)
+- Backlog: [Backlog: Setup](https://github.com/Charlie-org146/agent-workflow-template/milestones)
 
 <!-- kept machine-email-phone@9a67a8ff -->
 <!-- kept safety-fixes@585daa17 -->
