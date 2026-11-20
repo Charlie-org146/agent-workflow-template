@@ -25,3 +25,10 @@ C. Then qa lane, ship, hold for the chain; no goal.py pr before.
 ## Open for review
 - The variable-tail marker in the section data file.
 - Whether the new script or an existing one holds the check, decided by byte counts at build.
+
+## Review (condensed, one round, 2026-11-19)
+- DOC-25 is free on main (0 hits in README, Documentation, Principles). Keep it, with next-free fallback.
+- Wiring risk: docs.py (18,458 B) and audit.py (18,895 B) cannot grow past main. Hook the new check by a one-line import call only if bytes stay at or under main; otherwise add the call in a script with room, found by `wc -c` at build.
+- `criteria.py revise` was not found by name in a quick grep; at build, read criteria.py's command list and use its real revise form with record o483.
+- Order stays: A (figures, data file, script, toy) before the README/Home rewrite; no README/Home edit, no goal.py pr until principle-8-readme and the chain are done.
+Verdict: approve with those three build-time checks.
