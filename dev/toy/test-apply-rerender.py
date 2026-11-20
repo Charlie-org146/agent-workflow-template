@@ -78,9 +78,6 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
 
     # main's Settings block was rendered by an older template: one description reads differently
     old = "The branch goals start from and pull requests target."
-    # a README holds only the generated blocks it already has (the principles README, #5195): give the fixture's an empty Settings block and render it
-    write(repo, "README.md", text(repo, "README.md").rstrip("\n") + "\n\n<!-- settings:begin -->\n<!-- settings:end -->\n")
-    run(sys.executable, DOCS, "audit", cwd=repo)
     readme = text(repo, "README.md")
     check(old in readme, "the fixture's README holds the Settings block")
     write(repo, "README.md", readme.replace(old, "The branch goals start from."))
