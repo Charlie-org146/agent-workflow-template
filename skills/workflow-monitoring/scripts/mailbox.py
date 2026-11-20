@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
-"""Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation, both machines share one
-send budget, and a reply such as "1 recommended" is recorded as the owner's words and acted on.
+"""Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation; the machines share one send
+budget; a reply like "1 recommended" is recorded as the owner's words.
 
-usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply it read; QID is the
-                                                 `Question id` line of the mail
+usage: mailbox.py reply QID TEXT [--root DIR]   the operation session's reply; QID: the mail's `Question id` line
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
        mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                                OPS-1: file a finding of top or a machine session, without asking, as an ops-finding
-                                                issue on "Backlog: PAGE" ("Other" if no page matches); REF is the TOP-DECISION or
-                                                record that found it. Refuses a repeat of an open issue and a safety-class finding
-                                                with no owner's words.
+                                                OPS-1: file a session's finding as an ops-finding issue on "Backlog: PAGE" ("Other"
+                                                if none); REF found it. Refuses a repeat and a safety-class finding without owner's words.
 
-notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
-secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
-and one send from the shared ledger, a git ref on origin both machines read (refs/loop/mail-ledger when `machine_sync` is on; else a local file),
-so a second machine never mails an event the first one did, and no more than `notify_budget` (flow file, default 20) go out in
-24 hours. A reply is "<n>", "<n> recommended", "recommended" or "approve" (the option numbered, or the recommended one), or the
-owner's own words. A question about deleting, money, security or private data refuses a bare number or "approve": it needs the
-owner's own typed words, which are recorded and sent as written. The answer goes to the worker through operate.py send --source
-owner; a question with no goal goes to sessions.py owner-words.
+       mailbox.py watch ID --pr N [--arm --head SHA]   watcher job (TD487; ID: the goal's slug): the tick resumes it when checks end;
+                                                 green at SHA with --arm runs merge.py ID --go-head SHA once, another head waits, red
+                                                 records the checks (--arm: operation)
+       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); not loaded here;
+                                                 the tick runs the jobs, then checkin.py; no goal
+
+notify.py calls compose and claim per event (mail: workflow-health's mail.py).
+compose gives the body and remembers the question (loop/mailbox.json). claim takes the event's key and a send from
+the ledger (refs/loop/mail-ledger, else a file): a second machine never mails an event twice;
+`notify_budget` (20) caps the sends in 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or owner's
+words; a question about deleting, money, security or private data needs the owner's typed words. The answer goes to the worker via
+operate.py send --source owner (else sessions.py owner-words).
 """
 import argparse
 import hashlib
 import json
 import os
+import plistlib
 import re
 import subprocess
 import sys
@@ -34,6 +36,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import live_board as lb  # noqa: E402
+import proctree  # noqa: E402
 import machines  # noqa: E402
 
 LEDGER = "refs/loop/mail-ledger"
@@ -65,7 +68,7 @@ def write_json(path, data):
 
 
 def options(kind, action):
-    """([option words], index of the recommended one) for an event."""
+    """([option words], recommended index) for an event."""
     if kind in FIXED:
         return FIXED[kind]
     found = re.search(r"options?:\s*([^;\[]+)", action)
@@ -78,7 +81,7 @@ def options(kind, action):
 
 
 def compose(folder, key, kind, slug, action, repo):
-    """The mail body: the event, numbered options with the recommendation, how to reply, the question id. Remembers the question."""
+    """The mail body: event, numbered options, reply how-to, question id."""
     words, rec = options(kind, action)
     qa = qid(key)
     pending = read_json(os.path.join(folder, "mailbox.json"))
@@ -106,8 +109,8 @@ def budget_of(flow):
 
 
 def claim(folder, key, flow, cwd=None, release=False):
-    """Take one event and one send from the shared ledger: True when it is ours to mail, "sent" when another machine mailed the
-    event, "budget" when the budget is spent (the event stays unsent, so a later check-in tries again)."""
+    """Take one event and a send from the shared ledger: True when ours, "sent" when another machine mailed it, "budget"
+    when the budget is spent (the event stays unsent; a later check-in tries again)."""
     for _ in range(4):
         data, token = ledger(folder, cwd)
         sent, times = data.setdefault("sent", {}), [t for t in data.get("times", []) if time.time() - t < 86400]
@@ -145,7 +148,7 @@ def ids_of(title):
 
 
 def repeat_of(title, open_issues):
-    """The open issue a finding repeats: same normalised title, or same IDs in the title and half its words."""
+    """The open issue a finding repeats: same title, or same IDs and half its words."""
     mine, ids = set(norm(title).split()), ids_of(title)
     for item in open_issues:
         theirs = set(norm(item["title"]).split())
@@ -155,14 +158,14 @@ def repeat_of(title, open_issues):
 
 
 def covered(root, record, title, page):
-    """True when the owner-words record lists *, ops-findings, the page or an ID in the title."""
+    """True when the owner-words record lists *, ops-findings, the page or an ID."""
     import auto
     row = next((r for r in auto.owner_rows(root) if r[0] == record), None)
     return bool(row) and bool(({"*", "ops-findings", page} | ids_of(title)) & set(row[4].split(",")))
 
 
 def file_finding(root, args):
-    """(exit code, line): file one finding of the operation layer (OPS-1); nothing is filed when any check refuses."""
+    """(exit code, line): file one finding (OPS-1); a refusal files nothing."""
     import auto
     title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
     if not title or not args.found.strip():
@@ -260,6 +263,102 @@ def cmd_pending(args):
     return 0
 
 
+LABEL = "com.workflow-loop.tick"
+MERGE = os.path.join(HERE, "..", "..", "workflow-release", "scripts", "merge.py")
+
+
+def jobs_dir(root):
+    common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True).stdout.strip() or ".git"
+    return os.path.join(os.path.abspath(os.path.join(root, common)), "loop", "watchers")
+
+
+def now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def cmd_watch(args):
+    if args.arm:
+        proctree.require_operation(args.root, "an armed watcher job")
+        if not args.head:
+            sys.exit("REFUSED: an armed job names its head (--head SHA).")
+    path = os.path.join(jobs_dir(args.root), re.sub(r"[^\w.-]", "_", args.id) + ".json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_json(path, {"id": args.id, "pr": args.pr, "arm": args.arm, "head": args.head, "pod": machines.graph.pod_id(), "state": "waiting", "result": "", "at": now()})
+    print("WATCH %s: pull request %d" % (args.id, args.pr))
+
+
+def gh_json(root, *argv):
+    done = subprocess.run(["gh", *argv], cwd=root, capture_output=True, text=True)
+    try:
+        return json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        return None
+
+
+def resume(root, path):
+    """One watcher job: when its checks end, green arms (if asked), red reports."""
+    job = read_json(path)
+    if job.get("state") != "waiting" or not isinstance(job.get("pr"), int):
+        return
+    got = gh_json(root, "pr", "view", str(job["pr"]), "--json", "state,headRefOid,statusCheckRollup")
+    checks = [c for c in (got or {}).get("statusCheckRollup") or [] if isinstance(c, dict)]
+    if got is None or not checks or any((c.get("status") or "COMPLETED") != "COMPLETED" or c.get("state") in ("PENDING", "EXPECTED") for c in checks):
+        return
+    if got.get("state") != "OPEN":
+        job.update(state="done", result="pull request " + str(got.get("state")).lower())
+    else:
+        bad = sorted({c.get("name") or c.get("context") or "?" for c in checks if (c.get("conclusion") or c.get("state")) not in ("SUCCESS", "SKIPPED", "NEUTRAL")})
+        if bad:
+            job.update(state="red", result="red: " + ", ".join(bad))
+        elif job.get("arm") and job.get("head") != got["headRefOid"]:
+            job["result"] = "head moved to " + got["headRefOid"][:9]
+        elif job.get("arm"):  # the job id is the goal's slug
+            done = subprocess.run([sys.executable, MERGE, job["id"], "--go-head", job["head"]], cwd=root, capture_output=True, text=True, env=dict(os.environ, LOOP_POD_ID=job.get("pod", "")))
+            job.update(state="armed" if done.returncode == 0 else "arm-failed", result=(done.stdout + done.stderr).strip()[-200:])
+        else:
+            job.update(state="green", result="green at " + got["headRefOid"][:9])
+    job["at"] = now()
+    write_json(path, job)
+    print("WATCHED %s: %s (%s)" % (job["id"], job["state"], job["result"]))
+
+
+def cmd_tick(args):
+    folder = jobs_dir(args.root)
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        if name.endswith(".json"):
+            resume(args.root, os.path.join(folder, name))
+    for script in ("checkin.py", "board_page.py"):  # read and print only
+        subprocess.run([sys.executable, os.path.join(HERE, script)] + ["checkin"] * (script != "checkin.py"), cwd=args.root)
+    return 0
+
+
+def plist_path():
+    return os.path.join(os.environ.get("LOOP_AGENTS_DIR") or os.path.expanduser("~/Library/LaunchAgents"), LABEL + ".plist")
+
+
+def cmd_install(args):
+    logs = os.path.join(os.environ.get("LOOP_SCHEDULE_HOME") or os.path.expanduser("~/.workflow-loop/schedule"), "log", "restart-tick.log")
+    os.makedirs(os.path.dirname(logs), exist_ok=True)
+    os.makedirs(os.path.dirname(plist_path()), exist_ok=True)
+    with open(plist_path(), "wb") as handle:
+        plistlib.dump({"Label": LABEL, "ProgramArguments": [sys.executable, os.path.abspath(__file__), "tick", "--root", args.root], "WorkingDirectory": args.root,
+                       "StartInterval": 300, "StandardOutPath": logs, "StandardErrorPath": logs,
+                       "EnvironmentVariables": {"PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"}}, handle)
+    print("WROTE %s (not loaded; the owner loads it)" % plist_path())
+
+
+def cmd_uninstall(args):
+    gone = os.path.exists(plist_path())
+    if gone:
+        os.remove(plist_path())
+    print("REMOVED %s (the owner unloads it)" % plist_path() if gone else "NOTHING to remove")
+
+
+def cmd_status(args):
+    loaded = subprocess.run([os.environ.get("LOOP_LAUNCHCTL") or "launchctl", "print", "gui/%d/%s" % (getattr(os, "getuid", lambda: 0)(), LABEL)], capture_output=True).returncode == 0
+    print("tick plist: %s; loaded: %s" % ("present" if os.path.exists(plist_path()) else "missing", loaded))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -274,6 +373,14 @@ def main():
         one.add_argument("--" + name, default="")
     one.add_argument("--dry-run", action="store_true")
     one.set_defaults(func=cmd_finding)
+    one = sub.add_parser("watch")
+    one.add_argument("id")
+    one.add_argument("--pr", type=int, required=True)
+    one.add_argument("--arm", action="store_true")
+    one.add_argument("--head", default="")
+    one.set_defaults(func=cmd_watch)
+    for name, func in (("tick", cmd_tick), ("install", cmd_install), ("uninstall", cmd_uninstall), ("status", cmd_status)):
+        sub.add_parser(name).set_defaults(func=func)
     for item in sub.choices.values():
         item.add_argument("--root", default="")
     args = parser.parse_args()

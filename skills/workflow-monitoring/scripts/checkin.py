@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. usage: checkin.py [--since ISO]
-Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies (per repo: Building now, Queue in order with ETAs, then goals by
-release and feature), Needs you (numbered, MON-19), Coming up. --since defaults to the last check-in (<git common dir>/loop/checkin.json).
+Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies (per repo: Building now, Queue with ETAs, goals by release and
+feature), Needs you (numbered, MON-19), Coming up. --since defaults to the last check-in (<git common dir>/loop/checkin.json).
 """
 import argparse
 import datetime
@@ -60,10 +60,11 @@ def grouped(blocks, at=None, tags=None, loop=None):
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
         for release in sorted({key(item)[0] for item in items}):
-            out += ["-- %s --" % bs.release_header(release, every[release], at, loop)]
+            out += ["-- %s --" % bs.release_header(release, every[release], at, loop)] + [board_lines.roll(every[release], at)] * bool(at)
             for feature in sorted({key(item)[1] for item in items if key(item)[0] == release}):
                 out += ["  %s:" % feature]
-                out += ["    " + goal_line(item) for item in items if key(item) == (release, feature)]
+                for item in items:
+                    out += ["    " + goal_line(item)] + board_lines.bars(item, at) * bool(at) if key(item) == (release, feature) else []
         left = [item["left"] for item in items if item.get("left")]
         out += ["expected finish %s (about %s)" % ((at + datetime.timedelta(seconds=max(left))).astimezone().strftime("%H:%M"), board_page.span(max(left)))] if left and at else []
         edges += [(name, item["slug"], dep.partition("/")[0], dep.partition("/")[2]) for item in items
@@ -111,10 +112,11 @@ def render(root=None, at=None, stamp=None):
     broken = []
     pod = [mine] + others(bd.followed(), root, at, stamp, broken)
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
-    counts = lambda *names: sum(g["states"][r["slug"]] in names for g in pod for r in g["live"] if not graph.foreign(r))
+    counts = lambda *names, live=None: sum(g["states"][r["slug"]] in names and live in (None, machines.live(r, g["taken"], at, g["cfg"])) for g in pod for r in g["live"] if not graph.foreign(r))
+    parked = counts("running", "held", "silent", "waiting", live=False)  # TD481
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued; %s" % (counts("running", "held", "silent"),
-                                                            counts("waiting", "failed", "stopped"), sum(len(g["queue"]) for g in pod), pool_line),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True),
+                                                              sum(len(g["queue"]) for g in pod), ", %d parked" % parked if parked else "", pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg))]
     for g in pod:
         out += ["%s%s: %d goal%s, last activity %s" % (name, " (%s)" % machine if machine else "", n, "" if n == 1 else "s",
@@ -144,10 +146,10 @@ def render(root=None, at=None, stamp=None):
             if len(parts) >= 6:
                 out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
                            else "- %s waits for you: %s" % (parts[1], parts[5]))
-    filed = auto.since(root, stamp, "findings.log")  # OPS-1: what the operation layer filed since the last check-in
+    filed = auto.since(root, stamp, "findings.log")  # OPS-1: filed by the operation layer
     if filed:
         out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]
-    given = [r for r in auto.owner_rows(root) if r[2].startswith("operation-top:delegated:") and r[1] > stamp]  # DOC-2 (o664): each delegated record, once
+    given = [r for r in auto.owner_rows(root) if r[2].startswith("operation-top:delegated:") and r[1] > stamp]  # DOC-2 (o664)
     if given:
         out += ["", "Delegated approvals (DOC-2, since the last check-in):"] + ["- %s %s %s %s: %s" % (r[0], r[2].split(":")[2], r[2].split(":")[4], r[4], " ".join(json.loads(r[3]).split()[:14])) for r in given[-8:]]
     gone = mend.archived_since(folder, stamp)
@@ -160,8 +162,9 @@ def render(root=None, at=None, stamp=None):
                                     feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
                       owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at),
-                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1)) for r in g["live"]]
-        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"])) for q in g["queue"]]))
+                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1),
+                      bars=board_lines.progress(g["root"], r["slug"], r, lb.current(r), [])) for r in g["live"]]
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"]), bars=board_lines.progress(g["root"], q["slug"], None, 0, q["done"])) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
@@ -243,7 +246,7 @@ def render(root=None, at=None, stamp=None):
     except OSError:
         owed = []
     out += ["- off-machine to-do: %s red proof owed on %s since %s %s" % (c[0], c[2], c[1], c[3].strip()) for c in owed]
-    out += ["- " + line for line in bd.unread()]  # a stamp with no time zone or no time is named here, never guessed
+    out += ["- " + line for line in bd.unread()]  # a stamp with no zone or time is named, not guessed
     paused = board_lines.paused(live)
     out.append("- " + (paused or "next check-in in %s minutes" % (cfg.get("cadence") or 30)))
     return lb.fit(out, 100)
@@ -310,7 +313,7 @@ def main():
     args.since and bs.timed(args.since, "--since %r")
     lines = render(stamp=args.since or None)
     print("\n".join(lines))
-    try:  # an op-tokens.tsv row (proctree.op_append) and what the quiet hook compares with; never fail a check-in
+    try:  # an op-tokens.tsv row (proctree.op_append) for the quiet hook; never fail a check-in
         import proctree
         top = bs.git("rev-parse", "--show-toplevel")
         proctree.op_append(top)

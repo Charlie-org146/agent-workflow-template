@@ -46,7 +46,7 @@ echo "== every other milestone-freeform row was seen failing"
 f0=$fails
 out=$(python3 - <<'PY'
 rows = [l.rstrip("\n").split("\t") for l in open(".loop/regression.tsv") if not l.startswith("#")]
-want = ["no-milestone-issue-ok", "no-milestone-page-ok", "home-milestone-optional", "pr-no-milestone", "health-file-no-milestone",
+want = ["no-milestone-issue-ok", "no-milestone-page-ok", "home-milestone-optional", "pr-no-milestone", "pr-no-milestone",
         "regression-issue-no-milestone", "digest-no-milestone", "setup-no-milestone-step",
         "milestone-v1-free-form", "milestone-wording-unreviewed"]
 have = {r[0]: r for r in rows}

@@ -67,6 +67,7 @@ Each requirement and how it is delivered:
 - **Reads:** `.loop/regression.tsv` and the rows' commands.
 - **Writes:** `.loop/regression-runs.tsv`; with `--live`, one GitHub issue per failing row.
 - **Exit codes:** 0 when every selected row passed; nonzero when one failed.
+- **Run order:** inside a time budget, selected rows run closest to the change first: rows that name a changed file, then rows whose requirement is in the diff, then the rest, shortest first. Rows past the budget are left to the full run.
 
 ### Command: lanes_cli.py
 - **Command:** `python3 skills/workflow-regression/scripts/lanes_cli.py affected [--level land|nightly|all] PATH...`

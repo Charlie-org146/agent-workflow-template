@@ -16,6 +16,7 @@ KINDS = {
     'tests': ('+(?!Other$).+', 'Other'),
     'roadmap': ('+.+',),
 }
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1")  # DEL-10: gh and git never wait on a prompt
 LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/(?:wiki/|blob/main/docs/wiki/)|\(docs/wiki/")
 
 
@@ -79,14 +80,59 @@ SPLIT = re.compile(r"(?<!\\)\|")
 UNSEEN, UNDATA = "not measured: no references recorded yet", "not measured: no data yet"
 
 
-def adoption(follows):
-    """The share of a row's Follows tags that say adopted (adapted and own count 0)."""
-    tags = re.findall(r"\b(adopted|adapted|own)\b", follows)
-    return round(100 * tags.count("adopted") / len(tags)) if tags else 0
+TAG = re.compile(r"[:] (adopted|adapted|planned|own)\b[^;<]*$")
+TAGS = "adopted|adapted|planned|own"
 
 
-def tables(text):
-    """DOC-25: each principle table in the new columns, Adoption computed from Follows, the figure link in the Requirement cell, one score line under it."""
+def bullets(cell):
+    """DEL-21: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (an untagged source takes the tag to its right)."""
+    if cell.lstrip().startswith("- "):
+        return cell.strip()
+    parts, tag, out = [p.strip() for p in re.split(r";\s+(?![^()]*\))", cell.strip()) if p.strip()], "", []
+    for part in reversed(parts):
+        found = TAG.search(part)
+        tag = found[1] if found else tag
+        out.insert(0, "- %s%s" % (part[:found.start()] if found else part, ": " + tag if tag else ""))
+    return "<br>".join(out)
+
+
+def follows(cell):
+    """The (source, tag) lines of a bullet Follows cell; tag is "" when a line has none."""
+    return [(re.sub(r"[:] (%s)$" % TAGS, "", x[2:]), (re.search(r"[:] (%s)$" % TAGS, x) or [0, ""])[1]) for x in cell.split("<br>") if x.startswith("- ")]
+
+
+def adoption(cell):
+    """The share of a row's Follows lines tagged adopted (adapted, planned and own count 0); None with no lines."""
+    tags = [t for _, t in follows(cell)]
+    return round(100 * tags.count("adopted") / len(tags)) if tags else None
+
+
+def latest_full(slug, ids):
+    """DEL-21: {test id: state} of the latest finished regression run on main whose results cover most tests (a full run, not a row or lane run), read from its results-* artifacts with gh; None when none can be read."""
+    import json, subprocess, tempfile
+    got = subprocess.run(["gh", "run", "list", "-R", slug, "--workflow", "regression", "--branch", "main", "--limit", "12", "--json", "databaseId,conclusion"], capture_output=True, text=True)
+    for run in (json.loads(got.stdout) if got.returncode == 0 and got.stdout.strip() else []):
+        if run["conclusion"] not in ("success", "failure"):
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(["gh", "run", "download", str(run["databaseId"]), "-R", slug, "-p", "results-*", "-D", tmp], capture_output=True, text=True)
+            rows = [x.split("\t") for d, _, fs in os.walk(tmp) for f in fs for x in open(os.path.join(d, f), encoding="utf-8").read().splitlines() if x[:1] != "#"]
+        results = {x[0]: x[1] for x in rows if len(x) > 1}
+        if len(set(results) & set(ids)) * 5 >= len(ids) * 4:
+            return results
+    return None
+
+
+def confidence(row, tests, runs):
+    """DEL-21: the share of the requirement's tests (rows of .loop/regression.tsv naming it or an ID it absorbs) that PASS on the latest run; not measured with none."""
+    ids = re.findall(r"\b[A-Z]{2,5}-\d+\b", (re.match(r"\[([^\]]*)\]", row) or [0, ""])[1])
+    ran = [runs.get(t[0]) for t in tests if len(t) > 3 and t[3] in ids]
+    ran = [r for r in ran if r in ("PASS", "FAIL")]
+    return "%d%% (%d of %d)" % (round(100 * ran.count("PASS") / len(ran)), ran.count("PASS"), len(ran)) if ran else UNDATA
+
+
+def tables(text, tests=(), runs=None, keep=False):
+    """DOC-25, DEL-21: each principle table in the new columns; Follows as a tagged bullet list, Adoption computed from it, Confidence from the tests (keep: an existing figure is kept), one score line under it."""
     lines, out, i = text.split("\n"), [], 0
     while i < len(lines):
         head = [c.strip() for c in SPLIT.split(lines[i].strip()[1:-1])] if lines[i].startswith("| Requirement | Summary") else []
@@ -96,15 +142,18 @@ def tables(text):
         while i < len(lines) and lines[i].startswith("|"):
             c = [x.strip() for x in SPLIT.split(lines[i].strip()[1:-1])]
             rows.append([c[0] + " (" + c[5] + ")"] + c[1:4] + ["", ""] if head == OLD else c); i += 1
-        scores = [adoption(c[2]) for c in rows]
-        seen = any(re.search(r"\b(adopted|adapted|own)\b", c[2]) for c in rows)  # no Follows tag anywhere: nothing measured, not 0%
-        for c, score in zip(rows, scores):
-            c[4] = "%d%%" % score if seen else UNSEEN
-            c[5] = c[5] or UNDATA if not seen else "" if c[5] == UNDATA else c[5]
+        scores = []
+        for c in rows:
+            c[2] = bullets(c[2])
+            scores.append(adoption(c[2]))
+            c[4] = UNSEEN if scores[-1] is None else "%d%%" % scores[-1]
+            was = c[5] if keep and re.match(r"\d+% \(\d+ of \d+\)$|not measured", c[5]) else ""
+            c[5] = was or confidence(c[0], tests, runs or {})
             out.append("| " + " | ".join(c) + " |")
         while i < len(lines) and (lines[i] == "" or lines[i].startswith("Adoption: ")):
             i += 1
-        out += ["", "Adoption: %s." % ("%d%% (the average of this principle's rows)" % round(sum(scores) / len(scores)) if seen else UNSEEN), ""]
+        seen = [s for s in scores if s is not None]
+        out += ["", "Adoption: %s." % ("%d%% (the average of this principle's rows)" % round(sum(seen) / len(seen)) if seen else UNSEEN), ""]
     return "\n".join(out)
 
 
@@ -119,9 +168,11 @@ def relink(text, slug):
     return re.sub(r"https://github\.com/[\w.-]+/%s/" % re.escape(slug.split("/")[1]), "https://github.com/%s/" % slug, text) if slug.count("/") == 1 else text
 
 
-def fresh(text, folder, read, slug=""):
+def fresh(text, folder, read, slug="", keep=False):
     """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
-    text = relink(tables(text), slug)
+    tests = [x.split("\t") for x in (read(os.path.join(os.path.dirname(os.path.dirname(folder)), ".loop", "regression.tsv")) or "").splitlines()[1:]]
+    runs = None if keep or slug.count("/") != 1 else latest_full(slug, [t[0] for t in tests])
+    text = relink(tables(text, tests, runs or {}, keep or runs is None), slug)
     if "\n## System design" not in text:
         return text
     block = what(read(os.path.join(folder, "Delivery.md")))

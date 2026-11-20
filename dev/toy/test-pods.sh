@@ -31,7 +31,7 @@ queue() { printf '%s\n' "$2" >> "$T/$1/.loop/queue.md"; }   # queue REPO LINE
 runrec() { python3 - "$T/$1/.git/loop/runs" "$2" <<'PY'
 import datetime, json, os, sys
 now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-json.dump({"slug": sys.argv[2], "goal": "Goal " + sys.argv[2], "status": "running", "step": "build", "tries": 0, "pr": "", "waits_on": [], "updated": now}, open(os.path.join(sys.argv[1], sys.argv[2] + ".json"), "w"))
+json.dump({"slug": sys.argv[2], "goal": "Goal " + sys.argv[2], "status": "running", "step": "build", "tries": 0, "pr": "", "waits_on": [], "updated": now, "pid": 4242}, open(os.path.join(sys.argv[1], sys.argv[2] + ".json"), "w"))  # a live worker: a pid (TD481: a record with no worker reads parked, not running)
 PY
 }
 claim() { # claim REPO ID [flags]: run operate.py claim from that repo

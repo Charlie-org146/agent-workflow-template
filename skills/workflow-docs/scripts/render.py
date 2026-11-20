@@ -321,7 +321,7 @@ def refresh(root, check=False, insert=False):
             if (found and found.group(0) != block) or (insert and not found):
                 stale.append((rel, name))
         fresh = with_blocks(held, blocks, insert)
-        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read, counting.repo_slug(root))
+        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read, counting.repo_slug(root), check)
         if done != fresh:
             stale.append((rel, "format"))
             fresh = done
