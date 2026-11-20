@@ -8,6 +8,7 @@ D2: in a PR shard a row cut off by the per-row limit is LEFT with its name and d
 non-zero still does, and without the shard it fails as before. The workflow carries the times file and lists the LEFT rows."""
 import os
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -85,9 +86,33 @@ check(plain == 1 and "FAIL slow" in outp and "FAIL bad" in outp and "SPLIT" not 
       "negative control: with LOOP_PR_SHARD unset nothing changes, the slow row fails and every row runs (exit %d)" % plain)
 check("slow\t2\tLEFT" in open(stamp + ".0").read() and "fast\t" in open(stamp + ".1").read(),
       "a shard's times file keeps its rows' seconds and stamps the LEFT row at the limit")
+check(re.search(r"bad\t[\d.]+\tSEL", open(stamp + ".0").read()) and re.search(r"fast\t[\d.]+\tRAN", open(stamp + ".1").read()),
+      "a shard marks the rows it ran RAN and the rest of the selection SEL")
 flow = lanes_cli.NARROW
 check("LOOP_ROW_TIMES" in flow and "actions/cache/save" in flow and 'awk \'$3 == "LEFT"' in flow and "upload-artifact" in flow,
       "the PR workflow restores and saves the times file and its affected job lists the LEFT rows")
+# The affected job's coverage guard: run its script on fixtures where one row ran in no shard and one ran in two.
+script = [b for b in flow.split("      - run: |\n")[1:] if "ran.txt" in b][0].split("      - ")[0]
+script = "\n".join(x[10:] for x in script.splitlines())
+work = tempfile.mkdtemp(prefix="shard-balance-affected-")
+for name, body in (("shard-0", "a\t5\tRAN\nb\t1\tSEL\nc\t1\tSEL\nd\t2\tSEL\nold\t9\t\n"), ("shard-1", "a\t5\tSEL\nb\t3\tRAN\nc\t1\tRAN\nd\t0\tSEL\n"),
+                   ("shard-2", "a\t5\tSEL\nb\t3\tSEL\nc\t2\tRAN\nd\t0\tSEL\ne\t7\tLEFT\n")):
+    os.makedirs(os.path.join(work, "s", name))
+    with open(os.path.join(work, "s", name, "t.tsv"), "w") as handle:
+        handle.write(body)
+stub = os.path.join(work, "skills", "workflow-regression", "scripts")
+os.makedirs(stub)
+with open(os.path.join(stub, "regression.py"), "w") as handle:
+    handle.write("import sys\nopen('ran-here.txt', 'a').write(sys.argv[2] + '\\n')\nsys.exit(int(sys.argv[2] == 'd' and 'FAILD' in __import__('os').environ))\n")
+gate = subprocess.run(["bash", "-c", script], cwd=work, capture_output=True, text=True)
+sel = sorted(open(os.path.join(work, "ran-here.txt")).read().split()) if os.path.exists(os.path.join(work, "ran-here.txt")) else []
+check(gate.returncode == 0 and sel == ["d"] and "run twice: c" in gate.stdout and "not failed: e" in gate.stdout,
+      "affected runs the row no shard ran, names the row two shards ran and the LEFT row, and passes (ran %s, exit %d)" % (sel, gate.returncode))
+os.remove(os.path.join(work, "ran-here.txt"))
+bad = subprocess.run(["bash", "-c", script], cwd=work, capture_output=True, text=True, env=dict(os.environ, FAILD="1"))
+check(bad.returncode == 1, "negative control: a missing row that fails when affected runs it fails the job (exit %d)" % bad.returncode)
+kept = open(os.path.join(work, "all.tsv")).read().split("\n")
+check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
 wf = os.path.join(root, ".github", "workflows", "regression-pr.yml")
 check(not os.path.exists(wf) or open(wf).read() == flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly"),
       ".github/workflows/regression-pr.yml is the rendered workflow")

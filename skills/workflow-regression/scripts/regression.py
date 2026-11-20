@@ -4,10 +4,9 @@
 usage: regression.py <command> [options]
 
   add ID --level L --command C [--goal SLUG:N] [--describe TEXT] [--category C --link L]
-                                add or replace a row. L is land, nightly, draft or covered;
-                                TEXT says what the test checks; C is criterion (default), workflow (an
-                                end-to-end flow run on a toy repo) or defect, and a defect row needs L, the
-                                issue URL or finding:SLUG it keeps fixed
+                                add or replace a row. L is land, nightly, draft or covered; TEXT says what the
+                                test checks; C is criterion (default), workflow (a flow run on a toy repo) or defect
+                                (needs L, the issue URL or finding:SLUG it keeps fixed)
   sync [--write]                list done lines and criteria with no row, rows with no description or never seen failing; --write drafts rows
   criteria                      run each wiki criterion's row; print one UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, run CMD to break it, and record that the test fails there
@@ -19,7 +18,7 @@ usage: regression.py <command> [options]
                                 run rows (of one kind), then keep one issue per failing row;
                                 --tier goal plans a goal lane; a plain run nightly records its time (SUITE_TIME)
   workflow [--visibility V]     a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows
-                                a change reaches, on pull_request and push); a private repo: nothing (it runs on the Mac)
+                                a change reaches, split by recorded time over 6 shards); a private repo: nothing (it runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script from the newest check-reads trace
 
 Rows live in .loop/regression.tsv: id, level, command, goal, seen_red, description, category, link. Each run records each row's status, date and run in .loop/regression-runs.tsv (runs.py), which the wiki Tests tables show. Known failures live in .loop/regression-known.tsv: id, reason; a known failure never blocks, a row never seen failing does.
@@ -102,6 +101,10 @@ def new(**kw):
     return {name: kw.get(name, "") for name in FIELDS}
 
 
+def draft(key, goal):
+    return new(id=key, level="draft", command="echo write a test", goal=goal)
+
+
 def known(root):
     return {cells[0]: cells[1] for cells in cells_of(root, "regression-known.tsv")}
 
@@ -159,7 +162,7 @@ def cmd_sync(args):
         if not found:
             missing.append((key, "", "criterion has no regression row"))
             if args.write:
-                rows[key] = drafted[key] = new(id=key, level="draft", command="echo write a test", goal=key)
+                rows[key] = drafted[key] = draft(key, key)
     for slug, number, line in missing:
         if not number:
             print("GAP %s %s" % (slug, line))
@@ -167,7 +170,7 @@ def cmd_sync(args):
         print("GAP %s:%s %s" % (slug, number, line[:100]))
         if args.write:
             key = "%s-%s" % (slug, number)
-            rows[key] = drafted[key] = new(id=key, level="draft", command="echo write a test", goal="%s:%s" % (slug, number))
+            rows[key] = drafted[key] = draft(key, "%s:%s" % (slug, number))
     if drafted:
         edit_rows(root, lambda current: [current.setdefault(k, v) for k, v in drafted.items()])
     drafts = [row["id"] for row in rows.values() if row["level"] == "draft"]
@@ -199,7 +202,7 @@ def cmd_criteria(_args):
             unmet.append("%s (no regression row)" % key)
         for row in found:
             if row["level"] == "draft" or (row["level"] != "covered" and subprocess.run(["sh", "-c", row["command"]], cwd=root,
-                                                                                   capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
+        capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
                 unmet.append("%s (row %s is a draft or failing)" % (key, row["id"]))
     print("\n".join(unmet))
     return 1 if unmet else 0
@@ -242,14 +245,13 @@ def cmd_red(args):
     return 0
 
 
-def merged(paths, results=(), left=(), limit=0):
-    """{id: [seconds, state]} from times files (`id TAB seconds TAB state`), then this shard's results (LEFT: the limit)."""
+def merged(path, results=(), left=(), limit=0):
+    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results (LEFT: the limit)."""
     rows = {}
-    for path in paths:
-        try:
-            rows.update({c[0]: [float(c[1]), ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
-        except (OSError, ValueError):
-            pass
+    try:
+        rows.update({c[0]: [float(c[1]), ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
+    except (OSError, ValueError):
+        pass
     rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
     return rows
 
@@ -285,7 +287,7 @@ def cmd_run(args):
         old, why = lanes.load(record, root)
         if old:
             todo, reused, notes, why = lanes.plan(root, picked, old, lines_of(root, "regression.tsv"),
-                                                  lines_of(root, "regression-known.tsv"))
+                lines_of(root, "regression-known.tsv"))
             print("\n".join(notes)) if notes else None
         if why:
             print("FULL: " + why)
@@ -294,12 +296,13 @@ def cmd_run(args):
         else:
             ids = ", ".join(todo[:10]) + (", +%d more" % (len(todo) - 10) if len(todo) > 10 else "")
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
-                                                       " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
+                " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
     i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     path = os.environ.get("LOOP_ROW_TIMES", "")
+    every = todo
     if n > 1:
-        mine = split(todo, {k: v[0] for k, v in merged([path]).items() if v[0] > 0}, n)
+        mine = split(todo, {k: v[0] for k, v in merged(path).items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
     if todo and args.target in ("land", "nightly"):
@@ -315,7 +318,10 @@ def cmd_run(args):
     if late:
         print("LEFT %d over the %d s row limit, not failed: %s" % (len(late), args.timeout, ", ".join(late)))
     if path:
-        open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(merged([path], results, late, args.timeout).items()))
+        rows = merged(path, results, late, args.timeout)
+        for key in every:  # RAN: this shard's rows, SEL: the rest
+            rows.setdefault(key, [0, ""])[1] = rows[key][1] or ("RAN" if key in todo + cut else "SEL")
+        open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
     if not args.reuse and results:
