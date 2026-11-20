@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/test-shard-balance.py | tail -6`.
+   Expect: PASS for 8 shards with a 120-second budget, PASS for the docs step on a clean clone (exit 0), and PASS for the negative control: a changed reviewed requirement with no review log fails the step with its own LOCKED line.
+2. Open the next pull request's regression-pr run.
+   Expect: 8 shard jobs, and an affected job whose first step is `docs.py check`.
