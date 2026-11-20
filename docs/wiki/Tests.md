@@ -179,8 +179,8 @@
 | <a id="t-aut-email-secrets"></a>aut-email-secrets | requirement | DEL-9 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-12 |
 | <a id="t-builtin-flow"></a>builtin-flow | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-suite-time-recorded"></a>suite-time-recorded | requirement | DEL-17 | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
-| <a id="t-health-timing"></a>health-timing | requirement | DEL-17 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-11 |
-| <a id="t-lane-over-minutes"></a>lane-over-minutes | requirement | DEL-17 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-11 |
+| <a id="t-health-timing"></a>health-timing | requirement | DEL-17 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-19 |
+| <a id="t-lane-over-minutes"></a>lane-over-minutes | requirement | DEL-17 | PASS | 2026-11-11 | [CI 2026-11-11](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-11) | 2026-11-19 |
 | <a id="t-reg7-floor-test"></a>reg7-floor-test | requirement | DEL-17 | not run | - | local | 2026-11-11 |
 | <a id="t-reg7-budget-defaults"></a>reg7-budget-defaults | requirement | DEL-17 | not run | - | local | 2026-11-11 |
 | <a id="t-reg7-budget-left-reused"></a>reg7-budget-left-reused | requirement | DEL-17 | not run | - | local | 2026-11-11 |
@@ -226,7 +226,7 @@
 | <a id="t-grd7-round-cost"></a>grd7-round-cost | requirement | DEL-17 | not run | - | local | 2026-11-12 |
 | <a id="t-grd8-silent-worker"></a>grd8-silent-worker | requirement | DEL-17 | not run | - | local | 2026-11-12 |
 | <a id="t-budgets-agree"></a>budgets-agree | requirement | DEL-17 | not run | - | local | 2026-11-18 |
-| <a id="t-pr-body-by-file"></a>pr-body-by-file | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-12 |
+| <a id="t-pr-body-by-file"></a>pr-body-by-file | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-19 |
 | <a id="t-del5-docs-bump-minor"></a>del5-docs-bump-minor | requirement | DEL-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
 | <a id="t-resume-ask-worker-step"></a>resume-ask-worker-step | requirement | DEL-1 | not run | - | local | 2026-11-13 |
 | <a id="t-package-gate-controls"></a>package-gate-controls | requirement | DEL-1 | not run | - | local | 2026-11-13 |
@@ -352,7 +352,7 @@
 | <a id="t-format-groups-read"></a>format-groups-read | requirement | DOC-25 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-format-problem"></a>format-problem | requirement | DOC-25 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-10 |
 | <a id="t-format-tests-table"></a>format-tests-table | requirement | DOC-25 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-10 |
-| <a id="t-cap-default-10"></a>cap-default-10 | requirement | DOC-25 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
+| <a id="t-cap-default-10"></a>cap-default-10 | requirement | DOC-25 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-19 |
 | <a id="t-format-key"></a>format-key | requirement | DOC-25 | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-docs-guide-page-issue-125"></a>docs-guide-page-issue-125 | defect | [#125](https://github.com/jcl2018/agent-workflow-template/issues/125) closed (2026-11-11) | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |
 | <a id="t-docs-locked-hint-issue-133"></a>docs-locked-hint-issue-133 | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | PASS | 2026-11-10 | [60def83](https://github.com/Charlie-org146/agent-workflow-template/commit/60def83dfbc8727d0307a13b77f5aad43479da6a) | 2026-11-10 |

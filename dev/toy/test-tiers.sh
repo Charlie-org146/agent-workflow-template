@@ -138,9 +138,9 @@ python3 -c "import json;c=json.load(open('.loop/config.json'));c.update(goal_lev
 printf 'm\tnightly\tgrep -q ok src/a.txt && echo m >> "$TOY_LOG"\tX-1\t2026-01-01\tM runs nightly.\tcriterion\t\n' >> .loop/regression.tsv
 git add -A; git commit -qm "t6 rows"; printf 'ok, t6\n' > src/a.txt; git commit -qam "t6"
 out=$(python3 "$d/h.py" "$S" "$RUNS" t6 qa 2>&1)
-# Value: protects=goal_levels nightly makes a goal lane plan from land and nightly rows (S23) and a lane over goal_lane_minutes says so on its LANE line (S21); fails_when=the setting is ignored or the note is missing; why_new=both settings are new; seam=none; no_claim=a real 10-minute lane (0.0001 min stands in)
+# Value: protects=goal_levels nightly makes a goal lane plan from land and nightly rows (S23) and a lane over the retired goal_lane_minutes says nothing (S21, REG-7); fails_when=the setting is ignored or the note is missing; why_new=both settings are new; seam=none; no_claim=a real 10-minute lane (0.0001 min stands in)
 check "goal_levels nightly: a goal lane selects the nightly row a change reaches" 'grep -q "^SELECTED m: " "$RUNS/t6.qa-lane.txt"'
-check "a goal lane over goal_lane_minutes adds '; over N min (goal_lane_minutes)' to its LANE line" 'grep -q "^LANE qa AFFECTED .*; over 0.0001 min (goal_lane_minutes)" <<<"$out"'
+check "a goal lane over a tiny goal_lane_minutes adds no over note: the lane budget is the only lane limit" 'grep -q "^LANE qa AFFECTED " <<<"$out" && ! grep -q "; over" <<<"$out"'
 t0=$(date +%s); rr=$(python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import lanes;print(lanes.run_row('sleep 20 & echo \$! > $d/left.pid; exec sleep 20','.',None,1)[0])" "$here/skills/workflow-regression/scripts"); took=$(( $(date +%s) - t0 ))
 # Value: protects=a row's timeout holds even when its shell left a child holding the output (red team); fails_when=run_row waits for the pipe to close; why_new=run_row is new; seam=none; no_claim=none beyond protects
 check "a row past its timeout returns 124 within seconds and its whole tree is killed, the child it started too" '[ "$rr" = 124 ] && [ $took -lt 10 ] && ! kill -0 "$(cat "$d/left.pid")" 2>/dev/null'

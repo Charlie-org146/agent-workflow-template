@@ -52,7 +52,6 @@
   "smtp_host": "smtp.gmail.com",
   "smtp_port": 465,
   "step_limit": 0,
-  "goal_lane_minutes": 10,
   "goal_levels": "land",
   "ci_levels": "nightly",
   "stale_branch_days": 14,

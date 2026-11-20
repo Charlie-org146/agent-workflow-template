@@ -35,13 +35,13 @@ MON = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
 def file_issue(top, page, texts):
   title = "Docs: %s has DOC-19/DOC-4 findings" % page
   stone = "Backlog: " + (page[11:] if page.startswith("How-to-use-") else "Documentation" if "/" in page or page == "Home" else page)
-  gh = lambda *a: run(["gh"] + list(a), top)
+  gh = lambda *a, **k: run(["gh"] + list(a), top, **k)
   try:
     held = gh("issue", "list", "--state", "open", "--limit", "1000", "--json", "title", "-q", ".[].title")
     if held.returncode or title in held.stdout.splitlines():
       return "no issue filed (gh)" if held.returncode else "its issue is open"
     gh("api", "-X", "POST", "repos/{owner}/{repo}/milestones", "-f", "title=" + stone)
-    return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body", "\n".join(texts)).stdout.split()[-1]
+    return "filed " + gh("issue", "create", "--title", title, "--milestone", stone, "--body-file", "-", input="\n".join(texts)).stdout.split()[-1]
   except (OSError, IndexError):
     return "no issue filed (gh)"
 
@@ -64,8 +64,8 @@ if not sys.stdin or not sys.stdin.isatty():
   os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 
-def run(args, cwd=None):
-  return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+def run(args, cwd=None, **kw):
+  return subprocess.run(args, cwd=cwd, capture_output=True, text=True, **kw)
 
 
 REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "scripts", "lanes_cli.py"))
@@ -80,7 +80,7 @@ def reach(top, paths):
   done = run([sys.executable, "-B", REACH, "affected", "--root", top, "--"] + paths, cwd=top)
   found = re.search(r"^AFFECTED \d+ of \d+ rows \((.*)\)", done.stdout, re.M)
   if done.returncode or not found or re.search(r"^(UNMAPPED|DELETED) ", done.stdout, re.M):
-    return None  # a failing planner can't clear the merge
+    return None
   return set(found.group(1).split(", ")) - {"none", ""}
 
 
