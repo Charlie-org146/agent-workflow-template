@@ -218,8 +218,11 @@ def cmd_run(args):
         if delay == "none":
             print("CADENCE OFF: the owner turned the loop off. Stop.")
             return 0
-        stop = time.time() + int(delay)
+        stop, beat = time.time() + int(delay), 0
         while time.time() < stop and signature(top, common) == seen:
+            if layers.role(args.role) == "machine" and time.time() - beat >= 30:  # the status file stays under a minute old (TD430)
+                beat = time.time()
+                layers.beat(common, layers.build(common, CFG(top)))
             time.sleep(args.poll)
 
 

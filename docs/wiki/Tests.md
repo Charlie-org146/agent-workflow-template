@@ -710,6 +710,8 @@
 | <a id="t-platform-cap-ahead-once"></a>platform-cap-ahead-once | requirement | OPS-1 | not run | - | local | 2026-11-20 |
 | <a id="t-platform-no-new-session"></a>platform-no-new-session | requirement | OPS-1 | not run | - | local | 2026-11-20 |
 | <a id="t-platform-limits-sizes"></a>platform-limits-sizes | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-machine-status-live-workers"></a>machine-status-live-workers | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-machine-status-heartbeat"></a>machine-status-heartbeat | requirement | OPS-1 | not run | - | local | 2026-11-20 |
 
 ## Regression
 
