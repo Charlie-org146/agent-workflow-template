@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-automation-email.sh regression | tail -5`.
+   Expect: PASS for the schedule check, PASS for its negative control, `PASS milestone-freeform:aut-email-regression` and `22 passed, 0 failed`.
+2. Run `grep -c 'tags:' .github/workflows/regression.yml`.
+   Expect: 0, the release is made by release.yml on push to main, so the suite has no tag trigger of its own.
