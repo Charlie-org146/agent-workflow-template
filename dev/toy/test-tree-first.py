@@ -4,7 +4,7 @@
 # reads: skills/workflow-regression/scripts/tiers.py
 """tree-rules-first (TD494, TD497, TD504): the rows that run a whole-repo script (dev/package.py, test-tree.sh, test-portable.sh,
 size-check.py, straight or through a wrapper such as tree-once.sh) run once, in the PR workflow's ninth cell `tree`, not in the 8 shards;
-a red whole-tree row fails the tree cell and so the required `affected` job; a row a run cut for its budget goes first next time.
+a red whole-tree row fails the tree cell and so the required `affected` job; the full runs keep them in their shards; a row a run cut for its budget goes first next time.
 
 1. lanes.whole picks the rows that run a whole-repo script and no others.
 2. regression.py in a fixture repo: with LOOP_PR_SHARD set and no --tree the whole-tree row is left out (the shards); with --tree only it
@@ -79,6 +79,8 @@ with tempfile.TemporaryDirectory() as tmp:
 
     got, code = run()
     check(sorted(got) == ["r1", "r3", "tree"] and code == 0, "no shard and no --tree: every row runs, as before (%s)" % got)
+    got, code = run(REGRESSION_SHARD="3/16")
+    check(sorted(got) == ["r1", "r3", "tree"] and code == 0, "a full run (scheduled or dispatched: REGRESSION_SHARD, no LOOP_PR_SHARD) runs the whole-tree row too (%s)" % got)
     a, _ = run(LOOP_PR_SHARD="0/2")
     b, _ = run(LOOP_PR_SHARD="1/2")
     check("tree" not in a + b and sorted(a + b) == ["r1", "r3"], "a PR shard leaves the whole-tree rows out: the two shards run r1 and r3 only (%s + %s)" % (a, b))
@@ -111,4 +113,14 @@ affected = flow.split("\n  affected:")[1].split("\n  small:")[0]
 check("needs: shard" in affected and 'test "${{ needs.shard.result }}" = success' in affected, "affected needs the matrix and fails unless it is success, so a red tree cell fails it")
 committed = os.path.join(root, ".github", "workflows", "regression-pr.yml")
 check(not os.path.exists(committed) or open(committed).read() == flow, ".github/workflows/regression-pr.yml is the rendered workflow, tree cell included")
+full_path = os.path.join(root, ".github", "workflows", "regression.yml")
+full = open(full_path).read() if os.path.exists(full_path) else ""
+
+
+def leaves(text):  # a workflow that leaves the whole-tree rows out of its shards
+    return "LOOP_PR_SHARD" in text or "--tree" in text or "lanes.whole" in text
+
+
+check(not full or not leaves(full), "regression.yml (scheduled and dispatched full runs) keeps the whole-tree rows in every shard: no LOOP_PR_SHARD, --tree or whole filter")
+check(leaves(flow), "negative control: the same test flags the PR workflow, which does leave them to the tree cell")
 sys.exit(1 if failed else 0)
