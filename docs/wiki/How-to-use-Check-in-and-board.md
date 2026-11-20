@@ -29,7 +29,7 @@ Say these to the agent in the operation session; each feature page has the exact
 
 Each requirement and how it is delivered:
 
-- CHK-1: Live board. Example, from the waits-first test: given a live board, when the board page is opened, then it shows the live board.
+- CHK-1: Live board. Example, from the waits-first test: given a live board, when the board page is opened, then it shows the live board. Also (was MCH-5): One email stream, answered by reply. Example, from the mailbox-two-mails test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
 
 ### Command: checkin.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/checkin.py [--since ISO]`
