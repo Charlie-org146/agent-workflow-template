@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
 """Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation, both machines share one
-send budget, and a reply such as "1 recommended" is recorded as the owner's words and acted on.
+send budget, and a reply such as "1 recommended" is recorded as the owner's words.
 
-usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply it read; QID is the
+usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this with the owner's reply; QID is the
                                                  `Question id` line of the mail
        mailbox.py pending [--root DIR]          the questions mailed and not yet answered
+       mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
+                                                OPS-1: file a finding of top or a machine session, unasked, as an ops-finding
+                                                issue on "Backlog: PAGE" ("Other" if none matches); REF is the record that found it.
+                                                Refuses a repeat of an open issue and a safety-class finding with no owner's words.
+
+       mailbox.py watch ID --pr N [--arm]       restart-safe watcher job (TD487): the tick resumes it once its checks end;
+                                                 green with --arm queues the pull request, red records the checks (--arm: operation only)
+       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); never loaded here, that is the
+                                                 owner's. The tick runs the jobs, then checkin.py; it starts no goal
 
 notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
 secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
-and one send from the shared ledger, a git ref on origin both machines read (refs/loop/mail-ledger when `machine_sync` is on; else a local file),
-so a second machine never mails an event the first one did, and no more than `notify_budget` (flow file, default 20) go out in
-24 hours. A reply is "<n>", "<n> recommended", "recommended" or "approve" (the option numbered, or the recommended one), or the
-owner's own words. A question about deleting, money, security or private data refuses a bare number or "approve": it needs the
-owner's own typed words, which are recorded and sent as written. The answer goes to the worker through operate.py send --source
+and one send from the shared ledger (refs/loop/mail-ledger on origin with `machine_sync`, else a local file): a second machine
+never mails an event twice, and no more than `notify_budget` (default 20) go out in 24 hours. A reply is
+"<n>", "<n> recommended", "recommended" or "approve", or the owner's own words; a question about deleting, money, security or
+private data needs the owner's typed words, recorded as written. The answer goes to the worker through operate.py send --source
 owner; a question with no goal goes to sessions.py owner-words.
 """
 import argparse
 import hashlib
 import json
 import os
+import plistlib
 import re
 import subprocess
 import sys
@@ -29,6 +38,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import live_board as lb  # noqa: E402
+import proctree  # noqa: E402
 import machines  # noqa: E402
 
 LEDGER = "refs/loop/mail-ledger"
@@ -73,7 +83,7 @@ def options(kind, action):
 
 
 def compose(folder, key, kind, slug, action, repo):
-    """The mail body: the event, numbered options with the recommendation, how to reply, the question id. Remembers the question."""
+    """The mail body: event, numbered options, how to reply, question id."""
     words, rec = options(kind, action)
     qa = qid(key)
     pending = read_json(os.path.join(folder, "mailbox.json"))
@@ -101,7 +111,7 @@ def budget_of(flow):
 
 
 def claim(folder, key, flow, cwd=None, release=False):
-    """Take one event and one send from the shared ledger: True when it is ours to mail, "sent" when another machine mailed the
+    """Take one event and one send from the shared ledger: True when ours, "sent" when another machine mailed the
     event, "budget" when the budget is spent (the event stays unsent, so a later check-in tries again)."""
     for _ in range(4):
         data, token = ledger(folder, cwd)
@@ -122,6 +132,82 @@ def claim(folder, key, flow, cwd=None, release=False):
             write_json(os.path.join(folder, "mail-ledger.json"), data)
             return True
     return "budget"
+
+
+def gh(args, root):
+    try:
+        return subprocess.run(["gh"] + args, cwd=root, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as error:
+        return subprocess.CompletedProcess(args, 127, "", str(error))
+
+
+def norm(title):
+    return " ".join(re.sub(r"[^a-z0-9#-]+", " ", str(title).lower()).split())
+
+
+def ids_of(title):
+    return set(re.findall(r"#\d+|\b[A-Z]{2,5}-\d+\b", str(title)))
+
+
+def repeat_of(title, open_issues):
+    """The open issue a finding repeats: same title, or same IDs and half its words."""
+    mine, ids = set(norm(title).split()), ids_of(title)
+    for item in open_issues:
+        theirs = set(norm(item["title"]).split())
+        if norm(item["title"]) == norm(title) or (ids and ids == ids_of(item["title"]) and len(mine & theirs) * 2 >= len(mine | theirs)):
+            return item["number"], item["title"]
+    return None
+
+
+def covered(root, record, title, page):
+    """True when the owner-words record lists *, ops-findings, the page or an ID."""
+    import auto
+    row = next((r for r in auto.owner_rows(root) if r[0] == record), None)
+    return bool(row) and bool(({"*", "ops-findings", page} | ids_of(title)) & set(row[4].split(",")))
+
+
+def file_finding(root, args):
+    """(exit code, line): file one finding (OPS-1); a refusing check files nothing."""
+    import auto
+    title, text, home = " ".join(args.title.split())[:90], " ".join(args.text.split()), os.path.expanduser("~")
+    if not title or not args.found.strip():
+        return 2, "REFUSED: give a title and --found (the TOP-DECISION or record that found it). Nothing was filed."
+    if (len(home) > 1 and home in title + text) or re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", title + text):
+        return 2, "REFUSED: the finding holds a private value. Nothing was filed."
+    try:
+        with open(os.path.join(root, ".loop", "docs.tsv"), encoding="utf-8") as handle:
+            pages = [l.split("\t")[0].strip() for l in handle if l.strip() and l[0] != "#"]
+    except OSError:
+        pages = []
+    page = next((p for p in pages if p.lower() == args.feature.strip().lower() and p != "Home"), "Other")
+    for name, found in auto.CLASSES.items():
+        if found.search(title + " " + text) and not (args.owner_words and covered(root, args.owner_words, title, page)):
+            return 2, "REFUSED: safety class %s needs the owner's words (--owner-words oN listing %s or an ID in the title). Nothing was filed." % (name, page)
+    done = gh(["issue", "list", "--state", "open", "--limit", "500", "--json", "number,title"], root)
+    try:
+        same = repeat_of(title, json.loads(done.stdout)) if not done.returncode else 0
+    except ValueError:
+        same = 0
+    if same == 0:
+        return 1, "REFUSED: could not read the open issues, so nothing was filed (%s)" % done.stderr.strip()[:100]
+    if same:
+        return 1, "REFUSED: repeats open issue #%d (%s). Nothing was filed." % same
+    stone = "Backlog: " + page
+    if args.dry_run:
+        return 0, "WOULD file on %s: %s (found by %s; dry run)" % (stone, title, args.found)
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "..", "workflow-health", "scripts", "milestone.py"), "new", stone, "--live"],
+                   cwd=root, capture_output=True, text=True, timeout=60)  # kept when it exists
+    for label in ("backlog", "ops-finding"):
+        gh(["label", "create", label, "--description", "Filed by the operation layer"], root)
+    body = "<!-- loop-ops-finding %s -->\n\n%s\n\nFound by %s (operation layer).\n" % (hashlib.sha1(norm(title).encode()).hexdigest()[:12], text or title, args.found)
+    done = gh(["issue", "create", "--title", title, "--label", "backlog,ops-finding", "--milestone", stone, "--body", body], root)
+    if done.returncode:
+        return 1, "FAILED: %s" % done.stderr.strip()[:160]
+    number = re.search(r"/issues/(\d+)", done.stdout)
+    line = "FILED #%s on %s: %s (found by %s)" % (number.group(1) if number else "?", stone, title, args.found)
+    with open(os.path.join(auto.loop_dir(root), "findings.log"), "a", encoding="utf-8") as handle:
+        handle.write("%s | %s\n" % (auto.stamp(), line))
+    return 0, line
 
 
 def say(text):
@@ -165,12 +251,109 @@ def cmd_reply(args):
     return 0
 
 
+def cmd_finding(args):
+    code, line = file_finding(args.root, args)
+    say(line)
+    return code
+
+
 def cmd_pending(args):
     asked = read_json(os.path.join(lb.loop_dir(args.root), "mailbox.json"))
     for key in sorted(asked):
         say("%s %s: %s" % (key, asked[key]["slug"], asked[key]["action"][:100]))
     say("%d question(s) waiting for a reply" % len(asked))
     return 0
+
+
+LABEL = "com.workflow-loop.tick"
+
+
+def jobs_dir(root):
+    common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True).stdout.strip() or ".git"
+    return os.path.join(os.path.abspath(os.path.join(root, common)), "loop", "watchers")
+
+
+def now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def cmd_watch(args):
+    if args.arm:
+        proctree.require_operation(args.root, "an armed watcher job")
+    path = os.path.join(jobs_dir(args.root), re.sub(r"[^\w.-]", "_", args.id) + ".json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_json(path, {"id": args.id, "pr": args.pr, "arm": args.arm, "state": "waiting", "result": "", "at": now()})
+    print("WATCH %s: pull request %d" % (args.id, args.pr))
+
+
+def gh_json(root, *argv):
+    done = subprocess.run(["gh", *argv], cwd=root, capture_output=True, text=True)
+    try:
+        return json.loads(done.stdout) if done.returncode == 0 else None
+    except ValueError:
+        return None
+
+
+def resume(root, path):
+    """One watcher job: when its checks end, green arms (if asked), red reports."""
+    job = read_json(path)
+    if job.get("state") != "waiting" or not isinstance(job.get("pr"), int):
+        return
+    got = gh_json(root, "pr", "view", str(job["pr"]), "--json", "state,headRefOid,statusCheckRollup")
+    checks = [c for c in (got or {}).get("statusCheckRollup") or [] if isinstance(c, dict)]
+    if got is None or not checks or any((c.get("status") or "COMPLETED") != "COMPLETED" or c.get("state") in ("PENDING", "EXPECTED") for c in checks):
+        return
+    if got.get("state") != "OPEN":
+        job.update(state="done", result="pull request " + str(got.get("state")).lower())
+    else:
+        bad = sorted({c.get("name") or c.get("context") or "?" for c in checks if (c.get("conclusion") or c.get("state")) not in ("SUCCESS", "SKIPPED", "NEUTRAL")})
+        if bad:
+            job.update(state="red", result="red: " + ", ".join(bad))
+        elif job.get("arm"):
+            done = subprocess.run(["gh", "pr", "merge", str(job["pr"]), "--auto", "--merge", "--match-head-commit", got["headRefOid"]], cwd=root, capture_output=True, text=True)
+            job.update(state="armed" if done.returncode == 0 else "arm-failed", result=("armed at " + got["headRefOid"][:9]) if done.returncode == 0 else done.stderr.strip()[:200])
+        else:
+            job.update(state="green", result="green at " + got["headRefOid"][:9])
+    job["at"] = now()
+    write_json(path, job)
+    print("WATCHED %s: %s (%s)" % (job["id"], job["state"], job["result"]))
+
+
+def cmd_tick(args):
+    folder = jobs_dir(args.root)
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        if name.endswith(".json"):
+            resume(args.root, os.path.join(folder, name))
+    for script in ("checkin.py", "board_page.py"):  # read and print only
+        subprocess.run([sys.executable, os.path.join(HERE, script)] + ["checkin"] * (script != "checkin.py"), cwd=args.root)
+    return 0
+
+
+def plist_path():
+    return os.path.join(os.environ.get("LOOP_AGENTS_DIR") or os.path.expanduser("~/Library/LaunchAgents"), LABEL + ".plist")
+
+
+def cmd_install(args):
+    logs = os.path.join(os.environ.get("LOOP_SCHEDULE_HOME") or os.path.expanduser("~/.workflow-loop/schedule"), "log", "restart-tick.log")
+    os.makedirs(os.path.dirname(logs), exist_ok=True)
+    os.makedirs(os.path.dirname(plist_path()), exist_ok=True)
+    with open(plist_path(), "wb") as handle:
+        plistlib.dump({"Label": LABEL, "ProgramArguments": [sys.executable, os.path.abspath(__file__), "tick", "--root", args.root], "WorkingDirectory": args.root,
+                       "StartInterval": 300, "StandardOutPath": logs, "StandardErrorPath": logs,
+                       "EnvironmentVariables": {"PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"}}, handle)
+    print("WROTE %s (not loaded; the owner loads it)" % plist_path())
+
+
+def cmd_uninstall(args):
+    gone = os.path.exists(plist_path())
+    if gone:
+        os.remove(plist_path())
+    print("REMOVED %s (the owner unloads it)" % plist_path() if gone else "NOTHING to remove")
+
+
+def cmd_status(args):
+    loaded = subprocess.run([os.environ.get("LOOP_LAUNCHCTL") or "launchctl", "print", "gui/%d/%s" % (os.getuid(), LABEL)], capture_output=True).returncode == 0
+    print("tick plist: %s; loaded: %s" % ("present" if os.path.exists(plist_path()) else "missing", loaded))
 
 
 def main():
@@ -181,6 +364,19 @@ def main():
     one.add_argument("text")
     one.set_defaults(func=cmd_reply)
     sub.add_parser("pending").set_defaults(func=cmd_pending)
+    one = sub.add_parser("finding")
+    one.add_argument("title")
+    for name in ("feature", "found", "text", "owner-words"):
+        one.add_argument("--" + name, default="")
+    one.add_argument("--dry-run", action="store_true")
+    one.set_defaults(func=cmd_finding)
+    one = sub.add_parser("watch")
+    one.add_argument("id")
+    one.add_argument("--pr", type=int, required=True)
+    one.add_argument("--arm", action="store_true")
+    one.set_defaults(func=cmd_watch)
+    for name, func in (("tick", cmd_tick), ("install", cmd_install), ("uninstall", cmd_uninstall), ("status", cmd_status)):
+        sub.add_parser(name).set_defaults(func=func)
     for item in sub.choices.values():
         item.add_argument("--root", default="")
     args = parser.parse_args()

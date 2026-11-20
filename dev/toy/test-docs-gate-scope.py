@@ -146,7 +146,7 @@ class Done:
 def fake(open_titles, fail=False, list_fails=False):
     calls = []
 
-    def run(args, cwd=None):
+    def run(args, cwd=None, **kw):
         calls.append(args)
         if fail or (list_fails and args[:3] == ["gh", "issue", "list"]):
             return Done("", 1)
@@ -181,7 +181,7 @@ calls, merge.run = fake([], fail=True)
 check("a gh that fails files nothing and never raises", merge.file_issue(repo, "Home", ["a"]) == "no issue filed (gh)")
 
 
-def boom(args, cwd=None):
+def boom(args, cwd=None, **kw):
     raise OSError("no gh")
 
 

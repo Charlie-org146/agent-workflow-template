@@ -7,9 +7,10 @@
 # reads: skills/workflow-monitoring/scripts/sessions.py
 # reads: skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/worker.py
 # reads: skills/workflow-setup/scripts/setup.py
-# Proves worker sessions with a stand-in session tool: assignment, renaming, the report path, reuse of a finished
-# session for the next goal, the background fallback, steps run inside the session, and issue 98 (a goal moved into a
-# session shows with its session name and step, never as a failed background worker). No model is called.
+# Proves worker sessions with a stand-in session tool: a goal wakes a free (archived) session and never starts one (OPS-1),
+# renaming, the report path, reuse of a finished session for the next goal, the background fallback when none is free,
+# steps run inside the session, and issue 98 (a goal moved into a session shows with its session name and step, never as
+# a failed background worker). No model is called.
 # usage: test-session-workers.sh [DIR]
 set -u
 unset LOOP_ROLE LOOP_SESSION LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # these tests act as the operation session
@@ -50,9 +51,20 @@ PY
 git commit -qam "Agent"; git push -q origin main
 go() { $W go "Goal $1" --done "Line $1" --slug "$1" >/dev/null 2>&1; }
 
+seed() { python3 - "$C/loop/session-pool.json" "$@" <<'PY'
+import json, os, sys
+os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)
+p = json.load(open(sys.argv[1])) if os.path.exists(sys.argv[1]) else {}
+for sid in sys.argv[2:]:
+    p[sid] = {"name": "worker · old", "slug": "old", "state": "free"}  # an archived session the owner started earlier
+json.dump(p, open(sys.argv[1], "w"))
+PY
+}
+seed s1
+
 echo "== assignment and renaming"
 LOOP_SESSION_TOOL="$T/tool.sh" go a
-check "a ready goal gets a new worker session from the session tool" 'grep -q "^start worker · a" "$TOOL_LOG" && [ "$(field a session.id)" = s1 ]'
+check "a ready goal wakes a free archived session and never starts one" '! grep -q "^start" "$TOOL_LOG" && [ "$(field a session.id)" = s1 ]'
 check "the session is renamed worker · <goal>" 'grep -q "^rename s1 worker · a" "$TOOL_LOG" && [ "$(field a session.name)" = "worker · a" ]'
 check "the session is sent the goal, its worktree and the report rules" 'grep -q "^send s1 You are the worker session for goal a" "$TOOL_LOG" && $SE list | grep -q "^s1  busy  worker · a  a$"'
 check "the session is told to cd to the goal's worktree and set LOOP_ROLE=worker" 'grep -q "cd .*/loop/worktrees/a first, and run every goal.py and flow.py command there with LOOP_ROLE=worker" "$TOOL_LOG.sent.s1"'
@@ -68,12 +80,12 @@ echo "== reuse of a finished session"
 $SE report a --status merged --pr https://x/pull/1 >/dev/null
 check "a merged result is recorded and frees the session" '[ "$(field a report.status)" = merged ] && $SE list | grep -q "^s1  free"'
 LOOP_SESSION_TOOL="$T/tool.sh" go b
-check "the next ready goal reuses the finished session, renamed again" '[ "$(field b session.id)" = s1 ] && grep -q "^rename s1 worker · b" "$TOOL_LOG" && [ "$(grep -c "^start" "$TOOL_LOG")" = 1 ]'
+check "the next ready goal reuses the finished session, renamed again" '[ "$(field b session.id)" = s1 ] && grep -q "^rename s1 worker · b" "$TOOL_LOG" && [ "$(grep -c "^start" "$TOOL_LOG")" = 0 ]'
 
 echo "== the background fallback"
 TOOL_FAIL=1 LOOP_SESSION_TOOL="$T/tool.sh" go c
 for _ in $(seq 50); do [ -e "$FAKE_AGENT/agent-c" ] && break; sleep 0.1; done
-check "a tool that can't start a session falls back to a background process" '[ "$(field c worker)" = background ] && [ -e "$FAKE_AGENT/agent-c" ] && grep -q "could not start" "$C/loop/runs/c.json"'
+check "with no free session a new one is refused with its reason, no session is started and the goal falls back to a background process" '[ "$(field c worker)" = background ] && [ -e "$FAKE_AGENT/agent-c" ] && grep -q "owner.s typing" "$C/loop/runs/c.json" && ! grep -q "^start" "$TOOL_LOG"'
 go d
 check "no session tool at all also falls back, and says why" '[ "$(field d worker)" = background ] && grep -q "no session tool is set" "$C/loop/runs/d.json"'
 python3 - "$C/loop/runs/c.json" <<'PY'
@@ -81,7 +93,7 @@ import json, sys
 s = json.load(open(sys.argv[1])); s["status"] = "running"; json.dump(s, open(sys.argv[1], "w"))
 PY
 $LB > "$T/board2"
-check "the board marks a fallback goal as background" 'tr "\n" " " < "$T/board2" | tr -s " " | grep -q " worker: background (the session tool could not start a session)"'
+check "the board marks a fallback goal as background" 'tr "\n" " " < "$T/board2" | tr -s " " | grep -q " worker: background (a new session needs the owner.s typing"'
 
 echo "== steps run inside the worker session"
 R="$C/loop/runs"; (cd "$C/loop/worktrees/b" && LOOP_ROLE=worker python3 "$here/skills/workflow-delivery/scripts/flow.py" b idea > "$T/f1" 2>&1)
@@ -103,9 +115,10 @@ python3 - "$C/loop/session-pool.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1])); p["dead"] = {"name": "worker · old", "slug": "old", "state": "free"}; json.dump(p, open(sys.argv[1], "w"))
 PY
+seed s2
 printf '#!/bin/bash\n[ "$2" = dead ] && exit 1\nexec "%s" "$@"\n' "$T/tool.sh" > "$T/tool2.sh"; chmod +x "$T/tool2.sh"
 LOOP_SESSION_TOOL="$T/tool2.sh" go e
-check "a free session that can't be reached is skipped for a new one before any fallback" '[ "$(field e worker)" = session ] && [ "$(field e session.id)" = s2 ] && $SE list | grep -q "^dead  unreachable"'
+check "a free session that can't be reached is skipped for the next free one before any fallback" '[ "$(field e worker)" = session ] && [ "$(field e session.id)" = s2 ] && $SE list | grep -q "^dead  unreachable"'
 
 echo "== slots, results and answers"
 python3 - .loop/config.json <<'PY'
@@ -119,8 +132,9 @@ import json, sys
 c = json.load(open(sys.argv[1])); c["parallel"] = 0; json.dump(c, open(sys.argv[1], "w"), indent=2)
 PY
 printf '#!/bin/bash\n[ "$1" = rename ] && exit 1\nexec "%s" "$@"\n' "$T/tool.sh" > "$T/tool3.sh"; chmod +x "$T/tool3.sh"
+seed s3
 LOOP_SESSION_TOOL="$T/tool3.sh" $W watch --once >/dev/null 2>&1
-check "a new session that can't be renamed is marked unreachable and the goal falls back" '[ "$(field f worker)" = background ] && grep -q "could not reach session s3" "$C/loop/runs/f.json" && $SE list | grep -q "^s3  unreachable"'
+check "a woken session that can't be renamed is marked unreachable and the goal falls back" '[ "$(field f worker)" = background ] && grep -q "could not reach session s3" "$C/loop/runs/f.json" && $SE list | grep -q "^s3  unreachable"'
 $SE report e --status waiting --ask "Which database?" --words "use sqlite" >/dev/null
 check "a question for the owner makes the goal wait and keeps its session busy" '[ "$(field e status)" = waiting ] && [ "$(field e waiting.ask)" = "Which database?" ] && $SE list | grep -q "^s2  busy"'
 LOOP_SESSION_TOOL="$T/tool.sh" python3 "$S/operate.py" send e "use sqlite" > "$T/send-e" 2>&1
@@ -153,16 +167,17 @@ printf '#!/bin/bash\nsleep 20\n' > "$T/slowtool.sh"; chmod +x "$T/slowtool.sh"
 start=$(date +%s); LOOP_SESSION_TIMEOUT=2 LOOP_SESSION_TOOL="$T/slowtool.sh" go h; took=$(( $(date +%s) - start ))
 check "a hung session tool is cut off at its timeout, with its children, and the goal falls back at once" '[ "$took" -lt 10 ] && [ "$(field h worker)" = background ] && grep -q "timed out" "$C/loop/runs/h.json"'
 
-printf '#!/bin/bash\nif [ "$1" = start ]; then echo s9; (sleep 20 &); fi\nexit 0\n' > "$T/helpertool.sh"; chmod +x "$T/helpertool.sh"
+printf '#!/bin/bash\n(sleep 20 &)\nexit 0\n' > "$T/helpertool.sh"; chmod +x "$T/helpertool.sh"
 python3 - "$C/loop/session-pool.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
 for item in p.values():
     item["state"] = "busy" if item.get("state") == "free" else item.get("state")
+p["s9"]["state"] = "free"  # the one archived session left to wake
 json.dump(p, open(sys.argv[1], "w"))
 PY
 start=$(date +%s); LOOP_SESSION_TOOL="$T/helpertool.sh" go i; took=$(( $(date +%s) - start ))
-check "a helper the tool leaves running never holds the call: the new session is taken at once" '[ "$took" -lt 10 ] && [ "$(field i session.id)" = s9 ]'
+check "a helper the tool leaves running never holds the call: the woken session is taken at once" '[ "$took" -lt 10 ] && [ "$(field i session.id)" = s9 ]'
 
 echo "== issue 98: a goal moved into a session"
 python3 - "$R/d.json" <<'PY'

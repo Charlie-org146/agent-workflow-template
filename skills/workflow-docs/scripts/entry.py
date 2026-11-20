@@ -11,14 +11,12 @@ usage: entry.py render|write|check|block|lag [--repo DIR]
            with REFUSED when the majors differ (a migrate- slug passes)
 
 START.md opens with a first-five-minutes list, then one part each for the loop, release, operation and workers, docs,
-regression, health and settings (see references/commands.md, Entry point templates), then a
-Features table (every PRD page in the wiki folder: name, milestone, first sentence of Problem, the asks in its skills'
-Command maps) and a Settings table (each repo setting, its value, its _help line). Private settings are never read. It
-holds no count, date or machine path.
+regression, health and settings, then a Features table (each PRD page: name, milestone, first Problem sentence, its skills' asks) and a
+Settings table (each repo setting, its value, its _help line; a list shows as a count).
+Private settings are never read. It holds no date or machine path.
 
 When the installed skills are newer than the repo's template_version, a difference in the parts built from the skills
-(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. The Features and Settings
-tables are always checked. It runs git and nothing else.
+(the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. Features and Settings are always checked.
 """
 import argparse
 import json
@@ -30,7 +28,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILLS = os.path.dirname(os.path.dirname(HERE))
 TEMPLATES = os.path.join(os.path.dirname(HERE), "references", "commands.md")
-REFERENCE = os.path.join(SKILLS, "workflow-setup", "references", "settings.md")
+REFERENCE = os.path.join(SKILLS, "loop-files.md")
 ENTRY = os.path.join(".loop", "START.md")
 OPEN, CLOSE = "<!-- workflow-loop -->", "<!-- /workflow-loop -->"
 AGENT_FILES = ["CLAUDE.md", "AGENTS.md"]
@@ -41,7 +39,6 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 
 def version_key(text):
-    """The first three integers of a version."""
     return tuple(int(x) for x in re.findall(r"\d+", str(text or ""))[:3])
 
 
@@ -54,8 +51,11 @@ def read(path, default=""):
 
 
 def config(root):
+    # Committed file under a skip-worktree edit, else the working copy.
+    import counting
+    found = counting.config_of(root)
     try:
-        found = json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
+        found = found or json.loads(read(os.path.join(root, ".loop", "config.json"), "{}"))
     except ValueError:
         found = {}
     return found if isinstance(found, dict) else {}
@@ -70,6 +70,8 @@ def show(value):
         return str(value).lower()
     if value in (None, "", [], {}):
         return "none"
+    if isinstance(value, list):
+        return "%d entries in config.json" % len(value)
     return value if isinstance(value, (str, int, float)) else json.dumps(value)
 
 
@@ -199,7 +201,6 @@ def held_block(text):
 
 
 def raw_text(path):
-    """A file as written, endings untouched."""
     try:
         return open(path, encoding="utf-8", newline="").read()
     except (OSError, ValueError):
@@ -246,13 +247,12 @@ def lag(root, new=""):
 
 
 def problems(root):
-    """(kind, path, detail) for the entry point and blocks."""
     cfg, found = config(root), []
     want, have = render(root), read(os.path.join(root, ENTRY), None)
     lag = lagging(root, cfg)
     fix = "Fix: python3 <workflow-docs>/scripts/entry.py write (or docs.py audit)"
     note = NOTE % (cfg.get("template_version") or "0", installed())
-    # MISSING applies once the repo holds template_version, or to the template's own checkout.
+    # MISSING: once the repo holds template_version, or in the template's own checkout.
     owed = cfg.get("criteria") and (cfg.get("template_version") or ours(root))
     if have is None:
         if owed:

@@ -1,5 +1,149 @@
 # Changelog
 
+## v1.0.112 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.111 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.110 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.109 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.108 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.107 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.106 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.105 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.104 - 2026-11-20
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.103 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.102 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.101 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.100 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.99 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.98 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.97 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.96 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
+## v1.0.95 - 2026-11-19
+
+- No code changes
+
+### How to verify
+
+No manual steps were recorded.
+
 ## v1.0.94 - 2026-11-19
 
 - No code changes

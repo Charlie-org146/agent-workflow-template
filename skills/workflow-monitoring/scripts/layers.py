@@ -4,12 +4,21 @@
 usage: layers.py status [--force]   a machine: send its STATUS to top when it changed or 30 minutes passed (prints the one line)
        layers.py board              top: build the one board from every machine's latest STATUS and publish it
        layers.py defaults           the seven enforced defaults, each `ok` or `FIX: ...` (never changes a setting)
+       layers.py redteam input|record FILE|-|due [--eta ISO]   the red-team pass (HLT-2): the reviewer's input; record its three lists
+                                    (A: assumptions, I: idle work, R: the one biggest risk) with routes; is a pass due
 
 STATUS is one JSON message per machine in <git common dir>/loop/status/<machine>.json, also published as
 refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, its time, main per repo, one line per worker (step,
-status, PR number), the merges, the parked and idle sessions each with a reason, and needs-owner items with the exact words
-and a recommendation. Top is the only role that publishes the board; a machine prints one line. Imported by operate.py.
+status, PR number, ETA), the merges, the parked and idle sessions each with a reason, and needs-owner items with the exact
+words and a recommendation. Each ETA it states goes in the ETA ledger (etas.jsonl). Top is the only role that publishes the board; a machine prints one line. Imported by operate.py.
+
+Red-team (HLT-2): every hour and within an hour of a release ETA, a fresh-context reviewer is given `redteam input` (the board and
+each machine's latest STATUS) and answers `A:`, `I:` and `R:` lines. `redteam record` stores them with a timestamp in
+<git common dir>/loop/redteam/ (never a repo file) and prints one route per item: A to ops-findings, I and R to operation-top as a
+proposed TOP-DECISION. It never edits, merges, files or sends. The ETA is --eta or loop/release-eta.json ({"at": epoch}).
 """
+import calendar
+import datetime
 import hashlib
 import json
 import os
@@ -49,16 +58,51 @@ def number(url):
     return int(found.group(1)) if found else 0
 
 
+def root_of(common):
+    return os.path.dirname(common) if os.path.basename(common) == ".git" else os.getcwd()
+
+
+def eta_at(root, run, now):
+    import auto
+    at = datetime.datetime.fromtimestamp(now, datetime.timezone.utc)
+    left = auto.eta_left(auto.eta_seen(root, run), at) if run.get("status") in ("running", "waiting") else None
+    return round((now + left) / 300) * 300 if left else None
+
+
+def eta_sweep(common, now=None):
+    import auto
+    root, loop, now, events, state = root_of(common), os.path.join(common, "loop"), now or time.time(), {}, {}
+    for name in sorted(os.listdir(os.path.join(loop, "runs"))) if os.path.isdir(os.path.join(loop, "runs")) else []:
+        run = read(os.path.join(loop, "runs", name)) if name.endswith(".json") else {}
+        if not run.get("slug"):
+            continue
+        slug, names = run["slug"], eta_at(root, run, now)
+        state[slug] = " (the goal is at %s, %s)" % (run.get("step"), run.get("status"))
+        if run.get("status") == "done":
+            events["goal", slug] = events["status", slug] = calendar.timegm(time.strptime(str(run["updated"])[:19], "%Y-%m-%dT%H:%M:%S")) if run.get("updated") else now
+        if names:
+            auto.bs.eta_say(loop, "goal", slug, (run.get("session") or {}).get("name") or "goal.py", (run.get("eta") or {}).get("basis") or "", names, now)
+            auto.bs.eta_say(loop, "status", slug, "machine " + machines.me(), "STATUS to top", names, now)
+    for e in auto.bs.eta_fold(loop).values():
+        if e["layer"] == "board" and e["goals"] and all(("goal", g) in events for g in e["goals"]):
+            events["board", e["key"]] = max(events["goal", g] for g in e["goals"])
+    return auto.eta_settle(loop, events, now, lambda e: state.get(e["key"], ""))
+
+
 def build(common, cfg, now=None):
     """This machine's STATUS as data, from its run records and session pool."""
-    folder, workers, merges, parked, idle, needs = os.path.join(common, "loop"), [], [], [], [], []
+    folder, workers, merges, parked, idle, needs, stale = os.path.join(common, "loop"), [], [], [], [], [], []
+    root, now = root_of(common), now if now is not None else time.time()
+    pool = graph.read_pool(os.path.join(folder, "session-pool.json"))[0]
+    taken, at = graph.assigned(pool), datetime.datetime.fromtimestamp(now, datetime.timezone.utc)
     for name in sorted(os.listdir(os.path.join(folder, "runs"))) if os.path.isdir(os.path.join(folder, "runs")) else []:
         run = read(os.path.join(folder, "runs", name)) if name.endswith(".json") else {}
         if not run.get("slug") or graph.foreign(run) or run.get("external"):
             continue
         slug, status, pr = run["slug"], run.get("status"), number(run.get("pr"))
+        live = status != "running" or (graph.holds_slot(run, taken) and (graph.silent_for(run, at) or 0) <= graph.silent_limit(cfg))  # a live session, not a leftover record (TD430)
         if status in ("running", "waiting", "failed", "stopped", "done") and not (status == "done" and run.get("step") == "release"):
-            workers.append({"slug": slug, "step": run.get("step"), "status": status, "pr": pr})
+            workers.append({"slug": slug, "step": run.get("step"), "status": status, "pr": pr, "eta": eta_at(root, run, now)}) if live else stale.append(slug)
         if status == "done" and run.get("step") == "release":
             merges.append({"slug": slug, "pr": pr})
         ask = run.get("waiting") or {}
@@ -66,14 +110,13 @@ def build(common, cfg, now=None):
             needs.append({"slug": slug, "words": ask.get("ask"), "recommend": ask.get("recommend") or "", "options": ask.get("words") or []})
         if status in ("failed", "stopped") or run.get("held"):
             parked.append({"slug": slug, "reason": "%s at %s" % (status if status in ("failed", "stopped") else "held", run.get("step") or "no step")})
-    pool = graph.read_pool(os.path.join(folder, "session-pool.json"))[0] or {}
-    for sid, item in sorted(pool.items()):
+    stale and parked.append({"slug": "stale", "reason": "%d running records have no live session: %s" % (len(stale), ", ".join(stale[:5]))})
+    for sid, item in sorted((pool or {}).items()):
         if isinstance(item, dict) and item.get("state") == "free":
             idle.append({"session": item.get("name") or sid, "reason": "free in the pool, no ready goal"})
-    root = os.path.dirname(common) if os.path.basename(common) == ".git" else os.getcwd()
     base = cfg.get("base") or "main"
     main = {os.path.basename(root): machines.sh("rev-parse", "--short", "origin/" + base, cwd=root) or "unknown"}
-    return {"machine": machines.me(), "at": now if now is not None else time.time(), "main": main, "workers": workers,
+    return {"machine": machines.me(), "at": now, "main": main, "workers": workers,
             "merges": merges, "parked": parked, "idle": idle, "needs_owner": needs}
 
 
@@ -81,15 +124,21 @@ def fingerprint(status):
     return hashlib.sha1(json.dumps({k: v for k, v in status.items() if k != "at"}, sort_keys=True).encode()).hexdigest()
 
 
+def beat(common, status):
+    """The status file, rewritten whenever an operation session passes or waits, so its time is never over a minute old."""
+    write(os.path.join(common, "loop", "status", status["machine"] + ".json"), status)
+
+
 def send(common, cfg, force=False, now=None):
     """Send STATUS to top on change and every 30 minutes; returns (STATUS, 'sent'|'no change')."""
     now = now if now is not None else time.time()
     status, mark = build(common, cfg, now), os.path.join(common, "loop", "status-sent.json")
     mark_role(common)
+    eta_sweep(common, now)
     last = read(mark)
+    beat(common, status)
     if not force and last.get("sha") == fingerprint(status) and now - float(last.get("at") or 0) < STALE_SECONDS:
         return status, "no change"
-    write(os.path.join(common, "loop", "status", status["machine"] + ".json"), status)
     write(mark, {"sha": fingerprint(status), "at": now})
     if machines.shared():
         machines.write_ref(REF + status["machine"], status, machines.read_ref(REF + status["machine"])[1])
@@ -112,7 +161,7 @@ def machine_reply(text, common, now=None):
     lines = [l for l in str(text or "").splitlines() if l.strip()]
     if len(lines) != 1 or not LINE.match(lines[0]):
         return ["a machine check-in is one line: the time, then 'STATUS sent' or 'no change'"]
-    path = os.path.join(common, "loop", "status", machines.me() + ".json")
+    path = os.path.join(common, "loop", "status-sent.json")
     try:
         sent = (now if now is not None else time.time()) - os.path.getmtime(path) <= STALE_SECONDS + 300
     except OSError:
@@ -120,15 +169,18 @@ def machine_reply(text, common, now=None):
     return [] if sent else ["STATUS has not gone to top in the last 30 minutes; run layers.py status first"]
 
 
+def live_count(status):
+    return sum(w.get("status") in ("running", "waiting") for w in status["workers"])
+
+
 def one_line(status, said, now=None):
     now = now if now is not None else time.time()
     return "%s %s: STATUS %s, %d worker%s" % (time.strftime("%H:%M", time.localtime(now)), status["machine"],
-                                            "sent" if said == "sent" else "no change", len(status["workers"]),
-                                            "" if len(status["workers"]) == 1 else "s")
+                                            "sent" if said == "sent" else "no change", live_count(status),
+                                            "" if live_count(status) == 1 else "s")
 
 
 def collect(common):
-    """Every machine's latest STATUS: the local status folder, then each published ref (the newer wins)."""
     found, folder = {}, os.path.join(common, "loop", "status")
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
         item = read(os.path.join(folder, name)) if name.endswith(".json") else {}
@@ -143,7 +195,6 @@ def collect(common):
 
 
 def board(statuses, now=None):
-    """Top's board order: Needs you, stale STATUS call-outs, Running, PRs, Merges, Parked and idle, Main. One board for all machines."""
     now, out = now if now is not None else time.time(), []
     ages = {s["machine"]: int((now - float(s.get("at") or 0)) // 60) for s in statuses}
     needs = [(s["machine"], n) for s in statuses for n in s.get("needs_owner", [])]
@@ -165,12 +216,67 @@ def board(statuses, now=None):
 
 
 def publish_board(common, cfg, now=None):
-    """Top only: build, write and return the one board (its file is what Loop Board publishing reads)."""
     text = board(collect(common), now)
+    said = due(common, now)
+    text += (chr(10) + said) * said.startswith("RED-TEAM DUE")
     write_text = os.path.join(common, "loop", "top-board.txt")
     with open(write_text, "w", encoding="utf-8") as handle:
         handle.write(text + "\n")
     return text
+
+
+RED, RED_GAP, RED_NEAR, RED_FRESH = "redteam", 3600, 3600, 1200
+ROUTES = {"A": "ops-findings", "I": "TOP-DECISION (proposed)", "R": "TOP-DECISION (proposed)"}
+ASK = ("Reply with lines only, no edits and no decisions: `A: <an unverified assumption>` (any number), `I: <work idle capacity could start now>`"
+       " (any number), and exactly one `R: <the single biggest risk to the release time>`.")
+
+
+def iso(now):
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+
+
+def reviewer_input(common, now=None):
+    now, found = now if now is not None else time.time(), collect(common)
+    rows = ["STATUS %s (%d min old): %s" % (s["machine"], (now - float(s.get("at") or 0)) // 60, json.dumps(
+        {k: v for k, v in s.items() if k not in ("machine", "at")}, sort_keys=True, separators=(",", ":"))) for s in found]
+    return chr(10).join(["RED-TEAM INPUT " + iso(now), "", board(found, now), ""] + rows + ["", ASK])
+
+
+def parse_reply(text):
+    lists = {"A": [], "I": [], "R": []}
+    for line in str(text or "").splitlines():
+        found = re.match(r"^\W*([AIR])\s*[:.)]\s*(\S.*)$", line)
+        if found:
+            lists[found.group(1)].append(found.group(2).strip())
+    if len(lists["R"]) != 1:
+        sys.exit("REFUSED: the reply has %d R: lines, and a red-team pass names exactly one biggest risk. Fix: send one `R: <risk>` line; nothing was recorded." % len(lists["R"]))
+    return lists
+
+
+def record(common, text, now=None):
+    """Store the three lists with a timestamp under <common>/loop/redteam/ and return one route line per item (nothing is sent or filed)."""
+    now, lists = now if now is not None else time.time(), parse_reply(text)
+    routes = [{"kind": k, "item": item, "to": ROUTES[k], "state": "proposed"} for k in "AIR" for item in lists[k]]
+    write(os.path.join(common, "loop", RED, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now)) + ".json"),
+          {"at": now, "time": iso(now), "assumptions": lists["A"], "idle": lists["I"], "risk": lists["R"][0], "routes": routes})
+    file = "python3 skills/workflow-monitoring/scripts/mailbox.py finding %s --feature <PAGE> --found redteam/" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
+    return ["ROUTE ops-findings: " + file % json.dumps(r["item"][:100]) if r["kind"] == "A" else "ROUTE %s: %s: %s" % (r["to"], r["kind"], r["item"]) for r in routes]
+
+
+def due(common, now=None, eta=None):
+    """`RED-TEAM DUE: why` when no pass is recorded, the last is over an hour old, or a release ETA is within an hour and the last pass is over 20 minutes old."""
+    now, folder = now if now is not None else time.time(), os.path.join(common, "loop", RED)
+    last = max([float(read(os.path.join(folder, n)).get("at") or 0) for n in (os.listdir(folder) if os.path.isdir(folder) else []) if re.fullmatch(r"\d{8}T\d{6}Z\.json", n)] or [0])
+    if eta is None:
+        eta = read(os.path.join(common, "loop", "release-eta.json")).get("at")
+    age = int((now - last) // 60)
+    if not last:
+        return "RED-TEAM DUE: no pass recorded"
+    if now - last > RED_GAP:
+        return "RED-TEAM DUE: the last pass was %d minutes ago (over 60)" % age
+    if eta and 0 <= float(eta) - now <= RED_NEAR and now - last > RED_FRESH:
+        return "RED-TEAM DUE: the release ETA is in %d minutes and the last pass was %d minutes ago (over 20)" % ((float(eta) - now) // 60, age)
+    return "RED-TEAM ok: last pass %d minutes ago" % age
 
 
 def check_allowed(cfg):
@@ -204,7 +310,6 @@ def relay(source, text, rules=None):
 
 
 def defaults(common, cfg):
-    """The seven enforced defaults, one (name, verdict) row each; nothing is changed."""
     status = build(common, cfg)
     rows = [("relay counts except safety", "ok" if relay("top", "hello")[0] and not relay("top", "delete the branch")[0] and not relay("peer", "hello")[0]
              else "FIX: the relay rule in layers.relay no longer holds"),
@@ -231,9 +336,18 @@ def main(argv):
         for name, verdict in rows:
             print("%s: %s" % (name, verdict))
         return 1 if any(v != "ok" for _, v in rows) else 0
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["input"]:
+        print(reviewer_input(common))
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["record"] and len(argv) > 2:
+        print(chr(10).join(record(common, sys.stdin.read() if argv[2] == "-" else open(argv[2], encoding="utf-8").read())))
+    elif argv[:1] == ["redteam"] and argv[1:2] == ["due"]:
+        eta = None
+        if "--eta" in argv[2:]:
+            eta = calendar.timegm(time.strptime(argv[argv.index("--eta") + 1], "%Y-%m-%dT%H:%M:%SZ"))
+        print(due(common, eta=eta))
     else:
         print(__doc__.strip())
-        return 2
+        return 0 if argv[:1] in (["--help"], ["-h"]) else 2
     return 0
 
 

@@ -590,9 +590,19 @@ def check_held_idle():
 
 
 def check_module_size():
+    def verdict(path):
+        size = os.path.getsize(path)
+        return "FAIL" if size > 20480 else "WARN" if size > 19000 else "PASS"
+    with tempfile.TemporaryDirectory() as tmp:  # negative control: a file of 20,481 bytes fails, one of 20,480 only warns
+        for count, want in ((20481, "FAIL"), (20480, "WARN")):
+            fixture = os.path.join(tmp, "f.py")
+            open(fixture, "wb").write(b"#" * (count - 1) + b"\n")
+            need(verdict(fixture) == want, "negative control: %d bytes should be %s, got %s" % (count, want, verdict(fixture)))
     for name in ("board_status", "board_log", "board_model"):
         size = os.path.getsize(os.path.join(M, name + ".py"))
-        need(size < 19000, "%s.py is %d bytes, not under 19,000" % (name, size))
+        if size > 19000:
+            print("WARN: %s.py is %d bytes, over the 19,000 target (GRD-20: warn at 19,000, fail at 20,480)" % (name, size))
+        need(size <= 20480, "%s.py is %d bytes, over 20,480" % (name, size))
     spec = importlib.util.spec_from_file_location("bs_by_path", os.path.join(M, "board_status.py"))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

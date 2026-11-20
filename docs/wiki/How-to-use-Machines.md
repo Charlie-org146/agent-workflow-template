@@ -46,10 +46,8 @@ The mailer check reports connection failures while keeping credentials out of it
 
 Each requirement and how it is delivered:
 
-- MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks.
+- MCH-1: A second machine reaches this one's setup from a git clone and one command. Example, from the machine-apply-installs test: given a clone and a toy home, when machine plan runs, then it writes nothing, and when apply runs, then it links the skills and writes the private-names file, the mailer, the hooks and the tasks. Also (was DEL-7): Work survives failure and moves by backup. A failed step is resumed from its recorded step, never from the start; `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine. Also (was MCH-4): Goals move between machines, with one owner and one merge order. Example, from the machines-handover test: given a goal whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved.
 
-- MCH-4: Goals move between machines, with one owner and one merge order. Example, from the machines-handover test: given a goal whose worker can't start, when it is handed over, then the other machine binds a worker on the pushed branch and the old record shows it moved.
-- MCH-5: One email stream, answered by reply. Example, from the mailbox-two-mails test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
 
 ### Command: machines.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/machines.py handover SLUG --to MACHINE | take SLUG | snapshot [--publish] | turn`
@@ -108,4 +106,4 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-setup-and-restore@8497ebf6 -->
 
-<!-- kept requirements-consolidate@35f62965 -->
+<!-- kept ops-findings-v20@6e40968b -->

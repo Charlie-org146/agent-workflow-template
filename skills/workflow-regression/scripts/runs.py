@@ -1,7 +1,7 @@
 """Read and write .loop/regression-runs.tsv (each row's last run), a local `regression.py run`'s GitHub issues (sync_issues) and the
 in-loop test time budget (budget, fit, execute).
 
-The formats, the --reuse budget rules and why per-result evidence stays out of the tsv: references/commands.md, "runs.py notes".
+The formats, the --reuse budget rules and why per-result evidence stays out of the tsv: loop-files.md, "runs.py notes".
 """
 import datetime
 import glob
@@ -386,7 +386,7 @@ def notrun_todo(root, slug, ids, live):
 
 def owed_record(root, args, today, read_rows):
     rows, runner, row_id = read_rows(root), (args.runner or "").strip(), args.id
-    live = args.live or bool(os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"))
+    live = args.live
     if row_id not in rows:
         sys.exit("REFUSED: no row %s. Fix: add it first." % row_id)
     if not runner or "\t" in runner or "\n" in runner:

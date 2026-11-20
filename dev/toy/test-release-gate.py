@@ -3,7 +3,7 @@
 # reads: skills/workflow-release/scripts/review.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/release.py docs/wiki/Release.md
 """release-gate (REL-1 to REL-9, issue 4914): a major ships only through `review.py gate`; `promote` tags vX.0.0, keeps release/vX,
 writes the state report and mails it; a cut rc freezes the merge; `revert` opens a pull request back to the snapshot; a goal never
-bumps a major; the Release page holds REL-1 to REL-9, Unreviewed; the scripts stay under their size caps.
+bumps a major; the Release page holds REL-1 to REL-14, Unreviewed; the scripts stay under their size caps.
 
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
 process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major]  (one leg: only its checks decide the exit)"""
@@ -323,7 +323,7 @@ except SystemExit as stop:
 check("release.bump refuses a major: it ships only through review.py promote", "MAJOR_GATE" in refused and "review.py promote" in refused, refused, "major")
 check("release.bump still bumps a minor and a patch", release.bump("1.0.54", "minor") == "1.1.0" and release.bump("1.0.54", "patch") == "1.0.55", "", "major")
 
-# 7. the page (REL-1 to REL-9) and the sizes
+# 7. the page (REL-1 to REL-14) and the sizes
 text = open(os.path.join(root, "docs", "wiki", "Release.md"), encoding="utf-8").read() if os.path.exists(os.path.join(root, "docs", "wiki", "Release.md")) else ""
 ids = re.findall(r"^- (REL-\d+): \*\*(Unreviewed|Reviewed[^*]*)\*\*", text, re.M)
 check("the Release page holds its live requirements (REL-3, REL-12, REL-13 after the consolidation), none missing", [i for i, _ in ids] == ["REL-3", "REL-12", "REL-13"], str(ids), "major")
@@ -332,10 +332,10 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
     for name in files:
         if name.endswith(".py"):
             size = len(open(os.path.join(dirpath, name), "rb").read().replace(b"\r\n", b"\n"))
-            cap = 19495 if name == "checkin.py" else 19000
+            cap = 19495 if name == "checkin.py" else 20480  # TD482: review/merge/release follow GRD-20 (warn over 19,000, fail over 20,480); checkin.py is a no-growth line, kept
             if size > cap and name in ("review.py", "merge.py", "release.py", "checkin.py"):
                 over.append("%s %d" % (name, size))
-check("review.py, merge.py and release.py stay under 19,000 bytes, and checkin.py at or under 19,495", not over, ", ".join(over), "major")
+check("review.py, merge.py and release.py are within GRD-20 (none over 20,480 bytes), and checkin.py at or under 19,495", not over, ", ".join(over), "major")
 added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
 check("no file is added to the shipped package", not added.strip(), added, "major")
 sys.exit(1 if fails else 0)

@@ -97,6 +97,7 @@ Each requirement and how it is delivered:
 ### Skill: workflow-monitoring
 - **Say:** "Run the operation session"
 - **Command:** `/workflow-monitoring operate`
+- **Restart-safe tick:** `mailbox.py install` writes the launch agent (every 300 s: the watcher jobs in `loop/watchers/`, then `checkin.py`; it starts no goal); `mailbox.py watch ID --pr N [--arm]` leaves a job the tick resumes once (`--arm` only from the operation session). It never loads the agent: the owner runs the `launchctl bootstrap` line it prints. `mailbox.py uninstall` removes the plist.
 
 ### Command: board.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/board.py repos list`, or `repos adopt [OWNER/NAME ...]`
@@ -132,4 +133,7 @@ Each requirement and how it is delivered:
 
 <!-- kept machine-email-phone@9a67a8ff -->
 
-<!-- kept health-principles@f4a65014 -->
+
+<!-- kept plan-red-team-core@6edef587 -->
+
+<!-- kept slot-hold-release@75f0feff -->

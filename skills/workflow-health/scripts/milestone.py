@@ -191,8 +191,7 @@ def cmd_move(args):
 
 
 # ---- the cost rule (was cost.py), imported by health.py and judge.py: a goal over its time or token budget warns, naming
-# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: goal lanes over goal_lane_minutes
-# and the newest full suite over SUITE_LIMIT. Local files only: no model, no network. workflow-regression/references/commands.md.
+# its slowest or costliest steps (run records + board_status log gaps); timing_rows is REG-7: the newest full suite over SUITE_LIMIT. Local files only: no model, no network. loop-files.md.
 RECENT = 10
 NAMED = 3
 
@@ -305,8 +304,7 @@ def limits(root):
     except (OSError, ValueError):
         cfg = {}
     cfg = cfg if isinstance(cfg, dict) else {}
-    num = lambda key, default: cfg[key] if isinstance(cfg.get(key), (int, float)) and cfg[key] > 0 else default  # noqa: E731
-    return num("goal_lane_minutes", 10), SUITE_LIMIT, cfg
+    return SUITE_LIMIT, cfg
 
 
 def common(root):
@@ -320,22 +318,6 @@ def read(path):
             return json.load(handle)
     except (OSError, ValueError):
         return {}
-
-
-def lane_rows(runs, lane_limit):
-    rows = []
-    for path in sorted(glob.glob(os.path.join(runs, "*-lane.last"))):
-        found = re.match(r"^(.+)\.([a-z]+)-lane\.last$", os.path.basename(path))
-        state, last = read(os.path.join(runs, found.group(1) + ".json")) if found else {}, read(path)
-        if not isinstance(state, dict) or not isinstance(last, dict) or state.get("status") in (None, "done", "failed", "retired", "stopped"):
-            continue  # a stray file, or no goal still being built
-        slug, name = found.groups()
-        took = re.search(r"^LANE \S+ (\S+) \S+ in (\d+)s", str(last.get("line", "")), re.M)
-        if took and took.group(1) != "FULL" and int(took.group(2)) > lane_limit * 60:
-            rows.append(timing_row("WARN", "goal-lane", "%s %s took %d min (limit %d, goal_lane_minutes)" % (
-                slug, name, int(took.group(2)) // 60, lane_limit), "narrow the rows (regression.py reads ROW) or raise "
-                "goal_lane_minutes"))
-    return rows
 
 
 def suite_rows(common_dir, suite_limit, cfg):
@@ -362,12 +344,51 @@ def suite_rows(common_dir, suite_limit, cfg):
     return [timing_row("PASS", "full-suite", "suite: " + text)]
 
 
+QUERY = ('query($o:String!,$r:String!){repository(owner:$o,name:$r){pullRequests(states:MERGED,last:20,orderBy:{field:UPDATED_AT,'
+         'direction:ASC}){nodes{number mergedAt commits(last:1){nodes{commit{statusCheckRollup{contexts(first:40){nodes{... on CheckRun{'
+         'completedAt} ... on StatusContext{createdAt}}}}}}} timelineItems(first:5,itemTypes:[ADDED_TO_MERGE_QUEUE_EVENT]){nodes{... on '
+         'AddedToMergeQueueEvent{createdAt}}}}}}}')
+
+
+QUEUE_FROM = "2026-11-20T20:00:00Z"  # waits of merges before this are shown, never failed: history is not a failure now
+
+
+def queue_rows(root, limit=120, since=QUEUE_FROM):
+    """Queue use of the last 20 merges: PRs per merge, and seconds a green PR waited before it entered the queue; over limit FAILs (merges since `since`)."""
+    origin = run(["git", "remote", "get-url", "origin"], root).stdout.strip()
+    if "github.com" not in origin:  # a repo not on GitHub (or with no origin) has no merge queue to read, so nothing is unread
+        return []
+    url = origin.replace(":", "/").removesuffix(".git").split("/")
+    got = run(["gh", "api", "graphql", "-F", "o=" + url[-2], "-F", "r=" + url[-1], "-f", "query=" + QUERY], root)
+    try:
+        nodes = json.loads(got.stdout)["data"]["repository"]["pullRequests"]["nodes"]
+    except (ValueError, KeyError, TypeError):
+        return [timing_row("UNREAD", "queue", "gh could not list the last merges")]
+    when = lambda s: datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").timestamp()
+    waits, groups, old = {}, {}, {}
+    for pr in nodes:
+        groups[pr["mergedAt"]] = groups.get(pr["mergedAt"], 0) + 1
+        ctx = ((pr["commits"]["nodes"] or [{}])[0].get("commit", {}).get("statusCheckRollup") or {}).get("contexts", {}).get("nodes", [])
+        done = [c.get("completedAt") or c.get("createdAt") for c in ctx if c]
+        done = [d for d in done if d and not d.startswith("0001")]
+        queued = [q["createdAt"] for q in pr["timelineItems"]["nodes"] if q]
+        if done and queued:
+            waits[pr["number"]] = when(queued[0]) - when(max(done))
+            old[pr["number"]] = pr["mergedAt"] < since
+    slow = sorted((w, n) for n, w in waits.items() if w > limit and not old[n])
+    state = "FAIL" if slow else "PASS"
+    return [timing_row(state, "queue", "last %d merges: %.1f PRs per merge, longest wait before the queue %ds%s" % (
+        len(nodes), len(nodes) / max(len(groups), 1), max(waits.values(), default=0), "; over %ds: %s" % (
+            limit, ", ".join("#%d (%ds)" % (n, w) for w, n in slow)) if slow else "; before %s only info" % since[:10] * any(old.values())),
+        "enqueue each PR the moment its checks pass on its head" if slow else "")]
+
+
 def timing_rows(root):
-    lane_limit, suite_limit, cfg = limits(root)
+    suite_limit, cfg = limits(root)
     found = common(root)
     if not found:
         return [timing_row("UNREAD", "timing", "not a git repo, so no lane or suite times")]
-    return lane_rows(os.path.join(found, "loop", "runs"), lane_limit) + suite_rows(found, suite_limit, cfg)
+    return suite_rows(found, suite_limit, cfg)
 
 
 def main():

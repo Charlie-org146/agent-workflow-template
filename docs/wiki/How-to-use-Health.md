@@ -91,7 +91,6 @@ Each requirement and how it is delivered:
 , from the no-token-would test: given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing.
 - HLT-7: Checks, check-ins and rounds answer fast. Its budget and its limits for a scheduled round:
   - A round finishes within 45 minutes (the 30-minute regression budget of Regression REG-7 plus 15 for health and the digest, health starting when regression has finished, not at a fixed offset), and each report shows the round's wall time and its pass and fail counts, plus its Actions minutes when it ran in GitHub Actions, so I can slow the schedule if it costs too much.
-- HLT-11: Health keeps the repo lean. Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. It warns on a script over 19,000 bytes and fails one at 20 KB. (no test yet)
 
 ### Skill: workflow-health
 - **Say:** "How healthy is this repo?"
@@ -137,4 +136,4 @@ The scheduled health routine's Runbook lives in the [Health](Health) page, where
 - PRD page: [Health](Health)
 - Backlog: [Backlog: Health](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept health-principles@3cb4b68e -->
+<!-- kept fast-3min@d4d7dad03 -->

@@ -287,9 +287,9 @@ def skill_lines(root):
 def requirements_per_page(root):
     try:
         with open(os.path.join(root, ".loop", "config.json")) as handle:
-            limit = int(json.load(handle).get("criteria_max", 6))
+            limit = int(json.load(handle).get("criteria_max", 10))
     except (OSError, ValueError, TypeError, AttributeError):
-        limit = 6
+        limit = 10
     return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (len(LINE.findall(text)), limit),
                 "merge requirements, or raise criteria_max", name)
             for name, text in pages(root).items() if len(LINE.findall(text)) > limit]
@@ -329,6 +329,7 @@ def idle_sessions(root):
 
 
 ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
+HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # the ETA ledger and the run records' wrong statements (HLT-4)
 
 
 def eta(root, name):
@@ -342,6 +343,9 @@ def eta(root, name):
         spec.loader.exec_module(module)
     finally:
         sys.path.pop(0)
+    if name in HONEST:
+        import file as filing
+        return filing.honesty(root, name, module)
     return [row(level, "hygiene", text.split()[0], name, text, "sessions.py owner-words with --ids full-auto-rule, or goal.py set with an owner record")
             for rule, level, text in module.eta_rows(root) + module.auto_rows(root) if rule == name]
 
@@ -351,7 +355,7 @@ GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permiss
              "idle-sessions": idle_sessions}
 
 
-GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA})
+GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA + HONEST})
 FUNCTIONS.update(GUARD_FUNCTIONS)
 
 

@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(sys.argv[0]))
 GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "GIT_TERMINAL_PROMPT": "0"}
@@ -316,6 +317,17 @@ def f_eta(rule):
     return fixture
 
 
+def f_honest(rule):
+    def fixture(root):
+        repo(root)
+        open_ = {"id": "goal:x:1", "layer": "goal", "key": "x", "who": "w", "said": 1, "basis": "b", "names": 1, "state": "open", "goals": []}
+        lines = {"eta-unmarked": [open_], "eta-missed": [dict(open_, state="missed", settled=time.time(), cause="no event by 00:00")],
+                 "eta-rate": [dict(open_, id="goal:x:%d" % i, state="missed", settled=i) for i in range(6)]}.get(rule, [])
+        write(root, ".git/loop/etas.jsonl", "".join(json.dumps(e) + "\n" for e in lines))
+        rule == "statement-wrong" and run_record(root, "x", {"status": "running", "wrong": [{"said": "done by 5", "why": "it was not"}]})
+    return fixture
+
+
 def f_auto(root):
     repo(root)
     write(root, ".git/loop/auto.log", "2026-11-17T00:00:00Z | x | AUTO | delete the cache? | yes | routine, recommended\n")
@@ -358,6 +370,7 @@ CONTROLS = {
 }
 CONTROLS.update({name: ("hygiene", name, f_eta(name)) for name in ("eta-missing", "eta-extended", "eta-overrun")})
 CONTROLS.update({name: ("hygiene", name, f_auto) for name in ("auto-safety", "auto-record")})
+CONTROLS.update({name: ("hygiene", name, f_honest(name)) for name in ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")})
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 for _m in ("defects", "rules"):
     try:

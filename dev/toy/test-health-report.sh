@@ -144,7 +144,8 @@ p=$(PATH="$d/badgh:$PATH" $health preview --group size 2>&1); prc=$?; f=$(PATH="
 grep -q "^REFUSED\[gh\]: can't list the issues (.*HTTP 502.*). Nothing was written." <<<"$p" && grep -q "^REFUSED\[gh\]: can't list the issues" <<<"$f" \
   && [ $prc = 2 ] && [ $frc = 2 ] && ! grep -qEv "^api repos/\{owner\}/\{repo\}/issues\?state=" "$d/badgh/calls" && ok "an unreadable issue list refuses, writes nothing" || bad "gh unreadable"
 [ "$(cd "$here/skills/workflow-health/scripts" && python3 -c "import file, health; print(file.tag_of(health.groups_of('cost')[0]))")" = health:performance ] && ok "the Cost group is tagged health:performance" || bad "performance tag"
-for f in health report file; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 19000 ] && ok "$f.py under the size warning" || bad "$f.py size"; done
+S="$here/skills/workflow-health/scripts"  # GRD-20 (TD482): over 19,000 warns, only over 20,480 fails; a 20,481-byte fixture fails, a 19,500-byte one only warns
+python3 "$here/dev/toy/size-check.py" --control "$S/health.py" "$S/report.py" "$S/file.py" >/dev/null && ok "health.py, report.py and file.py are within GRD-20" || bad "health scripts size"
 
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

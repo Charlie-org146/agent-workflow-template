@@ -6,6 +6,7 @@ board_status.py; it imports only graph.py and the standard library (`board_log.p
 """
 import argparse
 import datetime
+import hashlib
 import json
 import math
 import os
@@ -39,11 +40,49 @@ def read_json(path):
         return None
 
 
-def stamp(text):
+def red_dir(root):
+    return os.path.join(os.path.abspath(os.path.join(root, git("rev-parse", "--git-common-dir", cwd=root) or ".git")), "loop", "redteam")
+
+
+def plan_sha(root, slug):
     try:
-        return datetime.datetime.fromisoformat(str(text).split(" ", 1)[0].replace("Z", "+00:00"))
-    except ValueError:
+        return hashlib.sha1(open(os.path.join(root, ".loop", "goals", slug + ".plan.md"), "rb").read().replace(b"\r\n", b"\n")).hexdigest()
+    except OSError:
+        return ""
+
+
+def principles(root):
+    try:
+        text = open(os.path.join(root, "docs", "wiki", "Principles.md"), encoding="utf-8").read()
+    except OSError:
+        text = ""
+    return text, [int(n) for n in re.findall(r"^## (\d+)\. ", text, re.M)] or list(range(1, 9))
+
+
+UNREAD = {}  # a stamp stamp() could not read as an aware time -> why; named in the board's and the check-in's output
+
+
+def stamp(text):
+    """A recorded time (a log entry's first word, a report's at) as an aware UTC datetime, or None. A stamp with no time zone, or one
+    that does not parse, is never guessed: it is None and named in UNREAD, so every datetime the board subtracts is aware."""
+    raw = str(text or "").split(" ", 1)[0]
+    if not raw:
         return None
+    try:
+        found = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        UNREAD[raw] = "not a time"
+        return None
+    if found.tzinfo is None:
+        UNREAD[raw] = "no time zone"
+        return None
+    return found.astimezone(datetime.timezone.utc)
+
+
+def unread(limit=5):
+    """Lines naming the stamps stamp() would not read (see UNREAD): at most limit, then a count of the rest."""
+    rows = ["stamp not read (%s): %s" % (why, raw[:40]) for raw, why in sorted(UNREAD.items())]
+    return rows[:limit] + (["... and %d more stamps not read" % (len(rows) - limit)] if len(rows) > limit else [])
 
 
 

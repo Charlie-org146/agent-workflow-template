@@ -91,7 +91,7 @@ def pages(root):
 def defined(root):
     out = {}
     for name, text in pages(root).items():
-        # How-to items reference requirements; their canonical definitions live under Requirements.
+        # How-to items cite requirements, defined under Requirements.
         body = text.split("\n## Requirements\n", 1)[1].split("\n## ", 1)[0] if "\n## Requirements\n" in text else ""
         for key in LINE.findall(body):
             out.setdefault(key, []).append(name)
@@ -251,8 +251,8 @@ def gaps_files(root, cfg, g):
 def gaps_settings(root, cfg, g):
     st = mod("workflow-setup", "settings")
     known = {row[0] for row in st.keys(st.REPO)}
-    extra = sorted(set(cfg) - known - {"_help", "template_version", "checks"})
-    missing = sorted(known - set(cfg) - {"regression_runs"})
+    extra = sorted(set(cfg) - known - {"_help", "template_version", "checks", "goal_lane_minutes"})
+    missing = sorted(known - set(cfg) - {"regression_runs", "milestones_source"})
     if extra:
         g("MIG_SETTINGS", ", ".join(clean(k) for k in extra), "not in the settings table (unknown)", "remove the key from .loop/config.json")
     if missing:

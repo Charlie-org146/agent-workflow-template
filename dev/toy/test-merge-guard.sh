@@ -104,10 +104,51 @@ check "a red check no rule requires does not stop a GO whose required checks are
 rm -f "$FAKE_GH_DIR/protection.json"
 out=$(go "$ok1" "${head:0:9}")
 check "with every check green on the head, a GO that names it (even shortened) passes the gate" '! grep -q "CI_\|GO_HEAD" <<<"$out" && grep -q "BASE_MOVED" <<<"$out"'
+# --go-head discounts rows that are red on main (the known file, or FAIL in main's latest full run), so the gate stays on for every other row
+git worktree add -q "$d/mainwt" main; mkdir -p "$d/mainwt/.loop"; printf '# id\treason\nknown-row\tred on main\n' > "$d/mainwt/.loop/regression-known.tsv"
+printf '# id\tstatus\tdate\trun\tflaky\nmain-red-run\tFAIL\t2026-11-18\t\t\nfine-row\tPASS\t2026-11-18\t\t\n' > "$d/mainwt/.loop/regression-runs.tsv"
+(cd "$d/mainwt" && git add .loop && git commit -qm "main reds" && git push -q origin main); git worktree remove --force "$d/mainwt"; git fetch -q origin
+aff='[{"name":"affected","status":"COMPLETED","conclusion":"FAILURE","detailsUrl":"https://example.test/o/r/actions/runs/9/job/777"}]'
+log() { printf '%s\n' "$@" | sed 's/^/2026-11-19T01:02:03.4Z /' > "$d/job.log"; export FAKE_GH_JOBLOG="$d/job.log"; }
+log "FAIL known-row" "FAIL main-red-run" "PASS fine-row"; out=$(go "$aff")
+check "a red check whose only failing rows are known main reds passes the gate, naming the rows and the job log" '! grep -q "REFUSED (CI_\|GO_HEAD)" <<<"$out" && grep -q "^GO_HEAD ok: affected red only on known main reds (known-row, main-red-run); logs: https://example.test/o/r/actions/runs/9/job/777$" <<<"$out"'
+log "FAIL known-row" "FAIL brand-new-row"; out=$(go "$aff"); rc=$?
+check "negative control: one failing row that is not a main red refuses CI_RED (exit 5), nothing discounted" '[ $rc = 5 ] && grep -q "^REFUSED (CI_RED): affected on head" <<<"$out" && ! grep -q "GO_HEAD ok" <<<"$out"'
+log "FAIL known-row"; out=$(go "$aff" deadbeefdeadbeef); rc=$?
+check "negative control: a main-red-only run still refuses a GO for another head (GO_HEAD, exit 4)" '[ $rc = 4 ] && grep -q "^REFUSED (GO_HEAD)" <<<"$out"'
+out=$(go '[{"name":"affected","status":"COMPLETED","conclusion":"FAILURE","detailsUrl":"https://example.test/o/r/actions/runs/9/job/777"},{"name":"suite","status":"IN_PROGRESS","conclusion":""}]'); rc=$?
+check "negative control: a discounted red next to a check still running refuses CI_PENDING (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_PENDING): suite on head" <<<"$out"'
+printf '{"required_status_checks": {"checks": [{"context": "affected", "app_id": null}, {"context": "suite", "app_id": null}]}}\n' > "$FAKE_GH_DIR/protection.json"
+out=$(go "$aff"); rc=$?
+check "negative control: a discounted red with a required check never reported refuses CI_MISSING (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_MISSING): suite on head" <<<"$out"'
+rm -f "$FAKE_GH_DIR/protection.json"
+unset FAKE_GH_JOBLOG; out=$(go "$aff"); rc=$?
+check "negative control: a job log that cannot be read keeps CI_RED (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_RED): affected on head" <<<"$out"'
+log "no rows here"; out=$(go '[{"name":"lint","status":"COMPLETED","conclusion":"FAILURE","detailsUrl":"https://example.test/o/r/actions/runs/9/job/778"}]'); rc=$?
+check "negative control: a red check whose log names no failing regression row keeps CI_RED (exit 5)" '[ $rc = 5 ] && grep -q "^REFUSED (CI_RED): lint on head" <<<"$out"'
+unset FAKE_GH_JOBLOG
 printf '#!/bin/bash\n# reads: src/a.txt\ncd "$here" && cat src/a.txt\n' > dev/tc.sh  # lanes: no read (toy repo file)
 printf 'tc\tland\tbash dev/tc.sh\n' >> .loop/regression.tsv; touch VERSION; git add -A; git commit -qm "root runner"
 out=$(python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected VERSION; python3 -B "$here/skills/workflow-regression/scripts/lanes_cli.py" affected src/b.txt)
 check "a change only to NO_EFFECT files (a release's VERSION) reaches no root runner; a real change still does" 'grep -qx "AFFECTED 0 of 3 rows ()" <<<"$out" && grep -q "^AFFECTED 2 of 3 rows (tb, tc)" <<<"$out"'
 # merge batching (merge-queue C): its own toy, folded in here so it adds no regression row
 out=$(bash "$here/dev/toy/test-merge-batch.sh" 2>&1 | tail -4); check "merge.py --batch: off by default, one release per batch, a red, conflicting, safety, major or stale-GO case never merges (dev/toy/test-merge-batch.sh)" 'grep -qx "ALL PASS" <<<"$out"'
+# #5306: private.py finds lane with no PYTHONPATH, loaded by path as merge.py does, from a checkout and an installed skills copy
+cp -r "$here/skills" "$d/inst"
+lane_import() { (cd "$d" && env -u PYTHONPATH python3 -B -c 'import importlib.util as u,sys;s=u.spec_from_file_location("private",sys.argv[1]);m=u.module_from_spec(s);s.loader.exec_module(m);import importlib;importlib.import_module("lane");print("LANE OK")' "$1/workflow-delivery/scripts/private.py" 2>&1); }
+out=$(lane_import "$here/skills")$(lane_import "$d/inst")
+check "private.py pr_result imports lane without PYTHONPATH from a checkout and an installed skills folder (no ModuleNotFoundError)" '[ "$(grep -c "^LANE OK" <<<"$out")" = 2 ] && ! grep -q ModuleNotFoundError <<<"$out"'
+# REL-15: with merge_queue on, GitHub's queue checks a moved base, so merge.py skips BASE_MOVED and prints MERGED only once gh reports the pull request merged
+git push -q origin loop/g
+qgo() {  # QUEUE-SETTING [ENV=VALUE...]: merge.py on the goal whose base moved in a path its rows reach
+  printf '{"auto_merge": true, "base": "main", "merge_queue": %s}\n' "$1" > .loop/config.json; shift
+  echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"branch\": \"loop/g\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"
+  rm -f "$FAKE_GH_DIR/enqueued"; env LOOP_QUEUE_WAIT=10 FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$head FAKE_GH_ROLLUP="$ok1" "$@" python3 "$M/merge.py" g --go-head "$head" 2>&1; }
+out=$(qgo true FAKE_GH_QUEUE=1); rc=$?
+check "queue on: a base that moved in paths the goal reaches does not refuse BASE_MOVED, and MERGED prints once gh reports the pull request merged" '[ $rc = 0 ] && ! grep -q BASE_MOVED <<<"$out" && grep -q "^MERGED https://example.test/pull/1 into main" <<<"$out" && [ -e "$FAKE_GH_DIR/enqueued" ]'
+out=$(qgo true); rc=$?
+check "queue on, negative control: gh never reports the pull request merged, so no MERGED is printed and the goal is not marked merged" '[ $rc != 0 ] && ! grep -q "^MERGED" <<<"$out" && grep -q "the merge queue has not merged https://example.test/pull/1" <<<"$out" && ! grep -q BASE_MOVED <<<"$out"'
+out=$(qgo false FAKE_GH_QUEUE=1); rc=$?
+check "queue off: the same moved base still refuses BASE_MOVED (exit 2) and nothing is enqueued" '[ $rc = 2 ] && grep -q "^REFUSED (BASE_MOVED)" <<<"$out" && [ ! -e "$FAKE_GH_DIR/enqueued" ]'
+printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

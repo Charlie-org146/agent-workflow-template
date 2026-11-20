@@ -85,7 +85,6 @@ IMAGE = re.compile(r"!\[[^\]]*\]\(([^)\s]+)\)")
 
 
 def images(root, folder, pages):
-    """(page, path, here) for each relative image a wiki page embeds."""
     out = []
     for page in pages:
         full = os.path.join(root, folder, page + ".md")
@@ -256,7 +255,6 @@ def cadence(cron):
 
 
 def config_of(root):
-    """.loop/config.json as a dict."""
     try:
         kept = git(root, "ls-files", "-v", "--", ".loop/config.json").stdout.startswith("S")
         with open(os.path.join(root, ".loop", "config.json")) as fh:
@@ -309,10 +307,14 @@ def runbook_link(root, entry, wiki):
     return ""
 
 
+def repo_slug(root):  # template_repo here, else the origin
+    named = config_of(root).get("template_repo") if os.path.realpath(__file__).startswith(os.path.realpath(root) + os.sep) else ""
+    return pf.owner_repo("https://github.com/" + named if named else git(root, "remote", "get-url", "origin").stdout)
+
+
 def automation_block(root):
     rows = []
-    origin = git(root, "remote", "get-url", "origin")
-    slug = pf.owner_repo(origin.stdout) if origin.returncode == 0 else ""
+    slug = repo_slug(root)
     wiki = "https://github.com/%s/wiki" % slug if slug else ""
     for e in entries(root):
         kind, _, target = str(e.get("runs", "")).partition(":")
@@ -356,7 +358,6 @@ def perm_rows(path):
 
 
 def perm_declared(root):
-    """{routine: [(kind, rule, why)]} and the file's problems."""
     out, bad = {}, []
     for number, row in perm_rows(os.path.join(root, ".loop", "permissions.tsv")):
         routine, kind, rule = (row + ["", "", ""])[:3]

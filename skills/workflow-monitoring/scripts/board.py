@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+from board_log import stamp, unread  # noqa: E402,F401  (aware UTC or None; a zone-less stamp is named, not guessed)
 try:  # without board_status.py there is no estimate
     import board_status  # noqa: E402
 except ImportError:
@@ -61,13 +62,6 @@ def pr_state(url, cwd):
 
 def clean(value, size=300):
     return " ".join(str(value or "").split())[:size]
-
-
-def stamp(text):
-    try:
-        return datetime.datetime.fromisoformat(str(text).replace("Z", "+00:00")).astimezone(datetime.timezone.utc)
-    except ValueError:
-        return None
 
 
 def iso(at):
@@ -318,6 +312,8 @@ def cmd_board(args):
     print("CHANGED " + ("yes" if lines else "no"))
     for line in lines:
         print(line)
+    for line in unread():
+        print("UNREAD " + line)
     print("NEXT_DELAY " + doc["next_delay"])
     print("JSON", path)
     return 0

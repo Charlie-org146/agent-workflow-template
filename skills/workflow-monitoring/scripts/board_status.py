@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The run facts the live board is built from, plus every name of board_log.py (log facts) and board_model.py (the estimate
-model the backtest picks, the accuracy line, the stall floor), re-exported so readers keep using board_status; running it
-prints the live board (see live_board.py). `board_log.py report` says why the board uses its model.
+model, the accuracy line, the stall floor), re-exported so readers keep using board_status; running it prints the live board
+(see live_board.py), and `board_log.py report` says why it uses its model. It also holds the ETA ledger (etas.jsonl).
 
 usage: board_status.py [--html]
 
@@ -14,6 +14,7 @@ import re
 import statistics
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
@@ -37,8 +38,8 @@ def timed(text, what="%r"):
 
 
 def seconds_by_step(run, at):
-    """Time each step took, by the board's held-time rule (board_log.flow_seconds): time held in the pr queue, on a hold, on
-    an owner answer or after a stop counts nothing, so a budget counts only active step time (#3878)."""
+    """Time each step took, by the board's held-time rule (board_log.flow_seconds): held, owner-answer and stopped time
+    counts nothing, so a budget counts only active step time (#3878)."""
     return flow_seconds(run, at)
 
 
@@ -98,8 +99,8 @@ def pr_states(runs, root):
 
 
 def error_open(run, gone, marker):
-    """An error stays under Issues unless its goal merged. A record-merged goal's error stays when it was logged after the merge
-    (the wiki publishes after it); one merged only on GitHub never merged through here, so what it logged came before."""
+    """An error stays under Issues unless its goal merged; a record-merged goal's error stays when logged after the merge
+    (the wiki publishes after it); one merged only on GitHub logged its errors before."""
     log = [str(entry).split(" ", 2)[1:] or [""] for entry in run.get("log") or []]
     last = lambda test: max([n for n, parts in enumerate(log) if test(parts)] + [-1])
     if marker == "wiki not published" and last(lambda parts: " ".join(parts).startswith(("wiki published", "wiki unchanged"))) > last(lambda parts: " ".join(parts).startswith(marker)):
@@ -154,11 +155,11 @@ def memory():
 
 
 def allowed(cfg=None):
-    """Goals memory lets start now: None when it can't be read or the floor is 0, 0 under min_free_memory_gb of free commit
-    (default 3.5), else one plus one per 1.5 GB above the floor."""
+    """Goals memory lets start now: None when unreadable or the floor is 0, 0 under min_free_memory_gb of free commit (default 3),
+    else one plus one per 1.5 GB above the floor."""
     cfg = cfg if cfg is not None else read_json(os.path.join(git("rev-parse", "--show-toplevel") or ".", ".loop", "config.json")) or {}
     try:
-        floor, each = float(cfg.get("min_free_memory_gb", 3.5)), 1.5  # a goal's worker needs about 1.5 GB
+        floor, each = float(cfg.get("min_free_memory_gb", 3)), 1.5  # a goal's worker needs about 1.5 GB
     except (TypeError, ValueError):
         return None
     commit = memory()[1]
@@ -166,14 +167,14 @@ def allowed(cfg=None):
 
 
 def _run_text(argv, timeout=30):
-    """A command's stdout as text. It is read as bytes and decoded with errors='replace': PowerShell and tasklist write the console
+    """A command's stdout as text, read as bytes and decoded with errors='replace': PowerShell and tasklist write the console
     code page (GBK on a zh-CN PC), which text=True would decode as UTF-8 and raise on (#4810)."""
     return (subprocess.run(argv, capture_output=True, timeout=timeout).stdout or b"").decode("utf-8", errors="replace")
 
 
 def slug_busy(slug):
-    """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read. LOOP_PROCS (one
-    command line per line) stands in for the list in tests."""
+    """True when a goal.py, flow.py, role.py or lane process for slug runs, or the process list can't be read (LOOP_PROCS stands in
+    for it in tests)."""
     try:
         if os.environ.get("LOOP_PROCS") is not None:
             text = os.environ["LOOP_PROCS"]
@@ -227,7 +228,7 @@ def machine_line(cfg):
     return "Machine: RAM %s, commit %s free, CPU %s, %s claude, %s node; memory allows %s" % (
         show(ram, " GB"), show(commit, " GB"), "unreadable" if cpu is None else "%d%%" % cpu,
         "?" if count["claude"] is None else int(count["claude"]), "?" if count["node"] is None else int(count["node"]),
-        "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3.5) if room == 0
+        "any number of goals" if room is None else "no new goal (under the %s GB floor)" % cfg.get("min_free_memory_gb", 3) if room == 0
         else "%d goal start%s" % (room, "" if room == 1 else "s"))
 
 
@@ -246,7 +247,7 @@ def release_of(root, slug):
 
 
 def feature_of(root, text, item=None):
-    """The feature page a goal is for (mend.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths, else 'no feature'."""
+    """The feature page a goal is for (mend.feature_of): its requirement ID, stored feature, issue label or docs.tsv paths."""
     import mend
     return mend.feature_of(root, text, item)
 
@@ -266,9 +267,43 @@ def intro(goal, slug):
     return "%s (%s)" % (" ".join(first.split()[:12])[:56].rstrip() or slug, ", ".join([slug] + issue))
 
 
-def release_header(release, items, at):
-    """The release milestone's header (MON-14): its release ETA, the latest expected finish among its goals, and counts. A started goal's
-    hard ETA (GRD-14) counts in place of its estimate; the header says how many goals each way, and nothing when none has a hard ETA."""
+ETAS, GRACE = "etas.jsonl", 900  # the ETA ledger (loop dir); an ETA moving less than GRACE seconds is the same one
+
+
+def hhmm(epoch):
+    return time.strftime("%H:%M", time.localtime(epoch))
+
+
+def eta_fold(loop):
+    """{id: entry}: layer (goal|board|status), key, who, said, basis, names (its time), state open|met|missed, cause."""
+    path, out = os.path.join(loop, ETAS), {}
+    for line in open(path, encoding="utf-8").read().splitlines() if os.path.exists(path) else []:
+        try:
+            entry = json.loads(line)
+            out[entry["id"]] = entry
+        except (ValueError, KeyError, TypeError):
+            pass
+    return out
+
+
+def eta_put(loop, *entries):
+    os.makedirs(loop, exist_ok=True)
+    with open(os.path.join(loop, ETAS), "a", encoding="utf-8") as handle:
+        handle.write("".join(json.dumps(e, sort_keys=True) + "\n" for e in entries))
+
+
+def eta_say(loop, layer, key, who, basis, names, now, goals=()):
+    """Record a stated ETA; a new time marks the open one missed."""
+    old = [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == (layer, key, "open")]
+    if not any(abs(e["names"] - names) <= GRACE for e in old):
+        eta_put(loop, *[dict(e, state="missed", settled=now, cause="restated to %s before it was met" % hhmm(names)) for e in old],
+                {"id": "%s:%s:%d" % (layer, key, names), "layer": layer, "key": key, "who": who, "said": now, "basis": basis,
+                 "names": names, "state": "open", "goals": list(goals)})
+
+
+def release_header(release, items, at, loop=None):
+    """The release milestone's header (MON-14): its release ETA (the latest finish among its goals; a started goal's hard ETA counts
+    in place of its estimate), counts, and an earlier missed ETA. The ETA goes in the ETA ledger."""
     import datetime
     hard = [i["hard"] for i in items if i.get("hard") is not None and i.get("mark") not in ("merged", "awaiting merge")]
     left = hard + [i["left"] for i in items if i.get("left") and (i.get("hard") is None or i.get("mark") in ("merged", "awaiting merge"))]
@@ -279,6 +314,12 @@ def release_header(release, items, at):
     days = (end.date() - at.astimezone().date()).days
     day = "today" if days <= 0 else "tomorrow" if days == 1 else end.strftime("%a %d %b")
     how = "; hard ETA for %d, estimate for %d" % (len(hard), len(left) - len(hard)) if hard else ""
+    try:
+        loop and eta_say(loop, "board", release, "check-in", "latest finish among %d goals" % len(items), end.timestamp(), at.timestamp(), [i["slug"] for i in items if i.get("slug")])
+        gone = loop and [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == ("board", release, "missed") and "restated" not in e["cause"]]
+        how += "; earlier ETA %s MISSED" % hhmm(max(gone, key=lambda e: e["settled"])["names"]) if gone else ""
+    except Exception:
+        pass
     return "%s release ETA %s ~%s (%d goals, %d not started%s)" % (release, day, end.strftime("%H:%M"), len(items), new, how)
 
 

@@ -1,7 +1,7 @@
 <!-- workflow-docs -->
 # Release
 
-Review: **Unreviewed** <!-- kept health-principles@4d09e1cc -->
+Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 
 How to use: [How-to-use-Release](How-to-use-Release)
 
@@ -15,26 +15,7 @@ How to use: [How-to-use-Release](How-to-use-Release)
 
 ### Functional
 
-- REL-3: **Reviewed 2026-11-19** A major ships only through the gate <!-- reviewed fd47b15f -->
-  - A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1]
-  - Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2]
-  - The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3]
-  - The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3]
-  - The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4]
-  - From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5]
-  - Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6]
-  - Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8]
-  - revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7]
-  - (v2.0 planned) release-readiness: a release-readiness check runs before the gate (named only).
-- REL-12: **Reviewed 2026-11-19** Merges wait only on gates I set <!-- reviewed 73d3745e -->
-  - Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12]
-  - No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10]
-- REL-13: **Reviewed 2026-11-19** Fast merge queue <!-- reviewed c78fb36c -->
-  - Pull requests merge one at a time per repo, across machines. [REL-13]
-  - A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13]
-  - When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13]
-  - (v2.0 planned) merge-queue: a merge queue (named only).
-  - (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13]
+None
 
 ### Non-functional
 
@@ -54,16 +35,20 @@ None
 
 ### Retired
 
-- REL-1: moved to REL-3
+- REL-1: moved to DEL-1
 - REL-10: moved to DEL-1
 - REL-11: moved to DEL-1
+- REL-12: moved to DEL-3
+- REL-13: moved to DEL-17
 - REL-14: moved to DEL-1
-- REL-2: moved to REL-3
-- REL-4: moved to REL-3
-- REL-5: moved to REL-3
-- REL-6: moved to REL-3
-- REL-7: moved to REL-3
-- REL-8: moved to REL-3
+- REL-15: moved to DEL-17
+- REL-2: moved to DEL-1
+- REL-3: moved to DEL-1
+- REL-4: moved to DEL-1
+- REL-5: moved to DEL-1
+- REL-6: moved to DEL-1
+- REL-7: moved to DEL-1
+- REL-8: moved to DEL-1
 - REL-9: moved to DEL-1
 
 ### REL-1
@@ -86,6 +71,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r6 | 2026-11-20 | A major ships only through the gate <br> A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1] <br> Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2] <br> The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3] <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3] <br> The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4] <br> From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5] <br> Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6] <br> Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8] <br> revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7] <br> (v2.0 planned) release-readiness: a release-readiness check runs before the gate (named only). | readme-six: absorbed into DEL-1 (o514) | o600: "yes build it" |
 | r5 | 2026-11-19 | A major ships only through the gate <br> A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1] <br> Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2] <br> The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3] <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3] <br> The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4] <br> From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5] <br> Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6] <br> Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8] <br> revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7] <br> (v2.0 planned) release-readiness: a release-readiness check runs before the gate (named only). | consolidation (TOP-DECISION 89): second revision (TOP-DECISIONs 91, 94, 95) | o361: "I want to merge the 2.1 into 2.0 ... (owner ~01:35, o355)" |
 | r4 | 2026-11-19 | A major ships only through the gate <br> A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1] <br> Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2] <br> The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3] <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3] <br> The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4] <br> From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5] <br> Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6] <br> Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8] <br> revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7] <br> (v2.1 planned) release-readiness: a release-readiness check runs before the gate (named only). | consolidation (TOP-DECISION 89) | o228: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r3 | 2026-11-19 | The full suite passes on the candidate <br> The gate runs the whole nightly suite on the release candidate. <br> Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. <br> The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. | a CI run of the regression workflow is an accepted suite source for the gate (TOP-DECISION 36) | o191: "TOP-DECISION 36 under the owner's delegation (o168), ~18:12: freeze gate-ci-suite on a" |
@@ -158,6 +144,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r3 | 2026-11-20 | Merges wait only on gates I set <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12] <br> No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10] | readme-six: absorbed into DEL-3 (o514) | o611: "yes build it" |
 | r2 | 2026-11-19 | Merges wait only on gates I set <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12] <br> No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10] | consolidation (TOP-DECISION 89) | o344: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | A review hold before auto merge <br> Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. | migration r1; date from the run day | o47: "Yes, start it end." |
 
@@ -165,6 +152,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-20 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.0 planned) merge-queue: a merge queue (named only). <br> (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13] | readme-six: absorbed into DEL-17 (o514) | o604: "yes build it" |
 | r4 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.0 planned) merge-queue: a merge queue (named only). <br> (v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13] | merge-queue-b stamp bullet (TOP-DECISION 113) | o419: "approved by operation-top under owner delegation (DOC-2, o371); TOP-DECISION 113: add the" |
 | r3 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.0 planned) merge-queue: a merge queue (named only). | consolidation (TOP-DECISION 89): second revision (TOP-DECISIONs 91, 94, 95) | o360: "I want to merge the 2.1 into 2.0 ... (owner ~01:35, o355)" |
 | r2 | 2026-11-19 | Fast merge queue <br> Pull requests merge one at a time per repo, across machines. [REL-13] <br> A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13] <br> When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13] <br> (v2.1 planned) merge-queue: a merge queue (named only). | consolidation (TOP-DECISION 89) | o289: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
@@ -177,24 +165,13 @@ None
 | r2 | 2026-11-19 | Every release is noted <br> Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). | consolidation (TOP-DECISION 89): absorbed into DEL-1 | o226: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every release is noted <br> Every release has a release note that says what changed and lists the issues it fixed; the test that proves each fix is Regression's (REG-6). | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### REL-15
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r2 | 2026-11-20 | A ready pull request is on main within 5 minutes <br> From the moment a pull request is ready (reviewed, its own checks green on its head) to its commit on main takes 5 minutes or less, and a merge of one pull request never makes another ready one re-run its lane or CI. [REL-15] <br> The affected run on the pull request's head counts for the rest of the checks: the merge_group run is a fixed small tier that finishes within 5 minutes, and a pushed pull-request branch starts one CI run, not two. The wiki publish after the merge is outside the 5 minutes. [REL-15] <br> With the merge_queue setting on, merge.py leaves a moved base to GitHub's merge queue, and prints MERGED only after gh reports the pull request merged; with it off the moved-base refusal is unchanged. [REL-15] <br> (v2.0 planned) Health prints the median and slowest of the last 20 merges and fails one over 5 minutes. [REL-15] | readme-six: absorbed into DEL-17 (o514) | o641: "yes build it" |
+| r1 | 2026-11-20 | A ready pull request is on main within 5 minutes <br> From the moment a pull request is ready (reviewed, its own checks green on its head) to its commit on main takes 5 minutes or less, and a merge of one pull request never makes another ready one re-run its lane or CI. [REL-15] <br> The affected run on the pull request's head counts for the rest of the checks: the merge_group run is a fixed small tier that finishes within 5 minutes, and a pushed pull-request branch starts one CI run, not two. The wiki publish after the merge is outside the 5 minutes. [REL-15] <br> With the merge_queue setting on, merge.py leaves a moved base to GitHub's merge queue, and prints MERGED only after gh reports the pull request merged; with it off the moved-base refusal is unchanged. [REL-15] <br> (v2.0 planned) Health prints the median and slowest of the last 20 merges and fails one over 5 minutes. [REL-15] | merging must not take 45 minutes; the target is under 5 | o486: "approved by operation-top under owner delegation (DOC-2, o486), goal rel-15-queue" |
+
 ## Tests
 
-| Test | Kind | Guards | Checks | Last result |
-|---|---|---|---|---|
-| [rel-major-refused](Tests#t-rel-major-refused) | requirement | REL-3 | Given a goal whose release would bump a major, when release.py bumps the version, then it refuses naming review.py promote; a minor and a patch still bump. | not run |
-| [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | REL-3 | Given a milestone with an open issue the owner has not moved by name, when review.py gate runs, then it refuses naming the issue; an issue with a waiver whose owner record names it does not refuse. | not run |
-| [rel-red-row-refused](Tests#t-rel-red-row-refused) | requirement | REL-3 | Given a known-red or failing full-suite row with no waiver naming an issue and an owner record, or a suite that did not run, when the gate runs, then it refuses naming the row. Also, given a CI run that is for another commit, unfinished, cut by budget or missing rows, when the gate takes it with --suite-from, then it refuses as not covering the candidate. | not run |
-| [rel-checks-refused](Tests#t-rel-checks-refused) | requirement | REL-3 | Given a failing health check, a requirement that is not Reviewed or a stale wiki page, when the gate runs, then it refuses naming the check, the requirement or the page. | not run |
-| [rel-freeze-refuses](Tests#t-rel-freeze-refuses) | requirement | REL-3 | Given a cut release candidate for a major, when a goal that names no recorded gate failure merges, then merge.py refuses with frozen for vX.0.0 and merges nothing; a goal naming one, or a release already tagged, goes on. | not run |
-| [rel-promote-snapshot](Tests#t-rel-promote-snapshot) | requirement | REL-3 | Given a release candidate with every gate check green and an owner record naming the version, when promote runs, then it tags vX.0.0, keeps release/vX, moves main, publishes the state report and mails it; a refused gate makes no tag, branch or release. | not run |
-| [rel-revert-pr](Tests#t-rel-revert-pr) | requirement | REL-3 | Given release/vX, when revert vX runs, then a branch with the snapshot's tree on top of main is pushed and a pull request to main is opened, and main itself is never pushed. | not run |
-| [rel-owner-only](Tests#t-rel-owner-only) | requirement | REL-3 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
-| - | requirement | REL-3 | no passing test | not enforced |
-| [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | REL-12 | Given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review. | not run |
-| [review-recorded-merges](Tests#t-review-recorded-merges) | requirement | REL-12 | Given review_hold is on, when the operation session records a review of the head, then merge.py merges, and with the setting off merging is unchanged. | not run |
-| [review-worker-refused](Tests#t-review-worker-refused) | requirement | REL-12 | Given review_hold is on, when a worker tries to record a review, then it is refused and nothing is recorded. | not run |
-| [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | REL-12 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
-| - | requirement | REL-12 | no passing test | not enforced |
-| [merge-batch-split](Tests#t-merge-batch-split) | requirement | REL-13 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit. | not run |
-| [pr-joins-queue](Tests#t-pr-joins-queue) | requirement | REL-13 | Given a goal at pr, when goal.py pr joins the pr queue, then it calls pool.pr_join with the goal and its state, with no runs folder, so the queue accepts it instead of crashing. | not run |
-| - | requirement | REL-13 | no passing test | not enforced |
+

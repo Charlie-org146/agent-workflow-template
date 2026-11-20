@@ -8,7 +8,7 @@ usage: goal.py <command> <slug> [options]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
   pr SLUG
-step, record and pr refuse outside a worker.
+step, record and pr: workers only.
   wait SLUG --ask TEXT --words W [--words W]
   answer SLUG
   finding SLUG TEXT [--requirement ID]
@@ -33,7 +33,7 @@ fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
 
-ME = sys.modules[__name__]
+ME = sys.modules.setdefault("goal", sys.modules[__name__])
 SKILLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 try:
     _spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(SKILLS, "workflow-monitoring", "scripts", "graph.py"))
@@ -116,7 +116,7 @@ def save(state, note=None):
         have = disk.get("log") or []
         merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
         role.report(disk, merged, state["updated"])
-        temp = path + ".%d.tmp" % os.getpid()
+        temp = path + ".tmp"
         write(temp, json.dumps(merged, indent=2))
         os.replace(temp, path)
     state.clear()
@@ -174,7 +174,7 @@ def fail_stop(state, text):
 
 
 def failed_try(state, why, step="build", fix="fix it, then run the step again"):
-    queue("free", state["slug"])  # a failed try gives the merge slot back
+    queue("free", state["slug"])
     guards.failed_try(ME, state, why, step, fix)
 
 
@@ -232,6 +232,7 @@ def cmd_new(args):
 
 def cmd_step(args):
     state = load(args.slug)
+    args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
     if args.tokens:
@@ -338,7 +339,7 @@ def cmd_pr(args):
     left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
-    waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+    waited = "waiting: pr queue" in (state.get("log") or [""])[-1]
     queue("preflight", ME, state)
     pods and pods.pr_queue("join", ME, state)
     if ahead := queue("turn", slug):
@@ -369,6 +370,7 @@ def cmd_pr(args):
     if git("status", "--porcelain", "--", "."):
         print("NOTE: uncommitted files stay out of the PR")
     head = role.bump_version(ME, state, head)
+    head = fit.regen(ME, slug)
     gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
     print(line)
     if gate == "running":
@@ -402,8 +404,6 @@ cmd_show = lambda args: fit.cmd_show(ME, args)
 def cmd_resume(args):
     pods and pods.refuse(load(args.slug) or {})
     return guards.cmd_resume(ME, args)
-
-    return 0
 
 
 def main():
