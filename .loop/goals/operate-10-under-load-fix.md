@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-operate-load.sh`.
+   Expect: `operate-all under load (N busy loops): 10 of 10 passed`, then the negative control line (an agent slower than the patience fails the polling sections), then ALL PASS, in about a minute and a half.
+2. Run `bash dev/toy/test-operate.sh | tail -3`.
+   Expect: ALL PASS, including `OPS-1 is the approved rewrite on the Operation page, with its revision`.
