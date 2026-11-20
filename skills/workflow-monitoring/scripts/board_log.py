@@ -6,6 +6,7 @@ board_status.py; it imports only graph.py and the standard library (`board_log.p
 """
 import argparse
 import datetime
+import glob
 import hashlib
 import json
 import math
@@ -25,6 +26,16 @@ COMMON = {}
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
+
+def restart_lines(loop, cwd=None):
+    """The restart checks: untrusted worktrees, worktree entries whose folder is gone."""
+    import operate
+    runs = (read_json(path) or {} for path in glob.glob(os.path.join(loop, "runs", "*.json")))
+    bad = [r["slug"] for r in runs if r.get("status") in ("running", "waiting") and r.get("session") and r.get("worktree") and operate.untrusted(r["worktree"])]
+    gone = sum(line.startswith("prunable") for line in git("worktree", "list", "--porcelain", cwd=cwd).splitlines())
+    return (["MISSING folder trust: %s. Fix: ask the owner to trust each worktree folder (FOLDER_TRUST)" % ", ".join(bad)] if bad else []) + (
+        ["MISSING worktrees: %d entries whose folder is gone. Fix: git worktree prune" % gone] if gone else [])
 
 
 def git(*args, cwd=None):

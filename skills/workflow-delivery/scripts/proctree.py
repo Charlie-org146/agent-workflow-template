@@ -7,17 +7,18 @@ start time (a reused pid reads differently), and proctree.alive(pid) on Windows.
 POSIX: kill is os.killpg, so the child's whole session goes; pstart is ps. Windows has no process group a signal
 reaches (and os.kill(pid, 0) there sends Ctrl+C, os.getuid and ps do not exist), so kill runs taskkill /T /F, which stops
 the child and every process it started, and alive and pstart ask the process itself. Either kill is quiet when gone.
-Also here, so each skill holds one identical copy: alive_since, tmp_for and rm_tmp (lane.py), FLOW, TEMPLATE and flow_set (goal.py),
+Also here (one identical copy per skill): alive_since, tmp_for and rm_tmp (lane.py), FLOW, TEMPLATE and flow_set (goal.py),
 and outcap, outcap_free and Capped (the 2,000-character output cap goal.py, flow.py and sessions.py install, GRD-15).
 Tokens measured from a session's own transcript (DEL-16): transcript, calls, measure, add (a step's tokens into a run record), live,
 fresh (input + cache writes + output, the budget's unit) and total (adds cache reads). A transcript is <projects>/<folder>/<session id>.jsonl
-(the id is CLAUDE_CODE_SESSION_ID; LOOP_TRANSCRIPT_DIR replaces ~/.claude/projects); a call spanning several lines counts once by message.id,
+(the id is CLAUDE_CODE_SESSION_ID; LOOP_TRANSCRIPT_DIR replaces ~/.claude/projects); a call spanning lines counts once by message.id,
 subagents are left out, and nothing raises: an unreadable transcript measures nothing. tokens[step] is a measure {input, cache_read, cache_write,
 output, calls, model, peak} or an int an older step reported. And the operation session's own turns (MON-5): classify, asked, needs_layout and
 op_append, which adds a row to <git common dir>/loop/op-tokens.tsv, the tokens since the last row by trigger (scheduled, peer, human, hook-retry).
 """
 import atexit
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -366,6 +367,16 @@ def needs_layout(entries):
 def common(root):
     done = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True, timeout=10)
     return os.path.realpath(os.path.join(root, done.stdout.strip())) if done.returncode == 0 and done.stdout.strip() else ""
+
+
+def require_operation(root, what):
+    """Exit unless the caller is an operation session (CLAUDE_SESSION_ID or LOOP_POD_ID in <common>/loop/operation.id), not a worker."""
+    base, ids = common(root), {os.environ.get("CLAUDE_SESSION_ID"), os.environ.get("LOOP_POD_ID")} - {None, ""}
+    gov = importlib.util.spec_from_file_location("govern_hook", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "govern_hook.py"))
+    hook = importlib.util.module_from_spec(gov)  # by path: only monitoring ships govern_hook.py
+    gov.loader.exec_module(hook)
+    if not base or os.environ.get("LOOP_ROLE") == "worker" or os.path.realpath(os.getcwd()).startswith(os.path.join(base, "loop", "worktrees") + os.sep) or not ids & hook.operation_ids(base):
+        sys.exit("REFUSED: only an operation session records %s (its id in operation.id, outside a worker worktree). Nothing was written." % what)
 
 
 def turn_label(entry):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. usage: checkin.py [--since ISO]
-Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies (per repo: Building now, Queue with ETAs, goals by release and
-feature), Needs you (numbered, MON-19), Coming up. --since defaults to the last check-in (<git common dir>/loop/checkin.json).
+Sections: Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies, Needs you (numbered, MON-19), Coming up. --since
+defaults to the last check-in (<git common dir>/loop/checkin.json).
 """
 import argparse
 import datetime
@@ -112,12 +112,13 @@ def render(root=None, at=None, stamp=None):
     broken = []
     pod = [mine] + others(bd.followed(), root, at, stamp, broken)
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
-    counts = lambda *names, live=None: sum(g["states"][r["slug"]] in names and live in (None, machines.live(r, g["taken"], at, g["cfg"])) for g in pod for r in g["live"] if not graph.foreign(r))
-    parked = counts("running", "held", "silent", "waiting", live=False)  # TD481
+    rows = lb.tally(pod, at)
+    counts = lambda *names, live=None: sum(s in names and live in (None, v) for _, s, v in rows)
+    parked, old = counts("running", "held", "silent", "waiting", live=False), [k for k, s, v in rows if s in ("failed", "stopped") and not v]  # TD481, TD502
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
     out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True),
-                                                              sum(len(g["queue"]) for g in pod), ", %d parked" % parked if parked else "", pool_line),
-           *machines.lines(root, cfg, bs.machine_line(cfg))]
+                                                              sum(len(g["queue"]) for g in pod), ", %d parked" % parked * bool(parked) + ", %d old" % len(old) * bool(old), pool_line),
+           *machines.lines(root, cfg, bs.machine_line(cfg)), *["Old: " + ", ".join(old)] * bool(old)]
     for g in pod:
         out += ["%s%s: %d goal%s, last activity %s" % (name, " (%s)" % machine if machine else "", n, "" if n == 1 else "s",
                                                       last.astimezone().strftime("%H:%M") if last else "unknown")

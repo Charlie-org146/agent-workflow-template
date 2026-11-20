@@ -367,13 +367,15 @@ def load(path):
 
 
 def principles(rows):
-    """HLT-2: one PRINCIPLE line per principle in commands.md, red on any FAIL in its groups; UNREAD is never green."""
+    """HLT-2: one PRINCIPLE line per principle in commands.md; RED on a failing group, no Reviewed requirement, or no rule that can fail."""
     try:
         text = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")).read().partition("## The principles")[2]
     except OSError:
         return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
-    out = []
+    out, fired = [], {r.get("subject") for r in rows if r["family"] == "controls" and r["state"] == "PASS"}
     for n, name, groups in re.findall(r"^\| (\d) \| ([^|]+) \| [^|]+ \| ([a-z,]+) \|$", text, re.M):
-        mine = [r["state"] for r in rows if r["family"] in groups.split(",")]
-        out.append("PRINCIPLE %s %s: %s (%s)" % (n, name.strip(), "RED" if "FAIL" in mine else "UNREAD" if not mine or "UNREAD" in mine else "green", groups.replace(",", ", ")))
+        mine = [r for r in rows if r["family"] in groups.split(",")]
+        states = [r["state"] for r in mine] + [r["state"] for r in rows if r.get("rule") == "principle-map" and r.get("subject") == "principle " + n]
+        dead = bool(mine and fired) and not any(r.get("rule") in fired for r in mine)
+        out.append("PRINCIPLE %s %s: %s (%s)" % (n, name.strip(), "RED" if "FAIL" in states or dead else "UNREAD" if not mine or "UNREAD" in states else "green", groups.replace(",", ", ")))
     return out
