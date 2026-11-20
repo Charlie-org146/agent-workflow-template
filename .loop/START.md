@@ -60,11 +60,11 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 
 | Setting | Value | What it does |
 |---|---|---|
-| `agent_command` | ["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"] | The command that runs a goal in the background; the prompt is its last argument. |
-| `agent_files` | ["CLAUDE.md", "AGENTS.md"] | Agent entry files setup wires the loop block into; [] turns wiring off. |
+| `agent_command` | 4 entries in config.json | The command that runs a goal in the background; the prompt is its last argument. |
+| `agent_files` | 2 entries in config.json | Agent entry files setup wires the loop block into; [] turns wiring off. |
 | `auto_approve` | true | true approves what a flow step leaves for the owner, logged auto-approved. |
 | `auto_merge` | true | true lets the release step merge a goal's PR and publish. |
-| `automation` | [{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}] | Routines the Automation table lists: {name, does, cadence, runs}. |
+| `automation` | 3 entries in config.json | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `base` | main | The branch goals start from and pull requests target. |
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
@@ -101,14 +101,14 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |
 | `prep_budget_minutes` | 25 | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
-| `public_origins` | ["https://12factor.net", "https://adr.github.io", "https://agentskills.io", "https://cli.github.com", "https://cncf.io", "https://containers.dev", "https://copier.readthedocs.io", "https://csrc.nist.gov", "https://diataxis.fr", "https://docs.cucumber.io", "https://docs.github.com", "https://docs.gitlab.com", "https://docs.openstack.org", "https://docs.renovatebot.com", "https://docs.sonarsource.com", "https://dora.dev", "https://eslint.org", "https://github.com/Charlie-org146", "https://github.com/jcl2018", "https://github.com/actions/stale", "https://github.com/bors-ng/bors-ng", "https://github.com/gitleaks/gitleaks", "https://github.com/ossf/scorecard", "https://github.com/twpayne/chezmoi", "https://jestjs.io", "https://kubernetes.io", "https://modelcontextprotocol.io", "https://npmjs.com", "https://nx.dev", "https://opengitops.dev", "https://playwright.dev", "https://pre-commit.com", "https://reproducible-builds.org", "https://semver.org", "https://sre.google", "https://support.pagerduty.com", "https://temporal.io", "https://testing.googleblog.com", "https://ubuntu.com", "https://www.agensi.io", "https://www.atlassian.com", "https://www.conventionalcommits.org", "https://www.finops.org", "https://www.thoughtworks.com", "https://www.uber.com", "https://www.writethedocs.org"] |  |
+| `public_origins` | 46 entries in config.json |  |
 | `regression_cron` | 17 */4 * * * | Five cron fields: when the full regression runs; off is off. |
 | `regression_runs` | actions | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `reply_hook` | true | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. |
 | `resume_on_limit` | false | true lets watch resume a goal that hit a usage limit. |
 | `review_depth` | full | full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `review_hold` | false | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
-| `risky_paths` | ["^\\.github/", "(^\|/)auth", "(^\|/)migrations?/", "(^\|/)(schema\|data)\\b"] | Regexes for paths whose goals need extra care. |
+| `risky_paths` | 4 entries in config.json | Regexes for paths whose goals need extra care. |
 | `routines` | none | Commands the release step runs on the base before it merges. |
 | `silent_minutes` | 30 | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
 | `smtp_host` | smtp.gmail.com | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). |

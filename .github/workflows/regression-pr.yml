@@ -10,10 +10,14 @@ concurrency:
   group: regression-pr-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  affected:
+  shard:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +26,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --timeout 900
+      - run: |
+          git diff --name-only origin/main...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
+          LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --budget 240 --timeout 200
+  affected:
+    needs: shard
+    if: always() && github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: test "${{ needs.shard.result }}" = success
   small:
     if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
