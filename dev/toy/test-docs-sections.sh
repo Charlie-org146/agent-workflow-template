@@ -27,6 +27,21 @@ want "a feature page with Non-goals missing fails" feature "$(sub $'## Non-goals
 want "a feature page with an optional Runbook before Requirements passes" feature "$(sub '## Requirements' $'## Runbook\n\n## Requirements' "$feat")" ""
 want "a How-to-use page without Links fails" howto $'# H\n\n## What it\'s for\n\n## How to reach or run it\n\n## URLs and deployments\n' "Links"
 want "a Tests page with Other last passes" tests $'# T\n\n## Delivery\n\n## Health\n\n## Other\n' ""
+prin=$'# P\n\n## 1. One\n\n## 2. Two\n'
+want "a Principles page of one section per principle passes" principles "$prin" ""
+want "a Principles page with a section that is not a principle fails" principles "$prin"$'\n## Extra\n' "no more sections"
+want "a Tests page with Other not last fails" tests $'# T\n\n## Other\n\n## Health\n' "got Other"
+# DOC-25 bullet 2: a Part 1 row with no figure fails, even one still marked v2.0 planned
+fig() { # FLOW-CELL: the docs check on a one-principle README whose one row has that Flow cell
+  python3 -c '
+import sys, pageformat as pf
+listing = "## The principles\n\n| 1 | Docs | The sentence. | a |\n"
+row = "| [X-1 A](u) | s | f | Docs | 🟪 v2.0 (planned) | %s |" % sys.argv[1]
+page = "# t\n\n[wiki](https://x/wiki/Home)\n\n## 1. Docs\n\nThe sentence.\n\n| Requirement | Summary | Follows | Feature | Version | Flow |\n|---|---|---|---|---|---|\n" + row + "\n\n## Requirements by feature\n"
+print("\n".join(x[2] for x in pf.frontdoor("README", page, listing, {"flows/X-1.svg"}) if "Flow link" in x[2]))' "$1"
+}
+if fig "none yet" | grep -q "DOC-23 a Flow link"; then echo "PASS: DOC-25 a planned row with no figure fails the docs check"; else echo "FAIL: DOC-25 row with no figure"; fails=1; fi
+if [ -z "$(fig "[X-1 flow](docs/wiki/flows/X-1.svg)")" ]; then echo "PASS: DOC-25 a planned row that links its figure passes"; else echo "FAIL: DOC-25 row with a figure"; fails=1; fi
 # README and Home: the same sections, and the same sentence and table in a principle
 r=$'# t\n\n## System design\n\n## 1. One\n\nSentence.\n\n![d](d.svg)\n\n| a | b |\n|---|---|\n| [X](https://github.com/o/r/wiki/X) | y |\n\n## Requirements by feature\n'
 h=$'# t\n\n## System design\n\n## 1. One\n\nSentence.\n\n| a | b |\n|---|---|\n| [X](X) | y |\n\n## Requirements by feature\n'
