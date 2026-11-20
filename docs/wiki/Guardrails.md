@@ -17,27 +17,21 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-4: **Reviewed 2026-11-19** Each session writes only what its role allows <!-- reviewed 5443f514 -->
-  - A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands. Only the operation session can do the rest. [GRD-4]
-  - A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo. [OPS-7]
-- GRD-5: **Reviewed 2026-11-19** Nothing is written outside without explicit say <!-- reviewed 391b2a85 -->
-  - Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit --live switch; a token in the environment does not turn writing on. [GRD-5]
-  - An integration reads by default. It writes outside only behind an explicit switch and, for shared text, an accepted delta. I attach each connector myself with the narrowest access, and its secrets live outside the repo. [INT-4]
-- GRD-6: **Reviewed 2026-11-19** Base branch and hooks cannot be bypassed <!-- reviewed 38016892 -->
-  - The base branch refuses direct and force pushes, and a pull request merges only when the repo's required checks pass. [GRD-6]
-  - I set those rules on the platform; setup never edits them, and health reads that they are set. [GRD-6]
-  - A commit or push that skips the repo's hooks is refused by the loop's own commands and flagged by health. [GRD-16]
-- GRD-7: **Reviewed 2026-11-19** CI minutes are spent only where needed <!-- reviewed 579d9629 -->
-  - A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code. [GRD-7]
-  - Runs or minutes per day past a set limit raise one alarm, and each round shows the Actions minutes it used. [GRD-17]
-- GRD-8: **Reviewed 2026-11-19** Token and time use is real and watched <!-- reviewed 793633ab -->
-  - Each step's tokens are read from its session record when the step is recorded. [GRD-15]
-  - A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget. [GRD-15]
-  - A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. [GRD-8]
-- GRD-20: **Reviewed 2026-11-19** The package always fits Agensi's rules <!-- reviewed c3325c66 -->
-  - No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20]
-  - One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21]
-  - A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22]
+- GRD-4: **Reviewed 2026-11-20** Every session and automation gets least access <!-- reviewed 9110aaad -->
+  - A worker touches only its own goal's state and cannot widen its files or budget, or resume itself. [GRD-4]
+  - Check-ins never edit, commit or push. [GRD-4]
+  - Each routine declares allow and deny rules and keeps its prompt locally. [GRD-4]
+- GRD-5: **Reviewed 2026-11-20** Nothing is written outside without explicit say <!-- reviewed f7806e3b -->
+  - GitHub writes preview by default and need `--live`. [GRD-5]
+  - Integrations read by default and write only behind a switch and an accepted delta. [GRD-5]
+  - I attach connectors myself. [GRD-5]
+- GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
+  - The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]
+  - Hook-skipping commits are refused and flagged. [GRD-6]
+- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
+  - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]
+  - No script on main is over its fail line. [GRD-20]
+  - Reformatting a whole file only to fit is refused. [GRD-20]
 
 ### Non-functional
 
@@ -60,19 +54,21 @@ None
 
 - GRD-1: moved to HLT-2
 - GRD-10: moved to SET-1
-- GRD-11: moved to REG-9
+- GRD-11: moved to REG-4
 - GRD-12: moved to OPS-16
-- GRD-13: moved to REG-7
+- GRD-13: moved to DEL-17
 - GRD-14: moved to DEL-17
-- GRD-15: moved to GRD-8
+- GRD-15: moved to DEL-17
 - GRD-16: moved to GRD-6
-- GRD-17: moved to GRD-7
+- GRD-17: moved to DEL-17
 - GRD-18: moved to MCH-1
-- GRD-19: moved to HLT-11
+- GRD-19: moved to GRD-20
 - GRD-2: Retired
 - GRD-21: moved to GRD-20
 - GRD-22: moved to GRD-20
 - GRD-3: moved to DEL-9
+- GRD-7: moved to DEL-17
+- GRD-8: moved to DEL-17
 - GRD-9: moved to HLT-2
 
 ### GRD-1
@@ -103,6 +99,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Every session and automation gets least access <br> A worker touches only its own goal's state and cannot widen its files or budget, or resume itself. [GRD-4] <br> Check-ins never edit, commit or push. [GRD-4] <br> Each routine declares allow and deny rules and keeps its prompt locally. [GRD-4] | readme-six: the owner-approved final README (o514) | o579: "yes build it" |
 | r3 | 2026-11-19 | Each session writes only what its role allows <br> A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands. Only the operation session can do the rest. [GRD-4] <br> A check-in never edits code, commits or pushes from the operation session; only merges and the post-merge steps change the repo. [OPS-7] | consolidation (TOP-DECISION 89) | o293: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | A worker writes only its own goal's work <br> A worker can't widen its own goal's touched files, resume itself or change its own budget, and it changes shared loop state only for its own goal through the goal's commands. <br> Only the operation session can do the rest. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | A worker writes only its own goal's work, never shared loop state or its own limits <br> A worker can't widen its own goal's touches, resume itself or change its own budget; only the operation session can (Delivery, new: today a role check, not a boundary). <br> A worker changes shared loop state only for its own goal and only through the goal's commands (`goal.py step`, `record` and `pr`, `sessions.py bind` and `report`); the queue, other goals' run records and the session pool's other sessions are the operation session's to change (Monitoring, new: today the commands scope a worker to its own slug, and nothing stops a hand edit). <br> The operation session never edits code, commits or pushes: MON-7. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -111,6 +108,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Nothing is written outside without explicit say <br> GitHub writes preview by default and need `--live`. [GRD-5] <br> Integrations read by default and write only behind a switch and an accepted delta. [GRD-5] <br> I attach connectors myself. [GRD-5] | readme-six: the owner-approved final README (o514) | o580: "yes build it" |
 | r3 | 2026-11-19 | Nothing is written outside without explicit say <br> Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit --live switch; a token in the environment does not turn writing on. [GRD-5] <br> An integration reads by default. It writes outside only behind an explicit switch and, for shared text, an accepted delta. I attach each connector myself with the narrowest access, and its secrets live outside the repo. [INT-4] | consolidation (TOP-DECISION 89) | o295: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Nothing is written to GitHub without --live <br> Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit --live switch; a token in the environment does not turn writing on. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | Nothing is written to GitHub without an explicit `--live` <br> Every command that writes issues, comments, milestones or releases previews by default and writes only behind an explicit `--live` switch; a token in the environment does not turn writing on (Health, HLT-4, REG-5 and AUT-5 hold the wording; Regression new: today it writes whenever a token is present). <br> The scheduled workflows pass `--live`; the page of each such command says so (each owner, new). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -119,6 +117,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Base branch and hooks cannot be bypassed <br> The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6] <br> Hook-skipping commits are refused and flagged. [GRD-6] | readme-six: the owner-approved final README (o514) | o581: "yes build it" |
 | r3 | 2026-11-19 | Base branch and hooks cannot be bypassed <br> The base branch refuses direct and force pushes, and a pull request merges only when the repo's required checks pass. [GRD-6] <br> I set those rules on the platform; setup never edits them, and health reads that they are set. [GRD-6] <br> A commit or push that skips the repo's hooks is refused by the loop's own commands and flagged by health. [GRD-16] | consolidation (TOP-DECISION 89) | o297: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | The base branch is protected <br> The base branch refuses direct and force pushes, and a pull request merges only when the repo's required checks pass. <br> I set those rules on the platform; setup never edits them, and health reads that they are set. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | The base branch is protected and merges only with its required checks green <br> The base branch refuses direct pushes and force pushes, and a pull request merges only when the repo's required checks pass; I set those rules on the platform, and setup never edits a ruleset or branch protection (it names, as BLOCKS, a required check no commit status can satisfy: Setup, SET-1). <br> Where the platform can enforce it (branch rules, required status checks), the platform does, and health reads that it is set (Health, new). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -127,6 +126,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | CI minutes are spent only where needed <br> A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code. [GRD-7] <br> Runs or minutes per day past a set limit raise one alarm, and each round shows the Actions minutes it used. [GRD-17] | readme-six: absorbed into DEL-17 (o514) | o602: "yes build it" |
 | r3 | 2026-11-19 | CI minutes are spent only where needed <br> A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code. [GRD-7] <br> Runs or minutes per day past a set limit raise one alarm, and each round shows the Actions minutes it used. [GRD-17] | consolidation (TOP-DECISION 89) | o278: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | CI spends minutes only on runs that matter <br> A newer run of the same workflow on the same branch cancels the one it replaces, and a heavy job is skipped for a change that touches no code. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | CI spends minutes only on runs that matter, and too many runs raise an alarm <br> A newer run of the same workflow on the same branch cancels the one it supersedes (Automation, new: the workflows queue runs today). <br> A heavy job is skipped for a change that touches no code, such as docs only (Automation, new). <br> Each round shows its Actions minutes and goes over its limit loudly (Automation, AUT-7); runs or minutes per day past a set limit raise one alarm (Automation, new). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -135,6 +135,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Token and time use is real and watched <br> Each step's tokens are read from its session record when the step is recorded. [GRD-15] <br> A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget. [GRD-15] <br> A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. [GRD-8] | readme-six: absorbed into DEL-17 (o514) | o603: "yes build it" |
 | r3 | 2026-11-19 | Token and time use is real and watched <br> Each step's tokens are read from its session record when the step is recorded. [GRD-15] <br> A goal with no token count shows "unread", never 0, so an unread count is never mistaken for an unspent budget. [GRD-15] <br> A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. [GRD-8] | consolidation (TOP-DECISION 89) | o276: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | A step far past its usual is flagged while it runs <br> A step whose tokens or time pass a set multiple of that step's usual is flagged on the board and in the check-in while it runs. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | A step far past its usual tokens or time is flagged while it runs <br> A step whose tokens pass a set multiple of that step's usual is flagged on the board and in the check-in (Monitoring, new). <br> A step past three times its estimate is shown as stalled under Issues on the board (Monitoring, MON-4, which keeps a stuck worker at the top of Issues), and a worker silent past `silent_minutes` shows under Needs you: MON-8. <br> A goal's test lane past `goal_lane_minutes` (default 10) says so in its LANE line (Regression, REG-8). | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -223,6 +224,8 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | approved by operation-top under owner delegation (DOC-2, o486): the fail line matches the enforced Agensi limit | o654: "Then I want u to fix this merge time issuee first. I" |
+| r3 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | readme-six: the owner-approved final README (o514) | o576: "yes build it" |
 | r2 | 2026-11-19 | The package always fits Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20] <br> One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21] <br> A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22] | consolidation (TOP-DECISION 89) | o284: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | The package always passes Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. <br> A failure names the rule and the file. | migration r1; date from the run day | o155: "start regroup 3 and 4" |
 
@@ -268,8 +271,6 @@ None
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
-| - | requirement | GRD-7 | no passing test | not enforced |
-| - | requirement | GRD-8 | no passing test | not enforced |
 | [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs git pull --ff-only (also with -C and a remote), then the govern hook lets it through. | PASS 2026-11-12 |
 | [pull-plain-blocked](Tests#t-pull-plain-blocked) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given the operation session, when it runs a plain git pull, -r, --rebase=merges, --no-ff, --ff-only with --rebase or --ff, a +refspec or -f, then the govern hook still refuses it (negative control). | PASS 2026-11-12 |

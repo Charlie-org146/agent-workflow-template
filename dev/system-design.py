@@ -3,7 +3,7 @@
 Each number is how many of a principle's requirements name the feature in the Feature column. Not shipped: the package holds skills/ only."""
 import collections, re, sys
 OUT = {"principle": "docs/wiki/system-design-by-principle.svg", "feature": "docs/wiki/system-design-by-feature.svg"}
-NAMES = ["Docs-driven", "Enforced", "Fast, cheap", "Private", "Reproducible", "Autonomous", "Standard", "Honest"]
+NAMES = []  # filled from the README headings: "## 1. Guided: documentation-driven and standard" gives Guided
 AREAS = [("Build loop", ["Delivery", "Operation", "Check in and board"]), ("Quality", ["Regression", "Health", "Guardrails"]),
          ("Docs", ["Documentation"]), ("Operations", ["Automation", "Machines", "Setup"]), ("Other", ["Release", "Integrations"])]
 SHORT = {"Check in and board": "Check-in and board"}
@@ -51,7 +51,7 @@ def cell(o, x, y, n, k):
 
 def by_feature(c):
     o = []; top(o, "System design, by feature: how many requirements each principle has", 592)
-    cx = [196 + i * 50 for i in range(8)]
+    cx = [int(196 + i * 400 / len(NAMES)) for i in range(len(NAMES))]
     for i, n in enumerate(NAMES):
         o.append('<circle cx="%d" cy="104" r="8" class="c%d"/><text x="%d" y="107.5" text-anchor="middle" class="k">%d</text><text x="%d" y="128" text-anchor="middle" class="n"%s>%s</text>' % (cx[i], i + 1, cx[i], i + 1, cx[i], ' textLength="46" lengthAdjust="spacingAndGlyphs"' if len(n) > 10 else "", n))
     o.append('<text x="%d" y="128" text-anchor="middle" class="n">Total</text>' % 600)
@@ -62,7 +62,7 @@ def by_feature(c):
             if r % 2 == 0: o.append('<rect x="12" y="%d" width="616" height="26" class="stripe"/>' % y)
             o.append('<text x="86" y="%d" class="s">%s</text>' % (y + 17, SHORT.get(f, f)))
             tot = 0
-            for n in range(1, 9):
+            for n in range(1, len(NAMES) + 1):
                 if c[(n, f)]: cell(o, cx[n - 1], y + 13, c[(n, f)], n); tot += c[(n, f)]
             o.append('<text x="600" y="%d" text-anchor="middle" class="s" style="font-weight:600">%d</text>' % (y + 17, tot))
             y += 26; r += 1
@@ -71,7 +71,7 @@ def by_feature(c):
     return "\n".join(o) + "\n"
 
 def by_principle(c):
-    o = []; top(o, "System design, by principle: how many requirements it has on each feature", 560)
+    o = []; top(o, "System design, by principle: how many requirements it has on each feature", 198 + 30 * len(NAMES) + 102)
     feats = [f for _, fs in AREAS for f in fs]; W, x0, xs = 34, 130, {}
     x = x0
     for area, fs in AREAS:
@@ -83,7 +83,7 @@ def by_principle(c):
     tx = x + W / 2 - 4
     o.append('<text x="%.1f" y="196" text-anchor="middle" class="n">Total</text>' % tx)
     y = 198
-    for n in range(1, 9):
+    for n in range(1, len(NAMES) + 1):
         if n % 2: o.append('<rect x="12" y="%d" width="616" height="30" class="stripe"/>' % y)
         o.append('<circle cx="26" cy="%d" r="8" class="c%d"/><text x="26" y="%.1f" text-anchor="middle" class="k">%d</text><text x="40" y="%d" class="s">%s</text>' % (y + 15, n, y + 18.5, n, y + 19, NAMES[n - 1]))
         tot = 0
@@ -96,6 +96,7 @@ def by_principle(c):
     return "\n".join(o) + "\n"
 
 def build(readme):
+    NAMES[:] = [re.split(r"[:,]| and ", h[6:])[0].strip() for h in re.findall(r"^## \d\. .+$", readme, re.M)]
     c = counts(readme)
     return {OUT["principle"]: by_principle(c), OUT["feature"]: by_feature(c)}, sum(c.values())
 

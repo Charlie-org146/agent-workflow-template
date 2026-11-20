@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Reviewed 2026-11-14** <!-- prd P=a45649a4 R=bde75618 N=e081872e M=4670eeeb U=03828777 --> <!-- kept ci-5min@61f7b5d0e -->
+Review: **Reviewed 2026-11-20** <!-- prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -15,22 +15,15 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Reviewed 2026-11-19** Routines run on schedule, by runbook <!-- reviewed 6bea60c3 -->
-  - Health runs on my always-on machine for every repo; regression runs in GitHub Actions for a public repo and on that machine for a private one. Each report says where it ran, and a routine missed while the machine was off runs once at the next tick and says it was missed. [AUT-1]
-  - The full regression suite runs on the schedule set in the repo's settings, every 4 hours by default, and on every release tag; I can also start it by hand. The report names every test it skipped and why. [AUT-2]
-  - Health runs on my always-on machine on the schedule, after the latest finished regression run, with all its rule groups and the repo review. It uses my own login, and when the login has expired the report says so and the next round tries again. [AUT-3]
-  - A page that owns a routine has a Runbook for it, saying what an agent told only "run routine X" must read and do, and a scheduled run follows it exactly. The docs check fails a registered routine with no runbook or a missing field. A runbook is not locked by my review. [DOC-16]
+- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
+  - Health and regression run on schedule wherever they can run fully. [AUT-1]
+  - They report where they ran and what they skipped, catch up missed runs, and follow runbooks. [AUT-1]
 
-- AUT-9: **Reviewed 2026-11-19** Automation runs with declared, least access <!-- reviewed 44fb8c0c -->
-  - Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules. [AUT-9]
-  - Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. [MCH-11]
-  - When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. [MCH-6]
-  - `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. [MCH-6]
 
 ### Non-functional
-- AUT-5: **Reviewed 2026-11-19** Routines and publishing stay under my control <!-- reviewed ec03824d -->
-  - Each routine can be turned off or rescheduled in one setting. Without the secrets it needs, a routine runs, writes nothing and says what is missing. [AUT-5]
-  - Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it. The last publish can be undone. [DOC-11]
+- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
+  - Each routine turns off or reschedules with one setting and writes nothing without secrets. [AUT-5]
+  - Publishing never deletes or overwrites pages it didn't write, and it can be undone. [AUT-5]
 
 ## Non-goals
 - The scheduled routines never push, merge or release; they only write issues, labels, comments, run reports (an Actions run summary or a local report on my Mac) and the digest email.
@@ -44,18 +37,20 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 ### Retired
 
-- AUT-10: moved to REL-12
+- AUT-10: moved to DEL-3
 - AUT-2: moved to AUT-1
 - AUT-3: moved to AUT-1
-- AUT-4: moved to MCH-5
+- AUT-4: moved to CHK-1
 - AUT-6: moved to DEL-9
 - AUT-7: moved to HLT-7
 - AUT-8: moved to AUT-1
+- AUT-9: moved to GRD-4
 
 ### AUT-1
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Routines run on schedule, by runbook <br> Health and regression run on schedule wherever they can run fully. [AUT-1] <br> They report where they ran and what they skipped, catch up missed runs, and follow runbooks. [AUT-1] | readme-six: the owner-approved final README (o514) | o573: "yes build it" |
 | r3 | 2026-11-19 | Routines run on schedule, by runbook <br> Health runs on my always-on machine for every repo; regression runs in GitHub Actions for a public repo and on that machine for a private one. Each report says where it ran, and a routine missed while the machine was off runs once at the next tick and says it was missed. [AUT-1] <br> The full regression suite runs on the schedule set in the repo's settings, every 4 hours by default, and on every release tag; I can also start it by hand. The report names every test it skipped and why. [AUT-2] <br> Health runs on my always-on machine on the schedule, after the latest finished regression run, with all its rule groups and the repo review. It uses my own login, and when the login has expired the report says so and the next round tries again. [AUT-3] <br> A page that owns a routine has a Runbook for it, saying what an agent told only "run routine X" must read and do, and a scheduled run follows it exactly. The docs check fails a registered routine with no runbook or a missing field. A runbook is not locked by my review. [DOC-16] | consolidation (TOP-DECISION 89) | o218: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Routines run where they can run fully <br> Health runs on my always-on machine for every repo; regression runs in GitHub Actions for a public repo and on that machine for a private one. Each report says where it ran, and a routine missed while the machine was off runs once at the next tick and says it was missed. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-14 | Routines run where they can run fully <br> Health runs on my always-on machine (the Mac through its launch agent, or a Windows PC through its own scheduled task) for every repo. Regression runs in GitHub Actions for a public repo and on that machine for a private one. <br> Each routine runs on a schedule set in the repo's config (every 4 hours by default), and I can also start it by hand. <br> A routine missed while that machine is asleep or off runs once at the next tick, and the digest says it was missed. <br> Each run's report says whether it ran on my Mac or in GitHub Actions. <br> A long issue body or comment is passed to gh in a file (`--body-file`), never on the command line, so a routine writes the same on native Windows. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -88,6 +83,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Routines and publishing stay under my control <br> Each routine turns off or reschedules with one setting and writes nothing without secrets. [AUT-5] <br> Publishing never deletes or overwrites pages it didn't write, and it can be undone. [AUT-5] | readme-six: the owner-approved final README (o514) | o588: "yes build it" |
 | r3 | 2026-11-19 | Routines and publishing stay under my control <br> Each routine can be turned off or rescheduled in one setting. Without the secrets it needs, a routine runs, writes nothing and says what is missing. [AUT-5] <br> Publishing never deletes a wiki page and never overwrites one it didn't write unless I name it. The last publish can be undone. [DOC-11] | consolidation (TOP-DECISION 89) | o346: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Under my control <br> Each routine can be turned off or rescheduled in one setting. Without the secrets it needs, a routine runs, writes nothing and says what is missing. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-13 | Under my control <br> Each routine can be turned off or rescheduled in one setting. It writes to GitHub only with `--live` (the scheduled workflows pass it), and without the secrets it needs a routine runs but writes nothing and says what is missing. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -119,6 +115,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-20 | Automation runs with declared, least access <br> Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules. [AUT-9] <br> Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. [MCH-11] <br> When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. [MCH-6] <br> `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. [MCH-6] | readme-six: absorbed into GRD-4 (o514) | o606: "yes build it" |
 | r3 | 2026-11-19 | Automation runs with declared, least access <br> Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules. [AUT-9] <br> Each scheduled task keeps its full prompt in a local routine file, and the machine check fails a task whose recorded permission mode would prompt or is missing. [MCH-11] <br> When no app session can start, a worker starts as a background process through `agent_command` (the owner's `workers: app` rule still keeps a goal waiting for a bound session), and the start goes through one function other goals can extend. [MCH-6] <br> `setup.py desk` lists every desk-only step (trusting folders, permission modes, tool pre-approvals, the private-names file, mail.env, the Codex login), prints each open step once, records each as done, and `desk check` ends with DESK OK only when nothing is left at the desk and a phone-only start works. [MCH-6] | consolidation (TOP-DECISION 89) | o299: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Every routine declares what it may do <br> Each routine has allow and deny rules in the repo for the commands, files and sites its runbook needs. Setup writes them into the repo's project settings, so a scheduled run on a fresh machine stops at no approval prompt, and the docs check fails a routine with missing or contradicting rules. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
 | r1 | 2026-11-14 | Every routine declares what it may do, in its repo. <br> Each routine in the registry has rows in `.loop/permissions.tsv` (routine, allow or deny, rule, why): the commands, file paths and sites its Runbook needs, and the denies its Never field states. The repo owns its list; the template owns the rule, the command that writes it and the check. <br> Setup writes the rows into the repo's committed project settings (`.claude/settings.json`, keeping every other rule), so a scheduled run on a fresh machine stops at no approval prompt for what its Runbook says it does; nothing private is written there. <br> The docs check fails a routine with no rows, a row missing from the project settings, a command or site the Runbook names that no allow row covers, and an allow that a deny contradicts. | migration r1; date from its stamp | o30: "Yes, I want this to be implemented in the 2.0, so it's" |
@@ -154,7 +151,6 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [aut-routine-block](Tests#t-aut-routine-block) | requirement | AUT-1 | Given the AUT-1 cases of test-automation-routines.py, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | not run |
 | [health-register-no-launchd](Tests#t-health-register-no-launchd) | requirement | AUT-1 | Given a machine that is not a Mac, when local register runs, then the repo is in the schedule registry, a second run keeps one entry, and no launch agent is written. | PASS 2026-11-14 |
 | [perms-docs-check](Tests#t-perms-docs-check) | requirement | AUT-1 | Given a routine with no declared permissions, when docs.py check runs, then it prints a PERMISSIONS finding (the same check as audit.py permissions check, run inside docs.py check). | not run |
-| - | requirement | AUT-9 | no passing test | not enforced |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-20 |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | AUT-5 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-19 |
