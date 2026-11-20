@@ -45,7 +45,7 @@ with tempfile.TemporaryDirectory() as tmp:
             handle.write(text)
         os.chmod(os.path.join(bin_, name), 0o755)
     env = dict(os.environ, FAKE_DIR=tmp, LOOP_AGENTS_DIR=agents, LOOP_SCHEDULE_HOME=os.path.join(tmp, "sched"), LOOP_LAUNCHCTL=os.path.join(bin_, "launchctl"),
-               PATH=bin_ + ":" + os.environ["PATH"], HOME=tmp)
+               PATH=bin_ + ":" + os.environ["PATH"], HOME=tmp, USERPROFILE=tmp)
     env.pop("CLAUDE_CODE_HOST_SESSION_ID", None)
     subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
     subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "x"], cwd=repo, check=True)

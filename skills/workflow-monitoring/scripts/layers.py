@@ -41,6 +41,13 @@ def role(given=""):
     return found if found in ROLES else ""
 
 
+def scratch(goal):
+    """~/.workflow-loop/scratch/<goal>: a restart keeps it."""
+    path = os.path.join(os.path.expanduser("~"), ".workflow-loop", "scratch", re.sub(r"[^\w.-]", "-", goal))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def read(path):
     return machines.read_json(path)
 

@@ -238,7 +238,7 @@
 | <a id="t-docs-scripts-under-19000"></a>docs-scripts-under-19000 | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 | <a id="t-template-in-commands"></a>template-in-commands | requirement | DOC-25 | not run | - | local | 2026-11-15 |
 | <a id="t-stale-comments-only-3122"></a>stale-comments-only-3122 | defect | [#3122](https://github.com/jcl2018/agent-workflow-template/issues/3122) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
-| <a id="t-restamp-marks-3867"></a>restamp-marks-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
+| <a id="t-restamp-marks-3867"></a>restamp-marks-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-20 |
 | <a id="t-restamp-wording-locked-3867"></a>restamp-wording-locked-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-25 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
@@ -773,3 +773,8 @@
 | <a id="t-tree-rules-first"></a>tree-rules-first | requirement | done line tree-rules-first:1 | not run | - | local | 2026-11-20 |
 | <a id="t-rows-pr-full"></a>rows-pr-full | requirement | done line rows-pr-full:1 | not run | - | local | 2026-11-20 |
 | <a id="t-root-ff-guard"></a>root-ff-guard | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-operation-id-not-worker"></a>operation-id-not-worker | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-folder-trust-refused"></a>folder-trust-refused | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-restart-trust-row"></a>restart-trust-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-restart-worktrees-row"></a>restart-worktrees-row | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
+| <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
