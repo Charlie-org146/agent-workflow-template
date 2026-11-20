@@ -16,7 +16,7 @@ usage: batch.py <command> [options]
       apart as "after v1.0", the "To-do:" issues, the goals in flight and each page's Unreviewed requirements; Priority is
       left empty. Open issues come from gh (--issues FILE reads the same JSON); with --out it writes the page, else prints it
 
-Each goal runs the one skill flow in its own worktree, in its own worker. Nothing is merged.
+Each goal runs the skill flow in its own worktree and worker. Nothing is merged.
 """
 import argparse
 import datetime
@@ -24,10 +24,11 @@ import glob
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal, no waiting: a git or gh prompt must fail.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -43,6 +44,25 @@ def git(*args, cwd=None, check=True):
     if check and done.returncode:
         sys.exit("REFUSED: git %s: %s" % (" ".join(args), done.stderr.strip()))
     return done.stdout.strip() if done.returncode == 0 else ""
+
+
+SANDBOX_OPEN = ("danger-full-access", "--dangerously-bypass-approvals-and-sandbox")
+
+
+def codex_next(cfg, state):
+    """A Codex profile is set and unused; one that opens the sandbox is refused."""
+    profile = cfg.get("codex_profile") or []
+    if any(bad in str(arg) for arg in profile for bad in SANDBOX_OPEN):
+        sys.exit("REFUSED: the Codex profile has %s; nothing was started." % " or ".join(SANDBOX_OPEN))
+    return bool(profile) and state.get("agent") != "codex"
+
+
+def agent_command(cfg, state):
+    """(command, agent): background Claude, else Codex (WORKTREE filled in)."""
+    claude = list(cfg.get("agent_command") or [])
+    if cfg.get("codex_profile") and (not codex_next(cfg, state) or not claude or not shutil.which(claude[0])):
+        return [state["worktree"] if arg == "WORKTREE" else arg for arg in cfg["codex_profile"]], "codex"
+    return claude, "claude"
 
 
 def now():
