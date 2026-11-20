@@ -193,8 +193,7 @@ None
 | [skill-says-governs](Tests#t-skill-says-governs) | requirement | OPS-1 | Given the delivery skill, when it is read, then it says the operation session only governs. | PASS 2026-11-20 |
 | [dependencies-on-map](Tests#t-dependencies-on-map) | requirement | OPS-1 | Given a goal that waits on others, when it starts, then it records what it waits on. | PASS 2026-11-09 |
 | [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
-| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given the governing session, when building is attempted inside it, then it is refused with one line. | PASS 2026-11-20 |
-| [worker-per-goal](Tests#t-worker-per-goal) | requirement | OPS-1 | Given several goals, when they run, then each runs in its own process and worktree. | PASS 2026-11-20 |
+| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given the OPS-1 cases of test-workers.sh, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | PASS 2026-11-20 |
 | [worker-reports](Tests#t-worker-reports) | requirement | OPS-1 | Given a merged goal, when the board is shown, then it shows its pull request. Given a goal with a PR, when a machine sends STATUS, then the worker line carries the PR number, and parked and idle sessions carry reasons. | PASS 2026-11-20 |
 | [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-20 |
 | [operate-all](Tests#t-operate-all) | requirement | OPS-1 | Given the operate command's toy suite, when it runs, then the whole suite passes. | PASS 2026-11-09 |
