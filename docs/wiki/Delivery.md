@@ -40,6 +40,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19]
   - Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19]
   - Done lines can't change once the goal starts; a change means a new goal. [DEL-2]
+- DEL-20: **Unreviewed** Adopt a standard tool by default
+  - Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-20]
 
 ### Non-functional
 - DEL-7: **Reviewed 2026-11-19** Work survives failure and moves by backup <!-- reviewed 491db53a -->
@@ -228,6 +230,12 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every goal serves a requirement <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. <br> A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. | migration r1; date from the run day | o47: "Yes, start it end." |
 
+### DEL-20
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Adopt a standard tool by default <br> Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-20] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -320,6 +328,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [eta-health-overrun](Tests#t-eta-health-overrun) | requirement | DEL-17 | Given a goal past its ETA that is not waiting under Needs you, when health runs, then it fails (eta-overrun), and the rule's negative control fires; a goal waiting for the owner's choice is clean. | not run |
 | - | requirement | DEL-17 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
+| - | requirement | DEL-20 | no passing test | not enforced |
 | [del8-floor-step](Tests#t-del8-floor-step) | requirement | DEL-7 | Given step_budget_minutes under 15, when a step reads it, then it is refused with a fix line. | PASS 2026-11-18 |
 | [reg7-budget-leaves](Tests#t-reg7-budget-leaves) | requirement | DEL-7 | Given rows that would run past the test budget, when a loop test run happens, then it runs the rows that fit, stops at the budget and lists every row it left. | not run |
 | [del8-step-stops](Tests#t-del8-step-stops) | requirement | DEL-7 | Given a review or ship step that reaches its limit, when it is stopped, then it is recorded done with what it left and the goal goes on without a failed try. | not run |
