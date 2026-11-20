@@ -1007,7 +1007,7 @@
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-merge-batch-split"></a>merge-batch-split | requirement | REL-13 | not run | - | local | 2026-11-13 |
+| <a id="t-merge-batch-split"></a>merge-batch-split | requirement | REL-13 | not run | - | local | 2026-11-19 |
 | <a id="t-review-hold-blocks"></a>review-hold-blocks | requirement | REL-12 | not run | - | local | 2026-11-15 |
 | <a id="t-review-recorded-merges"></a>review-recorded-merges | requirement | REL-12 | not run | - | local | 2026-11-15 |
 | <a id="t-review-worker-refused"></a>review-worker-refused | requirement | REL-12 | not run | - | local | 2026-11-15 |
