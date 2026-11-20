@@ -80,8 +80,8 @@ Health and regression, then each `automation` entry in `.loop/config.json`; to a
 
 | Routine | What it does | State | Cadence | Runs on | Last run | Owed by you |
 |---|---|---|---|---|---|---|
-| [health](https://github.com/jcl2018/agent-workflow-template/wiki/Health#health-round) | Checks the repo, files findings. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
-| [regression](https://github.com/jcl2018/agent-workflow-template/wiki/Regression#regression-round) | Runs the regression rows. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| [health](https://github.com/Charlie-org146/agent-workflow-template/wiki/Health#health-round) | Checks the repo, files findings. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| [regression](https://github.com/Charlie-org146/agent-workflow-template/wiki/Regression#regression-round) | Runs the regression rows. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
 | digest email | Mails the round's digest. | on (declared) | cron `with each health round` | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
 <!-- automation:end -->
 
