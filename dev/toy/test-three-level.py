@@ -42,7 +42,7 @@ with tempfile.TemporaryDirectory() as tmp:
     os.makedirs(os.path.join(common, "loop", "runs"))
     json.dump({"slug": "g", "status": "running", "step": "qa", "pr": "https://x/pull/12", "goal": "g"}, open(os.path.join(common, "loop", "runs", "g.json"), "w"))
     status, said = layers.send(common, {}, now=now)
-    check(said == "sent" and status["workers"] == [{"slug": "g", "step": "qa", "status": "running", "pr": 12}], "a machine sends STATUS with the goal's PR number")
+    check(said == "sent" and status["workers"] == [{"slug": "g", "step": "qa", "status": "running", "pr": 12, "eta": None}], "a machine sends STATUS with the goal's PR number")
     check(layers.send(common, {}, now=now + 60)[1] == "no change" and layers.send(common, {}, now=now + 31 * 60)[1] == "sent", "STATUS goes on change and every 30 minutes, not between")
     line = layers.one_line(status, "no change", now)
     check("\n" not in line and "STATUS no change" in line and "\n" not in layers.one_line(status, "sent", now), "a machine prints one line, not the board")
