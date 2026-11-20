@@ -16,3 +16,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Open `README.md` and read its eight sections. Expect: section 8 is "Honest, verified and on time", with the one sentence, its diagram and a table of CHK-1, DEL-17, OPS-1, HLT-2, HLT-4, OPS-2 and REG-9, each with a Follows cell, the six new rows marked v2.0 (planned).
+2. Run `python3 skills/workflow-docs/scripts/docs.py check`. Expect: `DOCS OK: 16 pages`.
+3. Run `python3 skills/workflow-health/scripts/health.py check | grep '^PRINCIPLE'`. Expect: eight lines, with principles 6, 7 and 8 reading UNREAD.
+4. In a scratch copy of `README.md`, delete the whole section 8, then change one word of its sentence, and run the docs check on each. Expect: the first fails with "section '8. Honest, verified and on time'", the second with "its sentence and a table".
+5. Open the wiki Home and Principles pages and the Check in and board, Delivery, Operation and Health pages. Expect: Home and Principles show the same eight sections, each of the six requirements ends with its new "(v2.0 planned)" bullet and reads Unreviewed, and HLT-2's text shows "eight principles".
