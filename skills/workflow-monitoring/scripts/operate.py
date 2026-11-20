@@ -4,18 +4,18 @@
 usage: operate.py <command> [options]
 
   run [--once] [--poll S] [--max N] [--skill-dir DIR] [--board]
-      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root is not advanced: "root is dirty: FILES;
-      not advanced"), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel; mends and
+      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root prints "root is dirty: FILES; not
+      advanced"), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel; mends and
       resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and pool.py archive
       (MON-6), prints the check-in (checkin.py) and mails its new events (notify.py). The live board prints only for report,
       dashboard and "where do things stand" (MON-4; --board adds it). It waits the gap from `board.py cadence` (less when a
-      worker reports or a goal is queued) and stops when nothing is queued, running or waiting, or the cadence is off.
-  run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
+      worker reports or a goal is queued); it stops when nothing is queued, running or waiting, or the cadence is off.
+  run --role top|machine   top: one board from every STATUS; machine: its STATUS to top
   start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool): ok or its fix
             per row (notify.py ready)
-  timer [created]   show the check-in timer for the owner's yes; `created` records it (notify.py timer)
+  timer [created]   show the check-in timer for the owner's yes; `created` records it
   send SLUG TEXT [--source owner|auto]
-      send a worker an answer or follow-up (worker.py send); an answer to a waiting question is kept in
+      send a worker an answer or follow-up (worker.py send); answers to a waiting question go to
       <git common dir>/loop/answers.jsonl (auto.py reads it)
   claim [--id ID]
       add this session (each id it goes by: CLI, app, pod; or --id) to loop/operation.id for the govern hook (MON-7), in this
@@ -83,7 +83,7 @@ RUNS = ".loop/regression-runs.tsv"
 
 
 def fast_forward(root, base):
-    """merge --ff-only; a dirty RUNS is stashed under a tag and applied back by sha."""
+    """merge --ff-only; a dirty RUNS is stashed under a tag, applied back by sha."""
     tag, sha = "operate-forward-%d" % os.getpid(), ""
     if RUNS in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].replace("\\", "/") and fgit(root, "stash", "push", "-m", tag, "--", RUNS)[0] == 0:
         sha = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%H %gs")[1].splitlines() if l.endswith(tag)), "")
@@ -132,7 +132,7 @@ def scratch(goal):
 
 
 def untrusted(folder):
-    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent (read only), else ""."""
+    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
     try:
         with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
             known = json.load(handle)["projects"]
@@ -143,7 +143,7 @@ def untrusted(folder):
 
 
 def behind_ask(common, base="main"):
-    """When the main checkout is behind origin/<base>, a line asks a free worker to move it."""
+    """A line asking a free worker to move the main checkout when it is behind origin/<base>."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -344,7 +344,7 @@ def readme_blocks_only(top, old, new):
 
 def apply(slug, branch):
     """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree, while a page's
-    reviewed text holds. The pushed head differs by wiki pages only."""
+    reviewed text holds; the pushed head differs by wiki pages only."""
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
@@ -383,7 +383,7 @@ def cmd_scratch(args):
 
 
 def cmd_wiki_only(args):
-    """merge.py: exit 0 when NEW follows OLD by wiki page commits only."""
+    """merge.py: exit 0 when NEW follows OLD by wiki commits only."""
     return 0 if wiki_only(os.getcwd(), args.old, args.new) else 1
 
 
