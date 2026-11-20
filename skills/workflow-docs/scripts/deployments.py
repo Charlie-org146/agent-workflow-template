@@ -4,6 +4,7 @@ commands.md's rules block names the section, headers and Access words, and each 
 findings out (pageformat.bad's shape); a secret-bearing value is never echoed: links read <link>, addresses <address>.
 criteria.py's page rules (rules, criteria_max, SHEET) sit at the end, moved here unchanged.
 """
+import importlib.util
 import json
 import os
 import re
@@ -247,6 +248,21 @@ def criteria_max(root):
 # --- the owner's recorded words (criteria.py review|unreview --owner-record ID), written by the operation session, never a worker:
 # it counts for its IDs or pages once per command (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record (MON-11,
 # o118) counts for any page, any number of times, for unreview only (never for a review).
+
+def safety(text):
+    """The safety class (auto.CLASSES, read from workflow-monitoring, never copied) the text falls in; 'unreadable' when it can't be read."""
+    here = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "workflow-monitoring", "scripts")
+    try:
+        sys.path.insert(0, here)
+        spec = importlib.util.spec_from_file_location("auto", os.path.join(here, "auto.py"))  # by path: a skill never imports another
+        auto = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(auto)
+        return next((name for name, found in auto.CLASSES.items() if found.search(text)), "")
+    except Exception:
+        return "unreadable"
+    finally:
+        sys.path.remove(here)
+
 
 def owner_rows(path):
     try:

@@ -166,7 +166,8 @@ def frontdoor(page, text, listing, ids, kind="README", old=()):
             fail(at, "its sentence and a table", "%d rows" % len(rows), "add it")
         for number, c in rows:
             m = re.search(r"flows/[^)/?#\s]+", c[0])
-            c[2] or fail(number, "a Follows cell", "none", "add it")
+            lines = [x for x in c[2].split("<br>") if x]
+            lines and all(re.search(r"^- .+: (adopted|adapted|planned|own)$", x) for x in lines) or fail(number, "a Follows list, one standard per line, each tagged adopted, adapted, planned or own", short(c[2]), "run /workflow-docs render")
             (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[0]), "add the diagram")
     more = secs[len(want):]
     if kind != "Principles":
