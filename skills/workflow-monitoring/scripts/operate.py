@@ -10,10 +10,10 @@ usage: operate.py <command> [options]
       pool.py archive (MON-6: ARCHIVE-NOW lines are for its archive tool), prints the check-in (checkin.py) and
       mails its new events (notify.py). The live board prints only for report, dashboard and "where do things stand"
       (MON-4; --board adds it). It waits the gap from `board.py cadence`, less when a worker reports or a goal is queued,
-      and stops when nothing is queued, running or waiting, or the cadence is off. --once makes one pass.
+      and stops when nothing is queued, running or waiting, or the cadence is off.
   run --role top|machine   top: one board from every STATUS; machine: STATUS to top, one line
   start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool), each row ok or
-            its fix; it starts no goal or worker (notify.py ready)
+            its fix; it starts nothing (notify.py ready)
   timer [created]   show the check-in timer for the owner's yes; `created` records it (notify.py timer)
   send SLUG TEXT [--source owner|auto]
       send a worker an answer or follow-up (worker.py send); it sees it the next time it runs goal.py. An answer to a
@@ -124,8 +124,15 @@ def refresh(common, base="main"):
     return "CHECKOUT FAST-FORWARDED %s by %s commits to %s" % (base, behind, fgit(root, "rev-parse", "--short", "HEAD")[1])
 
 
+def scratch(goal):
+    """~/.workflow-loop/scratch/<goal>: unlike /tmp, it survives a restart."""
+    path = os.path.join(os.path.expanduser("~"), ".workflow-loop", "scratch", re.sub(r"[^\w.-]", "-", goal))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def untrusted(folder):
-    """The refusal for FOLDER when ~/.claude.json lists projects and none at or above it is trusted (read only, never written), else ""."""
+    """The refusal for FOLDER when ~/.claude.json lists projects and none at or above it is trusted (read only), else ""."""
     try:
         with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
             known = json.load(handle)["projects"]
@@ -136,7 +143,7 @@ def untrusted(folder):
 
 
 def behind_ask(common, base="main"):
-    """When the main checkout is behind origin/<base>, the line asks a free worker to fast-forward it; '' when current."""
+    """When the main checkout is behind origin/<base>, a line asks a free worker to move it; '' when current."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -272,7 +279,7 @@ def add_id(base, sid):
 
 
 def cmd_claim(args):
-    """MON-13: this session joins this repo's operation sessions and those of every repo it follows."""
+    """MON-13: this session joins the operation sessions of this repo and every repo it follows."""
     sid = args.id or os.environ.get("CLAUDE_SESSION_ID", "")
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
     if os.environ.get("LOOP_ROLE") == "worker" or os.path.realpath(os.getcwd()).startswith(os.path.join(common, "loop", "worktrees") + os.sep):
@@ -288,7 +295,7 @@ def cmd_claim(args):
 
 
 def cmd_send(args):
-    """The inbox carries it; a worker session is also sent it by session message."""
+    """The inbox carries it; a worker session is also sent it."""
     graph.refuse(graph.load_run(args.slug))
     remember(args.slug, args.text, args.source)
     code, said = script("worker.py", "send", args.slug, args.text)
@@ -366,6 +373,11 @@ def cmd_forward(args):
     return 0 if "FAST-FORWARDED" in line else 1
 
 
+def cmd_scratch(args):
+    print(scratch(args.goal))
+    return 0
+
+
 def cmd_wiki_only(args):
     """merge.py: exit 0 when NEW follows OLD by wiki page commits only."""
     return 0 if wiki_only(os.getcwd(), args.old, args.new) else 1
@@ -396,6 +408,7 @@ def main():
     item = sub.add_parser("claim")
     item.add_argument("--id", default="")
     sub.add_parser("forward").add_argument("base")
+    sub.add_parser("scratch").add_argument("goal")
     item = sub.add_parser("wiki-only")
     item.add_argument("old")
     item.add_argument("new")

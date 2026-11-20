@@ -6,6 +6,7 @@ to that session like `sessions.py bind SLUG self` and says BOUND; outside an app
 usage: test-new-binds.py [in|out]"""
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -122,5 +123,15 @@ if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bou
     subprocess.run(["git", "-C", repo, "worktree", "add", "-q", "--detach", gone], check=True)
     shutil.rmtree(gone)
     check("a worktree entry whose folder is gone is MISSING worktrees, with the fix", "MISSING worktrees: 1 entries whose folder is gone. Fix: git worktree prune" in selfcheck())
+if only in ("", "scratch"):  # TD509: scratch lives under ~/.workflow-loop/scratch, and no loop script hard-codes /tmp
+    home = tempfile.mkdtemp(prefix="scratch-home-")
+    done = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "operate.py"), "scratch", "../my goal"], capture_output=True, text=True,
+                          env=dict(os.environ, HOME=home, USERPROFILE=home, LOOP_ROLE="worker"))
+    path = done.stdout.strip()
+    check("operate.py scratch GOAL makes and prints a folder under ~/.workflow-loop/scratch, whatever the goal text", os.path.isdir(path) and os.path.realpath(path).startswith(os.path.realpath(os.path.join(home, ".workflow-loop", "scratch")) + os.sep))
+    hard = re.compile(r"""["'](?:/private)?/tmp[/"']""")
+    found = [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(root, "skills")) for f in fs if f.endswith((".py", ".sh")) and hard.search(open(os.path.join(d, f), errors="replace").read())]
+    check("no loop script hard-codes /tmp (%s)" % ", ".join(found), not found)
+    check("negative control: a script that does is found", bool(hard.search('open("/tmp/x.log")')))
 print("PASS: goal.py new binds an app session's goal" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)
