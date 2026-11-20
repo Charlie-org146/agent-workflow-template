@@ -10,7 +10,9 @@ Built with the [jcl2018/agent-workflow-template](https://github.com/jcl2018/agen
 
 How the loop sits between its owner, its parts and the outside systems it uses; every principle below is judged against it.
 
-![System design](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/system-design.svg?raw=true)
+![System design, by principle: how many of each principle's requirements are on each feature](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/system-design-by-principle.svg?raw=true)
+
+![System design, by feature: how many of each principle's requirements are on each feature](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/system-design-by-feature.svg?raw=true)
 
 ## 1. Documentation-driven
 

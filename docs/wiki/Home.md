@@ -7,7 +7,9 @@ The features, how to use each one, the settings and what runs by itself are on t
 
 How the loop sits between its owner, its parts and the outside systems it uses; every principle below is judged against it.
 
-![System design](system-design.svg)
+![System design, by principle: how many of each principle's requirements are on each feature](system-design-by-principle.svg)
+
+![System design, by feature: how many of each principle's requirements are on each feature](system-design-by-feature.svg)
 
 ## 1. Documentation-driven
 

@@ -38,4 +38,4 @@ Frozen. A wrong done line needs a new goal.
 
 ## System design figure
 
-`docs/wiki/system-design.svg` is a grid: one column per principle, one row per feature grouped by area, and a dot where the principle has a requirement on the feature (49 today), read from the Feature column of the README's principle tables. Rebuild it with `python3 dev/system-design.py`; `python3 dev/system-design.py --check` fails when it is stale. The generator is under dev/, so it is not shipped and the package file count is unchanged.
+Two grids, `docs/wiki/system-design-by-principle.svg` (a row per principle, a column per feature) and `docs/wiki/system-design-by-feature.svg` (a row per feature grouped by area, a column per principle), each cell the number of that principle's requirements on the feature (92 requirement links today, a requirement naming two features counts for both), read from the Feature column of the README's principle tables. Rebuild it with `python3 dev/system-design.py`; `python3 dev/system-design.py --check` covers both and fails when either is stale. The generator is under dev/, so it is not shipped and the package file count is unchanged.
