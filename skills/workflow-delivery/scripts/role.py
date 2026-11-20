@@ -208,11 +208,10 @@ def markers(step):
 HERE = os.path.dirname(os.path.abspath(__file__))
 from lane import NOTHING, alive, flow_spec, kill, lane, lane_argv, lane_status, lane_text, wait_for  # noqa: E402,F401
 import lanekit  # noqa: E402
-from lanekit import FILES, REG, generated  # noqa: E402
+from lanekit import FILES, REG  # noqa: E402
 
 
 def lane_note(runs, slug, step):
-    """'N pass; M not runnable here' from the step's lane line (GRD-11), or ''."""
     try:
         line = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, step)))).get("line", "")
     except (OSError, ValueError):
@@ -243,7 +242,6 @@ def need_lane(runs, slug, reply, step="qa"):
 
 
 def over_caps():
-    """A refusal when the repo is over a test cap and this goal adds rows net (the base branch's caps; removing or merging as many always passes)."""
     top = git_out("rev-parse", "--show-toplevel")
     at = "origin/" + (json.loads(git_out("show", "HEAD:.loop/config.json") or "{}").get("base") or "main")
 
@@ -287,7 +285,6 @@ def issues(top):
 
 
 def results(top):
-    """Run results (DX-19): lanes_cli.py merge-runs, run by path."""
     cli = os.path.join(REG, "lanes_cli.py")
     if not os.path.exists(cli):
         return
@@ -299,7 +296,6 @@ def results(top):
 
 
 def cap_rows(rows, lines=300, chars=30000):
-    """Rows within `lines` lines and `chars` characters, then `... N more` (gh refuses a body over 65,536)."""
     keep = rows[:lines]
     while keep and sum(map(len, keep)) + len(keep) > chars:
         keep.pop()
@@ -339,16 +335,7 @@ def record(state, base):
         issues(top)
         results(top)
         changed = [path for path in FILES if git_out("status", "--porcelain", "--", path)]
-        criteria = os.path.join(os.path.dirname(REG), "..", "workflow-docs", "scripts", "criteria.py")
         try:
-            cfg = json.load(open(os.path.join(top, ".loop", "config.json")))
-        except (OSError, ValueError):
-            cfg = {}
-        cfg = cfg if isinstance(cfg, dict) else {}
-        try:
-            if changed and os.path.exists(os.path.join(top, ".loop", "docs.tsv")) and os.path.exists(criteria):
-                subprocess.run([sys.executable, criteria, "render", "--tables"], cwd=top, capture_output=True, text=True, timeout=300)
-                changed += generated(cfg)
             if changed:
                 subprocess.run(["git", "add", "--"] + changed, cwd=top, capture_output=True, text=True)
                 done = subprocess.run(["git", "commit", "--only", "-q", "-m", "pr: record issue states and the lane's results",
@@ -394,7 +381,6 @@ def bump_version(g, state, head):
 
 
 def requirement_gate(g, slug):
-    """Refuse pr while a requirement finding is unfiled or criteria.py guard refuses a changed Reviewed requirement."""
     rows = [r for r in g.guards.extra(g.state_dir(), slug)["findings"] if r.get("requirement")]
     loose = {r["text"] for r in rows if not r["filed"]} - {r["text"] for r in rows if r["filed"]}
     tool = os.path.join(g.SKILLS, "workflow-docs", "scripts", "criteria.py")

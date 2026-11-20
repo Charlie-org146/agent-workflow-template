@@ -179,7 +179,7 @@ echo v >> README.md; kill "$hp"; wait; git checkout -q README.md
 check "an uncommitted edit while a lane waits gives the worktree LANE_STALE with the path, exit 5" '[ "$(cat "$T/stale2.rc")" = 5 ] && grep -q "^LANE_STALE: the worktree changed while queued (README.md); no rows ran" "$T/stale2.err"'
 export LOOP_LANE_LIMIT=2
 
-echo "== the prep commit keeps Tests tables fresh (151)"
+echo "== the prep commit takes only a generated page, never the run dates (151, part 0b)"
 docs="python3 $here/skills/workflow-docs/scripts/docs.py"; cri="python3 $here/skills/workflow-docs/scripts/criteria.py"
 python3 -c "import json;c=json.load(open('.loop/config.json'));c['criteria']=True;json.dump(c,open('.loop/config.json','w'),indent=2)"
 mkdir -p docs/wiki
@@ -187,7 +187,7 @@ printf '<!-- workflow-docs -->\n# Calc\n\nReview: **Unreviewed**\n\n## Problem\n
 $docs add Calc --paths calc.py >/dev/null 2>&1
 $reg add r1 --level land --command "sleep 3; test ! -e broken" --goal CAL-1 --describe "Given the calculator, when it adds, then it works." >/dev/null
 seen r1; $cri render >/dev/null; git add -A; git commit -qm "Calc page"
-# Value: protects=a by-id rerun never leaves the Tests tables stale for the next lane (151); fails_when=no prep commit, or it commits more than rendered paths; why_new=prep is new; seam=none; no_claim=none beyond protects
+# Value: protects=a by-id rerun leaves its run dates to the release step and the prep commit takes only a generated page (151); fails_when=no prep commit, or it commits run dates or more than generated paths; why_new=prep is new; seam=none; no_claim=none beyond protects
 sed -i.bak -E 's/^(r1\t[A-Z]+\t)[0-9-]+/\12000-01-01/' .loop/regression-runs.tsv; rm -f .loop/regression-runs.tsv.bak
 $cri render >/dev/null; git add -A; git commit -qm "an old run date" >/dev/null 2>&1  # runs.tsv keeps one date a day: start from an older one, rendered
 $reg run r1 >/dev/null 2>&1
@@ -196,6 +196,8 @@ echo staged > staged.txt; git add staged.txt
 out=$(poll pp qa)
 check "a staged unrelated file makes the lane refuse LANE_DIRTY before any render or commit" 'grep -q "^LANE_DIRTY at start: staged.txt" <<<"$out" && [ "$(git log -1 --format=%s)" = "an old run date" ]'
 git rm -q --cached staged.txt; rm staged.txt
+printf 'a generated edit
+' >> docs/wiki/Calc.md
 printf '#!/bin/sh\necho hook says no >&2\nexit 1\n' > "$(git rev-parse --git-path hooks)/pre-commit"; chmod +x "$(git rev-parse --git-path hooks)/pre-commit"
 out=$(poll pp qa)
 check "a refused prep commit is LANE_PREP_FAILED with its fix, leaves the index empty and starts no lane" 'grep -q "^LANE_PREP_FAILED: git commit failed: hook says no .*Fix: make the commit pass" <<<"$out" && [ -z "$(git diff --cached --name-only)" ] && [ ! -e "$RUNS/pp.qa-lane.job" ]'
@@ -204,9 +206,7 @@ began=$(date +%s); out=$(poll pp qa); took=$(( $(date +%s) - began ))
 check "a hanging pre-commit hook times out to LANE_PREP_FAILED within about a minute" 'grep -q "^LANE_PREP_FAILED: git commit failed: timed out after 60s" <<<"$out" && [ $took -lt 90 ]'
 rm -f "$(git rev-parse --git-path hooks)/pre-commit"
 out=$(until_done pp qa)
-check "the next lane commits only the re-rendered page and run dates, says LANE_PREP, and passes" 'grep -q "^LANE_PREP: re-rendered the Tests tables (commit " "$RUNS/pp.qa-lane.txt" && [ "$(git log -1 --format=%s)" = "Lane: re-render the Tests tables" ] && [ "$(git show --name-only --format= HEAD | sort | tr "\n" " ")" = ".loop/regression-runs.tsv docs/wiki/Calc.md docs/wiki/Tests.md " ] && grep -qx pass <<<"$out"'
-$cri render --check >/dev/null; rc=$?
-check "after the prep commit the docs check finds no stale Tests table" '[ $rc = 0 ]'
+check "the next lane commits only the generated page, never the run dates, says LANE_PREP, and passes" 'grep -q "^LANE_PREP: re-rendered the Tests tables (commit " "$RUNS/pp.qa-lane.txt" && [ "$(git log -1 --format=%s)" = "Lane: re-render the Tests tables" ] && [ "$(git show --name-only --format= HEAD | sort | tr "\n" " ")" = "docs/wiki/Calc.md " ] && [ -n "$(git status --porcelain -- .loop/regression-runs.tsv)" ] && grep -qx pass <<<"$out"'
 sed -i.bak 's/The toy calculator, written/The calculator, rewritten/' docs/wiki/Calc.md; rm docs/wiki/Calc.md.bak
 out=$(poll pp ship)
 check "a hand edit above a page's Tests section refuses LANE_DIRTY naming the page, and nothing is committed" 'grep -q "^LANE_DIRTY: docs/wiki/Calc.md has edits above its ## Tests section" <<<"$out" && [ "$(git log -1 --format=%s)" = "Lane: re-render the Tests tables" ]'

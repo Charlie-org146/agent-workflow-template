@@ -517,6 +517,7 @@ reg-local-relabel	PASS	2026-11-12
 reg-same-env	PASS	2026-11-12	
 reg2-wording	PASS	2026-11-19	
 regression-issue-no-milestone	PASS	2026-11-12	
+release-head-status	PASS	2026-11-20	
 release-lists-fixes	PASS	2026-11-12	
 release-note-found	PASS	2026-11-19	
 release-runs-audit	PASS	2026-11-12	
@@ -654,6 +655,7 @@ sync-propose	SKIPPED	2026-11-16
 sync-repo-delta	PASS	2026-11-18	
 sync-source-delta	PASS	2026-11-18	
 sync-template-redirect	SKIPPED	2026-11-16	
+tables-prep-151	PASS	2026-11-20	
 template-sheet	PASS	2026-11-12	
 test-caps-consolidate-allowed	PASS	2026-11-16	
 test-caps-controls	PASS	2026-11-16	

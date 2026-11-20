@@ -2,7 +2,7 @@
 """The lane's kit, imported by lane.py and goal.py; not a command. Parts:
 1. Copies of the slots.py pieces lane.py uses (COPIED, flow_file ... rows_line): each must match
    workflow-regression/scripts/slots.py exactly; dev/toy/test-lane-control.sh fails on drift.
-2. The one commit a lane may make before it starts (prep, generated): re-rendered Tests tables and run dates, else LANE_DIRTY;
+2. The one commit a lane may make before it starts (prep, generated): re-stamped pages, else LANE_DIRTY;
    a refused or hung commit starts nothing (LANE_PREP_FAILED).
 3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, then pr_lane, pr_head
    and pr_base for merge.py's checks.
@@ -50,8 +50,8 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 HERE = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "scripts"))
 NOTHING = "the lane committed and pushed nothing"
-BOOKKEEPING = (".loop/regression-runs.tsv", ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
-FILES = (".loop/regression-issues.tsv", ".loop/regression-runs.tsv")
+BOOKKEEPING = (".loop/regression-runs.tsv", ".loop/lane-results/", ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
+FILES = (".loop/regression-issues.tsv", ".loop/lane-results/")
 EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL = 4, 5, 6, 2.0
 EXIT_PREP = 125
 TERMINAL = ("pass", "fail")
@@ -309,10 +309,6 @@ def prep(top, cfg, log):
             return None, "LANE_DIRTY at start: %s. Fix: commit or remove them; %s." % (", ".join(dirty()[:10]), NOTHING)
     if not os.path.exists(os.path.join(top, ".loop", "docs.tsv")) or not os.path.exists(criteria):
         return "", None
-    done = subprocess.run([sys.executable, criteria, "render", "--tables"], cwd=top, capture_output=True, text=True, timeout=300)
-    if done.returncode:
-        first = (done.stderr or done.stdout).strip().splitlines()[-1:] or ["exit %d" % done.returncode]
-        return None, "LANE_PREP_FAILED: criteria.py render failed: %s. Fix: run it by hand; %s." % (first[0][:200], NOTHING)
     branch = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()  # DOC-2: a page stale only by this goal's code is re-stamped before the rows run
     if branch.startswith("loop/"):
         try:
@@ -320,8 +316,6 @@ def prep(top, cfg, log):
         except subprocess.TimeoutExpired:
             git("checkout", "-q", "--", *[p for p in dirty() if is_page(p, cfg) and not tests_only(p)])
     paths = [p for p in dirty() if is_page(p, cfg)]
-    if git("status", "--porcelain", "--", ".loop/regression-runs.tsv").stdout.strip():
-        paths.append(".loop/regression-runs.tsv")
     if not paths:
         return "", None
     proc = subprocess.Popen(["git", "commit", "--only", "-q", "-m", "Lane: re-render the Tests tables", "--"] + paths,

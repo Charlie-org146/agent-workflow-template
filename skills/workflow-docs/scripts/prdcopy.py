@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The repo's copy of an external PRD (DOC-17), and docs.py sync. `.loop/prd/PAGE.md` is the last agreed version, in the repo's layout;
-every check reads it, never the source. normalise() brings a source's layout to the repo's, block() is the page's generated PRD block,
-link_page() the docs check of a page with a source, sync() compares source and copy with what both last agreed: one side changed is a
-DELTA, both a CONFLICT, nothing is overwritten, --accept PAGE:ID=repo|source writes one side over the other. Imports are lazy."""
+every check reads it, never the source. normalise() brings a source's layout to the repo's, block() is the generated PRD block,
+link_page() checks a page with a source, sync() compares source and copy with what both last agreed: one side changed is a DELTA,
+both a CONFLICT, nothing is overwritten, --accept PAGE:ID=repo|source writes one side over the other. Imports are lazy."""
 import os
 import re
 
@@ -180,7 +180,7 @@ def link_page(root, page, text, link, parts, numbered, rule, seen, linked, on):
         found += D.deployments(page, rule["deploy"], numbered[rule["deploy"]][1], rule["page_cols"], rule["delivery_cols"], rule["access"])
     if "runbook" in on and rule["runbook"] in numbered:
         found += pf.runbook(page, rule["runbook"], numbered[rule["runbook"]][1], rule["fields"])
-    if "tests" in on:
+    if "tests" in on and not criteria.waiting(root):
         found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], criteria.table(root, ids, linked))] if x]
     return found
 
@@ -298,7 +298,7 @@ def sync(root, dry=False, accept=(), opened=False):
             if r != s:
                 found.append((ident, "both sides" if (sha(r) != b) == (sha(s) != b) else "the repo" if sha(r) != b else "the source", r, s))
             elif r is not None and ident in want_blocks and mark_of(mine_blocks[ident][0]) != mark_of(want_blocks[ident][0]) and not dry:
-                marks[ident] = mark_of(want_blocks[ident][0])  # same text: the review mark follows the source
+                marks[ident] = mark_of(want_blocks[ident][0])
         for ident, mark in marks.items():
             first = re.sub(r"^(- [A-Z]{2,5}-\d+: )(?:\*\*.*?\*\* )?", lambda hit: "%s**%s** " % (hit.group(1), mark), mine_blocks[ident][0])
             copy = set_item(copy, ident, [first] + mine_blocks[ident][1:])
@@ -321,7 +321,7 @@ def sync(root, dry=False, accept=(), opened=False):
                 row[2] = "0"
             elif not row[1]:
                 from milestones import backlog
-                home = backlog(page)  # "Backlog: PAGE", made when missing, never the bare page name (DOC-17)
+                home = backlog(page)
                 for stone in ([["--milestone", home]] if home else []) + [[]]:
                     ok, made = post("LOOP_GH", "issue", "create", "--title", "%s %s %s: %s" % (kind_of(side), page, ident, what(side)), "--body", text, *stone)
                     if ok:
