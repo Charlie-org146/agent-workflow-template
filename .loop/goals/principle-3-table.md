@@ -13,4 +13,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `git diff origin/main --stat`.
+   Expect: README.md, docs/wiki/Principles.md and docs/wiki/Home.md changed, plus this goal's own record files, and nothing else.
+2. Open principle 3 in README.md.
+   Expect: seven rows REL-13, DEL-17, REG-7, HLT-7, GRD-7, GRD-20 and OPS-16 with Follows links, then REL-15, GRD-8 and HLT-11 each marked absorbed by REL-13, GRD-7 and GRD-20.
