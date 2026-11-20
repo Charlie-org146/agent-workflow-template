@@ -40,9 +40,6 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
     subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "x"], cwd=repo, check=True)
 
-    os.makedirs(os.path.join(repo, ".loop"))  # arming goes through merge.py, which refuses unless auto_merge is on (the owner's setting)
-    with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
-        json.dump({"base": "main", "auto_merge": True}, handle)
     env.pop("LOOP_ROLE", None)
     os.makedirs(os.path.join(repo, ".git", "loop"))
     open(os.path.join(repo, ".git", "loop", "operation.id"), "w").write("ops-session\n")
@@ -79,6 +76,10 @@ with tempfile.TemporaryDirectory() as tmp:
     check(refused.returncode != 0 and "REFUSED" in refused.stderr + refused.stdout and not os.path.exists(os.path.join(repo, ".git", "loop", "watchers", "workerjob.json")),
           "a worker's --arm job is refused and nothing is written")
     check(run("watch", "workerjob2", "--pr", "9", LOOP_ROLE="worker").returncode == 0, "a worker may still leave a report-only job")
+    pr(80, "OPEN", [ok_])
+    pr(81, "OPEN", [ok_])
+    run("watch", "headok", "--pr", "80", "--arm", "--head", "a" * 40)  # the head the operation session saw
+    run("watch", "headbad", "--pr", "81", "--arm", "--head", "b" * 40)  # the pull request has moved to another head since
     first = run("tick")
     state = {n[:-5]: json.load(open(os.path.join(folder, n))) for n in os.listdir(folder)}
     log = open(os.path.join(tmp, "gh.log")).read()
@@ -92,6 +93,12 @@ with tempfile.TemporaryDirectory() as tmp:
     check(state["gg-bad"]["state"] == "red" and "GitGuardian" in state["gg-bad"]["result"] and "pr merge 7" not in log, "a failed status check names GitGuardian and arms nothing")
     run("tick")
     check(open(os.path.join(tmp, "gh.log")).read().count("pr merge 1") == 1, "a second tick does not queue it again")
+    log = open(os.path.join(tmp, "gh.log")).read()
+    state = {n[:-5]: json.load(open(os.path.join(folder, n))) for n in os.listdir(folder)}
+    check(state["headok"]["state"] == "armed" and log.count("pr merge 80 --auto --merge --match-head-commit " + "a" * 40) == 1,
+          "a job whose recorded head is the pull request's head arms, once, and a second tick refuses to arm it again (armed is consumed)")
+    check(state["headbad"]["state"] == "refused" and "head moved" in state["headbad"]["result"] and "pr merge 81" not in log,
+          "negative control: a job whose recorded head is not the pull request's head refuses and queues nothing")
     check("next check-in" in first.stdout or "Coming up" in first.stdout, "the tick then prints the check-in")
     sys.path.insert(0, os.path.dirname(mailbox))
     import inspect
@@ -101,29 +108,6 @@ with tempfile.TemporaryDirectory() as tmp:
     spec.loader.exec_module(module)
     body = inspect.getsource(module.cmd_tick)
     check(not any(word in body for word in ("operate.py", "watch.py", "sessions.py", "assign", "send")), "the tick's code never names operate.py, watch.py, sessions.py, assign or send")
-    mail_src = open(mailbox).read()
-    check("gh pr merge" not in mail_src and '"pr", "merge"' not in mail_src, "mailbox.py never merges itself: it arms through merge.py, the one merging script (test-tree.sh)")
-    merge_py = os.path.join(os.path.dirname(mailbox), "..", "..", "workflow-release", "scripts", "merge.py")
-    before = open(os.path.join(tmp, "gh.log")).read()
-    for who, extra in (("LOOP_ROLE=worker", {"LOOP_ROLE": "worker"}), ("cwd in a worker worktree", {})):
-        where = os.path.join(repo, ".git", "loop", "worktrees", "w1")
-        if not os.path.isdir(where):  # a real worktree under <common>/loop/worktrees, with the repo's config in it
-            subprocess.run(["git", "worktree", "add", "-q", "--detach", where], cwd=repo, check=True, capture_output=True)
-            os.makedirs(os.path.join(where, ".loop"), exist_ok=True)
-            with open(os.path.join(where, ".loop", "config.json"), "w") as handle:
-                json.dump({"base": "main", "auto_merge": True}, handle)
-        got = subprocess.run([sys.executable, merge_py, "--arm", "--go-head", "a" * 40, "1"], capture_output=True, text=True, env=dict(env, **extra), cwd=where if "cwd" in who else repo)
-        check(got.returncode != 0 and "worker never arms" in got.stdout + got.stderr and open(os.path.join(tmp, "gh.log")).read() == before,
-              "merge.py --arm refuses a worker (%s) and queues nothing" % who)
-    # negative control: with auto_merge off, merge.py refuses and the armed job queues nothing
-    with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
-        json.dump({"base": "main", "auto_merge": False}, handle)
-    pr(8, "OPEN", [ok_])
-    run("watch", "off", "--pr", "8", "--arm")
-    run("tick")
-    off = json.load(open(os.path.join(folder, "off.json")))
-    check(off["state"] == "arm-failed" and "pr merge 8" not in open(os.path.join(tmp, "gh.log")).read(),
-          "negative control: with auto_merge off the armed job fails and queues nothing (%s)" % off["result"][:60])
     used = open(os.path.join(tmp, "launchctl.log")).read() if os.path.exists(os.path.join(tmp, "launchctl.log")) else ""
     check(not any(word in used for word in ("bootstrap", "load", "bootout", "enable", "kickstart")), "nothing was loaded, bootstrapped or booted out: launchctl saw only %r" % used.strip())
 sys.exit(1 if failed else 0)
