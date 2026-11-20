@@ -959,7 +959,7 @@
 | <a id="t-ls-usage-steps"></a>ls-usage-steps | requirement | done line local-schedule:5 | not run | - | local | 2026-11-12 |
 | <a id="t-ls-messages-table"></a>ls-messages-table | requirement | done line local-schedule:5 | not run | - | local | 2026-11-12 |
 | <a id="t-ls-nothing-in-repo"></a>ls-nothing-in-repo | requirement | done line local-schedule:6 | not run | - | local | 2026-11-12 |
-| <a id="t-ls-size-budget"></a>ls-size-budget | requirement | done line local-schedule:1 | not run | - | local | 2026-11-12 |
+| <a id="t-ls-size-budget"></a>ls-size-budget | requirement | done line local-schedule:1 | not run | - | local | 2026-11-20 |
 | <a id="t-ls-scheduled-rule"></a>ls-scheduled-rule | requirement | done line local-schedule:1 | not run | - | local | 2026-11-12 |
 | <a id="t-ls-regression-setting"></a>ls-regression-setting | requirement | done line local-schedule:2 | not run | - | local | 2026-11-12 |
 | <a id="t-st-public-zero"></a>st-public-zero | requirement | done line local-schedule:7 | not run | - | local | 2026-11-12 |
