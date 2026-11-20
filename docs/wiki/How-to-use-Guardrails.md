@@ -52,8 +52,8 @@ Say these to the agent in the operation session; each feature page has the exact
 | You say | What happens |
 |---|---|
 | "Show me every guardrail" | You get the Guardrails page: each guardrail with what it protects against, the feature that owns it, its setting, and whether its Tests row says it is enforced. |
-| "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes, goal_lane_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
-| "Check the budgets" | Health's performance group runs: it warns on any of the last 10 finished goals over its time or token budget, a goal's test lane over goal_lane_minutes, and a full suite over 30 minutes. |
+| "Which guardrail settings are there?" | The settings reference lists each setting with its home, default and meaning: token_budget, step_budget_minutes, test_budget_minutes and silent_minutes among them (time_budget_minutes is not listed yet). |
+| "Check the budgets" | Health's performance group runs: it warns on any of the last 10 finished goals over its time or token budget, and a full suite over 30 minutes. |
 | "Which guardrails aren't enforced yet?" | Each guardrail whose Tests row reads not enforced is listed with the feature that owns the missing part. |
 | "Will machine setup write my address into a repo?" | No: `machine.py apply` refuses a routine or item holding an address or home path, names the line and kind, and writes nothing. |
 
@@ -87,7 +87,7 @@ Each requirement and how it is delivered:
 
 ### API/file contract: .loop/config.json
 - **Path:** `.loop/config.json`
-- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `goal_lane_minutes`, `silent_minutes` and `criteria_max`.
+- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `silent_minutes` and `criteria_max`.
 - **Example:** `"criteria_max": 19` is this repo's cap on a page's requirements.
 - **Writer:** workflow-setup writes the defaults; the owner edits a value.
 - **Reader:** the guards, the lanes, docs check and health.
