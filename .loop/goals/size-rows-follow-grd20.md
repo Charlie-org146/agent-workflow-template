@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/toy/size-check.py --control 'skills/*/scripts/*.py'`.
+   Expect: PASS negative control (20,481 bytes fails, 20,480 only warns), then one WARN line per script over 19,000 and exit 0.
+2. Run `bash dev/toy/test-estimates.sh module_size` and `python3 dev/toy/test-trim-monitoring.py`.
+   Expect: a WARN line for each file over 19,000, and PASS for the 20,481-byte negative control.
