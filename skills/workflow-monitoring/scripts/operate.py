@@ -20,7 +20,7 @@ usage: operate.py <command> [options]
   claim [--id ID]
       add this session (each id it goes by: CLI, app, pod; or --id) to loop/operation.id for the govern hook (MON-7), in this
       repo and every repo it follows (MON-13); refused in a worker
-  scratch GOAL   print ~/.workflow-loop/scratch/GOAL (made on first use; a restart keeps it)
+  scratch GOAL   print ~/.workflow-loop/scratch/GOAL, made on first use
 
 An LLM asked to run the operation session runs `operate.py run` and nothing else. It never merges.
 """
@@ -124,13 +124,6 @@ def refresh(common, base="main"):
     return "CHECKOUT FAST-FORWARDED %s by %s commits to %s" % (base, behind, fgit(root, "rev-parse", "--short", "HEAD")[1])
 
 
-def scratch(goal):
-    """~/.workflow-loop/scratch/<goal>: a restart keeps it."""
-    path = os.path.join(os.path.expanduser("~"), ".workflow-loop", "scratch", re.sub(r"[^\w.-]", "-", goal))
-    os.makedirs(path, exist_ok=True)
-    return path
-
-
 def untrusted(folder):
     """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
     try:
@@ -143,7 +136,7 @@ def untrusted(folder):
 
 
 def behind_ask(common, base="main"):
-    """A line asking a free worker to move the main checkout when it is behind origin/<base>."""
+    """A line asking a free worker to move the main checkout when behind origin/<base>."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -378,7 +371,7 @@ def cmd_forward(args):
 
 
 def cmd_scratch(args):
-    print(scratch(args.goal))
+    print(layers.scratch(args.goal))
     return 0
 
 
