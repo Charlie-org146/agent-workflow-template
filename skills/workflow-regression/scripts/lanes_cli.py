@@ -11,7 +11,7 @@ affected: `AFFECTED n of m rows (ids)`, `ALWAYS <id>: <reason>`, `UNMAPPED` or `
 check: every `# reads:` problem, `<CODE> <file>:<line>: <what>` and a `fix:` line each; exit 1 on problems.
 merge-runs: the lane record's PASS and FAIL rows (flaky flag too) into the fragment .loop/lane-results/<slug>.tsv (DX-19).
 fold: the release step; every fragment into .loop/regression-runs.tsv (per row the later date, then line, wins), then deleted.
-Usage errors exit 2; LANES_DEBUG=1 shows a trace. The root is the git top level unless --root is given.
+Usage errors exit 2; LANES_DEBUG=1 traces. The root is the git top level unless --root.
 """
 import argparse
 import datetime
@@ -176,7 +176,6 @@ def _put(path, rows):
 
 
 def merge_runs(root):
-    """The lane record's PASS and FAIL rows (and any flaky flag, tiers.py flaky_apply) into .loop/lane-results/<slug>.tsv."""
     import runs
     record, _ = lanes.load(lanes.record_path(root), root.replace(chr(92), "/"))
     git = lambda *a: subprocess.run(["git", *a], cwd=root, capture_output=True, text=True).stdout.strip()
@@ -194,7 +193,6 @@ def merge_runs(root):
 
 
 def fold(root):
-    """The release step: fold every fragment into regression-runs.tsv (per row the later date, then line, wins) and delete it."""
     files, path = sorted(glob.glob(os.path.join(root, LANE, "*.tsv"))), os.path.join(root, ".loop", "regression-runs.tsv")
     best = _read(path)
     for name in files:
