@@ -355,7 +355,10 @@ QUEUE_FROM = "2026-11-20T20:00:00Z"  # waits of merges before this are shown, ne
 
 def queue_rows(root, limit=120, since=QUEUE_FROM):
     """Queue use of the last 20 merges: PRs per merge, and seconds a green PR waited before it entered the queue; over limit FAILs (merges since `since`)."""
-    url = run(["git", "remote", "get-url", "origin"], root).stdout.strip().replace(":", "/").removesuffix(".git").split("/")
+    origin = run(["git", "remote", "get-url", "origin"], root).stdout.strip()
+    if "github.com" not in origin:  # a repo not on GitHub (or with no origin) has no merge queue to read, so nothing is unread
+        return []
+    url = origin.replace(":", "/").removesuffix(".git").split("/")
     got = run(["gh", "api", "graphql", "-F", "o=" + url[-2], "-F", "r=" + url[-1], "-f", "query=" + QUERY], root)
     try:
         nodes = json.loads(got.stdout)["data"]["repository"]["pullRequests"]["nodes"]
