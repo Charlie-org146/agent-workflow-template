@@ -133,6 +133,9 @@ def monitor(name, paths=False):
 
 
 def budget_stop(slug, state, runs, cfg, at=None, save=None):
+    if save:
+        import goal
+        goal.SEEN[slug] = json.dumps(state)
     seen = view(state, runs)
     held, source = budget(seen, cfg)
     if seen.get("eta") or seen.get("eta_extend"):
@@ -150,11 +153,8 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
 
 def run_saver(runs):
     def save(state, note):
-        state.setdefault("log", []).append("%s %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), note))
-        path = os.path.join(runs, state["slug"] + ".json")
-        with open(path + ".tmp", "w") as handle:
-            json.dump(state, handle, indent=2)
-        os.replace(path + ".tmp", path)
+        import goal
+        goal.save(state, note)
     return save
 
 
