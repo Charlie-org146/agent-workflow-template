@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept lanes-table-data@5b6cb2663 -->
+Review: **Unreviewed** <!-- kept principle-7-readme@6991b3397 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -40,6 +40,8 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - A change to a Reviewed requirement is a new revision with its date, reason and my approval; earlier revisions stay on the page. I review only the changed requirement, and no other requirement loses its review. [DOC-20]
   - IDs are never reused, and a dropped requirement stays, marked Retired. A requirement that moves without a change of text keeps its Reviewed mark. [DOC-20]
   - Operation-top may approve requirement wording on my behalf after reading it, except safety classes; it lists each approval in the next check-in, and I can revert any. An approval record then reads 'approved by operation-top under owner delegation (DOC-2 rN)'. [DOC-2]
+- DOC-24: **Unreviewed** Every requirement names what it follows
+  - Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source, and a verdict, adopted or adapted. General guidance is not a reference. [DOC-24]
 
 
 
@@ -274,6 +276,12 @@ None
 | r2 | 2026-11-19 | The README is the principles <br> The README holds only its title, the eight principles, each with its one-sentence statement, its diagram and a table of the requirements that enforce it, then one final table of requirements not yet covered by any principle, and one link to the wiki Home; everything else it once held is on Home or a How-to-use page. The Principles page shows the same tables. <br> Each principle's table has one row per requirement, with the columns Requirement (its ID and title, linked to its feature page), Feature, Release (the version that introduced it, or v2.1 (planned) for a feature that has no requirement ID yet), Summary (one line) and Flow (a link to that requirement's own flow diagram); the not-yet-covered table has the columns Requirement, Feature and Reason. <br> `docs.py check` fails a README with any other section, a principle sentence that differs by a word from the list health uses (the list in workflow-health's commands reference), a table with other columns, a cited requirement that neither exists nor is v2.1 planned, and a Flow link that points to no existing diagram file; it checks only a repo that ships that list, so a repo that adopts the template keeps its own README. | README holds the eight principles with enforcing-requirement tables (owner 00:33-00:58; TOP-DECISION 82) | o177: "No, I'm not saying the readme is a draft... you will finish" |
 | r1 | 2026-11-18 | The README is the principles <br> The README holds only its title, the eight principles, each with its one-sentence statement, its diagram and the requirement IDs that enforce it, and one link to the wiki Home; everything else it once held is on Home or a How-to-use page. The Principles page shows the same eight with their diagrams. <br> `docs.py check` fails a README with any other section, a principle sentence that differs by a word from the list health uses (the list in workflow-health's commands reference), and a cited requirement that neither exists nor is marked planned; it checks only a repo that ships that list, so a repo that adopts the template keeps its own README. | migration r1; date from the run day | o39: "Yes" |
 
+### DOC-24
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-19 | Every requirement names what it follows <br> Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source, and a verdict, adopted or adapted. General guidance is not a reference. [DOC-24] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -415,6 +423,7 @@ None
 | [stale-code-page-unreviewed](Tests#t-stale-code-page-unreviewed) | requirement | DOC-2 | Given an Unreviewed page that only the goal's own mapped code staled, when the lane prep runs, then it carries a kept marker and is fresh before the rows run. | not run |
 | [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
 | [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
+| - | requirement | DOC-24 | no passing test | not enforced |
 | [docs-counts-issue-39](Tests#t-docs-counts-issue-39) | defect | [#39](https://github.com/jcl2018/agent-workflow-template/issues/39) closed (2026-11-09) | Given counts in the docs that drift from the code, when the docs check runs, then it fails (issue 39). | PASS 2026-11-12 |
 | [docs-count-word-gap-issue-104](Tests#t-docs-count-word-gap-issue-104) | defect | [#104](https://github.com/jcl2018/agent-workflow-template/issues/104) closed (2026-11-10) | Given a wrong skills count with a word such as "workflow-ready" or an extra space before the noun, when the docs check runs, then it fails, and a part such as "other" is not read. | PASS 2026-11-12 |
 | [docs-count-indented-code-issue-105](Tests#t-docs-count-indented-code-issue-105) | defect | [#105](https://github.com/jcl2018/agent-workflow-template/issues/105) closed (2026-11-10) | Given a count inside a 4-space indented code block, when the docs check runs, then it is skipped while the same indent inside a list item is still read. | PASS 2026-11-12 |

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept slot-hold-release@b3b4f3670 -->
+Review: **Unreviewed** <!-- kept principle-7-readme@6991b3397 -->
 
 How to use: [How-to-use-Check-in-and-board](How-to-use-Check-in-and-board)
 
