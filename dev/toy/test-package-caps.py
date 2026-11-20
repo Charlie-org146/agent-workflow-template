@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: dev/package.py, docs/wiki/How-to-use-Guardrails.md
+# reads: dev/package.py docs/wiki/How-to-use-Guardrails.md
 """dev/package.py's caps: a script of 20,480 bytes or more, or a 100th file, makes it fail; the real tree stays inside both.
 GRD-21: the package-limits table on How-to-use-Guardrails is there, and none of ours is looser than Agensi's."""
 import importlib.util

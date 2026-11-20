@@ -3,7 +3,7 @@
 
 Imported by lanes.py. A header is `# reads: <path>...` lines in the leading comment block: repo-relative paths, a
 trailing / for a folder. Shell files add the paths they name, Python files their same-folder imports and quoted file
-names (and quoted module names with importlib.import_module); anything unresolved reruns the row always.
+names (and importlib module names); anything unresolved always reruns the row.
 """
 import collections
 import json
@@ -179,7 +179,7 @@ def header(root, rel, cache):
     code = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#"))
     mentioned = {p for p in lanes.references(root, code, os.path.dirname(rel), wide=False)[0] if p.endswith("/")}
     if rel.endswith(".py") and re.search(r"""["']skills["']""", code):
-        mentioned.add("skills/")  # a Python script lists the skills folder by its quoted name
+        mentioned.add("skills/")
     found = False
     for number, line in enumerate(text.splitlines(), 1):
         lead = lead and (line.startswith("#") or (number == 1 and line.startswith("#!")))
@@ -208,6 +208,10 @@ def header(root, rel, cache):
                 paths.append(norm)
     cache[key] = (paths if found else None, problems)
     return cache[key]
+
+
+def live(text):
+    return "\n".join(x for x in text.split("\n") if not x.lstrip().startswith("#") and NOREAD not in x)
 
 
 def scan(root, rel, cache):
@@ -242,7 +246,7 @@ def scan(root, rel, cache):
                     if os.path.isdir(os.path.join(root, here)) and os.path.normpath(here) != base:
                         folders.add(os.path.normpath(here) + "/")
     elif "." not in os.path.basename(rel) or rel.endswith(".sh"):
-        text = "\n".join(line for line in text.split("\n") if not line.lstrip().startswith("#") and NOREAD not in line)
+        text = live(text)
         found, _ = lanes.references(root, text, base, wide=False)
         files = {p for p in found if not p.endswith("/")}
         folders = {p for p in found if p.endswith("/")}
@@ -314,8 +318,7 @@ def narrow(root, seeds, cache):
                 shell.append(lanes.read(root, rel, cache) or "")
                 sh.append(rel)
         for rel in sh:
-            text = "\n".join(x for x in (lanes.read(root, rel, cache) or "").split("\n")
-                             if not x.lstrip().startswith("#") and NOREAD not in x)
+            text = live(lanes.read(root, rel, cache) or "")
             sourced = {os.path.basename(s) for s in re.findall(r"(?m)^\s*(?:\.|source)\s+\"?([^\s\";]+)", text)}
             bound = {k: v for o in sh if o != rel and os.path.basename(o) in sourced
                      for k, v in cache.get(("bind", o), {}).items()}
