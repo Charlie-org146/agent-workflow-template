@@ -352,5 +352,18 @@ def eta_rows(root, at=None):
     return out
 
 
+def eta_settle(loop, events, now, why=lambda e: ""):
+    """Open ETAs: met when its event (events {(layer, key): epoch}) came by its time; missed, with a cause, when late or none."""
+    out = []
+    for e in bs.eta_fold(loop).values():
+        at = events.get((e["layer"], e["key"]))
+        if e["state"] == "open" and (at is not None or now > e["names"]):
+            late = at is None or at > e["names"]
+            note = "no event by %s" % bs.hhmm(e["names"]) if at is None else "came at %s, after %s" % (bs.hhmm(at), bs.hhmm(e["names"]))
+            out.append(dict(e, state="missed" if late else "met", settled=now, **({"cause": note + why(e)} if late else {})))
+    bs.eta_put(loop, *out)
+    return out
+
+
 if __name__ == "__main__":
     sys.exit(main())
