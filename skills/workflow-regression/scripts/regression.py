@@ -273,7 +273,7 @@ def cmd_run(args):
             ids = ", ".join(todo[:10]) + (", +%d more" % (len(todo) - 10) if len(todo) > 10 else "")
             print("AFFECTED %d of %d rows (%s): %s" % (len(todo), len(picked), ids,
                                                        " ".join(lanes.changed(root, old["commit"]) or [])[:400]))
-    i, n = map(int, os.environ.get("LOOP_PR_SHARD", "0/1").split("/"))
+    i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     todo = todo[i::n]
     if todo and args.target in ("land", "nightly"):
         lanes_cli.wait_memory(root)
