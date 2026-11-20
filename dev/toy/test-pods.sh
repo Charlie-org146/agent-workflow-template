@@ -242,13 +242,14 @@ echo "== done line 6: sizes"
 base=$(git -C "$here" merge-base HEAD origin/main 2>/dev/null || git -C "$here" rev-parse HEAD)
 over=""
 for f in "$here"/skills/*/scripts/*.py; do
-  rel=${f#$here/}; now=$(wc -c < "$f"); was=$(git -C "$here" show "$base:$rel" 2>/dev/null | wc -c | tr -d ' ')
-  if [ "$now" -ge 20480 ] || { [ "$now" -ge 19000 ] && [ "$was" -lt 19000 ]; }; then over="$over $rel($now)"; fi
+  rel=${f#$here/}; now=$(wc -c < "$f")
+  if [ "$now" -gt 20480 ]; then over="$over $rel($now)"; fi  # GRD-20 (TD482): a script over 19,000 warns, only over 20,480 fails
 done
-out="$over"; check "no script reaches 20 KB, and none newly crosses 18 KB" '[ -z "$over" ]'
+out="$over"; check "no script is over 20,480 bytes (GRD-20)" '[ -z "$over" ]'
 caps=""; for pair in graph:20480 checkin:20480 operate:20480 goal:20480 sessions:20480 watch:20480 merge:20480 mend:20480 board_lines:20480; do
   n=${pair%%:*}; cap=${pair##*:}; f=$(ls "$here"/skills/*/scripts/$n.py); [ "$(wc -c < "$f")" -le "$cap" ] || caps="$caps $n"; done
 out="$caps"; check "the touched scripts stay within their budgets" '[ -z "$caps" ]'
+out=""; check "negative control: size-check fails a 20,481-byte script and only warns at 19,500 and 20,480" 'python3 "$here/dev/toy/size-check.py" --control "$here/skills/workflow-monitoring/scripts/checkin.py" >/dev/null'
 mkdir -p "$T/export" && git -C "$here" archive HEAD | tar -x -C "$T/export"   # a clean export: no __pycache__ from earlier runs
 out=$(python3 "$here/dev/package.py" --root "$T/export" --out "$T/pkg.zip" 2>&1); rc=$?
 check "the package rules pass, 99 files or fewer (dev/package.py)" '[ $rc = 0 ] && has "PASS: " && has " files, ZIP"'
