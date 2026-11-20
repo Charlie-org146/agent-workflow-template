@@ -1,13 +1,4 @@
-"""Freshness, Tests and Adoption rules (report.py), plus Security and privacy, Size, Performance and Hygiene rules.
-Read-only; dates are days, so one day's runs print the same lines.
-
-Freshness: nightly (newest run over a day old), unreleased (commits over 3 days past the newest v* tag), finding-age (open health
-issue over 30 days), skipped (SKIPPED over 7 days). Tests: network (a land row reaching the network), config (config.json unparsable
-or no base: FAIL), checks-run-tests, template-version, scheduled, machine. Adoption: no-fit, agent-tools, prompt-pointer, milestones.
-Security, Size, Performance, Hygiene: private (a leak pattern: FAIL, never the text), scan-hook, workflow-permissions, skill-lines
-(150 lines: FAIL), requirements-per-page (over criteria_max: FAIL), check-time (over 60 s), idle-sessions, eta-missing, eta-extended,
-eta-overrun (GRD-14), auto-safety, auto-record (MON-11).
-"""
+"""Freshness, Tests, Adoption, Security, Size, Performance, Hygiene and principle-map rules. Read-only."""
 import datetime
 import glob
 import importlib.util
@@ -20,10 +11,9 @@ import time
 
 import issues as IS
 import report as _report
-from defects import LINE, behind, pages, row, setting, table
+from defects import LINE, behind, pages, row, setting, table, wiki
 
 
-# No prompt may block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -39,7 +29,6 @@ def days_since(text):
 
 
 def last_runs(root):
-    """{row id: (status, date)} from .loop/regression-runs.tsv."""
     out = {}
     try:
         with open(os.path.join(root, ".loop", "regression-runs.tsv")) as handle:
@@ -138,7 +127,6 @@ def template_version(root):
 
 
 def scheduled(root):
-    """The regression workflow must be scheduled unless regression_runs is mac; a leftover health.yml is a WARN."""
     out, flows = [], os.path.join(root, ".github", "workflows")
     try:
         mac = json.load(open(os.path.join(root, ".loop", "config.json"))).get("regression_runs") == "mac"
@@ -155,7 +143,6 @@ def scheduled(root):
 
 
 def no_fit(root):
-    """no-fit: each open `- [adoption] <kind>: <subjects>. Fix: <fix>` line of .loop/findings.md is one WARN row."""
     try:
         text = open(os.path.join(root, ".loop", "findings.md")).read()
     except OSError:
@@ -165,11 +152,10 @@ def no_fit(root):
             for m, line in found if m and not line.rstrip().endswith("[closed]")]
 
 
-POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Runbook section \S+ and follow it exactly\.$")  # docs.py prompts
+POINTER = re.compile(r"^In \S+, fast-forward to origin/main, then read \S+'s Runbook section \S+ and follow it exactly\.$")
 
 
 def prompt_pointer(root):
-    """prompt-pointer: WARN for each scheduled-task prompt (claude:TASK or mac:LABEL) with a line beyond the Runbook pointer."""
     try:
         items = json.load(open(os.path.join(root, ".loop", "config.json"))).get("automation") or []
     except (OSError, ValueError, AttributeError):
@@ -190,8 +176,6 @@ def prompt_pointer(root):
 
 
 def milestones(root):
-    """milestones: a WARN for each standing "Backlog: <Feature>" milestone (and Other) a GitHub repo lacks (DOC-10, SET-17). No
-    GitHub origin: nothing to check; no list from gh: one INFO row. LOOP_BACKLOG_MILESTONES stands in for gh."""
     if "github.com" not in (git_raw(root, "remote", "get-url", "origin") or ""):
         return []
     import milestone
@@ -204,7 +188,6 @@ def milestones(root):
 
 
 def machine(root):
-    """machine: each gap workflow-setup's machine.py lists, one WARN with its fix."""
     tool = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..", "dev", "machine.py")
     if os.environ.get("CI") or not os.path.isdir(os.path.expanduser("~/.claude/skills/workflow-health")) or not os.path.exists(tool):
         return []
@@ -251,12 +234,12 @@ def private(root):
     out = []
     for number, pattern in enumerate(wanted, 1):
         hits = git_raw(root, "grep", "-n", "-I", "-E", "-e", pattern, "--", ".", ":(exclude).git")
-        if hits is None:  # git grep exits 128 on a bad pattern: never a silent pass
+        if hits is None:
             out.append(row("UNREAD", "security", "pattern %d" % number, "private", "leak pattern %d is not a valid regex" % number,
                            "fix leak_patterns in the private flow file"))
             continue
         for line in hits.splitlines():
-            where = ":".join(line.split(":", 2)[:2])  # file:line, never the text
+            where = ":".join(line.split(":", 2)[:2])
             out.append(row("FAIL", "security", where, "private", "matches leak pattern %d" % number,
                            "remove it from the file and from history", where))
     return out
@@ -286,9 +269,9 @@ def workflow_permissions(root):
 
 
 def skill_lines(root):
-    out, cap = [], setting(root, "health_skill_lines", SKILL_LINES)  # a repo's own cap (config.json)
+    out, cap = [], setting(root, "health_skill_lines", SKILL_LINES)
     for path in sorted(glob.glob(os.path.join(root, "skills", "*", "SKILL.md"))):
-        with open(path, "rb") as handle:  # LF lines, as git holds them
+        with open(path, "rb") as handle:
             count = len(handle.read().replace(b"\r\n", b"\n").splitlines())
         if count >= cap:
             name = os.path.relpath(path, root)
@@ -352,11 +335,10 @@ def idle_sessions(root):
 
 
 ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record")
-HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # the ETA ledger and the run records' wrong statements (HLT-4)
+HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")
 
 
 def eta(root, name):
-    """One rule's rows from workflow-monitoring's auto.eta_rows and auto_rows."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "workflow-monitoring", "scripts", "auto.py")
     if not os.path.exists(path):
         return [row("UNREAD", "hygiene", "eta", name, "workflow-monitoring is not installed beside this skill")]
@@ -381,3 +363,40 @@ GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permiss
 
 GUARD_FUNCTIONS.update({name: (lambda root, name=name: eta(root, name)) for name in ETA + HONEST})
 FUNCTIONS.update(GUARD_FUNCTIONS)
+
+
+def pmap(root):
+    try:
+        text = open(os.path.join(wiki(root), "Principles.md"), errors="replace").read()
+    except OSError:
+        return {}
+    return {n: re.findall(r"^\| \[([A-Z]+-\d+) ", b, re.M) for n, b in re.findall(r"^## (\d)\. .*\n((?:(?!## ).*\n?)*)", text, re.M)}
+
+
+def reviewed(root, mark="Reviewed"):
+    return {k for t in pages(root).values() for k in re.findall(r"^- ([A-Z]+-\d+): \*\*" + mark, t, re.M)}
+
+
+def principle_map(root):
+    plan, done = pmap(root), reviewed(root)
+    under = {i for ids in plan.values() for i in ids}
+    bad = lambda i, why, fix: row("FAIL", "requirements", i, "principle-map", why, fix)
+    return ([bad(i, "%s is Reviewed under no principle" % i, "add it") for i in sorted(done - under)] * bool(plan)
+            + [bad(i, "%s is listed but not live" % i, "render") for i in sorted(under - reviewed(root, "[A-Za-z]"))]
+            + [bad("principle " + n, "principle %s has no Reviewed requirement" % n, "add one") for n, ids in sorted(plan.items()) if not done & set(ids)])
+
+
+def principle_review(root):
+    plan, done, goals = pmap(root), reviewed(root), [x["goal"].strip() for x in table(root)]
+    return ["PRINCIPLES: Reviewed requirements, tests and weak spots per principle"] + ["principle %s: %s" % (n, ", ".join(
+        "%s (%d tests)%s" % (i, goals.count(i), "" if i in goals else " WEAK") for i in ids if i in done) or "NONE") for n, ids in sorted(plan.items())]
+
+
+def f_principle_map(root):
+    for name, body in (("Principles", "## 1. A\n| [AB-1 x](One) |\n## 2. B\n"), ("One", "## Requirements\n- AB-1: **Reviewed**\n- AB-2: **Reviewed**\n")):
+        os.makedirs(os.path.join(root, "docs", "wiki"), exist_ok=True)
+        open(os.path.join(root, "docs", "wiki", name + ".md"), "w").write(body)
+
+
+CONTROLS = {"principle-map": ("requirements", "principle-map", f_principle_map)}
+FUNCTIONS["principle-map"] = principle_map

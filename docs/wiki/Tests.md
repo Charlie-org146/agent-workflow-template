@@ -309,7 +309,7 @@
 | <a id="t-reg-defect-label"></a>reg-defect-label | requirement | HLT-4 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
 | <a id="t-mon9-board-fast"></a>mon9-board-fast | requirement | HLT-7 | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-aut-email-rounds"></a>aut-email-rounds | requirement | HLT-7 | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-hlt2-twelve-groups"></a>hlt2-twelve-groups | requirement | HLT-2 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
+| <a id="t-hlt2-twelve-groups"></a>hlt2-twelve-groups | requirement | HLT-2 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-18 |
 | <a id="t-hlt4-feature-milestones"></a>hlt4-feature-milestones | requirement | HLT-4 | not run | - | local | 2026-11-12 |
 | <a id="t-hlt1-same-answer"></a>hlt1-same-answer | requirement | HLT-2 | not run | - | local | 2026-11-10 |
 | <a id="t-health-tokens-124"></a>health-tokens-124 | defect | [#124](https://github.com/jcl2018/agent-workflow-template/issues/124) closed (2026-11-11) | not run | - | local | 2026-11-10 |
