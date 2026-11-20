@@ -194,7 +194,7 @@ def since(root, row, old, ok, base, memo):
 
 def hit(root, row, path, at, cache, memo):
     if path == lanes.TABLE:
-        return lanes.reads_table(root, row["command"], cache)
+        return lanes.names_table(root, row["command"], cache)  # the row's own line is compared in reason()
     if path == KNOWN:
         return lanes.table(root, at, "regression-known.tsv", memo).get(row["id"]) != memo["known"].get(row["id"])
     if path == narrow.CONFIG:
