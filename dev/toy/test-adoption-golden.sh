@@ -1,7 +1,8 @@
 #!/bin/bash
-# reads: dev/toy/adoption-golden.tsv docs/wiki/Setup.md
+# reads: dev/toy/adoption-golden.tsv
 # Test SET-11's golden first adoption: the fixture holds exactly steps 1 to 8 in order, each with a check, a golden
-# result and a fix, names no machine path or account, and SET-11 names it. usage: test-adoption-golden.sh
+# result and a fix and names no machine path or account. The page wording that named the fixture and the first-mismatch stop is retired
+# (TD437: the approved text no longer says it; adopt-replay-strict proves the replay against this fixture). usage: test-adoption-golden.sh
 set -e
 here=$(cd "$(dirname "$0")/../.." && pwd)
 gold="$here/dev/toy/adoption-golden.tsv"; page="$here/docs/wiki/Setup.md"
@@ -14,7 +15,4 @@ rows=$(grep -v '^#' "$gold" | tr -d '\r')
 [ "$(awk -F'\t' 'NF != 4 || $2 == "" || $3 == "" || $4 == ""' <<<"$rows")" = "" ] && ok "each step has a check, golden result and fix" \
   || bad "a step lacks a check, golden result or fix"
 ! grep -qiE '[A-Z]:\|/Us[e]rs/|/home/|@[a-z0-9-]+\.[a-z]' "$gold" && ok "no machine path or account" || bad "the fixture names a machine path or account"
-req=$(awk '/^- SET-6:/{on=1; next} on && /^- [A-Z]+-[0-9]+:/{exit} on && /\[SET-11\]/' "$page")
-grep -q 'dev/toy/adoption-golden.tsv' <<<"$req" && grep -q 'first mismatch' <<<"$req" \
-  && ok "SET-11 names the fixture and stops at the first mismatch" || bad "SET-11 does not name the fixture or its stop rule"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }

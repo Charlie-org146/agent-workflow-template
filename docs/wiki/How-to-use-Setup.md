@@ -116,10 +116,8 @@ MIT. See [LICENSE](LICENSE).
 
 Each requirement and how it is delivered:
 
-- SET-1: One command adopts a repo. Example, from the adopt-set-1 test: given SET-1, when the toy adopt-and-update test runs, then it holds.
+- SET-1: One command adopts a repo. Example, from the adopt-set-1 test: given SET-1, when the toy adopt-and-update test runs, then it holds. Also (was SET-4): Updates flow both ways. Example, from the adopt-set-4 test: given SET-4, when the toy adopt-and-update test runs, then check shows the change, apply keeps the repo's data and lands the repo half on its branch. Also (was SET-6): Adoption is proven. Example, from the adopt-fixture-existing-checks test: given a repo whose config lists its own checks (pull request 83), when setup adopts it, then the written config keeps every check and the seeded row runs all of them.
 - SET-2: Layered settings. Example, from the settings-reference test: given every repo and private setting, when the reference is read, then each is listed with its default and a one-line explanation.
-- SET-4: Updates flow both ways. Example, from the adopt-set-4 test: given SET-4, when the toy adopt-and-update test runs, then check shows the change, apply keeps the repo's data and lands the repo half on its branch.
-- SET-6: Adoption is proven. Example, from the adopt-fixture-existing-checks test: given a repo whose config lists its own checks (pull request 83), when setup adopts it, then the written config keeps every check and the seeded row runs all of them.
 - SET-10: The right format for every agent. Example, from the agents-wire test: given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing.
 
 ### Skill: workflow-setup
@@ -207,7 +205,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `limit_wait` | Seconds to wait after a usage limit before resuming. | set "limit_wait" in .loop/config.json | `1800` | default |
 | `watch_interval` | Seconds between rounds of watch. | set "watch_interval" in .loop/config.json | `20` | default |
 | `agent_files` | Agent entry files setup wires the loop block into; [] turns wiring off. | set "agent_files" in .loop/config.json | `["CLAUDE.md", "AGENTS.md"]` | default |
-| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | default |
+| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | **overridden:** `Charlie-org146/agent-workflow-template` |
 | `milestones_source` | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. | set "milestones_source" in .loop/config.json | `(empty)` | default |
 | `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
 | `govern_hook` | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). | set "govern_hook" in .loop/config.json | `true` | default |
@@ -222,14 +220,14 @@ Every repo setting from the template's settings reference, with this repo's valu
 
 ## URLs and deployments
 
-- Wiki: [Setup](https://github.com/jcl2018/agent-workflow-template/wiki/Setup)
-- Milestone: [Setup](https://github.com/jcl2018/agent-workflow-template/milestone/9)
-- Releases: https://github.com/jcl2018/agent-workflow-template/releases
+- Wiki: [Setup](https://github.com/Charlie-org146/agent-workflow-template/wiki/Setup)
+- Milestone: [Setup](https://github.com/Charlie-org146/agent-workflow-template/milestone/9)
+- Releases: https://github.com/Charlie-org146/agent-workflow-template/releases
 
 ## Links
 
 - PRD page: [Setup](Setup)
-- Backlog: [Backlog: Setup](https://github.com/jcl2018/agent-workflow-template/milestones)
+- Backlog: [Backlog: Setup](https://github.com/Charlie-org146/agent-workflow-template/milestones)
 
 <!-- kept machine-email-phone@9a67a8ff -->
 <!-- kept safety-fixes@585daa17 -->

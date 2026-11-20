@@ -49,8 +49,8 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else a milestone URL."""
-    return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
+    """OWNER/REPO from counting.repo_slug (template_repo or the origin), else a milestone URL."""
+    return counting.repo_slug(root) or pf.owner_repo(text)
 
 
 def tests_page(root):
@@ -321,7 +321,7 @@ def refresh(root, check=False, insert=False):
             if (found and found.group(0) != block) or (insert and not found):
                 stale.append((rel, name))
         fresh = with_blocks(held, blocks, insert)
-        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read)
+        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read, counting.repo_slug(root))
         if done != fresh:
             stale.append((rel, "format"))
             fresh = done

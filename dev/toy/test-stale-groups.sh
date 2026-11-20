@@ -1,8 +1,9 @@
 #!/bin/bash
 # reads: skills/loop-files.md
 # Defect test for issue 89: a removed feature group name must not come back. No model is called.
-# The groups are the page names in .loop/docs.tsv (minus Home); Release and Milestones are gone, and the
-# docs feature is "Documentation", not "Criteria and tests". usage: test-stale-groups.sh [ROOT]
+# The groups are the page names in .loop/docs.tsv (minus Home); Milestones is gone (Release is a feature page again,
+# with its own PRD and How-to-use page), and the docs feature is "Documentation", not "Criteria and tests". A
+# How-to-use-<Feature> page is the feature's guide (DOC-18), not a group. usage: test-stale-groups.sh [ROOT]
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 here=$(cd "$(dirname "$0")/../.." && pwd); root=${1:-$here}
@@ -11,7 +12,7 @@ cd "$root" || exit 1
 bad=0
 no() { echo "FAIL: $1"; bad=1; }
 groups=$(grep -v '^#' .loop/docs.tsv | cut -f1 | grep -vx Home)
-removed="Release Milestones"
+removed="Milestones"
 
 # the wiki titles, its headings, and the pages in .loop/docs.tsv
 for g in $removed; do
@@ -21,7 +22,7 @@ for g in $removed; do
 done
 for f in docs/wiki/*.md; do
   n=$(basename "$f" .md)
-  [ "$n" = Home ] || [ "$n" = Tests ] || grep -qx "$n" <<<"$groups" || no "wiki page $n is not a feature group"
+  [ "$n" = Home ] || [ "$n" = Tests ] || [[ "$n" == How-to-use-* ]] || grep -qx "$n" <<<"$groups" || no "wiki page $n is not a feature group"
 done
 
 # the old name of the Documentation group, in the places that list groups
