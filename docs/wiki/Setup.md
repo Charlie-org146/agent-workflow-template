@@ -22,9 +22,9 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 - SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
-- SET-10: **Reviewed 2026-11-20** One versioned package; every agent runs one loop <!-- reviewed c112b139 -->
+- SET-10: **Unreviewed** One versioned package; every agent runs one loop
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
-  - Steps map to agents, with a warned fallback and recorded tokens. [SET-10]
+  - Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10]
 
 ### Non-functional
 
@@ -143,6 +143,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-20 | One versioned package; every agent runs one loop <br> One versioned skills package works out of the box in Claude Code and Codex. [SET-10] <br> Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10] | TD439, restored under delegation (DOC-2, o486): dropped by omission; its row guards it | o662: "Then I want u to fix this merge time issuee first. I" |
 | r4 | 2026-11-20 | One versioned package; every agent runs one loop <br> One versioned skills package works out of the box in Claude Code and Codex. [SET-10] <br> Steps map to agents, with a warned fallback and recorded tokens. [SET-10] | readme-six: the owner-approved final README (o514) | o582: "yes build it" |
 | r3 | 2026-11-19 | One versioned package; every agent runs one loop <br> The template ships as one versioned package of separate skills that works out of the box with a built-in default flow, and is proven to run in both Claude Code and Codex. The size and listing rules the package must pass are Guardrails' (GRD-20 to GRD-22, principle 3). [SET-3] <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. [SET-10] <br> A private setting maps each step and goal size to an agent profile. A missing or signed-out agent falls back to the default with a warning. The run record names the agent, model and tokens of every step. [DEL-16] | consolidation (TOP-DECISION 89) | o304: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | The right format for every agent <br> The same skills are wired into each agent's own entry files, so Claude Code, Codex and other skill-reading agents run the same loop the same way. | v2 rewrite text (prd-rewrite-to-10) | o47: "Yes, start it end." |
