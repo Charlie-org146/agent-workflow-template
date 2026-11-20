@@ -16,6 +16,7 @@ KINDS = {
     'tests': ('+(?!Other$).+', 'Other'),
     'roadmap': ('+.+',),
 }
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1")  # DEL-10: gh and git never wait on a prompt
 LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/(?:wiki/|blob/main/docs/wiki/)|\(docs/wiki/")
 
 
