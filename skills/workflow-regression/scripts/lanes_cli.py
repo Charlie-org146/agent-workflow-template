@@ -7,19 +7,17 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py merge-runs [--root DIR]
 
 affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
-          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps
-          the file: the rows that name it and the runners are picked, never a full run. No record is
-          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it. An edit to
-          .loop/regression-known.tsv picks only the rows whose line differs from the merge-base or base tip.
+          that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps the file: the rows that name
+          it and the runners are picked, never a full run. No record is read, so failed rows, ancestry and edited table
+          rows are outside it. .loop/regression-known.tsv picks only the rows whose line differs from the base.
 deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
           from the command to PATH, or NOT REACHED.
-check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
-          `<CODE> <file>:<line>: <what>` line and a `fix:` line each. Exit 0 clean, 1 problems.
-merge-runs  merge the branch's lane record's row results (PASS or FAIL, with any flaky flag) into
-          .loop/regression-runs.tsv under slots.py's row lock (DX-19); workflow-delivery's goal.py pr runs it, by path,
-          before its bookkeeping commit. Writes nothing when the record has no results; exit 1 on an error.
-The root is the git top level of the current directory unless --root is given. Usage errors exit 2 on stderr;
-LANES_DEBUG=1 shows the full trace of an unexpected error. Read-only, except merge-runs.
+check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row names), one
+          `<CODE> <file>:<line>: <what>` and a `fix:` line each. Exit 0 clean, 1 problems.
+merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock;
+          goal.py pr runs it before its bookkeeping commit. Writes nothing without results; exit 1 on an error.
+The root is the git top level of the current directory unless --root is given. Usage errors exit 2; LANES_DEBUG=1
+shows the full trace. Read-only, except merge-runs.
 """
 import argparse
 import datetime
@@ -84,7 +82,7 @@ def rows_of(root, level):
 
 def relative(root, path):
     here = os.path.realpath(os.getcwd())
-    base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root from outside it
+    base = here if (here + "/").startswith(os.path.realpath(root) + "/") else root  # relative to --root
     full = os.path.realpath(os.path.join(base, path))
     rel = os.path.relpath(full, os.path.realpath(root))
     if rel.startswith(".."):
@@ -100,7 +98,7 @@ def picked(root, rows, path, cache):
 
 def table_changed(root, name):
     """Ids whose line in .loop/<name> (regression.tsv or regression-known.tsv) differs between the working table and the
-    merge-base or the base tip (added, removed or changed); None when neither can be resolved, so the caller keeps the wide rule."""
+    merge-base or base tip (added, removed, changed); None if neither resolves, so the caller keeps the wide rule."""
     base = tiers.config(root).get("base") or "main"
     ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
                                                        for ref in ("origin/" + base, base)]) if at][:2]
@@ -125,15 +123,15 @@ def affected(root, rows, paths, cache):
                 path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
-            real = True  # a deleted file that isn't NO_EFFECT is a real change: the root runners run too (#4554)
+            real = True  # a deleted non-NO_EFFECT file is a real change: root runners run (#4554)
             continue
-        if path == ".loop/regression-known.tsv" and known is not None:  # only the rows whose known status changed
+        if path == ".loop/regression-known.tsv" and known is not None:  # only rows whose known status changed
             hit = {r["id"] for r in rows} & known
-        elif path == lanes.TABLE and edited is not None:  # the rows whose line changed, plus the rows that name the table
+        elif path == lanes.TABLE and edited is not None:  # rows whose line changed, and rows that name the table
             hit = ({r["id"] for r in rows} & edited) | {r["id"] for r in rows if lanes.names_table(root, r["command"], cache)
-                                                        or lanes.closure(root, r["command"], cache)[1]}  # table readers, runners
-        elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped; a record would add the edited rows
-            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # plus edited rows (needs a record)
+                                                        or lanes.closure(root, r["command"], cache)[1]}  # readers, runners
+        elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped
+            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # edited rows need a record
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
         no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
@@ -146,7 +144,7 @@ def affected(root, rows, paths, cache):
             real = real or not no_effect
             continue
         ids, real = ids | hit, real or not no_effect
-    if real:  # root runners rerun on a real change; a change only to NO_EFFECT files (a release's VERSION) reaches none
+    if real:  # root runners rerun on a real change, not on NO_EFFECT files only
         ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
     return sorted(ids), notes
 
@@ -192,9 +190,6 @@ on:
   pull_request:
   merge_group:
     types: [checks_requested]
-  push:
-    branches-ignore:
-      - "@BASE@"
 permissions:
   contents: read
 concurrency:
@@ -202,6 +197,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   affected:
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -213,6 +209,19 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
+  small:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 120 --timeout 100
 """
 OURS = "# Written by workflow-regression"
 
@@ -244,8 +253,8 @@ MATRIX_JOB = """
 
 
 def workflow(root, given, write_main):
-    """regression.py workflow: where the regression runs decides what is written. A public repo gets regression.yml and
-    regression-pr.yml (the affected rows on a pull request or push); a private repo or an unreadable visibility gets nothing."""
+    """regression.py workflow: a public repo gets regression.yml and regression-pr.yml (the affected rows on a pull
+    request, a push to the base, and a small tier in the merge queue); a private or unreadable repo gets nothing."""
     cfg = tiers.config(root)
     where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
     if not where:
@@ -320,8 +329,7 @@ def main():
 
 
 
-# The memory floor (GRD-2): free_gb reads the machine's free memory, and wait_memory holds a lane that is about to run rows
-# while it is below min_free_memory_gb.
+# The memory floor (GRD-2): wait_memory holds a lane about to run rows while free_gb is below min_free_memory_gb.
 
 
 def _slots():
@@ -330,8 +338,8 @@ def _slots():
 
 
 def free_gb():
-    """Free virtual memory in GB (Windows: the free page file; macOS: free, inactive and speculative pages; Linux: MemAvailable),
-    LOOP_FREE_GB to fake it, None when it can't be read (a lane is then never held)."""
+    """Free memory in GB (Windows: free page file; macOS: free, inactive, speculative pages; Linux: MemAvailable); LOOP_FREE_GB
+    fakes it, None when unreadable (a lane is then never held)."""
     try:
         if os.environ.get("LOOP_FREE_GB"):
             return float(os.environ["LOOP_FREE_GB"])
