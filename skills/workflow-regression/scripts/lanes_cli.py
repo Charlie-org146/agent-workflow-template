@@ -125,13 +125,13 @@ def affected(root, rows, paths, cache):
             notes.append("DELETED %s: the rows that name it and the runners" % path)
             real = True  # a deleted non-NO_EFFECT file is a real change: root runners run (#4554)
             continue
-        if path == ".loop/regression-known.tsv" and known is not None:  # only rows whose known status changed
+        if path == ".loop/regression-known.tsv" and known is not None:
             hit = {r["id"] for r in rows} & known
-        elif path == lanes.TABLE and edited is not None:  # rows whose line changed, and rows that name the table
+        elif path == lanes.TABLE and edited is not None:
             hit = ({r["id"] for r in rows} & edited) | {r["id"] for r in rows if lanes.names_table(root, r["command"], cache)
-                                                        or lanes.closure(root, r["command"], cache)[1]}  # readers, runners
+                                                        or lanes.closure(root, r["command"], cache)[1]}
         elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped
-            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}  # edited rows need a record
+            hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
         no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
@@ -221,7 +221,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 90 --timeout 60
+      - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: find skills -name '*.py' -exec python3 -m py_compile {} +
+      - run: python3 skills/workflow-docs/scripts/criteria.py render --check
 """
 OURS = "# Written by workflow-regression"
 
@@ -254,7 +256,7 @@ MATRIX_JOB = """
 
 def workflow(root, given, write_main):
     """regression.py workflow: a public repo gets regression.yml and regression-pr.yml (the affected rows on a pull
-    request, a push to the base, and a small tier in the merge queue); a private or unreadable repo gets nothing."""
+    request, a fixed smoke in the merge queue); a private or unreadable repo gets nothing."""
     cfg = tiers.config(root)
     where = given or {"mac": "private", "actions": "public"}.get(cfg.get("regression_runs"), "")
     if not where:

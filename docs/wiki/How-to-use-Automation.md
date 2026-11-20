@@ -78,4 +78,4 @@ Regression runs every 4 hours in GitHub Actions for a public repo, or on your Ma
 - PRD page: [Automation](Automation)
 - Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept rel-15-queue@352b3bec9 -->
+<!-- kept queue-smoke@1dd26367f -->
