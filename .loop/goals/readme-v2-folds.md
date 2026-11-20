@@ -22,4 +22,4 @@ Frozen. A wrong done line needs a new goal.
 3. Run `python3 skills/workflow-docs/scripts/docs.py check | tail -1` and `python3 skills/workflow-docs/scripts/criteria.py render --check | tail -1`.
    Expect: DOCS OK: 16 pages, then TABLES OK.
 4. Run `grep -n "^- \(REG-4\|HLT-2\|MCH-1\|DEL-17\|CHK-1\):" docs/wiki/*.md | cut -c1-90`.
-   Expect: REG-4, HLT-2, MCH-1 and DEL-17 each read Reviewed; CHK-1 is unchanged (its step-ETA text is a follow-up).
+   Expect: all five read Reviewed 2026-11-20.
