@@ -139,15 +139,16 @@ def front(root, names):
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
     listing = read(os.path.join(root, "skills", "workflow-health", "references", "commands.md")) or ""
-    ids = set(re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", "".join(read(os.path.join(folder, n + ".md")) or "" for n in names), re.M))
+    pages = "".join(read(os.path.join(folder, n + ".md")) or "" for n in names)
+    ids, old = set(re.findall(r"^- ([A-Z]{2,5}-\d+): \*\*", pages, re.M)), set(re.findall(r"^- ([A-Z]{2,5}-\d+): moved to ", pages, re.M))
     ids |= {"flows/" + n for _, _, fs in os.walk(os.path.join(folder, "flows")) for n in fs}
     own = "## The principles" in listing
     if "home" in on and home is not None:
         existing = {name[:-3] for name in os.listdir(folder) if name.endswith(".md")}
-        out += pf.frontdoor("Home", home, listing, ids, "Home") if own else pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
+        out += pf.frontdoor("Home", home, listing, ids, "Home", old) if own else pf.home(home, names, existing, readme, repo_of(root, home), topics_of(root))
     if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
-        out += pf.frontdoor("README", readme, listing, ids) + (pf.frontdoor("Principles", page, listing, ids, "Principles") if page else [])
+        out += pf.frontdoor("README", readme, listing, ids, old=old) + (pf.frontdoor("Principles", page, listing, ids, "Principles", old) if page else [])
     return out + (own and home is not None and sections.run(folder, readme, home, names) or [])
 
 
