@@ -47,6 +47,8 @@ def local_schedule():
             sys.exit("gh: Server Error (HTTP 500)")
         rules = load("rules.json")
         print(json.dumps([rules] if "--slurp" in args else rules))
+    elif "/actions/jobs/" in text and text.endswith("/logs"):  # a CI job's log, from the file FAKE_GH_JOBLOG names
+        sys.exit("gh: Not Found (HTTP 404)") if not os.environ.get("FAKE_GH_JOBLOG") else print(open(os.environ["FAKE_GH_JOBLOG"]).read(), end="")
     elif text.endswith("/protection") or "/protection " in text:
         if os.environ.get("FAKE_GH_PROTECTION_ERROR"):
             sys.exit("gh: Server Error (HTTP 500)")
