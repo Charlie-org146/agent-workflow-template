@@ -44,7 +44,8 @@ def ran_of(root):
 
 def pending(root):
     """Lane fragments not yet folded in: the release renders the tables."""
-    return sorted(glob.glob(os.path.join(root, ".loop", "lane-results", "*.tsv")))
+    head = subprocess.run(["git", "-C", root, "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True, text=True).stdout
+    return sorted(glob.glob(os.path.join(root, ".loop", "lane-results", "*.tsv"))) or ["loop/"] * head.startswith("loop/")
 
 
 def table(root, ids, linked):
