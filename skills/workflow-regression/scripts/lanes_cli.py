@@ -7,13 +7,13 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
        lanes_cli.py merge-runs [--root DIR]
 
 affected  `AFFECTED n of m rows (ids)` for a change to PATH, plus `ALWAYS <id>: <reason>` for rows that run on every
-          change and `UNMAPPED`/`DELETED <path>` when no row maps the file (the rows that name it and the runners are
-          picked, never a full run). No record is read; .loop/regression-known.tsv picks only rows whose line differs.
+          change and `UNMAPPED`/`DELETED <path>` when no row maps the file (the rows naming it and the runners run,
+          never all). No record is read; .loop/regression-known.tsv picks only rows whose line differs.
 deps      a row command's dependency paths, then `ALWAYS <command>: <reason>`; --why prints the chain to PATH.
 check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row names), one
           `<CODE> <file>:<line>: <what>` and a `fix:` line each. Exit 0 clean, 1 problems.
-merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock; goal.py pr
-          runs it before its bookkeeping commit. Exit 1 on an error.
+merge-runs  merge the lane record's row results into .loop/regression-runs.tsv under slots.py's row lock (goal.py pr
+          runs it before its bookkeeping commit). Exit 1 on an error.
 The root is the git top level unless --root is given. Usage errors exit 2; LANES_DEBUG=1 shows the full trace.
 """
 import argparse
@@ -26,22 +26,20 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import tiers
-import lanes  # noqa: E402
-import narrow  # noqa: E402
+import tiers, lanes, narrow  # noqa: E401,E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 FIX = {
-    "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' to the comment block at the top of {file}",
-    "LANES-DECL-PLACE": "move the # reads: line into the comment block at the top of {file}",
+    "LANES-DECL-NONE": "add '# reads: <the skill files it runs>' at the top of {file}",
+    "LANES-DECL-PLACE": "move the # reads: line to the top comment block of {file}",
     "LANES-DECL-PATTERN": "declare each file, or the skill folder the script globs (e.g. skills/x/scripts/)",
     "LANES-DECL-ESCAPE": "declare repo-relative paths only",
     "LANES-DECL-MISSING": "fix the path or remove it from # reads: in {file}",
-    "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs instead of the folder",
-    "LANES-DECL-GLOB": "declare the globbed folder itself in {file}'s # reads: line (a new file there must rerun it)",
+    "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs, not the folder",
+    "LANES-DECL-GLOB": "declare the globbed folder itself in {file}'s # reads: line",
     "LANES-DECL-FOLDER": "add the files {file} runs from that folder to its # reads: line",
-    "LANES-DECL-TREE": "add skills/ to the # reads: line of {file} (it stays wide: it reads every skill)",
+    "LANES-DECL-TREE": "add skills/ to the # reads: line of {file}",
 }
 TEST = re.compile(r"(?<![\w./-])(dev/toy/test-[\w-]+\.sh)")
 
@@ -54,10 +52,8 @@ def usage(message):
 def top(given):
     if given:
         return os.path.abspath(given)
-    done = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-    if done.returncode:
-        usage("not inside a git repo; run from the repo or pass --root DIR")
-    return done.stdout.strip()
+    done = lanes.git(os.getcwd(), "rev-parse", "--show-toplevel")
+    return done.strip() if done else usage("not inside a git repo; run from the repo or pass --root DIR")
 
 
 def rows_of(root, level):
@@ -115,8 +111,7 @@ def affected(root, rows, paths, cache):
         if cache.get(("why", row["command"])):
             notes.append("ALWAYS %s: %s" % (row["id"], cache["why", row["command"]]))
     for path in [p.replace("\\", "/") for p in paths]:  # NO_EFFECT names use / on Windows too
-        if not os.path.exists(os.path.join(root, path)) and not any(
-                path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT):
+        if not os.path.exists(os.path.join(root, path)) and not lanes.no_effect(path):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
             real = True  # a deleted non-NO_EFFECT file is a real change: root runners run (#4554)
@@ -130,8 +125,7 @@ def affected(root, rows, paths, cache):
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
-        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or any(
-            path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
+        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or lanes.no_effect(path)
         if not hit and not no_effect and not any(lanes.hits(path, lanes.closure(root, r["command"], cache)[0])
                                                  for r in rows):
             ids |= picked(root, rows, path, cache)
@@ -165,19 +159,17 @@ def chain(parent, path):
 
 
 def merge_runs(root):
-    """The lane record's row results, with any flaky flag (tiers.py flaky_apply), into regression-runs.tsv."""
-    import runs
-    import slots
+    """The lane record's row results, with any flaky flag (tiers.py), into regression-runs.tsv."""
+    import runs, slots
     record, _ = lanes.load(lanes.record_path(root), root)
     rows = (record or {}).get("rows") or {}
     done = [dict({"id": key, "state": value.get("status")}, **{k: value[k] for k in ("flaky",) if k in value})
             for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
     if done:
         day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+        head = (lanes.git(root, "rev-parse", "HEAD") or "").strip()
         slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
     return 0
-
 
 
 NARROW = """# Written by workflow-regression (regression.py workflow). The rows a change reaches; the full suite runs on the schedule only.
@@ -208,15 +200,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/t.tsv
+          key: row-times-${{ github.sha }}
+          restore-keys: row-times-
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
-          LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 240 --timeout 200
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 240 --timeout 200
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/t.tsv
+          if-no-files-found: ignore
   affected:
     needs: shard
     if: always() && github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: shard-*
+          path: s
+      - run: |
+          cat s/*/t.tsv 2>/dev/null | sort -k1,1 -k3,3r | awk '!k[$1]++' > all.tsv
+          echo "LEFT over the per-row limit, not failed: $(awk '$3 == "LEFT" {print $1}' all.tsv | paste -sd, -)"
+      - if: needs.shard.result == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: all.tsv
+          key: row-times-${{ github.sha }}
       - run: test "${{ needs.shard.result }}" = success
   small:
     if: github.event_name == 'merge_group'
@@ -339,9 +354,6 @@ def main():
     return 1 if problems else 0
 
 
-
-
-
 def _slots():
     import slots
     return slots
@@ -370,9 +382,9 @@ def free_gb():
 
 
 def wait_memory(root):
-    """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a lane already running is
-    never stopped. Each wait is logged in <git common dir>/loop/memory-waits.log for the check-in and health; past 4x the lane's
-    time limit (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
+    """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a running lane is
+    never stopped. Waits are logged in <git common dir>/loop/memory-waits.log; past 4x the lane's time limit
+    (LOOP_MEMORY_WAIT_SECONDS) it gives up with exit 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 3)
     except (OSError, ValueError, AttributeError):
@@ -389,8 +401,7 @@ def wait_memory(root):
             line = "LANE_MEMORY: %.1f GB free, min_free_memory_gb is %g; this lane waits and starts when memory frees (a lane already running is not stopped)" % (free, need)
             print(line, flush=True)
             try:
-                done = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True)
-                with open(os.path.join(os.path.abspath(os.path.join(root, done.stdout.strip())), "loop", "memory-waits.log"), "a") as log:
+                with open(os.path.join(os.path.abspath(os.path.join(root, (lanes.git(root, "rev-parse", "--git-common-dir") or "").strip())), "loop", "memory-waits.log"), "a") as log:
                     log.write("%s %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), line))
             except OSError:
                 pass
@@ -398,6 +409,7 @@ def wait_memory(root):
             _slots().note("MEMORY_WAIT: waited %ds for memory (%.1f GB free, min_free_memory_gb %g); nothing ran, no try used. Fix: run the same command again when memory frees" % (time.time() - began, free, need))
             sys.exit(_slots().EXIT_ENV)
         time.sleep(min(_slots().POLL * 5, max(cap / 4, 0.05)))
+
 
 if __name__ == "__main__":
     try:

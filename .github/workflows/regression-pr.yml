@@ -26,15 +26,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/t.tsv
+          key: row-times-${{ github.sha }}
+          restore-keys: row-times-
       - run: |
           git diff --name-only origin/main...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
-          LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --budget 240 --timeout 200
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --budget 240 --timeout 200
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/t.tsv
+          if-no-files-found: ignore
   affected:
     needs: shard
     if: always() && github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: shard-*
+          path: s
+      - run: |
+          cat s/*/t.tsv 2>/dev/null | sort -k1,1 -k3,3r | awk '!k[$1]++' > all.tsv
+          echo "LEFT over the per-row limit, not failed: $(awk '$3 == "LEFT" {print $1}' all.tsv | paste -sd, -)"
+      - if: needs.shard.result == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: all.tsv
+          key: row-times-${{ github.sha }}
       - run: test "${{ needs.shard.result }}" = success
   small:
     if: github.event_name == 'merge_group'
