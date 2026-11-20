@@ -1,6 +1,6 @@
 # doc-sections: plan (draft, pre-review)
 
-Design: .loop/designs/doc-sections.md. Goal done lines 1 to 5 frozen. Review depth for this step is waiting on Operation (full pipeline vs condensed).
+Design: .loop/goals/doc-sections.design.md. Goal done lines 1 to 5 frozen. Review depth for this step is waiting on Operation (full pipeline vs condensed).
 
 ## Work list, in build order
 
