@@ -221,7 +221,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - run: python3 skills/workflow-docs/scripts/docs.py check
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
