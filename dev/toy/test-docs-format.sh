@@ -195,7 +195,7 @@ open("README.md", "w").write("\n".join(out))
 os.makedirs("docs/wiki/flows", exist_ok=True); open("docs/wiki/flows/DEL-1.svg", "w").write("<svg/>")
 PY
 git add -A; git commit -qm "principles README"
-check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the seven principles passes"
+check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
 edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score 3/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a principle heading with a score after its name fails" || bad "readme score heading"; reset
 edit README.md "## 3. Fast, cheap and small" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
 printf '\n## Not yet covered\n\n| Requirement | Feature | Reason |\n|---|---|---|\n| [DEL-1](x) | Delivery | no test yet |\n' >> README.md; check | grep -q "^FORMAT README" && bad "not yet covered: $(check | grep '^FORMAT README')" || ok "DOC-23 a final 'Not yet covered' table passes"; reset
@@ -208,6 +208,11 @@ python3 - <<'PY'
 t = open("README.md").read(); i = t.index("## 7. "); j = t.index("## Requirements by feature"); open("README.md", "w").write(t[:i] + t[j:])
 PY
 has "^FORMAT README:[0-9]*: Principles: DOC-23 section '7. Standard, not home-made'" && ok "DOC-23 a README missing principle 7 fails" || bad "readme no principle 7"; reset
+python3 - <<'PY'
+t = open("README.md").read(); i = t.index("## 8. "); j = t.index("## Requirements by feature"); open("README.md", "w").write(t[:i] + t[j:])
+PY
+has "^FORMAT README:[0-9]*: Principles: DOC-23 section '8. Honest, verified and on time'" && ok "DOC-23 a README missing principle 8 fails" || bad "readme no principle 8"; reset
+edit README.md "a miss is recorded with its cause, never quietly moved" "a miss is recorded with its cause, never moved quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 principle 8's sentence off the list's by a word fails" || bad "readme sentence 8"; reset
 edit README.md "wherever one can run here; where it can't" "wherever one can run here; where it cannot"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 principle 7's sentence off the list's by a word fails" || bad "readme sentence 7"; reset
 edit README.md "v2.0 (planned)" "v1.0"; has "^FORMAT README:[0-9]*: Principles: DOC-23 an ID that exists or is planned (got DEL-9)" && ok "DOC-23 a cited ID that does not exist and is not planned fails" || bad "readme id"; reset
 python3 - <<'PY'

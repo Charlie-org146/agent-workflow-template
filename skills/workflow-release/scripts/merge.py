@@ -340,6 +340,7 @@ def main():
       return review.wait(state)
     ar.stage_notes(top, state, cfg)
     ar.stage_part(top, state)
+    ar.label_part(top, cfg, state)
     if not state.get("branch") or run(["git", "fetch", "-q", "origin", state["branch"]], cwd=top).returncode:
       ar.fail(state, "could not fetch the goal branch %s to scan it; nothing was merged (PRIVATE_LIST)" % state.get("branch"))
     ar.check(state, top, "origin/" + base, {"release notes": ar.notes_text(state)}, True, head)

@@ -73,6 +73,18 @@ Each requirement and how it is delivered:
 
 Regression runs every 4 hours in GitHub Actions for a public repo, or on your Mac; health runs every 4 hours on your always-on machine and never in Actions. `health_cron` in `.loop/config.json` changes the health schedule, and one digest per round is posted to the pinned digest issue. Each routine's Runbook is kept in the repo, where its one-line scheduled prompt points.
 
+<!-- automation:begin -->
+### Automation
+
+Health and regression, then each `automation` entry in `.loop/config.json`; to add one, add an entry.
+
+| Routine | What it does | State | Cadence | Runs on | Last run | Owed by you |
+|---|---|---|---|---|---|---|
+| [health](https://github.com/Charlie-org146/agent-workflow-template/wiki/Health#health-round) | Checks the repo, files findings. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| [regression](https://github.com/Charlie-org146/agent-workflow-template/wiki/Regression#regression-round) | Runs the regression rows. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+| digest email | Mails the round's digest. | on (declared) | cron `with each health round` | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
+<!-- automation:end -->
+
 ## Links
 
 - PRD page: [Automation](Automation)

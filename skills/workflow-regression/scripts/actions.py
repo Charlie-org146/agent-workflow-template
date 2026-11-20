@@ -27,9 +27,7 @@ def row_env():
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.
 name: regression
 on:
-@SCHEDULE@  push:
-    tags: ["v*"]
-  workflow_dispatch:
+@SCHEDULE@  workflow_dispatch:
     inputs:
       target:
         description: "land, nightly or a row id; empty runs @LEVELS@ (the ci_levels setting)"
