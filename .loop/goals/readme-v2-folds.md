@@ -22,4 +22,6 @@ Frozen. A wrong done line needs a new goal.
 3. Run `python3 skills/workflow-docs/scripts/docs.py check | tail -1` and `python3 skills/workflow-docs/scripts/criteria.py render --check | tail -1`.
    Expect: DOCS OK: 16 pages, then TABLES OK.
 4. Run `grep -n "^- \(REG-4\|HLT-2\|MCH-1\|DEL-17\|CHK-1\):" docs/wiki/*.md | cut -c1-90`.
-   Expect: all five read Reviewed 2026-11-20.
+   Expect: REG-4, HLT-2, MCH-1 and DEL-17 read Reviewed 2026-11-20; CHK-1 reads Unreviewed until the owner's fresh words review its r13.
+5. Run `grep -c "no release while main is known red" docs/wiki/Delivery.md README.md docs/wiki/Home.md docs/wiki/Principles.md`.
+   Expect: at least 1 in each file.
