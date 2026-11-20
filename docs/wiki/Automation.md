@@ -134,7 +134,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-19 |
+| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-20 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-19 |
 | [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given a failing test, when the scheduled regression runs, then one issue labelled defect opens, naming the test, the feature and the requirement it guards. | PASS 2026-11-12 |
 | [aut-old-issue-relabel](Tests#t-aut-old-issue-relabel) | requirement | AUT-1 | Given an open failing-test issue without the defect label, when the test fails again, then the issue gains the defect label. | PASS 2026-11-12 |
@@ -169,7 +169,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [perms-settings-tracked](Tests#t-perms-settings-tracked) | requirement | AUT-9 | Given a fresh checkout, when the permissions check runs, then .claude/settings.json is in it, because it is tracked and not ignored. | PASS 2026-11-15 |
 | [perms-no-repo-deny](Tests#t-perms-no-repo-deny) | requirement | AUT-9 | Given the committed .claude/settings.json, when it is read, then it holds allow rules only, because a deny would apply to every session in the repo. | not run |
 | [desk-lists](Tests#t-desk-lists) | requirement | AUT-9 | Given desk-only onboarding and no app session, when steps are listed, run and checked, then every step is listed once, gaps and invalid steps are refused, DESK OK requires completed setup and agent_command, and a background worker starts through agent_command while workers app keeps its bound-session rule. Covers #4805. | PASS 2026-11-18 |
-| [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-19 |
+| [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given a wiki page the tool did not write, when the tool writes pages, then that page is never overwritten. | PASS 2026-11-20 |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
 | [publish-restore](Tests#t-publish-restore) | requirement | AUT-5 | Given a publish that adopted a page someone else wrote, when restore runs, then the original page is back. | PASS 2026-11-19 |
 | [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given regression_cron off, when the regression workflow runs, then it writes nothing and says the routine is off. | PASS 2026-11-12 |
