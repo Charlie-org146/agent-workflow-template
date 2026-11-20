@@ -35,4 +35,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --budget 90 --timeout 60
+      - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: find skills -name '*.py' -exec python3 -m py_compile {} +
+      - run: python3 skills/workflow-docs/scripts/criteria.py render --check
