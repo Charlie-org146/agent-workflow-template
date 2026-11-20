@@ -8,9 +8,8 @@ usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record
 
 Machines share git refs on origin, each one small JSON blob: refs/loop/handover/<slug> (a handover's record),
 refs/loop/pr-turn (one merge ticket per repo, dropped after LOOP_MERGE_LOCK_SECONDS of silence) and refs/loop/snapshot/<machine>
-(what the check-in's Machine lines draw on). With `machine_sync` off (the default), or no reachable origin, the passive calls do
-nothing. A handed-over record says `moved`, which no worker starts from. A peer's record is never the owner's approval.
-start_worker is the one place a worker starts.
+(what the check-in's Machine lines draw on). With `machine_sync` off or no reachable origin the passive calls do nothing. A `moved` record
+starts no worker, and a peer's record is never the owner's approval. start_worker is the one place a worker starts.
 """
 import argparse
 import hashlib
@@ -35,11 +34,14 @@ RESUME = ("You are the background worker for goal `{slug}`, resuming in this wor
 
 
 def live(run, taken, at, cfg=None):
-    """TD481: running needs a slot and a recent word; waiting ends only if retired, merged, closed or its session left."""
-    if run.get("status") == "waiting":
+    """TD502: running needs a slot and a recent word; waiting an open ask, not over; failed or stopped a pid or pool entry."""
+    st, own = run.get("status"), run.get("slug") in (taken or ())
+    if st in ("failed", "stopped"):
+        return bool(run.get("pid") or own)
+    if st == "waiting":
         over = run.get("retired") or run.get("release") in ("merged", "cut", "closed") or (run.get("report") or {}).get("status") in ("merged", "closed")
-        return not (over or (taken is not None and run.get("session") and run.get("slug") not in taken))
-    return run.get("status") != "running" or (graph.holds_slot(run, taken) and (graph.silent_for(run, at) or 0) <= graph.silent_limit(cfg))
+        return bool((run.get("waiting") or {}).get("ask")) and not (over or (taken is not None and run.get("session") and not own))
+    return st != "running" or (graph.holds_slot(run, taken) and (graph.silent_for(run, at) or 0) <= graph.silent_limit(cfg))
 
 
 def sh(*args, cwd=None, data=None, wait=20):
@@ -56,7 +58,7 @@ def has_origin(cwd=None):
 
 def shared(cwd=None):
     """True when `machine_sync` is on in the flow file ($LOOP_FLOW or ~/.workflow-loop/flow.json; off by default) and there is an
-    origin. Every passive call (merge turn, Machine lines, mail ledger) asks first: no ref is pushed unless the owner allowed it."""
+    origin; every passive call asks first, so nothing is pushed unless the owner allowed it."""
     flow = os.path.expanduser(os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")
     return read_json(flow).get("machine_sync") is True and has_origin(cwd)
 
@@ -76,7 +78,7 @@ def read_ref(ref, cwd=None):
 
 
 def write_ref(ref, data, old="", cwd=None):
-    """Move origin's ref to a new blob only if it is still at old ("" is absent); data None deletes it. True when it won."""
+    """Move origin's ref to a new blob only if still at old ("" is absent); None deletes it. True when it won."""
     lease = "--force-with-lease=%s:%s" % (ref, old)
     if data is None:
         return sh("push", "-q", lease, "origin", ":" + ref, cwd=cwd) is not None
@@ -84,7 +86,7 @@ def write_ref(ref, data, old="", cwd=None):
     return bool(sha) and sh("push", "-q", lease, "origin", "%s:%s" % (sha, ref), cwd=cwd) is not None
 
 
-# Merge batching (merge-queue C): merge.py --batch, only when "merge_batch" is true. M is merge.py.
+# Merge batching: merge.py --batch, only when "merge_batch" is true. M is merge.py.
 PARTS = ("patch", "minor", "major")
 
 
@@ -215,7 +217,7 @@ def stale(at):
 
 
 def turn(op, runs=None, slug="", *rest):
-    """pr_queue hook (graph.pr_queue): turn and hold give "" when this goal holds the merge turn, else who does; free drops its ticket."""
+    """pr_queue hook: turn and hold give "" when this goal holds the merge turn, else who does; free drops its ticket."""
     if op not in ("turn", "hold", "free") or not slug or not shared():
         return ""
     here, (found, old) = me(), read_ref(TURN)
@@ -255,7 +257,7 @@ def read_json(path):
 
 
 def lines(root, cfg, own):
-    """The check-in's Machine lines: its own, then one per peer from that machine's published SNAPSHOT."""
+    """The check-in's Machine lines: its own, then one per peer's published SNAPSHOT."""
     out = [own]
     if not shared(root):
         return out

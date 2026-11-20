@@ -113,11 +113,12 @@ if only in ("", "merge"):
     git("fetch", "-q", "origin")
     before = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("merge.py would refuse the page before the re-stamp (%s)" % before, bool(before))
-    subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "operate.py"), "apply", "my-goal", "goal"], cwd=repo)
+    noone = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="user.useConfigOnly", GIT_CONFIG_VALUE_0="true")  # a CI runner: no git identity
+    subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "operate.py"), "apply", "my-goal", "goal"], cwd=repo, env=noone)
     git("fetch", "-q", "origin")
     after = [l for l in wiki.pending(repo, {}, head="origin/goal") if ": STALE " in l]
     check("after the merge step's re-stamp nothing is stale (%s)" % after, not after)
-    check("and the goal's branch got a re-stamp commit", "re-stamp pages for my-goal" in git("log", "-1", "--format=%s", "origin/goal").stdout)
+    check("and the goal's branch got a re-stamp commit, made with no git identity configured", "re-stamp pages for my-goal" in git("log", "-1", "--format=%s", "origin/goal").stdout)
 if only in ("", "ff", "ffconflict"):
     tmp = tempfile.mkdtemp(prefix="merge-unblock-ff-")
     origin, repo, other = (os.path.join(tmp, n) for n in ("origin.git", "repo", "other"))
