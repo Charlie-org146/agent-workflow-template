@@ -12,8 +12,7 @@ usage: mailbox.py reply QID TEXT [--root DIR]   the operation session runs this 
 
        mailbox.py watch ID --pr N [--arm]       restart-safe watcher job (TD487): the tick resumes it once its checks end;
                                                  green with --arm queues the pull request, red records the checks (--arm: operation only)
-       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); never loaded here, that is the
-                                                 owner's. The tick runs the jobs, then checkin.py; it starts no goal
+       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); never loaded here (the owner's). The tick runs the jobs, then checkin.py; it starts no goal
 
 notify.py calls compose and claim for each new event (it mails through workflow-health's mail.py; this file never reads mail or a
 secret). compose gives the body and remembers the question in <git common dir>/loop/mailbox.json. claim takes the event's key
@@ -266,6 +265,7 @@ def cmd_pending(args):
 
 
 LABEL = "com.workflow-loop.tick"
+MERGE = os.path.join(HERE, "..", "..", "workflow-release", "scripts", "merge.py")  # the one merging script
 
 
 def jobs_dir(root):
@@ -310,7 +310,7 @@ def resume(root, path):
         if bad:
             job.update(state="red", result="red: " + ", ".join(bad))
         elif job.get("arm"):
-            done = subprocess.run(["gh", "pr", "merge", str(job["pr"]), "--auto", "--merge", "--match-head-commit", got["headRefOid"]], cwd=root, capture_output=True, text=True)
+            done = subprocess.run([sys.executable, MERGE, "--arm", "--go-head", got["headRefOid"], str(job["pr"])], cwd=root, capture_output=True, text=True)
             job.update(state="armed" if done.returncode == 0 else "arm-failed", result=("armed at " + got["headRefOid"][:9]) if done.returncode == 0 else done.stderr.strip()[:200])
         else:
             job.update(state="green", result="green at " + got["headRefOid"][:9])

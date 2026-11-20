@@ -40,6 +40,9 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
     subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "x"], cwd=repo, check=True)
 
+    os.makedirs(os.path.join(repo, ".loop"))  # arming goes through merge.py, which refuses unless auto_merge is on (the owner's setting)
+    with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": "main", "auto_merge": True}, handle)
     env.pop("LOOP_ROLE", None)
     os.makedirs(os.path.join(repo, ".git", "loop"))
     open(os.path.join(repo, ".git", "loop", "operation.id"), "w").write("ops-session\n")
@@ -98,6 +101,17 @@ with tempfile.TemporaryDirectory() as tmp:
     spec.loader.exec_module(module)
     body = inspect.getsource(module.cmd_tick)
     check(not any(word in body for word in ("operate.py", "watch.py", "sessions.py", "assign", "send")), "the tick's code never names operate.py, watch.py, sessions.py, assign or send")
+    mail_src = open(mailbox).read()
+    check("gh pr merge" not in mail_src and '"pr", "merge"' not in mail_src, "mailbox.py never merges itself: it arms through merge.py, the one merging script (test-tree.sh)")
+    # negative control: with auto_merge off, merge.py refuses and the armed job queues nothing
+    with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": "main", "auto_merge": False}, handle)
+    pr(8, "OPEN", [ok_])
+    run("watch", "off", "--pr", "8", "--arm")
+    run("tick")
+    off = json.load(open(os.path.join(folder, "off.json")))
+    check(off["state"] == "arm-failed" and "pr merge 8" not in open(os.path.join(tmp, "gh.log")).read(),
+          "negative control: with auto_merge off the armed job fails and queues nothing (%s)" % off["result"][:60])
     used = open(os.path.join(tmp, "launchctl.log")).read() if os.path.exists(os.path.join(tmp, "launchctl.log")) else ""
     check(not any(word in used for word in ("bootstrap", "load", "bootout", "enable", "kickstart")), "nothing was loaded, bootstrapped or booted out: launchctl saw only %r" % used.strip())
 sys.exit(1 if failed else 0)
