@@ -252,8 +252,6 @@ def apply_repo(repo, cfg, target, wrote_skills):
         git(repo, "worktree", "prune", check=False)
 
 
-
-
 def base_copy(skills, old, rel):
     """The package copy a local fix was made on."""
     kept = os.path.join(skills, ".workflow-kept", rel)
@@ -377,6 +375,39 @@ def main():
     if not repo or not version:
         sys.exit("REFUSED: need a repo and an installed version (UPDATE_SKIPPED_REPO). Fix: pass --repo and --version")
     return apply_repo(repo, base_config(repo), version, args.wrote_skills)
+
+
+DESK_HOME = os.path.expanduser(os.environ.get("LOOP_DESK_HOME") or "~/.workflow-loop")
+# (id, what, how, a proof: paths under DESK_HOME, or None when only the owner can say)
+DESK_STEPS = (
+    ("trust-folders", "trust the project folder and the worktree folders in the app",
+        "open the repo and its .git/loop/worktrees folder once in the app and choose Trust", None),
+    ("permission-modes", "give each scheduled task a permission mode that never asks (bypass)",
+        "in the app, set the mode on each task, then machine.py record-task NAME bypass", None),
+    ("tool-preapprovals", "pre-approve the tools each scheduled task uses (Run now once)",
+        "press Run now on each task and allow its tools, so a scheduled check-in never stops to ask", None),
+    ("private-names", "create the private-names file",
+        "run `python3 dev/machine.py apply` from the template clone (it writes an empty one)", "private-names"),
+    ("mail-env", "put the mail settings in mail.env, outside the repo",
+        "run `python3 dev/machine.py apply`, then fill the file it names (keys stay out of the repo)", "mail.env|schedule/mail.env"),
+    ("codex-login", "sign in to Codex, if Codex is an agent here",
+        "run `codex login` at the desk", "AUTO:codex"),
+)
+
+
+def desk_load():
+    found = settings.load(os.path.join(DESK_HOME, "desk.json"))
+    return found if isinstance(found, dict) else {}
+
+
+def desk_save(found):
+    settings.write_json(os.path.join(DESK_HOME, "desk.json"), found)
+
+
+def desk_state(step, found):
+    name, proof = step[0], step[3]
+    ok = (not shutil.which("codex") or os.path.exists(os.path.expanduser("~/.codex/auth.json"))) if proof == "AUTO:codex" else proof and any(os.path.exists(os.path.join(DESK_HOME, part)) for part in proof.split("|"))
+    return "done" if ok or found.get(name, {}).get("done") else "listed" if name in found else "open"
 
 
 if __name__ == "__main__":

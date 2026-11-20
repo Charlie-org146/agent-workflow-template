@@ -249,6 +249,7 @@ def render(root=None, at=None, stamp=None):
     except OSError:
         owed = []
     out += ["- off-machine to-do: %s red proof owed on %s since %s %s" % (c[0], c[2], c[1], c[3].strip()) for c in owed]
+    out += ["- " + line for line in bd.unread()]  # a stamp with no time zone or no time is named here, never guessed
     paused = board_lines.paused(live)
     out.append("- " + (paused or "next check-in in %s minutes" % (cfg.get("cadence") or 30)))
     return lb.fit(out, 100)

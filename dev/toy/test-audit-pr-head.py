@@ -100,9 +100,7 @@ if only in ("", "start"):
     skills = os.path.join(repo, "skills")
     shutil.copytree(os.path.join(root, "skills", "workflow-docs"), os.path.join(skills, "workflow-docs"),
                     ignore=shutil.ignore_patterns("__pycache__"))
-    os.makedirs(os.path.join(skills, "workflow-setup", "references"))
-    shutil.copy(os.path.join(root, "skills", "workflow-setup", "references", "settings.md"),
-                os.path.join(skills, "workflow-setup", "references"))
+    shutil.copy(os.path.join(root, "skills", "loop-files.md"), skills)
     git("init", "-q", "-b", "main")
     write(".loop/config.json", "{}\n")
     write(".loop/docs.tsv", "A\ta.txt,skills/workflow-docs\n")
