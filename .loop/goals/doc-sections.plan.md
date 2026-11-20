@@ -32,3 +32,7 @@ C. Then qa lane, ship, hold for the chain; no goal.py pr before.
 - `criteria.py revise` was not found by name in a quick grep; at build, read criteria.py's command list and use its real revise form with record o483.
 - Order stays: A (figures, data file, script, toy) before the README/Home rewrite; no README/Home edit, no goal.py pr until principle-8-readme and the chain are done.
 Verdict: approve with those three build-time checks.
+
+## Red-team amendment
+- Principle 5 (adoptable): the section data file allows the adopted-repo form of README, with one extra section before the principles for the template's principles the repo inherits (DOC-25 bullet 1); a toy case with that section must pass, and one with it in the wrong place must fail.
+- Principles 1, 2, 3, 7 are covered above and need no change: DOC-25 text diffed against the approved draft; five negative controls; touched scripts at or under main's bytes; md043 try recorded in the design.
