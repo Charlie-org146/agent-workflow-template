@@ -6,11 +6,9 @@ usage: unattended.py sends [add TO | reset | status]       cross-session sends s
        unattended.py standing add TEXT [--scope merge] [--goals A,B|all] | check SLUG | revoke ID
        unattended.py selfcheck                             what is missing before an unattended run
 
-Records: <git common dir>/loop/.
-  sends       the app pauses sends after 20 with no owner message; from 16 status warns
-  loop        `loop status` says RECREATE in the last 24 hours and EXPIRED after the end; then `loop created`
-  standing    replaces a go per merge; only the operation session adds one; a worker at pr runs `standing check SLUG`
-  selfcheck   MISSING permission mode, routine rules, main checkout behind origin; else SELFCHECK OK
+Records are in <git common dir>/loop/. sends: the app pauses sends after 20 with no owner message, so each send is counted with
+its time, the owner's words reset the count and from 15 status says when it runs out. loop: RECREATE in the last 24 hours,
+EXPIRED after the end. standing: replaces a go per merge; only the operation session adds one. selfcheck: MISSING lines or OK.
 """
 import argparse
 import datetime
@@ -24,7 +22,7 @@ import sys
 import tempfile
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
-CAP, WARN_AT, LOOP_DAYS = 20, 16, 7
+CAP, WARN_AT, AHEAD_AT, LOOP_DAYS = 20, 16, 15, 7
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -67,16 +65,31 @@ def sent(to=""):
         path = os.path.join(common(), "sends.json")
         held = load(path, {"since": stamp(), "count": 0})
         held["count"] = int(held.get("count", 0)) + 1
+        held["times"] = held.get("times", [])[-29:] + [stamp()]
         save(path, held)
     except (OSError, ValueError, subprocess.SubprocessError):
         pass
 
 
-def sends_status():
-    held = load(os.path.join(common(), "sends.json"), {"since": "", "count": 0})
+def reset():
+    if common():
+        save(os.path.join(common(), "sends.json"), {"since": stamp(), "count": 0})
+
+
+def sends_status(mark=False):
+    path = os.path.join(common(), "sends.json")
+    held = load(path, {"since": "", "count": 0})
     count = int(held.get("count", 0))
     line = "SENDS %d of %d since %s (%d left)" % (count, CAP, held.get("since") or "the start", max(0, CAP - count))
-    return line + ("; WARNING: ask the owner for any message, it resets the count" if count >= WARN_AT else ""), count >= WARN_AT
+    line += "; WARNING: ask the owner for any message, it resets the count" * (count >= WARN_AT)
+    if count >= AHEAD_AT:
+        hour = [t for t in held.get("times", []) if t > stamp(now() - datetime.timedelta(hours=1))]
+        end = stamp(now() + datetime.timedelta(seconds=max(0, CAP - count) * 3600 / len(hour)))[11:16] if hour else ""
+        line += "; cap ahead: runs out " + ("about %s UTC" % end if end else "not at this rate")
+    fresh = count >= AHEAD_AT and not held.get("warned")
+    if fresh and mark:
+        save(path, dict(held, warned=True))
+    return line, fresh
 
 
 def loop_status():
@@ -96,7 +109,7 @@ def lines():
     if not common():
         return "", []
     try:
-        sends, warn_sends = sends_status()
+        sends, warn_sends = sends_status(True)
         loop, warn_loop = loop_status()
     except (OSError, ValueError, subprocess.SubprocessError):
         return "", []
@@ -111,12 +124,16 @@ def standing_path():
     return os.path.join(common(), "standing.tsv")
 
 
-def standing_rows():
+def lines_of(path):
     try:
-        with open(standing_path(), encoding="utf-8") as handle:
-            return [(row + [""] * 6)[:6] for row in (line.rstrip("\n").split("\t") for line in handle) if len(row) >= 5]
+        with open(path, encoding="utf-8") as handle:
+            return handle.read().splitlines()
     except OSError:
         return []
+
+
+def standing_rows():
+    return [(row + [""] * 6)[:6] for row in (line.split("\t") for line in lines_of(standing_path())) if len(row) >= 5]
 
 
 def standing(args):
@@ -140,7 +157,7 @@ def standing(args):
                 handle.write("\t".join(row[:5] + [stamp() if row[0] == args.text else row[5]]) + "\n")
         print("STANDING %s revoked" % args.text)
         return 0
-    for row in rows:  # check
+    for row in rows:
         if not row[5] and row[2] == "merge" and (row[3] == "all" or args.text in row[3].split(",")):
             try:
                 print("STANDING %s: %s" % (row[0], json.loads(row[4])))
@@ -153,8 +170,7 @@ def standing(args):
 
 def mode_line():
     top = run("rev-parse", "--show-toplevel")[1] or "."
-    for path in (os.path.join(top, ".claude", "settings.local.json"), os.path.join(top, ".claude", "settings.json"),
-                 os.path.join(os.path.expanduser("~"), ".claude", "settings.json")):
+    for path in (os.path.join(top, ".claude", "settings.local.json"), os.path.join(top, ".claude", "settings.json"), os.path.expanduser("~/.claude/settings.json")):
         held = load(path, {})
         mode = ((held.get("permissions") if isinstance(held, dict) else None) or {}).get("defaultMode")
         if mode:
@@ -178,11 +194,7 @@ def main_line():
     main = os.path.dirname(os.path.dirname(gitdir)) if gitdir.endswith(os.path.join(".git", "loop")) else ""
     if not main:
         return ""
-    try:
-        with open(os.path.join(main, ".loop", "config.json"), encoding="utf-8") as handle:
-            base = json.load(handle).get("base") or "main"
-    except (OSError, ValueError):
-        base = "main"
+    base = load(os.path.join(main, ".loop", "config.json"), {}).get("base") or "main"
     if run("fetch", "origin", base, cwd=main)[0] != 0:
         return "CHECK main checkout: origin could not be reached, so it may be behind"
     code, behind = run("rev-list", "--count", "%s..origin/%s" % (base, base), cwd=main)
@@ -229,15 +241,10 @@ def prerequisites():
 
 
 def followed():
-    try:
-        with open(os.path.join(HOME, "repos"), encoding="utf-8") as handle:
-            return [x.strip() for x in handle if x.strip()]
-    except OSError:
-        return []
+    return [x.strip() for x in lines_of(os.path.join(HOME, "repos")) if x.strip()]
 
 
 def connectors():
-    """SET-14: the connectors a followed repo's PRDs name, probed read-only."""
     probe, found = os.environ.get("LOOP_CONNECTOR_PROBE", "").split(), []
     for path in followed():
         pages = glob.glob(os.path.join(path, "docs", "wiki", "*.md"))
@@ -260,13 +267,10 @@ def observed(step):
         return bool(repos) and not bad, "%d followed repo(s), not a git repo: %s" % (len(repos), ", ".join(bad) or "none")
     if step == 3:
         names = os.environ.get("LOOP_PRIVATE_NAMES") or os.path.join(HOME, "private-names")
-        try:
-            with open(names, encoding="utf-8") as handle:
-                patterns = [x for x in handle if x.strip() and x.strip()[0] != "#"]
-        except OSError:
-            patterns = []
+        patterns = [x for x in lines_of(names) if x.strip() and x.strip()[0] != "#"]
         have = os.path.exists(os.environ.get("LOOP_FLOW") or os.path.join(HOME, "flow.json"))
-        return bool(patterns) and have and symlinks(), "%d private pattern(s), flow file %s, symlinks %s" % (len(patterns), have, symlinks())
+        links = symlinks()
+        return bool(patterns) and have and links, "%d private pattern(s), flow file %s, symlinks %s" % (len(patterns), have, links)
     if step == 4:
         version = load(os.path.join(os.path.dirname(os.path.dirname(HERE)), "workflow-package.json"), {}).get("version") or ""
         held = lambda p: load(os.path.join(p, ".loop", "config.json"), {}).get("template_version") or ""
@@ -274,22 +278,17 @@ def observed(step):
         return bool(repos) and not old, "installed %s; unknown or older: %s" % (version or "none (a checkout)", ", ".join(old) or "none")
     if step == 5:
         top = os.path.dirname(os.path.dirname(common())) if common() else "."
-        try:
-            with open(os.path.join(top, ".claude", "settings.local.json"), encoding="utf-8") as handle:
-                text = handle.read()
-        except OSError:
-            text = ""
+        text = "\n".join(lines_of(os.path.join(top, ".claude", "settings.local.json")))
         counts = [text.count(name) for name in ("reply_hook.py", "govern_hook.py")]
         return counts == [1, 1], "reply hook %d, govern hook %d" % tuple(counts)
     if step == 7:
-        runs = glob.glob(os.path.join(common(), "runs", "*.json"))
-        back = [os.path.basename(p)[:-5] for p in runs if load(p, {}).get("worker") == "background" and load(p, {}).get("status") == "running"]
+        runs = {os.path.basename(p)[:-5]: load(p, {}) for p in glob.glob(os.path.join(common(), "runs", "*.json"))}
+        back = [k for k, v in runs.items() if v.get("worker") == "background" and v.get("status") == "running"]
         return not back, "background worker(s) running: %s" % (", ".join(back) or "none")
     return False, "needs the live operation session: run operate.py run --once and compare its five parts"
 
 
 def replay(golden):
-    """SET-11: walk dev/toy/adoption-golden.tsv; stop at the first mismatch."""
     try:
         with open(golden, encoding="utf-8") as handle:
             steps = [x.rstrip("\n").split("\t") for x in handle if x.strip() and x[0] != "#"]
@@ -313,7 +312,6 @@ def template_version(dest):
 
 
 def adopt(args):
-    """SET-12: --recent N lists my repos by last push; named ones are set up."""
     gh = os.environ.get("LOOP_GH", "gh").split()
     if args.recent:
         done = subprocess.run(gh + ["repo", "list", "--limit", str(args.recent), "--json", "nameWithOwner,isPrivate,pushedAt", "--jq",
@@ -375,7 +373,7 @@ def main():
         if args.action == "add":
             sent(args.to)
         elif args.action == "reset":
-            save(os.path.join(common(), "sends.json"), {"since": stamp(), "count": 0})
+            reset()
             print("SENDS reset: 0 of %d" % CAP)
             return 0
         print(sends_status()[0])

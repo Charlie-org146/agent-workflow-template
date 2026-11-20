@@ -705,6 +705,11 @@
 | <a id="t-defect-4375-toys-fake-machine"></a>defect-4375-toys-fake-machine | defect | [#4375](https://github.com/jcl2018/agent-workflow-template/issues/4375) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-mon16-checkin-grouped"></a>mon16-checkin-grouped | requirement | OPS-16 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 | <a id="t-ops-findings-filed"></a>ops-findings-filed | requirement | OPS-1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
+| <a id="t-platform-sends-counted"></a>platform-sends-counted | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-platform-send-batched"></a>platform-send-batched | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-platform-cap-ahead-once"></a>platform-cap-ahead-once | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-platform-no-new-session"></a>platform-no-new-session | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-platform-limits-sizes"></a>platform-limits-sizes | requirement | OPS-1 | not run | - | local | 2026-11-20 |
 
 ## Regression
 
