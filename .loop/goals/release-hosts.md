@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 dev/package.py`.
+   Expect: no Disclosure line; only `FAIL Size: 105 files, at most 100 allowed` remains.
+2. Run `python3 dev/toy/test-listing-commands.py`.
+   Expect: PASS for the README hosts, and PASS for both negative controls (the five fail without the README-links entry, an unlisted README host still fails).
