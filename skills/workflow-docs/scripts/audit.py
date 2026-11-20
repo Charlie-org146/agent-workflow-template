@@ -214,13 +214,13 @@ def owned(root, rel, body, rule):
 
 
 def keep(root, slug, pages):
-    """DOC-2: a re-stamp is a line in the goal's own .loop/kept/<slug>.tsv (no page edit), committed alone."""
+    """DOC-2: a re-stamp is a line in .loop/kept/<slug>.tsv, committed alone."""
     path, sha_ = ".loop/kept/%s.tsv" % slug, cr.git("rev-parse", "--short", "HEAD")
     os.makedirs(join(root, ".loop", "kept"), exist_ok=True)
     with open(join(root, path), "a") as handle:
         handle.writelines("%s\t%s\n" % (page, sha_) for page in pages)
     cr.git("add", "--", path)
-    cr.git("commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
+    cr.git(*docs.identity(root), "commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
 
 
 def relock(root, slug="", only=()):

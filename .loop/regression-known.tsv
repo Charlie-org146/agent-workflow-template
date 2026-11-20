@@ -63,8 +63,6 @@ migration-robustness	fails on main since v1.0.100; see #5323
 migration-runs	fails on main since v1.0.100; see #5335
 migration-v1	fails on main since v1.0.100; see #5329
 setup-fit	fails on main since v1.0.102; see #4972
-doc18-howto-restamp	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5389
-home-guard-catches-leak	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5387
 restamp-marks-3867	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5386
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
