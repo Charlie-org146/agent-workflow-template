@@ -121,8 +121,8 @@ if only == "health":
     ledger({"key": "goal-a", "state": "missed", "settled": NOW, "names": NOW - 100, "cause": "no event by 10:00 (the goal is at qa, running)"})
     found = rows("eta-missed")
     check(len(found) == 1 and found[0]["subject"] == "goal-a" and "no event by 10:00" in found[0]["detail"], "a missed ETA is a finding row naming the goal and the cause")
-    ledger({"key": "goal-a", "state": "met", "settled": NOW})
-    check(rows("eta-missed") == [], "negative control: a met ETA is no finding")
+    ledger({"key": "goal-a", "state": "met", "settled": NOW}, {"key": "goal-b", "state": "missed", "settled": NOW, "cause": "restated to 12:00 before it was met"})
+    check(rows("eta-missed") == [], "negative control: a met ETA and an ETA restated before its time are no finding")
     with open(os.path.join(loop, "runs", "w.json"), "w") as handle:
         json.dump({"slug": "w", "status": "running", "wrong": [{"said": "merged by 5", "why": "it was still in review"}]}, handle)
     found = rows("statement-wrong")

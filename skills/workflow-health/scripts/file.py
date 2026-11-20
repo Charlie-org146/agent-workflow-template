@@ -48,7 +48,7 @@ REPORT_ONLY = ("test-time", "suite-cap", "worktrees", "local-branches", "idle-se
 
 
 def honesty(root, name, module):
-    """The ETA ledger's rules (HLT-4): eta-unmarked (FAIL), eta-missed (7 days), eta-rate (last 20), statement-wrong."""
+    """The ETA ledger's rules (HLT-4): eta-unmarked FAIL, eta-missed 7 days, eta-rate last 20."""
     loop, now, out = module.loop_dir(root), time.time(), []
     every = sorted(module.bs.eta_fold(loop).values(), key=lambda e: e.get("settled") or e["said"])
     put = lambda state, subject, text: out.append(_row(state, "hygiene", subject, name, text, "layers.py status settles the ledger"))
@@ -56,7 +56,7 @@ def honesty(root, name, module):
         what = "%s ETA %s of %s" % (e["layer"], module.bs.hhmm(e["names"]), e["key"])
         if name == "eta-unmarked" and e["state"] == "open" and now - e["names"] > 900:
             put("FAIL", e["key"], "%s (said by %s) is %d minutes past, neither met nor marked missed" % (what, e["who"], (now - e["names"]) // 60))
-        if name == "eta-missed" and e["state"] == "missed" and now - e.get("settled", 0) < 7 * 86400:
+        if name == "eta-missed" and e["state"] == "missed" and "restated" not in e["cause"] and now - e.get("settled", 0) < 7 * 86400:
             put("WARN", e["key"], "the %s was missed: %s" % (what, e.get("cause")))
     for layer in ("goal", "board", "status") if name == "eta-rate" else ():
         last = [e for e in every if e["layer"] == layer and e["state"] != "open"][-20:]

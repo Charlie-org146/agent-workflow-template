@@ -316,7 +316,7 @@ def release_header(release, items, at, loop=None):
     how = "; hard ETA for %d, estimate for %d" % (len(hard), len(left) - len(hard)) if hard else ""
     try:
         loop and eta_say(loop, "board", release, "check-in", "latest finish among %d goals" % len(items), end.timestamp(), at.timestamp(), [i["slug"] for i in items if i.get("slug")])
-        gone = loop and [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == ("board", release, "missed")]
+        gone = loop and [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == ("board", release, "missed") and "restated" not in e["cause"]]
         how += "; earlier ETA %s MISSED" % hhmm(max(gone, key=lambda e: e["settled"])["names"]) if gone else ""
     except Exception:
         pass
