@@ -11,7 +11,7 @@ a red whole-tree row fails the tree cell and so the required `affected` job; a r
    runs; a failing whole-tree row makes the --tree run exit 1 while a shard run exits 0 (negative control); with no shard and no --tree
    every row runs (a local run is unchanged).
 3. CUT first: a row marked CUT runs first; a run cut by --budget marks the rows it cut CUT, and the next run puts one of them first.
-4. The rendered workflow: `tree` is a cell of the shard matrix that runs four parallel --tree runs and exits with the OR of theirs, `affected`
+4. The rendered workflow: `tree` is a cell of the shard matrix that runs eight parallel --tree runs and exits with the OR of theirs, `affected`
    needs the matrix and fails unless it is success (so a red tree fails it), and the committed regression-pr.yml is the rendered one."""
 import os
 import shutil
@@ -105,8 +105,8 @@ with tempfile.TemporaryDirectory() as tmp:
 flow = lanes_cli.NARROW.replace("@BASE@", "main").replace("@LEVELS@", "nightly")
 job = flow.split("\n  shard:")[1].split("\n  affected:")[0]
 tree_part = job.split('if [ "${{ matrix.shard }}" = tree ]; then')[1].split("fi\n")[0]
-check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in job and "--tree" in tree_part and "for k in 0 1 2 3" in tree_part and "wait $i || r=1" in tree_part and "exit $r" in tree_part,
-      "tree is a cell of the shard matrix: four parallel --tree runs, exit status the OR of theirs")
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in job and "--tree" in tree_part and "for k in 0 1 2 3 4 5 6 7" in tree_part and "wait $i || r=1" in tree_part and "exit $r" in tree_part,
+      "tree is a cell of the shard matrix: eight parallel --tree runs, exit status the OR of theirs")
 affected = flow.split("\n  affected:")[1].split("\n  small:")[0]
 check("needs: shard" in affected and 'test "${{ needs.shard.result }}" = success' in affected, "affected needs the matrix and fails unless it is success, so a red tree cell fails it")
 committed = os.path.join(root, ".github", "workflows", "regression-pr.yml")

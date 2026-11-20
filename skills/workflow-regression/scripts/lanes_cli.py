@@ -31,8 +31,8 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 FIX = {
     "LANES-DECL-NONE": "add '# reads: <the files it runs>' at the top of {file}",
     "LANES-DECL-PLACE": "move # reads: into {file}'s top comment block",
-    "LANES-DECL-PATTERN": "declare each file, or the globbed skill folder",
-    "LANES-DECL-ESCAPE": "declare repo-relative paths only",
+    "LANES-DECL-PATTERN": "declare each file or the globbed folder",
+    "LANES-DECL-ESCAPE": "declare repo-relative paths",
     "LANES-DECL-MISSING": "fix or remove that path in {file}'s # reads:",
     "LANES-DECL-FOLDER-UNBACKED": "declare the files {file} runs, not the folder",
     "LANES-DECL-GLOB": "declare the globbed folder in {file}'s # reads:",
@@ -206,7 +206,7 @@ jobs:
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
           if [ "${{ matrix.shard }}" = tree ]; then
-            for k in 0 1 2 3; do LOOP_PR_SHARD=$k/4 $R --tree --timeout 200 & p="$p $!"; done
+            for k in 0 1 2 3 4 5 6 7; do LOOP_PR_SHARD=$k/8 $R --tree --timeout 200 & p="$p $!"; done
             r=0; for i in $p; do wait $i || r=1; done; exit $r
           fi
           LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget 120 --timeout 200
