@@ -323,13 +323,13 @@ chmod +x "$T/racetool.py"
 echo "{\"slug\": \"ra\", \"status\": \"running\", \"step\": \"idea\", \"worktree\": \"$T/tree\", \"log\": []}" > "$R/ra.json"
 echo '{"sfa": {"name": "w", "slug": "", "state": "free"}, "sfb": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" $SE assign ra > "$T/o" 2>&1; rc=$?
-check "assign skips a reused free session another goal took before the claim" '[ $rc = 0 ] && python3 -c "
+check "assign skips a free session another goal took before the claim, and starts none (the goal falls back to a background process)" '[ $rc = 1 ] && grep -q "^BACKGROUND ra: the session tool could not reach session sfa" "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/ra.json\"))
 assert p[\"sfb\"][\"slug\"]==\"other\" and p[\"sfb\"][\"state\"]==\"busy\" and p[\"sfa\"][\"state\"]==\"unreachable\"
-assert p[\"snew\"][\"slug\"]==\"ra\" and r[\"session\"][\"id\"]==\"snew\""'
+assert \"snew\" not in p and (r.get(\"session\") or {}).get(\"id\")!=\"snew\""'
 # Value: protects=an operator's bind during assign's send wins; fails_when=the HANDED guard after the send in sessions.assign is removed (the run is overwritten with snew); why_new=no check bound a goal while assign was sending; seam=none; no_claim=which session the operator should pick
 echo "{\"slug\": \"rb\", \"status\": \"running\", \"step\": \"idea\", \"worktree\": \"$T/tree\", \"log\": []}" > "$R/rb.json"
-echo '{}' > "$POOL"
+echo '{"snew": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"  # snew is an archived session to wake: assign never starts one (OPS-1, #5559)
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" RACE_BIND=rb RACE_SE="$S/sessions.py" $SE assign rb > "$T/o" 2>&1; rc=$?
 check "a bind during assign's send keeps the operator's bind and prints HANDED" '[ $rc = 0 ] && grep -q "^HANDED rb elsewhere during the send; session snew keeps no claim" "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/rb.json\"))
@@ -380,21 +380,21 @@ PY
 check "a pool entry with no run counts against parallel" 'grep -qx "full \[\] \[.slots full (1 of 1).\]" "$T/o" && grep -qx "free \[.q.\]" "$T/o"'
 # Value: protects=assign on a failed goal that still names its old session gives it to the new session; fails_when=the HANDED check treats the run's earlier session id as an operator's bind (the run stays failed on the old session and the new one keeps a hidden busy entry); why_new=the HANDED check only covered a bind made during the send; seam=none; no_claim=the session tool's real timing
 echo "{\"slug\": \"rc\", \"status\": \"failed\", \"step\": \"build\", \"worktree\": \"$T/tree\", \"worker\": \"session\", \"session\": {\"id\": \"sx\", \"name\": \"worker · rc\"}, \"log\": []}" > "$R/rc.json"
-echo '{"sx": {"name": "worker · gb", "slug": "gb", "state": "busy", "since": "2026-06-01T11:00:00Z"}}' > "$POOL"
+echo '{"sx": {"name": "worker · gb", "slug": "gb", "state": "busy", "since": "2026-06-01T11:00:00Z"}, "snew": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" $SE assign rc > "$T/o" 2>&1; rc=$?
 check "assign gives a failed goal that still names its old session to the new session" '[ $rc = 0 ] && ! grep -q HANDED "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/rc.json\"))
 assert r[\"session\"][\"id\"]==\"snew\" and r[\"status\"]==\"running\" and p[\"snew\"][\"slug\"]==\"rc\" and p[\"sx\"][\"slug\"]==\"gb\""'
 # Value: protects=an operator who binds a failed goal back to its old session during assign's send keeps that bind; fails_when=bind stops freeing the goal's other busy sessions, or assign overwrites a bind back to the run's old session (the run moves to snew); why_new=the failed-goal check had no operator in it; seam=none; no_claim=the session tool's real timing
 echo "{\"slug\": \"rd\", \"status\": \"failed\", \"step\": \"build\", \"worktree\": \"$T/tree\", \"worker\": \"session\", \"session\": {\"id\": \"sy\", \"name\": \"worker · rd\"}, \"log\": []}" > "$R/rd.json"
-echo '{}' > "$POOL"  # the old session is out of the pool, so assign starts snew
+echo '{"snew": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"  # the old session is out of the pool, so assign wakes the archived snew
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" RACE_BIND=rd RACE_TO=sy RACE_SE="$S/sessions.py" $SE assign rd > "$T/o" 2>&1; rc=$?
 check "a bind back to the old session during assign's send keeps the operator's bind" '[ $rc = 0 ] && grep -q "^HANDED rd" "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/rd.json\"))
 assert r[\"session\"][\"id\"]==\"sy\" and p[\"sy\"][\"state\"]==\"busy\" and p[\"snew\"][\"state\"]==\"free\""'
 # Value: protects=a bind back to the old session during assign's send wins even while that session is still busy for the goal; fails_when=assign's final check stops noticing the bind (bound_at changed) and overwrites the run with snew, leaving two busy sessions; why_new=the other rebind check frees snew through bind's release, so it never reaches assign's own check; seam=none; no_claim=the session tool's real timing
 echo "{\"slug\": \"rz\", \"status\": \"failed\", \"step\": \"build\", \"worktree\": \"$T/tree\", \"worker\": \"session\", \"session\": {\"id\": \"sz\", \"name\": \"worker · rz\"}, \"bound_at\": \"2026-06-01T10:00:00Z\", \"log\": []}" > "$R/rz.json"
-echo '{"sz": {"name": "worker · rz", "slug": "rz", "state": "busy", "since": "2026-06-01T10:00:00Z"}}' > "$POOL"
+echo '{"sz": {"name": "worker · rz", "slug": "rz", "state": "busy", "since": "2026-06-01T10:00:00Z"}, "snew": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" RACE_BIND=rz RACE_TO=sz RACE_SE="$S/sessions.py" $SE assign rz > "$T/o" 2>&1; rc=$?
 check "a bind back to a still-busy old session during assign's send keeps the operator's bind" '[ $rc = 0 ] && grep -q "^HANDED rz" "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/rz.json\"))
@@ -408,7 +408,7 @@ import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/rf.json\"))
 assert r[\"session\"][\"id\"]==\"sa\" and p[\"sa\"][\"state\"]==\"busy\" and \"snew\" not in p"'
 # Value: protects=a HANDED assign gives back the session it claimed; fails_when=the free of the claimed entry on HANDED is removed (snew stays busy for the goal, a hidden slot); why_new=in the bind races bind itself frees snew first; seam=none; no_claim=how the run moved
 echo "{\"slug\": \"re\", \"status\": \"running\", \"step\": \"idea\", \"worktree\": \"$T/tree\", \"log\": []}" > "$R/re.json"
-echo '{}' > "$POOL"
+echo '{"snew": {"name": "w", "slug": "", "state": "free"}}' > "$POOL"
 LOOP_SESSION_TOOL="$T/racetool.py" RACE_POOL="$POOL" RACE_RUN="$R/re.json" $SE assign re > "$T/o" 2>&1; rc=$?
 check "a HANDED assign frees the session it claimed" '[ $rc = 0 ] && grep -q "^HANDED re" "$T/o" && python3 -c "
 import json;p=json.load(open(\"$POOL\"));assert p[\"snew\"][\"state\"]==\"free\""'

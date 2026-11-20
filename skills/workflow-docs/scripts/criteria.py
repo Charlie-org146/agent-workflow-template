@@ -44,7 +44,7 @@ DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
 SCRIPT_FILE = re.compile(r"[\w./-]*\w\.(?:py|sh|bash|zsh|js|mjs|cjs|ts|rb|pl|php|ps1|bat)\b", re.I)
 import deployments  # noqa: E402
 from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, rules  # noqa: E402,F401
-link_of, link_page, owner_words, slurp = deployments.link_of, deployments.link_page, deployments.owner_words, deployments.slurp
+link_of, link_page, owner_words, safety, slurp = deployments.link_of, deployments.link_page, deployments.owner_words, deployments.safety, deployments.slurp
 
 
 def git(*args, check=True):
@@ -314,8 +314,32 @@ def today():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
 
+def delegated(root, rid, text):
+    # True: delegated (operation-top:delegated:TDn:DOC-2:rN), DOC-2 has rN, no safety class; False: delegated but not; None: not one
+    log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv")
+    try:
+        row = next(r for r in (x.rstrip("\n").split("\t") for x in open(log, encoding="utf-8")) if len(r) == 5 and r[0] == rid)
+    except (OSError, StopIteration):
+        return None
+    found = re.fullmatch(r"operation-top:delegated:(TD\d+):DOC-2:(r\d+)", row[2])
+    if not found:
+        return None
+    revs = "".join(x.split("### DOC-2\n", 1)[1].split("\n### ", 1)[0] for x in map(lambda r: slurp(os.path.join(root, r)), pages(root)) if "### DOC-2\n" in x)
+    return bool(re.search(r"^\| %s \|" % found[2], revs, re.M)) and not safety(json.loads(row[3]) + " " + text)
+
+
+def req_text(root, keys, names):
+    out = []
+    for rel in pages(root):
+        lines = slurp(os.path.join(root, rel)).split("\n")
+        out += lines if os.path.basename(rel)[:-3] in names else [x for n, line in enumerate(lines) if (m := LINE.match(line)) and m.group(1) in keys for x in [line] + subs(lines, n)]
+    return " ".join(out)
+
+
 def mark_all(args, make, page_change):
-    if not args.user:
+    root = git("rev-parse", "--show-toplevel")
+    ok = delegated(root, args.owner_record, req_text(root, [k for k in args.ids if ID.match(k)], [k for k in args.ids if not ID.match(k)])) if args.owner_record else None
+    if (not args.user and not ok) or ok is False:
         sys.exit("REFUSED: only the owner changes a review. Fix: pass --user when their own words said to.")
     words = " ".join(os.environ.get("LOOP_OWNER_WORDS", "").split())
     if args.owner_record:

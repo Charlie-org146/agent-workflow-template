@@ -283,6 +283,8 @@ def revise(args):
         body = open(args.text_file, encoding="utf-8").read().splitlines() if args.text_file else [args.text]
         if not (body and body[0].strip()) or "\n" in args.text:
             no("REV-NOOP", "empty text or a line break (use --text-file)")
+        if cr.delegated(root, args.owner_record, " ".join(body)) is False:
+            no("REV-RECORD", "a delegated record can't revise this: its text or the asking words are in a safety class, or DOC-2 lacks its revision. Fix: the owner's own words")
         subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
         fresh = pf.unit(body[0].strip(), subs)
         if fresh == old:

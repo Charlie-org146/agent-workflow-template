@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept rel-15-queue@88a93af7b -->
+Review: **Unreviewed** <!-- kept fast-3min@d4d7dad03 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
@@ -325,6 +325,10 @@ None
 | [stale-code-page-unreviewed](Tests#t-stale-code-page-unreviewed) | requirement | DOC-2 | Given an Unreviewed page that only the goal's own mapped code staled, when the lane prep runs, then it carries a kept marker and is fresh before the rows run. | not run |
 | [stale-code-page-wording](Tests#t-stale-code-page-wording) | requirement | DOC-2 | Given a Reviewed page whose reviewed wording changed, when the lane prep runs, then it is not re-stamped and stays stale. | not run |
 | [stale-code-page-scope](Tests#t-stale-code-page-scope) | requirement | DOC-2 | Given a page that only main's code staled and a goal's own stale page, when the lane prep runs, then only the goal's own page is re-stamped; on the base branch nothing is. | not run |
+| [delegated-record-accepted](Tests#t-delegated-record-accepted) | requirement | DOC-2 | Given a delegated record (the owner's asking words, TD number, DOC-2's revision) for a wording change that is not a safety class, when criteria.py revise and review run with it, then both accept it, and a plain record with no --user is still refused (negative control). | not run |
+| [delegated-safety-refused](Tests#t-delegated-safety-refused) | requirement | DOC-2 | Given a delegated record for a change in a safety class (the asking words, the requirement text or the new text), when criteria.py revise or review runs with it, then it is refused exactly as before, even with --user. | not run |
+| [delegated-in-checkin](Tests#t-delegated-in-checkin) | requirement | DOC-2 | Given a delegated record written since the last check-in, when the check-in runs, then it lists the record (id, TD number, DOC-2 revision, ids, the asking words). | not run |
+| [delegated-operation-only](Tests#t-delegated-operation-only) | requirement | DOC-2 | Given a delegated record asked for by a session that is not an operation session (not in operation.id, no id, or inside a worker worktree), when sessions.py owner-words --delegated runs, then it is refused and nothing is written. | not run |
 | [stale-found](Tests#t-stale-found) | requirement | DOC-25 | Given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale. | PASS 2026-11-20 |
 | [publish-refused-stale](Tests#t-publish-refused-stale) | requirement | DOC-25 | Given a stale wiki page, when the wiki is published, then publishing is refused. | PASS 2026-11-20 |
 | [stale-merge-order](Tests#t-stale-merge-order) | requirement | DOC-25 | Given two docs merges, when they merge in either order, then no page is left stale. | PASS 2026-11-20 |
