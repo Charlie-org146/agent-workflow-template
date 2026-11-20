@@ -271,7 +271,7 @@ check "status lines go to stdout and the exit code says what happened (3: no lan
 # Value: protects=lanekit.py's copies of the slots.py pieces lane.py uses stay the same code; fails_when=a copied
 # function (lanekit.COPIED) or EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL differs from slots.py, or a name in COPIED is missing;
 # why_new=a skill may not import another's scripts, so delivery keeps copies that could drift; seam=none; no_claim=behaviour
-out=$(python3 - "$S/lanekit.py" "$R/slots.py" <<'PY'
+cat > "$T/drift.py" <<'PY'
 import ast, sys
 def parts(path):
     text = open(path).read()
@@ -295,8 +295,13 @@ for name in ("flow_file", "lane_limit", "lanes_dir", "last_change", "port_base",
         drift.append("%s not in COPIED" % name)
 print("drift: " + ", ".join(drift) if drift else "same")
 PY
-)
+out=$(python3 "$T/drift.py" "$S/lanekit.py" "$R/slots.py")
 check "every function lanekit.py copies from slots.py has exactly the same source, and the shared constants match" '[ "$out" = same ]'
+# negative control: a copy whose `check` differs from slots.py's (here the group/other write mask) is reported as drift
+sed 's/info.st_mode & 0o022/info.st_mode \& 0o002/' "$S/lanekit.py" > "$T/lanekit-drifted.py"
+out=$(python3 "$T/drift.py" "$T/lanekit-drifted.py" "$R/slots.py")
+check "negative control: a lanekit.py whose check differs from slots.py's is reported as drift" '[ "$out" = "drift: check" ]'
+out=same
 
 echo "== review fixes: one start mark, a finished pass is reused, the pr commit takes only its files"
 mark_check
