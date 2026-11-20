@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/entry.py render | grep public_origins`.
+   Expect: one table row that reads "45 entries in config.json", with no list of URLs on it.
+2. Run `bash dev/toy/test-entry-config.sh | tail -6`.
+   Expect: PASS for the two-branch merge with no conflict, PASS for the negative control (main's one-line list conflicts), and ALL PASS.
