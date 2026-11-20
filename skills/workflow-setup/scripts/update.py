@@ -97,9 +97,12 @@ def guard_staged(repo, paths):
 
 
 def stop(proc, sig):
-    """Send sig to proc's process group; an ended group is fine."""
+    """Kill proc's tree on Windows, else signal its group; an ended one is fine."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+        return
     try:
-        os.killpg(proc.pid, sig)
+        os.killpg(proc.pid, sig)  # posix-only branch
     except ProcessLookupError:
         pass
 
@@ -111,14 +114,11 @@ def commit(repo, message, files):
     try:
         out = proc.communicate()[0]
     except BaseException:
-        if os.name == "nt":
-            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
-        else:  # posix: TERM first, so git removes its index.lock (a KILL leaves it)
-            stop(proc, signal.SIGTERM)
-            try:
-                proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                stop(proc, signal.SIGKILL)
+        stop(proc, signal.SIGTERM)  # TERM first, so git removes its index.lock (a KILL leaves it)
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            stop(proc, getattr(signal, "SIGKILL", signal.SIGTERM))
         proc.wait()
         raise
     return proc.returncode, out
