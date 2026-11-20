@@ -58,10 +58,6 @@ With merge_queue on, the release is made in CI on push to main, not by merge.py.
 
 Each requirement and how it is delivered:
 
-- REL-3: The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue. Example, from the rel-red-row-refused test: given a known-red row with no waiver, when the gate runs, then it refuses naming the row.
-- REL-12: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
-- REL-13: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
-- REL-15: A ready pull request is on main within 5 minutes. Example, from the merge-guard-base-head test: given the merge_queue setting on and a base that moved in paths the goal's rows reach, when merge.py runs, then it does not refuse BASE_MOVED and prints MERGED only after gh reports the pull request merged; with the setting off the refusal is unchanged.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]`

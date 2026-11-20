@@ -10,7 +10,7 @@ import re
 KINDS = {
     'front': ('What this is', 'System design', '+\\d+\\. .+', 'Requirements by feature'),
     'front-adopted': ('What this is', 'System design', "The template's principles", '+\\d+\\. .+', 'Requirements by feature'),
-    'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', 'Revisions', 'Tests'),
+    'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', '?Deployments', 'Revisions', 'Tests'),
     'howto': ("What it's for", 'How to reach or run it', 'URLs and deployments', '?Automations and schedules', '?Runbooks', 'Links'),
     'principles': ('+\\d+\\. .+',),
     'tests': ('+(?!Other$).+', 'Other'),
@@ -76,6 +76,7 @@ def targets(root, folder, read, block_re, both):
 OLD = "Requirement Summary Follows Feature Version Flow".split()
 NEW = "Requirement Summary Follows Feature Adoption Confidence".split()
 SPLIT = re.compile(r"(?<!\\)\|")
+UNSEEN, UNDATA = "not measured: no references recorded yet", "not measured: no data yet"
 
 
 def adoption(follows):
@@ -91,31 +92,41 @@ def tables(text):
         head = [c.strip() for c in SPLIT.split(lines[i].strip()[1:-1])] if lines[i].startswith("| Requirement | Summary") else []
         if head not in (OLD, NEW):
             out.append(lines[i]); i += 1; continue
-        out += ["| " + " | ".join(NEW) + " |", lines[i + 1]]; scores = []; i += 2
+        out += ["| " + " | ".join(NEW) + " |", lines[i + 1]]; rows = []; i += 2
         while i < len(lines) and lines[i].startswith("|"):
             c = [x.strip() for x in SPLIT.split(lines[i].strip()[1:-1])]
-            if head == OLD:
-                c = [c[0] + " (" + c[5] + ")"] + c[1:4] + ["", ""]
-            c[4] = "%d%%" % adoption(c[2]); scores.append(adoption(c[2]))
-            out.append("| " + " | ".join(c) + " |"); i += 1
+            rows.append([c[0] + " (" + c[5] + ")"] + c[1:4] + ["", ""] if head == OLD else c); i += 1
+        scores = [adoption(c[2]) for c in rows]
+        seen = any(re.search(r"\b(adopted|adapted|own)\b", c[2]) for c in rows)  # no Follows tag anywhere: nothing measured, not 0%
+        for c, score in zip(rows, scores):
+            c[4] = "%d%%" % score if seen else UNSEEN
+            c[5] = c[5] or UNDATA if not seen else "" if c[5] == UNDATA else c[5]
+            out.append("| " + " | ".join(c) + " |")
         while i < len(lines) and (lines[i] == "" or lines[i].startswith("Adoption: ")):
             i += 1
-        out += ["", "Adoption: %d%% (the average of this principle's rows)." % round(sum(scores) / len(scores)), ""]
+        out += ["", "Adoption: %s." % ("%d%% (the average of this principle's rows)" % round(sum(scores) / len(scores)) if seen else UNSEEN), ""]
     return "\n".join(out)
 
 
 def what(page):
-    """The What this is section, written from DEL-19's text on the Delivery page."""
+    """The What this is section, written from DEL-19's text on the Delivery page; None when the page has no DEL-19."""
     found = re.search(r"^- DEL-19: .*\n((?:  - .*\n?)*)", page or "", re.M)
-    return "## What this is\n\n" + " ".join(re.sub(r"\s*\[[A-Z]{3}-\d+\]$", "", b[4:]) for b in (found[1].splitlines() if found else [])) + "\n"
+    return found and "## What this is\n\n" + " ".join(re.sub(r"\s*\[[A-Z]{3}-\d+\]$", "", b[4:]) for b in found[1].splitlines()) + "\n"
 
 
-def fresh(text, folder, read):
+def relink(text, slug):
+    """Links to this repository's own pages and files name its owner now, whoever owned it when the page was written."""
+    return re.sub(r"https://github\.com/[\w.-]+/%s/" % re.escape(slug.split("/")[1]), "https://github.com/%s/" % slug, text) if slug.count("/") == 1 else text
+
+
+def fresh(text, folder, read, slug=""):
     """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
-    text = tables(text)
+    text = relink(tables(text), slug)
     if "\n## System design" not in text:
         return text
     block = what(read(os.path.join(folder, "Delivery.md")))
+    if not block:  # no DEL-19 in this repo: What this is stays as written
+        return text
     return re.sub(r"\n## What this is(?:\n\n[^\n]+(?:\n[^\n]+)*)?", lambda _: "\n" + block.rstrip("\n"), text, 1) if "\n## What this is\n" in text else text.replace("\n## System design", "\n" + block + "\n## System design", 1)
 
 

@@ -83,7 +83,6 @@ def relative(root, path):
 
 
 def picked(root, rows, path, cache):
-    """The rows a deleted or unmapped file selects: those that name it, and those that reach the runner."""
     return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
             or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
 
@@ -190,7 +189,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -206,7 +205,7 @@ jobs:
           restore-keys: row-times-
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
-          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/6 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 240 --timeout 200
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --budget 120 --timeout 200
       - uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}
@@ -219,6 +218,10 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 skills/workflow-docs/scripts/docs.py check
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
@@ -256,7 +259,6 @@ jobs:
 OURS = "# Written by workflow-regression"
 
 
-# The Linux cell of the agent x machine matrix: the smoke set every machine runs.
 MATRIX_JOB = """
   matrix-smoke:
     if: github.event_name != 'workflow_dispatch' || inputs.target == ''

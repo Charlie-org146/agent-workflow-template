@@ -25,6 +25,9 @@ feat=$'# F\n\n## Problem\n\n## Requirements\n\n## Non-goals\n\n## Success metric
 want "a feature page of the fixed sections passes" feature "$feat" ""
 want "a feature page with Non-goals missing fails" feature "$(sub $'## Non-goals\n\n' "" "$feat")" "Non-goals"
 want "a feature page with an optional Runbook before Requirements passes" feature "$(sub '## Requirements' $'## Runbook\n\n## Requirements' "$feat")" ""
+want "a feature page with an optional Deployments before Revisions passes" feature "$(sub '## Revisions' $'## Deployments\n\n## Revisions' "$feat")" ""
+want "a feature page with Deployments after Revisions fails" feature "$(sub '## Tests' $'## Deployments\n\n## Tests' "$feat")" "Deployments"
+want "a feature page with Deployments before Success metrics fails" feature "$(sub '## Success metrics' $'## Deployments\n\n## Success metrics' "$feat")" "Deployments"
 want "a How-to-use page without Links fails" howto $'# H\n\n## What it\'s for\n\n## How to reach or run it\n\n## URLs and deployments\n' "Links"
 want "a Tests page with Other last passes" tests $'# T\n\n## Delivery\n\n## Health\n\n## Other\n' ""
 prin=$'# P\n\n## 1. One\n\n## 2. Two\n'
@@ -58,6 +61,17 @@ out=$(mig "Version | Flow")
 if echo "$out" | grep -qF "| [X-1 A](u) ([f](flows/X-1.svg)) | s | a: adopted; b: adapted | Docs | 50% |  |" && echo "$out" | grep -qF "| Adoption | Confidence |"; then echo "PASS: DOC-25 the render moves the figure link into the Requirement cell and computes Adoption from the Follows tags"; else echo "FAIL: DOC-25 migrate: $out"; fails=1; fi
 if echo "$out" | grep -qF "Adoption: 25% (the average" && echo "$out" | grep -qF "It is a loop. Done."; then echo "PASS: DOC-25 the render averages Adoption per principle and writes What this is from DEL-19"; else echo "FAIL: DOC-25 average: $out"; fails=1; fi
 if [ "$(mig "Adoption | Confidence" | grep -c "^| \[X-")" = 2 ]; then echo "PASS: DOC-25 a table already in the new columns, with a blank Confidence, is kept"; else echo "FAIL: DOC-25 new columns kept"; fails=1; fi
+# an adopted repo: no DEL-19 leaves What this is as written; with DEL-19 it renders from it (negative control); no Follows tag anywhere is
+# "not measured", never 0% (negative control: tagged rows keep their percentages and an empty Confidence stays empty)
+adopted() { # DEL19-TEXT TABLE-ROW-FOLLOWS: fresh() on a front page with a hand-written What this is and one principle row with that Follows cell
+  python3 -c '
+import sys, sections as s
+page = "# t\n\n## What this is\n\nMy own words.\n\n## System design\n\n## 1. One\n\nSentence.\n\n| Requirement | Summary | Follows | Feature | Adoption | Confidence |\n|---|---|---|---|---|---|\n| [X-1 A](u) | s | " + sys.argv[2] + " | Docs | 0% | |\n"
+print(s.fresh(page, ".", lambda p: sys.argv[1]), end="")' "$1" "$2"; }
+out=$(adopted "" "")
+if echo "$out" | grep -qF "My own words." && echo "$out" | grep -qF "| Docs | not measured: no references recorded yet | not measured: no data yet |" && echo "$out" | grep -qF "Adoption: not measured: no references recorded yet." && ! echo "$out" | grep -q "0%"; then echo "PASS: DOC-25 a repo with no DEL-19 keeps What this is, and rows with no Follows tag read not measured, never 0%"; else echo "FAIL: DOC-25 adopted repo: $out"; fails=1; fi
+out=$(adopted $'- DEL-19: **Reviewed** t\n  - Generated. [DEL-19]\n' "a: adopted; b: own")
+if echo "$out" | grep -qF "Generated." && ! echo "$out" | grep -qF "My own words." && echo "$out" | grep -qF "| Docs | 50% |  |" && echo "$out" | grep -qF "Adoption: 50% (the average"; then echo "PASS: DOC-25 negative control: with DEL-19 and Follows tags What this is renders from DEL-19 and the percentages stay"; else echo "FAIL: DOC-25 template render: $out"; fails=1; fi
 # What this is: fresh() rewrites only the generated first paragraph; owner paragraphs after it stay byte for byte
 keep() { # TEXT: sections.fresh on a front page whose Delivery page has DEL-19 "Gen."
   python3 -c '

@@ -40,7 +40,6 @@ Say these to the agent in the operation session; each feature page has the exact
 Each requirement and how it is delivered:
 
 - AUT-1: Routines run where they can run fully. Example, from the ci-summary test: given the nightly run, when it ends, then it writes a results table to the job summary.
-- AUT-9: Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. Also: `setup.py desk` lists every desk-only setup step once and `desk check` ends with DESK OK when none is left. Also: `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
 
 ### Command: automation.py
 - **Command:** `python3 skills/workflow-health/scripts/automation.py digest [--owner L]` or `local status`
@@ -63,11 +62,13 @@ Each requirement and how it is delivered:
 - **Writer:** workflow-setup writes the defaults; the owner edits a value.
 - **Reader:** the scheduled rounds, the digest and the mail step.
 
+Desk-only setup (the folded AUT-9): `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
+
 ## URLs and deployments
 
-- Wiki: [Automation](https://github.com/jcl2018/agent-workflow-template/wiki/Automation)
-- Milestone: [Automation](https://github.com/jcl2018/agent-workflow-template/milestone/10)
-- Releases: https://github.com/jcl2018/agent-workflow-template/releases
+- Wiki: [Automation](https://github.com/Charlie-org146/agent-workflow-template/wiki/Automation)
+- Milestone: [Automation](https://github.com/Charlie-org146/agent-workflow-template/milestone/10)
+- Releases: https://github.com/Charlie-org146/agent-workflow-template/releases
 
 ## Automations and schedules
 
@@ -88,6 +89,6 @@ Health and regression, then each `automation` entry in `.loop/config.json`; to a
 ## Links
 
 - PRD page: [Automation](Automation)
-- Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
+- Backlog: [Backlog: Automation](https://github.com/Charlie-org146/agent-workflow-template/milestones)
 
 <!-- kept ci-5min@61f7b5d0e -->
