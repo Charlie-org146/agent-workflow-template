@@ -1,15 +1,21 @@
-#!/usr/bin/env python3
-"""DOC-25: each page kind has its fixed ## headings in order; README and Home match. Lists: references/sections.tsv."""
-import os
+"""DOC-25: each page kind has its fixed ## headings in order; README and Home match.
+
+KINDS maps a page kind to one regex per heading, each matching a whole heading. A "?" prefix makes a heading optional,
+a "+" prefix one or more. A page kind with a heading missing, extra, renamed or out of order fails the docs check;
+README and Home share the "front" row.
+"""
 import re
 
-TSV = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "sections.tsv")
+KINDS = {
+    'front': ('System design', '+\\d+\\. .+', 'Requirements by feature'),
+    'front-adopted': ('System design', "The template's principles", '+\\d+\\. .+', 'Requirements by feature'),
+    'feature': ('Problem', '?Runbook', 'Requirements', 'Non-goals', 'Success metrics', 'Revisions', 'Tests'),
+    'howto': ("What it's for", 'How to reach or run it', 'URLs and deployments', '?Automations and schedules', '?Runbooks', 'Links'),
+    'principles': ('+\\d+\\. .+',),
+    'tests': ('+(?!Other$).+', 'Other'),
+    'roadmap': ('+.+',),
+}
 LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/wiki/")
-
-
-def lists(path=TSV):
-    rows = [x.rstrip("\n").split("\t") for x in open(path, encoding="utf-8") if x.strip() and x[0] != "#"]
-    return {r[0]: r[1:] for r in rows}
 
 
 def heads(text):
@@ -37,8 +43,8 @@ def first_gap(toks, found):
     return (found[i][0], "no more sections", found[i][1]) if i < len(found) else None
 
 
-def check(page, kind, text, path=TSV):
-    gap = first_gap(lists(path)[kind], heads(text))
+def check(page, kind, text):
+    gap = first_gap(KINDS[kind], heads(text))
     return [("FORMAT", "%s:%d" % (page, gap[0]), "Sections: DOC-25 the %s sections in order, next '%s' (got %s). Fix: add, rename, remove or move the section" % (kind, gap[1], gap[2]))] if gap else []
 
 

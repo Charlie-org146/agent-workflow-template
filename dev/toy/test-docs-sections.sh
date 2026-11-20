@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-docs/scripts/sections.py skills/workflow-docs/references/sections.tsv
+# reads: skills/workflow-docs/scripts/sections.py
 # Test DOC-25: each page kind has its fixed ## sections in order and README and Home match: a good page passes, and a
 # missing, extra, renamed, out-of-order section or a README and Home that differ fails. usage: test-docs-sections.sh
 set -u
