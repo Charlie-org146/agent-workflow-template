@@ -14,10 +14,10 @@ usage: mailbox.py reply QID TEXT [--root DIR]   the operation session's reply; Q
        mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); not loaded here;
                                                  the tick runs the jobs, then checkin.py; no goal
 
-notify.py calls compose and claim per event (mail goes through workflow-health's mail.py).
+notify.py calls compose and claim per event (mail: workflow-health's mail.py).
 compose gives the body and remembers the question (loop/mailbox.json). claim takes the event's key and a send from
-the shared ledger (refs/loop/mail-ledger, else a file): a second machine never mails an event twice; no
-more than `notify_budget` (20) go out in 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or the owner's
+the ledger (refs/loop/mail-ledger, else a file): a second machine never mails an event twice;
+`notify_budget` (20) caps the sends in 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or owner's
 words; a question about deleting, money, security or private data needs the owner's typed words. The answer goes to the worker via
 operate.py send --source owner (else sessions.py owner-words).
 """
@@ -355,7 +355,7 @@ def cmd_uninstall(args):
 
 
 def cmd_status(args):
-    loaded = subprocess.run([os.environ.get("LOOP_LAUNCHCTL") or "launchctl", "print", "gui/%d/%s" % (os.getuid(), LABEL)], capture_output=True).returncode == 0
+    loaded = subprocess.run([os.environ.get("LOOP_LAUNCHCTL") or "launchctl", "print", "gui/%d/%s" % (getattr(os, "getuid", lambda: 0)(), LABEL)], capture_output=True).returncode == 0
     print("tick plist: %s; loaded: %s" % ("present" if os.path.exists(plist_path()) else "missing", loaded))
 
 
