@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Copy the repo with `git archive HEAD | tar -x -C /tmp/copy`, run `git init` there and `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: DOCS OK: 16 pages, with no STALE line, and the same with a copy whose origin is the old jcl2018 URL.
+2. In that copy run `python3 skills/workflow-docs/scripts/criteria.py render` and `git status --short`.
+   Expect: nothing changed, so How-to-use-Automation and Tests render the same links with no origin as with the organization origin.
