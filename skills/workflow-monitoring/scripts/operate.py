@@ -338,9 +338,10 @@ def apply(slug, branch):
         pages = stale() if again else pages
         said = "\n".join(x for x in (again, pages and run([sys.executable, os.path.join(docs, "audit.py"), "restamp", slug] + pages, tree).stdout.strip()) if x)
         if said and run(["git", "add", "-A", "--", folder] + ["README.md"] * os.path.exists(os.path.join(tree, "README.md")), tree).returncode == 0:
-            run(["git", "commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
-            pushed = run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
-            print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
+            who = [] if run(["git", "config", "user.email"], tree).stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=workflow-loop@users.noreply.github.com"]
+            pushed = run(["git"] + who + ["commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
+            pushed = pushed if pushed.returncode else run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
+            print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be committed or pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
     except (OSError, ValueError):
         pass
     finally:
