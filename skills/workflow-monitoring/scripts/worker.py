@@ -13,8 +13,8 @@ usage: worker.py <command> [options]
                             (git branch -d, never a remote); health.py check names this as the fix
   send SLUG TEXT            send a worker an answer; goal.py and flow.py print it to its agent next run, then file it away
 
-A report is the run record's `report`: {"status", "pr", "text", "at"}. A failed or waiting one stays at the top of
-Issues until the goal moves on. It never merges.
+A report is the run record's `report`: {"status", "pr", "text", "at"}; a failed or waiting one stays top of Issues until the
+goal moves on. It never merges.
 """
 import argparse
 import datetime
@@ -307,6 +307,9 @@ def cmd_bind(g, args):
     if args.id in g.reserved():
         sys.exit("REFUSED: %s is the governing session; it is never a worker (OPERATION_SESSION)." % args.id)
     tree = (g.load(args.slug) or {}).get("worktree") or ""
+    import operate
+    why = tree and operate.untrusted(tree)
+    why and sys.exit(why)
     for folder in [f for f in (args.cwd, os.getcwd() if worker else "") if f and tree]:
         if not inside(folder, tree):
             sys.exit("REFUSED: session folder %s is outside the goal worktree %s. Fix: start or move the session in %s, "

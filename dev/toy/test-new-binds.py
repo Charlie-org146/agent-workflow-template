@@ -38,7 +38,7 @@ def fresh():
 
 def freeze(repo, session):
     env = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_HOST_SESSION_ID"}
-    env.update(LOOP_FLOW=os.path.join(repo, "flow.json"), LOOP_ROLE="worker", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
+    env.update(HOME=repo, USERPROFILE=repo, LOOP_FLOW=os.path.join(repo, "flow.json"), LOOP_ROLE="worker", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
     if session:
         env["CLAUDE_CODE_HOST_SESSION_ID"] = session
     done = subprocess.run([sys.executable, goal, "new", "g", "--here", "--goal", "x", "--done", "one"], cwd=repo, capture_output=True, text=True, env=env)
@@ -72,5 +72,31 @@ if only in ("", "operation"):  # #5616: the governing session is never a worker,
     check("bind refuses the governing session's id", code != 0 and "never a worker" in said and "op-toy" in said)
     code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "w1")
     check("and still binds an ordinary session", code == 0 and "w1" in said)
+if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.json is refused, and the file is never written
+    repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
+    loop, tree = os.path.join(repo, ".git", "loop"), os.path.join(repo, "tree")
+    os.makedirs(os.path.join(loop, "runs"), exist_ok=True)
+    os.makedirs(tree)
+    json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+    json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+    claude = os.path.join(repo, ".claude.json")
+    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo)
+
+    def bind():
+        done = subprocess.run([sys.executable, os.path.join(scripts, "sessions.py"), "bind", "g", "w1"], cwd=tree, capture_output=True, text=True, env=env)
+        return done.returncode, done.stdout + done.stderr
+
+    code, said = bind()
+    check("negative control: with no ~/.claude.json nothing is known, so bind goes through", code == 0 and "w1" in said)
+    json.dump({"projects": {os.path.join(repo, "elsewhere"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
+    before = open(claude).read()
+    json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+    json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+    code, said = bind()
+    check("a worktree with no trust entry is refused: ask the owner to trust it", code != 0 and "ask the owner to trust" in said and tree in said)
+    check("and ~/.claude.json is read only: it is byte for byte as it was", open(claude).read() == before)
+    json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
+    code, said = bind()
+    check("a trusted parent folder lets it through", code == 0 and "w1" in said)
 print("PASS: goal.py new binds an app session's goal" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)

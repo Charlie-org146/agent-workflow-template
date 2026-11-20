@@ -6,21 +6,20 @@ usage: sessions.py <command> [options]
   assign SLUG               give a frozen goal to a free (archived) session, never a new one
   bind SLUG ID|self [--name N] [--force] [--cwd DIR]
                             record an app-started session: ASSIGNED before freezing, BOUND after goal.py new.
-                            --force: rebind a freed session. Prints WORKER and WORKTREE
+                            --force rebinds a freed session. Prints WORKER and WORKTREE
   free SLUG                 give back a stopped session's goal and slot
   report SLUG [--step S] [--status running|waiting|merged|failed] [--pr URL] [--ask Q --words W... --recommend W
               --kind K] [--attempt N] [--text T]
                             a worker's step or result (a counted send). waiting with --ask is a question (auto.py may answer a routine
-                            one); without it the pull request waits. merged is checked with gh. An ended goal's session
-                            returns to the pool. Done is final (KEPT); merged still frees the session.
-  send SLUG[,SLUG...] TEXT  send the owner's answer: one counted message per distinct worker session
-  owner-words TEXT --ids A,B [--from top|peer] [--delegated TDn --doc2 rN]  record the owner's exact message (or, delegated, the asking words) for its IDs
-  list                      the sessions and their goals
+                            one); without it the pull request waits. merged is checked with gh; an ended goal's session
+                            returns to the pool. Done is final (KEPT).
+  send SLUG[,SLUG...] TEXT  send the owner's answer: one counted message per worker session
+  owner-words TEXT --ids A,B [--from top|peer] [--delegated TDn --doc2 rN]  record the owner's exact message (delegated: the asking words) for its IDs
+  list                      sessions and goals
 
-The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL rename ID NAME` and
-`TOOL send ID TEXT`. With no tool, or one that fails or times out (LOOP_SESSION_TIMEOUT, 30 s), the goal runs as
-a background process. The pool, <git common dir>/loop/session-pool.json, is changed under a lock and never written
-when unreadable. Nothing here merges.
+The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL rename ID NAME` and `TOOL send ID TEXT`. With no tool,
+or one that fails or times out (LOOP_SESSION_TIMEOUT, 30 s), the goal runs in the background. The pool
+(<git common dir>/loop/session-pool.json) changes under a lock and is never written unreadable. Nothing here merges.
 """
 import argparse
 import contextlib
@@ -81,7 +80,7 @@ def pool_path():
 
 
 def reserved():
-    """The governing session's ids, from loop/operation.id: never a worker (#5616)."""
+    """Ids in loop/operation.id (#5616)."""
     import govern_hook
     return govern_hook.operation_ids(os.path.dirname(base()))
 
@@ -231,6 +230,9 @@ def cmd_assign(args):
     state = held(args.slug)
     if state.get("status") in ("running", "waiting", "done") and (state.get("session") or state.get("pid")):
         sys.exit("REFUSED: %s is %s with a worker; nothing was sent. Fix: free it first (sessions.py free)." % (args.slug, state["status"]))
+    import operate
+    why = state.get("worktree") and operate.untrusted(state["worktree"])
+    why and sys.exit(why)
     if not assign(state, args.text, config()):
         print("%s %s: %s" % ("REFUSED" if state["worker_why"] == NEW else "BACKGROUND", args.slug, state["worker_why"]))
         return 1
@@ -348,7 +350,7 @@ def cmd_report(args):
 
 
 def cmd_send(args):
-    """One message per distinct session; 1 when one is not reached."""
+    """One message per session; 1 if one is not reached."""
     import unattended
     command, by, code = tool(config()), {}, 0
     for slug in args.slug.split(","):

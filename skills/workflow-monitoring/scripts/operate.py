@@ -124,6 +124,17 @@ def refresh(common, base="main"):
     return "CHECKOUT FAST-FORWARDED %s by %s commits to %s" % (base, behind, fgit(root, "rev-parse", "--short", "HEAD")[1])
 
 
+def untrusted(folder):
+    """The refusal for FOLDER when ~/.claude.json lists projects and none at or above it is trusted (read only, never written), else ""."""
+    try:
+        with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
+            known = json.load(handle)["projects"]
+        path = os.path.realpath(folder) + "/"
+        return "" if any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return ""
+
+
 def behind_ask(common, base="main"):
     """When the main checkout is behind origin/<base>, the line asks a free worker to fast-forward it; '' when current."""
     common = os.path.abspath(common)
