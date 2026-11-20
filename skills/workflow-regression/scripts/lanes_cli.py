@@ -8,17 +8,15 @@ usage: lanes_cli.py affected [--root DIR] [--level land|nightly|all] PATH...
 
 affected  dependency impact of a change to PATH: `AFFECTED n of m rows (ids)`, plus `ALWAYS <id>: <reason>` for rows
           that run on every change, `UNMAPPED <path>` or `DELETED <path>` when no row maps
-          the file: the rows that name it and the runners are picked, never a full run. No record is
-          read, so failed rows, ancestry and edited table rows (which a reuse run also reruns) are outside it.
+          the file: the rows that name it and the runners are picked, never a full run. No record is read, so failed rows, ancestry and edited table rows are outside it.
 deps      a row command's dependency paths, sorted, then `ALWAYS <command>: <reason>`; --why prints the chain of files
           from the command to PATH, or NOT REACHED.
 check     every `# reads:` problem of the test scripts (default: each dev/toy/test-*.sh a row of the table names), one
           `<CODE> <file>:<line>: <what>` line and a `fix:` line each. Exit 0 clean, 1 problems.
 merge-runs  merge the branch's lane record's row results (PASS or FAIL, with any flaky flag) into
-          .loop/regression-runs.tsv under slots.py's row lock (DX-19); workflow-delivery's goal.py pr runs it, by path,
-          before its bookkeeping commit. Writes nothing when the record has no results; exit 1 on an error.
+          .loop/regression-runs.tsv under slots.py's row lock (DX-19); goal.py pr runs it before its bookkeeping commit. Writes nothing when the record has no results; exit 1 on an error.
 The root is the git top level of the current directory unless --root is given. Usage errors exit 2 on stderr;
-LANES_DEBUG=1 shows the full trace of an unexpected error. Read-only, except merge-runs.
+LANES_DEBUG=1 shows an unexpected error's trace. Read-only, except merge-runs.
 """
 import argparse
 import datetime
@@ -174,9 +172,10 @@ on:
       - "@BASE@"
 permissions:
   contents: read
+  checks: read
 concurrency:
   group: regression-pr-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.event.head_commit.message, 'pr:') }}
 jobs:
   affected:
     runs-on: ubuntu-latest
@@ -189,7 +188,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
+      - id: rec
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          s=false
+          if [ -f dev/recordonly.py ] && python3 dev/recordonly.py ${{ github.event.pull_request.head.sha || github.sha }}; then s=true; fi
+          echo "skip=$s" >> "$GITHUB_OUTPUT"
+      - if: steps.rec.outputs.skip != 'true'
+        run: python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal --timeout 900
 """
 OURS = "# Written by workflow-regression"
 

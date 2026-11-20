@@ -144,7 +144,7 @@ def done_lines(slug):
     try:
         return guards.done_lines(ME, root(), slug)
     except OSError:
-        no("no goal file for %s here. Fix: run this from the goal's worktree." % slug)
+        no("no goal file for %s here. Fix: run it in the goal's worktree." % slug)
 
 
 def done_sha(lines):
@@ -164,9 +164,7 @@ def held(slug):
 
 def base_ref(state):
     base = config()["base"]
-    if run(["git", "rev-parse", "--verify", "--quiet", "origin/" + base]).returncode == 0:
-        return "origin/" + base
-    return base
+    return "origin/" + base if run(["git", "rev-parse", "--verify", "--quiet", "origin/" + base]).returncode == 0 else base
 
 
 def fail_stop(state, text):
@@ -174,7 +172,7 @@ def fail_stop(state, text):
 
 
 def failed_try(state, why, step="build", fix="fix it, then run the step again"):
-    queue("free", state["slug"])  # a failed try gives the merge slot back
+    queue("free", state["slug"])
     guards.failed_try(ME, state, why, step, fix)
 
 
@@ -187,7 +185,7 @@ cmd_touches = lambda args: guards.cmd_touches(ME, args)
 
 
 def valid(args):
-    SLUG.match(args.slug) or no("bad slug. Fix: lowercase letters, digits and dashes.")
+    SLUG.match(args.slug) or no("bad slug. Fix: use lowercase, digits, dashes.")
     args.done or no("no done lines. Fix: give at least one --done.")
     flow_set() or no(NO_FLOW)
 
@@ -378,6 +376,7 @@ def cmd_pr(args):
         if queue("ahead", base):
             return queue("moved", ME, state, "lane failed while %s moved" % base, "run pr")
         return fit.pr_fail(ME, state, head, line, ids)
+    run(["git", "push", "-q", "-u", "origin", state["branch"]])
     role.record(state, base)
     known = run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}

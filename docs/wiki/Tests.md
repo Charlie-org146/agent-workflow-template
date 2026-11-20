@@ -362,6 +362,7 @@
 | <a id="t-gate-feature-edit-refuses"></a>gate-feature-edit-refuses | requirement | DEL-1 | not run | - | local | 2026-11-18 |
 | <a id="t-gate-list-failure-no-create"></a>gate-list-failure-no-create | requirement | DEL-1 | not run | - | local | 2026-11-18 |
 | <a id="t-depth-marker-rows-4557"></a>depth-marker-rows-4557 | defect | #4557 | not run | - | local | 2026-11-19 |
+| <a id="t-record-ci"></a>record-ci | requirement | DEL-20 | not run | - | local | 2026-11-19 |
 
 ## Documentation
 
