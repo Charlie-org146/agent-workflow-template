@@ -27,7 +27,9 @@ bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 finish() {  # finish SLUG [extra goal.py new args]: a done 0 goal with a pull request
   local slug=$1; shift
   git switch -q main
-  $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" "$@" >/dev/null
+  # a goal with no Verify steps must predate the empty-Verify refusal, or goal.py pr would refuse it before cut can
+  local frozen=(); [ -z "$NO_VERIFY" ] || frozen=(env GIT_COMMITTER_DATE=2026-11-01T00:00:00+00:00)
+  "${frozen[@]}" $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" "$@" >/dev/null
   mkdir -p "$(dirname "${FILE:-calc.py}")"
   printf '\n\ndef %s():\n    return 1\n' "${slug//-/_}" >> "${FILE:-calc.py}"
   git add "${FILE:-calc.py}"; git commit -qm "${MSG:-Add ${slug} to calc}"
