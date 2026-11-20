@@ -919,7 +919,7 @@
 | <a id="t-machine-setting-listed"></a>machine-setting-listed | requirement | SET-2 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-test-caps-settings"></a>test-caps-settings | requirement | SET-1 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
 | <a id="t-private-checks-run-local"></a>private-checks-run-local | requirement | SET-1 | not run | - | local | 2026-11-16 |
-| <a id="t-agent-routing"></a>agent-routing | workflow | SET-10: One versioned package; every agent runs one loop | not run | - | local | 2026-11-17 |
+| <a id="t-agent-routing"></a>agent-routing | workflow | SET-10: One versioned package; every agent runs one loop | not run | - | local | 2026-11-20 |
 
 ## Other
 
