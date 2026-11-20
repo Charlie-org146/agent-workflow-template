@@ -78,6 +78,9 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
 
     # main's Settings block was rendered by an older template: one description reads differently
     old = "The branch goals start from and pull requests target."
+    # a README holds only the generated blocks it already has (the principles README, #5195): give the fixture's an empty Settings block and render it
+    write(repo, "README.md", text(repo, "README.md").rstrip("\n") + "\n\n<!-- settings:begin -->\n<!-- settings:end -->\n")
+    run(sys.executable, DOCS, "audit", cwd=repo)
     readme = text(repo, "README.md")
     check(old in readme, "the fixture's README holds the Settings block")
     write(repo, "README.md", readme.replace(old, "The branch goals start from."))
@@ -156,5 +159,14 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
     check(before != after and "RESTAMPED How-to-use-Engine" in said, "the same apply run re-stamps the How-to-use page (%s)" % said.strip()[:80])
     check(not any("How-to-use-Engine" in l for l in stale_on("four")), "the How-to-use page is no longer STALE on the new head")
     check(run(sys.executable, OPERATE, "wiki-only", before, after, cwd=repo).returncode == 0, "merge.py accepts the head that carries the How-to-use re-stamp")
+
+    # the kept fragment is the one .loop path a re-stamp head may add: any other .loop file still refuses the head
+    def other():
+        os.makedirs(os.path.join(repo, ".loop", "kept"), exist_ok=True)
+        write(repo, ".loop/kept/x.tsv", "A\tabc\n")
+        write(repo, ".loop/kept/x.md", "no\n")
+    branch("five", other)
+    git("fetch", "-q", "origin", cwd=repo)
+    check(run(sys.executable, OPERATE, "wiki-only", "origin/main", "origin/loop/five", cwd=repo, ok=False).returncode != 0, "negative control: a head that also adds a non-.tsv file under .loop/kept stays refused")
 
 sys.exit(1 if failed else 0)
