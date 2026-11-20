@@ -50,6 +50,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - run: test ! -f dev/package.py || python3 dev/package.py --static
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
