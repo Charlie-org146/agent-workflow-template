@@ -40,7 +40,7 @@ check("STALE: pc STATUS is 45 minutes old (over 30)" in text and "STALE: mac" no
 with tempfile.TemporaryDirectory() as tmp:
     common = os.path.join(tmp, ".git")
     os.makedirs(os.path.join(common, "loop", "runs"))
-    json.dump({"slug": "g", "status": "running", "step": "qa", "pr": "https://x/pull/12", "goal": "g"}, open(os.path.join(common, "loop", "runs", "g.json"), "w"))
+    json.dump({"slug": "g", "status": "running", "step": "qa", "pr": "https://x/pull/12", "goal": "g", "pid": 1}, open(os.path.join(common, "loop", "runs", "g.json"), "w"))
     status, said = layers.send(common, {}, now=now)
     check(said == "sent" and status["workers"] == [{"slug": "g", "step": "qa", "status": "running", "pr": 12, "eta": None}], "a machine sends STATUS with the goal's PR number")
     check(layers.send(common, {}, now=now + 60)[1] == "no change" and layers.send(common, {}, now=now + 31 * 60)[1] == "sent", "STATUS goes on change and every 30 minutes, not between")
@@ -102,7 +102,7 @@ with tempfile.TemporaryDirectory() as tmp:
     common = os.path.join(tmp, ".git")
     os.makedirs(os.path.join(common, "loop", "status"))
     subprocess.run(["git", "init", "-q", tmp], check=True)
-    sent = os.path.join(common, "loop", "status", layers.machines.me() + ".json")
+    sent = os.path.join(common, "loop", "status-sent.json")  # the mark of a send to top: the status file itself is rewritten every minute (TD430)
     check(layers.machine_reply("14:05 mac: STATUS sent", common) != [], "a machine one-liner is refused before STATUS went to top")
     open(sent, "w").write("{}")
     check(layers.machine_reply("14:05 mac: STATUS sent", common) == [] and layers.machine_reply("14:35 mac: no change", common) == [], "after STATUS went to top, 'STATUS sent' and 'no change' one-liners pass")
