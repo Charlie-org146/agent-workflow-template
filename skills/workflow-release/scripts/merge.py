@@ -169,22 +169,25 @@ def start(top, cfg, state):
 
 
 def queue_on(top, base):
-    """True: base has a merge_queue rule; None: unreadable."""
+    """True: a merge_queue rule; None: unreadable."""
     got = run(["gh", "api", "repos/{owner}/{repo}/rules/branches/" + base], top)
     return None if got.returncode else '"type":"merge_queue"' in got.stdout.replace(" ", "")
 
 
 def land(top, base, url, head=None):
-    """"" once url is merged (enqueued, bound to head, under a queue), else why not."""
+    """"" once url is merged (enqueued under a queue), else why not."""
     queue = queue_on(top, base)
     bind = ["--match-head-commit", head] if head else []
     if queue is None:
-        return "can't read the rules for %s (QUEUE_UNREADABLE)" % base
+        return "can't read %s's rules (QUEUE_UNREADABLE)" % base
     seen, began = view(top, url), time.time()
-    if not queue or seen.get("state") == "OPEN" and not seen.get("isInMergeQueue"):
+    if not queue or not seen.get("isInMergeQueue") and seen.get("state") not in ("MERGED", "CLOSED"):
         done = run(["gh", "pr", "merge", url, "--merge"] + ["--auto"] * queue + bind, top)
-        if done.returncode or not queue:
-            return done.stderr.strip()[-300:] if done.returncode else ""
+        err = (done.stderr or done.stdout).strip()[-300:] or "gh exited %d" % done.returncode
+        if done.returncode and (not queue or "already" not in err):
+            return err
+        if not queue:
+            return ""
     while True:
         seen, waited = view(top, url), time.time() - began
         state, oid = seen.get("state"), seen.get("headRefOid")
@@ -192,10 +195,10 @@ def land(top, base, url, head=None):
             return ""
         if state == "CLOSED" or head and oid not in (None, head):
             return "left the queue: %s at %s, not %s" % (state, str(oid)[:12], head[:12])
-        if not seen.get("isInMergeQueue") and waited > int(os.environ.get("LOOP_QUEUE_GRACE") or 120):
-            return "dropped from the queue (QUEUE_DEQUEUED)"
-        if waited > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
-            return "still queued after %ds (QUEUE_TIMEOUT)" % waited
+        if not seen.get("isInMergeQueue") and not pending(seen) and waited > int(os.environ.get("LOOP_QUEUE_GRACE") or 120):
+            return "dropped (QUEUE_DEQUEUED)"
+        if waited > int(os.environ.get("LOOP_QUEUE_WAIT") or 1500):
+            return "queued %ds (QUEUE_TIMEOUT)" % waited
         time.sleep(float(os.environ.get("LOOP_QUEUE_POLL") or 15))
 
 

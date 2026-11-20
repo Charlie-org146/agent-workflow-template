@@ -306,9 +306,11 @@ def check_time(root):
 
 
 def merge_time(root):
-    stamp = lambda text: datetime.datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+    stamp = lambda text: datetime.datetime.fromisoformat(text.replace("Z", "+00:00"))
     try:
         file = os.environ.get("LOOP_HEALTH_MERGES")
+        if not file and "github.com" not in git(root, "remote", "get-url", "origin"):
+            return []
         text = open(file).read() if file else subprocess.run(
             ["gh", "pr", "list", "--state", "merged", "--limit", "20", "--json", "mergedAt,statusCheckRollup,headRefName"],
             cwd=root, capture_output=True, text=True, timeout=60, check=True).stdout
@@ -320,7 +322,7 @@ def merge_time(root):
             ends = [e for e in ends if e <= end]
             if ends and not item["headRefName"].startswith("release/"):  # to the release PR's merge when there is one
                 gaps.append((stamp(rel.get(item["headRefName"].split("/", 1)[-1], item["mergedAt"])) - max(ends)).total_seconds() / 60)
-    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError):
         return [row("UNREAD", "performance", "merge", "check-time", "MERGE-TIME can't be read (gh pr list)", "gh auth login", "merge")]
     if not gaps:
         return [row("INFO", "performance", "merge", "check-time", "MERGE-TIME no merged pull request with checks to measure")]

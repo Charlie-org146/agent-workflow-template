@@ -149,7 +149,7 @@ case "\$1 \$2" in
   "pr view") oid="\${HEADNOW:-$head}"; case \$s in merged) echo '{"state": "MERGED", "isInMergeQueue": false, "headRefOid": "'\$oid'"}';;
       queued) echo '{"state": "OPEN", "isInMergeQueue": true, "headRefOid": "'\$oid'"}'; echo merged > "\$st";;
       *) echo '{"state": "OPEN", "isInMergeQueue": false, "headRefOid": "'\$oid'"}';; esac; exit 0;;
-  "pr merge") if [[ "\$*" == *--auto* ]]; then [ -n "\${QDROP:-}" ] || echo queued > "\$st"
+  "pr merge") [ -n "\${QSILENT:-}" ] && exit 1; if [[ "\$*" == *--auto* ]]; then [ -n "\${QDROP:-}" ] || echo queued > "\$st"
       else [ "\${QUEUE:-on}" = on ] && { echo "the base branch requires a merge queue" >&2; exit 1; }; echo merged > "\$st"; fi; exit 0;;
 esac
 exec "$here/dev/toy/fakegh/gh" "\$@"
@@ -167,6 +167,8 @@ out=$(QUEUE=on HEADNOW=deadbeefdeadbeefdeadbeef land "$head")
 check "a queued PR whose head moved refuses naming both heads" 'grep -q "left the queue: OPEN at deadbeefdead, not ${head:0:12}" <<<"$out"'
 out=$(QUEUE=on QDROP=1 land "$head")
 check "a queue entry that was dropped (still open, not queued) refuses QUEUE_DEQUEUED instead of waiting forever" 'grep -q "QUEUE_DEQUEUED" <<<"$out"'
+out=$(QUEUE=on QSILENT=1 land "$head")
+check "a merge that fails with no output is a refusal naming the exit, never a success" 'grep -q "gh exited 1" <<<"$out" && ! grep -qx LANDED <<<"$out"'
 out=$(QUEUE=err land "$head")
 check "unreadable rules refuse QUEUE_UNREADABLE and merge nothing" 'grep -q "QUEUE_UNREADABLE" <<<"$out" && ! grep -q "^pr merge" "$Q/calls"'
 out=$(QUEUE=off land "$head")
