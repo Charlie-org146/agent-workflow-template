@@ -139,7 +139,7 @@ HEAD1, HEAD2 = "Requirement Summary Follows Feature Adoption Confidence".split()
 IDREF = re.compile(r"\b[A-Z]{2,5}-\d+\b")
 
 
-def frontdoor(page, text, listing, ids, kind="README"):
+def frontdoor(page, text, listing, ids, kind="README", old=()):
     want, out = LIST.findall(listing.partition("## The principles")[2]), []
     fail = lambda at, what, got, fix: out.append(bad(page, at, "Principles", 23, what, got, fix))
 
@@ -149,7 +149,7 @@ def frontdoor(page, text, listing, ids, kind="README"):
         rows = tabs[0][2] if ok else []
         for number, c in rows:
             for found in IDREF.findall(c[0]):
-                found in ids or fail(number, "an ID that exists", found, "remove it")
+                found in ids or found in old or fail(number, "an ID that exists", found, "remove it")
         return ok, rows, other
 
     head, *secs = [x for x in parts(unblocked(text)) if x[0] not in ("What this is", "System design")]
