@@ -1,6 +1,7 @@
 grd5-regression-dry	2026-11-12	Mac	9815fc8b
 grd6-head-moved	2026-11-12	Mac	9815fc8b
 grd7-round-cost	2026-11-12	Mac	9815fc8b
+grd2-step-budget	2026-11-12	Linux cloud session	0a15090f
 grd4-touches	2026-11-12	Linux cloud session	0a15090f
 grd4-budget	2026-11-12	Linux cloud session	0a15090f
 grd4-govern	2026-11-12	Linux cloud session	0a15090f
@@ -16,7 +17,6 @@ migration-clean	2026-11-19	mac	bec3b6e725abbe13f08750fda7833051b0ab2fd5
 
 unproven-blocks	2026-11-12	Mac	88c964ed
 known-no-block	2026-11-13	Mac	96b5b856
-del8-floor-step	2026-11-12	Linux cloud session	0a15090f
 del8-board-over	2026-11-12	Linux cloud session	0a15090f
 set8-hooks	2026-11-12	Linux cloud session	0a15090f
 hlt2-twelve-groups	2026-11-12	Linux cloud session	0a15090f

@@ -71,16 +71,13 @@ def build(members):
 
 
 def describe(members, goal, script):
+    """One Given-when-then sentence that names every case in short form; callers split a group when it passes 400 characters."""
     head = "Given %s, when %s runs its %d cases, then each passes: " % (goal, os.path.basename(script), len(members))
-    out, used = head, 0
+    pieces = []
     for r in members:
         m = re.search(r"\bthen (.*?)\.?$", r[5])
-        piece = (m.group(1) if m else r[5]).strip()[:60].rstrip()
-        add = ("; " if used else "") + piece
-        if len(out + add) > 360 and used < len(members):
-            return out + " (+%d more cases)" % (len(members) - used)
-        out, used = out + add, used + 1
-    return out + "."
+        pieces.append((m.group(1) if m else r[5]).strip()[:50].rstrip())
+    return head + "; ".join(pieces) + "."
 
 
 def main():
@@ -105,7 +102,7 @@ def main():
         chunks, cur = [], []
         for r in members:
             probe = cur + [r]
-            if build(probe)[2] > MAXRUNS and cur:
+            if (build(probe)[2] > MAXRUNS or len(describe(probe, key[1], key[4])) > 400) and cur:
                 chunks.append(cur)
                 cur = [r]
             else:
