@@ -442,6 +442,7 @@
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-safety-refused"></a>delegated-safety-refused | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-in-checkin"></a>delegated-in-checkin | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-delegated-operation-only"></a>delegated-operation-only | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 
 ## Guardrails
 
