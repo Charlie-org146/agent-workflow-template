@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-pods.sh docs` and `bash dev/toy/test-automation-budgets.sh budgets`.
+   Expect: both end ALL PASS, each with a PASS for its negative control (a page without MON-15's moved line fails; a page without the 30-minute budget, the sharding or the workflow timeout fails).
+2. Read the pull request.
+   Expect: del-16-on-page and adoption-golden are named as unchanged, each with the sentence the approved text no longer states.
