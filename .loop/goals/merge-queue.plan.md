@@ -59,5 +59,42 @@ merge.py over 19,000 bytes; the criteria `revise` flow needing the owner-record 
 Creating or changing the ruleset (the owner flips it after this is on main); `regression-pr.yml` (merge-queue-ci);
 tag-only releases; any bypass actor (listed as an owner option only).
 
-## Red team
-Run next, by a fresh reviewer given only this plan and the code; its findings are folded in below.
+## Red team (fresh reviewer, code-only brief): approve with changes. Folded in
+Settled answers to the three questions the done lines name:
+- Release commit under a queue: a release PR through the queue (no bypass, no tag-only). `protected()` counts a
+  `merge_queue` rule (autorelease.py, declared in touches by TD219). `advance` merges the release PR through `land()`.
+  The one-at-a-time lock is taken only after the goal PR is MERGED and held through `ar.finish` until the release PR is
+  MERGED, so the version (computed from origin/base in `push_release_commit`) cannot collide; the goal PRs themselves queue
+  concurrently. This replaces build step 2's "unlock/relock": `pods.unlock` does not exist and graph.py is 13 bytes under
+  the cap, so graph.py is NOT edited; in queue mode `main()` skips `merge_lock` before the enqueue and calls it before
+  `ar.finish`. A bypass is listed with the ruleset values as an owner option only.
+- Required checks on merge_group: a ruleset's required-status list is one list for the PR and the merge-group commit, so
+  "GitGuardian required on pull_request only" cannot be set in a ruleset. The recipe lists only contexts that report on
+  merge_group; the affected job (needs `merge_group` in regression-pr.yml, merge-queue-ci) is in; GitGuardian is out of
+  the required list if it does not report there (advisory on PRs), and the PR body says that plainly, including that the
+  GO gate (`private.required_checks`) reads the same list. To verify after merge-queue-ci lands, list the contexts on a real
+  merge-group run.
+- GRD-6: owner-set platform rules (Guardrails.md says the base refuses direct and force pushes, owner-set, health reads
+  that they are set); nothing in the repo enforces or reads them today, rules.py has no rules/branches read. Until the
+  owner creates the ruleset, local hooks are all that apply. Recorded for the owner; no requirement text changes.
+
+Plan changes from the review:
+1. `land()` polls `gh pr view --json state,isInMergeQueue,headRefOid`; MERGED returns; CLOSED, a changed head, or OPEN and
+   not in the queue past a grace of 120 s (a dequeued entry) refuses; an overall deadline from LOOP_MERGE_LOCK_SECONDS
+   (default 1800); a re-run finds `isInMergeQueue` and only waits (no second `--auto`). `queue_on` may use
+   `isMergeQueueEnabled`; a failed read refuses, never a direct merge.
+2. The toy supplies its own `gh` shim ahead of dev/toy/fakegh/gh on PATH (rules, `isInMergeQueue`, `--auto`, `pr view`),
+   because dev/toy/fakegh/gh is outside touches.
+3. Byte budget: merge.py has no waiting loop to trim (the design said so wrongly). The pay is the module docstring (about
+   900 bytes), the `_pods` comment, and folding `load`/`leave_queue` into one-liners; measure with `tr -d '' | wc -c`
+   after each edit. autorelease.py (18,945) trims blank lines and docstrings to pay for the `protected()` change.
+4. MERGE-TIME uses the max `completedAt` among a PR's checks to `mergedAt`; missing values give UNREAD. rules.py is
+   18,206 LF bytes (not 18,575, which counts CRLF); about 790 bytes of room.
+5. `--batch` under a queue refuses before `merge_lock` is taken (merge.py:274), using `queue_on` from `top` and `base`.
+6. Hand-off for merge-queue-ci (pc-w9), outside this goal: regression-pr.yml needs `merge_group: types: [checks_requested]`
+   and `${{ github.event_name }}` in its concurrency group (or `gh-readonly-queue/**` in branches-ignore on push),
+   or the push run and the merge_group run share `github.ref` and cancel each other, and a cancelled required check
+   dequeues the entry. Also `regression.py run --reuse` must compute its affected set on a merge-group ref.
+7. Out of scope, noted: `release_statuses` posts commit statuses to the release PR head; a required context satisfied only by
+   such a status never reports on the merge-group commit. The recipe says every required context must be an Actions check
+   that runs on merge_group.
