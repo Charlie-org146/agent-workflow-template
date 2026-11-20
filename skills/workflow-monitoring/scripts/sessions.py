@@ -3,22 +3,22 @@
 
 usage: sessions.py <command> [options]
 
-  assign SLUG               give a frozen goal to a worker session (watch.py does this for each goal)
+  assign SLUG               give a frozen goal to a free (archived) session, never a new one
   bind SLUG ID|self [--name N] [--force] [--cwd DIR]
                             record an app-started session: ASSIGNED before freezing, BOUND after goal.py new.
                             --force: rebind a freed session. Prints WORKER and WORKTREE
   free SLUG                 give back a stopped session's goal and slot
   report SLUG [--step S] [--status running|waiting|merged|failed] [--pr URL] [--ask Q --words W... --recommend W
               --kind K] [--attempt N] [--text T]
-                            a worker's step or result. waiting with --ask is a question (auto.py may answer a routine
+                            a worker's step or result (a counted send). waiting with --ask is a question (auto.py may answer a routine
                             one); without it the pull request waits. merged is checked with gh. An ended goal's session
                             returns to the pool. Done is final (KEPT); merged still frees the session.
-  send SLUG TEXT            send a worker the owner's answer or a follow-up (operate.py send does this)
-  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for its IDs (auto.py); not in a worker
+  send SLUG[,SLUG...] TEXT  send the owner's answer: one counted message per distinct worker session
+  owner-words TEXT --ids A,B [--from top|peer]  record the owner's exact message for its IDs (auto.py) and reset the send count
   list                      the sessions and their goals
 
-The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL start NAME` (prints the id), `TOOL rename
-ID NAME`, `TOOL send ID TEXT`. With no tool, or one that fails or times out (LOOP_SESSION_TIMEOUT, 30 s), the goal runs as
+The `session_command` (.loop/config.json) or $LOOP_SESSION_TOOL talks: `TOOL rename ID NAME` and
+`TOOL send ID TEXT`. With no tool, or one that fails or times out (LOOP_SESSION_TIMEOUT, 30 s), the goal runs as
 a background process. The pool, <git common dir>/loop/session-pool.json, is changed under a lock and never written
 when unreadable. Nothing here merges.
 """
@@ -48,6 +48,7 @@ SEND = ("You are the worker session for goal {slug}; this replaces any goal you 
         "session{to} a session message at each change of step or status, and your result when the goal ends (merged, "
         "failed or waiting, with the pull request).\n\n")
 FREE_TRIES = 2
+NEW = "a new session needs the owner's typing: wake an archived session or free one"
 
 
 def base():
@@ -72,7 +73,7 @@ def write(path, data):
 
 
 class PoolUnreadable(Exception):
-    """The pool can't be trusted."""
+    pass
 
 
 def pool_path():
@@ -123,7 +124,6 @@ def name_of(slug):
 
 
 def release(slug, found=None, mark=False):
-    """Free the goal's busy sessions; return how many. mark blocks a rebind (--force)."""
     if found is None:
         with locked():
             found = pool()
@@ -140,7 +140,7 @@ def release(slug, found=None, mark=False):
 
 
 def assign(state, prompt, cfg):
-    """Give the goal to a free or new session, rename it, send it the goal. False: use a background process."""
+    """Wake a free session for the goal, never start one. False: none or unreachable."""
     command, slug = tool(cfg), state["slug"]
     state["worker"], state["worker_why"] = "background", "no session tool is set (session_command)"
     if not command:
@@ -150,16 +150,12 @@ def assign(state, prompt, cfg):
     before = (start.get("session") or {}).get("id") if start.get("status") in ("failed", "stopped", "queued", "", None) else None
     text = SEND.format(slug=slug, tree=state.get("worktree") or "its worktree", to=" (%s)" % to if to else "") + worker.worker_line(slug) + "\n\n" + prompt
     free = sorted(s for s, item in found.items() if item.get("state") == "free")[:FREE_TRIES]
-    sid, reused = None, False
-    for sid in free + [None]:
-        reused = sid is not None
-        sid = sid or call(command, "start", name_of(slug))
-        if not sid:
-            state["worker_why"] = "the session tool timed out" if HUNG else "the session tool could not start a session"
-            break
+    state["worker_why"], sid = NEW, None
+    for sid in free:
         with locked():
             found = pool()
-            if reused and (found.get(sid) or {}).get("state") != "free":
+            if (found.get(sid) or {}).get("state") != "free":
+                sid = None
                 continue
             found[sid] = {"name": name_of(slug), "slug": slug, "state": "busy", "since": now()}
             save_pool(found)
@@ -188,7 +184,7 @@ def assign(state, prompt, cfg):
         current.update(worker="session", worker_why="", session={"id": sid, "name": name_of(slug)}, pid=None,
                        status="running", bound_at=now())
         graph.stamp(current)
-        save(current, "assigned to session %s (%s)%s" % (sid, name_of(slug), ", reused" if reused else ""))
+        save(current, "assigned to session %s (%s)%s" % (sid, name_of(slug), ", woken"))
         state.update(current)
     return True
 
@@ -230,13 +226,12 @@ def cmd_assign(args):
     if state.get("status") in ("running", "waiting", "done") and (state.get("session") or state.get("pid")):
         sys.exit("REFUSED: %s is %s with a worker; nothing was sent. Fix: free it first (sessions.py free)." % (args.slug, state["status"]))
     if not assign(state, args.text, config()):
-        print("BACKGROUND %s: %s" % (args.slug, state["worker_why"]))
+        print("%s %s: %s" % ("REFUSED" if state["worker_why"] == NEW else "BACKGROUND", args.slug, state["worker_why"]))
         return 1
     return 0
 
 
 def cmd_owner_words(args):
-    """Append the owner's message to owner-words.tsv, print OWNER-WORDS <id> <ids>; refuse a worker, no text or ids."""
     import auto
     ids = [item.strip() for item in args.ids.split(",") if item.strip()]
     if os.environ.get("LOOP_ROLE") == "worker":
@@ -253,6 +248,7 @@ def cmd_owner_words(args):
     with open(where, "a", encoding="utf-8") as handle:
         handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count + 1, auto.stamp(), "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation",
                                               json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
+    import unattended; unattended.reset()
     print("OWNER-WORDS o%d covers %s" % (count + 1, ",".join(ids)))
     return 0
 
@@ -290,6 +286,8 @@ def cmd_report(args):
     said = args.status
     if pool_module().stale(state, args):
         return 0
+    if said:
+        import unattended; unattended.sent("operation")
     if state.get("status") == "done" and (said in ("", "running", "failed") or (said == "waiting" and args.ask) or graph.merged(state)):
         text = args.text or "%s: %s" % ((state.get("session") or {}).get("name") or args.slug, said or "report")
         state.setdefault("reports", []).append({"at": now(), "step": args.step or state.get("step") or "-", "status": said or "-", "text": text})
@@ -347,18 +345,26 @@ def cmd_report(args):
 
 
 def cmd_send(args):
-    """Send the owner's answer to the worker session; 1 when none or unreachable."""
-    state = held(args.slug)
-    sid, command = (state.get("session") or {}).get("id"), tool(config())
-    if state.get("worker") != "session" or not sid or not command:
-        print("NO SESSION for %s: the inbox carries it" % args.slug)
-        return 1
-    if call(command, "send", sid, " ".join(args.text.split())) is None:
-        print("UNREACHED session %s for %s: the inbox carries it (%s)" % (sid, args.slug, LAST_ERROR[0]))
-        return 1
-    print("SENT to session %s (%s)" % (sid, (state.get("session") or {}).get("name")))
-    import unattended; unattended.sent(sid)  # MON-18
-    return 0
+    """One message per distinct session; 1 when one is not reached."""
+    import unattended
+    command, by, code = tool(config()), {}, 0
+    for slug in args.slug.split(","):
+        state = held(slug)
+        sid = (state.get("session") or {}).get("id")
+        if state.get("worker") != "session" or not sid or not command:
+            print("NO SESSION for %s: the inbox carries it" % slug)
+            code = 1
+        else:
+            by.setdefault(sid, []).append((slug, state["session"].get("name")))
+    for sid, found in by.items():
+        goals = ", ".join(x[0] for x in found)
+        if call(command, "send", sid, ("[%s] " % goals) * (len(found) > 1) + " ".join(args.text.split())) is None:
+            print("UNREACHED session %s for %s: the inbox carries it (%s)" % (sid, goals, LAST_ERROR[0]))
+            code = 1
+            continue
+        print("SENT to session %s (%s)" % (sid, found[0][1]))
+        unattended.sent(sid)
+    return code
 
 
 def cmd_list(args):
