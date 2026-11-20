@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=2d92af17 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept delivery-small-fixes@f8fc6ad86 -->
+Review: **Reviewed 2026-11-14** <!-- prd P=14b68802 R=2d92af17 N=f86bd012 M=d4d1a48b U=03828777 --> <!-- kept merge-private-lane-import@45fb2810 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -219,11 +219,11 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [toys-no-leak-lane-pool](Tests#t-toys-no-leak-lane-pool) | requirement | REG-1 | Given a toy that takes a lane port lease and counter lock as the CI runner's four LEAK rows did, when it runs under a fresh home, then ~/.workflow-loop stays empty because the harness points LOOP_LANES_DIR at a temp pool, and a toy aimed at the real lanes/ is still caught. | not run |
 | [homeguard-other-writer](Tests#t-homeguard-other-writer) | requirement | REG-1 | Given another session writes the schedule registry (a real repo, a backup) or moves ~/.workflow-loop/skills-main (START.md rewritten, clean afterwards) during a toy run, when the guard checks, then it reports no LEAK (#4760). | not run |
 | [homeguard-own-write](Tests#t-homeguard-own-write) | requirement | REG-1 | Given a toy itself registers a fixture repo from the temp folder in the schedule registry, or edits or adds a file in ~/.workflow-loop/skills-main, when the guard checks, then it still reports the LEAK (#4760). | not run |
-| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-4 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-20 |
-| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-4 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-20 |
-| [one-link](Tests#t-one-link) | requirement | REG-4 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-20 |
-| [milestones-once](Tests#t-milestones-once) | requirement | REG-4 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-20 |
-| [run-ledger](Tests#t-run-ledger) | requirement | REG-4 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-20 |
+| [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-4 | Given a test never seen failing, when the run happens, then the run is blocked. | PASS 2026-11-19 |
+| [tests-seen-failing](Tests#t-tests-seen-failing) | requirement | REG-4 | Given a test that cannot fail, when it is checked, then it stays unproven. | PASS 2026-11-19 |
+| [one-link](Tests#t-one-link) | requirement | REG-4 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-19 |
+| [milestones-once](Tests#t-milestones-once) | requirement | REG-4 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-19 |
+| [run-ledger](Tests#t-run-ledger) | requirement | REG-4 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-19 |
 | [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-4 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-19 |
 | [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-4 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-19 |
 | [describe-needed](Tests#t-describe-needed) | requirement | REG-4 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-19 |
