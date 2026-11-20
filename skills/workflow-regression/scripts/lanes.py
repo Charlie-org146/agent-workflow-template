@@ -25,9 +25,10 @@ if not sys.stdin or not sys.stdin.isatty():
 
 SCHEMA = 1
 RUNS_FILE = ".loop/regression-runs.tsv"
+RECORDS = (".loop/goals/", ".loop/kept/")
 BOOKKEEPING = (RUNS_FILE, ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
 NO_EFFECT = ("CHANGELOG.md", "VERSION", "README.md", "FINDINGS.md", "DECISIONS.md", "LICENSE", "docs/ROADMAP.md",
-             "docs/designs/", ".loop/goals/", ".loop/findings.md", ".loop/queue.md", RUNS_FILE)
+             "docs/designs/", *RECORDS, ".loop/findings.md", ".loop/queue.md", RUNS_FILE)
 PATH = re.compile(r"(?<![\w.@+/-])(?:\$\{?here\}?/|\./)?((?:\.?[A-Za-z0-9_@+-][A-Za-z0-9._@+-]*/)+[A-Za-z0-9._@+-]*"
                   r"|[A-Za-z0-9_-]+\.[A-Za-z0-9]+)")
 BARE = re.compile(r"\$\{?here\}?/skills\b(?!/)")
@@ -88,7 +89,7 @@ def load(path, root):
 
 
 def save(path, root, command, results, head, at, fresh, base=None):
-    """Merge this run's rows into the record under a lock; a fresh run or a new merge-base drops the old rows."""
+    """Merge this run's rows into the record under a lock; a fresh run or a new merge-base drops old rows."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -122,7 +123,7 @@ def descendants(root_pid):
 
 
 def run_row(command, cwd, env, timeout):
-    """(code, output, pid, signal) for one row's shell; signal names what stopped it, else None. A timeout kills it, returns 124."""
+    """(code, output, pid, signal) for one row's shell; a timeout kills it and returns 124."""
     import signal as sig
     import tempfile
     with tempfile.TemporaryFile("w+", errors="replace") as log:
@@ -131,10 +132,10 @@ def run_row(command, cwd, env, timeout):
         try:
             code, tail = proc.wait(timeout=timeout), ""
         except subprocess.TimeoutExpired:
-            if os.name == "nt":  # taskkill /T takes the tree
+            if win:  # taskkill /T takes the tree
                 import proctree
                 proctree.kill(proc.pid)
-            for pid in [] if os.name == "nt" else [proc.pid] + descendants(proc.pid):
+            for pid in [] if win else [proc.pid] + descendants(proc.pid):
                 try:
                     os.kill(pid, sig.SIGKILL)
                 except OSError:
@@ -150,8 +151,7 @@ def run_row(command, cwd, env, timeout):
 
 def dirty(root):
     out = git(root, "status", "--porcelain", "--no-renames", "--untracked-files=all") or ""
-    paths = [line[3:].strip('"') for line in out.splitlines()]
-    return [p for p in paths if not p.startswith(BOOKKEEPING)]
+    return [p for p in (line[3:].strip('"') for line in out.splitlines()) if not p.startswith(BOOKKEEPING)]
 
 
 def changed(root, commit):
@@ -184,15 +184,12 @@ def references(root, text, folder, wide=True, memo=None):
     for raw in PATH.findall(text):
         raw = raw.rstrip(".")
         for cand in {raw, os.path.normpath(os.path.join(folder, raw)).replace("\\", "/")}:
-            if cand.startswith("/"):
+            if cand.startswith("/") or cand.split("/")[0] == ".git":
                 continue
-            if cand.split("/")[0] == ".git":
-                continue
-            full = os.path.join(root, cand)
-            if narrow.kind(memo, full) == "d":
+            kind = narrow.kind(memo, os.path.join(root, cand))
+            if kind == "d":
                 cand = cand.rstrip("/") + "/"
-                found.add(widen(cand) if wide else cand)
-            elif narrow.kind(memo, full) == "f":
+            if kind in ("d", "f"):
                 found.add(widen(cand) if wide else cand)
     return found, whole
 
@@ -205,11 +202,10 @@ def scan(root, rel, cache):
     """The repo paths one file names (wide); read once per plan."""
     files = cache.setdefault(None, {})
     if rel not in files:
-        text = read(root, rel, cache) or ""
-        more, _ = references(root, text, os.path.dirname(rel), True, cache.setdefault("kind", {}))
+        text, here = read(root, rel, cache) or "", os.path.dirname(rel)
+        more, _ = references(root, text, here, True, cache.setdefault("kind", {}))
         if rel.endswith(".py"):
-            more |= {os.path.join(os.path.dirname(rel), m + ".py") for m in modules(text)
-                     if os.path.isfile(os.path.join(root, os.path.dirname(rel), m + ".py"))}
+            more |= {os.path.join(here, m + ".py") for m in modules(text) if os.path.isfile(os.path.join(root, here, m + ".py"))}
         files[rel] = more
     return files[rel]
 
@@ -248,7 +244,7 @@ def wide_closure(root, command, cache):
 
 
 def closure(root, command, cache):
-    """(deps, always) for a row command, every dep with forward slashes: narrow when a file it names has a header, else wide."""
+    """(deps, always) for a row command: narrow when a file it names has a header, else wide."""
     deps, always = raw_closure(root, command, cache)
     cache["closure", command] = {d.replace("\\", "/") for d in deps}, always
     return cache["closure", command]
@@ -288,16 +284,23 @@ def named(root, command, cache):
     return cache[key]
 
 
+def declared(root, command, cache):
+    """Paths a row's command names and the scripts it names declare in `# reads:`, not what they reach."""
+    found, _ = references(root, command, "", wide=False)
+    return found.union(*[narrow.header(root, p, cache)[0] or () for p in found if not p.endswith("/")])
+
+
 def hits(path, deps):
     return path in deps or any(d.endswith("/") and path.startswith(d) for d in deps)
 
 
 def touches(root, command, path, cache):
-    """Whether a change to path can affect a row (shared by plan() and affected())."""
+    """Whether a change to path can affect a row (plan() and affected())."""
     deps, _ = closure(root, command, cache)
     path = path.replace("\\", "/")
-    if any(path == n or (n.endswith("/") and path.startswith(n)) for n in NO_EFFECT):
-        return hits(path, named(root, command, cache))
+    if no_effect(path):  # a record file: only rows naming it or a folder inside the records, not the wide .loop/
+        return hits(path, {n for n in declared(root, command, cache) if n.startswith(RECORDS)} if path.startswith(RECORDS)
+                    else named(root, command, cache))
     return hits(path, deps)
 
 
@@ -308,13 +311,26 @@ def reads_table(root, command, cache):
     return cache.get(("table", command), hits(RUNNER, deps))
 
 
+def names_table(root, command, cache):
+    """Whether a row is a table reader: its command, or a file it names itself (not one only reached through other files:
+    nearly every tool names its repo's table), names .loop/regression.tsv (a `# reads:` line counts). Reaching
+    regression.py alone doesn't count."""
+    key = ("names_table", command)
+    if key not in cache:
+        found, _ = references(root, command, "", wide=False)
+        own = closure(root, "python3 " + RUNNER, cache)[0] | {RUNNER}
+        cache[key] = TABLE in found or TABLE in command or any(
+            TABLE in (read(root, p, cache) or "") for p in found if not p.endswith("/") and p not in own)
+    return cache[key]
+
+
 def deleted(root, commit):
-    """Deleted paths (release and loop files aside) since commit or in the worktree: a vanished file drops edges."""
+    """Deleted paths (release and loop files aside) since commit or in the worktree."""
     out = (git(root, "diff", "--name-status", "--no-renames", "%s..HEAD" % commit) or "").splitlines()
     out += (git(root, "status", "--porcelain", "--no-renames") or "").splitlines()
     gone = [line.split("\t")[-1] if "\t" in line else line[3:].strip('"') for line in out
             if line.startswith("D") or line[1:2] == "D"]
-    return sorted({p for p in gone if not any(p == n or (n.endswith("/") and p.startswith(n)) for n in NO_EFFECT)})
+    return sorted({p for p in gone if not no_effect(p)})
 
 
 def table(root, commit, name, memo):
@@ -336,7 +352,7 @@ def named_in(root, rel, path, cache):
 
 
 def names_any(root, command, paths, cache, skip=""):
-    """Whether a row's command, or a file it reaches, names one of paths (a file gone from the tree can't be mapped by reach)."""
+    """Whether a row's command, or a file it reaches, names one of paths (a gone file can't be mapped by reach)."""
     deps, _ = closure(root, command, cache)
     files = [p for p in deps if p.replace("\\", "/") != skip and not p.endswith("/")] + [f for p in deps if p.endswith("/") for f in walk(root, p, cache)]
     for path in paths:
@@ -372,7 +388,7 @@ def plan(root, selected, record, current_tsv, current_known):
         for path in since[prior["commit"]] or []:
             if path == TABLE:
                 stale = table(root, prior["commit"], "regression.tsv", memo).get(rid) != current_tsv.get(rid) \
-                    or reads_table(root, row["command"], cache)
+                    or names_table(root, row["command"], cache)
             elif path == ".loop/regression-known.tsv":
                 stale = table(root, prior["commit"], "regression-known.tsv", memo).get(rid) != current_known.get(rid)
             elif path == narrow.CONFIG:

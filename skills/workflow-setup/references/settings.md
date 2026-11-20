@@ -14,6 +14,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `cadence` | `30` | Minutes between operation check-ins, 1 to 60, or off. |
 | `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged auto-approved. |
 | `auto_merge` | `false` | true lets the release step merge a goal's PR and publish. |
+| `merge_queue` | `false` | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. |
 | `merge_batch` | `false` | true lets merge.py --batch merge 2-3 green goals as one. |
 | `review_hold` | `false` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. |
 | `pr_bumps_version` | `false` | true moves the last version number once on a goal's branch. |
@@ -32,7 +33,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `criteria_max` | `10` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. |
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
-| `step_limit` | `0` | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. |
+| `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
@@ -42,12 +43,12 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |
-| `plan_pause_percent` | `80` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. |
+| `plan_pause_percent` | `80` | Weekly plan % above which no goal starts; 0 is off. |
 | `min_free_memory_gb` | `3` | Free GB below which no lane or goal starts; 0 off. |
-| `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. |
+| `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `token_budget` | `0` | Tokens a goal may spend before no new step starts; 0 means none. |
-| `max_regression_rows` | `1200` | Most rows the regression table may hold; qa refuses a goal that adds more. |
-| `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. |
+| `max_regression_rows` | `1200` | Most rows the regression table may hold; qa refuses a goal over it. |
+| `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. |
 | `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |
 | `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
 | `step_budget_minutes` | `30` | Minutes one review or ship step may take, 15 or more. |

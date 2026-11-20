@@ -54,11 +54,10 @@ agent publishes the wiki. No release is published without you. Nothing merges wi
 
 A commit that moves only stamp files carries the pass already recorded for the tested tree, so it needs no fresh CI run. The stamp files are `VERSION` (or the repo's version file), `CHANGELOG.md`, `.loop/regression-runs.tsv` and `.loop/regression-issues.tsv`. Two commits count as equal modulo stamps only when the diff between them adds or edits regular files at those paths: any other path, a symlink, a rename or a delete breaks the match. `merge.py` and the release head use that one compare (`tems` in `autorelease.py`), and `operate.py wiki-only` uses it too, so the record commit `goal.py pr` adds, a release bump and a wiki re-stamp keep the lane's pass.
 
+With merge_queue on, the release is made in CI on push to main, not by merge.py. The adopted tool is `gh release create --generate-notes` in `release.yml` ([gh release create](https://cli.github.com/manual/gh_release_create)), so a merge adds no commit and no pull request. The part is the merged pull request's label `release:minor` or `release:major`, and patch when it has neither, as release-drafter does. The git tag is the version: `VERSION` and `CHANGELOG.md` are no longer written by each merge, the notes are the GitHub release's, and the release builds the package with the tag stamped into `VERSION` and attaches it. `update.py` reads that attached package first and falls back to the source archive.
+
 Each requirement and how it is delivered:
 
-- REL-3: The full regression suite passes on the release candidate, and each known-red row is fixed or waived with an issue. Example, from the rel-red-row-refused test: given a known-red row with no waiver, when the gate runs, then it refuses naming the row.
-- REL-12: A review hold before auto merge. Example, from the review-hold-blocks test: given review_hold is on, when no review of the pull request head is recorded, then merge.py refuses REVIEW_HOLD, merges nothing and the board shows a merge waiting on review.
-- REL-13: Fast merge queue. Example, from the merge-batch-split test: given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit.
 
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]`

@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/6
 
-Review: **Unreviewed** <!-- kept gap-cheap-fixes@8d399be1f -->
+Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 
 How to use: [How-to-use-Monitoring](How-to-use-Monitoring)
 
@@ -36,12 +36,12 @@ None
 - MON-12: moved to OPS-16
 - MON-13: moved to OPS-1
 - MON-14: moved to CHK-1
-- MON-15: moved to MCH-4
+- MON-15: moved to MCH-1
 - MON-16: moved to OPS-16
 - MON-17: moved to CHK-1
 - MON-18: moved to DEL-3
 - MON-19: moved to OPS-1
-- MON-2: moved to OPS-2
+- MON-2: moved to OPS-1
 - MON-3: moved to CHK-1
 - MON-4: moved to CHK-1
 - MON-5: moved to CHK-1

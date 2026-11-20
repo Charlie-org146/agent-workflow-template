@@ -4,7 +4,8 @@
 OLD.py is a skill script (repo-relative), NEW an existing module beside it that its block moved into (the package has
 no room for new files), NAMES the moved names, comma separated; PRIMITIVEs are small helpers copied into NEW unchanged
 (run, git, path_of). It checks, each failing with a fix line:
-  1. size: health's own size rule gives OLD.py and NEW.py no WARN or FAIL row;
+  1. size: health's own size rule gives OLD.py and NEW.py no FAIL row (GRD-20: a WARN over 19,000 is printed, a FAIL is over 20,480),
+     and a 20,481-byte fixture still gets a FAIL row;
   2. names: OLD imports back exactly NAMES from NEW, NEW defines each, and each is the same object on both modules;
   3. leftovers: OLD defines none of the moved names itself;
   4. primitives: each copied PRIMITIVE has the same source in both files;
@@ -80,8 +81,15 @@ def main():
         sys.path.insert(0, os.path.join(repo, "skills", "workflow-health", "scripts"))
         import health
         for row in health.size_rows(os.path.join(temp, "root")):
-            if row["state"] != "PASS":
+            if row["state"] == "WARN":
+                print("WARN: %s %s" % (row["subject"], row["detail"]))
+            elif row["state"] != "PASS":
                 trouble.append("size: %s %s. fix: move another leaf block out" % (row["subject"], row["detail"]))
+        os.makedirs(os.path.join(temp, "big", "skills", "x", "scripts"))
+        with open(os.path.join(temp, "big", "skills", "x", "scripts", "big.py"), "wb") as handle:
+            handle.write(b"#" * 20480 + b"\n")  # 20,481 bytes
+        if not [r for r in health.size_rows(os.path.join(temp, "big")) if r["state"] == "FAIL"]:
+            trouble.append("control: a 20,481-byte script got no FAIL row. fix: repair health's size rule")
         # 2 and 3
         found = static(old_text, new_text, new, moved)[0]
         trouble += found

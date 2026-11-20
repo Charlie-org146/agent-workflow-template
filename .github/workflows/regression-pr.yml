@@ -2,18 +2,22 @@
 name: regression-pr
 on:
   pull_request:
-  push:
-    branches-ignore:
-      - "main"
+  merge_group:
+    types: [checks_requested]
 permissions:
   contents: read
 concurrency:
   group: regression-pr-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  affected:
+  shard:
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,4 +26,60 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --timeout 900
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/t.tsv
+          key: row-times-${{ github.sha }}
+          restore-keys: row-times-
+      - run: |
+          git diff --name-only origin/main...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal --budget 120 --timeout 200
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/t.tsv
+          if-no-files-found: ignore
+  affected:
+    needs: shard
+    if: always() && github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 skills/workflow-docs/scripts/docs.py check
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: shard-*
+          path: s
+      - run: |
+          awk '$3 != "SEL"' s/*/t.tsv | sort -k1,1 -k3,3r | awk '!k[$1]++' > all.tsv
+          echo "LEFT over the per-row limit, not failed: $(awk '$3 == "LEFT" {print $1}' all.tsv | paste -sd, -)"
+          awk '$3 ~ /^(RAN|LEFT)$/ {print $1}' s/*/t.tsv | sort > ran.txt
+          echo "run twice: $(uniq -d ran.txt | paste -sd, -)"
+          for id in $(awk '$3 != ""' s/*/t.tsv | cut -f1 | sort -u | comm -23 - <(uniq ran.txt)); do python3 skills/workflow-regression/scripts/regression.py run "$id" --timeout 200 || bad=1; done
+          test -z "$bad"
+      - if: needs.shard.result == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: all.tsv
+          key: row-times-${{ github.sha }}
+      - run: test "${{ needs.shard.result }}" = success
+  small:
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: find skills -name '*.py' -exec python3 -m py_compile {} +
+      - run: python3 skills/workflow-docs/scripts/criteria.py render --check

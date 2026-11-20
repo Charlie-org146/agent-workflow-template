@@ -50,19 +50,12 @@ A row must be seen failing once before it counts. Known failures don't block, an
 | "What's untested?" | Requirements with no test, draft tests and tests never seen failing are listed. |
 | "List every test" | Every test, grouped by feature, with its kind, what it guards, what it checks and its last result. |
 | "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. |
-| "Which tests does this change reach?" | The rows the change can affect are listed. Any change but one only to NO_EFFECT files such as VERSION or a goal file, a deleted file included, also reaches the root runners, on Windows as on Linux. |
+| "Which tests does this change reach?" | The rows the change can affect are listed. Any change but one only to NO_EFFECT files such as VERSION or a goal file, a deleted file included, also reaches the root runners, on Windows as on Linux. An edit to `.loop/regression.tsv` or `.loop/regression-known.tsv` re-runs only the rows whose own line changed, plus the rows whose command or directly named script names `.loop/regression.tsv` and the rows that run tools on the repo's own files (TOP-DECISION 46, widened). A row that reads the table only through an unnamed helper isn't re-run on a table edit; the gate's full suite and the pull request's CI still run it. |
 | (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes), even on the lane's one rerun of it: it is not a failure, so rerun it when memory allows. |
 
 Each requirement and how it is delivered:
 
-- REG-1: Three kinds of tests. Example, from the refused-unmet test: given a criterion with no test, when a release is cut, then it is refused.
-- REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test.
-- REG-7: Fast in the loop. Its budget and its limits, word for word from the page before the v2 rewrite:
-  - Every in-loop test run (qa, ship and the pull-request lane) stays within a time budget, a setting that defaults to 15 minutes and can't be set lower. A run that would go past it, including changes the row picker can't map such as a deleted file, runs the affected tier that fits and leaves the rest to the scheduled full suite, saying what it left; the loop never runs the full suite. The scheduled full suite finishes in under 30 minutes: the GitHub job's time limit is that same 30 minutes and the suite is sharded over several jobs so each fits it, and health flags a suite that doesn't.
-  - The work before a lane's first test row (preparing, planning and waiting for a slot) has its own budget, a setting that defaults to 15 minutes and can't be set lower; a lane whose preparation reaches it stops, says which part ran long, and the goal can rerun it instead of starting over.
-  - Planning computes each row's closure once per lane, not once per row, and keeps it per branch, keyed by HEAD, the row file, the planner code, `LANES_WIDE` and the loop's uncommitted bookkeeping files; a dirty tree never uses it, a plan that read an ignored file, or one outside the repo through a symlink, is not saved (a file created or ignored later is outside the key: remove the plans folder or set `LANES_NO_CACHE=1`), and `LANES_NO_CACHE=1` turns it off.
-  - Issue bodies and comments are passed to gh in a file (`--body-file`), so a long failure output never meets the Windows command-line limit.
-  - A lane about to run rows waits while free memory is below `min_free_memory_gb` (default 4), and gives up after four times the lane's time limit; a lane already running is never stopped.
+- REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. Also (was REG-1): Three kinds of tests. Example, from the refused-unmet test: given a criterion with no test, when a release is cut, then it is refused.
 
 ### Skill: workflow-regression
 - **Say:** "Add a test for DEL-1 that runs the delivery toy suite"
@@ -108,4 +101,4 @@ The scheduled regression routine's Runbook lives in the [Regression](Regression)
 - PRD page: [Regression](Regression)
 - Backlog: [Backlog: Regression](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept go-head-main-reds@751300a25 -->
+<!-- kept ci-5min@61f7b5d0e -->

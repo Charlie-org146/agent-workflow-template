@@ -52,6 +52,18 @@ cat > $H <<'EOF'
 | Feature | What it does | How to use | Milestone |
 |---|---|---|---|
 | [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |
+
+<!-- diagram:begin -->
+## System diagram
+
+```text
+[OPERATION SESSION] --assigns a goal--> [WORKER]
+[WORKER] --runs each step--> (staging, then production)
+[MACHINE] --runs a routine, with a guard--> [WORKER]
+
+Legend: a box is a part of the loop; --text--> a flow of data or control; (text) a part outside it.
+```
+<!-- diagram:end -->
 EOF
 cat >> README.md <<'EOF'
 
@@ -70,6 +82,8 @@ cat > $P <<'EOF'
 # Delivery
 
 Review: **Unreviewed**
+
+How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ## Problem
 
@@ -98,6 +112,43 @@ Review: **Unreviewed**
 ## Tests
 
 EOF
+cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
+<!-- workflow-docs -->
+# How to use Delivery
+
+## What it's for
+
+The toy calculator prints the median of the numbers given.
+
+### What's delivered
+
+| Component | Kind | What it is | How a user uses it |
+|---|---|---|---|
+| `calc.py` | Command | Prints a median. | `python3 scripts/calc.py median LIST`. |
+
+### System diagram
+
+```text
+[Command: calc.py | the toy repo] --prints one line--> (the screen)
+
+Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
+```
+
+## How to reach or run it
+
+- DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
+
+### Command: calc.py
+- **Command:** `python3 scripts/calc.py median LIST`
+- **Dry run:** none
+- **Reads:** the list given
+- **Writes:** nothing
+- **Exit codes:** 0 printed
+
+## Links
+
+- PRD page: [Delivery](Delivery)
+HOWEOF
 $reg add del-1a --level land --command "true" --goal DEL-1 --describe "Given 1 2 3, when the median is asked, then it prints 2." >/dev/null
 $reg add del-2a --level land --command "true" --goal DEL-2 --describe "Given a short list, when it runs, then it answers in a second." >/dev/null
 $reg run del-1a >/dev/null 2>&1; $reg run del-2a >/dev/null 2>&1

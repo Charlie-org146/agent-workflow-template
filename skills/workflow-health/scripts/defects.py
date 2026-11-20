@@ -91,7 +91,7 @@ def pages(root):
 def defined(root):
     out = {}
     for name, text in pages(root).items():
-        # How-to items reference requirements; their canonical definitions live under Requirements.
+        # How-to items cite requirements, defined under Requirements.
         body = text.split("\n## Requirements\n", 1)[1].split("\n## ", 1)[0] if "\n## Requirements\n" in text else ""
         for key in LINE.findall(body):
             out.setdefault(key, []).append(name)

@@ -107,13 +107,13 @@ EOF
   check "a stamped repo with no entry point fails the check (ENTRY_MISSING)" "$E check | grep -q '^MISSING .loop/START.md'"
   $E write >/dev/null
   mkdir -p "$T/inst/workflow-docs/scripts" "$T/inst/workflow-docs/references" "$T/inst/workflow-setup/references"
-  cp "$DO/scripts/entry.py" "$T/inst/workflow-docs/scripts/"; cp "$DO/references/commands.md" "$T/inst/workflow-docs/references/"
+  cp "$DO"/scripts/*.py "$T/inst/workflow-docs/scripts/"; cp "$DO/references/commands.md" "$T/inst/workflow-docs/references/"
   cp "$DO/SKILL.md" "$T/inst/workflow-docs/"; cp "$SU/references/settings.md" "$T/inst/workflow-setup/references/"
   echo '{"version": "9.9.9", "files": {}}' > "$T/inst/workflow-package.json"
   sed -i.bak 's/One session governs and the others build:/One session governs; the others build:/' "$T/inst/workflow-docs/references/commands.md"
   out=$(python3 "$T/inst/workflow-docs/scripts/entry.py" check); code=$?
   check "skills newer than the repo's template_version: a narrative difference is LAG and does not fail (ENTRY_LAG)" "[ $code = 0 ] && grep -q '^LAG .loop/START.md: this repo is at v0.0.1, the template is at v9.9.9' <<<\"\$out\""
-  sed -i.bak 's/runs the engine/starts the engine/' docs/wiki/Engine.md
+  sed -i.bak 's/reason to run the engine/reason to start the engine/' docs/wiki/Engine.md
   check "a lagging repo still fails STALE when its own pages change" "! python3 $T/inst/workflow-docs/scripts/entry.py check >/dev/null"
   git checkout -q -- . ; cd "$T"
 fi

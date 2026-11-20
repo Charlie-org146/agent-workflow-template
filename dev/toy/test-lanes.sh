@@ -2,6 +2,7 @@
 # reads: skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/guards.py
 # reads: skills/workflow-delivery/scripts/role.py skills/workflow-regression/scripts/regression.py
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/tiers.py
+# reads: skills/workflow-regression/scripts/lanes_cli.py
 # Proves regression.py run --reuse: a goal's suite runs once, then later runs reuse it, rerun only the rows a change can
 # affect, and never reuse a failing or missing run. Then delivery's lanes: qa runs the lane before the qa skill (through
 # the flow file's test_record prefix), record refuses qa without it, and pr reruns only what a base merge and the goal
@@ -119,16 +120,41 @@ awk -F'\t' 'BEGIN {OFS = FS} $1 == "b" {$6 = "B still works."} {print}' .loop/re
 git commit -qam "Edit row b"
 fresh; out=$($reg run land --reuse); echo "$out"
 check "an edited row reruns only that row" '[ "$(ran)" = "b " ]'
-# Value: protects=any regression.tsv edit reruns rows that reach regression.py; fails_when=the RUNNER clause is dropped
-# from the regression.tsv rule; why_new=no toy row reached the runner; seam=none; no_claim=the real runner (toy stand-in)
+# Value: protects=a regression.tsv edit selects the rows whose lines changed and the rows that name the table; fails_when=the
+# changed row or a row naming the table is dropped from the selection; why_new=a one-row edit selected ~1,200 rows by reaching
+# regression.py; seam=none; no_claim=that a row only reaching regression.py is left out (the real table's count shows it)
 mkdir -p skills/workflow-regression/scripts; echo 'print(1)' > skills/workflow-regression/scripts/regression.py
 printf 'f\tland\tpython3 skills/workflow-regression/scripts/regression.py; echo f >> "$TOY_LOG"\tX-1\t2026-01-01\tF.\tcriterion\t\n' >> .loop/regression.tsv
-git add -A; git commit -qm "Row f"; $reg run land --reuse >/dev/null
+printf 'g\tland\tgrep -q . .loop/regression.tsv; echo g >> "$TOY_LOG"\tX-1\t2026-01-01\tG.\tcriterion\t\n' >> .loop/regression.tsv
+git add -A; git commit -qm "Rows f and g"; $reg run land --reuse >/dev/null
 awk -F'\t' 'BEGIN {OFS = FS} $1 == "b" {$6 = "B again."} {print}' .loop/regression.tsv > "$d/rows" && cat "$d/rows" > .loop/regression.tsv
+out=$(python3 "$here/skills/workflow-regression/scripts/lanes_cli.py" affected --root . -- .loop/regression.tsv | head -1); echo "$out"
+check "a regression.tsv edit selects the changed row and a row naming the table" 'grep -qE "[(, ]b[,)]" <<<"$out" && grep -qE "[(, ]g[,)]" <<<"$out"'
 git commit -qam "Edit row b again"
 fresh; out=$($reg run land --reuse); echo "$out"
-check "a regression.tsv edit also reruns a row that reaches regression.py" '[ "$(ran)" = "b f " ]'
-grep -v "^f	" .loop/regression.tsv > "$d/rows" && cat "$d/rows" > .loop/regression.tsv && git rm -rqf skills && git commit -qam "Drop row f"
+# Value: protects=an edit to regression-known.tsv selects only the rows whose known line changed, and a flipped row still is;
+# fails_when=affected goes back to picking every row that reads the table, or drops the flipped row; why_new=known edits
+# selected ~1,200 rows; seam=none; no_claim=a record's failed rows (plan(), not affected)
+git checkout -q -- .loop/regression-known.tsv  # the run above dropped b, now fixed, from the file; b is on the list since this branch added it
+printf 'a\tflipped\n' >> .loop/regression-known.tsv
+out=$(python3 "$here/skills/workflow-regression/scripts/lanes_cli.py" affected --root . -- .loop/regression-known.tsv); echo "$out"
+check "a known-list edit selects the row whose known status flipped and not the row that reads the table" 'grep -q "^AFFECTED 2 of [0-9]* rows (a, b)" <<<"$out"'
+git checkout -q -- .loop/regression-known.tsv
+# Value: protects=a goal file or kept fragment selects only the rows whose command or declared reads name it, no root runner, while
+# a code change beside them still selects its rows and the root runner; fails_when=record files count as code again (a row naming only
+# the wide .loop/ is picked); why_new=a typical pull request selected ~1,270 rows for its goal file;
+# seam=none; no_claim=rows reaching a record file only through a script's text
+printf 'w\tland\tls .loop/ >/dev/null; echo w >> "$TOY_LOG"\tX-1\t2026-01-01\tW.\tcriterion\t\n' >> .loop/regression.tsv
+printf 'k\tland\tcat .loop/kept/x.tsv >/dev/null; echo k >> "$TOY_LOG"\tX-1\t2026-01-01\tK.\tcriterion\t\n' >> .loop/regression.tsv
+printf 'r\tland\tls "$here" >/dev/null; echo r >> "$TOY_LOG"\tX-1\t2026-01-01\tR.\tcriterion\t\n' >> .loop/regression.tsv
+mkdir -p .loop/goals .loop/kept; echo x > .loop/goals/x.md; echo x > .loop/kept/x.tsv
+cli="python3 $here/skills/workflow-regression/scripts/lanes_cli.py affected --root ."
+out=$($cli -- .loop/goals/x.md .loop/kept/x.tsv | head -1); echo "$out"
+check "a goal file and a kept fragment select only the row naming it, not the wide .loop/ row or the root runner" 'grep -q "^AFFECTED 1 of [0-9]* rows (k)" <<<"$out"'
+out=$($cli -- .loop/goals/x.md dev/a.sh | head -1); echo "$out"
+check "a code change beside a record file still selects its rows and the root runner" 'grep -qE "[(, ]a[,)]" <<<"$out" && grep -qE "[(, ]d[,)]" <<<"$out" && grep -qE "[(, ]r[,)]" <<<"$out"'
+git checkout -q -- .loop/regression.tsv; rm -rf .loop/goals .loop/kept
+grep -v "^[fg]	" .loop/regression.tsv > "$d/rows" && cat "$d/rows" > .loop/regression.tsv && git rm -rqf skills && git commit -qam "Drop rows f and g"
 # Value: protects=a python row reruns when a module it imports changes, not everything; fails_when=scan stops following
 # imports; why_new=only shell sourcing is tested; seam=none; no_claim=packages or relative imports (same-folder module only)
 printf 'X = 1\n' > dev/helper.py; printf 'import helper\nimport os\nopen(os.environ["TOY_LOG"], "a").write("p\\n")\n' > dev/p.py
