@@ -24,7 +24,8 @@ for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file 
   grep -q "^| \`$k\` | .* | .[A-Za-z0-9]" <<<"$ref" || missing="$missing $k"
 done
 check "the reference lists every repo and private setting with a default and a line" '[ -z "$missing" ]'
-check "the saved reference is the generated one" '[ "$ref" = "$(sed -n '/^# Settings reference$/,$p' "$here/skills/loop-files.md")" ]'
+saved=$(sed -n '/^# Settings reference$/,$p' "$here/skills/loop-files.md")
+check "the saved reference is the generated one" '[ "$ref" = "$saved" ]'
 check "parallel 0 means unlimited and is the default" 'grep -q "^| .parallel. | .0. | Workers running at once; 0 means unlimited" <<<"$ref"'
 check "criteria_max defaults to 10 with a one-line explanation" 'grep -q "^| .criteria_max. | .10. | Most criteria a wiki page may hold" <<<"$ref"'
 check "this repo commits parallel 0" '[ "$(python3 -c "import json;print(json.load(open(\"$here/.loop/config.json\"))[\"parallel\"])")" = 0 ]'
