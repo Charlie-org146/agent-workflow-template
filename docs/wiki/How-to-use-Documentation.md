@@ -94,7 +94,7 @@ Each requirement and how it is delivered:
 - **Command:** `python3 skills/workflow-docs/scripts/audit.py restamp SLUG PAGE...`
 - **Dry run:** none: it prints one `RESTAMPED PAGE` line per page it changes, and nothing when no page qualifies.
 - **Reads:** the named pages and the git state of their files.
-- **Writes:** the named pages: their Review stamp, or a kept marker at the end of a How-to-use page.
+- **Writes:** one line per named page in `.loop/kept/<slug>.tsv`, committed as `Kept: <slug>`; no page is edited.
 - **Exit codes:** 0, whether or not a page qualified.
 
 ### API/file contract: .loop/docs.tsv
