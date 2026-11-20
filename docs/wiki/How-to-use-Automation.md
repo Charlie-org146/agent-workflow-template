@@ -66,9 +66,9 @@ Desk-only setup (the folded AUT-9): `setup.py desk` lists every desk-only setup 
 
 ## URLs and deployments
 
-- Wiki: [Automation](https://github.com/jcl2018/agent-workflow-template/wiki/Automation)
-- Milestone: [Automation](https://github.com/jcl2018/agent-workflow-template/milestone/10)
-- Releases: https://github.com/jcl2018/agent-workflow-template/releases
+- Wiki: [Automation](https://github.com/Charlie-org146/agent-workflow-template/wiki/Automation)
+- Milestone: [Automation](https://github.com/Charlie-org146/agent-workflow-template/milestone/10)
+- Releases: https://github.com/Charlie-org146/agent-workflow-template/releases
 
 ## Automations and schedules
 
@@ -89,6 +89,6 @@ Health and regression, then each `automation` entry in `.loop/config.json`; to a
 ## Links
 
 - PRD page: [Automation](Automation)
-- Backlog: [Backlog: Automation](https://github.com/jcl2018/agent-workflow-template/milestones)
+- Backlog: [Backlog: Automation](https://github.com/Charlie-org146/agent-workflow-template/milestones)
 
 <!-- kept ci-5min@61f7b5d0e -->

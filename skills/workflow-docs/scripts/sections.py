@@ -114,9 +114,14 @@ def what(page):
     return found and "## What this is\n\n" + " ".join(re.sub(r"\s*\[[A-Z]{3}-\d+\]$", "", b[4:]) for b in found[1].splitlines()) + "\n"
 
 
-def fresh(text, folder, read):
+def relink(text, slug):
+    """Links to this repository's own pages and files name its owner now, whoever owned it when the page was written."""
+    return re.sub(r"https://github\.com/[\w.-]+/%s/" % re.escape(slug.split("/")[1]), "https://github.com/%s/" % slug, text) if slug.count("/") == 1 else text
+
+
+def fresh(text, folder, read, slug=""):
     """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
-    text = tables(text)
+    text = relink(tables(text), slug)
     if "\n## System design" not in text:
         return text
     block = what(read(os.path.join(folder, "Delivery.md")))

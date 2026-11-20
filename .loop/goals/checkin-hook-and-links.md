@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `grep -c "jcl2018" README.md docs/wiki/Home.md`.
+   Expect: 0 for each file; every repository link names the organization repository.
+2. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: DOCS OK with no STALE line, and `git diff skills/workflow-monitoring/scripts/reply_hook.py` is empty.
