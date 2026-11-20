@@ -257,17 +257,6 @@ def holds_slot(run, taken=None):
     return taken is None and run.get("worker") == "session"
 
 
-def live(run, taken, at, cfg=None):
-    """A live session, not a leftover record (TD430, TD481). A running goal counts when it holds a slot and has spoken within
-    silent_minutes. A waiting goal is a leftover only when provably over (retired, its pull request merged or closed, or its bound
-    session gone from the pool), however silent: a real question stays. Failed, stopped and done goals are always live."""
-    if run.get("status") == "waiting":
-        report = (run.get("report") or {}).get("status")
-        return not (run.get("retired") or run.get("release") in ("merged", "cut", "closed") or report in ("merged", "closed")
-                    or (taken is not None and run.get("session") and run.get("slug") not in taken))
-    return run.get("status") != "running" or (holds_slot(run, taken) and (silent_for(run, at) or 0) <= silent_limit(cfg))
-
-
 def freezing(taken, on_disk):
     return [dict(entry, slug=slug) for slug, entry in sorted((taken or {}).items()) if slug not in on_disk]
 

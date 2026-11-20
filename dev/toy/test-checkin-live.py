@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/graph.py
+# reads: skills/workflow-monitoring/scripts/checkin.py skills/workflow-monitoring/scripts/layers.py skills/workflow-monitoring/scripts/machines.py
 """TD481: the check-in's first line counts live goals, not leftover run records, by the rule the machine status file uses.
 
 2 goals hold a busy pool entry and spoke a minute ago; 38 more hold a busy entry but have been silent for hours, and 2 read running with
 no pool entry and no pid: 2 running and 40 parked on line 1 and 40 rows marked parked, the status file's live-worker count agrees (2).
 A goal waiting on the owner for hours still counts under waiting on you (its session is in the pool, or it has none: a background worker);
-a waiting record is parked, in the same count, only when provably over: its pull request merged, the goal retired, or its bound session gone from the pool. Negative control: with graph.live always true the same records
+a waiting record is parked, in the same count, only when provably over: its pull request merged, the goal retired, or its bound session gone from the pool. Negative control: with machines.live always true the same records
 read 42 running and nothing parked, as the check-in did before. usage: test-checkin-live.py"""
 import datetime
 import json
@@ -20,7 +20,7 @@ scripts = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scrip
 sys.path.insert(0, scripts)
 os.environ["LOOP_ROLE"] = "worker"
 import checkin  # noqa: E402
-import graph  # noqa: E402
+import machines  # noqa: E402
 import layers  # noqa: E402
 
 failed = []
@@ -101,9 +101,9 @@ with tempfile.TemporaryDirectory() as tmp:
     asked = {n["slug"] for n in status["needs_owner"]}
     check({"ask", "bg"} <= asked and not asked & {"merged", "retired", "nosession"}, "the status file asks the owner about the 2 live questions and not about the parked waiting records (%s)" % sorted(asked))
     check(sum(w["status"] == "running" for w in status["workers"]) == int(line.split(" running")[0]), "the status file and the check-in agree on the running count")
-    real = graph.live
-    graph.live = lambda *a, **k: True  # negative control: every record counts, as the check-in did before
+    real = machines.live
+    machines.live = lambda *a, **k: True  # negative control: every record counts, as the check-in did before
     blind, _ = first_line(root)
-    graph.live = real
+    machines.live = real
     check(blind.startswith("42 running, 5 waiting on you, 0 queued;") and "parked" not in blind, "negative control: counting every record reads 42 running and nothing parked (%s)" % blind.split(";")[0])
 sys.exit(1 if failed else 0)
