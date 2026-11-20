@@ -145,10 +145,10 @@ def sync(root, args):
             title, side, r or "-", s or "-", title)
         row = held.get(key) or [side, "", "0", ""]
         if row[1] and row[3] != sha(text):
-            post("LOOP_GH", "issue", "comment", row[1], "--body", text)
+            post("LOOP_GH", "issue", "comment", row[1], "--body-file", "-", input=text)
             row[2] = "0"
         elif not row[1]:
-            ok, made = post("LOOP_GH", "issue", "create", "--title", "DELTA milestones %s: %s changed" % (title, side), "--body", text)
+            ok, made = post("LOOP_GH", "issue", "create", "--title", "DELTA milestones %s: %s changed" % (title, side), "--body-file", "-", input=text)
             if not ok:
                 print("not connected: milestones %s (gh): %s" % (title, made[:100]))
                 continue

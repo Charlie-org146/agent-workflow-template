@@ -34,7 +34,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
-| `goal_lane_minutes` | `10` | Minutes a goal's regression lane may take before health warns. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |

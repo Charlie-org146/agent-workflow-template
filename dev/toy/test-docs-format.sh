@@ -351,6 +351,15 @@ sys.path[:0] = [os.path.join(sys.argv[1], "skills", s, "scripts") for s in ("wor
 import criteria, settings
 setup = next(default for key, _, default, _ in settings.TABLE if key == "criteria_max")
 assert criteria.CRITERIA_MAX_DEFAULT == setup == 10 == criteria.criteria_max("."), (criteria.CRITERIA_MAX_DEFAULT, setup)
+import tempfile
+sys.path.insert(0, os.path.join(sys.argv[1], "skills", "workflow-health", "scripts"))
+import rules
+root = tempfile.mkdtemp()
+os.makedirs(os.path.join(root, "docs", "wiki")), os.makedirs(os.path.join(root, ".loop"))
+open(os.path.join(root, ".loop", "config.json"), "w").write("{}")
+for name, count in (("Ten", 10), ("Eleven", 11)):
+    open(os.path.join(root, "docs", "wiki", name + ".md"), "w").write("## Requirements\n\n" + "".join("- AB-%d: **Unreviewed** x.\n" % i for i in range(1, count + 1)))
+assert {r["subject"] for r in rules.requirements_per_page(root)} == {"Eleven"}, "health's rule must default to 10 too"
 PY
 
 echo "== the format key in the rules block chooses the checks"
