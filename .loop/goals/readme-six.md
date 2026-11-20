@@ -15,3 +15,26 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-docs/scripts/docs.py check`.
+   Expect: `DOCS OK: 16 pages` and no FORMAT, LINK, HOWTO or STALE line.
+2. Open README.md.
+   Expect: What this is (DEL-19's text, then the harness-engineering paragraph), System design with two grids, six principle sections each with its sentence, a table (Requirement, Summary, Follows, Feature, Adoption, Confidence), an Adoption line and a How it works paragraph, then Requirements by feature.
+3. Run `diff <(grep "^## " README.md) <(grep "^## " docs/wiki/Home.md)`.
+   Expect: no output.
+
+## Deviations from the approved draft
+
+Each is small, owner-visible and was accepted by the operation session (TD379, TD395):
+
+- `dev/system-design.py` (not shipped, so not a package change) now reads the principle names from the README headings and handles six principles; without it the two grids would ship the eight old principle labels. It is the one non-document change.
+- The Feature column carries the area as main does ("Documentation (Docs)"), because the grids read it.
+- The principle sentence is plain text under its heading, not a blockquote (DOC-23 compares the words).
+- Adoption is computed by the render from the Follows tags (adopted 1, adapted or own 0), so it differs from the draft's hand-read numbers; Confidence is blank.
+- Follows cells carry links around their own words and no wording change; the links not already on main: Google re:Work OKR guide, GitHub managing releases, Kubernetes ResourceQuota, Kanban WIP limits (atlassian.com), GitGuardian, Agensi (agensi.io), Google SRE incident command, ESLint max-lines.
+- "What this is" is rendered from DEL-19's text, with the owner's harness-engineering paragraph after it.
+- Principles page: one diagram per principle section (the existing 01, 02, 05, 06, 07 and 08 files).
+- How-to pages: the items of folded requirements moved to their survivors' pages as "Also (was ID)", and Delivery and Automation keep one line each naming `machine.py backup`/`restore` and `setup.py desk`.
+
+## Owner records used
+
+Owner words "yes build it" (o514) through records o569 to o655: revise and review of 26 requirements (o569 to o594, o613 to o638 and the later o645 to o655 for OPS-1, DEL-17, OPS-16 and GRD-20), DOC-26 (o595), and 21 retirements (o596 to o612 and o639 to o642). Additions approved by the owner (OPS-1 delays and platform limits, DEL-17 queue at full use) or by operation-top under owner delegation (DOC-2, o486: OPS-1 machine log, OPS-16 memory, GRD-20 20,480).
