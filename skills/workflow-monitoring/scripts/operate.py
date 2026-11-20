@@ -299,7 +299,8 @@ def tems(*args, **kwargs):
 
 
 def wiki_only(top, old, new):
-    """True when NEW descends from OLD and the diff is only stamp files, wiki .md pages (no SKILL.md), kept fragments and README.md outside its blocks."""
+    """True when NEW descends from OLD and the diff is only stamp files, wiki .md pages (no SKILL.md) and README.md outside
+    its generated blocks, as tems checks."""
     if run(["git", "merge-base", "--is-ancestor", old, new], cwd=top).returncode:
         return False
     head = run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=top).stdout.strip()
@@ -320,8 +321,8 @@ def readme_blocks_only(top, old, new):
 
 
 def apply(slug, branch):
-    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree, only while a
-    page's reviewed text still holds. The pushed commit moves the head by wiki pages only."""
+    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree: only while a
+    page's reviewed text still holds. The pushed commit moves the head by wiki pages only, which merge.py accepts."""
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
