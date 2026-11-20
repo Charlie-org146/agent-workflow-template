@@ -25,6 +25,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import socket
 import subprocess
 import sys
@@ -262,6 +263,20 @@ def rank(because):
         ("root runner", "names")) else 2
 
 
+def closeness(root, picked, base, times, cache=None):
+    """{row id: (0 its command, or a file it names, names changed files, 1 its requirement is in the diff, 2 the rest; the
+    changed files named, most first; seconds, shortest first)}. A folder counts only when it is a skills/x/scripts/ deep one."""
+    paths = lanes.changed(root, base) or [] if base else []
+    diff = (lanes.git(root, "diff", "-U0", "--no-renames", base) or "") if paths else ""
+    out = {}
+    for row in picked:
+        have = lanes.declared(root, row["command"], {} if cache is None else cache)
+        count = sum(any(p == d or d.endswith("/") and d.count("/") > 2 and p.startswith(d) for d in have) for p in paths)
+        near = 0 if count else 1 if row.get("goal") and re.search(r"\b%s\b" % re.escape(row["goal"]), diff) else 2
+        out[row["id"]] = (near, -count, (times.get(row["id"]) or {}).get("seconds") or 0)
+    return out
+
+
 def plan(root, picked, record):
     """(to run ids in tier order, reused ids, usable record or None, why no plan or ''); prints its plan lines."""
     global BASE
@@ -282,7 +297,8 @@ def plan(root, picked, record):
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
     todo = [row["id"] for row in picked if why[row["id"]]]
-    todo.sort(key=lambda rid: rank(why[rid]))  # the goal's own new and changed rows first, then reruns, reaches, the picks last
+    near = closeness(root, picked, BASE, old["rows"] if ok else {}, cache)
+    todo.sort(key=lambda rid: (rank(why[rid]), near[rid]))  # new and changed rows, reruns, reaches, picks; each by closeness (TD476)
     reused = [rid for rid in why if ok and rid in old["rows"] and not why[rid]]
     print("\n".join(lines)) if lines else None
     summary(picked, todo, why, len(loose) + len(gone), (full, text), old if ok else None)
