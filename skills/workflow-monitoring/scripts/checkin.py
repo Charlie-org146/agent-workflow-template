@@ -112,9 +112,12 @@ def render(root=None, at=None, stamp=None):
     pod = [mine] + others(bd.followed(), root, at, stamp, broken)
     ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
     counts = lambda *names: sum(g["states"][r["slug"]] in names for g in pod for r in g["live"] if not graph.foreign(r))
+    # TD481: a running goal counts only while graph.live holds (a slot, spoken within silent_minutes), as the status file counts it; the rest are parked
+    leftover = lambda g, r: g["states"][r["slug"]] in ("running", "held", "silent") and not graph.live(r, g["taken"], at, g["cfg"])
+    parked = sum(leftover(g, r) for g in pod for r in g["live"] if not graph.foreign(r))
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued; %s" % (counts("running", "held", "silent"),
-                                                            counts("waiting", "failed", "stopped"), sum(len(g["queue"]) for g in pod), pool_line),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent") - parked, counts("waiting", "failed", "stopped"),
+                                                              sum(len(g["queue"]) for g in pod), ", %d parked" % parked if parked else "", pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg))]
     for g in pod:
         out += ["%s%s: %d goal%s, last activity %s" % (name, " (%s)" % machine if machine else "", n, "" if n == 1 else "s",
@@ -127,7 +130,8 @@ def render(root=None, at=None, stamp=None):
             step = lb.current(run)
             left = bs.left_time(run, g["runs"], at)
             out.append("| %s | %s | %s | %s | %s %d/8 | %s | %s |" % (
-                cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(bs.intro(run.get("goal"), run["slug"]), 70), MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
+                cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(bs.intro(run.get("goal"), run["slug"]), 70),
+                "parked" if leftover(g, run) else MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
                 lb.FLOW[step], step + 1, ("?" if left is None else board_page.span(left)) + ", " + auto.eta_text(auto.eta_seen(g["root"], run), at), cell(lb.latest_report(run) or run.get("next"), 60)))
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
