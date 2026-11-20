@@ -107,7 +107,7 @@ EOF
   check "a stamped repo with no entry point fails the check (ENTRY_MISSING)" "$E check | grep -q '^MISSING .loop/START.md'"
   $E write >/dev/null
   mkdir -p "$T/inst/workflow-docs/scripts" "$T/inst/workflow-docs/references" "$T/inst/workflow-setup/references"
-  cp "$DO/scripts/entry.py" "$T/inst/workflow-docs/scripts/"; cp "$DO/references/commands.md" "$T/inst/workflow-docs/references/"
+  cp "$DO"/scripts/*.py "$T/inst/workflow-docs/scripts/"; cp "$DO/references/commands.md" "$T/inst/workflow-docs/references/"
   cp "$DO/SKILL.md" "$T/inst/workflow-docs/"; cp "$SU/references/settings.md" "$T/inst/workflow-setup/references/"
   echo '{"version": "9.9.9", "files": {}}' > "$T/inst/workflow-package.json"
   sed -i.bak 's/One session governs and the others build:/One session governs; the others build:/' "$T/inst/workflow-docs/references/commands.md"
