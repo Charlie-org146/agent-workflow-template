@@ -49,8 +49,9 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from the origin remote, else a milestone URL."""
-    return pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
+    """OWNER/REPO: template_repo when this checkout holds the skills (its links never depend on the origin), else the origin, else a milestone URL."""
+    named = config_of(root).get("template_repo") if os.path.realpath(SKILLS).startswith(os.path.realpath(root) + os.sep) else ""
+    return pf.owner_repo("https://github.com/%s" % named if named else "") or pf.owner_repo(cr.git("remote", "get-url", "origin", check=False)) or pf.owner_repo(text)
 
 
 def tests_page(root):
