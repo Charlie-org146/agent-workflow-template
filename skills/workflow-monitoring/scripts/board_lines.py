@@ -1,41 +1,12 @@
 #!/usr/bin/env python3
-"""What the live board draws, in one module (three were merged to keep the skill package under its file cap):
-
-1. The Dependencies graph (issues 94 and 123):
-The live board's Dependencies section as a graph a phone can read (issues 94 and 123): running and queued goals, top
-to bottom, one band per depth, at most 60 columns, with a legend. Pure functions; imported, not run.
+"""What the live board draws, in one module: the Dependencies graph and queue blocks (issues 94, 123), the Issues lines (issue 97), pull
+request states (MON-9: asked in parallel, a MERGED answer kept in <git common dir>/loop/pr-states.json) and the budget, depth and
+private-name lines (DEL-8, DEL-6, DEL-9). Imported by live_board.py, board.py, pool.py and checkin.py, not run.
 
   [>] running   [=] holding or paused   [ ] queued   [?] waiting on you   [!] stuck
-
-Goals that wait on nothing come first, packed side by side; each later band lists one goal a line with what it waits on
-(`[ ] c <- a, b`), so a goal that waits on several is drawn once with every arrow. A `|` / `v` joins the bands. A goal in
-a cycle carries `(cycle)` and the cycle is drawn once, never followed. No goals: `- (none)`.
-
-2. Issues lines a phone can read (issue 97):
-Issues lines a phone can read (issue 97). A stopped or failed goal is shown by its cause in plain words, never by
-the agent's raw output, and goals stopped by one cause share one line: "usage limit: 4 goals paused until Nov 11
-16:00; they resume by themselves" (only where resume_on_limit is on). While every live goal is paused by one cause, the finish says "paused until ...".
-Pure functions; imported by live_board.py, not run.
-
-  cause(run)          (key, words, until): the plain cause of a failed or stopped goal
-  stuck(runs)         the Issues lines for failed and stopped goals, grouped by cause, each with its fix
-  paused(runs)        "paused until <when>" when all live goals wait out one usage limit, else ""
-
-3. Pull request states and the health verdict, fast (MON-9):
-Pull request states for the board, fast (MON-9: the board builds in under 10 seconds). gh is asked in parallel, each
-call bounded, and a MERGED answer is kept in <git common dir>/loop/pr-states.json for good (OPEN and CLOSED can change,
-so they are asked each time, all at once). The file is written whole through a temp file and os.replace, so
-a reader never sees half of it; when two writers race, the last one wins and a lost answer is only asked again.
-Imported by live_board.py, board.py and pool.py, not run.
-
-  states(runs, root)  {slug: MERGED|CLOSED|OPEN|""} for each done, unmerged run with a pull request
-  state(url, root)    one pull request's state ("" when gh can't say)
-
-4. The per-goal budget and decided-depth lines, and the private-name Issues lines (DEL-8, DEL-6, DEL-9):
-Imported by live_board.py (as bb); were board_budget.py.
-
 """
 import concurrent.futures
+import datetime
 import importlib.util
 import json
 import os
@@ -103,6 +74,27 @@ def render(items, width=WIDTH):
             line = "%s <- %s" % (box(node, cut), ", ".join(node["depends"]))
             out += pack([line], width)
     return out + ["", LEGEND]
+
+
+BUILD = ("running", "holding", "silent")
+
+
+def queue_view(items, at):
+    """One repo's Building now and Queue, in order; a queued goal starts when what it waits on ends."""
+    clock = lambda sec: "ETA " + ("%s (about %s)" % ((at + datetime.timedelta(seconds=sec)).astimezone().strftime("%H:%M"), board_page.span(sec)) if sec else "now")
+    run, wait = [i for i in items if i["mark"] in BUILD], [i for i in items if i["mark"] == "queued"]
+    end = {i["slug"]: i.get("left") for i in run}
+    out = ["Building now:"] + ["  %s | %s | %s" % (i["slug"], i.get("row", ""), clock(i["left"]) if i.get("left") is not None else "ETA unknown: no step estimate yet") for i in run] + ["  nothing is building"] * (not run) + ["Queue, in order:"]
+    for n, q in enumerate(wait, 1):
+        deps = [d for d in q["depends"] if d in end]
+        full = str(q.get("why")).startswith("slots full")
+        need = deps or ([i["slug"] for i in run] if full else [])
+        times = [end[d] for d in need]
+        start = None if None in times else (min if full and not deps else max)(times or [0])
+        end[q["slug"]] = None if None in (start, q.get("left")) else start + q["left"]
+        out.append("  %d. %s | waits for: %s | %s" % (n, q["slug"], q.get("why") or "nothing, starts next", clock(start) if start is not None else
+                                                      "ETA unknown: %s has no estimate" % ", ".join(d for d in need if end[d] is None)))
+    return out + ["  (none queued)"] * (not wait)
 
 
 LIMIT = re.compile(r"usage limit|rate limit|limit reached|hit your (?:weekly |daily )?limit|out of (?:usage|credits)|quota", re.I)

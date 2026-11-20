@@ -368,6 +368,14 @@ def common(root):
     return os.path.realpath(os.path.join(root, done.stdout.strip())) if done.returncode == 0 and done.stdout.strip() else ""
 
 
+def require_operation(root, what):
+    """Exit unless the caller is an operation session (CLAUDE_SESSION_ID or LOOP_POD_ID in <common>/loop/operation.id), never a worker."""
+    base, ids = common(root), {os.environ.get("CLAUDE_SESSION_ID"), os.environ.get("LOOP_POD_ID")} - {None, ""}
+    import govern_hook
+    if not base or os.environ.get("LOOP_ROLE") == "worker" or os.path.realpath(os.getcwd()).startswith(os.path.join(base, "loop", "worktrees") + os.sep) or not ids & govern_hook.operation_ids(base):
+        sys.exit("REFUSED: only an operation session records %s (its id in operation.id, outside a worker worktree). Nothing was written." % what)
+
+
 def turn_label(entry):
     text = text_of(entry)
     return classify(text) if text is not None else None
