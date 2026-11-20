@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt (DEL-10)
 
 GROUPS = (
     ("requirements", "Requirements", "my angle: is every promise I approved proven?", ("rows", "proof", "done")),
