@@ -81,10 +81,8 @@ def now():
 
 
 def save(path, state):
-  temp = path + ".%d.tmp" % os.getpid()
-  with open(temp, "w") as handle:
-    json.dump(state, handle, indent=2)
-  os.replace(temp, path)
+  import goal
+  goal.save(state)
 
 
 def sync(base):
@@ -107,9 +105,12 @@ def sync(base):
 
 def goal_state(runs, slug):
   try:
-    return json.load(open(os.path.join(runs, slug + ".json")))
+    state = json.load(open(os.path.join(runs, slug + ".json")))
   except (OSError, ValueError):
     return {}
+  import goal
+  goal.SEEN[slug] = json.dumps(state)
+  return state
 
 
 def recorded_gate(args, runs, job):
