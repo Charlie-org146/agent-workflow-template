@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/1
 
-Review: **Unreviewed** <!-- kept known-red-lanes@3f8cf1af3 -->
+Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 
 How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
@@ -241,15 +241,15 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given a goal with no done line, when it is started, then it is refused. | PASS 2026-11-20 |
-| [no-flow-refused](Tests#t-no-flow-refused) | requirement | DEL-1 | Given no skill flow is set, when a goal is started, then it does not start. | PASS 2026-11-19 |
-| [cut-needs-verify](Tests#t-cut-needs-verify) | requirement | DEL-1 | Given no Verify by hand steps, when a release is cut, then it is refused. | PASS 2026-11-19 |
+| [no-flow-refused](Tests#t-no-flow-refused) | requirement | DEL-1 | Given no skill flow is set, when a goal is started, then it does not start. | PASS 2026-11-20 |
+| [cut-needs-verify](Tests#t-cut-needs-verify) | requirement | DEL-1 | Given no Verify by hand steps, when a release is cut, then it is refused. | PASS 2026-11-20 |
 | [stop-after-3-tries](Tests#t-stop-after-3-tries) | requirement | DEL-1 | Given a goal, when three tries fail, then the goal stops and files a finding. | PASS 2026-11-09 |
 | [never-merges](Tests#t-never-merges) | requirement | DEL-1 | Given auto_merge is off, when goals finish, then nothing is merged. | PASS 2026-11-09 |
 | [pr-needs-flow](Tests#t-pr-needs-flow) | requirement | DEL-1 | Given a flow step not yet done, when a pull request is opened, then it is refused. | PASS 2026-11-09 |
 | [starts-at-idea](Tests#t-starts-at-idea) | requirement | DEL-1 | Given a new goal, when it starts, then it starts at the idea step. | PASS 2026-11-09 |
 | [steps-through-flow](Tests#t-steps-through-flow) | requirement | DEL-1 | Given a step reply, when it is recorded, then it is accepted only if the flow ran that step. | PASS 2026-11-09 |
 | [no-prompts](Tests#t-no-prompts) | requirement | DEL-1 | Given any tool, when it runs, then it never waits on a terminal prompt. | PASS 2026-11-20 |
-| [wiki-release](Tests#t-wiki-release) | requirement | DEL-1 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-19 |
+| [wiki-release](Tests#t-wiki-release) | requirement | DEL-1 | Given a merged goal, when the release runs, then its wiki pages are published, even when python leaves cache files behind. | PASS 2026-11-20 |
 | [auto-release](Tests#t-auto-release) | requirement | DEL-1 | Given auto-release is on, when a goal merges, then it is released automatically. | PASS 2026-11-12 |
 | [defect-flow-steps](Tests#t-defect-flow-steps) | requirement | DEL-1 | Given the flow, when it is checked, then it has no checks step and every step can be mapped, with a default suite and overrides. | PASS 2026-11-12 |
 | [pr-body-criterion](Tests#t-pr-body-criterion) | requirement | DEL-1 | Given a pull request, when its body is written, then it carries the goal, the done lines, the verify steps and each step's result. | PASS 2026-11-19 |
@@ -298,7 +298,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [gate-nonascii-page-refused](Tests#t-gate-nonascii-page-refused) | requirement | DEL-1 | Given a goal that changes a page whose name is not ASCII and a DOC-19 finding on it, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-feature-edit-refuses](Tests#t-gate-feature-edit-refuses) | requirement | DEL-1 | Given a goal that changes a feature page and a DOC-19 finding on its How-to-use page, when merge.py checks the wiki, then it still refuses. | not run |
 | [gate-list-failure-no-create](Tests#t-gate-list-failure-no-create) | requirement | DEL-1 | Given gh issue list fails, when the gate files a page, then no issue is created. | not run |
-| [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-19 |
+| [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-20 |
 | [auto-approved](Tests#t-auto-approved) | requirement | DEL-3 | Given an auto-approved step, when it ends, then it is logged and nothing waits. | PASS 2026-11-09 |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-3 | Given review_depth full, when a plan or review reply says it ran condensed, then it is refused with no try used. | PASS 2026-11-18 |
 | [depth-auto-approve-gate](Tests#t-depth-auto-approve-gate) | requirement | DEL-3 | Given review_depth full and auto-approve on, when a condensed review leaves a gate, then it is refused, not approved. | PASS 2026-11-18 |

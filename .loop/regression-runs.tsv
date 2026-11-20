@@ -103,7 +103,7 @@ criteria-max-config	PASS	2026-11-12
 criteria-max-setting	PASS	2026-11-12	
 criteria-no-scripts	PASS	2026-11-20	
 cut-draft	PASS	2026-11-09	
-cut-needs-verify	PASS	2026-11-19	
+cut-needs-verify	PASS	2026-11-20	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-categories	FAIL	2026-11-12	
 defect-flow-steps	PASS	2026-11-12	
@@ -421,7 +421,7 @@ never-merges	PASS	2026-11-09
 new-binds-app-session-4257	PASS	2026-11-15	
 no-change-quiet	PASS	2026-11-09	
 no-done-line-refused	PASS	2026-11-20	
-no-flow-refused	PASS	2026-11-19	
+no-flow-refused	PASS	2026-11-20	
 no-line-in-governor	PASS	2026-11-20	
 no-pid-left-alone	PASS	2026-11-09	
 no-prompts	PASS	2026-11-20	
@@ -456,7 +456,7 @@ parallel-unlimited	PASS	2026-11-12
 pass3-symlink-page	PASS	2026-11-11	
 pending-none-goes-on	PASS	2026-11-12	
 pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-19	
+pending-waits	PASS	2026-11-20	
 perms-private-refused	PASS	2026-11-17	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
@@ -511,7 +511,7 @@ pull-ff-only-passes	PASS	2026-11-12
 pull-plain-blocked	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
 refuse-replace	PASS	2026-11-20	
-refused-unmet	PASS	2026-11-19	
+refused-unmet	PASS	2026-11-20	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-12	
@@ -668,9 +668,9 @@ tests-own-folder	PASS	2026-11-13
 tests-page-run-link	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tests-page-stale	PASS	2026-11-19	
 tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-tests-row-shape	PASS	2026-11-19	
+tests-row-shape	PASS	2026-11-20	
 tests-seen-failing	PASS	2026-11-20	
-tests-table-columns	PASS	2026-11-19	
+tests-table-columns	PASS	2026-11-20	
 tests-table-stale	PASS	2026-11-20	
 tiers-deleted-qa-pr	PASS	2026-11-10	
 tiers-no-merge-base	PASS	2026-11-10	
@@ -697,7 +697,7 @@ usage-section-allowed	PASS	2026-11-12
 usage-section-refused	SKIPPED	2026-11-15	
 waits-first	PASS	2026-11-09	
 wiki-no-report	PASS	2026-11-12	
-wiki-release	PASS	2026-11-19	
+wiki-release	PASS	2026-11-20	
 wiki-release-pycache	PASS	2026-11-19	
 wiki-unmapped-stale	PASS	2026-11-19	
 win-posix-calls-gone	PASS	2026-11-15	
