@@ -15,3 +15,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `python3 dev/toy/test-how-to-use.py | grep -vc '^PASS'`.
+   Expect: it prints 0 (31 PASS lines, no crash).
+2. Run `python3 dev/toy/test-apply-rerender.py | grep 'PASS: merge.py accepts the head that carries'`.
+   Expect: the line prints.
+3. Run `python3 dev/toy/test-merge-unblock.py restamp | tail -1`.
+   Expect: it prints `PASS: merge-unblock A`.
