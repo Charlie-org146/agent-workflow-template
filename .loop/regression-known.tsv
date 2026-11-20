@@ -3,11 +3,9 @@ adopt-set-3	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-4	fails on clean main since v0.27.17; fixed by render-readme-guard
 adopt-set-5	fails on clean main since v0.27.17; fixed by render-readme-guard
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
-lanes-repo-narrow	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
 pods-size	fails on clean main since v0.27.17; fixed by package-cap-3
 sync-check-preview	fails on clean main since v0.27.17; fixed by package-cap-3
-sync-board-lag	fails on clean main since v0.27.17; fixed by package-cap-3
 size-140	fails on clean main since v0.27.17: skills/workflow-docs/scripts/docs.py is 18,702 bytes, past the 90% size warning; fixed by package-cap-3 (moves a block out of docs.py)
 package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
@@ -17,94 +15,58 @@ scripts-a-delivery-under-19000	fails on main v1.0.48: fit.py (19,673), lanekit.p
 package-passes	fails on main v1.0.48: govern_hook.py calls __import__, which the package safety scan rejects; issue 4892
 scripts-a-monitoring-under-19000	red on main: workflow-monitoring sessions.py (19,636 bytes), checkin.py (19,444), operate.py (19,262) and reply_hook.py (19,386) are over the 19,000 warn line (owner record o39)
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
-sync-propose	red on main c9c8a2a0: dev/toy/test-sync-update.sh propose fails on the Mac, confirmed twice; the lane already holds the open issue, see #4967
 no-flow-refused	red on main (in-session flow.py path, see #4852)
 pending-waits	red on main (in-session flow.py path, see #4852)
-cut-needs-verify	red on main (in-session flow.py path, see #4852)
 wiki-release	red on main (in-session flow.py path, see #4852)
 doc1-sync-pointer	red on main f3a20557: DOC-1 reworded by requirements-consolidate, sync pointer no longer within 12 lines; see #5308
 landed-left-alone	red on main 49f0f2fe: CI-only red row, see #4495
 operate-all	red on main 49f0f2fe: its two asserts (a flow step records the tokens its agent reported; a clean merge goes on, costing no try) fail; tracked in #4516
-ls-messages-table	red on main f3a20557: test-local-schedule.sh messages fails 'every code the scripts print has a Messages row...' and 'goal.py pr exit 5 is documented'; see #5343
 ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the default judge_command grants no tools (--tools "")'; see #5343
-ls-scheduled-rule	red on main f3a20557: test-local-schedule.sh scheduledrule fails 'a leftover health.yml is a WARN naming git rm'; see #5343
 ls-size-budget	red on main f3a20557: test-local-schedule.sh size fails 'the package holds at most 99 files'; see #5343
 operate-wait-99	red on main f3a20557: test-operate.sh fails the same two asserts as operate-all; see #5343
 package-caps-held	red on main f3a20557: test-package-caps.py finds the real tree ships 104 files, at most 100; see #5343
 runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
-adopt-fixture-bare-agent	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4956
-adopt-fixture-ci-gitignore	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4953
-adopt-fixture-feature-milestones	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4957
-apply-rerender-accepted	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4994
 docs-guide-page-issue-125	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5370
 entry-adopt	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4965
 entry-stale	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5364
 guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4104
-hlt6-cannot-fire	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5365
 lane-messages-table	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4091
 lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4153
 lanes-trace-check	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4097
 merge-guard-base-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4113
-merge-wiki-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4117
-merge-wiki-skill-refused	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4083
 package-gate-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4974
-pass3-symlink-page	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4105
 prd-readers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5366
-reply-hook-all	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4545
 reply-hook-blocks	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4549
 reply-hook-checkin-123	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4547
 repo-narrow-178	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4090
 set1-docs-format	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4951
-st-post-fails	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4300
-st-release-pr	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4260
 st-union-contexts	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4258
 stale-code-page-reviewed	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5368
 stale-groups-defect	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5362
-sync-apply-keeps	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4976
 sync-default-source	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4966
-sync-template-redirect	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4968
 toy-no-leftovers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4092
 listing-names-every-command	fails on main since v1.0.82; see #4977
-stale-code-page-unreviewed	fails on main since v1.0.82; see #5369
 del9-scan-sites	fails on main since v1.0.91; see #4129
 doc19-readme-links	fails on main since v1.0.93; see #4992
-who-merges-hold-flag	fails on main since v1.0.94; see #5297
 who-merges-report	fails on main since v1.0.94; see #5299
 adopt-fixture-existing-checks	fails on main since v1.0.96; see #4952
 health-findings-table	fails on main since v1.0.96; see #5367
-restamp-at-merge-3867	fails on main since v1.0.96; see #4438
-who-merges-fallback	fails on main since v1.0.96; see #5305
 grd2-limits-in-settings	fails on main since v1.0.99; see #5311
 setup-no-milestone-step	fails on main since v1.0.99; see #5312
-grd9-controls	fails on main since v1.0.100; see #5334
 hlt2-twelve-groups	fails on main since v1.0.100; see #5326
 hlt6-controls-fire	fails on main since v1.0.100; see #5320
-hlt6-controls-lean	fails on main since v1.0.100; see #5327
 migration-clean	fails on main since v1.0.100; see #5324
-migration-fix-mac-no-yml	fails on main since v1.0.100; see #5328
 migration-fix-sched-task	fails on main since v1.0.100; see #5336
-migration-flags	fails on main since v1.0.100; see #5325
-migration-gaps-pr	fails on main since v1.0.100; see #5331
-migration-gaps-state	fails on main since v1.0.100; see #5330
-migration-health-same	fails on main since v1.0.100; see #5333
-migration-lag-line	fails on main since v1.0.100; see #5321
 migration-robustness	fails on main since v1.0.100; see #5323
 migration-runs	fails on main since v1.0.100; see #5335
 migration-v1	fails on main since v1.0.100; see #5329
-migration-writes-nothing	fails on main since v1.0.100; see #5319
-merge-wiki-rename-refused	fails on main since v1.0.102; see #4125
 setup-fit	fails on main since v1.0.102; see #4972
 doc18-howto-restamp	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5389
-doc19-item-missing	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5388
-doc19-item-unknown	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5385
-doc19-runbook-plain	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5390
 home-guard-catches-leak	fails on main since v1.0.110 (kept-fragments, #5380); fixed by kept-fragments-reds; see #5387
 restamp-marks-3867	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5386
-apply-rerender-howto	fails on main since v1.0.110; fixed by kept-fragments-reds; see #5391
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
-apply-rerender-hand-edit	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); fixed by kept-reds-2; see #4995
 lane-last-152	lanekit.py check() copy lacks slots.py's nt-line comment (drift: check); known red on main; see #5402
