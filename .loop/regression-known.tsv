@@ -22,9 +22,6 @@ no-flow-refused	red on main (in-session flow.py path, see #4852)
 pending-waits	red on main (in-session flow.py path, see #4852)
 cut-needs-verify	red on main (in-session flow.py path, see #4852)
 wiki-release	red on main (in-session flow.py path, see #4852)
-refused-unmet	red on main (scheduled regression 2026-11-17)
-tests-table-columns	red on main ef5b7edb: dev/toy/test-criteria.sh fails 3 checks (conforming page, rendered table, reviewed page); same family as refused-unmet, issue #5304
-tests-row-shape	red on main ef5b7edb: dev/toy/test-criteria.sh fails 3 checks (conforming page, rendered table, reviewed page); same family as refused-unmet, issue #5304
 doc1-sync-pointer	red on main f3a20557: DOC-1 reworded by requirements-consolidate, sync pointer no longer within 12 lines; see #5308
 landed-left-alone	red on main 49f0f2fe: CI-only red row, see #4495
 operate-all	red on main 49f0f2fe: its two asserts (a flow step records the tokens its agent reported; a clean merge goes on, costing no try) fail; tracked in #4516
@@ -50,7 +47,6 @@ lanes-trace-check	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is
 merge-guard-base-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4113
 merge-wiki-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4117
 merge-wiki-skill-refused	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4083
-no-usage-passes	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5363
 package-gate-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4974
 pass3-symlink-page	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4105
 prd-readers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5366
