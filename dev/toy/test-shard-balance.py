@@ -130,6 +130,26 @@ bad = subprocess.run(["bash", "-c", script], cwd=work, capture_output=True, text
 check(bad.returncode == 1, "negative control: a missing row that fails when affected runs it fails the job (exit %d)" % bad.returncode)
 kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
+# D3 (pr-check-fast): 8 shards of 120 seconds, and the affected job runs docs.py check on the merged ref with no review log (a
+# clone has none), so a page-level LOCKED or FORMAT line fails the pull request and not the merge queue.
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7]" in flow and "matrix.shard }}/8 " in flow and "--budget 120 " in flow,
+      "the PR workflow runs 8 shards with a 120-second budget each")
+job = flow.split("\n  affected:")[1].split("\n  small:")[0]
+step = [x.strip()[7:] for x in job.splitlines() if x.strip() == "- run: python3 skills/workflow-docs/scripts/docs.py check"]
+check(len(step) == 1 and "fetch-depth: 0" in job, "the affected job checks out the history and runs docs.py check")
+clone = tempfile.mkdtemp(prefix="pr-docs-")
+subprocess.run(["git", "clone", "-q", root, clone], check=True, capture_output=True)  # a CI checkout: origin set, no .git/loop/reviews.tsv
+subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=clone, check=True)  # the base is the pull request's own start
+good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+check(good.returncode == 0 and "DOCS OK" in good.stdout, "a pull request whose docs pass passes the docs step (exit %d)" % good.returncode)
+setup = os.path.join(clone, "docs", "wiki", "Setup.md")
+lines = open(setup).read().split("\n")
+at = next(i for i, x in enumerate(lines) if re.match(r"- [A-Z]+-\d+: \*\*Reviewed", x))
+lines[at] += " (changed with no review)"
+open(setup, "w").write("\n".join(lines))
+subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change a reviewed requirement"], cwd=clone, check=True, capture_output=True)
+bad = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+check(bad.returncode != 0 and "LOCKED Setup" in bad.stdout, "negative control: a changed reviewed requirement with no review log fails the docs step with its own LOCKED line (exit %d)" % bad.returncode)
 wf = os.path.join(root, ".github", "workflows", "regression-pr.yml")
 check(not os.path.exists(wf) or open(wf).read() == flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly"),
       ".github/workflows/regression-pr.yml is the rendered workflow")
