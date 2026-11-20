@@ -53,6 +53,7 @@ go() { $W go "Goal $1" --done "Line $1" --slug "$1" >/dev/null 2>&1; }
 
 seed() { python3 - "$C/loop/session-pool.json" "$@" <<'PY'
 import json, os, sys
+os.makedirs(os.path.dirname(sys.argv[1]), exist_ok=True)  # a fresh toy repo has no loop folder before the first goal
 p = json.load(open(sys.argv[1])) if os.path.exists(sys.argv[1]) else {}
 for sid in sys.argv[2:]:
     p[sid] = {"name": "worker · old", "slug": "old", "state": "free"}  # an archived session the owner started earlier
