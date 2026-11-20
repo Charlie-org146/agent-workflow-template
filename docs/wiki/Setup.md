@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=98612a96 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept merge-private-lane-import@45fb2810 -->
+Review: **Reviewed 2026-11-17** <!-- prd P=7f1b1066 R=98612a96 N=9c385754 M=471a58c6 U=03828777 --> <!-- kept rel-15-queue@88a93af7b -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -262,17 +262,13 @@ None
 | [adopt-many-one-pass](Tests#t-adopt-many-one-pass) | requirement | SET-1 | Given two GitHub repos chosen from the recent list, when repos adopt runs, then both are cloned into one folder, followed and set up, each reporting its template_version. | not run |
 | [setup-owner-words-up-front](Tests#t-setup-owner-words-up-front) | requirement | SET-1 | Given a repo, when setup runs, then its first output says that un-reviewing a locked requirement needs the owner's own sentence, not a relayed letter or an agent (#2874). | PASS 2026-11-15 |
 | [test-caps-settings](Tests#t-test-caps-settings) | requirement | SET-1 | Given settings.py, when the settings are read, then max_regression_rows and max_suite_seconds are repo settings with defaults the template passes today. | PASS 2026-11-16 |
-| [private-checks-run-local](Tests#t-private-checks-run-local) | requirement | SET-1 | Given a required check whose job is plain run steps, when the pr step posts statuses, then it runs those steps here and posts the check with the regression one (#4537). | not run |
-| [private-checks-fail-not-green](Tests#t-private-checks-fail-not-green) | requirement | SET-1 | Given a plain job whose step fails, when the pr step posts statuses, then that check is never posted green and is named, as is a third-party-action check (#4537). | not run |
-| [private-checks-control](Tests#t-private-checks-control) | requirement | SET-1 | Given a repo requiring only the regression check, when the pr step runs, then nothing is named or stopped, as before (negative control, #4537). | not run |
-| [adopt-set-5](Tests#t-adopt-set-5) | requirement | SET-2 | Given SET-5, when the toy adopt test runs, then the design guide is installed and setup's .loop/START.md holds the opener and every part. | FAIL 2026-11-19 |
+| [private-checks-run-local](Tests#t-private-checks-run-local) | requirement | SET-1 | Given the SET-1 cases of test-private-checks.py, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | not run |
 | [settings-reference](Tests#t-settings-reference) | requirement | SET-2 | Given every repo and private setting, when the reference is read, then each is listed with its default and a one-line explanation. | PASS 2026-11-12 |
 | [parallel-unlimited](Tests#t-parallel-unlimited) | requirement | SET-2 | Given parallel is 0, when goals run, then it means unlimited, and it is the default. | PASS 2026-11-12 |
 | [settings-read-fresh](Tests#t-settings-read-fresh) | requirement | SET-2 | Given a changed setting, when the next run happens, then it takes effect. | PASS 2026-11-12 |
 | [criteria-max-setting](Tests#t-criteria-max-setting) | requirement | SET-2 | Given the repo settings, when they are read, then criteria_max is a repo setting with default 10 and a one-line explanation. | PASS 2026-11-12 |
-| [depth-setup](Tests#t-depth-setup) | requirement | SET-2 | Given a new repo, when setup runs, then it writes review_depth full with a one-line explanation. | PASS 2026-11-10 |
-| [depth-reference](Tests#t-depth-reference) | requirement | SET-2 | Given the settings reference, when it is generated, then it lists review_depth with its default. | PASS 2026-11-10 |
-| [depth-fill-repo-help](Tests#t-depth-fill-repo-help) | requirement | SET-2 | Given a config that already has its _help explanations, when fill-repo runs, then it fills without error. | PASS 2026-11-10 |
+| [adopt-set-5](Tests#t-adopt-set-5) | requirement | SET-2 | Given SET-5, when the toy adopt test runs, then the design guide is installed and setup's .loop/START.md holds the opener and every part. | FAIL 2026-11-19 |
+| [depth-setup](Tests#t-depth-setup) | requirement | SET-2 | Given the SET-2 cases of test-review-depth.sh, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | PASS 2026-11-10 |
 | [entry-stale](Tests#t-entry-stale) | requirement | SET-2 | Given an adopted repo, when a PRD page's Problem changes, then the entry point check and the docs check fail STALE until docs.py audit regenerates it. | PASS 2026-11-12 |
 | [entry-adopt](Tests#t-entry-adopt) | requirement | SET-2 | Given a repo, when setup adopts it, then .loop/START.md holds the first-five-minutes list and every part: loop, release, operation and workers, docs, regression, health, settings and features. | SKIPPED 2026-11-16 |
 | [set2-layers-show](Tests#t-set2-layers-show) | requirement | SET-2 | Given a default, a repo and a local setting, when settings show runs, then each value shows the layer it came from, a local key in the committed config is flagged, and private values are withheld. | not run |

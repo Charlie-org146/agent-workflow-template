@@ -5,12 +5,12 @@ usage: replan.py [plan]       re-read every goal's progress, log what changed an
        replan.py since ISO    print the changes logged after a time (the check-in lists those since the last one)
 
 What it does, and only this:
-- starts: each goal watch starts (dependencies merged, a slot free) is logged with its reason, so no ready goal sits idle unexplained;
-- merges: queued goals with the same PRD (first word of `prd:`) and overlapping `touches:` are proposed merged (a goal missing either is never proposed);
-- splits: a goal that two or more queued goals wait on, whose queue line names `parts:`, is proposed split so that part can start first;
-- merge line: done goals with an open pull request, critical path first (most goals waiting, then longest time left); advisory.
-It never stops, restarts or edits a goal or applies a merge or split: the owner does, with board.py retire and a new queue line.
-Each change goes once into <git common dir>/loop/replan.log as `<time> <kind> <slugs>: <reason>`; a repeat is not logged or shown again.
+- starts: each goal watch starts is logged with its reason, so no ready goal sits idle unexplained;
+- merges: queued goals with the same PRD (first word of `prd:`) and overlapping `touches:` are proposed merged;
+- splits: a goal that two or more queued goals wait on, whose queue line names `parts:`, is proposed split;
+- merge line: done goals with an open pull request, critical path first; advisory.
+It never stops, restarts or edits a goal or applies a merge or split: the owner does.
+Each change goes once into <git common dir>/loop/replan.log as `<time> <kind> <slugs>: <reason>`.
 """
 import argparse
 import atexit
@@ -148,11 +148,11 @@ def main():
 
 
 # The goal limits (GRD-2): max_active_goals, plan_pause_percent and min_free_memory_gb decide whether a new goal starts.
-# pool.py usage PERCENT records the plan usage; watch.py and checkin.py read the rest. A limit set to 0 is off.
+# A limit set to 0 is off.
 
 
 def number(cfg, key, default):
-    """A whole number setting; unset gives the default, 0 turns the limit off, anything unreadable gives the default."""
+    """A whole number setting: unset or unreadable gives the default, 0 turns the limit off."""
     value = cfg.get(key, default)
     return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else default
 
@@ -164,7 +164,7 @@ def active_limit(cfg):
 
 
 def plan_usage():
-    """The account's weekly plan usage in percent, as the operation session recorded it (`pool.py usage N`) in the last 12 hours, else None."""
+    """Weekly plan usage in percent as recorded by `pool.py usage N` in the last 12 hours, else None."""
     try:
         held = se.read(os.path.join(se.base(), "plan-usage.json"), {})
         age = time.time() - graph.parse_at(held["at"]).timestamp()
@@ -174,13 +174,13 @@ def plan_usage():
 
 
 def plan_pause(cfg):
-    """Why no new goal starts, or '': weekly plan usage above plan_pause_percent (default 80, 0 turns it off). Unread usage never pauses."""
+    """Why no new goal starts, or '': plan usage above plan_pause_percent (default 80, 0 is off)."""
     limit, used = number(cfg, "plan_pause_percent", 80), plan_usage()
     return "plan usage %g%% is above plan_pause_percent %d%%; no new goal starts until it falls (PLAN_PAUSE)" % (used, limit) if limit and used is not None and used > limit else ""
 
 
 def memory_hold(cfg):
-    """Why no new goal starts, or '': free memory (workflow-regression's memory.free_gb, loaded by path) below min_free_memory_gb (default 3, 0 is off)."""
+    """Why no new goal starts, or '': free memory below min_free_memory_gb (default 3, 0 is off)."""
     need = cfg.get("min_free_memory_gb", 3)
     if isinstance(need, bool) or not isinstance(need, (int, float)) or need <= 0:
         return ""
@@ -235,14 +235,22 @@ def pr_free(runs, slug):
         pass
 
 
+def pr_done(runs, name):  # the lane finished and its PR is open
+    try:
+        record = json.load(open(os.path.join(runs, name + ".json")))
+        return record.get("status") == "done" and bool(record.get("pr"))
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def pr_before(runs, slug):
-    """The other goal that holds the slot and started its lane before slug's, else "". A holder silent for
-    LOOP_MERGE_LOCK_SECONDS (1800) is dropped; a goal with no slot of its own waits for none."""
+    """The other goal holding the slot whose lane started before slug's, else "". A holder silent for
+    LOOP_MERGE_LOCK_SECONDS (1800) or with its PR open is dropped; a goal with no slot waits for none."""
     limit, held = int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800), []
     try:
         for name in os.listdir(folder(runs)):
             path = os.path.join(folder(runs), name)
-            if time.time() - os.path.getmtime(path) > limit:
+            if time.time() - os.path.getmtime(path) > limit or name != slug and pr_done(runs, name):
                 os.unlink(path)
             else:
                 held.append((int(open(path).read()), name))
@@ -253,11 +261,13 @@ def pr_before(runs, slug):
 
 
 def pr_wait(runs, slug):
-    """merge.py: wait while another goal's pr lane that started first holds the slot, keeping this goal's own fresh, and give
-    the slot back when merge.py ends."""
+    """merge.py: wait while an earlier pr lane holds the slot (keeping this goal's own fresh), refuse naming it after
+    LOOP_MERGE_LOCK_SECONDS, and free the slot when merge.py ends."""
     atexit.register(lambda: pr_free(runs, slug))
-    told = ""
+    told, began = "", time.time()
     while ahead := pr_before(runs, slug):
+        if time.time() - began > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
+            sys.exit("REFUSED: %s's pr lane still holds the merge slot. Fix: finish or fail it, then run merge.py again." % ahead)
         told == ahead or print("WAITING: %s's pr lane started first and holds the merge slot; waiting for it to merge or fail" % ahead)
         told = ahead
         pr_hold(runs, slug)
@@ -280,8 +290,7 @@ def api_quota(top):
 
 
 def private_hits(top, touches):
-    """What the private-name list would refuse in the names a goal touches, the pages every pr re-renders and the repo's own
-    name (redacted by the scan), or the list's own break; [] when clean, absent or unreadable."""
+    """What the private-name list would refuse in the names a goal touches, the wiki pages and the repo's name; [] when clean or unreadable."""
     try:
         import importlib.util
         spec = importlib.util.spec_from_file_location("pf_private", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "private.py"))
@@ -296,7 +305,7 @@ def private_hits(top, touches):
 
 
 def dry_items(top, cfg, touches):
-    """The guards a goal can run before its push, as pre-flight items; only a dry run that would refuse gives one."""
+    """The guards a goal can run before its push, as pre-flight items; only a refusing dry run gives one."""
     items, why, hits, left = [], memory_hold(cfg), private_hits(top, touches), api_quota(top)
     why and items.append({"id": "memory", "ask": why, "options": ["lower min_free_memory_gb to the free memory", "keep the floor"], "recommend": "lower min_free_memory_gb to the free memory"})
     hits and items.append({"id": "private", "ask": "the private-name list would refuse: " + "; ".join(hits[:4]), "options": ["edit the list line", "rename the file"], "recommend": "edit the list line"})
@@ -313,7 +322,7 @@ def preflight_new(top, cfg, minutes, touches):
 
 
 def preflight_lines(seen):
-    """One Needs-you line per goal with open pre-flight items: each item, its options and recommendation, and the take-all word."""
+    """One Needs-you line per goal with open pre-flight items."""
     return ["%s pre-flight, %d open (blocks nothing until its ETA starts): %s; answer \"recommended\" to take every recommendation, or one answer per item" % (
         run["slug"], len(left), "; ".join("%s: %s [%s; recommended: %s]" % (i["id"], i["ask"], " / ".join(i["options"]), i["recommend"]) for i in left))
         for run in seen for left in [auto.eta_open(run)] if left]
@@ -339,7 +348,7 @@ def preflight_answer(g, args, state, why):
 
 
 def pr_preflight(runs, g, state):
-    """Before the pr step the dry runs go again; a refusal that was not on the freeze list is logged as a missed pre-flight item."""
+    """Before the pr step the dry runs go again; a new refusal is logged as a missed pre-flight item."""
     listed = {i["id"] for i in (state.get("preflight") or {}).get("items") or []} | {m["id"] for m in state.get("missed_preflight") or []}
     for item in dry_items(g.root(), g.config(), state.get("touches") or []):
         if item["id"] not in listed:
