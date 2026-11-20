@@ -80,6 +80,12 @@ def pool_path():
     return os.path.join(base(), "session-pool.json")
 
 
+def reserved():
+    """The governing session's ids, from loop/operation.id: never a worker (#5616)."""
+    import govern_hook
+    return govern_hook.operation_ids(os.path.dirname(base()))
+
+
 def pool():
     found, why = graph.read_pool(pool_path())
     if found is None:
@@ -149,7 +155,7 @@ def assign(state, prompt, cfg):
     start = load(slug) or state
     before = (start.get("session") or {}).get("id") if start.get("status") in ("failed", "stopped", "queued", "", None) else None
     text = SEND.format(slug=slug, tree=state.get("worktree") or "its worktree", to=" (%s)" % to if to else "") + worker.worker_line(slug) + "\n\n" + prompt
-    free = sorted(s for s, item in found.items() if item.get("state") == "free")[:FREE_TRIES]
+    free = sorted(s for s, item in found.items() if item.get("state") == "free" and s not in reserved())[:FREE_TRIES]
     state["worker_why"], sid = NEW, None
     for sid in free:
         with locked():

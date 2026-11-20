@@ -304,6 +304,8 @@ def cmd_bind(g, args):
     name = args.name or g.name_of(args.slug)
     worker = os.environ.get("LOOP_ROLE") == "worker"
     g.graph.refuse(g.load(args.slug) or {})
+    if args.id in g.reserved():
+        sys.exit("REFUSED: %s is the governing session; it is never a worker (OPERATION_SESSION)." % args.id)
     tree = (g.load(args.slug) or {}).get("worktree") or ""
     for folder in [f for f in (args.cwd, os.getcwd() if worker else "") if f and tree]:
         if not inside(folder, tree):

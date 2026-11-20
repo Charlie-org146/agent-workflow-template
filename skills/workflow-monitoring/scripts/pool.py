@@ -9,11 +9,11 @@ usage: pool.py <command> [options]
   decline             the owner said "no pool": hide the ask until K grows past today's K
   usage PERCENT       record weekly plan usage; above plan_pause_percent no goal starts
   return SLUG         a goal ended: its sessions go back to the pool (archive above pool_size); a merged goal's worktree and branch go
-  archive             archive worker sessions of released goals, and under memory pressure idle ones of retired goals (ARCHIVE-NOW
+  archive             archive worker sessions of released goals, and idle ones of retired goals under memory pressure (ARCHIVE-NOW
                       where the session tool can't); archived ID [--why W] records one the operation session archived with the app
   reconcile [--app-list F]  drop ids the app no longer has (TD489)
 
-The pool file is <git common dir>/loop/session-pool.json (sessions.py owns its lock); bad entries go to session-pool.bad.json.
+The pool file is <git common dir>/loop/session-pool.json (sessions.py owns its lock); bad entries go to session-pool.bad.json. The ids in
 """
 import argparse
 import json
@@ -46,7 +46,7 @@ def size_of(cfg):
 
 
 def counts(found):
-    entries = [item for item in found.values() if isinstance(item, dict) and item.get("state") in ("free", "busy")]
+    entries = [item for sid, item in found.items() if isinstance(item, dict) and item.get("state") in ("free", "busy") and sid not in se.reserved()]
     free = sum(item["state"] == "free" for item in entries)
     return free, len(entries) - free, len(entries)
 
@@ -69,7 +69,7 @@ def side_path():
 
 
 def need(found, cfg, ready):
-    """(K, declined): sessions to create now (pool_size - total) when free ones are fewer than ready goals."""
+    """(K, declined): sessions to create now (pool_size - total) when fewer are free than goals are ready."""
     free, _, total = counts(found)
     k = max(size_of(cfg) - total, 0) if free < ready else 0
     if k and graph.memory_room() == 0:
@@ -107,7 +107,7 @@ def attempt_ok(state, attempt):
 
 
 def stale(state, args):
-    """sessions.py report's guards: refuse a --recommend not in --words; record an older attempt's report unapplied."""
+    """sessions.py report's guards: refuse a --recommend not in --words; keep an older attempt's report unapplied."""
     if args.attempt not in (None, "") and not str(args.attempt).isdigit():
         sys.exit("REFUSED: --attempt %r is not a number. Fix: pass the attempt the WORKER line named; nothing was changed." % args.attempt)
     if args.recommend and args.recommend not in args.words:
@@ -163,7 +163,7 @@ def remove_tree(slug, state):
 
 
 def return_session(slug, merged=False):
-    """Give the goal's busy sessions back (archive above pool_size); a merge removes its tree."""
+    """Give the goal's busy sessions back (archive above pool_size); a merge drops its tree."""
     cfg, said, state = config(), [], se.load(slug)
     merged = merged or bool(state.get("pr") and prs.state(state["pr"], se.git("rev-parse", "--show-toplevel") or ".") == "MERGED")
     with se.locked():
@@ -225,7 +225,7 @@ def cmd_archive(args):
 
 
 def archived(sid, name, why, done=True):
-    """Drop an archived session from the pool and log it in archived.tsv; without done, the operation session does."""
+    """Drop an archived session from the pool, log it in archived.tsv; without done, the operation session does."""
     with se.locked():
         found = se.pool()
         found.pop(sid, None) if done else found.get(sid, {}).update(state="archive")
@@ -262,7 +262,7 @@ def cmd_return(args):
 
 
 def pr_order(runs, keep=""):
-    """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = heartbeat).
+    """The pr queue, oldest first: [(joined, slug, heartbeat age)] from <loop>/pr-queue (ticket = first join, <slug>.beat = beat).
     A goal (but keep) not running or waiting, not at pr, merged, or silent for LOOP_MERGE_LOCK_SECONDS (1800) is dropped."""
     folder, line, limit = os.path.join(os.path.dirname(runs), "pr-queue"), [], int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800)
     for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
@@ -283,14 +283,14 @@ def pr_order(runs, keep=""):
 
 
 def pr_join(g, state):
-    """A goal asking for its pr turn is at pr (saved first, so pr_order keeps its ticket, #4523)."""
+    """A goal asking for its pr turn is at pr (saved first, so pr_order keeps its ticket)."""
     if state.get("step") not in ("checks", "pr"):
         state["step"] = "pr"
         g.save(state, "at pr: joining the queue")
 
 
 def pr_turn(runs, slug):
-    """Join the queue; "" on slug's turn, else the earlier goal whose touches overlap its own (DEL-15)."""
+    """Join the queue; "" on slug's turn, else the earlier goal overlapping its touches (DEL-15)."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
     os.makedirs(folder, exist_ok=True)
     mine = os.path.join(folder, slug)
@@ -319,7 +319,7 @@ def pr_turn(runs, slug):
 
 
 def pr_ahead(runs, base):
-    """True when origin/<base> has commits this branch lacks."""
+    """True when origin/<base> has commits it lacks."""
     subprocess.run(["git", "fetch", "origin", base], capture_output=True)
     return subprocess.run(["git", "merge-base", "--is-ancestor", "origin/" + base, "HEAD"], capture_output=True).returncode != 0
 

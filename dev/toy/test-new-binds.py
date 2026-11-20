@@ -54,5 +54,23 @@ if only in ("", "in"):
 if only in ("", "out"):
     said, state = freeze(fresh(), "")
     check("outside an app session nothing is bound and nothing is said about it", state.get("slug") == "g" and not state.get("session") and "BOUND" not in said)
+if only in ("", "operation"):  # #5616: the governing session is never a worker, and the pool never counts it as free
+    repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
+    loop = os.path.join(repo, ".git", "loop")
+    os.makedirs(loop, exist_ok=True)
+    json.dump({"op-toy": {"state": "free", "name": "operation"}, "w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo)
+
+    def tool(*args):
+        done = subprocess.run([sys.executable] + list(args), cwd=repo, capture_output=True, text=True, env=env)
+        return done.returncode, done.stdout + done.stderr
+
+    check("negative control: with no operation.id the pool counts both sessions free", "2 free" in tool(os.path.join(scripts, "pool.py"), "status")[1])
+    open(os.path.join(loop, "operation.id"), "w").write("op-toy\n")
+    check("an id in operation.id is not counted as free", "1 free" in tool(os.path.join(scripts, "pool.py"), "status")[1])
+    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "op-toy")
+    check("bind refuses the governing session's id", code != 0 and "never a worker" in said and "op-toy" in said)
+    code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "w1")
+    check("and still binds an ordinary session", code == 0 and "w1" in said)
 print("PASS: goal.py new binds an app session's goal" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)
