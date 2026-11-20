@@ -6,4 +6,8 @@
 4. Re-stamp: `criteria.py render`, `entry.py write` and `docs.py audit` with the 2.0 floor dropped, `audit.py restamp` for pages the config change touched, `wiki.py prepare` last; put the 2.0 floor and skip-worktree back.
 5. Size and rows: no new script, `pageformat.py` at most 19,000 bytes, regression rows unchanged.
 
-PENDING: whether HLT-2's existing "six principles" sentence may change to seven (default: minimal fix inside the same revision, flagged in the PR).
+Resolved: HLT-2's "six principles" sentence changes to seven inside the HLT-2 revision, approved by operation-top under owner delegation (DOC-2 r4), recorded in owner record o477; the new bullet and the revision are the approved texts, byte for byte.
+
+Out of scope, by the goal's own brief: the one-line reason per "adapted" Follows cell and the Part 2 Reference lines (the reference-audit goal builds them; DEL-20 and DOC-24 are v2.0 planned, so no row claims them built), the red-team code, the adoption rebuilds. The Follows column here holds the name, its source link and the verdict, as done line 3 says.
+
+Known trade-offs: `criteria_max` 23 to 24 (retired IDs count and DOC-24 is the Documentation page's 24th ID); `public_origins` lists the 43 reference origins so DOC-19 lets Home and Principles link their sources; HLT-2 appears in both the principle 2 and principle 7 tables on purpose (its new bullet is principle 7's third requirement).
