@@ -32,7 +32,7 @@ Frozen. A wrong done line needs a new goal.
 
 - This pull request also lands principle 8's README text (approved 20:53 PT 2026-11-19), because this branch is built on principle-8-readme.
 - It adds one shipped file, `skills/workflow-docs/scripts/sections.py` (the DOC-25 section check), as the 105th. The owner said "Yes" to "Push the documentation fix with a 105th file this once?" (Operation TD332), recorded as the owner's 02:13 override of GRD-22 (record o504); the file cap and `listing.network` are not touched.
-- `python3 dev/package.py` refuses on main and on this branch. Main: `FAIL Size: 104 files, at most 100 allowed` and `REFUSED: 44 rule failure(s); no ZIP built`. This branch: `FAIL Size: 105 files, at most 100 allowed` and `REFUSED: 49 rule failure(s); no ZIP built`.
+- `python3 dev/package.py` refuses on main and on this branch. Main: `FAIL Size: 104 files, at most 100 allowed` and `REFUSED: 40 rule failure(s); no ZIP built`. This branch: `FAIL Size: 105 files, at most 100 allowed` and `REFUSED: 45 rule failure(s); no ZIP built`.
 - The five extra lines are `FAIL Disclosure: host en.wikipedia.org is not in listing.network`, and the same for `blogs.eclipse.org`, `research.google`, `standards.ieee.org` and `www.joelonsoftware.com`.
 - The size-trim goal brings the package back to 100 files or fewer and declares the five hosts before any release is cut.
 
