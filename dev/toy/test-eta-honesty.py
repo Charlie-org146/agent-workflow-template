@@ -77,9 +77,11 @@ if only == "ledger":
     # the board shows a missed ETA, not hides it
     bs.eta_say(loop, "board", "v9", "check-in", "latest finish", NOW - 7200, NOW - 10000, ["a"])
     auto.eta_settle(loop, {}, NOW)
-    head = bs.release_header("v9", [{"slug": "a", "left": 3600, "mark": "running"}], datetime.datetime.now(datetime.timezone.utc))
+    head = bs.release_header("v9", [{"slug": "a", "left": 3600, "mark": "running"}], datetime.datetime.now(datetime.timezone.utc), loop)
     check("MISSED" in head and "earlier ETA" in head, "the board's release header shows the missed ETA (%s)" % head)
-    clean = bs.release_header("v8", [{"slug": "a", "left": 3600, "mark": "running"}], datetime.datetime.now(datetime.timezone.utc))
+    clean = bs.release_header("v8", [{"slug": "a", "left": 3600, "mark": "running"}], datetime.datetime.now(datetime.timezone.utc), loop)
+    bare = bs.release_header("v7", [{"slug": "a", "left": 3600, "mark": "running"}], datetime.datetime.now(datetime.timezone.utc))
+    check(not any(e["key"] == "v7" for e in bs.eta_fold(loop).values()), "negative control: a header built with no ledger given records nothing (toys and views write no ETA)")
     check("MISSED" not in clean and any(e["key"] == "v8" and e["layer"] == "board" for e in bs.eta_fold(loop).values()), "negative control: a release with no missed ETA shows none, and its ETA is recorded")
     # the sweep: a goal that finished by its ETA is met
     bs.eta_say(loop, "goal", "fin", "worker five", "guess", hours(1), NOW)

@@ -345,31 +345,6 @@ ETA = ("eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record
 HONEST = ("eta-unmarked", "eta-missed", "eta-rate", "statement-wrong")  # the ETA ledger and the run records' wrong statements (HLT-4)
 
 
-def honesty(root, name, module):
-    """eta-unmarked (FAIL: an ETA over 15 minutes past, neither met nor marked missed), eta-missed (WARN, with goal and cause, 7 days),
-    eta-rate (each layer's hit rate over its last 20 settled ETAs: INFO, WARN under half), statement-wrong (a run record's `wrong` list)."""
-    loop, now = module.loop_dir(root), time.time()
-    every = sorted(module.bs.eta_fold(loop).values(), key=lambda e: e.get("settled") or e["said"])
-    fix, out = "sessions.py report or goal.py finding names the cause; layers.py status settles the ledger", []
-    if name == "eta-unmarked":
-        out = [row("FAIL", "hygiene", e["key"], name, "%s ETA %s (said by %s) passed %d minutes ago and is neither met nor marked missed" % (
-            e["layer"], module.bs.hhmm(e["names"]), e["who"], (now - e["names"]) // 60), fix) for e in every if e["state"] == "open" and now - e["names"] > 900]
-    elif name == "eta-missed":
-        out = [row("WARN", "hygiene", e["key"], name, "the %s ETA %s of %s was missed: %s" % (e["layer"], module.bs.hhmm(e["names"]), e["key"], e["cause"]), fix)
-               for e in every if e["state"] == "missed" and now - e.get("settled", 0) < 7 * 86400]
-    elif name == "eta-rate":
-        for layer in ("goal", "board", "status"):
-            last = [e for e in every if e["layer"] == layer and e["state"] != "open"][-20:]
-            met = sum(e["state"] == "met" for e in last)
-            out.append(row("WARN" if len(last) >= 5 and met * 2 < len(last) else "INFO", "hygiene", layer, name, "%s ETAs: %d of the last %d met" % (layer, met, len(last)), fix))
-    else:
-        for path in glob.glob(os.path.join(loop, "runs", "*.json")):
-            run = json.load(open(path)) if os.path.exists(path) else {}
-            out += [row("WARN", "hygiene", run.get("slug", "run"), name, "marked wrong in its run record: %s (%s)" % (w.get("said"), w.get("why")), fix)
-                    for w in run.get("wrong") or [] if isinstance(w, dict)]
-    return out
-
-
 def eta(root, name):
     """One rule's rows from workflow-monitoring's auto.eta_rows and auto_rows."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir, "workflow-monitoring", "scripts", "auto.py")
@@ -383,7 +358,8 @@ def eta(root, name):
     finally:
         sys.path.pop(0)
     if name in HONEST:
-        return honesty(root, name, module)
+        import file as filing
+        return filing.honesty(root, name, module)
     return [row(level, "hygiene", text.split()[0], name, text, "sessions.py owner-words with --ids full-auto-rule, or goal.py set with an owner record")
             for rule, level, text in module.eta_rows(root) + module.auto_rows(root) if rule == name]
 

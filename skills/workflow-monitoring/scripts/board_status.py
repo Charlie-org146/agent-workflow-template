@@ -301,7 +301,7 @@ def eta_say(loop, layer, key, who, basis, names, now, goals=()):
                  "names": names, "state": "open", "goals": list(goals)})
 
 
-def release_header(release, items, at):
+def release_header(release, items, at, loop=None):
     """The release milestone's header (MON-14): its release ETA (the latest finish among its goals; a started goal's hard ETA counts
     in place of its estimate), counts, and an earlier missed ETA. The ETA goes in the ETA ledger."""
     import datetime
@@ -315,10 +315,8 @@ def release_header(release, items, at):
     day = "today" if days <= 0 else "tomorrow" if days == 1 else end.strftime("%a %d %b")
     how = "; hard ETA for %d, estimate for %d" % (len(hard), len(left) - len(hard)) if hard else ""
     try:
-        import auto
-        loop = auto.loop_dir(auto.top())
-        eta_say(loop, "board", release, "check-in", "latest finish among %d goals" % len(items), end.timestamp(), at.timestamp(), [i["slug"] for i in items if i.get("slug")])
-        gone = [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == ("board", release, "missed")]
+        loop and eta_say(loop, "board", release, "check-in", "latest finish among %d goals" % len(items), end.timestamp(), at.timestamp(), [i["slug"] for i in items if i.get("slug")])
+        gone = loop and [e for e in eta_fold(loop).values() if (e["layer"], e["key"], e["state"]) == ("board", release, "missed")]
         how += "; earlier ETA %s MISSED" % hhmm(max(gone, key=lambda e: e["settled"])["names"]) if gone else ""
     except Exception:
         pass

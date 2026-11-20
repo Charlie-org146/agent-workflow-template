@@ -1,19 +1,19 @@
 """File health findings as tagged issues, under the owner's control (HLT-4). Used by health.py preview and file.
 
-plan() works out what each finding does (open, update, reopen, close, link or same). preview prints the plan and has no
-write path; file carries it out for the named groups (and --feature) only.
+plan() works out what each finding does (open, update, reopen, close, link or same); preview prints it and writes nothing;
+file carries it out for the named groups (and --feature) only.
 - Each issue is labelled health and health:<group> (review findings: health:review-<kind>), and is a defect (a FAIL except a
   performance one, a review conflict: labelled defect, no milestone) or a backlog item (labelled backlog, on its feature's
   milestone "Backlog: <Feature>", "Backlog: Other" when none, made first when missing). An issue the owner moved stays put.
   It is always tagged feature:<Page>, or feature:Other when it fits no page (issues.feature_label), whatever feature_labels
-  says, made beforehand with label create --force; if that fails it is filed without it and a FAILED label line says so.
+  says, made first with label create --force; if that fails it is filed without it and a FAILED label line says so.
 - Its marker `<!-- loop-health KEY evidence=H placed= -->` names the finding and a hash of its stable evidence (placed= is
   always empty; older markers naming a milestone still parse). A repeat updates, a fix closes (only when that rule ran and
-  read its data), a return reopens. A health:closed issue (closed by triage) stays closed while its evidence hash is unchanged.
-- An open non-health issue naming the finding's subject (an exact path, requirement id or row id) already covers it: it gets
-  one link comment, `<!-- loop-health-link KEY evidence=H -->`, never a duplicate issue.
+  read its data), a return reopens. A health:closed issue stays closed while its evidence hash is unchanged.
+- An open non-health issue naming the finding's subject (a path, requirement id or row id) covers it: it gets one link comment,
+  `<!-- loop-health-link KEY evidence=H -->`, never a duplicate issue.
 - Markers from before the twelve groups (criteria:, cost:, size:...:limit) are found and moved to the new key.
-It runs gh and nothing else, never edits a tracked page, and stops before any write when gh can't list the issues.
+It runs gh only, edits no tracked page, and writes nothing when gh can't list the issues.
 """
 import glob
 import hashlib
@@ -23,9 +23,11 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 
 import report as G
 import issues as IS
+from defects import row as _row
 import milestone as MS
 from issues import covering, evidence_of, key_of, legacy
 
@@ -43,6 +45,28 @@ BAD = ("WARN", "FAIL", "UNREAD")
 # Shown, never filed: local state, the controls, the check's own clock.
 REPORT_ONLY = ("test-time", "suite-cap", "worktrees", "local-branches", "idle-sessions", "eta-missing", "eta-extended", "eta-overrun", "auto-safety", "auto-record", "scan-hook", "hooks", "check-time", "control",
                "finding-age")  # finding-age would feed itself
+
+
+def honesty(root, name, module):
+    """The ETA ledger's rules (HLT-4): eta-unmarked (FAIL), eta-missed (7 days), eta-rate (last 20), statement-wrong."""
+    loop, now, out = module.loop_dir(root), time.time(), []
+    every = sorted(module.bs.eta_fold(loop).values(), key=lambda e: e.get("settled") or e["said"])
+    put = lambda state, subject, text: out.append(_row(state, "hygiene", subject, name, text, "layers.py status settles the ledger"))
+    for e in every:
+        what = "%s ETA %s of %s" % (e["layer"], module.bs.hhmm(e["names"]), e["key"])
+        if name == "eta-unmarked" and e["state"] == "open" and now - e["names"] > 900:
+            put("FAIL", e["key"], "%s (said by %s) is %d minutes past, neither met nor marked missed" % (what, e["who"], (now - e["names"]) // 60))
+        if name == "eta-missed" and e["state"] == "missed" and now - e.get("settled", 0) < 7 * 86400:
+            put("WARN", e["key"], "the %s was missed: %s" % (what, e.get("cause")))
+    for layer in ("goal", "board", "status") if name == "eta-rate" else ():
+        last = [e for e in every if e["layer"] == layer and e["state"] != "open"][-20:]
+        met = sum(e["state"] == "met" for e in last)
+        put("WARN" if len(last) >= 5 and met * 2 < len(last) else "INFO", layer, "%s ETAs: %d of the last %d met" % (layer, met, len(last)))
+    for path in glob.glob(os.path.join(loop, "runs", "*.json")) if name == "statement-wrong" else ():
+        run = module.bs.read_json(path) or {}
+        for w in run.get("wrong") or []:
+            put("WARN", run.get("slug", "run"), "marked wrong in its run record: %s (%s)" % (w.get("said"), w.get("why")))
+    return out
 
 
 def tag_of(group, item=None):
