@@ -15,3 +15,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-operate-loop-load.sh`.
+   Expect: `operate loop under load (N busy loops): 2 of 2 passed`, the negative control line (an agent slower than the patience fails the operate loop), and ALL PASS, in about two minutes.
+2. Run `grep -c "on every release tag" docs/wiki/Regression.md`.
+   Expect: 0.
