@@ -205,7 +205,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [refused-unmet](Tests#t-refused-unmet) | requirement | REG-1 | Given a criterion with no test, when a release is cut, then it is refused. | PASS 2026-11-19 |
+| [refused-unmet](Tests#t-refused-unmet) | requirement | REG-1 | Given a criterion with no test, when a release is cut, then it is refused. | PASS 2026-11-20 |
 | [defect-owed](Tests#t-defect-owed) | requirement | REG-1 | Given a goal that fixes an issue, when it opens its pull request without a defect test seen failing, then it is refused. | PASS 2026-11-12 |
 | [defect-known](Tests#t-defect-known) | requirement | REG-1 | Given issues 35 and 58 and the two worker defects, when the tests are listed, then defect tests exist for each. | PASS 2026-11-12 |
 | [prd-readers](Tests#t-prd-readers) | requirement | REG-1 | Given pages under the Requirements heading or the old Criteria heading, when the release, regression, health and docs readers run, then they all find the same requirement IDs and the release refuses an unmet one. | PASS 2026-11-10 |
@@ -224,8 +224,8 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 | [one-link](Tests#t-one-link) | requirement | REG-4 | Given a test linked to no criterion, when the check runs, then the check fails. | PASS 2026-11-20 |
 | [milestones-once](Tests#t-milestones-once) | requirement | REG-4 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-20 |
 | [run-ledger](Tests#t-run-ledger) | requirement | REG-4 | Given a test run, when it ends, then each test's result and date are recorded. | PASS 2026-11-20 |
-| [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-4 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-19 |
-| [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-4 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-19 |
+| [tests-table-columns](Tests#t-tests-table-columns) | requirement | REG-4 | Given a requirement with a test row, when the Tests are rendered, then its table row carries the test link, its Given/When/Then words and its last result. | PASS 2026-11-20 |
+| [tests-row-shape](Tests#t-tests-row-shape) | requirement | REG-4 | Given a test row, when the full Tests page is rendered, then the row carries its anchor, result, date, run and seen-failing date. | PASS 2026-11-20 |
 | [describe-needed](Tests#t-describe-needed) | requirement | REG-4 | Given a test row with no description, when the check runs, then it is flagged. | PASS 2026-11-20 |
 | [keeps-seen-red](Tests#t-keeps-seen-red) | requirement | REG-4 | Given a row with a seen-failing date, when a description is added, then the date is kept. | PASS 2026-11-20 |
 | [every-row-described](Tests#t-every-row-described) | requirement | REG-4 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | PASS 2026-11-19 |
