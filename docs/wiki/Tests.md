@@ -522,10 +522,10 @@
 | <a id="t-codex-ro-home"></a>codex-ro-home | requirement | SET-10 | not run | - | local | 2026-11-12 |
 | <a id="t-codex-key-commands"></a>codex-key-commands | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | not run | - | local | 2026-11-12 |
 | <a id="t-set1-health-bracket"></a>set1-health-bracket | requirement | SET-1 | not run | - | local | 2026-11-12 |
-| <a id="t-set1-docs-format"></a>set1-docs-format | requirement | SET-1 | not run | - | local | 2026-11-12 |
+| <a id="t-set1-docs-format"></a>set1-docs-format | requirement | SET-1 | not run | - | local | 2026-11-20 |
 | <a id="t-set2-layers-show"></a>set2-layers-show | requirement | SET-2 | not run | - | local | 2026-11-12 |
-| <a id="t-adopt-fixture-existing-checks"></a>adopt-fixture-existing-checks | requirement | SET-1 | not run | - | local | 2026-11-12 |
-| <a id="t-setup-fit"></a>setup-fit | requirement | SET-1 | not run | - | local | 2026-11-12 |
+| <a id="t-adopt-fixture-existing-checks"></a>adopt-fixture-existing-checks | requirement | SET-1 | not run | - | local | 2026-11-20 |
+| <a id="t-setup-fit"></a>setup-fit | requirement | SET-1 | not run | - | local | 2026-11-20 |
 | <a id="t-set9-from-no-values"></a>set9-from-no-values | requirement | SET-1 | not run | - | local | 2026-11-12 |
 | <a id="t-setup-zero-tests-119"></a>setup-zero-tests-119 | defect | [#119](https://github.com/jcl2018/agent-workflow-template/issues/119) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-setup-tsv-guard-127"></a>setup-tsv-guard-127 | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/127) closed (2026-11-13) | not run | - | local | 2026-11-12 |
@@ -652,7 +652,7 @@
 | <a id="t-review-findings-skill-lines"></a>review-findings-skill-lines | requirement | done line review-findings:2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-13 |
 | <a id="t-size-lf-crlf"></a>size-lf-crlf | defect | [#3125](https://github.com/jcl2018/agent-workflow-template/issues/3125) closed (2026-11-13) | not run | - | local | 2026-11-12 |
 | <a id="t-findings-one-per-lesson"></a>findings-one-per-lesson | workflow | done line migration-lessons:1 | not run | - | local | 2026-11-12 |
-| <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-12 |
+| <a id="t-win-posix-calls-gone"></a>win-posix-calls-gone | requirement | done line win-posix-rest:1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-20 |
 | <a id="t-body-file-windows"></a>body-file-windows | defect | [#2879](https://github.com/jcl2018/agent-workflow-template/issues/2879) closed (2026-11-12) | not run | - | local | 2026-11-12 |
 | <a id="t-docs-block-split"></a>docs-block-split | defect | [#1402](https://github.com/jcl2018/agent-workflow-template/issues/1402) closed (2026-11-19) | FAIL | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-20 |
 | <a id="t-settings-render-tables"></a>settings-render-tables | requirement | done line settings-render-windows:1 | not run | - | local | 2026-11-12 |
@@ -765,5 +765,6 @@
 | <a id="t-health-stale-checkout"></a>health-stale-checkout | requirement | done line health-guard:1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 | <a id="t-release-static-rules"></a>release-static-rules | requirement | done line fast-release-rules:1 | not run | - | local | 2026-11-20 |
 | <a id="t-package-static-toy"></a>package-static-toy | requirement | done line fast-release-rules:1 | not run | - | local | 2026-11-20 |
+| <a id="t-checkin-live-count"></a>checkin-live-count | requirement | done line checkin-live-count:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-reconcile-ghosts"></a>pool-reconcile-ghosts | requirement | done line pool-reconcile:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-ghost-health"></a>pool-ghost-health | requirement | done line pool-reconcile:2 | not run | - | local | 2026-11-20 |

@@ -61,7 +61,7 @@ with tempfile.TemporaryDirectory() as tmp:
     status = layers.build(common, {}, NOW)
     check(live_workers(status) == ["live1", "live2"], "2 live worker sessions and 7 stale busy records: the status lists 2 workers (%s)" % live_workers(status))
     check(layers.one_line(status, "sent", NOW).endswith("2 workers"), "the one-line count says 2 workers, not 9 or 10")
-    check(any(p["slug"] == "stale" and p["reason"].startswith("8 running records") and "ghost" in p["reason"] for p in status["parked"]),
+    check(any(p["slug"] == "stale" and p["reason"].startswith("8 records") and "ghost" in p["reason"] for p in status["parked"]),
           "the stale records show once under parked, with their count (8: the 7 and the one with no pool entry) and first names, so nothing vanishes")
     wide = layers.graph.silent_limit
     layers.graph.silent_limit = lambda cfg=None: 10 ** 9  # negative control: a build that ignores how long a session was silent
