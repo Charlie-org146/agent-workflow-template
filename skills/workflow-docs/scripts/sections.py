@@ -83,7 +83,7 @@ TAG = re.compile(r"[:] (adopted|adapted|planned|own)\b[^;<]*$")
 
 
 def bullets(cell):
-    """DOC-27: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (own becomes planned, an untagged source takes the tag to its right)."""
+    """DEL-21: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (own becomes planned, an untagged source takes the tag to its right)."""
     if cell.lstrip().startswith("- "):
         return cell.strip()
     parts, tag, out = [p.strip() for p in re.split(r";\s+(?![^()]*\))", cell.strip()) if p.strip()], "", []
@@ -106,7 +106,7 @@ def adoption(cell):
 
 
 def confidence(row, tests, runs):
-    """DOC-27: the share of the requirement's tests (rows of .loop/regression.tsv naming it or an ID it absorbs) that PASS on the latest run; not measured with none."""
+    """DEL-21: the share of the requirement's tests (rows of .loop/regression.tsv naming it or an ID it absorbs) that PASS on the latest run; not measured with none."""
     ids = re.findall(r"\b[A-Z]{2,5}-\d+\b", (re.match(r"\[([^\]]*)\]", row) or [0, ""])[1])
     ran = [runs.get(t[0]) for t in tests if len(t) > 3 and t[3] in ids]
     ran = [r for r in ran if r in ("PASS", "FAIL")]
@@ -114,7 +114,7 @@ def confidence(row, tests, runs):
 
 
 def tables(text, tests=(), runs=None, keep=False):
-    """DOC-25, DOC-27: each principle table in the new columns; Follows as a tagged bullet list, Adoption computed from it, Confidence from the tests (keep: an existing figure is kept), one score line under it."""
+    """DOC-25, DEL-21: each principle table in the new columns; Follows as a tagged bullet list, Adoption computed from it, Confidence from the tests (keep: an existing figure is kept), one score line under it."""
     lines, out, i = text.split("\n"), [], 0
     while i < len(lines):
         head = [c.strip() for c in SPLIT.split(lines[i].strip()[1:-1])] if lines[i].startswith("| Requirement | Summary") else []

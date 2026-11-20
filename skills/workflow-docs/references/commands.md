@@ -273,6 +273,10 @@ generated Tests page behind a fresh render is `STALE Tests`.
 the retired Usage print, still written and never reported). After it, a change to any of them is `LOCKED` (check, audit and release fail). A reviewed requirement line is locked on its own as well. To edit a reviewed requirement the
 owner un-reviews that requirement and the PRD, then reviews both again.
 
+### The Follows list, Adoption and Confidence
+
+In each principle table (README, Home, Principles) the **Follows** cell is a bullet list: one industry standard or tool the requirement adopts or plans to adopt per line, written `- [Source](url): tag` and joined with `<br>`, the tag one of `adopted`, `adapted` or `planned`. `docs check` refuses a row with no list or a line with no tag. **Adoption** is the adopted lines over all lines (adapted and planned count 0; `not measured` with no lines), and a principle's score is the average of its measured rows. **Confidence** is the share of the requirement's regression tests (rows of `.loop/regression.tsv` naming it or an ID it absorbs) that PASS in `.loop/regression-runs.tsv`, shown as `NN% (passing of run)`, or `not measured: no data yet` with none. Nobody types either column: `render` writes them, migrating an old `a; b: adapted` cell to the bullet form (an old `own` becomes `planned`), and `docs check` keeps a Confidence figure that is well-formed.
+
 ### Tests follow on their own
 
 **Tests follow on their own.** Write each new regression row's description as one scenario,
