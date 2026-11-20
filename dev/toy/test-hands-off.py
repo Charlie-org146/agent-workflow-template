@@ -272,11 +272,9 @@ if want("size"):
         return len(data) - data.count(b"\r\n")
 
     base = "skills/workflow-monitoring/scripts/"
-    names = ["checkin.py", "pool.py", "monitor.py", "mend.py", "notify.py", "watch.py", "graph.py", "board_status.py", "batch.py", "operate.py"]
-    done = subprocess.run([sys.executable, os.path.join(top, "dev", "toy", "size-check.py"), "--control"] + [os.path.join(top, base + n) for n in names]
-                          + [os.path.join(top, "skills/workflow-setup/scripts/settings.py")], capture_output=True, text=True)
-    print(done.stdout.strip())
-    check(done.returncode == 0 and "PASS negative control: 20,481 bytes fails, 20,480 and 19,500 only warn" in done.stdout,
-          "the scripts this goal touched warn over 19,000 and fail only over 20,480 (GRD-20); a 20,481-byte fixture fails, a 19,500-byte one only warns")
+    caps = {"checkin.py": 19495, "pool.py": 19000, "monitor.py": 18993, "mend.py": 19000, "notify.py": 19000, "watch.py": 19000, "graph.py": 19000, "board_status.py": 19000, "batch.py": 19000, "operate.py": 19864}
+    bad = ["%s %d > %d" % (n, lf_size(base + n), c) for n, c in caps.items() if lf_size(base + n) > c]
+    check(not bad, "checkin.py stays at or under 19,495 bytes and no script this goal touched grew past its starting size or 19,000 (%s)" % (bad or "all within"))
+    check(lf_size("skills/workflow-setup/scripts/settings.py") <= 19000, "settings.py stays under 19,000 bytes")
 
 sys.exit(1 if failed else 0)
