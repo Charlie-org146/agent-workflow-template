@@ -76,6 +76,8 @@ blocks-format	PASS	2026-11-18
 blocks-setup-clean	PASS	2026-11-18	
 board-estimates-overrun	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 board-sections	PASS	2026-11-09	
+board-tz-mixed-stamps	PASS	2026-11-20	
+board-tz-names-stamp	PASS	2026-11-20	
 breaking-asks	PASS	2026-11-09	
 budget-fair-base-moved	PASS	2026-11-15	
 budget-fair-failed-stays	PASS	2026-11-15	

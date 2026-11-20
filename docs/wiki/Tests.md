@@ -143,8 +143,8 @@
 | <a id="t-mailbox-two-mails"></a>mailbox-two-mails | requirement | CHK-1 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-mailbox-two-mails-4785"></a>mailbox-two-mails-4785 | defect | [#4785](https://github.com/jcl2018/agent-workflow-template/issues/4785) closed (2026-11-18) | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-mailbox-two-mails-4671"></a>mailbox-two-mails-4671 | defect | [#4671](https://github.com/jcl2018/agent-workflow-template/issues/4671) closed (2026-11-18) | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
-| <a id="t-board-tz-mixed-stamps"></a>board-tz-mixed-stamps | requirement | CHK-1 | not run | - | local | 2026-11-20 |
-| <a id="t-board-tz-names-stamp"></a>board-tz-names-stamp | requirement | CHK-1 | not run | - | local | 2026-11-20 |
+| <a id="t-board-tz-mixed-stamps"></a>board-tz-mixed-stamps | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
+| <a id="t-board-tz-names-stamp"></a>board-tz-names-stamp | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 
 ## Delivery
 
