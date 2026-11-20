@@ -289,7 +289,7 @@ None
 | [stale-found](Tests#t-stale-found) | requirement | DOC-1 | Given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale. | PASS 2026-11-20 |
 | [publish-refused-stale](Tests#t-publish-refused-stale) | requirement | DOC-1 | Given a stale wiki page, when the wiki is published, then publishing is refused. | PASS 2026-11-20 |
 | [stale-merge-order](Tests#t-stale-merge-order) | requirement | DOC-1 | Given two docs merges, when they merge in either order, then no page is left stale. | PASS 2026-11-20 |
-| [page-shape](Tests#t-page-shape) | requirement | DOC-1 | Given a wiki page with a Commands section, when the check runs, then it fails. | PASS 2026-11-20 |
+| [page-shape](Tests#t-page-shape) | requirement | DOC-1 | Given a wiki page with a Commands section, when the check runs, then it fails. | FAIL 2026-11-20 |
 | [criteria-no-scripts](Tests#t-criteria-no-scripts) | requirement | DOC-1 | Given a criterion that names a script, when the check runs, then it fails. | PASS 2026-11-20 |
 | [tests-not-enforced](Tests#t-tests-not-enforced) | requirement | DOC-1 | Given a criterion with no passing test, when the page is shown, then it shows as not enforced. | PASS 2026-11-20 |
 | [tests-last-run](Tests#t-tests-last-run) | requirement | DOC-1 | Given recorded runs, when the Tests table is shown, then it shows each test's last result and date. | PASS 2026-11-20 |
@@ -369,28 +369,7 @@ None
 | [doc19-readme-links](Tests#t-doc19-readme-links) | requirement | DOC-1 | Given a README with a How-to-use table of more than one row, when docs check runs, then it fails, and a README that only links each page passes. | PASS 2026-11-16 |
 | [home-howto-linksonly](Tests#t-home-howto-linksonly) | requirement | DOC-1 | Given the README with the DOC-18 links-only layout and a Home whose How to use cells link the How-to-use pages, when the docs check runs, then DOC-4 passes. | PASS 2026-11-17 |
 | [home-howto-linksonly-control](Tests#t-home-howto-linksonly-control) | requirement | DOC-1 | Given a links-only README and a Home that still links a README heading, when the docs check runs, then it fails naming DOC-4 and the How-to-use page link to use. | PASS 2026-11-17 |
-| [doc19-diagram-passes](Tests#t-doc19-diagram-passes) | requirement | DOC-1 | Given a How-to-use page whose System diagram has a box for each delivered row, where it runs and a legend, when docs check runs, then it passes. | not run |
-| [doc19-diagram-missing](Tests#t-doc19-diagram-missing) | requirement | DOC-1 | Given a How-to-use page with no System diagram, when docs check runs, then it fails naming the page. | not run |
-| [doc19-diagram-row-box](Tests#t-doc19-diagram-row-box) | requirement | DOC-1 | Given a System diagram that misses a delivered row, when docs check runs, then it fails naming the part. | not run |
-| [doc19-diagram-extra-box](Tests#t-doc19-diagram-extra-box) | requirement | DOC-1 | Given a System diagram that names a part the delivered table lacks, when docs check runs, then it fails naming the part. | not run |
-| [doc19-diagram-legend](Tests#t-doc19-diagram-legend) | requirement | DOC-1 | Given a System diagram with no legend, when docs check runs, then it fails. | not run |
-| [doc19-diagram-where](Tests#t-doc19-diagram-where) | requirement | DOC-1 | Given a box that does not say where the part runs, when docs check runs, then it fails naming the part. | not run |
-| [doc19-alone-own-links](Tests#t-doc19-alone-own-links) | requirement | DOC-1 | Given a page linking only this repo's milestone and wiki pages, when docs check runs, then it passes. | not run |
-| [doc19-alone-issue](Tests#t-doc19-alone-issue) | requirement | DOC-1 | Given a wiki page with an issue link, when docs check runs, then it fails naming the page, line and link. | not run |
-| [doc19-alone-ci](Tests#t-doc19-alone-ci) | requirement | DOC-1 | Given a wiki page with a CI run link, when docs check runs, then it fails naming the link. | not run |
-| [doc19-alone-host](Tests#t-doc19-alone-host) | requirement | DOC-1 | Given a wiki page with a link to another host, when docs check runs, then it fails naming the link. | not run |
-| [doc19-alone-other-repo](Tests#t-doc19-alone-other-repo) | requirement | DOC-1 | Given a wiki page linking another repository's milestone, when docs check runs, then it fails. | not run |
-| [doc19-alone-foreign-ref](Tests#t-doc19-alone-foreign-ref) | requirement | DOC-1 | Given a wiki page naming another repository's issue, when docs check runs, then it fails naming the reference. | not run |
-| [doc19-alone-path](Tests#t-doc19-alone-path) | requirement | DOC-1 | Given a wiki page with a Windows home path, when docs check runs, then it fails naming the path. | not run |
-| [doc19-alone-unix-path](Tests#t-doc19-alone-unix-path) | requirement | DOC-1 | Given a wiki page with a Unix home path, when docs check runs, then it fails naming the path. | not run |
-| [doc19-alone-exempt](Tests#t-doc19-alone-exempt) | requirement | DOC-1 | Given links inside a page's generated Tests section or a Deployments table, when docs check runs, then they are not reported, and a link after the Tests section is. | not run |
-| [doc19-alone-files](Tests#t-doc19-alone-files) | requirement | DOC-1 | Given a wiki folder and the skill docs, when docs check runs, then it reads each page and doc except the generated Tests page. | not run |
-| [doc4-home-diagram-ok](Tests#t-doc4-home-diagram-ok) | requirement | DOC-1 | Given a Home page whose diagram block names each part of the loop, when docs check runs, then it passes. | not run |
-| [doc4-home-diagram-missing](Tests#t-doc4-home-diagram-missing) | requirement | DOC-1 | Given a Home page with no system diagram, when docs check runs, then it fails. | not run |
-| [doc4-home-diagram-part](Tests#t-doc4-home-diagram-part) | requirement | DOC-1 | Given a Home diagram that leaves out a part of the loop, when docs check runs, then it fails naming the part. | not run |
-| [doc4-home-diagram-unread](Tests#t-doc4-home-diagram-unread) | requirement | DOC-1 | Given a Home page with the diagram block, when the DOC-4 table check runs, then the block is not read as a stray line. | not run |
-| [doc19-skill-schedule-unlisted](Tests#t-doc19-skill-schedule-unlisted) | requirement | DOC-1 | Given a feature page that names a skill or a schedule its How-to-use page does not list, when docs check runs, then it fails naming each. | not run |
-| [doc19-skill-schedule-listed](Tests#t-doc19-skill-schedule-listed) | requirement | DOC-1 | Given a skill and a schedule the How-to-use page lists, when docs check runs, then it passes. | not run |
+| [doc19-diagram-passes](Tests#t-doc19-diagram-passes) | requirement | DOC-1 | Given the DOC-1 cases of test-stands-alone.py, when it runs once, then it prints every PASS line the 22 merged rows checked and no FAIL line. | PASS 2026-11-20 |
 | [docs-v2-repo-passes](Tests#t-docs-v2-repo-passes) | requirement | DOC-1 | Given this repo's wiki pages and skill docs, when docs check runs, then it prints DOCS OK: every How-to-use page has a passing System diagram, Home has its diagram and no page holds a history link, another repo's name or a machine path. | not run |
 | [links-own-site-passes](Tests#t-links-own-site-passes) | requirement | DOC-1 | Given a page linking to a site in public_origins or to the repo's own README, when docs check runs, then it is not a LINKS finding. | not run |
 | [links-unlisted-site-fails](Tests#t-links-unlisted-site-fails) | requirement | DOC-1 | Given the same page and no listed site, when docs check runs, then each site link is a LINKS finding. | not run |
@@ -399,7 +378,7 @@ None
 | [links-origins-sources](Tests#t-links-origins-sources) | requirement | DOC-1 | Given public_origins in .loop/config.json or scripts/public-origins.json, when docs check runs, then those https sites are the repo's own, and a broken file is ignored. | not run |
 | [links-outside-links-fail](Tests#t-links-outside-links-fail) | requirement | DOC-1 | Given an unlisted site, another host, a lookalike host, another repo's README, or this repo's issue and source links, when docs check runs, then each is a LINKS finding. | not run |
 | [entry-committed-config](Tests#t-entry-committed-config) | requirement | DOC-1 | Given a worktree whose config.json has a local skip-worktree edit (min_free_memory_gb 2.0 against committed 3.0), when entry.py write runs, then START.md shows the committed 3.0 and entry.py check passes. | not run |
-| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | PASS 2026-11-20 |
+| [review-dated](Tests#t-review-dated) | requirement | DOC-2 | Given a criterion, when it is reviewed, then it is marked Reviewed with the date. | FAIL 2026-11-20 |
 | [review-owner-only](Tests#t-review-owner-only) | requirement | DOC-2 | Given a criterion, when a review is attempted, then it is reviewed only with the owner's words. | PASS 2026-11-20 |
 | [reviewed-lock](Tests#t-reviewed-lock) | requirement | DOC-2 | Given a reviewed criterion, when it is changed, then the check fails. | PASS 2026-11-20 |
 | [unreview-lifts](Tests#t-unreview-lifts) | requirement | DOC-2 | Given a reviewed criterion, when it is unreviewed, then its lock is lifted. | PASS 2026-11-20 |
