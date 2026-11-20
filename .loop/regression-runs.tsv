@@ -367,6 +367,8 @@ machine-new-machine-docs	PASS	2026-11-16
 machine-no-private	PASS	2026-11-17		90197cb446bf
 machine-operation-peer	PASS	2026-11-17	
 machine-setting-listed	PASS	2026-11-16	
+machine-status-heartbeat	PASS	2026-11-20	
+machine-status-live-workers	PASS	2026-11-20	
 machine-task-layout	PASS	2026-11-17		c58079f2bd05
 machines-handover	PASS	2026-11-18	
 machines-handover-4787	PASS	2026-11-18	
