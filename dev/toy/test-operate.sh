@@ -76,6 +76,55 @@ PY
 printf 'Shared\tshared.py\n' > .loop/docs.tsv
 git add -A; git commit -qm "Agent"; git push -q origin main
 
+echo "== operate.py forward and apply exit nonzero on failure (#5287)"
+ec="$T/ec-other"; git clone -q "$T/origin.git" "$ec"
+ecpush() { ( cd "$ec" && git config user.email t@example.test && git config user.name Toy && echo "$1" >> "ec-$1.txt" && git add -A && git commit -qm "ec $1" && git push -q origin main ); }
+ecpush one
+out=$($OP forward main 2>&1); rc=$?
+check "forward exits 0 only when the checkout fast-forwarded" '[ "$rc" = 0 ] && grep -q "^CHECKOUT FAST-FORWARDED" <<<"$out"'
+git switch -q -c ec-side; ecpush two
+out=$($OP forward main 2>&1); rc=$?
+check "forward on a checkout that is on another branch says NOT FAST-FORWARDED and exits nonzero" '[ "$rc" != 0 ] && grep -q "^CHECKOUT NOT FAST-FORWARDED" <<<"$out"'
+git switch -q main; git branch -q -D ec-side
+echo local > ec-local.txt; git add -A; git commit -qm "ec local"; ecpush three
+out=$($OP forward main 2>&1); rc=$?
+check "forward on a checkout with commits origin lacks, and behind, exits nonzero" '[ "$rc" != 0 ] && grep -q "^CHECKOUT NOT FAST-FORWARDED" <<<"$out"'
+git reset -q --hard origin/main
+out=$($OP apply ec-goal ec-no-such-branch 2>&1); rc=$?
+check "apply exits nonzero when the branch can not be fetched" '[ "$rc" != 0 ]'
+out=$(python3 - "$M" <<'PY'
+import os, sys
+sys.path.insert(0, sys.argv[1])
+import operate
+class Done:
+    def __init__(self, code=0, out="", err=""):
+        self.returncode, self.stdout, self.stderr = code, out, err
+def trial(fail, config=True):
+    def run(args, cwd=None):
+        if args[1] == "rev-parse":
+            return Done(0, os.getcwd())
+        if args[1] == "worktree" and args[2] == "add":
+            if config and "worktree" not in fail:
+                os.makedirs(os.path.join(args[-2], ".loop"), exist_ok=True)
+                with open(os.path.join(args[-2], ".loop", "config.json"), "w") as handle:
+                    handle.write("{}")
+            return Done(1 if "worktree" in fail else 0, "", "refused")
+        if args[1] in fail:
+            return Done(1, "", "refused")
+        if args[0] != "git":
+            return Done(0, "STALE Page: x\n" if "check" in args else "restamped")
+        return Done(0)
+    operate.run = run
+    return operate.apply("ec-goal", "ec-branch")
+results = {"all fine": (trial([]), 0), "worktree add fails": (trial(["worktree"]), 1), "fetch fails": (trial(["fetch"]), 1),
+           "add fails": (trial(["add"]), 1), "commit fails": (trial(["commit"]), 1), "push fails": (trial(["push"]), 1), "config unreadable": (trial([], config=False), 1)}
+for name, (got, want) in results.items():
+    print(("PASS" if (got == 0) == (want == 0) else "FAIL") + ": apply with " + name + " exits " + ("0" if want == 0 else "nonzero"))
+PY
+)
+echo "$out" | sed 's/^/  /'
+check "apply exits nonzero on every failure path (worktree add, fetch, add, commit, push, config) and 0 when all is fine" '! grep -q "^FAIL" <<<"$out" && [ "$(grep -c "^PASS" <<<"$out")" = 7 ]'
+[ "${OPERATE_ONLY:-}" = exitcodes ] && { echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }; exit 0; }
 echo "== OPS-1 carries the v2 wording"
 ops1_ok() {  # an Operation page holds the consolidated OPS-1 (Reviewed, "governs, re-plans and cleans up"), its first bullet and a newest revision row of that text
   grep -Eq '^- OPS-1: \*\*Reviewed [0-9-]+\*\* The operation session governs, re-plans and cleans up' "$1" \
