@@ -210,6 +210,8 @@ NARROW = """# Written by workflow-regression (regression.py workflow). The rows 
 name: regression-pr
 on:
   pull_request:
+  merge_group:
+    types: [checks_requested]
   push:
     branches-ignore:
       - "@BASE@"
