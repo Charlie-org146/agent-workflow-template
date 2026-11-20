@@ -339,7 +339,7 @@ def cmd_pr(args):
     left = [step for step in FLOW if not str(state.get("flow", {}).get(step, "")).startswith(("done", "skipped"))]
     if left:
         no("the flow hasn't finished: %s. Fix: run flow.py %s %s." % (", ".join(left), slug, left[0]))
-    waited = (state.get("log") or [""])[-1].split(" ", 1)[-1].startswith("waiting: pr queue")
+    waited = "waiting: pr queue" in (state.get("log") or [""])[-1]
     queue("preflight", ME, state)
     pods and pods.pr_queue("join", ME, state)
     if ahead := queue("turn", slug):
@@ -370,6 +370,7 @@ def cmd_pr(args):
     if git("status", "--porcelain", "--", "."):
         print("NOTE: uncommitted files stay out of the PR")
     head = role.bump_version(ME, state, head)
+    head = fit.regen(ME, slug)
     gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
     print(line)
     if gate == "running":
@@ -403,8 +404,6 @@ cmd_show = lambda args: fit.cmd_show(ME, args)
 def cmd_resume(args):
     pods and pods.refuse(load(args.slug) or {})
     return guards.cmd_resume(ME, args)
-
-    return 0
 
 
 def main():
