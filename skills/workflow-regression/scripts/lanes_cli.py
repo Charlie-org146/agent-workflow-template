@@ -186,7 +186,7 @@ def merge_runs(root):
     mine, day = _read(path), datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     for key, value in sorted(((record or {}).get("rows") or {}).items()):
         if value.get("status") in ("PASS", "FAIL"):
-            flag = str(value["flaky"] if "flaky" in value else (old.get(key) or [""] * 5)[4:5][0])[:12]
+            flag = str(value["flaky"] if "flaky" in value else (old.get(key, []) + [""] * 5)[4])[:12]
             mine[key] = [key, value["status"], day, runs.where()] + [flag] * bool(flag)
     if mine:
         _put(path, mine)
