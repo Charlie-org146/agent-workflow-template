@@ -194,6 +194,14 @@ def references(root, text, folder, wide=True, memo=None):
     return found, whole
 
 
+WHOLE = ("dev/package.py", "dev/toy/size-check.py", "dev/toy/test-portable.sh", "dev/toy/test-tree.sh", "dev/toy/tree-once.sh")  # TD504: run once by the tree job
+
+
+def whole(root, row, cache):
+    """A whole-tree row (TD504): its command runs one of the WHOLE scripts, the whole-repo checks the tree job runs once."""
+    return any(p in WHOLE for p in references(root, row["command"], "", wide=False)[0])
+
+
 def read(root, rel, cache):
     return cache.setdefault("text", narrow.Texts()).load(root, rel)
 

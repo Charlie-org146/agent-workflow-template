@@ -4,8 +4,8 @@
 usage: operate.py <command> [options]
 
   run [--once] [--poll S] [--max N] [--skill-dir DIR] [--board]
-      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; uncommitted work left alone; one line when it
-      moved or could not), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel;
+      Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root is not advanced: "root is dirty: FILES;
+      not advanced"; one line when it moved or could not), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel;
       mends and resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and
       pool.py archive (MON-6: ARCHIVE-NOW lines are for its archive tool), prints the check-in (checkin.py) and
       mails its new events (notify.py). The live board prints only for report, dashboard and "where do things stand"
@@ -106,6 +106,9 @@ def refresh(common, base="main"):
     head = fgit(root, "rev-parse", "--abbrev-ref", "HEAD")[1]
     if head != base:
         return "CHECKOUT NOT FAST-FORWARDED: %s is on %s, not %s; its skills run as they are" % (os.path.basename(root), head or "no branch", base)
+    dirty = [l.split(None, 1)[1] for l in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].splitlines() if l.strip() and l.split(None, 1)[1] != RUNS]
+    if dirty:
+        return "root is dirty: %s; not advanced" % ", ".join(dirty)
     code, said = fgit(root, "fetch", "-q", "origin", base)
     if code:
         return "CHECKOUT NOT FAST-FORWARDED: cannot fetch origin/%s (%s)" % (base, said.splitlines()[0][:80] if said else "no reply")
