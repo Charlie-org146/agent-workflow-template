@@ -293,9 +293,11 @@ def main():
     if args.command == "reference":
         text = reference()
         if args.write:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "settings.md")
-            with open(path, "w") as handle:
-                handle.write(text)
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "loop-files.md")
+            with open(path, encoding="utf-8") as handle:
+                head = handle.read().partition("# Settings reference")[0]
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(head + text)
             print("WROTE " + os.path.normpath(path))
         else:
             print(text, end="")

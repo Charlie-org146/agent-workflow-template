@@ -5,7 +5,7 @@ Documentation	skills/workflow-docs,skills/workflow-health/scripts/milestone.py,d
 Guardrails	.loop/config.json
 Health	skills/workflow-health,:(exclude)skills/workflow-health/SKILL.md,:(exclude)skills/workflow-health/references/commands.md
 Home	README.md,FINDINGS.md,DECISIONS.md
-Machines	dev/machine.py,dev/machine-templates.md,dev/toy/test-machine.sh,skills/loop-files.md
+Machines	dev/machine.py,dev/machine-templates.md,dev/toy/test-machine.sh,skills/workflow-monitoring/SKILL.md
 Monitoring	skills/workflow-monitoring,:(exclude)skills/workflow-monitoring/SKILL.md,:(exclude)skills/workflow-monitoring/scripts/proctree.py
 Operation	skills/workflow-monitoring,:(exclude)skills/workflow-monitoring/SKILL.md,:(exclude)skills/workflow-monitoring/scripts/proctree.py
 Check-in-and-board	skills/workflow-monitoring,:(exclude)skills/workflow-monitoring/SKILL.md,:(exclude)skills/workflow-monitoring/scripts/proctree.py
