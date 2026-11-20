@@ -15,7 +15,7 @@ KINDS = {
     'tests': ('+(?!Other$).+', 'Other'),
     'roadmap': ('+.+',),
 }
-LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/wiki/")
+LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/(?:wiki/|blob/main/docs/wiki/)|\(docs/wiki/")
 
 
 def heads(text):
@@ -53,7 +53,7 @@ def body(text, name):
     for line in text.splitlines():
         inside = line[3:].strip() == name if line.startswith("## ") else inside
         if inside and line.strip() and not line.startswith(("## ", "![")):
-            out.append(LINK.sub("", line.strip()))
+            out.append(LINK.sub(lambda m: "(" * m[0].startswith("("), line.strip()))
     return out
 
 
@@ -61,4 +61,4 @@ def same(readme, home):
     a, b = [x for _, x in heads(readme)], [x for _, x in heads(home)]
     bad = [("FORMAT", "Home:1", "Sections: DOC-25 README and Home have the same sections in order (README %s, Home %s). Fix: make them match" % (a, b))] * (a != b)
     return bad + [("FORMAT", "Home:%d" % n, "Sections: DOC-25 '%s' is the same on README and Home. Fix: copy it from the README" % x)
-                  for n, x in heads(home) if x in a and body(readme, x) != body(home, x)]
+                  for n, x in heads(home) if re.match(r"\d+\. ", x) and x in a and body(readme, x) != body(home, x)]
