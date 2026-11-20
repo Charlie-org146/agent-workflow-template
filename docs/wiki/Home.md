@@ -1,11 +1,17 @@
 <!-- workflow-docs -->
 # agent-workflow-template
 
+The features, how to use each one, the settings and what runs by itself are on the wiki pages below. The sections after the System design are the project's principles, each with the requirements that enforce it, then every requirement by topic and feature.
+
+## System design
+
+How the loop sits between its owner, its parts and the outside systems it uses; every principle below is judged against it.
+
+![System design](system-design.svg)
+
 ## 1. Documentation-driven
 
 Principles, features, requirements and tests are written first, in that order: nothing is built that a Reviewed requirement doesn't ask for, tests come from the requirements, and the PRD changes only by your words.
-
-![Documentation-driven](principle-01-documentation-driven.svg)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -17,8 +23,6 @@ Principles, features, requirements and tests are written first, in that order: n
 ## 2. Enforced and kept true
 
 Every requirement is proven and kept true: tests and health check it, the pages agree with each other and the code, and whatever falls short, conflicts or goes stale becomes work until it is fixed.
-
-![Enforced and kept true](principle-02-the-loop-and-coverage.svg)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -37,8 +41,6 @@ Every requirement is proven and kept true: tests and health check it, the pages 
 
 Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's.
 
-![Fast, cheap and small](principle-05-fast-cheap-and-small.svg)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-17 Goal ETAs are hard limits](Delivery) | Goals freeze ETAs and stop at them; I set release target and freeze; slips report at once; the freeze never waives failing rows (release target and freeze, ETA reporting, measured forecast (v2.0 planned, release-eta))<br>&bull; 🟪 release-eta (planned): A release has a target time and a freeze point; every goal's STATUS carries an ETA and slips over 15 minutes are reported at once. [flow](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/flows/v2.0-planned-release-eta.svg) | Kubernetes Job `activeDeadlineSeconds`; GitHub Actions `timeout-minutes` ([Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/), [Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)): adapted | Delivery (Build loop), Operation (Build loop), Check in and board (Build loop) | 🟪 v2.0 planned (since v1.0.28) | [DEL-17 flow](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/flows/DEL-17.svg) |
@@ -55,8 +57,6 @@ Goals, tests and health stay inside their time and token limits, and scripts, pa
 
 No private name, path, address or key leaves the machine, and automation gets only the access it needs.
 
-![Private and guarded](principle-06-nothing-private-escapes.svg)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-9 Nothing private is committed, shipped or copied](Delivery) | Every commit, push and PR passes the scoped private-name scan; private files, mail address and key stay local and are never copied (absorbs GRD-3, AUT-6, MCH-9) | gitleaks; GitHub secret scanning push protection ([gitleaks](https://github.com/gitleaks/gitleaks/blob/e55d3975ec6989fae76f28f5034ca88a7891fd94/README.md), [Push protection](https://docs.github.com/en/code-security/concepts/secret-security/push-protection)): adopted | Delivery (Build loop), Guardrails (Quality), Automation (Operations), Machines (Operations) | 🟧 v2.0 (since v0.1.3) | [DEL-9 flow](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/flows/DEL-9.svg) |
@@ -68,8 +68,6 @@ No private name, path, address or key leaves the machine, and automation gets on
 ## 5. Reproducible, portable and adoptable
 
 The same inputs give the same result on any machine, in any repo and on any agent; any repo adopts the template cleanly, byte for byte, and its README shows the template's principles and design logic as written; it plugs into other systems through adapters, and survives a failure without losing work.
-
-![Reproducible, portable and adoptable](principle-07-it-works-installed-fresh.svg)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -87,8 +85,6 @@ The same inputs give the same result on any machine, in any repo and on any agen
 
 It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours.
 
-![Autonomous, and you decide only what's yours](principle-08-it-stops-for-you-only-when-it-must.svg)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-3 It stops only for decisions that are mine](Delivery) | My decisions wait or are auto-approved where allowed; full auto applies all but safety classes; one standing merge instruction covers listed IDs (absorbs OPS-11, OPS-18) | GitHub environments required reviewers ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)): adapted | Delivery (Build loop), Operation (Build loop) | 🟧 v2.0 (since v0.1.2) | [DEL-3 flow](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/flows/DEL-3.svg) |
@@ -102,8 +98,6 @@ It runs by itself across machines and shows where everything stands, and it stop
 
 Every requirement follows a specific, named industry tool, standard or production system with a proven record, and uses that tool itself wherever one can run here; where it can't, it copies the proven design and says why.
 
-![Standard, not home-made](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-09-standard-not-home-made.svg?raw=true)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DOC-24 Every requirement names what it follows](https://github.com/jcl2018/agent-workflow-template/wiki/Documentation) | Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source and a verdict, adopted or adapted; general guidance is not a reference | MADR (Markdown decision records) ([MADR](https://adr.github.io/madr)): adapted, v2.0 planned | Documentation (Docs) | 🟪 v2.0 (planned) | [DOC-24 flow](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/flows/DOC-24.svg) |
@@ -113,8 +107,6 @@ Every requirement follows a specific, named industry tool, standard or productio
 ## 8. Honest, verified and on time
 
 Every claim the loop makes is backed by evidence it just read, every report and plan is checked by an adversarial reviewer before you rely on it, and every ETA is a commitment: a miss is recorded with its cause, never quietly moved.
-
-![Honest, verified and on time](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-10-honest-verified-and-on-time.svg?raw=true)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -300,118 +292,3 @@ Every requirement with its complete text, grouped by topic and feature (read fro
 | [REL-3 A major ships only through the gate](Release) | A patch is a fix, a minor is a goal shipped inside a milestone, and a major is a milestone. A goal's release never bumps a major; a major exists only after the gate passes. [REL-1]<br>Every issue on a major's milestone is closed before the gate passes, or moved by a waiver whose owner record names that issue. [REL-2]<br>The gate runs the whole nightly suite on the release candidate. Each failing, unrun or known-red row refuses unless an owner-recorded waiver names it with its issue; a suite that did not run refuses. [REL-3]<br>The suite may instead come from a GitHub Actions run of the regression workflow (review.py gate or promote with --suite-from RUN), but only a run on the candidate's commit that completed with every shard reported, nothing UNRUN and every land or nightly row logged; any other run refuses "suite run does not cover the candidate", and the run id is recorded with the gate result. [REL-3]<br>The gate refuses unless health is green on the candidate, every requirement is Reviewed by me, and no wiki page is stale, naming each one that fails. [REL-4]<br>From a major's release-candidate tag until the major is tagged, the merge refuses any goal that does not fix a subject of the last gate run's refusals. [REL-5]<br>Promoting a major runs only from the operation session with my record naming that version and every gate check passing. It tags the major, keeps a snapshot branch, and mails a state report as the release notes. [REL-6]<br>Only the operation session promotes or reverts, and a waiver counts only when its owner record exists and names its subject. [REL-8]<br>revert puts main back on a major's snapshot through a pull request, never by pushing the base, and a worker cannot run it. [REL-7]<br>(v2.0 planned) release-readiness: a release-readiness check runs before the gate (named only). |
 | [REL-12 Merges wait only on gates I set](Release) | Where a review hold is set, the release step merges only after the operation session records that it has read the diff, and the board shows the merge waiting on review. [REL-12]<br>No GitHub Actions check this tool writes is needed to merge a private repo. Where the repo's rules require named checks, the pull-request checks post them as commit statuses. [AUT-10] |
 | [REL-13 Fast merge queue](Release) | Pull requests merge one at a time per repo, across machines. [REL-13]<br>A goal waits only behind goals whose touched files overlap its own, a goal waiting on me yields its place, and several ready goals with separate files are verified and merged together. [REL-13]<br>When main moves, a waiting goal rechecks only the tests the moved files reach, once, when it is next. [REL-13]<br>(v2.0 planned) merge-queue: a merge queue (named only).<br>(v2.0 planned) A commit that moves only stamp files (the version, the changelog, the regression run and issue records) is tree-equal modulo stamps: a pass recorded for the tested tree carries to it, with no fresh CI run. [REL-13] |
-
-<!-- diagram:begin -->
-## System diagram
-
-The whole loop on one page: each part, where it runs, and the flows between them. Each feature's own diagram is on its How-to-use page.
-
-```text
- THE OWNER (any machine)
-   | says a goal in one sentence, answers what waits on them, reviews pull requests
-   v
- [OPERATION SESSION | the PC or the Mac, governs and never builds]
-   | assigns one goal each          ^ every step's result, every question
-   v                                |
- [WORKER SESSIONS | each in its own worktree, one goal each]
-   freeze -> idea -> plan -> build -> review -> qa -> ship -> pull request -> release
-   |  guard: a step that fails 3 times stops and files a finding      |
-   |  guard: a Reviewed requirement is never edited without the owner |
-   v                                                                  v
- [STAGING | planned: a staging branch and release candidates]  -> [PRODUCTION | main and its tagged release]
-   (the owner promotes; planned, not built)                          |
-                                                                     v
-                                                  [GITHUB WIKI | published pages, never a page it did not write]
-
- [MACHINES | the PC and the Mac, each set up from a git clone and one command]
-   run the operation session, the workers and the scheduled routines
- [SCHEDULED ROUTINES | the always-on machine and GitHub Actions]
-   health round --> issues and a digest mail ; regression round --> one issue per failing row
-
-Legend: [box] a part and where it runs; --> or v a flow of work; "guard" a rule that refuses; planned = not built yet.
-```
-<!-- diagram:end -->
-
-<!-- settings:begin -->
-## Settings
-
-Every repo setting from the template's settings reference, with this repo's value from `.loop/config.json`.
-
-| Name | What it means | How to set it | Default | This repo |
-|---|---|---|---|---|
-| `base` | The branch goals start from and pull requests target. | set "base" in .loop/config.json | `main` | default |
-| `agent_command` | The command that runs a goal in the background; the prompt is its last argument. | set "agent_command" in .loop/config.json | `[]` | **overridden:** `["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"]` |
-| `parallel` | Workers running at once; 0 means unlimited. | set "parallel" in .loop/config.json | `0` | default |
-| `cadence` | Minutes between operation check-ins, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
-| `auto_approve` | true approves what a flow step leaves for the owner, logged auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |
-| `auto_merge` | true lets the release step merge a goal's PR and publish. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
-| `merge_batch` | true lets merge.py --batch merge 2-3 green goals as one. | set "merge_batch" in .loop/config.json | `false` | **overridden:** `true` |
-| `review_hold` | true: merge.py waits (REVIEW_HOLD) for the operation session's review.py record. | set "review_hold" in .loop/config.json | `false` | default |
-| `pr_bumps_version` | true moves the last version number once on a goal's branch. | set "pr_bumps_version" in .loop/config.json | `false` | default |
-| `version_file` | The file holding the version; a release bumps it, writes the changelog. | set "version_file" in .loop/config.json | `VERSION` | default |
-| `routines` | Commands the release step runs on the base before it merges. | set "routines" in .loop/config.json | `[]` | default |
-| `regression_cron` | Five cron fields: when the full regression runs; off is off. | set "regression_cron" in .loop/config.json | `17 */4 * * *` | default |
-| `health_cron` | Five cron fields: when health, the judge and its digest run on the Mac; or off. | set "health_cron" in .loop/config.json | `47 */4 * * *` | default |
-| `judge_env` | No longer read. | set "judge_env" in .loop/config.json | `ANTHROPIC_API_KEY` | default |
-| `judge_setup` | No longer read; old configs stay valid. | set "judge_setup" in .loop/config.json | `(empty)` | default |
-| `digest_owner` | Who the digest comment mentions; empty is the repo owner (an organisation: none). | set "digest_owner" in .loop/config.json | `(empty)` | default |
-| `digest_mail` | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. | set "digest_mail" in .loop/config.json | `cloudflare` | default |
-| `smtp_host` | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). | set "smtp_host" in .loop/config.json | `smtp.gmail.com` | default |
-| `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
-| `review_depth` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
-| `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
-| `criteria_max` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `24` |
-| `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
-| `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
-| `step_limit` | Seconds one flow step may run when the flow file sets none; 0 is the built-in limit. | set "step_limit" in .loop/config.json | `0` | default |
-| `goal_lane_minutes` | Minutes a goal's regression lane may take before health warns. | set "goal_lane_minutes" in .loop/config.json | `10` | default |
-| `goal_levels` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). | set "goal_levels" in .loop/config.json | `land` | default |
-| `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
-| `machine_setup` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. | set "machine_setup" in .loop/config.json | `[]` | default |
-| `automation` | Routines the Automation table lists: {name, does, cadence, runs}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |
-| `topics` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring", "Operation", "Check-in-and-board"], "Quality": ["Regression", "Health", "Guardrails"], "Operations": ["Automation", "Setup", "Machines"], "Docs": ["Documentation"]}` |
-| `ci_levels` | Target of scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
-| `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `240` | default |
-| `max_merge_rounds` | Merge rounds goal.py pr may take before it waits. | set "max_merge_rounds" in .loop/config.json | `8` | default |
-| `max_active_goals` | Goals live at once (or parallel, if smaller); 0 is none. | set "max_active_goals" in .loop/config.json | `20` | default |
-| `plan_pause_percent` | Weekly plan % above which no goal starts (pool.py usage N); 0 is off. | set "plan_pause_percent" in .loop/config.json | `80` | default |
-| `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `3` | default |
-| `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300; fixed when the goal is frozen. | set "eta_margin_percent" in .loop/config.json | `25` | default |
-| `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
-| `max_regression_rows` | Most rows the regression table may hold; qa refuses a goal that adds more. | set "max_regression_rows" in .loop/config.json | `1200` | **overridden:** `1300` |
-| `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal that adds more. | set "max_suite_seconds" in .loop/config.json | `1900` | **overridden:** `2800` |
-| `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
-| `prep_budget_minutes` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
-| `step_budget_minutes` | Minutes one review or ship step may take, 15 or more. | set "step_budget_minutes" in .loop/config.json | `30` | default |
-| `stale_branch_days` | Days a local branch on no remote may sit before health lists it. | set "stale_branch_days" in .loop/config.json | `14` | default |
-| `mend` | true lets watch start a fresh agent for a failed goal. | set "mend" in .loop/config.json | `false` | **overridden:** `true` |
-| `mend_wait` | Seconds a failed goal waits before a mender starts. | set "mend_wait" in .loop/config.json | `120` | default |
-| `max_tries` | Failed tries a goal gets before it stops and files a finding. | set "max_tries" in .loop/config.json | `3` | default |
-| `resume_on_limit` | true lets watch resume a goal that hit a usage limit. | set "resume_on_limit" in .loop/config.json | `false` | default |
-| `limit_wait` | Seconds to wait after a usage limit before resuming. | set "limit_wait" in .loop/config.json | `1800` | default |
-| `watch_interval` | Seconds between rounds of watch. | set "watch_interval" in .loop/config.json | `20` | default |
-| `agent_files` | Agent entry files setup wires the loop block into; [] turns wiring off. | set "agent_files" in .loop/config.json | `["CLAUDE.md", "AGENTS.md"]` | default |
-| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | default |
-| `milestones_source` | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. | set "milestones_source" in .loop/config.json | `(empty)` | default |
-| `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
-| `govern_hook` | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). | set "govern_hook" in .loop/config.json | `true` | default |
-| `full_auto` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. | set "full_auto" in .loop/config.json | `false` | **overridden:** `true` |
-| `pool_size` | Idle worker sessions the pool keeps; low, the operation session asks you for more. | set "pool_size" in .loop/config.json | `20` | default |
-| `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. | set "silent_minutes" in .loop/config.json | `30` | default |
-| `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
-| `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
-| `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
-| `workers` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
-<!-- settings:end -->
-
-<!-- automation:begin -->
-## Automation
-
-Health and regression, then each `automation` entry in `.loop/config.json`; to add one, add an entry.
-
-| Routine | What it does | State | Cadence | Runs on | Last run | Owed by you |
-|---|---|---|---|---|---|---|
-| [health](https://github.com/jcl2018/agent-workflow-template/wiki/Health#health-round) | Checks the repo, files findings. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
-| [regression](https://github.com/jcl2018/agent-workflow-template/wiki/Regression#regression-round) | Runs the regression rows. | on (declared) | every 4 hours | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
-| digest email | Mails the round's digest. | on (declared) | cron `with each health round` | this Mac (launch agent agent-workflow-template-health-regression) | docs.py automation | confirm it is live: docs.py automation |
-<!-- automation:end -->

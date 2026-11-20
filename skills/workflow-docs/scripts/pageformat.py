@@ -152,7 +152,7 @@ def frontdoor(page, text, listing, ids, kind="README"):
                 found in ids or "planned" in c[4] or fail(number, "an ID that exists or is planned", found, "mark it planned or remove it")
         return ok, rows, other
 
-    head, *secs = parts(unblocked(text))
+    head, *secs = [x for x in parts(unblocked(text)) if x[0] != "System design"]
     extra = [x for x in head[2][1:] if x[1].strip()]
     if kind == "README" and (len(extra) != 1 or "/wiki/Home" not in extra[0][1]):
         fail(1, "the title and one link to the wiki Home", "%d lines" % len(extra), "keep one wiki Home link")
@@ -167,7 +167,7 @@ def frontdoor(page, text, listing, ids, kind="README"):
         for number, c in rows:
             m = re.search(r"flows/[^)/?#\s]+", c[5])
             c[2] or fail(number, "a Follows cell", "none", "add it")
-            "planned" in c[4] or (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
+            (m and m[0] in ids) or fail(number, "a Flow link to a file in docs/wiki/flows", short(c[5]), "add the diagram")
     more = secs[len(want):]
     if kind != "Principles":
         sec = more.pop(0) if more and more[0][0].startswith("Requirements by feature") else ("", 1, [])
@@ -258,7 +258,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
             continue
         if line.startswith("### "):
             groups.append([number, line[4:].strip(), 0, 0])
-            held.append((number, None, []))  # ends the requirement above
+            held.append((number, None, []))
         elif line.startswith("  - ") and held and held[-1][1]:
             held[-1][2].append((number, line[4:]))
         elif line.startswith("  - ") or line[:1].isspace():

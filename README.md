@@ -6,11 +6,15 @@ Built with the [jcl2018/agent-workflow-template](https://github.com/jcl2018/agen
 
 [The wiki](https://github.com/jcl2018/agent-workflow-template/wiki/Home) has the features, how to use each one, the settings and what runs by itself. The eight sections below are the project's principles, each with the requirements that enforce it and a flow diagram for each, then every requirement with its complete text by feature; [the Principles page](https://github.com/jcl2018/agent-workflow-template/wiki/Principles) has each in full, with its diagram and requirements.
 
+## System design
+
+How the loop sits between its owner, its parts and the outside systems it uses; every principle below is judged against it.
+
+![System design](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/system-design.svg?raw=true)
+
 ## 1. Documentation-driven
 
 Principles, features, requirements and tests are written first, in that order: nothing is built that a Reviewed requirement doesn't ask for, tests come from the requirements, and the PRD changes only by your words.
-
-![Documentation-driven](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-01-documentation-driven.svg?raw=true)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -22,8 +26,6 @@ Principles, features, requirements and tests are written first, in that order: n
 ## 2. Enforced and kept true
 
 Every requirement is proven and kept true: tests and health check it, the pages agree with each other and the code, and whatever falls short, conflicts or goes stale becomes work until it is fixed.
-
-![Enforced and kept true](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-02-the-loop-and-coverage.svg?raw=true)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -42,8 +44,6 @@ Every requirement is proven and kept true: tests and health check it, the pages 
 
 Goals, tests and health stay inside their time and token limits, and scripts, pages and the package stay inside their size limits, including Agensi's.
 
-![Fast, cheap and small](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-05-fast-cheap-and-small.svg?raw=true)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-17 Goal ETAs are hard limits](https://github.com/jcl2018/agent-workflow-template/wiki/Delivery) | Goals freeze ETAs and stop at them; I set release target and freeze; slips report at once; the freeze never waives failing rows (release target and freeze, ETA reporting, measured forecast (v2.0 planned, release-eta))<br>&bull; 🟪 release-eta (planned): A release has a target time and a freeze point; every goal's STATUS carries an ETA and slips over 15 minutes are reported at once. [flow](docs/wiki/flows/v2.0-planned-release-eta.svg) | Kubernetes Job `activeDeadlineSeconds`; GitHub Actions `timeout-minutes` ([Kubernetes Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/), [Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)): adapted | Delivery (Build loop), Operation (Build loop), Check in and board (Build loop) | 🟪 v2.0 planned (since v1.0.28) | [DEL-17 flow](docs/wiki/flows/DEL-17.svg) |
@@ -60,8 +60,6 @@ Goals, tests and health stay inside their time and token limits, and scripts, pa
 
 No private name, path, address or key leaves the machine, and automation gets only the access it needs.
 
-![Private and guarded](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-06-nothing-private-escapes.svg?raw=true)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-9 Nothing private is committed, shipped or copied](https://github.com/jcl2018/agent-workflow-template/wiki/Delivery) | Every commit, push and PR passes the scoped private-name scan; private files, mail address and key stay local and are never copied (absorbs GRD-3, AUT-6, MCH-9) | gitleaks; GitHub secret scanning push protection ([gitleaks](https://github.com/gitleaks/gitleaks/blob/e55d3975ec6989fae76f28f5034ca88a7891fd94/README.md), [Push protection](https://docs.github.com/en/code-security/concepts/secret-security/push-protection)): adopted | Delivery (Build loop), Guardrails (Quality), Automation (Operations), Machines (Operations) | 🟧 v2.0 (since v0.1.3) | [DEL-9 flow](docs/wiki/flows/DEL-9.svg) |
@@ -73,8 +71,6 @@ No private name, path, address or key leaves the machine, and automation gets on
 ## 5. Reproducible, portable and adoptable
 
 The same inputs give the same result on any machine, in any repo and on any agent; any repo adopts the template cleanly, byte for byte, and its README shows the template's principles and design logic as written; it plugs into other systems through adapters, and survives a failure without losing work.
-
-![Reproducible, portable and adoptable](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-07-it-works-installed-fresh.svg?raw=true)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
@@ -92,8 +88,6 @@ The same inputs give the same result on any machine, in any repo and on any agen
 
 It runs by itself across machines and shows where everything stands, and it stops for you only when a decision is truly yours.
 
-![Autonomous, and you decide only what's yours](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-08-it-stops-for-you-only-when-it-must.svg?raw=true)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DEL-3 It stops only for decisions that are mine](https://github.com/jcl2018/agent-workflow-template/wiki/Delivery) | My decisions wait or are auto-approved where allowed; full auto applies all but safety classes; one standing merge instruction covers listed IDs (absorbs OPS-11, OPS-18) | GitHub environments required reviewers ([Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)): adapted | Delivery (Build loop), Operation (Build loop) | 🟧 v2.0 (since v0.1.2) | [DEL-3 flow](docs/wiki/flows/DEL-3.svg) |
@@ -107,8 +101,6 @@ It runs by itself across machines and shows where everything stands, and it stop
 
 Every requirement follows a specific, named industry tool, standard or production system with a proven record, and uses that tool itself wherever one can run here; where it can't, it copies the proven design and says why.
 
-![Standard, not home-made](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-09-standard-not-home-made.svg?raw=true)
-
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|
 | [DOC-24 Every requirement names what it follows](https://github.com/jcl2018/agent-workflow-template/wiki/Documentation) | Every requirement names what it follows: a specific tool, published standard or production system with a proven record, a link to its source and a verdict, adopted or adapted; general guidance is not a reference | MADR (Markdown decision records) ([MADR](https://adr.github.io/madr)): adapted, v2.0 planned | Documentation (Docs) | 🟪 v2.0 (planned) | [DOC-24 flow](docs/wiki/flows/DOC-24.svg) |
@@ -118,8 +110,6 @@ Every requirement follows a specific, named industry tool, standard or productio
 ## 8. Honest, verified and on time
 
 Every claim the loop makes is backed by evidence it just read, every report and plan is checked by an adversarial reviewer before you rely on it, and every ETA is a commitment: a miss is recorded with its cause, never quietly moved.
-
-![Honest, verified and on time](https://github.com/jcl2018/agent-workflow-template/blob/main/docs/wiki/principle-10-honest-verified-and-on-time.svg?raw=true)
 
 | Requirement | Summary | Follows | Feature | Version | Flow |
 |---|---|---|---|---|---|

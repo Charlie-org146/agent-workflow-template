@@ -4,6 +4,7 @@ KINDS maps a page kind to one regex per heading, each matching a whole heading. 
 a "+" prefix one or more. A page kind with a heading missing, extra, renamed or out of order fails the docs check;
 README and Home share the "front" row.
 """
+import os
 import re
 
 KINDS = {
@@ -62,3 +63,22 @@ def same(readme, home):
     bad = [("FORMAT", "Home:1", "Sections: DOC-25 README and Home have the same sections in order (README %s, Home %s). Fix: make them match" % (a, b))] * (a != b)
     return bad + [("FORMAT", "Home:%d" % n, "Sections: DOC-25 '%s' is the same on README and Home. Fix: copy it from the README" % x)
                   for n, x in heads(home) if re.match(r"\d+\. ", x) and x in a and body(readme, x) != body(home, x)]
+
+
+def targets(root, folder, read, block_re, both):
+    """DOC-15: each generated block lives on its How-to-use page, under the page's own section, once it carries the markers."""
+    out = []
+    for name, block in both:
+        rel = os.path.join(folder, "How-to-use-%s.md" % ("Setup" if name == "settings" else "Automation"))
+        if block_re(name).search(read(os.path.join(root, rel)) or ""):
+            out.append((rel, [(name, block.replace("\n## ", "\n### ", 1))]))
+    return out
+
+
+def run(folder, readme, home, names):
+    """DOC-25 findings for the README, Home and every wiki page, by the page's kind."""
+    out = check("README", "front-adopted" if "## The template's principles" in readme else "front", readme) + check("Home", "front", home) + same(readme, home)
+    for page in sorted(x[:-3] for x in os.listdir(folder) if x.endswith(".md")):
+        kind = "howto" if page.startswith("How-to-use-") else {"Principles": "principles", "Tests": "tests", "Roadmap": "roadmap"}.get(page, "feature" if page in names else "")
+        out += check(page, kind, open(os.path.join(folder, page + ".md"), encoding="utf-8").read()) if kind else []
+    return out
