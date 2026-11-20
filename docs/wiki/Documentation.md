@@ -353,7 +353,7 @@ None
 | [format-groups-read](Tests#t-format-groups-read) | requirement | DOC-25 | Given a reviewed requirement under either group, when a sub-bullet is added, then it is still read and the check reports LOCKED. | PASS 2026-11-10 |
 | [format-problem](Tests#t-format-problem) | requirement | DOC-25 | Given a Problem that names code internals, when the docs check runs, then it fails naming the page, Problem and DOC-1. | PASS 2026-11-18 |
 | [format-tests-table](Tests#t-format-tests-table) | requirement | DOC-25 | Given a hand-edited Tests table, when the docs check runs, then it fails naming the page, Tests and DOC-1. | PASS 2026-11-18 |
-| [cap-default-10](Tests#t-cap-default-10) | requirement | DOC-25 | Given no criteria_max in the config, when the cap is read, then it is 10 in both the docs check and setup. | PASS 2026-11-10 |
+| [cap-default-10](Tests#t-cap-default-10) | requirement | DOC-25 | Given no criteria_max in the config, when the cap is read, then it is 10 in the docs check, in setup and in health's requirements-per-page rule. | PASS 2026-11-10 |
 | [format-key](Tests#t-format-key) | requirement | DOC-25 | Given a template rules block whose format key leaves out problem, when the docs check runs, then the Problem check is off. | PASS 2026-11-10 |
 | [problem-plural](Tests#t-problem-plural) | requirement | DOC-25 | Given a Problem with a banned word in the plural, when the docs check runs, then it fails. | PASS 2026-11-18 |
 | [guide-marker-refused](Tests#t-guide-marker-refused) | requirement | DOC-25 | Given a page with requirement or Review lines, when it carries the guide marker, then the docs check refuses it naming the page. | PASS 2026-11-10 |
