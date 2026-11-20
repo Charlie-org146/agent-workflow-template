@@ -60,10 +60,11 @@ def grouped(blocks, at=None, tags=None, loop=None):
         out += ["%s -> %s" % (dep, item["slug"]) for item in local for dep in item["depends"]]
         out += ["owner item: #%d %s needs you" % (tags[name, item["slug"]], item["slug"]) for item in items if (name, item["slug"]) in (tags or {})]
         for release in sorted({key(item)[0] for item in items}):
-            out += ["-- %s --" % bs.release_header(release, every[release], at, loop)]
+            out += ["-- %s --" % bs.release_header(release, every[release], at, loop)] + [board_lines.roll(every[release], at)] * bool(at)
             for feature in sorted({key(item)[1] for item in items if key(item)[0] == release}):
                 out += ["  %s:" % feature]
-                out += ["    " + goal_line(item) for item in items if key(item) == (release, feature)]
+                for item in items:
+                    out += ["    " + goal_line(item)] + board_lines.bars(item, at) * bool(at) if key(item) == (release, feature) else []
         left = [item["left"] for item in items if item.get("left")]
         out += ["expected finish %s (about %s)" % ((at + datetime.timedelta(seconds=max(left))).astimezone().strftime("%H:%M"), board_page.span(max(left)))] if left and at else []
         edges += [(name, item["slug"], dep.partition("/")[0], dep.partition("/")[2]) for item in items
@@ -160,8 +161,9 @@ def render(root=None, at=None, stamp=None):
                                     feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
                       owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at),
-                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1)) for r in g["live"]]
-        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"])) for q in g["queue"]]))
+                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1),
+                      bars=board_lines.progress(g["root"], r["slug"], r, lb.current(r), [])) for r in g["live"]]
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"]), bars=board_lines.progress(g["root"], q["slug"], None, 0, q["done"])) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]

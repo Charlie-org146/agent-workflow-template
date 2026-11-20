@@ -146,6 +146,7 @@
 | <a id="t-queue-view-blocks"></a>queue-view-blocks | requirement | CHK-1 | not run | - | local | 2026-11-20 |
 | <a id="t-board-tz-mixed-stamps"></a>board-tz-mixed-stamps | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 | <a id="t-board-tz-names-stamp"></a>board-tz-names-stamp | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
+| <a id="t-release-progress-bars"></a>release-progress-bars | requirement | CHK-1 | not run | - | local | 2026-11-20 |
 
 ## Delivery
 
