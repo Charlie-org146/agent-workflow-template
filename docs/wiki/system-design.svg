@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" width="640" role="img" aria-label="System design: the loop, its owner and the outside systems it uses">
+<title>System design: the loop and its surroundings</title>
+<style>
+.f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
+.f-s{font:400 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#27303c}
+.f-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.f-you{fill:#e4eeff;stroke:#3b6fd6}
+.f-step{fill:#f3f5f8;stroke:#8a94a3}
+.f-gate{fill:#fff4d6;stroke:#c08a00}
+.f-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.f-find{fill:#fde9e7;stroke:#c5483f}
+.f-bg{fill:#ffffff}
+.f-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.f-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.f-t{fill:#eef2f6}.f-h,.f-x{fill:#a3afbf}.f-s{fill:#e1e7ee}
+.f-step{fill:#222b36;stroke:#5c6b7d}.f-you{fill:#162a4f;stroke:#6d9bf0}
+.f-gate{fill:#3a2e0d;stroke:#d9a521}.f-find{fill:#3d1c1a;stroke:#e0736a}
+.f-ok{fill:#153420;stroke:#4fb56c}.f-bg{fill:#12171d}.f-a{stroke:#9aa7b8}.f-ah{fill:#9aa7b8}
+}
+
+.f-sys{fill:#f3f5f8;stroke:#566173;stroke-dasharray:6 4}
+.k-shipped{stroke:#8a94a3;stroke-width:1.5}.k-v20{stroke:#d9822b;stroke-width:5}.k-planned{stroke:#8a5cd6;stroke-width:5;stroke-dasharray:10 6}
+.p-shipped{fill:#2f8f4a}.p-v20{fill:#d9822b}.p-planned{fill:#8a5cd6}
+.f-pill{font:700 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#ffffff}
+@media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-planned{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-planned{fill:#7a4cc6}}
+@media (prefers-color-scheme: dark){.f-sys{fill:#181e26;stroke:#8a94a3}}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
+<rect width="640" height="440" class="f-bg"/>
+<text x="12" y="22" class="f-t">System design: the loop in its surroundings</text>
+<text x="12" y="40" class="f-x">C4 system context. The principles judge every part inside the dashed box.</text>
+<rect x="240" y="56" width="160" height="46" rx="8" class="f-you" stroke-width="1.2"/>
+<text x="320" y="75" text-anchor="middle" class="f-s">The owner</text>
+<text x="320" y="90" text-anchor="middle" class="f-x">any machine</text>
+<rect x="12" y="130" width="616" height="220" rx="10" class="f-sys" stroke-width="1.2"/>
+<text x="24" y="150" class="f-h">AGENT-WORKFLOW-TEMPLATE LOOP</text>
+<rect x="28" y="164" width="176" height="64" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="116" y="183" text-anchor="middle" class="f-s">Documentation</text>
+<text x="116" y="198" text-anchor="middle" class="f-x">requirements, pages, README</text>
+<rect x="232" y="164" width="176" height="64" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="320" y="183" text-anchor="middle" class="f-s">Delivery</text>
+<text x="320" y="198" text-anchor="middle" class="f-x">goal to pull request to release</text>
+<rect x="436" y="164" width="176" height="64" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="524" y="183" text-anchor="middle" class="f-s">Operation</text>
+<text x="524" y="198" text-anchor="middle" class="f-x">one session governs the workers</text>
+<rect x="28" y="262" width="176" height="64" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="116" y="281" text-anchor="middle" class="f-s">Checks</text>
+<text x="116" y="296" text-anchor="middle" class="f-x">docs check, regression, health</text>
+<rect x="232" y="262" width="176" height="64" rx="8" class="f-gate" stroke-width="1.2"/>
+<text x="320" y="281" text-anchor="middle" class="f-s">Guardrails</text>
+<text x="320" y="296" text-anchor="middle" class="f-x">private, small, reproducible</text>
+<rect x="436" y="262" width="176" height="64" rx="8" class="f-ok" stroke-width="1.2"/>
+<text x="524" y="281" text-anchor="middle" class="f-s">Setup and release</text>
+<text x="524" y="296" text-anchor="middle" class="f-x">adopt, settings, versions</text>
+<rect x="28" y="376" width="176" height="46" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="116" y="395" text-anchor="middle" class="f-s">GitHub</text>
+<text x="116" y="410" text-anchor="middle" class="f-x">repos, wiki, Actions</text>
+<rect x="232" y="376" width="176" height="46" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="320" y="395" text-anchor="middle" class="f-s">Agent tools</text>
+<text x="320" y="410" text-anchor="middle" class="f-x">Claude Code, Codex</text>
+<rect x="436" y="376" width="176" height="46" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="524" y="395" text-anchor="middle" class="f-s">Machines</text>
+<text x="524" y="410" text-anchor="middle" class="f-x">the PC and the Mac</text>
+<path d="M320 102 L320 130" class="f-a" marker-end="url(#ah)"/>
+<text x="326" y="120" class="f-x">says a goal, answers what is theirs</text>
+<path d="M116 350 L116 376" class="f-a" marker-end="url(#ah)"/>
+<path d="M320 350 L320 376" class="f-a" marker-end="url(#ah)"/>
+<path d="M524 350 L524 376" class="f-a" marker-end="url(#ah)"/>
+<path d="M204 196 L232 196" class="f-a" marker-end="url(#ah)"/>
+<path d="M408 196 L436 196" class="f-a" marker-end="url(#ah)"/>
+<path d="M116 228 L116 262" class="f-a" marker-end="url(#ah)"/>
+<path d="M320 228 L320 262" class="f-a" marker-end="url(#ah)"/>
+<path d="M524 228 L524 262" class="f-a" marker-end="url(#ah)"/>
+<text x="12" y="436" class="f-x">C4 model, level 1 (system context). One figure for all principles.</text>
+</svg>
