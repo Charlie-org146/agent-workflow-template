@@ -35,7 +35,28 @@ def fresh():
         json.dump({"steps": dict.fromkeys(("idea", "plan", "build", "review", "qa", "ship"), "built-in")}, handle)
     subprocess.run(git + ["add", "-A"], cwd=repo, check=True)
     subprocess.run(git + ["commit", "-q", "-m", "base"], cwd=repo, check=True)
+    trust(repo)
     return repo
+
+
+def trust(home, shape="trusting"):
+    """The trust file under HOME: a readable one that trusts HOME (the fixture default), or one of the shapes untrusted() refuses."""
+    path = os.path.join(home, ".claude.json")
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    elif os.path.exists(path):
+        os.remove(path)
+    if shape == "trusting":
+        json.dump({"projects": {home: {"hasTrustDialogAccepted": True}}}, open(path, "w"))
+    elif shape == "empty":
+        open(path, "w").close()
+    elif shape == "garbage":
+        open(path, "w").write("{not json")
+    elif shape == "directory":
+        os.makedirs(path)
+    elif shape == "no projects":
+        json.dump({"numStartups": 1}, open(path, "w"))
+    return path
 
 
 def freeze(repo, session):
@@ -95,7 +116,17 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
         return done.returncode, done.stdout + done.stderr
 
     code, said = bind()
-    check("negative control: with no ~/.claude.json nothing is known, so bind goes through", code == 0 and "w1" in said)
+    check("negative control: with a readable file that trusts the folder, bind goes through", code == 0 and "w1" in said)
+    for shape in ("missing", "empty", "garbage", "directory", "no projects"):  # TD509 / #5741: an unreadable trust file trusts nothing
+        claude = trust(repo, shape)
+        before = open(claude).read() if os.path.isfile(claude) else None
+        json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+        json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+        code, said = bind()
+        want = "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; the trust file %s must be readable and list it." % (tree, claude)
+        check("a %s trust file trusts nothing: bind is refused with the whole plain reason" % shape, code != 0 and want in said)
+        check("and the %s trust file is never written" % shape, (open(claude).read() if os.path.isfile(claude) else None) == before and (shape == "missing") != os.path.exists(claude))
+    claude = os.path.join(repo, ".claude.json")
     json.dump({"projects": {os.path.join(repo, "elsewhere"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
     before = open(claude).read()
     json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
@@ -121,7 +152,9 @@ if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bou
         done = subprocess.run([sys.executable, os.path.join(scripts, "unattended.py"), "selfcheck"], cwd=repo, capture_output=True, text=True, env=env)
         return done.stdout
 
-    check("negative control: with no ~/.claude.json no folder is called untrusted", "folder trust" not in selfcheck())
+    check("negative control: with a readable file that trusts the folder, no folder is called untrusted", "folder trust" not in selfcheck())
+    os.remove(claude)
+    check("with no ~/.claude.json the bound session's worktree is MISSING folder trust, with its slug", "MISSING folder trust: g" in selfcheck())
     json.dump({"projects": {os.path.join(repo, "elsewhere"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
     check("a bound session whose worktree has no trust entry is MISSING folder trust, with its slug", "MISSING folder trust: g" in selfcheck())
     json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
