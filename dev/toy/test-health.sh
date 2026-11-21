@@ -41,6 +41,8 @@ echo "CHANGE = 1" >> calc.py; git commit -qam "Change calc"
 out=$($health check --family docs); echo "$out"
 grep -q "^WARN docs Calc stale: " <<<"$out" && ok "a stale page shows as a docs row naming it" || bad "stale"
 grep -q "^FAIL docs Ghost missing: " <<<"$out" && ok "a missing page shows as a FAIL" || bad "missing"
+$health check --family docs >/dev/null; rc=$?
+[ $rc = 1 ] && tail -1 <<<"$out" | grep -q "^HEALTH: not green" && ok "a FAIL makes the verdict not green" || bad "red verdict"
 out=$($health check --family requirements); echo "$out"
 grep -q "^FAIL requirements REL-1 rows: not enforced for [0-9]* days since Reviewed 2026-01-01" <<<"$out" && ok "a criterion with no row is a FAIL" || bad "criterion row"
 [ "$($health check --family criteria)" = "$out" ] && ok "the old group name criteria still works" || bad "criteria alias"

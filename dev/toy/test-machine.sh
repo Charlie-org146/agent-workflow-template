@@ -202,6 +202,12 @@ if want machine-health-rule; then
   echo "PASS: health's Adoption group lists the machine gaps"
 fi
 
+# done 12 (the byte cap went with the package, SET-10; this half stays): machine.py lives in dev/, not in the skills folder every repo copies.
+if want machine-location; then
+  git -C "$here" ls-files skills | grep -q '/machine\.py$' && no "machine.py is under skills/"
+  echo "PASS: machine.py is not under skills/"
+fi
+
 # done 13: the operation session and the peer link exist after apply; check names a missing one.
 if want machine-operation-peer; then
   mk o; r="$d/o/repo"; h="$d/ho"; mkdir -p "$h"
