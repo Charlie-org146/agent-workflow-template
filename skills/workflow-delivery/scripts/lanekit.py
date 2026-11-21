@@ -382,17 +382,22 @@ def left_of(text):
 
 
 def hit(runs, slug, step, kind, limit, left):
+    """Record a budget hit: under the lock goal.py save takes, reread the record and change only budget_hits (#5350)."""
     path = os.path.join(runs, slug + ".json")
-    try:
-        with open(path) as handle:
-            state = json.load(handle)
-    except (OSError, ValueError):
+    if not os.path.exists(path):
         return
-    kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
-    state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
-    with tempfile.NamedTemporaryFile("w", dir=runs, delete=False, suffix=".tmp") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(handle.name, path)
+    with open(path + ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            with open(path) as handle:
+                state = json.load(handle)
+        except (OSError, ValueError):
+            return
+        kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
+        state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
+        with tempfile.NamedTemporaryFile("w", dir=runs, delete=False, suffix=".tmp") as handle:
+            json.dump(state, handle, indent=2)
+        os.replace(handle.name, path)
 
 
 def reached(state, step):

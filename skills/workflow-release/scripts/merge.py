@@ -14,6 +14,7 @@ Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, mer
 """
 import argparse
 import datetime
+import fcntl
 import importlib.util
 import json
 import os
@@ -245,6 +246,27 @@ def advance(top, cfg, state, again=False):
               url, number, why, number, slug, state.get("release_pr_branch"), state["release_tries"]))
 
 
+def save_merged(path, state, seen):
+  """Save under the lock goal.py save takes, rereading the record and writing only the fields this run changed (#5350)."""
+  with open(path + ".lock", "w") as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    try:
+      with open(path) as handle:
+        disk = json.load(handle)
+    except (OSError, ValueError):
+      disk = {}
+    was = json.loads(seen)
+    merged = dict(disk, **{k: v for k, v in state.items() if k not in was or was[k] != v})
+    merged = {k: v for k, v in merged.items() if k in state or k not in was}
+    have = disk.get("log") or []
+    merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
+    with open(path + ".tmp", "w") as handle:
+      json.dump(merged, handle, indent=2)
+    os.replace(path + ".tmp", path)
+  state.clear()
+  state.update(merged)
+
+
 def load(path):
   try:
     with open(path) as handle:
@@ -299,6 +321,7 @@ def main():
   state = load(path)
   if state is None:
     sys.exit("REFUSED: no goal named %s." % slug)
+  seen = json.dumps(state)
   if not ar.mergeable(state):
     sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
   if pods:
@@ -366,9 +389,7 @@ def main():
   ar.mark_merged(state)
   state["updated"] = at
   state.setdefault("log", []).append("%s merged %s (auto_merge)" % (at, state["pr"]))
-  with open(path + ".tmp", "w") as handle:
-    json.dump(state, handle, indent=2)
-  os.replace(path + ".tmp", path)
+  save_merged(path, state, seen)
   print("MERGED %s into %s" % (state["pr"], base))
   print(run([sys.executable, OPERATE, "forward", base], top).stdout.strip())
   leave_queue(path, slug)

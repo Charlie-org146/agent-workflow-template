@@ -50,5 +50,50 @@ PY
 )
 check "role.py save and fit.py save keep a budget goal.py set after the worker loaded its record (issue 5350)" '[ "$(tail -1 <<<"$out")" = OK ]'
 
+# #5350: lanekit.hit (a budget hit written by flow.py/lane.py) rereads and writes the record under goal.py's lock, so a budget
+# goal.py set while it runs is never lost. A writer process bumps the budget under the lock while hit() records 300 hits.
+out=$(python3 - "$here/skills/workflow-delivery/scripts" <<'PY'
+import fcntl, json, os, subprocess, sys, tempfile
+d = tempfile.mkdtemp(); runs = os.path.join(d, "runs"); os.makedirs(runs)
+rec = os.path.join(runs, "g.json")
+json.dump({"slug": "g", "budget_minutes": 0, "log": []}, open(rec, "w"))
+N = 300
+writer = subprocess.Popen([sys.executable, "-c", """
+import fcntl, json, os, sys
+rec = sys.argv[1]
+for _ in range(%d):
+    with open(rec + ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        s = json.load(open(rec)); s["budget_minutes"] += 1
+        json.dump(s, open(rec + ".w", "w")); os.replace(rec + ".w", rec)
+""" % N, rec])
+sys.path.insert(0, sys.argv[1]); import lanekit
+for i in range(N):
+    lanekit.hit(runs, "g", "build", "step", 30, "left %d" % i)
+writer.wait()
+s = json.load(open(rec))
+print("OK" if s["budget_minutes"] == N and s["budget_hits"][0]["left"] == "left %d" % (N - 1) else "BAD %s" % s["budget_minutes"])
+PY
+)
+check "lanekit.hit keeps a budget goal.py set while a budget hit is recorded (issue 5350)" '[ "$(tail -1 <<<"$out")" = OK ]'
+
+# #5350: mend.py save rereads the record under the lock and writes only what its caller changed, so a budget goal.py set after
+# the caller loaded its (old) state survives, and the caller's own change and log line land.
+out=$(python3 - "$here/skills/workflow-monitoring/scripts" <<'PY'
+import json, os, subprocess, sys, tempfile
+d = tempfile.mkdtemp(); os.chdir(d)
+subprocess.run(["git", "init", "-q"], check=True)
+runs = os.path.join(d, ".git", "loop", "runs"); os.makedirs(runs)
+rec = os.path.join(runs, "g.json")
+json.dump({"slug": "g", "status": "running", "budget_minutes": 240, "log": ["a"]}, open(rec, "w"))
+sys.path.insert(0, sys.argv[1]); import mend
+state = mend.load("g")
+s = json.load(open(rec)); s["budget_minutes"] = 360; s["log"].append("b"); json.dump(s, open(rec, "w"))  # goal.py set, after the load
+state["status"] = "stopped"; mend.save(state, "mended")
+r = json.load(open(rec))
+print("OK" if (r["budget_minutes"], r["status"], r["log"][:2], len(r["log"])) == (360, "stopped", ["a", "b"], 3) else "BAD %s" % r)
+PY
+)
+check "mend.py save keeps a budget goal.py set after its caller loaded the record (issue 5350)" '[ "$(tail -1 <<<"$out")" = OK ]'
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

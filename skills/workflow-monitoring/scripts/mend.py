@@ -80,24 +80,32 @@ def record_path(slug):
     return os.path.join(loop_dir("runs"), slug + ".json")
 
 
+SEEN = {}
+
+
 def load(slug):
     try:
         with open(record_path(slug)) as handle:
-            return json.load(handle)
+            SEEN[slug] = handle.read()
+        return json.loads(SEEN[slug])
     except (OSError, ValueError):
         return None
 
 
+def delivery(name):
+    spec = importlib.util.spec_from_file_location(name, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", name + ".py"))
+    module = sys.modules[name] = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def save(state, note=None):
-    state["updated"] = now()
-    if note:
-        state.setdefault("log", []).append("%s %s" % (state["updated"], note))
-        print("%s %s: %s" % (state["updated"], state["slug"], note))
-    path = record_path(state["slug"])
-    temp = path + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, path)
+    goal = delivery("goal")  # #5350: its save merges under the lock
+    slug = state["slug"]
+    goal.SEEN[slug] = SEEN.get(slug, "{}")
+    note and print("%s %s: %s" % (now(), slug, note))
+    goal.save(state, note)
+    SEEN[slug] = json.dumps(state)
 
 
 def runs():
@@ -165,11 +173,8 @@ def release_text(state):
 def resume_text(state):
     """Where a restarted goal goes on (fit.resume_at), its next command and the worktree state (D7: uncommitted files,
     HEAD); '' without workflow-delivery's fit.py."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "fit.py")
     try:
-        spec = importlib.util.spec_from_file_location("fit", path)
-        fit = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(fit)
+        fit = delivery("fit")
     except Exception:  # missing or broken: no line
         return ""
     tree = state.get("worktree") or os.path.join(loop_dir("worktrees"), state["slug"])

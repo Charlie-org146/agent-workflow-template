@@ -150,5 +150,15 @@ out=$(qgo true); rc=$?
 check "queue on, negative control: gh never reports the pull request merged, so no MERGED is printed and the goal is not marked merged" '[ $rc != 0 ] && ! grep -q "^MERGED" <<<"$out" && grep -q "the merge queue has not merged https://example.test/pull/1" <<<"$out" && ! grep -q BASE_MOVED <<<"$out"'
 out=$(qgo false FAKE_GH_QUEUE=1); rc=$?
 check "queue off: the same moved base still refuses BASE_MOVED (exit 2) and nothing is enqueued" '[ $rc = 2 ] && grep -q "^REFUSED (BASE_MOVED)" <<<"$out" && [ ! -e "$FAKE_GH_DIR/enqueued" ]'
+# #5350: merge.py saves under the record lock, rereading it, so a budget goal.py set while gh merged is kept
+mkdir -p "$d/shim"
+cat > "$d/shim/gh" <<SHIM
+#!/bin/bash
+[ "\$1 \$2" = "pr merge" ] && python3 -c 'import json,sys; s=json.load(open(sys.argv[1])); s["budget_minutes"]=360; json.dump(s,open(sys.argv[1],"w"))' "$n/$common/loop/runs/g.json"
+exec "$here/dev/toy/fakegh/gh" "\$@"
+SHIM
+chmod +x "$d/shim/gh"
+out=$(PATH="$d/shim:$PATH" qgo true FAKE_GH_QUEUE=1); rc=$?
+check "a budget goal.py set while gh merged survives merge.py's final save (issue 5350)" '[ $rc = 0 ] && grep -q "^MERGED " <<<"$out" && grep -q "\"budget_minutes\": 360" "$common/loop/runs/g.json"'
 printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
