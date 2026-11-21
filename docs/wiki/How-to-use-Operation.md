@@ -85,4 +85,4 @@ Each requirement and how it is delivered:
 - PRD page: [Operation](Operation)
 - Backlog: [Backlog: Operation](https://github.com/jcl2018/agent-workflow-template/milestones)
 
-<!-- kept slot-hold-release@75f0feff -->
+<!-- kept kr-reply-hook@2f9a900a -->

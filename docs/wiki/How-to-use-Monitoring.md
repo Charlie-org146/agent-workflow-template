@@ -137,4 +137,4 @@ Each requirement and how it is delivered:
 
 <!-- kept plan-red-team-core@6edef587 -->
 
-<!-- kept slot-hold-release@75f0feff -->
+<!-- kept kr-reply-hook@2f9a900a -->
