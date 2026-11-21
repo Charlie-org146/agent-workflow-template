@@ -10,7 +10,6 @@ ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the def
 ls-size-budget	red on main f3a20557: test-local-schedule.sh size fails 'the package holds at most 99 files'; see #5343
 runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
 lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4153
-lanes-trace-check	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4097
 merge-guard-base-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4113
 reply-hook-blocks	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4549
 reply-hook-checkin-123	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4547

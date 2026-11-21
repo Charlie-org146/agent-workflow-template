@@ -150,8 +150,8 @@ check "an uncommitted deletion selects rows the same way" '! grep -q "^FULL" <<<
 git checkout -q -- skills/k/scripts/k.py
 echo "== check-reads.sh: runtime reads outside a row's closure fail the trace"
 c="$d/trace"; mkdir -p "$c/dev/toy" "$c/skills/workflow-regression/scripts" "$c/skills/a/scripts" "$c/.loop"
-cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here/skills/workflow-regression/scripts/lanes.py" "$here/skills/workflow-regression/scripts/narrow.py" \
-  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$c/skills/workflow-regression/scripts/"
+# lanes_cli.py imports tiers, lanes, narrow and slots, and those import more: copy the folder's scripts, not a hand-picked few
+cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here"/skills/workflow-regression/scripts/*.py "$c/skills/workflow-regression/scripts/"
 for f in a b c e; do printf 'NAME = "%s"\nopen(__file__).read()\n' "$f" > "$c/skills/a/scripts/$f.py"; done
 printf 'import os\nopen(os.path.join(os.path.dirname(__file__), "c" + ".py")).read()\n' > "$c/skills/a/scripts/g.py"
 printf 'import os, shutil, subprocess, sys, tempfile\nt = tempfile.mkdtemp(); shutil.copy(os.path.join(os.path.dirname(__file__), "e" + ".py"), t + "/x.py")\nsubprocess.run(["python3", t + "/x.py"], check=True)\n' > "$c/skills/a/scripts/k.py"
