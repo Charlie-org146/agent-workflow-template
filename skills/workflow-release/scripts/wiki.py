@@ -89,12 +89,6 @@ def commit(top, cfg, slug):
         git("add", "--", folder, cwd=top)
         git("commit", "-m", "Wiki: update pages for %s" % slug, "--", folder, cwd=top)
         print("COMMITTED the wiki pages for %s" % slug)
-    # #5317: the audit's entry.write regenerates these; left uncommitted they push stale and merge.py refuses
-    made = [f for f in (".loop/START.md", "CLAUDE.md", "AGENTS.md")
-            if run(["git", "ls-files", "--", f], cwd=top).stdout.strip() and run(["git", "status", "--porcelain", "--", f], cwd=top).stdout.strip()]
-    if made:
-        git("commit", "-m", "Regenerate START.md for %s" % slug, "--", *made, cwd=top)
-        print("COMMITTED the regenerated %s for %s" % (", ".join(made), slug))
 
 
 def cmd_prepare(args):
