@@ -118,7 +118,7 @@ def main():
             sys.exit("REFUSED: git diff failed")
         changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
-        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv"}
+        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv", "README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md"}
         allowed = lambda x: (x in mine or re.match(r"\.loop/goals/migrate-features(-2)?\.", x) or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
         extra = [x for x in changed if not allowed(x)]
         ok("2 every changed file is a named page, the report, the scripts, a goal record or an allowed path", not extra, ", ".join(extra))
@@ -146,7 +146,25 @@ def main():
                 bad.append(n)
         ok("2 each page, blocks stripped and marks restored, equals BASE byte for byte", not bad, ", ".join(bad))
         # done line 3: counts follow from unchanged Revisions (inside the pages), the regression table and the Principles table
-        ok("3 test rows and Follows cells untouched (regression.tsv, Principles.md)", not [x for x in changed if x in (".loop/regression.tsv", "docs/wiki/Principles.md")])
+        ok("3 test rows untouched (regression.tsv)", ".loop/regression.tsv" not in changed)
+        # narrowed (#5728, owner-approved): the three generated tables may differ from BASE only in the Confidence cell; Follows and every other cell equal BASE's
+        gen, off, conf = ["README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md"], [], {}
+        for g in gen:
+            was = (show(base, g) or "").replace("\r\n", "\n").split("\n")
+            now_ = open(os.path.join(tmp, g), encoding="utf-8", newline="").read().replace("\r\n", "\n").split("\n")
+            if len(was) != len(now_):
+                off.append("%s: line count" % g)
+                continue
+            for x, y in zip(was, now_):
+                cx, cy = x.split("|"), y.split("|")
+                if x != y and not (x.startswith("|") and len(cx) == len(cy) and cx[:-2] == cy[:-2] and cx[-1] == cy[-1]):
+                    off.append("%s: %s" % (g, y[:50]))
+                m = re.match(r"\| \[(%s) " % ID, y)
+                if m and len(cy) > 2:
+                    conf.setdefault(m[1], {})[g] = cy[-2]
+        ok("3 the three generated tables differ from BASE only in the Confidence cell (Follows and every other cell equal BASE's)", not off, "; ".join(off[:3]))
+        split = sorted(k for k, v in conf.items() if len(set(v.values())) > 1)
+        ok("3 the Confidence cells agree across README, Home and Principles", not split, ", ".join(split[:5]))
         blocks = 0
         for n in names:
             t = open(os.path.join(tmp, "docs/wiki/%s.md" % n), encoding="utf-8", newline="").read()
@@ -194,6 +212,8 @@ def main():
         again = subprocess.run([sys.executable, "docs/migrations/features-v1.py", "run", "--base", base, "--skip", a.skip], cwd=clone, capture_output=True, text=True)
         status = run("git", "status", "--porcelain", cwd=clone)
         ok("5 a second run exits 0 and leaves an empty diff", again.returncode == 0 and status == "", (again.stdout + again.stderr)[-200:] or "git status failed")
+        subprocess.run([sys.executable, "skills/workflow-docs/scripts/criteria.py", "render"], cwd=clone, capture_output=True, text=True)
+        ok("3 the committed README equals what criteria.py render writes (the Confidence cells are the computed values)", run("git", "status", "--porcelain", cwd=clone) == "", "render changes the tree")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("CHECK %s on HEAD %s against BASE %s" % ("FAILED (%d)" % len(fails) if fails else "OK", head[:9], base[:9]))
