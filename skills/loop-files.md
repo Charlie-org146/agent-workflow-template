@@ -137,7 +137,7 @@ loop/handoff.md           the last handoff file
 loop/wiki.json            the last wiki publish, for restore
 loop/reply-hook/          the reply hook's state: <session>.kind (operation or worker), <session>.count (blocks this turn), log
 loop/tests/<branch>-<sha8>.json   a branch's last regression run: each row's result, seconds and commit, and the total (regression.py --reuse; health's test-time rule); deleted when its rows leave uncommitted files
-loop/runs/<slug>.qa-lane.*, ship-lane.*, pr-lane.*   a goal's regression lanes: job, exit status, output; qa-lane.ok
+loop/runs/<slug>.qa-lane.*, ship-lane.*, pr-lane.*   a goal's regression lanes: job, exit status, output; qa-lane.ok (a lane's .ok at HEAD answers all three)
 ```
 
 ### `runs/<slug>.json`
@@ -847,6 +847,7 @@ part is advice and never blocks.
 | LANE_RECORDER | lane.py | 1 | the flow file's `test_record` command isn't on this machine | install it or remove it |
 | LANE_TMPDIR | lane.py | 1 | the system temp folder is inside a git checkout; no job was made | set TMPDIR to a folder outside any repo, then run again |
 | LANE_DIED | lane.py | 1 | the lane ended with no exit status | the next call starts a new lane |
+| LANE_REUSE_COPY | lane.py | 1 | another lane's pass at this HEAD could not be copied; no `.ok` was written | run the same command again |
 | LANE_MISSING / HEAD_MOVED (record) | lane.py via goal.py | 2 | `goal.py record qa\|ship` with no passing lane on this HEAD; no try is used | run `role.py lane SLUG NAME` |
 | NO LANE | lane.py | 3 | `lane-wait` found no lane for this HEAD | start one with `role.py lane SLUG NAME` |
 | UNMAPPED | tiers.py | — | a changed or deleted path no row declares (Note) | declare it in the `# reads:` header of the row that tests it, or let pr run the full suite once |
@@ -860,6 +861,23 @@ part is advice and never blocks.
 
 Exit codes shared by every lane entry point: 0 pass (or still running for `role.py lane`), 1 fail, 2 lane-wait
 timeout, 3 no lane, 4 a hand run's slot wait timed out, 5 stale, 124 time limit.
+
+### One lane per head
+
+A pass at a HEAD by one lane (qa, ship or pr) answers the other two: `role.py lane SLUG ship` copies the passing lane's
+record (`.txt`, `.last`, then `.ok`) and says so on the first line with `; reused: the qa lane passed on this head`, and
+no lane starts. `goal.py record qa|ship` accepts the `.ok` of any lane that holds HEAD. Any move of HEAD needs a new lane,
+so `goal.py pr` reuses the pass only when its base merge leaves HEAD where the lane passed; a dirty tree gets no reuse.
+The copy keeps the `N pass; M not runnable here` note, and a fail at this HEAD is kept as `.last.prev`.
+
+```
+role.py lane SLUG qa    LANE qa AFFECTED 4/4 in 612s
+role.py lane SLUG ship  LANE qa AFFECTED 4/4 in 612s; reused: the qa lane passed on this head
+```
+
+To test again on the same HEAD, move the `<slug>.<name>-lane.last` and `.ok` files of all three lanes aside (name them
+`.prev`) and run the lane again. A regression run still reuses rows that passed, so run a row by hand with
+`regression.py run <id>`.
 
 ### Clocks
 
