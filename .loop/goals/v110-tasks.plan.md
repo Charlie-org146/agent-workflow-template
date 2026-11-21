@@ -52,7 +52,7 @@ Each is part of the plan above and is built and tested as written.
 
 - O1 never raise into the check-in or board; incomplete or unreadable brief named, not hidden; toy rows.
 - O2 brief text cleaned (control characters, pipe, length) and no private name; toy row with the repo's private-name scan.
-- O3 a goal named by two tasks is counted in both and flagged; toy row.
+- O3 a goal named by two tasks is counted in both and flagged; toy row. NOT BUILT: dropped to fit the byte caps (see Not built).
 - O4 Needs resolved through Replaced by, then cycle check on effective edges; toy rows for a cycle, a replacement cycle, reversed order and a three-task chain.
 - O5 state precedence replaced > done > running > waiting > queued; status queued is not started; ETA metric as stated; root passed explicitly; toy rows including cwd outside the fixture.
 - O6 both surfaces are required; if the board reader cannot fit the goal halts and reports line 4 unmet to operation; compact form keeps goal names.
@@ -67,7 +67,7 @@ Each is part of the plan above and is built and tested as written.
 - DX4 keys case-insensitive, spaces trimmed, unknown lines ignored.
 - DX5 no .loop/tasks: byte-identical output.
 - DX6 a toy row shows a brief appears in the same render; no telemetry.
-- DX8 an unknown or retired goal reference is flagged by name with the line to check; toy rows.
+- DX8 an unknown or retired goal reference is flagged by name with the line to check; toy rows. NOT BUILT: dropped to fit the byte caps (see Not built).
 - DX9 the Tasks section covers this repo only; stated on the page.
 - DX10 goal labels: finished, awaiting merge, not started, else the flow step; toy rows.
 
