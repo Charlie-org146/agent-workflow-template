@@ -237,6 +237,7 @@
 | <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-guide-page-stamp"></a>guide-page-stamp | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-doc1-sync-pointer-by-id"></a>doc1-sync-pointer-by-id | defect | [#5308](https://github.com/Charlie-org146/agent-workflow-template/issues/5308) state unknown | not run | - | local | no |
 
 ## Guardrails
 
