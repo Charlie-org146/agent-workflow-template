@@ -5,8 +5,11 @@
 send is counted with its time and the owner's words reset the count (a peer's do not); one event is one message per distinct
 worker session; at 15 of 20 the check-in says when the cap runs out, once; a worker comes only from a free (archived)
 session and a new one is refused; both scripts stay no larger than main and under the package gate."""
+import atexit
+import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,22 +18,53 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scripts, "sessions.py")
 fails = 0
-HOME = tempfile.mkdtemp(prefix="limits-home-")
+DROP_PREFIXES = ("LOOP_", "CLAUDE", "ANTHROPIC")
+DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
+THROWAWAY = tempfile.mkdtemp(prefix="limits-toy-")  # one mkdtemp area for the home, the fixture and the decoy; cleanup() removes only this
+HOME = os.path.join(THROWAWAY, "home")
+os.makedirs(HOME)
+
+
+def clean_env(**more):
+    """The environment every subprocess of this toy gets: no host session or loop setting, no git location variable, a throwaway HOME."""
+    keep = {k: v for k, v in os.environ.items() if not k.startswith(DROP_PREFIXES) and k not in DROP_NAMES}
+    keep.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1")
+    keep.update(more)
+    return keep
 
 
 def real_id_hash():
-    """Hash of the checkout's own .git/loop/operation.id (or "absent"); never its contents."""
-    import hashlib
+    """Hash of the checkout's own .git/loop/operation.id; never its contents. One id per line (the format govern_hook.operation_ids reads).
+    A failed git discovery or an unreadable file is "unverified:..." (a FAIL line), only a missing file at a discovered path is "absent"."""
+    done = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True, env=clean_env())
+    out = done.stdout.strip()
+    if done.returncode != 0 or not out:
+        return "unverified:discovery"
+    path = os.path.join(os.path.abspath(os.path.join(root, out)), "loop", "operation.id")
+    if not os.path.lexists(path):
+        return "absent"
     try:
-        out = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")}).stdout.strip()
-        path = os.path.join(os.path.abspath(os.path.join(root, out)), "loop", "operation.id")
         with open(path, "rb") as handle:
             return hashlib.sha256(handle.read()).hexdigest()
     except OSError:
-        return "absent"
+        return "unverified:unreadable"
 
 
 REAL_BEFORE = real_id_hash()
+
+
+def cleanup():
+    """Remove the one directory this toy created, and only that: it must lie under the real temp directory and be neither HOME nor the cwd."""
+    try:
+        target = os.path.realpath(THROWAWAY)
+        temp = os.path.realpath(tempfile.gettempdir())
+        if target.startswith(temp + os.sep) and target not in (os.path.realpath(os.path.expanduser("~")), os.path.realpath(os.getcwd())):
+            shutil.rmtree(target, ignore_errors=True)
+    except OSError:
+        pass
+
+
+atexit.register(cleanup)
 
 
 def check(name, ok):
@@ -40,10 +74,8 @@ def check(name, ok):
 
 
 def run(top, script, *args, **env):
-    # hermetic: no host session id or loop setting, and a throwaway HOME so the owner's ~/.claude.json and ~/.workflow-loop are never read
-    keep = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE", "ANTHROPIC")) and k not in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")}
-    keep.update(HOME=HOME, USERPROFILE=HOME)
-    done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, **env))
+    # hermetic: clean_env() (no host session or loop setting, a throwaway HOME so the owner's ~/.claude.json and ~/.workflow-loop are never read)
+    done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=clean_env(**env))
     return done.returncode, done.stdout + done.stderr
 
 
@@ -55,13 +87,20 @@ def count(top):
         return {}
 
 
-top = tempfile.mkdtemp(prefix="limits-toy-")
-subprocess.run(["git", "init", "-q", "-b", "main"], cwd=top, capture_output=True)
+def repo(name):
+    """A disposable repository under the throwaway directory, built with clean_env() so nothing inherited names another repository."""
+    path = os.path.join(THROWAWAY, name)
+    os.makedirs(path)
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=path, capture_output=True, env=clean_env())
+    os.makedirs(os.path.join(path, ".git", "loop", "runs"))
+    os.makedirs(os.path.join(path, ".loop"))
+    with open(os.path.join(path, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": "main"}, handle)
+    return path
+
+
+top = repo("top")
 loop = os.path.join(top, ".git", "loop")
-os.makedirs(os.path.join(loop, "runs"))
-os.makedirs(os.path.join(top, ".loop"))
-with open(os.path.join(top, ".loop", "config.json"), "w") as handle:
-    json.dump({"base": "main"}, handle)
 log = os.path.join(top, "tool.log").replace("\\", "/")
 fake = os.path.join(top, "fake.py").replace("\\", "/")
 with open(fake, "w") as handle:
@@ -115,8 +154,8 @@ check("a: the owner's words reset the count with no hand reset", code == 0 and c
 for _ in range(15):
     run(top, unattended, "sends", "add", "w")
 probe = ("import sys; sys.path.insert(0, %r); import unattended; print(unattended.lines()[1])" % scripts.replace("\\", "/"))
-first = subprocess.run([sys.executable, "-c", probe], cwd=top, capture_output=True, text=True).stdout
-second = subprocess.run([sys.executable, "-c", probe], cwd=top, capture_output=True, text=True).stdout
+first = subprocess.run([sys.executable, "-c", probe], cwd=top, capture_output=True, text=True, env=clean_env()).stdout
+second = subprocess.run([sys.executable, "-c", probe], cwd=top, capture_output=True, text=True, env=clean_env()).stdout
 check("c: at 15 of 20 the check-in carries one line with the projected time the cap runs out", "Send cap near" in first and "runs out about" in first)
 check("c: it is printed once", "Send cap near" not in second)
 run(top, unattended, "sends", "reset")
@@ -141,7 +180,9 @@ check("d: a free (archived) session is woken, renamed and sent the goal", code =
 for path in (unattended, sessions):
     with open(path, "rb") as handle:
         size = len(handle.read().replace(b"\r\n", b"\n"))
-    old = subprocess.run(["git", "show", "origin/main:" + os.path.relpath(path, root).replace("\\", "/")], cwd=root, capture_output=True)
+    old = subprocess.run(["git", "show", "origin/main:" + os.path.relpath(path, root).replace("\\", "/")], cwd=root, capture_output=True, env=clean_env())
+    if old.returncode != 0 or not old.stdout:
+        print("NOTE: no baseline for %s on origin/main (git show exit %d): the 20,000-byte gate alone applies" % (os.path.basename(path), old.returncode))
     limit = len(old.stdout.replace(b"\r\n", b"\n")) if old.returncode == 0 and old.stdout else 20000
     check("e: %s is %d bytes, no larger than main (%d) and under 20,000" % (os.path.basename(path), size, limit), size <= min(limit, 20000))
 
@@ -156,6 +197,42 @@ finally:
     os.environ.pop("GIT_DIR", None)
 check("control: with a host session id and GIT_DIR in the environment the fixture still counts its send", count(top).get("count") == before + 1)
 check("control: and the checkout's own operation.id is unchanged", real_id_hash() == REAL_BEFORE)
-check("hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy", real_id_hash() == REAL_BEFORE)
+
+# control (#5700 redirect): with the parent GIT_DIR naming a second valid repository, the scrubbed call counts in its own repository and leaves the
+# decoy alone; the same command without the scrub lands its send in the decoy, which is the cross-repository write the scrub prevents
+decoy = repo("decoy")
+top_n, decoy_n = count(top).get("count"), count(decoy).get("count") or 0
+os.environ["GIT_DIR"] = os.path.join(decoy, ".git")
+try:
+    run(top, unattended, "sends", "add", "w")
+    scrubbed_top, scrubbed_decoy = count(top).get("count"), count(decoy).get("count") or 0
+    direct_env = clean_env(GIT_DIR=os.path.join(decoy, ".git"))
+    subprocess.run([sys.executable, unattended, "sends", "add", "w"], cwd=top, capture_output=True, text=True, env=direct_env)
+finally:
+    os.environ.pop("GIT_DIR", None)
+check("control: with GIT_DIR naming another repository, the scrubbed call counts in its own repository and leaves the other alone", scrubbed_top == top_n + 1 and scrubbed_decoy == decoy_n)
+check("control: the same call without the scrub lands its send in the other repository and not its own", (count(decoy).get("count") or 0) == decoy_n + 1 and count(top).get("count") == top_n + 1)
+
+# control: one canary per scrubbed family in the parent environment; a child of clean_env() prints only booleans and sees none of them
+canaries = ("CLAUDE_TOY_CANARY", "ANTHROPIC_TOY_CANARY", "LOOP_TOY_CANARY", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
+for name in canaries:
+    os.environ[name] = "canary"
+try:
+    seen = subprocess.run([sys.executable, "-c", "import os; print(any(k in os.environ for k in %r))" % (canaries,)], capture_output=True, text=True, env=clean_env()).stdout.strip()
+    leaked = subprocess.run([sys.executable, "-c", "import os; print(any(k in os.environ for k in %r))" % (canaries,)], capture_output=True, text=True).stdout.strip()
+finally:
+    for name in canaries:
+        os.environ.pop(name, None)
+check("control: no canary variable of a scrubbed family reaches a child of the scrubbed environment", seen == "False")
+check("control: negative: the same child without the scrub does see them", leaked == "True")
+
+check("hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy (%s)" % ("verified" if not REAL_BEFORE.startswith("unverified") else REAL_BEFORE), not REAL_BEFORE.startswith("unverified") and real_id_hash() == REAL_BEFORE)
+
+# cleanup: only the directory this toy made, then asserted gone (counted before the tally)
+home_dir, throwaway_dir = HOME, THROWAWAY
+os.chdir(tempfile.gettempdir())
+cleanup()
+check("cleanup: the throwaway HOME is gone", not os.path.lexists(home_dir))
+check("cleanup: the fixture repositories are gone", not os.path.lexists(throwaway_dir))
 print("PLATFORM LIMITS TOY " + ("OK" if not fails else "FAILED %d" % fails))
 sys.exit(1 if fails else 0)
