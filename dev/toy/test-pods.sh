@@ -202,6 +202,13 @@ r "timeout 2 python3 - $SCRIPTS $C <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
 PY"
 check "a live fresh lock blocks, saying who is merging" '[ $rc = 124 ] && has WAITING && ! has TOOK'; rm -f "$C/loop/merge.lock"
+( while :; do touch "$C/loop/merge.lock"; sleep 0.3; done ) & beat=$!
+sleep 30 & live=$!; echo "$live fake-goal" > "$C/loop/merge.lock"
+start=$(date +%s); r "LOOP_MERGE_LOCK_SECONDS=2 timeout 20 python3 - $SCRIPTS $C <<'PY'
+import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
+PY"
+check "a waiter behind a live holder that keeps the lock fresh is refused past the limit, naming pid, goal and age (#5346)" '[ $rc != 124 ] && [ $rc != 0 ] && has "REFUSED: the merge lock is still held (pid $live, goal fake-goal, held" && has "Fix:" && ! has TOOK && [ $(( $(date +%s) - start )) -le 8 ] && kill -0 $live'
+kill $beat $live 2>/dev/null; wait $beat $live 2>/dev/null; rm -f "$C/loop/merge.lock"
 r "python3 - $SCRIPTS $C <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); sys.exit(1)
 PY"

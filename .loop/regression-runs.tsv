@@ -254,6 +254,7 @@ main-reds-4896	PASS	2026-11-17
 main-reds-4901	PASS	2026-11-17	
 matrix-health-rule	PASS	2026-11-13	
 merge-guard-base-head	PASS	2026-11-11	
+merge-lock-wait-refused	PASS	2026-11-21	
 merge-reach-fail-closed	PASS	2026-11-11	
 merge-refuses-worktree	PASS	2026-11-14	
 merged-frees-175	PASS	2026-11-10	
