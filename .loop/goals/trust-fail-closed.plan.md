@@ -4,7 +4,7 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 
 ## Implementation plan
 
-1. Move the trust-file reader out of the full script (operation's answer to B6, no docstring cutting): new `untrusted(folder)` in `skills/workflow-monitoring/scripts/machines.py` (19,912 bytes, was 18,927, under the 20,480 fail line, warns past 19,000 as the others do); `operate.py` `untrusted()` keeps its name and callers and delegates to it (20,019 bytes, was 20,455: 436 freed). The reader (a) fails closed: a missing, unreadable, unparseable or projects-less file trusts nothing, and the refusal names the file it looked at; (b) reads only the trust file in the home folder and never CLAUDE_CONFIG_DIR (operation's call on red-team B4: a worker controls its own environment, so honouring it would let a worker point the check at a file it wrote; anyone who sets it is refused with the file named); (c) retries once on a parse error, since the app may be mid-write. Trusted-root and trusted-parent logic unchanged. No new file. Done lines 1 and 2.
+1. Move the trust-file reader out of the full script (operation's answer to B6, no docstring cutting): new `untrusted(folder)` in `skills/workflow-monitoring/scripts/machines.py` (about 19,915 bytes, was 18,927, under the 20,480 fail line, warns past 19,000 as the others do); `operate.py` `untrusted()` keeps its name and callers and delegates to it (20,019 bytes, was 20,455: 436 freed). The reader (a) fails closed: a missing, unreadable, unparseable or projects-less file trusts nothing, and the refusal names the file it looked at; (b) reads only the trust file in the home folder and never CLAUDE_CONFIG_DIR (operation's call on red-team B4: a worker controls its own environment, so honouring it would let a worker point the check at a file it wrote; anyone who sets it is refused with the file named); (c) retries once on a parse error, since the app may be mid-write. Trusted-root and trusted-parent logic unchanged. No new file. Done lines 1 and 2.
 2. `dev/toy/test-new-binds.py` ("trust" and "restart" cases): the negative control "no ~/.claude.json, bind goes through" becomes the refusal case; add cases for an empty file, invalid JSON, a directory in its place and a file with no `projects` key; each refuses with "ask the owner to trust" and the file is never written. Keep the trusted-root and trusted-parent cases as the control. selfcheck: with no file the folder is named MISSING folder trust. Done lines 1 and 2.
 3. Every other toy that binds, assigns or starts a worker under a temporary HOME gets a trusting `.claude.json` in that HOME (found by running them), so it tests what it tested; no assert is loosened or removed. Done line 3.
 4. B5: one sentence in docs/wiki/How-to-use-Guardrails.md under `sessions.py bind` (trust the folder first; no readable trust file means bind refuses and names it). `.loop/regression.tsv`: a row for the fail-closed case with `regression.py add`, then `red --break`. Docs: one sentence where FOLDER_TRUST is described, if a page names the missing-file case (grep first).
@@ -15,7 +15,7 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 
 ### What could break
 - Machines with no ~/.claude.json can no longer bind (intended; nothing is trusted).
-- Toys relying on the fail-open default; found by running them in the lane. machines.py warns past 19,000 bytes (19,912 measured).
+- Toys relying on the fail-open default; found by running them in the lane. machines.py warns past 19,000 bytes (19,919).
 - Merging pc-path-trust (#5722): it edits the same function; its logic must be carried into machines.untrusted (stop and report if the bytes do not hold).
 
 ### Out of scope
@@ -56,14 +56,3 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 
 ### Red-team round 2, B4 decided by operation
 CLAUDE_CONFIG_DIR is dropped: the reader looks only at the home folder's trust file. The refusal keeps its opening "ask the owner to trust FOLDER (FOLDER_TRUST)" so the existing toy asserts still match, then says to open the folder once in Claude Code and names the trust file. The docs sentence and the PR notes say a machine that sets CLAUDE_CONFIG_DIR is refused.
-
-### Red-team round 3 answers (plan-record taken; six BREAK lines)
-- Bytes measured: machines.py 19,912, operate.py 20,019 (fail line 20,480).
-- B1: the assert-count comparison runs for every touched toy and goes in the PR notes.
-- B2: the red run uses a lane clone detached at the parent commit with only the new toy, which calls `operate.untrusted` (the public name, unchanged), so it runs against the old code there and the new code here.
-- B3: the 460-byte headroom on operate.py and 568 on machines.py is recorded in the PR notes as a tracked item.
-- B6: one toy assert pins the whole refusal line.
-- Retry and board false claim: the retry is bounded at 0.2 s; a still-failing read is shown as untrusted by design (fail closed), and the message names the file so it is not read as a missing trust entry.
-- Write side: stated out of scope (anything running as the same user can still write the file); the PR notes say the fix closes the read side only.
-- Regression row: `regression.py add` checks for a duplicate.
-- Unfixable here, sent to operation: the HOME redirect (A and B4), Windows path, a stale home file under CLAUDE_CONFIG_DIR, and the setup-checklist step (B5).
