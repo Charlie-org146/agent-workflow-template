@@ -51,6 +51,26 @@ $wiki prepare s --commit >/dev/null 2>&1 || true
 git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && ok "CLAUDE.md is in a commit" || bad "CLAUDE.md is in no commit"
 [ "$(git log -1 --format=%s)" = "Regenerate CLAUDE.md for s" ] && ok "the message names the file committed" || bad "message: $(git log -1 --format=%s)"
 
+echo "== the merge.py repair path: entry.write first, then prepare --commit, commits the dirty START.md"
+sed -i.bak 's/that also has s\./that also has s and more./' docs/wiki/Calc.md; rm -f docs/wiki/Calc.md.bak
+git commit -qam "Edit the Calc page again"
+$entry write >/dev/null
+git status --porcelain | grep -q "START.md" && ok "entry.write left START.md dirty, as merge.py's refusal asks" || bad "START.md not dirty after entry.write"
+$wiki prepare s --commit >/dev/null 2>&1 || true
+[ -z "$(git status --porcelain)" ] && ok "the repair path leaves START.md committed" || bad "left uncommitted: $(git status --porcelain | tr '\n' ' ')"
+git diff --quiet HEAD -- .loop/START.md && $entry check 2>&1 | grep -q "ENTRY_STALE" && bad "START.md is stale at HEAD" || ok "START.md is current at HEAD"
+
+echo "== a dirty file with a hand edit mixed into the regeneration is not committed, and prepare fails"
+printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > CLAUDE.md
+git add -A; git commit -qm "CLAUDE.md with a stale block"
+echo "my own note" >> CLAUDE.md
+before=$(git rev-parse HEAD)
+out=$($wiki prepare s --commit 2>&1) && code=0 || code=$?
+[ "$code" != 0 ] && ! grep -q "WIKI CURRENT" <<<"$out" && ok "prepare exits non-zero and never says WIKI CURRENT" || bad "prepare exit $code: $out"
+grep -q "WARNING: CLAUDE.md has edits" <<<"$out" && ok "the mixed file is named" || bad "no warning: $out"
+git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && bad "a mixed CLAUDE.md was committed" || ok "the mixed CLAUDE.md is not committed"
+git checkout -q -- CLAUDE.md; $entry write >/dev/null; git commit -qam "CLAUDE.md block current"
+
 echo "== only what entry.write changed is committed: a hand edit and a deletion stay out"
 printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > AGENTS.md
 git add -A; git commit -qm "Track AGENTS.md with a stale block"
@@ -60,6 +80,6 @@ before=$(git rev-parse HEAD)
 out=$($wiki prepare s --commit 2>&1 || true)
 git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && bad "a hand edit to CLAUDE.md was committed" || ok "a hand edit to CLAUDE.md is not committed"
 git log --name-only --format= "$before..HEAD" | grep -qx "AGENTS.md" && bad "a deleted AGENTS.md was committed" || ok "a deleted tracked AGENTS.md is not committed"
-grep -q "WARNING: CLAUDE.md had edits" <<<"$out" && grep -q "WARNING: AGENTS.md had edits" <<<"$out" && ok "each file left alone is named in a warning" || bad "no warning naming both files: $out"
+grep -q "WARNING: CLAUDE.md has edits" <<<"$out" && grep -q "WARNING: AGENTS.md has edits" <<<"$out" && ok "each file left alone is named in a warning" || bad "no warning naming both files: $out"
 git status --porcelain | grep -q "CLAUDE.md" && git status --porcelain | grep -q "AGENTS.md" && ok "both stay as the owner left them" || bad "a file was touched"
 exit $((fails > 0))
