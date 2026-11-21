@@ -285,16 +285,19 @@ def pr_join(g, state):
 
 
 def pr_diff(run):
-    """A goal with no recorded touches gets them from its branch's diff against the base (#5344); [] when that can't be read,
-    which still counts as overlapping everything."""
+    """A goal with no recorded touches gets them from its branch's diff against the base (#5344), renames listed at both ends;
+    [] when that can't be read (no worktree, no base ref, git missing or slow), which still counts as overlapping everything."""
     tree = run.get("worktree") or ""
     if not tree or not os.path.isdir(tree):
         return []
     base = se.read(os.path.join(tree, ".loop", "config.json"), {}).get("base") or "main"
-    for ref in ("origin/" + base, base):
-        done = subprocess.run(["git", "diff", "--name-only", ref + "...HEAD"], cwd=tree, capture_output=True, text=True)
-        if done.returncode == 0:
-            return done.stdout.split()
+    try:
+        for ref in ("origin/" + base, base):
+            done = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", ref + "...HEAD"], cwd=tree, capture_output=True, timeout=30)
+            if done.returncode == 0:
+                return [x for x in done.stdout.decode("utf-8", "surrogateescape").split("\0") if x]
+    except (OSError, subprocess.SubprocessError):
+        pass
     return []
 
 
@@ -323,8 +326,9 @@ def pr_turn(runs, slug):
         run = se.read(os.path.join(runs, n + ".json"), {})
         return [str(t).strip("/") for t in run.get("touches") or pr_diff(run)]
     ours = paths(slug)
-    ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
-        x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in paths(n)))]
+    theirs = {n: paths(n) for j, n, _ in line if n != slug and j < at and ours}  # each earlier goal's paths, read once
+    ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not theirs[n] or any(
+        x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in theirs[n]))]
     return min(ahead)[1] if ahead else ""
 
 

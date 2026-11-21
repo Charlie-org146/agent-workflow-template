@@ -5,6 +5,7 @@
 goal whose touches overlap its own."""
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -84,6 +85,32 @@ with tempfile.TemporaryDirectory() as tmp:
     check(pool.pr_turn(runs, "d3") == "d1", "5344: negative control: no recorded touches, a diff sharing a file with an earlier goal still waits")
     time.sleep(0.01)
     check(pool.pr_turn(runs, "d4") == "d1", "5344: negative control: recorded touches overlapping an earlier goal's diff still wait")
+
+    # a goal that moves a file away still holds back a later goal that edits the old path
+    tree = os.path.join(tmp, "r1")
+    git("worktree", "add", "-q", "-b", "r1", tree, "main")
+    git("mv", "seed", "moved-seed", cwd=tree)
+    git("commit", "-q", "-m", "r1", cwd=tree)
+    with open(os.path.join(runs, "r1.json"), "w") as handle:
+        json.dump({"slug": "r1", "status": "running", "step": "pr", "worktree": tree, "touches": []}, handle)
+    branch("r2", ["seed"], [])
+    check(sorted(pool.pr_diff(json.load(open(os.path.join(runs, "r1.json"))))) == ["moved-seed", "seed"], "5344: a rename lists both the old and the new path")
+    for gone in ("d1", "d2", "d3", "d4"):
+        os.unlink(os.path.join(runs, gone + ".json"))
+    pool.pr_turn(runs, "r1")
+    time.sleep(0.01)
+    check(pool.pr_turn(runs, "r2") == "r1", "5344: a goal that moved a file away holds back a later goal that edits the old path")
+
+    # a diff that can't be read overlaps everything
+    with open(os.path.join(runs, "r1.json"), "w") as handle:
+        json.dump({"slug": "r1", "status": "running", "step": "pr", "worktree": tree}, handle)
+    os.makedirs(os.path.join(tree, ".loop"), exist_ok=True)
+    with open(os.path.join(tree, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": "no-such-base"}, handle)
+    check(pool.pr_diff({"worktree": tree}) == [], "5344: a missing base ref gives no paths, so it overlaps everything")
+    shutil.rmtree(tree)
+    check(pool.pr_diff({"worktree": tree}) == [], "5344: a deleted worktree gives no paths, so it overlaps everything")
+    check(pool.pr_turn(runs, "r2") == "r1", "5344: a goal whose worktree is gone overlaps everything and holds back a later goal")
 if not failed:
     print("PASS: DEL-15: goals with disjoint touches take their pr turn at once and overlapping ones wait")
 sys.exit(1 if failed else 0)
