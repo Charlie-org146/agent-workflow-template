@@ -215,7 +215,7 @@ from lanekit import FILES, REG, generated  # noqa: E402
 def lane_note(runs, slug, step):
     """'N pass; M not runnable here' from the step's lane line (GRD-11), or ''."""
     try:
-        line = json.load(open(lanekit.lane_base(runs, slug, lanekit.lane_ok(runs, slug, step, git_out("rev-parse", "HEAD"))[1]) + ".last")).get("line", "")
+        line = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, step)))).get("line", "")
     except (OSError, ValueError):
         return ""
     found = re.search(r"\d+ pass; \d+ not runnable here", line)
@@ -229,12 +229,15 @@ def need_lane(runs, slug, reply, step="qa"):
     if found and found[-1].lower() == "failed" and not guards.pending_items(text):
         return None
     head = git_out("rev-parse", "HEAD")
-    ok, src = lanekit.lane_ok(runs, slug, step, head)
+    try:
+        ok = open(os.path.join(runs, "%s.%s-lane.ok" % (slug, step))).read().strip()
+    except OSError:
+        ok = ""
     fix = "python3 %s lane %s %s" % (os.path.join(HERE, "role.py"), slug, step)
     if not ok:
         return ("the %s lane has not passed on %s" % (step, head[:12]), fix, "LANE_MISSING")
     if ok != head:
-        return ("HEAD moved since the %s lane passed (lane on %s, HEAD %s)" % (src, ok[:12], head[:12]),
+        return ("HEAD moved since the %s lane passed (lane on %s, HEAD %s)" % (step, ok[:12], head[:12]),
                 fix + " (reruns only the rows the change can affect)",
                 "HEAD_MOVED")
     return over_caps() if step == "qa" else None

@@ -231,7 +231,7 @@ check "qa runs the lane first: a goal lane with no record runs the rows the goal
 check "the recorder got the exact lane command on the tested commit" 'grep -qF "commit=$(git rev-parse HEAD)	command=$lane" "$TOY_RECEIPTS"'
 check "qa is recorded once its lane passed" 'grep -q "^RECORDED qa" <<<"$out"'
 out=$(step lg ship); echo "$out"
-check "ship reuses qa's pass at this HEAD: it says so, starts no lane and the recorder ran once" 'grep -q "; reused: the qa lane passed on this head" <<<"$out" && [ ! -e "$common/loop/runs/lg.ship-lane.job" ] && [ "$(grep -c "commit=$(git rev-parse HEAD)	" "$TOY_RECEIPTS")" = 1 ]'
+check "ship reuses qa's run on unchanged content and runs no row" 'grep -q "^LANE ship REUSED 0/" <<<"$out" && grep -q "^REUSED [0-9]* rows" "$common/loop/runs/lg.ship-lane.txt"'
 
 echo "== pr: a base merge reruns only the rows it affected"
 git clone -q "$d/origin.git" "$d/other"; (cd "$d/other" && git config user.email t@example.test && git config user.name Toy \
