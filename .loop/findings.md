@@ -76,3 +76,4 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - milestone-sync: Failed 3 tries. Last: regression lane failed: LANE_TIMEOUT: past its time limit of 99s (flow file limit); the lane was killed, rows partly ran, nothing committed or pushed. Fix: run the same command again, or raise the flow file "limit" (else ste
 - how-to-use-docs: Failed 3 tries (+1 free reruns). Last: regression lane failed: migration-v1
 - row886-runtime-path: Failed 3 tries. Last: regression lane failed: no-done-line-refused
+- hr-body-file: D1 is not met by machines.py alone: test-body-file.sh has a second FAIL at mailbox.py:201 (issue create --body). D3 freezes the diff to machines.py, so the mailbox.py fix goes to its own goal, hr-body-file-mailbox, and the two PRs are paired
