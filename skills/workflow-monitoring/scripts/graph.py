@@ -210,15 +210,9 @@ def flow(nodes):
     return ["flow (arrow = must finish before):"] + ["%s --> %s" % (label(dep), ", ".join(label(s) for s in waiting[dep])) for dep in sorted(waiting)]
 
 
-# One goal's state, decided once for every reader (issue 113). Imported, not run.
-#   classify(run, taken, at, cfg)  running, waiting, failed, stopped, held, silent, done, merged, retired or queued
-#   holds_slot(run, taken)         a live goal uses a worker slot: a pid, or a busy pool entry (issue 112)
-#   held(run, taken)               running with no worker: pool known, no busy session names it, no pid
-#   freezing(taken, on_disk)       pool entries handed a goal that has no run record yet
-#   silent_for(run, at)            seconds since the worker last spoke, or None
-#   stamp_held / with_held         when each goal first read held, in <loop>/held.json
-# `taken` is graph.assigned (None when unreadable: nothing is called held). `silent_minutes` in config (default 30)
-# is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
+# One goal's state, decided once for every reader (issue 113): classify, holds_slot, held, freezing, silent_for, stamp_held and
+# with_held (each has a docstring). `taken` is graph.assigned (None when unreadable: nothing is called held). `silent_minutes`
+# in config (default 30) is MON-8's limit; LOOP_SESSION_QUIET (seconds) overrides it.
 
 def parse_at(text):
     """A recorded time as an aware UTC datetime (naive counts as UTC), or None."""
@@ -244,6 +238,7 @@ def silent_limit(cfg=None):
 
 
 def held(run, taken):
+    """Running with no worker: the pool is known, no busy session names it, no pid."""
     return run.get("status") == "running" and taken is not None and run.get("slug") not in taken and not run.get("pid")
 
 
@@ -258,6 +253,7 @@ def holds_slot(run, taken=None):
 
 
 def freezing(taken, on_disk):
+    """Pool entries handed a goal that has no run record yet."""
     return [dict(entry, slug=slug) for slug, entry in sorted((taken or {}).items()) if slug not in on_disk]
 
 
@@ -272,6 +268,7 @@ def last_spoke(run):
 
 
 def silent_for(run, at):
+    """Seconds since the worker last spoke, or None."""
     last = last_spoke(run)
     return None if not last or not at else max(0.0, (at - last).total_seconds())
 
@@ -346,12 +343,8 @@ def load_run(slug):
 
 
 # Pods and the merge lock (MON-15): goal.py and merge.py load this file by path and carry on without it. Imported, not run.
-#   pod_id()        $LOOP_POD_ID, else the operation session's own id ($CLAUDE_SESSION_ID); "" in a worker or with neither
-#   stamp(state)    record the caller's pod on a goal that has none; a goal with no pod belongs to no one
-#   foreign(state)  the owning pod's id when it is not the caller's (a worker never counts), else ""
-#   refuse(state)   print the one REFUSED line naming the owner to stderr and exit 2 (no try is used)
-#   merge_lock(common)  one merge per repo at a time; a dead or old holder is replaced
-#   pr_queue(op, ...)   pr turns and main-moved tries (pool.py)
+# pod_id, stamp, foreign and refuse name a goal's owning pod; merge_lock(common, goal) allows one merge per repo at a time, replaces a
+# dead or old holder, and refuses a waiter past LOOP_MERGE_LOCK_SECONDS (1800) naming the holder's pid, goal and age.
 def pod_id():
     if os.environ.get("LOOP_ROLE") == "worker":
         return ""
@@ -388,13 +381,13 @@ def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.p
     return getattr(replan if op in ("hold", "free", "before", "wait", "preflight") else pool,"pr_"+op)(*args) or m.turn(op,*args)
 
 
-def merge_lock(common):
-    path, told = os.path.join(common, "loop", "merge.lock"), False
+def merge_lock(common, goal=""):
+    path, told, began = os.path.join(common, "loop", "merge.lock"), False, time.monotonic()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     while True:
         try:
             with os.fdopen(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY), "w") as handle:
-                handle.write("%d\n" % os.getpid())
+                handle.write("%d %s\n" % (os.getpid(), re.sub(r"\s+", "_", str(goal or ""))))
             break
         except FileExistsError:
             pid, dead, age, seen = 0, False, 0, ""
@@ -419,8 +412,12 @@ def merge_lock(common):
                 except OSError:
                     pass
                 continue
+            who = "%s, goal %s, held %ds" % ("pid %d" % pid if pid > 0 else "pid unknown", (seen.split() + ["", ""])[1] or "unknown", age)
+            if time.monotonic() - began > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
+                hint = "stop pid %d if it is stuck" % pid if pid > 0 else "if no merge.py runs, delete %s" % os.path.relpath(path, os.path.dirname(common))
+                sys.exit("REFUSED: the merge lock is still held (%s). Fix: wait for that merge.py to end, or %s, then run merge.py again." % (who, hint))
             if not told:
-                sys.stderr.write("WAITING: another pod is merging into this repo (pid %d); one merge at a time.\n" % pid)
+                sys.stderr.write("WAITING: another pod is merging into this repo (%s); one merge at a time.\n" % who)
                 told = True
             time.sleep(0.2)
 

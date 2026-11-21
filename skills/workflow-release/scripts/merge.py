@@ -46,7 +46,7 @@ def file_issue(top, page, texts):
     return "no issue filed (gh)"
 
 
-def _pods():  # MON-15: workflow-monitoring's graph.py, or None
+def _pods():  # MON-15: monitoring's graph.py, or None
   sys.path.append(MON)  # graph's proctree
   try:
     spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(MON, "graph.py"))
@@ -288,7 +288,7 @@ def main():
   if args.batch or len(args.slug) > 1:
     if not (args.batch and cfg.get("merge_batch") is True):
       sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing merged.")
-    pods and pods.merge_lock(os.path.abspath(common))
+    pods and pods.merge_lock(os.path.abspath(common), "batch")
     spec = importlib.util.spec_from_file_location("batch", os.path.join(MON, "machines.py"))
     machines = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(machines)
@@ -304,7 +304,7 @@ def main():
   if pods:
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
-    pods.merge_lock(os.path.abspath(common))
+    pods.merge_lock(os.path.abspath(common), slug)
   wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
   view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
   info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}

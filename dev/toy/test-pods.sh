@@ -202,6 +202,26 @@ r "timeout 2 python3 - $SCRIPTS $C <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
 PY"
 check "a live fresh lock blocks, saying who is merging" '[ $rc = 124 ] && has WAITING && ! has TOOK'; rm -f "$C/loop/merge.lock"
+( while :; do touch "$C/loop/merge.lock"; sleep 0.3; done ) & beat=$!
+sleep 30 & live=$!; echo "$live fake-goal" > "$C/loop/merge.lock"
+start=$(date +%s); r "LOOP_MERGE_LOCK_SECONDS=2 timeout 20 python3 - $SCRIPTS $C <<'PY'
+import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
+PY"
+check "a waiter behind a live holder that keeps the lock fresh is refused past the limit, naming pid, goal and age (#5346)" '[ $rc != 124 ] && [ $rc != 0 ] && has "REFUSED: the merge lock is still held (pid $live, goal fake-goal, held" && has "Fix:" && ! has TOOK && [ $(( $(date +%s) - start )) -le 8 ] && kill -0 $live'
+kill $beat $live 2>/dev/null; wait $beat $live 2>/dev/null; rm -f "$C/loop/merge.lock"
+( while :; do touch "$C/loop/merge.lock"; sleep 0.3; done ) & beat=$!
+sleep 30 & live=$!; echo "$live fake-goal" > "$C/loop/merge.lock"
+r "LOOP_MERGE_LOCK_SECONDS=10 timeout 3 python3 - $SCRIPTS $C <<'PY'
+import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
+PY"
+check "within the limit a live fresh holder still just makes the waiter wait, naming its pid, goal and age (#5346)" '[ $rc = 124 ] && has "WAITING: another pod is merging into this repo (pid $live, goal fake-goal, held" && ! has REFUSED && ! has TOOK'
+kill $beat $live 2>/dev/null; wait $beat $live 2>/dev/null; rm -f "$C/loop/merge.lock"
+: > "$C/loop/merge.lock"; ( while :; do touch "$C/loop/merge.lock"; sleep 0.3; done ) & beat=$!
+r "LOOP_MERGE_LOCK_SECONDS=2 timeout 20 python3 - $SCRIPTS $C <<'PY'
+import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); print('TOOK')
+PY"
+check "an empty lock file is refused past the limit naming the lock file, with no pid 0 and no kill hint (#5346)" '[ $rc != 124 ] && [ $rc != 0 ] && has "REFUSED: the merge lock is still held (pid unknown" && has "loop/merge.lock" && ! has "pid 0" && ! has "stop pid" && ! has "$C"'
+kill $beat 2>/dev/null; wait $beat 2>/dev/null; rm -f "$C/loop/merge.lock"
 r "python3 - $SCRIPTS $C <<'PY'
 import sys; sys.path.insert(0, sys.argv[1]); import graph; graph.merge_lock(sys.argv[2]); sys.exit(1)
 PY"

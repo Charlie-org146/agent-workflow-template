@@ -11,15 +11,16 @@ usage: wiki.py <command> SLUG
 
 Both scan for private names first: prepare --commit scans the branch before its push; publish scans every wiki page and
 publishes nothing on a hit (wiki_error names it). A wiki with no first page can't be cloned: create it in the Wiki tab
-and run merge.py again. A repo without .loop/docs.tsv has no wiki: both do nothing.
+and run merge.py again. No .loop/docs.tsv, no wiki: both do nothing.
 
 Also here: fixes_lines, one "Fixes #N: test ROW, seen failing DATE, passing" line per issue fixed since the last v* tag
-(REG-6), from tests.py fixes; a missing or failing tests.py gives "Fixes: unknown/not listed", never a failure.
+(REG-6); no or failing tests.py: "Fixes: unknown/not listed".
 """
 import argparse
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -32,8 +33,7 @@ from release import base_of, git, load, read_config, run, save
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # release.py sets the rest on import
 OPERATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "operate.py")
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts", "docs.py")
-CRITERIA = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-docs", "scripts",
-                                         "criteria.py"))
+CRITERIA = os.path.join(os.path.dirname(DOCS), "criteria.py")
 TESTS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-regression",
                                       "scripts", "tests.py"))
 
@@ -83,12 +83,42 @@ def pending(top, cfg, fix=False, head="HEAD", filer=None):
     return kept
 
 
-def commit(top, cfg, slug):
+GENERATED = (".loop/START.md", "CLAUDE.md", "AGENTS.md")
+ENTRY = os.path.join(os.path.dirname(CRITERIA), "entry.py")
+BLOCK = re.compile(r"<!-- workflow-loop -->.*?<!-- /workflow-loop -->", re.S)
+
+
+def dirty_generated(top):  # differs from HEAD now
+    return {f for f in GENERATED if git("ls-files", f, cwd=top) and git("status", "--porcelain", f, cwd=top)}
+
+
+def regenerated(top, name):
+    """Exactly entry.write's render (an agent file: HEAD's text with the block swapped)?"""
+    out = lambda what: run([sys.executable, ENTRY, what, "--repo", top]).stdout
+    held = run(["git", "show", "HEAD:" + name], cwd=top).stdout
+    want = out("render") if name == GENERATED[0] else BLOCK.sub(lambda _: out("block").rstrip("\n"), held, 1)
+    path = os.path.join(top, name)
+    return os.path.isfile(path) and open(path, newline="").read().replace("\r\n", "\n") == want
+
+
+def commit(top, cfg, slug, before=None):
+    """Commit the wiki pages; with before (dirty ahead of the audit) also entry.write's output (#5317), never edits beyond it."""
     folder = cfg.get("wiki_dir") or "docs/wiki"
-    if run(["git", "status", "--porcelain", "--", folder], cwd=top).stdout.strip():
+    if git("status", "--porcelain", folder, cwd=top):
         git("add", "--", folder, cwd=top)
         git("commit", "-m", "Wiki: update pages for %s" % slug, "--", folder, cwd=top)
         print("COMMITTED the wiki pages for %s" % slug)
+    if before is None:
+        return []
+    now = dirty_generated(top)
+    made = [f for f in GENERATED if f in now and (f not in before or regenerated(top, f))]
+    left = sorted(now - set(made))
+    for f in left:
+        print("WARNING: %s has edits beyond entry.write's render: not committed" % f)
+    if made:
+        git("commit", "-m", "Regenerate %s for %s" % (", ".join(made), slug), "--", *made, cwd=top)
+        print("COMMITTED the regenerated " + ", ".join(made))
+    return left
 
 
 def cmd_prepare(args):
@@ -97,16 +127,19 @@ def cmd_prepare(args):
         print("NO WIKI: .loop/docs.tsv is not set up.")
         return 0
     cfg = read_config(top)
+    before = dirty_generated(top)
     if args.commit:
         commit(top, cfg, args.slug)
     stale = pending(top, cfg, fix=args.commit)
-    if args.commit:
-        commit(top, cfg, args.slug)  # the audit's mechanical fixes
+    left = commit(top, cfg, args.slug, before) if args.commit else []
     for line in stale:
         print(line)
     if stale:
         names = sorted({l.split(":")[0].split()[1] for l in stale if l.startswith("REWRITE ")})
         print("NEXT: update %s, then wiki.py prepare %s --commit" % (", ".join(names) or "the pages above", args.slug))
+        return 1
+    if left:
+        print("NEXT: fix %s, then prepare %s --commit" % (", ".join(left), args.slug))
         return 1
     if args.commit and load(args.slug).get("pr"):
         branch = git("branch", "--show-current", cwd=top)

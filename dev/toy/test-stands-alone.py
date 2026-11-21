@@ -81,4 +81,41 @@ with tempfile.TemporaryDirectory() as root:
     write("skills/workflow-x/references/commands.md", "See https://example.org/x .")
     found = milestones.alone(root, "docs/wiki", REPO)
     check([p for _, p, _ in found] == ["skills/workflow-x/references/commands.md"], "alone reads wiki pages and skill docs, never the Tests page: " + repr(found))
+# #5078: an image in this repo's own GitHub counts as inside when the file is in the repo; another repo's image and a missing file do not.
+with tempfile.TemporaryDirectory() as root:
+    os.makedirs(os.path.join(root, "docs", "wiki"))
+    os.makedirs(os.path.join(root, "docs", "img"))
+    os.makedirs(os.path.join(root, "skills"))
+    open(os.path.join(root, "docs", "img", "a.png"), "wb").write(b"x")
+
+    def img(url):
+        open(os.path.join(root, "docs", "wiki", "Other.md"), "w", encoding="utf-8").write("![x](%s)" % url)
+        return milestones.alone(root, "docs/wiki", REPO)
+    GH = "https://github.com/me/proj/"
+    for url in (GH + "blob/main/docs/img/a.png?raw=true", GH + "raw/main/docs/img/a.png", "https://raw.githubusercontent.com/me/proj/main/docs/img/a.png",
+                GH + "raw/refs/heads/main/docs/img/a.png", GH + "blob/main/docs/img/a.png", "https://github.com/Me/Proj/blob/main/docs/img/a.png?raw=true"):
+        check(img(url) == [], "an own-repo image that exists stands: " + url)
+    check(says(img("https://github.com/other/thing/blob/main/docs/img/a.png?raw=true"), "other/thing"), "negative control: another repo's image is reported")
+    check(says(img("https://raw.githubusercontent.com/other/thing/main/docs/img/a.png"), "other/thing"), "negative control: another repo's raw image is reported")
+    check(says(img(GH + "blob/main/docs/img/missing.png?raw=true"), "missing.png"), "negative control: an own-repo image path that does not exist is reported")
+    check(says(img(GH + "blob/main/docs/img/../../../etc/a.png"), "../"), "negative control: a path climbing out of the repo is reported")
+    open(os.path.join(root, "a.png"), "wb").write(b"x")
+    check(says(img(GH + "blob/main/x/../a.png"), "x/../a.png"), "negative control: a '..' segment is reported though the file it lands on exists")
+    check(says(img(GH + "blob/main/x/%2e%2e/a.png"), "%2e%2e"), "negative control: a %2e-encoded '..' segment is reported")
+    os.makedirs(os.path.join(root, "main", "docs", "img"))
+    open(os.path.join(root, "main", "docs", "img", "b.png"), "wb").write(b"x")
+    check(says(img(GH + "blob/main/docs/img/b.png"), "b.png"), "negative control: the branch name is not part of the path, so main/docs/img/b.png does not make docs/img/b.png stand")
+    check(says(img(GH + "blob/main/nowhere/at/all/docs/img/a.png"), "nowhere"), "negative control: junk between the branch and a real path is reported")
+    with tempfile.TemporaryDirectory() as outside:
+        open(os.path.join(outside, "o.png"), "wb").write(b"x")
+        os.makedirs(os.path.join(outside, "dir"))
+        open(os.path.join(outside, "dir", "d.png"), "wb").write(b"x")
+        os.symlink(os.path.join(outside, "o.png"), os.path.join(root, "docs", "img", "link.png"))
+        os.symlink(os.path.join(outside, "dir"), os.path.join(root, "docs", "linkdir"))
+        check(says(img(GH + "blob/main/docs/img/link.png"), "link.png"), "negative control: a symlinked image that points outside the repo is reported")
+        check(says(img(GH + "blob/main/docs/linkdir/d.png"), "linkdir"), "negative control: an image under a symlinked folder that points outside the repo is reported")
+    os.symlink("a.png", os.path.join(root, "docs", "img", "inner.png"))
+    check(img(GH + "blob/main/docs/img/inner.png") == [], "a symlink that stays inside the repo stands")
+    check(milestones.stands_alone("P", "![x](https://raw.githubusercontent.com/me/proj/main/a.png)", REPO) != [], "no root: the rule stays as before, raw.githubusercontent.com is reported")
+    check(milestones.stands_alone("P", "![x](https://github.com/me/proj/blob/main/docs/a.PNG)", REPO) != [], "no root: the extension stays case-sensitive")
 sys.exit(1 if failed else 0)

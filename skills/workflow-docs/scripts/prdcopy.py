@@ -5,6 +5,7 @@ link_page() the docs check of a page with a source, sync() compares source and c
 DELTA, both a CONFLICT, nothing is overwritten, --accept PAGE:ID=repo|source writes one side over the other. Imports are lazy."""
 import os
 import re
+from urllib.parse import unquote
 
 SYNC_MARK = "<!-- prd-sync: owned -->"
 BEGIN, END = "<!-- prd:begin -->", "<!-- prd:end -->"
@@ -343,17 +344,40 @@ def sync(root, dry=False, accept=(), opened=False):
 
 
 AWAY = re.compile(r"https?://[^\s`'\")>\]]+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
-NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/(?:blob|raw)/[^/]+/[^\s?#]+\.(?:png|jpe?g|gif|svg|webp)(?:[?#]|$)|/?(?:#|$))")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
 
 
-def stands_alone(page, text, repo="", sites=()):
+EXT = r"(?:png|jpe?g|gif|svg|webp)"
+IMAGE = re.compile(r"https://(?:github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)|raw\.githubusercontent\.com/([\w.-]+/[\w.-]+))/([^\s?#]+\." + EXT + r")(?:[?#]|$)", re.I)
+IMAGE_LOOSE = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)/[^/]+/[^\s?#]+\." + EXT + r"(?:[?#]|$)")
+
+
+def own_image(hit, repo, root):
+    """An own-repo GitHub image is inside (#5078). No root: github.com blob/raw as before; with one, the file must exist after one ref segment, no dot segment, real path inside."""
+    if not root:
+        found = IMAGE_LOOSE.match(hit)
+        return bool(found) and (not repo or found.group(1).lower() == repo.lower())
+    found = IMAGE.match(hit)
+    if not found or (repo and (found.group(1) or found.group(2)).lower() != repo.lower()):
+        return False
+    path = unquote(found.group(3))
+    parts = path.split("/")
+    if any(p in ("", ".", "..") or "\\" in p or "\0" in p for p in parts):
+        return False
+    skip = 3 if parts[0] == "refs" and len(parts) > 3 and parts[1] in ("heads", "tags") else 1
+    base = os.path.realpath(root)
+    real = os.path.realpath(os.path.join(base, *parts[skip:]))
+    return len(parts) > skip and real.startswith(base + os.sep) and os.path.isfile(real)
+
+
+def stands_alone(page, text, repo="", sites=(), root=""):
     out, skip = [], False
     for number, line in enumerate(text.splitlines(), 1):
         skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
         for hit in ([] if skip else AWAY.findall(line)):
             hit = hit.rstrip(".,;:)")
             near = NEAR.match(hit)
-            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
+            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not own_image(hit, repo, root) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
                 out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
     return out
 
@@ -367,5 +391,5 @@ def alone(root, folder, repo=""):
     for name, path in files:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
-        out += stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
+        out += stands_alone(name, text, repo, sites, root) + (audit.home_diagram(text) if name == "Home" else [])
     return out
