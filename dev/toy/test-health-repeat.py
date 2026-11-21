@@ -93,14 +93,14 @@ for labels in (False, True):
             json.dump({"base": "main", "feature_labels": labels}, f)
         with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
             f.write("Calc\tskills/x\nHome\tREADME.md\n")
-        with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-            f.write("# pad\n" * 3400)
+        with open(os.path.join(repo, "skills", "x", "SKILL.md"), "w", newline="\n") as f:
+            f.write("pad\n" * 160)
         git("init", "-q", "-b", "main", repo)
         git("-C", repo, "config", "user.email", "t@example.test")
         git("-C", repo, "config", "user.name", "t")
         git("-C", repo, "config", "core.autocrlf", "false")
         git("-C", repo, "add", "-A")
-        git("-C", repo, "commit", "-qm", "A near-limit script")
+        git("-C", repo, "commit", "-qm", "A SKILL.md over its line limit")
         name = "feature_labels %s" % ("on" if labels else "off")
         out, code = health(repo, "file", "--group", "size")
         print(out)

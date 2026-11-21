@@ -102,8 +102,8 @@ with tempfile.TemporaryDirectory() as tmp:
     write(os.path.join(repo, ".loop", "docs.tsv"), "Calc\tskills/calc\nGhost\tghost.py\nHome\tREADME.md\n")
     write(os.path.join(repo, "docs", "wiki", "Calc.md"),
           "<!-- workflow-docs -->\n# Calc\n\n## Summary\n\nCalc adds numbers.\n\n## Criteria\n\n- REL-1: **Reviewed 2026-01-01** calc adds.\n")
-    write(os.path.join(repo, "skills", "calc", "scripts", "near.py"), "# pad\n" * 3400)
-    write(os.path.join(repo, "skills", "x", "scripts", "near.py"), "# pad\n" * 3400)
+    write(os.path.join(repo, "skills", "calc", "SKILL.md"), "pad\n" * 160)
+    write(os.path.join(repo, "skills", "x", "SKILL.md"), "pad\n" * 160)
     git("init", "-q", "-b", "main", repo)
     for key, value in (("user.email", "t@example.test"), ("user.name", "t"), ("core.autocrlf", "false")):
         git("-C", repo, "config", key, value)

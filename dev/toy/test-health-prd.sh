@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-health/scripts/
+# reads: skills/workflow-health/scripts/ dev/toy/health-standin.py
 # reads: dev/toy/fakegh/gh dev/toy/fakegh/fake.py
 # Proves the owner-approved Health PRD on throwaway repos with a stand-in for GitHub and stand-in judges: the twelve groups
 # and their angles (HLT-2), tagged issues, links and migration (HLT-4), the review and its evidence (HLT-5, HLT-9),
@@ -13,6 +13,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 DIAG=$(mktemp)  # what failing checks saw, replayed at the end because CI keeps only the last 20 lines of a failing row
 d=${1:-$(mktemp -d)}; part=${2:-all}; rm -rf "${d:?}"; mkdir -p "$d"
 S="$here/skills/workflow-health/scripts"; H="python3 $S/health.py"
+HS="python3 $here/dev/toy/health-standin.py"; export HEALTH_STANDIN=skills/calc/scripts/near.py  # health.py with the stand-in size rule: a WARN to file
 export HOME="$d/home" PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"; mkdir -p "$HOME" "$FAKE_GH_DIR"
 export USERPROFILE="$HOME"
 fails=0
@@ -79,23 +80,23 @@ json.dump([{"number": 1, "title": "old size finding", "state": "OPEN", "labels":
             "milestone": {"title": "Backlog"}, "createdAt": "2026-01-01T00:00:00Z",
             "body": "<!-- loop-health size:skills/calc/scripts/near.py:limit -->\nold"}], open(sys.argv[1], "w"))
 PY
-out=$($H preview --group size,consistency 2>&1)
+out=$($HS preview --group size,consistency 2>&1)
 check "an old marker is moved to the new key, not closed" 'grep -q "^WOULD update #1 size:skills/calc/scripts/near.py:scripts \[health:size, feature:Calc\]" <<<"$out" && ! grep -q "close #1" <<<"$out"'
 check "a finding is tagged with its group and the preview says where it goes" 'grep -q "^WOULD open issue .health: consistency /workflow-zzz frob usage-readme. \[health:consistency, feature:Other\]" <<<"$out" && grep -qE "\] as (defect|backlog on Backlog: .+)$" <<<"$out"'
 pf=$(r=$PWD; cd "$S" && python3 -B -c "import issues; print(issues.feature_of('$r', {'subject': 'Calc', 'evidence': 'Calc'}), issues.feature_of('$r', {'subject': 'nothing/here.py', 'evidence': ''}))" 2>&1)
 check "a page-level finding (a stale page) is about that page, one that fits none about none ($pf)" '[ "$pf" = "Calc None" ]'
 : > "$FAKE_GH_DIR/calls.log"
-$H file --group size,consistency >/dev/null 2>&1
+$HS file --group size,consistency >/dev/null 2>&1
 m=$(python3 -c "import json;print([i['milestone']['title'] for i in json.load(open('$FAKE_GH_DIR/issues.json')) if i['number']==1][0])")
 check "file leaves an issue the owner put on a milestone where it is, and tags it with its feature" '[ "$m" = Backlog ] && grep -q -- "--add-label feature:Calc" "$FAKE_GH_DIR/calls.log"'
-out=$($H preview --group size,consistency 2>&1)
+out=$($HS preview --group size,consistency 2>&1)
 check "a repeat is SAME, a key with a space (a /workflow command) included" 'grep -q "^SAME #1 " <<<"$out" && grep -q "^SAME #2 consistency:/workflow-zzz frob:usage-readme" <<<"$out" && grep -q "PREVIEW: 0 to write" <<<"$out"'
 printf '# small\n' > skills/calc/scripts/near.py; git commit -qam fixed
-out=$($H preview --group size 2>&1)
+out=$($HS preview --group size 2>&1)
 check "a fix closes its issue" 'grep -q "^WOULD close #1 " <<<"$out"'
-$H file --group size >/dev/null 2>&1
+$HS file --group size >/dev/null 2>&1
 printf '# pad\n%.0s' $(seq 1 3400) > skills/calc/scripts/near.py; git commit -qam back
-check "a return reopens it" '$H preview --group size 2>&1 | grep -q "^WOULD reopen #1 "'
+check "a return reopens it" '$HS preview --group size 2>&1 | grep -q "^WOULD reopen #1 "'
 python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
 import json, sys
 p = sys.argv[1]; s = json.load(open(p))
@@ -108,7 +109,7 @@ check "an open issue that already names the subject is linked, not duplicated" '
 $H file --group requirements >/dev/null 2>&1; $H file --group requirements >/dev/null 2>&1
 check "the link comment is written once" '[ "$(python3 -c "import json;print(sum(\"loop-health-link requirements:CAL-1:rows\" in c[\"body\"] for i in json.load(open(\"$FAKE_GH_DIR/issues.json\")) for c in i.get(\"comments\") or []))")" = 1 ]'
 python3 -c "import json;c=json.load(open('.loop/config.json'));c['feature_labels']=True;json.dump(c,open('.loop/config.json','w'))"; git commit -qam labels-on
-out=$($H preview --group size,consistency 2>&1)
+out=$($HS preview --group size,consistency 2>&1)
 check "with feature_labels on nothing changes: health already tagged each issue with its feature, Other when none" 'grep -q "^WOULD reopen #1 .*\[health:size, feature:Calc\]" <<<"$out" && ! grep -q "^WOULD update" <<<"$out" && grep -q "^SAME #2 " <<<"$out"'
 
 [ "$fails" = "$f0" ] && echo "PASS milestone-freeform:hlt4-feature-milestones"
@@ -143,7 +144,7 @@ echo "== HLT-8: triage per feature; a closed batch keeps the owner's words and i
 # Value: protects=HLT-8; fails_when=triage writes without --yes, closes more than it listed, or file reopens a finding the
 # owner closed with unchanged evidence; why_new=no triage existed; seam=fake gh; no_claim=GitHub's label colors
 mkrepo; fl_on
-$H file --group size >/dev/null 2>&1
+$HS file --group size >/dev/null 2>&1
 out=$($H triage 2>&1)
 check "triage lists open findings per feature by kind and age" 'grep -q "^== Calc: 1 ==" <<<"$out" && grep -q "size .* 1 open, oldest [0-9]* days" <<<"$out"'
 out=$($H triage --close --feature Calc --kind size --why "won't fix: generated file" 2>&1)
@@ -153,12 +154,12 @@ $H triage --close --feature Calc --kind size --why "won't fix: generated file" -
 check "--yes closes the batch with the owner's words and health:closed" 'python3 -c "
 import json; i=json.load(open(\"$FAKE_GH_DIR/issues.json\"))[0]
 assert i[\"state\"]==\"CLOSED\" and {\"name\":\"health:closed\"} in i[\"labels\"] and \"generated file\" in json.dumps(i[\"comments\"])"'
-check "the next file leaves it closed while its evidence is the same" '$H preview --group size 2>&1 | grep -q "^SAME #1 .*closed by the owner, evidence unchanged"'
+check "the next file leaves it closed while its evidence is the same" '$HS preview --group size 2>&1 | grep -q "^SAME #1 .*closed by the owner, evidence unchanged"'
 python3 - "$FAKE_GH_DIR/issues.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s[0]["body"] = s[0]["body"].replace("evidence=", "evidence=0"); json.dump(s, open(sys.argv[1], "w"))
 PY
-$H file --group size >/dev/null 2>&1
+$HS file --group size >/dev/null 2>&1
 check "when the evidence changes it reopens, and the owner's health:closed label comes off" 'python3 -c "
 import json; i=json.load(open(\"$FAKE_GH_DIR/issues.json\"))[0]; assert i[\"state\"]==\"OPEN\" and {\"name\":\"health:closed\"} not in i[\"labels\"], i[\"labels\"]"'
 fi

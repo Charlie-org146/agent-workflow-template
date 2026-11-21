@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-health/scripts/health.py
 # reads: skills/workflow-health/scripts/milestone.py skills/workflow-setup/scripts/setup.py
-# reads: skills/workflow-health/scripts/
+# reads: skills/workflow-health/scripts/ dev/toy/health-standin.py
 # Test that milestones are optional and free form (owner commands, none per feature, none on a pull request or an issue
 # health files), the feature tag always on, and that setup asks for none, on a toy repo with a fake gh. usage: test-milestones.sh [DIR]
 set -u
@@ -17,7 +17,8 @@ export LOOP_FLOW="$d/flow.json"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 unset GH_TOKEN GITHUB_TOKEN
 ms="python3 $here/skills/workflow-health/scripts/milestone.py"
-health="python3 $here/skills/workflow-health/scripts/health.py"
+health="python3 $here/dev/toy/health-standin.py"  # health.py with the stand-in size rule: a WARN to file
+export HEALTH_STANDIN=skills/x/scripts/near.py
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"
 cd "$d/repo" || exit 1
 setup_out=$(python3 "$here/skills/workflow-setup/scripts/setup.py" --bare 2>&1)

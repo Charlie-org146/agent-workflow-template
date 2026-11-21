@@ -85,17 +85,18 @@ with tempfile.TemporaryDirectory() as tmp:
     git("init", "-q", "--bare", "-b", "main", bare)
     os.makedirs(os.path.join(repo, ".loop"))
     os.makedirs(os.path.join(repo, "skills", "x", "scripts"))
+    os.makedirs(os.path.join(repo, "skills", "y"))
     with open(os.path.join(repo, ".loop", "config.json"), "w") as f:
         json.dump({"base": "main"}, f)
     with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
         f.write("Calc\tskills/x\nHome\tREADME.md\n")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-        f.write("# pad\n" * 3400)
+    with open(os.path.join(repo, "skills", "x", "SKILL.md"), "w", newline="\n") as f:
+        f.write("pad\n" * 160)
     git("init", "-q", "-b", "main", repo)
     for key, value in (("user.email", "t@example.test"), ("user.name", "t"), ("core.autocrlf", "false")):
         git("-C", repo, "config", key, value)
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A near-limit script")
+    git("-C", repo, "commit", "-qm", "A SKILL.md over its line limit")
     git("-C", repo, "remote", "add", "origin", bare)
     git("-C", repo, "push", "-q", "origin", "main")
     out, code = health(repo, "file", "--group", "size")
@@ -112,16 +113,16 @@ with tempfile.TemporaryDirectory() as tmp:
         git("-C", other, "add", "-A")
         git("-C", other, "commit", "-qm", "main moves %d" % n)
     git("-C", other, "push", "-q", "origin", "main")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near2.py"), "w", newline="\n") as f:  # a new finding the stale checkout would file
-        f.write("# pad\n" * 3400)
+    with open(os.path.join(repo, "skills", "y", "SKILL.md"), "w", newline="\n") as f:  # a new finding the stale checkout would file
+        f.write("pad\n" * 160)
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A second near-limit script")
+    git("-C", repo, "commit", "-qm", "A second SKILL.md over its line limit")
     before = issues_of(d)
     out, code = health(repo, "file", "--group", "size")
     print(out)
     check("checkout is 3 commits behind origin/main: not filing" in out and code == 1 and "DONE" not in out and issues_of(d) == before,
           "3 commits behind: it prints the line, files nothing and exits 1 (exit %d, %d issues)" % (code, len(issues_of(d))))
-    check("near2.py" in out and "FINDINGS (2)" in out, "3 commits behind: the findings, the new one included, are still printed")
+    check("skills/y/SKILL.md" in out and "FINDINGS (2)" in out, "3 commits behind: the findings, the new one included, are still printed")
     out, code = health(repo, "triage", "--close", "--issue", "1", "--why", "the owner said so", "--yes")
     print(out)
     check("not filing" in out and code == 1 and all(i.get("state", "OPEN").upper() == "OPEN" for i in issues_of(d)),

@@ -589,7 +589,7 @@ def check_held_idle():
     need(bs.flow_seconds(tail, AT)["build"] == 100 + 300, "the pool unknown: a trailing hold entry stops the tail")
 
 
-def check_module_names():
+def check_module_size():
     spec = importlib.util.spec_from_file_location("bs_by_path", os.path.join(M, "board_status.py"))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

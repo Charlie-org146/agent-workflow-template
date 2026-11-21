@@ -113,14 +113,14 @@ with tempfile.TemporaryDirectory() as tmp:
         json.dump({"base": "main"}, f)
     with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
         f.write("Calc\tskills/x\nZed\tskills/z\nHome\tREADME.md\n")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-        f.write("# pad\n" * 3400)
+    with open(os.path.join(repo, "skills", "x", "SKILL.md"), "w", newline="\n") as f:
+        f.write("pad\n" * 160)
     git("init", "-q", "-b", "main", repo)
     git("-C", repo, "config", "user.email", "t@example.test")
     git("-C", repo, "config", "user.name", "t")
     git("-C", repo, "config", "core.autocrlf", "false")
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A near-limit script")
+    git("-C", repo, "commit", "-qm", "A SKILL.md over its line limit")
 
     # SET-17: the standing milestones, one per feature page (Home is not one) and Other
     out, _ = script(os.path.join(health, "milestone.py"), repo, "backlog")
@@ -153,24 +153,56 @@ with tempfile.TemporaryDirectory() as tmp:
         F.home = lambda item, page: ("backlog", "Backlog: " + page if page else "Backlog: Other")
     row = lambda state, family, rule: {"state": state, "family": family, "rule": rule, "subject": "x", "detail": "d", "fix": "f", "evidence": "x"}
     check(F.home(row("FAIL", "traceability", "rows"), "Calc") == ("defect", ""), "a FAIL is a defect on no milestone")
-    check(F.home(row("FAIL", "size", "scripts"), "Calc") == ("defect", ""), "a size FAIL is a defect")
-    check(F.home(row("WARN", "size", "scripts"), "Calc") == ("backlog", "Backlog: Calc"), "a size WARN is a backlog item on its feature's milestone")
+    check(F.home(row("FAIL", "size", "skill-lines"), "Calc") == ("defect", ""), "a size FAIL is a defect")
+    check(F.home(row("WARN", "size", "skill-lines"), "Calc") == ("backlog", "Backlog: Calc"), "a size WARN is a backlog item on its feature's milestone")
     check(F.home(row("FAIL", "performance", "cost"), "Calc") == ("backlog", "Backlog: Calc"), "a performance FAIL is a backlog item")
     check(F.home(row("WARN", "docs", "docs-check"), None) == ("backlog", "Backlog: Other"), "a WARN that fits no feature is a backlog item on Backlog: Other")
     check(F.home(row("WARN", "review", "conflict"), "Zed") == ("defect", ""), "a review conflict is a defect")
     check(F.home(row("WARN", "review", "gap"), "Zed") == ("backlog", "Backlog: Zed"), "a review gap is a backlog item")
     sys.path.pop(0)
+    # the one size rule left, skill-lines, is a FAIL, so it is a defect; a size WARN (none is left, so a row is made) is the backlog item
     out, _ = script(os.path.join(health, "health.py"), repo, "preview", "--group", "size")
-    check("as backlog on Backlog: Calc" in out, "the preview says where the issue would go (%s)" % out.strip()[:200])
+    check("as defect" in out and "skills/x/SKILL.md" in out, "the preview says the skill-lines finding would be a defect (%s)" % out.strip()[:200])
     out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "size")
     got = issues_of(d)
-    check(len(got) == 1 and "backlog" in labels(got[0]) and stone(got[0]) == "Backlog: Calc" and "defect" not in labels(got[0]),
+    check(len(got) == 1 and "defect" in labels(got[0]) and not stone(got[0]) and "backlog" not in labels(got[0]),
+          "file opens one skill-lines finding labelled defect on no milestone (%s)" % [(labels(i), stone(i)) for i in got])
+
+    def file_rows(rows, live):
+        sys.path.insert(0, health)
+        for name in ("file", "issues", "report", "defects", "milestone"):
+            sys.modules.pop(name, None)
+        import file as F3
+        if breaking:
+            F3.home = lambda item, page: ("backlog", "Backlog: Other")
+        os.chdir(repo)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            held, _ = F3.held(repo)
+            acts = F3.plan(rows, held, ("size",), root=repo)
+            (F3.apply if live else F3.preview)(*((acts, repo, ("size",)) if live else (acts,)))
+        os.chdir(here)
+        sys.path.pop(0)
+        return buf.getvalue()
+
+    warn = [{"state": "WARN", "family": "size", "rule": "limit", "subject": "skills/x/SKILL.md", "detail": "big", "fix": "", "evidence": "skills/x/SKILL.md"}]
+    before = len(issues_of(d))
+    out = file_rows(warn, False)
+    check("as backlog on Backlog: Calc" in out and len(issues_of(d)) == before, "the preview says where a size WARN would go (%s)" % out.strip()[:200])
+    file_rows(warn, True)
+    got = [i for i in issues_of(d) if "backlog" in labels(i)]
+    check(len(got) == 1 and stone(got[0]) == "Backlog: Calc" and "defect" not in labels(got[0]),
           "file opens one size finding labelled backlog on Backlog: Calc (%s)" % [(labels(i), stone(i)) for i in got])
-    got[0]["milestone"] = {"title": "v1.0"}  # the owner moved it
+    all_issues = issues_of(d)
+    for i in all_issues:
+        if "backlog" in labels(i):
+            i["milestone"] = {"title": "v1.0"}  # the owner moved it
     with open(os.path.join(d, "issues.json"), "w") as f:
-        json.dump(got, f)
-    out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "size")
-    check(len(issues_of(d)) == 1 and stone(issues_of(d)[0]) == "v1.0", "a repeat opens no second issue and leaves the owner's milestone (%s)" % out.strip()[:120])
+        json.dump(all_issues, f)
+    n = len(all_issues)
+    out = file_rows(warn, True)
+    check(len(issues_of(d)) == n and [stone(i) for i in issues_of(d) if "backlog" in labels(i)] == ["v1.0"],
+          "a repeat opens no second issue and leaves the owner's milestone (%s)" % out.strip()[:120])
 
     # HLT-4: a defect, end to end through plan and apply
     sys.path.insert(0, health)
