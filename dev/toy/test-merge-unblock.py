@@ -90,6 +90,8 @@ if only in ("", "restamp"):
     commit("Wiki: re-stamp pages for my-goal")
     check("restamp records the page in the goal's own kept fragment (%s)" % done, done == ["A"] and open(os.path.join(repo, ".loop/kept/my-goal.tsv")).read().startswith("A	"))
     check("and the page is no longer stale (%s)" % stale(), not stale())
+    head_before = git("rev-parse", "HEAD").stdout
+    check("an empty set of pages re-stamps nothing, makes no Kept commit and HEAD does not move (#5730)", audit.relock(repo, "my-goal", set()) == [] and git("rev-parse", "HEAD").stdout == head_before)
     log = open(os.path.join(repo, ".git", "loop", "reviews.tsv")).read()
     check("and the reviews log names the goal's slug", "restamp\tA\tmy-goal" in log)
     check("and the page's review line still parses", prd.review_of(open(os.path.join(repo, "docs/wiki/A.md")).read(), criteria.rules())[1] is None)

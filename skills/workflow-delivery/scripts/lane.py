@@ -183,6 +183,7 @@ def finalize(base, held, name):
 
 def lane(runs, slug, name, spec, cfg, wait=90):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
+    os.makedirs(runs, exist_ok=True)  # a fresh clone has no runs folder (#5735)
     head = rev("HEAD")
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:

@@ -223,10 +223,10 @@ def keep(root, slug, pages):
     cr.git(*docs.identity(root), "commit", "-q", "--only", "-m", "Kept: " + slug, "--", path)
 
 
-def relock(root, slug="", only=()):
+def relock(root, slug="", only=None):  # only=None: every page; an empty set: none (#5730)
     rule, done, held_ = cr.rules(), [], []
     for rel in cr.pages(root):
-        if only and os.path.basename(rel)[:-3] not in only:
+        if only is not None and os.path.basename(rel)[:-3] not in only:
             continue
         with open(join(root, rel)) as handle:
             text = handle.read()
@@ -247,7 +247,7 @@ def relock(root, slug="", only=()):
             done.append(os.path.basename(rel)[:-3])
         elif slug and not moved:
             held_.append(os.path.basename(rel)[:-3])
-    for page in only if slug else ():  # DOC-18: a How-to-use or guide page has no Review line; a kept marker re-stamps it
+    for page in (only or ()) if slug else ():  # DOC-18: a How-to-use or guide page has no Review line; a kept marker re-stamps it
         rel, feature, mapped = "%s/%s.md" % (docs.wiki_dir(root), page), page[len(docs.deployments.HOWTO):], docs.read_map(root)
         held = os.path.isfile(join(root, rel)) and (page.startswith(docs.deployments.HOWTO) and feature in mapped or page in mapped and pf.is_guide(open(join(root, rel)).read()))
         if held and not cr.git("diff", "--name-only", "HEAD", "--", rel, check=False).strip():
@@ -266,7 +266,8 @@ def relock(root, slug="", only=()):
 def restamp_own(root, slug, _=()):
     """DOC-2: relock the pages check --own calls STALE for this goal."""
     seen = subprocess.run([sys.executable, join(os.path.dirname(__file__), "docs.py"), "check", "--own", "HEAD"], cwd=root, capture_output=True, text=True).stdout
-    return relock(root, slug, {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]})
+    stale = {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]}
+    return relock(root, slug, stale) if stale else []  # nothing stale: no re-key, no commit, HEAD stays (#5730)
 
 
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
