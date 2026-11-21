@@ -189,6 +189,8 @@
 | <a id="t-queue-use"></a>queue-use | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-follows-adoption"></a>follows-adoption | requirement | DEL-21 | not run | - | local | 2026-11-20 |
 | <a id="t-release-hold-red"></a>release-hold-red | requirement | DEL-17 | not run | - | local | 2026-11-20 |
+| <a id="t-defect-closing-keywords"></a>defect-closing-keywords | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-defect-closing-unaffected"></a>defect-closing-unaffected | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 
 ## Documentation
 
