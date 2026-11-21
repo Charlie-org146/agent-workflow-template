@@ -51,3 +51,19 @@ Shape spec: DOC-27 as pinned in `.claude/worktrees/consolidate-documentation-921
 Internal cleanup of this repo; adopting repos migrate in a later goal.
 
 Order and safety: the branch is merged up to main only after the earlier goal (doc27-28-text-2) merges; the pull request is opened as a draft and stays one until the owner says; auto-merge is never armed and `merge.py` is never run.
+
+Manual negative controls (each run in a throwaway clone; all 12 behave as stated):
+1. A forced hash mismatch (unit changed on the second call): `REFUSED: the text of CHK-1 changed`, no file written.
+2. A Reviewed mark not on the base: `REFUSED: DOC-26 holds a Reviewed mark that is not on 48ac06e7d`, exit non-zero.
+3. One broken proof (a stray line added to a page): `check` exits non-zero with `FAIL 2 each page ... equals BASE byte for byte: Machines`.
+4. A CRLF page: every one of its 296 lines is CRLF after the run, marker lines included.
+5. A last entry with no final newline: the block is added once and the page still ends without a newline.
+6. A real sub-bullet that starts with `Line` (`Line 9: metric reasons ...`) survives a re-run, and the block is regenerated.
+7. An ID-token collision: a Success metrics bullet naming `DOC-27` and `DOC-2-x` leaves DOC-2 at `metric missing`.
+8. A hostile Follows cell (`<!--`, `-->` and a URL): the Reference bullet reads `evil x t tail`.
+9. An absent reviews log: the report reads `record not available` and the run exits 0.
+10. Hostile review-log text (`<!-- a | b -->`): the report cell reads `evil a / b c`, with the table still seven columns.
+11. A run interrupted between renames (failure injected at the 4th rename): it prints `REFUSED`, the three files it touched and `git checkout --` for those paths; running that command leaves a clean tree and no temporary folder.
+12. A write target with uncommitted changes: `REFUSED: these paths have uncommitted changes`.
+
+`check` on the committed branch before the merge-up (base 48ac06e7d): 11 of 12 proofs pass; the one FAIL is `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28. The final `check` output replaces this after the merge-up.
