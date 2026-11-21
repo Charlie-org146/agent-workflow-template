@@ -272,7 +272,7 @@ def regen(g, slug):
     readme = g.git("status", "--porcelain", "--", "README.md")  # #5728: the audit's own render of README is committed with the wiki
     done = g.run([sys.executable, tool("workflow-release", "scripts", "wiki.py"), "prepare", slug, "--commit"])
     done.returncode and print("NOTE: stale page: " + done.stdout)
-    if not readme and g.git("status", "--porcelain", "--", "README.md").startswith("M"):
+    if not readme and not done.returncode and g.git("status", "--porcelain", "--", "README.md").startswith("M"):
         g.git("commit", "-m", "Wiki: update pages for " + slug, "--", "README.md")
         print("COMMITTED README.md for " + slug)
     return g.git("rev-parse", "HEAD")

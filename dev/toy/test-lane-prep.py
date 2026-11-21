@@ -34,15 +34,15 @@ def git(repo, *args):
 class Goal:
     """The part of goal.py's interface that fit.regen uses; run() stands in for wiki.py and writes README like the audit does."""
 
-    def __init__(self, repo, write):
-        self.repo, self.write = repo, write
+    def __init__(self, repo, write, rc=0):
+        self.repo, self.write, self.rc = repo, write, rc
 
     def git(self, *args, check=True):
         return git(self.repo, *args)
 
     def run(self, args):
         self.write and open(os.path.join(self.repo, "README.md"), "a").write(self.write)
-        return subprocess.CompletedProcess(args, 0, "", "")
+        return subprocess.CompletedProcess(args, self.rc, "", "")
 
 
 def fresh_repo():
@@ -83,6 +83,11 @@ if only in ("", "readme"):
     before = git(repo, "rev-parse", "HEAD")
     fit.regen(Goal(repo, "\nConfidence 99%\n"), "slug")
     check("negative control: a README already hand-edited is not committed, so the lane still refuses it", git(repo, "rev-parse", "HEAD") == before and git(repo, "status", "--porcelain").startswith("M README.md"))
+
+    repo = fresh_repo()
+    before = git(repo, "rev-parse", "HEAD")
+    fit.regen(Goal(repo, "\nConfidence 99%\n", 1), "slug")
+    check("negative control: when the wiki step fails (a page is still stale) README is not committed alone", git(repo, "rev-parse", "HEAD") == before)
 
 print("ALL PASS" if not fails else "%d FAILED" % fails)
 sys.exit(1 if fails else 0)
