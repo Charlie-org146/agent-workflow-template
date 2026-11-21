@@ -13,7 +13,6 @@ lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the o
 merge-guard-base-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4113
 reply-hook-blocks	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4549
 reply-hook-checkin-123	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4547
-repo-narrow-178	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4090
 stale-code-page-reviewed	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5368
 toy-no-leftovers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4092
 del9-scan-sites	fails on main since v1.0.91; see #4129
