@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Email-first (#4785, #4671): each mail asks one question with numbered options and a recommendation; the machines share one send
-budget; a reply like "1 recommended" is recorded as the owner's words.
+"""Email-first (#4785, #4671): one question, numbered options and a recommendation per mail; machines share a send
+budget; "1 recommended" is recorded as the owner's words.
 
-usage: mailbox.py reply QID TEXT [--root DIR]   the operation session's reply; QID: the mail's `Question id` line
-       mailbox.py pending [--root DIR]          the questions mailed and not yet answered
+usage: mailbox.py reply QID TEXT [--root DIR]   reply; QID: mail's `Question id`
+       mailbox.py pending [--root DIR]          unanswered mailed questions
        mailbox.py finding TITLE --feature PAGE --found REF [--text WORDS] [--owner-words oN] [--dry-run]
-                                                OPS-1: file a session's finding as an ops-finding issue on "Backlog: PAGE" ("Other"
-                                                if none); REF found it. Refuses a repeat and a safety-class finding without owner's words.
+                                                OPS-1: file on "Backlog: PAGE" (else "Other"); REF found it.
+                                                Refuses repeats and safety findings without owner's words.
 
        mailbox.py watch ID --pr N [--arm --head SHA]   watcher job (TD487; ID: the goal's slug): the tick resumes it when checks end;
                                                  green at SHA with --arm runs merge.py ID --go-head SHA once, another head waits, red
                                                  records the checks (--arm: operation)
-       mailbox.py tick | install | uninstall | status   the 300 s launch agent's plist (LOOP_AGENTS_DIR); not loaded here;
-                                                 the tick runs the jobs, then checkin.py; no goal
+       mailbox.py tick | install | uninstall | status   300 s launch agent plist (LOOP_AGENTS_DIR); not loaded here;
+                                                 tick runs jobs, then checkin.py
 
-notify.py calls compose and claim per event (mail: workflow-health's mail.py).
-compose gives the body and remembers the question (loop/mailbox.json). claim takes the event's key and a send from
-the ledger (refs/loop/mail-ledger, else a file): a second machine never mails an event twice;
-`notify_budget` (20) caps the sends in 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or owner's
+notify.py calls compose/claim (mail: workflow-health/mail.py).
+compose stores questions (loop/mailbox.json). claim takes an event key and send from the ledger
+(refs/loop/mail-ledger, else a file), preventing duplicate mail across machines.
+`notify_budget` (20) caps sends per 24 hours. A reply is "<n>", "<n> recommended", "recommended", "approve" or owner's
 words; a question about deleting, money, security or private data needs the owner's typed words. The answer goes to the worker via
 operate.py send --source owner (else sessions.py owner-words).
 """
@@ -29,6 +29,7 @@ import plistlib
 import re
 import subprocess
 import sys
+import tempfile
 import time
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -198,7 +199,12 @@ def file_finding(root, args):
     for label in ("backlog", "ops-finding"):
         gh(["label", "create", label, "--description", "Filed by the operation layer"], root)
     body = "<!-- loop-ops-finding %s -->\n\n%s\n\nFound by %s (operation layer).\n" % (hashlib.sha1(norm(title).encode()).hexdigest()[:12], text or title, args.found)
-    done = gh(["issue", "create", "--title", title, "--label", "backlog,ops-finding", "--milestone", stone, "--body", body], root)
+    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
+        f.write(body)
+    try:
+        done = gh(["issue", "create", "--title", title, "--label", "backlog,ops-finding", "--milestone", stone, "--body-file", f.name], root)
+    finally:
+        os.remove(f.name)
     if done.returncode:
         return 1, "FAILED: %s" % done.stderr.strip()[:160]
     number = re.search(r"/issues/(\d+)", done.stdout)
