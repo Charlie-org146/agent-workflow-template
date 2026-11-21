@@ -96,7 +96,7 @@ fi
 
 # done 6: each machine row is listed in the Machines Tests table.
 if want machine-rows-listed; then
-  for row in machine-apply-installs machine-no-private machine-task-layout machine-no-prompt-mode; do  # the other machine rows merged into these (rows-600-c)
+  for row in machine-apply-installs machine-no-private machine-no-prompt-mode; do  # the other machine rows merged into these (rows-600-c, rows-strict-merge)
     grep -qF "[$row](Tests#t-$row)" "$here"/docs/wiki/*.md || no "row $row is not in a feature page Tests table"; done
   for n in 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
   echo "PASS: every machine row is listed in the Machines Tests table"
@@ -117,7 +117,7 @@ if want machine-windows; then
 fi
 
 # done 8: one task per repo named <repo>-health-regression, every 4 hours, staggered; no double schedule; public workflow trimmed.
-if want machine-task-layout; then
+if want machine-task-schedule; then
   mk t1; mk t2; h="$d/ht"; mkdir -p "$h"
   $M apply --home "$h" --repo "$d/t1/repo" >/dev/null || no "apply t1 failed"; $M apply --home "$h" --repo "$d/t2/repo" >/dev/null || no "apply t2 failed"
   a="$h/.claude/scheduled-tasks/t1-repo-health-regression/SKILL.md"; b="$h/.claude/scheduled-tasks/t2-repo-health-regression/SKILL.md"
