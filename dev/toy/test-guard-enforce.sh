@@ -8,7 +8,7 @@
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-unset LOOP_NO_GIT_HOOKS LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GITHUB_ACTIONS LOOP_HEALTH_HOOKS LOOP_HOOK_DEADLINE LOOP_HOOK_RANGE
+unset LOOP_NO_GIT_HOOKS LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GITHUB_ACTIONS LOOP_HEALTH_HOOKS LOOP_HOOK_DEADLINE LOOP_HOOK_RANGE CLAUDE_CODE_HOST_SESSION_ID  # a goal made here must not bind to the running app session (it would then wait for a session reply, not run the flow)
 section=${1:-all}; case "$section" in all|set8|del9|hooks|more|setup|push|limits|merge) shift 2>/dev/null ;; *) section=all ;; esac
 want() { case "$section" in all|"$1") return 0 ;; set8) case $1 in hooks|more|setup) return 0 ;; esac ;; del9) case $1 in push|limits|merge) return 0 ;; esac ;; esac; return 1; }
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"

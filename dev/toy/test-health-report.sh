@@ -58,7 +58,20 @@ grep -q "^FAIL docs Extra unmapped" <<<"$out" && ! grep -q "^PASS docs" <<<"$out
 #   as PASS when regression sync could not be read; why_new=the lone test only ran the docs group; seam=none;
 #   no_claim=none beyond protects
 out=$(python3 "$lone/scripts/health.py" check --group requirements)
-grep -q "^UNREAD requirements done done: its source could not be read" <<<"$out" && ! grep -q "^PASS requirements" <<<"$out" && ok "an unread source leaves its other rule UNREAD" || bad "unread padding"
+unread_source() {
+  local text="$1" rule
+  grep -q "^UNREAD requirements regression rows: regression.py is not installed beside this skill" <<<"$text" || return 1
+  for rule in proof done; do
+    grep -qx "UNREAD requirements $rule $rule: its source could not be read -> fix: see the UNREAD line above" <<<"$text" || return 1
+  done
+  ! grep -Eq "^PASS requirements [^ ]+ (rows|proof|done):" <<<"$text" &&
+    grep -qx "PASS requirements principle-map principle-map: no problem found" <<<"$text"
+}
+unread_source "$out" && ok "an unread source leaves all three dependent rules UNREAD; the independent principle map passes" || bad "unread padding"
+for rule in rows proof done; do
+  changed=$(sed "s/^UNREAD requirements \([^ ]* $rule:\)/PASS requirements \1/" <<<"$out")
+  ! unread_source "$changed" && ok "unread control rejects a false PASS for $rule" || bad "unread control $rule"
+done
 # Value: protects=check --json rows agree with its counts, padded PASS rows included; fails_when=report() hands back the
 #   raw rows; why_new=no JSON shape test; seam=none; no_claim=none beyond protects
 $health check --json | python3 -c "import json,sys; d=json.load(sys.stdin); c=d['counts']; sys.exit(0 if sum(1 for r in d['rows'] if r['state'] in c) == sum(c.values()) else 1)" \
@@ -76,10 +89,19 @@ sed -n 2p <<<"$out" | grep -q "^groups run: Docs; skipped: Requirements (not ask
 echo "== preview writes nothing"
 before=$(writes)
 out=$($health preview); echo "$out"
-grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size\]" <<<"$out" \
-  && grep -q "^WOULD open issue 'health: requirements REL-1 rows' \[health:requirements\]" <<<"$out" \
-  && grep -q "^WOULD open issue 'health: docs Ghost missing' \[health:docs\]" <<<"$out" \
-  && grep -q "\[health:hygiene\]" <<<"$out" && ! grep -q "\[health:criteria\]" <<<"$out" && grep -q "as backlog on Backlog: " <<<"$out" && ok "each issue it would open shows with its tag and where it goes" || bad "preview lines"
+preview_lines() {
+  local text="$1"
+  grep -qx "WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size, feature:Other\] as backlog on Backlog: Other" <<<"$text" &&
+    grep -qx "WOULD open issue 'health: requirements REL-1 rows' \[health:requirements, feature:Other\] as defect" <<<"$text" &&
+    grep -qx "WOULD open issue 'health: docs Ghost missing' \[health:docs, feature:Ghost\] as defect" <<<"$text" &&
+    grep -q "\[health:hygiene, feature:Other\]" <<<"$text" && ! grep -q "\[health:criteria" <<<"$text"
+}
+preview_lines "$out" && ok "each issue it would open shows with its group, feature and destination" || bad "preview lines"
+for feature in Other Ghost; do
+  ! preview_lines "$(sed "s/, feature:$feature//g" <<<"$out")" &&
+    ! preview_lines "$(sed "s/feature:$feature/feature:Wrong/g" <<<"$out")" &&
+    ok "preview control rejects missing or wrong feature:$feature" || bad "preview feature control $feature"
+done
 [ "$(writes)" = "$before" ] && [ ! -f "$FAKE_GH_DIR/issues.json" ] && ok "preview made no write call" || bad "preview wrote"
 GH_TOKEN=x $health preview >/dev/null; [ "$(writes)" = "$before" ] && ok "a token does not make preview write" || bad "token"
 # Value: protects=the old run --live (cron, habit) now only previews and writes nothing; fails_when=run is pointed back at
@@ -119,8 +141,19 @@ for i in issues:
     if "size:" in i["body"]: i["labels"] = [{"name": "health"}]
 json.dump(issues, open(p, "w"))
 PYEND
-$health preview --group size | grep -q "^WOULD update #2 size:.* \[health:size\]" && $health file --group size >/dev/null && [ "$(count health:size OPEN)" = 1 ] \
-  && ok "an untagged old issue is updated to carry its group tag" || bad "tag backfill"
+backfill_line() { grep -qx "WOULD update #2 size:skills/x/scripts/near.py:scripts \[health:size, feature:Other\]" <<<"$1"; }
+out=$($health preview --group size)
+backfill_line "$out" && $health file --group size >/dev/null && [ "$(count health:size OPEN)" = 1 ] \
+  && python3 - <<'PYEND' && ok "an untagged old issue gains its group and feature tags" || bad "tag backfill"
+import json, os
+issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
+size = [i for i in issues if i["number"] == 2]
+assert len(size) == 1
+assert {"health:size", "feature:Other"} <= {l["name"] for l in size[0]["labels"]}
+PYEND
+for tag in health:size feature:Other; do
+  ! backfill_line "$(sed "s/$tag/wrong/g" <<<"$out")" && ok "backfill control rejects a wrong $tag" || bad "backfill control $tag"
+done
 git rm -q skills/x/scripts/near.py; git commit -qm "Fixed"
 $health file --group size | grep -q "^DONE close #2" && ok "a fix closes it" || bad "close"
 mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3600)" > skills/x/scripts/near.py; git add -A; git commit -qm "Back"

@@ -45,8 +45,15 @@ PY
 
 echo "== Cost: no budget set"
 goal quick 6 100
+# setup now writes a default time budget, so "no budget set" means both keys removed from the config
+setcfg time_budget_minutes= token_budget=
 out=$($health check --family cost); echo "$out"
 grep -q "^INFO performance budgets cost: " <<<"$out" && ok "no budget set is INFO" || bad "info"
+# negative control: with a budget set, the same check does not say no budget is set
+setcfg time_budget_minutes=240
+out=$($health check --family cost)
+! grep -q "^INFO performance budgets cost: " <<<"$out" && ok "a budget set is not INFO (control)" || bad "info control"
+setcfg time_budget_minutes= token_budget=
 
 echo "== Cost: over a time and a token budget"
 setcfg time_budget_minutes=30 token_budget=1000
@@ -85,7 +92,21 @@ a=$($health check); b=$($health check); rc_check=$?
 out=$($health judge); rc=$?; echo "$out"
 [ $rc = $rc_check ] && ok "stand-in judge: same exit code as check" || bad "exit code with judge"
 [ -e "$JUDGE_CALLS" ] && ok "judge calls the judge command" || bad "judge not called"
-[ "$(head -n "$(wc -l <<<"$a")" <<<"$out")" = "$a" ] && ok "the rules and the verdict print first, as check prints them" || bad "rules first"
+# check alone adds the FINDINGS table (before the first group) and the PRINCIPLE lines (before the verdict) around its rules;
+# judge prints the same header, rule rows and verdict, then the judge section. Compare everything else line for line.
+same_rules() {  # same_rules CHECK_TEXT JUDGE_TEXT: the judge's text starts with the check's rules and verdict, exactly
+  python3 - "$1" "$2" <<'PY2'
+import sys
+check, judge = sys.argv[1].split("\n"), sys.argv[2].split("\n")
+first = next(i for i, line in enumerate(check) if line.startswith("== "))
+rules = check[:2] + [line for line in check[first:] if not line.startswith("PRINCIPLE ")]
+sys.exit(0 if len(rules) > 10 and judge[:len(rules)] == rules else 1)
+PY2
+}
+same_rules "$a" "$out" && ok "the rules and the verdict print first, as check prints them" || bad "rules first"
+# negative control: a changed rule row, or a missing verdict, is not the same rules
+! same_rules "$a" "$(awk '/^PASS / && !done {sub(/^PASS /, "FAIL "); done=1} {print}' <<<"$out")" && ok "rules control: a changed rule row is caught" || bad "rules control row"
+! same_rules "$a" "$(grep -v '^HEALTH: ' <<<"$out")" && ok "rules control: a missing verdict is caught" || bad "rules control verdict"
 sec=$(sed -n '/^JUDGE (suggestions, never part of the verdict)$/,$p' <<<"$out")
 [ -n "$sec" ] && ok "the judge section is marked as suggestions" || bad "judge heading"
 for h in "criteria quality" "test quality" "performance, test time and tokens, ranked by savings" "Needs you" "candidate goals" "next steps"; do
