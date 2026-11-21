@@ -44,7 +44,7 @@ t=$(mktemp -d); toy_on_exit 'rm -rf "$t"'
 git clone -q --depth 1 "file://$here" "$t/clone" 2>/dev/null
 printf '#!/bin/bash\n# reads: skills/workflow-regression/scripts/tests.py\ngrep -q "/\\.git/" "$1"\n' > "$t/clone/dev/toy/test-zz.sh"  # lanes: no read (toy script)
 deps=$($L deps --root "$t/clone" "bash dev/toy/test-zz.sh")
-check "in a full clone a script naming .git/ gets no dependency inside git's store and is not run on every change" '[ -d "$t/clone/.git" ] && grep -qx "skills/workflow-regression/scripts/tests.py" <<<"$deps" && ! grep -q "^\.git\|^ALWAYS" <<<"$deps"'
+check "in a full clone a script naming .git/ gets no dependency inside git's store and is not run on every change" '[ -d "$t/clone/.git" ] && grep -qx "skills/workflow-regression/scripts/tests.py" <<<"$deps" && ! grep -Eq "^\.git(/|\$)|^ALWAYS" <<<"$deps"'
 
 echo "== this repo stays green: no docs check line but CHANGED, no health FAIL but a docs changed row"
 # STALE and TESTS are left out too: a goal's own run or code change makes them mid-goal, and its release step fixes them.
