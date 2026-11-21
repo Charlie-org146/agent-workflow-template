@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-health/scripts/health.py check | grep -E "requirements-per-page|controls migration"`.
+   Expect: `PASS size requirements-per-page ...` and `PASS controls migration: fires on its fixture`; no `FAIL size Documentation` and no `FAIL controls migration`.
+2. Run `python3 dev/toy/test-health-rules-fix.py | tail -3`.
+   Expect: ALL PASS (6 PASS), including the 25-live negative control.
+3. In `skills/workflow-health/scripts/defects.py` delete `(?!moved to |merged into |Retired)` from `LIVE` and run step 2 again (then undo).
+   Expect: FAIL on the 3-live case and `FAILED:` at the end.
