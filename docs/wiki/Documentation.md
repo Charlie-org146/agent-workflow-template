@@ -31,6 +31,213 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
   - A new need is written into an existing requirement before a new one is added. [DOC-26]
   - Health fails a principle with more than five, and a goal that would add a sixth is refused at freeze. [DOC-26]
+- DOC-27: **Unreviewed** The new standard: every feature is one unit you can review
+  - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
+  - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
+  - Revised at 23:08 after your review at 23:05, to correct its "as today" notes against main (your words: "Fix them, re-review"), then at 23:10 for your milestone line and to drop the optional sections. It is back to Unreviewed.
+  - **Promise.** Every feature is small enough to understand, shows how you'd know it works, and is marked Reviewed only by your own typed words.
+  - ### Problem
+  - I marked requirements Reviewed by accepting a recommendation, so the mark doesn't tell me what I've actually read.
+  - I can't say what each requirement is for or how I'd know it works. Its metric sits at the bottom of the page, not beside it.
+  - I can't see from the front page how the principles, the features and my reviews fit together, and the pages drift from what I approved.
+  - ### Requirements
+  - 5 functional requirements, each with one success metric and its test cases.
+  - Functional
+  - 27.1 A feature has a fixed shape
+  - A feature is the smallest unit. It has one promise, belongs to exactly one principle, and has one home topic, the page its ID prefix names. It may also be listed under another topic it serves. *As today for the principle and the topic; the promise line is new.*
+  - The principles sit above the features. Each has a number and a name, and they're shown in a fixed order. *As today.*
+  - A feature's page, in this order: its docs marker line; the header lines (Milestone, linked to this repo's milestone, and Review); Problem; Requirements (Functional, then Non-functional); Non-goals; Success metrics; Reference; Revisions; Tests (generated, last). No other section: how a feature is run or deployed is covered by its success metrics. *As today, plus Reference, and without the How to use line. Today the docs check also allows optional Runbook and Deployments sections; those go.*
+  - Every feature names its milestone: the GitHub milestone, in this repo, of the release that builds or last changed it, shown in the feature's header and linked. *New for each feature. Today each topic page has one Milestone line for the whole page; Integrations and Release have none, and 11 of the links point to an old account.*
+  - Problem: two or three lines from your side, saying what goes wrong without the feature. *As today.*
+  - Non-functional requirements say how well: speed, cost, size, safety. A feature with none says None. *As today.*
+  - Non-goals: what the feature deliberately doesn't do. *As today.*
+  - Revisions: every change is a dated revision. Old revisions are kept, and an ID is never reused. *As today.*
+  - **Success metric 27.1.** Features with a section missing, empty or out of order.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - A feature with an empty Problem or Non-goals section fails the docs check.
+  - A feature with no milestone, or with a milestone link to another repo, fails the docs check.
+  - A feature with Non-goals placed before Requirements fails the docs check.
+  - A feature listed under two principles, or under none, fails the docs check.
+  - A feature whose text changed with no new revision row fails the docs check.
+  - 27.2 At most five requirements, each with one success metric and at least one test case
+  - A feature has at most five functional requirements. *New. Today the cap is five requirements per principle (DOC-26).*
+  - Every requirement has exactly one success metric, with a target and today's measured value. "Not measured" is allowed, but it is shown. *New. Today metrics sit at the bottom of the page and aren't linked.*
+  - Every requirement has at least one test case, shown with it. *As today in intent: each requirement needs a passing test.*
+  - A feature with more than five requirements, or more than one promise, is split before it can be reviewed. *New.*
+  - **Success metric 27.2.** Requirements with no success metric or no test case, plus features with more than five requirements.
+  - Target **0**
+  - Today **9 features over five**
+  - Counted on main: 27 features hold 121 requirement lines; 9 hold more than five (the largest has 13). No line has a linked metric yet.
+  - Test cases
+  - A requirement with no metric, or with no test case, fails the docs check.
+  - A feature with a sixth functional requirement fails the docs check.
+  - A metric with no target fails the docs check.
+  - 27.3 Every feature names what it follows
+  - Reference: each specific standard, tool or production system the feature follows, with its source link and one tag: adopted (used as it is), adapted (its design copied and changed, with the reason) or reference (studied, not followed). Where nothing fits, it says own. *New as a section; today it's the Follows column with the tags adopted, adapted and own.*
+  - General guidance isn't a reference. Each entry names a specific source. *As today.*
+  - Adoption and Confidence: each feature shows both scores. Health generates them from the references and the tests, and no one types them. *As today.*
+  - **Success metric 27.3.** Reference entries with no source link or no tag, plus features with no entry at all.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - A reference with no link or no tag fails the docs check.
+  - A reference that names no specific source fails the docs check.
+  - A typed score that differs from health's latest run fails the docs check.
+  - 27.4 The documentation has exactly this structure, and a check keeps it
+  - Front page: README and wiki Home have the same sections, in this order: What this is; System design; one numbered section per principle; Features by topic. Their principle sections are identical. Each keeps its own lead lines (the README's template block, Home's docs marker). *As today, except the last section's name: today it's "Requirements by feature", and the docs check requires that name, so the build changes both.*
+  - "N of M reviewed" is shown at the top of the front page. *New.*
+  - System design shows exactly two figures: by principle, and by feature. *As today.*
+  - Each principle section has, in this order: the principle's paragraph, one table, an Adoption line, and a "How it works" paragraph. *As today.*
+  - The principle table's columns, in this order: Feature (its ID and name, linked to its topic page and its flow figure), Promise, Success metrics, Today, Reference, Topic, Adoption, Confidence, Review. *New. Today's columns are Requirement, Summary, Follows, Feature, Adoption, Confidence: Feature is today's Requirement, Reference replaces Follows, and Topic is today's Feature column.*
+  - Features by topic lists every topic that has a feature, grouped under a few headings. Under each topic is one table with the columns Feature and Complete text. *New for the names and the topic rule. Today the columns are Requirement and Complete text, each topic links its How-to-use page, and Release is listed with an empty table.*
+  - Wiki pages, exactly these and no other: Home, Principles, Tests, Roadmap, and one topic page per topic. There are no How-to-use pages. *As today, except the 13 How-to-use pages, which go.*
+  - Principles page: an introduction, the principles overview figure, then for each principle its paragraph, its one figure, the same table as the front page, and its Adoption line. *As today.*
+  - Tests page: generated, one section per topic that has tests, then Other, last. Roadmap: the wiki's Roadmap page only. *As today for Tests. A second roadmap, docs/ROADMAP.md, sits outside the wiki: it is folded into the wiki page or removed.*
+  - Files outside the wiki (the docs/designs notes, the sweep and triage notes) and the root files (AGENTS.md, CLAUDE.md, CHANGELOG.md and others) are outside this structure and aren't checked by it. *As today.*
+  - Figures, exactly these and no other: two system design figures, one principles overview, one per principle, and one flow figure per live feature, named by its ID. A figure no page shows is removed. *As today for the ones in use. Today 34 of 70 figure files are left over: 4 old principle figures, 20 flow figures for IDs no longer live, and 10 v2.0 diagrams no page shows.*
+  - The docs check runs on every pull request and fails any missing or extra page, section, table column or figure, and any difference between README's and Home's principle sections. *New for pages, columns and figures. Today it fails wrong, missing, extra or out-of-order section headings on every page, and principle sections that differ between README and Home. It doesn't check the five-requirement cap, a figure per row, the table columns or the scores.*
+  - **Success metric 27.4.** Differences between this structure and what is on main: missing or extra pages, sections, table columns or figures.
+  - Target **0**
+  - Today **at least 51**
+  - A hand count on main at 48ac06e7d, not yet from a command: 34 left-over figure files, 13 How-to-use pages to remove, 3 table columns not built, the Reference section not built, and 2 missing Milestone lines.
+  - Test cases
+  - Move a front-page section out of order, or make Home differ from the README. The docs check fails.
+  - Drop the Review column, or swap two columns. The docs check fails.
+  - Add a wiki page that is none of the listed kinds, or a How-to-use page. The docs check fails.
+  - Add a figure file that no page shows, or leave a live feature without its flow figure. The docs check fails.
+  - A pull request with any of these has a failing check and can't merge.
+  - 27.5 Only your own review counts
+  - Every feature starts Unreviewed, and its mark is shown at the top of the feature and on the front page. *New.*
+  - A feature becomes Reviewed only by your own typed words naming that one ID. No batch, no delegation, and no agent recommends "reviewed". *New.*
+  - Before you review a feature, its review page shows the promise, each requirement with its metric, today's value and test cases, its references and its confidence. *New.*
+  - A revised feature goes back to Unreviewed. *New.*
+  - A goal that builds something new names a Reviewed feature. A bug fix is exempt: it restores what a feature already promises. *As today, plus the exemption.*
+  - Only you add, rename or remove a principle. *As today (DOC-2).*
+  - **Success metric 27.5.** Features marked Reviewed without your own typed record naming that ID.
+  - Target **0**
+  - Today **not measured**
+  - 26 marks exist, all dated one day. Some have a relayed record of your words; none was checked against this rule.
+  - Test cases
+  - A Reviewed mark with no typed record naming that ID is refused. So is one record naming two IDs.
+  - Change one word of a Reviewed feature. Its mark reads Unreviewed.
+  - Freezing a new-work goal that names an Unreviewed feature is refused. A bug-fix goal is allowed.
+  - Mark one feature Reviewed. "N of M reviewed" rises by one on both front pages.
+  - Non-functional
+  - None
+  - ### Non-goals
+  - It never reviews a feature for you. An agent may draft; only your words count.
+  - It doesn't ask you to review everything at once. A few at a time is the intended pace.
+  - It doesn't say which features exist or what they promise. That is each feature's own text.
+  - ### Success metrics
+  - \# | Metric | Target | Today
+  - 27.1 | Features with a section missing, empty or out of order. | 0 | not measured
+  - 27.2 | Requirements with no success metric or no test case, plus features with more than five requirements. | 0 | 9 features over five
+  - 27.3 | Reference entries with no source link or no tag, plus features with no entry at all. | 0 | not measured
+  - 27.4 | Differences between this structure and what is on main: missing or extra pages, sections, table columns or figures. | 0 | at least 51
+  - 27.5 | Features marked Reviewed without your own typed record naming that ID. | 0 | not measured
+  - ### Reference
+  - adapted
+  - [ISO/IEC/IEEE 29148, characteristics of a requirement](https://www.iso.org/standard/72089.html). It asks that each requirement be singular and verifiable. One success metric and one test case per requirement is that rule made checkable. The page shape stays ours.
+  - adapted
+  - [GitHub code owners and required reviews](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners). A named person must approve each unit before it counts. Here the unit is a feature, not a code path, and the approval is your typed record.
+  - reference
+  - [INVEST criteria for a work item](https://en.wikipedia.org/wiki/INVEST_(mnemonic)). Small and testable are both tests applied when deciding whether a feature must be split.
+  - ### Revisions
+  - r1 · 2026-11-20 · first draft by operation-top, not yet your text
+- DOC-28: **Unreviewed** Releases: major, minor and patch, each with one job, and a brief you write first
+  - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
+  - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
+  - **Promise.** Every release is one of three kinds with a clear job, each major or minor starts from a brief you wrote and froze, and a major ships only when everything is clean.
+  - ### Problem
+  - I kept adding things to a release while it ran, so its scope drifted and it never closed. v2.0 was re-scoped several times in one day.
+  - Major, minor and patch didn't mean anything different in practice, so I couldn't tell what a release was for or when it was finished.
+  - I want to write the direction once, then let the loop run and fix bugs without asking me, and I want a major to mean the system is really clean.
+  - ### Requirements
+  - 5 functional requirements, each with one success metric and its test cases.
+  - Functional
+  - 28.1 Three kinds of release, each with one job
+  - Major: a clean-up and full check. It closes all open issues, fixes every regression failure so the known-red list is empty, and passes a complete health check. *New.*
+  - Minor: adds a new feature or makes a small change, as written in its brief. *New.*
+  - Patch: fixes bugs only. It never adds a feature. *New.*
+  - Version numbers follow that meaning: a major moves the first number, a minor the second, a patch the third. *As today for the numbers.*
+  - **Success metric 28.1.** Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - Cutting a patch that adds a feature is refused.
+  - Cutting a major while one issue on its milestone is open is refused.
+  - Version numbers on a sample of tags match each release's kind.
+  - 28.2 A brief is written before each major or minor release, and frozen
+  - Before a major or minor release starts, you write its brief: what the release is about in your own words, the features in it with the metric change you expect, what isn't in it, and what "done" means. *New.*
+  - Your typed word freezes the brief. After that a check refuses any change to it. *New.*
+  - The brief stays as the release's record, with what shipped and each metric before and after. *New.*
+  - **Success metric 28.2.** Major or minor releases without a frozen brief, plus edits to a brief after it was frozen.
+  - Target **0**
+  - Today **not measured**
+  - No release has had a brief yet.
+  - Test cases
+  - Starting a minor release with no frozen brief is refused.
+  - Change one word of a frozen brief. The check fails.
+  - After a release, its brief shows each feature's metric before and after.
+  - 28.3 Only the brief's features are built
+  - A goal that builds something new is frozen only if its feature is in the current frozen brief. *New.*
+  - Anything else waits on a "next" list for the next brief. *New.*
+  - The release's milestone holds only the brief's features and the bugs found along the way. *New.*
+  - **Success metric 28.3.** New work started outside the frozen brief, per release.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - Freezing a goal for a feature outside the brief is refused, and the item appears on the "next" list.
+  - An issue for a feature outside the brief, placed on the release's milestone, is flagged.
+  - 28.4 Patches keep flowing between briefs
+  - Bug fixes ship as patch releases at any time, with no brief and without your words. *As today for patch releases.*
+  - A bug is a gap between what a feature already promises and what it does. Anything else is new work and waits for a brief. *New.*
+  - **Success metric 28.4.** Bug fixes held back because no brief covers them.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - A bug-fix goal is frozen and released as a patch while a brief is frozen and names other features.
+  - A goal labelled a bug fix that adds a requirement is refused.
+  - 28.5 Each kind ships only when its gate passes
+  - A minor ships when every "done" line in its brief is met. *New.*
+  - A major ships only when all of these hold on the release commit: no open issue on its milestone; a complete test run with no failure and an empty known-red list; a complete health check that is green. *Today the major gate checks open issues, reviews, the docs audit, the suite and health, but known-red rows can be waived.*
+  - A patch ships when its own fix's tests pass and the rest of the suite is no worse than before. *As today in intent.*
+  - **Success metric 28.5.** Releases cut with their gate not fully met.
+  - Target **0**
+  - Today **not measured**
+  - Tonight's v2.0 attempt is the example: 54 open issues, 32 known-red rows and 3 health failures.
+  - Test cases
+  - Cutting a minor with one "done" line unmet is refused.
+  - Cutting a major with one known-red row left, or with health not green, is refused.
+  - A major cut on a clean commit passes all three checks and is tagged.
+  - Non-functional
+  - None
+  - ### Non-goals
+  - It never writes the brief for you. An agent may draft one; freezing it is yours.
+  - It doesn't plan the work inside a release. Goals and their order stay with the loop.
+  - A major doesn't waive anything. If the clean-up isn't done, the major waits.
+  - ### Success metrics
+  - \# | Metric | Target | Today
+  - 28.1 | Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. | 0 | not measured
+  - 28.2 | Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. | 0 | not measured
+  - 28.3 | New work started outside the frozen brief, per release. | 0 | not measured
+  - 28.4 | Bug fixes held back because no brief covers them. | 0 | not measured
+  - 28.5 | Releases cut with their gate not fully met. | 0 | not measured
+  - ### Reference
+  - adopted
+  - [Semantic Versioning 2.0.0](https://semver.org/). Major, minor and patch keep their standard numbering. The jobs given to each kind here are ours.
+  - adapted
+  - [Shape Up: the pitch and the betting table](https://basecamp.com/shapeup). A written pitch is chosen before a cycle starts, its scope is fixed once bet on, and anything unfinished or new waits for the next cycle. The brief is the pitch; your freeze is the bet.
+  - adopted
+  - [GitHub milestones](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones). One milestone per release holds the brief's features and bugs.
+  - reference
+  - [PEP 602: Python's release calendar and feature freeze](https://peps.python.org/pep-0602/). After the freeze only fixes go in; new features wait for the next release. Bug-fix releases follow on their own schedule.
+  - reference
+  - [Scrum Guide: the Sprint Goal](https://scrumguides.org/scrum-guide.html). The goal is set at the start and not changed during the sprint.
+  - ### Revisions
+  - r1 · 2026-11-20 · first draft by operation-top, not yet your text
 
 
 
@@ -291,6 +498,18 @@ None
 |---|---|---|---|---|
 | r1 | 2026-11-20 | Each principle has at most five requirements, each dense and fully covering <br> A new need is written into an existing requirement before a new one is added. [DOC-26] <br> Health fails a principle with more than five, and a goal that would add a sixth is refused at freeze. [DOC-26] | readme-six: the owner-approved final README (o514) | o595: "yes build it" |
 
+### DOC-27
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-21 | The new standard: every feature is one unit you can review <br> Principle 1, Guided · Topic: Documentation · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> Revised at 23:08 after your review at 23:05, to correct its "as today" notes against main (your words: "Fix them, re-review"), then at 23:10 for your milestone line and to drop the optional sections. It is back to Unreviewed. <br> **Promise.** Every feature is small enough to understand, shows how you'd know it works, and is marked Reviewed only by your own typed words. <br> ### Problem <br> I marked requirements Reviewed by accepting a recommendation, so the mark doesn't tell me what I've actually read. <br> I can't say what each requirement is for or how I'd know it works. Its metric sits at the bottom of the page, not beside it. <br> I can't see from the front page how the principles, the features and my reviews fit together, and the pages drift from what I approved. <br> ### Requirements <br> 5 functional requirements, each with one success metric and its test cases. <br> Functional <br> 27.1 A feature has a fixed shape <br> A feature is the smallest unit. It has one promise, belongs to exactly one principle, and has one home topic, the page its ID prefix names. It may also be listed under another topic it serves. *As today for the principle and the topic; the promise line is new.* <br> The principles sit above the features. Each has a number and a name, and they're shown in a fixed order. *As today.* <br> A feature's page, in this order: its docs marker line; the header lines (Milestone, linked to this repo's milestone, and Review); Problem; Requirements (Functional, then Non-functional); Non-goals; Success metrics; Reference; Revisions; Tests (generated, last). No other section: how a feature is run or deployed is covered by its success metrics. *As today, plus Reference, and without the How to use line. Today the docs check also allows optional Runbook and Deployments sections; those go.* <br> Every feature names its milestone: the GitHub milestone, in this repo, of the release that builds or last changed it, shown in the feature's header and linked. *New for each feature. Today each topic page has one Milestone line for the whole page; Integrations and Release have none, and 11 of the links point to an old account.* <br> Problem: two or three lines from your side, saying what goes wrong without the feature. *As today.* <br> Non-functional requirements say how well: speed, cost, size, safety. A feature with none says None. *As today.* <br> Non-goals: what the feature deliberately doesn't do. *As today.* <br> Revisions: every change is a dated revision. Old revisions are kept, and an ID is never reused. *As today.* <br> **Success metric 27.1.** Features with a section missing, empty or out of order. <br> Target **0** <br> Today **not measured** <br> Test cases <br> A feature with an empty Problem or Non-goals section fails the docs check. <br> A feature with no milestone, or with a milestone link to another repo, fails the docs check. <br> A feature with Non-goals placed before Requirements fails the docs check. <br> A feature listed under two principles, or under none, fails the docs check. <br> A feature whose text changed with no new revision row fails the docs check. <br> 27.2 At most five requirements, each with one success metric and at least one test case <br> A feature has at most five functional requirements. *New. Today the cap is five requirements per principle (DOC-26).* <br> Every requirement has exactly one success metric, with a target and today's measured value. "Not measured" is allowed, but it is shown. *New. Today metrics sit at the bottom of the page and aren't linked.* <br> Every requirement has at least one test case, shown with it. *As today in intent: each requirement needs a passing test.* <br> A feature with more than five requirements, or more than one promise, is split before it can be reviewed. *New.* <br> **Success metric 27.2.** Requirements with no success metric or no test case, plus features with more than five requirements. <br> Target **0** <br> Today **9 features over five** <br> Counted on main: 27 features hold 121 requirement lines; 9 hold more than five (the largest has 13). No line has a linked metric yet. <br> Test cases <br> A requirement with no metric, or with no test case, fails the docs check. <br> A feature with a sixth functional requirement fails the docs check. <br> A metric with no target fails the docs check. <br> 27.3 Every feature names what it follows <br> Reference: each specific standard, tool or production system the feature follows, with its source link and one tag: adopted (used as it is), adapted (its design copied and changed, with the reason) or reference (studied, not followed). Where nothing fits, it says own. *New as a section; today it's the Follows column with the tags adopted, adapted and own.* <br> General guidance isn't a reference. Each entry names a specific source. *As today.* <br> Adoption and Confidence: each feature shows both scores. Health generates them from the references and the tests, and no one types them. *As today.* <br> **Success metric 27.3.** Reference entries with no source link or no tag, plus features with no entry at all. <br> Target **0** <br> Today **not measured** <br> Test cases <br> A reference with no link or no tag fails the docs check. <br> A reference that names no specific source fails the docs check. <br> A typed score that differs from health's latest run fails the docs check. <br> 27.4 The documentation has exactly this structure, and a check keeps it <br> Front page: README and wiki Home have the same sections, in this order: What this is; System design; one numbered section per principle; Features by topic. Their principle sections are identical. Each keeps its own lead lines (the README's template block, Home's docs marker). *As today, except the last section's name: today it's "Requirements by feature", and the docs check requires that name, so the build changes both.* <br> "N of M reviewed" is shown at the top of the front page. *New.* <br> System design shows exactly two figures: by principle, and by feature. *As today.* <br> Each principle section has, in this order: the principle's paragraph, one table, an Adoption line, and a "How it works" paragraph. *As today.* <br> The principle table's columns, in this order: Feature (its ID and name, linked to its topic page and its flow figure), Promise, Success metrics, Today, Reference, Topic, Adoption, Confidence, Review. *New. Today's columns are Requirement, Summary, Follows, Feature, Adoption, Confidence: Feature is today's Requirement, Reference replaces Follows, and Topic is today's Feature column.* <br> Features by topic lists every topic that has a feature, grouped under a few headings. Under each topic is one table with the columns Feature and Complete text. *New for the names and the topic rule. Today the columns are Requirement and Complete text, each topic links its How-to-use page, and Release is listed with an empty table.* <br> Wiki pages, exactly these and no other: Home, Principles, Tests, Roadmap, and one topic page per topic. There are no How-to-use pages. *As today, except the 13 How-to-use pages, which go.* <br> Principles page: an introduction, the principles overview figure, then for each principle its paragraph, its one figure, the same table as the front page, and its Adoption line. *As today.* <br> Tests page: generated, one section per topic that has tests, then Other, last. Roadmap: the wiki's Roadmap page only. *As today for Tests. A second roadmap, docs/ROADMAP.md, sits outside the wiki: it is folded into the wiki page or removed.* <br> Files outside the wiki (the docs/designs notes, the sweep and triage notes) and the root files (AGENTS.md, CLAUDE.md, CHANGELOG.md and others) are outside this structure and aren't checked by it. *As today.* <br> Figures, exactly these and no other: two system design figures, one principles overview, one per principle, and one flow figure per live feature, named by its ID. A figure no page shows is removed. *As today for the ones in use. Today 34 of 70 figure files are left over: 4 old principle figures, 20 flow figures for IDs no longer live, and 10 v2.0 diagrams no page shows.* <br> The docs check runs on every pull request and fails any missing or extra page, section, table column or figure, and any difference between README's and Home's principle sections. *New for pages, columns and figures. Today it fails wrong, missing, extra or out-of-order section headings on every page, and principle sections that differ between README and Home. It doesn't check the five-requirement cap, a figure per row, the table columns or the scores.* <br> **Success metric 27.4.** Differences between this structure and what is on main: missing or extra pages, sections, table columns or figures. <br> Target **0** <br> Today **at least 51** <br> A hand count on main at 48ac06e7d, not yet from a command: 34 left-over figure files, 13 How-to-use pages to remove, 3 table columns not built, the Reference section not built, and 2 missing Milestone lines. <br> Test cases <br> Move a front-page section out of order, or make Home differ from the README. The docs check fails. <br> Drop the Review column, or swap two columns. The docs check fails. <br> Add a wiki page that is none of the listed kinds, or a How-to-use page. The docs check fails. <br> Add a figure file that no page shows, or leave a live feature without its flow figure. The docs check fails. <br> A pull request with any of these has a failing check and can't merge. <br> 27.5 Only your own review counts <br> Every feature starts Unreviewed, and its mark is shown at the top of the feature and on the front page. *New.* <br> A feature becomes Reviewed only by your own typed words naming that one ID. No batch, no delegation, and no agent recommends "reviewed". *New.* <br> Before you review a feature, its review page shows the promise, each requirement with its metric, today's value and test cases, its references and its confidence. *New.* <br> A revised feature goes back to Unreviewed. *New.* <br> A goal that builds something new names a Reviewed feature. A bug fix is exempt: it restores what a feature already promises. *As today, plus the exemption.* <br> Only you add, rename or remove a principle. *As today (DOC-2).* <br> **Success metric 27.5.** Features marked Reviewed without your own typed record naming that ID. <br> Target **0** <br> Today **not measured** <br> 26 marks exist, all dated one day. Some have a relayed record of your words; none was checked against this rule. <br> Test cases <br> A Reviewed mark with no typed record naming that ID is refused. So is one record naming two IDs. <br> Change one word of a Reviewed feature. Its mark reads Unreviewed. <br> Freezing a new-work goal that names an Unreviewed feature is refused. A bug-fix goal is allowed. <br> Mark one feature Reviewed. "N of M reviewed" rises by one on both front pages. <br> Non-functional <br> None <br> ### Non-goals <br> It never reviews a feature for you. An agent may draft; only your words count. <br> It doesn't ask you to review everything at once. A few at a time is the intended pace. <br> It doesn't say which features exist or what they promise. That is each feature's own text. <br> ### Success metrics <br> \\# \| Metric \| Target \| Today <br> 27.1 \| Features with a section missing, empty or out of order. \| 0 \| not measured <br> 27.2 \| Requirements with no success metric or no test case, plus features with more than five requirements. \| 0 \| 9 features over five <br> 27.3 \| Reference entries with no source link or no tag, plus features with no entry at all. \| 0 \| not measured <br> 27.4 \| Differences between this structure and what is on main: missing or extra pages, sections, table columns or figures. \| 0 \| at least 51 <br> 27.5 \| Features marked Reviewed without your own typed record naming that ID. \| 0 \| not measured <br> ### Reference <br> adapted <br> [ISO/IEC/IEEE 29148, characteristics of a requirement](https://www.iso.org/standard/72089.html). It asks that each requirement be singular and verifiable. One success metric and one test case per requirement is that rule made checkable. The page shape stays ours. <br> adapted <br> [GitHub code owners and required reviews](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners). A named person must approve each unit before it counts. Here the unit is a feature, not a code path, and the approval is your typed record. <br> reference <br> [INVEST criteria for a work item](https://en.wikipedia.org/wiki/INVEST_(mnemonic)). Small and testable are both tests applied when deciding whether a feature must be split. <br> ### Revisions <br> r1 · 2026-11-20 · first draft by operation-top, not yet your text | the owner's pinned draft (2358) with the o710 wording changes | o710: "T1 and T3: allow iso.org, basecamp.com, peps.python.org and scrumguides.org as link origins;" |
+
+### DOC-28
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-21 | Releases: major, minor and patch, each with one job, and a brief you write first <br> Principle 1, Guided · Topic: Documentation · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> **Promise.** Every release is one of three kinds with a clear job, each major or minor starts from a brief you wrote and froze, and a major ships only when everything is clean. <br> ### Problem <br> I kept adding things to a release while it ran, so its scope drifted and it never closed. v2.0 was re-scoped several times in one day. <br> Major, minor and patch didn't mean anything different in practice, so I couldn't tell what a release was for or when it was finished. <br> I want to write the direction once, then let the loop run and fix bugs without asking me, and I want a major to mean the system is really clean. <br> ### Requirements <br> 5 functional requirements, each with one success metric and its test cases. <br> Functional <br> 28.1 Three kinds of release, each with one job <br> Major: a clean-up and full check. It closes all open issues, fixes every regression failure so the known-red list is empty, and passes a complete health check. *New.* <br> Minor: adds a new feature or makes a small change, as written in its brief. *New.* <br> Patch: fixes bugs only. It never adds a feature. *New.* <br> Version numbers follow that meaning: a major moves the first number, a minor the second, a patch the third. *As today for the numbers.* <br> **Success metric 28.1.** Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. <br> Target **0** <br> Today **not measured** <br> Test cases <br> Cutting a patch that adds a feature is refused. <br> Cutting a major while one issue on its milestone is open is refused. <br> Version numbers on a sample of tags match each release's kind. <br> 28.2 A brief is written before each major or minor release, and frozen <br> Before a major or minor release starts, you write its brief: what the release is about in your own words, the features in it with the metric change you expect, what isn't in it, and what "done" means. *New.* <br> Your typed word freezes the brief. After that a check refuses any change to it. *New.* <br> The brief stays as the release's record, with what shipped and each metric before and after. *New.* <br> **Success metric 28.2.** Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. <br> Target **0** <br> Today **not measured** <br> No release has had a brief yet. <br> Test cases <br> Starting a minor release with no frozen brief is refused. <br> Change one word of a frozen brief. The check fails. <br> After a release, its brief shows each feature's metric before and after. <br> 28.3 Only the brief's features are built <br> A goal that builds something new is frozen only if its feature is in the current frozen brief. *New.* <br> Anything else waits on a "next" list for the next brief. *New.* <br> The release's milestone holds only the brief's features and the bugs found along the way. *New.* <br> **Success metric 28.3.** New work started outside the frozen brief, per release. <br> Target **0** <br> Today **not measured** <br> Test cases <br> Freezing a goal for a feature outside the brief is refused, and the item appears on the "next" list. <br> An issue for a feature outside the brief, placed on the release's milestone, is flagged. <br> 28.4 Patches keep flowing between briefs <br> Bug fixes ship as patch releases at any time, with no brief and without your words. *As today for patch releases.* <br> A bug is a gap between what a feature already promises and what it does. Anything else is new work and waits for a brief. *New.* <br> **Success metric 28.4.** Bug fixes held back because no brief covers them. <br> Target **0** <br> Today **not measured** <br> Test cases <br> A bug-fix goal is frozen and released as a patch while a brief is frozen and names other features. <br> A goal labelled a bug fix that adds a requirement is refused. <br> 28.5 Each kind ships only when its gate passes <br> A minor ships when every "done" line in its brief is met. *New.* <br> A major ships only when all of these hold on the release commit: no open issue on its milestone; a complete test run with no failure and an empty known-red list; a complete health check that is green. *Today the major gate checks open issues, reviews, the docs audit, the suite and health, but known-red rows can be waived.* <br> A patch ships when its own fix's tests pass and the rest of the suite is no worse than before. *As today in intent.* <br> **Success metric 28.5.** Releases cut with their gate not fully met. <br> Target **0** <br> Today **not measured** <br> Tonight's v2.0 attempt is the example: 54 open issues, 32 known-red rows and 3 health failures. <br> Test cases <br> Cutting a minor with one "done" line unmet is refused. <br> Cutting a major with one known-red row left, or with health not green, is refused. <br> A major cut on a clean commit passes all three checks and is tagged. <br> Non-functional <br> None <br> ### Non-goals <br> It never writes the brief for you. An agent may draft one; freezing it is yours. <br> It doesn't plan the work inside a release. Goals and their order stay with the loop. <br> A major doesn't waive anything. If the clean-up isn't done, the major waits. <br> ### Success metrics <br> \\# \| Metric \| Target \| Today <br> 28.1 \| Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. \| 0 \| not measured <br> 28.2 \| Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. \| 0 \| not measured <br> 28.3 \| New work started outside the frozen brief, per release. \| 0 \| not measured <br> 28.4 \| Bug fixes held back because no brief covers them. \| 0 \| not measured <br> 28.5 \| Releases cut with their gate not fully met. \| 0 \| not measured <br> ### Reference <br> adopted <br> [Semantic Versioning 2.0.0](https://semver.org/). Major, minor and patch keep their standard numbering. The jobs given to each kind here are ours. <br> adapted <br> [Shape Up: the pitch and the betting table](https://basecamp.com/shapeup). A written pitch is chosen before a cycle starts, its scope is fixed once bet on, and anything unfinished or new waits for the next cycle. The brief is the pitch; your freeze is the bet. <br> adopted <br> [GitHub milestones](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones). One milestone per release holds the brief's features and bugs. <br> reference <br> [PEP 602: Python's release calendar and feature freeze](https://peps.python.org/pep-0602/). After the freeze only fixes go in; new features wait for the next release. Bug-fix releases follow on their own schedule. <br> reference <br> [Scrum Guide: the Sprint Goal](https://scrumguides.org/scrum-guide.html). The goal is set at the start and not changed during the sprint. <br> ### Revisions <br> r1 · 2026-11-20 · first draft by operation-top, not yet your text | the owner's pinned draft (2358) with the o710 wording changes | o710: "T1 and T3: allow iso.org, basecamp.com, peps.python.org and scrumguides.org as link origins;" |
+
 ## Tests
 
 | Test | Kind | Guards | Checks | Last result |
@@ -341,6 +560,8 @@ None
 | [entry-committed-config](Tests#t-entry-committed-config) | requirement | DOC-25 | Given a worktree whose config.json has a local skip-worktree edit (min_free_memory_gb 2.0 against committed 3.0), when entry.py write runs, then START.md shows the committed 3.0 and entry.py check passes. | not run |
 | [sections-controls](Tests#t-sections-controls) | requirement | DOC-25 | Given a README, Home, feature, How-to-use, Principles or Tests page with a section missing, extra, renamed or out of order, a README and Home that differ, or a Part 1 row with no figure, when the docs check runs, then it fails; and the adopted-README form passes. | not run |
 | - | requirement | DOC-26 | no passing test | not enforced |
+| - | requirement | DOC-27 | no passing test | not enforced |
+| - | requirement | DOC-28 | no passing test | not enforced |
 | [docs-locked-hint-issue-133](Tests#t-docs-locked-hint-issue-133) | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | Given a reviewed requirement whose wording changed, when docs check runs, then its LOCKED hint says restore or unreview, never review. | PASS 2026-11-10 |
 | [stale-comments-only-3122](Tests#t-stale-comments-only-3122) | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3122 https://github.com/jcl2018/agent-workflow-template/issues/3867) state unknown | Given DOC-2, when test-merge-unblock.py runs its 4 cases, then each passes: the page is not stale; a real code change still st; it is kept by the goal's slug, no longer stale, an; the branch gets a re-stamp commit and nothing is s; it is not re-stamped and stays LOCKED (issue 3867). | PASS 2026-11-15 |
 | [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when INT-3 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
