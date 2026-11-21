@@ -4,7 +4,8 @@
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 # Test workflow-release on a throwaway toy repo with a fake gh. usage: test-release.sh [DIR]
 # env: AGENT_TEST=1 also runs a headless agent (MODEL, default haiku) that follows SKILL.md to ask and cut.
-unset LOOP_BATCH LOOP_PRIVATE_NAMES
+unset LOOP_BATCH
+export LOOP_PRIVATE_NAMES=/dev/null  # o675: no list stops the scan, so a toy names an explicit empty one
 set -e
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)

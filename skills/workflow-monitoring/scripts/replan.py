@@ -299,7 +299,7 @@ def private_hits(top, touches):
         paths = [t for t in touches if not str(t).startswith("github:")] + ["docs/wiki"]
         listed = subprocess.run(["git", "ls-files", "--"] + paths, cwd=top, capture_output=True, text=True).stdout.split()
         found = private.scan(top, None, texts={n: n for n in sorted(set(listed + [os.path.basename(top)]))})
-        return found["hits"] if found["state"] == "hit" else [found["note"]] if found["state"] == "broken" else []
+        return found["hits"] if found["state"] == "hit" else [found["note"]] if found["state"] in ("broken", "none") else []
     except Exception:
         return []
 
