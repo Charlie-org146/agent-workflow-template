@@ -123,7 +123,7 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
         json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
         json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
         code, said = bind()
-        want = "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; the trust file %s must be readable and list it." % (tree, claude)
+        want = "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; %s must be readable." % (tree, claude)
         check("a %s trust file trusts nothing: bind is refused with the whole plain reason" % shape, code != 0 and want in said)
         check("and the %s trust file is never written" % shape, (open(claude).read() if os.path.isfile(claude) else None) == before and (shape == "missing") != os.path.exists(claude))
     claude = os.path.join(repo, ".claude.json")

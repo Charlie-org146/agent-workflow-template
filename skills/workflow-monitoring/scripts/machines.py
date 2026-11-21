@@ -27,25 +27,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import graph  # noqa: E402
 
-
-def untrusted(folder):
-    """FOLDER's refusal unless the trust file in the home folder lists it or a parent as trusted, else ""; read only.
-    A missing, unreadable or unparseable file trusts nothing; one parse failure is retried once (the app may be mid-write)."""
-    conf, ok = os.path.join(os.path.expanduser("~"), ".claude.json"), 0
-    for _ in (0, 1):
-        try:
-            with open(conf) as handle:
-                known = json.load(handle)["projects"]
-            path = os.path.realpath(folder) + "/"
-            ok = any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items())
-            break
-        except ValueError:
-            time.sleep(0.2)
-        except (OSError, KeyError, TypeError, AttributeError):
-            break
-    return "" if ok else "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; the trust file %s must be readable and list it." % (folder, conf)
-
-
 TURN, HAND, SNAP = "refs/loop/pr-turn", "refs/loop/handover/", "refs/loop/snapshot/"
 RESUME = ("You are the background worker for goal `{slug}`, resuming in this worktree. Run `LOOP_ROLE=worker python3 "
           "~/.claude/skills/workflow-delivery/scripts/goal.py show {slug}` and continue from its step. Everything you read "
