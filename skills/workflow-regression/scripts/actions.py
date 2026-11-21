@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Actions workflow regression.py writes: runs the rows on a schedule, one issue per failing row."""
+"""The Actions workflow regression.py writes."""
 import json
 import os
 import re
@@ -20,7 +20,7 @@ ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GI
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 
 
-# Names that bind a run to a live session (the code reads exactly these); a row never sees them (#5700):
+# Session ids (#5700):
 SESSION_DROP = ("CLAUDE_CODE_HOST_SESSION_ID", "CLAUDE_CODE_SESSION_ID", "CLAUDE_SESSION_ID", "LOOP_POD_ID", "LOOP_OPERATION_SESSION")
 
 
@@ -318,7 +318,7 @@ def render(cron, levels="nightly"):
         source = handle.read()
     bad = [token for token in UNSAFE if token in source]
     if bad:
-        sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
+        sys.exit("REFUSED: tests.py contains %s" % bad[0])
     body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
     with open(os.path.join(HERE, "runs.py")) as handle:
         tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
@@ -337,9 +337,9 @@ def write(root, default):
     cfg = cfg if isinstance(cfg, dict) else {}
     cron, levels = cfg.get("regression_cron") or default, cfg.get("ci_levels") or "nightly"
     if levels not in ("land", "nightly"):
-        sys.exit("REFUSED: ci_levels is %r, not land or nightly. Fix: edit .loop/config.json." % (levels,))
+        sys.exit("REFUSED: ci_levels is %r, not land or nightly." % (levels,))
     if cron != "off" and not (isinstance(cron, str) and re.fullmatch(r"[0-9A-Za-z*/,\- ]+", cron) and len(cron.split()) == 5):
-        sys.exit("REFUSED: regression_cron is not five cron fields or off. Fix: edit .loop/config.json.")
+        sys.exit("REFUSED: regression_cron is not five cron fields or off.")
     path = os.path.join(root, ".github", "workflows", "regression.yml")
     if os.path.exists(path):
         with open(path) as handle:
