@@ -12,6 +12,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-}
 d=${TOY_KEEP:-$(mktemp -d)}; [ -n "${TOY_KEEP:-}" ] || toy_on_exit 'rm -rf "$d"'
 export HOME="$d/home" PYTHONDONTWRITEBYTECODE=1; mkdir -p "$HOME"
 export USERPROFILE="$HOME"
+sedi() { sed -i.bak "$@" || return; rm -f "${@: -1}.bak"; }  # in-place edit that BSD (macOS) and GNU sed both accept
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 fails=0
 ok() { echo "PASS: $1"; }
@@ -26,24 +27,25 @@ python3 "$here/skills/workflow-setup/scripts/setup.py" >/dev/null 2>&1
 git switch -q main && git merge -q --no-edit workflow-setup || { echo "FAIL: setup did not merge"; exit 1; }
 H=docs/wiki/Home.md
 # Home maps README.md and .loop/config.json; its one feature row is written (no placeholder text), so only staleness is in play
-sed -i '/^Home\t/d' .loop/docs.tsv; printf 'Home\tREADME.md,.loop/config.json\n' >> .loop/docs.tsv
-sed -i 's/Write this page from what is really in the repo\./The calculator engine./' $H
+sedi '/^Home\t/d' .loop/docs.tsv; printf 'Home\tREADME.md,.loop/config.json\n' >> .loop/docs.tsv
+sedi 's/Write this page from what is really in the repo\./The calculator engine./' $H
 git commit -qam "Home written and mapped to README and config"
 home_lines() { grep -E "^(STALE|UNWRITTEN|MISSING) Home|^FORMAT Home" <<<"$1"; }
 [ -z "$(home_lines "$($docs check 2>&1)")" ] && ok "a fresh fixture passes check on Home" || { bad "the fixture's Home is not clean: $(home_lines "$($docs check 2>&1)")"; exit 1; }
 
 # clears: a goal changes README.md, then config.json; Home's render is unchanged, so check says nothing about Home (DOC-4 passes)
 if want clears; then
-  sed -i 's/A tiny calculator\./A tiny calculator that adds./' README.md; git commit -qam "README text"
+  sedi 's/A tiny calculator\./A tiny calculator that adds./' README.md; git commit -qam "README text"
   out=$($docs check 2>&1); [ -z "$(home_lines "$out")" ] && ok "a README change with Home's render unchanged leaves Home clear" || bad "Home: $(home_lines "$out")"
-  sed -i 's/"criteria": true,/"criteria": true,\n  "max_tries": 3,/' .loop/config.json; git commit -qam "A config key at its default"
+  sedi 's/"criteria": true,/"criteria": true,\
+  "max_tries": 3,/' .loop/config.json; git commit -qam "A config key at its default"
   out=$($docs check 2>&1); [ -z "$(home_lines "$out")" ] && ok "a config.json change with Home's render unchanged leaves Home clear" || bad "Home: $(home_lines "$out")"
   grep -q "FORMAT Home" <<<"$out" && bad "DOC-4 fails the generated Home" || ok "DOC-4 still passes the generated Home"
 fi
 
 # control: a Home that differs from its fresh render still fails once a mapped path changes
 if want control; then
-  sed -i 's/"health_cron": "47 \*\/4 \* \* \*"/"health_cron": "off"/' .loop/config.json; git commit -qam "health_cron off, Home not re-rendered"
+  sedi 's/"health_cron": "47 \*\/4 \* \* \*"/"health_cron": "off"/' .loop/config.json; git commit -qam "health_cron off, Home not re-rendered"
   out=$($docs check 2>&1)
   grep -q "^STALE Home" <<<"$out" && ok "a Home unlike its fresh render is STALE" || bad "a Home unlike its fresh render passes: $out"
   $render >/dev/null 2>&1; git commit -qm "Home re-rendered" -- $H
@@ -53,7 +55,7 @@ fi
 # kept: a value kept with skip-worktree never reaches Home or README (the committed config renders them)
 if want kept; then
   git update-index --skip-worktree .loop/config.json
-  sed -i 's/"digest_owner": ""/"digest_owner": "KEPTLOCALLY"/' .loop/config.json
+  sedi 's/"digest_owner": ""/"digest_owner": "KEPTLOCALLY"/' .loop/config.json
   $render >/dev/null 2>&1
   grep -rq KEPTLOCALLY README.md docs/wiki && bad "a kept config value reached a committed page" || ok "a kept (skip-worktree) value never reaches a rendered page"
   git update-index --no-skip-worktree .loop/config.json
