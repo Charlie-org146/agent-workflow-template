@@ -31,7 +31,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 - DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
   - A new need is written into an existing requirement before a new one is added. [DOC-26]
   - Health fails a principle with more than five, and a goal that would add a sixth is refused at freeze. [DOC-26]
-- DOC-27: **Unreviewed** The new standard: every feature is one unit you can review
+- DOC-27: **Reviewed 2026-11-21** The new standard: every feature is one unit you can review <!-- reviewed e4161660 -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - Revised at 23:08 after your review at 23:05, to correct its "as today" notes against main (your words: "Fix them, re-review"), then at 23:10 for your milestone line and to drop the optional sections. It is back to Unreviewed.
@@ -146,7 +146,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - [INVEST criteria for a work item](https://en.wikipedia.org/wiki/INVEST_(mnemonic)). Small and testable are both tests applied when deciding whether a feature must be split.
   - ### Revisions
   - r1 · 2026-11-20 · first draft by operation-top, not yet your text
-- DOC-28: **Unreviewed** Releases: major, minor and patch, each with one job, and a brief you write first
+- DOC-28: **Reviewed 2026-11-21** Releases: major, minor and patch, each with one job, and a brief you write first <!-- reviewed 70e0396f -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - **Promise.** Every release is one of three kinds with a clear job, each major or minor starts from a brief you wrote and froze, and a major ships only when everything is clean.
