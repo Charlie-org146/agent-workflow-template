@@ -24,7 +24,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 SENTINEL = "host-probe"
 DROP_PREFIXES = ("CLAUDE", "ANTHROPIC", "LOOP_")
 DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP")
+              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP", "GIT_CONFIG_PARAMETERS", "GIT_PREFIX")
 DROP_PREFIXES = DROP_PREFIXES + ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
 REAL_HOME = os.path.realpath(os.path.expanduser("~"))  # before the throwaway HOME replaces it: cleanup() must never remove it
 
@@ -42,6 +42,7 @@ THROWAWAY = tempfile.mkdtemp(prefix="machine-log-home-")  # cleanup() removes on
 HOME = os.path.join(THROWAWAY, "home")
 os.makedirs(HOME)
 os.environ.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)  # every module below reads HOME at import: the swap stays above those imports
+LEFTOVER = [k for k, v in os.environ.items() if (k.startswith(DROP_PREFIXES) or k in DROP_NAMES) and not (k == "GIT_CONFIG_GLOBAL" and v == os.devnull)]  # before the subject scripts are imported (they set their own LOOP_ names)
 
 
 def real_id_path():
@@ -181,6 +182,10 @@ def run_loop(beating, host=""):
     with tempfile.TemporaryDirectory() as tmp:
         common = fixture(tmp)
         subprocess.run(["git", "init", "-q", "-b", "main", "--template="], cwd=tmp, capture_output=True, env=dict(os.environ))  # a real repository: discovery from here stops at the fixture even when TMPDIR sits inside another repository
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=tmp, capture_output=True, text=True, env=dict(os.environ)).stdout.strip()
+        if os.path.realpath(top or "/nonexistent") != os.path.realpath(tmp):
+            check(False, "the claim fixture is its own repository (git resolves %r from it): without that, discovery could reach an enclosing repository, so the claim is not run" % os.path.basename(top))
+            return [10 ** 6], "", [], False, []
         os.chdir(tmp)  # the claim follows the cwd's repo: it must be the fixture, never the checkout this runs from
         second = os.path.join(tmp, "second")
         if host:
@@ -256,6 +261,7 @@ probe = "import os; print(any(os.environ.get(k) == 'canary' for k in %r))" % (ca
 with_canaries = dict(os.environ, **{name: "canary" for name in canaries})
 clean = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=scrubbed(with_canaries)).stdout.strip()
 raw = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=with_canaries).stdout.strip()
+check(LEFTOVER == [], "the toy's own environment held no host session, loop, git location or git config variable right after the scrub (%d left)" % len(LEFTOVER))
 check(clean == "False", "no canary variable of a scrubbed family reaches a child of the scrubbed environment")
 check(raw == "True", "negative control: the same child without the scrub does see the canaries")
 

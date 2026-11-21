@@ -20,7 +20,7 @@ unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scri
 fails = 0
 DROP_PREFIXES = ("LOOP_", "CLAUDE", "ANTHROPIC")
 DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP")
+              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP", "GIT_CONFIG_PARAMETERS", "GIT_PREFIX")
 DROP_PREFIXES = DROP_PREFIXES + ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
 REAL_HOME = os.path.realpath(os.path.expanduser("~"))  # before any HOME swap: cleanup() must never remove it
 THROWAWAY = tempfile.mkdtemp(prefix="limits-toy-")  # one mkdtemp area for the home, the fixture and the decoy; cleanup() removes only this
