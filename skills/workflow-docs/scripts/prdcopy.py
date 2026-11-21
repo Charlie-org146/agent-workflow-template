@@ -5,6 +5,7 @@ link_page() the docs check of a page with a source, sync() compares source and c
 DELTA, both a CONFLICT, nothing is overwritten, --accept PAGE:ID=repo|source writes one side over the other. Imports are lazy."""
 import os
 import re
+from urllib.parse import unquote
 
 SYNC_MARK = "<!-- prd-sync: owned -->"
 BEGIN, END = "<!-- prd:begin -->", "<!-- prd:end -->"
@@ -347,15 +348,27 @@ NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|rele
 
 
 IMAGE = re.compile(r"https://(?:github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)|raw\.githubusercontent\.com/([\w.-]+/[\w.-]+))/([^\s?#]+\.(?:png|jpe?g|gif|svg|webp))(?:[?#]|$)", re.I)
+IMAGE_LOOSE = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)/[^/]+/[^\s?#]+\.(?:png|jpe?g|gif|svg|webp)(?:[?#]|$)")
 
 
 def own_image(hit, repo, root):
-    """An image in this repo's own GitHub (blob, raw or raw.githubusercontent.com URL) is inside the repo when the file is there (#5078)."""
+    """An own-repo GitHub image counts as inside (#5078). No root: github.com blob/raw only, as before. With a root: also
+    raw.githubusercontent.com, any case, and the file must exist right after one ref segment (or refs/heads|tags/NAME), no '.'
+    or '..' segment (raw or %-decoded), real path inside the root's."""
+    if not root:
+        found = IMAGE_LOOSE.match(hit)
+        return bool(found) and (not repo or found.group(1).lower() == repo.lower())
     found = IMAGE.match(hit)
     if not found or (repo and (found.group(1) or found.group(2)).lower() != repo.lower()):
         return False
-    parts = found.group(3).split("/")  # the branch may hold slashes: any tail of the path may be the file
-    return not root or any(os.path.isfile(os.path.join(root, *parts[i:])) for i in range(len(parts)) if ".." not in parts[i:])
+    path = unquote(found.group(3))
+    parts = path.split("/")
+    if any(p in ("", ".", "..") or "\\" in p or "\0" in p for p in parts):
+        return False
+    skip = 3 if parts[0] == "refs" and len(parts) > 3 and parts[1] in ("heads", "tags") else 1
+    base = os.path.realpath(root)
+    real = os.path.realpath(os.path.join(base, *parts[skip:]))
+    return len(parts) > skip and real.startswith(base + os.sep) and os.path.isfile(real)
 
 
 def stands_alone(page, text, repo="", sites=(), root=""):
