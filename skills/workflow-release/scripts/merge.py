@@ -247,7 +247,9 @@ def advance(top, cfg, state, again=False):
 def load(path):
   try:
     with open(path) as handle:
-      return json.load(handle)
+      text = handle.read()
+    release.SEEN[os.path.basename(path)[:-5]] = text  # the snapshot release.save merges against (#5350)
+    return json.loads(text)
   except (OSError, ValueError):
     return None
 
@@ -298,7 +300,6 @@ def main():
   state = load(path)
   if state is None:
     sys.exit("REFUSED: no goal named %s." % slug)
-  release.SEEN[slug] = json.dumps(state)
   if not ar.mergeable(state):
     sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
   if pods:

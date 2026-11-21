@@ -163,5 +163,8 @@ SHIM
 chmod +x "$d/shim/gh"; rm -f "$d/viewed"
 out=$(PATH="$d/shim:$PATH" qgo true FAKE_GH_QUEUE=1); rc=$?
 check "a budget goal.py set at the first gh pr view or while gh merged survives merge.py's and release.py's saves (issue 5350)" '[ $rc = 0 ] && grep -q "^MERGED " <<<"$out" && grep -q "\"budget_minutes\": 300" "$common/loop/runs/g.json" && grep -q "\"budget_tokens\": 7" "$common/loop/runs/g.json"'
+out=$(qgo true FAKE_GH_MERGE_FAIL=1); rc=$?
+rep=$(python3 -c 'import json,sys; sys.path.insert(0, sys.argv[1]); import live_board; print(live_board.latest_report(json.load(open(sys.argv[2]))))' "$here/skills/workflow-monitoring/scripts" "$common/loop/runs/g.json")
+check "after a failed merge the latest report still names the reason, not the generic worker line (issue 5350)" '[ $rc != 0 ] && grep -q "^merge.py: .*gh could not merge" <<<"$rep"'
 printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

@@ -381,23 +381,38 @@ def left_of(text):
     return " ".join(found[-1].split())[:300] if found else ""
 
 
-def hit(runs, slug, step, kind, limit, left):
-    """Record a budget hit: under the lock goal.py save takes, reread the record and change only budget_hits (#5350)."""
-    path = os.path.join(runs, slug + ".json")
-    if not os.path.exists(path):
-        return
+def save_changed(path, state, seen, note=""):
+    """Write only what state changed since seen (JSON text) into a fresh read of the record, under goal.py save's lock (#5350)."""
+    state["updated"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    note and state.setdefault("log", []).append("%s %s" % (state["updated"], note))
     with open(path + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         try:
             with open(path) as handle:
-                state = json.load(handle)
+                disk = json.load(handle)
         except (OSError, ValueError):
-            return
-        kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
-        state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
-        with tempfile.NamedTemporaryFile("w", dir=runs, delete=False, suffix=".tmp") as handle:
-            json.dump(state, handle, indent=2)
+            disk = {}
+        was = json.loads(seen)
+        merged = dict(disk, **{k: v for k, v in state.items() if k not in was or was[k] != v})
+        if disk.get("log") or state.get("log"):
+            merged["log"] = list(dict.fromkeys((disk.get("log") or []) + (state.get("log") or [])))
+        with open(path + ".%d.tmp" % os.getpid(), "w") as handle:
+            json.dump(merged, handle, indent=2)
         os.replace(handle.name, path)
+    return merged
+
+
+def hit(runs, slug, step, kind, limit, left):
+    path = os.path.join(runs, slug + ".json")
+    try:
+        with open(path) as handle:
+            text = handle.read()
+        state = json.loads(text)
+    except (OSError, ValueError):
+        return
+    kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
+    state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
+    save_changed(path, state, text)
 
 
 def reached(state, step):

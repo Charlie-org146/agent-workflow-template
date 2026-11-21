@@ -751,3 +751,5 @@
 | <a id="t-defect-5350-budget-hit-save"></a>defect-5350-budget-hit-save | defect | [#5350](https://github.com/Charlie-org146/agent-workflow-template/issues/5350) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5350-mend-save"></a>defect-5350-mend-save | defect | [#5350](https://github.com/Charlie-org146/agent-workflow-template/issues/5350) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5350-merge-save"></a>defect-5350-merge-save | defect | [#5350](https://github.com/Charlie-org146/agent-workflow-template/issues/5350) state unknown | PASS | 2026-11-21 | [CI 2026-11-21](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-21) | 2026-11-21 |
+| <a id="t-defect-5350-merge-report"></a>defect-5350-merge-report | defect | [#5350](https://github.com/Charlie-org146/agent-workflow-template/issues/5350) state unknown | not run | - | local | 2026-11-21 |
+| <a id="t-defect-5350-batch-snapshot"></a>defect-5350-batch-snapshot | defect | [#5350](https://github.com/Charlie-org146/agent-workflow-template/issues/5350) state unknown | not run | - | local | 2026-11-21 |

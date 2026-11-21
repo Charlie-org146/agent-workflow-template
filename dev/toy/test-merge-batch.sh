@@ -59,6 +59,12 @@ def finish(t, cfg, lead):
     calls.append(lead["slug"]); lead.update(release="cut", release_version="9.9.9", release_url="https://example.test/r/9", release_pushed="9.9.9")
     merge.release.save(lead); return True
 merge.ar.finish = finish
+if os.environ.get("TOY_BUDGET"):  # #5350: goal.py set raises each member's budget after the batch loaded its records
+    marked = merge.ar.mark_merged
+    def raised(s):
+        path = os.path.join(common, "loop", "runs", s["slug"] + ".json"); held = json.load(open(path)); held["budget_minutes"] = 360
+        json.dump(held, open(path, "w")); marked(s)
+    merge.ar.mark_merged = raised
 cfg = {"base": "main", "merge_batch": True}
 out, err = io.StringIO(), io.StringIO()
 with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -137,9 +143,12 @@ check "after the red batch both goals are still open and unreleased (each merges
 out=$(drive g2,g5 ""); b2=$(bid g2,g5); bh2=$(rec "$b2" head); pr2=$(rec "$b2" pr); pn2=${pr2##*/}
 check "a second batch g2 g5 is assembled" 'grep -q "RC=0" <<<"$out" && [ "$(rec $b2 phase)" = assembled ]'
 export FAKE_GH_PR_HEAD_$pn2=$bh2 FAKE_GH_ROLLUP_$pn2="$ok1" FAKE_GH_MERGE_BRANCH="batch/$b2" FAKE_GH_ORIGIN="$d/origin.git"
-out=$(drive g2,g5 "${bh2:0:12}")
+mk g2 budget_minutes 240; mk g5 budget_minutes 240  # a budget the records already hold, which goal.py set then raises
+out=$(TOY_BUDGET=1 drive g2,g5 "${bh2:0:12}")
 check "a GO on the draft's green head merges the draft with the head bound, and releases once" \
   'grep -q "RC=0" <<<"$out" && grep -q "FINISH=1" <<<"$out" && calls | grep -q "pr ready $pr2" && calls | grep -q "pr merge $pr2 --merge --match-head-commit $bh2" && [ "$(rec $b2 phase)" = released ]'
+check "a budget goal.py set after the batch loaded its records survives each member's save (issue 5350)" \
+  'for s in g2 g5; do grep -q "\"budget_minutes\": 360" "$common/loop/runs/$s.json" || exit 1; done'
 check "the bump is the largest of the members (minor), carried by the goal that releases" '[ "$(python3 -c "import json;print(json.load(open(\"$common/loop/runs/g2.json\")).get(\"bump\"))")" = minor ]'
 check "every member shows the one release and is marked merged" \
   'for s in g2 g5; do python3 -c "import json,sys; s=json.load(open(sys.argv[1])); sys.exit(0 if s.get(\"release_version\")==\"9.9.9\" and s.get(\"status\")==\"done\" else 1)" "$common/loop/runs/$s.json" || exit 1; done'

@@ -100,8 +100,9 @@ def delivery(name):
 
 
 def save(state, note=None):
-    goal = delivery("goal")  # #5350: its save merges under the lock
+    goal = delivery("goal")  # #5350
     slug = state["slug"]
+    note and state.update(say="mend.py: " + note)
     goal.SEEN[slug] = SEEN.get(slug, "{}")
     note and print("%s %s: %s" % (now(), slug, note))
     goal.save(state, note)

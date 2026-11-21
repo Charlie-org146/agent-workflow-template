@@ -50,9 +50,10 @@ def inbox(common, slug):
 
 
 def report(old, state, at):
+    say = state.pop("say", "")  # a caller's own text
     if (old.get("step"), old.get("status")) != (state.get("step"), state.get("status")):
         now = state.get("step") or "-", state.get("status") or "-"
-        state.setdefault("reports", []).append({"at": at, "step": now[0], "status": now[1], "text": "worker %s: step %s, %s" % (state["slug"], *now)})
+        state.setdefault("reports", []).append({"at": at, "step": now[0], "status": now[1], "text": say or "worker %s: step %s, %s" % (state["slug"], *now)})
         del state["reports"][:-30]
 
 

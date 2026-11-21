@@ -2,9 +2,6 @@
 """Ask whether a finished goal is released: cut a draft GitHub release or leave it.
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
-
-ask shows the docs and verify steps and asks; cut bumps the version, writes the changelog, pushes and
-makes a DRAFT; it never publishes or merges.
 """
 import argparse
 import datetime
@@ -14,7 +11,6 @@ import re
 import subprocess
 import sys
 import tempfile
-import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -64,9 +60,14 @@ def load(slug):
 
 def save(state, note=None):
     import autorelease
-    goal, stop = autorelease.sibling("goal")  # #5350: merges under the lock
-    stop and sys.exit("REFUSED: " + stop[0])
+    goal, stop = autorelease.sibling("goal")
     slug = state["slug"]
+    if stop:  # lanekit's locked write
+        sys.path.insert(0, autorelease.SIBLING)
+        state.update(autorelease.sibling("lanekit")[0].save_changed(state_path(slug), state, SEEN.get(slug, "{}"), note))
+        SEEN[slug] = json.dumps(state)
+        return
+    note and state.update(say=os.path.basename(sys.argv[0]) + ": " + note)
     goal.SEEN[slug] = SEEN.pop(slug, goal.SEEN.get(slug, "{}"))
     goal.save(state, note)
 
@@ -222,7 +223,7 @@ def docs_trouble(top, base, fix=False, whole=False):
 
 
 def untouched(top, base, lines, filer=None):
-    """DOC-19 and DOC-4 findings on pages the goal leaves alone go to filer, not a refusal."""
+    """DOC-19, DOC-4 findings on pages the goal leaves alone go to filer."""
     made = run(["git", "log", "--format=%H", "--grep=^Wiki: re-render and re-stamp ", base + "..HEAD"], top).stdout.split()[::-1]
     spans = [a + b for a, b in zip([base + "..."] + [c + ".." for c in made], [c + "^" for c in made] + ["HEAD"])]
     diffs = [run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", span], top) for span in spans]
@@ -248,7 +249,7 @@ def fails(command, top):
 
 
 def criteria_trouble(top, cfg):
-    import review  # review imports release
+    import review
     return review.criteria(top, cfg, doc_rows, fails)
 
 
@@ -331,7 +332,7 @@ def cmd_cut(args):
     unmet, left = criteria_trouble(cwd, cfg)
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
-    import review  # review imports release
+    import review
     print(review.left_text(left).strip() or "LEFT 0 rows: every row ran or had a PASS on this commit")
     version_file = cfg.get("version_file") or "VERSION"
     if os.path.isabs(version_file) or ".." in version_file.split("/"):
@@ -343,7 +344,7 @@ def cmd_cut(args):
     if run(["git", "rev-parse", "--verify", "--quiet", "refs/tags/" + tag], cwd=cwd).returncode == 0 or \
             run(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=cwd).returncode == 0:
         sys.exit("REFUSED: tag %s already exists. Fix: pick another --bump or set the version by hand." % tag)
-    import wiki  # wiki imports release
+    import wiki
     bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)
     day = now()[:10]
     old = open(cpath).read() if os.path.exists(cpath) else ""
