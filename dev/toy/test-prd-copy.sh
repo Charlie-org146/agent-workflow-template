@@ -1,6 +1,5 @@
 #!/bin/bash
 # windows: ok
-# reads: skills/
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: skills/workflow-docs/scripts/prdcopy.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/audit.py

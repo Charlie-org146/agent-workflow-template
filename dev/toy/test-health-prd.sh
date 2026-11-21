@@ -1,6 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-health/scripts/
 # reads: dev/toy/fakegh/gh dev/toy/fakegh/fake.py
+# reads: skills/
 # Proves the owner-approved Health PRD on throwaway repos with a stand-in for GitHub and stand-in judges: the twelve groups
 # and their angles (HLT-2), tagged issues, links and migration (HLT-4), the review and its evidence (HLT-5, HLT-9),
 # triage (HLT-8), controls (HLT-6), same answer and no writes (HLT-1), and issues 124, 158

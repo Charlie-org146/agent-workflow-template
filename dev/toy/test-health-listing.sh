@@ -1,8 +1,9 @@
 #!/bin/bash
+# reads: skills/workflow-health/scripts/issues.py
+# reads: skills/workflow-health/scripts/
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # windows: ok
-# reads: skills/workflow-health/scripts/issues.py
 # The health commands read only the issues they need, a page of 100 at a time, so a repo with thousands of issues lists
 # within the timeout: triage reads the open health issues in one filtered page, file reads the health issues and the open
 # ones page by page, and a page that fails refuses with one line naming it. Python only, with gh stood in by a function,

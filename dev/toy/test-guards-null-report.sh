@@ -1,6 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-delivery/scripts/guards.py skills/workflow-monitoring/scripts/worker.py
 # reads: skills/workflow-monitoring/scripts/mend.py
+# reads: skills/
 # A goal reset never writes a null report, and goal.py's state file is written under a lock so two writers lose neither
 # write. A temp repo, no model, no network. usage: test-guards-null-report.sh [reset|writers|fresh|nofiles ...]   (default all)
 set -u

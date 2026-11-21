@@ -1,6 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-monitoring/scripts/machines.py skills/workflow-release/scripts/merge.py
 # reads: skills/workflow-release/scripts/autorelease.py dev/toy/fakegh/gh
+# reads: skills/
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # Merge batching (merge-queue slice C): merge.py SLUG SLUG [SLUG] --batch merges up to 3 done goals whose own CI is green as one

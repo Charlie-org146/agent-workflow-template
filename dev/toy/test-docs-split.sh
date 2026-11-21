@@ -1,8 +1,9 @@
 #!/bin/bash
+# reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/counting.py
+# reads: skills/workflow-docs/scripts/
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # windows: ok
-# reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/counting.py
 # Issue 1402: render.py sat at 97% of the script cap, so the Automation block code (BUILT_IN, config_of, entries,
 # automation_block) moved to counting.py unchanged. The block a toy config renders is the text it rendered before
 # (dev/toy/docs-split-golden.txt, made from the code before the move), and render.py and counting.py stay under 90%
