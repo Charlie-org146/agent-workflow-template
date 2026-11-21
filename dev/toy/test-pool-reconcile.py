@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check(refused.returncode != 0 and json.load(open(pool_path)) == pool, "an empty list is refused: it would wipe the pool")
     done = reconcile()
     after = json.load(open(pool_path))
-    check(done.returncode == 0 and sorted(after) == sorted(live + others) and done.stdout.count("GHOST ") == 5 and "RECONCILED: 5 ghost ids left the pool, 6 stay, 3 not checked" in done.stdout,
+    check(done.returncode == 0 and sorted(after) == sorted(live + others) and done.stdout.count("GHOST ") == 5 and "RECONCILED: 5 ghost ids left, 6 stay, 3 not checked" in done.stdout,
           "the 5 ghosts leave the pool and the 3 live ids stay: %s" % done.stdout.strip().splitlines()[-1])
     check("local_s3" in after and after["local_s3"]["state"] == "archive", "an archived app session in the list is never dropped")
     check(all(sid in after for sid in others) and "GHOST bg-1" not in done.stdout, "ids that are not app sessions (bg-, board-artifact-page, a bare hash) are reported as not checked and never dropped")

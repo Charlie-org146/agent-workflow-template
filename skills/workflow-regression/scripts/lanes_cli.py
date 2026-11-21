@@ -184,7 +184,7 @@ jobs:
   shard:
     if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -205,8 +205,9 @@ jobs:
       - run: |
           git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; exit 0; }
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
+          B=120; git diff --name-only origin/@BASE@...HEAD | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
           [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200
-          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget 120 --timeout 200
+          LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 200
       - if: always()
         uses: actions/upload-artifact@v4
         with:
