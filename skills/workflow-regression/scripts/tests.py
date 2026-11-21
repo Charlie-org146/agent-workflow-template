@@ -350,10 +350,12 @@ def lane_checks(top, contexts):
     """The required checks the pr step posts a status for: regression-only jobs (#3840) and plain jobs whose steps pass here (#4537)."""
     reg, loc, no = classify(top, contexts)
     ok = list(reg)
+    import actions  # no host session ids (#5700)
+    env = {k: v for k, v in os.environ.items() if k not in actions.SESSION_DROP}
     for c, run in loc.items():
         for cmd in run:
             try:
-                bad = subprocess.run(["sh", "-c", cmd], cwd=top, capture_output=True, timeout=900).returncode
+                bad = subprocess.run(["sh", "-c", cmd], cwd=top, capture_output=True, timeout=900, env=env).returncode
             except (OSError, subprocess.TimeoutExpired):
                 bad = 1
             if bad:

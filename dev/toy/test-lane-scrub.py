@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-# reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/lanes.py
+# reads: skills/workflow-regression/scripts/tests.py skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/lanes.py
 """lane-scrub (#5700): a row run by the lane runner never sees the host session variables.
 
 Done 1: a fake row that reports each host session variable, run through runs.execute with fake values set, sees none of them.
+Done 1 also holds for the pr step's lane_checks (tests.py): a plain job's `run:` step sees none of them.
 Done 2: the real .git/loop/operation.id hashes the same before and after the lane run (the hash is compared, never printed);
         with the scrub reverted in a scratch copy of the scripts the same row sees every variable, so this toy fails there."""
 import hashlib
@@ -57,6 +58,36 @@ def operation_hash():
     return hashlib.sha256(open(path, "rb").read()).hexdigest() if os.path.exists(path) else "absent"
 
 
+CI = """name: ci
+on: [push]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python3 probe.py
+"""
+CHECKS = """import json, os, sys
+sys.path.insert(0, sys.argv[1])
+import tests
+top = sys.argv[2]
+os.environ.update(json.loads(sys.argv[3]))
+tests.lane_checks(top, ["checks"])
+print("SEEN " + open(os.path.join(top, "seen.json")).read())
+"""
+
+
+def lane_checks(scripts):
+    """What a plain CI job's step sees when tests.lane_checks runs it here, with fake host values set."""
+    fake = {name: "fake-" + name.lower() for name in HOST}
+    with tempfile.TemporaryDirectory() as top:
+        os.makedirs(os.path.join(top, ".github", "workflows"))
+        open(os.path.join(top, ".github", "workflows", "ci.yml"), "w").write(CI)
+        open(os.path.join(top, "probe.py"), "w").write("import json, os\njson.dump({n: os.environ.get(n) for n in %r + ('PATH',)}, open('seen.json', 'w'))\n" % (HOST,))
+        done = subprocess.run([sys.executable, "-c", CHECKS, scripts, top, json.dumps(fake)], capture_output=True, text=True)
+    line = [x for x in done.stdout.splitlines() if x.startswith("SEEN ")]
+    return json.loads(line[0][5:]) if line else None
+
+
 before = operation_hash()
 got, env = lane(real)
 after = operation_hash()
@@ -65,6 +96,8 @@ got = got or {}
 check(all(got.get(name) is None for name in HOST), "the row sees none of the host session variables")
 check(all(got.get(name) == value for name, value in KEEP.items()), "LOOP_PRIVATE_NAMES and the other variables come through unchanged")
 check(got.get("PATH") == env["PATH"], "PATH comes through unchanged")
+seen = lane_checks(real) or {}
+check(bool(seen) and all(seen.get(name) is None for name in HOST) and bool(seen.get("PATH")), "lane_checks runs a plain job's step without the host variables")
 check(before == after, "the real .git/loop/operation.id is byte-identical before and after the lane run")
 
 # negative control: the scrub reverted in a scratch copy of the scripts
@@ -79,4 +112,10 @@ with tempfile.TemporaryDirectory() as tmp:
     got, _ = lane(scratch)
     got = got or {}
     check(all(got.get(name) == "fake-" + name.lower() for name in HOST), "negative control: with the scrub reverted the row sees every host variable")
+    path = os.path.join(scratch, "tests.py")
+    text = open(path).read()
+    open(path, "w").write(text.replace("k not in actions.SESSION_DROP", "True"))
+    check(open(path).read() != text, "the scratch copy's lane_checks has the scrub removed")
+    seen = lane_checks(scratch) or {}
+    check(all(seen.get(name) == "fake-" + name.lower() for name in HOST), "negative control: lane_checks with the scrub reverted lets the step see every host variable")
 sys.exit(1 if failed else 0)
