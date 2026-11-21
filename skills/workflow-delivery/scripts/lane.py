@@ -189,7 +189,8 @@ def answer(runs, slug, src, name):
 def passing(runs, slug, step):
     ok, src = lanekit.lane_ok(runs, slug, step, rev("HEAD"))
     src = src if ok == rev("HEAD") else step
-    return src, read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
+    last = read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
+    return src, last if src == step or (last.get("head"), last.get("state")) == (ok, "pass") else {}
 
 
 def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
@@ -198,6 +199,9 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
     if redo:
         if any(j and live(j) for j in [job_of(runs, slug, n)[1] for n in NAMES]):
             return "fail", "LANE_FRESH: a lane of %s is still running. Fix: role.py lane-wait %s NAME, then run --fresh again." % (slug, slug), []
+        for n in NAMES:
+            if job_of(runs, slug, n)[1]:
+                stop(*job_of(runs, slug, n))
         drop(*[lanekit.lane_base(runs, slug, n) + end for n in NAMES for end in (".ok", ".last")])
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:

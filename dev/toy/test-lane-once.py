@@ -201,6 +201,22 @@ with open(base("ship") + ".job", "w") as handle:
                "markers": 1, "pid": 999999, "pstart": ""}, handle)
 check(ask("ship")[0] == "fail" and len(starts) == 1, "a dead job record is cleared and the lane starts (no crash on the stale-job path)")
 
+# --fresh also clears a finished lane that was never finalized, so its old result is not written back
+clear()
+record("qa", head2)
+with open(base("ship") + ".job", "w") as handle:
+    json.dump({"head": head2, "attempt": "done", "started": time.time() - 100, "limit": 600, "rc": base("ship") + ".done.rc", "pool": tmp,
+               "markers": 1, "pid": 999999, "pstart": ""}, handle)
+open(base("ship") + ".done.rc", "w").write("0")
+redo = ask("ship", fresh=True)
+check(redo[0] == "fail" and "TOY_STOP" in redo[1] and len(starts) == 1 and not os.path.exists(base("ship") + ".job") and not os.path.exists(base("ship") + ".done.rc"),
+      "--fresh clears a finished, unfinalized job and starts a new lane instead of finalizing the old one")
+
+# a lane whose .ok holds HEAD but whose .last no longer says pass is not shown in the PR body
+clear()
+record("qa", head2, state="fail")
+check("LANE qa" not in role.lane_part(SLUG), "the PR body never shows a failing record for a lane the gate accepted")
+
 # the three names run one argv
 check(list(inspect.signature(lane.lane_argv).parameters) == ["seconds"] and inspect.getsource(lane.lane).count("lane_argv(") == 1,
       "the lane command comes from lane_argv alone, which takes no lane name")
