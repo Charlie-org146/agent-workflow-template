@@ -6,7 +6,7 @@
 
 ## Approaches
 
-**A. Fail closed in the one function.** Compute `ok` inside the try, set `ok = 0` in the except, and return one refusal for both "no trust entry" and "no readable file". Both callers already `sys.exit(why)` on a non-empty line, so nothing else changes. operate.py is at 20,455 of 20,480 bytes (GRD-20), too full for the longer reader, so the reader moves into machines.py (a move, not a reformat) and `operate.untrusted` delegates to it: operate.py 20,019 bytes, machines.py about 19,915, no new file. The moved reader also names the file in the refusal, reads only the home folder's trust file (CLAUDE_CONFIG_DIR is deliberately not read, so a worker cannot point the check at its own file) and retries one parse error.
+**A. Fail closed in the one function.** Compute `ok` inside the try, set `ok = 0` in the except, and return one refusal for both "no trust entry" and "no readable file". Both callers already `sys.exit(why)` on a non-empty line, so nothing else changes. operate.py is at 20,455 of 20,480 bytes (GRD-20), too full for the longer reader, so the reader moves into machines.py (a move, not a reformat) and `operate.untrusted` delegates to it: operate.py 20,019 bytes, machines.py 19,912, no new file. The moved reader also names the file in the refusal, reads only the home folder's trust file (CLAUDE_CONFIG_DIR is deliberately not read, so a worker cannot point the check at its own file) and retries one parse error.
 
 **B. Check the file in each caller.** Two more copies of the rule and more bytes in scripts that are also near the cap. Rejected (DRY, size).
 
