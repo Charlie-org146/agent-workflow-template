@@ -749,3 +749,4 @@
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
 | <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |
+| <a id="t-defect-5700-lane-scrub"></a>defect-5700-lane-scrub | defect | [#5700](https://github.com/jcl2018/agent-workflow-template/issues/5700) state unknown | PASS | 2026-11-21 | [CI 2026-11-21](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-21) | 2026-11-21 |
