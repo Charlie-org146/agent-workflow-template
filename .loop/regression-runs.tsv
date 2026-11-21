@@ -506,10 +506,6 @@ win-posix-calls-gone	PASS	2026-11-15
 worker-per-goal	PASS	2026-11-20	
 worker-refuses	PASS	2026-11-20	
 worker-reports-live	PASS	2026-11-09	
-<<<<<<< Updated upstream
 worker-runs-release	PASS	2026-11-19	
-=======
-worker-runs-release	FAIL	2026-11-18	
->>>>>>> Stashed changes
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-10	
