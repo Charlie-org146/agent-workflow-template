@@ -347,6 +347,8 @@
 | <a id="t-judge-key-savings"></a>judge-key-savings | requirement | HLT-4 | not run | - | local | 2026-11-16 |
 | <a id="t-health-findings-table"></a>health-findings-table | requirement | HLT-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-health-feature-always"></a>health-feature-always | requirement | HLT-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-health-live-requirements"></a>health-live-requirements | requirement | HLT-2 | not run | - | local | 2026-11-21 |
+| <a id="t-health-migration-fires"></a>health-migration-fires | requirement | HLT-2 | not run | - | local | 2026-11-21 |
 
 ## Machines
 
@@ -782,4 +784,4 @@
 | <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |
 | <a id="t-reap-sandbox-skip"></a>reap-sandbox-skip | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
-| <a id="t-codex-run-ends-done"></a>codex-run-ends-done | requirement | done line codex-fallback-2:1 | not run | - | local | no |
+| <a id="t-codex-run-ends-done"></a>codex-run-ends-done | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
