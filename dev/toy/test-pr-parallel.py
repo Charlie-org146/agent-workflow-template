@@ -108,6 +108,19 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(tree, ".loop", "config.json"), "w") as handle:
         json.dump({"base": "no-such-base"}, handle)
     check(pool.pr_diff({"worktree": tree}) == [], "5344: a missing base ref gives no paths, so it overlaps everything")
+    real_run = pool.subprocess.run
+    # the worktree still exists here, so only the git call itself fails
+    for boom in (pool.subprocess.TimeoutExpired("git", 30), OSError("git is missing")):
+        def fail(*args, _boom=boom, **kw):
+            raise _boom
+        pool.subprocess.run = fail
+        try:
+            got = pool.pr_diff({"worktree": tree})
+        except Exception as err:  # noqa: BLE001
+            got = "raised %s" % type(err).__name__
+        finally:
+            pool.subprocess.run = real_run
+        check(got == [], "5344: a git call that fails with %s gives no paths, so it overlaps everything" % type(boom).__name__)
     shutil.rmtree(tree)
     check(pool.pr_diff({"worktree": tree}) == [], "5344: a deleted worktree gives no paths, so it overlaps everything")
     check(pool.pr_turn(runs, "r2") == "r1", "5344: a goal whose worktree is gone overlaps everything and holds back a later goal")
