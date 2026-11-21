@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/3
 
-Review: **Unreviewed** <!-- kept fast-3min@d4d7dad03 -->
+Review: **Unreviewed** <!-- kept adoption-count-fix@4d125886 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
