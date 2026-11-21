@@ -67,6 +67,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `automation` | 3 entries in config.json | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `base` | main | The branch goals start from and pull requests target. |
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
+| `check_slots` | 2 | Open PRs with unfinished checks allowed before a push. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `codex_profile` | 8 entries in config.json |  |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
