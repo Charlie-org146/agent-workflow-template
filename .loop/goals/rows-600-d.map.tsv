@@ -34,6 +34,8 @@ restamp-marks-3867	stale-comments-only-3122
 restamp-wording-locked-3867	stale-comments-only-3122
 doc18-howto-restamp	doc18-howto-missing
 mailbox-two-mails-4671	mailbox-two-mails-4785
+codex-fallback-limit	codex-fallback-start
+codex-guard-refuses	codex-fallback-start
 folder-trust-refused	operation-id-not-worker
 restart-trust-row	operation-id-not-worker
 restart-worktrees-row	operation-id-not-worker
