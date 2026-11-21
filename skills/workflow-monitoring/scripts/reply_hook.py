@@ -294,10 +294,10 @@ def problems(text):
                 "Needs you and Coming up (issue 321)"]
     found = ["missing section %s%s" % (name, " (or it is out of order)" if any(heading(l) == name.lower() for l in lines) else "")
              for name in SECTIONS if name not in spots]
-    first = min(spots.values())
-    if first == 0:
+    before = [l for l in lines[:min(spots.values())] if not l.startswith("Machine:") and ", last activity " not in l]
+    if not before:
         found.append("no headline line before the first section")
-    elif len([l for l in lines[:first] if not l.startswith("Machine:") and ", last activity " not in l]) > 1:
+    elif len(before) > 1:
         found.append("more than one line before the first section; the headline is one line")
     names = [n for n in SECTIONS if n in spots]
     for name, after in zip(names, names[1:] + [None]):
