@@ -80,6 +80,8 @@ for fid, (path, topic) in PAGES.items():
     say(LINE.match(lines[at[0]])[2] == title, "%s title equals the pinned title" % fid)
     say(subs == want, "%s: its %d sub-bullets equal the pinned page's, line by line" % (fid, len(want)))
     say("**Reviewed " in lines[at[0]], "%s is marked Reviewed" % fid)
+    svg = open("docs/wiki/flows/%s.svg" % fid, encoding="utf-8").read()
+    say("<title>%s %s</title>" % (fid, title.replace("'", "&#x27;")) in svg, "%s: its flow figure is titled with its own ID and title" % fid)
 
 # the brief: the pinned section, one name swapped, first line frozen
 bsec = section("v1.1.0 brief (minor, re-frozen 2026-11-21 10:52)")
