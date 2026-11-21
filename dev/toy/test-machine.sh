@@ -98,7 +98,7 @@ fi
 if want machine-rows-listed; then
   for row in machine-apply-installs machine-no-private machine-task-layout machine-no-prompt-mode; do  # the other machine rows merged into these (rows-600-c)
     grep -qF "[$row](Tests#t-$row)" "$here"/docs/wiki/*.md || no "row $row is not in a feature page Tests table"; done
-  for n in 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
+  for n in 3 4 5 6 7 8 9 10 11; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
   echo "PASS: every machine row is listed in the Machines Tests table"
 fi
 

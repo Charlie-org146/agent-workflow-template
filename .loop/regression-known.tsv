@@ -1,7 +1,7 @@
 # id	reason
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
-rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
+rel-major-refused	fails on main: the Release page check of test-release-gate.py major finds no REL-3, REL-12 or REL-13 on docs/wiki/Release.md (its size check went with the script byte limit)
 ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the default judge_command grants no tools (--tools "")'; see #5343
 runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
 guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4104
