@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Live-board estimate candidates, time-ordered selection, and per-goal predictions. Scores are kept in MODEL per set of
 runs; a goal file edited inside one long-lived process is not seen until a run changes. Never imports board_status.py."""
+import glob
 import json
 import math
 import os
+import re
 import statistics
 import sys
 import traceback
@@ -22,6 +24,26 @@ CANDIDATES = ("steps", "size", "blend")   # a new candidate is a cell function i
 LABELS = {"steps": "step medians", "size": "size rule", "blend": "blend"}
 MODEL = {}
 span = board_page.span
+
+
+X = r"\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069"
+
+
+def task_rows(root):  # DEL-23: one row per brief in .loop/tasks; a bad brief is named, never hidden
+    rows = []
+    for f in sorted(glob.glob(os.path.join(glob.escape(root), ".loop", "tasks", "*.md"))):
+        slug = os.path.basename(f)[:-3]
+        try:
+            text, err = open(f, encoding="utf-8").read(), ""
+        except (OSError, ValueError):
+            text, err = "", "brief unreadable: check its permissions"
+        kv = {m[1].lower(): m[2].strip() for m in re.finditer(r"^- +(feature|release|goals|needs|replaced by|source) *: *(.*)$", text, re.M | re.I)}
+        w = lambda k: re.findall("[^%s, |]{1,60}" % X, kv.get(k, ""))
+        name = re.sub("[%s|]" % X, " ", text.split("\n")[0].lstrip("# "))[:100].strip()
+        miss = [k for k in ("feature", "release", "source") if not kv.get(k)]
+        rows.append(dict(slug=slug, name=name or slug, goals=w("goals"), needs=w("needs"), by=kv.get("replaced by", ""),
+                         note=err or f"incomplete brief: add its {', '.join(miss)} line" * bool(miss or not name)))
+    return rows
 
 
 def step_left(est, spent):

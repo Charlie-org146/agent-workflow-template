@@ -20,6 +20,7 @@ for key in ("HOME", "USERPROFILE"):
     os.environ[key] = home
 os.environ["LOOP_MACHINE_NAME"] = "pc"
 import board_lines  # noqa: E402
+import board_model  # noqa: E402
 import checkin  # noqa: E402
 import live_board  # noqa: E402
 import reply_hook  # noqa: E402
@@ -64,7 +65,20 @@ def repo(briefs, runs):
 
 
 def listed(root, runs, gone=()):
-    return {t["slug"]: t for t in board_lines.tasks(root, runs, now, set(gone))}
+    return {t["slug"]: t for t in board_lines.tasks(root, runs, set(gone))}
+
+
+def shown(root, name, gone=()):
+    """(the task's line, {goal: label}) from the real Tasks lines."""
+    lines = live_board.task_lines(root, load(root), now, set(gone))
+    i = next(n for n, l in enumerate(lines) if l.startswith("- %s:" % name))
+    goals = {}
+    for l in lines[i + 1:]:
+        if not l.startswith("    "):
+            break
+        slug, _, label = l.strip().partition(" ")
+        goals[slug] = label
+    return lines[i], goals
 
 
 def load(root):
@@ -90,10 +104,10 @@ check(got["a"]["state"] == "done" and got["c"]["state"] == "queued", "once the n
 root = repo({"a": brief("Task A", "ga, gb")}, {"ga": MERGED, "gb": {}})
 got = listed(root, load(root))
 check(got["a"]["state"] == "running" and got["a"]["done"] == 1, "a task whose last goal is still open is not done")
-check(dict(got["a"]["goals"]) == {"ga": "finished", "gb": "build"}, "a goal reads finished or its flow step")
+check(shown(root, "Task A")[1] == {"ga": "finished", "gb": "build"}, "a goal reads finished or its flow step")
 root = repo({"a": brief("Task A", "ga, gb, gc, gd")}, {"gb": {"status": "queued"}, "gc": {"status": "done", "step": "pr"}, "gd": ASKING})
 got = listed(root, load(root))
-labels = dict(got["a"]["goals"])
+labels = shown(root, "Task A")[1]
 check(labels["ga"] == "not started" and labels["gb"] == "not started", "a goal with no record and a goal with status queued are both not started")
 check(labels["gc"] == "awaiting merge" and labels["gd"] == "plan", "a done goal that is not merged reads awaiting merge, a waiting goal its step")
 check(got["a"]["state"] == "running", "a goal done but not merged keeps the task running")
@@ -122,11 +136,11 @@ root = repo({"a": brief("A", "g1"), "b": brief("B", "g2"), "c": brief("C", "g3")
             {"g1": {"status": "done", "step": "pr"}, "g2": {}, "g3": {}})
 LEFT.update(g2=600, g3=1800)
 got = listed(root, load(root))
-check(got["a"]["eta"] == "awaiting merge", "every live goal done but unmerged gives the ETA words awaiting merge")
-check(got["b"]["eta"] == "10m", "the ETA is the time left of the live goal: %s" % got["b"]["eta"])
-check(got["d"]["eta"] == "-", "a task with nothing in flight shows an ETA of a dash")
+check(shown(root, "A")[0].endswith("ETA awaiting merge"), "every live goal done but unmerged gives the ETA words awaiting merge")
+check(shown(root, "B")[0].endswith("ETA 10m"), "the ETA is the time left of the live goal: %s" % shown(root, "B")[0])
+check(shown(root, "D")[0].endswith("ETA -"), "a task with nothing in flight shows an ETA of a dash")
 LEFT["g3"] = None
-check(listed(root, load(root))["c"]["eta"] == "?", "a live goal with no estimate gives an ETA of a question mark")
+check(shown(root, "C")[0].endswith("ETA ?"), "a live goal with no estimate gives an ETA of a question mark")
 LEFT.clear()
 calls = []
 checkin.bs.left_time = lambda run, runs_, at, root=None: calls.append(root) or 60
@@ -134,7 +148,7 @@ here_cwd = os.getcwd()
 os.chdir(tempfile.mkdtemp())
 try:
     root = repo({"a": brief("A", "g1")}, {"g1": {}})
-    listed(root, load(root))
+    shown(root, "A")
 finally:
     os.chdir(here_cwd)
 check(calls and all(c == root for c in calls), "left_time gets the fixture's root, not the working directory")
@@ -194,7 +208,7 @@ check(not any(re.search(r"merged|hist|closed|milestone|tokens|total|done lines|l
 folder = os.path.join(top, ".loop", "tasks")
 names = sorted(n for n in os.listdir(folder) if n.endswith(".md")) if os.path.isdir(folder) else []
 check(len(names) >= 11, "the repo holds at least the eleven briefs: %d" % len(names))
-real = live_board.task_rows(top)
+real = board_model.task_rows(top)
 check(all(not t["note"] for t in real) and len(real) == len(names), "every real brief has its feature, release and source lines")
 bodies = [open(os.path.join(folder, n), encoding="utf-8").read() for n in names]
 check(all("## Purpose" in b and "## Done when" in b for b in bodies), "every real brief has a Purpose and a Done when section")

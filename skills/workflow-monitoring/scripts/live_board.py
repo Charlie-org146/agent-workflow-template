@@ -14,7 +14,6 @@ status question, never by a check-in (MON-4). Imported by board_status.py.
 """
 import argparse
 import datetime
-import glob
 import html
 import os
 import re
@@ -26,6 +25,7 @@ import board_lines  # noqa: E402
 bb = board_lines  # budget, depth and private-name lines (its section 4)
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
@@ -47,36 +47,18 @@ def plain(text, size=200):
     return " ".join(words)[:size]
 
 
-X = r"\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069"
-
-
-def task_rows(root):  # DEL-23
-    rows = []
-    for f in sorted(glob.glob(os.path.join(glob.escape(root), ".loop", "tasks", "*.md"))):
-        slug = os.path.basename(f)[:-3]
-        try:
-            text, err = open(f, encoding="utf-8").read(), ""
-        except (OSError, ValueError):
-            text, err = "", "brief unreadable: check its permissions"
-        kv = {m[1].lower(): m[2].strip() for m in re.finditer(r"^- +(feature|release|goals|needs|replaced by|source) *: *(.*)$", text, re.M | re.I)}
-        w = lambda k: re.findall("[^%s, |]{1,60}" % X, kv.get(k, ""))
-        name = re.sub("[%s|]" % X, " ", text.split("\n")[0].lstrip("# "))[:100].strip()
-        miss = [k for k in ("feature", "release", "source") if not kv.get(k)]
-        rows.append(dict(slug=slug, name=name or slug, goals=w("goals"), needs=w("needs"), by=kv.get("replaced by", ""),
-                         note=err or f"incomplete brief: add its {', '.join(miss)} line" * bool(miss or not name)))
-    return rows
-
-
-def task_lines(root, runs, at, gone=()):  # DEL-23
+def task_lines(root, runs, at, gone=()):  # DEL-23: each task by name with state, goals finished and ETA, then its goals and their step
     try:
-        rows = board_lines.tasks(root, runs, at, gone)
+        out = ["", "Tasks"]
+        for t in board_lines.tasks(root, runs, gone):
+            live = [r for _, _, r in t["goals"] if r]
+            left = [bs.left_time(r, runs, at, root) for r in live]
+            eta = "-" if not live else "awaiting merge" if all(r.get("status") == "done" for r in live) else "?" if None in left else board_page.span(max(left))
+            out.append(f"- {t['name']}: {t['state']}{t['note'] and ' (%s)' % t['note']}, {sum(f for _, f, _ in t['goals'])} of {len(t['goals'])} goals finished, ETA {eta}")
+            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else FLOW[current(r)]) for s, f, r in t["goals"]]
     except Exception as e:  # never stop the check-in or the board
         return ["", "Tasks", "- tasks unavailable: " + type(e).__name__]
-    out = ["", "Tasks"] * bool(rows)
-    for t in rows:
-        out.append(f"- {t['name']}: {t['state']}{t['note'] and ' (%s)' % t['note']}, {t['done']} of {len(t['goals'])} goals finished, ETA {t['eta']}")
-        out += ["    %s %s" % g for g in t["goals"]]
-    return out
+    return out if len(out) > 2 else []
 
 
 def tally(pod, at):
@@ -139,7 +121,8 @@ current = bs.current
 
 
 def flow_lines(run, over=0):
-    """The step flow in lines of at most WIDTH, broken at " > "; the current step reads "[build over by 12m]" a minute past its time."""
+    """The step flow, indented four, packed into lines of at most WIDTH that break at the " > " joints (steps stay whole).
+    The current step reads "[build over by 12m]" when it ran a minute or more past its usual time."""
     if run.get("status") == "freezing":
         steps = ["[freezing]"] + list(FLOW)
     else:
@@ -157,7 +140,8 @@ def flow_lines(run, over=0):
 
 
 def fit(lines, width=WIDTH):
-    """Wrap each line to width at word boundaries, continuations indented two more; a longer word is cut. Runs before HTML, so markup is never split."""
+    """Wrap every line to width at word boundaries, continuations indented two past the line's own indent; a word longer than
+    the width is cut. Runs on the text model before it becomes HTML, so markup is never split."""
     out = []
     for line in lines:
         indent = line[:len(line) - len(line.lstrip())]
