@@ -14,7 +14,7 @@ sessions script (bind and assign) and the unattended selfcheck all call this one
 Decisions, taken as the routine answer:
 1. Fix only that function. The edited text (measured, see decision 2) replaces the two inline path builders with one
    local lambda:
-   `at = lambda p: os.path.normcase(os.path.realpath(p)).rstrip(os.sep) + os.sep`, then
+   `at = lambda p: os.path.normcase(os.path.realpath(p)).rstrip(os.sep)+os.sep`, then
    `... and at(folder).startswith(at(k)) ...`. It resolves, applies os.path.normcase (lowercase and backslashes on
    Windows, identity on macOS and Linux), strips trailing separators and adds os.sep. A folder is trusted when its form
    starts with a trusted entry's form. The trailing separator keeps a prefix-only sibling ("agent-workflow-template2"
@@ -22,10 +22,11 @@ Decisions, taken as the routine answer:
    (a sibling `/repo\` of a trusted `/repo`) stays refused; there is a case for it. The outside voice found the earlier
    both-kinds strip would have trusted that sibling.
 2. Size: the script is 20,455 bytes and fails over 20,480 (dev/toy/size-check.py:14). The candidate text measured
-   +13 bytes (20,468); a reviewer's different lambda measured +18 (20,473). The build re-measures the real file with
+   +11 bytes (20,466) with no spaces around the plus sign; a reviewer's different lambda measured +18 (20,473). The build re-measures the real file with
    size-check.py and trusts only that, and the acceptance line is strictly under 20,480 (dev/toy/test-tree.sh:16 uses
-   `-lt 20480`), so at most 20,479. Concession if it exceeds 20,480: shorten this function's own docstring; never
-   trim unrelated code. If still over, the build stops and reports.
+   `-lt 20480`), so at most 20,479, and the owner's ask is no growth beyond +12. The byte is found inside the new expression itself
+   (no spaces around the plus sign); no docstring, comment or other code is touched. If the real file still measures
+   over 20,479 the build stops and reports.
    No other script under skills/ is edited and no new file appears under skills/.
 3. macOS and Linux behaviour is unchanged (normcase is the identity, os.sep is "/", and only "/" is stripped);
    the existing trust, restart and bind cases of the new-binds toy stay unedited and green.
@@ -61,6 +62,10 @@ Steps:
      is a forward slash, and on a backslash host it prints PASS: wintrust posix paths give the same answers as before
      skipped on a backslash host, so the row's greps hold on every host)
    - wintrust negative control the old text refuses the windows worktree under its root
+   - wintrust the child ran on a temporary HOME and USERPROFILE and never the real ones (the real trust file's size and
+     modification time, read with a stat only and never opened, are the same before and after the run)
+   - wintrust negative control the home check refuses a child whose HOME is the real home (run on made-up values, so
+     the real file is never opened)
    UNC paths are not claimed.
    Red proof: after writing the cases and before editing operate.py, the build runs the real-function cases against the
    unedited file and saves the output (the Windows cases fail); then it edits. seen_red in the row is that date, so
@@ -84,10 +89,29 @@ Steps:
    skills/workflow-delivery/scripts/private.py check`, re-measure the toy (it grows by a literal and a child script and
    must stay under 20,480), then the regression lane on the committed head.
 
+Limits, stated plainly. The Windows proof for MCH-1 is simulated: the cases run on the host's own operating system
+with Windows path functions swapped in, never on Windows, so the string logic is proven and the Windows file system
+(junctions, short names, long-path prefixes, drive substitutions) is not. The requirement's Confidence is not raised by
+this change. There is no Windows runner and none is planned here. The refusal text is unchanged: it still names the
+folder and FOLDER_TRUST but neither the trust file nor the entries it checked, because the done lines freeze the
+behaviour and the script has no bytes to spare. A trust file that cannot be read still answers trusted, as it does
+today; that is existing behaviour this goal does not change. One real check by a person on Windows remains the
+owner's verify-by-hand step.
+
+Out of scope, with their issue: the three other forward-slash prefix checks (lanes_cli.py:76, operate.py:328,
+pool.py:312) are filed as issue 5740 and are not touched here; a shared path helper, a Windows runner, UNC paths, the
+refusal text and the fail-open read are not part of this goal for the reasons above.
+
+Estimate and per-step budget (a realistic one; the frozen ETA of 325 minutes stays the commitment on the goal and
+this plan fits inside it): plan and its reviews, spent and recorded; build, 60 minutes (toy section 25, red proof 5,
+edit and measure 10, row and docs 15, local checks 5); review, 30; qa and the one affected-row lane, 40 (the lane
+itself is bounded by the repo's 5-minute lane target on a free machine); ship and pull request, 25; remaining about
+155 minutes of the 325. A step past twice its budget is flagged to the operation session.
+
 Test plan: the cases in step 2 plus the existing trust, restart and bind cases of the same toy. Failure modes: a
 trusted entry that is the filesystem root (covered by the drive root case); a non-dict entry or malformed file
 (covered, never raises); mixed-case drive letters (covered). Not in scope: changing what is trusted on Windows beyond this prefix test,
-the app's own trust dialog, any other script under skills/, a Windows CI runner, UNC paths.
+the app's own trust dialog, any other script under skills/, UNC paths (see Limits and Out of scope above).
 
 ## Review record
 
@@ -188,7 +212,7 @@ Section 9 Deployment: pure script change, no migration, no flag; rollback is a r
 Section 10 Trajectory: reversibility 5/5; debt: the same "/"-joined prefix idiom exists at lanes_cli.py:76, operate.py:328 and pool.py:312 (observed by grep; not shown to fail on Windows and outside issue 5722, so not touched here); a shared path-contains helper is the dream-state path. Ecosystem fit: stdlib only.
 Section 11 Design: SKIPPED (no UI scope).
 
-NOT in scope: a shared path helper module; the other "/" prefix sites named in section 10 (an owner decision: PENDING below); a Windows CI runner; UNC paths; making the trust test fail closed.
+NOT in scope: a shared path helper module; the other "/" prefix sites named in section 10 (filed as issue 5740); a Windows CI runner (a stated limit); UNC paths; making the trust test fail closed (existing behaviour, frozen by the done lines).
 What already exists: operate.untrusted, three callers, the new-binds trust and restart sections, size-check.py, the regression table.
 Dream state delta: this plan moves one separator-aware check into place and names the remaining sites; the ideal is one tested helper on a Windows runner.
 
@@ -202,13 +226,10 @@ Failure modes registry:
 | trust file | missing or malformed | Y (existing) | Y | nothing refused | no |
 0 critical gaps.
 
-Open decisions for the owner (from this review):
-- PENDING: whether the other "/"-prefix sites (lanes_cli.py:76, operate.py:328, pool.py:312) get a follow-up goal for Windows.
-- PENDING: whether a Windows CI runner for the toy is wanted (deferred).
-- PENDING: whether the trust test should fail closed instead of open on a read error (left as is).
+Open items from this review, resolved: the other "/"-prefix sites are filed as issue 5740 (out of scope); a Windows runner and the fail-open read are stated limits in the plan (out of scope, reason given); nothing is left for the owner in this plan.
 Implementation tasks: T1 (P1) write toy cases and red proof; T2 (P1) edit operate.py and measure; T3 (P1) set USERPROFILE in the trust section; T4 (P2) reads header; T5 (P1) regression row; T6 (P1) run the checks and the lane. Verify each by the commands in step 5.
 
-Completion summary: mode SELECTIVE EXPANSION; sections 1-10 reviewed, section 11 skipped; 5 scope proposals, 3 accepted, 1 deferred, 2 skipped (6 listed); error-rescue 4 rows, 0 gaps; failure modes 4, 0 critical gaps; outside voice Codex completed; Lake Score 3/3; diagrams 2; unresolved decisions 3 (the PENDING lines); reality rows 7/7, unverified 0.
+Completion summary: mode SELECTIVE EXPANSION; sections 1-10 reviewed, section 11 skipped; 5 scope proposals, 3 accepted, 1 deferred, 2 skipped (6 listed); error-rescue 4 rows, 0 gaps; failure modes 4, 0 critical gaps; outside voice Codex completed; Lake Score 3/3; diagrams 2; unresolved decisions 0 (each former open item is fixed or out of scope with a reason); reality rows 7/7, unverified 0.
 Approval readiness: PASS (rows D1-D4 approved by autoplan-style auto-decision under the six principles; no user answer was available or needed).
 
 ### DX review (hand run of the developer-experience review; unattended, recommended answers taken, nothing approved by a person)
@@ -229,7 +250,7 @@ Magical Moment (0D): the bind simply works after one trust of the root, on eithe
 Journey map (0F, TRIAGE: Install and Hello World only):
 | STAGE | DEVELOPER DOES | FRICTION | STATUS |
 |---|---|---|---|
-| 1 Discover | reads the refusal | text names neither file nor entries | deferred (CAP6, below) |
+| 1 Discover | reads the refusal | text names neither file nor entries | out of scope, limit stated (CAP6, below) |
 | 2 Install | trusts the repo root in the app | none | ok |
 | 3 Hello World | bind a new worktree | refused on Windows (the bug) | fixed by this plan |
 | 4-6 Real usage, debug, upgrade | not traced in TRIAGE | n/a | n/a |
@@ -243,16 +264,16 @@ Pass 3 Error messages 6/10, capped. Error path matrix (agent-ready-v1), surface 
 | untrusted() refusal (bind, assign) | environment | pass (the folder) | pass (a human must trust it) | pass (ask a human; no side effects) | pass (FOLDER_TRUST) | fail (names neither ~/.claude.json nor the entries it checked) | N/A (expected refusal) | pass | pass (non-zero exit, tested) | CAP6:context |
 | selfcheck MISSING folder trust | environment | pass | pass (names the fix) | pass | pass | fail (same) | N/A | pass | pass | CAP6:context |
 | trust file unreadable or malformed | unexpected | fail (silent) | fail | fail | fail | fail | fail (absent) | pass | fail (answers "trusted") | CAP6:trace; the silence is pre-existing fail-open |
-CAP6:untrusted-refusal:context: today an agent sees `REFUSED: ask the owner to trust <folder> (FOLDER_TRUST).`; the corrected line would add `(checked ~/.claude.json: no trusted entry is a parent of <folder>)`. Not applied: it adds bytes to a script 12 bytes from its cap and the refusal text is frozen by existing tests; reported, deferred. No CAP4 finding: no secret is printed, the exit is non-zero, nothing blocks waiting for a terminal.
+CAP6:untrusted-refusal:context: today an agent sees `REFUSED: ask the owner to trust <folder> (FOLDER_TRUST).`; the corrected line would add `(checked ~/.claude.json: no trusted entry is a parent of <folder>)`. Not applied: it adds bytes to a script 12 bytes from its cap and the refusal text is frozen by existing tests; out of scope, stated as a limit in the plan, no follow-up item kept. No CAP4 finding: no secret is printed, the exit is non-zero, nothing blocks waiting for a terminal.
 Pass 4 Documentation 6/10: no prose describes FOLDER_TRUST; the generated pages need no change.
 Pass 5 Upgrade 8/10: nothing breaks; macOS and Linux answers are identical (cases prove it).
-Pass 6 Environment 8/10 after (2/10 before on Windows): the toy runs on any host through a Windows path shim; a real Windows runner is deferred.
+Pass 6 Environment 8/10 after (2/10 before on Windows): the toy runs on any host through a Windows path shim; a real Windows runner is out of scope and the simulation is a stated limit.
 Pass 7 Community 5/10: not applicable to a one-function fix; no change.
 Pass 8 Measurement 5/10: the new regression row is the measurement; no telemetry is added.
 
-NOT in scope (DX): improving the refusal text (CAP6, needs bytes and a decision); a Windows CI runner; telemetry; docs prose for FOLDER_TRUST.
+NOT in scope (DX): improving the refusal text (CAP6, no bytes and frozen behaviour: a stated limit); a Windows CI runner; telemetry; docs prose for FOLDER_TRUST.
 What already exists: the refusal text and code (operate.py:133), the selfcheck line (board_log.py:37), the new-binds trust and restart sections.
-TODOs (each PENDING for the owner; the repo has no TODOS.md): the CAP6 context line for the refusal; the silent fail-open on an unreadable trust file.
+TODOs: none kept. The CAP6 context line and the fail-open read are existing behaviour that this goal does not change; both are stated as limits in the plan.
 
 ## DX Review Scorecard
 ```
@@ -285,9 +306,9 @@ TODOs (each PENDING for the owner; the repo has no TODOS.md): the CAP6 context l
 | Agents Are Users   | gap (silent fail-open on an unreadable file)   |
 +====================================================================+
 ```
-DX Implementation Checklist: [x] bind works on Windows after one root trust; [x] first run unchanged on macOS; [ ] refusal names the file it read (deferred, CAP6); [x] every changed error path keeps its exit code and text; [x] cases run on any host.
-DX tasks: T1 (P1) cases and fix as planned; T2 (P3) CAP6 refusal context line (follow-up); T3 (P3) fail-open on unreadable trust file (follow-up).
-Outside voice (DX): skipped by mode (TRIAGE), not unavailable. Unresolved decisions (PENDING, for the owner): whether to add the CAP6 refusal context line later; whether the unreadable-trust-file case should fail closed.
+DX Implementation Checklist: [x] bind works on Windows after one root trust; [x] first run unchanged on macOS; [ ] refusal names the file it read (out of scope, a stated limit, CAP6); [x] every changed error path keeps its exit code and text; [x] cases run on any host.
+DX tasks: T1 (P1) cases and fix as planned; no follow-up tasks.
+Outside voice (DX): skipped by mode (TRIAGE), not unavailable. Unresolved decisions: none; the two former items are stated limits in the plan.
 
 ### Eng review (hand run of the engineering review; target: this plan, user-named)
 
@@ -329,30 +350,25 @@ Outside voice (Codex, completed): 4 findings (2 Medium, 2 Low), 4 of 4 folded in
 
 NOT in scope (eng): a shared path helper; a Windows runner; failing closed on an unreadable trust file; the other "/"-prefix sites.
 What already exists: operate.untrusted and its callers, the new-binds toy sections, size-check.py, the Tests tables generator (docs.py audit), the regression table.
-Failure modes: prefix test on Windows paths (rescued by the fix, tested); sibling and outside folders (refused, tested); malformed trust file (rescued to empty, new case; silent by design, no critical gap because the existing no-file control and the owner's PENDING cover it); size cap breach (the build re-measures and stops). 0 critical gaps.
+Failure modes: prefix test on Windows paths (rescued by the fix, tested); sibling and outside folders (refused, tested); malformed trust file (rescued to empty, new case; silent by design and unchanged, no critical gap because the existing no-file control covers the same answer; a stated limit in the plan); size cap breach (the build re-measures and stops). 0 critical gaps.
 Worktree parallelization: sequential implementation, no parallelization opportunity (one script, one toy, one table).
 Implementation tasks: T1 (P1, human ~3h / CC ~25min) toy section and cases, then red proof; T2 (P1, ~20min / ~3min) edit operate.py and re-measure; T3 (P1) USERPROFILE in the trust section; T4 (P1) regression row (eight columns) and docs.py audit; T5 (P1) run the checks, then the lane on the committed head. Verify each by the step-5 commands.
-Unresolved decisions in this review: 0 new (the three PENDING items from the CEO review and two from the DX review are carried: other "/"-prefix sites, Windows runner, fail closed, CAP6 refusal context line; counted once in the report).
-Completion summary: Step 0 scope accepted as-is; reality rows 7/7, unverified 0; Architecture 0 issues; Code quality 1 informational (size boundary), folded; Test review diagram produced, 5 gaps, all planned; Performance 0 issues; NOT in scope written; What already exists written; TODOS: 0 new proposals beyond the carried PENDING items (the repo has no TODOS.md); failure modes 0 critical gaps; outside voice Codex completed; parallelization sequential; Lake Score 4/4.
+Unresolved decisions in this review: 0. The former carried items are resolved: other prefix sites filed as issue 5740; Windows runner and fail-open read are stated limits in the plan.
+Completion summary: Step 0 scope accepted as-is; reality rows 7/7, unverified 0; Architecture 0 issues; Code quality 1 informational (size boundary), folded; Test review diagram produced, 5 gaps, all planned; Performance 0 issues; NOT in scope written; What already exists written; TODOS: none proposed (the repo has no TODOS.md; the former carried items are resolved); failure modes 0 critical gaps; outside voice Codex completed; parallelization sequential; Lake Score 4/4.
 Approval readiness: PASS (every accepted change traces to the plan's decisions 1-5 and the auto-decisions recorded in the CEO review; no user answer exists or was required in this unattended run).
 
 ## REVIEW REPORT
 
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` (hand run) | Scope & strategy | 1 | ISSUES OPEN | 6 proposals, 3 accepted, 1 deferred, 2 skipped; 0 critical gaps |
+| CEO Review | `/plan-ceo-review` (hand run) | Scope & strategy | 1 | CLEAR | 6 proposals, 3 accepted, 1 out of scope, 2 skipped; 0 critical gaps; every open item fixed or out of scope with a reason |
 | Outside Review | codex (completed, CEO phase and Eng phase) | Independent 2nd opinion | 2 | completed | CEO phase 2 findings, Eng phase 4 findings; all folded in |
-| Eng Review | `/plan-eng-review` (hand run, read from its skill file; the Skill tool answered "Unknown skill: plan-eng-review") | Architecture & tests (required) | 1 | ISSUES OPEN | 6 issues (all folded in), 0 critical gaps |
+| Eng Review | `/plan-eng-review` (hand run, read from its skill file; the Skill tool answered "Unknown skill: plan-eng-review") | Architecture & tests (required) | 1 | CLEAR | 6 issues, all folded in, 0 critical gaps |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | skipped | no UI scope |
-| DX Review | `/plan-devex-review` (hand run, TRIAGE) | Developer experience gaps | 1 | ISSUES OPEN | score: 4/10 -> 6/10, TTHW: blocked on Windows -> parity with macOS |
+| DX Review | `/plan-devex-review` (hand run, TRIAGE) | Developer experience gaps | 1 | CLEAR with named limits | score: 4/10 -> 6/10, TTHW: blocked on Windows -> parity with macOS; the refusal-text gap is a stated limit, out of scope |
 
-**OUTSIDE COVERAGE:** codex completed for the CEO phase and the Eng phase; the DX phase's outside voice was skipped by mode (TRIAGE), not unavailable; the CEO spec review ran as a native subagent (3 launches, scores 6, 7, 7) and supplies no outside coverage.
+**OUTSIDE COVERAGE:** codex completed for the CEO phase and the Eng phase; the DX phase's outside voice was skipped by mode (TRIAGE), not unavailable; the CEO spec review ran as a native subagent (3 launches, scores 6, 7, 7) and supplies no outside coverage. The red-team gate and an independent plan reviewer ran on the committed plan and are recorded outside this file.
 **CROSS-MODEL:** the two completed codex reviews found different issues (the POSIX trailing-backslash widening and the isolation of the existing Windows test; then the docs, row-description, header and size-boundary gaps); no disagreement with the native passes; no overlap to confirm agreement. Model identity per the probe: gpt-6-astra for both.
-**VERDICT:** no review is CLEAR (each has open informational follow-ups, none blocking); the plan's own findings are folded in; eng review passed with open items, so a person approves the plan and the carried PENDING items at the gate.
+**VERDICT:** CEO + ENG CLEARED, DX cleared with its named limits (simulated Windows proof, unchanged refusal text, no Windows runner); ready to implement.
 
-**UNRESOLVED DECISIONS:**
-- whether the other forward-slash prefix sites (lanes_cli.py:76, operate.py:328, pool.py:312) get a follow-up goal for Windows
-- whether a Windows CI runner for the new toy is wanted (deferred)
-- whether the trust test should fail closed instead of open on an unreadable trust file (left as is)
-- whether to add the refusal's missing context line later (CAP6, deferred for bytes)
-
+NO UNRESOLVED DECISIONS
