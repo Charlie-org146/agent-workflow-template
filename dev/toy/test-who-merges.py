@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/sessions.py skills/workflow-monitoring/scripts/worker.py skills/workflow-monitoring/scripts/mailbox.py
+# reads: skills/workflow-monitoring/scripts/ skills/workflow-delivery/scripts/
 """#3868: a goal's pull request merges only through its own merge.py, never as a side effect of a report.
 
 Two goals sit at pr in a repo with auto_merge on. A session report for one of them (waiting, or merged for a PR that is
@@ -10,7 +10,9 @@ What the scan below is: a tripwire against accident, not a proof of exclusive me
 skills/workflow-monitoring/scripts and skills/workflow-delivery/scripts only; the other skills (workflow-release,
 workflow-health, workflow-docs, workflow-regression, workflow-setup) are not scanned. It does not cover a merge spelled
 as a REST call (gh api ... /merge), a GraphQL mutation (mergePullRequest, enablePullRequestAutoMerge), an import or runpy
-of merge.py, or a string built by concatenation; and it does not check who wrote a watcher job file (that gate is
+of merge.py, or a string built by concatenation; a list with a flag between the words (["gh", "pr", "-R", "x", "merge"]); a
+single-quoted 'merge.py'; subfolders and shell scripts; and a docstring or prompt in a scanned script that says "pr merge"
+fails it. It does not check who wrote a watcher job file (that gate is
 proctree.require_operation in mailbox.py's cmd_watch). The tick probe re-executes mailbox.py's real resume() and
 cmd_tick() with stubs, so it is coupled to their shape: when that shape changes the probe says so and the harness, not
 the product, is what to update. The negative controls run on every execution of this test."""
@@ -142,6 +144,12 @@ def mailbox_errors(source):
             return ["cmd_tick must be resume's only caller"]
     if not resume_calls:
         return ["cmd_tick must be resume's only caller"]
+    # Every use of the name, not only a direct call: an alias or a callback is another entry point to the launch.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == "resume" and isinstance(node.ctx, ast.Load):
+            use = parents.get(node)
+            if not (isinstance(use, ast.Call) and use.func is node):
+                return ["cmd_tick must be resume's only caller: resume is referenced without being called"]
     launches = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute) and node.func.attr == "run"
                 and any(isinstance(part, ast.Name) and part.id == "MERGE" for part in ast.walk(node))]
@@ -150,6 +158,10 @@ def mailbox_errors(source):
     # A second literal launch or a use of MERGE outside this command must not inherit the exception.
     assignment = next((node for node in tree.body if isinstance(node, ast.Assign)
                        and any(isinstance(target, ast.Name) and target.id == "MERGE" for target in node.targets)), None)
+    # The assignment may build a path, never do work: a call other than a path helper in it would run at import time.
+    if assignment and any(isinstance(node, ast.Call) and not (isinstance(node.func, ast.Attribute) and node.func.attr in ("join", "abspath", "realpath", "normpath"))
+                          for node in ast.walk(assignment.value)):
+        return ["mailbox MERGE must be a plain path expression, not a call that does work"]
     allowed = list(ast.walk(launches[0])) + (list(ast.walk(assignment)) if assignment else [])
     if any((isinstance(node, ast.Name) and node.id == "MERGE"
             or isinstance(node, ast.Constant) and node.value == "merge.py") and node not in allowed
@@ -172,8 +184,13 @@ def mailbox_errors(source):
             with open(path, encoding="utf-8") as handle:
                 return json.load(handle)
 
+        def write_job(path, data):
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(data, handle)
+
+        job_file = os.path.join(folder, "job.json")
         scope = {"os": os, "sys": sys, "HERE": folder, "MERGE": "merge.py", "now": lambda: "now",
-                 "jobs_dir": lambda root: folder, "read_json": read_job, "write_json": lambda *args: None,
+                 "jobs_dir": lambda root: folder, "read_json": read_job, "write_json": write_job,
                  "subprocess": types.SimpleNamespace(run=probe_run)}
         exec(compile(module, "mailbox tick probe", "exec"), scope)
         job = {"id": "only-this-goal", "pr": 42, "state": "waiting", "arm": True, "head": "exact-head"}
@@ -187,19 +204,33 @@ def mailbox_errors(source):
                  ("moved head", dict(job, head="old-head"), green, False, True),
                  ("pending checks", job, dict(green, statusCheckRollup=[{"status": "PENDING"}]), False, True),
                  ("red checks", job, dict(green, statusCheckRollup=[{"conclusion": "FAILURE"}]), False, True),
+                 ("one green and one pending check (resume: any check pending)", job,
+                  dict(green, statusCheckRollup=[{"status": "COMPLETED", "conclusion": "SUCCESS"}, {"status": "IN_PROGRESS"}]), False, True),
+                 ("one green and one red check", job,
+                  dict(green, statusCheckRollup=[{"status": "COMPLETED", "conclusion": "SUCCESS"}, {"conclusion": "FAILURE"}]), False, True),
+                 ("commit status PENDING (resume: state in PENDING)", job, dict(green, statusCheckRollup=[{"state": "PENDING"}]), False, True),
+                 ("commit status FAILURE", job, dict(green, statusCheckRollup=[{"state": "FAILURE"}]), False, True),
                  ("PR state MERGED (resume: state is not OPEN)", job, dict(green, state="MERGED"), False, True),
                  ("PR state CLOSED (resume: state is not OPEN)", job, dict(green, state="CLOSED"), False, True),
                  ("gh_json returns None (resume: got is None)", job, None, False, True),
                  ("empty check list (resume: not checks)", job, dict(green, statusCheckRollup=[]), False, True),
                  ("armed job at exact head", job, green, True, True)]
+        after = {"nonwaiting job record": "done", "invalid PR record": "waiting", "unarmed job": "green", "moved head": "waiting",
+                 "pending checks": "waiting", "red checks": "red",
+                 "one green and one pending check (resume: any check pending)": "waiting", "one green and one red check": "red",
+                 "commit status PENDING (resume: state in PENDING)": "waiting", "commit status FAILURE": "red",
+                 "PR state MERGED (resume: state is not OPEN)": "done", "PR state CLOSED (resume: state is not OPEN)": "done",
+                 "gh_json returns None (resume: got is None)": "waiting", "empty check list (resume: not checks)": "waiting",
+                 "armed job at exact head": "armed"}  # no job file and no job record: no state at all (None)
         asked_for = (folder, "pr", "view", str(job["pr"]), "--json", "state,headRefOid,statusCheckRollup")
         launched_once = False
         for label, record, result, expected, queried in cases:
             launched.clear()
             asked = []
+            if os.path.exists(job_file):
+                os.remove(job_file)  # each case starts from its own record, never the last case's
             if record is not None:
-                with open(os.path.join(folder, "job.json"), "w", encoding="utf-8") as handle:
-                    json.dump(record, handle)
+                write_job(job_file, record)
             scope["gh_json"] = lambda *args, result=result: (asked.append(args), result)[1]
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
@@ -207,7 +238,7 @@ def mailbox_errors(source):
             except Exception as exc:
                 # An unexpected raise is a failure, never a pass; a missing name means the probe's stubs are stale.
                 errors.append("%s: %s%s" % (label, type(exc).__name__,
-                                            " (probe shape changed: update this harness, not the product)" if isinstance(exc, NameError) else ""))
+                                            " (probe shape changed: update this harness, not the product)" if isinstance(exc, (NameError, AttributeError)) else ""))
                 continue
             wanted = [[sys.executable, "merge.py", job["id"], "--go-head", job["head"]]] if expected else []
             if launched != wanted:
@@ -216,6 +247,18 @@ def mailbox_errors(source):
             if asked != ([asked_for] if queried else []):
                 errors.append("%s: gh_json asked %r, wanted %r" % (label, asked, [asked_for] if queried else []))
             launched_once = launched_once or bool(launched)
+            # The record each case leaves behind: pending, empty and unanswered checks keep the job waiting, which tells a
+            # guard that returns early from one that settles the job some other way.
+            saved = read_job(job_file) if os.path.exists(job_file) else {}
+            if saved.get("state") != after.get(label):
+                errors.append("%s: the job record afterwards says %r, wanted %r" % (label, saved.get("state"), after.get(label)))
+            if expected:
+                # After the arm the next tick leaves the armed record alone (no second merge).
+                launched.clear()
+                with contextlib.redirect_stdout(io.StringIO()):
+                    scope["cmd_tick"](types.SimpleNamespace(root=folder))
+                if launched:
+                    errors.append("%s: the next tick launched merge.py again for an armed job" % label)
         if not launched_once:
             errors.append("the armed positive case launched nothing: the no-merge cases prove nothing")
     return errors
@@ -281,7 +324,9 @@ for label, addition, expected in (
         ("legacy text net", '\n# "pr", "merge"\n', "mailbox must merge through merge.py"),
         ("second MERGE reference", '\ndef other():\n    return MERGE\n', "outside its guarded job launch"),
         ("resume caller other than cmd_tick", '\ndef other(root, path):\n    resume(root, path)\n',
-         "cmd_tick must be resume's only caller")):
+         "cmd_tick must be resume's only caller"),
+        ("resume alias used by another function", '\nresume_other = resume\n\ndef other(root, path):\n    resume_other(root, path)\n',
+         "resume is referenced without being called")):
     errors = caller_errors(dict(sources, **{MAILBOX: sources[MAILBOX] + addition}))
     check(any(expected in error for error in errors),
           "negative control: mailbox %s rejected: %s" % (label, errors))
@@ -315,13 +360,21 @@ for label, anchor, replacement, expected in (
         ("empty-checks guard dropped", "not checks or ", "", "empty check list"),
         # got is None is redundant with not checks while both stand; drop both so the None case can fail
         ("None and empty-checks guards dropped", "got is None or not checks or ", "", "gh_json returns None"),
+        ("pending test any changed to all", "not checks or any((c.get(", "not checks or all((c.get(", "one green and one pending check"),
         ("PR number of the query changed", 'str(job["pr"])', '"999"', "gh_json asked")):
     if anchor not in sources[MAILBOX]:
         check(False, "negative control: mailbox %s: anchor text not found in mailbox.py, update this harness" % label)
         continue
     errors = caller_errors(dict(sources, **{MAILBOX: sources[MAILBOX].replace(anchor, replacement, 1)}))
     seen = [error for error in errors if expected in error]
-    check(bool(seen), "negative control: mailbox %s rejected: %s" % (label, (seen or errors)[0][:120]))
+    check(bool(seen), "negative control: mailbox %s rejected: %s" % (label, (seen or errors or ["the validator found nothing"])[0][:120]))
+
+# The MERGE assignment is exempt from the one-reference rule, so it may build a path but never run anything.
+tricky = re.sub(r"^MERGE = .*$", 'MERGE = (subprocess.run([sys.executable, os.path.join(HERE, "merge.py"), "other-goal"]), os.path.join(HERE, "merge.py"))[1]',
+                sources[MAILBOX], count=1, flags=re.M)
+errors = caller_errors(dict(sources, **{MAILBOX: tricky}))
+check(tricky != sources[MAILBOX] and any("plain path expression" in error for error in errors),
+      "negative control: mailbox MERGE assignment that runs a command rejected: %s" % (errors or ["the validator found nothing"])[0][:120])
 if not failed:
     print("PASS: #3868: report --hold holds a goal whatever its wording says")
     print("PASS: #3868: a report merges neither goal; merge.py runs only for the goal it is asked for")
