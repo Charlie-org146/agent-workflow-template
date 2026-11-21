@@ -97,12 +97,29 @@ def bullets(cell):
 
 
 def follows(cell):
-    """The (source, tag) lines of a bullet Follows cell; tag is "" when a line has none."""
-    return [(re.sub(r"[:] (%s)$" % TAGS, "", x[2:]), (re.search(r"[:] (%s)$" % TAGS, x) or [0, ""])[1]) for x in cell.split("<br>") if x.startswith("- ")]
+    """The (source, tag) pairs of a bullet Follows cell; split tagged sources outside links, never untagged text."""
+    out = []
+    pair = re.compile(r"(.+): (%s)$" % TAGS)
+    for bullet in cell.split("<br>"):
+        if not bullet.startswith("- "):
+            continue
+        text, start, depth, parts = bullet[2:], 0, 0, []
+        for i, char in enumerate(text):
+            if char in "[(":
+                depth += 1
+            elif char in "])":
+                depth = max(0, depth - 1)
+            elif not depth and text[i:i + 2] == "; " and pair.fullmatch(text[start:i]):
+                parts.append(text[start:i]); start = i + 2
+        parts.append(text[start:])
+        if not all(pair.fullmatch(p) for p in parts):
+            parts = [text]
+        out += [(m[1], m[2]) if (m := pair.fullmatch(p)) else (p, "") for p in parts]
+    return out
 
 
 def adoption(cell):
-    """The share of a row's Follows lines tagged adopted (adapted, planned and own count 0); None with no lines."""
+    """The share of a row's Follows sources tagged adopted (adapted, planned and own count 0); None with no sources."""
     tags = [t for _, t in follows(cell)]
     return round(100 * tags.count("adopted") / len(tags)) if tags else None
 

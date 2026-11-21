@@ -36,6 +36,17 @@ check("an old own tag stays own, and a source's own tag is kept", s.bullets("[A]
 check("a bullet cell is migrated to itself", s.bullets(new) == new)
 check("Adoption is the adopted lines over all lines", s.adoption("- [A](u): adopted<br>- [B](v): adapted<br>- [C](w): planned") == 33 and s.adoption("- [A](u): adopted") == 100)
 check("negative control: adapted and planned lines count 0, and no lines is not measured", s.adoption("- [A](u): adapted<br>- [B](v): planned") == 0 and s.adoption("") is None)
+mixed = "- [A](u): adapted; [B](v): adopted"
+check("each source on a bullet counts with its own tag", s.follows(mixed) == [("[A](u)", "adapted"), ("[B](v)", "adopted")] and s.adoption(mixed) == 50)
+check("single-source bullets keep their main values, including own", all(s.adoption(cell) == value for cell, value in [
+    ("- A: adopted", 100), ("- A: adapted", 0), ("- A: planned", 0), ("- A: own", 0),
+    ("- A: adopted<br>- B: adapted<br>- C: planned<br>- D: own", 25)]))
+for source in ("[A; B](u)", "[A: adopted; B](u)", "[A](https://a.test/x; y)", "A; B"):
+    cell = "- %s: adapted; [C](v): adopted" % source
+    check("negative control: a semicolon inside source %s does not split" % source,
+          s.follows("- %s: adapted" % source) == [(source, "adapted")] and
+          s.follows(cell) == [(source, "adapted"), ("[C](v)", "adopted")] and s.adoption(cell) == 50)
+check("negative control: an unknown tag does not split a bullet", s.follows("- A: unknown; B: adopted") == [("A: unknown; B", "adopted")])
 tests = [["t1", "land", "x", "DEL-1"], ["t2", "land", "x", "DEL-1"], ["t3", "land", "x", "DEL-2"], ["t4", "land", "x", "OTHER"]]
 runs = {"t1": "PASS", "t2": "FAIL", "t3": "PASS"}
 row = "[DEL-1 Every change (absorbs DEL-2)](https://x.test/wiki/Delivery) ([DEL-1 flow](f.svg))"
