@@ -23,7 +23,10 @@ import tempfile
 here = os.path.dirname(os.path.abspath(__file__))
 SENTINEL = "host-probe"
 DROP_PREFIXES = ("CLAUDE", "ANTHROPIC", "LOOP_")
-DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
+DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP")
+DROP_PREFIXES = DROP_PREFIXES + ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
+REAL_HOME = os.path.realpath(os.path.expanduser("~"))  # before the throwaway HOME replaces it: cleanup() must never remove it
 
 
 def scrubbed(env):
@@ -33,13 +36,12 @@ def scrubbed(env):
 
 # hermetic: no host session id or loop setting, and a throwaway HOME, so the owner's session never reaches the wait loop's operation-session
 # claim (operate.cmd_run -> cmd_claim -> board.followed reads the cwd's repo and ~/.workflow-loop) and the real .git/loop/operation.id is never written
-os.environ.update(scrubbed(os.environ))
 for name in [k for k in list(os.environ) if k.startswith(DROP_PREFIXES) or k in DROP_NAMES]:
     os.environ.pop(name, None)
 THROWAWAY = tempfile.mkdtemp(prefix="machine-log-home-")  # cleanup() removes only this
 HOME = os.path.join(THROWAWAY, "home")
 os.makedirs(HOME)
-os.environ.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1")
+os.environ.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)  # every module below reads HOME at import: the swap stays above those imports
 
 
 def real_id_path():
@@ -83,7 +85,7 @@ def cleanup():
     try:
         target = os.path.realpath(THROWAWAY)
         temp = os.path.realpath(tempfile.gettempdir())
-        if target.startswith(temp + os.sep) and target not in (os.path.realpath(os.path.expanduser("~")), os.path.realpath(os.getcwd())):
+        if target.startswith(temp + os.sep) and target not in (REAL_HOME, os.path.realpath(os.getcwd())):
             shutil.rmtree(target, ignore_errors=True)
     except OSError:
         pass
@@ -91,7 +93,6 @@ def cleanup():
 
 atexit.register(cleanup)
 
-here = os.path.dirname(os.path.abspath(__file__))
 scripts = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts")
 sys.path.insert(0, scripts)
 import graph  # noqa: E402
@@ -102,7 +103,7 @@ HELD = []
 
 
 def check(ok, text, hold=False):
-    """hold: the row at regression.tsv greps this PASS line but ignores the exit status, so it is printed after every other check has passed."""
+    """hold: print this PASS line only after every other check has passed, so the row that greps it cannot go green on a partial run (the row also requires exit status 0)."""
     global fails
     fails += 0 if ok else 1
     if hold:
@@ -179,13 +180,14 @@ def run_loop(beating, host=""):
     registry = os.path.join(HOME, ".workflow-loop", "repos")
     with tempfile.TemporaryDirectory() as tmp:
         common = fixture(tmp)
+        subprocess.run(["git", "init", "-q", "-b", "main", "--template="], cwd=tmp, capture_output=True, env=dict(os.environ))  # a real repository: discovery from here stops at the fixture even when TMPDIR sits inside another repository
         os.chdir(tmp)  # the claim follows the cwd's repo: it must be the fixture, never the checkout this runs from
         second = os.path.join(tmp, "second")
         if host:
             os.environ["CLAUDE_SESSION_ID"] = host
             # followed-repository discovery: a disposable registry in the throwaway HOME names a second disposable repository
             os.makedirs(second)
-            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=second, capture_output=True, env=dict(os.environ))
+            subprocess.run(["git", "init", "-q", "-b", "main", "--template="], cwd=second, capture_output=True, env=dict(os.environ))
             os.makedirs(os.path.dirname(registry), exist_ok=True)
             with open(registry, "w") as handle:
                 handle.write(second + "\n")
@@ -249,8 +251,8 @@ check(sentinel_fixture is True, "negative control: the sentinel check sees the s
 check(second_ids == [SENTINEL], "followed-repository discovery: with a disposable registry in the throwaway HOME the claim lands in the second disposable repository too (%r)" % second_ids)
 
 # one canary per scrubbed family in the parent environment: a child of the scrubbed environment prints only booleans and sees none of them
-canaries = ("CLAUDE_TOY_CANARY", "ANTHROPIC_TOY_CANARY", "LOOP_TOY_CANARY", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
-probe = "import os; print(any(k in os.environ for k in %r))" % (canaries,)
+canaries = ("CLAUDE_TOY_CANARY", "ANTHROPIC_TOY_CANARY", "LOOP_TOY_CANARY", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG_GLOBAL", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_CONFIG_KEY_0", "PYTHONSTARTUP")
+probe = "import os; print(any(os.environ.get(k) == 'canary' for k in %r))" % (canaries,)
 with_canaries = dict(os.environ, **{name: "canary" for name in canaries})
 clean = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=scrubbed(with_canaries)).stdout.strip()
 raw = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, env=with_canaries).stdout.strip()
@@ -269,7 +271,7 @@ os.chdir(tempfile.gettempdir())
 cleanup()
 check(not os.path.lexists(home_dir) and not os.path.lexists(throwaway_dir), "cleanup: the throwaway HOME and its directory are gone")
 
-# the two PASS lines the regression row greps print last, and only when every check passed (the row ignores the exit status)
+# the two PASS lines the regression row greps print last, and only when every check passed
 for ok, text in HELD:
     print(("PASS: " if ok and not fails else "FAIL: ") + text + ("" if not fails else " (held until every check passed)"))
 sys.exit(1 if fails else 0)

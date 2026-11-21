@@ -19,7 +19,10 @@ scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scripts, "sessions.py")
 fails = 0
 DROP_PREFIXES = ("LOOP_", "CLAUDE", "ANTHROPIC")
-DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
+DROP_NAMES = ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+              "GIT_CONFIG_GLOBAL", "GIT_CONFIG_COUNT", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "PYTHONSTARTUP")
+DROP_PREFIXES = DROP_PREFIXES + ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
+REAL_HOME = os.path.realpath(os.path.expanduser("~"))  # before any HOME swap: cleanup() must never remove it
 THROWAWAY = tempfile.mkdtemp(prefix="limits-toy-")  # one mkdtemp area for the home, the fixture and the decoy; cleanup() removes only this
 HOME = os.path.join(THROWAWAY, "home")
 os.makedirs(HOME)
@@ -28,7 +31,7 @@ os.makedirs(HOME)
 def clean_env(**more):
     """The environment every subprocess of this toy gets: no host session or loop setting, no git location variable, a throwaway HOME."""
     keep = {k: v for k, v in os.environ.items() if not k.startswith(DROP_PREFIXES) and k not in DROP_NAMES}
-    keep.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1")
+    keep.update(HOME=HOME, USERPROFILE=HOME, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
     keep.update(more)
     return keep
 
@@ -58,7 +61,7 @@ def cleanup():
     try:
         target = os.path.realpath(THROWAWAY)
         temp = os.path.realpath(tempfile.gettempdir())
-        if target.startswith(temp + os.sep) and target not in (os.path.realpath(os.path.expanduser("~")), os.path.realpath(os.getcwd())):
+        if target.startswith(temp + os.sep) and target not in (REAL_HOME, os.path.realpath(os.getcwd())):
             shutil.rmtree(target, ignore_errors=True)
     except OSError:
         pass
@@ -91,7 +94,7 @@ def repo(name):
     """A disposable repository under the throwaway directory, built with clean_env() so nothing inherited names another repository."""
     path = os.path.join(THROWAWAY, name)
     os.makedirs(path)
-    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=path, capture_output=True, env=clean_env())
+    subprocess.run(["git", "init", "-q", "-b", "main", "--template="], cwd=path, capture_output=True, env=clean_env())
     os.makedirs(os.path.join(path, ".git", "loop", "runs"))
     os.makedirs(os.path.join(path, ".loop"))
     with open(os.path.join(path, ".loop", "config.json"), "w") as handle:
@@ -187,20 +190,20 @@ for path in (unattended, sessions):
     check("e: %s is %d bytes, no larger than main (%d) and under 20,000" % (os.path.basename(path), size, limit), size <= min(limit, 20000))
 
 # control: a host session variable put back in the parent environment does not reach the fixture, and the real operation.id stays as it was
-before = count(top).get("count")
+decoy = repo("decoy")
+before = count(top).get("count") or 0
 os.environ["CLAUDE_CODE_HOST_SESSION_ID"] = "host-probe"
-os.environ["GIT_DIR"] = os.path.join(root, ".git")
+os.environ["GIT_DIR"] = os.path.join(decoy, ".git")  # a disposable repository: a scrub regression must never be able to write the checkout's own state
 try:
     run(top, unattended, "sends", "add", "w")
 finally:
     os.environ.pop("CLAUDE_CODE_HOST_SESSION_ID", None)
     os.environ.pop("GIT_DIR", None)
-check("control: with a host session id and GIT_DIR in the environment the fixture still counts its send", count(top).get("count") == before + 1)
+check("control: with a host session id and GIT_DIR in the environment the fixture still counts its send", count(top).get("count") == before + 1 and not count(decoy))
 check("control: and the checkout's own operation.id is unchanged", real_id_hash() == REAL_BEFORE)
 
 # control (#5700 redirect): with the parent GIT_DIR naming a second valid repository, the scrubbed call counts in its own repository and leaves the
 # decoy alone; the same command without the scrub lands its send in the decoy, which is the cross-repository write the scrub prevents
-decoy = repo("decoy")
 top_n, decoy_n = count(top).get("count"), count(decoy).get("count") or 0
 os.environ["GIT_DIR"] = os.path.join(decoy, ".git")
 try:
@@ -214,12 +217,12 @@ check("control: with GIT_DIR naming another repository, the scrubbed call counts
 check("control: the same call without the scrub lands its send in the other repository and not its own", (count(decoy).get("count") or 0) == decoy_n + 1 and count(top).get("count") == top_n + 1)
 
 # control: one canary per scrubbed family in the parent environment; a child of clean_env() prints only booleans and sees none of them
-canaries = ("CLAUDE_TOY_CANARY", "ANTHROPIC_TOY_CANARY", "LOOP_TOY_CANARY", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES")
+canaries = ("CLAUDE_TOY_CANARY", "ANTHROPIC_TOY_CANARY", "LOOP_TOY_CANARY", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG_GLOBAL", "GIT_TEMPLATE_DIR", "XDG_CONFIG_HOME", "GIT_CEILING_DIRECTORIES", "GIT_NAMESPACE", "GIT_CONFIG_KEY_0", "PYTHONSTARTUP")
 for name in canaries:
     os.environ[name] = "canary"
 try:
-    seen = subprocess.run([sys.executable, "-c", "import os; print(any(k in os.environ for k in %r))" % (canaries,)], capture_output=True, text=True, env=clean_env()).stdout.strip()
-    leaked = subprocess.run([sys.executable, "-c", "import os; print(any(k in os.environ for k in %r))" % (canaries,)], capture_output=True, text=True).stdout.strip()
+    seen = subprocess.run([sys.executable, "-c", "import os; print(any(os.environ.get(k) == 'canary' for k in %r))" % (canaries,)], capture_output=True, text=True, env=clean_env()).stdout.strip()
+    leaked = subprocess.run([sys.executable, "-c", "import os; print(any(os.environ.get(k) == 'canary' for k in %r))" % (canaries,)], capture_output=True, text=True).stdout.strip()
 finally:
     for name in canaries:
         os.environ.pop(name, None)
