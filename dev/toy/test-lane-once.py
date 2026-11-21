@@ -200,8 +200,8 @@ if not os.environ.get("LANE_ONCE_SCRIPTS"):
     cut = os.path.join(tmp, "cut")
     shutil.copytree(scripts, cut, ignore=shutil.ignore_patterns("__pycache__"))
     text = open(os.path.join(cut, "lanekit.py")).read()
-    old = 'if (last.get("head"), last.get("state")) == (head, "pass") and'
-    open(os.path.join(cut, "lanekit.py"), "w").write(text.replace(old, 'if n == name and (last.get("head"), last.get("state")) == (head, "pass") and'))
+    old = " for n in done if lane_ok("
+    open(os.path.join(cut, "lanekit.py"), "w").write(text.replace(old, " for n in done if n == name and lane_ok("))
     check(old in text and open(os.path.join(cut, "lanekit.py")).read() != text, "the control's cut changed the file")
     done = subprocess.run([sys.executable, os.path.abspath(__file__)], capture_output=True, text=True, env=dict(os.environ, LANE_ONCE_SCRIPTS=cut))
     said = done.stdout + done.stderr
