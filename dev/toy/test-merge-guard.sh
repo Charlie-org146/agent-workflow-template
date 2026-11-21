@@ -62,23 +62,29 @@ git remote set-url origin "$d/origin.git"
 common=$(git rev-parse --git-common-dir); mkdir -p "$common/loop/runs"
 printf '{"auto_merge": true, "base": "main"}\n' > .loop/config.json
 echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"
+reopen() { echo "{\"slug\": \"g\", \"status\": \"done\", \"pr\": \"https://example.test/pull/1\", \"pr_base\": \"$base\", \"pr_head\": \"$head\"}" > "$common/loop/runs/g.json"; }  # a refused merge leaves the goal failed (#4004); each case starts from the finished goal
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=0000000000000000000000000000000000000000 python3 "$M/merge.py" g 2>&1); rc=$?
 check "a pull request head that moved since the pr lane refuses HEAD_MOVED with its fix (exit 4), nothing merged" '[ $rc = 4 ] && grep -q "^REFUSED (HEAD_MOVED): the pull request head moved since the pr lane passed (lane on .*, PR head 000000000000). Fix: goal.py pr g, then merge.py g" <<<"$out" && [ ! -e "$FAKE_GH_DIR/merged" ]'
 mkdir -p docs/wiki; echo page > docs/wiki/Page.md; git add docs/wiki/Page.md; git commit -qm "wiki page"; wiki=$(git rev-parse HEAD)
+reopen
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$wiki python3 "$M/merge.py" g 2>&1); rc=$?
 check "a head moved only by a wiki page commit (wiki.py prepare) is not HEAD_MOVED: it notes it and goes on to the base check" '[ $rc = 2 ] && grep -q "^REFUSED (BASE_MOVED)" <<<"$out" && grep -q "^NOTE: the pull request head moved only by wiki page commits (wiki.py prepare); merging ${wiki:0:12}" <<<"$out"'
 git mv src/b.txt docs/wiki/b.md; git commit -qm "move code into the wiki"; moved=$(git rev-parse HEAD)
+reopen
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$moved python3 "$M/merge.py" g 2>&1); rc=$?
 check "a file moved into the wiki folder is no wiki-only move: HEAD_MOVED (exit 4)" '[ $rc = 4 ] && grep -q "^REFUSED (HEAD_MOVED)" <<<"$out"'
 git reset -q --hard "$wiki"; printf 'x\n' > docs/wiki/SKILL.md; git add docs/wiki/SKILL.md; git commit -qm "skill page"; skill=$(git rev-parse HEAD)
+reopen
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$skill python3 "$M/merge.py" g 2>&1); rc=$?
 check "a SKILL.md, even in the wiki folder, is no wiki-only move: HEAD_MOVED (exit 4)" '[ $rc = 4 ]'
 git reset -q --hard "$wiki"
 ln -s ../../src/a.txt docs/wiki/link.md; git add docs/wiki/link.md; git commit -qm "symlink page"; link=$(git rev-parse HEAD)
+reopen
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$link python3 "$M/merge.py" g 2>&1); rc=$?
 check "a symlink named like a wiki page is no wiki-only move: HEAD_MOVED (exit 4)" '[ $rc = 4 ]'
 git reset -q --hard "$wiki"
 echo x > src/c.txt; git add src/c.txt; git commit -qm code; code=$(git rev-parse HEAD)
+reopen
 out=$(FAKE_GH_PR_STATE=OPEN FAKE_GH_PR_HEAD=$code python3 "$M/merge.py" g 2>&1); rc=$?
 check "a head moved by any other commit still refuses HEAD_MOVED (exit 4)" '[ $rc = 4 ] && grep -q "^REFUSED (HEAD_MOVED)" <<<"$out"'
 # #5171: --go-head binds a GO to one head and to CI on exactly that head (the PR's rollup is that head's, so a green parent never counts)
