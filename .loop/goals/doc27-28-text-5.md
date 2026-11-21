@@ -21,10 +21,11 @@ Frozen. A wrong done line needs a new goal.
 
 ## PR notes
 
-### Owner: confirm or choose (two lines)
+### Owner: confirm or choose (three lines)
 
 1. **Principle 1 now lists seven rows against DOC-26's cap of five.** This rests on the owner's words of 2026-11-20, "Allow 7 until v1.2.0" (owner record o701, relayed by the operation session). Nothing enforces the cap today. The allowance ends at v1.2.0.
 2. **Two flow figures were composed for the new rows.** The row check requires a figure per row and no tool makes one; docs/wiki/flows/DOC-27.svg and DOC-28.svg hold only the feature title and its five requirement titles from the pinned draft, with no arrows or version pill. Replace them if the owner wants them drawn differently.
+3. **Open for the owner: two lines of the brief read "Every the service repo requirement".** Lines 61 and 67 of docs/release-brief-v1.1.0.md carry the literal swap of the name for "the service repo" (owner record o711), which leaves that clumsy wording. It is kept as written until the owner gives other words; the capital "The" at the start of lines 5, 63 and 73 is the only other adaptation. Rewording is one small commit.
 
 Closed by the owner's o711 answers (they were open owner items in the earlier goal doc27-28-text-4): the v1.1.0 brief is in this pull request with the repo's name written "the service repo" on its 7 lines (done line 4), and listing.json lists basecamp.com and www.iso.org so the package check passes (done line 6).
 
@@ -52,12 +53,16 @@ Closed by the owner's o711 answers (they were open owner items in the earlier go
 - Known reds that are also on main and are not caused by this change are named by the full run in the pull request comments, not here.
 - Full regression run: the TD679 nightly evidence run and the full GitHub run on the exact head before merge are the real coverage; their results are in the pull request comments.
 
+### Pull request state
+
+The done line asks for a draft held for review; the operation session lifted the draft and the hold for this goal after the lanes (ruling TD691), so the pull request is opened ready for review with auto-merge off, and is merged second, after T2.
+
 ### Review
 
 Full-depth review of the content under the earlier goal doc27-28-text-4 (checklist, gate scan, testing, maintainability and simplification specialists, red team, a Claude adversarial pass, a Codex adversarial pass): no blocker; a scoped review of what o711 changed (the brief and listing.json) ran under this goal and its result is in a pull request comment. Notes: the how-to items repeat only the title; the allowlist is per host and split between .loop/config.json and scripts/public-origins.json; each requirement body carries its own "r1 2026-11-20" Revisions line next to the table's "r1 2026-11-21"; the owner's own text holds time-relative numbers and contradicts live rules (the How-to pages, the per-principle cap) until the later enforcement work; flow figure links resolve after merge; the front-page Follows cells are a subset of the Reference entries; the by-feature Complete text cells hold only the title or Promise because the sub-bullets carry no [DOC-N] tag.
 
 ### Follow-ups (no TODOS file exists)
 
-A committed extraction bundle and a regression row guarding the copy; the clumsy "Every the service repo requirement" wording on two brief lines if the owner wants a better phrase; a durable v1.2.0 tracker for the principle-1 allowance; accepting "reference" as a Follows tag and drawn flow figures (T3 work); the spec review of the plan ended at its cap (three launches, 24 gaps answered and not re-verified).
+A committed extraction bundle and a regression row guarding the copy; a durable v1.2.0 tracker for the principle-1 allowance; accepting "reference" as a Follows tag and drawn flow figures (T3 work); the spec review of the plan ended at its cap (three launches, 24 gaps answered and not re-verified).
 
 Relayed owner words are labelled relayed: o701 (Allow 7 until v1.2.0), o703 (replace the brief line), o708 (finish v1.1.0 overnight), o710 (the wording changes, the origins, the milestone, rows under principle 1, lowercase tags), o711 (the service repo wording on the brief's 7 lines, the two listing.json hosts). The owner's words reached this goal only through the operation session.
