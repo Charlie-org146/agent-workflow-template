@@ -88,7 +88,7 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
     json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
     json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
     claude = os.path.join(repo, ".claude.json")
-    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo)
+    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo)
 
     def bind():
         done = subprocess.run([sys.executable, os.path.join(scripts, "sessions.py"), "bind", "g", "w1"], cwd=tree, capture_output=True, text=True, env=env)
@@ -141,5 +141,98 @@ if only in ("", "scratch"):  # TD509: scratch lives under ~/.workflow-loop/scrat
     found = [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(root, "skills")) for f in fs if f.endswith((".py", ".sh")) and hard.search(open(os.path.join(d, f), errors="replace").read())]
     check("no loop script hard-codes /tmp (%s)" % ", ".join(found), not found)
     check("negative control: a script that does is found", bool(hard.search('open("/tmp/x.log")')))
+if only in ("", "wintrust"):  # #5722: the trust test on Windows-style paths, run in a child process with a path shim; the real HOME is never opened
+    OLD = '''def untrusted(folder):
+    try:
+        with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
+            known = json.load(handle)["projects"]
+        path = os.path.realpath(folder) + "/"
+        return "" if any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return ""
+'''
+    CHILD = '''import importlib.util, json, ntpath, os, sys, types
+scripts, old, plan = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
+sys.path.insert(0, scripts)
+spec = importlib.util.spec_from_file_location("operate", os.path.join(scripts, "operate.py"))
+op = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(op)
+real = os
+shim = types.SimpleNamespace(**{k: getattr(real, k) for k in dir(real) if not k.startswith("__")})
+shim.sep = chr(92)
+shim.path = types.SimpleNamespace(join=real.path.join, expanduser=real.path.expanduser, realpath=ntpath.normpath, normcase=ntpath.normcase)
+out = []
+for item in plan:
+    os.environ["HOME"] = os.environ["USERPROFILE"] = item["home"]
+    op.os = shim if item["win"] else real
+    ns = dict(vars(op))
+    ns["os"] = op.os
+    exec(old, ns)
+    row = {"home": real.path.expanduser("~"), "env": [os.environ["HOME"], os.environ["USERPROFILE"]]}
+    for key, fn in (("new", op.untrusted), ("old", ns["untrusted"])):
+        try:
+            row[key] = fn(item["folder"])
+        except Exception as err:
+            row[key] = "EXC " + type(err).__name__
+    out.append(row)
+print(json.dumps(out))
+'''
+    scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
+    real_file = os.path.join(os.path.expanduser("~"), ".claude.json")
+    stat = lambda: (lambda s: (s.st_size, s.st_mtime_ns))(os.stat(real_file)) if os.path.exists(real_file) else None
+    before, homes = stat(), []
+
+    def home(entries, raw=None):  # a temporary home whose trust file holds ENTRIES (key -> value), or the text RAW
+        folder = tempfile.mkdtemp(prefix="wintrust-")
+        homes.append(folder)
+        with open(os.path.join(folder, ".claude.json"), "w") as handle:
+            handle.write(raw if raw is not None else json.dumps({"projects": entries}))
+        return folder
+
+    trust = lambda *keys: {k: {"hasTrustDialogAccepted": True} for k in keys}
+    win, root_w = True, "C:" + chr(92) + "Users" + chr(92) + "x" + chr(92) + "repo"
+    bs = chr(92)
+    plan = [  # (home, folder, windows paths?)
+        (home(trust(root_w)), root_w + bs + ".git" + bs + "loop" + bs + "g", True),
+        (home(trust(root_w)), "c:" + bs + "users" + bs + "X" + bs + "REPO" + bs + "wt", True),
+        (home(trust(root_w.lower())), root_w + bs + "wt", True),
+        (home(trust(root_w)), root_w, True),
+        (home(trust(root_w)), "D:" + bs + "other", True),
+        (home(trust(root_w)), root_w + "2" + bs + "wt", True),
+        (home(trust("C:" + bs)), "C:" + bs + "Users" + bs + "x", True),
+        (home({root_w: "yes"}), root_w + bs + "wt", True),
+        (home({}, raw="{not json"), root_w + bs + "wt", True),
+    ]
+    posix_root = tempfile.mkdtemp(prefix="wintrust-posix-")
+    homes.append(posix_root)
+    for folder in (os.path.join(posix_root, "wt"), posix_root + "2", posix_root + bs, os.path.dirname(posix_root)):
+        plan.append((home(trust(posix_root)), folder, False))
+    done = subprocess.run([sys.executable, "-I", "-c", CHILD, scripts, OLD, json.dumps([{"home": h, "folder": f, "win": w} for h, f, w in plan])], capture_output=True, text=True)
+    try:
+        got = json.loads(done.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        got = []
+        print("child output: " + (done.stdout + done.stderr)[-400:])
+    refused = lambda text: text.startswith("REFUSED: ask the owner to trust")
+    ok = len(got) == len(plan)
+    new = [r["new"] for r in got] if ok else [""] * len(plan)
+    old = [r["old"] for r in got] if ok else [""] * len(plan)
+    check("wintrust windows worktree under a trusted root is trusted", ok and new[0] == "")
+    check("wintrust drive letter case differs on either side", ok and new[1] == "" and new[2] == "")
+    check("wintrust the root itself is trusted", ok and new[3] == "")
+    check("wintrust an outside folder is refused", ok and refused(new[4]))
+    check("wintrust a prefix only sibling is refused", ok and refused(new[5]))
+    check("wintrust a drive root entry trusts a path under it", ok and new[6] == "")
+    check("wintrust a non dict entry and a malformed file give an empty answer without raising", ok and new[7] == "" and new[8] == "")
+    if os.sep == "/":
+        check("wintrust posix paths give the same answers as before, including that a sibling named with a trailing backslash stays refused", ok and new[9] == "" and refused(new[10]) and refused(new[11]) and refused(new[12]))
+    else:
+        check("wintrust posix paths give the same answers as before, including that a sibling named with a trailing backslash stays refused (skipped on a backslash host)", True)
+    check("wintrust negative control the old text refuses the windows worktree under its root", ok and refused(old[0]) and old[3] == "")
+    home_ok = lambda told, temp, real_home: told == temp and told != real_home
+    check("wintrust the child ran on a temporary HOME and USERPROFILE and never the real ones", ok and all(home_ok(r["home"], h, os.path.expanduser("~")) and r["env"] == [h, h] for r, (h, _, _) in zip(got, plan)) and stat() == before)
+    check("wintrust negative control the home check refuses a child whose HOME is the real home", not home_ok("/the/real/home", "/tmp/a-temporary-home", "/the/real/home"))
+    for folder in homes:
+        shutil.rmtree(folder, ignore_errors=True)
 print("PASS: goal.py new binds an app session's goal" if not fails else "FAILED %d" % fails)
 sys.exit(1 if fails else 0)
