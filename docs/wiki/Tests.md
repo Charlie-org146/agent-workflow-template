@@ -175,6 +175,7 @@
 | <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-defect-5317-wiki-start"></a>defect-5317-wiki-start | defect | [#5317](https://github.com/Charlie-org146/agent-workflow-template/issues/5317) state unknown | not run | - | local | 2026-11-21 |
 
 ## Documentation
 
