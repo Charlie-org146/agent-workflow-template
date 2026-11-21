@@ -82,8 +82,9 @@ def main():
         sys.exit("REFUSED: bad argument")
     root = (run("git", "rev-parse", "--show-toplevel") or "").strip() or sys.exit("REFUSED: not in a git repository")
     os.chdir(root)
-    if run("git", "status", "--porcelain", "--untracked-files=no"):
-        sys.exit("REFUSED: tracked files are dirty; commit first, check reads the committed HEAD")
+    st = run("git", "status", "--porcelain", "--untracked-files=no")
+    if st is None or st:
+        sys.exit("REFUSED: git status failed or tracked files are dirty; commit first, check reads the committed HEAD")
     base = a.base or (run("git", "merge-base", "HEAD", "origin/main") or "").strip() or sys.exit("REFUSED: no base: pass --base")
     skip = set(filter(None, a.skip.split(",")))
     tip = (run("git", "rev-parse", "origin/main") or "").strip()
@@ -111,7 +112,10 @@ def main():
            ", ".join(k for k, v in want.items() if feats.get(k) != (v, v) or now.get(k) != v))
         ok("1 skipped IDs present on HEAD", all(k in now for k in skip), ", ".join(k for k in skip if k not in now))
         # done line 2: changed files and a byte proof of every page
-        changed = [x for x in (run("git", "diff", "--name-only", base, "HEAD") or "").split("\n") if x]
+        diff = run("git", "diff", "--name-only", base, "HEAD")
+        if diff is None:
+            sys.exit("REFUSED: git diff failed")
+        changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
         allowed = lambda x: (x.startswith("docs/migrations/") or x.startswith(".loop/goals/migrate-features.") or x == ".loop/kept/migrate-features.tsv"
                              or (x.startswith("docs/wiki/") and x[10:-3] in names) or x in a.allow.split(","))

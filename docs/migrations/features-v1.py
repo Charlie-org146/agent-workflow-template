@@ -221,6 +221,7 @@ def main():
     if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^][A-Za-z0-9._/@~^-]*", a.base)):
         bail("bad --base or --skip")
     root = (git("rev-parse", "--show-toplevel") or "").strip() or bail("not in a git repository")
+    os.chdir(root)
     base = a.base or (git("merge-base", "HEAD", "origin/main") or "").strip() or bail("no base: pass --base")
     skip = set(filter(None, a.skip.split(",")))
     sys.path.insert(0, os.path.join(root, "skills/workflow-docs/scripts"))
