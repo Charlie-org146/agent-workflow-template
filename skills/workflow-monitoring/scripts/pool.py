@@ -290,10 +290,12 @@ def pr_diff(run):
     tree = run.get("worktree") or ""
     if not tree or not os.path.isdir(tree):
         return []
-    base = se.read(os.path.join(tree, ".loop", "config.json"), {}).get("base") or "main"
+    base = se.read(os.path.join(tree, ".loop", "config.json"), {})
+    base = base.get("base") if isinstance(base, dict) else None
+    base = base if isinstance(base, str) and base and not base.startswith("-") else "main"  # branch-controlled: never an option, never a crash
     try:
         for ref in ("origin/" + base, base):
-            done = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", ref + "...HEAD"], cwd=tree, capture_output=True, timeout=30)
+            done = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", ref + "...HEAD", "--"], cwd=tree, capture_output=True, timeout=30)
             if done.returncode == 0:
                 return [x for x in done.stdout.decode("utf-8", "surrogateescape").split("\0") if x]
     except (OSError, subprocess.SubprocessError):

@@ -108,6 +108,16 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(tree, ".loop", "config.json"), "w") as handle:
         json.dump({"base": "no-such-base"}, handle)
     check(pool.pr_diff({"worktree": tree}) == [], "5344: a missing base ref gives no paths, so it overlaps everything")
+    for bad in ("--output=" + os.path.join(tree, "hostile"), 7, ["x"]):  # the base comes from the goal's own branch
+        with open(os.path.join(tree, ".loop", "config.json"), "w") as handle:
+            json.dump({"base": bad}, handle)
+        try:
+            got = pool.pr_diff({"worktree": tree})
+        except Exception as err:  # noqa: BLE001
+            got = "raised %s" % type(err).__name__
+        check(isinstance(got, list) and not [x for x in os.listdir(tree) if x.startswith("hostile")], "5344: a hostile or malformed base in the branch's config is no git option, writes no file and raises nothing")
+    with open(os.path.join(tree, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": "no-such-base"}, handle)
     real_run = pool.subprocess.run
     # the worktree still exists here, so only the git call itself fails
     for boom in (pool.subprocess.TimeoutExpired("git", 30), OSError("git is missing")):

@@ -58,7 +58,7 @@ $entry write >/dev/null
 git status --porcelain | grep -q "START.md" && ok "entry.write left START.md dirty, as merge.py's refusal asks" || bad "START.md not dirty after entry.write"
 $wiki prepare s --commit >/dev/null 2>&1 || true
 [ -z "$(git status --porcelain)" ] && ok "the repair path leaves START.md committed" || bad "left uncommitted: $(git status --porcelain | tr '\n' ' ')"
-git diff --quiet HEAD -- .loop/START.md && $entry check 2>&1 | grep -q "ENTRY_STALE" && bad "START.md is stale at HEAD" || ok "START.md is current at HEAD"
+if git diff --quiet HEAD -- .loop/START.md && ! $entry check 2>&1 | grep -q "ENTRY_STALE"; then ok "START.md is current at HEAD"; else bad "START.md is stale or differs from HEAD"; fi
 
 mkdir -p "$(git rev-parse --git-common-dir)/loop/runs"; echo '{"slug": "s"}' > "$(git rev-parse --git-common-dir)/loop/runs/s.json"  # a goal with no PR: nothing pushes
 echo "== a dirty file with a hand edit mixed into the regeneration is not committed, and prepare fails"
