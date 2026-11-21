@@ -8,7 +8,7 @@ usage: goal.py <command> <slug> [options]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
   pr SLUG
-step, record and pr: workers only.
+step, record, pr: workers only.
   wait SLUG --ask TEXT --words W [--words W]
   answer SLUG
   finding SLUG TEXT [--requirement ID]
@@ -42,6 +42,7 @@ try:
 except Exception:
     pods = None
 
+os.environ["GIT_TERMINAL_PROMPT"] = "0"
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
@@ -367,7 +368,7 @@ def cmd_pr(args):
         no("no passing defect test, seen failing, for %s. Fix: regression.py add --category defect --link ..., then red." % ", ".join(owed))
     role.requirement_gate(ME, slug)
     if git("status", "--porcelain", "--", "."):
-        print("NOTE: uncommitted files stay out of the PR")
+        print("NOTE: uncommitted files stay out")
     head = role.bump_version(ME, state, head)
     head = fit.regen(ME, slug)
     gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
@@ -383,7 +384,7 @@ def cmd_pr(args):
     info = json.loads(known.stdout) if not known.returncode else {}
     body = fit.pr_text(ME, state)
     if left := fit.monitor("pool").pr_closing(root(), body):
-        no("the PR leaves %s open. Fix: add Fixes %s to the goal file outside its done lines, commit, run pr." % (", ".join(left), left[0]))
+        no("the PR leaves %s open. Fix: add Fixes %s to the goal file, not its done lines." % (", ".join(left), left[0]))
     state["step"] = "pr"
     save(state, "pr")
     url = fit.pr_open(ME, state, base, info, body)
