@@ -126,6 +126,40 @@ with tempfile.TemporaryDirectory() as tmp:
         check(made == [] and said and said.startswith("REFUSED") and "sandbox" in said, "the guard refuses %s and starts nothing" % " ".join(bad[2:5]))
     check(batch.codex_next({"codex_profile": PROFILE}, {}) is True and batch.codex_next({}, {}) is False, "the shipped shape passes the guard; no profile means no Codex")
     os.chdir(here)
+
+# TD520: a Codex run that ends 0 outside the flow ends done, its steps recorded, when it committed, left a clean tree and passed the
+# gates; any other end still fails. The real worker.py loop and routing.py finish run against a throwaway repo with an origin.
+def loop_run(command, slug, names=""):
+    with tempfile.TemporaryDirectory() as tmp:
+        bare, work = os.path.join(tmp, "o.git"), os.path.join(tmp, "r")
+        git = lambda *a, cwd=work: subprocess.run(["git", *a], cwd=cwd, capture_output=True, text=True)
+        git("init", "-q", "--bare", "-b", "main", bare, cwd=tmp)
+        git("clone", "-q", bare, work, cwd=tmp)
+        for key, value in (("user.email", "t@t"), ("user.name", "t")):
+            git("config", key, value)
+        git("commit", "-q", "--allow-empty", "-m", "base")
+        git("push", "-q", "origin", "HEAD:main")
+        git("checkout", "-qb", "loop/" + slug)
+        runs = os.path.join(work, ".git", "loop", "runs")
+        os.makedirs(runs)
+        os.makedirs(os.path.join(work, ".git", "loop", "logs"))
+        json.dump({"slug": slug, "status": "running", "worktree": work, "branch": "loop/" + slug, "log": [], "flow": {}}, open(os.path.join(runs, slug + ".json"), "w"))
+        home = os.path.join(tmp, "home")
+        os.makedirs(os.path.join(home, ".workflow-loop"))
+        open(os.path.join(home, ".workflow-loop", "private-names"), "w").write(names)
+        env = dict(os.environ, LOOP_ROLE="worker", HOME=home, USERPROFILE=home)
+        env.pop("LOOP_PRIVATE_NAMES", None)
+        subprocess.run([sys.executable, os.path.join(MON, "worker.py"), "loop", slug, "--", "sh", "-c", command], cwd=work, capture_output=True, text=True, env=env)
+        return json.load(open(os.path.join(runs, slug + ".json")))
+
+
+good = loop_run("echo work > f.txt; git add -A; git commit -qm work", "g2")
+check(good.get("status") == "done" and sorted(good.get("flow") or {}) == ["idea", "plan", "qa", "review", "ship"] and not good.get("finding"), "a Codex run that commits, leaves a clean tree and passes the gates ends done with its flow steps recorded")
+check((good.get("report") or {}).get("status") == "waiting", "and it reports its pull request waiting, never merged by itself")
+for name, command, names in (("no commit", "true", ""), ("a dirty tree", "echo w > f.txt; git add -A; git commit -qm w; echo more > g.txt", ""), ("an exit 1", "echo w > f.txt; git add -A; git commit -qm w; exit 1", ""),
+                             ("a private name in the commit", "echo secretword > f.txt; git add -A; git commit -qm w", "secretword\n")):
+    bad = loop_run(command, "g3", names)
+    check(bad.get("status") == "failed" and not bad.get("flow"), "negative control: a run that ends with %s still ends failed, no steps recorded" % name)
 if failed:
     sys.exit(1)
 print("PASS: TD515: Codex is the last fallback, started with exactly the profile's arguments, and a sandbox-opening profile is refused")
