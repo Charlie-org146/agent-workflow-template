@@ -284,6 +284,20 @@ def pr_join(g, state):
         g.save(state, "at pr: joining the queue")
 
 
+def pr_diff(run):
+    """A goal with no recorded touches gets them from its branch's diff against the base (#5344); [] when that can't be read,
+    which still counts as overlapping everything."""
+    tree = run.get("worktree") or ""
+    if not tree or not os.path.isdir(tree):
+        return []
+    base = se.read(os.path.join(tree, ".loop", "config.json"), {}).get("base") or "main"
+    for ref in ("origin/" + base, base):
+        done = subprocess.run(["git", "diff", "--name-only", ref + "...HEAD"], cwd=tree, capture_output=True, text=True)
+        if done.returncode == 0:
+            return done.stdout.split()
+    return []
+
+
 def pr_turn(runs, slug):
     """Join the queue; "" on slug's turn, else the earlier goal that overlaps (DEL-15)."""
     folder = os.path.join(os.path.dirname(runs), "pr-queue")
@@ -306,7 +320,8 @@ def pr_turn(runs, slug):
         return line[0][1] if line else "the queue"
 
     def paths(n):
-        return [str(t).strip("/") for t in se.read(os.path.join(runs, n + ".json"), {}).get("touches") or []]
+        run = se.read(os.path.join(runs, n + ".json"), {})
+        return [str(t).strip("/") for t in run.get("touches") or pr_diff(run)]
     ours = paths(slug)
     ahead = [(j, n) for j, n, _ in line if n != slug and j < at and (not ours or not paths(n) or any(
         x == y or x.startswith(y + "/") or y.startswith(x + "/") for x in ours for y in paths(n)))]
