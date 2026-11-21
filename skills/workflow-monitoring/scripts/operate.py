@@ -355,7 +355,9 @@ def apply(slug, branch):
             who = [] if run(["git", "config", "user.email"], tree).stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=workflow-loop@users.noreply.github.com"]
             pushed = run(["git"] + who + ["commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
             stop = None if pushed.returncode else autorelease().private_check(tree, "origin/" + base, {"commit message": slug}, True)
-            pushed = subprocess.CompletedProcess([], 1, "", "REFUSED: %s. Fix: %s (%s)" % stop) if stop else pushed
+            if stop:
+                print("REFUSED: %s. Fix: %s (%s)" % stop)
+                return 1
             pushed = pushed if pushed.returncode else run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be committed or pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
     except (OSError, ValueError):

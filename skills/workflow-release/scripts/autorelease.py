@@ -52,8 +52,6 @@ def private_check(top, base, texts, pushed=False, head="HEAD"):
     stop = private.refusal(result, base or "the base branch", pushed)
   except Exception as error:  # noqa: BLE001
     return "the private scan failed (%s); nothing was pushed" % error, "run private.py check, then again", "PRIVATE_LIST"
-  if not stop and result["state"] == "none":
-    print("NOTE: " + result["note"])
   return stop
 
 

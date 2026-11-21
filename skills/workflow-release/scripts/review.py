@@ -26,7 +26,7 @@ os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 def worker():
-    """A worker or a goal worktree."""
+    """A worker or goal worktree."""
     common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
     inside = os.path.join(os.path.normcase(os.path.realpath(common)), "loop", "worktrees") + os.sep
     return os.environ.get("LOOP_ROLE") == "worker" or os.path.normcase(os.path.realpath(os.getcwd())).startswith(inside)
@@ -45,7 +45,7 @@ def held(cfg, state, head):
 
 
 def wait(state):
-    """Waiting on review (exit 5)."""
+    """Waiting on review (5)."""
     state["review_wait"] = True
     release.save(state, "merge waiting on review (REVIEW_HOLD)")
     return 5
@@ -93,7 +93,7 @@ def proven(top):
 
 
 def tsv(*path):
-    """Tab-file rows, padded."""
+    """Tab rows, padded."""
     try:
         return [l.rstrip("\n").split("\t") + [""] * 5 for l in open(os.path.join(*path)) if l[0] != "#"]
     except OSError:
@@ -101,12 +101,12 @@ def tsv(*path):
 
 
 def left_text(left):
-    """The cut's LEFT section, or ''."""
+    """The LEFT section, or ''."""
     return "\n## LEFT\n\nLEFT %d rows were not run before the cut's stop: %s\n" % (len(left), ", ".join(left)) if left else ""
 
 
 def criteria(top, cfg, doc_rows, fails):
-    """(unmet, left): requirements with no passing row, and rows the cut left unrun (LOOP_CUT_SECONDS)."""
+    """(unmet, left): requirements with no passing row, and rows the cut left unrun."""
     rows, stop = tsv(top, ".loop", "regression.tsv"), time.time() + float(os.environ.get("LOOP_CUT_SECONDS") or 900)
     out, left, skip = [], [], proven(top) | {r[0] for r in tsv(top, ".loop", "regression-known.tsv")}
     for page in doc_rows(top):
@@ -144,7 +144,7 @@ def table(top, name):
 
 
 def waivers(top, kind):
-    """{subject: detail} of release-waivers.tsv rows an owner-words record names."""
+    """{subject: detail} of release-waivers.tsv rows an owner record names."""
     said = {r[0]: (r[3] + r[4]).lower() for r in table(top, "owner-words.tsv")}
     return {r[1]: r[2] for r in table(top, "release-waivers.tsv") if r[0] == kind and r[2] and r[1].lower().lstrip("#") in said.get(r[3], "-")}
 
@@ -193,7 +193,7 @@ def ci_text(work, run, sha):
 
 
 def check_suite(work, red, run="", sha=""):
-    """REL-3: a FAIL, NOTRUN, ENV, KNOWN or LEFT row refuses unless a red waiver names it."""
+    """REL-3: a FAIL, NOTRUN, ENV, KNOWN or LEFT row refuses without a red waiver."""
     text, why = ci_text(work, run, sha) if run else (run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly"), "")
     if why:
         return [("suite", "suite run does not cover the candidate (%s)" % why, ["suite"])], {}
@@ -278,9 +278,9 @@ def state_report(top, ver, tag, sha, facts):
                    + ["- #%d %s" % (i["number"], i["title"]) for i in closed] + ["## Changes since " + (prior or "the start")] + log) + NL
 
 
-def check(top, texts):
+def check(top, texts, base=None, head="HEAD"):
     import autorelease
-    stop = autorelease.private_check(top, None, texts)
+    stop = autorelease.private_check(top, base, texts, False, head)
     if stop:
         sys.exit("REFUSED: %s. Fix: %s (%s)" % stop)
 
@@ -295,7 +295,7 @@ def promote(top, cfg, ver, rec, ref, run=""):
         return 1
     sha = release.git("rev-parse", ref + "^{commit}", cwd=top)
     text, path = state_report(top, ver, tag, sha, facts), os.path.join(common_of(top), "gate", tag + ".md")
-    check(top, {"release notes": text})
+    check(top, {"release notes": text}, "origin/" + base, sha)
     open(path, "w").write(text)
     release.git("tag", "-a", tag, sha, "-m", "Release " + tag, cwd=top)
     release.git("branch", rel, sha, cwd=top)
@@ -315,7 +315,7 @@ def promote(top, cfg, ver, rec, ref, run=""):
 
 
 def revert(top, cfg, ver):
-    """REL-7: a pull request putting main back on release/vX."""
+    """REL-7: a PR putting main back on release/vX."""
     rel, base = "release/v%d" % ver, cfg.get("base", "main")
     release.run(["git", "fetch", "-q", "origin", rel, base], cwd=top)
     snap = next((n for n in ("origin/" + rel, rel) if OK([n], top)), "")

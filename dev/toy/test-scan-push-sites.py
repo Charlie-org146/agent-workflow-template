@@ -4,6 +4,8 @@
 autorelease.label_part, merge.merge_pr, review.promote and revert, machines.batch_assemble and batch, operate.apply)
 refuses a planted fixture name BEFORE it writes, and a clean payload still goes through (the negative control).
 Fixture repos, a made-up name in a fixture list under a temp dir, a fake gh on PATH, a local bare origin. No network."""
+import contextlib
+import io
 import json
 import os
 import subprocess
@@ -21,6 +23,9 @@ LISTS = {}
 for key, lines in (("name", NAME + "\n"), ("label", NAME + "\nrelease:major\n")):
     LISTS[key] = os.path.join(T, "names-" + key)
     open(LISTS[key], "w").write(lines)
+LISTS["broken"] = os.path.join(T, "names-broken")
+open(LISTS["broken"], "w").write("(\n")
+LISTS["missing"] = os.path.join(T, "names-missing")
 os.environ.update(LOOP_PRIVATE_NAMES=LISTS["name"], GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.test",
                   GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.test", GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_SYSTEM=os.devnull)
 
@@ -160,7 +165,9 @@ calls = []
 
 def fake_git(*args, cwd=None, check=True):
     calls.append(["git"] + list(args))
-    return "abc123" if args[0] in ("rev-parse", "commit-tree") else ""
+    if args[0] == "rev-parse":
+        return git(cwd, *args)
+    return "abc123" if args[0] == "commit-tree" else ""
 
 
 def fake_run(args, cwd=None, **kw):
@@ -190,6 +197,14 @@ for text, label, planted in (("- #9 closed issue titled %s\n" % NAME, "the close
         code = review.promote(top, {"base": "trunk"}, 1, "rec", "HEAD")
         check(code == 0 and any(c[:2] == ["git", "push"] for c in calls) and any(c[:3] == ["gh", "release", "create"] for c in calls),
               "review.promote still tags, pushes and releases clean notes (negative control)")
+pro, _ = repo("pro-bad")
+open(os.path.join(pro, "later.txt"), "w").write("has %s inside\n" % NAME)
+git(pro, "add", "-A")
+git(pro, "commit", "-q", "-m", "work after the base")
+review.state_report = lambda *a: "- #9 a clean title\n"
+calls.clear()
+bad, why = refused(lambda: review.promote(pro, {"base": "trunk"}, 1, "rec", "HEAD"))
+check(bad and "private name" in why and not pushed(), "review.promote refuses a planted name in a commit it would push to the base, the tag and release/vX")
 calls.clear()
 bad, why = refused(lambda: review.revert(top, {"base": NAME + "-trunk"}, 1))
 check(bad and "private name" in why and not pushed(), "review.revert refuses a planted name before git push or gh pr create")
@@ -229,6 +244,7 @@ for name, body, planted in (("assemble-bad", "has %s inside\n" % NAME, True), ("
 runs = []
 M2 = types.SimpleNamespace(load=lambda path: {"slug": os.path.basename(path)[:-5], "branch": "x"}, ar=autorelease,
                            run=lambda args, cwd=None: (runs.append(list(args)), CP(args, 0, "https://example.test/pull/3\n", ""))[1])
+real_assemble = machines.batch_assemble
 machines.batch_ready = lambda M, top, base, state: ({"headRefOid": "abc"}, "")
 machines.batch_assemble = lambda M, top, base, bid, members: ([m[0] for m in members], [], "headsha0000000000")
 for slugs, planted in (([NAME + "-a", "b"], True), (["a", "b"], False)):
@@ -263,13 +279,55 @@ for name, text, planted in (("apply-bad", "# Page\n%s\n" % NAME, True), ("apply-
     before = git(top, "ls-remote", "origin", "refs/heads/work")
     page["text"] = text
     os.chdir(top)
-    operate.apply("slug", "work")
+    seen = io.StringIO()
+    with contextlib.redirect_stdout(seen):
+        code = operate.apply("slug", "work")
     after = git(top, "ls-remote", "origin", "refs/heads/work")
     if planted:
-        check(before == after, "operate.apply refuses a planted name in the re-stamped pages before it pushes the goal's branch")
+        check(before == after and code == 1 and seen.getvalue().startswith("REFUSED: a private name would be pushed") and "(PRIVATE_NAME)" in seen.getvalue(),
+              "operate.apply refuses a planted name in the re-stamped pages before it pushes, prints the whole refusal and exits 1")
     else:
-        check(before != after, "operate.apply still pushes a clean re-stamp (negative control)")
+        check(before != after and code == 0, "operate.apply still pushes a clean re-stamp and exits 0 (negative control)")
 os.chdir(T)
+
+# 9. a MISSING or BROKEN list: every newly scanned site refuses (PRIVATE_LIST) and writes nothing
+for mode in ("missing", "broken"):
+    os.environ["LOOP_PRIVATE_NAMES"] = LISTS[mode]
+    top, origin = repo("closed-" + mode)
+    word = "a %s list" % mode
+    calls.clear()
+    bad, why = refused(lambda: fit.pr_open(G(), {"branch": "work", "goal": "g", "slug": "x"}, "trunk", {}, "a clean body"))
+    check(bad and "PRIVATE_LIST" in why and not calls, "fit.pr_open refuses with %s before it writes" % word)
+    reset()
+    bad, why = refused(lambda: autorelease.label_part(top, cfg, {"release_part": "major", "pr": "7", "slug": "x"}))
+    check(bad and not log(), "autorelease.label_part refuses with %s before it writes" % word)
+    reset()
+    os.environ["FAKE_VIEW"] = '{"title":"t","headRefName":"b"}'
+    done = merge.merge_pr(top, "7", "abc")
+    check(done.returncode and "PRIVATE_LIST" in done.stderr and "pr merge" not in log(), "merge.merge_pr refuses with %s before gh pr merge" % word)
+    os.environ.pop("FAKE_VIEW")
+    release.git, release.run = fake_git, fake_run
+    review.state_report = lambda *a: "- #9 a clean title\n"
+    calls.clear()
+    bad, why = refused(lambda: review.promote(top, {"base": "trunk"}, 1, "rec", "HEAD"))
+    check(bad and "PRIVATE_LIST" in why and not pushed(), "review.promote refuses with %s before it tags or pushes" % word)
+    calls.clear()
+    bad, why = refused(lambda: review.revert(top, {"base": "trunk"}, 1))
+    check(bad and "PRIVATE_LIST" in why and not pushed(), "review.revert refuses with %s before it pushes" % word)
+    release.git, release.run = real_git, real_release_run
+    kept, alone, head = real_assemble(M, top, "trunk", "bid2", members(top, "all clean\n"))
+    check(not kept and not git(top, "ls-remote", "origin", "refs/heads/batch/bid2"), "machines.batch_assemble refuses with %s before it pushes batch/<id>" % word)
+    runs.clear()
+    code = machines.batch(top, tempfile.mkdtemp(dir=T), {"base": "trunk"}, ["a", "b"], "", M2)
+    check(code == 1 and not [r for r in runs if r[:3] == ["gh", "pr", "create"]], "machines.batch refuses with %s before gh pr create" % word)
+    page["text"] = "# Page\nclean\n"
+    git(top, "push", "-q", "origin", "work")
+    before = git(top, "ls-remote", "origin", "refs/heads/work")
+    os.chdir(top)
+    with contextlib.redirect_stdout(io.StringIO()):
+        code = operate.apply("slug", "work")
+    check(code == 1 and before == git(top, "ls-remote", "origin", "refs/heads/work"), "operate.apply refuses with %s before it pushes" % word)
+    os.chdir(T)
 
 print("ALL PASS" if not fails else "FAILED: %d" % len(fails))
 sys.exit(1 if fails else 0)
