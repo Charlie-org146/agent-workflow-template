@@ -406,6 +406,7 @@
 | <a id="t-ops-findings-filed"></a>ops-findings-filed | requirement | OPS-1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
 | <a id="t-platform-sends-counted"></a>platform-sends-counted | requirement | OPS-1 | not run | - | local | 2026-11-20 |
 | <a id="t-machine-status-live-workers"></a>machine-status-live-workers | requirement | OPS-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
+| <a id="t-defect-5651-body-file"></a>defect-5651-body-file | defect | [#5651](https://github.com/jcl2018/agent-workflow-template/issues/5651) state unknown | not run | - | local | 2026-11-21 |
 
 ## Regression
 
