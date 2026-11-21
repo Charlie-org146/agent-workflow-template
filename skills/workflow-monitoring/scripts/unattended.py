@@ -338,6 +338,18 @@ def adopt(args):
     return 0
 
 
+def owner_words_migrate():  # DEL-3.4, once: every row now counted is legacy; a new row needs a verified stamp
+    import auto
+    path = auto.owner_words_path()
+    if os.path.exists(path.replace(".tsv", "-from")):
+        return print("ALREADY: migrated") or 0
+    rows = [x.split("\t") for x in open(path, encoding="utf-8").read().splitlines()]
+    out = ["\t".join(r[:2] + [r[2] + " (legacy, before DEL-3.4)"] + r[3:]) if len(r) == 5 and not r[2].startswith("operation-top:delegated:") else "\t".join(r) for r in rows]
+    open(path, "w", encoding="utf-8").write("".join(x + "\n" for x in out))
+    open(path.replace(".tsv", "-from"), "w").write(auto.stamp())
+    return print("MIGRATED %d rows marked legacy" % len(out)) or 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -352,6 +364,7 @@ def main():
     item.add_argument("text", nargs="?", default="")
     item.add_argument("--scope", default="merge", choices=("merge",))
     item.add_argument("--goals", default="all")
+    sub.add_parser("owner-words-migrate")
     sub.add_parser("selfcheck")
     sub.add_parser("prerequisites")
     sub.add_parser("connectors")
@@ -366,6 +379,8 @@ def main():
         return replay(args.golden or os.path.join(run("rev-parse", "--show-toplevel")[1] or ".", "dev", "toy", "adoption-golden.tsv"))
     if not common():
         sys.exit("REFUSED: not inside a git repository. Nothing was written.")
+    if args.cmd == "owner-words-migrate":
+        return owner_words_migrate()
     if args.cmd == "selfcheck":
         return selfcheck()
     if args.cmd == "standing":

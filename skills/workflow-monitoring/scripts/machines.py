@@ -363,5 +363,28 @@ def main():
     return 0
 
 
+def eta_rows(root, at=None):
+    """(rule, level, text): eta-missing (WARN), eta-extended (FAIL: no covering record), eta-overrun (FAIL: past its ETA, not waiting)."""
+    import auto as A, datetime, glob
+    at, out = at or datetime.datetime.now(datetime.timezone.utc), []
+    covers, grace = {r[0]: r[4].split(",") for r in A.owner_rows(root)}, A.config(root).get("step_budget_minutes") or 30
+    for path in sorted(glob.glob(os.path.join(A.loop_dir(root), "runs", "*.json"))):
+        run = A.bs.read_json(path)
+        if not isinstance(run, dict) or not run.get("slug"):
+            continue
+        seen, slug = A.eta_seen(root, run), run["slug"]
+        for e in seen.get("eta_extend") or []:
+            if not isinstance(e, dict) or slug not in covers.get(e.get("record"), []):
+                out.append(("eta-extended", "FAIL", "%s has an ETA extended with no covering owner-words record" % slug))
+                break
+        if run.get("status") not in ("running", "waiting", "failed", "stopped"):
+            continue
+        if not A.eta_minutes(seen):
+            out.append(("eta-missing", "WARN", "%s has no ETA" % slug))
+        elif A.eta_over(seen, A.bs.active_minutes(seen, at) - grace) and not (run.get("waiting") or {}).get("eta"):
+            out.append(("eta-overrun", "FAIL", "%s is past its ETA and not waiting under Needs you" % slug))
+    return out
+
+
 if __name__ == "__main__":
     sys.exit(main())

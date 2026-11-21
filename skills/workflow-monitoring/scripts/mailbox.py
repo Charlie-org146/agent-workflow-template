@@ -203,9 +203,20 @@ def file_finding(root, args):
         return 1, "FAILED: %s" % done.stderr.strip()[:160]
     number = re.search(r"/issues/(\d+)", done.stdout)
     line = "FILED #%s on %s: %s (found by %s)" % (number.group(1) if number else "?", stone, title, args.found)
+    if getattr(args, "kind", "") == "promise":
+        line += "; its fix changes a promise or a test: on the owner's list, it waits (DEL-3.3)"
+    elif number:  # one issue, one patch goal that merges on green; a repeat is fine
+        n, cut = number.group(1), title.replace("|", "/")
+        made = subprocess.run([sys.executable, os.path.join(HERE, "..", "..", "workflow-delivery", "scripts", "goal.py"), "queue", "fix-" + n, "--goal", "Fix #%s: %s" % (n, cut),
+                               "--done", "Given #%s (%s), then its defect check passes" % (n, cut)], cwd=root, capture_output=True, text=True)
+        line += "; patch goal fix-%s %s" % (n, "queued" if not made.returncode or "already exists" in made.stdout + made.stderr else "not queued")
     with open(os.path.join(auto.loop_dir(root), "findings.log"), "a", encoding="utf-8") as handle:
         handle.write("%s | %s\n" % (auto.stamp(), line))
     return 0, line
+
+
+def revoked_issue(root, rid, code):
+    return gh(["issue", "create", "--title", "Owner words %s revoked (%s)" % (rid, code), "--body", "Not confirmed by the heartbeat re-check. No private text."], root).returncode == 0
 
 
 def say(text):
@@ -236,6 +247,9 @@ def cmd_reply(args):
     slug = asked["slug"]
     if os.path.exists(os.path.join(folder, "runs", slug + ".json")):
         cmd = [sys.executable, os.path.join(HERE, "operate.py"), "send", slug, text, "--source", "owner"]
+    elif os.path.exists(os.path.join(folder, "owner-words-from")):  # DEL-3.4: a mail reply has no operation-session turn to stamp
+        say("REFUSED (MAIL_REPLY): a mailed reply can't be verified. Fix: type the answer in any operation session. Nothing was recorded.")
+        return 2
     else:
         cmd = [sys.executable, os.path.join(HERE, "sessions.py"), "owner-words", text, "--ids", args.id]
     done = subprocess.run(cmd, capture_output=True, text=True, cwd=args.root)
@@ -369,7 +383,7 @@ def main():
     sub.add_parser("pending").set_defaults(func=cmd_pending)
     one = sub.add_parser("finding")
     one.add_argument("title")
-    for name in ("feature", "found", "text", "owner-words"):
+    for name in ("feature", "found", "text", "owner-words", "kind"):
         one.add_argument("--" + name, default="")
     one.add_argument("--dry-run", action="store_true")
     one.set_defaults(func=cmd_finding)

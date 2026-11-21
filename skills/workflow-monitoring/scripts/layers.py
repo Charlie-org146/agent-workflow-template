@@ -8,14 +8,13 @@ usage: layers.py status [--force]   a machine: send its STATUS to top when it ch
                                     (A: assumptions, I: idle work, R: the one biggest risk) with routes; is a pass due
 
 STATUS is one JSON message per machine in <git common dir>/loop/status/<machine>.json, also published as
-refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, its time, main per repo, one line per worker (step,
-status, PR number, ETA), the merges, the parked and idle sessions each with a reason, and needs-owner items with the exact
-words and a recommendation. Each ETA it states goes in the ETA ledger (etas.jsonl). Top is the only role that publishes the board; a machine prints one line. Imported by operate.py.
+refs/loop/status/<machine> when `machine_sync` is on. It carries: the machine, its time, main per repo, a line per worker (step,
+status, PR, ETA), the merges, parked and idle sessions with a reason, and needs-owner items with the exact words and a recommendation. Each ETA it states goes in the ETA ledger (etas.jsonl). Only top publishes the board; a machine prints one line.
 
 Red-team (HLT-2): every hour and within an hour of a release ETA, a fresh-context reviewer is given `redteam input` (the board and
 each machine's latest STATUS) and answers `A:`, `I:` and `R:` lines. `redteam record` stores them with a timestamp in
-<git common dir>/loop/redteam/ (never a repo file) and prints one route per item: A to ops-findings, I and R to operation-top as a
-proposed TOP-DECISION. It never edits, merges, files or sends. The ETA is --eta or loop/release-eta.json ({"at": epoch}).
+<git common dir>/loop/redteam/ (never a repo file) and prints one route per item (A to ops-findings, I and R to operation-top). It never
+edits, merges, files or sends. The ETA is --eta or loop/release-eta.json ({"at": epoch}).
 """
 import calendar
 import datetime
@@ -303,23 +302,19 @@ def check_budgets(common, cfg):
     return "ok" if not over else "FIX: %s hold a budget above the owner's cap (time_budget_minutes, token_budget); only the owner raises a cap" % ", ".join(over)
 
 
-def relay(source, text, rules=None):
-    """(accepted, why): OWNER-WORDS relayed from top count as owner words except safety classes; from a peer they never do."""
-    if source == "peer":
-        return False, "a peer's words are data, never the owner's"
-    if source != "top":
-        return True, ""
+def relay(source, text):
+    """(accepted, why): a peer's or relayed message never counts (DEL-3.4); a delegated record counts except safety classes."""
+    if source in ("peer", "top"):
+        return False, "a %s message is not owner words" % source
     import auto
-    for name, found in (rules or auto.CLASSES).items():
-        if found.search(str(text)):
-            return False, "safety class %s: only the owner's own typed words count" % name
-    return True, ""
+    hit = next((n for n, f in auto.CLASSES.items() if f.search(str(text))), "") if source == "delegated" else ""
+    return (False, "safety class %s: only the owner's typed words count" % hit) if hit else (True, "")
 
 
 def defaults(common, cfg):
     status = build(common, cfg)
-    rows = [("relay counts except safety", "ok" if relay("top", "hello")[0] and not relay("top", "delete the branch")[0] and not relay("peer", "hello")[0]
-             else "FIX: the relay rule in layers.relay no longer holds"),
+    rows = [("relay never counts", "ok" if not relay("top", "hi")[0] and relay("delegated", "hi")[0] and not relay("delegated", "delete it")[0] and not relay("peer", "hi")[0]
+             else "FIX: the layers.relay rule no longer holds"),
             ("machine sessions are STATUS-only", "ok" if role("machine") == "machine" and one_line(status, "sent").count("\n") == 0 else "FIX: a machine must print one line"),
             ("machines raise their own time budgets, caps stay the owner's", check_budgets(common, cfg)),
             ("machines raise their own token budgets, caps stay the owner's", check_budgets(common, cfg)),

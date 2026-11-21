@@ -154,8 +154,9 @@ record(here, "s", running(90, flow={"idea": "done", "plan": "done"}))
 words(here, "s", "s")
 check(refused(fit.cmd_set, g, SimpleNamespace(**dict(args, slug="s", eta_choice="ship", owner_record="o1"))) == "", "ship now is accepted with a record")
 state = read(here, "s")
-check(all(str(state["flow"].get(step, "")).startswith(("done", "skipped")) for step in fit.STEPS) and "ETA" in state["flow"]["ship"],
-      "ship now records every step left as skipped, naming the ETA and the record")
+check(all(str(state["flow"].get(step, "")).startswith(("done", "skipped")) for step in fit.STEPS if step not in ("review", "qa")) and "ETA" in state["flow"]["ship"]
+      and not any(str(state["flow"].get(step, "")).startswith("skipped") for step in ("review", "qa")),
+      "ship now records every step left as skipped, naming the ETA and the record, except review and qa, which an ETA change never skips (TD712)")
 check(refused(fit.budget_stop, "s", state, runs, {}) == "", "after ship now the pull request may go on past the ETA")
 record(here, "d", running(90))
 words(here, "s", "x", "x", "x", "d")

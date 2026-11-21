@@ -380,3 +380,15 @@ def plan_accept(root, slug, n, record):
         b["accepted"] = record
     json.dump(seen, open(path, "w"), indent=1)
     return "ACCEPTED principle %d for %s by %s" % (n, slug, record)
+
+
+def owner_words_check(args):  # the heartbeat re-check (TD710): --mismatch CODE revokes the row, one issue, no words logged
+    import auto, mailbox
+    path = auto.owner_words_path()
+    rows = open(path, encoding="utf-8").read().splitlines()
+    keep = [x for x in rows if x.split("\t")[0] != args.id]
+    if not args.mismatch or len(keep) == len(rows):
+        return print("CHECKED " + args.id if not args.mismatch else "REFUSED: %s is not a counted record. Nothing was changed." % args.id) or int(bool(args.mismatch))
+    open(path, "w", encoding="utf-8").write("".join(x + "\n" for x in keep))
+    open(path.replace(".tsv", "-revoked.tsv"), "a").write("%s\t%s\t%s\n" % (args.id, auto.stamp(), args.mismatch))
+    return print("owner words %s revoked: %s; issue %s" % (args.id, args.mismatch, "opened" if mailbox.revoked_issue(".", args.id, args.mismatch) else "NOT opened")) or 0

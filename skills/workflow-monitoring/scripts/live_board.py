@@ -17,6 +17,7 @@ import datetime
 import html
 import os
 import re
+import subprocess
 import sys
 import textwrap
 
@@ -332,3 +333,20 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def undo(args):  # DEL-3.5: send the other option of an AUTO decision; log it UNDONE
+    import auto
+    root, rec = auto.top(), args.owner_record
+    L = [[x.strip() for x in l.split(" | ")] for l in auto.since(root, "")]
+    h = next((p for p in L if len(p) > 8 and p[2] == "AUTO" and p[6] == args.id), [""] * 9)
+    o, s = h[7].split("/"), (auto.bs.read_json(os.path.join(auto.loop_dir(root), "runs", h[1] + ".json")) or {}).get("status")
+    why = ("NONE" if not h[1] or len(o) != 2 else "STALE" if s in ("merged", "retired") or any(p[2] == "UNDONE" and p[-1] == args.id for p in L)
+           else "RECORD" if not any(r[0] == rec and args.id in r[4].split(",") for r in auto.owner_rows(root)) else "")
+    other = next((x for x in o if x != h[4]), "")
+    if not why and subprocess.run([sys.executable, os.path.join(auto.HERE, "operate.py"), "send", h[1], "%s (undo of %s, owner record %s)" % (other, args.id, rec), "--source", "owner"], capture_output=True).returncode:
+        why = "SEND"
+    if why:
+        return print("REFUSED (UNDO_%s) %s. Fix: the owner types the check-in's undo line. Nothing was sent." % (why, args.id)) or 1
+    print(auto.log(auto.loop_dir(root), h[1], "UNDONE", h[:4] and {"ask": h[3]}, other, "undone by " + rec, auto.stamp(), args.id))
+    return 0

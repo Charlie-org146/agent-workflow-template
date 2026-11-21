@@ -127,19 +127,22 @@ classes = {"destructive-delete": "Delete the old worktree directory?", "destruct
            "authorization": "Update the authorization header?", "close-pr": "Close PR #12 from another contributor?",
            "reset-branch": "Reset the branch to origin/main?", "unpublish": "Unpublish the package?", "purge": "Purge the cache?",
            "cleanup": "Clean up old worktrees?", "charge": "Charge the card?", "gmail": "Read the user's Gmail?",
-           "records": "Store customer records in the db?", "eta-text": "Extend the ETA by 30 minutes?", "merge-pr": "Merge pull request #7 now?"}
+           "records": "Store customer records in the db?", "signing-key": "Rotate the signing key?", "merge-pr": "Merge pull request #7 now?"}
 for slug, text in classes.items():
     ask(w, slug, text, "owner" if slug.endswith(("delete", "key", "names")) else "routine")
 for kind in ("destructive", "money", "security"):
     ask(w, "kind-" + kind, "Which helper name should the toy use?", kind)
-ask(w, "eta1", "full-auto-all is past its ETA: ship now, extend once, or defer?", "owner", eta=True)
+ask(w, "eta1", "full-auto-all is past its ETA: ship now, extend once, or defer?", "owner", eta=True)  # TD712: answered, no longer waits
+open(os.path.join(w, ".loop", "owner-decisions.md"), "w").write(open(os.path.join(root, ".loop", "owner-decisions.md")).read())
+ask(w, "kind-promise", "Which helper name should the toy use?", "promise")
 ask(w, "ask1", "Which helper name should the toy use?", "routine")
 words(w, "always ask me about this goal", "always-ask:ask1")
 auto.decide_all(w)
 for slug, text in classes.items():
     check(waits(w, slug) and not answered(w, slug), "safety class waits: " + slug)
-for slug in ("kind-destructive", "kind-money", "kind-security", "eta1", "ask1"):
+for slug in ("kind-destructive", "kind-money", "kind-security", "kind-promise", "ask1"):
     check(waits(w, slug) and not answered(w, slug), "waits: " + slug)
+check(answered(w, "eta1") and not waits(w, "eta1"), "answers: an ETA choice takes the recommended path (TD712)")
 
 # 4. negative control: with the safety guard removed, the same security question is answered
 saved = dict(auto.CLASSES)

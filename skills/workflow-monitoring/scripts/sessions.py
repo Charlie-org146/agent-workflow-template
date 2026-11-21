@@ -246,10 +246,18 @@ def cmd_owner_words(args):
         sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
     if not args.text.strip() or not ids:
         sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
-    import layers
-    ok, why = layers.relay(args.via, args.text)
-    if not ok:
-        sys.exit("REFUSED: %s. Nothing was written." % why)
+    import hashlib, layers
+    folder = auto.loop_dir(".")
+    ok, why = layers.relay("delegated" if args.delegated else args.via, args.text)
+    if ok and os.path.exists(os.path.join(folder, "owner-words-from")) and not args.delegated and not re.fullmatch(
+            r"[\w.-]+@\d{4}-\d\d-\d\dT[\d:]+Z#" + hashlib.sha256(args.text.strip().encode()).hexdigest()[:8], args.verified):
+        ok, why = False, "STAMP_MISSING: no --verified stamp whose hash matches these words"
+    if not ok:  # a refusal is logged with its ids and reason, never the words
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, "owner-words-refused.log"), "a", encoding="utf-8") as handle:
+            handle.write("%s\t%s\t%s\t%s\n" % (auto.stamp(), ",".join(ids), args.via, why[:80]))
+        sys.exit("REFUSED: %s. Fix: the owner types it in an operation session, which checks that session's transcript and passes "
+                 "--verified SESSION@TIME#HASH8. Nothing was written." % why)
     if args.delegated:
         proctree.require_operation(".", "a delegated approval")
     count = auto.add_owner_words(args, ids)
@@ -410,6 +418,7 @@ def main():
     item.add_argument("--from", dest="via", default="owner", choices=["owner", "top", "peer"], help="top: relayed owner words (not safety classes); peer: refused")
     item.add_argument("--delegated", default="", help="TDn: a delegated record (DOC-2)")
     item.add_argument("--doc2", default="", help="DOC-2's revision, rN")
+    item.add_argument("--verified", default="", help="SESSION@TIME#HASH8: the operation session checked that session's transcript (DEL-3.4)")
     sub.add_parser("list")
     args = parser.parse_args()
     try:

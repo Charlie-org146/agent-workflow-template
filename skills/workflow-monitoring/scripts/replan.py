@@ -17,6 +17,7 @@ import atexit
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -356,6 +357,21 @@ def pr_preflight(runs, g, state):
                                                              "why": "not on the freeze list: it appeared after the goal was frozen and was found at the pr step"})
             g.save(state, "missed pre-flight item %s: %s" % (item["id"], item["ask"][:160]))
             print("MISSED PRE-FLIGHT %s: %s" % (item["id"], item["ask"][:200]))
+
+
+def auto_rows(root):
+    """(rule, FAIL, text): auto-record (an AUTO line without a standing owner record), auto-safety (an AUTO line in a safety class)."""
+    A = auto
+    out, rules = [], {r[0]: r[1] for r in A.owner_rows(root) if A.RULE in r[4].split(",")}
+    first = min(rules.values(), default="")  # AUTO lines from before the rule existed are history
+    for p in (map(str.strip, x.split(" | ")) for x in A.since(root, "")):
+        p = list(p)
+        if len(p) > 5 and p[2] == "AUTO" and p[0] >= first:
+            found = re.search(r"owner rule (o\d+)", p[5])
+            found and found.group(1) in rules or out.append(("auto-record", "FAIL", "%s has an auto answer with no standing owner record" % p[1]))
+            hit = next((n for n, x in A.CLASSES.items() if x.search(p[3] + " " + p[4])), "")
+            hit and out.append(("auto-safety", "FAIL", "%s was auto-answered in safety class %s" % (p[1], hit)))
+    return out
 
 
 if __name__ == "__main__":

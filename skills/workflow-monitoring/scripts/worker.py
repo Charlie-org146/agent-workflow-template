@@ -260,9 +260,21 @@ def main():
     item = sub.add_parser("send")
     item.add_argument("slug")
     item.add_argument("text")
+    item = sub.add_parser("undo")
+    item.add_argument("id")
+    item.add_argument("--owner-record", default="")
+    item = sub.add_parser("owner-words-check")
+    item.add_argument("id")
+    item.add_argument("--mismatch", default="")
     args = parser.parse_args()
     if args.cmd == "loop" and args.command[:1] == ["--"]:
         args.command = args.command[1:]
+    if args.cmd == "undo":
+        import live_board
+        return live_board.undo(args)
+    if args.cmd == "owner-words-check":
+        import board_model
+        return board_model.owner_words_check(args)
     return globals()["cmd_" + args.cmd](args)
 
 

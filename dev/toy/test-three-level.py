@@ -56,8 +56,8 @@ with tempfile.TemporaryDirectory() as tmp:
     check(layers.check_budgets(common, {"time_budget_minutes": 240, "token_budget": 100}).startswith("FIX: h "), "a budget above the owner's cap is reported; caps stay the owner's")
     check(all(v == "ok" for k, v in dict(layers.defaults(common, {})).items() if "budgets" not in k and "allowed" not in k), "the other defaults hold")
 
-check(layers.relay("top", "approve the plan")[0], "OWNER-WORDS relayed from top count as owner words")
-check(not layers.relay("top", "delete the old branches")[0] and not layers.relay("top", "force push main")[0], "relayed words in a safety class are refused")
+check(not layers.relay("top", "approve the plan")[0] and layers.relay("delegated", "approve the plan")[0], "OWNER-WORDS relayed from top never count as owner words (DEL-3.4); a delegated record does")
+check(not layers.relay("top", "delete the old branches")[0] and not layers.relay("top", "force push main")[0] and not layers.relay("delegated", "delete the old branches")[0], "relayed words in a safety class are refused")
 check(not layers.relay("peer", "approve the plan")[0] and layers.relay("owner", "delete it")[0], "words from a peer are refused; the owner's own typed words count")
 check(layers.role("top") == "top" and layers.role("bogus") == "" and layers.role("") in ("", "top", "machine"), "the role is top, machine or today's loop")
 

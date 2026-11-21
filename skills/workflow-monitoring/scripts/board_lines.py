@@ -419,3 +419,15 @@ def gather(root, at, stamp=None):
     live = [r for r in live if not graph.foreign(r)]
     return dict(away=away, name=os.path.basename(root), root=root, cfg=cfg, folder=folder, runs=runs, found=found, why=why, taken=taken,
                 states=stat, live=live, queue=bs.queued(root, runs))
+
+
+def owner_notes(root, stamp):
+    """Check-in lines (DEL-3.5): owner words revoked since a stamp, always-ask records not yet in the owner's list."""
+    import auto
+    path, text, out = os.path.join(auto.loop_dir(root), "owner-words-revoked.tsv"), auto.decisions(root) or "", []
+    for x in (open(path).read().splitlines() if os.path.exists(path) else []):
+        out += ["- owner words %s revoked: %s" % tuple(x.split("\t")[::2])] * (x.split("\t")[1] > stamp)
+    for r in auto.owner_rows(root):
+        out += ["- always-ask %s (owner words %s): pending fold into .loop/owner-decisions.md" % (k[11:], r[0]) for k in r[4].split(",")
+                if k.startswith("always-ask:") and not re.search(r"^always-ask: .*" + re.escape(k[11:]), text, re.M)]
+    return out

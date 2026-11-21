@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The check-in (MON-4, MON-5): what operate.py prints each pass, in the one layout the reply hook checks. usage: checkin.py [--since ISO]
-Sections: Headline, All sessions, Re-plan, Auto-answered, Archived, Dependencies, Needs you (numbered, MON-19), Coming up. --since
+Sections: Headline, All sessions, Re-plan, Decided for you, Archived, Dependencies, Needs you (numbered, MON-19), Coming up. --since
 defaults to the last check-in (<git common dir>/loop/checkin.json).
 """
 import argparse
@@ -31,6 +31,14 @@ from board_status import feature_of, goal_line, release_of
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
         "silent": "silent", "done": "awaiting merge", "queued": "queued"}
+
+
+def decided(root, stamp):
+    """DEL-3.5: AUTO decisions since a stamp: reason, undo, tally, revoked, unfolded always-ask."""
+    rows = [p for p in ([x.strip() for x in l.split(" | ")] for l in auto.since(root, stamp)) if len(p) > 5]
+    out = ['- %s: "%s" -> %s; why: %s; undo: %s (rule %s)' % (p[1], p[3][:60], p[4], p[5], 'type "%s"' % p[8] if len(p) > 8 and p[8][:4] == "undo" else "none", p[5].split()[-1])
+           if p[2] == "AUTO" else "- %s %s: %s" % (p[1], "waits for you" if p[2] == "WAITS" else p[2].lower(), p[5]) for p in rows[-8:]]
+    return out + (["Tally: decided %d, waits %d" % (sum(p[2] == "AUTO" for p in rows), sum(p[2] == "WAITS" for p in rows))] if rows else []) + board_lines.owner_notes(root, stamp)
 
 
 def cell(text, size=48):
@@ -135,18 +143,13 @@ def render(root=None, at=None, stamp=None):
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
     changes = replan.since(root, stamp)
-    decided = auto.since(root, stamp)
     open_now = replan.open_proposals(root)
     if changes or open_now:
         out += ["", "Re-plan (since the last check-in, then proposals still open):"] + ["- " + line[21:] for line in changes[-8:]]
         out += ["- open: %s" % line for line in open_now if not any(line in c for c in changes)][:6]
-    if decided:
-        out += ["", "Auto-answered (full auto):"]
-        for line in decided[-8:]:
-            parts = [p.strip() for p in line.split(" | ")]
-            if len(parts) >= 6:
-                out.append('- %s: "%s" -> %s; revert: operate.py send %s "<other words>" (rule %s)' % (parts[1], parts[3][:60], parts[4], parts[1], parts[5].split()[-1]) if parts[2] == "AUTO"
-                           else "- %s waits for you: %s" % (parts[1], parts[5]))
+    seen = decided(root, stamp)  # DEL-3.5
+    if seen:
+        out += ["", "Decided for you (full auto):"] + seen
     filed = auto.since(root, stamp, "findings.log")  # OPS-1: filed by the operation layer
     if filed:
         out += ["", "Findings filed (operation layer):"] + ["- " + line[23:] for line in filed[-8:]]

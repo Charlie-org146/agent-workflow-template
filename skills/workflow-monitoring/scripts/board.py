@@ -299,6 +299,21 @@ def changes(old, new):
     return lines
 
 
+def counted(folder, rows):
+    """DEL-3.4: once owner-words-from holds a time, a row counts only if it is stamped (verified:), legacy, delegated (DOC-2) or older than that time; a revoked id never counts."""
+    try:
+        with open(os.path.join(folder, "owner-words-from")) as handle:
+            since = handle.read().strip()
+    except OSError:
+        return rows
+    try:
+        with open(os.path.join(folder, "owner-words-revoked.tsv")) as handle:
+            gone = {line.split("\t")[0] for line in handle}
+    except OSError:
+        gone = set()
+    return [r for r in rows if r[0] not in gone and (r[1] < since or "verified:" in r[2] or "legacy" in r[2] or r[2].startswith("operation-top:delegated:"))]
+
+
 def cmd_board(args):
     doc, lines = build(clock(args.at), args.since)
     folder = os.path.abspath(args.out) if args.out else loop_dir(common())

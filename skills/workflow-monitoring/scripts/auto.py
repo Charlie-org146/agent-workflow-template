@@ -25,7 +25,7 @@ import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
-KINDS = ("routine", "destructive", "money", "security", "owner")
+KINDS = ("routine", "destructive", "money", "security", "owner", "promise", "brief", "major", "external")
 RULE = "full-auto-rule"  # the owner-words id of the standing record
 
 
@@ -67,38 +67,63 @@ def standing(root):
     return rows[-1] if rows else ""
 
 
+def decisions(root):
+    """The owner's list (DEL-3.1, .loop/owner-decisions.md): its text, '' when there is none, None when it can't be read."""
+    try:
+        with open(os.path.join(root or ".", ".loop", "owner-decisions.md"), encoding="utf-8") as handle:
+            return handle.read()
+    except FileNotFoundError:
+        return ""
+    except (OSError, ValueError):
+        return None
+
+
 def always(root, slug):
-    return any({"always-ask:" + slug, "always-ask:*"} & set(r[4].split(",")) for r in owner_rows(root))
+    text = decisions(root) or ""
+    return bool(re.search(r"^always-ask: .*(?:\b%s\b|\*)" % re.escape(slug), text, re.M)) or any({"always-ask:" + slug, "always-ask:*"} & set(r[4].split(",")) for r in owner_rows(root))
 
 
-def why_not(waiting, cfg, ask_always=False):
-    """'' when full auto may answer this decision, else why it waits."""
+def listed(text, ask, kind):
+    """The number of the owner-list item (2 to 5) this question falls under, '' when none."""
+    for n, body in re.findall(r"^([2-5])\. (.*(?:\n[ \t]+.*)*)", text, re.M):
+        want, pattern = re.search(r"kind: (\w+)", body), re.search(r"match: (.+)", body)
+        if kind and want and kind == want.group(1) or pattern and re.search(pattern.group(1), ask, re.I):
+            return n
+    return ""
+
+
+def why_not(waiting, cfg, ask_always=False, root=None):
+    """'' when full auto may answer this decision, else why it waits: the owner-list item (DEL-3.1) or what is missing."""
     if cfg.get("full_auto") is not True:
         return "full_auto is off"
     kind, rec = waiting.get("kind") or "", waiting.get("recommend") or ""
     if kind and kind not in KINDS:
         return "unknown kind %s" % kind
     if kind in ("destructive", "money", "security"):
-        return "a %s decision is the owner's" % kind
-    if waiting.get("eta") or ask_always or re.search(r"\bETA\b", str(waiting.get("ask"))):
-        return "an ETA choice or an always-ask goal is the owner's"
+        return "owner list item 1: a %s decision is the owner's" % kind
+    if ask_always:
+        return "owner list: an always-ask goal"
     if not rec or rec not in (waiting.get("words") or []):
         return "no recommended answer"
     said = " ".join([str(waiting.get("ask") or ""), rec])
     for name, found in CLASSES.items():
         if found.search(said):
-            return "safety class %s: %s" % (name, found.search(said).group(0).lower())
+            return "owner list item 1, safety class %s: %s" % (name, found.search(said).group(0).lower())
     for pattern in cfg.get("risky_paths") or []:
         try:
             if re.search(pattern, said):
                 return "risky path %s" % pattern
         except re.error:
             continue
-    return ""
+    text = decisions(root) if root else ""
+    if text is None:
+        return "LIST_UNREADABLE: .loop/owner-decisions.md can't be read. Fix: restore it from git"
+    item = listed(text, said, kind)
+    return "owner list item %s: %s" % (item, re.search(r"^%s\. (.*)" % item, text, re.M).group(1)[:80]) if item else ""
 
 
-def log(folder, slug, verdict, waiting, answer, reason, at):
-    line = " | ".join(str(x).replace("|", "/") for x in (at, slug, verdict, key_of(waiting.get("ask"))[:200], answer or "-", reason))
+def log(folder, slug, verdict, waiting, answer, reason, at, *more):
+    line = " | ".join(str(x).replace("|", "/") for x in (at, slug, verdict, key_of(waiting.get("ask"))[:200], answer or "-", reason) + more)
     os.makedirs(folder, exist_ok=True)
     with open(os.path.join(folder, "auto.log"), "a") as handle:
         handle.write(line.replace("\n", " ") + "\n")
@@ -118,7 +143,7 @@ def decide_all(root=None, now=None, dry=False):
         waiting = run["waiting"]
         if graph.foreign(run) or (waiting.get("auto") and not (waiting["auto"].get("norule") and rule)):
             continue
-        reason = why_not(waiting, cfg, always(root, run["slug"]))
+        reason = why_not(waiting, cfg, always(root, run["slug"]), root)
         if reason == "full_auto is off":
             continue  # nothing is marked: turning it on later still answers
         norule = not reason and not rule
@@ -126,7 +151,7 @@ def decide_all(root=None, now=None, dry=False):
         if dry:
             out.append("WOULD %s %s: %s" % ("WAIT" if reason else "ANSWER", run["slug"], reason or waiting["recommend"]))
             continue
-        say = lambda verdict, answer, why: out.append(log(folder, run["slug"], verdict, waiting, answer, why, at))
+        say = lambda verdict, answer, why, *more: out.append(log(folder, run["slug"], verdict, waiting, answer, why, at, *more))
         if reason:
             say("WAITS", "", reason)
             waiting["auto"] = {"verdict": "waits", "why": reason, "at": at, "norule": norule}
@@ -137,7 +162,8 @@ def decide_all(root=None, now=None, dry=False):
             if sent.returncode:
                 say("WAITS", "", "the answer could not be sent")
                 continue
-            say("AUTO", words, "%s, recommended, owner rule %s" % (waiting.get("kind") or "no kind", rule))
+            ids, opts = "#%s@%s%sZ" % (run["slug"], at[11:13], at[14:16]), waiting.get("words") or []
+            say("AUTO", words, "%s, recommended, owner rule %s" % (waiting.get("kind") or "no kind", rule), ids, "/".join(opts), "undo %s" % ids if len(opts) == 2 else "choose one of " + "/".join(opts))
             waiting["auto"] = {"verdict": "answered", "words": words, "at": at}
         fresh = bs.read_json(path)
         if isinstance(fresh, dict) and fresh.get("status") == "waiting" and key_of((fresh.get("waiting") or {}).get("ask")) == key_of(waiting.get("ask")):
@@ -172,7 +198,7 @@ def main():
     args.cmd == "since" and bs.timed(args.stamp)
     if args.cmd == "decide-text":
         reason = why_not({"ask": sys.stdin.read(), "kind": args.kind, "recommend": args.recommend,
-                          "words": args.words or [args.recommend]}, config(top() or "."))
+                          "words": args.words or [args.recommend]}, config(top() or "."), root=top() or ".")
         print("WAITS: " + reason if reason else "AUTO")
         return 0
     lines = since(top(), args.stamp) if args.cmd == "since" else decide_all(dry=args.dry_run)
@@ -194,6 +220,7 @@ def add_owner_words(args, ids):
     where, count = owner_words_path(), len(owner_rows()) + 1
     os.makedirs(os.path.dirname(where), exist_ok=True)
     who = "operation-top:delegated:%s:DOC-2:%s" % (args.delegated, args.doc2) if args.delegated else "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation"
+    who += " verified:" + args.verified if getattr(args, "verified", "") else ""  # DEL-3.4: the operation session checked a transcript
     with open(where, "a", encoding="utf-8") as handle:
         handle.write("o%d\t%s\t%s\t%s\t%s\n" % (count, stamp(), who, json.dumps(args.text, ensure_ascii=False), ",".join(ids)))
     return count
@@ -202,23 +229,16 @@ def add_owner_words(args, ids):
 def owner_rows(root="."):
     try:
         with open(owner_words_path(root), encoding="utf-8") as handle:
-            return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]
+            rows = [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]
     except OSError:
         return []
+    import board
+    return board.counted(loop_dir(root), rows)  # DEL-3.4: only stamped, legacy or delegated rows count
 
 
-def auto_rows(root):
-    """(rule, FAIL, text): auto-record (an AUTO line without an existing standing record), auto-safety (an AUTO line in a safety class)."""
-    out, rules = [], {r[0]: r[1] for r in owner_rows(root) if RULE in r[4].split(",")}
-    first = min(rules.values(), default="")  # AUTO lines from before the rule existed are history
-    for p in (map(str.strip, x.split(" | ")) for x in since(root, "")):
-        p = list(p)
-        if len(p) > 5 and p[2] == "AUTO" and p[0] >= first:
-            found = re.search(r"owner rule (o\d+)", p[5])
-            found and found.group(1) in rules or out.append(("auto-record", "FAIL", "%s has an auto answer with no standing owner rule record" % p[1]))
-            hit = next((n for n, x in CLASSES.items() if x.search(p[3] + " " + p[4])), "")
-            hit and out.append(("auto-safety", "FAIL", "%s was auto-answered in safety class %s" % (p[1], hit)))
-    return out
+def auto_rows(root):  # moved to replan.py (byte room, DEL-3)
+    import replan
+    return replan.auto_rows(root)
 
 
 # --- the hard ETA (GRD-14, o52): past it the goal waits under Needs you (ship now, extend once, defer); only `goal.py set` with an owner record moves it.
@@ -308,8 +328,8 @@ def eta_record(g, rid, slug, what):
     if not rid:
         g.no("%s needs the owner's words. Fix: %s (ETA_NO_RECORD)" % (what, fix))
     found = [r for r in owner_rows() if r[0] == rid]
-    if found and RULE in found[-1][4].split(",") and what != "an ETA change" and (what.startswith("the recommended") or what == "raising a budget" and any(" | %s | AUTO | " % slug in x and "budget" in x for x in since(top(), ""))):
-        return rid  # the standing rule, for a goal full auto answered: reusable (never an ETA move)
+    if found and RULE in found[-1][4].split(",") and (what.startswith("the recommended") or what in ("raising a budget", "an ETA change") and any(" | %s | AUTO | " % slug in x and ("eta" if what[1] == "n" else "budget") in x for x in since(top(), ""))):
+        return rid  # the standing rule, for a goal full auto answered: reusable
     if not found or slug not in found[-1][4].split(","):
         g.no("owner-words record %s does not exist or does not cover %s. Fix: %s (ETA_NO_RECORD)" % (rid, slug, fix))
     for path in glob.glob(os.path.join(g.state_dir(), "*.extra.json")):
@@ -331,7 +351,7 @@ def eta_set(g, args, state, why):
         g.guards.add_set(runs, slug, "eta_choice", dict(note, choice=args.eta_choice), "set eta choice %s (record %s): %s" % (args.eta_choice, rid, why))
     if args.eta_choice == "ship":
         for step in g.fit.STEPS:
-            if not g.fit.recorded(state, step):
+            if not g.fit.recorded(state, step) and step not in ("review", "qa"):  # an ETA change never skips review or qa (TD712)
                 state.setdefault("flow", {})[step] = "skipped: past its ETA, the owner chose ship now (record %s)" % rid
     if args.eta_choice == "defer":
         state["status"], state["retired"] = "retired", {"reason": "past its ETA, the owner moved it to the next release (record %s)" % rid}
@@ -340,26 +360,9 @@ def eta_set(g, args, state, why):
     g.save(state, "eta %s (record %s): %s" % (args.eta_choice or "extended by %dm" % args.eta_extend, rid, why))
 
 
-def eta_rows(root, at=None):
-    """(rule, level, text): eta-missing (WARN), eta-extended (FAIL: no covering record), eta-overrun (FAIL: past its ETA, not waiting)."""
-    at, out = at or datetime.datetime.now(datetime.timezone.utc), []
-    covers, grace = {r[0]: r[4].split(",") for r in owner_rows(root)}, config(root).get("step_budget_minutes") or 30
-    for path in sorted(glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))):
-        run = bs.read_json(path)
-        if not isinstance(run, dict) or not run.get("slug"):
-            continue
-        seen, slug = eta_seen(root, run), run["slug"]
-        for e in seen.get("eta_extend") or []:
-            if not isinstance(e, dict) or slug not in covers.get(e.get("record"), []):
-                out.append(("eta-extended", "FAIL", "%s has an ETA extended with no covering owner-words record" % slug))
-                break
-        if run.get("status") not in ("running", "waiting", "failed", "stopped"):
-            continue
-        if not eta_minutes(seen):
-            out.append(("eta-missing", "WARN", "%s has no ETA" % slug))
-        elif eta_over(seen, bs.active_minutes(seen, at) - grace) and not (run.get("waiting") or {}).get("eta"):
-            out.append(("eta-overrun", "FAIL", "%s is past its ETA and not waiting under Needs you" % slug))
-    return out
+def eta_rows(root, at=None):  # moved to machines.py (byte room, DEL-3)
+    import machines
+    return machines.eta_rows(root, at)
 
 
 def eta_settle(loop, events, now, why=lambda e: ""):
