@@ -15,3 +15,25 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+## PR notes
+
+Refs #5343
+
+Root causes (details in .loop/goals/kr-ls.pr.md):
+
+- ls-judge-login, case `judge`: 0d3687d5b (2026-11-14) rewrote this repo's `.loop/config.json` by hand and dropped
+  `judge_command`. Setup has not written it since c53fd2016, so nothing restored it, and the Mac judge here had no command,
+  including the tool-less default the design relies on. Fixed by restoring `"judge_command": ["claude", "-p", "--tools", ""]`.
+  .loop/START.md was regenerated (`entry.py write`) and gains that key's row.
+- ls-judge-login, case `messages` (folded in from ls-messages-table): drop-usage (9f4e31b8b) moved the Messages list from
+  docs/wiki/Health.md into skills/workflow-health/references/commands.md, and 75f533eca moved the MAIL_ENV_MODE check into
+  rounds.py. The toy still read Health.md and did not search rounds.py. It now reads both, and the per-code pattern is
+  stricter: each code needs its own meaning and `(exit N; fix: ...)`.
+- runbook-registry, "with no registry file": since dfa036cb3 the generated Automation block links routines to their runbooks
+  from `.loop/routines.tsv`, so removing the registry correctly makes How-to-use-Automation STALE. The toy now checks that no
+  runbook or registry finding appears and that STALE is the only new line, then renders and requires the exact baseline.
+- runbook-registry, "the same routine passes once its page carries the runbook": fixed on main by 39c011064 (the toy declares
+  the routine's permissions). It passes unchanged.
+
+Net rows: 0. Both known lines are removed.

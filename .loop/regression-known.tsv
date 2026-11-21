@@ -6,9 +6,7 @@ package-headroom-held	package at the 99-file cap; toy wants 98; fold one script 
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
 trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
 rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
-ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the default judge_command grants no tools (--tools "")'; see #5343
 ls-size-budget	red on main f3a20557: test-local-schedule.sh size fails 'the package holds at most 99 files'; see #5343
-runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
 guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4104
 lane-messages-table	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4091
 lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4153

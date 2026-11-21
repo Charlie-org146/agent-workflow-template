@@ -2,7 +2,7 @@
 # reads: skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-health/scripts/rounds.py
 # reads: skills/workflow-health/scripts/rules.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
-# reads: skills/workflow-delivery/scripts/private.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl docs/wiki/Health.md
+# reads: skills/workflow-delivery/scripts/private.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl skills/workflow-health/references/commands.md
 # The local schedule (local-schedule done lines 1 to 6): one user launch agent, a registry outside every repo, a tick that runs
 # health with the judge and, for a private repo, the full regression, then posts the digest. No launchctl, no network, no real
 # claude: launchctl, gh and the judge are fakes and every home is a temp folder. usage: test-local-schedule.sh [PART]
@@ -295,10 +295,12 @@ if want usage; then H="$here/skills/workflow-health/references/commands.md"
   check "every local command the reference names exists in automation.py --help" '[ -z "$missing" ]'
   check "the command reference states the trust model once and that no API key secret exists" 'grep -q "the Mac is the CI" "$H" && grep -q "no API key secret" "$H"'
 fi
-if want messages; then H="$here/docs/wiki/Health.md"; miss=""
+# the Messages list lives in the health command reference (pages carry no Usage); each code's entry gives its meaning, then
+# (exit N; fix: ...) before the next code, and the code is printed by one of the schedule's scripts (rounds.py checks mail.env)
+if want messages; then H="$here/skills/workflow-health/references/commands.md"; miss=""
   for code in SCHEDULE_CRON SCHEDULE_PROGRAM_PATH SCHEDULE_DUPLICATE_ORIGIN SCHEDULE_NO_ORIGIN SCHEDULE_PLATFORM SCHEDULE_REMOVED_WORKFLOW SCHEDULE_AUTH SCHEDULE_OFFLINE REGISTRY_UNREADABLE MAIL_ENV_MODE TICK_CRASH STATUS_FAILED STATUSES_UNREADABLE BLOCKS DRIFT JUDGE_SKIPPED PROGRAM_MISSING ORIGIN_CHANGED PATH_MISSING; do
-    grep -q "\`$code\` .*(exit" "$H" || miss="$miss table:$code"
-    grep -q "$code" "$S/workflows.py" "$S/automation.py" "$here/skills/workflow-delivery/scripts/private.py" || miss="$miss print:$code"
+    grep -qE "\`$code\` [^\`]+ \(exit [0-9][^;)]*; fix: [^)]+\)" "$H" || miss="$miss table:$code"
+    grep -q "$code" "$S/workflows.py" "$S/automation.py" "$S/rounds.py" "$here/skills/workflow-delivery/scripts/private.py" || miss="$miss print:$code"
   done
   out="$miss"; check "every code the scripts print has a Messages row with its meaning, exit status and fix, and every printed line ends with its code" '[ -z "$miss" ]'
   check "goal.py pr exit 5 is documented" 'grep -q "goal.py. pr. exits 5\|goal.py pr exits 5" "$H"'

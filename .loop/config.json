@@ -16,6 +16,12 @@
     "-C",
     "WORKTREE"
   ],
+  "judge_command": [
+    "claude",
+    "-p",
+    "--tools",
+    ""
+  ],
   "parallel": 0,
   "risky_paths": [
     "^\\.github/",

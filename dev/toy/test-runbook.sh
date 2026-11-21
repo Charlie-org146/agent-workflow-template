@@ -114,7 +114,13 @@ $(printf '%s\n' "$GOOD" | sed 1d)"
   check "an indented heading inside another block does not count as the runbook" 'out | grep -qF "a '"'"'### setup-nightly'"'"' runbook"'
   reset; printf 'ghost-routine\tNoSuchPage\n' >> .loop/routines.tsv
   check "a registry row naming no page is refused" 'out | grep -qF "Runbook: DOC-16 a routine on a feature page"'
-  reset; rm -f .loop/routines.tsv; check "with no registry file the check still passes" '[ "$(out | sort)" = "$BASE" ]'
+  # the Automation block links each routine to its runbook from the registry, so with no registry that generated page
+  # is stale until it is rendered again; nothing else may change, and once rendered the output is the copy's own
+  reset; rm -f .loop/routines.tsv
+  check "with no registry file the check names no runbook or registry finding, only the Automation page to render" '! out | grep -qE "Runbook|routines\.tsv" && [ "$(out | grep -v "^STALE Automation: docs/wiki/How-to-use-Automation.md differs from a fresh render" | grep -v "^DOCS " | sort)" = "$(grep -v "^DOCS " <<<"$BASE")" ]'
+  python3 skills/workflow-docs/scripts/criteria.py render >/dev/null 2>&1
+  check "with no registry file the check still passes" '[ "$(out | sort)" = "$BASE" ]'
+  reset; git checkout -q -- docs
 }
 
 case_locked() {
