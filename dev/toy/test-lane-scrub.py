@@ -43,7 +43,7 @@ NAME = re.compile(r"[A-Z][A-Z0-9_]*(SESSION_ID|POD_ID|OPERATION_SESSION)")
 TIMEOUT = 60
 REPAIR = "add the name to SESSION_DROP in " + ACTIONS + " and run `python3 skills/workflow-regression/scripts/regression.py workflow`"
 
-PROBE = """import importlib.util, inspect, json, os, sys
+PROBE = """import hashlib, importlib.util, inspect, json, os, sys
 operate_path, base, host, keep = sys.argv[1], sys.argv[2], sys.argv[3].split(","), sys.argv[4].split(",")
 sys.path.insert(0, os.path.dirname(operate_path))
 spec = importlib.util.spec_from_file_location("operate", operate_path)
@@ -55,7 +55,9 @@ for name in host:
     if os.environ.get(name):
         operate.add_id(base, os.environ[name])
         offered += 1
-print("PROBE " + json.dumps({n: os.environ.get(n) for n in host + keep + ["PATH"]}))
+seen = {n: os.environ.get(n) for n in host + keep}
+seen["PATH_SHA"] = hashlib.sha256(os.environ.get("PATH", "").encode()).hexdigest()
+print("PROBE " + json.dumps(seen))
 print("OFFERED %d" % offered)
 """
 DRIVER = """import json, shlex, sys
@@ -80,7 +82,8 @@ top = sys.argv[2]
 tests.lane_checks(top, ["checks"])
 print("SEEN " + open(top + "/seen.json").read())
 """
-PLAIN = "import json, os\njson.dump({n: os.environ.get(n) for n in %r}, open('seen.json', 'w'))\n"
+PLAIN = ("import hashlib, json, os\nseen = {n: os.environ.get(n) for n in %r}\n"
+         "seen['PATH_SHA'] = hashlib.sha256(os.environ.get('PATH', '').encode()).hexdigest()\njson.dump(seen, open('seen.json', 'w'))\n")
 failed = []
 made = []
 
@@ -120,7 +123,7 @@ def kept(seen, env, label):
     bad = [n for n, v in KEEP.items() if (seen or {}).get(n) != v]
     check(not bad, "%s: LOOP_PRIVATE_NAMES, LOOP_ROLE, LOOP_SESSION_TOOL and TOY_KEEP come through unchanged (empty, spaced and newline values included)" % label,
           "changed or dropped (names only): " + ", ".join(bad))
-    check((seen or {}).get("PATH") == env["PATH"], "%s: PATH comes through unchanged" % label)
+    check((seen or {}).get("PATH_SHA") == hashlib.sha256(env["PATH"].encode()).hexdigest(), "%s: PATH comes through unchanged (a PATH longer than the output a passing row keeps, too)" % label)
 
 
 def edit(path, old, new, what):
@@ -139,9 +142,16 @@ def real_state():
     return hashlib.sha256(open(path, "rb").read()).hexdigest() if common and os.path.isfile(path) else "absent", common
 
 
+def row_parent_env():
+    """The environment the runner starts from: kept variables, fake host values and a PATH longer than the 1,500 characters a passing row's output keeps."""
+    env = dict(os.environ, **KEEP, **FAKE)
+    env["PATH"] = os.pathsep.join([os.environ["PATH"]] + ["/toy/pad"] * 300)
+    return env
+
+
 def lane(scripts, repo, base):
     """The row's environment as the lane runner hands it over, with fake host values set around it (the toy's own os.environ is never edited)."""
-    env = dict(os.environ, **KEEP, **FAKE)
+    env = row_parent_env()
     probe = os.path.join(repo, "probe.py")
     open(probe, "w").write(PROBE)
     out = run([sys.executable, "-c", DRIVER, scripts, repo, sys.executable, probe, OPERATE, base, ",".join(HOST), ",".join(KEEP)], env=env)
@@ -152,11 +162,11 @@ def lane(scripts, repo, base):
 
 def lane_checks(scripts):
     """What a plain CI job's step sees when tests.lane_checks runs it here, with fake host values set."""
-    env = dict(os.environ, **KEEP, **FAKE)
+    env = row_parent_env()
     top = tmp()
     os.makedirs(os.path.join(top, ".github", "workflows"))
     open(os.path.join(top, ".github", "workflows", "ci.yml"), "w").write(CI)
-    open(os.path.join(top, "probe.py"), "w").write(PLAIN % (list(HOST) + list(KEEP) + ["PATH"],))
+    open(os.path.join(top, "probe.py"), "w").write(PLAIN % (list(HOST) + list(KEEP),))
     seen = tagged(run([sys.executable, "-c", CHECKS, scripts, top], env=env), "SEEN")
     return (json.loads(seen) if seen else None), env
 
