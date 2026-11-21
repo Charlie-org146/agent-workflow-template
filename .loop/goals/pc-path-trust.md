@@ -16,3 +16,8 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. On a Windows machine where the repository root is trusted in the app, start a new goal and bind it to a worker session with `python3 skills/workflow-monitoring/scripts/sessions.py bind SLUG SESSION`.
+   Expect: the bind goes through and prints the session name; it does not print REFUSED or FOLDER_TRUST for the new worktree under the trusted root.
+2. On the same machine, bind a goal whose worktree is outside the trusted root.
+   Expect: it prints `REFUSED: ask the owner to trust` followed by that folder and `(FOLDER_TRUST)`.
+3. This step needs a person on a Windows machine; the tests here only simulate Windows paths. The loop cannot reach done for MCH-1 on Windows without it, and the release refuses a goal with no Verify by hand step.
