@@ -266,6 +266,7 @@ None
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
+| [size-limits-held](Tests#t-size-limits-held) | requirement | GRD-20 | Given GRD-20, when health checks the Size group, then it is green: every SKILL.md is under its line cap and no page holds more requirements than criteria_max, so nothing on main is over its limit. | not run |
 | - | requirement | GRD-20 | no passing test | not enforced |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given GRD-4, when test-deployments.sh runs its 2 cases, then each passes: the govern hook lets it through; the govern hook still refuses it (negative control. | PASS 2026-11-12 |
 | [desk-lists-4805](Tests#t-desk-lists-4805) | defect | [#4805](https://github.com/jcl2018/agent-workflow-template/issues/4805) closed (2026-11-18) | Given the missing desk onboarding and background worker fallback, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |

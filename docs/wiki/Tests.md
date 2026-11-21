@@ -262,6 +262,7 @@
 | <a id="t-quiet-plain-import-4892"></a>quiet-plain-import-4892 | defect | [#4892](https://github.com/jcl2018/agent-workflow-template/issues/4892) closed (2026-11-17) | not run | - | local | 2026-11-17 |
 | <a id="t-desk-lists"></a>desk-lists | requirement | GRD-4 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
 | <a id="t-desk-lists-4805"></a>desk-lists-4805 | defect | [#4805](https://github.com/jcl2018/agent-workflow-template/issues/4805) closed (2026-11-18) | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-17 |
+| <a id="t-size-limits-held"></a>size-limits-held | requirement | GRD-20 | not run | - | local | no |
 
 ## Health
 
@@ -507,6 +508,7 @@
 | <a id="t-private-checks-run-local"></a>private-checks-run-local | requirement | SET-1 | not run | - | local | 2026-11-16 |
 | <a id="t-agent-routing"></a>agent-routing | workflow | SET-10: One versioned template; every agent runs one loop | not run | - | local | 2026-11-20 |
 | <a id="t-goal-pr-regenerates-start"></a>goal-pr-regenerates-start | requirement | SET-2 | not run | - | local | 2026-11-21 |
+| <a id="t-skills-static-rules"></a>skills-static-rules | requirement | SET-10 | not run | - | local | no |
 
 ## Other
 

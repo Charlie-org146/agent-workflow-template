@@ -53,6 +53,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - run: test ! -f dev/skills-scan.py || python3 dev/skills-scan.py
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with:
@@ -84,5 +85,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 skills/workflow-docs/scripts/docs.py check
+      - run: test ! -f dev/skills-scan.py || python3 dev/skills-scan.py
       - run: find skills -name '*.py' -exec python3 -m py_compile {} +
       - run: python3 skills/workflow-docs/scripts/criteria.py render --check

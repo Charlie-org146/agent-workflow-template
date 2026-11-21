@@ -2,7 +2,8 @@
 # needs a lane or a CI run. The git tag is the version. The part is the merged pull request's label release:major or
 # release:minor (default patch, as release-drafter does). Tool: gh release create --generate-notes
 # (https://cli.github.com/manual/gh_release_create). VERSION and CHANGELOG.md in the repo are not written per merge; the
-# release is the tag and its notes only: no package is built or attached (SET-10). While an issue labeled main-red is open the job holds:
+# release is the tag and its notes only: no package is built or attached (SET-10). The tag is a release commit (this merge's tree
+# with VERSION set to the version, the merge as its parent), so the source archive of a tag carries its own version. While an issue labeled main-red is open the job holds:
 # it prints "held: main red (#N)", ends green and publishes nothing (owner o672, TD507); the first push after the last one
 # closes releases from that commit as usual. An open one that the pushed commit's merged pull request closes does not hold (TD517).
 name: release
@@ -46,7 +47,15 @@ jobs:
         if: steps.hold.outputs.held != '1'
         run: |
           set -eu
-          if git tag --points-at "$GITHUB_SHA" | grep -q '^v'; then echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # A rerun: a v tag at this commit, or on its release commit (whose parent is this commit), means the version is made;
+          # only a release missing from that tag is created.
+          for t in $(git tag --list 'v[0-9]*' --contains "$GITHUB_SHA" --sort=creatordate); do
+            if [ "$(git rev-parse "$t^{commit}")" = "$GITHUB_SHA" ] || [ "$(git rev-parse "$t^{commit}^" 2>/dev/null)" = "$GITHUB_SHA" ]; then
+              echo "skip=1" >> "$GITHUB_OUTPUT"
+              gh release view "$t" > /dev/null 2>&1 || gh release create "$t" --verify-tag --title "$t" --generate-notes
+              exit 0
+            fi
+          done
           labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[].labels[].name' || true)
           part=patch
           echo "$labels" | grep -qx 'release:minor' && part=minor
@@ -63,4 +72,17 @@ jobs:
         run: |
           set -eu
           v="${{ steps.version.outputs.version }}"
-          gh release create "v$v" --target "$GITHUB_SHA" --title "v$v" --generate-notes
+          # The tag is a release commit: this merge's tree with VERSION set to the version, the merge commit as its parent, so the
+          # source archive of the tag says the tag (update.py reads VERSION there). main does not move; only the tag is pushed.
+          echo "$v" > VERSION
+          git add VERSION
+          commit=$(git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit-tree "$(git write-tree)" -p "$GITHUB_SHA" -m "Release v$v of $GITHUB_SHA")
+          git tag "v$v" "$commit"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')" push origin "refs/tags/v$v"
+          gh release create "v$v" --verify-tag --title "v$v" --generate-notes
+      - if: always() && steps.hold.outputs.held != '1' && steps.version.outputs.skip != '1'
+        continue-on-error: true
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          n=$(gh release view "v$v" --json assets --jq '.assets | length') || { echo "warning: no release for v$v; rerun the job to create it"; exit 0; }
+          [ "$n" = 0 ] || echo "warning: v$v holds $n asset(s); no asset is expected (SET-10): gh release delete-asset v$v NAME"
