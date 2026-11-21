@@ -69,8 +69,11 @@ Manual negative controls (each run in a throwaway clone; all behave as stated, a
 14. The same dirty target when the script is run from `docs/migrations` instead of the repo root: still refused (the guard runs from the repo root).
 15. A base that already holds marker blocks: `REFUSED ... pass --refresh to rewrite them`; with `--refresh` the run writes 0 files and the tree stays clean.
 
-`check` on the committed branch before the merge-up (base 48ac06e7d): every proof passes except `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28; it ends `CHECK FAILED (1)` with exit 1 until then. The final `check` output replaces this after the merge-up.
-
+`check` on the final head (base 48ac06e7d): every proof passes and it ends `CHECK OK` with exit 0. DOC-27 and DOC-28 are a note, not a proof (see the order change below): none present, none required.
 What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and the five done lines. It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
 
 Order change (Operation TD668): this goal merges before the goal that adds DOC-27 and DOC-28, so the check's proof `skipped IDs present on HEAD` became a note: those two IDs are skipped if present and nothing is required if they are absent, the report says the goal that adds them lands later, and the sentence above reads `(and DOC-27 and DOC-28 once they land)`. No other proof changed.
+
+Scoped review of the order-change diff (everything since 30ee5e1ff), one reviewer, verdict recorded: no other proof weakened, no assertion removed beyond the one named, no defect in the changed lines; `VERDICT: SAFE`. Its one cosmetic point (a stale paragraph about the old failing proof) is fixed above.
+
+Regression lane (qa): 56 of 634 affected rows ran in 900 s: 49 passed, 3 known, 4 failed (`ls-narrow-triggers`, `no-done-line-refused`, `pending-waits`, `stale-found`). All four fail identically when run alone on a clean origin/main (48ac06e7d) on the same Mac, so they are not caused by this change; none is on the known list; handled by the owner's ruling relayed by Operation.
