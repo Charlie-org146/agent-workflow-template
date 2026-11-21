@@ -32,7 +32,10 @@ LINUX = os.path.isdir("/proc/self") and sys.platform.startswith("linux")
 _libc = None
 
 
-def fail(why, hint):
+def fail(why, hint, denied=False):
+    if denied:  # a sandbox that forbids ps: say so by name and exit 77, which the lane reports as SKIPPED, never as a silent pass
+        sys.stderr.write("SKIP: REAP: cannot list processes (%s); leftover processes were not checked here\n" % why)
+        sys.exit(77)
     sys.stderr.write("REAP: cannot list processes: %s. Fix: %s\n" % (why, hint))
     sys.exit(1)
 
@@ -57,7 +60,8 @@ def table():
         text = subprocess.run(["ps", "-ax", "-o", "pid=,ppid=,uid=,stat=,lstart="], capture_output=True,
                               text=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError) as e:
-        fail("ps failed (%s)" % e, "check that ps runs in this shell")
+        said = "%s %s" % (e, getattr(e, "stderr", "") or "")
+        fail("ps failed (%s)" % said.strip(), "check that ps runs in this shell", isinstance(e, PermissionError) or "not permitted" in said.lower())
     for line in text.splitlines():
         cells = line.split(None, 4)
         if len(cells) == 5 and cells[2] == str(uid):
