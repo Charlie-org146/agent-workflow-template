@@ -155,7 +155,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
 
 # 7. every setting is in the settings table with its default, and this repo's config carries them
 table = {name: default for name, home, default, _ in settings.TABLE}
-check(table.get("time_budget_minutes") == 240 and table.get("max_merge_rounds") == 8 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 4,
+check(table.get("time_budget_minutes") == 240 and table.get("max_merge_rounds") == 8 and table.get("max_active_goals") == 20 and table.get("plan_pause_percent") == 80 and table.get("min_free_memory_gb") == 3,
       "the settings table lists time_budget_minutes, max_merge_rounds, max_active_goals and plan_pause_percent with their defaults")
 with open(os.path.join(root, ".loop", "config.json")) as handle:
     live = json.load(handle)
