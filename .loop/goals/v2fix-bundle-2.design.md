@@ -10,7 +10,7 @@ Six reviewed fixes and one header cleanup sit on one branch, each already writte
 
 1. Is this the right problem? Yes: the fixes exist and are reviewed. The open work is to prove them together on the current main and ship them in one pull request.
 2. If we do nothing: each fix lands later as its own pull request, serializing the merge queue six more times.
-3. What already solves part of it: the branch carries every fix, its row and its kept record. The pull request body draft is `.loop/goals/v2fix-bundle.pr.md`.
+3. What already solves part of it: the branch carries every fix, its row and its kept record. The pull request body draft is `.loop/goals/v2fix-bundle-2.pr.md`.
 4. Distribution: the pull request path through `goal.py pr`, no new artifact.
 
 ## Approaches
