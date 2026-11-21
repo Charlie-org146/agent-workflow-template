@@ -16,3 +16,17 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+## PR notes
+
+Fixes #5671, #5665 and #5704. Refs #5700, #5705 and #5706.
+
+What changes: dev/toy/test-platform-limits.py and dev/toy/test-machine-log.py run hermetically (no host session, loop or git location variable, a throwaway HOME, fixture repositories that are checked to be their own repository, no git templates or inherited git config), clean up after themselves, keep every earlier assertion, and add controls: a decoy-repository pair that proves the scrub matters, a canary per scrubbed variable family, a verified guard on the checkout's own operation id file (hashed and never written), a sentinel check, followed-repository discovery with a disposable registry, and the two row-matched PASS lines printed last. The rows platform-sends-counted and machine-status-live-workers in .loop/regression.tsv are changed in place (no new row) so each also requires its toy to exit 0 (#5704).
+
+Re-proof of done line 4: each row was re-proven red with the regression tool's red command on a recorded break: the toy's final exit line becomes an exit with status 3 (`sed -i.bak 's/^sys.exit(1 if fails else 0)$/sys.exit(3)/'` on the toy), so the toy prints its PASS lines and exits non-zero and the row fails; the proof is the rows' seen_red field. Run alone on this branch, both rows pass.
+
+Carry-over disclosure: the idea and plan records for this goal are carried over from goal toy-hermetic (Operation ruling TD624), whose plan ran at full depth on the same commits up to 971ff2b3e; the idea record was condensed. The #5704 row change was not part of that plan review; the review step ran fresh and covered it.
+
+Review: full depth and fresh: seven specialists, a Claude and a Codex adversarial pass, four QA probes, and a fresh re-review of the fix commit; an independent review of 73d5ba790 passed. The full plan and review reports are kept outside the repo, per the leak rule.
+
+Follow-ups, filed separately: #5705 (audit the seven other toys that name operation.id) and #5706 (a common launcher for the toys). Known limit: the hash guard on the real operation id file can report a false failure if another session legitimately writes that file during a run; its message names the sentinel result.
