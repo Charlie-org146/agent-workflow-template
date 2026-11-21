@@ -211,10 +211,10 @@ reset
 echo "== issue 156: commits merged in from the base branch don't stale the branch's pages"
 fork=$(git rev-parse HEAD)
 git switch -q -c side; git switch -q -c other main
-printf '\n# other goal\n' >> calc.py; git commit -qam "Other goal code" >/dev/null
+printf '\nOTHER_GOAL = 1\n' >> calc.py; git commit -qam "Other goal code" >/dev/null
 edit $P "- No charts." "- No charts.
 - No graphs."; git commit -qam "Other goal page" >/dev/null
-git switch -q main; git merge -q --no-ff --no-edit other; printf '\n# owner\n' >> calc.py; git commit -qam "Owner code on main" >/dev/null
+git switch -q main; git merge -q --no-ff --no-edit other; printf '\nOWNER = 1\n' >> calc.py; git commit -qam "Owner code on main" >/dev/null
 git switch -q side; edit $P "- No charts." "- No charts.
 - No tables."; git commit -qam "Branch page" >/dev/null
 git merge -q --no-edit main >/dev/null 2>&1 || { git checkout -q --ours $P; git add -A; git commit -qm "Merge main" >/dev/null; }
@@ -222,7 +222,7 @@ $docs check --base "$fork" 2>&1 | grep -q "^STALE Delivery: .* Owner code on mai
 git push -q origin main
 out=$($docs check --base "$fork" 2>&1)
 ! grep -q "^STALE Delivery" <<<"$out" && ok "after merging the base branch, its commits don't make the branch's page stale (issue 156)" || bad "merged base: $out"
-printf '\n# branch\n' >> calc.py; git commit -qam "Branch code" >/dev/null
+printf '\nBRANCH = 1\n' >> calc.py; git commit -qam "Branch code" >/dev/null
 $docs check --base "$fork" | grep -q "^STALE Delivery: 1 commits since the page: [0-9a-f]* Branch code" && ok "the branch's own later change still makes the page stale (issue 156)" || bad "own change"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
