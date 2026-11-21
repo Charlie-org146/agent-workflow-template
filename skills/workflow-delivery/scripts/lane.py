@@ -187,7 +187,8 @@ def answer(runs, slug, src, name):
 
 
 def passing(runs, slug, step):
-    src = lanekit.lane_ok(runs, slug, step, rev("HEAD"))[1]
+    ok, src = lanekit.lane_ok(runs, slug, step, rev("HEAD"))
+    src = src if ok == rev("HEAD") else step
     return src, read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
 
 
