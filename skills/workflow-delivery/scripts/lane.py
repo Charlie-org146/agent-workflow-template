@@ -200,8 +200,9 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
         if any(j and live(j) for j in [job_of(runs, slug, n)[1] for n in NAMES]):
             return "fail", "LANE_FRESH: a lane of %s is still running. Fix: role.py lane-wait %s NAME, then run --fresh again." % (slug, slug), []
         for n in NAMES:
-            if job_of(runs, slug, n)[1]:
-                stop(*job_of(runs, slug, n))
+            b, j = job_of(runs, slug, n)
+            if j and not live(j):
+                stop(b, j)
         drop(*[lanekit.lane_base(runs, slug, n) + end for n in NAMES for end in (".ok", ".last")])
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:
@@ -215,6 +216,8 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
             stop(other_base, other_held)
         elif live(other_held):
             return "running", running_line(other_held, other), []
+        elif os.path.exists(other_held["rc"]) or os.path.exists(other_held["rc"] + ".claimed"):
+            finalize(other_base, other_held, other)
     if held and not live(held) and not os.path.exists(held["rc"]) and not fresh(held) \
             and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
         stop(base, held)
@@ -300,7 +303,9 @@ def lane_status(runs, slug, name):
             if live(job):
                 return "running", running_line(job, other)
             if os.path.exists(job["rc"]) or os.path.exists(job["rc"] + ".claimed"):
-                finalize(sib, job, other)
+                got = finalize(sib, job, other)
+                if got[0] != "pass":
+                    return got[:2]
     if not dirty() and (src := lanekit.passed(runs, slug, head, name)):
         return "pass", answer(runs, slug, src, name)
     done = read_json(base + ".last") or {}

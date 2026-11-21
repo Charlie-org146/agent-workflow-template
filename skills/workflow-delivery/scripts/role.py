@@ -310,7 +310,7 @@ def lane_part(slug):
             import private
             line = private.plain(re.sub(r"; log: \S+", "", last.get("line", "").split("\n")[0]))
             if src != "pr":
-                line += " (%s lane ended %s)" % (src, datetime.datetime.fromtimestamp(last.get("ended", 0), datetime.timezone.utc).isoformat(" ", "minutes"))
+                line += " (%s lane ended %s)" % (src, str(datetime.datetime.fromtimestamp(last.get("ended", 0), datetime.timezone.utc))[:16])
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
@@ -331,6 +331,7 @@ NO_PUSH = "REFUSED: the bookkeeping commit did not land, so nothing was pushed (
 
 
 def record(state, base):
+    part = lane_part(state.get("slug", ""))
     top = git_out("rev-parse", "--show-toplevel")
     if top:
         issues(top)
@@ -363,7 +364,7 @@ def record(state, base):
                 os.remove(lock)
             undo(top, changed)
             sys.exit(NO_PUSH)
-    state["pr_lane"] = lane_part(state.get("slug", ""))
+    state["pr_lane"] = part
     head = git_out("rev-parse", "HEAD")
     state["pr_head"] = head
     state["pr_base"] = git_out("merge-base", head, "origin/" + base) or git_out("rev-parse", "origin/" + base)

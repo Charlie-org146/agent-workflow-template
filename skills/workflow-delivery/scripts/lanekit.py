@@ -203,8 +203,12 @@ def lane_base(runs, slug, name):
 
 
 def lane_ok(runs, slug, step, head):
-    oks = [(open(p).read().strip() if os.path.exists(p) else "", n) for n in (step,) + tuple(x for x in LANES if x != step)
-           for p in [lane_base(runs, slug, n) + ".ok"]]
+    oks = []
+    for n in (step,) + tuple(x for x in LANES if x != step):
+        try:
+            oks.append((open(lane_base(runs, slug, n) + ".ok").read().strip(), n))
+        except OSError:
+            oks.append(("", n))
     return next((o for o in oks if o[0] == head), next((o for o in oks if o[0]), ("", step)))
 
 

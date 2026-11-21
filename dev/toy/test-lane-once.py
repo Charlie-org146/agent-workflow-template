@@ -217,6 +217,14 @@ clear()
 record("qa", head2, state="fail")
 check("LANE qa" not in role.lane_part(SLUG), "the PR body never shows a failing record for a lane the gate accepted")
 
+# a finished sibling that was never finalized is finalized, then its pass answers (no second lane); a failure is reported
+clear()
+with open(base("qa") + ".job", "w") as handle:
+    json.dump({"head": head2, "attempt": "fin", "started": time.time() - 60, "limit": 600, "rc": base("qa") + ".fin.rc", "pool": tmp,
+               "markers": 1, "pid": 999999, "pstart": ""}, handle)
+open(base("qa") + ".fin.rc", "w").write("1")
+check(lane.lane_status(runs, SLUG, "ship")[0] == "fail", "lane-wait ship reports a sibling's failure it finalized (not NO LANE)")
+
 # the three names run one argv
 check(list(inspect.signature(lane.lane_argv).parameters) == ["seconds"] and inspect.getsource(lane.lane).count("lane_argv(") == 1,
       "the lane command comes from lane_argv alone, which takes no lane name")
