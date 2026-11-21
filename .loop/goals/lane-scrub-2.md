@@ -12,6 +12,19 @@ Frozen. A wrong done line needs a new goal.
 2. Given a lane run, then the real .git/loop/operation.id is byte-identical before and after (compared by hash, never printed), and with the scrub reverted the toy check fails
 3. Given this goal's diff, then only the lane runner (actions.py and tests.lane_checks), its toy, its row and its rendered Tests line, the regenerated embedded copy of tests.py in .github/workflows/regression.yml (no trigger, permission or secret change, said in the pull request body) and the goal's own records change, every other variable in the row environment is unchanged, the docs check passes and the private scan is clean
 
+## Deferred and skipped
+
+Recorded by the autoplan step (run 20261120-203857); none of this is built here, each is a decision for the owner.
+
+- S7 skipped: no check that a row run never reaches variables other than the five dropped names (a nested session reads other `CLAUDE_CODE_*` names; named as a residual gap in the pull request body).
+- Allow-list rejected: the scrub stays a deny list of five names, with a toy scan (S6) that fails when a session-looking name is spelled in `skills/` and is not dropped; an allow-list of kept variables would break rows that need others.
+- S4 hint loss, UC1 settled by the operator (keep the frozen build): three `Fix:` hints stay out of `actions.py` (lines 321, 340, 342) because `actions.py` has 14 spare bytes against 113 needed; they come back after #5687 merges (Refs #5716).
+- Follow-up 1: split `actions.py` or raise its 19,000-byte cap deliberately.
+- Follow-up 2: an operational completion criterion for the qa lane after this goal and toy-hermetic merge.
+- Follow-up 3: structured diagnostics for plain-job failures in `tests.py`; a repo-wide onboarding quickstart.
+- Narrowed guarantee: the toy gates on the operation id file it plants in its own temporary repo; the real file is only read (informational), because a legitimate claim by another session changes it. Done line 2 is read that way.
+- Owner decisions taken at their defaults: M4 keep the carried records of lane-scrub; T-eng-2 leave the mixed pair of a new `tests.py` with an older customized `actions.py` as is (both ship together; `tests.lane_checks` is not reached in this public repo).
+
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
