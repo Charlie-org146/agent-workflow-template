@@ -6,7 +6,7 @@ Six principles sit above the features. Health gives one verdict for each, red wh
 
 ![How principles, health and features fit](principles-overview.svg)
 
-Principle 1 may hold 8 features until v2.0.0, on the owner's words (record o721); every other principle keeps DOC-26's limit of five.
+The owner's words, record o721: "principle 1 may hold 8 features until v2.0.0".
 
 ## 1. Guided: documentation-driven and standard
 
