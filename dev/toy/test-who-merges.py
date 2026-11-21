@@ -4,7 +4,16 @@
 """#3868: a goal's pull request merges only through its own merge.py, never as a side effect of a report.
 
 Two goals sit at pr in a repo with auto_merge on. A session report for one of them (waiting, or merged for a PR that is
-still open) must not run merge.py for either; merge.py for one goal runs only when asked for that goal."""
+still open) must not run merge.py for either; merge.py for one goal runs only when asked for that goal.
+
+What the scan below is: a tripwire against accident, not a proof of exclusive merge authority. It reads the scripts under
+skills/workflow-monitoring/scripts and skills/workflow-delivery/scripts only; the other skills (workflow-release,
+workflow-health, workflow-docs, workflow-regression, workflow-setup) are not scanned. It does not cover a merge spelled
+as a REST call (gh api ... /merge), a GraphQL mutation (mergePullRequest, enablePullRequestAutoMerge), an import or runpy
+of merge.py, or a string built by concatenation; and it does not check who wrote a watcher job file (that gate is
+proctree.require_operation in mailbox.py's cmd_watch). The tick probe re-executes mailbox.py's real resume() and
+cmd_tick() with stubs, so it is coupled to their shape: when that shape changes the probe says so and the harness, not
+the product, is what to update. The negative controls run on every execution of this test."""
 import argparse
 import ast
 import copy
@@ -12,6 +21,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -106,6 +116,9 @@ def names_gh_merge(source, tree):
         and any(isinstance(left, ast.Constant) and left.value == "pr"
                 and isinstance(right, ast.Constant) and right.value == "merge"
                 for left, right in zip(node.elts, node.elts[1:]))
+        for node in ast.walk(tree)) or any(
+        # a shell-command string, such as subprocess.run("gh pr merge 42", shell=True)
+        isinstance(node, ast.Constant) and isinstance(node.value, str) and re.search(r"\bpr\s+merge\b", node.value)
         for node in ast.walk(tree))
 
 
@@ -166,29 +179,45 @@ def mailbox_errors(source):
         job = {"id": "only-this-goal", "pr": 42, "state": "waiting", "arm": True, "head": "exact-head"}
         green = {"state": "OPEN", "headRefOid": "exact-head",
                  "statusCheckRollup": [{"status": "COMPLETED", "conclusion": "SUCCESS"}]}
-        cases = [("no job file", None, green, False), ("no job record", {}, green, False),
-                 ("nonwaiting job record", dict(job, state="done"), green, False),
-                 ("invalid PR record", dict(job, pr="42"), green, False),
-                 ("unarmed job", dict(job, arm=False), green, False),
-                 ("moved head", dict(job, head="old-head"), green, False),
-                 ("pending checks", job, dict(green, statusCheckRollup=[{"status": "PENDING"}]), False),
-                 ("red checks", job, dict(green, statusCheckRollup=[{"conclusion": "FAILURE"}]), False),
-                 ("armed job at exact head", job, green, True)]
-        for label, record, result, expected in cases:
+        # (label with the resume() branch it covers, job record, gh_json answer, merge expected, gh_json queried)
+        cases = [("no job file", None, green, False, False), ("no job record", {}, green, False, False),
+                 ("nonwaiting job record", dict(job, state="done"), green, False, False),
+                 ("invalid PR record", dict(job, pr="42"), green, False, False),
+                 ("unarmed job", dict(job, arm=False), green, False, True),
+                 ("moved head", dict(job, head="old-head"), green, False, True),
+                 ("pending checks", job, dict(green, statusCheckRollup=[{"status": "PENDING"}]), False, True),
+                 ("red checks", job, dict(green, statusCheckRollup=[{"conclusion": "FAILURE"}]), False, True),
+                 ("PR state MERGED (resume: state is not OPEN)", job, dict(green, state="MERGED"), False, True),
+                 ("PR state CLOSED (resume: state is not OPEN)", job, dict(green, state="CLOSED"), False, True),
+                 ("gh_json returns None (resume: got is None)", job, None, False, True),
+                 ("empty check list (resume: not checks)", job, dict(green, statusCheckRollup=[]), False, True),
+                 ("armed job at exact head", job, green, True, True)]
+        asked_for = (folder, "pr", "view", str(job["pr"]), "--json", "state,headRefOid,statusCheckRollup")
+        launched_once = False
+        for label, record, result, expected, queried in cases:
             launched.clear()
+            asked = []
             if record is not None:
                 with open(os.path.join(folder, "job.json"), "w", encoding="utf-8") as handle:
                     json.dump(record, handle)
-            scope["gh_json"] = lambda *args: result
+            scope["gh_json"] = lambda *args, result=result: (asked.append(args), result)[1]
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
                     scope["cmd_tick"](types.SimpleNamespace(root=folder))
             except Exception as exc:
-                errors.append("%s: %s" % (label, type(exc).__name__))
+                # An unexpected raise is a failure, never a pass; a missing name means the probe's stubs are stale.
+                errors.append("%s: %s%s" % (label, type(exc).__name__,
+                                            " (probe shape changed: update this harness, not the product)" if isinstance(exc, NameError) else ""))
                 continue
             wanted = [[sys.executable, "merge.py", job["id"], "--go-head", job["head"]]] if expected else []
             if launched != wanted:
                 errors.append("%s: unexpected merge commands %r" % (label, launched))
+            # The case must have reached the branch it names: gh_json asked for the job's own PR, or not asked at all.
+            if asked != ([asked_for] if queried else []):
+                errors.append("%s: gh_json asked %r, wanted %r" % (label, asked, [asked_for] if queried else []))
+            launched_once = launched_once or bool(launched)
+        if not launched_once:
+            errors.append("the armed positive case launched nothing: the no-merge cases prove nothing")
     return errors
 
 
@@ -204,6 +233,10 @@ def caller_errors(sources):
 
     callers = sorted(name for name, source in sources.items() if names_merge(source))
     errors = [] if callers == [MAILBOX, WORKER] else ["unexpected callers: %r" % callers]
+    # Permission to start merge.py is never permission to merge directly: no scanned file may spell gh pr merge.
+    direct = sorted(name for name, source in sources.items() if names_gh_merge(source, ast.parse(source)))
+    if direct:
+        errors.append("direct gh pr merge in %s: merge only through merge.py" % ", ".join(direct))
     if MAILBOX in sources:
         errors.extend(mailbox_errors(sources[MAILBOX]))
     return errors
@@ -267,6 +300,28 @@ mutant.body.append(other)
 errors = caller_errors(dict(sources, **{MAILBOX: ast.unparse(mutant)}))
 check(any("launch must be in resume" in error for error in errors),
       "negative control: mailbox MERGE launch moved out of resume rejected: %s" % errors)
+
+# An allowed caller may not bypass merge.py: a direct gh pr merge added to worker.py, and a shell string anywhere.
+errors = caller_errors(dict(sources, **{WORKER: sources[WORKER] + '\nsubprocess.run(["gh", "pr", "merge", "999"])\n'}))
+check(any("direct gh pr merge in" in error and WORKER in error for error in errors),
+      "negative control: worker.py with a direct gh pr merge rejected: %s" % errors)
+errors = caller_errors(dict(sources, **{"toy-third.py": 'subprocess.run("gh pr merge 42", shell=True)'}))
+check(any("toy-third.py" in error for error in errors),
+      "negative control: third caller via a shell string rejected: %s" % errors)
+
+# Drop one guard of resume() from the real source (text edit, so the anchor must exist) and the probe must fail.
+for label, anchor, replacement, expected in (
+        ("OPEN check dropped", 'if got.get("state") != "OPEN":', "if False:", "PR state MERGED"),
+        ("empty-checks guard dropped", "not checks or ", "", "empty check list"),
+        # got is None is redundant with not checks while both stand; drop both so the None case can fail
+        ("None and empty-checks guards dropped", "got is None or not checks or ", "", "gh_json returns None"),
+        ("PR number of the query changed", 'str(job["pr"])', '"999"', "gh_json asked")):
+    if anchor not in sources[MAILBOX]:
+        check(False, "negative control: mailbox %s: anchor text not found in mailbox.py, update this harness" % label)
+        continue
+    errors = caller_errors(dict(sources, **{MAILBOX: sources[MAILBOX].replace(anchor, replacement, 1)}))
+    seen = [error for error in errors if expected in error]
+    check(bool(seen), "negative control: mailbox %s rejected: %s" % (label, (seen or errors)[0][:120]))
 if not failed:
     print("PASS: #3868: report --hold holds a goal whatever its wording says")
     print("PASS: #3868: a report merges neither goal; merge.py runs only for the goal it is asked for")
