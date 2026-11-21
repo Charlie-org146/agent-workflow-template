@@ -8,12 +8,28 @@ import subprocess
 import sys
 import time
 
+import lanekit
+
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 STEPS = ("idea", "plan", "review", "qa", "ship")
 NOT_AREAS = ("docs/", ".loop/", "dev/toy/", "test/", "tests/")
 SURFACES = ("wiki", "milestones", "projects", "releases", "labels", "issues")
 SMALL_DONE = 3
+
+
+def deadline(held):
+    if "markers" not in held:
+        return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
+    began = lanekit.mtime(held["rc"] + ".started")
+    if began:
+        return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
+    if held.get("prep_by"):  # before the first row the preparation budget rules
+        return held["prep_by"], "past its preparation budget"
+    at = held["started"]
+    if os.path.exists(held["rc"] + ".queued"):
+        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
+    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
 
 
 def surface(path):

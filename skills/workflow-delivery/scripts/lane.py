@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""A goal's regression lane: start or poll it, wait for it, and check it before a step is recorded.
-
-Imported by role.py: `role.py lane SLUG qa|ship|pr`, `role.py lane-wait SLUG STEP [--timeout S]`, `lane.py lane-exec ...`
-(a lane's child). A lane tests committed HEAD, never pushes, and may commit the re-rendered Tests tables. One lane per goal
-runs at a time; one on an older HEAD is stopped first. Result: <runs>/<slug>.<name>-lane.last. Messages: lanekit.py.
+"""A goal's regression lane: start, poll or wait for it, and check it before a step is recorded (role.py lane, lane-wait;
+lane.py lane-exec is a lane's child). A lane tests committed HEAD, never pushes, may commit the re-rendered Tests tables;
+one per goal runs at a time, one on an older HEAD is stopped first. Result: <runs>/<slug>.<name>-lane.last. Messages: lanekit.py.
 """
 import json
 import os
@@ -24,7 +22,6 @@ import fit  # noqa: E402
 import proctree  # noqa: E402
 from proctree import alive_since as alive, rm_tmp, tmp_for  # noqa: E402,F401
 fcntl = lanekit.fcntl
-# No terminal, no waiting.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 from lanekit import NOTHING, TERMINAL, death, dirty, drop, generated, git, mtime, prep, read_json, running_line, set_last  # noqa: E402,F401
 
@@ -59,18 +56,7 @@ def kill(pid, start="", base="", why=""):
     proctree.kill(pid, signal.SIGTERM)
 
 
-def deadline(held):
-    if "markers" not in held:
-        return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
-    began = mtime(held["rc"] + ".started")
-    if began:
-        return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
-    if held.get("prep_by"):  # before the first row the preparation budget rules
-        return held["prep_by"], "past its preparation budget"
-    at = held["started"]
-    if os.path.exists(held["rc"] + ".queued"):
-        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
-    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
+deadline = fit.deadline
 
 
 def live(held):
@@ -95,6 +81,10 @@ def stop(base, held):
         drop(*[held["rc"] + end for end in ("", ".queued", ".started", ".note", ".claimed", ".times", ".times.tmp")])
 
 
+def ended(held):
+    return os.path.exists(held["rc"]) or os.path.exists(held["rc"] + ".claimed")
+
+
 def fresh(held):
     """A claimed rc younger than GRACE: another caller finishes it."""
     at = mtime(held["rc"] + ".claimed")
@@ -102,7 +92,7 @@ def fresh(held):
 
 
 def finalize(base, held, name):
-    """An ended lane's result, once: the first caller claims the rc file."""
+    """An ended lane's result, once: the first caller claims the rc."""
     out, last = base + ".txt", base + ".last"
     with open(base + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -186,24 +176,16 @@ def answer(runs, slug, src, name):
     return first + "; reused: the %s lane passed on this head" % src * (src != name) + nl + rest
 
 
-def passing(runs, slug, step):
-    ok, src = lanekit.lane_ok(runs, slug, step, rev("HEAD"))
-    src = src if ok == rev("HEAD") else step
-    last = read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
-    return src, last if src == step or (last.get("head"), last.get("state")) == (ok, "pass") else {}
-
-
 def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
     head = rev("HEAD")
     if redo:
-        if any(j and live(j) for j in [job_of(runs, slug, n)[1] for n in NAMES]):
-            return "fail", "LANE_FRESH: a lane of %s is still running. Fix: role.py lane-wait %s NAME, then run --fresh again." % (slug, slug), []
-        for n in NAMES:
-            b, j = job_of(runs, slug, n)
-            if j and not live(j):
-                stop(b, j)
-        drop(*[lanekit.lane_base(runs, slug, n) + end for n in NAMES for end in (".ok", ".last")])
+        jobs = [job_of(runs, slug, n) for n in NAMES]
+        if any(j and live(j) for _, j in jobs):
+            return "fail", "LANE_FRESH: %s has a lane running. Fix: lane-wait %s NAME, then --fresh again." % (slug, slug), []
+        for b, j in jobs:
+            stop(b, j)
+        drop(*[b + end for b, _ in jobs for end in (".ok", ".last")])
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:
         stop(base, held)
@@ -216,13 +198,12 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
             stop(other_base, other_held)
         elif live(other_held):
             return "running", running_line(other_held, other), []
-        elif os.path.exists(other_held["rc"]) or os.path.exists(other_held["rc"] + ".claimed"):
+        elif ended(other_held):
             finalize(other_base, other_held, other)
-    if held and not live(held) and not os.path.exists(held["rc"]) and not fresh(held) \
-            and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
+    if held and not live(held) and not ended(held) and not fresh(held) and time.time() - held["started"] > 30:
         stop(base, held)
         held = None
-    if not held and not redo and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+    if not held and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
         return "pass", answer(runs, slug, src, name), []
     if not held:
         top = rev("--show-toplevel")
@@ -278,7 +259,7 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
         time.sleep(0.2)
     if live(held):
         return "running", running_line(held), []
-    if not os.path.exists(held["rc"]) and not os.path.exists(held["rc"] + ".claimed"):
+    if not ended(held):
         stop(base, held)
         return death(base, base + ".txt")
     return finalize(base, held, name)
@@ -291,7 +272,7 @@ def lane_status(runs, slug, name):
     if held and held.get("head") == head:
         if live(held):
             return "running", running_line(held)
-        if os.path.exists(held["rc"]) or os.path.exists(held["rc"] + ".claimed"):
+        if ended(held):
             status, line, _ = finalize(base, held, name)
             return status, line
         if time.time() - held["started"] > 30 and not alive(held["pid"], held.get("pstart", "")):
@@ -302,7 +283,7 @@ def lane_status(runs, slug, name):
         if other != name and job and job.get("head") == head:
             if live(job):
                 return "running", running_line(job, other)
-            if os.path.exists(job["rc"]) or os.path.exists(job["rc"] + ".claimed"):
+            if ended(job):
                 got = finalize(sib, job, other)
                 if got[0] != "pass":
                     return got[:2]

@@ -207,9 +207,17 @@ def markers(step):
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-from lane import NOTHING, alive, flow_spec, kill, lane, lane_argv, lane_status, lane_text, passing, wait_for  # noqa: E402,F401
+from lane import NOTHING, alive, flow_spec, kill, lane, lane_argv, lane_status, lane_text, wait_for  # noqa: E402,F401
 import lanekit  # noqa: E402
 from lanekit import FILES, REG, generated  # noqa: E402
+
+
+def passing(runs, slug, step):
+    head = git_out("rev-parse", "HEAD")
+    ok, src = lanekit.lane_ok(runs, slug, step, head)
+    src = src if ok == head else step
+    last = lanekit.read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
+    return src, last if src == step or (last.get("head"), last.get("state")) == (ok, "pass") else {}
 
 
 def lane_note(runs, slug, step):
