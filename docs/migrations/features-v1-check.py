@@ -160,7 +160,7 @@ def main():
                 if x != y and not (x.startswith("|") and len(cx) == len(cy) and cx[:-2] == cy[:-2] and cx[-1] == cy[-1]):
                     off.append("%s: %s" % (g, y[:50]))
                 m = re.match(r"\| \[(%s) " % ID, y)
-                if m and len(cy) > 2:
+                if m and len(cy) == 8:  # the six-column Requirement table only
                     conf.setdefault(m[1], {})[g] = cy[-2]
         ok("3 the three generated tables differ from BASE only in the Confidence cell (Follows and every other cell equal BASE's)", not off, "; ".join(off[:3]))
         split = sorted(k for k, v in conf.items() if len(set(v.values())) > 1)
