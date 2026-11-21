@@ -784,3 +784,4 @@
 | <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |
 | <a id="t-reap-sandbox-skip"></a>reap-sandbox-skip | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
+| <a id="t-slot-counter"></a>slot-counter | requirement | done line slot-counter:1 | not run | - | local | 2026-11-21 |

@@ -1,20 +1,8 @@
 #!/usr/bin/env python3
-"""Lane slots and row-file locks. Imported by regression.py and lanes_cli.py; not a command. workflow-delivery's
-lanekit.py holds exact copies of the pieces its lane.py uses (lanekit.COPIED, and EXIT_WAIT, EXIT_STALE, EXIT_ENV, POLL), and
-dev/toy/test-lane-control.sh fails when a copy differs from the function here: change both together.
-
-The pool: `lane_limit` slots per machine (flow file, default 2, 0 is unlimited; LOOP_LANE_LIMIT overrides it) in
-~/.workflow-loop/lanes (or $LOOP_LANES_DIR), a folder that must be yours and closed to others. Only a FULL lane takes a
-slot, after it has planned; AFFECTED, REUSED, by-id and red runs never wait. It limits concurrent FULL regression lanes,
-best effort, not the machine's load. Waiting lanes are served first in, first out by ticket files. A holder keeps a
-flock on its slot file and its ticket, so a dead process frees both; slot files are never unlinked. A run inside a
-slot holder (`_LOOP_LANE_HELD` names that slot, still locked by that pid) takes none, so a nested run never waits on
-its own parent. `_LOOP_LANE_*` variables are internal: the lane sets them.
-Row files (.loop/regression.tsv, .loop/regression-runs.tsv) are edited under locks in <git common dir>/loop/locks,
-which serializes writers across every worktree of a repo. controls.py (throwaway control repos) and setup's seed write
-them without the lock.
+"""Lane slots, row-file locks, and `slots` (open PR check slots).
+Lane helpers copied by delivery's lanekit.py must stay identical; test-lane-control.sh checks them.
 Exit codes, shared with lane.py: 0 pass, 1 fail, 2 lane-wait timeout, 3 no lane, 4 a hand run's slot wait timed out,
-5 LANE_STALE, 124 time limit. Messages: loop-files.md.
+5 LANE_STALE, 124 time limit. Messages: loop-files.md. (`slots` itself: 0 a slot is free, 1 full, 2 could not count.)
 """
 import glob
 import json
@@ -449,3 +437,28 @@ ROUTINE_STEP = r"""      - name: Check the routine
             echo "::warning::$said"; echo "$said" >> "$GITHUB_STEP_SUMMARY"
           fi
 """
+
+
+def pr_slots():
+    try:
+        root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True).stdout.strip()
+        cap = _read(os.path.join(root, ".loop", "config.json")).get("check_slots", 2)
+        if isinstance(cap, bool) or not isinstance(cap, int) or cap < 1:
+            sys.exit("REFUSED: check_slots must be a positive integer.")
+        done = subprocess.run(["gh", "pr", "list", "--state", "open", "--json", "number,statusCheckRollup", "--limit", "1000000"],
+                              cwd=root, capture_output=True, text=True, check=True)
+        prs = json.loads(done.stdout)
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:  # not "full": nothing could be counted
+        print("SLOTS unknown: %s" % str(getattr(error, "stderr", "") or error).strip()[:120])
+        sys.exit(2)
+    # A check run has `status`; a commit status (GitGuardian, say) has only `state`: unfinished when PENDING or EXPECTED.
+    unfinished = lambda c: (c.get("status") or "COMPLETED") != "COMPLETED" or c.get("state") in ("PENDING", "EXPECTED")
+    used = sum(any(unfinished(check) for check in pr.get("statusCheckRollup") or []) for pr in prs)
+    print("SLOTS %d/%d" % (used, cap))
+    return int(used >= cap)
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] != ["slots"]:
+        sys.exit("usage: slots.py slots")
+    sys.exit(pr_slots())
