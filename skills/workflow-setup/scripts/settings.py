@@ -67,7 +67,7 @@ TABLE = [
     ("limit_wait", REPO, 1800, "Seconds to wait after a usage limit before resuming."),
     ("watch_interval", REPO, 20, "Seconds between rounds of watch."),
     ("agent_files", REPO, ["CLAUDE.md", "AGENTS.md"], "Agent entry files setup wires the loop block into; [] turns wiring off."),
-    ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from, if the package names none."),
+    ("template_repo", REPO, "", "The template's GitHub repo (owner/name) update reads releases from."),
     ("milestones_source", REPO, "", "Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows."),
     ("reply_hook", REPO, True, "false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session."),
     ("govern_hook", REPO, True, "false turns off the govern-only hook (edits, commits, pushes refused in the operation session)."),

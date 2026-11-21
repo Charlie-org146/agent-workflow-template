@@ -17,8 +17,6 @@ Moved from the wiki page, which is now only a short PRD and its tests.
 First-page rule: if the wiki has no pages yet, the user must create its first page in the browser, because GitHub only
 makes the wiki's repo then. Tell them, then stop.
 
-On Agensi, the file contract `loop-files.md` is under `shared/` in the pack.
-
 
 ## Commands
 

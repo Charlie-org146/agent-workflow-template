@@ -57,6 +57,50 @@ check(name == "agent-workflow-template-v1.2.3.zip" and "--pattern" in calls and 
       "a release with no asset falls back to the source archive")
 name, calls = fetch("empty")
 check(name == "agent-workflow-template-v1.2.3.zip" and "--archive" in calls, "a download that wrote no file falls back to the source archive")
+
+# the archive's own edge cases (ENG-10): the version of a source archive is the VERSION file of its tree
+import contextlib  # noqa: E402
+import io  # noqa: E402
+import zipfile  # noqa: E402
+
+
+def archive(version_text):
+    path = os.path.join(tempfile.mkdtemp(prefix="upd-tree-"), "tree.zip")
+    with zipfile.ZipFile(path, "w") as bundle:
+        bundle.writestr("template/skills/workflow-x/SKILL.md", "# x\n")
+        if version_text is not None:
+            bundle.writestr("template/VERSION", version_text)
+    return path
+
+
+manifest, _ = update.load(archive("1.0.158\n"))
+check(manifest["version"] == "1.0.158" and update.version_key(manifest["version"]) > update.version_key("1.0.157"),
+      "a source archive reports the VERSION of its tree, and an adopter on 1.0.157 sees 1.0.158 as newer")
+try:
+    update.load(archive(None))
+    refused = False
+except ValueError as error:
+    refused = "VERSION" in str(error)
+check(refused, "a source archive without a VERSION file is refused (the caller refuses it as UPDATE_BAD_ARCHIVE and writes nothing)")
+manifest, _ = update.load(archive("garbage\n"))
+check(update.version_key(manifest["version"]) == () and update.version_key(manifest["version"]) < update.version_key("1.0.157"),
+      "a VERSION that is not a number reads as older than any installed version, so only a numeric VERSION in the tag updates anyone")
+stale, _ = update.load(archive("1.0.112\n"))
+check(update.version_key(stale["version"]) < update.version_key("1.0.157"),
+      "the verified stranding: an archive whose VERSION lags the tag (1.0.112) reads as older than an installed 1.0.157, which is why the release tag carries its own VERSION")
+bindir = tempfile.mkdtemp(prefix="upd-nogh-")
+open(os.path.join(bindir, "gh"), "w").write("#!/bin/sh\nexit 1\n")
+os.chmod(os.path.join(bindir, "gh"), 0o755)
+os.environ["PATH"] = bindir + os.pathsep + os.environ["PATH"]
+into, err = tempfile.mkdtemp(prefix="upd-into-"), io.StringIO()
+with contextlib.redirect_stderr(err):
+    try:
+        update.fetch("owner/template", "test", "v1.2.3", into)
+        code = 0
+    except SystemExit as stop:
+        code = stop.code
+check(code == 2 and "UPDATE_GH" in err.getvalue() and os.listdir(into) == [], "a release with no package and no source archive is refused as UPDATE_GH and nothing is written")
+
 if failed:
     sys.exit(1)
 print("PASS: REL-15: update prefers the release's package asset and falls back to the source archive")

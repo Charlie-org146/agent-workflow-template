@@ -67,6 +67,9 @@ From install to one finished goal.
 7. **Keep it current.** `/workflow-setup update --check` shows what a newer template version brings;
    `/workflow-setup update` applies it and puts this repo's generated files on a `workflow-update-vX` branch for you to
    merge. A skill you fixed here is kept, and `/workflow-setup update --propose` sends the fix back to the template.
+   The template ships only as a release tag with its generated notes and no package file: update reads the tag's source
+   archive, and the tag carries its own VERSION, so a newer tag reads as newer. That path is unsupported until the
+   follow-up update-package-path replaces it.
 
 **File reference**
 
@@ -205,7 +208,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `limit_wait` | Seconds to wait after a usage limit before resuming. | set "limit_wait" in .loop/config.json | `1800` | default |
 | `watch_interval` | Seconds between rounds of watch. | set "watch_interval" in .loop/config.json | `20` | default |
 | `agent_files` | Agent entry files setup wires the loop block into; [] turns wiring off. | set "agent_files" in .loop/config.json | `["CLAUDE.md", "AGENTS.md"]` | default |
-| `template_repo` | The template's GitHub repo (owner/name) update reads releases from, if the package names none. | set "template_repo" in .loop/config.json | `(empty)` | **overridden:** `Charlie-org146/agent-workflow-template` |
+| `template_repo` | The template's GitHub repo (owner/name) update reads releases from. | set "template_repo" in .loop/config.json | `(empty)` | **overridden:** `Charlie-org146/agent-workflow-template` |
 | `milestones_source` | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. | set "milestones_source" in .loop/config.json | `(empty)` | default |
 | `reply_hook` | false turns off the reply-format hook (setup.py --reply-hook installs it) in the operation session. | set "reply_hook" in .loop/config.json | `true` | default |
 | `govern_hook` | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). | set "govern_hook" in .loop/config.json | `true` | default |
