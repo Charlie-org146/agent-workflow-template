@@ -117,7 +117,7 @@ def read(path):
     try:
         with open(path) as fh:
             return fh.read()
-    except OSError:
+    except (OSError, UnicodeDecodeError):  # an unreadable or binary file reads as absent, never a crash (#5323)
         return None
 
 
