@@ -5,7 +5,7 @@
 # reads: skills/workflow-release/scripts/release.py skills/workflow-setup/scripts/setup.py
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 # Test the criteria contract across workflow-docs, workflow-regression and workflow-release. usage: test-criteria.sh [DIR]
-unset LOOP_BATCH
+unset LOOP_BATCH CLAUDE_CODE_HOST_SESSION_ID  # isolate the toy from the host app session
 set -e
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
@@ -319,6 +319,9 @@ p = ".loop/goals/crit.md"; t = open(p).read().replace("## Verify by hand\n", "##
 PY
 echo "Covers the change too, with more words for the check." >> docs/wiki/Delivery.md
 $cri render >/dev/null; howto Delivery; git add -A; git commit -qm "Change calc"
+$goal record crit idea --file "$d/skill.sh" >"$d/early-record.log" 2>&1 && bad "record accepted an unrun step" || {
+  grep -q "wasn't run by flow.py" "$d/early-record.log" && ok "negative control: an unrun step is refused" || bad "early record refused for another reason"
+}
 bash "$here/dev/toy/flow-done.sh" crit; $goal pr crit >/dev/null
 cutout=$($rel cut crit 2>&1 || true); grep -q "DEL-2 (no regression row)" <<<"$cutout" && ok "cut refuses a missing row" || { bad "cut missing row"; echo "$cutout" | head -5; }
 $reg add del-2 --level land --command "false" --goal DEL-2 --describe "$gwt" >/dev/null

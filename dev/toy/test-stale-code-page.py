@@ -4,7 +4,7 @@
 """stale-code-page (#4442, DOC-2): a page made stale only by the goal's own code change is re-stamped on the branch before the lane's rows run;
 a page whose text really changed stays stale.
 
-Done 1: the lane prep (lanekit.prep) re-stamps a Reviewed page and an Unreviewed page that only mapped code staled, in its commit, so docs check --own is clean.
+Done 1: the lane prep (lanekit.prep) re-stamps a Reviewed page and an Unreviewed page that only mapped code staled, in audit.keep's dedicated kept-fragment commit, so docs check --own is clean.
 Done 2: a Reviewed page whose reviewed wording changed is not re-stamped and still fails."""
 import os
 import subprocess
@@ -50,7 +50,7 @@ def commit(message):
 
 
 def body(problem):
-    return ("<!-- workflow-docs -->\n# A\nReview: **Unreviewed**\n\n## Problem\n%s\n\n## Requirements\n- A-1: Be useful\n\n"
+    return ("<!-- workflow-docs -->\n# A\nReview: **Unreviewed**\n\n## Problem\n%s\n\n## Requirements\n### Functional\n- A-1: **Unreviewed** Be useful\n  - It describes the mapped code.\n\n### Non-functional\nNone\n\n"
             "## Non-goals\nNothing else here.\n\n## Success metrics\nIt stays fresh.\n\n## Tests\nNone yet.\n") % problem
 
 
@@ -86,12 +86,25 @@ def lane_prep():
     return lanekit.prep(repo, {}, os.path.join(repo, "lane.log"))
 
 
+def kept(page):
+    path = os.path.join(repo, ".loop", "kept", "my-goal.tsv")
+    return os.path.exists(path) and any(line.split("\t")[0] == page for line in open(path))
+
+
 for label, text in (("a Reviewed page", reviewed("Readers need a page that says what a.py does today.")),
                     ("an Unreviewed page", body("Readers need a page that says what a.py does today."))):
     build(text)
     check("%s is stale after the goal's code change" % label, stale() == ["A"])
+    before = git("rev-parse", "HEAD").stdout.strip()
+    page_before = git("show", "HEAD:docs/wiki/A.md").stdout
     out, why = lane_prep()
-    check("the lane prep re-stamps %s in its commit (%s)" % (label, why or out), why is None and "LANE_PREP" in (out or ""))
+    after = git("rev-parse", "HEAD").stdout.strip()
+    stamp = git("show", "HEAD:.loop/kept/my-goal.tsv").stdout
+    check("the lane prep re-stamps %s in a dedicated kept commit (%s)" % (label, why or out),
+          why is None and before != after and git("log", "-1", "--format=%s").stdout.strip() == "Kept: my-goal"
+          and git("diff", "--name-only", before, after).stdout.splitlines() == [".loop/kept/my-goal.tsv"]
+          and stamp.splitlines() == ["A\t" + git("rev-parse", "--short", before).stdout.strip()]
+          and git("show", "HEAD:docs/wiki/A.md").stdout == page_before)
     check("%s is fresh before the rows run, and the tree is clean" % label, not stale() and not git("status", "--porcelain").stdout.strip())
 
 build(reviewed("Readers need a page that says what a.py does today."))
@@ -102,7 +115,7 @@ commit("another code change")
 was = stale()
 out, why = lane_prep()
 review = [l for l in open(os.path.join(repo, "docs/wiki/A.md")).read().splitlines() if l.startswith("Review")]
-check("negative control: a page whose reviewed wording changed is stale and the prep does not re-stamp it (%s)" % review, was == ["A"] and "kept my-goal" not in review[0])
+check("negative control: a page whose reviewed wording changed is stale and the prep does not re-stamp it (%s)" % review, was == ["A"] and not kept("A") and "kept my-goal" not in review[0])
 # a page that only main's code staled is not the goal's: it is left alone, and so is every page when the lane runs on main
 def two_pages():
     build(reviewed("Readers need a page that says what a.py does today."))
@@ -123,11 +136,11 @@ two_pages()
 before = [p for k, p, _ in docs.problems(repo, "") if k == "STALE"]
 out, why = lane_prep()
 text_b = open(os.path.join(repo, "docs/wiki/B.md")).read()
-check("a page that only main's code staled stays stale and unmarked (before %s)" % before, "B" in before and "kept my-goal" not in text_b)
-check("the goal's own page A was re-stamped beside it", "kept my-goal" in open(os.path.join(repo, "docs/wiki/A.md")).read())
+check("a page that only main's code staled stays stale and unmarked (before %s)" % before, "B" in before and not kept("B") and "kept my-goal" not in text_b)
+check("the goal's own page A was re-stamped beside it", kept("A") and not stale())
 two_pages()
 git("switch", "-q", "main")
 git("merge", "-q", "--no-edit", "loop/my-goal")
 out, why = lane_prep()
-check("a lane on the base branch re-stamps nothing", "kept" not in open(os.path.join(repo, "docs/wiki/A.md")).read() + open(os.path.join(repo, "docs/wiki/B.md")).read())
+check("a lane on the base branch re-stamps nothing", not kept("A") and not kept("B") and "kept" not in open(os.path.join(repo, "docs/wiki/A.md")).read() + open(os.path.join(repo, "docs/wiki/B.md")).read())
 sys.exit(1 if fails else 0)

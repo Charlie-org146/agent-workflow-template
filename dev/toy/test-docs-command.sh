@@ -36,6 +36,14 @@ mkdir -p docs/wiki; cat > docs/wiki/How-to-use-Delivery.md <<'HOWEOF'
 
 The toy calculator prints the median of the numbers given.
 
+### System diagram
+
+```text
+[Command: calc.py | the agent session]
+
+Legend: a box is Kind, Component and where it runs.
+```
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |
@@ -45,7 +53,6 @@ The toy calculator prints the median of the numbers given.
 ## How to reach or run it
 
 - DEL-1: The calculator prints a median; run `calc.py median LIST` and read its one line.
-- DEL-2: It answers within a second; run it on a short list.
 
 ### Command: calc.py
 - **Command:** `python3 scripts/calc.py median LIST`
@@ -61,7 +68,21 @@ HOWEOF
 mkdir -p "$FAKE_GH_DIR"
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
 mkdir -p docs/wiki
-printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://example.test/milestone/1 |\n' > docs/wiki/Home.md
+printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n| [Delivery](Delivery) | Prints the median of the numbers given. | [README](https://github.com/toy/repo#how-to-use-delivery) | https://github.com/toy/repo/milestone/1 |\n' > docs/wiki/Home.md
+cat >> docs/wiki/Home.md <<'DIAGRAM'
+<!-- diagram:begin -->
+## System diagram
+
+```text
+ [OPERATION SESSION | the toy machine] -> [WORKER SESSIONS | one worker per goal, each step in turn]
+ [STAGING | none] -> [PRODUCTION | main]
+ [MACHINES | the toy machine] run [SCHEDULED ROUTINES | none]
+ guard: a failing step stops
+
+Legend: [box] a part and where it runs; -> a flow of work; guard a rule that refuses.
+```
+<!-- diagram:end -->
+DIAGRAM
 printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "How do I use Delivery?" | Opens [How-to-use-Delivery](https://github.com/toy/repo/wiki/How-to-use-Delivery). |\n' >> README.md
 GOOD='### Functional
 
@@ -118,6 +139,33 @@ grep -q "PROBLEM" <<<"$trouble" && ok "the release step reads the audit and sees
 page "- I want the median of my numbers." "$GOOD"; $cri render >/dev/null; git add -A; git commit -qm "Short" >/dev/null
 trouble=$(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.docs_trouble('$repo', 'main'))")
 [ "$trouble" = "[]" ] && ok "a clean page passes the release step" || bad "release clean: $trouble"
+
+# Each repaired fixture has a control: the release audit must still reject its broken form.
+python3 - "$here" "$repo" <<'PYCONTROL'
+import pathlib, sys
+sys.path.insert(0, sys.argv[1] + "/skills/workflow-release/scripts")
+import release
+cases = [
+    ("docs/wiki/How-to-use-Delivery.md", "### Command: calc.py", "- DEL-2: An orphan requirement.\n\n### Command: calc.py", "an item for an ID its feature page lacks: DEL-2"),
+    ("docs/wiki/How-to-use-Delivery.md", "### System diagram", "### Missing diagram", "no System diagram"),
+    ("docs/wiki/Home.md", "https://github.com/toy/repo/milestone/1", "https://example.test/milestone/1", "outside this repo"),
+    ("docs/wiki/Home.md", "<!-- diagram:begin -->", "<!-- absent:begin -->", "no system diagram"),
+]
+for name, old, new, expected in cases:
+    path = pathlib.Path(name); original = path.read_text()
+    assert old in original
+    try:
+        broken = original.replace(old, new, 1)
+        if expected == "no system diagram":
+            broken = original[:original.index("<!-- diagram:begin -->")]
+        path.write_text(broken)
+        trouble = release.docs_trouble(sys.argv[2], "main")
+        assert any(expected in line for line in trouble), trouble
+        print("PASS: negative control: release rejects " + expected)
+    finally:
+        path.write_text(original)
+PYCONTROL
+[ "$?" = 0 ] || bad "repaired fixture negative controls"
 
 echo "== 3. Reviewed criteria with no test, or tests that no longer match, are listed"
 $cri review DEL-1 --user >/dev/null; $cri render >/dev/null; git add -A; git commit -qm "Reviewed" >/dev/null

@@ -78,10 +78,11 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
 
     # main's Settings block was rendered by an older template: one description reads differently
     old = "The branch goals start from and pull requests target."
-    readme = text(repo, "README.md")
-    check(old in readme, "the fixture's README holds the Settings block")
-    write(repo, "README.md", readme.replace(old, "The branch goals start from."))
-    git("commit", "-qam", "README rendered by an older template", cwd=repo)
+    SET = "docs/wiki/Home.md"  # the Settings block lives on Home once the wiki exists (README keeps it only if marked)
+    readme = text(repo, SET)
+    check(old in readme and "<!-- settings:begin -->" in readme, "the fixture's Home page holds the Settings block")
+    write(repo, SET, readme.replace(old, "The branch goals start from."))
+    git("commit", "-qam", "Home rendered by an older template", cwd=repo)
     git("push", "-q", "origin", "main", cwd=repo)
 
     def branch(name, edit):
@@ -119,13 +120,13 @@ with (tempfile.TemporaryDirectory() if not _keep else __import__("contextlib").n
     branch("one", code)
     check(any("Settings" in l for l in stale_on("one")), "the branch is STALE on its Settings block before apply")
     before, after, said = applied("one")
-    check(before != after and "RERENDERED README.md" in said, "apply pushes one commit that re-renders README.md (%s)" % said.strip()[:100])
-    check(run(sys.executable, OPERATE, "wiki-only", before, after, cwd=repo).returncode == 0, "merge.py accepts the new head: it moved by README blocks and wiki pages only")
+    check(before != after and "RERENDERED " + SET in said, "apply pushes one commit that re-renders the Settings block on Home (%s)" % said.strip()[:100])
+    check(run(sys.executable, OPERATE, "wiki-only", before, after, cwd=repo).returncode == 0, "merge.py accepts the new head: it moved by generated blocks and wiki pages only")
     check(not stale_on("one"), "docs.py check --own on the new head reports no STALE line")
 
     # 2. a hand edit inside the block is refused
     def hand():
-        write(repo, "README.md", text(repo, "README.md").replace("| `base` |", "| `base` | HAND EDIT |", 1))
+        write(repo, SET, text(repo, SET).replace("| `base` |", "| `base` | HAND EDIT |", 1))
 
     branch("two", hand)
     before, after, said = applied("two")

@@ -3,7 +3,7 @@
 # reads: skills/workflow-release/scripts/release.py skills/workflow-setup/scripts/setup.py
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 # Test workflow-docs on a throwaway toy repo with a bare wiki. usage: test-docs.sh [DIR]
-unset LOOP_BATCH
+unset LOOP_BATCH CLAUDE_CODE_HOST_SESSION_ID  # isolate the toy from the host app session
 set -e
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
@@ -101,6 +101,10 @@ python3 - <<'PY'
 p = ".loop/goals/stale.md"; t = open(p).read().replace("## Verify by hand\n", "## Verify by hand\n\n1. Open calc.py.\n   Expect: the change.\n", 1); open(p, "w").write(t)
 PY
 git commit -qam "Verify steps"
+# Do not record a step until the real flow runner has produced its reply.
+$goal record stale idea --file "$d/skill.sh" >"$d/early-record.log" 2>&1 && bad "record accepted an unrun step" || {
+  grep -q "wasn't run by flow.py" "$d/early-record.log" && ok "negative control: an unrun step is refused" || bad "early record refused for another reason"
+}
 bash "$here/dev/toy/flow-done.sh" stale; $goal pr stale >/dev/null
 $rel ask stale | grep -q "STALE" && ok "ask warns about stale" || bad "ask stale"
 $rel cut stale 2>&1 | grep -q "docs audit found trouble" && ok "cut refused stale" || bad "cut stale"
