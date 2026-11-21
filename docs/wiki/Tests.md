@@ -189,6 +189,8 @@
 | <a id="t-queue-use"></a>queue-use | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-follows-adoption"></a>follows-adoption | requirement | DEL-21 | not run | - | local | 2026-11-20 |
 | <a id="t-release-hold-red"></a>release-hold-red | requirement | DEL-17 | not run | - | local | 2026-11-20 |
+| <a id="t-defect-closing-keywords"></a>defect-closing-keywords | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-defect-closing-unaffected"></a>defect-closing-unaffected | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 
 ## Documentation
 
@@ -784,4 +786,5 @@
 | <a id="t-scratch-persistent"></a>scratch-persistent | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |
 | <a id="t-reap-sandbox-skip"></a>reap-sandbox-skip | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
+| <a id="t-codex-run-ends-done"></a>codex-run-ends-done | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
 | <a id="t-slot-counter"></a>slot-counter | requirement | done line slot-counter:1 | not run | - | local | 2026-11-21 |
