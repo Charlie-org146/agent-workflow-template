@@ -9,7 +9,7 @@
 # test-local gh shim (dev/toy/release-gh.py) around dev/toy/fakegh and a pre-receive hook in the toy origin that stands in for a protected main.
 # usage: test-delivery-release.sh [CASE]   CASE: patch removed bump protected rules review pending nomatch crash
 #        dirty mismatch exists latebump private wikiname firstpage wikinull docs (default: all). Prints PASS:/FAIL: lines; exits non-zero on any FAIL.
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH TOY_PROTECT TOY_PR_MODE
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH LOOP_PRIVATE_NAMES TOY_PROTECT TOY_PR_MODE  # its cases write the home's list (a row's explicit empty one would hide it)
 set -u
 export LOOP_ROLE=worker
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-all}; self="$here/dev/toy/$(basename "$0")"
