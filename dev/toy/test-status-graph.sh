@@ -9,7 +9,7 @@
 # graph on the board, and the step label changing when a step starts. No model is called. usage: test-status-graph.sh [DIR]
 set -u
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION CLAUDE_CODE_HOST_SESSION_ID  # a toy test never reaches a real session tool, and an app session id would bind each new goal to it (steps then run in session, not headless)
 unset LOOP_ROLE  # these tests act as the operation session; workers get LOOP_ROLE=worker where they need it
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"

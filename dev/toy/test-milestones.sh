@@ -5,7 +5,7 @@
 # Test that milestones are optional and free form (owner commands, none per feature, none on a pull request or an issue
 # health files), the feature tag always on, and that setup asks for none, on a toy repo with a fake gh. usage: test-milestones.sh [DIR]
 set -u
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION CLAUDE_CODE_HOST_SESSION_ID  # a toy test never reaches a real session tool, and an app session id would bind each new goal to it (steps then run in session, not headless)
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
@@ -33,7 +33,12 @@ mkdir -p "$FAKE_GH_DIR"
 
 echo "== setup asks for no milestone"
 f0=$fails
-! grep -qi "milestone" <<<"$setup_out" && ! git ls-files | xargs grep -li "milestone" 2>/dev/null | grep -q . && ok "setup's plan, NEXT line and files mention no milestone" || bad "setup mentions a milestone: $setup_out"
+# The one thing setup writes about milestones is the opt-in key milestones_source, empty (off) until the owner sets it; any other
+# mention in a file, or a non-empty source, still fails. The filter is proven on a non-empty source first (a negative control).
+nomil() { tr -d '\n' | sed 's/"milestones_source": *""//g' | grep -qi "milestone"; }
+printf '{"milestones_source": "url:x"}' | nomil && ok "negative control: a non-empty milestones_source is not filtered out" || bad "the milestone filter hides a set milestones_source"
+printf '{"milestones_source": "", "x": "milestone"}' | nomil && ok "negative control: any other milestone mention is not filtered out" || bad "the milestone filter hides another mention"
+! grep -qi "milestone" <<<"$setup_out" && ! git ls-files | xargs cat 2>/dev/null | nomil && python3 -c 'import json; c = json.load(open(".loop/config.json")); raise SystemExit(0 if c.get("milestones_source", "") == "" else 1)' && ok "setup's plan, NEXT line and files mention no milestone, and milestones_source is empty" || bad "setup mentions a milestone: $setup_out"
 grep -q "^NEXT: review the branch, then merge it into main$" <<<"$setup_out" && ok "setup's NEXT line is only to review and merge" || bad "setup NEXT: $setup_out"
 [ "$fails" = "$f0" ] && echo "PASS milestone-freeform:setup-no-milestone-step"
 

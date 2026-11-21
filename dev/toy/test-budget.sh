@@ -8,7 +8,7 @@
 # a review or ship step at its limit finishes with what it has done and the goal goes on, a session-run step is given its
 # budget and an overrun is recorded, and the board and health show what hit a budget. No model is called.
 set -u
-unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
+unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN CLAUDE_CODE_HOST_SESSION_ID  # an app session id would bind every new goal to a session, so steps would run in session, not headless
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)

@@ -9,7 +9,7 @@
 # verdicts in the pull request (issue 38) and GitHub touches, regeneration warnings and set (issue 117). No model.
 # usage: test-delivery-prd.sh [depth|resume|budget|private|defects|hold|guard|all]
 set -u
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_PRIVATE_NAMES LOOP_BATCH LOOP_ROLE  # w() sets the worker role per call; set and touches run as the operation
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_PRIVATE_NAMES LOOP_BATCH LOOP_ROLE CLAUDE_CODE_HOST_SESSION_ID  # an app session id would bind each new goal to a session and run steps in session, not headless; w() sets the worker role per call; set and touches run as the operation
 here=$(cd "$(dirname "$0")/../.." && pwd); case=${1:-all}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
@@ -141,8 +141,14 @@ s = json.load(open(sys.argv[1])); s["tokens"] = {"idea": 700, "plan": 400}; json
 PY
   s=$(git rev-parse HEAD); out=$(w $F bud1 review 2>&1)
   check "at its token budget no new step starts, naming the budget and the fix" 'grep -q "1100 tokens spent, at the token budget of 1000 (the goal.s budget).*goal.py set bud1 --budget-tokens N.*(BUDGET_TOKENS)" <<<"$out"'
-  $goal set bud1 --budget-tokens 5000 --why "owner: more" >/dev/null 2>&1
-  check "the owner raises one goal's budget with set" 'grep -q "\"tokens\": 5000" "$R/bud1.extra.json"'
+  # Raising a budget now needs the owner's own words on record that cover the goal (ETA_NO_RECORD); no record, no change.
+  out=$($goal set bud1 --budget-tokens 5000 --why "owner: more" 2>&1); rc=$?
+  check "raising a goal's budget with no owner-words record is refused, changing nothing" '[ $rc != 0 ] && grep -q "(ETA_NO_RECORD)" <<<"$out" && [ ! -e "$R/bud1.extra.json" ]'
+  mkdir -p "$C/loop"; printf 'ob1\t2026-11-17T00:00:00Z\toperation\t"give bud1 more tokens"\tbud1\n' >> "$C/loop/owner-words.tsv"
+  $goal set bud1 --budget-tokens 5000 --why "owner: more" --owner-record ob1 >/dev/null 2>&1
+  check "the owner raises one goal's budget with set, on a record that covers the goal" 'grep -q "\"tokens\": 5000" "$R/bud1.extra.json" && grep -q "\"record\": \"ob1\"" "$R/bud1.extra.json"'
+  out=$($goal set bud1 --budget-tokens 9000 --why "again" --owner-record ob1 2>&1)
+  check "the same record can't raise the budget twice" 'grep -q "already used.*(ETA_NO_RECORD)" <<<"$out" && ! grep -q "\"tokens\": 9000" "$R/bud1.extra.json"'
   out=$(w $goal set bud1 --budget-tokens 99999 --why "worker: more" 2>&1)
   check "a worker can't set a goal's budget (operation only)" '! grep -q 99999 "$R/bud1.extra.json" && grep -qi "operation" <<<"$out"'
   base 'time_budget_minutes=0' 'token_budget=0'
@@ -154,7 +160,9 @@ if on private; then
   echo "== DEL-9 nothing private ships"
   printf '# private names\nsecretword\n' > "$d/names"; export LOOP_PRIVATE_NAMES="$d/names"
   check "private.py check counts the patterns and never prints one" 'python3 $S/private.py check | grep -q "^PRIVATE LIST: 1 pattern from \$LOOP_PRIVATE_NAMES$" && ! python3 $S/private.py check | grep -q secretword'
-  prgoal() { new "$1" "src/api" >/dev/null; run_all "$1"; }
+  # Each goal touches its own path: goals with overlapping touches take turns at pr, and a goal refused for a private name
+  # keeps its place in the queue, so a shared path would make every later goal print WAITING pr queue instead of being scanned.
+  prgoal() { new "$1" "src/$1" >/dev/null; run_all "$1"; }
   prgoal priv1; echo "a secretword here" > notes.txt; git add notes.txt; git commit -qm "notes"
   out=$(w $goal pr priv1 2>&1); rc=$?
   check "goal.py pr refuses to push a private name, with no try, naming the place, never the text" '[ $rc = 2 ] && grep -q "REFUSED (no try used): a private name would be pushed: notes.txt:1 (commit:[0-9a-f]*) matches list line 2; nothing was pushed" <<<"$out" && grep -q "(PRIVATE_NAME)" <<<"$out" && ! git ls-remote --exit-code origin loop/priv1 >/dev/null && [ "$(field priv1 tries)" = 0 ]'

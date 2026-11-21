@@ -3,7 +3,7 @@
 # reads: skills/workflow-monitoring/scripts/board_status.py skills/workflow-release/scripts/merge.py
 # reads: skills/workflow-release/scripts/wiki.py skills/workflow-setup/scripts/setup.py
 # reads: skills/workflow-docs/scripts/criteria.py
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION CLAUDE_CODE_HOST_SESSION_ID  # a toy test never reaches a real session tool, and an app session id would bind each new goal to it (steps then run in session, not headless)
 # Test the release step's wiki half on a throwaway toy repo with a bare wiki. usage: test-wiki.sh [DIR]
 unset LOOP_BATCH
 set -e
