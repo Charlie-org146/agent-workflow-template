@@ -80,7 +80,7 @@
 |---|---|---|---|---|---|---|
 | <a id="t-no-done-line-refused"></a>no-done-line-refused | requirement | DEL-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-pending-waits"></a>pending-waits | requirement | DEL-3 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
-| <a id="t-frozen-done-lines"></a>frozen-done-lines | requirement | DEL-19 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
+| <a id="t-frozen-done-lines"></a>frozen-done-lines | requirement | DEL-19 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-21 |
 | <a id="t-stop-after-3-tries"></a>stop-after-3-tries | requirement | DEL-1 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
 | <a id="t-auto-approved"></a>auto-approved | requirement | DEL-3 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
 | <a id="t-wiki-release"></a>wiki-release | requirement | DEL-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-09 |
@@ -172,9 +172,6 @@
 | <a id="t-follows-adoption"></a>follows-adoption | requirement | DEL-21 | not run | - | local | 2026-11-20 |
 | <a id="t-release-hold-red"></a>release-hold-red | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-defect-closing-keywords"></a>defect-closing-keywords | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 
 ## Documentation
 
@@ -539,7 +536,7 @@
 | <a id="t-st-setup-readonly"></a>st-setup-readonly | requirement | done line local-schedule:2 | not run | - | local | 2026-11-12 |
 | <a id="t-two-lanes-toy-435"></a>two-lanes-toy-435 | defect | [#435](https://github.com/jcl2018/agent-workflow-template/issues/435) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-done-line-rows-128"></a>done-line-rows-128 | defect | [#128](https://github.com/jcl2018/agent-workflow-template/issues/128) closed (2026-11-11) | PASS | 2026-11-12 | [CI 2026-11-12](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-12) | 2026-11-10 |
-| <a id="t-lane-limit-150"></a>lane-limit-150 | defect | [#150](https://github.com/jcl2018/agent-workflow-template/issues/150) closed (2026-11-11) | not run | - | local | 2026-11-10 |
+| <a id="t-lane-limit-150"></a>lane-limit-150 | defect | [#4115](https://github.com/jcl2018/agent-workflow-template/issues/150 https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | 2026-11-10 |
 | <a id="t-red-race-135"></a>red-race-135 | defect | [#135](https://github.com/jcl2018/agent-workflow-template/issues/135) closed (2026-11-11) | not run | - | local | 2026-11-10 |
 | <a id="t-lane-last-152"></a>lane-last-152 | defect | [#152](https://github.com/jcl2018/agent-workflow-template/issues/152) closed (2026-11-11) | not run | - | local | 2026-11-10 |
 | <a id="t-head-moved-168"></a>head-moved-168 | defect | [#168](https://github.com/jcl2018/agent-workflow-template/issues/168) closed (2026-11-11) | not run | - | local | 2026-11-10 |
@@ -746,6 +743,5 @@
 | <a id="t-defect-5619-row-run-exists"></a>defect-5619-row-run-exists | defect | [#5619](https://github.com/Charlie-org146/agent-workflow-template/issues/5619) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5605-guide-stamp"></a>defect-5605-guide-stamp | defect | [#5605](https://github.com/Charlie-org146/agent-workflow-template/issues/5605) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5386-restamp-no-identity"></a>defect-5386-restamp-no-identity | defect | [#5386](https://github.com/Charlie-org146/agent-workflow-template/issues/5386) state unknown | not run | - | local | 2026-11-21 |
-| <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
 | <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |
