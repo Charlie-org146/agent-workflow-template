@@ -28,7 +28,7 @@ fcntl = lanekit.fcntl
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 from lanekit import NOTHING, TERMINAL, death, dirty, drop, generated, git, mtime, prep, read_json, running_line, set_last  # noqa: E402,F401
 
-NAMES = ("qa", "ship", "pr")
+NAMES = lanekit.LANES
 GRACE = 60  # seconds a claimed rc is its finisher's
 
 
@@ -181,9 +181,23 @@ def finalize(base, held, name):
     return status, line, ids
 
 
-def lane(runs, slug, name, spec, cfg, wait=90):
+def answer(runs, slug, src, name):
+    first, nl, rest = (read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}).get("line", "").partition("\n")
+    return first + "; reused: the %s lane passed on this head" % src * (src != name) + nl + rest
+
+
+def passing(runs, slug, step):
+    src = lanekit.lane_ok(runs, slug, step, rev("HEAD"))[1]
+    return src, read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
+
+
+def lane(runs, slug, name, spec, cfg, wait=90, fresh=False):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
     head = rev("HEAD")
+    if fresh:
+        if any(j and live(j) for j in [job_of(runs, slug, n)[1] for n in NAMES]):
+            return "fail", "LANE_FRESH: a lane of %s is still running. Fix: role.py lane-wait %s NAME, then run --fresh again." % (slug, slug), []
+        drop(*[lanekit.lane_base(runs, slug, n) + ".ok" for n in NAMES])
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:
         stop(base, held)
@@ -200,9 +214,8 @@ def lane(runs, slug, name, spec, cfg, wait=90):
             and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
         stop(base, held)
         held = None
-    done = read_json(base + ".last") or {}
-    if not held and done.get("head") == head and done.get("state") == "pass" and not dirty():
-        return "pass", done.get("line", ""), []
+    if not held and not fresh and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+        return "pass", answer(runs, slug, src, name), []
     if not held:
         top = rev("--show-toplevel")
         began_prep = time.time()
@@ -276,6 +289,15 @@ def lane_status(runs, slug, name):
         if time.time() - held["started"] > 30 and not alive(held["pid"], held.get("pstart", "")):
             stop(base, held)
             return "fail", lanekit.died(base + ".txt")
+    for other in NAMES:
+        sib, job = job_of(runs, slug, other)
+        if other != name and job and job.get("head") == head:
+            if live(job):
+                return "running", running_line(job, other)
+            if os.path.exists(job["rc"]) or os.path.exists(job["rc"] + ".claimed"):
+                finalize(sib, job, other)
+    if not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+        return "pass", answer(runs, slug, src, name)
     done = read_json(base + ".last") or {}
     if done.get("head") == head and done.get("state") in TERMINAL:
         return done["state"], done.get("line", "")
@@ -362,7 +384,7 @@ def main(argv):
             timeout = float(argv[argv.index("--timeout") + 1]) if "--timeout" in argv else None
             return wait_for(runs, argv[1], argv[2], timeout)
         cfg = json.load(open(os.path.join(rev("--show-toplevel"), ".loop", "config.json")))
-        status, line, _ = lane(runs, argv[1], argv[2], flow_spec(), cfg)
+        status, line, _ = lane(runs, argv[1], argv[2], flow_spec(), cfg, fresh="--fresh" in argv)
         print(line, file=sys.stderr if status == "fail" else sys.stdout)
         return 0 if status != "fail" else 1
     print("usage: role.py lane SLUG qa|ship|pr            start or poll a goal's regression lane\n"

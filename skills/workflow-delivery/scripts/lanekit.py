@@ -195,6 +195,26 @@ def set_last(path, attempt, **fields):
 
 
 
+LANES = ("qa", "ship", "pr")
+
+
+def lane_base(runs, slug, name):
+    return os.path.join(runs, "%s.%s-lane" % (slug, name))
+
+
+def lane_ok(runs, slug, step, head):
+    oks = [(open(p).read().strip() if os.path.exists(p) else "", n) for n in (step,) + tuple(x for x in LANES if x != step)
+           for p in [lane_base(runs, slug, n) + ".ok"]]
+    return next((o for o in oks if o[0] == head), next((o for o in oks if o[0]), ("", step)))
+
+
+def passed(runs, slug, head, name):
+    last = {n: read_json(lane_base(runs, slug, n) + ".last") or {} for n in LANES}
+    done = [n for n in LANES if (last[n].get("head"), last[n].get("state")) == (head, "pass")]
+    full = [(n != name, LANES.index(n), n) for n in done if lane_ok(runs, slug, n, head) == (head, n)]
+    return min(full)[2] if full else name * (name in done)
+
+
 def holders(pool):
     out = []
     for path in sorted(glob.glob(os.path.join(pool or "", "slot-*"))):
