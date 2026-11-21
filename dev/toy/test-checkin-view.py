@@ -4,6 +4,7 @@
 """MON-5, MON-14, MON-16: the check-in prints a Machine line first, groups each repo block by release then feature, and
 shows each goal's status marker, time left and machine; the reply hook flags a check-in missing any of these."""
 import datetime
+import hashlib
 import json
 import os
 import subprocess
@@ -105,14 +106,20 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     # OPS-1: the operation layer files its own findings (mailbox.py finding), and the check-in lists them
     import argparse
     import mailbox
-    calls, opened = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}]
+    calls, opened, made, state = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}], [], {"fail": False}
     def fake(args, cwd):
         args = list(args)
+        raw, path = max(len(x) for x in args), None  # the longest raw argument, and the --body-file path (None without the flag)
         if "--body-file" in args:
             i = args.index("--body-file") + 1
-            with open(args[i], encoding="utf-8") as f:
+            path = args[i]
+            with open(path, encoding="utf-8", newline="") as f:
                 args[i] = f.read()
         calls.append(args)
+        if args[:2] == ["issue", "create"]:
+            made.append((raw, path))
+            if state["fail"]:
+                return subprocess.CompletedProcess(args, 1, "", "gh: HTTP 502")
         out = json.dumps(opened) if args[:2] == ["issue", "list"] else "https://github.com/o/r/issues/6001\n"
         return subprocess.CompletedProcess(args, 0, out, "")
     mailbox.gh = fake
@@ -124,6 +131,8 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     creates = [c for c in calls if c[:2] == ["issue", "create"]]
     check(code == 0 and len(creates) == 1 and "Backlog: Operation" in creates[0] and "backlog,ops-finding" in creates[0] and "TOP-DECISION 88" in creates[0][-1],
           "a finding is filed on the feature's Backlog milestone with its decision linked (%s)" % line)
+    body_of = lambda title, text="": "<!-- loop-ops-finding %s -->\n\n%s\n\nFound by %s (operation layer).\n" % (hashlib.sha1(mailbox.norm(title).encode()).hexdigest()[:12], text or title, "TOP-DECISION 88")
+    check(creates[0][-1] == body_of("Slot hand-out order was guessed") and made[0][1] is not None, "a short finding's whole body reaches gh through a --body-file unchanged")
     check(make("Unmapped thing", feature="nothing")[1].count("Backlog: Other") == 1 and calls[-1][1] == "create", "a finding with no matching feature goes to Backlog: Other")
     del calls[:]
     for title, why in (("merge slot  WAIT is not logged!", "the same normalised title"), ("Slot wait for #5170 never logged", "the same IDs and most of the words")):
@@ -139,6 +148,30 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     shown = "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="0000"))
     check("Findings filed (operation layer):" in shown and "#6001 on Backlog: Operation: Slot hand-out order was guessed" in shown, "the check-in lists the findings filed since the last check-in")
     check("Findings filed" not in "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="9999")), "the check-in lists none filed before its stamp")
+    # issue 5651: a long finding text reaches gh through a file, whole; a failed publication leaves no file and no log line
+    import auto
+    long_title, long_text = "Long finding text reaches gh through a file", "plain words here " * 2353
+    before = len(made)
+    code, line = make(long_title, text=long_text)
+    raw, path = made[-1] if len(made) == before + 1 else (0, None)
+    body = [c for c in calls if c[:2] == ["issue", "create"]][-1][-1]
+    short_arg = code == 0 and 0 < raw <= 2000
+    whole = path is not None and body == body_of(long_title, " ".join(long_text.split()))
+    gone = path is not None and not os.path.exists(path)
+    check(short_arg, "a 40,000-character finding's gh call has no argument over 2,000 characters (longest %d)" % raw)
+    check(whole, "a 40,000-character finding's whole body, marker and footer included, reads back from the --body-file unchanged")
+    check(gone, "the temporary --body-file of a 40,000-character finding is removed after the call")
+    check(short_arg and whole and gone, "a 40,000-character finding text reaches gh through a file, whole, with no long argument and the file removed")
+    log, before = os.path.join(auto.loop_dir(root), "findings.log"), len(made)
+    with open(log, encoding="utf-8") as f:
+        logged = f.read()
+    state["fail"] = True
+    code, line = make("A failed publication leaves no file behind")
+    state["fail"] = False
+    raw, path = made[-1] if len(made) == before + 1 else (0, None)
+    with open(log, encoding="utf-8") as f:
+        check(code == 1 and line == "FAILED: gh: HTTP 502" and path is not None and not os.path.exists(path) and f.read() == logged,
+              "a failed publication returns gh's error, removes the temporary file and writes no findings.log line (%s)" % line)
     os.chdir(here)
 
 sys.exit(1 if failed else 0)
