@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The automatic release, called by merge.py: routines, then after the merge a version bump, the CHANGELOG entry, a push to
-the base and a GitHub release (a release pull request on a protected base; with merge_queue, release.yml instead).
+the base and a GitHub release (a release PR on a protected base; with merge_queue, release.yml instead).
 Failures: `release_error`. Commit and notes pass the private-name scan first (PRIVATE_MODULE)."""
 import datetime
 import importlib.util
@@ -15,7 +15,6 @@ import tempfile
 import release
 import wiki  # noqa: E402
 
-# no prompt
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
   os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -32,7 +31,7 @@ def sibling(name):
     path = os.path.join(SIBLING, name + ".py")
     try:
       spec = importlib.util.spec_from_file_location("delivery_" + name, path)
-      module = importlib.util.module_from_spec(spec)
+      module = sys.modules[spec.name] = importlib.util.module_from_spec(spec)
       spec.loader.exec_module(module)
     except Exception as error:  # noqa: BLE001
       return None, ("delivery's %s.py could not be loaded from %s (%s: %s); nothing pushed or merged"

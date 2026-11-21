@@ -3,8 +3,8 @@
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
 
-ask shows the docs and verify steps and asks cut or leave; cut bumps the version, writes the changelog,
-pushes and creates a DRAFT; it never publishes or merges.
+ask shows the docs and verify steps and asks; cut bumps the version, writes the changelog, pushes and
+makes a DRAFT; it never publishes or merges.
 """
 import argparse
 import datetime
@@ -49,9 +49,13 @@ def state_path(slug):
     return os.path.join(runs, slug + ".json")
 
 
+SEEN = {}
+
+
 def load(slug):
     try:
-        return json.load(open(state_path(slug)))
+        SEEN[slug] = text = open(state_path(slug)).read()
+        return json.loads(text)
     except OSError:
         sys.exit("REFUSED: no goal named %s. Fix: run it with workflow-delivery first." % slug)
     except ValueError:
@@ -59,14 +63,12 @@ def load(slug):
 
 
 def save(state, note=None):
-    state["updated"] = now()
-    if note:
-        state.setdefault("log", []).append("%s %s" % (state["updated"], note))
-    path = state_path(state["slug"])
-    temp = path + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, path)
+    import autorelease
+    goal, stop = autorelease.sibling("goal")  # #5350: merges under the lock
+    stop and sys.exit("REFUSED: " + stop[0])
+    slug = state["slug"]
+    goal.SEEN[slug] = SEEN.pop(slug, goal.SEEN.get(slug, "{}"))
+    goal.save(state, note)
 
 
 def finished(state):
