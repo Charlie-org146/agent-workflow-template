@@ -2,6 +2,9 @@
 # Run one goal on a toy repo with a headless agent. usage: run-goal.sh REPO_DIR LEVEL SLUG "GOAL" "DONE1" ["DONE2"] 
 # env: AGENT=claude|codex  MODEL=<model>  EXTRA=<more prompt text>
 set -e
+# A helper, not a test: nothing runs it bare. With no arguments it says how to use it and exits 0; a partial call is an error.
+if [ "$#" -eq 0 ]; then echo "run-goal.sh is a helper, not a test: usage: run-goal.sh REPO_DIR LEVEL SLUG \"GOAL\" \"DONE1\" [\"DONE2\" ...]"; exit 0; fi
+if [ "$#" -lt 5 ]; then echo "usage: run-goal.sh REPO_DIR LEVEL SLUG \"GOAL\" \"DONE1\" [\"DONE2\" ...]" >&2; exit 2; fi
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd); repo=$1; level=$2; slug=$3; goal=$4; shift 4
 done_args=""; for d in "$@"; do done_args="$done_args --done \"$d\""; done

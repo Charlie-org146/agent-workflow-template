@@ -1,0 +1,9 @@
+# hrt-misc: bring toys up to current behaviour (#5649 #5672 #5673)
+
+| Toy | Before | After (exit, FAIL lines, wall seconds) | What drifted and what changed |
+| --- | --- | --- | --- |
+| dev/toy/run-goal.sh | exit 1, 0 FAIL | exit 0, 0 FAIL, 0.01 s (bare run) | It is a helper, not a test: nothing runs it, and the docs name it a helper that gets no header. Bare, `shift 4` failed under `set -e`. Added a usage guard: no arguments prints the usage and exits 0; 1 to 4 arguments exit 2 with the usage. The agent path is unchanged. |
+| dev/toy/test-regression.sh | exit non-zero, 6 FAIL lines | exit 0, ALL PASS, 144.64 s | The shard check compared `wc -l` output with `=`; macOS pads the count with spaces, so a correct split read as a failure. Replaced by a numeric `complete_shards` check, plus a negative control that rejects a repeated row, a missing row and an excess row. The remaining two `FAIL flag` lines are the output of the toy's deliberately broken row, each followed by a PASS that expects it. |
+| dev/toy/test-release.sh | exit 1, 0 FAIL lines at the start | exit 0, ALL PASS, 161.20 s | Product change, intended (MAJOR_GATE, release-gate goal): `release.bump(..., "major")` now refuses. The old assertion expected 2.0.0.0; it now asserts the refusal names MAJOR_GATE for a four-number and a three-number version, while patch and minor are still asserted. Kept from the Codex draft: it unsets CLAUDE_CODE_HOST_SESSION_ID so the fixture never binds a host session, and `finish` asserts the new goal has no worker session (extra check, stricter). |
+
+Each changed assertion is at least as strict: the shard check gains three negative controls, the major bump check goes from one expected value to a required refusal for two shapes. No product script is changed and no product bug was found.

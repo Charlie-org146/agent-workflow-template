@@ -1,7 +1,7 @@
 #!/bin/bash
 # reads: skills/workflow-delivery/scripts/goal.py skills/workflow-release/SKILL.md
 # reads: skills/workflow-release/scripts/release.py skills/workflow-setup/scripts/setup.py
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION CLAUDE_CODE_HOST_SESSION_ID  # the headless fixture never binds the host app's session
 # Test workflow-release on a throwaway toy repo with a fake gh. usage: test-release.sh [DIR]
 # env: AGENT_TEST=1 also runs a headless agent (MODEL, default haiku) that follows SKILL.md to ask and cut.
 unset LOOP_BATCH LOOP_PRIVATE_NAMES
@@ -28,6 +28,7 @@ finish() {  # finish SLUG [extra goal.py new args]: a done 0 goal with a pull re
   local slug=$1; shift
   git switch -q main
   $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" "$@" >/dev/null
+  $goal show "$slug" | python3 -c 'import json, sys; s=json.load(sys.stdin); assert s.get("worker") != "session" and not s.get("session"), "headless fixture inherited a worker session"'
   mkdir -p "$(dirname "${FILE:-calc.py}")"
   printf '\n\ndef %s():\n    return 1\n' "${slug//-/_}" >> "${FILE:-calc.py}"
   git add "${FILE:-calc.py}"; git commit -qm "${MSG:-Add ${slug} to calc}"
@@ -92,7 +93,15 @@ echo "== 3d. four-number versions and bracket changelogs"
 (cd "$here" && python3 - <<'PY'
 import importlib.util
 s = importlib.util.spec_from_file_location("r", "skills/workflow-release/scripts/release.py"); m = importlib.util.module_from_spec(s); s.loader.exec_module(m)
-assert m.bump("1.3.3.3", "patch") == "1.3.3.4" and m.bump("1.3.3.3", "minor") == "1.4.0.0" and m.bump("1.3.3.3", "major") == "2.0.0.0"
+assert m.bump("1.3.3.3", "patch") == "1.3.3.4" and m.bump("1.3.3.3", "minor") == "1.4.0.0"
+# a goal never bumps a major (MAJOR_GATE): the refusal replaces the old 2.0.0.0 result, for both version shapes
+for v in ("1.3.3.3", "0.1.9"):
+    try:
+        m.bump(v, "major")
+    except SystemExit as e:
+        assert "MAJOR_GATE" in str(e), e
+    else:
+        raise AssertionError("a major bump was not refused for " + v)
 assert m.bump("0.1.9", "patch") == "0.1.10" and m.bump("0.1.9", "minor") == "0.2.0"
 out = m.changelog_text("# Changelog\n\nIntro.\n\n## [1.0.0.0] - 2026-01-01\n\nOld.\n", "1.0.0.1", "2026-02-02", ["New"], "1. Step\n   Expect: x")
 assert out.index("Intro.") < out.index("## [1.0.0.1] - 2026-02-02") < out.index("## [1.0.0.0]")

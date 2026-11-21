@@ -212,7 +212,11 @@ grep -q "^# unrun " "$d/results2.tsv" && ok "a row skipped for job time is recor
 N=$(cd "$here/skills/workflow-regression/scripts" && python3 -c "import actions; print(actions.SHARDS)")
 for n in $(seq 0 $((N - 1))); do : > "$d/shard$n.tsv"; REGRESSION_SHARD="$n/$N" REGRESSION_RESULTS="$d/shard$n.tsv" python3 ci-block.py --live >/dev/null 2>&1; grep -v '^#' "$d/shard$n.tsv" >> "$d/all-shards.tsv"; done
 once=$(cut -f1 "$d/all-shards.tsv" | sort | uniq -d | wc -l); total=$(cut -f1 "$d/all-shards.tsv" | wc -l); wantedn=$(grep -v '^#' "$d/results4.tsv" | wc -l)
-[ "$once" = 0 ] && [ "$total" = "$wantedn" ] && ok "all the shards run every wanted row once ($total rows)" || bad "shard split: $once repeated, $total of $wantedn"
+# wc pads counts on macOS; these are numbers, including the duplicate count.
+complete_shards() { [ "$1" -eq 0 ] && [ "$2" -eq "$3" ]; }
+complete_shards "$once" "$total" "$wantedn" && ok "all the shards run every wanted row once ($total rows)" || bad "shard split: $once repeated, $total of $wantedn"
+! complete_shards 1 "$wantedn" "$wantedn" && ! complete_shards 0 "$((wantedn - 1))" "$wantedn" && ! complete_shards 0 "$((wantedn + 1))" "$wantedn" \
+  && ok "the shard count check rejects duplicates, missing rows and excess rows" || bad "the shard count check accepted a broken split"
 yml=.github/workflows/regression.yml
 grep -q "shard: \[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15\]" $yml && grep -q "^  summary:" $yml && grep -A1 "^  summary:" $yml | grep -q "needs: regression" && ! grep -q "Write the run summary, one table per feature" $yml \
   && grep -q "pattern: results-\*" $yml && ok "the workflow has sixteen shards and one summary job that reads every shard's results" || bad "workflow shape"
