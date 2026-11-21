@@ -5,6 +5,7 @@
 3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, pr_lane, pr_head, pr_base.
 4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a stopped step left.
 5. pstart/same, audit (runs/kills.log), died/death (LANE_DIED): who may signal a lane.
+6. lane_ok, passed: one pass at a head answers every lane name.
 """
 import glob
 import json
@@ -193,6 +194,25 @@ def set_last(path, attempt, **fields):
         os.replace(temp, path)
         return data
 
+
+
+LANES = ("qa", "ship", "pr")
+
+
+def lane_base(runs, slug, name):
+    return os.path.join(runs, "%s.%s-lane" % (slug, name))
+
+
+def lane_ok(runs, slug, step, head):
+    oks = [(open(p).read().strip() if os.path.exists(p) else "", n) for n in (step,) + tuple(x for x in LANES if x != step)
+           for p in [lane_base(runs, slug, n) + ".ok"]]
+    return next((o for o in oks if o[0] == head), next((o for o in oks if o[0]), ("", step)))
+
+
+def passed(runs, slug, head, name):
+    found = [(n != name, "reused_from" in last, i, n) for i, n in enumerate(LANES) for last in [read_json(lane_base(runs, slug, n) + ".last") or {}]
+             if (last.get("head"), last.get("state")) == (head, "pass") and lane_ok(runs, slug, n, head) == (head, n)]
+    return min(found)[3] if found else ""
 
 
 def holders(pool):

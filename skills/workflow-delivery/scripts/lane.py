@@ -28,7 +28,7 @@ fcntl = lanekit.fcntl
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 from lanekit import NOTHING, TERMINAL, death, dirty, drop, generated, git, mtime, prep, read_json, running_line, set_last  # noqa: E402,F401
 
-NAMES = ("qa", "ship", "pr")
+NAMES = lanekit.LANES
 GRACE = 60  # seconds a claimed rc is its finisher's
 
 
@@ -181,6 +181,26 @@ def finalize(base, held, name):
     return status, line, ids
 
 
+def reuse(runs, slug, src, name, head):
+    a, b = lanekit.lane_base(runs, slug, src), lanekit.lane_base(runs, slug, name)
+    try:
+        if src != name:
+            last = read_json(a + ".last")
+            first, nl, rest = last.get("line", "").partition("\n")
+            last.setdefault("reused_from", src)
+            last["line"] = "%s; reused: the %s lane passed on this head%s%s" % (first.split("; reused:")[0], last["reused_from"], nl, rest)
+            if (read_json(b + ".last") or {}).get("head") == head:
+                os.replace(b + ".last", b + ".last.prev")
+            text = open(a + ".txt").read() if os.path.exists(a + ".txt") else ""
+            for end, data in ((".txt", text), (".last", json.dumps(last, indent=1, sort_keys=True)), (".ok", head)):
+                with open(b + end + ".tmp", "w") as handle:
+                    handle.write(data)
+                os.replace(b + end + ".tmp", b + end)
+    except (OSError, AttributeError) as exc:
+        return "fail", "LANE_REUSE_COPY: could not copy the %s lane record (%s); no .ok was written. Fix: run the same command again." % (src, exc), []
+    return "pass", (read_json(b + ".last") or {}).get("line", ""), []
+
+
 def lane(runs, slug, name, spec, cfg, wait=90):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
     head = rev("HEAD")
@@ -200,9 +220,8 @@ def lane(runs, slug, name, spec, cfg, wait=90):
             and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
         stop(base, held)
         held = None
-    done = read_json(base + ".last") or {}
-    if not held and done.get("head") == head and done.get("state") == "pass" and not dirty():
-        return "pass", done.get("line", ""), []
+    if not held and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+        return reuse(runs, slug, src, name, head)
     if not held:
         top = rev("--show-toplevel")
         began_prep = time.time()
@@ -276,6 +295,15 @@ def lane_status(runs, slug, name):
         if time.time() - held["started"] > 30 and not alive(held["pid"], held.get("pstart", "")):
             stop(base, held)
             return "fail", lanekit.died(base + ".txt")
+    for other in NAMES:
+        sib, job = job_of(runs, slug, other)
+        if other != name and job and job.get("head") == head:
+            if live(job):
+                return "running", running_line(job, other)
+            if os.path.exists(job["rc"]) or os.path.exists(job["rc"] + ".claimed"):
+                finalize(sib, job, other)
+    if not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+        return reuse(runs, slug, src, name, head)[:2]
     done = read_json(base + ".last") or {}
     if done.get("head") == head and done.get("state") in TERMINAL:
         return done["state"], done.get("line", "")
