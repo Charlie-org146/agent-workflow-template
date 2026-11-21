@@ -93,7 +93,7 @@ def commit(top, cfg, slug):
     made = [f for f in (".loop/START.md", "CLAUDE.md", "AGENTS.md")
             if run(["git", "ls-files", "--", f], cwd=top).stdout.strip() and run(["git", "status", "--porcelain", "--", f], cwd=top).stdout.strip()]
     if made:
-        git("commit", "-m", "Regenerate %s for %s" % (", ".join(made), slug), "--", *made, cwd=top)
+        git("commit", "-m", "Regenerate START.md for %s" % slug, "--", *made, cwd=top)
         print("COMMITTED the regenerated %s for %s" % (", ".join(made), slug))
 
 

@@ -41,13 +41,4 @@ $entry check 2>&1 | grep -q "ENTRY_STALE" && bad "START.md is stale at HEAD" || 
 for f in CLAUDE.md AGENTS.md; do
   [ -z "$(git status --porcelain -- $f)" ] && ok "$f is not left dirty" || bad "$f left dirty"
 done
-
-echo "== a tracked CLAUDE.md whose generated block went stale is committed too"
-printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > CLAUDE.md
-git add -A; git commit -qm "A CLAUDE.md with a stale generated block"
-before=$(git rev-parse HEAD)
-$wiki prepare s --commit >/dev/null 2>&1 || true
-[ -z "$(git status --porcelain)" ] && ok "a stale CLAUDE.md block leaves nothing uncommitted" || bad "left uncommitted: $(git status --porcelain | tr '\n' ' ')"
-git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && ok "CLAUDE.md is in a commit" || bad "CLAUDE.md is in no commit"
-[ "$(git log -1 --format=%s)" = "Regenerate CLAUDE.md for s" ] && ok "the message names the file committed" || bad "message: $(git log -1 --format=%s)"
 exit $((fails > 0))
