@@ -38,35 +38,35 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 
 | Kind | Page | ID | Date | Seal or lock | Review-log row (context only, not proof) |
 |---|---|---|---|---|---|
-| entry | Automation | AUT-1 | 2026-11-20 | 6aac93e4 | 2026-11-20 record o617: yes build it |
-| entry | Automation | AUT-5 | 2026-11-20 | bd5f6128 | 2026-11-20 record o632: yes build it |
-| page | Automation | - | 2026-11-20 | prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 | 2026-11-20 record o658: yes build it |
-| entry | Check-in-and-board | CHK-1 | 2026-11-20 | e1ba8975 | 2026-11-20 record o673: each step with its own progress bar a |
-| entry | Delivery | DEL-1 | 2026-11-20 | 8a6cfd0a | 2026-11-20 record o616: yes build it |
-| entry | Delivery | DEL-3 | 2026-11-20 | e3b04ded | 2026-11-20 record o631: yes build it |
-| entry | Delivery | DEL-17 | 2026-11-20 | 01f97e9e | 2026-11-20 record o672: release should pause yes |
-| entry | Delivery | DEL-19 | 2026-11-20 | 24b6865a | 2026-11-20 record o614: yes build it |
-| entry | Delivery | DEL-21 | 2026-11-20 | b530df14 | 2026-11-20 record o634: yes build it |
-| entry | Delivery | DEL-9 | 2026-11-20 | 753012f1 | 2026-11-20 record o622: yes build it |
-| entry | Documentation | DOC-2 | 2026-11-20 | 22a8ca15 | 2026-11-20 record o613: yes build it |
-| entry | Documentation | DOC-25 | 2026-11-20 | 45ba875e | 2026-11-20 record o633: yes build it |
-| entry | Documentation | DOC-26 | 2026-11-20 | a075bf15 | 2026-11-20 record o595: yes build it |
-| entry | Guardrails | GRD-4 | 2026-11-20 | 9110aaad | 2026-11-20 record o623: yes build it |
-| entry | Guardrails | GRD-5 | 2026-11-20 | f7806e3b | 2026-11-20 record o624: yes build it |
-| entry | Guardrails | GRD-6 | 2026-11-20 | 361f1915 | 2026-11-20 record o625: yes build it |
-| entry | Guardrails | GRD-20 | 2026-11-20 | 2ecb9a54 | 2026-11-21 record o679: yes, use the template-only text in it |
-| entry | Health | HLT-2 | 2026-11-20 | 58360fd7 | 2026-11-20 record o666: So at the let's add these 5 goals to  |
-| entry | Health | HLT-4 | 2026-11-20 | e97cc230 | 2026-11-20 record o636: yes build it |
-| entry | Health | HLT-7 | 2026-11-20 | 2060d7f7 | 2026-11-20 record o619: yes build it |
-| entry | Integrations | INT-1 | 2026-11-20 | 2f1e2663 | 2026-11-20 record o630: yes build it |
-| entry | Machines | MCH-1 | 2026-11-20 | 5820cfff | 2026-11-20 record o666: So at the let's add these 5 goals to  |
-| entry | Operation | OPS-1 | 2026-11-20 | 5ee683ee | 2026-11-20 record o653: Or maybe like this, for the autonomou |
-| entry | Operation | OPS-16 | 2026-11-20 | dada51c6 | 2026-11-20 record o651: Oh, you need to apply like a minimum  |
-| entry | Regression | REG-4 | 2026-11-20 | 05626ff1 | 2026-11-20 record o666: So at the let's add these 5 goals to  |
-| page | Regression | - | 2026-11-20 | prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777 | 2026-11-20 record o659: yes build it |
-| entry | Setup | SET-1 | 2026-11-20 | e36ea742 | 2026-11-21 record o679: yes, use the template-only text in it |
-| entry | Setup | SET-2 | 2026-11-20 | 129441cc | 2026-11-20 record o629: yes build it |
-| page | Setup | - | 2026-11-20 | prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 | 2026-11-20 record o660: yes build it |
+| entry | Automation | AUT-1 | 2026-11-20 | 6aac93e4 | 2026-11-20 o617 |
+| entry | Automation | AUT-5 | 2026-11-20 | bd5f6128 | 2026-11-20 o632 |
+| page | Automation | - | 2026-11-20 | prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 | 2026-11-20 o658 |
+| entry | Check-in-and-board | CHK-1 | 2026-11-20 | e1ba8975 | 2026-11-20 o673 |
+| entry | Delivery | DEL-1 | 2026-11-20 | 8a6cfd0a | 2026-11-20 o616 |
+| entry | Delivery | DEL-3 | 2026-11-20 | e3b04ded | 2026-11-20 o631 |
+| entry | Delivery | DEL-17 | 2026-11-20 | 01f97e9e | 2026-11-20 o672 |
+| entry | Delivery | DEL-19 | 2026-11-20 | 24b6865a | 2026-11-20 o614 |
+| entry | Delivery | DEL-21 | 2026-11-20 | b530df14 | 2026-11-20 o634 |
+| entry | Delivery | DEL-9 | 2026-11-20 | 753012f1 | 2026-11-20 o622 |
+| entry | Documentation | DOC-2 | 2026-11-20 | 22a8ca15 | 2026-11-20 o613 |
+| entry | Documentation | DOC-25 | 2026-11-20 | 45ba875e | 2026-11-20 o633 |
+| entry | Documentation | DOC-26 | 2026-11-20 | a075bf15 | 2026-11-20 o595 |
+| entry | Guardrails | GRD-4 | 2026-11-20 | 9110aaad | 2026-11-20 o623 |
+| entry | Guardrails | GRD-5 | 2026-11-20 | f7806e3b | 2026-11-20 o624 |
+| entry | Guardrails | GRD-6 | 2026-11-20 | 361f1915 | 2026-11-20 o625 |
+| entry | Guardrails | GRD-20 | 2026-11-20 | 2ecb9a54 | 2026-11-20 o655 |
+| entry | Health | HLT-2 | 2026-11-20 | 58360fd7 | 2026-11-20 o666 |
+| entry | Health | HLT-4 | 2026-11-20 | e97cc230 | 2026-11-20 o636 |
+| entry | Health | HLT-7 | 2026-11-20 | 2060d7f7 | 2026-11-20 o619 |
+| entry | Integrations | INT-1 | 2026-11-20 | 2f1e2663 | 2026-11-20 o630 |
+| entry | Machines | MCH-1 | 2026-11-20 | 5820cfff | 2026-11-20 o666 |
+| entry | Operation | OPS-1 | 2026-11-20 | 5ee683ee | 2026-11-20 o653 |
+| entry | Operation | OPS-16 | 2026-11-20 | dada51c6 | 2026-11-20 o651 |
+| entry | Regression | REG-4 | 2026-11-20 | 05626ff1 | 2026-11-20 o666 |
+| page | Regression | - | 2026-11-20 | prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777 | 2026-11-20 o659 |
+| entry | Setup | SET-1 | 2026-11-20 | e36ea742 | 2026-11-20 o628 |
+| entry | Setup | SET-2 | 2026-11-20 | 129441cc | 2026-11-20 o629 |
+| page | Setup | - | 2026-11-20 | prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 | 2026-11-20 o660 |
 
 ## To split (more than five lines)
 
@@ -98,33 +98,33 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 ## Original mark lines (read by the check)
 
 ```text
-entry	Automation	AUT-1	2026-11-20	6aac93e4	2026-11-20 record o617: yes build it	- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
-entry	Automation	AUT-5	2026-11-20	bd5f6128	2026-11-20 record o632: yes build it	- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
-page	Automation	-	2026-11-20	prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777	2026-11-20 record o658: yes build it	Review: **Reviewed 2026-11-20** <!-- prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 --> <!-- kept fast-3min@d0a4c4b38 -->
-entry	Check-in-and-board	CHK-1	2026-11-20	e1ba8975	2026-11-20 record o673: each step with its own progress bar a	- CHK-1: **Reviewed 2026-11-20** One live board and one check-in layout show where everything stands <!-- reviewed e1ba8975 -->
-entry	Delivery	DEL-1	2026-11-20	8a6cfd0a	2026-11-20 record o616: yes build it	- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
-entry	Delivery	DEL-3	2026-11-20	e3b04ded	2026-11-20 record o631: yes build it	- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
-entry	Delivery	DEL-17	2026-11-20	01f97e9e	2026-11-20 record o672: release should pause yes	- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 01f97e9e -->
-entry	Delivery	DEL-19	2026-11-20	24b6865a	2026-11-20 record o614: yes build it	- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
-entry	Delivery	DEL-21	2026-11-20	b530df14	2026-11-20 record o634: yes build it	- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
-entry	Delivery	DEL-9	2026-11-20	753012f1	2026-11-20 record o622: yes build it	- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
-entry	Documentation	DOC-2	2026-11-20	22a8ca15	2026-11-20 record o613: yes build it	- DOC-2: **Reviewed 2026-11-20** Only I write the principles and requirements; the repo copy is the PRD <!-- reviewed 22a8ca15 -->
-entry	Documentation	DOC-25	2026-11-20	45ba875e	2026-11-20 record o633: yes build it	- DOC-25: **Reviewed 2026-11-20** Every page has the same fixed sections, and README and Home match <!-- reviewed 45ba875e -->
-entry	Documentation	DOC-26	2026-11-20	a075bf15	2026-11-20 record o595: yes build it	- DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
-entry	Guardrails	GRD-4	2026-11-20	9110aaad	2026-11-20 record o623: yes build it	- GRD-4: **Reviewed 2026-11-20** Every session and automation gets least access <!-- reviewed 9110aaad -->
-entry	Guardrails	GRD-5	2026-11-20	f7806e3b	2026-11-20 record o624: yes build it	- GRD-5: **Reviewed 2026-11-20** Nothing is written outside without explicit say <!-- reviewed f7806e3b -->
-entry	Guardrails	GRD-6	2026-11-20	361f1915	2026-11-20 record o625: yes build it	- GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
-entry	Guardrails	GRD-20	2026-11-20	2ecb9a54	2026-11-21 record o679: yes, use the template-only text in it	- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
-entry	Health	HLT-2	2026-11-20	58360fd7	2026-11-20 record o666: So at the let's add these 5 goals to 	- HLT-2: **Reviewed 2026-11-20** Health checks every rule, every principle and every page <!-- reviewed 58360fd7 -->
-entry	Health	HLT-4	2026-11-20	e97cc230	2026-11-20 record o636: yes build it	- HLT-4: **Reviewed 2026-11-20** Every finding is one tracked issue until settled <!-- reviewed e97cc230 -->
-entry	Health	HLT-7	2026-11-20	2060d7f7	2026-11-20 record o619: yes build it	- HLT-7: **Reviewed 2026-11-20** Checks, check-ins and instructions answer fast <!-- reviewed 2060d7f7 -->
-entry	Integrations	INT-1	2026-11-20	2f1e2663	2026-11-20 record o630: yes build it	- INT-1: **Reviewed 2026-11-20** Every integration is a declared, visible adapter <!-- reviewed 2f1e2663 -->
-entry	Machines	MCH-1	2026-11-20	5820cfff	2026-11-20 record o666: So at the let's add these 5 goals to 	- MCH-1: **Reviewed 2026-11-20** Any machine sets up identically, and work moves between them safely <!-- reviewed 5820cfff -->
-entry	Operation	OPS-1	2026-11-20	5ee683ee	2026-11-20 record o653: Or maybe like this, for the autonomou	- OPS-1: **Reviewed 2026-11-20** One operation session governs the loop for me <!-- reviewed 5ee683ee -->
-entry	Operation	OPS-16	2026-11-20	dada51c6	2026-11-20 record o651: Oh, you need to apply like a minimum 	- OPS-16: **Reviewed 2026-11-20** Every ready goal starts within capacity limits <!-- reviewed dada51c6 -->
-entry	Regression	REG-4	2026-11-20	05626ff1	2026-11-20 record o666: So at the let's add these 5 goals to 	- REG-4: **Reviewed 2026-11-20** Every requirement has its tests, written and run one way, with honest results <!-- reviewed 05626ff1 -->
-page	Regression	-	2026-11-20	prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777	2026-11-20 record o659: yes build it	Review: **Reviewed 2026-11-20** <!-- prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777 -->
-entry	Setup	SET-1	2026-11-20	e36ea742	2026-11-21 record o679: yes, use the template-only text in it	- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
-entry	Setup	SET-2	2026-11-20	129441cc	2026-11-20 record o629: yes build it	- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
-page	Setup	-	2026-11-20	prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777	2026-11-20 record o660: yes build it	Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
+entry	Automation	AUT-1	2026-11-20	6aac93e4	2026-11-20 o617	- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
+entry	Automation	AUT-5	2026-11-20	bd5f6128	2026-11-20 o632	- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
+page	Automation	-	2026-11-20	prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777	2026-11-20 o658	Review: **Reviewed 2026-11-20** <!-- prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 --> <!-- kept fast-3min@d0a4c4b38 -->
+entry	Check-in-and-board	CHK-1	2026-11-20	e1ba8975	2026-11-20 o673	- CHK-1: **Reviewed 2026-11-20** One live board and one check-in layout show where everything stands <!-- reviewed e1ba8975 -->
+entry	Delivery	DEL-1	2026-11-20	8a6cfd0a	2026-11-20 o616	- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
+entry	Delivery	DEL-3	2026-11-20	e3b04ded	2026-11-20 o631	- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
+entry	Delivery	DEL-17	2026-11-20	01f97e9e	2026-11-20 o672	- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 01f97e9e -->
+entry	Delivery	DEL-19	2026-11-20	24b6865a	2026-11-20 o614	- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
+entry	Delivery	DEL-21	2026-11-20	b530df14	2026-11-20 o634	- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
+entry	Delivery	DEL-9	2026-11-20	753012f1	2026-11-20 o622	- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
+entry	Documentation	DOC-2	2026-11-20	22a8ca15	2026-11-20 o613	- DOC-2: **Reviewed 2026-11-20** Only I write the principles and requirements; the repo copy is the PRD <!-- reviewed 22a8ca15 -->
+entry	Documentation	DOC-25	2026-11-20	45ba875e	2026-11-20 o633	- DOC-25: **Reviewed 2026-11-20** Every page has the same fixed sections, and README and Home match <!-- reviewed 45ba875e -->
+entry	Documentation	DOC-26	2026-11-20	a075bf15	2026-11-20 o595	- DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
+entry	Guardrails	GRD-4	2026-11-20	9110aaad	2026-11-20 o623	- GRD-4: **Reviewed 2026-11-20** Every session and automation gets least access <!-- reviewed 9110aaad -->
+entry	Guardrails	GRD-5	2026-11-20	f7806e3b	2026-11-20 o624	- GRD-5: **Reviewed 2026-11-20** Nothing is written outside without explicit say <!-- reviewed f7806e3b -->
+entry	Guardrails	GRD-6	2026-11-20	361f1915	2026-11-20 o625	- GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
+entry	Guardrails	GRD-20	2026-11-20	2ecb9a54	2026-11-20 o655	- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
+entry	Health	HLT-2	2026-11-20	58360fd7	2026-11-20 o666	- HLT-2: **Reviewed 2026-11-20** Health checks every rule, every principle and every page <!-- reviewed 58360fd7 -->
+entry	Health	HLT-4	2026-11-20	e97cc230	2026-11-20 o636	- HLT-4: **Reviewed 2026-11-20** Every finding is one tracked issue until settled <!-- reviewed e97cc230 -->
+entry	Health	HLT-7	2026-11-20	2060d7f7	2026-11-20 o619	- HLT-7: **Reviewed 2026-11-20** Checks, check-ins and instructions answer fast <!-- reviewed 2060d7f7 -->
+entry	Integrations	INT-1	2026-11-20	2f1e2663	2026-11-20 o630	- INT-1: **Reviewed 2026-11-20** Every integration is a declared, visible adapter <!-- reviewed 2f1e2663 -->
+entry	Machines	MCH-1	2026-11-20	5820cfff	2026-11-20 o666	- MCH-1: **Reviewed 2026-11-20** Any machine sets up identically, and work moves between them safely <!-- reviewed 5820cfff -->
+entry	Operation	OPS-1	2026-11-20	5ee683ee	2026-11-20 o653	- OPS-1: **Reviewed 2026-11-20** One operation session governs the loop for me <!-- reviewed 5ee683ee -->
+entry	Operation	OPS-16	2026-11-20	dada51c6	2026-11-20 o651	- OPS-16: **Reviewed 2026-11-20** Every ready goal starts within capacity limits <!-- reviewed dada51c6 -->
+entry	Regression	REG-4	2026-11-20	05626ff1	2026-11-20 o666	- REG-4: **Reviewed 2026-11-20** Every requirement has its tests, written and run one way, with honest results <!-- reviewed 05626ff1 -->
+page	Regression	-	2026-11-20	prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777	2026-11-20 o659	Review: **Reviewed 2026-11-20** <!-- prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777 -->
+entry	Setup	SET-1	2026-11-20	e36ea742	2026-11-20 o628	- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
+entry	Setup	SET-2	2026-11-20	129441cc	2026-11-20 o629	- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
+page	Setup	-	2026-11-20	prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777	2026-11-20 o660	Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
 ```

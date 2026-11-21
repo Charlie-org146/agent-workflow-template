@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 ID = r"[A-Z]{2,5}-\d+"
 REPORT = "docs/migrations/features-v1-report.md"
@@ -28,7 +29,12 @@ def bail(why):
 
 
 def clean(s, n=60):
-    return re.sub(r"\s+", " ", (s or "").replace("|", "/").replace("<!--", "").replace("-->", "")).strip()[:n]
+    s = s or ""
+    while True:
+        t = s.replace("|", "/").replace("<!--", "").replace("-->", "")
+        if t == s:
+            return re.sub(r"\s+", " ", s).strip()[:n]
+        s = t
 
 
 def plain(s):
@@ -72,24 +78,32 @@ def follows(pf, root):
     return {k: v[0] for k, v in seen.items() if len(v) == 1}
 
 
-def log_rows(root):
+def log_rows():
+    """{key: [(date, record id)]} from the shared reviews log: the date and the owner-record id only, never the free text."""
     rows = {}
     try:
         path = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir").strip()), "loop", "reviews.tsv")
         for line in open(path, encoding="utf-8"):
             c = line.rstrip("\n").split("\t")
-            if len(c) > 3 and c[1] == "review":
+            if len(c) > 3 and c[1] == "review" and re.fullmatch(r"\d{4}-\d\d-\d\d", c[0][:10]):
+                m = re.search(r"record (o\d+)", c[3])
                 for key in c[2].split(","):
-                    rows[key] = "%s %s" % (c[0][:10], clean(c[3], 50))
+                    rows.setdefault(key.strip(), []).append((c[0][:10], m[1] if m else "no record id"))
     except (OSError, AttributeError):
         pass
     return rows
 
 
+def record(log, key, day):
+    got = [r for r in log.get(key, []) if r[0] <= day] or log.get(key, [])
+    return "%s %s" % got[-1] if got else "record not available"
+
+
 def build(root, base, skip, cr, pf, prd):
     """(pages {rel: text}, features, marks) built in memory; refuses before any write."""
     tests, _ = cr.test_rows(root)
-    refs, log, pages, feats, marks, ids = follows(pf, root), log_rows(root), {}, [], [], set()
+    refs, log, pages, feats, marks, ids = follows(pf, root), log_rows(), {}, [], [], set()
+    known = {r[6] for r in kept_rows(root)}
     for rel in cr.pages(root):
         raw = open(os.path.join(root, rel), encoding="utf-8", newline="").read()
         eol = "\r\n" if "\r\n" in raw else "\n"
@@ -118,9 +132,9 @@ def build(root, base, skip, cr, pf, prd):
             before = pf.unit(m[4], subs)
             line = lines[k]
             if m[2] != "Unreviewed":
-                if line not in onbase:
-                    bail("%s holds a Reviewed mark that is not on %s" % (key, base))
-                marks.append(("entry", name, key, m[3], m[5] or "-", log.get(key, "record not available"), line))
+                if line not in (known or onbase):
+                    bail("%s holds a Reviewed mark that is not %s" % (key, "in the report" if known else "on " + base))
+                marks.append(("entry", name, key, m[3], m[5] or "-", record(log, key, m[3]), line))
                 line = re.sub(r" <!-- reviewed \w+ -->$", "", re.sub(r"\*\*Reviewed \d{4}-\d\d-\d\d\*\*", "**Unreviewed**", line, count=1))
             tok = re.compile(r"(?<![A-Za-z0-9-])%s(?![A-Za-z0-9-])" % re.escape(key))
             hit = [str(i + 1) for i, b in enumerate(sm) if tok.search(b)]
@@ -142,9 +156,9 @@ def build(root, base, skip, cr, pf, prd):
             feats.append([key, name, before, None, len(subs), met != "missing", n, ref, key])
         text2 = "\n".join(out)
         if page_mark:
-            if lines[page_mark[0]] not in onbase:
-                bail("%s has a Reviewed Review line that is not on %s" % (rel, base))
-            marks.append(("page", name, "-", page_mark[1][1], clean(re.sub(r"^.*?(<!-- prd .*?-->).*$", r"\1", lines[page_mark[0]]), 90), log.get(name, "record not available"), lines[page_mark[0]]))
+            if lines[page_mark[0]] not in (known or onbase):
+                bail("%s has a Reviewed Review line that is not %s" % (rel, "in the report" if known else "on " + base))
+            marks.append(("page", name, "-", page_mark[1][1], clean(re.sub(r"^.*?(<!-- prd .*?-->).*$", r"\1", lines[page_mark[0]]), 90), record(log, name, page_mark[1][1]), lines[page_mark[0]]))
             text2, why = prd.unreview_text(text2, name)
             if why:
                 bail(why)
@@ -166,7 +180,9 @@ def build(root, base, skip, cr, pf, prd):
 
 
 def report(feats, marks, skip, kept):
-    rows = marks or kept
+    seen = {(r[0], r[1], r[2]): r for r in kept}
+    seen.update({(r[0], r[1], r[2]): r for r in marks})
+    rows = list(seen.values())
     out = ["# Feature migration report (features-v1)", "",
            "Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-run writes the same bytes.", "",
            "## Features", "", "| ID | Page | Text hash before | Text hash after | Lines | Metric | Test rows | Reference |", "|---|---|---|---|---|---|---|---|"]
@@ -202,7 +218,7 @@ def main():
     ap.add_argument("--base")
     ap.add_argument("--skip", default="DOC-27,DOC-28")
     a = ap.parse_args()
-    if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^-]+", a.base)):
+    if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^][A-Za-z0-9._/@~^-]*", a.base)):
         bail("bad --base or --skip")
     root = (git("rev-parse", "--show-toplevel") or "").strip() or bail("not in a git repository")
     base = a.base or (git("merge-base", "HEAD", "origin/main") or "").strip() or bail("no base: pass --base")
@@ -218,12 +234,15 @@ def main():
     if not os.path.exists(cur) or open(cur, encoding="utf-8", newline="").read() != text:
         todo[REPORT] = text
     dirty = git("status", "--porcelain", "--", *todo) if todo else ""
+    if dirty is None:
+        bail("git status failed")
     if dirty:
         bail("these paths have uncommitted changes:\n" + dirty)
-    tmp = os.path.join(root, "docs/migrations", ".features-v1-tmp")
-    done = []
+    tmp, done = "", []
     try:
-        os.makedirs(tmp, exist_ok=True)
+        if todo:
+            os.makedirs(os.path.join(root, "docs/migrations"), exist_ok=True)
+            tmp = tempfile.mkdtemp(prefix=".features-v1-", dir=os.path.join(root, "docs/migrations"))
         for i, (rel, t) in enumerate(sorted(todo.items(), key=lambda x: x[0] == REPORT)):
             part = os.path.join(tmp, "%d.tmp" % i)
             open(part, "w", encoding="utf-8", newline="").write(t)
@@ -235,7 +254,7 @@ def main():
         sys.exit("REFUSED: write failed (%s). Touched: %s. Recover: git checkout -- %s%s" % (
             e, ", ".join(done) or "none", " ".join(r for r in done if r != REPORT) or ".", "; delete " + REPORT if REPORT in done else ""))
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+        tmp and shutil.rmtree(tmp, ignore_errors=True)
     print("MIGRATED %d features on %d pages, %d marks cleared; wrote %d files (base %s)" % (len(feats), len(pages), len(marks or kept_rows(root)), len(done), base[:9]))
 
 

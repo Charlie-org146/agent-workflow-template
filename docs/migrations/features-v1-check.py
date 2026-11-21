@@ -2,7 +2,7 @@
 """Proof for goal migrate-features (shares no code with features-v1.py): python3 docs/migrations/features-v1-check.py check
 
 usage: check [--base REF] [--skip IDS] [--allow PATHS] [--source SHA]
-Unpacks the committed HEAD with git archive into a temporary directory (no worktree is registered), then proves the five done
+One-shot: meaningful only before this migration merges (afterwards BASE is the migrated main). Unpacks the committed HEAD with git archive into a temporary directory (no worktree is registered), then proves the five done
 lines against BASE (default: git merge-base HEAD origin/main) and the frozen source. It writes nothing to the tracked tree.
 """
 import argparse
@@ -78,7 +78,7 @@ def main():
     ap.add_argument("--allow", default="")
     ap.add_argument("--source", default="48ac06e7d")
     a = ap.parse_args()
-    if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or not re.fullmatch(r"[0-9a-f]{7,40}", a.source) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^-]+", a.base)) or not re.fullmatch(r"[A-Za-z0-9._/,-]*", a.allow):
+    if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or not re.fullmatch(r"[0-9a-f]{7,40}", a.source) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^][A-Za-z0-9._/@~^-]*", a.base)) or not re.fullmatch(r"[A-Za-z0-9._/,-]*", a.allow):
         sys.exit("REFUSED: bad argument")
     root = (run("git", "rev-parse", "--show-toplevel") or "").strip() or sys.exit("REFUSED: not in a git repository")
     os.chdir(root)
@@ -141,6 +141,25 @@ def main():
             t = open(os.path.join(tmp, "docs/wiki/%s.md" % n), encoding="utf-8", newline="").read()
             blocks += len(re.findall(r"^  - Feature markers v1\r?$", t, re.M))
         ok("3 one marker block per migrated feature", blocks == len(want), "%d blocks, %d features" % (blocks, len(want)))
+        broken = []
+        for n in names:
+            ls = open(os.path.join(tmp, "docs/wiki/%s.md" % n), encoding="utf-8", newline="").read().replace("\r\n", "\n").split("\n")
+            for k, x in enumerate(ls):
+                m = ENTRY.match(x)
+                if not m or m[1] in skip:
+                    continue
+                subs = 0
+                while k + 1 + subs < len(ls) and ls[k + 1 + subs].startswith("  ") and ls[k + 1 + subs].strip():
+                    subs += 1
+                head = k + 1 + subs
+                got = []
+                for y in ls[head + 3:]:
+                    if not re.match(r"^  - Line \d+: metric .*; test .*$", y):
+                        break
+                    got.append(y)
+                if not (ls[head] == "" and ls[head + 1] == "  - Feature markers v1" and ls[head + 2].startswith("  - Reference: ") and [int(re.match(r"  - Line (\d+):", y)[1]) for y in got] == list(range(1, subs + 1))):
+                    broken.append(m[1])
+        ok("3 every block has a Reference and one numbered Line per requirement line", not broken, ", ".join(broken))
         # done line 4: marks
         left = []
         for f in os.listdir(os.path.join(tmp, "docs/wiki")):
