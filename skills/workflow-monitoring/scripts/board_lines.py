@@ -378,7 +378,7 @@ def issues(root, runs=()):
     """Issues lines: the missing list (when fit is installed beside this skill), then each finding kept local."""
     out = []
     if fit is not None and missing_list():
-        out += ["- no private-name list: nothing is scanned (create %s; a file holding only comments says off on purpose)" % SHOWN,
+        out += ["- no private-name list: every push and merge stops (create %s; an empty file passes, o675)" % SHOWN,
                 "    fix: write one pattern per line to %s (or point $LOOP_PRIVATE_NAMES at a file)" % SHOWN]
     for run in runs:
         wait = " ".join(str(run.get("release_pr_waiting") or "").split())

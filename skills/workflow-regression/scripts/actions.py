@@ -21,7 +21,7 @@ ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GI
 
 
 def row_env():
-    return {k: v for k, v in os.environ.items() if k not in ROW_DROP}
+    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.
@@ -30,12 +30,12 @@ on:
 @SCHEDULE@  workflow_dispatch:
     inputs:
       target:
-        description: "land, nightly or a row id; empty runs @LEVELS@ (the ci_levels setting)"
+        description: "land, nightly or a row id; empty: @LEVELS@"
         required: false
         default: ""
         type: string
       cleanup:
-        description: "true: run no row; close skipped-only and duplicate issues (paced)"
+        description: "true: run no row, close skipped-only and duplicate issues"
         required: false
         default: false
         type: boolean
@@ -71,9 +71,10 @@ jobs:
           REGRESSION_TARGET: ${{ inputs.target }}
           REGRESSION_CLEANUP: ${{ inputs.cleanup }}
           REGRESSION_LEVELS: "@LEVELS@"
+          LOOP_PRIVATE_NAMES: /dev/null  # no list in CI: an empty one (o675)
           REGRESSION_SHARD: "${{ matrix.shard }}/@SHARDS@"
         run: |
-          here=$(mktemp -d)  # what each row guards, read before any row runs
+          here=$(mktemp -d)
           cat > "$here/tests.py" <<'TESTS_PY_EOF'
 @TESTS@
           TESTS_PY_EOF
@@ -173,7 +174,7 @@ jobs:
               else:
                   filed[0] += 1
               return done
-          def label_for(page):  # the page's label, made first, or ""
+          def label_for(page):
               if not LABELS_ON or page not in FEATURES:
                   return ""
               label = "feature:" + "".join(c for c in page if c != "," and c.isprintable())[:42]
@@ -210,7 +211,7 @@ jobs:
                   (code, said), skipped = run(row[2], int(min(ROW_SECONDS, JOB_SECONDS - (time.time() - start)))), False
               hits = sorted((item for item in issues or [] if marked(item["body"])[0] == row[0]), key=lambda i: i["number"])
               sk = lambda i: (i["body"] or "").split("\n")[1:2] == ["The row `%s` was skipped." % row[0]]
-              hit = hits[0] if hits else None  # the oldest open issue is the row's one
+              hit = hits[0] if hits else None
               for item in [i for i in hits if i["state"] == "OPEN" and i is not hit]:
                   if dupes[0] > 0:
                       dupes[0] -= 1

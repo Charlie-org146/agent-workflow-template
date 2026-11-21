@@ -489,9 +489,9 @@ rule warns on the last three and on a broken list.
 
 | Exit | Hook says | Means and what to do |
 |---|---|---|
-| 0 | nothing | clean, no list (`private.py check` says so), or a list of only comments (off on purpose) |
+| 0 | nothing | clean, or a list of only comments (off on purpose; an empty file passes) |
 | 1 | `REFUSED: a private name would be committed\|pushed: <place> matches list line <n>; nothing was committed\|pushed ... (PRIVATE_NAME)` | remove the text from that place and commit or push again; for a false positive edit that list line. A pre-push hit means a commit already holds it: amend or squash, then push |
-| 2 | `REFUSED: the private-name list or scan is broken: ... (PRIVATE_LIST)` | the list file is missing or unreadable, a pattern is invalid or matches ordinary text such as an empty line, or git couldn't be read (a push over 500 commits: set `LOOP_HOOK_RANGE=<rev>` to scan from that rev). Nothing was committed or pushed; repair the line named |
+| 2 | `REFUSED: the private-name list or scan is broken: ... (PRIVATE_LIST)` | no list file (o675: it stops, never reads clean), an unreadable one, a pattern is invalid or matches ordinary text such as an empty line, or git couldn't be read (a push over 500 commits: set `LOOP_HOOK_RANGE=<rev>` to scan from that rev). Nothing was committed or pushed; repair the line named |
 | 64 | `the hook is wired wrong` | the stub calls a mode `private.py` doesn't have; rerun `setup.py --git-hooks` |
 | 142 | `the scan took too long and was killed` | a pattern is too slow (`LOOP_HOOK_DEADLINE` seconds, default 30); shorten the pattern |
 | other | `private.py is gone`, `python3 is not on PATH` or `the scan failed unexpectedly` | the skills moved or python3 is gone: rerun `python3 .../setup.py --git-hooks`. To skip one commit or push git's own `--no-verify` is yours to decide; the push scan and the merge step still scan it |

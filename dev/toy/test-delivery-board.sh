@@ -24,7 +24,7 @@ S="$here/skills/workflow-monitoring/scripts"
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"; SE="python3 $S/sessions.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 cd "$d/repo" || exit 1
-python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
+LOOP_PRIVATE_NAMES=/dev/null python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null  # o675: no list stops the adoption commit
 git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
 fails=0
 ok() { echo "PASS: $1"; }
@@ -118,7 +118,7 @@ if want issues; then
   new i1; git switch -q main
   edit i1 "s.update(finding_error='finding commit holds a private name at commit:abc1234 (list line 2). Fix: remove it, then push the finding commit (FINDING_LOCAL)')"
   board
-  check "with no private-name list, Issues says nothing is scanned and how to create one" 'issues | grep -q -- "- no private-name list: nothing is scanned (create \$HOME/.workflow-loop/private-names; a file holding only comments says off on purpose)"'
+  check "with no private-name list, Issues says every push and merge stops and how to create one (o675)" 'issues | grep -q -- "- no private-name list: every push and merge stops (create \$HOME/.workflow-loop/private-names; an empty file passes, o675)"'
   check "a finding a scan kept local shows under Issues with its place and fix" 'issues | grep -q -- "- i1: a finding stayed local: finding commit holds a private name at commit:abc1234 (list line 2) fix: remove it, then push the finding commit (FINDING_LOCAL)"'
   mkdir -p "$HOME/.workflow-loop"; printf '# off on purpose\n' > "$HOME/.workflow-loop/private-names"
   board
