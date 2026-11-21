@@ -34,10 +34,9 @@ grep -q "/tmp\|/var/\|health-control-" <<<"$out" && bad "a control row shows a t
 #   that a rule ran, not that it reported; why_new=no test breaks a rule; seam=none; no_claim=none beyond protects
 broken="$d/broken/skills/workflow-health"; mkdir -p "$broken"; cp -R "$here/skills/workflow-health/scripts" "$broken/"
 for s in workflow-docs workflow-regression workflow-monitoring; do ln -s "$here/skills/$s" "$d/broken/skills/$s"; done
-sed -i.b 's/^LIMIT = 20 \* 1024$/LIMIT = 20 * 1024 * 1000/' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
-sed -i.b 's/^WARN = 19000 /WARN = 19000000 /' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
+sed -i.b 's/^SKILL_LINES = 150$/SKILL_LINES = 150000/' "$broken/scripts/rules.py" && rm "$broken/scripts/rules.py.b"
 out=$(python3 "$broken/scripts/health.py" check --group controls); rc=$?
-grep -q "^FAIL controls scripts control: cannot fire" <<<"$out" && grep -q "controls.py run scripts --keep" <<<"$out" && [ $rc = 1 ] \
+grep -q "^FAIL controls skill-lines control: cannot fire" <<<"$out" && grep -q "controls.py run skill-lines --keep" <<<"$out" && [ $rc = 1 ] \
   && ok "a broken rule is reported as unable to fire, with how to look" || bad "cannot fire"
 grep -q "^PASS controls findings control" <<<"$out" && ok "the other rules' controls still fire" || bad "other controls"
 # Value: protects=a new rule cannot be added without its control; fails_when=the load check is dropped; why_new=new;

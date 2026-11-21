@@ -9,13 +9,13 @@
 # Pods (MON-13, MON-14, MON-15): two layers per pod with several independent operation sessions, the check-in's per-repo
 # dependency blocks, goal ownership by pod and the cross-pod merge lock, on made-up repos (alpha-app, beta-svc, gamma-lib,
 # delta-tool, omega-none) and pods (pod-a, pod-b) in a temp HOME. No model, no network.
-# usage: test-pods.sh [layers|blocks|owner|lock|twopods|size|docs ...]   (default all; POD_SKILLS=DIR runs another copy of skills/)
+# usage: test-pods.sh [layers|blocks|owner|lock|twopods|docs ...]   (default all; POD_SKILLS=DIR runs another copy of skills/)
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_ROLE LOOP_SESSION_QUIET LOOP_GOVERN_HOOK CLAUDE_SESSION_ID LOOP_POD_ID LOOP_MERGE_LOCK_SECONDS
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 SK=${POD_SKILLS:-$here/skills}; SCRIPTS=$SK/workflow-monitoring/scripts; GOAL=$SK/workflow-delivery/scripts/goal.py; MERGE=$SK/workflow-release/scripts/merge.py
-cases=("$@"); [ ${#cases[@]} = 0 ] && cases=(layers blocks owner lock twopods size docs)
+cases=("$@"); [ ${#cases[@]} = 0 ] && cases=(layers blocks owner lock twopods docs)
 want() { for c in "${cases[@]}"; do [ "$c" = "$1" ] && return 0; done; return 1; }
 T=$(mktemp -d); export HOME="$T/home"; mkdir -p "$HOME/.workflow-loop"
 export GIT_CONFIG_GLOBAL="$T/gitconfig" GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0; : > "$GIT_CONFIG_GLOBAL"
@@ -235,23 +235,6 @@ shim; own alpha-app m1 pod-a done 5; own alpha-app m2 pod-b done 6; ma=$(fp alph
 ( cd $T/alpha-app && LOOP_POD_ID=pod-a PATH="$T/shim:$PATH" python3 $MERGE m1 >"$T/ma.out" 2>&1 & cd $T/alpha-app && LOOP_POD_ID=pod-b PATH="$T/shim:$PATH" python3 $MERGE m2 >"$T/mb.out" 2>&1 & wait )
 check "both pods merge their own goals at once: neither is refused, the merges are serialized, the lock is gone" '! grep -q "owned by pod" "$T/ma.out" "$T/mb.out" && [ "$(depth)" = 1 ] && [ ! -e "$T/alpha-app/.git/loop/merge.lock" ]'
 check "no pod changed the other's records" '[ "$(fp alpha-app api)" = "$ra" ] && [ "$(fp alpha-app web)" = "$rw" ]'
-fi
-
-if want size; then
-echo "== done line 6: sizes"
-base=$(git -C "$here" merge-base HEAD origin/main 2>/dev/null || git -C "$here" rev-parse HEAD)
-over=""
-for f in "$here"/skills/*/scripts/*.py; do
-  rel=${f#$here/}; now=$(wc -c < "$f"); was=$(git -C "$here" show "$base:$rel" 2>/dev/null | wc -c | tr -d ' ')
-  if [ "$now" -ge 20480 ] || { [ "$now" -ge 19000 ] && [ "$was" -lt 19000 ]; }; then over="$over $rel($now)"; fi
-done
-out="$over"; check "no script reaches 20 KB, and none newly crosses 18 KB" '[ -z "$over" ]'
-caps=""; for pair in graph:20480 checkin:20480 operate:20480 goal:20480 sessions:20480 watch:20480 merge:20480 mend:20480 board_lines:20480; do
-  n=${pair%%:*}; cap=${pair##*:}; f=$(ls "$here"/skills/*/scripts/$n.py); [ "$(wc -c < "$f")" -le "$cap" ] || caps="$caps $n"; done
-out="$caps"; check "the touched scripts stay within their budgets" '[ -z "$caps" ]'
-mkdir -p "$T/export" && git -C "$here" archive HEAD | tar -x -C "$T/export"   # a clean export: no __pycache__ from earlier runs
-out=$(python3 "$here/dev/package.py" --root "$T/export" --out "$T/pkg.zip" 2>&1); rc=$?
-check "the package rules pass, 99 files or fewer (dev/package.py)" '[ $rc = 0 ] && has "PASS: " && has " files, ZIP"'
 fi
 
 if want docs; then

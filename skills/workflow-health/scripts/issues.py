@@ -101,7 +101,7 @@ def is_health(issue):
 
 
 OLD = {"requirements": "criteria", "performance": "cost", "traceability": "criteria", "tests": "criteria"}
-OLD_RULE = {"scripts": "limit", "seen-red": "proof", "done": "rows"}
+OLD_RULE = {"seen-red": "proof", "done": "rows"}
 
 
 def posix(text):

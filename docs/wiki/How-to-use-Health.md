@@ -63,8 +63,6 @@ or a batch with a real agent. Records older than these goals may be gone, so "no
   outside `tests/`, a wiki with pages from another tool, and a pre-push hook that takes minutes." (FINDINGS.md)
 - Several goals pushing at once can fail with a bare git error, and a plain re-push works; `pr` retries twice
   (FINDINGS.md).
-- Some scripts are within a few hundred bytes of the 20 KB limit, so the next feature needs a new script
-  (FINDINGS.md).
 - "Codex's `workspace-write` sandbox blocks writes to `.git` and outside the workspace." (FINDINGS.md)
 
 **Gaps for the owner**
@@ -86,7 +84,7 @@ The consistency group counts definitions in Requirements sections; How-to items 
 
 Each requirement and how it is delivered:
 
-- HLT-2: The rules. Example, from the size-fail test: given a script over 20 KB, when health runs, then it is a FAIL with a fix.
+- HLT-2: The rules. Example, from the health-live-requirements test: given a page with 3 live requirements and 23 moved-to lines, when health runs, then it counts 3 and passes, while 25 live requirements still fail.
 - HLT-4: Findings become issues tagged with their group and their feature. Example, from the health-feature-always test: given findings filed by health.py file, when issues are created or updated, then each carries its feature label whatever feature_labels says, and a finding with no feature is filed under Other. Another example
 , from the no-token-would test: given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing.
 - HLT-7: Checks, check-ins and rounds answer fast. Its budget and its limits for a scheduled round:

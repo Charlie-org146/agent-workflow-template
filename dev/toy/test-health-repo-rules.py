@@ -7,9 +7,8 @@
 
 Each case builds a throwaway git repo, writes the repo's own rules and runs the real health.py (and settings.py) on it:
 run (rows land in their group with their feature), control (a rule's break makes Controls see it fail), refuse (a rule with
-no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), threshold
-(health_script_bytes), setup (fill-repo writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
-CASE is one of run, control, refuse, off, threshold or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
+no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), setup (fill-repo writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
+CASE is one of run, control, refuse, off or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
 import json
 import os
 import subprocess
@@ -129,23 +128,14 @@ with tempfile.TemporaryDirectory() as tmp:
         # off: a default turned off shows its reason; an empty reason leaves the rule on and is UNREAD
         d = os.path.join(tmp, "d")
         os.makedirs(d)
-        repo(d, [], off={"hooks": "CI runs no git hooks", "scripts": ""})
+        repo(d, [], off={"hooks": "CI runs no git hooks", "skill-lines": ""})
         found, _ = rows(d, "security,size,repo")
         off = find(found, "hooks")
         check(bool(off) and off["state"] == "INFO" and off["family"] == "security" and "turned off: CI runs no git hooks" in off["detail"],
               "a default rule turned off prints its reason in its own group")
-        bare = find(found, "scripts")
-        check(any(r["state"] == "UNREAD" and r["subject"] == "scripts" and r["family"] == "repo" for r in found) and bool(bare) and bare["family"] == "size",
+        bare = next((r for r in found if r["subject"] == "skill-lines" and r["family"] == "size"), None)
+        check(any(r["state"] == "UNREAD" and r["subject"] == "skill-lines" and r["family"] == "repo" for r in found) and bool(bare) and bare["family"] == "size",
               "a default turned off with no reason stays on and is reported UNREAD")
-    if run_it('threshold'):
-        # threshold: health_script_bytes
-        e1, e2 = os.path.join(tmp, "e1"), os.path.join(tmp, "e2")
-        for e, config in ((e1, None), (e2, {"health_script_bytes": 2000})):
-            os.makedirs(e)
-            repo(e, config=config, scripts={"skills/x/scripts/big.py": 3000})
-        one, two = find(rows(e1, "size")[0], "scripts"), [r for r in rows(e2, "size")[0] if r["rule"] == "scripts" and r["state"] == "FAIL"]
-        check(bool(one) and one["state"] == "PASS" and bool(two) and "over 2000" in two[0]["detail"],
-              "health_script_bytes in config.json lowers the script cap for that repo, the default leaves it at 20480")
     if run_it('setup'):
         # setup: fill-repo writes the file once and keeps an edited one
         f = os.path.join(tmp, "f")
@@ -159,8 +149,8 @@ with tempfile.TemporaryDirectory() as tmp:
         sh([py, settings, "fill-repo", "--repo", f], f)
         check(first.get("rules") == [] and first.get("off") == {} and "_comment" in first and json.load(open(target))["off"] == {"hooks": "kept"},
               "setup writes an empty commented .loop/health-rules.json once and keeps an edited one")
-        check(json.load(open(os.path.join(f, ".loop", "config.json"))).get("health_script_bytes") == 20480,
-              "setup fills the health_script_bytes and health_skill_lines settings with their defaults")
+        check(json.load(open(os.path.join(f, ".loop", "config.json"))).get("health_skill_lines") == 150,
+              "setup fills the health_skill_lines setting with its default")
 
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

@@ -205,11 +205,6 @@ python3 "$lone/scripts/health.py" file --group size,criteria,docs >/dev/null 2>&
 still=$(python3 -c "import json,os;print(sorted(i['number'] for i in json.load(open(os.environ['FAKE_GH_DIR']+'/issues.json')) if i['state']=='OPEN' and 'size:' not in i['body'] and i['number'] in $open_other))")
 [ "$still" = "$open_other" ] && ok "a rule that could not read closes none of its issues" || bad "unread close: $still"
 
-echo "== sizes"
-for f in milestone.py health.py; do
-  [ "$(wc -c < "$here/skills/workflow-health/scripts/$f")" -lt 20480 ] && ok "$f under 20 KB" || bad "$f size"
-done
-[ "$(wc -c < "$here/skills/workflow-delivery/scripts/goal.py")" -lt 20480 ] && ok "goal.py under 20 KB" || bad "goal.py size"
 
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

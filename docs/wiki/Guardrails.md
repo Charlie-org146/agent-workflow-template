@@ -28,10 +28,8 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 - GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
   - The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]
   - Hook-skipping commits are refused and flagged. [GRD-6]
-- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
-  - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]
-  - No script on main is over its fail line. [GRD-20]
-  - Reformatting a whole file only to fit is refused. [GRD-20]
+- GRD-20: **Reviewed 2026-11-21** Sizes are one table, enforced on main <!-- reviewed 30eee1ac -->
+  - One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). [GRD-20]
 
 ### Non-functional
 
@@ -224,6 +222,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-21 | Sizes are one table, enforced on main <br> One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). [GRD-20] | TD554: the loop ships only as the template (owner o677, item 5 of operation-top's pending folds, as drafted) | o677: "So I'm thinking about making it template only. Add this decision to" |
 | r4 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | approved by operation-top under owner delegation (DOC-2, o486): the fail line matches the enforced Agensi limit | o654: "Then I want u to fix this merge time issuee first. I" |
 | r3 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | readme-six: the owner-approved final README (o514) | o576: "yes build it" |
 | r2 | 2026-11-19 | The package always fits Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20] <br> One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21] <br> A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22] | consolidation (TOP-DECISION 89) | o284: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
@@ -265,7 +264,7 @@ None
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | not run |
 | - | requirement | GRD-6 | no passing test | not enforced |
-| [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 101st file is added, then the toy fails, and the real tree stays at 100 files and under the byte cap. | PASS 2026-11-14 FLAKY |
+| - | requirement | GRD-20 | no passing test | not enforced |
 | [pull-ff-only-passes](Tests#t-pull-ff-only-passes) | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | Given GRD-4, when test-deployments.sh runs its 2 cases, then each passes: the govern hook lets it through; the govern hook still refuses it (negative control. | PASS 2026-11-12 |
 | [desk-lists-4805](Tests#t-desk-lists-4805) | defect | [#4805](https://github.com/jcl2018/agent-workflow-template/issues/4805) closed (2026-11-18) | Given the missing desk onboarding and background worker fallback, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
 | [issues-rest-fallback](Tests#t-issues-rest-fallback) | defect | [#4464](https://github.com/jcl2018/agent-workflow-template/issues/4464) closed (2026-11-16) | Given the GRD-5 cases of test-regression-issues.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |

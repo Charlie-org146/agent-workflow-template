@@ -43,7 +43,7 @@ Each guardrail with what it protects against, the requirement that owns it ("new
 | OPS-16 (was GRD-12) | A goal or test lane starting while free memory is low | OPS-16 | `min_free_memory_gb` | Performance |
 | MCH-1 (was GRD-18) | A POSIX-only call, or long text passed on a command line, breaking native Windows | MCH-1 | none | none yet |
 | HLT-11 (was GRD-19) | A feature page too large to review | HLT-11 | `criteria_max` | Size: `requirements-per-page` |
-| GRD-20 (with the former GRD-21 and GRD-22) | A release package that fails Agensi's rules, a package limit of ours looser than Agensi's, or a goal that outgrows a package limit, learned only at release | GRD-20 | none | none yet |
+| GRD-20 (with the former GRD-21 and GRD-22) | A page, a page's requirements or the test rows outgrowing their limit | GRD-20 | `criteria_max`, `max_regression_rows` | Size: `requirements-per-page`, `rows-cap` |
 
 ## How to reach or run it
 
@@ -62,7 +62,7 @@ Each requirement and how it is delivered:
 - GRD-4: A worker writes only its own goal's work, never shared loop state or its own limits. Example, from the grd4-touches test: given a worker session, when it tries to widen its goal's touches, then the command refuses. Also (was AUT-9): Every routine declares what it may do. Example, from the perms-undeclared test: given a routine in the registry with no rows in .loop/permissions.tsv, when permissions.py check runs, then it prints UNDECLARED and exits 1. Also: `setup.py desk` lists every desk-only setup step once and `desk check` ends with DESK OK when none is left. Also: `setup.py desk` lists every desk-only setup step once, and `desk check` ends with DESK OK when none is left.
 - GRD-5: Nothing is written to GitHub without an explicit `--live`. Example, from the grd5-regression-dry test: given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call.
 - GRD-6: The base branch is protected and merges only with its required checks green. Example, from the grd6-head-moved test: given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged.
-- GRD-20: The package always passes Agensi's rules. No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. (no test yet) Also (was HLT-11): Health keeps the repo lean. Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. It warns on a script over 19,000 bytes and fails one at 20 KB. (no test yet)
+- GRD-20: Sizes are one table, enforced on main. One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). (no test yet) Also (was HLT-11): Health keeps the repo lean. Health flags an in-loop test run over its time budget, naming the slowest tests to move to the full suite, and flags stale worktrees and branches, printing the commands that remove them without running them. (no test yet)
 
 ### Command: goal.py show
 - **Command:** `python3 skills/workflow-delivery/scripts/goal.py show SLUG`
@@ -94,23 +94,7 @@ Each requirement and how it is delivered:
 
 ## URLs and deployments
 
-**Package limits**
-
-Each package limit Agensi states on its packaging page, next to ours in `dev/package.py`. Ours may be tighter, never looser: `dev/toy/test-package-caps.py` fails when this table is missing or a figure of ours is above Agensi's. Agensi's page gives no unit for MB and KB, so the check reads them as binary (1 MB is 1,048,576 bytes and 1 KB is 1,024 bytes); the package size cap is 5,000,000 bytes, equal or tighter in either unit.
-
-| Limit | Agensi's figure | Ours | Date Agensi's page was read |
-|---|---|---|---|
-| Files per package (upload from an agent) | 100 files | 100 files (MAX_FILES) | 2026-11-18 |
-| Package size (upload from an agent; the page does not say per file or in total) | 5 MB | 5,000,000 bytes for the whole package, failing at 5,000,000 or more (MAX_BYTES) | 2026-11-18 |
-| Files the buyer's agent receives besides SKILL.md | 200 files | 100 files in all, SKILL.md files included (MAX_FILES) | 2026-11-18 |
-| Text the buyer's agent receives per listing | 6,000,000 characters | 5,000,000 characters, the package cap in bytes, which is at least as many characters (MAX_BYTES) | 2026-11-18 |
-| Script size (a guideline on Agensi's page) | 20 KB | 20 KB, failing at 20,480 bytes (MAX_SCRIPT). Agensi guideline, unit unstated; binary assumed, 2.4% looser if Agensi means decimal | 2026-11-18 |
-| ZIP size (upload from the website) | 50 MB | 5,000,000 bytes (MAX_BYTES) | 2026-11-18 |
-| Files per package (upload from the website) | 1,000 files | 100 files (MAX_FILES) | 2026-11-18 |
-| Skills per pack (upload from the website) | 50 skills | no cap of its own; at most 100 files | 2026-11-18 | <!-- not-a-count -->
-| File content | text files only | text only: a file that is not UTF-8 text fails | 2026-11-18 |
-| Executables and bundled dependencies | not allowed | not allowed: an executable bit, compiled files and dependency folders fail | 2026-11-18 |
-| Listing fields (summary, tags, keywords, use_cases) | no limit stated | summary 300 characters, tags 10, keywords 10, use_cases 8 | 2026-11-18 |
+The loop ships only as a GitHub template (SET-10), so there is no package to build, upload or limit.
 
 - Wiki: [Guardrails](https://github.com/jcl2018/agent-workflow-template/wiki/Guardrails)
 - Milestone: [Guardrails](https://github.com/jcl2018/agent-workflow-template/milestone/11)

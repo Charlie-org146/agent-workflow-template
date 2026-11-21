@@ -202,15 +202,6 @@ if want machine-health-rule; then
   echo "PASS: health's Adoption group lists the machine gaps"
 fi
 
-# done 12: machine.py is under the script cap and adds no file to the package (it lives in dev/).
-if want machine-caps; then
-  for f in machine.py machine_ops.py; do [ "$(tr -d '\015' < "$here/dev/$f" | wc -c)" -lt 20480 ] || no "$f is 20,480 bytes or more"; done
-  for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(tr -d '\015' < "$here/$f" | wc -c)" -lt 20480 ] || no "$f is over the script cap"; done
-  # machine.py adds no file to the package: it is not under skills/ (other goals may add their own scripts there)
-  git -C "$here" ls-files skills | grep -q '/machine\.py$' && no "machine.py is under skills/"
-  echo "PASS: machine.py and every script stay under the byte cap and the package gains no file"
-fi
-
 # done 13: the operation session and the peer link exist after apply; check names a missing one.
 if want machine-operation-peer; then
   mk o; r="$d/o/repo"; h="$d/ho"; mkdir -p "$h"

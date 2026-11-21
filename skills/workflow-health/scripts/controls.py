@@ -82,11 +82,6 @@ def run_record(root, slug, state):
         json.dump(dict({"slug": slug}, **state), handle)
 
 
-def f_size(root):
-    repo(root)
-    write(root, "skills/x/scripts/big.py", "# pad\n" * 3600)
-
-
 def f_criteria_rows(root):
     repo(root)
     write(root, "docs/wiki/Calc.md", "# Calc\n\n## Requirements\n\n- CAL-1: **Unreviewed** calc adds.\n")
@@ -335,7 +330,6 @@ def f_auto(root):
 
 # rule -> (group, label, fixture)
 CONTROLS = {
-    "scripts": ("size", "scripts", f_size),
     "rows": ("requirements", "rows", f_criteria_rows),
     "proof": ("requirements", "proof", f_proof),
     "done": ("requirements", "done", f_criteria_done),

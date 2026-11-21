@@ -39,15 +39,13 @@ try:
     import report as G  # noqa: E402
 except ImportError:  # lone health.py: its own rules only
     class G:
-        RULES_OF = {"size": ("scripts",), "requirements": ("rows", "proof", "done"), "docs": ("docs-check",),
+        RULES_OF = {"size": (), "requirements": ("rows", "proof", "done"), "docs": ("docs-check",),
                     "hygiene": ("findings", "waiting", "branches"), "mine": (), "controls": ()}
         ORDER = tuple(RULES_OF)
         RULES = tuple(r for rules in RULES_OF.values() for r in rules)
         GROUP_OF = {r: g for g, rules in RULES_OF.items() for r in rules}
         ALIASES = {"criteria": "requirements", "cost": "performance"}
 
-LIMIT = 20 * 1024
-WARN = 19000  # the script target: a script that meets it raises no warning
 FINDINGS_WARN = 5
 WAITING_HOURS = 24
 RULES = G.RULES
@@ -71,28 +69,6 @@ def row(state, family, subject, rule, detail, fix=""):
 def sibling(skill, script):
     path = os.path.join(HERE, "..", "..", skill, "scripts", script)
     return path if os.path.exists(path) else ""
-
-
-def size_rows(root):
-    rows, good = [], 0
-    limit = setting(root, "health_script_bytes", LIMIT)
-    warn = min(WARN, limit)
-    for path in sorted(glob.glob(os.path.join(root, "skills", "*", "scripts", "*.*"))):
-        if not path.endswith((".py", ".sh")):
-            continue
-        with open(path, "rb") as handle:  # LF bytes
-            size = len(handle.read().replace(b"\r\n", b"\n"))
-        name = os.path.relpath(path, root)
-        if size > limit:
-            rows.append(row("FAIL", "size", name, "scripts", "%d bytes, over %d" % (size, limit), "split it into modules"))
-        elif size > warn:
-            rows.append(row("WARN", "size", name, "scripts", "%d bytes, over the %d target (the limit is %d)" % (size, warn, limit),
-                            "trim or split before it passes the limit"))
-        else:
-            good += 1
-    if not rows:
-        rows.append(row("PASS", "size", "scripts", "scripts", "%d scripts at %d bytes or less" % (good, warn)))
-    return rows
 
 
 def criteria_rows(root):
@@ -241,7 +217,7 @@ def rule_functions():
     for name in ("defects", "rules", "report"):
         module = sibling_module(name)
         extra.update(module.FUNCTIONS if module else {})
-    found = {"scripts": size_rows, "rows": criteria_rows, "proof": criteria_rows, "done": criteria_rows,
+    found = {"rows": criteria_rows, "proof": criteria_rows, "done": criteria_rows,
              "seen-red": criteria_rows, "defect-tests": defect_rows, "docs-check": docs_check, "findings": hygiene_rows,
              "waiting": hygiene_rows, "branches": hygiene_rows, "cost": cost_rows}
     if lean:

@@ -2,7 +2,7 @@
 # reads: skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/goal.py
 # reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py
 # reads: skills/workflow-health/scripts/health.py skills/workflow-regression/scripts/regression.py
-# reads: skills/workflow-setup/scripts/setup.py dev/toy/split-check.py
+# reads: skills/workflow-setup/scripts/setup.py
 # reads: skills/workflow-docs/scripts/deployments.py skills/workflow-docs/scripts/counting.py
 # reads: skills/workflow-regression/scripts/runs.py
 # reads: skills/ docs/ README.md .loop/regression.tsv .loop/regression-runs.tsv .loop/regression-issues.tsv
@@ -16,7 +16,7 @@ unset LOOP_BATCH
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-cases="home-sandbox wording flow-steps categories defect-owed closing-keywords closing-unaffected health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
+cases="home-sandbox wording flow-steps categories defect-owed closing-keywords closing-unaffected health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept"
 if [ $# = 0 ]; then
   fails=0
   for c in $cases; do
@@ -270,17 +270,6 @@ KEPT
     done
     grep -qiE "governance only|one session governs" "$here/skills/workflow-delivery/SKILL.md" || no "workflow-delivery/SKILL.md lost its governance line"
     grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" "$here/skills/workflow-docs/references/commands.md" || no "workflow-docs lost its review rule (SKILL.md and its commands reference)"
-    exit 0;;
-  size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py; it stays under health's size warning
-    python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/criteria.py deployments \
-      CRITERIA_MAX_DEFAULT,SHEET,criteria_max,rules || exit 1
-    exit 0;;
-  size-140) # issue 140: docs.py's page map moved unchanged into counting.py; it stays under health's size warning
-    python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/docs.py counting map_path,read_map,write_map || exit 1
-    exit 0;;
-  size-141) # issue 141: regression.py's row and page readers moved unchanged into runs.py; under health's size warning
-    python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-regression/scripts/regression.py runs \
-      chosen,clean,criteria_ids,criterion_rows,done_lines,lines_of,today path_of || exit 1
     exit 0;;
   *) no "unknown case";;
 esac

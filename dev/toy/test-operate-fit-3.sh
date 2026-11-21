@@ -100,5 +100,4 @@ assert lb.plain("see /srv/me/x/y.md and ~/z.txt but https://a.test/p/1") == "see
 PY
 
 echo "== sizes"
-check "every script is under 20 KB" '[ -z "$(find "$here/skills" -name "*.py" -size +20479c)" ]'
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
