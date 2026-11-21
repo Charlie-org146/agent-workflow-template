@@ -16,11 +16,11 @@ Build order (the Reviewed marks are the last write, because the mark seals the t
 
 1. B1. Extract the three feature units and the brief section from the pinned page with a scratch script kept outside the repo; check the page hash first.
 2. B2. `criteria.py revise DEL-19` and `revise DOC-28` with `--owner-record o721 --text-file`; add DEL-23 by hand after DEL-21 with its r1 revision row built by the repo's own functions (`pf.unit`, `pf.enc`, `ms.rput`).
-3. B3. Sync the principle-table and by-feature rows on README, Home and Principles, the how-to items and the flow figures (new DEL-23.svg; DEL-19.svg and DOC-28.svg redrawn from the new requirements); run `criteria.py render`, then `dev/system-design.py` and `--check`.
+3. B3. Sync the principle-table and by-feature rows on README, Home and Principles (the Summary cell holds the feature's own requirement texts, joined; by-feature rows join them with line breaks, each tagged with the ID), the how-to items and the flow figures (new DEL-23.svg; DEL-19.svg and DOC-28.svg redrawn from the new requirements); run `criteria.py render`, then `dev/system-design.py` and `--check`.
 4. B4. Write the brief section into `docs/release-brief-v1.1.0.md`, marked frozen; the service repo's name is written "the service repo".
 5. B5. One sentence on the Principles page: principle 1 may hold 8 features until v2.0.0 (o721). It sits in the page head, because the front-page check allows only a sentence, an image and one table line inside a principle's section.
-6. B6. Add the one new link origin (`trunkbaseddevelopment.com`) to `scripts/public-origins.json` and to the network list in `listing.json`; nothing else in either file.
-7. B7. Checks: `docs.py check`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan; a script compares the final repo units to the pinned page sentence by sentence (with a control that a changed word fails) and proves every other feature unit is byte-identical to the base.
+6. B6. Add the one new link origin (`trunkbaseddevelopment.com`) to `scripts/public-origins.json` (read by the docs check) and to the network list in `listing.json` (read by the package check); nothing else in either file; `basecamp.com` and the other hosts the three units link were already in both.
+7. B7. Checks: the health check's Size group (read-only; no new size finding), the page, file-count and requirements-per-page limits (file count by the package check, `criteria_max` 24 against 7 live lines on Delivery and 5 on Documentation), `docs.py check`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan; a script compares the final repo units to the pinned page sentence by sentence (with a control that a changed word fails) and proves every other feature unit is byte-identical to the base.
 8. B8. Preflight that record o721 is unused in the review log, then `criteria.py review DEL-19 DEL-23 DOC-28 --user --owner-record o721`; re-run the checks.
 
 ## What the review changed in the plan
@@ -32,6 +32,17 @@ Build order (the Reviewed marks are the last write, because the mark seals the t
 - Name which check reads which origin file: the docs check reads `scripts/public-origins.json`, the package check reads `listing.json`.
 - The generated "What this is" paragraph changes because it is built from every sub-bullet of DEL-19; accepted as is (operation session, 11:15), with the before and after at the top of the PR notes.
 - Done line 4 is read as the Principles page, because DOC-26 holds the limit and is Reviewed and protected by done lines 1 and 2; nothing enforces the cap today, so no check changes.
+
+## Red-team review of this plan
+
+A fresh read-only reviewer answered, recorded unchanged with `notify.py plan-record`. Its B lines and what the plan does:
+
+- B1, an agent writing requirement text: not fixable in the plan. No sentence is written by the agent: every sentence is the owner's pinned page and the marks use his typed record o721. DEL-23 has no `revise` path (the tool needs an existing revision table), so its unit and r1 row are built with the repo's own functions, as the earlier text goal did. Sent to the operation session.
+- B1, summaries repeating the title: fixed. The Summary cells now hold each feature's own requirement texts (B3).
+- B2, no tests for two Reviewed requirements: out of scope by done line 5 and the pinned page (the tests are the implementation task). Observed in a read-only health run: DEL-23 and DOC-28 show WARN "not enforced, 0 days since Reviewed 2026-11-21 (fails after 7)", so rows must land before 2026-11-28. Sent to the operation session.
+- B3, sizes: fixed in B7. The read-only health run shows no new size finding; its 4 FAIL lines are unrelated (three traceability issues and the Windows matrix); file count stays 100 by the package check.
+- B5, origins: fixed in B6, which now names both lists and the check that reads each.
+- Its A and R lines: no check enforces a limit of five per principle (the health output holds no such finding); the three marks went through in one call with one record (observed); the final compare re-reads the pinned page independently of the extractor, and a changed word fails it.
 
 ## NOT in scope
 
