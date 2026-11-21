@@ -76,3 +76,4 @@ Open (from the issue-cleanup triage of the open non-regression issues, 2026-11-1
 - milestone-sync: Failed 3 tries. Last: regression lane failed: LANE_TIMEOUT: past its time limit of 99s (flow file limit); the lane was killed, rows partly ran, nothing committed or pushed. Fix: run the same command again, or raise the flow file "limit" (else ste
 - how-to-use-docs: Failed 3 tries (+1 free reruns). Last: regression lane failed: migration-v1
 - row886-runtime-path: Failed 3 tries. Last: regression lane failed: no-done-line-refused
+- hr-body-file-mailbox: Claude review FAIL: 43728c04 turns dev/toy/test-checkin-view.py red (line 120 reads the issue text from the last gh argument, now a temp-file path). D3 froze the diff to mailbox.py, so the toy fix cannot land here; superseded by hr-body-file-mailbox-2, which carries 43728c04 plus the toy's fake reading --body-file
