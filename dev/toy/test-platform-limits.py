@@ -15,6 +15,7 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scripts, "sessions.py")
 fails = 0
+HOME = tempfile.mkdtemp(prefix="limits-home-")
 
 
 def check(name, ok):
@@ -24,7 +25,9 @@ def check(name, ok):
 
 
 def run(top, script, *args, **env):
-    keep = {k: v for k, v in os.environ.items() if k != "LOOP_ROLE"}
+    # hermetic: no host session id or loop setting, and a throwaway HOME so the owner's ~/.claude.json and ~/.workflow-loop are never read
+    keep = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE"))}
+    keep.update(HOME=HOME, USERPROFILE=HOME)
     done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, **env))
     return done.returncode, done.stdout + done.stderr
 
