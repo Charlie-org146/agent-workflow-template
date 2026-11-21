@@ -26,7 +26,7 @@ log="$FAKE_GH_DIR/statuses.log"
 git init -q --bare -b main "$d/origin.git"
 git clone -q "$d/origin.git" "$d/repo" 2>/dev/null; cd "$d/repo"
 git config user.email t@example.test; git config user.name Toy
-mkdir -p .github/workflows; printf 'jobs:\n  lane-a:\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n  lane-b:\n    name: lane-b\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n' > .github/workflows/lane.yml
+mkdir -p .github/workflows; printf 'jobs:\n  lane-a:\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n  lane-b:\n    name: lane-b\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n  lane-c:\n    steps:\n      - run: python3 skills/workflow-regression/scripts/regression.py run land\n' > .github/workflows/lane.yml  # lane-c: a required check needs a job to be postable (tests.py classify)
 mkdir -p .loop src; printf 'a\n' > src/a.txt; printf '{"base": "main", "auto_merge": true}\n' > .loop/config.json
 git add -A; git commit -qm base; git push -q origin main
 base=$(git rev-parse HEAD)
@@ -86,7 +86,7 @@ if want postfails; then reset; git push -q origin loop/g
   check "a 5xx is retried and posts; a 4xx is not retried, is named in posted k of n, and the lane returns failure to the caller" \
     '[ $rc = 5 ] && grep -q "\"context\": \"lane-a\", \"state\": \"success\"" "$log" && ! grep -q "lane-b" "$log" && grep -q "STATUS_FAILED posted 1 of 2; failed: lane-b" <<<"$out" && [ "$(grep -c "statuses/$head.*context=lane-b" "$FAKE_GH_DIR/calls.log")" = 1 ]'
   # goal.py pr exits 5 and records statuses: failed (the PR is created once, a rerun reuses it)
-  grep -q 'return 5 \* (state\["statuses"\] == "failed")' "$P/goal.py"; check "goal.py pr ends with exit 5 when a status failed to post, and records it" '[ $? = 0 ] && grep -q "state\[\"statuses\"\] = \"ok\" if private.pr_result" "$P/goal.py"'
+  grep -q 'return 5 \* (state\["statuses"\] == "failed")' "$P/goal.py"; check "goal.py pr ends with exit 5 when a status failed to post, and records it" '[ $? = 0 ] && grep -q "statuses=\"ok\" if private.pr_result" "$P/goal.py"'
 fi
 if want wikehead; then reset
   git push -q origin loop/g
@@ -119,7 +119,7 @@ PY
   out=$(rel "$good" release/v1-g); check "a release PR head that reaches no row gets a real success from the affected-rows run" 'grep -q "release_status=success" <<<"$out" && grep -q "\"sha\": \"$good\".*\"state\": \"success\"" "$log"'
   out=$(rel "$bro" release/v2-g); check "a release PR head that fails a row gets failure, never success" 'grep -q "release_status=failure" <<<"$out" && grep -q "\"sha\": \"$bro\".*\"state\": \"failure\"" "$log" && ! grep -q "\"sha\": \"$bro\".*\"state\": \"success\"" "$log"'
   cd "$d/repo"
-  grep -q "autorelease.release_statuses(top, cfg, state" "$M/merge.py"; check "merge.py advance runs it before it merges the release PR" '[ $? = 0 ]'
+  grep -q "ar.release_statuses(top, cfg, state" "$M/merge.py"; check "merge.py advance runs it before it merges the release PR" '[ $? = 0 ]'
 fi
 if want nobypass; then reset
   check "merge.py carries no --admin and no --auto on any gh call" '! grep -n -e "\"--admin\"" -e "\"--auto\"" "$M/merge.py" "$M/autorelease.py"'
