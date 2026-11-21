@@ -262,7 +262,7 @@ print(json.dumps(out))
     check("wintrust an outside folder is refused", ok and refused(new[4]))
     check("wintrust a prefix only sibling is refused", ok and refused(new[5]))
     check("wintrust a drive root entry trusts a path under it", ok and new[6] == "")
-    check("wintrust a non dict entry and a malformed file give an empty answer without raising", ok and new[7] == "" and new[8] == "")
+    check("wintrust a non dict entry and a malformed file are refused without raising", ok and refused(new[7]) and refused(new[8]))
     if os.sep == "/":
         check("wintrust posix paths give the same answers as before, including that a sibling named with a trailing backslash stays refused", ok and new[9] == "" and refused(new[10]) and refused(new[11]) and refused(new[12]))
     else:
