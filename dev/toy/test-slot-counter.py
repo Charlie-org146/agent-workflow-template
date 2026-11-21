@@ -36,6 +36,10 @@ with tempfile.TemporaryDirectory() as temp:
     check('cap override', [pending], {'check_slots': 1}, 1, 'SLOTS 1/1')
     check('a finished commit status (no status field) uses no slot', [{'number': 5, 'statusCheckRollup': [{'state': 'SUCCESS'}, {'status': 'COMPLETED'}]}], {}, 0, 'SLOTS 0/2')
     check('a pending commit status uses a slot', [{'number': 6, 'statusCheckRollup': [{'state': 'PENDING'}]}], {}, 0, 'SLOTS 1/2')
+    for args, code in (([], 0), (['--help'], 0), (['bogus'], 2)):  # the package builder runs every script alone with no arguments and with --help
+        done = subprocess.run(['python3', str(script), *args], cwd=root / 'nested', env=env, capture_output=True, text=True)
+        assert done.returncode == code and done.stdout.startswith('usage: slots.py slots'), (args, done.returncode, done.stdout)
+    print('PASS: slots.py run alone or with --help prints its usage and exits 0; an unknown argument exits 2')
     gh.write_text('#!/bin/sh\necho "gh: not logged in" >&2\nexit 1\n')
     done = subprocess.run(['python3', str(script), 'slots'], cwd=root / 'nested', env=env, capture_output=True, text=True)
     assert done.returncode == 2 and done.stdout.startswith('SLOTS unknown: gh: not logged in'), (done.returncode, done.stdout)

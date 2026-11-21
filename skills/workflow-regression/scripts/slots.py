@@ -459,6 +459,7 @@ def pr_slots():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] != ["slots"]:
-        sys.exit("usage: slots.py slots")
-    sys.exit(pr_slots())
+    if sys.argv[1:] == ["slots"]:
+        sys.exit(pr_slots())
+    print("usage: slots.py slots   (SLOTS used/cap; exit 0 free, 1 full, 2 could not count)")
+    sys.exit(0 if sys.argv[1:] in ([], ["-h"], ["--help"]) else 2)
