@@ -2,6 +2,7 @@
 # reads: skills/workflow-delivery/scripts/fit.py
 # Test that a lane failing only on rows both SKIPPED and UNPROVEN waits for off-platform proof (REG-10). usage: test-owed.sh
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 cd "$here/skills/workflow-delivery/scripts" || exit 1
 python3 - <<'PY'
 import sys; sys.dont_write_bytecode = True

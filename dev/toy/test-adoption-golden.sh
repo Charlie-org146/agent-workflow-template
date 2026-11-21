@@ -5,6 +5,7 @@
 # (TD437: the approved text no longer says it; adopt-replay-strict proves the replay against this fixture). usage: test-adoption-golden.sh
 set -e
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 gold="$here/dev/toy/adoption-golden.tsv"; page="$here/docs/wiki/Setup.md"
 fails=0
 ok() { echo "PASS: $1"; }

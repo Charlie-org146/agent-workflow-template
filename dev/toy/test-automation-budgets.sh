@@ -5,6 +5,7 @@
 set -u
 group=${1:-all}
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 pass=0; fail=0
 ok() { echo "PASS: $1"; pass=$((pass + 1)); }
 bad() { echo "FAIL: $1"; fail=$((fail + 1)); }

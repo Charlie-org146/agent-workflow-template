@@ -7,9 +7,10 @@
 # the other parts of test-migration.sh already fail there on main (10 checks), so the script as a whole is not marked.
 # Value: protects=a feature the template carries is never silently dropped on a new machine: migration-check names it or prints the owner step;
 # fails_when=a missing format file, a doubled hook or a missing toolchain goes unnamed, or an owner step fails the check; why_new=adoption on a new PC hit each by hand; seam=none; no_claim=the other parts of test-migration.sh
-here=$(cd "$(dirname "$0")" && pwd); tmp="$here/.v1-$$.sh"
-rm -f "$here"/.v1-*.sh
-trap 'rm -f "$tmp"' EXIT
-trap 'rm -f "$tmp"; exit 143' TERM INT HUP
-awk 'NR == 2 { print "# windows: ok" } { print }' "$here/test-migration.sh" > "$tmp"
+here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
+tmp="$here/dev/toy/.v1-$$.sh"
+rm -f "$here"/dev/toy/.v1-*.sh
+toy_on_exit 'rm -f "$tmp"'
+awk 'NR == 2 { print "# windows: ok" } { print }' "$here/dev/toy/test-migration.sh" > "$tmp"
 bash "$tmp" v1 < /dev/null

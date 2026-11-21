@@ -5,6 +5,7 @@
 # no-stdin: a script whose --help waits on stdin doesn't hold the run while stdin stays open.
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 cases="parity no-stdin"
 if [ $# = 0 ]; then
   fails=0
@@ -16,7 +17,7 @@ if [ $# = 0 ]; then
 fi
 case=$1
 no() { echo "$case: $1"; exit 1; }
-d=$(mktemp -d); trap 'rm -rf "$d"' EXIT
+d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
 export HOME="$d/home"  # no private flow file: only the built-in scans run
 export USERPROFILE="$HOME"
 copy() { mkdir -p "$1"; (cd "$here" && cp -R skills listing.json README.md LICENSE VERSION CHANGELOG.md "$1/"); }

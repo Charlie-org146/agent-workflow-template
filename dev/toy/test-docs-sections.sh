@@ -4,6 +4,7 @@
 # missing, extra, renamed, out-of-order section or a README and Home that differ fails. usage: test-docs-sections.sh
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$here/skills/workflow-docs/scripts"
 fails=0
 # run KIND PAGE-TEXT: prints the check's findings, one per line

@@ -7,8 +7,9 @@
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 entry=${ENTRY:-$here/skills/workflow-docs/scripts/entry.py}
-t=$(mktemp -d); trap 'for w in w new old; do git -C "$here" worktree remove --force "$t/$w" >/dev/null 2>&1; done; rm -rf "$t"' EXIT
+t=$(mktemp -d); toy_on_exit 'for w in w new old; do git -C "$here" worktree remove --force "$t/$w" >/dev/null 2>&1; done; rm -rf "$t"'
 git -C "$here" worktree add -q --detach "$t/w" HEAD || exit 1
 [ -n "${ENTRY:-}" ] && ENTRY=$(cd "$(dirname "$ENTRY")" && pwd)/$(basename "$ENTRY")
 cd "$t/w"; git config user.email t@example.test; git config user.name Toy

@@ -6,6 +6,7 @@
 # toy folder; no repo, no model. usage: test-lanes-abs-path.sh [DIR] [SCRIPTS]  (SCRIPTS: lanes.py's folder, default this repo's)
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd)
+. "$here/dev/toy/reap.sh"
 T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; S=${2:-$here/skills/workflow-regression/scripts}
 mkdir -p "$T/outside/deep" "$T/a/dev/toy" "$T/a/skills/workflow-x/scripts" "$T/a/skills/workflow-x/data"
 echo x > "$T/outside/deep/file.txt"; echo x > "$T/a/skills/workflow-x/data/d.txt"
