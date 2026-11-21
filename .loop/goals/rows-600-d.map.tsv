@@ -1,5 +1,8 @@
+no-flow-refused	no-done-line-refused
 landed-left-alone	one-failure
+wiki-unmapped-stale	wiki-release
 no-usage-passes	page-shape
+worker-reports-live	operate-all
 adopt-set-4	adopt-set-1
 entry-adopt	adopt-set-5
 worker-runs-release	scripts-no-hang
@@ -8,6 +11,7 @@ docs-count-word-gap-issue-104	docs-counts-issue-39
 docs-count-indented-code-issue-105	docs-counts-issue-39
 docs-count-defect-tests-issue-106	docs-counts-issue-39
 docs-count-other-id-issue-107	docs-counts-issue-39
+prd-readers	prd-scenarios
 size-139	skill-size-116
 size-141	skill-size-116
 est-issue-96	est-stalled
@@ -29,7 +33,9 @@ issue-154-release-pr-merge	issue-129-docs-published
 issue-170-patch-on-remove	issue-129-docs-published
 set9-from-no-values	set1-docs-format
 setup-tsv-guard-127	setup-zero-tests-119
+grd2-memory-health	grd2-limits-in-settings
 moved-exit-live-at-pr	merge-refuses-worktree
+scripts-a-delivery-under-19000	release-scripts-under-19000
 restamp-marks-3867	stale-comments-only-3122
 restamp-wording-locked-3867	stale-comments-only-3122
 doc18-howto-restamp	doc18-howto-missing
