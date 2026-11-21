@@ -347,14 +347,13 @@ AWAY = re.compile(r"https?://[^\s`'\")>\]]+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Use
 NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
 
 
-IMAGE = re.compile(r"https://(?:github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)|raw\.githubusercontent\.com/([\w.-]+/[\w.-]+))/([^\s?#]+\.(?:png|jpe?g|gif|svg|webp))(?:[?#]|$)", re.I)
-IMAGE_LOOSE = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)/[^/]+/[^\s?#]+\.(?:png|jpe?g|gif|svg|webp)(?:[?#]|$)")
+EXT = r"(?:png|jpe?g|gif|svg|webp)"
+IMAGE = re.compile(r"https://(?:github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)|raw\.githubusercontent\.com/([\w.-]+/[\w.-]+))/([^\s?#]+\." + EXT + r")(?:[?#]|$)", re.I)
+IMAGE_LOOSE = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)/[^/]+/[^\s?#]+\." + EXT + r"(?:[?#]|$)")
 
 
 def own_image(hit, repo, root):
-    """An own-repo GitHub image counts as inside (#5078). No root: github.com blob/raw only, as before. With a root: also
-    raw.githubusercontent.com, any case, and the file must exist right after one ref segment (or refs/heads|tags/NAME), no '.'
-    or '..' segment (raw or %-decoded), real path inside the root's."""
+    """An own-repo GitHub image is inside (#5078). No root: github.com blob/raw as before; with one, the file must exist after one ref segment, no dot segment, real path inside."""
     if not root:
         found = IMAGE_LOOSE.match(hit)
         return bool(found) and (not repo or found.group(1).lower() == repo.lower())
