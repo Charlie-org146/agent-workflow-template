@@ -52,10 +52,10 @@
 <text x="16" y="265" class="h">QUALITY</text><path d="M12 301 L628 301" class="rule"/>
 <rect x="12" y="306" width="616" height="26" class="stripe"/>
 <text x="86" y="323" class="s">Documentation</text>
-<circle cx="196.0" cy="319.0" r="8.5" class="c1"/><text x="196.0" y="322.6" text-anchor="middle" class="k">4</text>
+<circle cx="196.0" cy="319.0" r="8.5" class="c1"/><text x="196.0" y="322.6" text-anchor="middle" class="k">6</text>
 <circle cx="262.0" cy="319.0" r="8.5" class="c2"/><text x="262.0" y="322.6" text-anchor="middle" class="k">3</text>
 <circle cx="529.0" cy="319.0" r="8.5" class="c6"/><text x="529.0" y="322.6" text-anchor="middle" class="k">1</text>
-<text x="600" y="323" text-anchor="middle" class="s" style="font-weight:600">8</text>
+<text x="600" y="323" text-anchor="middle" class="s" style="font-weight:600">10</text>
 <text x="16" y="322" class="h">DOCS</text><path d="M12 332 L628 332" class="rule"/>
 <text x="86" y="354" class="s">Automation</text>
 <circle cx="262.0" cy="350.0" r="8.5" class="c2"/><text x="262.0" y="353.6" text-anchor="middle" class="k">1</text>

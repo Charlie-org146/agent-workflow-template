@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/references/commands.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md
+# reads: skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/references/commands.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md scripts/public-origins.json
 # Proves the optional Runbook section (DOC-16) on a copy of this repo's own wiki: a good runbook passes, each missing or
 # stray part is refused naming the page, routine and field, a routine in .loop/routines.tsv with no runbook on its page
 # is refused, a Reviewed page that gains a Runbook is not locked, and this repo's Health and Regression pages carry the
@@ -15,7 +15,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
-mkdir -p "$T/r" && git -C "$here" ls-files -co --exclude-standard skills docs .loop .claude/settings.json README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
+mkdir -p "$T/r" && git -C "$here" ls-files -co --exclude-standard skills docs .loop .claude/settings.json README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE scripts/public-origins.json |
   tar -C "$here" -cf - -T - | tar -C "$T/r" -xf -
 cd "$T/r" || exit 1
 git init -q && git add -A && git -c user.email=t@example.test -c user.name=Toy commit -qm base

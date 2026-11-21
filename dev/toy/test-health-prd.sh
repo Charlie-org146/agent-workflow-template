@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/workflow-health/scripts/
-# reads: dev/toy/fakegh/gh dev/toy/fakegh/fake.py
+# reads: dev/toy/fakegh/gh dev/toy/fakegh/fake.py scripts/public-origins.json
 # Proves the owner-approved Health PRD on throwaway repos with a stand-in for GitHub and stand-in judges: the twelve groups
 # and their angles (HLT-2), tagged issues, links and migration (HLT-4), the review and its evidence (HLT-5, HLT-9),
 # triage (HLT-8), controls (HLT-6), same answer and no writes (HLT-1), and issues 124, 158
@@ -56,7 +56,7 @@ check "a principle is RED when no rule under it has a passing control (none can 
 mkdir -p "$d/pm/docs/wiki"; cd "$d/pm"; printf '# P\n\n## 1. A\n\n| [AB-1 x](One) |\n| [AB-9 y](One) |\n\n## 2. B\n\n| Requirement |\n' > docs/wiki/Principles.md; printf '# One\n\n## Requirements\n\n- AB-1: **Reviewed 2026-11-19** a.\n- AB-2: **Reviewed 2026-11-19** b.\n' > docs/wiki/One.md
 pm=$(python3 -c "import sys;sys.path.insert(0,'$S');import rules;print('\n'.join(r['detail'] for r in rules.principle_map('.')));print('\n'.join(rules.principle_review('.')))"); cd "$d"
 check "principle-map fails a Reviewed requirement under no principle, a principle with none and a stale Principles.md row, and review lists each principle's requirements, tests and weak spots" 'grep -q "AB-2 is Reviewed under no principle" <<<"$pm" && grep -q "principle 2 has no Reviewed requirement" <<<"$pm" && grep -q "principle 1: AB-1 (0 tests) WEAK" <<<"$pm" && grep -q "principle 2: NONE" <<<"$pm" && grep -q "AB-9, no live requirement (stale)" <<<"$pm"'
-rd="$d/rd"; mkdir -p "$rd"; cp -R "$here/README.md" "$here/docs" "$here/skills" "$here/.loop" "$here/CLAUDE.md" "$here/AGENTS.md" "$rd/" 2>/dev/null; (cd "$rd" && python3 - <<'PY' && git init -q -b main && git add -A >/dev/null 2>&1 && git -c user.email=a@b -c user.name=a commit -qm toy)
+rd="$d/rd"; mkdir -p "$rd"; cp -R "$here/README.md" "$here/docs" "$here/skills" "$here/.loop" "$here/CLAUDE.md" "$here/AGENTS.md" "$rd/" 2>/dev/null; { [ ! -f "$here/scripts/public-origins.json" ] || { mkdir -p "$rd/scripts" && cp "$here/scripts/public-origins.json" "$rd/scripts/"; }; }; (cd "$rd" && python3 - <<'PY' && git init -q -b main && git add -A >/dev/null 2>&1 && git -c user.email=a@b -c user.name=a commit -qm toy)
 t = open("README.md").read(); open("README.md", "w").write(t.replace("tests come from the requirements", "tests come from the requirements, quietly", 1))
 PY
 check "a README principle sentence that differs from the list by a word fails health's Docs group, naming the README line" '(cd "$rd" && python3 skills/workflow-health/scripts/health.py check --group docs 2>&1 | grep -q "FAIL.*README:[0-9]*: Principles: DOC-23 its sentence")'
