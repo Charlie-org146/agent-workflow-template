@@ -210,9 +210,10 @@ def lane_ok(runs, slug, step, head):
 
 
 def passed(runs, slug, head, name):
-    found = [(n != name, "reused_from" in last, i, n) for i, n in enumerate(LANES) for last in [read_json(lane_base(runs, slug, n) + ".last") or {}]
-             if (last.get("head"), last.get("state")) == (head, "pass") and lane_ok(runs, slug, n, head) == (head, n)]
-    return min(found)[3] if found else ""
+    last = {n: read_json(lane_base(runs, slug, n) + ".last") or {} for n in LANES}
+    done = [n for n in LANES if (last[n].get("head"), last[n].get("state")) == (head, "pass")]
+    full = [(n != name, "reused_from" in last[n], LANES.index(n), n) for n in done if lane_ok(runs, slug, n, head) == (head, n)]
+    return min(full)[3] if full else name * (name in done)
 
 
 def holders(pool):
