@@ -118,10 +118,16 @@ def main():
             sys.exit("REFUSED: git diff failed")
         changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
-        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv"}
-        allowed = lambda x: (x in mine or x.startswith(".loop/goals/migrate-features.") or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
+        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv"}
+        allowed = lambda x: (x in mine or re.match(r"\.loop/goals/migrate-features(-2)?\.", x) or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
         extra = [x for x in changed if not allowed(x)]
         ok("2 every changed file is a named page, the report, the scripts, a goal record or an allowed path", not extra, ", ".join(extra))
+        known = run("git", "diff", "-U0", base, "HEAD", "--", ".loop/regression-known.tsv")
+        if known is None:
+            sys.exit("REFUSED: git diff of the known list failed")
+        added = [x[1:] for x in known.split("\n") if x.startswith("+") and not x.startswith("+++")]
+        dropped = [x for x in known.split("\n") if x.startswith("-") and not x.startswith("---")]
+        ok("6 the known list gains one row for ls-narrow-triggers citing #4061 and no other row changes", len(added) == 1 and not dropped and re.fullmatch(r"ls-narrow-triggers\t[^\t]*#4061", added[0]) is not None, "added %d, removed %d" % (len(added), len(dropped)))
         print("changed outside the pages and the migration: " + (", ".join(x for x in changed if not x.startswith("docs/wiki/") and not x.startswith("docs/migrations/")) or "none"))
         bad = []
         for n in sorted(names):
