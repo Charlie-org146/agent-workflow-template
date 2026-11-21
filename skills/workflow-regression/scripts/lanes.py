@@ -194,7 +194,7 @@ def references(root, text, folder, wide=True, memo=None):
     return found, whole
 
 
-WHOLE = ("dev/package.py", "dev/toy/size-check.py", "dev/toy/test-portable.sh", "dev/toy/test-tree.sh", "dev/toy/tree-once.sh")  # TD504: run once by the tree job
+WHOLE = ("dev/toy/size-check.py", "dev/toy/test-portable.sh", "dev/toy/test-tree.sh", "dev/toy/tree-once.sh")  # TD504: run once by the tree job
 
 
 def whole(root, row, cache):
