@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Unreviewed**
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -15,16 +15,32 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
+- SET-1: **Unreviewed** Any repo adopts the template, stays current, and is proven by replay
   - One safe, idempotent command adopts any repo byte for byte. [SET-1]
   - Adopted repos hold only their own data, record their template version, take updates, flag lag, and send fixes upstream. [SET-1]
   - Adoption is proven by a step-by-step replay against the golden result. [SET-1]
-- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
+
+  - Feature markers v1
+  - Reference: Copier: adapted; GitHub template repositories: adapted; Renovate: adapted; Jest snapshots: adapted
+  - Line 1: metric missing; test 19 linked rows, see Tests
+  - Line 2: metric missing; test 19 linked rows, see Tests
+  - Line 3: metric missing; test 19 linked rows, see Tests
+- SET-2: **Unreviewed** Layered settings and a generated entry page
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
+
+  - Feature markers v1
+  - Reference: Twelve-Factor App, factor III Config: adapted
+  - Line 1: metric missing; test 9 linked rows, see Tests
+  - Line 2: metric missing; test 9 linked rows, see Tests
 - SET-10: **Unreviewed** One versioned package; every agent runs one loop
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
   - Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10]
+
+  - Feature markers v1
+  - Reference: Semantic Versioning 2.0.0: adopted; Agent Skills format: adopted
+  - Line 1: metric missing; test 8 linked rows, see Tests
+  - Line 2: metric missing; test 8 linked rows, see Tests
 
 ### Non-functional
 
