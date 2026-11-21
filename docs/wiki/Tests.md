@@ -228,7 +228,6 @@
 | <a id="t-stale-code-page-reviewed"></a>stale-code-page-reviewed | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-stale-code-page-wording"></a>stale-code-page-wording | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-doc19-kind-row"></a>doc19-kind-row | requirement | DOC-25 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
-| <a id="t-doc19-readme-links"></a>doc19-readme-links | requirement | DOC-25 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-17 |
 | <a id="t-doc-nongoal-milestone-sync"></a>doc-nongoal-milestone-sync | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | not run | - | local | 2026-11-16 |
 | <a id="t-doc19-diagram-passes"></a>doc19-diagram-passes | requirement | DOC-25 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-17 |
 | <a id="t-docs-v2-repo-passes"></a>docs-v2-repo-passes | requirement | DOC-25 | not run | - | local | 2026-11-17 |

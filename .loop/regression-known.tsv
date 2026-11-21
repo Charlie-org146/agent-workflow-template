@@ -21,7 +21,6 @@ st-union-contexts	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is
 stale-code-page-reviewed	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #5368
 toy-no-leftovers	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4092
 del9-scan-sites	fails on main since v1.0.91; see #4129
-doc19-readme-links	fails on main since v1.0.93; see #4992
 who-merges-report	fails on main since v1.0.94; see #5299
 setup-no-milestone-step	fails on main since v1.0.99; see #5312
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
