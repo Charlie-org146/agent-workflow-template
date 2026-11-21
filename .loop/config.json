@@ -13,6 +13,8 @@
     "workspace-write",
     "-c",
     "sandbox_workspace_write.network_access=true",
+    "-c",
+    "sandbox_workspace_write.writable_roots=GITROOTS",
     "-C",
     "WORKTREE"
   ],
