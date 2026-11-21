@@ -137,6 +137,8 @@ finally:
 check(calls and all(c == root for c in calls), "left_time gets the fixture's root, not the working directory")
 checkin.bs.left_time = lambda run, runs_, at, root=None: LEFT.get(run["slug"], 0)
 
+root = repo({"a": brief("A", ""), "b": brief("B", "", needs="a")}, {})
+check(listed(root, load(root))["b"]["state"] == "waiting", "a task with no goals is never done, so a task that needs it keeps waiting")
 # bad briefs are named, the rest still print
 root = repo({"ok": brief("Fine", "g1"), "bare": "# Bare name\n\n- Goals: g2\n", "dir": brief("Dir")}, {"g1": {}})
 os.remove(os.path.join(root, ".loop", "tasks", "dir.md"))
@@ -154,7 +156,7 @@ check(len(lines) == 3 and "|" not in lines[2] and "\x1b" not in lines[2] and len
 # no briefs: nothing printed
 root = repo({}, {})
 check(live_board.task_lines(board_lines.tasks(root, [], now)) == [], "no briefs prints nothing")
-check(not os.path.exists(os.path.join(root, ".loop", "tasks", "x")) and "Tasks" not in "\n".join(live_board.render(root=root, at=now)), "the board prints no Tasks lines without briefs")
+check("Tasks" not in "\n".join(live_board.render(root=root, at=now)), "the board prints no Tasks lines without briefs")
 plain_checkin = "\n".join(checkin.render(root=root, at=now, stamp="0000"))
 check("Tasks" not in plain_checkin, "the check-in prints no Tasks section without briefs")
 
@@ -196,6 +198,7 @@ def git(*args):
 
 
 base = git("merge-base", "origin/main", "HEAD")
+added = ""
 if base.returncode:
     check(False, "origin/main is missing here, so skills/ and the regression rows cannot be compared")
 else:
