@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-20** <!-- prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 --> <!-- kept fast-3min@d0a4c4b38 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -15,25 +15,15 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Unreviewed** Routines run on schedule, by runbook
+- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
   - Health and regression run on schedule wherever they can run fully. [AUT-1]
   - They report where they ran and what they skipped, catch up missed runs, and follow runbooks. [AUT-1]
 
-  - Feature markers v1
-  - Reference: GitHub Actions `schedule`: adopted; Google SRE on-call playbooks: adapted
-  - Line 1: metric missing; test 12 linked rows, see Tests
-  - Line 2: metric missing; test 12 linked rows, see Tests
-
 
 ### Non-functional
-- AUT-5: **Unreviewed** Routines and publishing stay under my control
+- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
   - Each routine turns off or reschedules with one setting and writes nothing without secrets. [AUT-5]
   - Publishing never deletes or overwrites pages it didn't write, and it can be undone. [AUT-5]
-
-  - Feature markers v1
-  - Reference: GitHub environments with required reviewers: own
-  - Line 1: metric missing; test 4 linked rows, see Tests
-  - Line 2: metric missing; test 4 linked rows, see Tests
 
 ## Non-goals
 - The scheduled routines never push, merge or release; they only write issues, labels, comments, run reports (an Actions run summary or a local report on my Mac) and the digest email.

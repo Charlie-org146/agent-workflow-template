@@ -27,40 +27,21 @@ How to use: [How-to-use-Health](How-to-use-Health)
 ## Requirements
 
 ### Functional
-- HLT-2: **Unreviewed** Health checks every rule, every principle and every page
+- HLT-2: **Reviewed 2026-11-20** Health checks every rule, every principle and every page <!-- reviewed 58360fd7 -->
   - Health is deterministic and read-only: twelve fixed rule groups, each rule proven able to fire, one report with a verdict per principle; what it couldn't read is never shown green. [HLT-2]
   - It checks each page's template, each principle's row count, every requirement's reference and tag, and every claim, ETA and correction. [HLT-2]
   - The scheduled health routine computes the Adoption and Confidence scores, and the docs render writes them into the tables. [HLT-2]
   - A fresh-context reviewer is a gate, not a report: it checks the live operation on a fixed cadence, every plan before build, and every report that claims done. [HLT-2]
   - **Release rules run before merge when they are fast:** every release rule that can be checked from the files alone (file count, sizes, disclosure) also runs in the pull request check, only while it keeps every merge within the 3-minute target. [HLT-2]
-
-  - Feature markers v1
-  - Reference: OpenSSF Scorecard: adapted; Open Policy Agent: adapted; IEEE 1012 independent verification: adapted; GitHub required status checks: adopted
-  - Line 1: metric missing; test 28 linked rows, see Tests
-  - Line 2: metric missing; test 28 linked rows, see Tests
-  - Line 3: metric missing; test 28 linked rows, see Tests
-  - Line 4: metric missing; test 28 linked rows, see Tests
-  - Line 5: metric missing; test 28 linked rows, see Tests
-- HLT-4: **Unreviewed** Every finding is one tracked issue until settled
+- HLT-4: **Reviewed 2026-11-20** Every finding is one tracked issue until settled <!-- reviewed e97cc230 -->
   - Each finding, failing test and unfixed goal finding is one evidenced issue on its feature's Backlog milestone, triaged with my words and planned into goals. [HLT-4]
   - A wrong statement, a missed ETA or a skipped gate is a finding too: corrected where it was made, logged with what was said, what was true, the cause and the action. [HLT-4]
   - Health counts them. [HLT-4]
 
-  - Feature markers v1
-  - Reference: GitHub Issues and milestones: adopted; Google SRE postmortem action items: adopted
-  - Line 1: metric missing; test 17 linked rows, see Tests
-  - Line 2: metric missing; test 17 linked rows, see Tests
-  - Line 3: metric missing; test 17 linked rows, see Tests
-
 ### Non-functional
-- HLT-7: **Unreviewed** Checks, check-ins and instructions answer fast
+- HLT-7: **Reviewed 2026-11-20** Checks, check-ins and instructions answer fast <!-- reviewed 2060d7f7 -->
   - Health under 60 seconds, docs under 30, the board under 10, rounds under 45 minutes. [HLT-7]
   - A worker's turn ends at least every 5 minutes, so an instruction reaches it within 5. [HLT-7]
-
-  - Feature markers v1
-  - Reference: DORA four keys: adapted
-  - Line 1: metric missing; test 5 linked rows, see Tests
-  - Line 2: metric missing; test 5 linked rows, see Tests
 
 ## Non-goals
 - It never changes code, pages or requirements; it reports and files issues.

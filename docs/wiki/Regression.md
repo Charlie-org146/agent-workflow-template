@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/7
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-20** <!-- prd P=14b68802 R=94b657f1 N=f86bd012 M=d4d1a48b U=03828777 -->
 
 How to use: [How-to-use-Regression](How-to-use-Regression)
 
@@ -26,7 +26,7 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
 ## Requirements
 
 ### Functional
-- REG-4: **Unreviewed** Every requirement has its tests, written and run one way, with honest results
+- REG-4: **Reviewed 2026-11-20** Every requirement has its tests, written and run one way, with honest results <!-- reviewed 05626ff1 -->
   - Every Reviewed requirement, whole flow and fixed issue has its kind of test: requirement, flow or defect. [REG-4]
   - A requirement with no passing test shows "not enforced". [REG-4]
   - One format, and one command runs them everywhere. [REG-4]
@@ -36,18 +36,6 @@ How to use: [How-to-use-Regression](How-to-use-Regression)
   - A fix leaves a defect test behind. [REG-4]
   - Coverage comes from main's full run and never drops silently. [REG-4]
   - **No test stays parked:** a known-red row needs an open issue and a fix goal, and a major release needs the known list empty. [REG-4]
-
-  - Feature markers v1
-  - Reference: Gherkin: adapted; Nx `affected`: adapted; Google flaky-test handling; pytest `xfail(strict=True)`: adapted
-  - Line 1: metric missing; test 49 linked rows, see Tests
-  - Line 2: metric missing; test 49 linked rows, see Tests
-  - Line 3: metric missing; test 49 linked rows, see Tests
-  - Line 4: metric missing; test 49 linked rows, see Tests
-  - Line 5: metric missing; test 49 linked rows, see Tests
-  - Line 6: metric missing; test 49 linked rows, see Tests
-  - Line 7: metric missing; test 49 linked rows, see Tests
-  - Line 8: metric missing; test 49 linked rows, see Tests
-  - Line 9: metric missing; test 49 linked rows, see Tests
 
 ### Non-functional
 
