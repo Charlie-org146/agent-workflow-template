@@ -39,11 +39,9 @@ Each carried fix kept its own defect row and its own Kept record. Each passed it
 - Rows: `defect-5679-reads-headers`, and for test-tree's three missing defect tests: `defect-88-closing-keywords`, `defect-5635-settings-default`, `defect-5638-reconcile-wording`. #5635 and #5638 were fixed on main (#5636, #5639); each row has a recorded `regression.py red --break` proof. #88 is a merged pull request, not an issue; the adopt-closing-keywords goal uses "#88" as an example, so its row proves the closing-keywords behaviour that goal built.
 - Not fixed: test-tree's "one-file change reruns fewer than half the land rows" (634 of 646 rows for a change to batch.py; the Python import graph links the skills; it fails on main too and is a known row, lanes-headers).
 
-Fixes #5344
-Fixes #5308
-Fixes #5078
-Fixes #5359
-Fixes #5346
-Fixes #5679
-Fixes #5635
-Fixes #5638
+Fixes #5344, #5308, #5078, #5359, #5346
+
+Refs #5679: `lanes_cli.py check` is clean, but `dev/toy/test-tree.sh` still has one FAIL (`lanes-headers`), which needs a `narrow.py` or `lanes.py` change that is out of scope here, so the issue stays open.
+Refs #5635 and #5638: already fixed on main (#5636, #5639); each new defect row (`defect-5635-settings-default`, `defect-5638-reconcile-wording`) is proven by its recorded break.
+#88 is a merged pull request, not an issue: no closing line.
+#5317 was picked, then reverted with `git revert` at the coordinator's word, and is not part of this change.
