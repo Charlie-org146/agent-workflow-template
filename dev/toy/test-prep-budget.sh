@@ -168,6 +168,7 @@ want body && {
 echo "== the pull request body's lane part carries no local log path"
 printf '{"attempt": "x", "head": "h", "state": "pass", "line": "LANE pr AFFECTED 3/3 in 9s; before rows: prep 0s, planning 1s, slot wait 0s; rows: 3 selected (0 affected, 0 new, 0 root runners, 0 failure reruns), 0 reused, 0 unfinished; unmapped: 0; log: /home/someone/private/repo/.git/loop/runs/g.pr-lane.txt"}' > "$RUNS/g.pr-lane.last"
 printf 'SELECTED r1: new row\n' > "$RUNS/g.pr-lane.txt"
+rm -f "$RUNS"/g.qa-lane.ok "$RUNS"/g.ship-lane.ok  # a fixture pr record, with no earlier lane's pass at this HEAD to show instead
 out=$(python3 -c "import sys; sys.path.insert(0, sys.argv[1]); import role; print(role.lane_part('g'))" "$S" 2>&1)
 check "the lane part keeps the LANE line, the before-rows parts and the rows, and drops the log path" 'grep -q "^LANE pr AFFECTED 3/3 in 9s; before rows: prep 0s, planning 1s, slot wait 0s; rows: 3 selected" <<<"$out" && ! grep -q "/home/someone\|log:" <<<"$out" && grep -q "SELECTED r1: new row" <<<"$out"'
 }
