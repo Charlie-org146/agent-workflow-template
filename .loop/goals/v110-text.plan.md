@@ -20,7 +20,7 @@ Build order (the Reviewed marks are the last write, because the mark seals the t
 4. B4. Write the brief section into `docs/release-brief-v1.1.0.md`, marked frozen; the service repo's name is written "the service repo".
 5. B5. One sentence on the Principles page: principle 1 may hold 8 features until v2.0.0 (o721). It sits in the page head, because the front-page check allows only a sentence, an image and one table line inside a principle's section.
 6. B6. Add the one new link origin (`trunkbaseddevelopment.com`) to `scripts/public-origins.json` (read by the docs check) and to the network list in `listing.json` (read by the package check); nothing else in either file; `basecamp.com` and the other hosts the three units link were already in both.
-7. B7. Checks: the health check's Size group (read-only; no new size finding), the page, file-count and requirements-per-page limits (file count by the package check, `criteria_max` 24 against 7 live lines on Delivery and 5 on Documentation), `docs.py check`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan; a script compares the final repo units to the pinned page sentence by sentence (with a control that a changed word fails) and proves every other feature unit is byte-identical to the base.
+7. B7. Checks (and the committed, read-only `docs/v110-text-check.py PINNED_HTML`, which re-derives the units and the brief from the pinned page and compares): the health check's Size group (read-only; no new size finding), the page, file-count and requirements-per-page limits (file count by the package check, `criteria_max` 24 against 7 live lines on Delivery and 5 on Documentation), `docs.py check`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan; a script compares the final repo units to the pinned page sentence by sentence (with a control that a changed word fails) and proves every other feature unit is byte-identical to the base.
 8. B8. Preflight that record o721 is unused in the review log, then `criteria.py review DEL-19 DEL-23 DOC-28 --user --owner-record o721`; re-run the checks.
 
 ## What the review changed in the plan
@@ -43,6 +43,16 @@ A fresh read-only reviewer answered, recorded unchanged with `notify.py plan-rec
 - B3, sizes: fixed in B7. The read-only health run shows no new size finding; its 4 FAIL lines are unrelated (three traceability issues and the Windows matrix); file count stays 100 by the package check.
 - B5, origins: fixed in B6, which now names both lists and the check that reads each.
 - Its A and R lines: no check enforces a limit of five per principle (the health output holds no such finding); the three marks went through in one call with one record (observed); the final compare re-reads the pinned page independently of the extractor, and a changed word fails it.
+
+### Second round (a second fresh reviewer, recorded unchanged)
+
+- B1, the sentence on the Principles page contradicts DOC-26 and is agent-written: not fixable in the plan; done line 4 asks for the allowance and the operation session chose this reading (DOC-26 is Reviewed and protected by done lines 1 and 2). Sent to the operation session word for word.
+- B1, the name written "the service repo" inside word-for-word text, and the hand-built DEL-23 unit and row: not fixable in the plan (the owner's rule o711 and no add path in `revise`). Sent word for word.
+- B2 and B5, the compare lives in scratch code and the result cannot be replayed: fixed. `docs/v110-text-check.py` is committed. It writes nothing and re-derives the three units and the brief from the pinned page and compares the repo to them; a changed word fails it (seen).
+- B3, page sizes and the figures: the figures are generated from the requirement texts by a script, not drawn by hand, and are checked only by the frontdoor rule (a file per feature). The health Size group was run read-only; no new size finding. No further size check exists for generated pages.
+- B4, the name in scratch files and PR notes: the scratch outputs holding the name were deleted; the PR notes say "the service repo" and list lines by file and line number, never quoting the name.
+- B6, the two readings were relayed by the operation session, not asked of the owner: sent word for word.
+- Its R lines: `.loop/goals`, figures and the two origin files are in the plan; the operation session widened Touches for `scripts/public-origins.json` and `listing.json`. The file count rises by one in the repo (DEL-23.svg) and by one more with the check script; the package check counts only the shipped package (100 files, passes). The plan was committed after the build commit; the red-team gate ran after the fact and the build is recorded only if the gate passes.
 
 ## NOT in scope
 
