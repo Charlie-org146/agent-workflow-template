@@ -115,6 +115,9 @@ check(all(os.path.exists(base(n) + ".ok") and open(base(n) + ".ok").read() == he
       "each copy writes its own .ok (HEAD) and leaves no job")
 check(got["ship"][1].count("; reused:") == 1 and "the qa lane passed on this head" in got["ship"][1].split("\n")[0],
       "the reuse is said once on the line: reused: the qa lane passed on this head")
+if os.environ.get("LANE_ONCE_SCRIPTS"):  # the control run: only the happy case matters
+    shutil.rmtree(tmp, ignore_errors=True)
+    sys.exit(1 if failed else 0)
 check(gate("ship") is None, "need_lane accepts ship after a qa-only pass")
 check(open(base("ship") + ".txt").read() == ROWS and json.load(open(base("ship") + ".last"))["reused_from"] == "qa",
       "the copy carries the qa lane's rows and says where it came from (Done 2: the qa lane's own record)")
