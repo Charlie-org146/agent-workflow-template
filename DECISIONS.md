@@ -5,7 +5,7 @@ One line each, where the roadmap didn't say.
 - Layout: `skills/workflow-<name>/` per skill, `skills/loop-files.md` as the shared file contract.
 - Toy runs use a test double for `gh` (`dev/toy/fakegh`); only the real-repo check calls the real `gh`.
 - A goal's run state lives in `<git common dir>/loop/`, so every worktree sees it and nothing extra is committed.
-- `dev/package.sh` ships `skills/`, `listing.json` and `README.md` only.
+- The loop ships only as the GitHub template (SET-10); `dev/package.py` builds update.py's test fixtures from `skills/`, `listing.json` and `README.md` only.
 - Starting goals moved from `monitor.py` to `watch.py`, so `monitor.py` only reads. `watch` replaces `start --wait`.
 - `goal.py new` needs `--here`: a tool that can't run a background agent is the only reason to build in the governing session.
 - A regression row never seen failing blocks `run`, and `red` proves it on a temporary copy of `HEAD`.

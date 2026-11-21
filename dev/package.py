@@ -33,7 +33,7 @@ import zipfile
 
 SHIPPED = ["skills", "listing.json", "README.md", "LICENSE"]
 BAD_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", "vendor"}
-MAX_FILES, MAX_BYTES, MAX_SCRIPT = 100, 5000000, 20 * 1024
+MAX_BYTES = 5000000
 STATIC = False
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"gh[pousr]_[A-Za-z0-9]{30,}", r"sk-[A-Za-z0-9]{20,}", r"xox[baprs]-[A-Za-z0-9-]{10,}",
            r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"(?i)(api[_-]?key|secret|password)\s*[:=]\s*['\"][^'\"\s]{8,}"]
@@ -45,7 +45,6 @@ AGENT_AIMED = [r"(?i)ignore (all |any )?(previous|prior|above) instructions", r"
 DANGEROUS = [r"\bos\.system\(", r"chmod\s+777", r"\brm\s+-rf\s+/(\s|$)", r"\b(curl|wget)\b[^\n|]*\|\s*(ba)?sh\b"]
 INJECTION = [r"(?i)ignore previous instructions", r"(?i)do not tell the user", r"(?i)\bsecretly\b"]
 SHARED = {"skills/loop-files.md": "shared/loop-files.md"}  # in a pack, only shared/ reaches every skill
-LIMITS = {"tags": 10, "keywords": 10, "use_cases": 8}
 try:
     CHILD_SECONDS = max(1, int(os.environ.get("PACKAGE_CHILD_SECONDS") or 30))
 except ValueError:
@@ -224,25 +223,8 @@ def check_frontmatter(root, files):
     return skills
 
 
-def load_listing(root):
-    try:
-        return json.loads(read(root, "listing.json"))
-    except (OSError, ValueError) as error:
-        fail("Listing fields", "listing.json unreadable: %s" % error)
-        return {}
 
 
-def check_listing(listing):
-    if not listing.get("license"):
-        fail("Listing fields", "no license")
-    summary = listing.get("summary", "")
-    if not summary:
-        fail("Listing fields", "no summary")
-    if len(summary) > 300:
-        fail("Listing fields", "summary is %d characters, 300 at most" % len(summary))
-    for key, limit in LIMITS.items():
-        if len(listing.get(key, [])) > limit:
-            fail("Listing fields", "%s has %d entries, %d at most" % (key, len(listing[key]), limit))
 
 
 def check_files(root, files):
@@ -272,7 +254,6 @@ def check_scripts(root, files):
     for rel in [f for f in files if f.endswith(".py")]:
         data = read(root, rel)
         text = data.decode("utf-8", "replace")
-        size = len(data.replace(b"\r\n", b"\n"))  # committed (LF) bytes: a Windows CRLF checkout reads the same
         modules = set()
         siblings = {n[:-3] for n in os.listdir(os.path.dirname(os.path.join(root, rel))) if n.endswith(".py")}
         try:
@@ -349,29 +330,6 @@ def check_pack(root):
         fail("Files", "no LICENSE file")
 
 
-def check_disclosure(root, files, listing):
-    said = " ".join(listing.get("commands", [])).split()
-    wanted = set()
-    for rel in files:
-        if rel.endswith(".py"):
-            wanted |= set(re.findall(r"add_parser\(\"([a-z-]+)\"", read(root, rel).decode("utf-8", "replace")))
-        if re.fullmatch(r"skills/[^/]+/SKILL\.md", rel):
-            wanted |= set(re.findall(r"^## `([a-z-]+)", read(root, rel).decode("utf-8", "replace"), re.M))
-    for name in sorted(wanted):
-        if name not in said:
-            fail("Disclosure", "command %r is not in listing.commands" % name)
-    hosts = set()
-    for rel in files:
-        if not rel.endswith("/") and rel != "listing.json":
-            hosts |= set(re.findall(r"https?://([A-Za-z0-9.-]+)", read(root, rel).decode("utf-8", "replace")))
-    hosts -= {"example.com", "example.test"}
-    for host in sorted(hosts):
-        if host not in " ".join(listing.get("network", [])):
-            fail("Disclosure", "host %s is not in listing.network" % host)
-    if not listing.get("writes"):
-        fail("Disclosure", "listing.writes is empty")
-    if not listing.get("network"):
-        fail("Disclosure", "listing.network is empty (state \"none\" or each host)")
 
 
 def version_of(root):
@@ -458,7 +416,6 @@ def main():
     check_frontmatter(root, files)
     check_inventory(root, files)
     version = version_of(root)
-    listing = load_listing(root)
     wait_on('reading the shipped files')
     check_files(root, files)
     wait_on('the script checks')

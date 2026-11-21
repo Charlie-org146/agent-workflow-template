@@ -45,10 +45,9 @@ def main(control):
             if not (len(lines) == 1 and lines[0].endswith("a.sh: beta broke") and (bad, seen) == (1, 2)):
                 sys.exit("FAIL negative control: %r %d of %d" % (lines, bad, seen))
         print("PASS negative control: a script with an unread assert is named, a fully read one is not")
-    lines, bad, seen = unread(os.path.join(here), os.path.join(here, "..", "..", ".loop", "regression.tsv"))
+    lines, bad, seen = unread(here, os.path.join(here, "..", "..", ".loop", "regression.tsv"))
     print("\n".join(lines))
     print("UNREAD SCRIPTS: %d of %d scripts with asserts" % (bad, seen))
 
-
-
-main(sys.argv[1:2] == ["--control"])
+if __name__ == "__main__":
+    main(sys.argv[1:2] == ["--control"])

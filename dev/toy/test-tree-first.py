@@ -61,12 +61,12 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(repo, ".loop", "regression.tsv"), "w") as handle:
         handle.write("# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n")
         for rid, cmd in (("r1", "sleep 2; bash dev/toy/plain.sh r1"), ("tree-row", "bash dev/toy/tree-once.sh"), ("wrap-row", "bash dev/toy/wrap.sh"), ("r3", "bash dev/toy/plain.sh r3"),
-                         ("size-row", "python3 dev/toy/unread-check.py --control"), ("portable-row", "bash dev/toy/test-portable.sh")):
+                         ("unread-row", "python3 dev/toy/unread-check.py --control"), ("portable-row", "bash dev/toy/test-portable.sh")):
             handle.write("%s\tland\t%s\t\t2026-01-01\tx\tcriterion\t\n" % (rid, cmd))
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "rows")
     rows = lanes_cli.rows_of(repo, "land")
-    check(sorted(r["id"] for r in rows if lanes.whole(repo, r, {})) == ["portable-row", "size-row", "tree-row"],
+    check(sorted(r["id"] for r in rows if lanes.whole(repo, r, {})) == ["portable-row", "tree-row", "unread-row"],
           "the rows that run tree-once.sh, unread-check.py or test-portable.sh are whole-tree; the others, a script that wraps tree-once.sh among them, are not")
     env = dict(os.environ, LOOP_FREE_GB="100", LOOP_ROLE="", ORDER=order, LOOP_ROW_TIMES=os.path.join(tmp, "t.tsv"))
     env.pop("TREE_RED", None)

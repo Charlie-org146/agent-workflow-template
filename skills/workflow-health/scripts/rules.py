@@ -60,11 +60,21 @@ def git(root, *args):
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
+def last_release(root):
+    """(tag, base): the newest v<N>.<N>.<N> tag, and the commit it was made from. A release commit (the merge's tree with VERSION set,
+    tagged by release.yml, never on main) is made from its parent, so base is the tag's first parent; any other tag is its own base."""
+    tags = git(root, "tag", "--list", "v[0-9]*", "--sort=-v:refname").splitlines()
+    tag = next((name for name in tags if re.fullmatch(r"v\d+[.]\d+[.]\d+", name)), "")
+    if not tag:
+        return "", ""
+    return tag, tag + "^" if git(root, "log", "-1", "--format=%s", tag).startswith("Release v") else tag
+
+
 def unreleased(root):
-    tag = git(root, "describe", "--tags", "--abbrev=0", "--match", "v*")
+    tag, base = last_release(root)
     if not tag:
         return [row("INFO", "freshness", "release", "unreleased", "no v* release tag")]
-    dates = git(root, "log", "--format=%cs", "--reverse", tag + "..HEAD").splitlines()
+    dates = git(root, "log", "--format=%cs", "--reverse", base + "..HEAD").splitlines()
     age = days_since(dates[0]) if dates else None
     if age is not None and age > 3:
         return [row("WARN", "freshness", tag, "unreleased", "%d commits since %s, the oldest from %s" % (len(dates), tag, dates[0]),

@@ -68,6 +68,9 @@ def setting_path():
     return os.environ.get("LOOP_HEALTH") or os.path.join(os.path.expanduser("~"), ".workflow-loop", "health.json")
 
 
+RETIRED = ('scripts',)  # the script byte rule went with the Agensi package (SET-10)
+
+
 def mine_row(state, subject, detail, fix="", family=GROUP, rule="mine", **more):
     return dict({"state": state, "family": family, "subject": subject, "rule": rule, "detail": detail, "fix": fix}, **more)
 
@@ -144,6 +147,8 @@ def repo_load(root):
         else:
             good.append(dict(rule, name=name))
     for key, why in off.items():
+        if key in RETIRED:  # a rule the loop no longer has: an old health-rules.json may still turn it off, and that is harmless
+            continue
         if key not in G.RULES or not (isinstance(why, str) and why.strip()):
             rows += [mine_row("UNREAD", key, "cannot be turned off: %s" % ("not a default rule" if key not in G.RULES else "it needs a reason"),
                               "name a default rule and give a reason in off", "repo", "repo")]

@@ -20,6 +20,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -199,10 +200,12 @@ def cmd_publish(args):
 
 
 def fixes_since(top):
-    """The previous v* tag reachable from HEAD, else the first commit."""
-    tag = subprocess.run(["git", "describe", "--tags", "--abbrev=0", "--match", "v*"], cwd=top, capture_output=True, text=True)
-    if tag.returncode == 0 and tag.stdout.strip():
-        return tag.stdout.strip()
+    """The commit the newest v<N>.<N>.<N> release was made from (a release commit, tagged by release.yml and never on main, is made
+    from its parent), else the first commit."""
+    git = lambda *a: subprocess.run(["git", *a], cwd=top, capture_output=True, text=True).stdout.strip()
+    tag = next((n for n in git("tag", "--list", "v[0-9]*", "--sort=-v:refname").splitlines() if re.fullmatch(r"v\d+[.]\d+[.]\d+", n)), "")
+    if tag:
+        return tag + "^" if git("log", "-1", "--format=%s", tag).startswith("Release v") else tag
     roots = subprocess.run(["git", "rev-list", "--max-parents=0", "HEAD"], cwd=top, capture_output=True, text=True)
     return (roots.stdout.split() or ["HEAD"])[-1]
 

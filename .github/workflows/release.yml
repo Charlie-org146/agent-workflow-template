@@ -49,10 +49,10 @@ jobs:
           set -eu
           # A rerun: a v tag at this commit, or on its release commit (whose parent is this commit), means the version is made;
           # only a release missing from that tag is created.
-          for t in $(git tag --list 'v[0-9]*' --contains "$GITHUB_SHA" --sort=creatordate); do
+          for t in $(git tag --list 'v[0-9]*' --contains "$GITHUB_SHA" --sort=creatordate | grep -E '^v[0-9]+[.][0-9]+[.][0-9]+$'); do
             if [ "$(git rev-parse "$t^{commit}")" = "$GITHUB_SHA" ] || [ "$(git rev-parse "$t^{commit}^" 2>/dev/null)" = "$GITHUB_SHA" ]; then
               echo "skip=1" >> "$GITHUB_OUTPUT"
-              gh release view "$t" > /dev/null 2>&1 || gh release create "$t" --verify-tag --title "$t" --generate-notes
+              gh release view "$t" > /dev/null 2>&1 || gh release create "$t" --verify-tag --title "$t" --generate-notes || gh release view "$t" > /dev/null 2>&1
               exit 0
             fi
           done
@@ -60,12 +60,13 @@ jobs:
           part=patch
           echo "$labels" | grep -qx 'release:minor' && part=minor
           echo "$labels" | grep -qx 'release:major' && part=major
-          last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+          last=$(git tag --list 'v[0-9]*' --sort=-v:refname | grep -E '^v[0-9]+[.][0-9]+[.][0-9]+$' | head -n 1)
+          [ -n "$last" ] || last=v0.0.0
           IFS=. read -r major minor patch <<< "${last#v}"
           case "$part" in
-            major) major=$((major + 1)); minor=0; patch=0 ;;
-            minor) minor=$((minor + 1)); patch=0 ;;
-            *) patch=$((patch + 1)) ;;
+            major) major=$((10#$major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((10#$minor + 1)); patch=0 ;;
+            *) patch=$((10#$patch + 1)) ;;
           esac
           echo "version=$major.$minor.$patch" >> "$GITHUB_OUTPUT"
       - if: steps.hold.outputs.held != '1' && steps.version.outputs.skip != '1'
@@ -78,11 +79,14 @@ jobs:
           git add VERSION
           commit=$(git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit-tree "$(git write-tree)" -p "$GITHUB_SHA" -m "Release v$v of $GITHUB_SHA")
           git tag "v$v" "$commit"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')" push origin "refs/tags/v$v"
+          basic=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')
+          echo "::add-mask::$basic"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $basic" push origin "refs/tags/v$v"
           gh release create "v$v" --verify-tag --title "v$v" --generate-notes
       - if: always() && steps.hold.outputs.held != '1' && steps.version.outputs.skip != '1'
         continue-on-error: true
         run: |
           v="${{ steps.version.outputs.version }}"
+          [ -n "$v" ] || exit 0
           n=$(gh release view "v$v" --json assets --jq '.assets | length') || { echo "warning: no release for v$v; rerun the job to create it"; exit 0; }
           [ "$n" = 0 ] || echo "warning: v$v holds $n asset(s); no asset is expected (SET-10): gh release delete-asset v$v NAME"

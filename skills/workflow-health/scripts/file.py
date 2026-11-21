@@ -219,7 +219,8 @@ def plan(rows, issues, groups, extra=(), judged=False, root=".", ran_rules=None,
         whole = {"criteria": {"requirements", "traceability", "tests"}, "cost": {"performance"}}.get(key.partition(":")[0])
         if whole and not whole <= set(groups):  # an old key may mean a rule in a group not run: leave it
             continue
-        if (savings and judged) or (not savings and ran_rules is not None and rule in ran_rules) or (reviewed and family == "review"):
+        retired = family == "size" and key.rsplit(":", 1)[-1] in ("scripts", "limit")  # the script byte rule is gone: its old issues close
+        if (savings and judged) or (not savings and ran_rules is not None and (rule in ran_rules or retired)) or (reviewed and family == "review"):
             out.append({"kind": "close", "group": family, "key": key, "number": str(issue["number"]), "title": "", "body": "",
                         "tag": tag_of(family), "feature": ""})
     return out

@@ -215,13 +215,10 @@
 | <a id="t-lane-rows-judge-own-diff"></a>lane-rows-judge-own-diff | defect | [#3876](https://github.com/jcl2018/agent-workflow-template/issues/3876) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-template-in-commands"></a>template-in-commands | requirement | DOC-25 | not run | - | local | 2026-11-15 |
 | <a id="t-stale-comments-only-3122"></a>stale-comments-only-3122 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3122 https://github.com/jcl2018/agent-workflow-template/issues/3867) state unknown | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-20 |
-| <a id="t-restamp-marks-3867"></a>restamp-marks-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | not run | - | local | 2026-11-20 |
-| <a id="t-restamp-wording-locked-3867"></a>restamp-wording-locked-3867 | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3867) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-docs-scripts-import-by-name"></a>docs-scripts-import-by-name | requirement | DOC-25 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-15 |
 | <a id="t-milestone-sync-no-source"></a>milestone-sync-no-source | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
 | <a id="t-prd-copy-no-reader"></a>prd-copy-no-reader | requirement | DOC-2 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-15 |
 | <a id="t-doc18-howto-missing"></a>doc18-howto-missing | requirement | DOC-25 | PASS | 2026-11-16 | [CI 2026-11-16](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-16) | 2026-11-16 |
-| <a id="t-doc18-howto-restamp"></a>doc18-howto-restamp | requirement | DOC-25 | not run | - | local | 2026-11-16 |
 | <a id="t-home-stale-clears"></a>home-stale-clears | requirement | DOC-25 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-blocks"></a>apply-rerender-blocks | requirement | DOC-2 | not run | - | local | 2026-11-16 |
 | <a id="t-apply-rerender-tables"></a>apply-rerender-tables | requirement | DOC-2 | not run | - | local | 2026-11-16 |
@@ -321,7 +318,6 @@
 | <a id="t-health-findings-table"></a>health-findings-table | requirement | HLT-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-health-feature-always"></a>health-feature-always | requirement | HLT-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-health-live-requirements"></a>health-live-requirements | requirement | HLT-2 | not run | - | local | 2026-11-21 |
-| <a id="t-health-migration-fires"></a>health-migration-fires | requirement | HLT-2 | not run | - | local | 2026-11-21 |
 
 ## Machines
 
@@ -721,3 +717,5 @@
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
 | <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |
+| <a id="t-ls-scheduled-rule"></a>ls-scheduled-rule | requirement | done line local-schedule:1 | not run | - | local | no |
+| <a id="t-plan-cache-states"></a>plan-cache-states | requirement | done line lane-plan-cache:5 | not run | - | local | no |
