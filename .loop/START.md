@@ -69,7 +69,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
 | `check_slots` | 2 | Open PRs with unfinished checks allowed before a push. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
-| `codex_profile` | 8 entries in config.json |  |
+| `codex_profile` | 10 entries in config.json |  |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
