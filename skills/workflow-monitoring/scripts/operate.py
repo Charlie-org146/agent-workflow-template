@@ -125,14 +125,9 @@ def refresh(common, base="main"):
 
 
 def untrusted(folder):
-    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
-    try:
-        with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
-            known = json.load(handle)["projects"]
-        path = os.path.realpath(folder) + "/"
-        return "" if any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        return ""
+    """FOLDER's refusal unless the owner's Claude trust file lists it; read only (machines.untrusted)."""
+    import machines
+    return machines.untrusted(folder)
 
 
 def behind_ask(common, base="main"):
