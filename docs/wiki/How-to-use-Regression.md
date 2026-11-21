@@ -103,3 +103,5 @@ The scheduled regression routine's Runbook lives in the [Regression](Regression)
 - Backlog: [Backlog: Regression](https://github.com/jcl2018/agent-workflow-template/milestones)
 
 <!-- kept fast-3min@d0a4c4b38 -->
+
+Before a push, run `python3 skills/workflow-regression/scripts/slots.py slots`: `SLOTS used/cap` counts open PRs with any check not COMPLETED. Exit 1 means full, 2 could not count; `.loop/config.json` key `check_slots` defaults to 2.
