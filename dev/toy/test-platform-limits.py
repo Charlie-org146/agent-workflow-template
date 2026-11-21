@@ -90,11 +90,21 @@ def count(top):
         return {}
 
 
+def own_toplevel(path):
+    """Whether git, run from path with the scrubbed environment, resolves path itself as the repository (not an enclosing one, not none)."""
+    done = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=path, capture_output=True, text=True, env=clean_env())
+    return done.returncode == 0 and os.path.realpath(done.stdout.strip() or "/nonexistent") == os.path.realpath(path)
+
+
 def repo(name):
     """A disposable repository under the throwaway directory, built with clean_env() so nothing inherited names another repository."""
     path = os.path.join(THROWAWAY, name)
     os.makedirs(path)
     subprocess.run(["git", "init", "-q", "-b", "main", "--template="], cwd=path, capture_output=True, env=clean_env())
+    if not own_toplevel(path):  # a failed git init would let the subject resolve an enclosing repository: stop before any count is made
+        print("FAIL: the fixture repository %s is not its own repository (git init failed or an enclosing repository answers); nothing was run" % name)
+        print("PLATFORM LIMITS TOY FAILED 1")
+        sys.exit(1)
     os.makedirs(os.path.join(path, ".git", "loop", "runs"))
     os.makedirs(os.path.join(path, ".loop"))
     with open(os.path.join(path, ".loop", "config.json"), "w") as handle:
@@ -229,6 +239,9 @@ finally:
 check("control: no canary variable of a scrubbed family reaches a child of the scrubbed environment", seen == "False")
 check("control: negative: the same child without the scrub does see them", leaked == "True")
 
+plain = os.path.join(THROWAWAY, "plain")
+os.makedirs(plain)
+check("control: a fixture directory that is not its own repository is detected, and a real fixture is accepted", not own_toplevel(plain) and own_toplevel(top) and own_toplevel(decoy))
 check("hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy (%s)" % ("verified" if not REAL_BEFORE.startswith("unverified") else REAL_BEFORE), not REAL_BEFORE.startswith("unverified") and real_id_hash() == REAL_BEFORE)
 
 # cleanup: only the directory this toy made, then asserted gone (counted before the tally)
