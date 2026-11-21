@@ -343,17 +343,29 @@ def sync(root, dry=False, accept=(), opened=False):
 
 
 AWAY = re.compile(r"https?://[^\s`'\")>\]]+|\b[\w.-]+/[\w.-]+#\d+|[A-Za-z]:\\Users|/Use[r]s/|/home/\w")
-NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/(?:blob|raw)/[^/]+/[^\s?#]+\.(?:png|jpe?g|gif|svg|webp)(?:[?#]|$)|/?(?:#|$))")
+NEAR = re.compile(r"https://github\.com/([\w.-]+/[\w.-]+)(?:/(?:milestones?|releases|wiki)(?:[/?#]|$)|/blob/[^/]+/README\.md|/?(?:#|$))")
 
 
-def stands_alone(page, text, repo="", sites=()):
+IMAGE = re.compile(r"https://(?:github\.com/([\w.-]+/[\w.-]+)/(?:blob|raw)|raw\.githubusercontent\.com/([\w.-]+/[\w.-]+))/([^\s?#]+\.(?:png|jpe?g|gif|svg|webp))(?:[?#]|$)", re.I)
+
+
+def own_image(hit, repo, root):
+    """An image in this repo's own GitHub (blob, raw or raw.githubusercontent.com URL) is inside the repo when the file is there (#5078)."""
+    found = IMAGE.match(hit)
+    if not found or (repo and (found.group(1) or found.group(2)).lower() != repo.lower()):
+        return False
+    parts = found.group(3).split("/")  # the branch may hold slashes: any tail of the path may be the file
+    return not root or any(os.path.isfile(os.path.join(root, *parts[i:])) for i in range(len(parts)) if ".." not in parts[i:])
+
+
+def stands_alone(page, text, repo="", sites=(), root=""):
     out, skip = [], False
     for number, line in enumerate(text.splitlines(), 1):
         skip = line[3:].strip() in ("Tests", "Deployments") if line.startswith("## ") else skip
         for hit in ([] if skip else AWAY.findall(line)):
             hit = hit.rstrip(".,;:)")
             near = NEAR.match(hit)
-            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
+            if not (near and (not repo or near.group(1).lower() == repo.lower())) and not own_image(hit, repo, root) and not any(hit.startswith(o) and hit[len(o):][:1] in ("", "/", "?", "#") for o in sites):
                 out.append(("LINKS", page, "DOC-19 line %d holds '%s', outside this repo. Fix: say it in words" % (number, hit[:60])))
     return out
 
@@ -367,5 +379,5 @@ def alone(root, folder, repo=""):
     for name, path in files:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
-        out += stands_alone(name, text, repo, sites) + (audit.home_diagram(text) if name == "Home" else [])
+        out += stands_alone(name, text, repo, sites, root) + (audit.home_diagram(text) if name == "Home" else [])
     return out
