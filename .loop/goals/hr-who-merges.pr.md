@@ -1,27 +1,25 @@
-Fixes #5680. Built by the Codex fallback
+Fixes #5680. Built by the Codex fallback, then taken through the full plan and review steps.
 
-This widens what dev/toy/test-who-merges.py accepts by allowing one more caller of merge.py: mailbox.py, in addition to worker.py. TD499 and PR 5608 intentionally added mailbox.py's tick-job path, which merges a job written by the operation session at its exact head. The old assertion rejected that intended behavior.
+## What this widens
 
-The test checks that mailbox.py's launch is inside resume(), that cmd_tick() is resume()'s only caller, and then exercises it through cmd_tick() with watcher job files. Missing records, nonwaiting records, invalid PRs, unarmed jobs, moved heads, pending checks and red checks must not merge; an armed green job must invoke merge.py for its own id and exact head. Adjacent string items `pr`, `merge` anywhere in a list or tuple identify a merge caller, including helper calls and gh options before the subcommand. The old plain-text checks remain an extra net over every scanned file; mailbox.py also rejects any gh pr merge form. Other callers remain forbidden. Product scripts are unchanged.
+dev/toy/test-who-merges.py now accepts one more caller of merge.py: mailbox.py, in addition to worker.py. TD499 and PR 5608 intentionally added mailbox.py's tick-job path, which starts merge.py for a job the operation session wrote, at the job's exact head. The old assertion (only worker.py may start merge.py) rejected that intended behavior, so main's test fails (issue 5680). Only the test and this goal's own records change: no product script, no regression row, no known-list change.
 
-Negative controls all use the same validator and are rejected as expected:
-- Third script starting merge.py.
-- Mailbox waiting/PR job-record guard removed (nonwaiting and invalid-PR jobs merge).
-- Third script calling `gh(["pr","merge","5"], root)`.
-- Third script calling `subprocess.run(["gh","-R","x","pr","merge","5"])`.
-- Third script with adjacent `pr`, `merge` in a tuple after another item, using single quotes.
-- Third script containing only the legacy `"pr", "merge"` text in a comment.
-- Third script containing only the legacy `"merge.py"` text in a comment.
-- Mailbox copy calling `gh(["pr","merge","5","--admin"], root)` in another function.
-- Mailbox copy containing the legacy `"pr", "merge"` text in a comment.
-- Mailbox copy with a second MERGE reference outside its assignment and launch.
-- Mailbox copy calling resume() from a function other than cmd_tick().
-- Mailbox copy with the MERGE launch moved from resume() into another function.
+## What the test checks
 
-Before the validator fix, the new controls exposed eight missed violations (the moved launch and second MERGE reference controls already rejected their mutations). After the fix, all twelve controls reject their mutations.
+- Callers: among skills/workflow-monitoring/scripts and skills/workflow-delivery/scripts, exactly worker.py and mailbox.py may name merge.py. No scanned file, worker.py included, may spell a direct `gh pr merge` (a list or tuple with `pr`, `merge` adjacent, the text, or a shell string).
+- mailbox.py structure: the MERGE assignment may build a path but never run a command; its one launch is inside resume(); resume() is called only by cmd_tick(), and no alias or callback of resume() exists.
+- mailbox.py behaviour: the real resume() and cmd_tick() source runs with stubs. merge.py runs only for a waiting, armed, green job at its exact head, with argv `merge.py <job id> --go-head <job head>`, and gh_json must be asked for the job's own PR. It never runs for: no job file, an empty record, a nonwaiting record, a string PR, an unarmed job, a moved head, pending checks, red checks, one green check beside a pending or a red one, commit-status PENDING or FAILURE, a PR that is MERGED or CLOSED, gh_json returning None, or an empty check list (17 cases). Each case also checks the record it leaves behind (waiting, green, red, done or armed), and the armed job is not merged again by the next tick.
+- 21 negative controls run on every execution and each must be rejected: a third script naming merge.py; the job-record guard removed; `gh pr merge` as a helper call, with a `-R` option, as adjacent tuple items, as a shell string, and in worker.py; the legacy `"pr", "merge"` and `"merge.py"` text in a comment; in a mailbox copy a `gh pr merge` call with an admin flag in another function, the legacy text in a comment, a second MERGE reference, a second resume() caller, a resume alias, the launch moved out of resume(), and a MERGE assignment that runs a command; and mutants of resume() that drop the OPEN check, the empty-checks guard, the None and empty-checks guards, change the pending test from any to all, or query another PR number.
 
-Validation:
-- python3 dev/toy/test-who-merges.py: 0 FAIL, exit 0; all twelve negative controls rejected as expected.
-- python3 skills/workflow-docs/scripts/docs.py check
-- python3 skills/workflow-docs/scripts/criteria.py render --check
-- python3 dev/package.py --static
+## Evidence
+
+- Main's test against this tree fails, naming mailbox.py as a caller: `FAIL: only worker.py (the worker's own exit) starts merge.py among the monitoring and delivery scripts: ['mailbox.py', 'worker.py']`.
+- This branch's test: 35 PASS lines, 0 FAIL, exit 0.
+- dev/toy/test-restart-tick.py (the watcher integration test: head matching, pod propagation, repeat ticks): 21 PASS, exit 0.
+- The test header says what the scan is not: a tripwire against accident for enumerated spellings, not a proof of exclusive merge authority; it scans only the two script folders above (workflow-release, workflow-health, workflow-docs, workflow-regression and workflow-setup are not scanned); it does not cover a REST merge, a GraphQL mutation, an import or runpy of merge.py, concatenated strings, a flag between the words, a single-quoted 'merge.py', subfolders or shell scripts; and a docstring in a scanned script that says "pr merge" would fail it. It is coupled to the shape of resume() and cmd_tick(), and says so when that shape changes.
+
+## Known gaps and follow-ups
+
+- The test does not check who wrote a watcher job file; that gate is proctree.require_operation in mailbox.py's cmd_watch and is out of scope here.
+- merge.py's own refusal of a missing or mismatched --go-head is tested elsewhere: dev/toy/test-merge-guard.sh (the #5171 --go-head cases) and dev/toy/test-merge-batch.sh.
+- The existing row who-merges-report (issue 5299, OPS-1) runs this test and is on the known list (.loop/regression-known.tsv). When this merges it prints FIXED, and its known-list line comes off in the next known-list removal PR, owned by operation. Do not remove the line before this PR merges, or the row turns red on main; while the line stays, a later failure of the row is reported as KNOWN, not as a failure. No new row is added here (operation-mac, 2026-11-20 19:27).
