@@ -16,6 +16,10 @@ import os
 import sys
 import tempfile
 
+# hermetic: no host session id or loop setting reaches operate.py, and HOME is a throwaway so the real ~/.workflow-loop is never read
+for _k in [k for k in os.environ if k.startswith(("LOOP_", "CLAUDE"))]:
+    del os.environ[_k]
+os.environ["HOME"] = os.environ["USERPROFILE"] = tempfile.mkdtemp(prefix="machine-log-home-")
 here = os.path.dirname(os.path.abspath(__file__))
 scripts = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts")
 sys.path.insert(0, scripts)
