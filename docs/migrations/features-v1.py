@@ -153,7 +153,7 @@ def build(root, base, skip, cr, pf, prd):
                 while k < len(lines) and BLOCK.match(lines[k]):
                     k += 1
             out += block
-            feats.append([key, name, before, None, len(subs), met != "missing", n, ref, key])
+            feats.append([key, name, before, None, len(subs), met != "missing", n, ref])
         text2 = "\n".join(out)
         if page_mark:
             if lines[page_mark[0]] not in (known or onbase):

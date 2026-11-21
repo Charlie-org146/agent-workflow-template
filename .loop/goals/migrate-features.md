@@ -67,3 +67,5 @@ Manual negative controls (each run in a throwaway clone; all 12 behave as stated
 12. A write target with uncommitted changes: `REFUSED: these paths have uncommitted changes`.
 
 `check` on the committed branch before the merge-up (base 48ac06e7d): 11 of 12 proofs pass; the one FAIL is `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28. The final `check` output replaces this after the merge-up.
+
+What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and the five done lines. It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
