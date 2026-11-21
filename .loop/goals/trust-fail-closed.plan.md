@@ -15,8 +15,8 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 
 ### What could break
 - Machines with no ~/.claude.json can no longer bind (intended; nothing is trusted).
-- Toys relying on the fail-open default; found by running them all.
-- operate.py has 13 spare bytes; merging pc-path-trust (#5722) may not fit: stop and report if so.
+- Toys relying on the fail-open default; found by running them in the lane. machines.py warns past 19,000 bytes (19,919).
+- Merging pc-path-trust (#5722): it edits the same function; its logic must be carried into machines.untrusted (stop and report if the bytes do not hold).
 
 ### Out of scope
 - #5743 case folding. The ~/.claude.json file is read only and never written.

@@ -6,7 +6,7 @@
 
 ## Approaches
 
-**A. Fail closed in the one function.** Compute `ok` inside the try, set `ok = 0` in the except, and return one refusal for both "no trust entry" and "no readable file". Both callers already `sys.exit(why)` on a non-empty line, so nothing else changes. operate.py is at 20,455 of 20,480 bytes (GRD-20); the rewrite measured 20,467, so it fits with 13 bytes spare and adds no file.
+**A. Fail closed in the one function.** Compute `ok` inside the try, set `ok = 0` in the except, and return one refusal for both "no trust entry" and "no readable file". Both callers already `sys.exit(why)` on a non-empty line, so nothing else changes. operate.py is at 20,455 of 20,480 bytes (GRD-20), too full for the longer reader, so the reader moves into machines.py (a move, not a reformat) and `operate.untrusted` delegates to it: operate.py 20,019 bytes, machines.py 19,919, no new file. The moved reader also names the file in the refusal, honours CLAUDE_CONFIG_DIR and retries one parse error.
 
 **B. Check the file in each caller.** Two more copies of the rule and more bytes in scripts that are also near the cap. Rejected (DRY, size).
 
@@ -14,7 +14,7 @@
 
 ## Chosen: A
 
-Same refusal text as today ("ask the owner to trust FOLDER (FOLDER_TRUST)"), so the plain reason is the one the owner already knows; it now also covers a missing file.
+The refusal keeps today's opening ("ask the owner to trust FOLDER (FOLDER_TRUST)") and adds the trust file it looked at, so an unreadable file is told apart from an untrusted folder.
 
 ## What each done line needs
 
@@ -25,4 +25,4 @@ Same refusal text as today ("ask the owner to trust FOLDER (FOLDER_TRUST)"), so 
 ## Open questions
 
 - A machine with no ~/.claude.json at all (Claude Code never run) now cannot bind. That is the intent: nothing is trusted. Recommended: yes.
-- #5743 (case folding) and the unmerged pc-path-trust (#5722) touch the same function; merge up when it lands, and stop if the 13 spare bytes do not hold.
+- #5743 (case folding) and the unmerged pc-path-trust (#5722) touch the same function; merge up when it lands; the reader now lives in machines.py, so the conflict is one delegating function.
