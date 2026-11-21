@@ -83,11 +83,12 @@ def pending(top, cfg, fix=False, head="HEAD", filer=None):
     return kept
 
 
-def commit(top, cfg, slug):
+def commit(top, cfg, slug, readme=False):
     folder = cfg.get("wiki_dir") or "docs/wiki"
-    if run(["git", "status", "--porcelain", "--", folder], cwd=top).stdout.strip():
-        git("add", "--", folder, cwd=top)
-        git("commit", "-m", "Wiki: update pages for %s" % slug, "--", folder, cwd=top)
+    paths = [folder] + ["README.md"] * readme  # #5728: README the audit just re-rendered goes in the same commit
+    if run(["git", "status", "--porcelain", "--"] + paths, cwd=top).stdout.strip():
+        git("add", "--", *paths, cwd=top)
+        git("commit", "-m", "Wiki: update pages for %s" % slug, "--", *paths, cwd=top)
         print("COMMITTED the wiki pages for %s" % slug)
 
 
@@ -99,9 +100,10 @@ def cmd_prepare(args):
     cfg = read_config(top)
     if args.commit:
         commit(top, cfg, args.slug)
+    clean = not run(["git", "status", "--porcelain", "--", "README.md"], cwd=top).stdout.strip()  # a hand-edited README stays out
     stale = pending(top, cfg, fix=args.commit)
     if args.commit:
-        commit(top, cfg, args.slug)  # the audit's mechanical fixes
+        commit(top, cfg, args.slug, clean and not stale)  # the audit's mechanical fixes
     for line in stale:
         print(line)
     if stale:
