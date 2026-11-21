@@ -50,5 +50,34 @@ PY
 )
 check "role.py save and fit.py save keep a budget goal.py set after the worker loaded its record (issue 5350)" '[ "$(tail -1 <<<"$out")" = OK ]'
 
+# #5359: flow.py's end-of-step token write merges only the token fields, so a budget goal.py set after it read the run
+# record (a stand-in add() sets it, as the operation session would) survives, and the tokens are recorded.
+out=$(LOOP_ROLE=worker python3 - "$here/skills/workflow-delivery/scripts" <<'PY'
+import json, os, subprocess, sys, tempfile
+d = tempfile.mkdtemp(); os.chdir(d)
+subprocess.run(["git", "init", "-q"], check=True)
+runs = os.path.join(d, ".git", "loop", "runs"); os.makedirs(runs)
+rec = os.path.join(runs, "g.json")
+json.dump({"slug": "g", "step": "idea", "budget_minutes": 240, "log": []}, open(rec, "w"))
+agent = os.path.join(d, "agent.py")
+open(agent, "w").write("import json\nprint(json.dumps({'result': 'ok\\nSTEP: done', 'usage': {'input_tokens': 7, 'output_tokens': 5}}))\n")
+flowfile = os.path.join(d, "flow.json")
+json.dump({"steps": {k: "built-in" for k in ("idea", "plan", "review", "qa", "ship")}, "command": [sys.executable, agent]}, open(flowfile, "w"))
+os.environ["LOOP_FLOW"] = flowfile
+sys.path.insert(0, sys.argv[1]); sys.argv = ["flow.py", "g", "idea", "--wait", "20"]
+import flow, proctree
+real = proctree.add
+def add(state, step, spent):  # goal.py set, after flow.py read the record and before it saves
+    s = json.load(open(rec)); s["budget_minutes"] = 360; json.dump(s, open(rec, "w"))
+    return real(state, step, spent)
+proctree.add = add
+for _ in range(10):
+    flow.main()
+    if os.path.exists(os.path.join(runs, "g.idea.ran")): break
+s = json.load(open(rec))
+print("OK" if s["budget_minutes"] == 360 and "12" in json.dumps(s.get("tokens")) else "BAD %s" % s)
+PY
+)
+check "flow.py's token write keeps a budget goal.py set after it read the run record (issue 5359)" '[ "$(tail -1 <<<"$out")" = OK ]'
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

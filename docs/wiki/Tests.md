@@ -176,6 +176,7 @@
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5317-wiki-start"></a>defect-5317-wiki-start | defect | [#5317](https://github.com/jcl2018/agent-workflow-template/issues/5317) state unknown | not run | - | local | 2026-11-21 |
+| <a id="t-worker-save-5359"></a>worker-save-5359 | defect | [#5359](https://github.com/Charlie-org146/agent-workflow-template/issues/5359) state unknown | PASS | 2026-11-21 | [CI 2026-11-21](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-21) | 2026-11-21 |
 
 ## Documentation
 

@@ -163,7 +163,7 @@ Each requirement and how it is delivered:
 - **Command:** `python3 skills/workflow-delivery/scripts/flow.py SLUG STEP`
 - **Dry run:** none: a step runs for real; the lane rows it starts are the only preview.
 - **Reads:** the goal's run record, `.loop/config.json` and the step's reply file.
-- **Writes:** the step's prompt and reply file and the lane logs under the git common dir's `loop/runs`.
+- **Writes:** the step's prompt and reply file and the lane logs under the git common dir's `loop/runs`, and the step's tokens in the run record (only those fields: a budget set meanwhile stays).
 - **Exit codes:** 0 when the step prints its `NEXT` line or `RUNNING`; nonzero when it refuses or the step fails.
 
 Backup and restore (the folded DEL-7): `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.

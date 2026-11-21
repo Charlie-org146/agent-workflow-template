@@ -350,11 +350,9 @@ def main():
             out.write(text)
     if spent:
         record = os.path.join(runs, args.slug + ".json")
-        state = json.loads(read(record))
+        state = role.goal_state(runs, args.slug)  # goal.save then merges only the token fields into a fresh read (#5359)
         fit.tokens().add(state, args.step, spent)
-        with open(record + ".%d.tmp" % os.getpid(), "w") as handle:
-            json.dump(state, handle, indent=2)
-        os.replace(record + ".%d.tmp" % os.getpid(), record)
+        role.save(record, state)
     print("\n".join(re.findall(r"^\W*(?:PENDING|STEP): .*", text, re.M)) or "STEP: it gave no STEP line")
     print("NEXT: goal.py record %s %s --file %s" % (args.slug, args.step, reply))
     return 0
