@@ -6,7 +6,7 @@ usage: routing.py build SLUG          run the goal's build through the agent its
        routing.py detect [--write]    which agents are installed and logged in; --write saves the profiles
        routing.py check               a second agent's notes on a release plan read from stdin (monitor.py plan --check)
        routing.py show SLUG           the agent, model and tokens each step of the goal's run record names
-       routing.py finish SLUG CODE    worker.py loop: a good run that ended 0 outside the flow ends done (TD520)
+       routing.py finish SLUG CODE    worker.py loop: a good Codex run ending 0 outside the flow ends done
 
 The private file ~/.workflow-loop/agents.json ($LOOP_AGENTS) holds `profiles` ({name: command, model, output, prompt, login,
 cost_per_mtok}) and `routes` ({steps: {step: profile}, sizes: {small|large: profile}, gated: [review], fallback: heavy}). A step
@@ -353,13 +353,13 @@ def cmd_show(args):
 
 
 def cmd_finish(args):
-    """TD520: a run that ended 0 outside the flow, committed, clean and gated, ends done."""
+    """TD520: a Codex run ending 0 outside the flow, committed, clean and gated, ends done."""
     runs, here = RUNS(), os.path.dirname(os.path.abspath(__file__))
     state = role.goal_state(runs, args.slug)
     tree, base = state.get("worktree") or "", "origin/main"
     git = lambda *a: role.git("-C", tree, *a).stdout.strip()
     gate = lambda *a: subprocess.run([sys.executable, *a], cwd=tree or None, capture_output=True).returncode
-    why = ("it ended %d" % args.code if args.code else "not running" if state.get("status") != "running" or not tree else
+    why = ("it ended %d" % args.code if args.code else "not Codex" if state.get("agent") != "codex" else "not running" if state.get("status") != "running" or not tree else
            "no commit" if git("rev-list", "--count", base + "..HEAD") in ("", "0") else "dirty tree" if git("status", "--porcelain") else
            "private scan" if gate(os.path.join(here, "private.py"), "scan", "--base", base) else
            "docs check" if os.path.isdir(os.path.join(tree, "docs", "wiki")) and gate(os.path.join(here, "..", "..", "workflow-docs", "scripts", "docs.py"), "check") else "")

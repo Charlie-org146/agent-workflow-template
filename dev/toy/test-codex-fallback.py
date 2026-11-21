@@ -129,7 +129,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
 # TD520: a Codex run that ends 0 outside the flow ends done, its steps recorded, when it committed, left a clean tree and passed the
 # gates; any other end still fails. The real worker.py loop and routing.py finish run against a throwaway repo with an origin.
-def loop_run(command, slug, names=""):
+def loop_run(command, slug, names="", agent="codex"):
     with tempfile.TemporaryDirectory() as tmp:
         bare, work = os.path.join(tmp, "o.git"), os.path.join(tmp, "r")
         git = lambda *a, cwd=work: subprocess.run(["git", *a], cwd=cwd, capture_output=True, text=True)
@@ -143,7 +143,7 @@ def loop_run(command, slug, names=""):
         runs = os.path.join(work, ".git", "loop", "runs")
         os.makedirs(runs)
         os.makedirs(os.path.join(work, ".git", "loop", "logs"))
-        json.dump({"slug": slug, "status": "running", "worktree": work, "branch": "loop/" + slug, "log": [], "flow": {}}, open(os.path.join(runs, slug + ".json"), "w"))
+        json.dump({"slug": slug, "status": "running", "agent": agent, "worktree": work, "branch": "loop/" + slug, "log": [], "flow": {}}, open(os.path.join(runs, slug + ".json"), "w"))
         home = os.path.join(tmp, "home")
         os.makedirs(os.path.join(home, ".workflow-loop"))
         open(os.path.join(home, ".workflow-loop", "private-names"), "w").write(names)
@@ -156,6 +156,8 @@ def loop_run(command, slug, names=""):
 good = loop_run("echo work > f.txt; git add -A; git commit -qm work", "g2")
 check(good.get("status") == "done" and sorted(good.get("flow") or {}) == ["idea", "plan", "qa", "review", "ship"] and not good.get("finding"), "a Codex run that commits, leaves a clean tree and passes the gates ends done with its flow steps recorded")
 check((good.get("report") or {}).get("status") == "waiting", "and it reports its pull request waiting, never merged by itself")
+claude = loop_run("echo work > f.txt; git add -A; git commit -qm work", "g4", agent="claude")
+check(claude.get("status") == "failed" and not claude.get("flow"), "negative control: a Claude worker that ends 0 with a commit and a clean tree is not overridden: it still ends failed")
 for name, command, names in (("no commit", "true", ""), ("a dirty tree", "echo w > f.txt; git add -A; git commit -qm w; echo more > g.txt", ""), ("an exit 1", "echo w > f.txt; git add -A; git commit -qm w; exit 1", ""),
                              ("a private name in the commit", "echo secretword > f.txt; git add -A; git commit -qm w", "secretword\n")):
     bad = loop_run(command, "g3", names)
