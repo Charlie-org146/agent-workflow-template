@@ -176,7 +176,7 @@ cp "$d/cfg.gated" .loop/config.json; git commit -qam "Gates back on" >/dev/null;
 
 echo "== the Delivery commands reference names every goal.py command and flag"
 missing=""
-for word in $(python3 "$here/skills/workflow-delivery/scripts/goal.py" -h | sed -n '/^  new /,/^  show /p' | awk '{print $1}') $(grep -oE 'add_argument\("--[a-z]+"' "$here/skills/workflow-delivery/scripts/goal.py" | cut -d'"' -f2 | sort -u); do
+for word in $(python3 "$here/skills/workflow-delivery/scripts/goal.py" -h | sed -n '/^  new /,/^  show /p' | awk '$1 !~ /^\[/ {print $1}') $(grep -oE 'add_argument\("--[a-z]+"' "$here/skills/workflow-delivery/scripts/goal.py" | cut -d'"' -f2 | sort -u); do
   grep -q -- "$word" "$here/skills/workflow-delivery/references/commands.md" || missing="$missing $word"
 done
 [ -z "$missing" ] && ok "page lists them" || bad "page lacks:$missing"
@@ -192,7 +192,7 @@ flowall bump; $goal pr bump >/dev/null
 [ "$(git show origin/loop/bump:VERSION)" = "1.3.3.4" ] && ok "bump pushed" || bad "bump push"
 $goal pr bump >/dev/null; [ "$(cat VERSION)" = "1.3.3.4" ] && ok "second pr doesn't bump again" || bad "double bump"
 E="python3 $here/skills/workflow-docs/scripts/entry.py"
-git switch -q main; $E write >/dev/null; git add -A .loop CLAUDE.md AGENTS.md 2>/dev/null; git commit -qm "START.md" 2>/dev/null; git push -q origin main
+git switch -q main; $E write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "START.md" 2>/dev/null; git push -q origin main
 $goal new regen --here --goal "Add regen" --done "calc has regen" >/dev/null
 printf '
 
