@@ -6,14 +6,13 @@ usage: batch.py <command> [options]
   add NAME --goal GOAL --done LINE [--done LINE] [--slug S] [--touches A,B] [--depends-on A,B] [--release ask] [--feature PAGE]
       add a goal line under '## Batch: NAME' in .loop/queue.md
   start NAME [--max N] [--skill-dir DIR]
-      start one worker per goal line (watch.py beside this file does it); each runs its loop to the end and reports back;
-      otherwise print the command that starts them
+      start one worker per goal line (watch.py beside this file does it), else print the command that starts them
   status NAME
       one line for each goal of the batch
   roadmap [--issues FILE] [--out FILE]
-      the Roadmap wiki page: docs/ROADMAP.md's v1.0.0 group tables and Rollout, each open issue in its group (hand row, else
-      label) with a status, the Backlog milestones as "after v1.0", the "To-do:" issues, the goals in flight and each
-      page's Unreviewed requirements. Issues come from gh (--issues FILE: the same JSON); --out writes the page
+      the Roadmap wiki page: docs/ROADMAP.md's v1.0.0 groups and Rollout, each open issue in its group with a status, the
+      Backlog milestones, the "To-do:" issues, the goals in flight and each page's Unreviewed requirements. Issues come
+      from gh (--issues FILE: the same JSON); --out writes the page
 
 Each goal runs the skill flow in its own worktree and worker. Nothing merges.
 """
@@ -59,8 +58,14 @@ def agent_command(cfg, state):
     """(command, agent): background Claude, else Codex (WORKTREE, GITROOTS filled in, TD537)."""
     claude = list(cfg.get("agent_command") or [])
     if cfg.get("codex_profile") and (not codex_next(cfg, state) or not claude or not shutil.which(claude[0])):
-        got = subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "lanekit.py"), "codex-args", state["worktree"], *cfg["codex_profile"]], capture_output=True, text=True)
-        return (json.loads(got.stdout) if got.returncode == 0 else sys.exit(got.stderr.strip())), "codex"
+        tree = state["worktree"]
+        one = lambda what: git("-C", tree, "rev-parse", "--path-format=absolute", what)
+        common, own = one("--git-common-dir"), one("--git-dir")
+        bad = r"(^|[/\[\",=])(hooks|config|info)([/\]\",]|$)|writable_roots=(?!GITROOTS$)"
+        if own == common or any(re.search(bad, arg) for arg in cfg["codex_profile"]):
+            sys.exit("REFUSED: the Codex profile names hooks, config, info or other roots, or the worktree is unlinked")
+        roots = json.dumps([os.path.join(common, sub) for sub in ("objects", "refs", "logs")] + [own])
+        return [tree if arg == "WORKTREE" else arg.replace("GITROOTS", roots) for arg in cfg["codex_profile"]], "codex"
     return claude, "claude"
 
 
