@@ -11,10 +11,34 @@ Each has a negative control: a stale-blind build counts 9 and a loop with no hea
 import contextlib
 import datetime
 import io
+import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
+
+here = os.path.dirname(os.path.abspath(__file__))
+
+
+def real_id_hash():
+    """Hash of the checkout's own .git/loop/operation.id (or "absent"); never its contents."""
+    try:
+        out = subprocess.run(["git", "-C", here, "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+        path = os.path.join(os.path.abspath(os.path.join(here, out)), "loop", "operation.id")
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()
+    except OSError:
+        return "absent"
+
+
+REAL_BEFORE = real_id_hash()
+# hermetic: no host session id or loop setting, and a throwaway HOME, so the owner's session never reaches the wait loop's operation-session
+# claim (operate.cmd_run -> cmd_claim -> board.followed reads the cwd's repo and ~/.workflow-loop) and the real .git/loop/operation.id is never written
+for name in [k for k in os.environ if k.startswith(("CLAUDE", "ANTHROPIC", "LOOP_"))]:
+    os.environ.pop(name, None)
+HOME = tempfile.mkdtemp(prefix="machine-log-home-")
+os.environ.update(HOME=HOME, USERPROFILE=HOME)
 
 here = os.path.dirname(os.path.abspath(__file__))
 scripts = os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts")
@@ -93,10 +117,14 @@ class Clock:
         return getattr(__import__("time"), name)
 
 
-def run_loop(beating):
-    ages, passes, printed = [], [0], io.StringIO()
+def run_loop(beating, host=""):
+    ages, passes, printed, ids = [], [0], io.StringIO(), []
+    start = os.getcwd()
     with tempfile.TemporaryDirectory() as tmp:
         common = fixture(tmp)
+        os.chdir(tmp)  # the claim follows the cwd's repo: it must be the fixture, never the checkout this runs from
+        if host:
+            os.environ["CLAUDE_SESSION_ID"] = host
         path = os.path.join(common, "loop", "status", "m.json")
         clock = Clock()
 
@@ -127,13 +155,24 @@ def run_loop(beating):
         except SystemExit:
             pass
         finally:
+            os.chdir(start)
+            os.environ.pop("CLAUDE_SESSION_ID", None)
+            try:
+                ids = open(os.path.join(common, "loop", "operation.id")).read().split()
+            except OSError:
+                pass
             operate.time, layers.time, operate.one_pass, operate.signature, layers.role, operate.git, operate.CFG, layers.beat, layers.machines.me = real
-    return ages, printed.getvalue()
+    return ages, printed.getvalue(), ids
 
 
-good, said = run_loop(True)
+good, said, ids = run_loop(True)
 check(said == "", "the heartbeat adds no check-in output or board message: the wait loop printed nothing between passes (%r)" % said[:40])
 check(good and max(good) <= 60, "with an operation session running, the status file is never over 60 s old on a fake clock (oldest %.0f s over %d polls)" % (max(good or [0]), len(good)))
-bad, _ = run_loop(False)
+bad, _, _ = run_loop(False)
 check(bad and max(bad) > 60, "negative control: a wait loop that never rewrites the file leaves it over 60 s old (oldest %.0f s)" % max(bad or [0]))
+check(ids == [], "hermetic: no session id reaches the wait loop, so it claims nothing (%r)" % ids)
+_, leaked, ids = run_loop(True, host="host-probe")
+check("CLAIMED operation session host-probe" in leaked and ids == ["host-probe"],
+      "negative control: a host session id left in the environment makes the wait loop claim, and the claim lands only in the fixture (%r)" % ids)
+check(real_id_hash() == REAL_BEFORE, "hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy")
 sys.exit(1 if fails else 0)

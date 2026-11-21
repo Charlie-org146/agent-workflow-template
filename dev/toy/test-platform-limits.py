@@ -15,6 +15,22 @@ root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scripts, "sessions.py")
 fails = 0
+HOME = tempfile.mkdtemp(prefix="limits-home-")
+
+
+def real_id_hash():
+    """Hash of the checkout's own .git/loop/operation.id (or "absent"); never its contents."""
+    import hashlib
+    try:
+        out = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+        path = os.path.join(os.path.abspath(os.path.join(root, out)), "loop", "operation.id")
+        with open(path, "rb") as handle:
+            return hashlib.sha256(handle.read()).hexdigest()
+    except OSError:
+        return "absent"
+
+
+REAL_BEFORE = real_id_hash()
 
 
 def check(name, ok):
@@ -24,7 +40,9 @@ def check(name, ok):
 
 
 def run(top, script, *args, **env):
-    keep = {k: v for k, v in os.environ.items() if k != "LOOP_ROLE"}
+    # hermetic: no host session id or loop setting, and a throwaway HOME so the owner's ~/.claude.json and ~/.workflow-loop are never read
+    keep = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE"))}
+    keep.update(HOME=HOME, USERPROFILE=HOME)
     done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, **env))
     return done.returncode, done.stdout + done.stderr
 
@@ -127,5 +145,6 @@ for path in (unattended, sessions):
     limit = len(old.stdout.replace(b"\r\n", b"\n")) if old.returncode == 0 and old.stdout else 20000
     check("e: %s is %d bytes, no larger than main (%d) and under 20,000" % (os.path.basename(path), size, limit), size <= min(limit, 20000))
 
+check("hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy", real_id_hash() == REAL_BEFORE)
 print("PLATFORM LIMITS TOY " + ("OK" if not fails else "FAILED %d" % fails))
 sys.exit(1 if fails else 0)
