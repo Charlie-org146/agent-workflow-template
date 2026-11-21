@@ -96,13 +96,17 @@ for it in re.findall(r"<li>(.*?)</li>\s*(?=<li>|\Z)", ul2, re.S):
     else:
         want.append("- " + md(it))
 assert len(re.findall(r"<li>", ul2)) == sum(1 for w in want if w.startswith("- ")), "a top-level bullet of the pinned section was not read"
-other = "therm" + "is"
 text = "\n".join(want) + "\n"
-text = text.replace("the " + other + " feature migration (" + other + "#1240", "the service repo feature migration (the service repo #1240")
-say(other not in text.lower(), "the expected brief text holds no other repo's name after the one swap")
+# the other repo's name is read from the pinned page at run time (never written in this file)
+named = re.search(r"the (\w+) feature migration \((\w+)#1240", text)
+other = named[1].lower() if named and named[1] == named[2] else None
+say(other is not None, "the pinned brief names the other repo once in the expected place")
+if other:
+    text = text.replace(named[0], "the service repo feature migration (the service repo #1240")
+say(bool(other) and other not in text.lower(), "the expected brief text holds no other repo's name after the one swap")
 brief = open("docs/release-brief-v1.1.0.md", encoding="utf-8").read()
 say(brief.split("\n", 1)[0].startswith("v1.1.0 Frozen"), "the brief's first line says frozen")
-say(other not in brief.lower(), "the brief file holds no other repo's name")
+say(bool(other) and other not in brief.lower(), "the brief file holds no other repo's name")
 say(brief.split("\n", 2)[2:] == [text], "the brief is its frozen first line, a blank line and the pinned section word for word, nothing else (only that name swapped)")
 print("ALL PASS" if not bad else "%d FAILED" % bad)
 sys.exit(1 if bad else 0)
