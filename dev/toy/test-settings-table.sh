@@ -35,7 +35,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 printf '<!-- workflow-docs -->\n# Toy\n\n## Features\n\n| Feature | What it does | How to use | Milestone |\n|---|---|---|---|\n' > docs/wiki/Home.md
-printf '# Toy\n\nA toy repo.\n\n## How to use\n\nSay things.\n' > README.md
+printf '# Toy\n\nA toy repo.\n\n## How to use\n\nSay things.\n\n<!-- settings:begin -->\n<!-- settings:end -->\n' > README.md  # sections own the blocks now: a README is refreshed only where it already holds the markers
 printf 'Home\tREADME.md\n' > .loop/docs.tsv
 python3 - <<'PY'
 import json
@@ -50,7 +50,7 @@ over=$(sed -n '/settings:begin/,/settings:end/p' $H | grep -c 'overridden')
 grep -q '^| `parallel` .*overridden:\*\* `3`' $H && [ "$over" = 1 ] && ok "one overridden setting shows exactly that one marked, with its value" || bad "overridden rows: $over: $(grep -c . $H)"
 grep -q '^| `base` | .* | set "base" in .loop/config.json | `main` | default |' $H && ok "a setting at its default shows the name, meaning, how to set it, the default and 'default'" || bad "default row missing"
 grep -q '^Built with the \[[A-Za-z0-9_.-]*/[A-Za-z0-9_.-]*\](https://github.com/[A-Za-z0-9_.-]*/[A-Za-z0-9_.-]*) workflow loop\.$' README.md && ! grep -q -E '/(Users|home)/' README.md $H && ok "the README names and links the template repo and holds no local path" || bad "template line: $(sed -n 1,5p README.md)"
-sed -n '/settings:begin/,/settings:end/p' README.md | grep -q '`parallel`' && ok "the README carries the Settings section too" || bad "README settings"
+sed -n '/settings:begin/,/settings:end/p' README.md | grep -q '`parallel`' && ok "a README that holds the Settings markers gets the section filled too" || bad "README settings"
 check() { $docs check 2>&1; }
 check | grep -q '^STALE' && bad "fresh blocks reported stale: $(check | grep STALE)" || ok "freshly rendered blocks are not stale"
 python3 -c "import json; c = json.load(open('.loop/config.json')); c['parallel'] = 5; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
