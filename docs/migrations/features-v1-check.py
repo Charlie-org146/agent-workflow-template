@@ -2,8 +2,8 @@
 """Proof for goal migrate-features (shares no code with features-v1.py): python3 docs/migrations/features-v1-check.py check
 
 usage: check [--base REF] [--skip IDS] [--allow PATHS] [--source SHA]
-One-shot: meaningful only before this migration merges (afterwards BASE is the migrated main). Unpacks the committed HEAD with git archive into a temporary directory (no worktree is registered), then proves the five done
-lines against BASE (default: git merge-base HEAD origin/main) and the frozen source. It writes nothing to the tracked tree.
+One-shot: meaningful only before this migration merges (afterwards BASE is the migrated main). Unpacks the committed HEAD with git archive into a temporary directory (no worktree is registered), then proves done lines 1 to 6
+against BASE (default: git merge-base HEAD origin/main) and the frozen source. It writes nothing to the tracked tree.
 """
 import argparse
 import hashlib

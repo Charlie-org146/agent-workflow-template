@@ -30,12 +30,14 @@ Frozen. A wrong done line needs a new goal.
    Expect: 27 features with equal hashes before and after, 29 cleared marks (26 requirement, 3 page-level), the features over five lines under `To split`, and DOC-27 and DOC-28 named as skipped.
 6. Run `git diff origin/main -- .loop/regression-known.tsv`.
    Expect: exactly one added line, for `ls-narrow-triggers`, citing #4061, and no removed line.
+7. Read the Result section of the pull request.
+   Expect: the regression lane ran at the final head in a fresh clean clone and shows no FAIL.
 
 ## PR notes
 
 This goal (migrate-features-2) is migrate-features re-frozen by the owner's typed words (record o711) with one added done line: `.loop/regression-known.tsv` gains one row for `ls-narrow-triggers` (red on main 48ac06e7d, macOS only because `test-local-schedule.sh` skips non-Darwin hosts), citing #4061. No other row of that file changes. The migration, its report and its pages are exactly as built and checked in migrate-features (head 6eaeecb7a); the check script's allowed-file list grows by the known list and this goal's own records, and it proves the known-list diff is one added line. The notes below are carried over from migrate-features.
 
-What changed: the 27 live requirements on the 11 feature pages become features in place, each keeping its ID, page and every word (text hash before and after listed in `docs/migrations/features-v1-report.md`). Each entry's Reviewed mark is cleared and each gets a block of `  - ` bullets after its own lines: its reference (the Follows cell, as link text), and one line per requirement line with its metric and test result. Two scripts and the report are new, all under `docs/migrations`: `features-v1.py run` and, as its own file so the proof shares no code with it, `features-v1-check.py check`. No other file changes.
+What changed: the 27 live requirements on the 11 feature pages become features in place, each keeping its ID, page and every word (text hash before and after listed in `docs/migrations/features-v1-report.md`). Each entry's Reviewed mark is cleared and each gets a block of `  - ` bullets after its own lines: its reference (the Follows cell, as link text), and one line per requirement line with its metric and test result. Two scripts and the report are new, all under `docs/migrations`: `features-v1.py run` and, as its own file so the proof shares no code with it, `features-v1-check.py check`. No other file changes except, in this goal, the known list row and the check's allowlist and proof 6.
 
 Owner decisions: the plan gate was answered `rec` by the owner (record o706, and the owner also typed `rec` directly in the operation session); the owner then ordered, in record o708, that this goal merges when green after the earlier goal, which is: the marker blocks are written into the 27 pages (UC1a); all 29 Reviewed marks are cleared (UC2a, the owner's o700 order); the test count shows on every line of an ID (D2a); the blocks are write-once snapshots until the checker goal recomputes them (D6a); and health's new FAIL rows and the release-gate effect are reported, not fixed (D7a). Re-run `features-v1.py run --refresh` to refresh a block (the flag is needed once the base already carries blocks, so a later run cannot overwrite them by accident).
 
@@ -51,11 +53,13 @@ For the checker goal: the marker bullets are indented `  - ` bullets after a bla
 
 Deferred: a committed toy test and regression row for the scripts need `dev/toy`, outside this goal's touches. The accepted record for Operation to file or not: one test that runs `check` on a fixture, plus the negative controls listed below.
 
-Shape spec: DOC-27 as pinned in `.claude/worktrees/consolidate-documentation-9216aa/operation-top/readme-drafts/frozen-source-v1.1.0-2358.html`, sha256 beginning 781aaacb72806fcd; used as a spec only, nothing from it is added. DOC-27 itself is merged by the earlier goal and is the durable copy.
+Shape spec: DOC-27 as pinned in the frozen source draft, sha256 beginning 781aaacb72806fcd; used as a spec only, nothing from it is added. DOC-27 itself is merged by the earlier goal and is the durable copy.
 
 Internal cleanup of this repo; adopting repos migrate in a later goal.
 
-Order and safety: the branch is merged up to main only after the earlier goal (doc27-28-text-2) merges; the pull request is opened as a draft and stays one until the owner says; auto-merge is never armed and `merge.py` is never run.
+Check change (named, as Operation asked): `features-v1-check.py` is loosened in exactly one way, its changed-file allowlist now also admits `.loop/regression-known.tsv`, `.loop/kept/migrate-features-2.tsv` and this goal's own records (`.loop/goals/migrate-features-2.*`); and one proof is added, number 6: the known-list diff against the base is exactly one added line, for `ls-narrow-triggers` citing #4061, with no removed line. Nothing else in the check changes. Negative control: a second added row prints `FAIL 6 ... added 2, removed 0` and the check exits non-zero.
+
+Order and safety: this goal merges first, before the goal that adds DOC-27 and DOC-28 (Operation TD668 and TD678), so the branch holds main as it is (48ac06e7d) and nothing newer; the pull request is opened as a draft and stays one until the owner says; auto-merge is never armed and `merge.py` is never run.
 
 Manual negative controls (each run in a throwaway clone; all behave as stated, and the review added controls 13 to 15 and re-ran all of them on the final code):
 1. A forced hash mismatch (unit changed on the second call): `REFUSED: the text of CHK-1 changed`, no file written.
@@ -75,10 +79,10 @@ Manual negative controls (each run in a throwaway clone; all behave as stated, a
 15. A base that already holds marker blocks: `REFUSED ... pass --refresh to rewrite them`; with `--refresh` the run writes 0 files and the tree stays clean.
 
 `check` on the final head (base 48ac06e7d): every proof passes and it ends `CHECK OK` with exit 0. DOC-27 and DOC-28 are a note, not a proof (see the order change below): none present, none required.
-What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and the five done lines. It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
+What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and done lines 1 to 5 (done line 6 is proof 6). It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
 
 Order change (Operation TD668): this goal merges before the goal that adds DOC-27 and DOC-28, so the check's proof `skipped IDs present on HEAD` became a note: those two IDs are skipped if present and nothing is required if they are absent, the report says the goal that adds them lands later, and the sentence above reads `(and DOC-27 and DOC-28 once they land)`. No other proof changed.
 
 Scoped review of the order-change diff (everything since 30ee5e1ff), one reviewer, verdict recorded: no other proof weakened, no assertion removed beyond the one named, no defect in the changed lines; `VERDICT: SAFE`. Its one cosmetic point (a stale paragraph about the old failing proof) is fixed above.
 
-Regression lane (qa): 56 of 634 affected rows ran in 900 s: 49 passed, 3 known, 4 failed (`ls-narrow-triggers`, `no-done-line-refused`, `pending-waits`, `stale-found`). All four fail identically when run alone on a clean origin/main (48ac06e7d) on the same Mac, so they are not caused by this change; none is on the known list; handled by the owner's ruling relayed by Operation.
+Regression lane (qa, Operation TD676 and TD680): run only in a fresh clean clone at the final head, with the session variables cleared, and its result is the Result section of this pull request. The earlier lane run in the working tree was void. `ls-narrow-triggers` fails on main itself (macOS only, #4061) and is on the known list in this change (owner o711, done line 6).
