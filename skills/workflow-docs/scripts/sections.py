@@ -97,27 +97,42 @@ def bullets(cell):
 
 
 def follows(cell):
-    """The (source, tag) pairs of a bullet Follows cell. A bullet splits at "; " outside brackets and parentheses after a complete
-    `source: tag` pair; a malformed part, a `name: word` with a wrong tag before a "; ", a leading ";" or unbalanced brackets keep it one source."""
+    """The (source, tag) pairs of a bullet Follows cell. A bullet splits at "; " outside brackets, parentheses and `code` after a
+    complete `source: tag` pair; a malformed part, a `name: word` with a wrong tag before a "; ", a leading ";", unbalanced
+    brackets or an open `code` keep it one source. A backslash escapes the next character. One pass, linear in the bullet."""
     out = []
-    pair = re.compile(r"(?![;\s])(.+): (%s)$" % TAGS)
-    close = {"[": "]", "(": ")"}
+    pair = re.compile(r"(?![;\s])(.*): (%s)$" % TAGS)
+    tags, close = TAGS.split("|"), {"[": "]", "(": ")"}
     for bullet in cell.split("<br>"):
         if not bullet.startswith("- "):
             continue
-        text, start, stack, parts, loose, bad = bullet[2:], 0, [], [], 0, False
+        text, start, stack, parts, loose, bad, colon, skip, code = bullet[2:].lstrip(), 0, [], [], 0, False, -1, False, False
         for i, char in enumerate(text):
-            if char in close:
+            if skip:
+                skip = False
+            elif code:
+                code = char != "`"
+            elif char == "\\":
+                skip = True
+            elif char == "`":
+                code = True
+            elif char in close:
                 stack.append(close[char])
             elif char in "])":
                 bad = bad or not stack or stack.pop() != char
+            elif char == ":" and text[i + 1:i + 2] == " ":
+                colon = i
             elif not stack and text[i:i + 2] == "; ":
-                if pair.fullmatch(text[start:i]):
+                gap = i - colon - 2 if colon >= start else 0
+                if 0 < gap < 8 and text[colon + 2:i] in tags:
+                    if not pair.fullmatch(text[start:i]):
+                        bad = True
+                        break
                     parts.append(text[start:i]); start = i + 2
-                else:
-                    loose += bool(re.search(r": \S+$", text[start:i]))  # `name: word`: a wrong tag, not a name that holds "; "
+                elif gap > 0 and text.find(" ", colon + 2, i) < 0:
+                    loose += 1  # `name: word`: a wrong tag, not a name that holds "; "
         parts.append(text[start:])
-        if bad or stack or (len(parts) > 1 and loose) or not all(pair.fullmatch(p) for p in parts):
+        if bad or stack or code or (len(parts) > 1 and loose) or not all(pair.fullmatch(p) for p in parts):
             parts = [text]
         out += [(m[1], m[2]) if (m := pair.fullmatch(p)) else (p, "") for p in parts]
     return out

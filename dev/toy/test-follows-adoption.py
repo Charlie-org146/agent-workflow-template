@@ -2,7 +2,7 @@
 # reads: skills/workflow-docs/scripts/sections.py skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/render.py
 # reads: README.md docs/wiki/Home.md docs/wiki/Principles.md .loop/regression.tsv .loop/regression-runs.tsv
 # windows: ok
-"""DEL-21 (o291, o293): a principle table's Follows cell is a tagged bullet list, Adoption is the adopted lines over all lines,
+"""DEL-21 (o291, o293): a principle table's Follows cell is a tagged bullet list, Adoption is the adopted sources over all sources (a bullet can name several),
 Confidence is the share of the requirement's tests passing on the latest run, and docs check refuses an untagged line.
 Value: protects=the Adoption and Confidence columns are computed, never typed, and a Follows line always carries a tag;
 fails_when=an old 'a; b: adapted' cell is not migrated, the score counts adapted or planned as adopted, a failing test does not
@@ -54,6 +54,12 @@ for cell, sources, share in [
         ("- a: adopted; [a): adapted", 1, 0), ("- a: adopted (v2); b: adapted", 1, 0), ("- a: adopted; b", 1, 0),
         ("- [outer [inner] label: adopted; tail](u): adapted", 1, 0)]:
     check("edge case %s gives %d source(s) and %d" % (cell, sources, share), len(s.follows(cell)) == sources and s.adoption(cell) == share)
+for cell, sources, share in [
+        (r"- [A\] label](u): adapted; [B](v): adopted", 2, 50), ("- `x: adopted; y`: adapted; [B](v): adopted", 2, 50),
+        ("- `tool: adopted; extra`: adapted; [B](v): adapted", 2, 0), ("- `a: adopted; b: adapted", 1, 0),
+        ("-  A: adopted", 1, 100), ("- : adopted", 1, 100)]:
+    check("review case %s gives %d source(s) and %d" % (cell, sources, share), len(s.follows(cell)) == sources and s.adoption(cell) == share)
+check("a long semicolon-heavy bullet is read in one pass", len(s.follows("- " + "a; " * 20000 + "z: adopted")) == 1 and len(s.follows("- " + "a; " * 20000 + "b: adapted; c: adopted")) == 2)
 
 # An independent count of the sources on a Follows cell, made outside follows(): strip bracket and parenthesis pairs from the inside
 # out, then count ': <tag>' at a '; ', a line break or the end; a bullet with no tag counts one. It disagrees with follows() on a
