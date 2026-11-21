@@ -97,22 +97,27 @@ def bullets(cell):
 
 
 def follows(cell):
-    """The (source, tag) pairs of a bullet Follows cell; split tagged sources outside links, never untagged text."""
+    """The (source, tag) pairs of a bullet Follows cell. A bullet splits at "; " outside brackets and parentheses after a complete
+    `source: tag` pair; a malformed part, a `name: word` with a wrong tag before a "; ", a leading ";" or unbalanced brackets keep it one source."""
     out = []
-    pair = re.compile(r"(.+): (%s)$" % TAGS)
+    pair = re.compile(r"(?![;\s])(.+): (%s)$" % TAGS)
+    close = {"[": "]", "(": ")"}
     for bullet in cell.split("<br>"):
         if not bullet.startswith("- "):
             continue
-        text, start, depth, parts = bullet[2:], 0, 0, []
+        text, start, stack, parts, loose, bad = bullet[2:], 0, [], [], 0, False
         for i, char in enumerate(text):
-            if char in "[(":
-                depth += 1
+            if char in close:
+                stack.append(close[char])
             elif char in "])":
-                depth = max(0, depth - 1)
-            elif not depth and text[i:i + 2] == "; " and pair.fullmatch(text[start:i]):
-                parts.append(text[start:i]); start = i + 2
+                bad = bad or not stack or stack.pop() != char
+            elif not stack and text[i:i + 2] == "; ":
+                if pair.fullmatch(text[start:i]):
+                    parts.append(text[start:i]); start = i + 2
+                else:
+                    loose += bool(re.search(r": \S+$", text[start:i]))  # `name: word`: a wrong tag, not a name that holds "; "
         parts.append(text[start:])
-        if not all(pair.fullmatch(p) for p in parts):
+        if bad or stack or (len(parts) > 1 and loose) or not all(pair.fullmatch(p) for p in parts):
             parts = [text]
         out += [(m[1], m[2]) if (m := pair.fullmatch(p)) else (p, "") for p in parts]
     return out

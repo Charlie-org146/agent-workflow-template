@@ -47,6 +47,54 @@ for source in ("[A; B](u)", "[A: adopted; B](u)", "[A](https://a.test/x; y)", "A
           s.follows("- %s: adapted" % source) == [(source, "adapted")] and
           s.follows(cell) == [(source, "adapted"), ("[C](v)", "adopted")] and s.adoption(cell) == 50)
 check("negative control: an unknown tag does not split a bullet", s.follows("- A: unknown; B: adopted") == [("A: unknown; B", "adopted")])
+for cell, sources, share in [
+        ("- a: adopted; b: adapted; c: planned", 3, 33), ("- a: adopted; b: adapted; c", 1, 0), ("- a: adopted;", 1, 0),
+        ("- a: adopted;b: adapted", 1, 0), ("- [A: adopted; B](u: adapted", 1, 0), ("- a: Adopted; b: adapted", 1, 0),
+        ("- a: adopted; ; b: adapted", 1, 0), ("- a: adopted; b: unknown; c: adapted", 1, 0), ("- a: adopted; [b: adapted", 1, 0),
+        ("- a: adopted; [a): adapted", 1, 0), ("- a: adopted (v2); b: adapted", 1, 0), ("- a: adopted; b", 1, 0),
+        ("- [outer [inner] label: adopted; tail](u): adapted", 1, 0)]:
+    check("edge case %s gives %d source(s) and %d" % (cell, sources, share), len(s.follows(cell)) == sources and s.adoption(cell) == share)
+
+# An independent count of the sources on a Follows cell, made outside follows(): strip bracket and parenthesis pairs from the inside
+# out, then count ': <tag>' at a '; ', a line break or the end; a bullet with no tag counts one. It disagrees with follows() on a
+# bullet with two or more tagged parts that follows() reads as one (for example 'a: adopted; b: adapted; c'); a single-token
+# half-tagged bullet such as 'a: adopted; b' is not flagged, and the hand-counted cells below say what is right.
+INNER, TOKEN = re.compile(r"\[[^\[\]]*\]|\([^()]*\)"), re.compile(r": (?:adopted|adapted|planned|own)(?=; |<br>|$)")
+
+
+def expected(cell):
+    total = 0
+    for bullet in cell.split("<br>"):
+        if bullet.startswith("- "):
+            text = bullet[2:]
+            while INNER.search(text):
+                text = INNER.sub("", text)
+            total += max(1, len(TOKEN.findall(text)))
+    return total
+
+
+def main_reading(cell):  # main's counter read one source per bullet
+    return len([b for b in cell.split("<br>") if b.startswith("- ")])
+
+
+with open(os.path.join(TOP, "README.md"), encoding="utf-8") as readme:
+    cells = [c.strip() for line in readme.read().split("\n") if line.startswith("|") for c in s.SPLIT.split(line.strip()[1:-1]) if c.strip().startswith("- ")]
+check("README: at least one Follows cell was found", len(cells) > 0)
+for cell in cells:
+    if expected(cell) != len(s.follows(cell)):
+        print("MISMATCH: expected %d source(s), follows() gave %d (brackets stripped by innermost pairs): %s" % (expected(cell), len(s.follows(cell)), cell[:90]))
+        fails += 1
+check("README: the independent source count equals follows() on every Follows cell (%d cells)" % len(cells), all(expected(c) == len(s.follows(c)) for c in cells))
+check("negative control: the README check fails on main's one-source reading of a two-source cell, and passes on follows()",
+      expected(mixed) == 2 and main_reading(mixed) != expected(mixed) and len(s.follows(mixed)) == expected(mixed))
+check("negative control: the README check flags a half-tagged bullet with two tagged parts", expected("- a: adopted; b: adapted; c") != len(s.follows("- a: adopted; b: adapted; c")))
+for name, cell, sources, share in [
+        ("HLT-2 shaped", "- [A](u): adapted; [B](v): adopted<br>- [C](w): adopted", 3, 67),
+        ("MCH-1 shaped", "- [A](u): adopted; [B](v): adapted<br>- [C](w): own<br>- [D](x): planned", 4, 25),
+        ("DEL-1 shaped, grouped references count once", "- [A](u), [B](v), [C](w): adopted<br>- [D](x): adapted<br>- E: own", 3, 33),
+        ("nested brackets", "- [outer [inner] label: adopted; tail](u): adapted", 1, 0),
+        ("half-tagged", "- a: adopted; b: adapted; c", 1, 0)]:
+    check("hand-counted cell %s: %d source(s), %d" % (name, sources, share), len(s.follows(cell)) == sources and s.adoption(cell) == share)
 tests = [["t1", "land", "x", "DEL-1"], ["t2", "land", "x", "DEL-1"], ["t3", "land", "x", "DEL-2"], ["t4", "land", "x", "OTHER"]]
 runs = {"t1": "PASS", "t2": "FAIL", "t3": "PASS"}
 row = "[DEL-1 Every change (absorbs DEL-2)](https://x.test/wiki/Delivery) ([DEL-1 flow](f.svg))"
