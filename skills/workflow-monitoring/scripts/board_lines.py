@@ -33,7 +33,7 @@ def box(node, cut):
 
 
 def pack(pieces, width, gap="  "):
-    """Pieces side by side, wrapped at width; a piece longer than width stands alone (the caller's fit wraps it)."""
+    """Pieces side by side, wrapped at width; a longer piece stands alone."""
     lines, line = [], ""
     for piece in pieces:
         if line and len(line) + len(gap) + len(piece) > width:
@@ -60,7 +60,7 @@ def cycled(nodes):
 
 
 def render(items, width=WIDTH):
-    """Lines for the Dependencies section. items: dicts with slug, mark and depends (slugs it waits on)."""
+    """Dependencies lines; items are dicts of slug, mark and depends."""
     if not items:
         return ["- (none)"]
     known = {node["slug"] for node in items}
@@ -85,7 +85,7 @@ def eta(at, sec, why="no estimate"):
 
 
 def progress(root, slug, run, step, lines):
-    """(done, total, by_rows) per frozen done line: its rows linked as slug:N that last passed, else the flow steps done."""
+    """(done, total, by_rows) per frozen done line: its linked rows that last passed, else the flow steps done."""
     path = os.path.join((run or {}).get("worktree") or root, ".loop")
     try:
         found = re.findall(r"(?m)^\d+\. ", open(os.path.join(path, "goals", slug + ".md")).read().split("## Done lines")[1].split("\n## ")[0])
@@ -375,7 +375,7 @@ def missing_list():
 
 
 def issues(root, runs=()):
-    """Issues lines: the missing list (when fit is installed beside this skill), then each finding kept local."""
+    """Issues lines: the missing list (if fit is beside this skill), then each local finding."""
     out = []
     if fit is not None and missing_list():
         out += ["- no private-name list: every push and merge stops (create %s; an empty file passes, o675)" % SHOWN,
@@ -399,6 +399,33 @@ def issues(root, runs=()):
 def shown(run):
     return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
 
+
+def tasks(root, runs, at, gone=()):  # DEL-23: briefs with state, goal labels and ETA
+    import live_board as lb
+    by, rows = {r["slug"]: r for r in runs}, lb.task_rows(root)
+    ids = {t["slug"]: t for t in rows}
+    end = lambda s: s in gone or graph.merged(by.get(s))
+    live = lambda s: s in by and not end(s) and by[s].get("status") != "queued"
+
+    def hop(s):
+        for _ in range(5):
+            s = ids.get(s, {}).get("by") or s
+        return s
+
+    for t in rows:
+        g = t["goals"]
+        t["state"] = "replaced" if t["by"] else "done" if g and all(map(end, g)) else "running" if any(map(live, g)) else "queued"
+    cut = cycled([dict(slug=t["slug"], depends=[hop(s) for s in t["needs"]]) for t in rows])
+    for t in rows:
+        bad = [ids[s]["name"] if s in ids else s + " (no brief)" for s in map(hop, t["needs"]) if s not in ids or ids[s]["state"] != "done"]
+        if t["state"] == "queued" and (bad or t["slug"] in cut):
+            t["state"], t["note"] = "waiting", t["note"] or "cycle" * (t["slug"] in cut) or "needs " + ", ".join(bad)
+        g, mine = t["goals"], [s for s in t["goals"] if live(s)]
+        left = [bs.left_time(by[s], runs, at, root) for s in mine]
+        t["eta"] = "-" if not mine else "?" if None in left else "awaiting merge" if not max(left) else board_page.span(max(left))
+        t["done"] = sum(map(end, g))
+        t["goals"] = [(s, "finished" if end(s) else "not started" if not live(s) else "awaiting merge" if by[s].get("status") == "done" else lb.FLOW[lb.current(by[s])]) for s in g]
+    return rows
 
 def gather(root, at, stamp=None):
     import live_board as lb  # lazy: live_board imports this module

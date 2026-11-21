@@ -134,6 +134,7 @@ def render(root=None, at=None, stamp=None):
                 lb.FLOW[step], step + 1, ("?" if left is None else board_page.span(left)) + ", " + auto.eta_text(auto.eta_seen(g["root"], run), at), cell(lb.latest_report(run) or run.get("next"), 60)))
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
+    out += lb.task_lines(board_lines.tasks(root, runs, at, {s for s, v in states.items() if v == "merged"}))
     changes = replan.since(root, stamp)
     decided = auto.since(root, stamp)
     open_now = replan.open_proposals(root)

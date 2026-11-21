@@ -14,6 +14,7 @@ status question, never by a check-in (MON-4). Imported by board_status.py.
 """
 import argparse
 import datetime
+import glob
 import html
 import os
 import re
@@ -44,6 +45,32 @@ def plain(text, size=200):
             word = word.replace(core, core.rstrip("/").rsplit("/", 1)[-1])
         words.append(word)
     return " ".join(words)[:size]
+
+
+def task_rows(root):  # DEL-23: one row per brief in .loop/tasks; a bad brief is named, never hidden
+    rows = []
+    for f in sorted(glob.glob(os.path.join(root, ".loop", "tasks", "*.md"))):
+        row = dict(slug=os.path.basename(f)[:-3], goals=[], needs=[], by="", note="")
+        try:
+            text = open(f, encoding="utf-8").read()
+        except (OSError, ValueError):
+            rows.append(dict(row, name=row["slug"], note="brief unreadable: check its permissions"))
+            continue
+        kv = {m[1].lower(): m[2].strip() for m in re.finditer(r"^- +(feature|release|goals|needs|replaced by|source) *: *(.*)$", text, re.M | re.I)}
+        w = lambda k: re.findall(r"[^ ,]+", kv.get(k, ""))
+        name = re.sub(r"[\x00-\x1f\x7f|]", " ", text.split("\n")[0].lstrip("# "))[:100].strip()
+        miss = [k for k in ("feature", "release", "source") if not kv.get(k)]
+        rows.append(dict(row, name=name or row["slug"], goals=w("goals"), needs=w("needs"), by=kv.get("replaced by", ""),
+                         note=f"incomplete brief: add its {', '.join(miss)} line" if miss or not name else ""))
+    return rows
+
+
+def task_lines(rows):  # DEL-23: each task by name with state, goals finished and ETA, then its goals and their step
+    out = ["", "Tasks"] * bool(rows)
+    for t in rows:
+        out.append(f"- {t['name']}: {t['state']}{' (%s)' % t['note'] if t['note'] else ''}, {t['done']} of {len(t['goals'])} goals finished, ETA {t['eta']}")
+        out += ["    %s %s" % g for g in t["goals"]]
+    return out
 
 
 def tally(pod, at):
@@ -106,8 +133,7 @@ current = bs.current
 
 
 def flow_lines(run, over=0):
-    """The step flow, indented four, packed into lines of at most WIDTH that break at the " > " joints (steps stay whole).
-    The current step reads "[build over by 12m]" when it ran a minute or more past its usual time."""
+    """The step flow in lines of at most WIDTH, broken at " > "; the current step reads "[build over by 12m]" a minute past its time."""
     if run.get("status") == "freezing":
         steps = ["[freezing]"] + list(FLOW)
     else:
@@ -125,8 +151,7 @@ def flow_lines(run, over=0):
 
 
 def fit(lines, width=WIDTH):
-    """Wrap every line to width at word boundaries, continuations indented two past the line's own indent; a word longer than
-    the width is cut. Runs on the text model before it becomes HTML, so markup is never split."""
+    """Wrap each line to width at word boundaries, continuations indented two more; a longer word is cut. Runs before HTML, so markup is never split."""
     out = []
     for line in lines:
         indent = line[:len(line) - len(line.lstrip())]
@@ -304,7 +329,8 @@ def render(root=None, at=None):
     for goal in queue:
         out.append("- %s  %s%s" % (goal["slug"], bs.estimate_text(next(i["est"] for i in items if i["slug"] == goal["slug"])),
                                    "  waits on " + ", ".join(waits(goal["depends"])) if waits(goal["depends"]) else ""))
-    out += ([] if queue or held else ["- (none)"]) + ["", "Dependencies"]
+    out += [] if queue or held else ["- (none)"]
+    out += task_lines(board_lines.tasks(root, runs, at, gone)) + ["", "Dependencies"]
     out += board_lines.render([dict(i, mark="held" if i["slug"] in {r["slug"] for r in held} else i["mark"]) for i in items])
     seconds, _, _ = board_page.chain(items)
     missing = board_page.unknown(items) or any(i["partial"] for i in items) or held or freezing
