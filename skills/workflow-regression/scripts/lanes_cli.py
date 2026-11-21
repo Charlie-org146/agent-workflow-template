@@ -276,6 +276,8 @@ MATRIX_JOB = """
         with:
           python-version: "3.12"
       - name: Smoke set on Linux
+        env:
+          LOOP_PRIVATE_NAMES: /dev/null  # no list in CI: an empty one (o675)
         run: |
           if [ -f dev/toy/matrix-smoke.py ]; then python3 dev/toy/matrix-smoke.py --agent ci; else echo "no dev/toy/matrix-smoke.py in this repo; nothing to prove"; fi
       - name: Keep the matrix record

@@ -211,6 +211,46 @@ if want set8-private-value-refused; then
   echo "PASS set8-private-value-refused: a home path and a local value refused by file:line, three look-alikes adopted"
 fi
 
+# SET-8 (#5727) a private-name scan that could not run (no list, or a list file that is missing) is not "a private name": the hook's
+# exit 2 gets its own code and cause, and a real hit (exit 1) keeps SETUP_PRIVATE_NAME. The matrix-smoke job, which adopts a toy repo
+# on a runner with no list, carries the explicit empty list in its own step (the generator's job text and the committed workflow).
+if want set8-no-list-refused; then
+  rm -f "$HOME/.workflow-loop/private-names"
+  mk nl; before=$(state "$d/nl/repo")
+  out=$(env -u LOOP_PRIVATE_NAMES $setup 2>&1); rc=$?
+  [ $rc = 1 ] && echo "$out" | grep -q 'no private-name list at' && echo "$out" | grep -q 'REFUSED: the private-name scan could not run (hook exit 2.*(SETUP_PRIVATE_LIST)' || no "no list: rc=$rc $(echo "$out" | tail -4)"
+  echo "$out" | grep -q 'SETUP_PRIVATE_NAME' && no "no list was refused as a private name"
+  echo "$out" | grep 'SETUP_PRIVATE_LIST' | grep -qE 'python3|private\.py' && no "the refusal prints a command of its own"
+  [ "$(state "$d/nl/repo")" = "$before" ] || no "the no-list refusal left something written"
+  mk nm; before=$(state "$d/nm/repo")
+  out=$(LOOP_PRIVATE_NAMES="$d/no-such-list" $setup 2>&1); rc=$?
+  [ $rc = 1 ] && echo "$out" | grep -q 'LOOP_PRIVATE_NAMES names a file that doesn.t exist' && echo "$out" | grep -q 'hook exit 2.*(SETUP_PRIVATE_LIST)' || no "missing list file: rc=$rc $(echo "$out" | tail -4)"
+  echo "$out" | grep -q 'SETUP_PRIVATE_NAME' && no "a missing list file was refused as a private name"
+  [ "$(state "$d/nm/repo")" = "$before" ] || no "the missing-list refusal left something written"
+  mk nh; mkdir -p docs/wiki; printf '# Engine\n\nThis page names zq-hitword-5727 itself.\n' > docs/wiki/Engine.md   # an untracked page: setup adopts it, so its line is one the adoption adds
+  printf '# a toy list\nzq-hitword-5727\n' > "$d/hit-names"; before=$(state "$d/nh/repo")
+  out=$(LOOP_PRIVATE_NAMES="$d/hit-names" $setup 2>&1); rc=$?
+  [ $rc = 1 ] && echo "$out" | grep -q 'REFUSED: a staged adoption file holds a private name.*(SETUP_PRIVATE_NAME)' || no "a real hit: rc=$rc $(echo "$out" | tail -4)"
+  echo "$out" | grep -q 'SETUP_PRIVATE_LIST' && no "a real hit was refused as a scan that could not run"
+  echo "$out" | grep -q 'zq-hitword-5727' && no "the refusal prints the private name"
+  [ "$(state "$d/nh/repo")" = "$before" ] || no "the hit refusal left something written"
+  python3 - "$here/.github/workflows/regression.yml" "$here/skills/workflow-regression/scripts/lanes_cli.py" <<'PY' || no "a matrix-smoke run step has no LOOP_PRIVATE_NAMES: /dev/null in its own env block (#5727)"
+import re, sys
+for path in sys.argv[1:]:
+    lines = open(path).read().split("\n")
+    start = next(i for i, l in enumerate(lines) if l.strip() == "- name: Smoke set on Linux")  # the step is found by its name, its block by indentation
+    indent = len(lines[start]) - len(lines[start].lstrip())
+    block = []
+    for line in lines[start + 1:]:
+        if line.strip() and len(line) - len(line.lstrip()) <= indent:
+            break
+        block.append(line)
+    if not re.search(r"^\s+env:\n\s+LOOP_PRIVATE_NAMES: /dev/null(\s|$)", "\n".join(block), re.M):
+        sys.exit("%s: the Smoke set on Linux step carries no LOOP_PRIVATE_NAMES: /dev/null env" % path)
+PY
+  echo "PASS set8-no-list-refused: no list and a missing list file refuse as SETUP_PRIVATE_LIST, a real hit as SETUP_PRIVATE_NAME, nothing written, the CI step carries the empty list"
+fi
+
 # SET-9 --from borrows the portable settings and the page shape, holds the unattended ones, keeps this repo's own.
 model() { # model NAME: an adopted-looking repo with a distinctive config
   rm -rf "$d/$1"; mkdir -p "$d/$1/.loop"; (cd "$d/$1" && git init -q -b main)
