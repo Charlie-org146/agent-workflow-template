@@ -423,17 +423,18 @@ m_seconds() {
 
 m_sizes() {
   cur=sizes
-  echo "== sizes: the files this goal edits stay inside their ceilings, the package stays at 100 files or fewer (the package.py cap)"
+  echo "== sizes: the files this goal edits stay inside their ceilings, the package stays within package.py's file cap (MAX_FILES)"
   local r="$here/skills/workflow-regression/scripts" size
   # Value: protects=the planner change stays inside the size budget (done line 5, read as: lanes.py does not grow past 19,710 (its size on main at v0.27.12); tiers.py and narrow.py stay under 19,000); fails_when=lanes.py grows or tiers.py or narrow.py reaches the health warn line; why_new=the cache code lives in scripts near their ceilings; seam=none; no_claim=files this goal does not edit, and the literal done-line text (27 scripts already exceed 18 KB)
   # GRD-20 (TD482): a script warns over 19,000 and fails only over 20,480; a 20,481-byte fixture fails, a 19,500-byte one only warns
   if out=$(python3 "$here/dev/toy/size-check.py" --control "$r/lanes.py" "$r/tiers.py" "$r/narrow.py" 2>&1); then ok "lanes.py, tiers.py and narrow.py are within GRD-20 ($(grep -c '^WARN' <<<"$out") warn)"; else fail "planner script sizes" "none over 20,480" "$out"; fi
-  # Value: protects=the shipped package passes its own scan with at most 99 files; fails_when=package.py fails or counts more than 99 files; why_new=the cache must fit in existing scripts; seam=dev/package.py with its ZIP in a temp folder; no_claim=the new files under dev/toy (not shipped)
-  local out count
+  # Value: protects=the shipped package passes its own scan within package.py's file cap (MAX_FILES); fails_when=package.py fails or counts more files than that cap; why_new=the cache must fit in existing scripts; seam=dev/package.py with its ZIP in a temp folder; no_claim=the new files under dev/toy (not shipped)
+  local out count cap
+  cap=$(sed -n 's/^MAX_FILES, MAX_BYTES, MAX_SCRIPT = \([0-9][0-9]*\),.*/\1/p' "$here/dev/package.py")  # the cap is read, never repeated here
   mkdir -p "$d/pkgroot" && git -C "$here" archive HEAD | tar -x -C "$d/pkgroot"  # the committed files only: a stray __pycache__ in the worktree is not shipped
   out=$(python3 -B "$here/dev/package.py" --root "$d/pkgroot" --out "$d/pkg.zip" </dev/null 2>&1)
   count=$(sed -n 's/^PASS: \([0-9]*\) files.*/\1/p' <<<"$out")
-  if [ -n "$count" ] && [ "$count" -le 100 ]; then ok "package.py passes with $count files"; else fail "package.py" "PASS with <= 100 files" "$(tail -3 <<<"$out")"; fi
+  if [ -n "$cap" ] && [ -n "$count" ] && [ "$count" -le "$cap" ]; then ok "package.py passes with $count files (cap $cap)"; else fail "package.py" "PASS with <= ${cap:-the cap in dev/package.py} files" "$(tail -3 <<<"$out")"; fi
   # Value: protects=the owner can look up every PLAN_CACHE state in commands.md; fails_when=a state token the planner prints is missing from its Plan cache section; why_new=tokens are the owner's only view of the cache; seam=none; no_claim=the table's wording
   local section missing="" token
   section=$(awk '/^## Plan cache/ {on = 1; next} /^## / {on = 0} on' "$here/skills/loop-files.md")

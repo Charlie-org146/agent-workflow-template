@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory() as tmp:
             handle.write("x\n")
         names.append(name)
     check("%d files pass the size rule" % package.MAX_FILES, not [f for f in failures_of(lambda: package.check_files(tmp, names[:package.MAX_FILES])) if "files" in f])
-    check("a package of %d files fails it" % (package.MAX_FILES + 1), any(str(package.MAX_FILES + 1) in f for f in failures_of(lambda: package.check_files(tmp, names))))
+    check("a package of %d files fails it" % (package.MAX_FILES + 1), any("%d files, at most %d allowed" % (package.MAX_FILES + 1, package.MAX_FILES) in f for f in failures_of(lambda: package.check_files(tmp, names))))
 
 shipped = package.walk(root)
 check("the real tree ships at most %d files (%d)" % (package.MAX_FILES, len(shipped)), len(shipped) <= package.MAX_FILES)
@@ -78,20 +78,27 @@ def limits_problems(text):
     head = re.search(r"^\| Limit \| Agensi's figure \| Ours \| Date Agensi's page was read \|$", text, re.M)
     if not head or len(rows) < 3:
         return ["the package-limits table is missing"]
-    bad, want = [], {"Files the buyer's agent receives": package.MAX_FILES,
+    bad, want = [], {"Files the buyer's agent receives": package.MAX_FILES, "Files per package (upload from the website)": package.MAX_FILES,
                      "Package size (upload from an agent": package.MAX_BYTES, "Script size": package.MAX_SCRIPT}
     for row in [r for r in rows if len(r) >= 4 and r[0] not in ("You say",)]:
-        if not re.fullmatch(r"20\d\d-\d\d-\d\d", row[3]):
-            continue
-        if re.match(r"no longer applies\b", row[2], re.I):
+        # a row that says a limit does not apply, in any wording, dated or not: only the agent-upload file row may
+        if re.search(r"no longer appl|not applicable|does not apply|doesn't apply|n/a", row[2], re.I):
             if not row[0].startswith(AGENT):
                 bad.append("%s: only the agent-upload file row may say it no longer applies" % row[0])
+            elif not re.match(r"no longer applies\b", row[2], re.I):
+                bad.append("%s: the agent-upload row must start with \"No longer applies\"" % row[0])
             elif "temporary" not in row[2].lower():
                 bad.append("%s: it no longer applies, but the row does not say the change is temporary" % row[0])
             else:  # the exempt row still names our figure, and it must be dev/package.py's
                 named = re.search(r"([\d,]+) files \(MAX_FILES\)", row[2])
                 if not named or int(named.group(1).replace(",", "")) != package.MAX_FILES:
                     bad.append("%s: ours is not dev/package.py's %d" % (row[0], package.MAX_FILES))
+        elif row[0].startswith(AGENT):
+            bad.append("%s: the agent-upload row must start with \"No longer applies\"" % row[0])
+        if row[0].startswith("Skills per pack") and "at most %d files" % package.MAX_FILES not in row[2]:
+            bad.append("%s: ours is not dev/package.py's %d files" % (row[0], package.MAX_FILES))
+        if not re.fullmatch(r"20\d\d-\d\d-\d\d", row[3]):
+            continue
         theirs, ours = figure(row[1]), figure(row[2])
         if theirs and ours and theirs[1] in (ours[1], "KB", "MB") and ours[0] > theirs[0]:
             bad.append("%s: ours %s is looser than Agensi's %s" % (row[0], row[2], row[1]))
@@ -112,6 +119,11 @@ check("control: ours looser (%d files) fails" % (package.MAX_FILES + 1), any("lo
 check("control: a row that still applies cannot say it no longer applies", any("only the agent-upload" in b for b in limits_problems(doc.replace("| %d files in all" % package.MAX_FILES, "| No longer applies, temporary; %d files in all" % package.MAX_FILES, 1))))
 check("control: the agent-upload row cannot say it no longer applies without saying temporary", any("not say the change is temporary" in b for b in limits_problems(doc.replace("Temporary", "Permanent", 1))))
 check("control: the agent-upload row cannot name a figure other than MAX_FILES", any("not dev/package.py's" in b for b in limits_problems(doc.replace("Ours is %d files (MAX_FILES)" % package.MAX_FILES, "Ours is 500 files (MAX_FILES)", 1))))
+check("control: an undated row cannot say it no longer applies", any("only the agent-upload" in b for b in limits_problems(doc.replace("| 1,000 files | 200 files (MAX_FILES) | 2026-11-18 |", "| 1,000 files | No longer applies | |", 1))))
+check("control: another wording ('Not applicable; 5000 files') cannot slip past the looser check", any("only the agent-upload" in b for b in limits_problems(doc.replace("| 1,000 files | 200 files (MAX_FILES) |", "| 1,000 files | Not applicable; 5000 files (MAX_FILES) |", 1))))
+check("control: the agent-upload row cannot drop the exact opening words", any("must start with" in b for b in limits_problems(doc.replace("| No longer applies: the package", "| Ours is 5000 files (MAX_FILES) (temporary): the package", 1))))
+check("control: the website row cannot drift from MAX_FILES", any("not dev/package.py's" in b for b in limits_problems(doc.replace("| 1,000 files | 200 files (MAX_FILES) |", "| 1,000 files | 250 files (MAX_FILES) |", 1))))
+check("control: the skills-per-pack row cannot drift from MAX_FILES", any("not dev/package.py's" in b for b in limits_problems(doc.replace("at most 200 files", "at most 250 files", 1))))
 check("control: the agent-upload row cannot be dropped", any("no dated row for " + AGENT in b for b in limits_problems("\n".join(l for l in doc.splitlines() if not l.startswith("| " + AGENT)))))
 check("control: ours looser (6 MB) fails", any("looser" in b for b in limits_problems(doc.replace("5,000,000 bytes for the whole package", "6 MB for the whole package", 1))))
 check("control: no date fails", any("no dated row" in b for b in limits_problems(doc.replace("| 2026-11-18 |", "| |"))))

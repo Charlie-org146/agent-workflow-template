@@ -102,7 +102,7 @@ Each package limit Agensi states on its packaging page, next to ours in `dev/pac
 |---|---|---|---|
 | Files per package (upload from an agent) | 100 files | No longer applies: the package is published by website upload, not from an agent (owner words o718, GRD-21). Ours is 200 files (MAX_FILES), against 200 for the buyer's agent and 1,000 for the website, so none of ours is looser than the limit that applies. Temporary until a later minor revises GRD-21 | 2026-11-18 |
 | Package size (upload from an agent; the page does not say per file or in total) | 5 MB | 5,000,000 bytes for the whole package, failing at 5,000,000 or more (MAX_BYTES) | 2026-11-18 |
-| Files the buyer's agent receives besides SKILL.md | 200 files | 200 files in all, SKILL.md files included (MAX_FILES); the ZIP adds 2 stamp files, so a full package is 202 entries, 195 besides the 7 SKILL.md files today | 2026-11-18 |
+| Files the buyer's agent receives besides SKILL.md | 200 files | 200 files in all, SKILL.md files included (MAX_FILES); the ZIP adds 2 stamp files, so a package at the cap is 202 entries, and with at least 2 SKILL.md files (the pack rule) at most 200 besides SKILL.md | 2026-11-18 |
 | Text the buyer's agent receives per listing | 6,000,000 characters | 5,000,000 characters, the package cap in bytes, which is at least as many characters (MAX_BYTES) | 2026-11-18 |
 | Script size (a guideline on Agensi's page) | 20 KB | 20 KB, failing at 20,480 bytes (MAX_SCRIPT). Agensi guideline, unit unstated; binary assumed, 2.4% looser if Agensi means decimal | 2026-11-18 |
 | ZIP size (upload from the website) | 50 MB | 5,000,000 bytes (MAX_BYTES) | 2026-11-18 |
