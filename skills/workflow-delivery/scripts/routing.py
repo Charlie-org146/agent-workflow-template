@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Route a goal's steps to the agent the config picks (DEL-16): Claude for heavy steps, Codex or another agent for cheap ones.
 
-usage: routing.py build SLUG          run the goal's build through the agent its route names (a worker's step)
+usage: routing.py build SLUG          run the goal's build through the agent its route names
        routing.py resolve STEP [--size small|large]   which profile a step runs on, with any fallback warning
-       routing.py detect [--write]    which agents are installed and logged in; --write puts the profiles in the private file
-       routing.py check               a second agent's notes on a release plan read from stdin (monitor.py plan --check, step `plan`)
+       routing.py detect [--write]    which agents are installed and logged in; --write saves the profiles
+       routing.py check               a second agent's notes on a release plan read from stdin (monitor.py plan --check)
        routing.py show SLUG           the agent, model and tokens each step of the goal's run record names
+       routing.py finish SLUG CODE    worker.py loop: a good Codex run ending 0 outside the flow ends done
 
-The private file ~/.workflow-loop/agents.json ($LOOP_AGENTS) holds `profiles` ({name: command, model, output, prompt,
-login, cost_per_mtok}) and `routes` ({steps: {step: profile}, sizes: {small|large: profile}, gated: [review],
-fallback: heavy}). A step route beats a size route, which beats the fallback; a gated step (review) takes a size route
-never, so review stays on the heavy profile unless the config routes it by name. An agent that is not installed or not
-logged in falls back with one AGENT_FALLBACK line. A new agent is one profile entry: no code change.
+The private file ~/.workflow-loop/agents.json ($LOOP_AGENTS) holds `profiles` ({name: command, model, output, prompt, login,
+cost_per_mtok}) and `routes` ({steps: {step: profile}, sizes: {small|large: profile}, gated: [review], fallback: heavy}). A step
+route beats a size route, which beats the fallback; a gated step (review) takes no size route, so it stays on the heavy
+profile unless the config routes it by name. An agent that is not installed or not logged in falls back with one AGENT_FALLBACK
+line. A new agent is one profile entry.
 """
 import argparse
 import json
@@ -25,7 +26,7 @@ import guards  # noqa: E402
 import proctree  # noqa: E402
 import role  # noqa: E402
 
-# Subprocesses fail instead of waiting for a terminal prompt, as in the other delivery scripts.
+# Subprocesses fail instead of waiting for a terminal prompt.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 FILE = "~/.workflow-loop/agents.json"
@@ -44,7 +45,7 @@ End with one line: `STEP: done` or `STEP: failed <why>`.
 
 
 def brief(slug):
-    """The goal file, design and plan as text: an agent that can't run shell commands still reads them."""
+    """The goal file, design and plan as text, for an agent that can't run shell commands."""
     parts = []
     for suffix in (".md", ".design.md", ".plan.md"):
         try:
@@ -73,7 +74,7 @@ def RUNS():
 
 
 def repo_command():
-    """The repo's agent_command: the existing Claude path, and the heavy profile's command when the file names none."""
+    """The repo's agent_command: the Claude path, else the heavy profile's command."""
     try:
         with open(os.path.join(top(), ".loop", "config.json"), encoding="utf-8") as handle:
             return list(json.load(handle).get("agent_command") or [])
@@ -82,7 +83,7 @@ def repo_command():
 
 
 def load():
-    """{profiles, routes}: the defaults with the private file's entries over them; unreadable means the defaults."""
+    """{profiles, routes}: the defaults with the private file's entries over them; unreadable: the defaults."""
     try:
         with open(path(), encoding="utf-8") as handle:
             given = json.load(handle)
@@ -99,12 +100,12 @@ def load():
 
 
 def exe(name):
-    """The program on this machine: shutil.which, with the .cmd shim on Windows (PowerShell blocks the .ps1 one)."""
+    """The program here: shutil.which, with the .cmd shim on Windows (not the blocked .ps1 one)."""
     return shutil.which(name) or (shutil.which(name + ".cmd") if os.name == "nt" else None)
 
 
 def unavailable(profile):
-    """Why this profile's agent can't run here ('' when it can): not installed, or its login probe fails."""
+    """Why this profile's agent can't run here ('' when it can): not installed, or its login fails."""
     command = profile.get("command") or []
     if not command or not exe(command[0]):
         return "%s isn't installed" % (profile.get("agent") or (command[0] if command else "its agent"))
@@ -121,7 +122,7 @@ def unavailable(profile):
 
 
 def resolve(step, size="large", cfg=None):
-    """{profile, agent, model, fallback, warning} for a step: step route, else size route (never for a gated step), else the fallback."""
+    """{profile, agent, model, fallback, warning} for a step: step route, else size route (not a gated step), else the fallback."""
     cfg = cfg or load()
     routes, profiles = cfg["routes"], cfg["profiles"]
     back = routes.get("fallback") or "heavy"
@@ -140,7 +141,7 @@ def resolve(step, size="large", cfg=None):
 
 
 def usage(profile, text):
-    """(reply text, {in, out, tokens} or None) from an agent's output: claude-json, codex-jsonl or plain text."""
+    """(reply text, {in, out, tokens} or None) from agent output: claude-json, codex-jsonl or text."""
     kind = profile.get("output")
     try:
         if kind == "claude-json":
@@ -181,7 +182,7 @@ def entry(name, prof, spent=None, why=""):
 
 
 def update(slug, step, item):
-    """Write the step's agent entry (and its tokens, so the token budget counts every agent) into the run record."""
+    """Write the step's agent entry (and tokens, so the budget counts every agent) into the run record."""
     runs = RUNS()
     record = os.path.join(runs, slug + ".json")
     state = role.goal_state(runs, slug)
@@ -193,7 +194,7 @@ def update(slug, step, item):
 
 
 def add_tokens(state, step, given, measure=False):
-    """guards.add_tokens, then name the agent that ran the step when no route did: the heavy profile, in this session."""
+    """guards.add_tokens, then name the heavy profile as the agent when no route did."""
     guards.add_tokens(state, step, given, measure)
     agents = state["agents"] = state.get("agents") if isinstance(state.get("agents"), dict) else {}
     held = (state.get("tokens") or {}).get(step)
@@ -296,7 +297,7 @@ any goal that depends on one planned later. At most 8 lines, no file edits. The 
 
 
 def tree_run(argv, stdin, limit, cwd=None):
-    """subprocess.run(timeout=) kills only the child; a timed-out agent loses its whole process tree (DEL-8)."""
+    """subprocess.run(timeout=) kills only the child; a timed-out agent loses its whole tree (DEL-8)."""
     kid = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE if stdin else subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            text=True, encoding="utf-8", errors="replace", start_new_session=True)
     try:
@@ -309,7 +310,7 @@ def tree_run(argv, stdin, limit, cwd=None):
 
 
 def ask(prof, prompt):
-    """(reply text, return code, stderr) from running the profile's agent once on a prompt, without a shell."""
+    """(reply text, return code, stderr) from running the profile's agent once on a prompt, no shell."""
     base = [exe(prof["command"][0]) or prof["command"][0]] + list(prof["command"][1:])
     base += [prof["model_flag"], prof["model"]] if prof.get("model") and prof.get("model_flag") else []
     stdin = prompt if prof.get("prompt") == "stdin" else None
@@ -321,7 +322,7 @@ def ask(prof, prompt):
 
 
 def cmd_check(args):
-    """The plan step's second agent reads the plan on stdin and prints its notes; an agent that is missing, fails or can't write falls back to Claude."""
+    """The plan step's second agent reads the plan on stdin and prints notes; one that is missing, fails or can't write falls back to Claude."""
     pick, cfg = resolve("plan", "large"), load()
     heavy = cfg["routes"].get("fallback") or "heavy"
     if pick["warning"]:
@@ -351,6 +352,25 @@ def cmd_show(args):
     return 0 if agents else 1
 
 
+def cmd_finish(args):
+    """TD520: a Codex run ending 0 outside the flow, committed, clean and gated, ends done."""
+    runs, here = RUNS(), os.path.dirname(os.path.abspath(__file__))
+    state = role.goal_state(runs, args.slug)
+    tree, base = state.get("worktree") or "", "origin/main"
+    git = lambda *a: role.git("-C", tree, *a).stdout.strip()
+    gate = lambda *a: subprocess.run([sys.executable, *a], cwd=tree or None, capture_output=True).returncode
+    why = ("it ended %d" % args.code if args.code else "not Codex" if state.get("agent") != "codex" else "not running" if state.get("status") != "running" or not tree else
+           "no commit" if git("rev-list", "--count", base + "..HEAD") in ("", "0") else "dirty tree" if git("status", "--porcelain") else
+           "private scan" if gate(os.path.join(here, "private.py"), "scan", "--base", base) else
+           "docs check" if os.path.isdir(os.path.join(tree, "docs", "wiki")) and gate(os.path.join(here, "..", "..", "workflow-docs", "scripts", "docs.py"), "check") else "")
+    steps = {step: "done: the agent ended 0, committed, gates clean" for step in ("idea", "plan", "review", "qa", "ship")}
+    if not why:
+        state.update(status="done", flow=dict(steps, **(state.get("flow") or {})))
+        role.save(os.path.join(runs, args.slug + ".json"), state)
+    print("NOT GOOD: " + why if why else "GOOD: " + args.slug)
+    return 1 if why else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -358,6 +378,10 @@ def main():
     one.add_argument("slug")
     one.set_defaults(func=cmd_build)
     sub.add_parser("check").set_defaults(func=cmd_check)
+    one = sub.add_parser("finish")
+    one.add_argument("slug")
+    one.add_argument("code", type=int)
+    one.set_defaults(func=cmd_finish)
     one = sub.add_parser("show")
     one.add_argument("slug")
     one.set_defaults(func=cmd_show)
