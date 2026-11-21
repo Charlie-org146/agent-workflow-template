@@ -144,7 +144,7 @@ def batch_assemble(M, top, base, bid, members):
 
 
 def batch(top, common, cfg, slugs, go, M):
-    """merge.py --batch: the exit code; a rerun repeats the unfinished phase."""
+    """merge.py --batch; reruns resume the unfinished phase."""
     base, runs = cfg.get("base", "main"), os.path.join(os.path.abspath(common), "loop", "runs")
     if not 2 <= len(slugs) <= 3 or len(set(slugs)) != len(slugs):
         sys.exit("REFUSED: a batch is 2 or 3 goals. Nothing merged.")
@@ -185,7 +185,7 @@ def batch(top, common, cfg, slugs, go, M):
             return say(why or "BATCH %s is green at %s. GO: merge.py %s --batch --go-head %s" % (bid, rec["head"][:12], " ".join(slugs), rec["head"][:12]),
                        (4 if "GO_HEAD" in why else 5) if why else 0)
         M.run(["gh", "pr", "ready", rec["pr"]], top)
-        done = M.run(["gh", "pr", "merge", rec["pr"], "--merge", "--match-head-commit", rec["head"]], top)
+        done = M.merge_pr(top, rec["pr"], rec["head"])
         if done.returncode:
             return say("BATCH_MERGE_FAILED: %s" % done.stderr.strip()[-150:], 1)
         rec = batch_file(common, bid, dict(rec, phase="landed"))

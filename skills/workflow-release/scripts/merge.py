@@ -68,6 +68,10 @@ def run(args, cwd=None, **kw):
   return subprocess.run(args, cwd=cwd, capture_output=True, text=True, **kw)
 
 
+def merge_pr(top, pr, head):
+  return run(["gh", "pr", "merge", pr, "--merge"] + (["--match-head-commit", head] if head else []), top)
+
+
 REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "scripts", "lanes_cli.py"))
 
 
@@ -353,7 +357,7 @@ def main():
     ar.run_routines(top, cfg, state)
     if tested != state.get("pr_head"):
       ar.restatus(top, cfg, state, tested)
-    done = run(["gh", "pr", "merge", state["pr"], "--merge"] + (["--match-head-commit", tested] if tested else []))
+    done = merge_pr(None, state["pr"], tested)
     if done.returncode:
       ar.fail(state, "gh could not merge %s: %s" % (state["pr"], done.stderr.strip()[-300:]))
     if cfg.get("merge_queue") and not queued(top, state["pr"]):
