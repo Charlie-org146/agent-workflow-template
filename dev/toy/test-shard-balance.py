@@ -132,7 +132,7 @@ kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
 # D3 (pr-check-fast, fast-3min): 8 shards of 120 seconds; docs.py check runs once per merge, in the merge-queue job `small` on the merged
 # ref with no review log (a clone has none), so a page-level LOCKED or FORMAT line fails the merge group, not the pull request's affected job.
-check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in flow and "matrix.shard }}/8 " in flow and "--budget 120 " in flow,
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in flow and "matrix.shard }}/8 " in flow and "B=120;" in flow and "--budget $B " in flow,
       "the PR workflow runs 8 shards with a 120-second budget each, and the tree cell")
 job = flow.split("\n  affected:")[1].split("\n  small:")[0]
 small = flow.split("\n  small:")[1]
@@ -153,6 +153,59 @@ open(setup, "w").write("\n".join(lines))
 subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change a reviewed requirement"], cwd=clone, check=True, capture_output=True)
 bad = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
 check(bad.returncode != 0 and "LOCKED Setup" in bad.stdout, "negative control: a changed reviewed requirement with no review log fails the docs step with its own LOCKED line (exit %d)" % bad.returncode)
+# rows-pr-full (TD512): a PR whose diff touches .loop/regression.tsv or the known list runs its shards with no budget, so nothing is LEFT.
+shard_job = flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly").split("\n  shard:")[1].split("\n  affected:")[0]
+block = shard_job.split("      - run: |\n")[1].split("\n      - ")[0]
+sh = "\n".join(x[10:] for x in block.splitlines()).replace("${{ matrix.shard }}", "0").replace("${{ runner.temp }}", "/tmp")
+rf = tempfile.mkdtemp(prefix="rows-full-")
+stub = os.path.join(rf, "skills", "workflow-regression", "scripts")
+os.makedirs(stub)
+open(os.path.join(stub, "regression.py"), "w").write("import sys\nprint('ARGS', *sys.argv[1:])\n")
+os.makedirs(os.path.join(rf, ".loop"))
+os.makedirs(os.path.join(rf, "dev"))
+for rel in (".loop/regression.tsv", ".loop/regression-known.tsv", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak", "dev/a.py"):
+    open(os.path.join(rf, rel), "w").write("x\n")
+for step in (["git", "init", "-q", "-b", "main"], ["git", "add", "-A"], ["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base"]):
+    subprocess.run(step, cwd=rf, check=True, capture_output=True)
+subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=rf, check=True)
+
+
+def budget_of(changed):
+    subprocess.run(["git", "checkout", "-q", "-B", "pr", "main"], cwd=rf, check=True, capture_output=True)
+    open(os.path.join(rf, changed), "a").write("y\n")
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change"], cwd=rf, check=True, capture_output=True)
+    done = subprocess.run(["bash", "-e", "-c", sh], cwd=rf, capture_output=True, text=True)
+    return re.search(r"--budget (\S+)", done.stdout).group(1) if done.returncode == 0 and "--budget" in done.stdout else "none"
+
+
+got = {rel: budget_of(rel) for rel in (".loop/regression.tsv", ".loop/regression-known.tsv", "dev/a.py", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak")}
+check(got[".loop/regression.tsv"] == "-1" and got[".loop/regression-known.tsv"] == "-1",
+      "a PR that changes .loop/regression.tsv or the known list runs its shard with no budget (--budget -1): %s" % got)
+check(all(got[k] == "120" for k in ("dev/a.py", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak")),
+      "negative control: a PR that changes any other file, even one named like the table, keeps the 120-second budget")
+rows = tempfile.mkdtemp(prefix="rows-full-run-")
+for step in (["git", "init", "-q", "-b", "main"], ["git", "config", "commit.gpgsign", "false"]):
+    subprocess.run(step, cwd=rows, check=True, capture_output=True)
+os.makedirs(os.path.join(rows, ".loop"))
+with open(os.path.join(rows, ".loop", "regression.tsv"), "w") as handle:
+    handle.write("# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n")
+    for rid in ("a", "b", "c"):
+        handle.write("%s\tland\tsleep 3\t\t2026-01-01\tx\tcriterion\t\n" % rid)
+subprocess.run(["git", "add", "-A"], cwd=rows, check=True, capture_output=True)
+subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "rows"], cwd=rows, check=True, capture_output=True)
+
+
+def pr_run(limit):
+    done = subprocess.run([sys.executable, REG, "run", "land", "--reuse", "--budget", limit, "--timeout", "30"], cwd=rows, capture_output=True, text=True,
+                          env=dict(env, LOOP_PR_SHARD="0/1"))
+    return done.returncode, done.stdout
+subprocess.run(["rm", "-rf", os.path.join(rows, ".git", "loop", "tests")])
+code4, out4 = pr_run("4")
+subprocess.run(["rm", "-rf", os.path.join(rows, ".git", "loop", "tests")])
+codeu, outu = pr_run("-1")
+check("BUDGET" in out4 and "LEFT" in out4 and code4 == 0, "a shard with a 4-second budget leaves rows LEFT (exit %d)" % code4)
+check("BUDGET" not in outu and "LEFT" not in outu and all(("PASS %s" % r) in outu for r in "abc") and codeu == 0,
+      "rows-pr-full: with --budget -1 the same shard runs every row and prints no LEFT (exit %d)" % codeu)
 wf = os.path.join(root, ".github", "workflows", "regression-pr.yml")
 check(not os.path.exists(wf) or open(wf).read() == flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly"),
       ".github/workflows/regression-pr.yml is the rendered workflow")

@@ -7,7 +7,7 @@ usage: regression.py <command> [options]
       add or replace a row. L is land, nightly, draft or covered; TEXT says what it checks;
       C is criterion (default), workflow (a flow run on a toy repo) or defect (L is the issue URL or finding:SLUG)
   sync [--write]                list done lines and criteria with no row, rows with no description or never seen red; --write drafts
-  criteria                      run each wiki criterion's row; print an UNMET line for each missing, draft or failing
+  criteria                      run each criterion's row; print an UNMET line for each missing, draft or failing
   red ID --break CMD            copy HEAD, break it with CMD, and record that the test fails there
   red ID --owed --runner R [--live]
       machine R owes the proof: a to-do issue on its milestone; the goal goes on
@@ -22,7 +22,7 @@ usage: regression.py <command> [options]
   reads ROW                     suggest a # reads: header for ROW's script
 
 Rows: .loop/regression.tsv (id, level, command, goal, seen_red, description, category, link). Each run records status, date and run in
-.loop/regression-runs.tsv (runs.py; the wiki Tests tables show it). Known failures: .loop/regression-known.tsv (id, reason); they never
+.loop/regression-runs.tsv (runs.py). Known failures: .loop/regression-known.tsv (id, reason); they never
 block, a row never seen failing does. Issues dry-run unless --live; a token in the environment writes nothing. Only git, gh and your tests run.
 """
 import argparse
@@ -315,7 +315,7 @@ def cmd_run(args):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
-    limit = (args.budget or runs.budget(root)) if args.reuse else None
+    limit = (args.budget or runs.budget(root)) if args.reuse and args.budget >= 0 else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
     late = [r["id"] for r in results if n > 1 and r["state"] == "FAIL" and r["rc"] == 124]
     results, cut = [r for r in results if r["id"] not in late], cut + late
@@ -410,7 +410,7 @@ def main():
     item.add_argument("--tier", choices=("goal",), help="a goal lane (tiers.py)")
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
     item.add_argument("--tree", action="store_true")
-    item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take")
+    item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take (-1: no limit)")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")
     item.add_argument("--visibility", choices=("public", "private"), help="skip the probe")
