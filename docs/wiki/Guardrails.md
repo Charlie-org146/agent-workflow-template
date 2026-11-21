@@ -28,8 +28,9 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 - GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
   - The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]
   - Hook-skipping commits are refused and flagged. [GRD-6]
-- GRD-20: **Reviewed 2026-11-21** Sizes are one table, enforced on main <!-- reviewed 30eee1ac -->
+- GRD-20: **Reviewed 2026-11-21** Sizes are one table, enforced on main <!-- reviewed 61ba0a6e -->
   - One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). [GRD-20]
+  - Nothing on main is over its limit. [GRD-20]
 
 ### Non-functional
 
@@ -222,6 +223,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r6 | 2026-11-21 | Sizes are one table, enforced on main <br> One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). [GRD-20] <br> Nothing on main is over its limit. [GRD-20] | TD554: item 5's last GRD-20 line, 'Nothing on main is over its limit.' (owner o677 and o678) | o678: "Go to should have gone because there's no requirement." |
 | r5 | 2026-11-21 | Sizes are one table, enforced on main <br> One table holds every size limit: pages, requirements per page and test rows. There is no script byte limit and no package file cap: both came from the Agensi package, and the loop ships only as the template (SET-10). [GRD-20] | TD554: the loop ships only as the template (owner o677, item 5 of operation-top's pending folds, as drafted) | o677: "So I'm thinking about making it template only. Add this decision to" |
 | r4 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | approved by operation-top under owner delegation (DOC-2, o486): the fail line matches the enforced Agensi limit | o654: "Then I want u to fix this merge time issuee first. I" |
 | r3 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | readme-six: the owner-approved final README (o514) | o576: "yes build it" |
