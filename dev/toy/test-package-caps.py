@@ -2,7 +2,7 @@
 # windows: ok
 # reads: dev/package.py, docs/wiki/How-to-use-Guardrails.md
 """dev/package.py's caps: a script of 20,480 bytes or more, or a 201st file, makes it fail; the real tree stays inside both.
-GRD-21: the package-limits table on How-to-use-Guardrails is there, and none of ours is looser than Agensi's."""
+GRD-21: the package-limits table on How-to-use-Guardrails is there, and none of ours is looser than the Agensi figure that applies."""
 import importlib.util
 import os
 import re
@@ -88,6 +88,10 @@ def limits_problems(text):
                 bad.append("%s: only the agent-upload file row may say it no longer applies" % row[0])
             elif "temporary" not in row[2].lower():
                 bad.append("%s: it no longer applies, but the row does not say the change is temporary" % row[0])
+            else:  # the exempt row still names our figure, and it must be dev/package.py's
+                named = re.search(r"([\d,]+) files \(MAX_FILES\)", row[2])
+                if not named or int(named.group(1).replace(",", "")) != package.MAX_FILES:
+                    bad.append("%s: ours is not dev/package.py's %d" % (row[0], package.MAX_FILES))
         theirs, ours = figure(row[1]), figure(row[2])
         if theirs and ours and theirs[1] in (ours[1], "KB", "MB") and ours[0] > theirs[0]:
             bad.append("%s: ours %s is looser than Agensi's %s" % (row[0], row[2], row[1]))
@@ -107,6 +111,7 @@ too_many = "| %d files in all" % (package.MAX_FILES + 1)  # the buyer's-agent ro
 check("control: ours looser (%d files) fails" % (package.MAX_FILES + 1), any("looser" in b for b in limits_problems(doc.replace("| %d files in all" % package.MAX_FILES, too_many, 1))))
 check("control: a row that still applies cannot say it no longer applies", any("only the agent-upload" in b for b in limits_problems(doc.replace("| %d files in all" % package.MAX_FILES, "| No longer applies, temporary; %d files in all" % package.MAX_FILES, 1))))
 check("control: the agent-upload row cannot say it no longer applies without saying temporary", any("not say the change is temporary" in b for b in limits_problems(doc.replace("Temporary", "Permanent", 1))))
+check("control: the agent-upload row cannot name a figure other than MAX_FILES", any("not dev/package.py's" in b for b in limits_problems(doc.replace("Ours is %d files (MAX_FILES)" % package.MAX_FILES, "Ours is 500 files (MAX_FILES)", 1))))
 check("control: the agent-upload row cannot be dropped", any("no dated row for " + AGENT in b for b in limits_problems("\n".join(l for l in doc.splitlines() if not l.startswith("| " + AGENT)))))
 check("control: ours looser (6 MB) fails", any("looser" in b for b in limits_problems(doc.replace("5,000,000 bytes for the whole package", "6 MB for the whole package", 1))))
 check("control: no date fails", any("no dated row" in b for b in limits_problems(doc.replace("| 2026-11-18 |", "| |"))))

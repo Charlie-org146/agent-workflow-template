@@ -96,7 +96,7 @@ Each requirement and how it is delivered:
 
 **Package limits**
 
-Each package limit Agensi states on its packaging page, next to ours in `dev/package.py`. Ours may be tighter, never looser: `dev/toy/test-package-caps.py` fails when this table is missing or a figure of ours is above Agensi's. Agensi's page gives no unit for MB and KB, so the check reads them as binary (1 MB is 1,048,576 bytes and 1 KB is 1,024 bytes); the package size cap is 5,000,000 bytes, equal or tighter in either unit.
+Each package limit Agensi states on its packaging page, next to ours in `dev/package.py`. Ours may be tighter, never looser than the limit that applies to how the package is published: `dev/toy/test-package-caps.py` fails when this table is missing or a figure of ours is above the Agensi figure that applies. One row, the agent-upload file count, says it no longer applies, and only as a temporary change (owner words o718). Agensi's page gives no unit for MB and KB, so the check reads them as binary (1 MB is 1,048,576 bytes and 1 KB is 1,024 bytes); the package size cap is 5,000,000 bytes, equal or tighter in either unit.
 
 | Limit | Agensi's figure | Ours | Date Agensi's page was read |
 |---|---|---|---|
