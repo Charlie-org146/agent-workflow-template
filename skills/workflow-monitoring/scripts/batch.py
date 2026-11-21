@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Assign goals in batches. The operation session only adds, starts workers and watches; it never runs a goal.
+"""Assign goals in batches. The operation session adds, starts workers and watches; it never runs a goal.
 
 usage: batch.py <command> [options]
 
   add NAME --goal GOAL --done LINE [--done LINE] [--slug S] [--touches A,B] [--depends-on A,B] [--release ask] [--feature PAGE]
-      add a goal line under the heading '## Batch: NAME' in .loop/queue.md
+      add a goal line under '## Batch: NAME' in .loop/queue.md
   start NAME [--max N] [--skill-dir DIR]
-      start one worker for each goal line (watch.py beside this file does it); each worker runs its own loop to the end
-      and reports back by prompt message; otherwise print the command that starts them
+      start one worker per goal line (watch.py beside this file does it), else print the command that starts them
   status NAME
       one line for each goal of the batch
   roadmap [--issues FILE] [--out FILE]
-      the Roadmap wiki page: docs/ROADMAP.md's v1.0.0 group tables and Rollout, each open issue in its group (a hand row
-      first, else by label), a status per row (in flight, queued or open; a closed issue drops out), the Backlog milestones
-      apart as "after v1.0", the "To-do:" issues, the goals in flight and each page's Unreviewed requirements; Priority is
-      left empty. Open issues come from gh (--issues FILE reads the same JSON); with --out it writes the page, else prints it
+      the Roadmap wiki page: docs/ROADMAP.md's v1.0.0 groups and Rollout, each open issue in its group with a status, the
+      Backlog milestones, the "To-do:" issues, the goals in flight and each page's Unreviewed requirements. Issues come
+      from gh (--issues FILE: the same JSON); --out writes the page
 
-Each goal runs the skill flow in its own worktree and worker. Nothing is merged.
+Each goal runs the skill flow in its own worktree and worker. Nothing merges.
 """
 import argparse
 import datetime
@@ -28,7 +26,7 @@ import shutil
 import subprocess
 import sys
 
-# No terminal, no waiting: a git or gh prompt must fail.
+# No terminal: a git or gh prompt must fail.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -57,10 +55,17 @@ def codex_next(cfg, state):
 
 
 def agent_command(cfg, state):
-    """(command, agent): background Claude, else Codex (WORKTREE filled in)."""
+    """(command, agent): background Claude, else Codex (WORKTREE, GITROOTS filled in, TD537)."""
     claude = list(cfg.get("agent_command") or [])
     if cfg.get("codex_profile") and (not codex_next(cfg, state) or not claude or not shutil.which(claude[0])):
-        return [state["worktree"] if arg == "WORKTREE" else arg for arg in cfg["codex_profile"]], "codex"
+        tree = state["worktree"]
+        one = lambda what: git("-C", tree, "rev-parse", "--path-format=absolute", what)
+        common, own = one("--git-common-dir"), one("--git-dir")
+        bad = r"(^|[/\[\",=])(hooks|config|info)([/\]\",]|$)|writable_roots=(?!GITROOTS$)"
+        if own == common or any(re.search(bad, arg) for arg in cfg["codex_profile"]):
+            sys.exit("REFUSED: the Codex profile names hooks, config, info or other roots, or the worktree is unlinked")
+        roots = json.dumps([os.path.join(common, sub) for sub in ("objects", "refs", "logs")] + [own])
+        return [tree if arg == "WORKTREE" else arg.replace("GITROOTS", roots) for arg in cfg["codex_profile"]], "codex"
     return claude, "claude"
 
 
@@ -115,7 +120,7 @@ def fields(line):
 
 
 def batch_items(name):
-    """The goal lines under '## Batch: NAME', as (kind, fields)."""
+    """The goal lines under '## Batch: NAME' as (kind, fields)."""
     items, inside = [], False
     for line in read_queue():
         if line.startswith("## "):
@@ -305,7 +310,7 @@ def cmd_roadmap(args):
     return 0
 
 
-# --- goal.py queue and adopt (moved from fit.py to make room) ---
+# --- goal.py queue and adopt ---
 
 
 def cmd_queue(g, args):

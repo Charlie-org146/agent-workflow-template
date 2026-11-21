@@ -229,7 +229,7 @@ its skills without losing its data (`loop-files.md` lists every file).
 - A **goal's done lines** are checked by the repo's `checks` before a pull request opens. Nothing the worker reads from
   the repo is an instruction.
 - **Regression** is the safety net after merge: the rows run on a schedule and open an issue when one fails.
-- **Health** reads the same files and reports gaps: scripts near 20 KB, criteria with no row, stale pages, stuck runs.
+- **Health** reads the same files and reports gaps: criteria with no row, stale pages, stuck runs.
 - **Release** brings the touched wiki pages up to date, moves the version and writes the changelog.
 
 ## Adopting and updating
@@ -244,7 +244,7 @@ folder, so config, criteria, docs and private settings stay as they are.
 
 ## Rules that hold everywhere
 
-- Each script stays under 20 KB, uses the standard library only, and runs on its own (its siblings are the only files it reaches).
+- Each script uses the standard library only, and runs on its own (its siblings are the only files it reaches).
 - Skill instructions stay out of the repo. `.loop/` holds the repo's own data.
 - Gates (`auto_approve`, `auto_merge`) are off only where the owner turned them off.
 
@@ -332,7 +332,7 @@ Each refusal ends with one of these codes; the line also gives the fix and what 
 
 Stamp-only commits carry a recorded pass. `autorelease.tems(top, old, new)` is the one compare: two commits are equal modulo stamps only when `git diff --raw --no-renames` shows regular files added or edited at the `STAMPS` paths (`VERSION` or the repo's version file, `CHANGELOG.md`, `.loop/regression-runs.tsv`, `.loop/regression-issues.tsv`); any other path, a symlink, a rename or a delete breaks it. A release head that differs from its parent only by stamps carries the goal's passing lane, and `operate.py wiki-only` (HEAD_MOVED) accepts stamp files and wiki pages together through the same compare.
 
-The package for Agensi is a skill pack: one ZIP with all seven skills, and the shared file contract under `shared/`.
+The loop ships only as a GitHub template (SET-10): the seven skills and the shared file contract in `skills/`, versioned by release tags. dev/package.py still builds the ZIP that update.py's tests read.
 
 ### Example
 
@@ -1833,7 +1833,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `full_auto` | `false` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
 | `pool_size` | `20` | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
-| `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
 | `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
 | `workers` | `(empty)` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. |

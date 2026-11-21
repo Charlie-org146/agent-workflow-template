@@ -297,10 +297,7 @@ if want docs; then
   for code in PRIVATE_NAME PRIVATE_LIST PRIVATE_MODULE RELEASE_PR_BLOCKED RELEASE_VERSION_MISMATCH RELEASE_EXISTS REQUIREMENT_MISSING; do
     grep -q "| \`$code\`" "$C" || bad "codes table lacks $code"
   done
-  for f in "$here"/skills/workflow-release/scripts/*.py "$self"; do
-    [ "$(wc -c < "$f")" -lt 20480 ] || bad "$(basename "$f") is over 20 KB"
-  done
-  [ "$fails" = "$was" ] && ok "the release codes table and every release script under 20 KB"
+  [ "$fails" = "$was" ] && ok "the release codes table lists every code"
 fi
 
 [ "$fails" = 0 ] || { echo "$fails FAILED"; exit 1; }

@@ -49,8 +49,7 @@ unchanged repo print the same lines.
 | Security and privacy (can anything private escape?) | `private` | a tracked file matches a `leak_patterns` entry of the private flow file: file:line and the pattern's number only, never the text (FAIL) |
 | | `scan-hook` | no commit scan hook (WARN; shown, never filed) |
 | | `workflow-permissions` | a workflow has no top-level `permissions:` (WARN) |
-| Size (can someone still read this?) | `scripts` | a script over 19,000 bytes (WARN) or over 20 KB (FAIL) |
-| | `skill-lines` | a SKILL.md of 150 lines or more (FAIL) |
+| Size (can someone still read this?) | `skill-lines` | a SKILL.md of 150 lines or more (FAIL) |
 | | `requirements-per-page` | a page with more requirements than `criteria_max` (FAIL) |
 | Hygiene (is anything left lying around?) | `findings` | over 5 open findings in `.loop/findings.md` (WARN) |
 | | `waiting` | a run waiting over 24 hours (WARN) |
@@ -93,8 +92,8 @@ does, and its row carries its `feature` so filing treats FAIL as a defect and WA
 group runs `break` on a private copy of the repo's files and the rule must then exit 1 or 2 (else it is reported as unable
 to fire); a rule with no `break`, a repeated or default rule's name, or an unknown group makes health refuse (exit 2). A rule
 in `off` does not run and its group prints `INFO <rule>: turned off: <reason>`; an empty reason leaves it on and UNREAD. The
-commands are the repo's own and run for whoever runs the check. The numbers `health_script_bytes` (20480) and
-`health_skill_lines` (150) in `.loop/config.json` set the Size group's script and SKILL.md caps for that repo.
+commands are the repo's own and run for whoever runs the check. The number `health_skill_lines` (150) in
+`.loop/config.json` sets the Size group's SKILL.md cap for that repo.
 
 Adding a rule: write `fn(root) -> rows` in a rule module, add its name to its group in `report.py`, list it in the
 module's `FUNCTIONS`, and add a fixture to its `CONTROLS` that makes it fire. Health refuses to load until the control exists.

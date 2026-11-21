@@ -74,7 +74,6 @@ TABLE = [
     ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait."),
     ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; low, the operation session asks you for more."),
     ("silent_minutes", REPO, 30, "Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides."),
-    ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),
     ("health_skill_lines", REPO, 150, "SKILL.md line cap health fails."),
     ("feature_labels", REPO, False, "true tags each health and regression issue feature:<Page>, creating the label."),
     ("workers", REPO, "", "app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start."),

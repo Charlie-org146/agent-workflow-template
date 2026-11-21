@@ -93,5 +93,4 @@ check "clearing an error counts as a change and reprints the board" 'grep -q "wi
 check "every pass writes the check-in" '[ -f "$C/loop/checkin.json" ]'
 
 echo "== sizes"
-check "every script is under 20 KB" '[ -z "$(find "$here/skills" -name "*.py" -size +20479c)" ]'
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

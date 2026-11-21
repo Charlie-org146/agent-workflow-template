@@ -4,7 +4,7 @@
 usage: matrix-smoke.py [--agent claude-app|claude-cli|codex|ci] [--no-record] [--keep] [--skills DIR] [--only STEP[,STEP]]
 
 Steps, in order (each prints `PASS: <step>: ...` or `FAIL: <step>: ...`):
-  package   build the Agensi ZIP with dev/package.py and unpack it; every later step runs the unpacked skills, not the checkout's
+  package   zip skills/ and unpack it; every later step runs the unpacked skills, not the checkout's
   adopt     adopt a toy repo (dev/toy/make.sh) with the unpacked setup.py and merge the adoption
   freeze    freeze a goal in it (goal.py new --here)
   qa        run its land rows (regression.py run land): the result line must show no failed row
@@ -62,19 +62,14 @@ def step_package(work, skills_arg):
     if skills_arg:
         say(os.path.isdir(skills_arg), "package", "using --skills %s (not the package)" % skills_arg)
         return skills_arg
-    out = os.path.join(work, "package.zip")
-    code, text = run([sys.executable, os.path.join(ROOT, "dev", "package.py"), "--root", ROOT, "--out", out])
+    out = os.path.join(work, "skills.zip")  # the loop ships as the template only (SET-10): a plain ZIP of skills/ stands for a repo made from it
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as bundle:
+        for base, dirs, names in os.walk(os.path.join(ROOT, "skills")):
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            for name in names:
+                full = os.path.join(base, name)
+                bundle.write(full, os.path.relpath(full, ROOT))
     note = ""
-    if code or not os.path.isfile(out):  # until the package passes its own rules, adopt from a plain ZIP of skills/
-        refused = next((l for l in text.splitlines() if l.startswith("REFUSED")), "dev/package.py exited %d" % code)
-        print("WARN: package: %s; using a plain ZIP of skills/ instead" % refused[:140])
-        with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as bundle:
-            for base, dirs, names in os.walk(os.path.join(ROOT, "skills")):
-                dirs[:] = [d for d in dirs if d != "__pycache__"]
-                for name in names:
-                    full = os.path.join(base, name)
-                    bundle.write(full, os.path.relpath(full, ROOT))
-        note = " (plain ZIP: package.py refused)"
     target = os.path.join(work, "pkg")
     with zipfile.ZipFile(out) as bundle:
         bundle.extractall(target)

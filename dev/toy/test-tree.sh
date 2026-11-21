@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/ docs/wiki/ README.md listing.json dev/toy/
+# reads: skills/ docs/wiki/ README.md dev/toy/
 # Checks that read every skill at once: script sizes, SKILL.md lengths and repo-wide greps. They live here, in one
 # script that declares all of skills/, so the other toy scripts can declare only the files they run and their rows
 # rerun only when those change (see lanes_cli.py check), and the checks of those headers on this repo. No model is
@@ -12,9 +12,7 @@ ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
-echo "== sizes"
-check "every skill Python script is under 20 KB" '[ -z "$(find "$here/skills" -name "*.py" -size +20479c)" ]'
-for f in "$here"/skills/*/scripts/*.py; do [ "$(wc -c < "$f")" -lt 20480 ] && ok "under 20 KB: $(basename "$f")" || bad "over 20 KB: $f"; done
+echo "== skill lines"
 for f in "$here"/skills/*/SKILL.md; do [ "$(wc -l < "$f")" -lt 150 ] && ok "under 150 lines: $(basename "$(dirname "$f")")" || bad "over 150 lines: $f"; done
 
 echo "== repo-wide greps"

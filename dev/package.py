@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Check the package against the Agensi rules and build the ZIP.
+"""Build the package ZIP that update.py reads (its toys build fixtures here). The loop ships as the template only (SET-10): the Agensi
+script-size, file-cap and listing rules are retired; the other checks stay.
 
 usage: package.py [--root DIR] [--out FILE] [--timeout SECONDS]
 
@@ -263,8 +264,6 @@ def check_files(root, files):
                 raise ValueError
         except ValueError:
             fail("Files", "%s is not text" % rel)
-    if len(files) > MAX_FILES:
-        fail("Size", "%d files, at most 100 allowed" % len(files))
     if total >= MAX_BYTES:
         fail("Size", "%d bytes, under 5,000,000 allowed" % total)
 
@@ -274,8 +273,6 @@ def check_scripts(root, files):
         data = read(root, rel)
         text = data.decode("utf-8", "replace")
         size = len(data.replace(b"\r\n", b"\n"))  # committed (LF) bytes: a Windows CRLF checkout reads the same
-        if size >= MAX_SCRIPT:
-            fail("Scripts", "%s is %d bytes, under 20 KB allowed" % (rel, size))
         modules = set()
         siblings = {n[:-3] for n in os.listdir(os.path.dirname(os.path.join(root, rel))) if n.endswith(".py")}
         try:
@@ -462,15 +459,12 @@ def main():
     check_inventory(root, files)
     version = version_of(root)
     listing = load_listing(root)
-    check_listing(listing)
     wait_on('reading the shipped files')
     check_files(root, files)
     wait_on('the script checks')
     check_scripts(root, files)
     wait_on('the safety scans')
     check_safety(root, files)
-    wait_on('the disclosure checks')
-    check_disclosure(root, files, listing)
     check_pack(root)
     if failures:
         print("REFUSED: %d rule failure(s); no ZIP built" % len(failures))

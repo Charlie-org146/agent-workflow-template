@@ -98,7 +98,7 @@ fi
 if want machine-rows-listed; then
   for row in machine-apply-installs machine-no-private machine-task-layout machine-no-prompt-mode; do  # the other machine rows merged into these (rows-600-c)
     grep -qF "[$row](Tests#t-$row)" "$here"/docs/wiki/*.md || no "row $row is not in a feature page Tests table"; done
-  for n in 3 4 5 6 7 8 9 10 11 12; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
+  for n in 3 4 5 6 7 8 9 10 11; do grep -qF "id=\"t-machine-done-$n\"" "$here/docs/wiki/Tests.md" || no "row machine-done-$n is not in Tests"; done
   echo "PASS: every machine row is listed in the Machines Tests table"
 fi
 
@@ -200,15 +200,6 @@ if want machine-health-rule; then
   out=$(cd "$r" && HOME="$h" USERPROFILE="$h" CI= python3 "$d/clone/skills/workflow-health/scripts/health.py" check --group adoption 2>&1)
   echo "$out" | grep -q '^WARN adoption .* machine' || no "health's Adoption group did not list a machine gap"
   echo "PASS: health's Adoption group lists the machine gaps"
-fi
-
-# done 12: machine.py is under the script cap and adds no file to the package (it lives in dev/).
-if want machine-caps; then
-  for f in machine.py machine_ops.py; do [ "$(tr -d '\015' < "$here/dev/$f" | wc -c)" -lt 20480 ] || no "$f is 20,480 bytes or more"; done
-  for f in $(cd "$here" && git ls-files skills | grep '\.py$'); do [ "$(tr -d '\015' < "$here/$f" | wc -c)" -lt 20480 ] || no "$f is over the script cap"; done
-  # machine.py adds no file to the package: it is not under skills/ (other goals may add their own scripts there)
-  git -C "$here" ls-files skills | grep -q '/machine\.py$' && no "machine.py is under skills/"
-  echo "PASS: machine.py and every script stay under the byte cap and the package gains no file"
 fi
 
 # done 13: the operation session and the peer link exist after apply; check names a missing one.

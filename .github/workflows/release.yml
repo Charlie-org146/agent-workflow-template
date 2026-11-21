@@ -2,7 +2,7 @@
 # needs a lane or a CI run. The git tag is the version. The part is the merged pull request's label release:major or
 # release:minor (default patch, as release-drafter does). Tool: gh release create --generate-notes
 # (https://cli.github.com/manual/gh_release_create). VERSION and CHANGELOG.md in the repo are not written per merge; the
-# version is stamped into the package this job builds and attaches. While an issue labeled main-red is open the job holds:
+# release is the tag and its notes only: no package is built or attached (SET-10). While an issue labeled main-red is open the job holds:
 # it prints "held: main red (#N)", ends green and publishes nothing (owner o672, TD507); the first push after the last one
 # closes releases from that commit as usual. An open one that the pushed commit's merged pull request closes does not hold (TD517).
 name: release
@@ -63,7 +63,4 @@ jobs:
         run: |
           set -eu
           v="${{ steps.version.outputs.version }}"
-          echo "$v" > VERSION
-          mkdir -p dist
-          bash dev/package.sh --out "dist/agent-workflow-template-$v.zip"
-          gh release create "v$v" "dist/agent-workflow-template-$v.zip" --target "$GITHUB_SHA" --title "v$v" --generate-notes
+          gh release create "v$v" --target "$GITHUB_SHA" --title "v$v" --generate-notes

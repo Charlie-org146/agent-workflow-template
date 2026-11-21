@@ -23,7 +23,7 @@ GROUPS = (
      ("cost", "test-time", "rows-cap", "suite-cap", "check-time")),
     ("security", "Security and privacy", "a leak's angle: can anything private escape?",
      ("private", "scan-hook", "hooks", "workflow-permissions")),
-    ("size", "Size", "a maintainer's angle: can someone still read this?", ("scripts", "skill-lines", "requirements-per-page")),
+    ("size", "Size", "a maintainer's angle: can someone still read this?", ("skill-lines", "requirements-per-page")),
     ("hygiene", "Hygiene", "a janitor's angle: is anything left lying around?",
      ("findings", "waiting", "branches", "eta-missing", "eta-extended", "eta-overrun", "eta-unmarked", "eta-missed", "eta-rate", "statement-wrong", "worktrees", "local-branches", "idle-sessions")),
     ("adoption", "Adoption", "another repo's angle: would this work installed fresh?",
@@ -44,7 +44,7 @@ RULES = tuple(rule for g in GROUPS for rule in g[3])  # every rule; each needs a
 ALIASES = {"criteria": "requirements", "cost": "performance"}  # older --group names, kept for one release
 # older row labels -> their rule
 LABELS = {"sync": "rows", "done-lines": "done", "open": "findings", "run": "waiting", "merged": "branches",
-          "branch": "branches", "time": "cost", "tokens": "cost", "limit": "scripts"}
+          "branch": "branches", "time": "cost", "tokens": "cost"}
 
 
 MATRIX_DAYS = 7

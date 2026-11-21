@@ -92,7 +92,7 @@ check-ins, or `off`) and `handoff.md`. Nothing there is committed. `board.py rep
 `~/.workflow-loop/flow.json` names your skill flow.
 
 In this template: `skills/` (the seven skills; the full contract is `skills/loop-files.md`), `dev/` (install, package and
-toy tests), `listing.json`, `VERSION`, `DECISIONS.md`, `FINDINGS.md`, `docs/ROADMAP.md` and `LICENSE`.
+toy tests), `listing.json` (kept for update.py's tests), `VERSION`, `DECISIONS.md`, `FINDINGS.md`, `docs/ROADMAP.md` and `LICENSE`.
 
 **License**
 
@@ -212,7 +212,6 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `full_auto` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. | set "full_auto" in .loop/config.json | `false` | **overridden:** `true` |
 | `pool_size` | Idle worker sessions the pool keeps; low, the operation session asks you for more. | set "pool_size" in .loop/config.json | `20` | default |
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. | set "silent_minutes" in .loop/config.json | `30` | default |
-| `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
 | `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
 | `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
 | `workers` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
