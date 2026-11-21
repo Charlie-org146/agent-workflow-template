@@ -72,7 +72,10 @@ $_toy_reap_cbs
 EOF_TOY_REAP
   [ ! -s "$_toy_wl" ] || python3 "$_toy_guard" diff "$_toy_wl" || { [ "$rc" != 0 ] || rc=1; }
   rm -f "$_toy_wl"
-  toy_reap TOY_REAP_ID "$TOY_REAP_ID" >/dev/null || { [ "$rc" != 0 ] || rc=1; }
+  toy_reap TOY_REAP_ID "$TOY_REAP_ID" >/dev/null 2>"$_toy_wl.err"; local r=$?
+  cat "$_toy_wl.err" >&2; rm -f "$_toy_wl.err"
+  if [ "$r" = 77 ]; then [ "$rc" != 0 ] || { [ -z "${TOY_SKIP_FILE:-}" ] || echo skip > "$TOY_SKIP_FILE"; rc=77; }  # ps is not permitted here: a SKIP named above, not a pass
+  elif [ "$r" != 0 ]; then [ "$rc" != 0 ] || rc=1; fi
   exit "$rc"
 }
 _toy_reap_sig() { trap '' PIPE INT TERM HUP; exit "$1"; }
