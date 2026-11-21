@@ -788,4 +788,4 @@
 | <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |
 | <a id="t-reap-sandbox-skip"></a>reap-sandbox-skip | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
 | <a id="t-codex-run-ends-done"></a>codex-run-ends-done | requirement | done line codex-fallback-2:1 | not run | - | local | 2026-11-21 |
-| <a id="t-codex-git-roots"></a>codex-git-roots | requirement | done line codex-git-root:1 | not run | - | local | no |
+| <a id="t-codex-git-roots"></a>codex-git-roots | requirement | done line codex-git-root:1 | not run | - | local | 2026-11-21 |
