@@ -33,7 +33,6 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
-SELF = os.path.abspath(sys.argv[0])
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,50}$")
 HEAD = re.compile(r"^## Batch: (\S+)\s*$")
 STEPS = ("build", "plan", "idea", "review", "qa", "ship", "step", "pr", "record", "run")
@@ -192,7 +191,7 @@ def cmd_start(args):
         sys.exit("REFUSED: no goal lines under '## Batch: %s'." % args.name)
     if items:
         flags = (["--max", str(args.max)] if args.max else []) + (["--skill-dir", args.skill_dir] if args.skill_dir else [])
-        watch = os.path.join(os.path.dirname(SELF), "watch.py")
+        watch = os.path.join(os.path.dirname(os.path.abspath(__file__)), "watch.py")
         if os.path.exists(watch):
             subprocess.run([sys.executable, watch, "watch", "--once"] + flags, cwd=root())
         else:
