@@ -757,3 +757,4 @@
 | <a id="t-defect-5635-settings-default"></a>defect-5635-settings-default | defect | [#5635](https://github.com/Charlie-org146/agent-workflow-template/issues/5635) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5638-reconcile-wording"></a>defect-5638-reconcile-wording | defect | [#5638](https://github.com/Charlie-org146/agent-workflow-template/issues/5638) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5679-reads-headers"></a>defect-5679-reads-headers | defect | [#5679](https://github.com/Charlie-org146/agent-workflow-template/issues/5679) state unknown | not run | - | local | 2026-11-21 |
+| <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |

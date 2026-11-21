@@ -5,7 +5,8 @@
 # reads: skills/workflow-setup/scripts/setup.py
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 # Proves the automatic release on a throwaway toy repo with a fake gh. usage: test-autorelease.sh [DIR]
-unset LOOP_BATCH LOOP_PRIVATE_NAMES
+unset LOOP_BATCH
+export LOOP_PRIVATE_NAMES=/dev/null  # o675: no list stops the scan, so a toy names an explicit empty one
 set -e
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker

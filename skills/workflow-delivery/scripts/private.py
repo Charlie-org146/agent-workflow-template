@@ -138,7 +138,7 @@ def scan(top, base, texts=None, head="HEAD", items=None):
     shown = source()[1]
     if state != "on":
         return {"state": state, "hits": [], "note": error or "Private-name scan: %s." % (
-            "no list at %s, nothing was checked" % shown if state == "none" else "off on purpose (%s holds only comments)" % shown)}
+            "no private-name list at %s" % shown if state == "none" else "off on purpose (%s holds only comments)" % shown)}
     hits, rows, stop = [], [], time.time() + LIMIT
     if base or items:
         try:
@@ -160,9 +160,9 @@ def scan(top, base, texts=None, head="HEAD", items=None):
 
 
 def refusal(result, base="the base branch", pushed=False):
-    if result["state"] == "broken":
+    if result["state"] in ("broken", "none"):  # o675: no list stops the push, never reads clean
         return ("the private-name list or scan is broken: %s; nothing was pushed" % result["note"],
-                "repair the list (private.py check names the line), then run the command again", PRIVATE_LIST)
+                "create the list (an empty file passes) or repair it (private.py check names the line), then run the command again", PRIVATE_LIST)
     if result["state"] != "hit":
         return None
     shown = "; ".join(result["hits"][:8]) + (" and %d more" % (len(result["hits"]) - 8) if len(result["hits"]) > 8 else "")
@@ -264,7 +264,7 @@ def hook(mode="", arg=""):
     if stop:
         fix = stop[1] if stop[2] == PRIVATE_LIST else "remove the text; for a false positive, edit that line of the list"
         print("REFUSED: %s. Fix: %s (%s)" % (stop[0].replace("pushed", "pushed" if mode == "push" else "committed"), fix, stop[2]))
-    return max(code, {"broken": 2, "hit": 1}.get(got["state"], 0))
+    return max(code, {"broken": 2, "none": 2, "hit": 1}.get(got["state"], 0))
 
 
 def gh(top, *args):
@@ -364,7 +364,7 @@ def main():
         top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
         base = args[args.index("--base") + 1] if "--base" in args else "origin/main"
         result = scan(top, base)
-        print(result["note"], *("HIT " + hit for hit in result["hits"]), sep="\n")
+        result["state"] == "none" or print(result["note"], *("HIT " + hit for hit in result["hits"]), sep="\n")
         stop = refusal(result, base)
         if stop:
             print("REFUSED: %s. Fix: %s (%s)" % stop)

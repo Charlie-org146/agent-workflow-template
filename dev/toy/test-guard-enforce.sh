@@ -163,7 +163,10 @@ check "a pattern that matches the empty string (or ordinary text) is a broken li
 r "LOOP_PRIVATE_NAMES=$T/optout git -C $T/s10 commit -m x"
 check "a comment-only list is off on purpose and the commit goes through" '[ $rc = 0 ]'
 r "env -u LOOP_PRIVATE_NAMES HOME=$T/nohome USERPROFILE=$T/nohome git -C $T/s10 commit --allow-empty -m y"
-check "no list at all passes the commit silently" '[ $rc = 0 ]'
+check "no list at all refuses the commit with PRIVATE_LIST, naming the list (o675)" '[ $rc != 0 ] && has "PRIVATE_LIST" && has "no private-name list at"'
+: > "$T/zero"
+r "LOOP_PRIVATE_NAMES=$T/zero git -C $T/s10 commit --allow-empty -m y"
+check "an empty list file passes the commit" '[ $rc = 0 ]'
 
 echo "== SET-8: health reports the hooks"
 r "cd $T/s10 && $HEALTH check --group security"

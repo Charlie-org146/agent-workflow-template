@@ -48,7 +48,7 @@ def package(tmp, version="9.8.7"):
 
 def env_of(tmp):
     env = {k: v for k, v in os.environ.items() if not k.startswith("LOOP_")}
-    env.update(HOME=tmp, USERPROFILE=tmp, LOOP_NO_GIT_HOOKS="1", GH_PROMPT_DISABLED="1")
+    env.update(HOME=tmp, USERPROFILE=tmp, LOOP_NO_GIT_HOOKS="1", GH_PROMPT_DISABLED="1", LOOP_PRIVATE_NAMES=os.devnull)  # o675: an explicit empty list
     return env
 
 
@@ -147,6 +147,7 @@ def case_replay():
     gold = os.path.join(ROOT, "dev", "toy", "adoption-golden.tsv")
     with tempfile.TemporaryDirectory() as tmp:
         env = fake_gh(tmp)
+        env.pop("LOOP_PRIVATE_NAMES")  # the golden reads the home's own list
         operation = home(tmp)
         unattended = tool(tmp, "workflow-monitoring", "unattended.py")
         code, out = run([sys.executable, unattended, "replay", "--golden", gold], operation, env)
