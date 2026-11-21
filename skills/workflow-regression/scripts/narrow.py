@@ -132,7 +132,8 @@ def warm(path, key, picked, cache):
             if value is not None:
                 cache[name, command] = value
     want = {row["command"] for row in picked}
-    return "hit (%d rows)" % len(want) if want <= set(rows) else "miss (partial %d of %d)" % (len(rows), len(want))
+    have = want & set(rows)
+    return "hit (%d rows)" % len(want) if have == want else "miss (partial %d of %d)" % (len(have), len(want))
 
 
 def store(path, key, cache):
@@ -209,7 +210,7 @@ def header(root, rel, cache):
 
 
 def scan(root, rel, cache):
-    """(files, folders) one file reaches, unwidened: shell, named paths; Python, sibling imports and quoted names."""
+    """(files, folders) one file reaches, unwidened (the module docstring says how)."""
     key = ("narrow", rel)
     if key in cache:
         return cache[key]

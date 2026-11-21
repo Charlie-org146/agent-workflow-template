@@ -26,8 +26,6 @@ who-merges-report	fails on main since v1.0.94; see #5299
 setup-no-milestone-step	fails on main since v1.0.99; see #5312
 hlt2-twelve-groups	fails on main since v1.0.100; see #5326
 migration-robustness	fails on main since v1.0.100; see #5323
-entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
 hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
-plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993

@@ -12,7 +12,7 @@ t=$(mktemp -d); trap 'for w in w new old; do git -C "$here" worktree remove --fo
 git -C "$here" worktree add -q --detach "$t/w" HEAD || exit 1
 [ -n "${ENTRY:-}" ] && ENTRY=$(cd "$(dirname "$ENTRY")" && pwd)/$(basename "$ENTRY")
 cd "$t/w"; git config user.email t@example.test; git config user.name Toy
-sed -i 's/"min_free_memory_gb": 3.0/"min_free_memory_gb": 2.0/' .loop/config.json
+python3 -c "p='.loop/config.json'; s=open(p).read(); open(p, 'w').write(s.replace('\"min_free_memory_gb\": 3.0', '\"min_free_memory_gb\": 2.0'))"
 git update-index --skip-worktree .loop/config.json
 grep -q '"min_free_memory_gb": 2.0' .loop/config.json || { echo "FAIL: setup"; exit 1; }
 fails=0; ok() { echo "PASS: $1"; }; bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -22,9 +22,10 @@ python3 "$entry" check --repo "$t/w" 2>&1 | tail -1 | grep -qx "ENTRY OK" && ok 
 git -C "$t/w" update-index --no-skip-worktree .loop/config.json
 python3 "$entry" write --repo "$t/w" >/dev/null 2>&1
 grep -q 'min_free_memory_gb` | 2.0 |' "$t/w/.loop/START.md" && ok "negative control: an ordinary edit still renders" || bad "an ordinary edit is ignored"
-# SET-2: two branches that each add a different public_origins entry merge with no conflict in the regenerated START.md; main's entry.py
-# (it prints the whole list on one line) is the negative control and must conflict.
-mkdir -p "$t/src"; git -C "$here" archive origin/main skills | tar -x -C "$t/src"
+# SET-2: two branches that each add a different public_origins entry merge with no conflict in the regenerated START.md; the entry.py
+# under test with its list-as-count branch removed (it prints the whole list on one line, as before d5d021101) is the negative control and must conflict.
+mkdir -p "$t/src"; git -C "$here" archive HEAD skills | tar -x -C "$t/src"; old=$t/src/skills/workflow-docs/scripts/entry.py; cp "$entry" "$old"
+python3 -c "import sys; p=sys.argv[1]; s=open(p).read(); c='    if isinstance(value, list):\n        return \"%d entries in config.json\" % len(value)\n'; assert c in s; open(p, 'w').write(s.replace(c, ''))" "$old" || bad "negative control: the list-as-count branch was not found to remove"
 merge_two() {  # $1 = the entry.py that writes START.md, $2 = a name for the worktree
   local m="$t/$2"; git -C "$here" worktree add -q --detach "$m" HEAD || return 2
   ( cd "$m" && git config user.email t@example.test && git config user.name Toy
@@ -38,6 +39,6 @@ merge_two() {  # $1 = the entry.py that writes START.md, $2 = a name for the wor
 }
 merge_two "$entry" new && ok "two branches adding different public_origins entries merge with no conflict" || bad "the merge conflicts"
 python3 "$entry" write --repo "$t/new" >/dev/null 2>&1; python3 "$entry" check --repo "$t/new" 2>&1 | tail -1 | grep -qx "ENTRY OK" && ok "the merged START.md regenerates and passes entry check" || bad "entry check fails after the merge"
-merge_two "$t/src/skills/workflow-docs/scripts/entry.py" old; [ $? -eq 1 ] && ok "negative control: main's one-line list conflicts" || bad "negative control: main's entry.py did not conflict"
+merge_two "$old" old; [ $? -eq 1 ] && ok "negative control: the one-line list conflicts" || bad "negative control: the one-line list did not conflict"
 [ "$(tr -d '\r' < "$entry" | wc -c)" -le "$(git -C "$here" show origin/main:skills/workflow-docs/scripts/entry.py | tr -d '\r' | wc -c)" ] && ok "entry.py is no larger than main's" || bad "entry.py grew past main"
 [ $fails -eq 0 ] && echo "ALL PASS"
