@@ -238,6 +238,7 @@ def silent_limit(cfg=None):
 
 
 def held(run, taken):
+    """Running with no worker: the pool is known, no busy session names it, no pid."""
     return run.get("status") == "running" and taken is not None and run.get("slug") not in taken and not run.get("pid")
 
 
@@ -252,6 +253,7 @@ def holds_slot(run, taken=None):
 
 
 def freezing(taken, on_disk):
+    """Pool entries handed a goal that has no run record yet."""
     return [dict(entry, slug=slug) for slug, entry in sorted((taken or {}).items()) if slug not in on_disk]
 
 
@@ -266,6 +268,7 @@ def last_spoke(run):
 
 
 def silent_for(run, at):
+    """Seconds since the worker last spoke, or None."""
     last = last_spoke(run)
     return None if not last or not at else max(0.0, (at - last).total_seconds())
 
@@ -379,7 +382,7 @@ def pr_queue(op, *args):  # pr turns and main-moved tries (#3877) live in pool.p
 
 
 def merge_lock(common, goal=""):
-    path, told, began = os.path.join(common, "loop", "merge.lock"), False, time.time()
+    path, told, began = os.path.join(common, "loop", "merge.lock"), False, time.monotonic()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     while True:
         try:
@@ -409,9 +412,10 @@ def merge_lock(common, goal=""):
                 except OSError:
                     pass
                 continue
-            who = "pid %d, goal %s, held %ds" % (pid, (seen.split() + ["", ""])[1] or "unknown", age)
-            if time.time() - began > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
-                sys.exit("REFUSED: the merge lock is still held (%s). Fix: wait for that merge.py to end, or stop pid %d if it is stuck, then run merge.py again." % (who, pid))
+            who = "%s, goal %s, held %ds" % ("pid %d" % pid if pid > 0 else "pid unknown", (seen.split() + ["", ""])[1] or "unknown", age)
+            if time.monotonic() - began > int(os.environ.get("LOOP_MERGE_LOCK_SECONDS") or 1800):
+                hint = "stop pid %d if it is stuck" % pid if pid > 0 else "if no merge.py runs, delete %s" % os.path.relpath(path, os.path.dirname(common))
+                sys.exit("REFUSED: the merge lock is still held (%s). Fix: wait for that merge.py to end, or %s, then run merge.py again." % (who, hint))
             if not told:
                 sys.stderr.write("WAITING: another pod is merging into this repo (%s); one merge at a time.\n" % who)
                 told = True
