@@ -1,12 +1,12 @@
 #!/bin/bash
-# Real proof of one governing process: two level 0 goals, started by one process, each built by a real headless agent in
-# its own worktree. WARNING: this calls the real claude CLI (haiku by default). gh is faked. usage: test-govern.sh [DIR]
+# Proof of one governing process: two level 0 goals, started by one process, each built by a stand-in agent (a script) in
+# its own worktree. It starts no real claude agent, so it needs no login, network or quota. gh is faked. usage: test-govern.sh [DIR]
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION  # a toy test never reaches a real session tool
 unset LOOP_ROLE  # these tests act as the operation session
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-T=${1:-$(mktemp -d)}; rm -rf "$T"; mkdir -p "$T"; MODEL=${MODEL:-haiku}
+T=${1:-$(mktemp -d)}; rm -rf "$T"; mkdir -p "$T";
 W="python3 $here/skills/workflow-monitoring/scripts/watch.py"
 M="python3 $here/skills/workflow-monitoring/scripts/monitor.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"
@@ -15,14 +15,35 @@ export LOOP_FLOW="$T/flow.json"
 cd "$T/repo" || exit 1
 h=$(mktemp -d); HOME=$h USERPROFILE=$h python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null  # its private settings go to a throwaway home
 git switch -q main; git merge -q --ff-only workflow-setup
-python3 - "$here/skills" "$MODEL" <<'PY'
+C=$(cd "$(git rev-parse --git-common-dir)" && pwd); export COMMON="$C"
+# A stand-in agent (a script, as the other toys use), run in the goal's own worktree: it writes the module and its test,
+# commits, opens the pull request through the faked gh and marks the goal done, as the real agent's flow ends.
+cat > "$T/agent.sh" <<'A'
+#!/bin/bash
+prompt=${!#}
+slug=$(grep -oE 'Slug: [a-z0-9-]+' <<<"$prompt" | head -1 | cut -d' ' -f2)
+[ -n "$slug" ] || slug=$(grep -oE 'goal [a-z0-9-]+ in this git' <<<"$prompt" | head -1 | cut -d' ' -f2)
+mod=${slug//-/_}
+printf 'def f(values):\n    return sorted(values)[len(values) // 2]\n' > "$mod.py"
+printf 'import %s\nassert %s.f([3, 1, 2]) == 2\n' "$mod" "$mod" > "test_$mod.py"
+git add -A; git commit -qm "Add $mod"
+gh pr create --title "Add $mod" --body "built by the stand-in agent" >/dev/null
+python3 - "$COMMON/loop/runs/$slug.json" "$slug" <<'PY'
+import json, sys
+s = json.load(open(sys.argv[1])); s.update(status="done", step="release", pr="https://example.test/pull/" + sys.argv[2])
+json.dump(s, open(sys.argv[1], "w"))
+PY
+A
+python3 - "$T/agent.sh" <<'PY'
 import json, sys
 c = json.load(open(".loop/config.json"))
-c["agent_command"] = ["claude", "-p", "--model=" + sys.argv[2], "--allowedTools=Bash,Read,Write,Edit", "--add-dir=" + sys.argv[1]]
+c["agent_command"] = ["bash", sys.argv[1]]
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
-git commit -qam "Agent command"; git push -q origin main
-C=$(cd "$(git rev-parse --git-common-dir)" && pwd)
+git commit -qam "Agent command"
+# The origin is rebuilt from the fixture after that commit (no push): the same refs the push left, main only, and HEAD on main.
+rm -rf "$T/origin.git"; git clone -q --bare --single-branch --branch main "$PWD" "$T/origin.git"
+git fetch -q origin; git branch -q --set-upstream-to=origin/main main
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
