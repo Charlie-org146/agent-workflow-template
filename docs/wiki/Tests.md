@@ -175,7 +175,6 @@
 | <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-defect-5317-wiki-start"></a>defect-5317-wiki-start | defect | [#5317](https://github.com/jcl2018/agent-workflow-template/issues/5317) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-worker-save-5359"></a>worker-save-5359 | defect | [#5359](https://github.com/Charlie-org146/agent-workflow-template/issues/5359) state unknown | PASS | 2026-11-21 | [CI 2026-11-21](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-21) | 2026-11-21 |
 
 ## Documentation
@@ -753,3 +752,7 @@
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
 | <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5078-own-repo-image"></a>defect-5078-own-repo-image | defect | [#5078](https://github.com/Charlie-org146/agent-workflow-template/issues/5078) state unknown | PASS | 2026-11-21 | [CI 2026-11-21](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-21) | 2026-11-21 |
+| <a id="t-defect-88-closing-keywords"></a>defect-88-closing-keywords | defect | [#88](https://github.com/Charlie-org146/agent-workflow-template/issues/88) state unknown | not run | - | local | no |
+| <a id="t-defect-5635-settings-default"></a>defect-5635-settings-default | defect | [#5635](https://github.com/Charlie-org146/agent-workflow-template/issues/5635) state unknown | not run | - | local | no |
+| <a id="t-defect-5638-reconcile-wording"></a>defect-5638-reconcile-wording | defect | [#5638](https://github.com/Charlie-org146/agent-workflow-template/issues/5638) state unknown | not run | - | local | no |
+| <a id="t-defect-5679-reads-headers"></a>defect-5679-reads-headers | defect | [#5679](https://github.com/Charlie-org146/agent-workflow-template/issues/5679) state unknown | not run | - | local | no |
