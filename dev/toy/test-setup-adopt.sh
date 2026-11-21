@@ -3,6 +3,7 @@
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # reads: skills/workflow-setup/scripts/sync.py skills/workflow-setup/scripts/update.py
 # reads: skills/workflow-health/scripts/health.py skills/workflow-docs/scripts/docs.py
+# reads: .github/workflows/regression.yml
 # Proves setup's adoption: health first and last, no blocking, no unrelated writes after a refusal, issues for what does
 # not fit, the docs format, the settings layers, the dry run list, private values, --from and the zero-test check.
 # One case per regression row id. usage: test-setup-adopt.sh [ROW-ID]   no ID runs every case. No model is called, and
@@ -227,6 +228,14 @@ if want set8-no-list-refused; then
   [ $rc = 1 ] && echo "$out" | grep -q 'LOOP_PRIVATE_NAMES names a file that doesn.t exist' && echo "$out" | grep -q 'hook exit 2.*(SETUP_PRIVATE_LIST)' || no "missing list file: rc=$rc $(echo "$out" | tail -4)"
   echo "$out" | grep -q 'SETUP_PRIVATE_NAME' && no "a missing list file was refused as a private name"
   [ "$(state "$d/nm/repo")" = "$before" ] || no "the missing-list refusal left something written"
+  for stub in "import sys; sys.exit(64)" "import os, signal; os.kill(os.getpid(), signal.SIGKILL)"; do   # a hook that exits 64, and one killed by a signal: neither is a hit
+    cd "$d" && rm -rf "$d/sk" "$d/ns"; mkdir -p "$d/sk"; cp -R "$here/skills/." "$d/sk/"; printf '%s\n' "$stub" > "$d/sk/workflow-delivery/scripts/private.py"
+    mk ns; before=$(state "$d/ns/repo")
+    out=$(python3 "$d/sk/workflow-setup/scripts/setup.py" 2>&1); rc=$?
+    [ $rc = 1 ] && echo "$out" | grep -q 'REFUSED: the private-name scan could not run (hook exit \(64\|-9\).*(SETUP_PRIVATE_LIST)' || no "a hook that is not a hit ($stub): rc=$rc $(echo "$out" | tail -3)"
+    echo "$out" | grep -q 'SETUP_PRIVATE_NAME' && no "a hook that is not a hit was refused as a private name ($stub)"
+    [ "$(state "$d/ns/repo")" = "$before" ] || no "the refusal for a hook that is not a hit left something written ($stub)"
+  done
   mk nh; mkdir -p docs/wiki; printf '# Engine\n\nThis page names zq-hitword-5727 itself.\n' > docs/wiki/Engine.md   # an untracked page: setup adopts it, so its line is one the adoption adds
   printf '# a toy list\nzq-hitword-5727\n' > "$d/hit-names"; before=$(state "$d/nh/repo")
   out=$(LOOP_PRIVATE_NAMES="$d/hit-names" $setup 2>&1); rc=$?
