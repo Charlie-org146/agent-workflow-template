@@ -32,7 +32,7 @@ Frozen. A wrong done line needs a new goal.
 
 What changed: the 27 live requirements on the 11 feature pages become features in place, each keeping its ID, page and every word (text hash before and after listed in `docs/migrations/features-v1-report.md`). Each entry's Reviewed mark is cleared and each gets a block of `  - ` bullets after its own lines: its reference (the Follows cell, as link text), and one line per requirement line with its metric and test result. Two scripts and the report are new, all under `docs/migrations`: `features-v1.py run` and, as its own file so the proof shares no code with it, `features-v1-check.py check`. No other file changes.
 
-Owner decisions: the plan gate was answered `rec` by the owner (record o706, and the owner also typed `rec` directly in the operation session), which is: the marker blocks are written into the 27 pages (UC1a); all 29 Reviewed marks are cleared (UC2a, the owner's o700 order); the test count shows on every line of an ID (D2a); the blocks are write-once snapshots until the checker goal recomputes them (D6a); and health's new FAIL rows and the release-gate effect are reported, not fixed (D7a). Re-run `features-v1.py run` to refresh a block.
+Owner decisions: the plan gate was answered `rec` by the owner (record o706, and the owner also typed `rec` directly in the operation session); the owner then ordered, in record o708, that this goal merges when green after the earlier goal, which is: the marker blocks are written into the 27 pages (UC1a); all 29 Reviewed marks are cleared (UC2a, the owner's o700 order); the test count shows on every line of an ID (D2a); the blocks are write-once snapshots until the checker goal recomputes them (D6a); and health's new FAIL rows and the release-gate effect are reported, not fixed (D7a). Re-run `features-v1.py run --refresh` to refresh a block (the flag is needed once the base already carries blocks, so a later run cannot overwrite them by accident).
 
 release gate (review.py check_reviews) now lists every Unreviewed requirement, the 27 migrated and DOC-27 and DOC-28, as not Reviewed
 
@@ -46,13 +46,13 @@ For the checker goal: the marker bullets are indented `  - ` bullets after a bla
 
 Deferred: a committed toy test and regression row for the scripts need `dev/toy`, outside this goal's touches. The accepted record for Operation to file or not: one test that runs `check` on a fixture, plus the negative controls listed below.
 
-Shape spec: DOC-27 as pinned in `.claude/worktrees/consolidate-documentation-9216aa/operation-top/readme-drafts/frozen-source-v1.1.0-2349.html`, sha256 beginning 396af06cf2c369d3; used as a spec only, nothing from it is added. DOC-27 itself is merged by the earlier goal and is the durable copy.
+Shape spec: DOC-27 as pinned in `.claude/worktrees/consolidate-documentation-9216aa/operation-top/readme-drafts/frozen-source-v1.1.0-2358.html`, sha256 beginning 781aaacb72806fcd; used as a spec only, nothing from it is added. DOC-27 itself is merged by the earlier goal and is the durable copy.
 
 Internal cleanup of this repo; adopting repos migrate in a later goal.
 
 Order and safety: the branch is merged up to main only after the earlier goal (doc27-28-text-2) merges; the pull request is opened as a draft and stays one until the owner says; auto-merge is never armed and `merge.py` is never run.
 
-Manual negative controls (each run in a throwaway clone; all 12 behave as stated):
+Manual negative controls (each run in a throwaway clone; all behave as stated, and the review added controls 13 to 15 and re-ran all of them on the final code):
 1. A forced hash mismatch (unit changed on the second call): `REFUSED: the text of CHK-1 changed`, no file written.
 2. A Reviewed mark not on the base: `REFUSED: DOC-26 holds a Reviewed mark that is not on 48ac06e7d`, exit non-zero.
 3. One broken proof (a stray line added to a page): `check` exits non-zero with `FAIL 2 each page ... equals BASE byte for byte: Machines`.
@@ -65,7 +65,10 @@ Manual negative controls (each run in a throwaway clone; all 12 behave as stated
 10. Hostile review-log text (`<!-- a | b -->`): the report cell reads `evil a / b c`, with the table still seven columns.
 11. A run interrupted between renames (failure injected at the 4th rename): it prints `REFUSED`, the three files it touched and `git checkout --` for those paths; running that command leaves a clean tree and no temporary folder.
 12. A write target with uncommitted changes: `REFUSED: these paths have uncommitted changes`.
+13. A later owner review (INT-1 marked Reviewed after the migration), re-run with the base at main: `REFUSED: INT-1 holds a Reviewed mark that is not in the report`, and the report still lists its 26 entry marks.
+14. The same dirty target when the script is run from `docs/migrations` instead of the repo root: still refused (the guard runs from the repo root).
+15. A base that already holds marker blocks: `REFUSED ... pass --refresh to rewrite them`; with `--refresh` the run writes 0 files and the tree stays clean.
 
-`check` on the committed branch before the merge-up (base 48ac06e7d): 11 of 12 proofs pass; the one FAIL is `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28. The final `check` output replaces this after the merge-up.
+`check` on the committed branch before the merge-up (base 48ac06e7d): every proof passes except `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28; it ends `CHECK FAILED (1)` with exit 1 until then. The final `check` output replaces this after the merge-up.
 
 What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and the five done lines. It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
