@@ -877,8 +877,8 @@ role.py lane SLUG qa    LANE qa AFFECTED 4/4 in 612s
 role.py lane SLUG ship  LANE qa AFFECTED 4/4 in 612s; reused: the qa lane passed on this head
 ```
 
-To test again on the same HEAD run `role.py lane SLUG NAME --fresh`: it removes the passes (`.ok`) of the goal's three lanes
-and starts a lane; it refuses while a lane of the goal is running (LANE_FRESH). A regression run still reuses rows that
+To test again on the same HEAD run `role.py lane SLUG NAME --fresh`: it removes the records (`.ok`, `.last`) of the goal's three
+lanes and starts a lane; it refuses while a lane of the goal is running (LANE_FRESH). A regression run still reuses rows that
 passed, so run a row by hand with `regression.py run <id>`.
 
 ### Clocks

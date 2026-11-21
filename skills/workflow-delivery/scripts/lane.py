@@ -192,13 +192,13 @@ def passing(runs, slug, step):
     return src, read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
 
 
-def lane(runs, slug, name, spec, cfg, wait=90, fresh=False):
+def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
     """Start or poll a lane on committed HEAD: (running|pass|fail, line, failing ids)."""
     head = rev("HEAD")
-    if fresh:
+    if redo:
         if any(j and live(j) for j in [job_of(runs, slug, n)[1] for n in NAMES]):
             return "fail", "LANE_FRESH: a lane of %s is still running. Fix: role.py lane-wait %s NAME, then run --fresh again." % (slug, slug), []
-        drop(*[lanekit.lane_base(runs, slug, n) + ".ok" for n in NAMES])
+        drop(*[lanekit.lane_base(runs, slug, n) + end for n in NAMES for end in (".ok", ".last")])
     base, held = job_of(runs, slug, name)
     if held and held.get("head") != head:
         stop(base, held)
@@ -215,7 +215,7 @@ def lane(runs, slug, name, spec, cfg, wait=90, fresh=False):
             and time.time() - held["started"] > 30 and not os.path.exists(held["rc"] + ".claimed"):
         stop(base, held)
         held = None
-    if not held and not fresh and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+    if not held and not redo and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
         return "pass", answer(runs, slug, src, name), []
     if not held:
         top = rev("--show-toplevel")
@@ -385,7 +385,7 @@ def main(argv):
             timeout = float(argv[argv.index("--timeout") + 1]) if "--timeout" in argv else None
             return wait_for(runs, argv[1], argv[2], timeout)
         cfg = json.load(open(os.path.join(rev("--show-toplevel"), ".loop", "config.json")))
-        status, line, _ = lane(runs, argv[1], argv[2], flow_spec(), cfg, fresh="--fresh" in argv)
+        status, line, _ = lane(runs, argv[1], argv[2], flow_spec(), cfg, redo="--fresh" in argv)
         print(line, file=sys.stderr if status == "fail" else sys.stdout)
         return 0 if status != "fail" else 1
     print("usage: role.py lane SLUG qa|ship|pr            start or poll a goal's regression lane\n"

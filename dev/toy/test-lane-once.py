@@ -89,7 +89,7 @@ def record(name, head, state="pass", line=QA, ok=True):
 
 
 def ask(name, fresh=False):
-    return lane.lane(runs, SLUG, name, {}, cfg, 0, fresh=fresh)
+    return lane.lane(runs, SLUG, name, {}, cfg, 0, redo=fresh)
 
 
 def gate(step):
@@ -122,7 +122,7 @@ if os.environ.get("LANE_ONCE_SCRIPTS"):  # the control run: only the happy case 
 check(gate("ship") is None, "need_lane accepts ship after a qa-only pass")
 check(role.lane_note(runs, SLUG, "ship") == "2 pass; 1 not runnable here", "lane_note reads the not-runnable note from qa's record")
 part = role.lane_part(SLUG)
-check("SELECTED r1" in part and "(lane: qa, ended " in part, "the PR body's lane part shows qa's rows and names the lane and when it ended")
+check("SELECTED r1" in part and "(qa lane ended " in part, "the PR body's lane part shows qa's rows and names the lane and when it ended")
 check(lane.lane_status(runs, SLUG, "ship")[0] == "pass", "lane_status gives the same pass")
 waited = subprocess.run([sys.executable, os.path.join(scripts, "role.py"), "lane-wait", SLUG, "ship"], cwd=repo, capture_output=True,
                         text=True, env=dict(os.environ, LOOP_ROLE="worker"))
@@ -130,7 +130,7 @@ check(waited.returncode == 0 and "reused: the qa lane" in waited.stdout, "lane-w
 
 # pr lane wins over an older qa record in the PR body, and only a pass at HEAD is shown
 record("pr", head1, line="LANE pr AFFECTED 1/1 in 3s")
-check("LANE pr AFFECTED" in role.lane_part(SLUG) and "(lane:" not in role.lane_part(SLUG), "a pr lane that passed at HEAD is the one the PR body shows")
+check("LANE pr AFFECTED" in role.lane_part(SLUG) and "(qa lane" not in role.lane_part(SLUG), "a pr lane that passed at HEAD is the one the PR body shows")
 
 # Done 1/3: HEAD moves
 clear()
@@ -185,14 +185,21 @@ check(ask("pr")[0] == lane.lane_status(runs, SLUG, "pr")[0] == "pass", "no job l
 clear()
 record("qa", head2)
 fresh = ask("ship", fresh=True)
-check(fresh[0] == "fail" and "TOY_STOP" in fresh[1] and len(starts) == 1 and not os.path.exists(base("qa") + ".ok") and gate("ship")[2] == "LANE_MISSING",
-      "--fresh removes the passes and starts a lane; the gate then waits for that lane's own pass")
+check(fresh[0] == "fail" and "TOY_STOP" in fresh[1] and len(starts) == 1 and not os.path.exists(base("qa") + ".ok") and not os.path.exists(base("qa") + ".last") and gate("ship")[2] == "LANE_MISSING",
+      "--fresh removes the passes and records and starts a lane; the gate then waits for that lane's own pass")
 clear()
 record("qa", head2)
 sibling_job("pr", head2)
 blocked = ask("ship", fresh=True)
 check(blocked[0] == "fail" and blocked[1].startswith("LANE_FRESH") and os.path.exists(base("qa") + ".ok") and not starts, "--fresh while a lane runs refuses and removes nothing")
 os.remove(base("pr") + ".job")
+
+# a dead job with no exit status is cleared and a new lane starts (the crashed-job path)
+clear()
+with open(base("ship") + ".job", "w") as handle:
+    json.dump({"head": head2, "attempt": "dead", "started": time.time() - 100, "limit": 600, "rc": base("ship") + ".dead.rc", "pool": tmp,
+               "markers": 1, "pid": 999999, "pstart": ""}, handle)
+check(ask("ship")[0] == "fail" and len(starts) == 1, "a dead job record is cleared and the lane starts (no crash on the stale-job path)")
 
 # the three names run one argv
 check(list(inspect.signature(lane.lane_argv).parameters) == ["seconds"] and inspect.getsource(lane.lane).count("lane_argv(") == 1,

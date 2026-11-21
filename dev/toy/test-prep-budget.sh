@@ -101,7 +101,7 @@ kill "$hp" 2>/dev/null; wait "$hp" 2>/dev/null
 out=$(until_done h ship)
 check "its place was freed: another lane takes the slot at once and passes" 'grep -q "^pass$" <<<"$out" && ! grep -q "LANE_WAIT" "$RUNS/h.ship-lane.txt"'
 out=$(until_done h pr)
-check "the same command run again, with the slot free, passes" 'grep -q "^pass$" <<<"$out" && grep -qE "^LANE (pr|ship) " <<<"$out"'
+check "the same command run again, with the slot free, passes" 'grep -q "^pass$" <<<"$out" && grep -qE "^LANE pr |; reused: the ship lane passed on this head" <<<"$out"'
 
 }
 want edges && {

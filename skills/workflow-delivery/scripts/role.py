@@ -310,7 +310,7 @@ def lane_part(slug):
             import private
             line = private.plain(re.sub(r"; log: \S+", "", last.get("line", "").split("\n")[0]))
             if src != "pr":
-                line += " (lane: %s, ended %s)" % (src, datetime.datetime.fromtimestamp(last["ended"], datetime.timezone.utc).isoformat(" ", "minutes"))
+                line += " (%s lane ended %s)" % (src, datetime.datetime.fromtimestamp(last.get("ended", 0), datetime.timezone.utc).isoformat(" ", "minutes"))
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
