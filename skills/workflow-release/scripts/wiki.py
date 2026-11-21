@@ -95,7 +95,7 @@ def dirty_generated(top):  # differs from HEAD now
 def regenerated(top, name):
     """Exactly entry.write's render (an agent file: HEAD's text with the block swapped)?"""
     out = lambda what: run([sys.executable, ENTRY, what, "--repo", top]).stdout
-    held = git("show", "HEAD:" + name, cwd=top, check=False) + "\n"
+    held = run(["git", "show", "HEAD:" + name], cwd=top).stdout
     want = out("render") if name == GENERATED[0] else BLOCK.sub(lambda _: out("block").rstrip("\n"), held, 1)
     path = os.path.join(top, name)
     return os.path.isfile(path) and open(path, newline="").read().replace("\r\n", "\n") == want

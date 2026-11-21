@@ -60,6 +60,7 @@ $wiki prepare s --commit >/dev/null 2>&1 || true
 [ -z "$(git status --porcelain)" ] && ok "the repair path leaves START.md committed" || bad "left uncommitted: $(git status --porcelain | tr '\n' ' ')"
 git diff --quiet HEAD -- .loop/START.md && $entry check 2>&1 | grep -q "ENTRY_STALE" && bad "START.md is stale at HEAD" || ok "START.md is current at HEAD"
 
+mkdir -p "$(git rev-parse --git-common-dir)/loop/runs"; echo '{"slug": "s"}' > "$(git rev-parse --git-common-dir)/loop/runs/s.json"  # a goal with no PR: nothing pushes
 echo "== a dirty file with a hand edit mixed into the regeneration is not committed, and prepare fails"
 printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > CLAUDE.md
 git add -A; git commit -qm "CLAUDE.md with a stale block"
@@ -70,6 +71,19 @@ out=$($wiki prepare s --commit 2>&1) && code=0 || code=$?
 grep -q "WARNING: CLAUDE.md has edits" <<<"$out" && ok "the mixed file is named" || bad "no warning: $out"
 git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && bad "a mixed CLAUDE.md was committed" || ok "the mixed CLAUDE.md is not committed"
 git checkout -q -- CLAUDE.md; $entry write >/dev/null; git commit -qam "CLAUDE.md block current"
+
+echo "== a pure regeneration is committed whatever the file's trailing newlines are"
+for tail in "" "
+
+"; do
+  printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->%s' "$tail" > CLAUDE.md
+  git add -A; git commit -qm "CLAUDE.md, stale block, odd ending"
+  before=$(git rev-parse HEAD)
+  $entry write >/dev/null  # the merge.py repair path: dirty before the audit, so it is compared with the render
+  $wiki prepare s --commit >/dev/null 2>&1 || true
+  git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && [ -z "$(git status --porcelain)" ] && ok "committed as regenerated, ending ${#tail} newline(s)" || bad "refused as edits, ending ${#tail} newline(s)"
+done
+$entry write >/dev/null; git commit -qam "CLAUDE.md block current" 2>/dev/null || true
 
 echo "== only what entry.write changed is committed: a hand edit and a deletion stay out"
 printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > AGENTS.md
