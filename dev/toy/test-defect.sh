@@ -16,7 +16,7 @@ unset LOOP_BATCH
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-cases="home-sandbox wording flow-steps categories defect-owed health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
+cases="home-sandbox wording flow-steps categories defect-owed closing-keywords closing-unaffected health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
 if [ $# = 0 ]; then
   fails=0
   for c in $cases; do
@@ -143,6 +143,28 @@ PY
     $reg red fixit-77 --break 'rm calc.py' | grep -q "SEEN RED" || no "red"
     git add -A; git commit -qm "Seen failing"
     $goal pr fixit 2>&1 | grep -q "^PR " || no "pr refused with a defect test seen failing and passing"
+    exit 0;;
+  closing-keywords) # DEL-19: a PR that adds a defect row for an issue must close it with Fixes, Closes or Resolves #N
+    toy
+    finish closer "calc has closer"
+    $reg add closer-88 --level land --command 'test -f calc.py' --goal - --category defect --link https://github.com/o/r/issues/88 --describe "calc.py stays" >/dev/null
+    git add -A; git commit -qm "Defect row"
+    $reg red closer-88 --break 'rm calc.py' | grep -q "SEEN RED" || no "red"
+    git add -A; git commit -qm "Seen failing"
+    $goal pr closer 2>&1 | grep -q "the PR leaves #88 open" || no "pr opened without closing the defect row's issue"
+    printf 'see issue #88\n' > "$d/body"; python3 "$here/skills/workflow-monitoring/scripts/pool.py" closing "$d/body" | grep -q "REFUSED: the PR leaves #88 open" || no "a body that only mentions #88 passed (negative control)"
+    for word in Fixes Closes Resolves fixes; do
+      printf '%s #88\n' "$word" > "$d/body"; python3 "$here/skills/workflow-monitoring/scripts/pool.py" closing "$d/body" | grep -q "CLOSING OK" || no "$word #88 was refused"
+    done
+    printf 'Fixes #99\n' > "$d/body"; python3 "$here/skills/workflow-monitoring/scripts/pool.py" closing "$d/body" | grep -q "leaves #88 open" || no "closing another issue passed"
+    printf '\nFixes #88\n' >> .loop/goals/closer.md; git commit -qam "Goal: name the issue it closes"
+    $goal pr closer 2>&1 | grep -q "^PR " || no "pr refused though the goal file closes #88"
+    exit 0;;
+  closing-unaffected) # DEL-19: a goal that adds no defect row is not asked to close anything
+    toy
+    finish plain "calc has plain"
+    printf 'nothing to close\n' > "$d/body"; python3 "$here/skills/workflow-monitoring/scripts/pool.py" closing "$d/body" | grep -q "CLOSING OK" || no "a branch with no new defect row was refused"
+    $goal pr plain 2>&1 | grep -q "^PR " || no "a goal with no defect row was refused"
     exit 0;;
   health-closed) # done line 6: health flags a closed issue or finding with no defect test
     toy

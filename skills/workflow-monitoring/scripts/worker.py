@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """A worker runs one goal's own loop to the end, then reports back to the operation session.
 
-Also holds sessions.py bind (worker_line, announce, cmd_bind) and the session tool (tool, call), imported by sessions.py.
+Also holds sessions.py bind (worker_line, announce, cmd_bind) and the session tool (tool, call).
 
 usage: worker.py <command> [options]
 
-  loop SLUG -- COMMAND...   run the goal's agent command; when it ends, send the result back (watch.py and mend.py start this)
+  loop SLUG -- COMMAND...   run the goal's agent command; when it ends, send the result back (watch.py, mend.py start it)
   report SLUG STATUS [--pr URL] [--words TEXT]
                             send a result back by hand: STATUS is merged, failed or waiting
-  met SLUG N [N...]         record that done lines N are met (kept off the live board)
-  cleanup [--dry-run]       delete the loop/* branches already merged into main that no worktree has checked out
-                            (git branch -d, never a remote); health.py check names this as the fix
-  send SLUG TEXT            send a worker an answer; goal.py and flow.py print it to its agent next run, then file it away
+  met SLUG N [N...]         record that done lines N are met
+  cleanup [--dry-run]       delete loop/* branches already merged into main that no worktree has checked out (git
+                            branch -d, never a remote); health.py check names this as the fix
+  send SLUG TEXT            send a worker an answer; goal.py and flow.py print it to its agent next run
 
-A report is the run record's `report`: {"status", "pr", "text", "at"}; a failed or waiting one stays top of Issues until the
-goal moves on. It never merges.
+A report is the run record's `report`: {"status", "pr", "text", "at"}; a failed or waiting one stays on Issues until the goal
+moves on. It never merges.
 """
 import argparse
 import datetime
@@ -52,7 +52,7 @@ except ImportError:  # native Windows msvcrt byte-range locks under flock's name
 
     fcntl = types.SimpleNamespace(LOCK_SH=1, LOCK_EX=2, LOCK_NB=4, LOCK_UN=8, flock=_flock)
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No terminal: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -108,7 +108,7 @@ def merged(url):
 
 def held_by_operation(state):
     """Whether the operation holds the goal: held_at or hold_at (sessions.py report --hold) is stamped, or its run log's last
-    hold entry has no later step, bind or resume (board_log.holding). A held goal merges only on a go."""
+    hold has no later step, bind or resume (board_log.holding). A held goal merges only on a go."""
     import board_log
     paused = False
     for entry in state.get("log") or []:
@@ -117,8 +117,8 @@ def held_by_operation(state):
 
 
 def release_step(state):
-    """A worker that ended with its pull request waiting, where auto_merge is on, gets merge.py run for it (its own lock and
-    queue cover it), unless the operation holds the goal (#3868)."""
+    """A worker that ended with its pull request waiting, where auto_merge is on, gets merge.py run for it, unless the
+    operation holds the goal (#3868)."""
     tree = state.get("worktree") or ""
     try:
         with open(os.path.join(tree, ".loop", "config.json")) as handle:
@@ -146,7 +146,7 @@ def log_since(slug, mark):
 
 
 def outcome(state, text):
-    """What a finished worker sends back, from its run record."""
+    """What a finished worker sends back."""
     status, pr = state.get("status"), state.get("pr", "")
     if status == "done":
         landed = bool(pr) and merged(pr)
@@ -163,6 +163,7 @@ def cmd_loop(args):
         sys.exit("REFUSED: loop needs a run record and a command after --.")
     mark = os.path.getsize(os.path.join(base(), "logs", args.slug + ".log")) if os.path.exists(os.path.join(base(), "logs", args.slug + ".log")) else 0
     code = subprocess.run(args.command, env=dict(os.environ, LOOP_ROLE="worker")).returncode
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "routing.py"), "finish", args.slug, str(code)], capture_output=True)
     state = load(args.slug) or state
     release_step(state)
     state = load(args.slug) or state
@@ -173,7 +174,7 @@ def cmd_loop(args):
     if found:
         state["tokens"] = dict(state.get("tokens") or {}, total=int(found[-1].replace(",", "")))
     report = outcome(state, text)
-    fresh = load(args.slug) or state  # issue 159: a merge recorded meanwhile is never overwritten
+    fresh = load(args.slug) or state  # issue 159: a merge recorded meanwhile stays
     if (fresh.get("report") or {}).get("status") == "merged" or fresh.get("status") in ("merged",):
         report = fresh.get("report") or report
     elif fresh.get("status") != state.get("status") and fresh.get("status") not in ("running",):
@@ -276,7 +277,7 @@ def inside(folder, tree):
 
 
 def announce(g, args, tree, was, worker):
-    """Print the WORKER and WORKTREE lines for whoever binds to pass on."""
+    """Print the WORKER and WORKTREE lines for the binder to pass on."""
     attempt = (g.load(args.slug) or {}).get("attempt")
     lines = [worker_line(args.slug) + (" (attempt %s: pass --attempt %s to sessions.py report)" % (attempt, attempt) if attempt else "")]
     lines += ["WORKTREE %s: %s" % (args.slug, tree)] if tree else []
@@ -287,7 +288,7 @@ def announce(g, args, tree, was, worker):
 
 
 def self_id(args):
-    """`bind SLUG self`: the id from CLAUDE_CODE_HOST_SESSION_ID (issue 117); unset is a usage error."""
+    """`bind SLUG self`: the id from CLAUDE_CODE_HOST_SESSION_ID (issue 117); unset is an error."""
     if args.id != "self":
         return
     args.id = os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "").strip()
@@ -362,7 +363,7 @@ def tool(cfg):
     return [os.path.expanduser(str(part)) for part in found] if isinstance(found, list) and found else []
 
 
-HUNG = []  # set when a call times out: the tool is given up for this run
+HUNG = []  # set when a call times out: the tool is given up
 LAST_ERROR = [""]  # the last call's failure
 
 
@@ -375,8 +376,8 @@ def timeout():
 
 def call(command, *args):
     """One session tool call: its last output line, or None when it can't start or reach a session. A call past
-    LOOP_SESSION_TIMEOUT (default 30 s) is killed with its process group; the tool is then given up for the run (watch.py
-    clears that each round). Output goes to a file, so a helper the tool leaves running can't hold it."""
+    LOOP_SESSION_TIMEOUT (default 30 s) is killed with its process group and the tool is given up for the run (watch.py
+    clears that each round). Output goes to a file, so a helper left running can't hold it."""
     LAST_ERROR[0] = ""
     if HUNG:
         LAST_ERROR[0] = "the session tool timed out earlier in this run"
