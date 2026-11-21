@@ -29,6 +29,8 @@ import json, os, sys
 F = sys.argv[1]
 good = """Two goals moved; one needs you.
 
+Machine: RAM 8.0 GB free, commit 20 GB free, CPU 30%, 1 claude, 2 node; memory allows 3 goals
+
 ## All sessions
 | session | repo | for | status | progress | ETA | tokens left | latest |
 |---|---|---|---|---|---|---|---|
@@ -40,6 +42,10 @@ good = """Two goals moved; one needs you.
 [>] alpha
  |
 [ ] beta
+-- v1 release ETA today ~18:30 (2 goals, 1 not started) --
+  Median feature:
+    [>] alpha ~20m left mac
+    [ ] beta ~40m left mac
 ```
 
 ## Needs you
@@ -63,7 +69,7 @@ replies = {
     "cased": good.replace("## All sessions", "## All Sessions").replace("## Needs you", "## Needs you (1)").replace(
         "1. Release alpha?", "- Q1. Release alpha?"),
     "fenced": good.replace("## Coming up\n", "```\nComing up\n```\n"),
-    "onefence": good.replace("[ ] beta\n```\n", "[ ] beta\n```\n```a -> b```\n"),
+    "onefence": good.replace("[ ] beta ~40m left mac\n```\n", "[ ] beta ~40m left mac\n```\n```a -> b```\n"),
     "clock": good.replace("1. Release alpha? Options: cut, leave. Recommended: leave. [blocks nothing]\n", "- 10:30 standup\n"),
 }
 for name, text in replies.items():
