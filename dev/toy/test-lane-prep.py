@@ -41,6 +41,8 @@ class Goal:
         return git(self.repo, *args)
 
     def run(self, args):
+        if args[0] == "git":  # the README commit itself runs for real
+            return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + args[1:], cwd=self.repo, capture_output=True, text=True)
         self.write and open(os.path.join(self.repo, "README.md"), "a").write(self.write)
         return subprocess.CompletedProcess(args, self.rc, "", "")
 
@@ -88,6 +90,18 @@ if only in ("", "readme"):
     before = git(repo, "rev-parse", "HEAD")
     fit.regen(Goal(repo, "\nConfidence 99%\n", 1), "slug")
     check("negative control: when the wiki step fails (a page is still stale) README is not committed alone", git(repo, "rev-parse", "HEAD") == before)
+
+    repo = fresh_repo()
+    hook = os.path.join(repo, ".git", "hooks", "pre-commit")
+    open(hook, "w").write("#!/bin/sh\necho refused by the test hook >&2\nexit 1\n")
+    os.chmod(hook, 0o755)
+    before = git(repo, "rev-parse", "HEAD")
+    import contextlib
+    import io
+    said = io.StringIO()
+    with contextlib.redirect_stdout(said):
+        fit.regen(Goal(repo, "\nConfidence 99%\n"), "slug")
+    check("a refused README commit says so in plain words with the fix and does not crash", "NOTE: README.md was re-rendered but not committed" in said.getvalue() and "Fix: commit it by hand" in said.getvalue() and git(repo, "rev-parse", "HEAD") == before)
 
 print("ALL PASS" if not fails else "%d FAILED" % fails)
 sys.exit(1 if fails else 0)

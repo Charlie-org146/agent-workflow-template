@@ -273,8 +273,8 @@ def regen(g, slug):
     done = g.run([sys.executable, tool("workflow-release", "scripts", "wiki.py"), "prepare", slug, "--commit"])
     done.returncode and print("NOTE: stale page: " + done.stdout)
     if not readme and not done.returncode and g.git("status", "--porcelain", "--", "README.md").startswith("M"):
-        g.git("commit", "-m", "Wiki: update pages for " + slug, "--", "README.md")
-        print("COMMITTED README.md for " + slug)
+        kept = g.run(["git", "commit", "-q", "-m", "Wiki: update pages for " + slug, "--", "README.md"])
+        print("COMMITTED README.md for " + slug if not kept.returncode else "NOTE: README.md was re-rendered but not committed (%s). Fix: commit it by hand, then run goal.py pr again" % (kept.stderr or kept.stdout).strip()[:200])
     return g.git("rev-parse", "HEAD")
 
 
