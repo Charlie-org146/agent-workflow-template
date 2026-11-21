@@ -743,3 +743,4 @@
 | <a id="t-defect-5605-guide-stamp"></a>defect-5605-guide-stamp | defect | [#5605](https://github.com/Charlie-org146/agent-workflow-template/issues/5605) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5386-restamp-no-identity"></a>defect-5386-restamp-no-identity | defect | [#5386](https://github.com/Charlie-org146/agent-workflow-template/issues/5386) state unknown | not run | - | local | 2026-11-21 |
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) state unknown | not run | - | local | no |
+| <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) state unknown | not run | - | local | 2026-11-21 |
