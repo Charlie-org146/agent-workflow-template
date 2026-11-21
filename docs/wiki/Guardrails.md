@@ -17,21 +17,44 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
 
 ### Functional
 
-- GRD-4: **Reviewed 2026-11-20** Every session and automation gets least access <!-- reviewed 9110aaad -->
+- GRD-4: **Unreviewed** Every session and automation gets least access
   - A worker touches only its own goal's state and cannot widen its files or budget, or resume itself. [GRD-4]
   - Check-ins never edit, commit or push. [GRD-4]
   - Each routine declares allow and deny rules and keeps its prompt locally. [GRD-4]
-- GRD-5: **Reviewed 2026-11-20** Nothing is written outside without explicit say <!-- reviewed f7806e3b -->
+
+  - Feature markers v1
+  - Reference: GitHub Actions `permissions`: adopted; NIST SP 800-53 AC-6, Kubernetes RBAC: adapted
+  - Line 1: metric missing; test 12 linked rows, see Tests
+  - Line 2: metric missing; test 12 linked rows, see Tests
+  - Line 3: metric missing; test 12 linked rows, see Tests
+- GRD-5: **Unreviewed** Nothing is written outside without explicit say
   - GitHub writes preview by default and need `--live`. [GRD-5]
   - Integrations read by default and write only behind a switch and an accepted delta. [GRD-5]
   - I attach connectors myself. [GRD-5]
-- GRD-6: **Reviewed 2026-11-20** Base branch and hooks cannot be bypassed <!-- reviewed 361f1915 -->
+
+  - Feature markers v1
+  - Reference: GitHub environments with required reviewers: adapted
+  - Line 1: metric missing; test 3 linked rows, see Tests
+  - Line 2: metric missing; test 3 linked rows, see Tests
+  - Line 3: metric missing; test 3 linked rows, see Tests
+- GRD-6: **Unreviewed** Base branch and hooks cannot be bypassed
   - The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]
   - Hook-skipping commits are refused and flagged. [GRD-6]
-- GRD-20: **Reviewed 2026-11-20** Sizes are one table, enforced on main, never met by reformatting <!-- reviewed 2ecb9a54 -->
+
+  - Feature markers v1
+  - Reference: GitHub rulesets with merge queue and required checks: adopted; pre-commit: adopted
+  - Line 1: metric missing; test 1 linked rows, see Tests
+  - Line 2: metric missing; test 1 linked rows, see Tests
+- GRD-20: **Unreviewed** Sizes are one table, enforced on main, never met by reformatting
   - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]
   - No script on main is over its fail line. [GRD-20]
   - Reformatting a whole file only to fit is refused. [GRD-20]
+
+  - Feature markers v1
+  - Reference: Agensi packaging rules: adopted; ESLint `max-lines`: adapted
+  - Line 1: metric missing; test 1 linked rows, see Tests
+  - Line 2: metric missing; test 1 linked rows, see Tests
+  - Line 3: metric missing; test 1 linked rows, see Tests
 
 ### Non-functional
 
