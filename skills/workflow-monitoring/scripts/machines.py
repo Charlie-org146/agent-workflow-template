@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Goals that move between machines, one merge order across them, and a structured SNAPSHOT (machine-coordination).
+"""Cross-machine goals, merge order and SNAPSHOT.
 
 usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record, mark it moved here (no worker)
        machines.py take SLUG                    fetch the branch and record, bind a worker
        machines.py snapshot [--publish]         this machine's SNAPSHOT (JSON); --publish shares it
        machines.py turn                         who holds the cross-machine merge turn
 
-Machines share git refs on origin, each one small JSON blob: refs/loop/handover/<slug> (a handover's record),
-refs/loop/pr-turn (one merge ticket per repo, dropped after LOOP_MERGE_LOCK_SECONDS of silence) and refs/loop/snapshot/<machine>
-(what the check-in's Machine lines draw on). With `machine_sync` off or no reachable origin the passive calls do nothing. A `moved` record
-starts no worker, and a peer's record is never the owner's approval. start_worker is the one place a worker starts.
+Origin's JSON refs: refs/loop/handover/<slug> (record), refs/loop/pr-turn (merge ticket, expires after
+LOOP_MERGE_LOCK_SECONDS), refs/loop/snapshot/<machine> (check-in). Passive calls need machine_sync and reachable origin.
+A moved record starts no worker; a peer's record grants no approval. Only start_worker starts workers.
 """
 import argparse
 import hashlib
@@ -164,8 +163,13 @@ def batch(top, common, cfg, slugs, go, M):
             print("ALONE %s: %s; merge.py %s" % (slug, why, slug))
         if len(kept) < 2:
             return say("BATCH_NONE: fewer than 2 can be batched. Nothing merged.", 4)
-        made = M.run(["gh", "pr", "create", "--draft", "--base", base, "--head", "batch/" + bid, "--title", "Batch: " + ", ".join(kept),
-                      "--body", "One CI run for %s." % ", ".join(kept)], top)
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8", newline="\n") as f:
+            f.write("One CI run for %s." % ", ".join(kept))
+        try:
+            made = M.run(["gh", "pr", "create", "--draft", "--base", base, "--head", "batch/" + bid, "--title", "Batch: " + ", ".join(kept),
+                          "--body-file", f.name], top)
+        finally:
+            os.remove(f.name)
         if made.returncode:
             return say("BATCH_PR_FAILED: %s" % made.stderr.strip()[-150:], 1)
         rec = batch_file(common, bid, {"slugs": kept, "head": head, "phase": "assembled", "pr": made.stdout.strip().splitlines()[-1]})
