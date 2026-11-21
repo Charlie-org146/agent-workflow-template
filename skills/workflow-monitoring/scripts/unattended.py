@@ -238,7 +238,7 @@ def prerequisites():
             need("real symlinks", symlinks(), "on Windows turn on Developer Mode, or run the install with MSYS=winsymlinks:nativestrict"),
             need("platform", sys.platform in ("darwin", "linux", "win32"), "use macOS, Linux or Windows"),
             "OK private-name list" if os.path.exists(os.environ.get("LOOP_PRIVATE_NAMES") or os.path.join(HOME, "private-names")) else
-            "NOTE private-name list: none. Fix: add ~/.workflow-loop/private-names; @public or @repos=a,b scopes a line"]
+            "NOTE private-name list: none, so every push stops. Fix: add ~/.workflow-loop/private-names; @public or @repos=a,b scopes a line"]
 
 
 def followed():

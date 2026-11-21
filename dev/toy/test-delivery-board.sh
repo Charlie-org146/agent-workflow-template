@@ -118,7 +118,7 @@ if want issues; then
   new i1; git switch -q main
   edit i1 "s.update(finding_error='finding commit holds a private name at commit:abc1234 (list line 2). Fix: remove it, then push the finding commit (FINDING_LOCAL)')"
   board
-  check "with no private-name list, Issues says nothing is scanned and how to create one" 'issues | grep -q -- "- no private-name list: nothing is scanned (create \$HOME/.workflow-loop/private-names; a file holding only comments says off on purpose)"'
+  check "with no private-name list, Issues says every push and merge stops and how to create one (o675)" 'issues | grep -q -- "- no private-name list: every push and merge stops (create \$HOME/.workflow-loop/private-names; an empty file passes, o675)"'
   check "a finding a scan kept local shows under Issues with its place and fix" 'issues | grep -q -- "- i1: a finding stayed local: finding commit holds a private name at commit:abc1234 (list line 2) fix: remove it, then push the finding commit (FINDING_LOCAL)"'
   mkdir -p "$HOME/.workflow-loop"; printf '# off on purpose\n' > "$HOME/.workflow-loop/private-names"
   board

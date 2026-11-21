@@ -9,7 +9,8 @@
 # verdicts in the pull request (issue 38) and GitHub touches, regeneration warnings and set (issue 117). No model.
 # usage: test-delivery-prd.sh [depth|resume|budget|private|defects|hold|guard|all]
 set -u
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_PRIVATE_NAMES LOOP_BATCH LOOP_ROLE  # w() sets the worker role per call; set and touches run as the operation
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH LOOP_ROLE  # w() sets the worker role per call; set and touches run as the operation
+export LOOP_PRIVATE_NAMES=/dev/null  # o675: no list stops the scan, so a toy names an explicit empty one
 here=$(cd "$(dirname "$0")/../.." && pwd); case=${1:-all}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
@@ -186,12 +187,14 @@ PY
   printf 'good\n(unclosed\n' > "$d/names"; prgoal priv5
   out=$(w $goal pr priv5 2>&1)
   check "a broken list refuses every push, naming the file and line, never the pattern" 'grep -q "\$LOOP_PRIVATE_NAMES line 2 isn.t a valid pattern.*(PRIVATE_LIST)" <<<"$out" && ! git ls-remote --exit-code origin loop/priv5 >/dev/null'
-  unset LOOP_PRIVATE_NAMES; prgoal priv6; w $goal pr priv6 >/dev/null 2>&1
-  check "with no list the pull request says nothing was checked, naming the list unexpanded" 'grep -q "Private-name scan: no list at ~/.workflow-loop/private-names, nothing was checked" "$FAKE_GH_DIR/calls.log" && ! grep -q "$HOME" "$FAKE_GH_DIR/calls.log"'
+  prgoal priv6; out=$( (unset LOOP_PRIVATE_NAMES; w $goal pr priv6 2>&1) )
+  check "with no list the pull request is refused (o675), naming the list unexpanded, and nothing is pushed" 'grep -q "no private-name list at ~/.workflow-loop/private-names.*(PRIVATE_LIST)" <<<"$out" && ! grep -q "$HOME" <<<"$out" && ! git ls-remote --exit-code origin loop/priv6 >/dev/null'
+  : > "$d/empty-list"; prgoal priv7; out=$(LOOP_PRIVATE_NAMES="$d/empty-list" w $goal pr priv7 2>&1)
+  check "negative control: an empty list passes the same pull request" 'grep -q "^PR " <<<"$out"'
   mkdir -p "$HOME/.workflow-loop"; printf '# nothing private here\n' > "$HOME/.workflow-loop/private-names"
   check "a list named by LOOP_PRIVATE_NAMES that doesn't exist is broken, never silently no list" 'LOOP_PRIVATE_NAMES="$d/no-such-list" python3 $S/private.py check | grep -q "broken: \$LOOP_PRIVATE_NAMES names a file that doesn.t exist (PRIVATE_LIST)"'
-  check "a list holding only comments is off on purpose" 'python3 $S/private.py check | grep -q "off on purpose"'
-  rm -rf "$HOME/.workflow-loop"
+  check "a list holding only comments is off on purpose" 'env -u LOOP_PRIVATE_NAMES python3 $S/private.py check | grep -q "off on purpose"'
+  rm -rf "$HOME/.workflow-loop"; export LOOP_PRIVATE_NAMES=/dev/null  # the cases after this one name an explicit empty list too
 fi
 
 if on defects; then

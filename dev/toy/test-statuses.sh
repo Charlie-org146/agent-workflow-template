@@ -15,7 +15,7 @@ export HOME=$(mktemp -d) PATH="$here/dev/toy/fakegh:$PATH"
 export USERPROFILE="$HOME"
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 export FAKE_GH_DIR="$d/gh"; mkdir -p "$FAKE_GH_DIR"
-unset LOOP_PRIVATE_NAMES
+export LOOP_PRIVATE_NAMES=/dev/null  # o675: no list stops the scan, so a toy names an explicit empty one
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
