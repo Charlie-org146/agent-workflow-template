@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """v110-text: check that DEL-19, DEL-23, DOC-28 and the v1.1.0 brief read word for word as on the owner's pinned page.
 Read-only: it writes nothing. Run from the repo root: python3 docs/v110-text-check.py PINNED_HTML
-The page is pinned by sha256 (full digest below); the one allowed difference is the other repo's name, written "the service repo"."""
+The page is pinned by the first 16 hex digits of its sha256 (PIN below), the pin the goal froze; the one allowed difference is the other repo's name, written "the service repo"."""
 import hashlib
 import html
 import re
 import sys
 
-FULL = None  # the first 16 hex digits are the pin the goal froze
 PIN = "cd66455a83be4a0b"
 raw = open(sys.argv[1], encoding="utf-8").read()
 if hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16] != PIN:
@@ -89,19 +88,21 @@ eyebrow = md(re.search(r'<div class="eyebrow">(.*?)</div>', bsec, re.S)[1])
 ul = re.search(r"<ul>(.*)</ul>\s*</section>", bsec, re.S)[1]
 want = ["## " + h2, "", eyebrow, ""]
 ul2 = re.sub(r"<ol>.*?</ol>", lambda m: m[0].replace("<li>", "<oli>").replace("</li>", "</oli>"), ul, flags=re.S)
-for it in re.findall(r"<li>(.*?)</li>\s*(?=<li>|\$)", ul2, re.S):
+for it in re.findall(r"<li>(.*?)</li>\s*(?=<li>|\Z)", ul2, re.S):
     if "<ol>" in it:
         head, rest = it.split("<ol>", 1)
         want.append("- " + md(head))
         want += ["  %d. %s" % (n, md(x)) for n, x in enumerate(re.findall(r"<oli>(.*?)</oli>", rest, re.S), 1)]
     else:
         want.append("- " + md(it))
+assert len(re.findall(r"<li>", ul2)) == sum(1 for w in want if w.startswith("- ")), "a top-level bullet of the pinned section was not read"
 other = "therm" + "is"
 text = "\n".join(want) + "\n"
 text = text.replace("the " + other + " feature migration (" + other + "#1240", "the service repo feature migration (the service repo #1240")
-say(other not in text, "the expected brief text holds no other repo's name after the one swap")
+say(other not in text.lower(), "the expected brief text holds no other repo's name after the one swap")
 brief = open("docs/release-brief-v1.1.0.md", encoding="utf-8").read()
 say(brief.split("\n", 1)[0].startswith("v1.1.0 Frozen"), "the brief's first line says frozen")
-say(text in brief, "the brief carries the pinned section word for word (only that name swapped)")
+say(other not in brief.lower(), "the brief file holds no other repo's name")
+say(brief.split("\n", 2)[2:] == [text], "the brief is its frozen first line, a blank line and the pinned section word for word, nothing else (only that name swapped)")
 print("ALL PASS" if not bad else "%d FAILED" % bad)
 sys.exit(1 if bad else 0)
