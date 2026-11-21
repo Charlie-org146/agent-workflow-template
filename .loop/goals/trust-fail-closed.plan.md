@@ -34,3 +34,10 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 <!-- autoplan-accepted:eng -->
 - operate.py stays at or under 20,480 bytes; the refusal covers missing, empty, invalid, directory and no-projects files; no assert in any toy is loosened; no new file under skills/.
 <!-- /autoplan-accepted:eng -->
+
+### Red-team answers (plan-record taken; five BREAK lines)
+- B1 (principle 1): accepted and stated. The flipped controls are the point of done line 1: each old assert that bind "goes through" with no file is replaced by its opposite and nothing is deleted or weakened; no other assert is touched. Fixtures gain a trusting file through ONE shared helper in the toy harness where a harness exists (the red team's cheaper path), not per-toy edits.
+- B2 (principle 2): the new regression row is first run against the unfixed `untrusted()` (git stash is banned; the row runs in a lane clone detached at the parent commit with the new toy only) and must be seen red, then green at the fix.
+- B3 (principle 3): no reformatting; only the one function's docstring wording changes, and only if the bytes need it.
+- B5 (principle 5): goes to operation, not decided here: a machine with no trust file has no trust entry to create from this repo; Claude Code writes the entry when the owner trusts the folder, so the setup text should say so.
+- B6 (principle 6): goes to operation: a message naming the unreadable file needs about 22 bytes against 13 spare; it fits only if the docstring is cut to one short line.
