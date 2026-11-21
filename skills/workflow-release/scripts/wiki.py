@@ -83,15 +83,29 @@ def pending(top, cfg, fix=False, head="HEAD", filer=None):
     return kept
 
 
-def commit(top, cfg, slug):
+GENERATED = (".loop/START.md", "CLAUDE.md", "AGENTS.md")
+
+
+def dirty_generated(top):
+    """The generated entry files that differ from HEAD right now (a hand edit, a deletion or a stale copy)."""
+    return {f for f in GENERATED if run(["git", "ls-files", "--", f], cwd=top).stdout.strip()
+            and run(["git", "status", "--porcelain", "--", f], cwd=top).stdout.strip()}
+
+
+def commit(top, cfg, slug, before=None):
+    """Commit the wiki pages. With before (dirty_generated taken ahead of the audit), also commit the entry files the audit's
+    entry.write changed (#5317); a file already dirty before it is left alone with a warning, never staged."""
     folder = cfg.get("wiki_dir") or "docs/wiki"
     if run(["git", "status", "--porcelain", "--", folder], cwd=top).stdout.strip():
         git("add", "--", folder, cwd=top)
         git("commit", "-m", "Wiki: update pages for %s" % slug, "--", folder, cwd=top)
         print("COMMITTED the wiki pages for %s" % slug)
-    # #5317: the audit's entry.write regenerates these; left uncommitted they push stale and merge.py refuses
-    made = [f for f in (".loop/START.md", "CLAUDE.md", "AGENTS.md")
-            if run(["git", "ls-files", "--", f], cwd=top).stdout.strip() and run(["git", "status", "--porcelain", "--", f], cwd=top).stdout.strip()]
+    if before is None:
+        return
+    now = dirty_generated(top)
+    for f in sorted(now & before):
+        print("WARNING: %s had edits before the audit, so it is not committed. Fix: commit or restore it by hand" % f)
+    made = [f for f in GENERATED if f in now - before]
     if made:
         git("commit", "-m", "Regenerate %s for %s" % (", ".join(made), slug), "--", *made, cwd=top)
         print("COMMITTED the regenerated %s for %s" % (", ".join(made), slug))
@@ -103,11 +117,12 @@ def cmd_prepare(args):
         print("NO WIKI: .loop/docs.tsv is not set up.")
         return 0
     cfg = read_config(top)
+    before = dirty_generated(top)
     if args.commit:
         commit(top, cfg, args.slug)
     stale = pending(top, cfg, fix=args.commit)
     if args.commit:
-        commit(top, cfg, args.slug)  # the audit's mechanical fixes
+        commit(top, cfg, args.slug, before)  # the audit's mechanical fixes and the entry files it regenerated
     for line in stale:
         print(line)
     if stale:

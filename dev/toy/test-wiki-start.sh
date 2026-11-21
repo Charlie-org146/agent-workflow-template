@@ -50,4 +50,16 @@ $wiki prepare s --commit >/dev/null 2>&1 || true
 [ -z "$(git status --porcelain)" ] && ok "a stale CLAUDE.md block leaves nothing uncommitted" || bad "left uncommitted: $(git status --porcelain | tr '\n' ' ')"
 git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && ok "CLAUDE.md is in a commit" || bad "CLAUDE.md is in no commit"
 [ "$(git log -1 --format=%s)" = "Regenerate CLAUDE.md for s" ] && ok "the message names the file committed" || bad "message: $(git log -1 --format=%s)"
+
+echo "== only what entry.write changed is committed: a hand edit and a deletion stay out"
+printf '# Toy\n\n<!-- workflow-loop -->\n## Workflow loop\n\n- stale line\n<!-- /workflow-loop -->\n' > AGENTS.md
+git add -A; git commit -qm "Track AGENTS.md with a stale block"
+echo "my own note" >> CLAUDE.md
+rm AGENTS.md
+before=$(git rev-parse HEAD)
+out=$($wiki prepare s --commit 2>&1 || true)
+git log --name-only --format= "$before..HEAD" | grep -qx "CLAUDE.md" && bad "a hand edit to CLAUDE.md was committed" || ok "a hand edit to CLAUDE.md is not committed"
+git log --name-only --format= "$before..HEAD" | grep -qx "AGENTS.md" && bad "a deleted AGENTS.md was committed" || ok "a deleted tracked AGENTS.md is not committed"
+grep -q "WARNING: CLAUDE.md had edits" <<<"$out" && grep -q "WARNING: AGENTS.md had edits" <<<"$out" && ok "each file left alone is named in a warning" || bad "no warning naming both files: $out"
+git status --porcelain | grep -q "CLAUDE.md" && git status --porcelain | grep -q "AGENTS.md" && ok "both stay as the owner left them" || bad "a file was touched"
 exit $((fails > 0))
