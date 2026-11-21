@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""The lane's kit, imported by lane.py and goal.py; not a command. Parts:
-1. COPIED (flow_file ... rows_line): copies of slots.py pieces; they must match workflow-regression/scripts/slots.py (test-lane-control.sh).
-2. prep, generated: the one commit a lane may make first (re-rendered Tests tables), else LANE_DIRTY or LANE_PREP_FAILED.
-3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, pr_lane, pr_head, pr_base.
-4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a stopped step left.
+"""The lane's kit, imported by lane.py and goal.py; command `codex-args` (batch.py). Parts:
+1. COPIED (flow_file ... rows_line): copies of slots.py pieces; they must match workflow-regression's slots.py (test-lane-control.sh).
+2. prep, generated: the one commit a lane may make first (re-rendered Tests tables), else LANE_DIRTY/LANE_PREP_FAILED.
+3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, pr_lane/head/base.
+4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a step left.
 5. pstart/same, audit (runs/kills.log), died/death (LANE_DIED): who may signal a lane.
 """
 import glob
@@ -68,7 +68,7 @@ def _flow():
 
 
 def time_limit(root):
-    """A lane's time limit in seconds and its source: the flow file's limit, else step_limit, else 2700."""
+    """A lane's time limit in seconds and its source: the flow file's, step_limit, else 2700."""
     value = _flow().get("limit")
     if value:
         return float(value), "flow file limit"
@@ -84,7 +84,7 @@ def lanes_dir():
 
 
 def check(pool):
-    """Create the pool 0700; refuse one that isn't yours or that others can write (OSError names why)."""
+    """Create the pool 0700; refuse one not yours or others can write (OSError says why)."""
     os.makedirs(pool, mode=0o700, exist_ok=True)
     if os.name == "nt":  # no uid or group bits: the pool sits in the user's own profile, private by its ACL
         return
@@ -98,8 +98,8 @@ def _open(path, flags=0):
 
 
 def port_base():
-    """(fd, base) for a lane's own ports (REG-8): flock the first free port-N file (N 0..99) in the pool and return
-    20000 + 100 * N, held while fd stays open; (None, why) when the pool is unavailable or all 100 are held."""
+    """(fd, base) for a lane's own ports (REG-8): flock the first free port-N file (N 0..99) and return 20000 + 100 * N, held
+    while fd stays open; (None, why) when the pool is unavailable or all 100 are held."""
     try:
         pool = lanes_dir()
         check(pool)
@@ -116,7 +116,7 @@ def port_base():
 
 
 def last_change(pool):
-    """The newest slot-file change: the queue clock (any slot taken restarts a waiting lane's span)."""
+    """The newest slot-file change: the queue clock (a taken slot restarts a waiting lane's span)."""
     times = [os.path.getmtime(path) for path in glob.glob(os.path.join(pool, "slot-*"))]
     return max(times) if times else 0.0
 
@@ -133,7 +133,7 @@ def timeout_line(text, why, held):
 
 
 def env_line(notes):
-    """A lane that gave up waiting for memory (its MEMORY_WAIT note), or one whose rows mostly could not start (LANE_ENV): the machine's fault."""
+    """A lane that gave up waiting for memory (MEMORY_WAIT) or whose rows mostly could not start (LANE_ENV): the machine's fault."""
     return notes if "MEMORY_WAIT" in notes else "LANE_ENV: most rows could not start (low memory); rerun when memory allows"
 
 
@@ -146,8 +146,7 @@ def budget_note(text, base, name):
 
 
 def rows_line(text, ran, log):
-    """The LANE line's end (DX-12, DX-18 ROWS): the goal tier's ROWS counts, the selected rows a timeout left unfinished,
-    and the lane log."""
+    """The LANE line's end (DX-12, DX-18 ROWS): the goal tier's ROWS counts, rows a timeout left unfinished, the lane log."""
     found = re.search(r"^ROWS: (\d+) selected (\(.*?\)), (\d+) reused; unmapped: (\d+)$", text, re.M)
     if not found:
         return "; log: %s" % log
@@ -448,3 +447,17 @@ def mend(git, files, base):
         return False
     print("MENDED %s: rows unioned, Tests.md taken from %s and re-rendered" % (", ".join(files), base))
     return True
+
+
+def codex_args(tree, profile):
+    """TD537 (o676): the profile with WORKTREE and GITROOTS (git objects, refs, logs, this worktree's folder) filled in."""
+    one = lambda what: git("-C", tree, "rev-parse", "--path-format=absolute", what).stdout.strip()
+    common, own = one("--git-common-dir"), one("--git-dir")
+    if any(re.search(r"danger-full-access|dangerously-bypass|(^|[/\[\",=])(hooks|config|info)([/\]\",]|$)|writable_roots=(?!GITROOTS$)", arg) for arg in profile) or own == common:
+        sys.exit("REFUSED: the Codex profile opens the sandbox, names hooks, config or info, or lists writable roots, or the worktree is unlinked.")
+    roots = json.dumps([os.path.join(common, sub) for sub in ("objects", "refs", "logs")] + [own])
+    return [tree if arg == "WORKTREE" else arg.replace("GITROOTS", roots) for arg in profile]
+
+
+if __name__ == "__main__" and sys.argv[1:2] == ["codex-args"]:  # batch.py: codex-args TREE PROFILE-ARG...
+    print(json.dumps(codex_args(sys.argv[2], sys.argv[3:])))
