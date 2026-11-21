@@ -11,7 +11,7 @@ import time
 
 import issues as IS
 import report as _report
-from defects import LINE, behind, pages, row, setting, table, wiki
+from defects import LIVE, behind, pages, row, setting, table, wiki
 
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -286,9 +286,8 @@ def requirements_per_page(root):
             limit = int(json.load(handle).get("criteria_max", 10))
     except (OSError, ValueError, TypeError, AttributeError):
         limit = 10
-    return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (len(LINE.findall(text)), limit),
-                "merge requirements, or raise criteria_max", name)
-            for name, text in pages(root).items() if len(LINE.findall(text)) > limit]
+    return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (n, limit), "merge requirements, or raise criteria_max", name)
+            for name, text in pages(root).items() for n in [len(LIVE.findall(text))] if n > limit]
 
 
 def check_time(root):

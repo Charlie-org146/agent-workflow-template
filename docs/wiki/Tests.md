@@ -347,6 +347,8 @@
 | <a id="t-judge-key-savings"></a>judge-key-savings | requirement | HLT-4 | not run | - | local | 2026-11-16 |
 | <a id="t-health-findings-table"></a>health-findings-table | requirement | HLT-2 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
 | <a id="t-health-feature-always"></a>health-feature-always | requirement | HLT-4 | PASS | 2026-11-17 | [CI 2026-11-17](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-17) | 2026-11-17 |
+| <a id="t-health-live-requirements"></a>health-live-requirements | requirement | HLT-2 | not run | - | local | 2026-11-21 |
+| <a id="t-health-migration-fires"></a>health-migration-fires | requirement | HLT-2 | not run | - | local | 2026-11-21 |
 
 ## Machines
 
