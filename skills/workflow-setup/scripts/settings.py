@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Every setting in one table: home, default, note.
-
-usage: settings.py reference [--write]   print reference (--write saves it)
-       settings.py fill-repo [--repo DIR]  fill missing repo defaults
-       settings.py fill-private [--file F]  fill private defaults (0600)
-       settings.py show [--repo DIR] [--json]  each value, its layer (default, repo, local) and home
-"""
+"""Settings: reference [--write], fill-repo, fill-private, show."""
 import argparse
 import functools
 import importlib.util
@@ -22,6 +16,7 @@ RISKY = ["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b
 TABLE = [
     ("base", REPO, "main", "The branch goals start from and pull requests target."),
     ("agent_command", REPO, [], "The command that runs a goal in the background; the prompt is its last argument."),
+    ("check_slots", REPO, 2, "Open PRs with unfinished checks allowed before a push."),
     ("parallel", REPO, 0, "Workers running at once; 0 means unlimited."),
     ("cadence", REPO, "30", "Minutes between operation check-ins, 1 to 60, or off."),
     ("auto_approve", REPO, False, "true approves what a flow step leaves for the owner, logged auto-approved."),
