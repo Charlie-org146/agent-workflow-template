@@ -154,6 +154,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 |---|---|---|---|---|
 | `base` | The branch goals start from and pull requests target. | set "base" in .loop/config.json | `main` | default |
 | `agent_command` | The command that runs a goal in the background; the prompt is its last argument. | set "agent_command" in .loop/config.json | `[]` | **overridden:** `["claude", "-p", "--model=sonnet", "--allowedTools=Bash,Read,Write,Edit,Skill"]` |
+| `check_slots` | Open PRs with unfinished checks allowed before a push. | set "check_slots" in .loop/config.json | `2` | default |
 | `parallel` | Workers running at once; 0 means unlimited. | set "parallel" in .loop/config.json | `0` | default |
 | `cadence` | Minutes between operation check-ins, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
 | `auto_approve` | true approves what a flow step leaves for the owner, logged auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |

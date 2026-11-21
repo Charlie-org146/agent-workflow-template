@@ -110,6 +110,8 @@ check <script>` and `affected <file>`; `LANES_WIDE=1` forces the wide mapping. R
 ## `workflow`
 The `workflow` command and the job it writes are in [loop-files.md](../loop-files.md).
 
+`slots` prints `SLOTS used/cap` for open PRs with unfinished checks; `check_slots` defaults to 2. Exit 1 means full, 2 could not count.
+
 ## Test listing
 
 `scripts/tests.py` (`list`, `summary`, `issues`) prints every test in one format by feature, for the wiki, health and the run summary: `loop-files.md`.
@@ -128,6 +130,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 
 | Ask | Runs |
 |---|---|
+| `/workflow-regression slots` | `python3 scripts/slots.py slots` |
 | `/workflow-regression add ID --level land --command "cmd" --goal DEL-1` | `python3 scripts/regression.py add ID --level land --command "cmd" --goal DEL-1` |
 | `/workflow-regression red ID --break "cmd"` | `python3 scripts/regression.py red ID --break "cmd"` |
 | `/workflow-regression red ID --off-platform --runner R --commit SHA` | `python3 scripts/regression.py red ID --off-platform --runner R --commit SHA` |
