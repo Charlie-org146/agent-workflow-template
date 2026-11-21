@@ -1775,6 +1775,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 |---|---|---|
 | `base` | `main` | The branch goals start from and pull requests target. |
 | `agent_command` | `[]` | The command that runs a goal in the background; the prompt is its last argument. |
+| `check_slots` | `2` | Open PRs with unfinished checks allowed before a push. |
 | `parallel` | `0` | Workers running at once; 0 means unlimited. |
 | `cadence` | `30` | Minutes between operation check-ins, 1 to 60, or off. |
 | `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged auto-approved. |
