@@ -80,7 +80,7 @@ Each requirement and how it is delivered:
 - DOC-25: Every page has the same fixed sections, and README and Home match (v2.0 planned). `python3 skills/workflow-docs/scripts/docs.py check` fails a README or Home whose sections are not System design, the principles and Requirements by feature, a README and Home that differ in a principle's sentence or table, and any wiki page with a section missing, extra, renamed or out of order for its kind. Example: rename `## Non-goals` to `## Out of scope` on a feature page and the check prints a Sections line naming the page, DOC-25 and the section it wanted. Also (was DOC-1): PRD template. Example, from the stale-found test: given a wiki page behind the code it covers, when the docs check runs, then the page is reported as stale; and, from the format-bullets test, a requirement with no sub-bullet fails the check naming the page and Requirements.
 - DOC-26: Each principle has at most five requirements, each dense and fully covering. A new need is written into an existing requirement before a new one is added; health fails a principle with more than five, and a goal that would add a sixth is refused at freeze.
 - DOC-27: The new standard: every feature is one unit you can review
-- DOC-28: Releases: major, minor and patch, each with one job, and a brief you write first
+- DOC-28: Releases: a frozen release brief picks the tasks for a cut
 
 ### Skill: workflow-docs
 - **Say:** "Check the docs"

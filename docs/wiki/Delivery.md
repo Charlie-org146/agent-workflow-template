@@ -35,13 +35,33 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A merge never makes another ready pull request re-run. [DEL-17]
   - **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17]
   - Test count and suite time stay capped. [DEL-17]
-- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
-  - The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. [DEL-19]
-  - Everything in the repo is part of one of those steps or keeps them running. [DEL-19]
-  - Main changes only through a goal's pull request. [DEL-19]
-  - A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. [DEL-19]
-  - Done lines never change after the freeze. [DEL-19]
-  - "What this is" is generated from this text. [DEL-19]
+- DEL-19: **Reviewed 2026-11-21** The goal loop: one change, one goal, one fixed format <!-- reviewed 2c388429 -->
+  - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
+  - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
+  - ### Problem
+  - The goal loop already runs every change, but its format is spread over many pages and scripts. I can't see in one place what a goal is, what steps it takes, or what it leaves behind.
+  - Last night, goals were re-frozen, relabelled and restarted in ways I couldn't follow from the board.
+  - ### Requirements
+  - DEL-19.1 A goal is one change, written in one fixed file format: its title, the task it serves, its done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that. A wrong done line needs a new goal.
+  - **Metric.** Goals whose file is missing a part, or whose done lines changed after the freeze. Target 0.
+  - **Test.** Freezing a goal with no task named, or editing a frozen done line, is refused.
+  - DEL-19.2 Every goal runs the same steps in its own worktree and session: plan, build, review, test lanes, pull request, merge queue, merge. Each step writes its result to the goal's run record, and the board shows the current step.
+  - **Metric.** Merged goals with a step missing from their run record. Target 0.
+  - **Test.** A goal that skips its review step can't open its pull request.
+  - DEL-19.3 Main changes only through a goal's pull request, merged when every check is green on its exact head.
+  - **Metric.** Commits on main that came from no goal's pull request. Target 0.
+  - **Test.** A direct push to main is refused, and a pull request whose head moved after its checks can't merge.
+  - DEL-19.4 The goal format and its steps are drawn on one page, generated from the code, so the picture can't drift from what runs.
+  - **Metric.** Differences between the drawn steps and the steps the code runs. Target 0.
+  - **Test.** Add a step to the code without regenerating, and the docs check fails.
+  - ### Non-goals
+  - It doesn't decide what to build; tasks do. It doesn't decide when to release; releases do.
+  - No change to how the steps work today. This feature describes and enforces the existing loop.
+  - ### Reference
+  - adopted
+  - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Merging only on green checks for the exact merged result.
+  - adapted
+  - [Trunk-based development](https://trunkbaseddevelopment.com/). Short-lived branches, one per change, merged to main.
 - DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
   - Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21]
   - General guidance is not a reference. [DEL-21]
@@ -50,6 +70,32 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - The target is 50%, and I set it. [DEL-21]
   - Every goal that adds or rewrites a requirement first checks whether a tool can be adopted. [DEL-21]
   - A change that lowers the score needs my words. [DEL-21]
+- DEL-23: **Reviewed 2026-11-21** Tasks: a brief I write once and freeze, run as goals <!-- reviewed 7129cd65 -->
+  - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
+  - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
+  - ### Problem
+  - I think in tasks ("migrate the features", "fix #5727"), but the loop only knows goals. Last night T1, T2 and T3 lived in a brief while their goals were re-frozen four or five times, and I couldn't tell what a "T" was.
+  - I want to keep adding work whenever I think of it, without tying it to a release.
+  - ### Requirements
+  - DEL-23.1 A task starts from a short brief I write: its name, the feature it serves, what it's for in my words, and its done-when lines. My typed word freezes it, and a frozen brief can't be edited. A change means a new task that replaces it.
+  - **Metric.** Tasks running without a frozen brief, plus edits to a frozen brief. Target 0.
+  - **Test.** Starting a task with no frozen brief is refused. Changing one word of a frozen brief fails the check.
+  - DEL-23.2 I can add a task at any time. It goes on one task list with its name, state (queued, running, waiting, done or replaced), the goals it produced and its ETA. A task doesn't need a release to exist.
+  - **Metric.** Tasks I added that don't appear on the list within one minute. Target 0.
+  - **Test.** Add a task. It shows on the list as queued, by name.
+  - DEL-23.3 Tasks are independent of each other. A task that needs another one finished names it, and doesn't start before that one is done. Two tasks that touch the same files can both build; the second merges up before its tests.
+  - **Metric.** Tasks started before a task they name was done. Target 0.
+  - **Test.** A task naming another can't start until that one is done. Two tasks with no dependency can both be running at once.
+  - DEL-23.4 A task runs as one or more goals, using the goal loop (DEL-19). It's done when every done-when line in its brief is met and all its goals have merged. The board shows each task by name, with its goals under it.
+  - **Metric.** Tasks marked done with a done-when line unmet or a goal unmerged. Target 0.
+  - **Test.** A task whose last goal is still open can't be marked done.
+  - ### Non-goals
+  - It doesn't decide when a task starts or in what order tasks run. Scheduling is left for later.
+  - It doesn't pick what goes into a release; the release brief does.
+  - It never writes a brief for me. An agent may draft one; freezing it is mine.
+  - ### Reference
+  - adapted
+  - [Shape Up: the pitch](https://basecamp.com/shapeup). A short written brief, fixed before work starts.
 
 ### Non-functional
 - DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
@@ -237,6 +283,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r4 | 2026-11-21 | The goal loop: one change, one goal, one fixed format <br> Principle 1, Guided · Topic: Delivery · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> The goal loop already runs every change, but its format is spread over many pages and scripts. I can't see in one place what a goal is, what steps it takes, or what it leaves behind. <br> Last night, goals were re-frozen, relabelled and restarted in ways I couldn't follow from the board. <br> ### Requirements <br> DEL-19.1 A goal is one change, written in one fixed file format: its title, the task it serves, its done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that. A wrong done line needs a new goal. <br> **Metric.** Goals whose file is missing a part, or whose done lines changed after the freeze. Target 0. <br> **Test.** Freezing a goal with no task named, or editing a frozen done line, is refused. <br> DEL-19.2 Every goal runs the same steps in its own worktree and session: plan, build, review, test lanes, pull request, merge queue, merge. Each step writes its result to the goal's run record, and the board shows the current step. <br> **Metric.** Merged goals with a step missing from their run record. Target 0. <br> **Test.** A goal that skips its review step can't open its pull request. <br> DEL-19.3 Main changes only through a goal's pull request, merged when every check is green on its exact head. <br> **Metric.** Commits on main that came from no goal's pull request. Target 0. <br> **Test.** A direct push to main is refused, and a pull request whose head moved after its checks can't merge. <br> DEL-19.4 The goal format and its steps are drawn on one page, generated from the code, so the picture can't drift from what runs. <br> **Metric.** Differences between the drawn steps and the steps the code runs. Target 0. <br> **Test.** Add a step to the code without regenerating, and the docs check fails. <br> ### Non-goals <br> It doesn't decide what to build; tasks do. It doesn't decide when to release; releases do. <br> No change to how the steps work today. This feature describes and enforces the existing loop. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Merging only on green checks for the exact merged result. <br> adapted <br> [Trunk-based development](https://trunkbaseddevelopment.com/). Short-lived branches, one per change, merged to main. | the owner's pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b): the goal loop as one fixed format | o721: "DEL-19, DEL-23 and DOC-28 reviewed as in frozen-source-v1.1.0-1052; principle 1 may hold" |
 | r3 | 2026-11-20 | Every change is a goal inside the loop, serving a requirement <br> The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. [DEL-19] <br> Everything in the repo is part of one of those steps or keeps them running. [DEL-19] <br> Main changes only through a goal's pull request. [DEL-19] <br> A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. [DEL-19] <br> Done lines never change after the freeze. [DEL-19] <br> "What this is" is generated from this text. [DEL-19] | readme-six: the owner-approved final README (o514) | o570: "yes build it" |
 | r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r1 | 2026-11-18 | Every goal serves a requirement <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. <br> A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. | migration r1; date from the run day | o47: "Yes, start it end." |
@@ -247,6 +294,12 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 |---|---|---|---|---|
 | r2 | 2026-11-20 | Every requirement names what it follows and adopts a standard tool by default, scored <br> Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21] <br> General guidance is not a reference. [DEL-21] <br> A drop-in tool is used as it is; adapted names the design it copies and why. [DEL-21] <br> The adoption score is shown per requirement, per principle and overall. [DEL-21] <br> The target is 50%, and I set it. [DEL-21] <br> Every goal that adds or rewrites a requirement first checks whether a tool can be adopted. [DEL-21] <br> A change that lowers the score needs my words. [DEL-21] | readme-six: the owner-approved final README (o514) | o590: "yes build it" |
 | r1 | 2026-11-19 | Adopt a standard tool by default <br> Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-21] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
+
+### DEL-23
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-21 | Tasks: a brief I write once and freeze, run as goals <br> Principle 1, Guided · Topic: Delivery · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> I think in tasks ("migrate the features", "fix #5727"), but the loop only knows goals. Last night T1, T2 and T3 lived in a brief while their goals were re-frozen four or five times, and I couldn't tell what a "T" was. <br> I want to keep adding work whenever I think of it, without tying it to a release. <br> ### Requirements <br> DEL-23.1 A task starts from a short brief I write: its name, the feature it serves, what it's for in my words, and its done-when lines. My typed word freezes it, and a frozen brief can't be edited. A change means a new task that replaces it. <br> **Metric.** Tasks running without a frozen brief, plus edits to a frozen brief. Target 0. <br> **Test.** Starting a task with no frozen brief is refused. Changing one word of a frozen brief fails the check. <br> DEL-23.2 I can add a task at any time. It goes on one task list with its name, state (queued, running, waiting, done or replaced), the goals it produced and its ETA. A task doesn't need a release to exist. <br> **Metric.** Tasks I added that don't appear on the list within one minute. Target 0. <br> **Test.** Add a task. It shows on the list as queued, by name. <br> DEL-23.3 Tasks are independent of each other. A task that needs another one finished names it, and doesn't start before that one is done. Two tasks that touch the same files can both build; the second merges up before its tests. <br> **Metric.** Tasks started before a task they name was done. Target 0. <br> **Test.** A task naming another can't start until that one is done. Two tasks with no dependency can both be running at once. <br> DEL-23.4 A task runs as one or more goals, using the goal loop (DEL-19). It's done when every done-when line in its brief is met and all its goals have merged. The board shows each task by name, with its goals under it. <br> **Metric.** Tasks marked done with a done-when line unmet or a goal unmerged. Target 0. <br> **Test.** A task whose last goal is still open can't be marked done. <br> ### Non-goals <br> It doesn't decide when a task starts or in what order tasks run. Scheduling is left for later. <br> It doesn't pick what goes into a release; the release brief does. <br> It never writes a brief for me. An agent may draft one; freezing it is mine. <br> ### Reference <br> adapted <br> [Shape Up: the pitch](https://basecamp.com/shapeup). A short written brief, fixed before work starts. | the owner's pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b): tasks as a frozen brief run as goals | o721: "DEL-19, DEL-23 and DOC-28 reviewed as in frozen-source-v1.1.0-1052; principle 1 may hold" |
 
 ## Tests
 
@@ -319,6 +372,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [goal-pr-push-error](Tests#t-goal-pr-push-error) | requirement | DEL-19 | Given a remote that always refuses, when goal.py pr runs, then it exits non-zero and prints git's own error. | not run |
 | [follows-adoption](Tests#t-follows-adoption) | requirement | DEL-21 | Given a principle table, when render and docs check run, then Follows is a tagged bullet list, Adoption is the adopted share of its lines, Confidence is the passing share of the requirement's tests, and an untagged line is refused. | not run |
 | - | requirement | DEL-21 | no passing test | not enforced |
+| - | requirement | DEL-23 | no passing test | not enforced |
 | [aut-email-secrets](Tests#t-aut-email-secrets) | requirement | DEL-9 | Given the mail settings in the schedule's mail.env, when the tick runs, then they reach only the mail step and never a log, the summary, an issue or the digest comment, a mail.env of the wrong mode sends nothing, and without it nothing is written and the digest says why. | PASS 2026-11-12 |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | DEL-9 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
