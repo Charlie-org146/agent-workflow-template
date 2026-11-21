@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """One-shot (goal migrate-features): move every live requirement into the feature format in place.
 
-usage: python3 docs/migrations/features-v1.py run [--base REF] [--skip IDS]
+usage: python3 docs/migrations/features-v1.py run [--base REF] [--skip IDS] [--refresh]
+(--refresh is needed once the base already carries marker blocks: it rewrites them from the current sources)
 Each entry keeps its text; its Reviewed mark is cleared and a block of `  - ` bullets follows it (outside its hashed text).
 Everything is built in memory and every text hash is checked before any file is written. The proof is features-v1-check.py.
 """
@@ -95,7 +96,7 @@ def log_rows():
 
 
 def record(log, key, day):
-    got = [r for r in log.get(key, []) if r[0] <= day] or log.get(key, [])
+    got = [r for r in log.get(key, []) if r[0] <= day]
     return "%s %s" % got[-1] if got else "record not available"
 
 
@@ -247,10 +248,15 @@ def main():
     try:
         if todo:
             os.makedirs(os.path.join(root, "docs/migrations"), exist_ok=True)
-            tmp = tempfile.mkdtemp(prefix=".features-v1-", dir=os.path.join(root, "docs/migrations"))
+            tmp = tempfile.mkdtemp(prefix="features-v1-", dir=(git("rev-parse", "--absolute-git-dir") or "").strip() or None)
         for i, (rel, t) in enumerate(sorted(todo.items(), key=lambda x: x[0] != REPORT)):
             part = os.path.join(tmp, "%d.tmp" % i)
-            open(part, "w", encoding="utf-8", newline="").write(t)
+            with open(part, "w", encoding="utf-8", newline="") as out:
+                out.write(t)
+                out.flush()
+                os.fsync(out.fileno())
+            if open(part, encoding="utf-8", newline="").read() != t:
+                raise OSError("short write to " + part)
             todo[rel] = part
         moved = [r for r in orig if r in todo and open(os.path.join(root, r), encoding="utf-8", newline="").read() != orig[r]]
         if moved:

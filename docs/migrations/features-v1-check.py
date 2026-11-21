@@ -117,8 +117,8 @@ def main():
             sys.exit("REFUSED: git diff failed")
         changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
-        allowed = lambda x: (x.startswith("docs/migrations/") or x.startswith(".loop/goals/migrate-features.") or x == ".loop/kept/migrate-features.tsv"
-                             or (x.startswith("docs/wiki/") and x[10:-3] in names) or x in a.allow.split(","))
+        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv"}
+        allowed = lambda x: (x in mine or x.startswith(".loop/goals/migrate-features.") or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
         extra = [x for x in changed if not allowed(x)]
         ok("2 every changed file is a named page, the report, the scripts, a goal record or an allowed path", not extra, ", ".join(extra))
         print("changed outside the pages and the migration: " + (", ".join(x for x in changed if not x.startswith("docs/wiki/") and not x.startswith("docs/migrations/")) or "none"))
