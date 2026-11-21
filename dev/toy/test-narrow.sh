@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/
 # reads: skills/workflow-regression/scripts/narrow.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/setup.py dev/toy/check-reads.sh
 # Proves narrow rows: # reads: headers map a change to only the rows whose closure reaches it, anything the mapping

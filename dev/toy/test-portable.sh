@@ -1,8 +1,8 @@
 #!/bin/bash
+# reads: skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/slots.py skills/workflow-delivery/scripts/proctree.py skills/workflow-monitoring/scripts/proctree.py skills/workflow-regression/scripts/proctree.py skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/lane.py skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/worker.py skills/workflow-regression/scripts/lanes.py skills/
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # windows: ok
-# reads: skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/slots.py skills/workflow-delivery/scripts/proctree.py skills/workflow-monitoring/scripts/proctree.py skills/workflow-regression/scripts/proctree.py skills/workflow-delivery/scripts/flow.py skills/workflow-delivery/scripts/lane.py skills/workflow-monitoring/scripts/mend.py skills/workflow-monitoring/scripts/worker.py skills/workflow-regression/scripts/lanes.py
 # Issue 1396: lanes, slots and step timeouts on native Windows Python as on POSIX. port_base() leases a base with no
 # os.getuid or os.O_NOFOLLOW; a stop for a timeout or a mend takes the child's whole tree (killpg on POSIX, taskkill /T
 # on Windows), and no stop site calls os.killpg itself. Runs the same on Linux, macOS and Windows.

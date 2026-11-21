@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/autorelease.py
+# reads: skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/autorelease.py skills/
 # reads: skills/workflow-release/scripts/release.py skills/workflow-release/scripts/wiki.py
 # reads: skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/lanes.py
 # reads: skills/workflow-regression/scripts/narrow.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-regression/scripts/lanes_cli.py dev/toy/fakegh/gh

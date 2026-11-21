@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-health/scripts/rounds.py
+# reads: skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-health/scripts/rounds.py skills/workflow-health/scripts/
 # reads: skills/workflow-health/scripts/rules.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
 # reads: skills/workflow-delivery/scripts/private.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl docs/wiki/Health.md

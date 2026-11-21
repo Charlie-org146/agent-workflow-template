@@ -1,8 +1,8 @@
 #!/bin/bash
+# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/rules.py dev/package.py
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 # windows: ok
-# reads: skills/workflow-health/scripts/health.py skills/workflow-health/scripts/rules.py dev/package.py
 # Issue 3125: a Windows CRLF checkout gets the same size verdicts as Linux. A 20,000-byte script (20,3xx on disk
 # with CRLF), a 149-line SKILL.md and a 150-line one are judged by their LF bytes and lines in health's size and
 # skill-lines rules and in package.py's Scripts rule.

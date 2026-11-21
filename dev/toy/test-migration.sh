@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py
+# reads: skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py skills/
 # reads: skills/workflow-setup/scripts/update.py skills/workflow-setup/scripts/sync.py skills/workflow-setup/scripts/agents.py
 # reads: skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-delivery/scripts/private.py
 # reads: skills/workflow-docs/scripts/render.py skills/workflow-docs/scripts/entry.py dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/fakegh/launchctl

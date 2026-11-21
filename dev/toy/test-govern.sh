@@ -1,4 +1,5 @@
 #!/bin/bash
+# reads: skills/ dev/toy/make.sh dev/toy/fakegh/gh dev/toy/fakegh/fake.py
 # Real proof of one governing process: two level 0 goals, started by one process, each built by a real headless agent in
 # its own worktree. WARNING: this calls the real claude CLI (haiku by default). gh is faked. usage: test-govern.sh [DIR]
 set -u
