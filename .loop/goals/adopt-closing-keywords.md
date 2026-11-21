@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-defect.sh closing-keywords` and `bash dev/toy/test-defect.sh closing-unaffected`.
+   Expect: both exit 0 with no output.
+2. In a branch that adds a defect row linked to issue #88, save a PR body without a keyword (say `see issue #88`) and run `python3 skills/workflow-monitoring/scripts/pool.py closing BODYFILE`.
+   Expect: `REFUSED: the PR leaves #88 open. Fix: add Fixes #88.` and exit 1; with `Fixes #88` in the file, `CLOSING OK` and exit 0.
+3. Run `goal.py pr SLUG` for such a goal whose file has no closing keyword.
+   Expect: `REFUSED: the PR leaves #88 open. Fix: add Fixes #88 to the goal file outside its done lines, commit, run pr.`
