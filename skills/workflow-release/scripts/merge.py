@@ -4,11 +4,9 @@
 
 Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges
 (`gh pr merge --match-head-commit`), releases (autorelease.py; `release_error`) and publishes the wiki (wiki.py; `wiki_error`);
-a stale wiki page, REVIEW_HOLD, a private name in the merge text, REQUIREMENT_MISSING or another pod's goal refuse first.
+a stale wiki page, a refused `operate.py apply`, REVIEW_HOLD, a private name in the merge text, REQUIREMENT_MISSING or another pod's goal refuse first.
 --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless checks are green.
-merge_queue (off): the queue checks the moved base; BASE_MOVED is skipped.
 --batch (merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
-The release pull request (`merge.advance`) is `release/vX-<slug>`, merged with `gh pr merge --merge`.
 """
 import argparse
 import datetime
@@ -306,7 +304,9 @@ def main():
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
     pods.merge_lock(os.path.abspath(common))
-  wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
+  done = wiki.top_of() and run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top)
+  done and done.returncode and sys.exit("REFUSED: operate.py apply refused: " + done.stdout.strip())
+  done and print(done.stdout.strip())
   view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
   info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
   known, new = info.get("state", ""), info.get("headRefOid")

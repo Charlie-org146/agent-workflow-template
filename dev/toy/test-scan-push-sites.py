@@ -291,16 +291,24 @@ for name, text, planted in (("apply-bad", "# Page\n%s\n" % NAME, True), ("apply-
 os.chdir(T)
 
 # 9. a MISSING or BROKEN list: every newly scanned site refuses (PRIVATE_LIST) and writes nothing
-for mode in ("missing", "broken"):
-    os.environ["LOOP_PRIVATE_NAMES"] = LISTS[mode]
+REAL_HOME = os.environ.get("HOME")
+EMPTY_HOME = os.path.join(T, "home-without-a-list")
+os.makedirs(EMPTY_HOME)
+for mode in ("nolist", "missing", "broken"):
+    if mode == "nolist":  # the real no-list state: LOOP_PRIVATE_NAMES unset, a home that holds no list
+        os.environ.pop("LOOP_PRIVATE_NAMES")
+        os.environ["HOME"] = EMPTY_HOME
+    else:
+        os.environ["LOOP_PRIVATE_NAMES"] = LISTS[mode]
+        os.environ["HOME"] = REAL_HOME
     top, origin = repo("closed-" + mode)
-    word = "a %s list" % mode
+    word = {"nolist": "no list at all", "missing": "a list file that does not exist", "broken": "a broken list"}[mode]
     calls.clear()
     bad, why = refused(lambda: fit.pr_open(G(), {"branch": "work", "goal": "g", "slug": "x"}, "trunk", {}, "a clean body"))
     check(bad and "PRIVATE_LIST" in why and not calls, "fit.pr_open refuses with %s before it writes" % word)
     reset()
     bad, why = refused(lambda: autorelease.label_part(top, cfg, {"release_part": "major", "pr": "7", "slug": "x"}))
-    check(bad and not log(), "autorelease.label_part refuses with %s before it writes" % word)
+    check(bad and "PRIVATE_LIST" in why and not log(), "autorelease.label_part refuses with %s before it writes" % word)
     reset()
     os.environ["FAKE_VIEW"] = '{"title":"t","headRefName":"b"}'
     done = merge.merge_pr(top, "7", "abc")
@@ -315,19 +323,56 @@ for mode in ("missing", "broken"):
     bad, why = refused(lambda: review.revert(top, {"base": "trunk"}, 1))
     check(bad and "PRIVATE_LIST" in why and not pushed(), "review.revert refuses with %s before it pushes" % word)
     release.git, release.run = real_git, real_release_run
-    kept, alone, head = real_assemble(M, top, "trunk", "bid2", members(top, "all clean\n"))
-    check(not kept and not git(top, "ls-remote", "origin", "refs/heads/batch/bid2"), "machines.batch_assemble refuses with %s before it pushes batch/<id>" % word)
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        kept, alone, head = real_assemble(M, top, "trunk", "bid2", members(top, "all clean\n"))
+    check(not kept and "PRIVATE_LIST" in err.getvalue() and not git(top, "ls-remote", "origin", "refs/heads/batch/bid2"), "machines.batch_assemble refuses with %s before it pushes batch/<id>" % word)
     runs.clear()
-    code = machines.batch(top, tempfile.mkdtemp(dir=T), {"base": "trunk"}, ["a", "b"], "", M2)
-    check(code == 1 and not [r for r in runs if r[:3] == ["gh", "pr", "create"]], "machines.batch refuses with %s before gh pr create" % word)
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        code = machines.batch(top, tempfile.mkdtemp(dir=T), {"base": "trunk"}, ["a", "b"], "", M2)
+    check(code == 1 and "PRIVATE_LIST" in err.getvalue() and not [r for r in runs if r[:3] == ["gh", "pr", "create"]], "machines.batch refuses with %s before gh pr create" % word)
     page["text"] = "# Page\nclean\n"
     git(top, "push", "-q", "origin", "work")
     before = git(top, "ls-remote", "origin", "refs/heads/work")
     os.chdir(top)
-    with contextlib.redirect_stdout(io.StringIO()):
+    seen = io.StringIO()
+    with contextlib.redirect_stdout(seen):
         code = operate.apply("slug", "work")
-    check(code == 1 and before == git(top, "ls-remote", "origin", "refs/heads/work"), "operate.apply refuses with %s before it pushes" % word)
+    check(code == 1 and "(PRIVATE_LIST)" in seen.getvalue() and before == git(top, "ls-remote", "origin", "refs/heads/work"), "operate.apply refuses with %s before it pushes" % word)
     os.chdir(T)
+os.environ["HOME"] = REAL_HOME
+os.environ["LOOP_PRIVATE_NAMES"] = LISTS["name"]
+
+# 10. merge.py stops when operate.py apply refuses (rc 1) and writes nothing to GitHub
+top, origin = repo("stopapply")
+cfgpath = os.path.join(top, ".loop", "config.json")
+open(cfgpath, "w").write(json.dumps({"base": "trunk", "auto_merge": True}))
+runs_dir = os.path.join(top, ".git", "loop", "runs")
+os.makedirs(runs_dir)
+open(os.path.join(runs_dir, "s.json"), "w").write(json.dumps({"slug": "s", "pr": "7", "status": "done", "branch": "work"}))
+fake_apply = os.path.join(T, "fake-operate.py")
+merge.wiki.where, merge.wiki.top_of, merge.pods = (lambda *a: None), (lambda *a: True), None
+real_operate = merge.OPERATE
+os.chdir(top)
+sys.argv = ["merge.py", "s"]
+for text, rc in (("REFUSED: a private name would be pushed (PRIVATE_NAME)", 1), ("clean", 0)):
+    open(fake_apply, "w").write("import sys\nprint(%r)\nsys.exit(%d)\n" % (text, rc))
+    merge.OPERATE = fake_apply
+    reset()
+    try:
+        merge.main()
+        stop = ""
+    except SystemExit as stopped:
+        stop = str(stopped.code)
+    except Exception as crash:  # noqa: BLE001 - the clean case runs on into code this toy does not set up
+        stop = ""
+    if rc:
+        check("operate.py apply refused" in stop and "PRIVATE_NAME" in stop and not log(), "merge.py stops on a refused apply, says why, and calls gh not at all")
+    else:
+        check("operate.py apply refused" not in stop and "pr view" in log(), "merge.py goes on to gh pr view after a clean apply (negative control)")
+merge.OPERATE = real_operate
+os.chdir(T)
 
 print("ALL PASS" if not fails else "FAILED: %d" % len(fails))
 sys.exit(1 if fails else 0)
