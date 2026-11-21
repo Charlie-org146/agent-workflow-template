@@ -7,8 +7,7 @@ usage: review.py record SLUG
        review.py revert vX
 
 With "review_hold": true, merge.py merges only a head the operation session ran record on (else REVIEW_HOLD).
---suite-from RUN takes REL-3's suite from a completed regression run on the gate ref with every shard reported, nothing UNRUN
-and every row logged; else "suite run does not cover the candidate". The run id goes in loop/gate/vX.json.
+--suite-from RUN takes REL-3's suite from a completed regression run on the gate ref (see the Release wiki page).
 """
 import glob
 import importlib
@@ -27,7 +26,7 @@ os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
 def worker():
-    """True for a worker or a goal worktree."""
+    """A worker or a goal worktree."""
     common = release.git("rev-parse", "--path-format=absolute", "--git-common-dir", check=False)
     inside = os.path.join(os.path.normcase(os.path.realpath(common)), "loop", "worktrees") + os.sep
     return os.environ.get("LOOP_ROLE") == "worker" or os.path.normcase(os.path.realpath(os.getcwd())).startswith(inside)
@@ -46,7 +45,7 @@ def held(cfg, state, head):
 
 
 def wait(state):
-    """Mark the goal as waiting on review (exit 5)."""
+    """Waiting on review (exit 5)."""
     state["review_wait"] = True
     release.save(state, "merge waiting on review (REVIEW_HOLD)")
     return 5
@@ -81,7 +80,7 @@ def main():
 
 
 def proven(top):
-    """Row ids with a PASS on this commit in a lane record (loop/tests/*.json); not regression-runs.tsv."""
+    """Row ids with a PASS on this commit in a lane record (loop/tests/*.json)."""
     head = release.git("rev-parse", "HEAD", cwd=top, check=False)
     found = set()
     for path in glob.glob(os.path.join(common_of(top), "tests", "*.json")):
@@ -94,7 +93,7 @@ def proven(top):
 
 
 def tsv(*path):
-    """Tab-file rows, padded; [] if missing."""
+    """Tab-file rows, padded."""
     try:
         return [l.rstrip("\n").split("\t") + [""] * 5 for l in open(os.path.join(*path)) if l[0] != "#"]
     except OSError:
@@ -102,12 +101,12 @@ def tsv(*path):
 
 
 def left_text(left):
-    """The cut's LEFT section: the count and the ids, or ''."""
+    """The cut's LEFT section, or ''."""
     return "\n## LEFT\n\nLEFT %d rows were not run before the cut's stop: %s\n" % (len(left), ", ".join(left)) if left else ""
 
 
 def criteria(top, cfg, doc_rows, fails):
-    """(unmet, left): requirements with no passing row, and rows the cut left unrun (LOOP_CUT_SECONDS, 900)."""
+    """(unmet, left): requirements with no passing row, and rows the cut left unrun (LOOP_CUT_SECONDS)."""
     rows, stop = tsv(top, ".loop", "regression.tsv"), time.time() + float(os.environ.get("LOOP_CUT_SECONDS") or 900)
     out, left, skip = [], [], proven(top) | {r[0] for r in tsv(top, ".loop", "regression-known.tsv")}
     for page in doc_rows(top):
@@ -145,7 +144,7 @@ def table(top, name):
 
 
 def waivers(top, kind):
-    """{subject: detail} of release-waivers.tsv rows whose owner-words record names the subject."""
+    """{subject: detail} of release-waivers.tsv rows an owner-words record names."""
     said = {r[0]: (r[3] + r[4]).lower() for r in table(top, "owner-words.tsv")}
     return {r[1]: r[2] for r in table(top, "release-waivers.tsv") if r[0] == kind and r[2] and r[1].lower().lstrip("#") in said.get(r[3], "-")}
 
@@ -194,7 +193,7 @@ def ci_text(work, run, sha):
 
 
 def check_suite(work, red, run="", sha=""):
-    """REL-3: a FAIL, NOTRUN, ENV, KNOWN or budget-LEFT row refuses unless a red waiver names its issue."""
+    """REL-3: a FAIL, NOTRUN, ENV, KNOWN or LEFT row refuses unless a red waiver names it."""
     text, why = ci_text(work, run, sha) if run else (run_in(work, "workflow-regression/scripts/regression.py", "run", "nightly"), "")
     if why:
         return [("suite", "suite run does not cover the candidate (%s)" % why, ["suite"])], {}
@@ -259,13 +258,13 @@ def email(top, subject, text):
     """"" when mailed, else why not."""
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts"))
     try:
-        notify = importlib.import_module("notify")  # another skill's script: no static import
+        notify = importlib.import_module("notify")  # another skill's script
         os.environ.update(notify.load_env()[0] or {})
         mail = notify.mailer()
         mode, host, port, wait, api = mail.settings(top)
         done = mail.deliver(mode, mail.secrets(mode, False), subject, text, "<pre>%s</pre>" % text.replace("<", "&lt;"), (host, port, wait, api)) if mode != "off" else ("off",) * 2
         return "" if done[0] == "ok" else "%s: %s" % done[:2]
-    except Exception as err:  # noqa: BLE001 - a mail failure never undoes a promotion
+    except Exception as err:  # noqa: BLE001 - mail never undoes a promotion
         return str(getattr(err, "text", err))[:200]
 
 
@@ -279,6 +278,13 @@ def state_report(top, ver, tag, sha, facts):
                    + ["- #%d %s" % (i["number"], i["title"]) for i in closed] + ["## Changes since " + (prior or "the start")] + log) + NL
 
 
+def check(top, texts):
+    import autorelease
+    stop = autorelease.private_check(top, None, texts)
+    if stop:
+        sys.exit("REFUSED: %s. Fix: %s (%s)" % stop)
+
+
 def promote(top, cfg, ver, rec, ref, run=""):
     tag, rel, base = "v%d.0.0" % ver, "release/v%d" % ver, cfg.get("base", "main")
     if tag not in re.split(r"[,\s]+", " ".join(r[4] for r in table(top, "owner-words.tsv") if r[0] == rec)) or OK(["refs/tags/" + tag], top):
@@ -289,13 +295,14 @@ def promote(top, cfg, ver, rec, ref, run=""):
         return 1
     sha = release.git("rev-parse", ref + "^{commit}", cwd=top)
     text, path = state_report(top, ver, tag, sha, facts), os.path.join(common_of(top), "gate", tag + ".md")
+    check(top, {"release notes": text})
     open(path, "w").write(text)
     release.git("tag", "-a", tag, sha, "-m", "Release " + tag, cwd=top)
     release.git("branch", rel, sha, cwd=top)
     for push in (["origin", "%s:refs/heads/%s" % (sha, base)], ["origin", tag, rel]):
         done = release.run(["git", "push"] + push, cwd=top)
         if done.returncode:
-            for undo in ([["tag", "-d", tag], ["branch", "-D", rel]] if push[1] != tag else []):  # nothing remote changed yet
+            for undo in ([["tag", "-d", tag], ["branch", "-D", rel]] if push[1] != tag else []):  # nothing remote yet
                 release.run(["git"] + undo, cwd=top)
             sys.exit("REFUSED (PROMOTE_PUSH): git push failed: " + done.stderr.strip()[-200:])
     made = release.run(["gh", "release", "create", tag, "--title", tag, "--notes-file", path, "--verify-tag"], cwd=top)
@@ -308,13 +315,14 @@ def promote(top, cfg, ver, rec, ref, run=""):
 
 
 def revert(top, cfg, ver):
-    """REL-7: a pull request putting main's tree back on release/vX."""
+    """REL-7: a pull request putting main back on release/vX."""
     rel, base = "release/v%d" % ver, cfg.get("base", "main")
     release.run(["git", "fetch", "-q", "origin", rel, base], cwd=top)
     snap = next((n for n in ("origin/" + rel, rel) if OK([n], top)), "")
     if not snap:
         sys.exit("REFUSED: no snapshot branch " + rel)
     name, body = "revert/v%d-%s" % (ver, time.strftime("%Y%m%d%H%M%S", time.gmtime())), os.path.join(common_of(top), "gate", "revert.md")
+    check(top, {"revert branch": name, "revert base": base})
     release.git("push", "origin", "%s:refs/heads/%s" % (release.git("commit-tree", snap + "^{tree}", "-p", "origin/" + base, "-m",
                                                                      "Revert to v%d" % ver, cwd=top), name), cwd=top)
     os.makedirs(os.path.dirname(body), exist_ok=True)

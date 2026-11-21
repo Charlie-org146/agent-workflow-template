@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Goals that move between machines, one merge order across them, and a structured SNAPSHOT (machine-coordination).
+"""Goals that move between machines, one merge order across them, and a SNAPSHOT (machine-coordination).
 
-usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record, mark it moved here (no worker)
+usage: machines.py handover SLUG --to MACHINE   push the branch, copy the record, mark it moved (no worker)
        machines.py take SLUG                    fetch the branch and record, bind a worker
        machines.py snapshot [--publish]         this machine's SNAPSHOT (JSON); --publish shares it
        machines.py turn                         who holds the cross-machine merge turn
 
-Machines share git refs on origin, each one small JSON blob: refs/loop/handover/<slug> (a handover's record),
-refs/loop/pr-turn (one merge ticket per repo, dropped after LOOP_MERGE_LOCK_SECONDS of silence) and refs/loop/snapshot/<machine>
-(what the check-in's Machine lines draw on). With `machine_sync` off or no reachable origin the passive calls do nothing. A `moved` record
-starts no worker, and a peer's record is never the owner's approval. start_worker is the one place a worker starts.
+Machines share git refs on origin, each a small JSON blob: refs/loop/handover/<slug> (a handover's record), refs/loop/pr-turn
+(one merge ticket per repo, dropped after LOOP_MERGE_LOCK_SECONDS) and refs/loop/snapshot/<machine> (the check-in's Machine
+lines). With `machine_sync` off or no origin, passive calls do nothing. A `moved` record starts no worker, and a peer's
+record is never the owner's approval. start_worker alone starts a worker.
 """
 import argparse
 import hashlib
@@ -34,7 +34,7 @@ RESUME = ("You are the background worker for goal `{slug}`, resuming in this wor
 
 
 def live(run, taken, at, cfg=None):
-    """TD502: running needs a slot and a recent word; waiting an open ask, not over; failed or stopped a pid or pool entry."""
+    """TD502: running needs a slot and a recent word; waiting an open ask; failed a pid."""
     st, own = run.get("status"), run.get("slug") in (taken or ())
     if st in ("failed", "stopped"):
         return bool(run.get("pid") or own)
@@ -57,14 +57,13 @@ def has_origin(cwd=None):
 
 
 def shared(cwd=None):
-    """True when `machine_sync` is on in the flow file ($LOOP_FLOW or ~/.workflow-loop/flow.json; off by default) and there is an
-    origin; every passive call asks first, so nothing is pushed unless the owner allowed it."""
+    """True when `machine_sync` is on in the flow file ($LOOP_FLOW) and there is an origin."""
     flow = os.path.expanduser(os.environ.get("LOOP_FLOW") or "~/.workflow-loop/flow.json")
     return read_json(flow).get("machine_sync") is True and has_origin(cwd)
 
 
 def read_ref(ref, cwd=None):
-    """(data, sha) of the blob a ref names on origin, or (None, "")."""
+    """(data, sha) of a ref's blob, or (None, "")."""
     if not has_origin(cwd) or not sh("ls-remote", "origin", ref, cwd=cwd):
         return None, ""
     if sh("fetch", "-q", "origin", "+%s:%s" % (ref, ref), cwd=cwd) is None:
@@ -78,7 +77,7 @@ def read_ref(ref, cwd=None):
 
 
 def write_ref(ref, data, old="", cwd=None):
-    """Move origin's ref to a new blob only if still at old ("" is absent); None deletes it. True when it won."""
+    """Move origin's ref to a new blob only if still at old ("" if absent); None deletes."""
     lease = "--force-with-lease=%s:%s" % (ref, old)
     if data is None:
         return sh("push", "-q", lease, "origin", ":" + ref, cwd=cwd) is not None
@@ -86,12 +85,12 @@ def write_ref(ref, data, old="", cwd=None):
     return bool(sha) and sh("push", "-q", lease, "origin", "%s:%s" % (sha, ref), cwd=cwd) is not None
 
 
-# Merge batching: merge.py --batch, only when "merge_batch" is true. M is merge.py.
+# Merge batching (merge.py --batch, "merge_batch" true). M is merge.py.
 PARTS = ("patch", "minor", "major")
 
 
 def batch_file(common, bid, data=None):
-    """Read or write DATA: loop/batches/<id>.json."""
+    """Read or write loop/batches/<id>.json."""
     path = os.path.join(os.path.abspath(common), "loop", "batches", bid + ".json")
     if data is None:
         return read_json(path)
@@ -119,8 +118,14 @@ def batch_ready(M, top, base, state):
     return (None, why) if why else (info, "")
 
 
+def check(M, top, base, bid, kept):
+    stop = M.ar.private_check(top, base, {"batch text": "Batch %s: %s" % (bid, ", ".join(kept))})
+    stop and print("REFUSED: %s. Fix: %s (%s)" % stop, file=sys.stderr)
+    return stop
+
+
 def batch_assemble(M, top, base, bid, members):
-    """(kept, alone [(slug, why)], head): member heads merged in order in a temp worktree, pushed as batch/<id>."""
+    """(kept, alone [(slug, why)], head): heads merged in a temp worktree, pushed to batch/<id>."""
     temp = tempfile.mkdtemp(prefix="batch-")
     tree, kept, alone, head = os.path.join(temp, "tree"), [], [], ""
     try:
@@ -135,6 +140,8 @@ def batch_assemble(M, top, base, bid, members):
             else:
                 kept.append(slug)
         head = len(kept) > 1 and sh("rev-parse", "HEAD", cwd=tree) or ""
+        if len(kept) > 1 and check(M, tree, "origin/" + base, bid, kept):
+            return [], [(k, "a private name") for k in kept] + alone, ""
         if len(kept) > 1 and (not head or sh("push", "-q", "-f", "origin", "HEAD:refs/heads/batch/" + bid, cwd=tree) is None):
             return [], [(k, "push failed") for k in kept] + alone, ""
         return kept, alone, head
@@ -144,7 +151,7 @@ def batch_assemble(M, top, base, bid, members):
 
 
 def batch(top, common, cfg, slugs, go, M):
-    """merge.py --batch; reruns resume the unfinished phase."""
+    """merge.py --batch; a rerun resumes."""
     base, runs = cfg.get("base", "main"), os.path.join(os.path.abspath(common), "loop", "runs")
     if not 2 <= len(slugs) <= 3 or len(set(slugs)) != len(slugs):
         sys.exit("REFUSED: a batch is 2 or 3 goals. Nothing merged.")
@@ -164,6 +171,8 @@ def batch(top, common, cfg, slugs, go, M):
             print("ALONE %s: %s; merge.py %s" % (slug, why, slug))
         if len(kept) < 2:
             return say("BATCH_NONE: fewer than 2 can be batched. Nothing merged.", 4)
+        if check(M, top, None, bid, kept):
+            return say("BATCH_PRIVATE: no pull request opened", 1)
         made = M.run(["gh", "pr", "create", "--draft", "--base", base, "--head", "batch/" + bid, "--title", "Batch: " + ", ".join(kept),
                       "--body", "One CI run for %s." % ", ".join(kept)], top)
         if made.returncode:
@@ -217,7 +226,7 @@ def stale(at):
 
 
 def turn(op, runs=None, slug="", *rest):
-    """pr_queue hook: turn and hold give "" when this goal holds the merge turn, else who does; free drops its ticket."""
+    """pr_queue hook: turn and hold give "" if this goal holds the turn, else who; free drops it."""
     if op not in ("turn", "hold", "free") or not slug or not shared():
         return ""
     here, (found, old) = me(), read_ref(TURN)
@@ -234,7 +243,7 @@ def turn(op, runs=None, slug="", *rest):
 
 
 def snapshot(root=None, cfg=None):
-    """This machine's SNAPSHOT: its Machine line and its goals, as data."""
+    """This machine's SNAPSHOT: its line and goals."""
     import board_status
     root = root or sh("rev-parse", "--show-toplevel") or os.getcwd()
     cfg = cfg if cfg is not None else read_json(os.path.join(root, ".loop", "config.json"))
@@ -257,7 +266,7 @@ def read_json(path):
 
 
 def lines(root, cfg, own):
-    """The check-in's Machine lines: its own, then one per peer's published SNAPSHOT."""
+    """The check-in's Machine lines: its own, then each peer's."""
     out = [own]
     if not shared(root):
         return out
@@ -276,7 +285,7 @@ def lines(root, cfg, own):
 
 
 def start_worker(state, prompt, cfg):
-    """Bind a worker: an app session if one starts, else a background worker through agent_command."""
+    """Bind a worker: an app session, else agent_command."""
     import sessions
     try:
         if sessions.assign(state, prompt, cfg):

@@ -5,24 +5,23 @@ usage: operate.py <command> [options]
 
   run [--once] [--poll S] [--max N] [--skill-dir DIR] [--board]
       Each pass fast-forwards the main checkout to origin/<base> (--ff-only; a dirty root prints "root is dirty: FILES; not
-      advanced"), then runs watch.py watch --once (starts every goal whose dependencies are merged, up to parallel; mends and
-      resumes if config allows), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and pool.py archive
-      (MON-6), prints the check-in (checkin.py) and mails its new events (notify.py). The live board prints only for report,
-      dashboard and "where do things stand" (MON-4; --board adds it). It waits the gap from `board.py cadence` (less when a
-      worker reports or a goal is queued); it stops when nothing is queued, running or waiting, or the cadence is off.
+      advanced"), then runs watch.py watch --once (starts goals whose dependencies are merged, up to parallel; mends and
+      resumes if allowed), board.py board, board_page.py, replan.py (MON-10), auto.py pass (MON-11) and pool.py archive
+      (MON-6), prints the check-in and mails its new events (notify.py). The live board prints only for report,
+      dashboard and "where do things stand" (MON-4; or --board). It waits the `board.py cadence` gap (less when a worker
+      reports or a goal is queued); it stops when nothing is queued, running or waiting, or cadence is off.
   run --role top|machine   top: one board from every STATUS; machine: its STATUS to top
   start     a new operation session's readiness table (session tool, workers, skills, hooks, memory, pool): ok or its fix
-            per row (notify.py ready)
   timer [created]   show the check-in timer for the owner's yes; `created` records it
   send SLUG TEXT [--source owner|auto]
-      send a worker an answer or follow-up (worker.py send); answers to a waiting question go to
+      send a worker an answer or note; answers to a waiting question go to
       <git common dir>/loop/answers.jsonl (auto.py reads it)
   claim [--id ID]
       add this session (each id it goes by: CLI, app, pod; or --id) to loop/operation.id for the govern hook (MON-7), in this
-      repo and every repo it follows (MON-13); refused in a worker
+      repo and those it follows (MON-13); refused in a worker
   scratch GOAL   print ~/.workflow-loop/scratch/GOAL, made on first use
 
-An LLM asked to run the operation session runs `operate.py run` and nothing else. It never merges.
+An LLM asked to run the operation session runs `operate.py run`. It never merges.
 """
 import argparse
 import glob
@@ -83,7 +82,7 @@ RUNS = ".loop/regression-runs.tsv"
 
 
 def fast_forward(root, base):
-    """merge --ff-only; a dirty RUNS is stashed under a tag, applied back by sha."""
+    """merge --ff-only; a dirty RUNS is stashed under a tag, then applied back."""
     tag, sha = "operate-forward-%d" % os.getpid(), ""
     if RUNS in fgit(root, "status", "--porcelain", "--untracked-files=no")[1].replace("\\", "/") and fgit(root, "stash", "push", "-m", tag, "--", RUNS)[0] == 0:
         sha = next((l.split()[0] for l in fgit(root, "stash", "list", "--format=%H %gs")[1].splitlines() if l.endswith(tag)), "")
@@ -125,7 +124,7 @@ def refresh(common, base="main"):
 
 
 def untrusted(folder):
-    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
+    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it, else ""."""
     try:
         with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
             known = json.load(handle)["projects"]
@@ -136,7 +135,7 @@ def untrusted(folder):
 
 
 def behind_ask(common, base="main"):
-    """A line asking a free worker to move the main checkout when behind origin/<base>."""
+    """A line asking a free worker to move the main checkout when behind."""
     common = os.path.abspath(common)
     root, mark = os.path.dirname(common), os.path.join(common, "loop", "checkout-behind.txt")
     behind = fgit(root, "rev-list", "--count", "HEAD..origin/" + base)[1] if os.path.basename(common) == ".git" else "0"
@@ -234,7 +233,7 @@ def cmd_run(args):
             return 0
         stop, beat = time.time() + int(delay), 0
         while time.time() < stop and signature(top, common) == seen:
-            if layers.role(args.role) == "machine" and time.time() - beat >= 30:  # the status file stays under a minute old (TD430)
+            if layers.role(args.role) == "machine" and time.time() - beat >= 30:  # status stays under a minute old (TD430)
                 beat = time.time()
                 layers.beat(common, layers.build(common, CFG(top)))
             time.sleep(args.poll)
@@ -275,7 +274,7 @@ def add_id(base, sid):
 
 
 def cmd_claim(args):
-    """MON-13: this session joins the operation sessions of this repo and those it follows."""
+    """MON-13: this session joins the operation sessions of this repo and its followed repos."""
     ids = {args.id} if args.id else {os.environ.get(key) for key in OWN} - {None, ""}
     sid = args.id or os.environ.get("CLAUDE_SESSION_ID") or min(ids, default="")
     common = os.path.abspath(git("rev-parse", "--git-common-dir") or ".git")
@@ -292,7 +291,7 @@ def cmd_claim(args):
 
 
 def cmd_send(args):
-    """The inbox carries it; a worker session gets it too."""
+    """The inbox carries it, and a worker gets it too."""
     graph.refuse(graph.load_run(args.slug))
     remember(args.slug, args.text, args.source)
     code, said = script("worker.py", "send", args.slug, args.text)
@@ -306,13 +305,13 @@ def run(args, cwd=None):
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True)
 
 
-def tems(*args, **kwargs):
+def autorelease():
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts")
     sys.path.append(here)
     spec = importlib.util.spec_from_file_location("autorelease", os.path.join(here, "autorelease.py"))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.tems(*args, **kwargs)
+    return module
 
 
 def wiki_only(top, old, new):
@@ -327,7 +326,7 @@ def wiki_only(top, old, new):
         folder = "docs/wiki"
     page = lambda p: (p.startswith(str(folder).rstrip("/") + "/") and p.endswith(".md") and os.path.basename(p) != "SKILL.md"
                       ) or re.fullmatch(r"[.]loop/kept/[^/]+[.]tsv", p) or (p == "README.md" and readme_blocks_only(top, old, new))
-    return tems(top, old, new, allow=page)
+    return autorelease().tems(top, old, new, allow=page)
 
 
 def readme_blocks_only(top, old, new):
@@ -336,8 +335,8 @@ def readme_blocks_only(top, old, new):
 
 
 def apply(slug, branch):
-    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree, while a page's
-    reviewed text holds; the pushed head differs by wiki pages only."""
+    """Re-stamp the pages docs.py check --own calls stale on the goal's branch, in a temporary worktree; the push
+    differs by wiki pages only."""
     top = run(["git", "rev-parse", "--show-toplevel"]).stdout.strip()
     tree = tempfile.mkdtemp(prefix="restamp-")
     if run(["git", "fetch", "-q", "origin", branch], top).returncode or run(["git", "worktree", "add", "-q", "--detach", tree, "origin/" + branch], top).returncode:
@@ -355,6 +354,8 @@ def apply(slug, branch):
         if said and run(["git", "add", "-A", "--", folder] + ["README.md"] * os.path.exists(os.path.join(tree, "README.md")), tree).returncode == 0:
             who = [] if run(["git", "config", "user.email"], tree).stdout.strip() else ["-c", "user.name=workflow-loop", "-c", "user.email=workflow-loop@users.noreply.github.com"]
             pushed = run(["git"] + who + ["commit", "-q", "-m", "Wiki: re-render and re-stamp pages for %s" % slug], tree)
+            stop = None if pushed.returncode else autorelease().private_check(tree, "origin/" + base, {"commit message": slug}, True)
+            pushed = subprocess.CompletedProcess([], 1, "", "REFUSED: %s. Fix: %s (%s)" % stop) if stop else pushed
             pushed = pushed if pushed.returncode else run(["git", "push", "-q", "origin", "HEAD:refs/heads/" + branch], tree)
             print(said if not pushed.returncode else "NOTE: the re-stamp of %s could not be committed or pushed: %s" % (", ".join(pages), pushed.stderr.strip()[-120:]))
     except (OSError, ValueError):

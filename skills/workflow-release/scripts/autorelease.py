@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The automatic release, called by merge.py: routines, then after the merge a version bump, the CHANGELOG entry, a push to
 the base and a GitHub release (a release pull request on a protected base; with merge_queue, release.yml instead).
-Failures: `release_error`. Commit and notes pass the private-name scan first (PRIVATE_MODULE)."""
+Failures: `release_error`. Commit, notes and label pass the private-name scan (PRIVATE_MODULE)."""
 import datetime
 import importlib.util
 import json
@@ -199,7 +199,7 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
       if PROTECTED.search(pushed.stderr):
         print("NOTE: origin/%s is protected; the release goes through a pull request" % base)
         return None, pushed.stderr
-            # another goal moved the base: redo the bump on top
+            # the base moved: redo the bump on top
     fail(state, "push to %s was rejected %d times: %s" % (base, PUSH_TRIES, pushed.stderr.strip()[-200:]))
   finally:
     drop(top, tree, temp)
@@ -217,7 +217,7 @@ ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
 
 
 def tems(top, old, new, extra="", allow=None):
-  """Tree equal modulo stamps: old to new only edits regular files at STAMPS paths (and extra, allow's)."""
+  """Tree equal modulo stamps: old to new only edits regular files at STAMPS paths (and allow's)."""
   done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
   rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
   return done.returncode == 0 and bool(rows) and all(
@@ -262,7 +262,7 @@ def release_statuses(top, cfg, state, branch, sha):
     code, text = lane_at(top, cfg, sha)
     rows = re.findall(r"^FAIL (\S+)", text, re.M)
     ok = code == 0
-    if not ok and not rows:  # nothing failed: don't blame an untested head
+    if not ok and not rows:  # nothing failed: no blame on an untested head
       state["release_status"], state["release_status_why"] = "untested", "the lane at head %s gave no result: %s" % (
         sha[:12], " ".join((text or "(no output)").split())[-160:])
       return print("RELEASE_STATUS untested: " + state["release_status_why"])
@@ -293,7 +293,7 @@ def main_reds(top, base, info, red):
 
 
 def go_gate(top, base, info, go):
-  """None, or the refusal, unless the head is the GO's and every check is green (#5171)."""
+  """None, or the refusal, unless the head is the GO's and all checks are green (#5171)."""
   head = str(info.get("headRefOid"))
   if len(go) < 7 or not head.startswith(go):
     return "REFUSED (GO_HEAD): the GO was for %s, the PR head is %s. Nothing merged." % (go[:12], head[:12])
@@ -314,7 +314,7 @@ def go_gate(top, base, info, go):
 
 
 def status_held(state, url, number, seen=None):
-  """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head has no passing status or is red."""
+  """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head has no passing status."""
   red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
     if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
   why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
@@ -332,7 +332,7 @@ def create_release(top, cfg, state, version, target):
   tag, text = "v" + version, notes_text(state)
   check(state, top, None, {"release notes": text})
   seen = sh(["gh", "release", "view", tag, "--json", "targetCommitish,url"], cwd=top)
-  if seen.returncode == 0:  # a crash after create is adopted; one elsewhere is not ours
+  if seen.returncode == 0:  # a crash after create is adopted; others are not ours
     try:
       info = json.loads(seen.stdout)
     except ValueError:
@@ -354,6 +354,7 @@ def label_part(top, cfg, state):
   """merge_queue: the part is a release:<part> label (default patch)."""
   part = state.get("release_part")
   if cfg.get("merge_queue") and part in ("minor", "major"):
+    check(state, top, None, {"label": "release:" + part})
     sh(["gh", "label", "create", "release:" + part, "--force"], cwd=top)
     sh(["gh", "pr", "edit", state["pr"], "--add-label", "release:" + part], cwd=top)
 
@@ -364,7 +365,7 @@ def finish(top, cfg, state):
     print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
     return
   base = cfg.get("base", "main")
-  if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
+  if cfg.get("merge_queue"):  # REL-15: release.yml tags on push; no commit or pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
     return True
   if not state.get("release_pushed"):

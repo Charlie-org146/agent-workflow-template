@@ -3,14 +3,12 @@
        merge.py SLUG SLUG [SLUG] --batch [--go-head SHA]
 
 Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs the base's routines, merges
-(`gh pr merge --match-head-commit`), releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py;
-refused: `wiki_error`); a stale wiki page, REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse
-first. --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green.
-Setting merge_queue (off): GitHub's merge queue checks the moved base, so merge.py skips BASE_MOVED and prints MERGED
-only once gh reports the pull request merged.
-
---batch (setting merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
-Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
+(`gh pr merge --match-head-commit`), releases (autorelease.py; `release_error`) and publishes the wiki (wiki.py; `wiki_error`);
+a stale wiki page, REVIEW_HOLD, a private name in the merge text, REQUIREMENT_MISSING or another pod's goal refuse first.
+--go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless checks are green.
+merge_queue (off): the queue checks the moved base; BASE_MOVED is skipped.
+--batch (merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
+The release pull request (`merge.advance`) is `release/vX-<slug>`, merged with `gh pr merge --merge`.
 """
 import argparse
 import datetime
@@ -46,8 +44,8 @@ def file_issue(top, page, texts):
     return "no issue filed (gh)"
 
 
-def _pods():  # MON-15: workflow-monitoring's graph.py, or None
-  sys.path.append(MON)  # graph's proctree
+def _pods():  # MON-15: graph.py or None
+  sys.path.append(MON)
   try:
     spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(MON, "graph.py"))
     spec.loader.exec_module(mod := importlib.util.module_from_spec(spec))
@@ -58,7 +56,7 @@ def _pods():  # MON-15: workflow-monitoring's graph.py, or None
 
 pods = _pods()
 
-# No terminal, no waiting: a prompt from git or gh must fail, not block.
+# No prompt: git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
   os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
@@ -69,6 +67,10 @@ def run(args, cwd=None, **kw):
 
 
 def merge_pr(top, pr, head):
+  seen = run(["gh", "pr", "view", pr, "--json", "title,headRefName"], top)
+  stop = ar.private_check(top, None, {"merge message": seen.stdout}) or seen.returncode and ("gh could not read it", "run again", "GH")
+  if stop:
+    return subprocess.CompletedProcess([], 1, "", "REFUSED: %s. Fix: %s (%s)" % stop)
   return run(["gh", "pr", "merge", pr, "--merge"] + (["--match-head-commit", head] if head else []), top)
 
 
@@ -76,7 +78,6 @@ REACH = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "
 
 
 def reach(top, paths):
-  """Row ids PATHS can affect, or None for all."""
   if not paths:
     return set()
   if not os.path.exists(REACH):
@@ -92,7 +93,7 @@ OPERATE = os.path.join(MON, "operate.py")
 
 
 def base_moved(state, cfg, top):
-  """None to go ahead, else (exit code, refusal): the base moved in paths this goal's rows reach (2), or no fetch (3)."""
+  """None to go ahead, else (exit code, refusal): the base moved in paths its rows reach (2) or no fetch (3)."""
   base, was, slug = cfg.get("base", "main"), state.get("pr_base"), state.get("slug", "SLUG")
   if not was and state.get("pr_head"):
     return 2, "REFUSED (BASE_MOVED): the base the pr lane ran on was not recorded. Fix: goal.py pr %s, then merge.py %s" % (
@@ -122,7 +123,7 @@ def base_moved(state, cfg, top):
 
 
 def missing_ids(top, cfg, head="HEAD"):
-  """(held, noted): requirement IDs its criterion rows add that no origin/<base> wiki page names."""
+  """(held, noted): new requirement IDs no base wiki page names."""
   base = "origin/" + cfg.get("base", "main")
   folder = (cfg.get("wiki_dir") or "docs/wiki").strip("/")
   added = run(["git", "diff", "-U0", base + "..." + head, "--", ".loop/regression.tsv"], cwd=top).stdout
@@ -260,7 +261,7 @@ def leave_queue(path, slug):
 
 
 def queued(top, pr):
-  """True once gh reports the pull request MERGED, False if it closes or LOOP_QUEUE_WAIT seconds pass."""
+  """True once gh reports MERGED, False on close or LOOP_QUEUE_WAIT."""
   for _ in range(int(os.environ.get("LOOP_QUEUE_WAIT") or 900) // 10):
     state = view(top, pr).get("state")
     if state in ("MERGED", "CLOSED"):
