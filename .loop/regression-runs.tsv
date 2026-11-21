@@ -77,7 +77,6 @@ config-lane-unparseable	PASS	2026-11-15
 cost-time-warn	PASS	2026-11-12	
 cut-draft	PASS	2026-11-09	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
-defect-5700-lane-scrub	PASS	2026-11-21	
 defect-categories	FAIL	2026-11-12	
 defect-flow-steps	PASS	2026-11-12	
 defect-health	PASS	2026-11-12	
