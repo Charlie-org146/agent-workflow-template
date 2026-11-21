@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.join(root, "skills", "workflow-monitoring", "scripts"
 os.chdir(root)
 os.environ.pop("LOOP_ROLE", None)
 os.environ["LOOP_POD_ID"] = "mine"
+_home = tempfile.mkdtemp()  # a throwaway home: the check-in reads ~/.workflow-loop/repos, and the owner's real followed repos must not leak into its lines
+os.environ["HOME"] = os.environ["USERPROFILE"] = _home
 fails = 0
 
 
@@ -27,11 +29,12 @@ import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 
 os.environ["LOOP_MACHINE"] = "8,4.5,30,5,12"
-line = bs.machine_line({})
+FLOOR = {"min_free_memory_gb": 3.5}  # the toy states its own floor, so main's config (3.0) or its default never moves what it proves
+line = bs.machine_line(FLOOR)
 check("RAM 8.0 GB" in line and "commit 4.5 GB free" in line and "CPU 30%" in line and "5 claude, 12 node" in line, "the Machine line shows RAM, commit, CPU and the claude and node counts: " + line)
-check("memory allows 1 goal start" in line, "4.5 GB free over the 3.5 floor allows one goal start")
+check("memory allows 1 goal start" in line and "memory allows 2 goal starts" in bs.machine_line({"min_free_memory_gb": 3.0}), "4.5 GB free over the 3.5 floor allows one goal start")
 os.environ["LOOP_MACHINE"] = "8,9,,,"
-check("memory allows 4 goal starts" in bs.machine_line({}), "9 GB free allows four goal starts")
+check("memory allows 4 goal starts" in bs.machine_line(FLOOR), "9 GB free allows four goal starts")
 goals = [{"slug": "a-goal", "depends": []}, {"slug": "b-goal", "depends": []}]
 os.environ["LOOP_MACHINE"] = "8,2.0,,,"
 start, held = graph.ready(goals, {}, 0, {}, "")

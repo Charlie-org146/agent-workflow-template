@@ -11,6 +11,7 @@
 set -u
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID  # run cells and rendered Tests never depend on the runner
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN
+unset CLAUDE_CODE_HOST_SESSION_ID  # inside an app session, goal.py new --here would bind the goal to it (worker=session) and flow.py would start no headless agent
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
@@ -213,6 +214,7 @@ git switch -q main; git push -q origin main
 step() { all=""; for _ in $(seq 20); do out=$($F "$1" "$2" --wait 10 2>&1); all="$all$out"$'\n'; grep -q "^NEXT:" <<<"$out" && break; done
          echo "$all"; $goal record "$1" "$2" --file "$common/loop/runs/$1.$2.txt" 2>&1; }
 $goal new lg --here --goal "Lane goal" --done "lanes work" >/dev/null
+check "the lane goal is a headless worker goal, not bound to a host session" '[ "$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get(\"worker\"))" "$common/loop/runs/lg.json")" != session ]'
 for s in idea plan review; do step lg $s >/dev/null; done
 out=$($goal record lg qa --file "$d/flow.json" 2>&1)
 check "record refuses qa before the qa lane passed on HEAD" 'grep -q "the qa lane has not passed on .* (LANE_MISSING)" <<<"$out"'

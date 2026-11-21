@@ -42,7 +42,8 @@ steps = ["2026-06-01T10:%02d:00Z %s" % (n * 5, w) for n, w in enumerate(["queued
 write("hist", status="done", step="pr", pr="https://example.test/pull/89", release="merged", log=steps)   # gives every step a 5 minute estimate
 write("nopage", status="done", step="pr", pr="https://example.test/pull/92", wiki_error="push rejected by the wiki remote")
 PY
-printf '%s\n' '- slug: a | touches: x | goal: A | done: a' '- slug: b | touches: x | depends-on: a | goal: B | done: b' \
+# An unmerged parent holds the chain: an operate pass starts ready goals, even in a board toy.
+printf '%s\n' '- slug: a | touches: x | depends-on: oldclean | goal: A | done: a' '- slug: b | touches: x | depends-on: a | goal: B | done: b' \
   '- slug: c | touches: x | depends-on: b | goal: C | done: c' '- slug: d | touches: x | depends: a | goal: D | done: d' >> .loop/queue.md
 needs() { sed -n '/^Issues/,/^Running goals/p' "$1"; }
 
@@ -54,6 +55,11 @@ check "line 1: a saved error naming no page is kept, in the one wiki line" '[ "$
 
 echo "== one page goes stale"
 printf '\n# changed\n' >> calc.py; git commit -qam "Change calc"
+out=$($DOCS check); rc=$?
+check "a comment-only change leaves the mapped page fresh" '[ $rc = 0 ] && grep -q "^DOCS OK" <<<"$out" && ! grep -q "^STALE" <<<"$out"'
+printf '\ndef total(values):\n    return sum(values)\n' >> calc.py; git commit -qam "Add calculator total"
+out=$($DOCS check); rc=$?
+check "a new calculator function makes exactly the mapped page stale" '[ $rc = 1 ] && [ "$(grep -c "^STALE " <<<"$out")" = 1 ] && grep -q "^STALE Using-the-toy:" <<<"$out"'
 python3 - "$C/loop/runs/nopage.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s.pop("wiki_error"); json.dump(s, open(sys.argv[1], "w"))
@@ -63,6 +69,7 @@ check "line 1: exactly one wiki line names today's stale page and the fix" '[ "$
 check "line 1: the old goal's error is folded in, not repeated per goal" '! needs "$T/stale" | grep -q "oldclean\|oldgone\|Vanished"'
 $OP run --board --once > "$T/again" 2>&1
 check "line 1: two passes with an unchanged check print the same full board" 'grep -q "^LIVE BOARD" "$T/again" && [ "$(needs "$T/again")" = "$(needs "$T/stale")" ]'
+check "the board passes keep the unmerged dependency chain queued: no run record for a, no goal started" '[ ! -e "$C/loop/runs/a.json" ]'
 
 echo "== the dependencies"
 check "line 2: chained goals are drawn as a top-to-bottom graph" 'grep -qx "\[ \] b <- a" "$T/stale" && grep -qx "\[ \] d <- a" "$T/stale" && grep -qx "\[ \] c <- b" "$T/stale"'
@@ -86,6 +93,10 @@ echo "== direct branches"
 python3 - "$M" "$T/repo" <<'PY' && ok "line 4: unreachable branches" || bad "line 4: unreachable branches"
 import sys, os
 sys.path.insert(0, sys.argv[1]); import graph, board_status as b
+queued = [{"slug": "a", "depends": ["oldclean"]}]
+parent = dict(slug="oldclean", status="done", pr="https://example.test/pull/90")
+assert not graph.ready(queued, {"oldclean": parent}, 0)[0]
+assert [g["slug"] for g in graph.ready(queued, {"oldclean": dict(parent, release="merged")}, 0)[0]] == ["a"]
 node = lambda s, d=(): dict(slug=s, mark="queued", depends=list(d))
 assert graph.flow([node("a"), node("b")]) == []
 assert any("? not a goal here] zzz" in l for l in graph.flow([node("a", ["zzz"])]))

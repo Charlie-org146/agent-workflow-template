@@ -151,7 +151,7 @@ git checkout -q -- skills/k/scripts/k.py
 echo "== check-reads.sh: runtime reads outside a row's closure fail the trace"
 c="$d/trace"; mkdir -p "$c/dev/toy" "$c/skills/workflow-regression/scripts" "$c/skills/a/scripts" "$c/.loop"
 cp "$here/dev/toy/check-reads.sh" "$c/dev/toy/"; cp "$here/skills/workflow-regression/scripts/lanes.py" "$here/skills/workflow-regression/scripts/narrow.py" \
-  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$c/skills/workflow-regression/scripts/"
+  "$here/skills/workflow-regression/scripts/lanes_cli.py" "$here/skills/workflow-regression/scripts/tiers.py" "$here/skills/workflow-regression/scripts/slots.py" "$c/skills/workflow-regression/scripts/"
 for f in a b c e; do printf 'NAME = "%s"\nopen(__file__).read()\n' "$f" > "$c/skills/a/scripts/$f.py"; done
 printf 'import os\nopen(os.path.join(os.path.dirname(__file__), "c" + ".py")).read()\n' > "$c/skills/a/scripts/g.py"
 printf 'import os, shutil, subprocess, sys, tempfile\nt = tempfile.mkdtemp(); shutil.copy(os.path.join(os.path.dirname(__file__), "e" + ".py"), t + "/x.py")\nsubprocess.run(["python3", t + "/x.py"], check=True)\n' > "$c/skills/a/scripts/k.py"
@@ -166,7 +166,11 @@ printf '#!/bin/bash\n# reads: skills/a/scripts/h.py\npython3 skills/a/scripts/h.
 printf '#!/bin/bash\n# reads: skills/a/scripts/m.py\npython3 skills/a/scripts/m.py\n' > "$c/dev/t7.sh"  # lanes: no read (toy repo file)
 printf '# id\tlevel\tcommand\n' > "$c/.loop/regression.tsv"
 for r in 1 2 3 4 5 6 7; do printf 'r%s\tland\tbash dev/t%s.sh\n' $r $r >> "$c/.loop/regression.tsv"; done
-git -C "$c" init -q; before=$(cd "$c" && $reg reads r2 2>&1); brc=$?
+git -C "$c" init -q
+# The copied CLI must resolve dependencies, rather than silently supplying an empty closure to the trace checker.
+deps=$(python3 "$c/skills/workflow-regression/scripts/lanes_cli.py" deps --root "$c" 'bash dev/t1.sh' 2>&1); drc=$?
+check "the trace fixture CLI resolves the declared file and excludes the undeclared read" '[ $drc = 0 ] && grep -qx "skills/a/scripts/a.py" <<<"$deps" && ! grep -qx "skills/a/scripts/c.py" <<<"$deps"'
+before=$(cd "$c" && $reg reads r2 2>&1); brc=$?
 out=$(bash "$c/dev/toy/check-reads.sh" 2>&1); rc=$?; echo "$out"
 after=$(cd "$c" && $reg reads r2 2>&1)
 # Value: protects=a row's runtime Python reads outside its closure fail the nightly trace; fails_when=the hook or the

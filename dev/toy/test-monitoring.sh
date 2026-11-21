@@ -181,6 +181,9 @@ $W watch --once >/dev/null
 check "a failed goal waits before a mender starts" 'sleep 0.3; [ ! -e "$FAKE_AGENT/prompt-slow" ] && [ "$(field slow status)" = failed ] && [ "$(field slow mended)" = None ]'
 sets slow 'status="done"' 
 mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$here/skills/workflow-monitoring/scripts/proctree.py" "$here/skills/workflow-monitoring/scripts/replan.py" "$here/skills/workflow-monitoring/scripts/worker.py" "$here/skills/workflow-monitoring/scripts/sessions.py" "$here/skills/workflow-monitoring/scripts/auto.py" "$here/skills/workflow-monitoring/scripts/board_log.py" "$here/skills/workflow-monitoring/scripts/board_model.py" "$here/skills/workflow-monitoring/scripts/board_page.py" "$here/skills/workflow-monitoring/scripts/board_status.py" "$T/lone/"  # watch.py and what it imports, but no mend.py
+# batch became a required import for worker fallback; it is not the optional mender under test.
+cp "$here/skills/workflow-monitoring/scripts/batch.py" "$T/lone/"
+check "the standalone fixture has worker selection but still has no mender" '[ -f "$T/lone/batch.py" ] && [ ! -e "$T/lone/mend.py" ]'
 check "watch.py alone runs, and says it mended nothing" 'python3 "$T/lone/watch.py" watch --once | grep -q "mend.py isn.t beside"'
 check "watch.py alone refuses resume, and says why" 'python3 "$T/lone/watch.py" resume late 2>&1 | grep -q "needs mend.py"'
 rm -f "$T/lone/board_page.py"; cp "$here/skills/workflow-monitoring/scripts/board.py" "$T/lone/"  # no board_page.py beside board.py
