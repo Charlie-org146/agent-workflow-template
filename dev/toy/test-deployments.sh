@@ -1,6 +1,6 @@
 #!/bin/bash
 # reads: skills/workflow-docs/scripts/deployments.py skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/counting.py skills/workflow-docs/scripts/criteria.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/entry.py skills/workflow-docs/scripts/pageformat.py skills/workflow-docs/scripts/prd.py skills/workflow-docs/scripts/render.py
-# reads: skills/workflow-docs/references/commands.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md
+# reads: skills/workflow-docs/references/commands.md docs/wiki/ .loop/ README.md CLAUDE.md AGENTS.md scripts/public-origins.json
 # reads: skills/workflow-monitoring/scripts/govern_hook.py skills/workflow-monitoring/scripts/reply_hook.py
 # Proves the optional Deployments section (DOC-14) on a copy of this repo's own wiki: a page with or without it passes,
 # each malformed table is refused naming the table and column, the section never locks a Reviewed page, review and
@@ -17,7 +17,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
-mkdir -p "$T/r" && git -C "$here" ls-files skills docs .loop .claude README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE |
+mkdir -p "$T/r" && git -C "$here" ls-files skills docs .loop .claude README.md CLAUDE.md AGENTS.md VERSION listing.json CHANGELOG.md LICENSE scripts/public-origins.json |
   tar -C "$here" -cf - -T - | tar -C "$T/r" -xf -
 cd "$T/r" || exit 1
 git init -q && git add -A && git -c user.email=t@example.test -c user.name=Toy commit -qm base
