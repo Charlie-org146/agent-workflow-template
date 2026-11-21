@@ -99,6 +99,16 @@ with tempfile.TemporaryDirectory() as tmp:
 subprocess.run = real
 # TD499 / PR 5608 intentionally added the operation's armed watcher job as a second caller.
 # Check the launch's function and exercise that function through tick; a file-wide allowlist is insufficient.
+def names_gh_merge(source, tree):
+    # Preserve the old text net, including comments, alongside quote/spacing-independent AST checks.
+    return '"pr", "merge"' in source or any(
+        isinstance(node, (ast.List, ast.Tuple))
+        and any(isinstance(left, ast.Constant) and left.value == "pr"
+                and isinstance(right, ast.Constant) and right.value == "merge"
+                for left, right in zip(node.elts, node.elts[1:]))
+        for node in ast.walk(tree))
+
+
 def mailbox_errors(source):
     tree = ast.parse(source)
     functions = {node.name: node for node in tree.body if isinstance(node, ast.FunctionDef)}
@@ -106,10 +116,19 @@ def mailbox_errors(source):
     tick = functions.get("cmd_tick")
     if resume is None or tick is None:
         return ["mailbox lacks resume or cmd_tick"]
-    if any(isinstance(node, (ast.List, ast.Tuple))
-           and [part.value if isinstance(part, ast.Constant) else None for part in node.elts[:3]] == ["gh", "pr", "merge"]
-           for node in ast.walk(tree)):
+    if names_gh_merge(source, tree):
         return ["mailbox must merge through merge.py, never gh pr merge"]
+    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    resume_calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name) and node.func.id == "resume"]
+    for call in resume_calls:
+        owner = parents.get(call)
+        while owner is not None and not isinstance(owner, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            owner = parents.get(owner)
+        if owner is not tick:
+            return ["cmd_tick must be resume's only caller"]
+    if not resume_calls:
+        return ["cmd_tick must be resume's only caller"]
     launches = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute) and node.func.attr == "run"
                 and any(isinstance(part, ast.Name) and part.id == "MERGE" for part in ast.walk(node))]
@@ -179,11 +198,9 @@ WORKER = "workflow-monitoring/worker.py"
 
 def caller_errors(sources):
     def names_merge(source):
-        nodes = list(ast.walk(ast.parse(source)))
-        return any(isinstance(node, ast.Constant) and node.value == "merge.py" for node in nodes) or any(
-            isinstance(node, (ast.List, ast.Tuple))
-            and [part.value if isinstance(part, ast.Constant) else None for part in node.elts[:3]] == ["gh", "pr", "merge"]
-            for node in nodes)
+        tree = ast.parse(source)
+        return ('"merge.py"' in source or names_gh_merge(source, tree)
+                or any(isinstance(node, ast.Constant) and node.value == "merge.py" for node in ast.walk(tree)))
 
     callers = sorted(name for name, source in sources.items() if names_merge(source))
     errors = [] if callers == [MAILBOX, WORKER] else ["unexpected callers: %r" % callers]
@@ -214,6 +231,42 @@ resume.body.remove(guard)
 errors = caller_errors(dict(sources, **{MAILBOX: ast.unparse(mutant)}))
 check(any("nonwaiting job record: unexpected merge commands" in error for error in errors),
       "negative control: mailbox tick without job-record guard rejected: %s" % errors)
+
+for label, source in (
+        ("gh helper", 'gh(["pr","merge","5"], root)'),
+        ("gh repository option", 'subprocess.run(["gh","-R","x","pr","merge","5"])'),
+        ("adjacent tuple items", "gh(('prefix', 'pr', 'merge', '5'), root)"),
+        ("legacy text net", '# "pr", "merge"'),
+        ("legacy merge.py text net", '# "merge.py"')):
+    errors = caller_errors(dict(sources, **{"toy-third.py": source}))
+    check(any("toy-third.py" in error for error in errors),
+          "negative control: third caller via %s rejected: %s" % (label, errors))
+
+for label, addition, expected in (
+        ("gh helper in another function", '\ndef other(root):\n    gh(["pr","merge","5","--admin"], root)\n',
+         "mailbox must merge through merge.py"),
+        ("legacy text net", '\n# "pr", "merge"\n', "mailbox must merge through merge.py"),
+        ("second MERGE reference", '\ndef other():\n    return MERGE\n', "outside its guarded job launch"),
+        ("resume caller other than cmd_tick", '\ndef other(root, path):\n    resume(root, path)\n',
+         "cmd_tick must be resume's only caller")):
+    errors = caller_errors(dict(sources, **{MAILBOX: sources[MAILBOX] + addition}))
+    check(any(expected in error for error in errors),
+          "negative control: mailbox %s rejected: %s" % (label, errors))
+
+# Move the real launch, rather than adding a second launch, to test its function boundary.
+mutant = copy.deepcopy(ast.parse(sources[MAILBOX]))
+resume = next(node for node in mutant.body if isinstance(node, ast.FunctionDef) and node.name == "resume")
+launch = next(node for node in ast.walk(resume) if isinstance(node, ast.Assign)
+              and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute)
+              and node.value.func.attr == "run")
+parent = next(node for node in ast.walk(resume) if launch in getattr(node, "body", []))
+parent.body[parent.body.index(launch)] = ast.Pass()
+other = ast.parse("def other():\n    pass\n").body[0]
+other.body = [launch]
+mutant.body.append(other)
+errors = caller_errors(dict(sources, **{MAILBOX: ast.unparse(mutant)}))
+check(any("launch must be in resume" in error for error in errors),
+      "negative control: mailbox MERGE launch moved out of resume rejected: %s" % errors)
 if not failed:
     print("PASS: #3868: report --hold holds a goal whatever its wording says")
     print("PASS: #3868: a report merges neither goal; merge.py runs only for the goal it is asked for")
