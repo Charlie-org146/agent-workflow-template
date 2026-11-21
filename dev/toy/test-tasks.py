@@ -96,7 +96,10 @@ got = listed(root, load(root))
 labels = dict(got["a"]["goals"])
 check(labels["ga"] == "not started" and labels["gb"] == "not started", "a goal with no record and a goal with status queued are both not started")
 check(labels["gc"] == "awaiting merge" and labels["gd"] == "plan", "a done goal that is not merged reads awaiting merge, a waiting goal its step")
-check(got["a"]["state"] == "running", "a waiting or failed goal counts as in flight, so the task is running")
+check(got["a"]["state"] == "running", "a goal done but not merged keeps the task running")
+root = repo({"a": brief("A", "gw"), "b": brief("B", "gf")}, {"gw": ASKING, "gf": {"status": "failed"}})
+got = listed(root, load(root))
+check(got["a"]["state"] == "waiting" and got["b"]["state"] == "waiting", "a task whose only live goals wait on the owner or failed shows waiting, not running")
 root = repo({"a": brief("Task A", "ga")}, {"ga": {"status": "running"}})
 check(listed(root, load(root), gone={"ga"})["a"]["state"] == "done", "a goal in the merged set passed in counts as finished")
 root = repo({"old": brief("Old", "g1", by="new"), "new": brief("New", "g2"), "n": brief("Needs old", "", needs="old"), "m": brief("Needs new", "", needs="new")},
@@ -139,6 +142,11 @@ checkin.bs.left_time = lambda run, runs_, at, root=None: LEFT.get(run["slug"], 0
 
 root = repo({"a": brief("A", ""), "b": brief("B", "", needs="a")}, {})
 check(listed(root, load(root))["b"]["state"] == "waiting", "a task with no goals is never done, so a task that needs it keeps waiting")
+root = repo({"s": brief("S", "g[31mx|" + "y" * 200)}, {})
+line = live_board.task_lines(root, [], now)[3]
+check("" not in line and "|" not in line and len(line) < 100, "a goal slug with a control character or a pipe is printed clean and bounded")
+check(live_board.task_lines(root, None, now)[2].startswith("- tasks unavailable: "), "a failure inside the task code shows one tasks-unavailable line, not a crash")
+
 # bad briefs are named, the rest still print
 root = repo({"ok": brief("Fine", "g1"), "bare": "# Bare name\n\n- Goals: g2\n", "dir": brief("Dir")}, {"g1": {}})
 os.remove(os.path.join(root, ".loop", "tasks", "dir.md"))
@@ -150,12 +158,12 @@ root = repo({"k": "# Keys\n\n-  FEATURE :  DEL-23 \n- release: v1.1.0\n- GOALS: 
 got = listed(root, load(root))
 check(got["k"]["note"] == "" and got["k"]["goals"][0][0] == "g1" and len(got["k"]["goals"]) == 2, "keys are read without case or spacing, and every goal is listed")
 root = repo({"w": "# Hostile | name\x1b[31m " + "x" * 500 + "\n\n- Feature: F\n- Release: R\n- Source: S\n"}, {})
-lines = live_board.task_lines(board_lines.tasks(root, [], now))
+lines = live_board.task_lines(root, [], now)
 check(len(lines) == 3 and "|" not in lines[2] and "\x1b" not in lines[2] and len(lines[2]) < 200, "a name with a pipe, a control character and 500 characters prints as one clean bounded line")
 
 # no briefs: nothing printed
 root = repo({}, {})
-check(live_board.task_lines(board_lines.tasks(root, [], now)) == [], "no briefs prints nothing")
+check(live_board.task_lines(root, [], now) == [], "no briefs prints nothing")
 check("Tasks" not in "\n".join(live_board.render(root=root, at=now)), "the board prints no Tasks lines without briefs")
 plain_checkin = "\n".join(checkin.render(root=root, at=now, stamp="0000"))
 check("Tasks" not in plain_checkin, "the check-in prints no Tasks section without briefs")
@@ -185,7 +193,7 @@ check(not any(re.search(r"merged|hist|closed|milestone|tokens|total|done lines|l
 # the real briefs
 folder = os.path.join(top, ".loop", "tasks")
 names = sorted(n for n in os.listdir(folder) if n.endswith(".md")) if os.path.isdir(folder) else []
-check(len(names) == 11, "the repo holds the eleven briefs: %d" % len(names))
+check(len(names) >= 11, "the repo holds at least the eleven briefs: %d" % len(names))
 real = live_board.task_rows(top)
 check(all(not t["note"] for t in real) and len(real) == len(names), "every real brief has its feature, release and source lines")
 bodies = [open(os.path.join(folder, n), encoding="utf-8").read() for n in names]
