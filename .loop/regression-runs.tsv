@@ -208,6 +208,7 @@ lane-walk-skips-node-modules	PASS	2026-11-14
 lanes-abs-not-walked	PASS	2026-11-14	
 lanes-declared	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-headers	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+lanes-pr-affected	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-reuse	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-trace	FAIL	2026-11-10	
 lanes-trace-check	PASS	2026-11-10	
@@ -336,6 +337,7 @@ publish-tables-regen	PASS	2026-11-13
 pull-ff-only-passes	PASS	2026-11-12	
 record-in-session	PASS	2026-11-12	
 refuse-replace	PASS	2026-11-20	
+refused-unmet	PASS	2026-11-20	
 reg-defect-label	PASS	2026-11-12	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-12	
