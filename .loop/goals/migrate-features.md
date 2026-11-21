@@ -34,7 +34,7 @@ What changed: the 27 live requirements on the 11 feature pages become features i
 
 Owner decisions: the plan gate was answered `rec` by the owner (record o706, and the owner also typed `rec` directly in the operation session); the owner then ordered, in record o708, that this goal merges when green after the earlier goal, which is: the marker blocks are written into the 27 pages (UC1a); all 29 Reviewed marks are cleared (UC2a, the owner's o700 order); the test count shows on every line of an ID (D2a); the blocks are write-once snapshots until the checker goal recomputes them (D6a); and health's new FAIL rows and the release-gate effect are reported, not fixed (D7a). Re-run `features-v1.py run --refresh` to refresh a block (the flag is needed once the base already carries blocks, so a later run cannot overwrite them by accident).
 
-release gate (review.py check_reviews) now lists every Unreviewed requirement, the 27 migrated and DOC-27 and DOC-28, as not Reviewed
+release gate (review.py check_reviews) now lists every Unreviewed requirement, the 27 migrated (and DOC-27 and DOC-28 once they land), as not Reviewed
 
 Health: after this merge `health.py check` shows six new FAIL rows from the `principle-map` rule (`principle N has no Reviewed requirement`), compared as sets with the unmigrated tree; they clear as the owner reviews one feature per principle. Reported, not fixed: the rule file is outside this goal's touches. Operation is told before merge.
 
@@ -72,3 +72,5 @@ Manual negative controls (each run in a throwaway clone; all behave as stated, a
 `check` on the committed branch before the merge-up (base 48ac06e7d): every proof passes except `1 skipped IDs present on HEAD`, expected until the earlier goal merges DOC-27 and DOC-28; it ends `CHECK FAILED (1)` with exit 1 until then. The final `check` output replaces this after the merge-up.
 
 What `check` proves, and what it does not: it proves every page equals the base byte for byte once the marker blocks are stripped and the marks restored, that each block is well formed (a Reference and one numbered Line per requirement line), that the test rows and the Principles table are untouched, and the five done lines. It does not re-derive the values inside a block (reference text, metric hit, linked-row count); `run` writes those from the repo's own parsers, and they are snapshots until the checker goal recomputes them.
+
+Order change (Operation TD668): this goal merges before the goal that adds DOC-27 and DOC-28, so the check's proof `skipped IDs present on HEAD` became a note: those two IDs are skipped if present and nothing is required if they are absent, the report says the goal that adds them lands later, and the sentence above reads `(and DOC-27 and DOC-28 once they land)`. No other proof changed.

@@ -80,9 +80,9 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 - DEL-19 (Delivery): 6 lines
 - DOC-25 (Documentation): 6 lines
 
-## Skipped (already in the new format)
+## Skipped (added in the new format by a later goal)
 
-- DOC-27, DOC-28
+- DOC-27, DOC-28 (skipped if present; nothing is required if absent, the goal that adds them lands later)
 
 ## Totals
 

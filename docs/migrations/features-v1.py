@@ -195,7 +195,7 @@ def report(feats, marks, skip, kept):
     out += ["", "## To split (more than five lines)", ""]
     out += ["- %s (%s): %d lines" % (f[0], f[1], f[4]) for f in sorted(feats, key=lambda f: -f[4]) if f[4] > 5] or ["- none"]
     perline = sum(f[4] for f in feats)
-    out += ["", "## Skipped (already in the new format)", "", "- " + (", ".join(sorted(skip)) or "none"), "", "## Totals", "",
+    out += ["", "## Skipped (added in the new format by a later goal)", "", "- " + (", ".join(sorted(skip)) or "none") + " (skipped if present; nothing is required if absent, the goal that adds them lands later)", "", "## Totals", "",
             "- features migrated: %d" % len(feats), "- requirement marks cleared: %d" % sum(r[0] == "entry" for r in rows),
             "- page-level marks cleared: %d" % sum(r[0] == "page" for r in rows),
             "- features to split: %d" % sum(f[4] > 5 for f in feats), "- lines: %d" % perline,
