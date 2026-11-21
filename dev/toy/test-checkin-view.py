@@ -107,6 +107,11 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     import mailbox
     calls, opened = [], [{"number": 5167, "title": "Merge slot wait is not logged"}, {"number": 5168, "title": "Slot wait never logged (#5170)"}]
     def fake(args, cwd):
+        args = list(args)
+        if "--body-file" in args:
+            i = args.index("--body-file") + 1
+            with open(args[i], encoding="utf-8") as f:
+                args[i] = f.read()
         calls.append(args)
         out = json.dumps(opened) if args[:2] == ["issue", "list"] else "https://github.com/o/r/issues/6001\n"
         return subprocess.CompletedProcess(args, 0, out, "")
