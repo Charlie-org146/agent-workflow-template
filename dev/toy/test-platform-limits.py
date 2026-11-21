@@ -22,7 +22,7 @@ def real_id_hash():
     """Hash of the checkout's own .git/loop/operation.id (or "absent"); never its contents."""
     import hashlib
     try:
-        out = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+        out = subprocess.run(["git", "-C", root, "rev-parse", "--git-common-dir"], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")}).stdout.strip()
         path = os.path.join(os.path.abspath(os.path.join(root, out)), "loop", "operation.id")
         with open(path, "rb") as handle:
             return hashlib.sha256(handle.read()).hexdigest()
@@ -41,7 +41,7 @@ def check(name, ok):
 
 def run(top, script, *args, **env):
     # hermetic: no host session id or loop setting, and a throwaway HOME so the owner's ~/.claude.json and ~/.workflow-loop are never read
-    keep = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE"))}
+    keep = {k: v for k, v in os.environ.items() if not k.startswith(("LOOP_", "CLAUDE", "ANTHROPIC")) and k not in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")}
     keep.update(HOME=HOME, USERPROFILE=HOME)
     done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, **env))
     return done.returncode, done.stdout + done.stderr
@@ -145,6 +145,17 @@ for path in (unattended, sessions):
     limit = len(old.stdout.replace(b"\r\n", b"\n")) if old.returncode == 0 and old.stdout else 20000
     check("e: %s is %d bytes, no larger than main (%d) and under 20,000" % (os.path.basename(path), size, limit), size <= min(limit, 20000))
 
+# control: a host session variable put back in the parent environment does not reach the fixture, and the real operation.id stays as it was
+before = count(top).get("count")
+os.environ["CLAUDE_CODE_HOST_SESSION_ID"] = "host-probe"
+os.environ["GIT_DIR"] = os.path.join(root, ".git")
+try:
+    run(top, unattended, "sends", "add", "w")
+finally:
+    os.environ.pop("CLAUDE_CODE_HOST_SESSION_ID", None)
+    os.environ.pop("GIT_DIR", None)
+check("control: with a host session id and GIT_DIR in the environment the fixture still counts its send", count(top).get("count") == before + 1)
+check("control: and the checkout's own operation.id is unchanged", real_id_hash() == REAL_BEFORE)
 check("hermetic: the checkout's own .git/loop/operation.id is byte-identical before and after this toy", real_id_hash() == REAL_BEFORE)
 print("PLATFORM LIMITS TOY " + ("OK" if not fails else "FAILED %d" % fails))
 sys.exit(1 if fails else 0)

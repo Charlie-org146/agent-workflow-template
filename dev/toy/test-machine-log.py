@@ -24,7 +24,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 def real_id_hash():
     """Hash of the checkout's own .git/loop/operation.id (or "absent"); never its contents."""
     try:
-        out = subprocess.run(["git", "-C", here, "rev-parse", "--git-common-dir"], capture_output=True, text=True).stdout.strip()
+        out = subprocess.run(["git", "-C", here, "rev-parse", "--git-common-dir"], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")}).stdout.strip()
         path = os.path.join(os.path.abspath(os.path.join(here, out)), "loop", "operation.id")
         with open(path, "rb") as handle:
             return hashlib.sha256(handle.read()).hexdigest()
@@ -35,7 +35,7 @@ def real_id_hash():
 REAL_BEFORE = real_id_hash()
 # hermetic: no host session id or loop setting, and a throwaway HOME, so the owner's session never reaches the wait loop's operation-session
 # claim (operate.cmd_run -> cmd_claim -> board.followed reads the cwd's repo and ~/.workflow-loop) and the real .git/loop/operation.id is never written
-for name in [k for k in os.environ if k.startswith(("CLAUDE", "ANTHROPIC", "LOOP_"))]:
+for name in [k for k in os.environ if k.startswith(("CLAUDE", "ANTHROPIC", "LOOP_")) or k in ("GIT_DIR", "GIT_COMMON_DIR", "GIT_WORK_TREE")]:
     os.environ.pop(name, None)
 HOME = tempfile.mkdtemp(prefix="machine-log-home-")
 os.environ.update(HOME=HOME, USERPROFILE=HOME)
