@@ -13,8 +13,6 @@
     "workspace-write",
     "-c",
     "sandbox_workspace_write.network_access=true",
-    "-c",
-    "sandbox_workspace_write.writable_roots=GITROOTS",
     "-C",
     "WORKTREE"
   ],
@@ -84,7 +82,6 @@
   "merge_batch": true,
   "max_active_goals": 20,
   "plan_pause_percent": 80,
-  "health_script_bytes": 20480,
   "health_skill_lines": 150,
   "public_origins": [
     "https://12factor.net",

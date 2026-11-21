@@ -69,7 +69,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `cadence` | 30 | Minutes between operation check-ins, 1 to 60, or off. |
 | `check_slots` | 2 | Open PRs with unfinished checks allowed before a push. |
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
-| `codex_profile` | 10 entries in config.json |  |
+| `codex_profile` | 8 entries in config.json |  |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
@@ -80,7 +80,6 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
-| `health_script_bytes` | 20480 |  |
 | `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
 | `judge_setup` | none | No longer read; old configs stay valid. |
