@@ -41,3 +41,15 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 - B3 (principle 3): no reformatting; only the one function's docstring wording changes, and only if the bytes need it.
 - B5 (principle 5): goes to operation, not decided here: a machine with no trust file has no trust entry to create from this repo; Claude Code writes the entry when the owner trusts the folder, so the setup text should say so.
 - B6 (principle 6): goes to operation: a message naming the unreadable file needs about 22 bytes against 13 spare; it fits only if the docstring is cut to one short line.
+
+### Red-team round 2 answers (plan-record taken; eight BREAK lines)
+- Import cycle (A): checked, machines.py imports only graph and the standard library, never operate; an import error is not swallowed (the delegating call is outside any try).
+- Exact reason (A) and B1 parameterised case: the five file shapes are one parameterised toy case that asserts the refusal text and the file name, not only a nonzero exit.
+- B1 assert count: the toy's assert count before and after is compared in the lane; the flipped controls are replaced, none dropped.
+- B2: the red run's commit hash goes in the regression row's note.
+- B3: the move is two hunks: one function removed from operate.py (replaced by a three-line delegate), the same function with the new behaviour added to machines.py; no other line changes.
+- Retry (R): one retry after 0.2 seconds, only on a parse error; the worst added delay is 0.2 seconds.
+- B6: the refusal's last clause becomes one action: "open FOLDER once in Claude Code and trust it; the trust file is X".
+- B5 (MCH-1 text): goes with the docs sentence already added; the Reviewed MCH-1 text is not edited.
+- B4 (CLAUDE_CONFIG_DIR read from the environment by a check a worker can run): goes to operation to decide, with the option to read only the home folder.
+- C (skip the move): goes to operation with B4.
