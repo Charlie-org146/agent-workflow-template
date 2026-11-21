@@ -48,13 +48,16 @@ def check(root):
     block = live_block(root, START)
     if not block:
         gone.append("%s reaches no live requirement" % START)
-    elif not re.search(r"\bsync", block, re.I):
+    elif not re.search(r"\bsync|in step", block, re.I):
         gone.append("the requirement %s reaches no longer says it syncs" % START)
     if not os.path.exists(os.path.join(root, DOCS)):
         gone.append("no docs.py")
     else:
-        run = subprocess.run([sys.executable, os.path.join(root, DOCS), "sync", "--help"], capture_output=True, text=True, cwd=root)
-        if run.returncode != 0:
+        try:
+            code = subprocess.run([sys.executable, os.path.join(root, DOCS), "sync", "--help"], capture_output=True, text=True, cwd=root, timeout=60).returncode
+        except subprocess.TimeoutExpired:
+            code = 1
+        if code != 0:
             gone.append("docs.py has no sync command")
     if "docs.py sync" not in read(root, HOWTO):
         gone.append("the How-to-use page does not name docs.py sync")
@@ -93,12 +96,16 @@ expect("the repo's sync pointer holds by ID" + "".join("; " + g for g in check(R
 expect("a fixture with the pointer in place passes", check(fixture()) == [])
 expect("rewording the requirement keeps it green where the old DOC-1 sentence grep fails",
        check(fixture(**{PAGES + "/Documentation.md": "- DOC-17: moved to DOC-2\n- DOC-2: **Reviewed 2026-11-21** Wholly new words\n  - Syncing stays opt-in. [DOC-2]\n"})) == [])
+expect("rewording to 'kept in step with an outside document' without the word sync stays green",
+       check(fixture(**{PAGES + "/Documentation.md": "- DOC-17: moved to DOC-2\n- DOC-2: **Reviewed 2026-11-21** Wholly new words\n  - The repo copy is kept in step with an outside document. [DOC-2]\n"})) == [])
 expect("negative control: a live home that no longer says it syncs fails",
        any("no longer says" in g for g in check(fixture(**{PAGES + "/Documentation.md": "- DOC-17: moved to DOC-2\n- DOC-2: **Unreviewed** Only I write\n  - Nothing else. [DOC-2]\n"}))))
 expect("negative control: an ID that reaches no live requirement fails",
        any("reaches no live" in g for g in check(fixture(**{PAGES + "/Documentation.md": "- DOC-2: **Unreviewed** sync\n"}))))
 expect("negative control: a retirement loop fails instead of spinning",
        any("reaches no live" in g for g in check(fixture(**{PAGES + "/Documentation.md": "- DOC-17: moved to DOC-2\n- DOC-2: moved to DOC-17\n"}))))
+expect("negative control: a missing docs.py fails",
+       any("no docs.py" in g for g in check(fixture(**{DOCS: None}))))
 expect("negative control: a docs.py with no sync command fails",
        any("no sync command" in g for g in check(fixture(**{DOCS: "import sys\nsys.exit(2)\n"}))))
 expect("negative control: a How-to-use page that drops docs.py sync fails",
