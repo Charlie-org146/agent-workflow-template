@@ -15,3 +15,9 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `bash dev/toy/test-goal.sh 2>&1 | grep -E "^FAIL|ALL PASS"`.
+   Expect: `ALL PASS` and no FAIL line (it printed 4 FAILs before this goal).
+2. Run `python3 dev/toy/size-check.py --unread --control | head -1` and `python3 dev/toy/size-check.py --unread | tail -1`.
+   Expect: `PASS negative control: a script with an unread assert is named, a fully read one is not`, then `UNREAD SCRIPTS: N of M scripts with asserts` (N is 152 of 272 on this branch).
+3. In `dev/toy/test-goal.sh` turn the `git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null)` line back into `git add -A .loop CLAUDE.md AGENTS.md 2>/dev/null` and run step 1 again (then undo).
+   Expect: FAIL lines for `pr left START.md stale`, `retry` and `push error`.
