@@ -13,7 +13,6 @@ guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the
 lane-messages-table	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4091
 lanes-trace	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4153
 lanes-trace-check	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4097
-merge-guard-base-head	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4113
 reply-hook-blocks	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4549
 reply-hook-checkin-123	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4547
 repo-narrow-178	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4090
