@@ -80,7 +80,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
-| `health_script_bytes` | 20480 | Script size health fails, in bytes (warns at 90%). |
+| `health_script_bytes` | 20480 |  |
 | `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
 | `judge_setup` | none | No longer read; old configs stay valid. |
