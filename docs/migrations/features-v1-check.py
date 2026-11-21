@@ -155,13 +155,13 @@ def main():
                 subs = 0
                 while k + 1 + subs < len(ls) and ls[k + 1 + subs].startswith("  ") and ls[k + 1 + subs].strip():
                     subs += 1
-                head = k + 1 + subs
+                at = k + 1 + subs
                 got = []
-                for y in ls[head + 3:]:
+                for y in ls[at + 3:]:
                     if not re.match(r"^  - Line \d+: metric .*; test .*$", y):
                         break
                     got.append(y)
-                if not (ls[head] == "" and ls[head + 1] == "  - Feature markers v1" and ls[head + 2].startswith("  - Reference: ") and [int(re.match(r"  - Line (\d+):", y)[1]) for y in got] == list(range(1, subs + 1))):
+                if not (ls[at] == "" and ls[at + 1] == "  - Feature markers v1" and ls[at + 2].startswith("  - Reference: ") and [int(re.match(r"  - Line (\d+):", y)[1]) for y in got] == list(range(1, subs + 1))):
                     broken.append(m[1])
         ok("3 every block has a Reference and one numbered Line per requirement line", not broken, ", ".join(broken))
         # done line 4: marks
@@ -185,7 +185,8 @@ def main():
         clone = os.path.join(tmp, "clone")
         run("git", "clone", "-q", "--local", "--no-hardlinks", root, clone)
         again = subprocess.run([sys.executable, "docs/migrations/features-v1.py", "run", "--base", base, "--skip", a.skip], cwd=clone, capture_output=True, text=True)
-        ok("5 a second run exits 0 and leaves an empty diff", again.returncode == 0 and not run("git", "status", "--porcelain", cwd=clone), (again.stdout + again.stderr)[-200:])
+        status = run("git", "status", "--porcelain", cwd=clone)
+        ok("5 a second run exits 0 and leaves an empty diff", again.returncode == 0 and status == "", (again.stdout + again.stderr)[-200:] or "git status failed")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("CHECK %s on HEAD %s against BASE %s" % ("FAILED (%d)" % len(fails) if fails else "OK", head[:9], base[:9]))

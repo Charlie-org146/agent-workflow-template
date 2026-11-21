@@ -99,7 +99,7 @@ def record(log, key, day):
     return "%s %s" % got[-1] if got else "record not available"
 
 
-def build(root, base, skip, cr, pf, prd):
+def build(root, base, skip, cr, pf, prd, refresh=False):
     """(pages {rel: text}, features, marks) built in memory; refuses before any write."""
     tests, _ = cr.test_rows(root)
     refs, log, pages, feats, marks, ids = follows(pf, root), log_rows(), {}, [], [], set()
@@ -114,6 +114,8 @@ def build(root, base, skip, cr, pf, prd):
         if old is None:
             bail("%s is not on %s" % (rel, base))
         onbase = set(old.replace("\r\n", "\n").split("\n"))
+        if "  - Feature markers v1" in onbase and not refresh:
+            bail("%s on %s already holds marker blocks; pass --refresh to rewrite them" % (rel, base))
         top = re.compile(r"^Review: \*\*Reviewed (\d{4}-\d\d-\d\d)\*\*")
         page_mark = next(((k, top.match(x)) for k, x in enumerate(lines[:12]) if top.match(x)), None)
         if not ents and not page_mark:
@@ -148,7 +150,7 @@ def build(root, base, skip, cr, pf, prd):
             out.append(line)
             out += lines[k + 1:k + 1 + len(subs)]
             k += 1 + len(subs)
-            if k < len(lines) and lines[k] == "" and k + 1 < len(lines) and BLOCK.match(lines[k + 1]):
+            if k < len(lines) and lines[k] == "" and k + 1 < len(lines) and lines[k + 1] == "  - Feature markers v1":
                 k += 1
                 while k < len(lines) and BLOCK.match(lines[k]):
                     k += 1
@@ -217,6 +219,7 @@ def main():
     ap.add_argument("cmd", choices=["run"])
     ap.add_argument("--base")
     ap.add_argument("--skip", default="DOC-27,DOC-28")
+    ap.add_argument("--refresh", action="store_true")
     a = ap.parse_args()
     if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^][A-Za-z0-9._/@~^-]*", a.base)):
         bail("bad --base or --skip")
@@ -228,9 +231,10 @@ def main():
     import criteria as cr
     import pageformat as pf
     import prd
-    pages, feats, marks = build(root, base, skip, cr, pf, prd)
+    pages, feats, marks = build(root, base, skip, cr, pf, prd, a.refresh)
     text = report(feats, marks, skip, kept_rows(root))
-    todo = {rel: t for rel, t in pages.items() if open(os.path.join(root, rel), encoding="utf-8", newline="").read() != t}
+    orig = {rel: open(os.path.join(root, rel), encoding="utf-8", newline="").read() for rel in pages}
+    todo = {rel: t for rel, t in pages.items() if orig[rel] != t}
     cur = os.path.join(root, REPORT)
     if not os.path.exists(cur) or open(cur, encoding="utf-8", newline="").read() != text:
         todo[REPORT] = text
@@ -244,16 +248,23 @@ def main():
         if todo:
             os.makedirs(os.path.join(root, "docs/migrations"), exist_ok=True)
             tmp = tempfile.mkdtemp(prefix=".features-v1-", dir=os.path.join(root, "docs/migrations"))
-        for i, (rel, t) in enumerate(sorted(todo.items(), key=lambda x: x[0] == REPORT)):
+        for i, (rel, t) in enumerate(sorted(todo.items(), key=lambda x: x[0] != REPORT)):
             part = os.path.join(tmp, "%d.tmp" % i)
             open(part, "w", encoding="utf-8", newline="").write(t)
             todo[rel] = part
-        for rel, part in sorted(todo.items(), key=lambda x: x[0] == REPORT):
+        moved = [r for r in orig if r in todo and open(os.path.join(root, r), encoding="utf-8", newline="").read() != orig[r]]
+        if moved:
+            bail("changed while the migration was built, nothing written: " + ", ".join(moved))
+        for rel, part in sorted(todo.items(), key=lambda x: x[0] != REPORT):
             os.replace(part, os.path.join(root, rel))
             done.append(rel)
-    except Exception as e:
-        sys.exit("REFUSED: write failed (%s). Touched: %s. Recover: git checkout -- %s%s" % (
-            e, ", ".join(done) or "none", " ".join(r for r in done if r != REPORT) or ".", "; delete " + REPORT if REPORT in done else ""))
+    except BaseException as e:
+        if isinstance(e, SystemExit):
+            raise
+        pages_done = [r for r in done if r != REPORT]
+        sys.exit("REFUSED: write failed (%s). Touched: %s.%s%s" % (
+            e, ", ".join(done) or "none", " Recover: git checkout -- " + " ".join(pages_done) if pages_done else "",
+            "; delete " + REPORT + " if it is new, else git checkout -- " + REPORT if REPORT in done else ""))
     finally:
         tmp and shutil.rmtree(tmp, ignore_errors=True)
     print("MIGRATED %d features on %d pages, %d marks cleared; wrote %d files (base %s)" % (len(feats), len(pages), len(marks or kept_rows(root)), len(done), base[:9]))
