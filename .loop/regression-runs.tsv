@@ -78,8 +78,14 @@ cost-time-warn	PASS	2026-11-12
 cut-draft	PASS	2026-11-09	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-5078-own-repo-image	PASS	2026-11-21	
-defect-categories	FAIL	2026-11-12	
-defect-flow-steps	PASS	2026-11-12	
+defect-5317-wiki-start	PASS	2026-11-21	
+defect-5635-settings-default	PASS	2026-11-21	
+defect-5638-reconcile-wording	PASS	2026-11-21	
+defect-5679-reads-headers	PASS	2026-11-21	
+defect-88-closing-keywords	PASS	2026-11-21	
+defect-categories	FAIL	2026-11-21	
+defect-closing-keywords	PASS	2026-11-21	
+defect-flow-steps	PASS	2026-11-21	
 defect-health	PASS	2026-11-12	
 defect-owed-branch-proved	PASS	2026-11-10	
 defect-wording	PASS	2026-11-12	
@@ -111,6 +117,7 @@ desk-lists	PASS	2026-11-18
 desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
 digest-no-milestone	PASS	2026-11-12	
+doc1-sync-pointer-by-id	PASS	2026-11-21	
 doc18-howto-mapped	PASS	2026-11-16	
 doc18-howto-missing	PASS	2026-11-16	
 doc18-howto-orphan	PASS	2026-11-16	
@@ -326,6 +333,7 @@ pr-commit-scope	PASS	2026-11-19
 pr-head-audit-passes-4208	PASS	2026-11-15	
 pr-in-milestone	PASS	2026-11-12	
 pr-moved-uncounted	PASS	2026-11-15	
+pr-no-touches-from-diff	PASS	2026-11-21	
 pr-real-fail-costs-try	PASS	2026-11-13	
 pr-statuses-only-lane-3840	PASS	2026-11-14	
 pr-waits-owed	PASS	2026-11-13	
@@ -369,6 +377,7 @@ roadmap-closed-drops	PASS	2026-11-15
 row-timeout-holds	PASS	2026-11-11	
 runs-sha	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 same-lines	PASS	2026-11-20	
+scan-fail-closed	PASS	2026-11-21	
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
