@@ -10,13 +10,13 @@
 # usage: test-delivery-release.sh [CASE]   CASE: patch removed bump protected rules review pending nomatch crash
 #        dirty mismatch exists latebump private wikiname firstpage wikinull docs (default: all). Prints PASS:/FAIL: lines; exits non-zero on any FAIL.
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH TOY_PROTECT TOY_PR_MODE
-export LOOP_PRIVATE_NAMES=/dev/null  # o675: no list stops the scan, so a toy names an explicit empty one
 set -u
 export LOOP_ROLE=worker
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-all}; self="$here/dev/toy/$(basename "$0")"
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
+mkdir -p "$HOME/.workflow-loop"; : > "$HOME/.workflow-loop/private-names"  # o675: no list stops the scan, so the home holds an empty one
 d=$(mktemp -d); toy_on_exit 'rm -rf "$d" "$HOME"'
 "$here/dev/toy/make.sh" "$d" >/dev/null || { echo "FAIL: toy repo"; exit 1; }
 export LOOP_FLOW="$d/flow.json" FAKE_GH_DIR="$d/gh" FAKE_GH_ORIGIN="$d/origin.git" TOY_FAKEGH="$here/dev/toy/fakegh/gh"
@@ -210,7 +210,7 @@ fi
 if want latebump; then
   echo "== DEL-5: a bump set after a refused merge.py still binds"
   finish late "# owner: late-secret-zz"; list "late-secret-zz"; merge late >/dev/null
-  rm -f "$HOME/.workflow-loop/private-names"; v=$(remote_file VERSION)
+  : > "$HOME/.workflow-loop/private-names"; v=$(remote_file VERSION)
   python3 -c "import json,os;p='$R/late.extra.json';x=json.load(open(p)) if os.path.exists(p) else {};x.setdefault('set',{})['bump']='minor';json.dump(x,open(p,'w'))"
   out=$(merge late); echo "$out" | tail -1
   [ "$(state late release_part)" = minor ] && [ "$(remote_file VERSION)" = "$(bumped "$v" minor)" ] \
@@ -228,7 +228,7 @@ if want private; then
   out=$(merge leaky); rc=$?; echo "$out" | tail -1
   [ $rc -ne 0 ] && grep -q "(PRIVATE_LIST)" <<<"$out" && grep -q "line 2" <<<"$out" && [ "$(origin_main)" = "$before" ] \
     && ok "DEL-9: a broken list (invalid pattern) refuses merge.py, nothing merged" || bad "DEL-9: broken list"
-  rm -f "$HOME/.workflow-loop/private-names"
+  : > "$HOME/.workflow-loop/private-names"
   cp -R "$here/skills" "$d/skills"; rm "$d/skills/workflow-delivery/scripts/private.py"
   out=$(MERGE="$d/skills/workflow-release/scripts/merge.py" merge leaky); rc=$?; echo "$out" | tail -1
   [ $rc -ne 0 ] && grep -q "(PRIVATE_MODULE)" <<<"$out" && grep -q "workflow-delivery/scripts/private.py" <<<"$out" && [ "$(origin_main)" = "$before" ] \
@@ -250,7 +250,7 @@ if want wikiname; then
   err=$(state wk wiki_error)
   [ $rc -ne 0 ] && grep -q "wiki:Other:2" <<<"$err" && grep -q "(PRIVATE_NAME)" <<<"$err" && ! grep -q plantedname <<<"$err" \
     && [ "$(git --git-dir="$d/origin.wiki.git" rev-parse main)" = "$head" ] && ok "DEL-9: wiki publish stops on a planted name in an untouched page" || bad "DEL-9: wiki scan"
-  rm -f "$HOME/.workflow-loop/private-names"
+  : > "$HOME/.workflow-loop/private-names"
   git rm -q docs/wiki/Other.md; git commit -qm "Drop the page"; TOY_SERVER_MERGE=1 git push -q origin main
 fi
 

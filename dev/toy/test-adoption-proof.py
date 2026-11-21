@@ -147,6 +147,7 @@ def case_replay():
     gold = os.path.join(ROOT, "dev", "toy", "adoption-golden.tsv")
     with tempfile.TemporaryDirectory() as tmp:
         env = fake_gh(tmp)
+        env.pop("LOOP_PRIVATE_NAMES")  # the golden reads the home's own list
         operation = home(tmp)
         unattended = tool(tmp, "workflow-monitoring", "unattended.py")
         code, out = run([sys.executable, unattended, "replay", "--golden", gold], operation, env)

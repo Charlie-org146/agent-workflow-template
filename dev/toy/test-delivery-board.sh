@@ -24,7 +24,7 @@ S="$here/skills/workflow-monitoring/scripts"
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"; SE="python3 $S/sessions.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 cd "$d/repo" || exit 1
-python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
+LOOP_PRIVATE_NAMES=/dev/null python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null  # o675: no list stops the adoption commit
 git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
 fails=0
 ok() { echo "PASS: $1"; }
