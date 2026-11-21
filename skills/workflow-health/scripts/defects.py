@@ -2,9 +2,8 @@
 """The defect-test rule: every closed issue or finding needs a regression row of category defect.
 
 Closed: a merged goal says it fixed it ("fixes #35", "fixes finding:SLUG" in .loop/goals/*.md), or a line of
-.loop/findings.md is marked [closed]. A defect row's link holds the issue URL or finding:SLUG. Reads files only (no gh call).
-Also the Traceability and Consistency rules (report.py) and the shared page reader: row-requirement, ids-unique, refs,
-usage-readme, migration. Each rule's negative control is in CONTROLS (controls.py runs it).
+.loop/findings.md is marked [closed]. A defect row's link holds the issue URL or finding:SLUG. Reads files only.
+Also the page reader and these rules: row-requirement, ids-unique, refs, usage-readme, migration (controls: CONTROLS).
 """
 import glob
 import importlib
@@ -61,6 +60,7 @@ def missing(root):
 
 
 LINE = re.compile(r"^- ([A-Z]{2,5}-\d+[a-z]?): ", re.M)
+LIVE = re.compile(r"^- [A-Z]{2,5}-\d+[a-z]?: (?!moved to |merged into |Retired)", re.M)
 SLUG_N = re.compile(r"^[a-z0-9][a-z0-9-]*:\d+$")
 COMMAND = re.compile(r"/workflow-[a-z]+ [a-z][a-z-]*")
 
@@ -130,7 +130,7 @@ def ids_unique(root):
 
 
 def retired(root):
-    """Ids a page lists under `### Retired`: each resolves through its moved-to marker (DOC-20)."""
+    """Ids under `### Retired`, each resolved through its moved-to marker (DOC-20)."""
     out = set()
     for text in pages(root).values():
         for part in re.findall(r"^### Retired\n\n((?:- .*\n?)+)", text, re.M):
@@ -181,8 +181,9 @@ def mod(skill, name):
     sys.path.insert(0, where)
     try:
         return importlib.import_module(name)
-    finally:
-        sys.path.pop(0)
+    finally:  # kept, last: its lazy imports need it
+        sys.path.remove(where)
+        where in sys.path or sys.path.append(where)
 
 
 def clean(text):
@@ -226,7 +227,7 @@ def gaps_version(root, cfg, g, info):
 
 
 def behind(root):
-    """MIG_VERSION as WARN rows for rules.template_version (the migration rule skips that code)."""
+    """MIG_VERSION as WARN rows for rules.template_version."""
     found = []
     try:
         gaps_version(root, config_of(root) or {}, lambda *item: found.append(item), {})
@@ -265,7 +266,7 @@ def gaps_blocks(root, cfg, g):
 
 
 def migration_gaps(root, online=True, pr=False, info=None):
-    """[(code, subject, what, fix)] for the repo. pr: only PR-closable gaps. online: also clone the published wiki. info records what ran."""
+    """[(code, subject, what, fix)] for the repo. pr: only PR-closable gaps. online: also clone the wiki. info records what ran."""
     info = {} if info is None else info
     info.update(skipped=[], notes=[], steps=[], held="none", want="unknown", platform=sys.platform, off={"health": False, "regression": False})
     found, g = [], lambda *item: found.append(item)
@@ -312,7 +313,7 @@ def lines(root, gaps, info, pr, offline):
 
 
 def main(argv):
-    """setup.py migration-check [--repo DIR] [--pr] [--offline]: exit 0 no gap, 1 gaps, 2 usage, 4 could not run."""
+    """setup.py migration-check [--repo DIR] [--pr] [--offline]: exit 0 no gap, 1 gaps, 2 usage, 4 not run."""
     import argparse
     parser = argparse.ArgumentParser(prog="setup.py migration-check", description="List every gap between a repo and the current template, each with its fix; writes nothing.")
     parser.add_argument("--repo", default=".", help="the repo to check (default: the current directory)")
@@ -343,7 +344,7 @@ def main(argv):
 
 
 def migration(root):
-    """The health rule: each gap but MIG_VERSION is a WARN row; wiki rows are grouped."""
+    """Health's rule: each gap but MIG_VERSION is a WARN row; wiki rows grouped."""
     online, info = os.environ.get("LOOP_MIGRATION_ONLINE") == "1", {}
     mode = "online" if online else "offline"
     try:
