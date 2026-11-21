@@ -200,7 +200,8 @@ if base.returncode:
     check(False, "origin/main is missing here, so skills/ and the regression rows cannot be compared")
 else:
     sha = base.stdout.strip()
-    rows = git("diff", sha, "HEAD", "--", ".loop/regression.tsv").stdout.splitlines()
+    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
     check(not [l for l in rows if l.startswith("-") and not l.startswith("---")], "no existing regression row is changed or removed")
-    check(not git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout.strip(), "no file is added under skills/")
+    added = git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout + git("ls-files", "-o", "--exclude-standard", "--", "skills").stdout
+check(not added.strip(), "no file is added under skills/")
 sys.exit(1 if failed else 0)
