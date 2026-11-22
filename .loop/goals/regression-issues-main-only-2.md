@@ -30,3 +30,10 @@ Rows: +1, the defect row `defect-5773-issues-default-branch` (seen failing with 
 Stated limits: a fail-closed unreadable default branch stops nightly filing with one `DRY RUN` log line only; a branch can edit its own workflow file, so the guard protects against mistakes, not intent; whether the first real nightly (schedule run) reads the default branch and sets `--live` is unproven until it runs after the merge; actions.py has no byte slack (18,940 LF bytes, main 18,980); `gh()` still treats every `gh api` as a read, so the toy's fake gh fails on `api -X/-f`; a dry run on a branch still counts `filed` and, in cleanup mode, sleeps its pace per would-be write (follow-up, nothing is written). The new toy fails rather than skips when bash is missing. To fit the bytes the timeout `ps` diagnostic in the row runner was dropped (no row asserted it); the Windows taskkill branch stays.
 
 Depth: idea and plan condensed (TD867 override): one independent reviewer, two red-team gate runs (the first recorded four breaks, fixed in the plan; the second, NO BREAKS), no gstack.
+
+## Handover notes for the Mac (PC to Mac, qa passed on the PC)
+
+- The bash toys `dev/toy/test-regression.sh` and `dev/toy/test-ci-target.sh` skip on native Windows: the Mac's qa and ship MUST run them (their extractors now match `python3 - $live <<'PY'`; test-ci-target.sh ignores only the exact default-branch read in calls.log).
+- The +1 row `defect-5773-issues-default-branch` is top's TD867 grant, and done line 4 of this goal says so; every other row is net 0.
+- Still unproven until the first nightly after the merge: the real GITHUB_REF forms and token read of a schedule run.
+- Never dispatch regression.yml on any branch. It is a patch that merges when green and does not take the Mac slot ahead of the cut chain; the Mac decides when.
