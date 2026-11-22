@@ -146,98 +146,35 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - [INVEST criteria for a work item](https://en.wikipedia.org/wiki/INVEST_(mnemonic)). Small and testable are both tests applied when deciding whether a feature must be split.
   - ### Revisions
   - r1 · 2026-11-20 · first draft by operation-top, not yet your text
-- DOC-28: **Reviewed 2026-11-21** Releases: major, minor and patch, each with one job, and a brief you write first <!-- reviewed 70e0396f -->
+- DOC-28: **Reviewed 2026-11-21** Releases: a frozen release brief picks the tasks for a cut <!-- reviewed ffdd5c3d -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
-  - **Promise.** Every release is one of three kinds with a clear job, each major or minor starts from a brief you wrote and froze, and a major ships only when everything is clean.
-  - ### Problem
-  - I kept adding things to a release while it ran, so its scope drifted and it never closed. v2.0 was re-scoped several times in one day.
-  - Major, minor and patch didn't mean anything different in practice, so I couldn't tell what a release was for or when it was finished.
-  - I want to write the direction once, then let the loop run and fix bugs without asking me, and I want a major to mean the system is really clean.
+  - ### What changes from today's DOC-28
+  - Kept: three kinds (major is a clean-up, minor adds features, patch fixes bugs only), the version numbers, and the gate for each kind.
+  - Changed: the release brief lists **tasks, in order**, instead of features, and the cut contains exactly those tasks.
   - ### Requirements
-  - 5 functional requirements, each with one success metric and its test cases.
-  - Functional
-  - 28.1 Three kinds of release, each with one job
-  - Major: a clean-up and full check. It closes all open issues, fixes every regression failure so the known-red list is empty, and passes a complete health check. *New.*
-  - Minor: adds a new feature or makes a small change, as written in its brief. *New.*
-  - Patch: fixes bugs only. It never adds a feature. *New.*
-  - Version numbers follow that meaning: a major moves the first number, a minor the second, a patch the third. *As today for the numbers.*
-  - **Success metric 28.1.** Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure.
-  - Target **0**
-  - Today **not measured**
-  - Test cases
-  - Cutting a patch that adds a feature is refused.
-  - Cutting a major while one issue on its milestone is open is refused.
-  - Version numbers on a sample of tags match each release's kind.
-  - 28.2 A brief is written before each major or minor release, and frozen
-  - Before a major or minor release starts, you write its brief: what the release is about in your own words, the features in it with the metric change you expect, what isn't in it, and what "done" means. *New.*
-  - Your typed word freezes the brief. After that a check refuses any change to it. *New.*
-  - The brief stays as the release's record, with what shipped and each metric before and after. *New.*
-  - **Success metric 28.2.** Major or minor releases without a frozen brief, plus edits to a brief after it was frozen.
-  - Target **0**
-  - Today **not measured**
-  - No release has had a brief yet.
-  - Test cases
-  - Starting a minor release with no frozen brief is refused.
-  - Change one word of a frozen brief. The check fails.
-  - After a release, its brief shows each feature's metric before and after.
-  - 28.3 Only the brief's features are built
-  - A goal that builds something new is frozen only if its feature is in the current frozen brief. *New.*
-  - Anything else waits on a "next" list for the next brief. *New.*
-  - The release's milestone holds only the brief's features and the bugs found along the way. *New.*
-  - **Success metric 28.3.** New work started outside the frozen brief, per release.
-  - Target **0**
-  - Today **not measured**
-  - Test cases
-  - Freezing a goal for a feature outside the brief is refused, and the item appears on the "next" list.
-  - An issue for a feature outside the brief, placed on the release's milestone, is flagged.
-  - 28.4 Patches keep flowing between briefs
-  - Bug fixes ship as patch releases at any time, with no brief and without your words. *As today for patch releases.*
-  - A bug is a gap between what a feature already promises and what it does. Anything else is new work and waits for a brief. *New.*
-  - **Success metric 28.4.** Bug fixes held back because no brief covers them.
-  - Target **0**
-  - Today **not measured**
-  - Test cases
-  - A bug-fix goal is frozen and released as a patch while a brief is frozen and names other features.
-  - A goal labelled a bug fix that adds a requirement is refused.
-  - 28.5 Each kind ships only when its gate passes
-  - A minor ships when every "done" line in its brief is met. *New.*
-  - A major ships only when all of these hold on the release commit: no open issue on its milestone; a complete test run with no failure and an empty known-red list; a complete health check that is green. *Today the major gate checks open issues, reviews, the docs audit, the suite and health, but known-red rows can be waived.*
-  - A patch ships when its own fix's tests pass and the rest of the suite is no worse than before. *As today in intent.*
-  - **Success metric 28.5.** Releases cut with their gate not fully met.
-  - Target **0**
-  - Today **not measured**
-  - Tonight's v2.0 attempt is the example: 54 open issues, 32 known-red rows and 3 health failures.
-  - Test cases
-  - Cutting a minor with one "done" line unmet is refused.
-  - Cutting a major with one known-red row left, or with health not green, is refused.
-  - A major cut on a clean commit passes all three checks and is tagged.
-  - Non-functional
-  - None
-  - ### Non-goals
-  - It never writes the brief for you. An agent may draft one; freezing it is yours.
-  - It doesn't plan the work inside a release. Goals and their order stay with the loop.
-  - A major doesn't waive anything. If the clean-up isn't done, the major waits.
-  - ### Success metrics
-  - \# | Metric | Target | Today
-  - 28.1 | Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. | 0 | not measured
-  - 28.2 | Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. | 0 | not measured
-  - 28.3 | New work started outside the frozen brief, per release. | 0 | not measured
-  - 28.4 | Bug fixes held back because no brief covers them. | 0 | not measured
-  - 28.5 | Releases cut with their gate not fully met. | 0 | not measured
+  - DOC-28.1 Three kinds of release, each with one job. A major is a clean-up (no open issues, an empty known-red list, health green). A minor adds what its brief names. A patch fixes bugs only. Version numbers follow the kind. *As today's DOC-28.1.*
+  - **Metric.** Releases whose content doesn't match their kind. Target 0.
+  - **Test.** Cutting a patch that adds a feature is refused.
+  - DOC-28.2 Before a major or minor, I write a release brief and freeze it. It names the tasks in the cut, in order, plus what it's about and what "done" means. A frozen brief can't be edited.
+  - **Metric.** Major or minor releases without a frozen brief, plus edits after the freeze. Target 0.
+  - **Test.** Starting a minor with no frozen release brief is refused.
+  - DOC-28.3 A release contains exactly the tasks its brief names. A task that adds a feature merges to main only once a frozen release brief names it. Until then it builds and waits, ready. A bug-fix task merges at any time and ships as a patch.
+  - **Metric.** Feature changes on main that no frozen release brief named. Target 0.
+  - **Test.** A feature task not in any brief builds green but can't merge. Once a brief names it, it merges.
+  - DOC-28.4 The cut happens when every task in the brief is done, in the brief's order, and the gate for its kind passes. The tag records the tasks it contains.
+  - **Metric.** Releases cut with a named task not done, or the gate not met. Target 0.
+  - **Test.** Cutting a minor with one named task still running is refused. The tag's notes list every task in it.
+  - DOC-28.5 The brief stays as the release's record: what shipped, and each task's result.
+  - **Metric.** Releases whose brief doesn't show each task's result. Target 0.
+  - **Test.** After a cut, the brief lists each task with its merged goals.
   - ### Reference
   - adopted
-  - [Semantic Versioning 2.0.0](https://semver.org/). Major, minor and patch keep their standard numbering. The jobs given to each kind here are ours.
+  - [Semantic Versioning 2.0.0](https://semver.org/).
   - adapted
-  - [Shape Up: the pitch and the betting table](https://basecamp.com/shapeup). A written pitch is chosen before a cycle starts, its scope is fixed once bet on, and anything unfinished or new waits for the next cycle. The brief is the pitch; your freeze is the bet.
-  - adopted
-  - [GitHub milestones](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones). One milestone per release holds the brief's features and bugs.
+  - [Shape Up: the betting table](https://basecamp.com/shapeup). Pick the pitches for a cycle up front.
   - reference
-  - [PEP 602: Python's release calendar and feature freeze](https://peps.python.org/pep-0602/). After the freeze only fixes go in; new features wait for the next release. Bug-fix releases follow on their own schedule.
-  - reference
-  - [Scrum Guide: the Sprint Goal](https://scrumguides.org/scrum-guide.html). The goal is set at the start and not changed during the sprint.
-  - ### Revisions
-  - r1 · 2026-11-20 · first draft by operation-top, not yet your text
+  - [PEP 602](https://peps.python.org/pep-0602/). After the freeze only fixes go in.
 
 
 
@@ -508,6 +445,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-21 | Releases: a frozen release brief picks the tasks for a cut <br> Principle 1, Guided · Topic: Documentation · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### What changes from today's DOC-28 <br> Kept: three kinds (major is a clean-up, minor adds features, patch fixes bugs only), the version numbers, and the gate for each kind. <br> Changed: the release brief lists **tasks, in order**, instead of features, and the cut contains exactly those tasks. <br> ### Requirements <br> DOC-28.1 Three kinds of release, each with one job. A major is a clean-up (no open issues, an empty known-red list, health green). A minor adds what its brief names. A patch fixes bugs only. Version numbers follow the kind. *As today's DOC-28.1.* <br> **Metric.** Releases whose content doesn't match their kind. Target 0. <br> **Test.** Cutting a patch that adds a feature is refused. <br> DOC-28.2 Before a major or minor, I write a release brief and freeze it. It names the tasks in the cut, in order, plus what it's about and what "done" means. A frozen brief can't be edited. <br> **Metric.** Major or minor releases without a frozen brief, plus edits after the freeze. Target 0. <br> **Test.** Starting a minor with no frozen release brief is refused. <br> DOC-28.3 A release contains exactly the tasks its brief names. A task that adds a feature merges to main only once a frozen release brief names it. Until then it builds and waits, ready. A bug-fix task merges at any time and ships as a patch. <br> **Metric.** Feature changes on main that no frozen release brief named. Target 0. <br> **Test.** A feature task not in any brief builds green but can't merge. Once a brief names it, it merges. <br> DOC-28.4 The cut happens when every task in the brief is done, in the brief's order, and the gate for its kind passes. The tag records the tasks it contains. <br> **Metric.** Releases cut with a named task not done, or the gate not met. Target 0. <br> **Test.** Cutting a minor with one named task still running is refused. The tag's notes list every task in it. <br> DOC-28.5 The brief stays as the release's record: what shipped, and each task's result. <br> **Metric.** Releases whose brief doesn't show each task's result. Target 0. <br> **Test.** After a cut, the brief lists each task with its merged goals. <br> ### Reference <br> adopted <br> [Semantic Versioning 2.0.0](https://semver.org/). <br> adapted <br> [Shape Up: the betting table](https://basecamp.com/shapeup). Pick the pitches for a cycle up front. <br> reference <br> [PEP 602](https://peps.python.org/pep-0602/). After the freeze only fixes go in. | the owner's pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b): the release brief lists tasks | o721: "DEL-19, DEL-23 and DOC-28 reviewed as in frozen-source-v1.1.0-1052; principle 1 may hold" |
 | r1 | 2026-11-21 | Releases: major, minor and patch, each with one job, and a brief you write first <br> Principle 1, Guided · Topic: Documentation · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> **Promise.** Every release is one of three kinds with a clear job, each major or minor starts from a brief you wrote and froze, and a major ships only when everything is clean. <br> ### Problem <br> I kept adding things to a release while it ran, so its scope drifted and it never closed. v2.0 was re-scoped several times in one day. <br> Major, minor and patch didn't mean anything different in practice, so I couldn't tell what a release was for or when it was finished. <br> I want to write the direction once, then let the loop run and fix bugs without asking me, and I want a major to mean the system is really clean. <br> ### Requirements <br> 5 functional requirements, each with one success metric and its test cases. <br> Functional <br> 28.1 Three kinds of release, each with one job <br> Major: a clean-up and full check. It closes all open issues, fixes every regression failure so the known-red list is empty, and passes a complete health check. *New.* <br> Minor: adds a new feature or makes a small change, as written in its brief. *New.* <br> Patch: fixes bugs only. It never adds a feature. *New.* <br> Version numbers follow that meaning: a major moves the first number, a minor the second, a patch the third. *As today for the numbers.* <br> **Success metric 28.1.** Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. <br> Target **0** <br> Today **not measured** <br> Test cases <br> Cutting a patch that adds a feature is refused. <br> Cutting a major while one issue on its milestone is open is refused. <br> Version numbers on a sample of tags match each release's kind. <br> 28.2 A brief is written before each major or minor release, and frozen <br> Before a major or minor release starts, you write its brief: what the release is about in your own words, the features in it with the metric change you expect, what isn't in it, and what "done" means. *New.* <br> Your typed word freezes the brief. After that a check refuses any change to it. *New.* <br> The brief stays as the release's record, with what shipped and each metric before and after. *New.* <br> **Success metric 28.2.** Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. <br> Target **0** <br> Today **not measured** <br> No release has had a brief yet. <br> Test cases <br> Starting a minor release with no frozen brief is refused. <br> Change one word of a frozen brief. The check fails. <br> After a release, its brief shows each feature's metric before and after. <br> 28.3 Only the brief's features are built <br> A goal that builds something new is frozen only if its feature is in the current frozen brief. *New.* <br> Anything else waits on a "next" list for the next brief. *New.* <br> The release's milestone holds only the brief's features and the bugs found along the way. *New.* <br> **Success metric 28.3.** New work started outside the frozen brief, per release. <br> Target **0** <br> Today **not measured** <br> Test cases <br> Freezing a goal for a feature outside the brief is refused, and the item appears on the "next" list. <br> An issue for a feature outside the brief, placed on the release's milestone, is flagged. <br> 28.4 Patches keep flowing between briefs <br> Bug fixes ship as patch releases at any time, with no brief and without your words. *As today for patch releases.* <br> A bug is a gap between what a feature already promises and what it does. Anything else is new work and waits for a brief. *New.* <br> **Success metric 28.4.** Bug fixes held back because no brief covers them. <br> Target **0** <br> Today **not measured** <br> Test cases <br> A bug-fix goal is frozen and released as a patch while a brief is frozen and names other features. <br> A goal labelled a bug fix that adds a requirement is refused. <br> 28.5 Each kind ships only when its gate passes <br> A minor ships when every "done" line in its brief is met. *New.* <br> A major ships only when all of these hold on the release commit: no open issue on its milestone; a complete test run with no failure and an empty known-red list; a complete health check that is green. *Today the major gate checks open issues, reviews, the docs audit, the suite and health, but known-red rows can be waived.* <br> A patch ships when its own fix's tests pass and the rest of the suite is no worse than before. *As today in intent.* <br> **Success metric 28.5.** Releases cut with their gate not fully met. <br> Target **0** <br> Today **not measured** <br> Tonight's v2.0 attempt is the example: 54 open issues, 32 known-red rows and 3 health failures. <br> Test cases <br> Cutting a minor with one "done" line unmet is refused. <br> Cutting a major with one known-red row left, or with health not green, is refused. <br> A major cut on a clean commit passes all three checks and is tagged. <br> Non-functional <br> None <br> ### Non-goals <br> It never writes the brief for you. An agent may draft one; freezing it is yours. <br> It doesn't plan the work inside a release. Goals and their order stay with the loop. <br> A major doesn't waive anything. If the clean-up isn't done, the major waits. <br> ### Success metrics <br> \\# \| Metric \| Target \| Today <br> 28.1 \| Releases whose content doesn't match their kind: a patch that adds a feature, or a major with an open issue, a regression failure or a health failure. \| 0 \| not measured <br> 28.2 \| Major or minor releases without a frozen brief, plus edits to a brief after it was frozen. \| 0 \| not measured <br> 28.3 \| New work started outside the frozen brief, per release. \| 0 \| not measured <br> 28.4 \| Bug fixes held back because no brief covers them. \| 0 \| not measured <br> 28.5 \| Releases cut with their gate not fully met. \| 0 \| not measured <br> ### Reference <br> adopted <br> [Semantic Versioning 2.0.0](https://semver.org/). Major, minor and patch keep their standard numbering. The jobs given to each kind here are ours. <br> adapted <br> [Shape Up: the pitch and the betting table](https://basecamp.com/shapeup). A written pitch is chosen before a cycle starts, its scope is fixed once bet on, and anything unfinished or new waits for the next cycle. The brief is the pitch; your freeze is the bet. <br> adopted <br> [GitHub milestones](https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/about-milestones). One milestone per release holds the brief's features and bugs. <br> reference <br> [PEP 602: Python's release calendar and feature freeze](https://peps.python.org/pep-0602/). After the freeze only fixes go in; new features wait for the next release. Bug-fix releases follow on their own schedule. <br> reference <br> [Scrum Guide: the Sprint Goal](https://scrumguides.org/scrum-guide.html). The goal is set at the start and not changed during the sprint. <br> ### Revisions <br> r1 · 2026-11-20 · first draft by operation-top, not yet your text | the owner's pinned draft (2358) with the o710 wording changes | o710: "T1 and T3: allow iso.org, basecamp.com, peps.python.org and scrumguides.org as link origins;" |
 
 ## Tests
