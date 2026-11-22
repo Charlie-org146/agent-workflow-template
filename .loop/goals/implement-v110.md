@@ -63,8 +63,17 @@ an unmodified copy of the base (DOC-25 migrate and template render, resume from 
 page's live requirements, milestone setup text, migration trace, private-name cases, codex), except `categories` in test-defect, which fails
 only because this worktree's local config holds a 2.5 GB memory floor that changes a generated settings block.
 
-Not done: a `render.py` gate for a whole page in the new form (new-form features live inside topic pages today); DOC-27's "typed score
-differs from health's latest run" and the 27.4 structure cases beyond the existing DOC-25 rows; `watch.py go --task`; scheduling.
+Added after the first report (operation-mac: all of (a) to (f) in scope, (g) my decision):
+- (a) End-to-end cases through the real scripts: `test-delivery-release.sh briefs` (merge.py refuses an unnamed feature task, holds a named one for its minor cut, the automatic release refuses a minor with no frozen brief or with a named task not done and releases once done, with the changelog and the brief's `## Results` naming the task), `test-release.sh` 3e (`release.py cut --bump minor`, same), `test-release-gate.py` (`review.py gate` lists every known-red row). A feature task's goal is now released with its minor cut: `autorelease.finish` prints `HELD ... for its minor cut` and records no release of its own.
+- (b) The DEL-19 row also requires the existing merge-guard case "a pull request head that moved since the pr lane refuses HEAD_MOVED" and the push-guard case "a worker's push to main is refused" to pass (merge-guard-base-head and the other cases of that script are on the known-red list; only those named lines are required).
+- (c) A whole page in the new form (it has a Reference section) must have exactly Problem, Requirements, Non-goals, Success metrics, Reference, Revisions, Tests; the old section checks (`sections.KINDS`, `criteria.contract`) accept the Reference section. The old content rules (DOC-7 to DOC-9, DOC-18 How-to page, DOC-19 links) still apply to such a page; the template's feature migration owns those.
+- (d) A page or a feature whose text changed with no new revision row fails (`milestones.new_form`, against origin/<base>).
+- (e) `goal.py new` refuses a task whose feature is Unreviewed unless the task is `Kind: fix`; it needs the task's brief (`.loop/tasks/`), so a repo with no tasks is untouched.
+- (f) `goal.py pr` refuses a goal file in the new format that lacks a part (title, slug, touches, ETA, task, release, done lines); `goal.py adopt` reads the task from the goal file (a file with a Release line and no task is refused; an older file adopts as before). A touches line of "not declared" and a release of "none" are explicit values and accepted.
+- (g) My choice: typed scores. `docs.py check --strict` compares every typed Confidence score (N% (a of b)) in the README, Home and Principles tables with health's latest full run (`sections.latest_full`, no new format) and says "no health run to compare" and fails when there is none; the default check does not, because it would call `gh run download` on every run.
+- Cases of DOC-27 that remain page-rebuild items and are NOT built here: 27.4's structure cases (the nine-column principle table with a Review column, no How-to-use pages, exactly the listed figures, "N of M reviewed" on the front pages) and 27.5's "N of M reviewed rises by one". They conflict between done line 1 (every test case) and done line 6 (page-rebuild items are reported, not failed): reported to the operation session as a decision for the owner.
+- Steps page: the generated line in `Delivery.md` meets line 3 only as the operation session ruled (v110-fast-steps-2 lands the generated page first or after; the later merges up).
+- Not done: `watch.py go --task`; scheduling.
 
 ## Verify by hand
 
