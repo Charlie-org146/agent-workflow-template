@@ -4,11 +4,10 @@
 usage: criteria.py <command> [options]
 
   review ID|PAGE [...] --user [--date D]
-                               mark requirements, or a whole PRD, Reviewed today (or on D); --user: the owner's own
-                               words said so
+                               mark requirements, or a PRD, Reviewed today (or on D); --user: the owner's words
   unreview ID|PAGE [...] --user
-                               mark them Unreviewed, so their wording may change. With no terminal, both need
-                               LOOP_OWNER_WORDS, the owner's own words; each change is logged with them in .git/loop/reviews.tsv
+                               mark them Unreviewed. With no terminal both need LOOP_OWNER_WORDS (the owner's words),
+                               logged in .git/loop/reviews.tsv
   review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID
   render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs;
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
@@ -207,6 +206,7 @@ def contract(root, names, seen):
         want = head[:1] + [rule["runbook"]] * (rule["runbook"] in have) + head[1:]
         if rule["deploy"] in have:
             want = want[:-1] + [rule["deploy"]] + want[-1:]
+        want = want[:-1] + ["Reference"] * ("Reference" in have) + want[-1:]
         if rule["revs"] in have:
             want = want[:-1] + [rule["revs"]] + want[-1:]
         if have != want:
@@ -313,7 +313,7 @@ def today():
 
 
 def delegated(root, rid, text):
-    # True: delegated (operation-top:delegated:TDn:DOC-2:rN), DOC-2 has rN, no safety class; False: delegated but not; None: not one
+    # True: delegated and allowed; False: delegated, not allowed; None: not delegated
     log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv")
     try:
         row = next(r for r in (x.rstrip("\n").split("\t") for x in open(log, encoding="utf-8")) if len(r) == 5 and r[0] == rid)
