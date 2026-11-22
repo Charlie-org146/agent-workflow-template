@@ -118,7 +118,7 @@ def main():
             sys.exit("REFUSED: git diff failed")
         changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
-        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv", "README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md"}
+        mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv", "README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md", "dev/toy/test-shard-balance.py", "dev/toy/test-operate.sh"}  # the two toys whose fixtures changed (Operation TD948)
         allowed = lambda x: (x in mine or re.match(r"\.loop/goals/migrate-features(-2)?\.", x) or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
         extra = [x for x in changed if not allowed(x)]
         ok("2 every changed file is a named page, the report, the scripts, a goal record or an allowed path", not extra, ", ".join(extra))
