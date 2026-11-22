@@ -52,7 +52,7 @@ Adoption: 43% (the average of this principle's rows).
 
 **How it works:** every pull request runs its affected tests in CI. The merge queue runs a fixed smoke on the merged result before main moves; it took 11 seconds on its first run at 03:17 (the Mac's reading). Health runs on schedule and before every release, opens one issue per finding, and writes the scores. The reviewer runs every 15 minutes and on every plan and done claim.
 
-## 3. Fast, cheap and small
+## 3. Fast
 
 Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits.
 
@@ -60,14 +60,35 @@ Every change runs on one clock from my ask to main, with a limit and a token bud
 |---|---|---|---|---|---|
 | [DEL-17 Every change runs on one clock, from my ask to main (absorbs REG-7, GRD-7, GRD-8, REL-13, REL-15)](Delivery) ([DEL-17 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/DEL-17.svg)) | **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. A merge never makes another ready pull request re-run. **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. Test count and suite time stay capped. | - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue): adopted<br>- [DORA lead time](https://dora.dev/guides/dora-metrics-four-keys): adapted | Delivery (Build loop), Regression (Quality), Release (Other), Guardrails (Quality) | 50% | 100% (24 of 24) |
 | [HLT-7 Checks, check-ins and instructions answer fast](Health) ([HLT-7 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/HLT-7.svg)) | Health under 60 seconds, docs under 30, the board under 10, rounds under 45 minutes. A worker's turn ends at least every 5 minutes, so an instruction reaches it within 5. | - [DORA four keys](https://dora.dev/guides/dora-metrics-four-keys): adapted | Health (Quality), Check in and board (Build loop), Operation (Build loop) | 0% | 100% (5 of 5) |
-| [GRD-20 Sizes are one table, enforced on main, never met by reformatting (absorbs HLT-11)](Guardrails) ([GRD-20 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/GRD-20.svg)) | One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. No script on main is over its fail line. Reformatting a whole file only to fit is refused. | - [Agensi packaging rules](https://www.agensi.io): adopted<br>- [ESLint `max-lines`](https://eslint.org/docs/rules/max-lines): adapted | Guardrails (Quality), Health (Quality) | 50% | 100% (2 of 2) |
-| [OPS-16 Every ready goal starts within capacity limits](Operation) ([OPS-16 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/OPS-16.svg)) | Every ready goal gets its own worker at once unless a capacity limit holds it. The memory floor is measured per machine. **Memory is guarded on every machine by set limits.** At most one live session per 2 GB of memory, counting the operation sessions (8 on a 16 GB machine). A new worker starts only while the system's free-memory figure is at least 25% and swap use is under 80% of its current size. Below 20% free, or at 85% swap, idle sessions are archived and nothing new starts. Below 10% free, or at 95% swap, the lowest-priority building goal is paused: its work is committed, not pushed, and it restarts when memory recovers. Each reading is the lower of two taken a minute apart, so one swing does not trigger. Every STATUS reports the free figure, swap and live sessions, and health fails a machine that crossed a limit with no action recorded. | - [Kubernetes ResourceQuota](https://kubernetes.io/docs/concepts/policy/resource-quotas/): adapted<br>- [Kanban WIP limits](https://www.atlassian.com/agile/kanban/wip-limits): adapted | Operation (Build loop), Guardrails (Quality) | 0% | 100% (9 of 9) |
 
 Adoption: 25% (the average of this principle's rows).
 
 **How it works:** the merge queue enforces "ready to main" today: four merges tonight took between 50 seconds and 2 min 39 s. The 5-minute CI is being built now. Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
 
-## 4. Private and guarded
+## 4. Cheap
+
+Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits.
+
+| Requirement | Summary | Follows | Feature | Adoption | Confidence |
+|---|---|---|---|---|---|
+
+Adoption: 0% (the average of this principle's rows).
+
+**How it works:** the merge queue enforces "ready to main" today: four merges tonight took between 50 seconds and 2 min 39 s. The 5-minute CI is being built now. Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
+
+## 5. Small
+
+Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits.
+
+| Requirement | Summary | Follows | Feature | Adoption | Confidence |
+|---|---|---|---|---|---|
+| [GRD-20 Sizes are one table, enforced on main, never met by reformatting (absorbs HLT-11)](Guardrails) ([GRD-20 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/GRD-20.svg)) | One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. No script on main is over its fail line. Reformatting a whole file only to fit is refused. | - [Agensi packaging rules](https://www.agensi.io): adopted<br>- [ESLint `max-lines`](https://eslint.org/docs/rules/max-lines): adapted | Guardrails (Quality), Health (Quality) | 50% | 100% (2 of 2) |
+
+Adoption: 50% (the average of this principle's rows).
+
+**How it works:** the merge queue enforces "ready to main" today: four merges tonight took between 50 seconds and 2 min 39 s. The 5-minute CI is being built now. Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
+
+## 6. Private and guarded
 
 No private name, path, address or key leaves the machine, and automation gets only the access it needs.
 
@@ -82,7 +103,7 @@ Adoption: 62% (the average of this principle's rows).
 
 **How it works:** GitHub enforces these, not our code. The ruleset "Main" refuses direct pushes, and GitGuardian and push protection scan every push. The private-name scan runs in the pre-commit hook and in CI.
 
-## 5. Reproducible, portable and adoptable
+## 7. Reproducible, portable and adoptable
 
 The same inputs give the same result on any machine, in any repo and on any agent. Any repo adopts the template cleanly, plugs into other systems through adapters, and survives a failure without losing work.
 
@@ -93,12 +114,13 @@ The same inputs give the same result on any machine, in any repo and on any agen
 | [SET-1 Any repo adopts the template, stays current, and is proven by replay (absorbs SET-4, SET-6 and their folded rows)](Setup) ([SET-1 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/SET-1.svg)) | One safe, idempotent command adopts any repo byte for byte. Adopted repos hold only their own data, record their template version, take updates, flag lag, and send fixes upstream. Adoption is proven by a step-by-step replay against the golden result. | - [Copier](https://copier.readthedocs.io/): adapted<br>- [GitHub template repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template): adapted<br>- [Renovate](https://docs.renovatebot.com): adapted<br>- [Jest snapshots](https://jestjs.io/docs/snapshot-testing): adapted | Setup (Operations), Guardrails (Quality) | 0% | 100% (21 of 21) |
 | [SET-2 Layered settings and a generated entry page (absorbs SET-5)](Setup) ([SET-2 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/SET-2.svg)) | Settings come in layers (template, repo, private), each with a default and an explanation. Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. | - [Twelve-Factor App, factor III Config](https://12factor.net/config): adapted | Setup (Operations) | 0% | 100% (9 of 9) |
 | [INT-1 Every integration is a declared, visible adapter (absorbs INT-6, INT-5)](Integrations) ([INT-1 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/INT-1.svg)) | Outside systems are opt-in integrations in one registry, added as adapters without changes to the loop's code, with state and deltas shown and counted. | - [Model Context Protocol](https://modelcontextprotocol.io/specification): adopted | Integrations (Other) | 100% | not measured: no data yet |
+| [OPS-16 Every ready goal starts within capacity limits](Operation) ([OPS-16 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/OPS-16.svg)) | Every ready goal gets its own worker at once unless a capacity limit holds it. The memory floor is measured per machine. **Memory is guarded on every machine by set limits.** At most one live session per 2 GB of memory, counting the operation sessions (8 on a 16 GB machine). A new worker starts only while the system's free-memory figure is at least 25% and swap use is under 80% of its current size. Below 20% free, or at 85% swap, idle sessions are archived and nothing new starts. Below 10% free, or at 95% swap, the lowest-priority building goal is paused: its work is committed, not pushed, and it restarts when memory recovers. Each reading is the lower of two taken a minute apart, so one swing does not trigger. Every STATUS reports the free figure, swap and live sessions, and health fails a machine that crossed a limit with no action recorded. | - [Kubernetes ResourceQuota](https://kubernetes.io/docs/concepts/policy/resource-quotas/): adapted<br>- [Kanban WIP limits](https://www.atlassian.com/agile/kanban/wip-limits): adapted | Operation (Build loop), Guardrails (Quality) | 0% | 100% (9 of 9) |
 
-Adoption: 45% (the average of this principle's rows).
+Adoption: 38% (the average of this principle's rows).
 
 **How it works:** the package is one versioned zip that update.py installs the same way on any machine. Adoption is one command, proven by the replay tests in CI.
 
-## 6. Autonomous and human-friendly
+## 8. Autonomous and human-friendly
 
 It runs by itself across machines and stops for me only when a decision is truly mine. At any moment I can see where everything stands, on one board and in one check-in layout, in plain words that read on a phone. When it needs me, it asks one clear question with a recommendation.
 

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 266" role="img" aria-label="How principle 5 is enforced">
+<style>
+.d-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.d-h{font:600 12px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.04em}
+.d-b{font:600 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
+.d-s{font:400 11.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#3c4757}
+.d-x{font:400 10.5px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173}
+.d-step{fill:#f3f5f8;stroke:#8a94a3}
+.d-you{fill:#e4eeff;stroke:#3b6fd6}
+.d-gate{fill:#fff4d6;stroke:#c08a00}
+.d-find{fill:#fde9e7;stroke:#c5483f}
+.d-ok{fill:#e2f5e6;stroke:#2f8f4a}
+.d-bg{fill:#ffffff}
+.d-a{stroke:#6b7686;stroke-width:1.5;fill:none}
+.d-ah{fill:#6b7686}
+@media (prefers-color-scheme: dark){
+.d-t,.d-b{fill:#eef2f6}.d-h,.d-x{fill:#a3afbf}.d-s{fill:#cdd5df}
+.d-step{fill:#222b36;stroke:#5c6b7d}.d-you{fill:#162a4f;stroke:#6d9bf0}
+.d-gate{fill:#3a2e0d;stroke:#d9a521}.d-find{fill:#3d1c1a;stroke:#e0736a}
+.d-ok{fill:#153420;stroke:#4fb56c}.d-bg{fill:#12171d}.d-a{stroke:#9aa7b8}.d-ah{fill:#9aa7b8}
+}
+</style>
+<defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="d-ah"/></marker></defs>
+<rect width="420" height="266" class="d-bg"/>
+<text x="12" y="24" class="d-t">Principle 4: cheap</text>
+<rect x="10" y="38" width="400" height="62" rx="8" class="d-find" stroke-width="1.2"/>
+<text x="210.0" y="58.0" text-anchor="middle" class="d-b">It breaks when</text>
+<text x="210.0" y="73.0" text-anchor="middle" class="d-s">A goal or test run goes past its budget, or a</text>
+<text x="210.0" y="88.0" text-anchor="middle" class="d-s">script, page or the package outgrows its limit</text>
+<path d="M210 100 L210 113" class="d-a" marker-end="url(#ah)"/>
+<rect x="10" y="114" width="400" height="62" rx="20" class="d-gate" stroke-width="1.2"/>
+<text x="210.0" y="134.0" text-anchor="middle" class="d-b">Stopped before it lands</text>
+<text x="210.0" y="149.0" text-anchor="middle" class="d-s">Budgets stop a runaway; the package check refuses</text>
+<text x="210.0" y="164.0" text-anchor="middle" class="d-s">a release that doesn&#x27;t fit · GRD-2, GRD-20, GRD-22</text>
+<path d="M210 176 L210 189" class="d-a" marker-end="url(#ah)"/>
+<rect x="10" y="190" width="400" height="62" rx="8" class="d-step" stroke-width="1.2"/>
+<text x="210.0" y="210.0" text-anchor="middle" class="d-b">Health checks it: Performance, Size</text>
+<text x="210.0" y="225.0" text-anchor="middle" class="d-s">Goals and the suite within their limits; scripts</text>
+<text x="210.0" y="240.0" text-anchor="middle" class="d-s">under 20 KB; pages within their requirement limit</text>
+</svg>
