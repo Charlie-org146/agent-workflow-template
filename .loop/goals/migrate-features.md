@@ -34,7 +34,7 @@ What changed: the 27 live requirements on the 11 feature pages become features i
 
 Owner decisions: the plan gate was answered `rec` by the owner (record o706, and the owner also typed `rec` directly in the operation session); the owner then ordered, in record o708, that this goal merges when green after the earlier goal, which is: the marker blocks are written into the 27 pages (UC1a); all 29 Reviewed marks are cleared (UC2a, the owner's o700 order); the test count shows on every line of an ID (D2a); the blocks are write-once snapshots until the checker goal recomputes them (D6a); and health's new FAIL rows and the release-gate effect are reported, not fixed (D7a). Re-run `features-v1.py run --refresh` to refresh a block (the flag is needed once the base already carries blocks, so a later run cannot overwrite them by accident).
 
-release gate (review.py check_reviews) now lists every Unreviewed requirement, the 27 migrated (and DOC-27 and DOC-28 once they land), as not Reviewed
+release gate (review.py check_reviews) now lists every Unreviewed requirement, the 26 migrated (DOC-27, DOC-28, DEL-19 and DEL-23 are left alone by ID, owner record o786), as not Reviewed
 
 Health: after this merge `health.py check` shows six new FAIL rows from the `principle-map` rule (`principle N has no Reviewed requirement`), compared as sets with the unmigrated tree; they clear as the owner reviews one feature per principle. Reported, not fixed: the rule file is outside this goal's touches. Operation is told before merge.
 

@@ -219,7 +219,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run"])
     ap.add_argument("--base")
-    ap.add_argument("--skip", default="DOC-27,DOC-28")
+    ap.add_argument("--skip", default="DOC-27,DOC-28,DEL-19,DEL-23")
     ap.add_argument("--refresh", action="store_true")
     a = ap.parse_args()
     if not re.fullmatch(r"(%s(,%s)*)?" % (ID, ID), a.skip) or (a.base and not re.fullmatch(r"[A-Za-z0-9._/@~^][A-Za-z0-9._/@~^-]*", a.base)):

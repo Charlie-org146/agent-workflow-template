@@ -17,7 +17,7 @@ import tarfile
 import tempfile
 
 ID = r"[A-Z]{2,5}-\d+"
-SENTENCE = "release gate (review.py check_reviews) now lists every Unreviewed requirement, the 27 migrated (and DOC-27 and DOC-28 once they land), as not Reviewed"
+SENTENCE = "release gate (review.py check_reviews) now lists every Unreviewed requirement, the 26 migrated (DOC-27, DOC-28, DEL-19 and DEL-23 are left alone by ID, owner record o786), as not Reviewed"
 BLOCK = re.compile(r"^  - (Feature markers v1|Reference: .*|Line \d+: metric .*; test .*)$")
 ENTRY = re.compile(r"^- (%s): \*\*(Unreviewed|Reviewed \d{4}-\d\d-\d\d)\*\* (\S.*?)(?: <!-- reviewed \w+ -->)?$" % ID)
 fails = []
@@ -74,7 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["check"])
     ap.add_argument("--base")
-    ap.add_argument("--skip", default="DOC-27,DOC-28")
+    ap.add_argument("--skip", default="DOC-27,DOC-28,DEL-19,DEL-23")
     ap.add_argument("--allow", default="")
     ap.add_argument("--source", default="48ac06e7d")
     a = ap.parse_args()
