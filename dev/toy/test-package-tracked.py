@@ -91,25 +91,26 @@ with tempfile.TemporaryDirectory() as tmp:
     put(sub, "skills/demo/scripts/ok.py", "print(1)\n")
     check(pk.walk(sub) == ["skills/demo/scripts/ok.py"], "a folder inside a repo, not its top, falls back to the folder walk")
 
-    # the headroom row counts through package.walk, so loose files cannot push it over 98
+    # the headroom row counts through package.walk, so loose files cannot push it over the cap; LOOSE is more than a whole cap of them, so counting them would fail
+    LOOSE = pk.MAX_FILES + 10
     code, text = run(os.path.join(here, "test-package-headroom.py"))
     check(code == 0 and "the package holds" in text, "the headroom row passes here with its count printed")
     loose_here = os.path.join(root, "skills", "workflow-docs", "scripts", "__pycache__")
     made = not os.path.isdir(loose_here)
     os.makedirs(loose_here, exist_ok=True)
-    for n in range(90):
-        put(loose_here, "pad%02d.pyc" % n, "x")
+    for n in range(LOOSE):
+        put(loose_here, "pad%03d.pyc" % n, "x")
     try:
         code, text = run(os.path.join(here, "test-package-headroom.py"))
-        check(code == 0, "the headroom row still passes with 90 loose .pyc files in the checkout")
+        check(code == 0, "the headroom row still passes with %d loose .pyc files in the checkout" % LOOSE)
         code, text = run(os.path.join(here, "test-package-caps.py"))
-        check(code == 0, "the caps row still passes with 90 loose .pyc files in the checkout")
+        check(code == 0, "the caps row still passes with %d loose .pyc files in the checkout" % LOOSE)
     finally:
         if made:
             shutil.rmtree(loose_here, ignore_errors=True)
         else:
-            for n in range(90):
-                os.remove(os.path.join(loose_here, "pad%02d.pyc" % n))
+            for n in range(LOOSE):
+                os.remove(os.path.join(loose_here, "pad%03d.pyc" % n))
 
     # the gate's head row names what broke: a tracked script of 20,480 bytes in a stand-in checkout
     big = repo(tmp, "big", [("skills/demo/scripts/big.py", '"""Big."""\n#' + "x" * 20500 + "\n")])
