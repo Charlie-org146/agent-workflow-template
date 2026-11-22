@@ -266,7 +266,8 @@ def relock(root, slug="", only=()):
 def restamp_own(root, slug, _=()):
     """DOC-2: relock the pages check --own calls STALE for this goal."""
     seen = subprocess.run([sys.executable, join(os.path.dirname(__file__), "docs.py"), "check", "--own", "HEAD"], cwd=root, capture_output=True, text=True).stdout
-    return relock(root, slug, {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]})
+    only = {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]}
+    return relock(root, slug, only) if only else []
 
 
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
