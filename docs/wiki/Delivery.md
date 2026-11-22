@@ -61,7 +61,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 5: metric missing; test 23 linked rows, see Tests
   - Line 6: metric missing; test 23 linked rows, see Tests
   - Line 7: metric missing; test 23 linked rows, see Tests
-- DEL-19: **Reviewed 2026-11-21** The goal loop: one change, one goal, one fixed format <!-- reviewed 2c388429 -->
+- DEL-19: **Reviewed 2026-11-22** The goal loop: one change, one goal, one fixed format <!-- reviewed 2c388429 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - ### Problem
@@ -106,7 +106,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 5: metric missing; test 1 linked rows, see Tests
   - Line 6: metric missing; test 1 linked rows, see Tests
   - Line 7: metric missing; test 1 linked rows, see Tests
-- DEL-23: **Reviewed 2026-11-21** Tasks: a brief I write once and freeze, run as goals <!-- reviewed 7129cd65 -->
+- DEL-23: **Reviewed 2026-11-22** Tasks: a brief I write once and freeze, run as goals <!-- reviewed 7129cd65 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - ### Problem

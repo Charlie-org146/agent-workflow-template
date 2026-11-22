@@ -53,7 +53,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
   - Reference: Google re:Work OKR guide, three to five objectives (checked at build): adapted
   - Line 1: metric missing; test missing
   - Line 2: metric missing; test missing
-- DOC-27: **Reviewed 2026-11-21** The new standard: every feature is one unit you can review <!-- reviewed e4161660 -->
+- DOC-27: **Reviewed 2026-11-22** The new standard: every feature is one unit you can review <!-- reviewed e4161660 -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - Revised at 23:08 after your review at 23:05, to correct its "as today" notes against main (your words: "Fix them, re-review"), then at 23:10 for your milestone line and to drop the optional sections. It is back to Unreviewed.
