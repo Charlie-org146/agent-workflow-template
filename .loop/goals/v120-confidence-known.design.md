@@ -11,9 +11,9 @@ B. Overlay regression-known.tsv onto runs. Rejected: actions.py and runs.py mark
 render.py (18,737 LF bytes) untouched; no file crosses 19,000 or 20,480.
 
 ## Done lines
-1. KNOWN counts as not passing, in the total only: toy cases C1 to C3, C5; one regression row with a negative control (break: filter back to PASS/FAIL).
+1. KNOWN counts as not passing, in the total only: toy cases C1 to C3, C5 in dev/toy/test-follows-adoption.py; the existing follows-adoption row (DEL-21, net 0 rows, TD625) extended and re-proved with a negative control (break: filter back to PASS/FAIL).
 2. No KNOWN row: exact old strings; C4 and the keep-mode round trip C6; test-follows-adoption stays green.
-3. Whole change: docs check, package check, private scan, one row (REG-4: one row per script and requirement), LF byte counts, and the PR lists every moved score from a main-vs-worktree run over the same input (expected REG-4 and SET-10); no cell is re-rendered, the next live render settles them.
+3. Whole change: docs check, package check, private scan, LF byte counts, and the PR lists every moved score from a main-vs-worktree run over the same input (whatever the real run shows); Confidence cells are not re-rendered (only `criteria.py render --tables` for the Tests pages), the next live render settles them; the Documentation page needs operation-pc's re-stamp.
 
 ## Open questions
 None for the owner. Out of scope: sub-requirements (v120-del3-text).
