@@ -4,11 +4,14 @@
 """machine-coordination (#4787): a goal owned by one machine moves to the other with a handover, nothing runs twice, the repo has
 one merge turn across both machines, and the Machine lines of a check-in come from published structured SNAPSHOTs.
 Two toy clones of one bare origin stand for the PC and the Mac. No network, no model."""
+import contextlib
+import glob
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MON = os.path.join(HERE, "..", "..", "skills", "workflow-monitoring", "scripts")
@@ -40,7 +43,52 @@ def run(cwd, machine, *args):
     return done.returncode, done.stdout + done.stderr
 
 
-with tempfile.TemporaryDirectory() as TMP:
+PIDS = []  # worker processes this toy started; scratch() waits for them before it removes the folder
+
+
+def wait_pid(pid, seconds=15):
+    """Wait for a process to end. Never os.kill(pid, 0) on Windows: it terminates the process."""
+    if os.name == "nt":
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x100000, False, pid)  # SYNCHRONIZE
+        if handle:
+            ctypes.windll.kernel32.WaitForSingleObject(handle, seconds * 1000)
+            ctypes.windll.kernel32.CloseHandle(handle)
+        return
+    end = time.time() + seconds
+    while time.time() < end:
+        try:
+            if os.waitpid(pid, os.WNOHANG)[0]:
+                return
+        except ChildProcessError:
+            pass
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return
+        time.sleep(0.2)
+
+
+@contextlib.contextmanager
+def scratch():
+    """A TemporaryDirectory that waits for every worker the toy started (PIDS and the pid in each runs/*.json) and leaves it as
+    the working directory before it is removed: Windows refuses to remove a folder that is a process's cwd or holds an open file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            yield tmp
+        finally:
+            for state in glob.glob(os.path.join(tmp, "**", "runs", "*.json"), recursive=True):
+                try:
+                    with open(state) as handle:
+                        PIDS.append(json.load(handle).get("pid"))
+                except (OSError, ValueError, AttributeError):
+                    pass
+            for pid in PIDS:
+                isinstance(pid, int) and wait_pid(pid)
+            os.chdir(HERE)
+
+
+with scratch() as TMP:
     TMP = os.path.realpath(TMP)
     origin, pc, mac = (os.path.join(TMP, n) for n in ("origin.git", "pc", "mac"))
     git(TMP, "init", "-q", "--bare", "-b", "main", origin)

@@ -3,11 +3,14 @@
 # reads: skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/sync.py skills/workflow-setup/scripts/settings.py skills/workflow-monitoring/scripts/machines.py
 """phone-first (#4805): onboarding lists every desk-only step and runs each once; check says DESK OK only when nothing is left
 at the desk and a phone-only start works; a goal no app session can take starts as a background worker through agent_command."""
+import contextlib
+import glob
 import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOP = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -22,7 +25,52 @@ def check(ok, name):
         FAILS.append(name)
 
 
-with tempfile.TemporaryDirectory() as tmp:
+PIDS = []  # worker processes this toy started; scratch() waits for them before it removes the folder
+
+
+def wait_pid(pid, seconds=15):
+    """Wait for a process to end. Never os.kill(pid, 0) on Windows: it terminates the process."""
+    if os.name == "nt":
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x100000, False, pid)  # SYNCHRONIZE
+        if handle:
+            ctypes.windll.kernel32.WaitForSingleObject(handle, seconds * 1000)
+            ctypes.windll.kernel32.CloseHandle(handle)
+        return
+    end = time.time() + seconds
+    while time.time() < end:
+        try:
+            if os.waitpid(pid, os.WNOHANG)[0]:
+                return
+        except ChildProcessError:
+            pass
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return
+        time.sleep(0.2)
+
+
+@contextlib.contextmanager
+def scratch():
+    """A TemporaryDirectory that waits for every worker the toy started (PIDS and the pid in each runs/*.json) and leaves it as
+    the working directory before it is removed: Windows refuses to remove a folder that is a process's cwd or holds an open file."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            yield tmp
+        finally:
+            for state in glob.glob(os.path.join(tmp, "**", "runs", "*.json"), recursive=True):
+                try:
+                    with open(state) as handle:
+                        PIDS.append(json.load(handle).get("pid"))
+                except (OSError, ValueError, AttributeError):
+                    pass
+            for pid in PIDS:
+                isinstance(pid, int) and wait_pid(pid)
+            os.chdir(HERE)
+
+
+with scratch() as tmp:
     tmp = os.path.realpath(tmp)
     repo, home = os.path.join(tmp, "repo"), os.path.join(tmp, "home")
     subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
@@ -79,6 +127,7 @@ with tempfile.TemporaryDirectory() as tmp:
     import machines
     state = {"slug": "g1", "worktree": repo, "log": []}
     how = machines.start_worker(state, "go", {"agent_command": [sys.executable, "-c", "pass"]})
+    PIDS.append(state.get("pid"))
     check(how == "background" and state.get("status") == "running" and state.get("pid"), "with no app session a background worker starts through agent_command")
     state = {"slug": "g2", "worktree": repo, "log": []}
     how = machines.start_worker(state, "go", {"workers": "app", "agent_command": [sys.executable, "-c", "pass"]})

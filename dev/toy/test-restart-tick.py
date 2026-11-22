@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# windows: skip
+# windows: ok
 # reads: skills/workflow-monitoring/scripts/mailbox.py skills/workflow-monitoring/scripts/proctree.py
 """restart-tick (TD487): the 300 s launch agent and the watcher jobs a stopped session leaves. The installer writes a plist
 (StartInterval 300, running the tick) into a temp folder and an uninstall removes it; a fake launchctl fails the toy if the
@@ -26,6 +26,24 @@ def check(ok, text):
         failed.append(text)
 
 
+SHIM = """import importlib.machinery, importlib.util, os, subprocess, sys
+_init = subprocess.Popen.__init__
+
+
+def _init_fixed(self, args, *a, **k):
+    if isinstance(args, (list, tuple)) and args and args[0] in ("gh", os.environ.get("LOOP_LAUNCHCTL")):
+        script = os.environ["TOY_FAKE_BIN"] + "/gh" if args[0] == "gh" else args[0].replace("\\\\", "/")
+        args = ["bash", script] + list(args[1:])
+    _init(self, args, *a, **k)
+
+
+subprocess.Popen.__init__ = _init_fixed
+here = os.path.abspath(os.path.dirname(__file__))
+spec = importlib.machinery.PathFinder.find_spec("sitecustomize", [x for x in sys.path if os.path.abspath(x) != here])
+if spec:
+    spec.loader.exec_module(importlib.util.module_from_spec(spec))
+"""
+
 with tempfile.TemporaryDirectory() as tmp:
     bin_, agents, repo = (os.path.join(tmp, x) for x in ("bin", "agents", "repo"))
     # a copy of the monitoring scripts beside a stub merge.py: the tick finds merge.py by its path from mailbox.py, so the stub records each call
@@ -45,7 +63,16 @@ with tempfile.TemporaryDirectory() as tmp:
             handle.write(text)
         os.chmod(os.path.join(bin_, name), 0o755)
     env = dict(os.environ, FAKE_DIR=tmp, LOOP_AGENTS_DIR=agents, LOOP_SCHEDULE_HOME=os.path.join(tmp, "sched"), LOOP_LAUNCHCTL=os.path.join(bin_, "launchctl"),
-               PATH=bin_ + ":" + os.environ["PATH"], HOME=tmp, USERPROFILE=tmp)
+               PATH=bin_ + os.pathsep + os.environ["PATH"], HOME=tmp, USERPROFILE=tmp)
+    if os.name == "nt":
+        # CreateProcess launches only .exe files: a sitecustomize in the tick's own Python sends "gh" and the fake launchctl (sh scripts here)
+        # through bash, and chains any sitecustomize already on the path
+        shim = os.path.join(tmp, "shim")
+        os.makedirs(shim)
+        with open(os.path.join(shim, "sitecustomize.py"), "w") as handle:
+            handle.write(SHIM)
+        env["PYTHONPATH"] = os.pathsep.join(x for x in (shim, env.get("PYTHONPATH", "")) if x)
+        env["TOY_FAKE_BIN"] = bin_.replace("\\", "/")
     env.pop("CLAUDE_CODE_HOST_SESSION_ID", None)
     subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
     subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "x"], cwd=repo, check=True)
