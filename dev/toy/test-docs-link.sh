@@ -171,8 +171,8 @@ dw=$(cd "$d" && { pwd -W 2>/dev/null || pwd; })
 # this fixture (mklink //J: no admin, nothing outside the toy), removed with rmdir (never rm -rf) at exit.
 if command -v cygpath >/dev/null 2>&1; then case "$dw" in */[Uu]sers/*)
   junc="C:/loop-toy-$$"; cmd //c rmdir "$(cygpath -w "$junc")" >/dev/null 2>&1
-  if cmd //c mklink //J "$(cygpath -w "$junc")" "$(cygpath -w "$d")" >/dev/null 2>&1 && [ -d "$junc" ]; then dw=$junc
-  else echo "FAIL: no drive-root junction for the PRD link (mklink //J $junc)"; fi
+  if err=$(cmd //c mklink //J "$(cygpath -w "$junc")" "$(cygpath -w "$d")" 2>&1) && [ -d "$junc" ]; then dw=$junc
+  else echo "REFUSED: the toy cannot make its drive-root junction $junc ($(printf %s "$err" | tr -d '\r' | head -c 200)). Fix: allow mklink //J on C:/ for this user; the toy did not run."; exit 1; fi
   toy_on_exit 'cmd //c rmdir "$(cygpath -w "C:/loop-toy-$$")" >/dev/null 2>&1';; esac; fi
 cat > "$d/linked-prd.md" <<'EOF'
 # Delivery PRD
