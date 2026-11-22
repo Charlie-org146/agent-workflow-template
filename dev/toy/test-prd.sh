@@ -321,7 +321,11 @@ $prd convert --write | grep -q "^Delivery skipped$" && ok "converting twice chan
 $cri render >/dev/null; out=$(check)
 grep -q "^UNWRITTEN Delivery" <<<"$out" && ! grep -q "^SECTIONS" <<<"$out" && ok "a converted page is UNWRITTEN until its placeholder drafts are replaced" || bad "convert unwritten: $out"
 sed -i.bak 's/^- Write this page from what is really in the repo\./- A real draft line./' $P; rm $P.bak
-! check | grep -vE "^(FORMAT|HOWTO|NOTE)" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
+# the lines a drafted page may print: the format checks, and the report-only page-rebuild NOTEs (DOC-27.4); any other line fails
+unexpected() { grep -vE "^(FORMAT|HOWTO) |^NOTE [^ ]+: DOC-27 27\.4: "; }
+! check | unexpected | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
+printf 'FORMAT Delivery: x\nHOWTO Delivery: y\nNOTE README: DOC-27 27.4: z\n' | unexpected | grep -q . && bad "the allowed lines are not allowed" || ok "the format, how-to and page-rebuild lines are the only lines allowed"
+printf 'STALE Delivery: x\n' | unexpected | grep -q . && printf 'NOTE Delivery: another note\n' | unexpected | grep -q . && printf 'FORMATX Delivery: x\n' | unexpected | grep -q . && ok "negative control: any other line, including another NOTE, still fails" || bad "an unexpected line passes"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write | grep -q "^Delivery completed$" && grep -q "^## Requirements$" $P && grep -q "^## Success metrics$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a half-converted page is completed" || bad "completed"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P

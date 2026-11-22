@@ -240,12 +240,16 @@ fi
 if want size; then
 echo "== done line 6: sizes"
 base=$(git -C "$here" merge-base HEAD origin/main 2>/dev/null || git -C "$here" rev-parse HEAD)
-over=""
+# GRD-20: "scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB)": a script fails only at 20,480 or more; one newly over 19,000 is a WARN line
+over=""; warn=""; ctl=""
 for f in "$here"/skills/*/scripts/*.py; do
   rel=${f#$here/}; now=$(wc -c < "$f"); was=$(git -C "$here" show "$base:$rel" 2>/dev/null | wc -c | tr -d ' ')
-  if [ "$now" -ge 20480 ] || { [ "$now" -ge 19000 ] && [ "$was" -lt 19000 ]; }; then over="$over $rel($now)"; fi
+  if [ "$now" -ge 20480 ]; then over="$over $rel($now)"; elif [ "$now" -ge 19000 ] && [ "$was" -lt 19000 ]; then warn="$warn $rel($now)"; fi
 done
-out="$over"; check "no script reaches 20 KB, and none newly crosses 18 KB" '[ -z "$over" ]'
+[ -z "$warn" ] || echo "WARN: newly over 19,000 bytes (GRD-20 warns, does not fail):$warn"
+out="$over"; check "no script reaches 20,480 bytes (GRD-20)" '[ -z "$over" ]'
+for n in 20480 20479; do head -c $n /dev/zero | tr '\0' 'x' > "$T/size-control.py"; if [ "$(wc -c < "$T/size-control.py")" -ge 20480 ]; then got=fails; else got=passes; fi; ctl="$ctl $n:$got"; done
+check "negative control: a script of exactly 20,480 bytes fails and one of 20,479 passes (GRD-20)" '[ "$ctl" = " 20480:fails 20479:passes" ]'
 caps=""; for pair in graph:20480 checkin:20480 operate:20480 goal:20480 sessions:20480 watch:20480 merge:20480 mend:20480 board_lines:20480; do
   n=${pair%%:*}; cap=${pair##*:}; f=$(ls "$here"/skills/*/scripts/$n.py); [ "$(wc -c < "$f")" -le "$cap" ] || caps="$caps $n"; done
 out="$caps"; check "the touched scripts stay within their budgets" '[ -z "$caps" ]'
