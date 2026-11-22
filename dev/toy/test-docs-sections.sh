@@ -89,7 +89,8 @@ o = counting.origins(sys.argv[1])
 sys.exit(not ("https://rework.withgoogle.com" in o and "https://www.gitguardian.com" in o and "https://example.invalid" not in o))' "$here"; then echo "PASS: DOC-19 public_origins holds the two new hosts and still refuses an unlisted one"; else echo "FAIL: DOC-19 public_origins"; fails=1; fi
 # DOC-27: a feature in the new form (sections, five requirements, metric and tests each, reference, milestone, Reviewed mark)
 if python3 - "$here" <<'PY'
-import os, sys, tempfile
+import contextlib, io, os, sys, tempfile
+from types import SimpleNamespace as SimpleNamespaceX
 sys.path.insert(0, os.path.join(sys.argv[1], "skills/workflow-docs/scripts"))
 import sections as s
 slug = "o/r"
@@ -231,6 +232,54 @@ sections.latest_full = lambda slug, ids: None
 check_("a typed score with no health run says there is no run to compare, and fails", any("no health run to compare" in x[2] for x in milestones.new_form(rt, True)))
 open(os.path.join(rt, "README.md"), "w").write("|a|\n" + ROW % "not measured: no data yet")
 check_("a score that is not a typed number needs no run", not any("health" in x[2] for x in milestones.new_form(rt, True)))
+# DOC-27.4: the page rebuild, reported as NOTE findings; docs.py check --strict fails them
+sys.path.insert(0, os.path.join(sys.argv[1], "skills", "workflow-release", "scripts"))
+import brief as brief27  # noqa: E402
+rb = tempfile.mkdtemp()
+os.makedirs(os.path.join(rb, "docs", "wiki", "flows")); os.makedirs(os.path.join(rb, ".loop"))
+HEADER = "| " + " | ".join(brief27.COLS27) + " |\n|---|---|---|---|---|---|---|---|---|\n"
+FRONT = "3 of 5 reviewed\n\n" + HEADER
+def front(readme=FRONT, home=FRONT, extra=None, figs=()):
+    for f in os.listdir(os.path.join(rb, "docs", "wiki")):
+        if os.path.isfile(os.path.join(rb, "docs", "wiki", f)):
+            os.remove(os.path.join(rb, "docs", "wiki", f))
+    open(os.path.join(rb, "README.md"), "w").write(readme)
+    for name, text in {"Home": home, "Principles": HEADER, "Tests": "t", "Roadmap": "r", "Topic": "topic ![](flows/X-1.svg)\n", **(extra or {})}.items():
+        open(os.path.join(rb, "docs", "wiki", name + ".md"), "w").write(text)
+    open(os.path.join(rb, ".loop", "docs.tsv"), "w").write("Topic\tskills\n")
+    for f in ("X-1.svg",) + tuple(figs):
+        open(os.path.join(rb, "docs", "wiki", "flows", f), "w").write("<svg/>")
+notes = lambda: brief27.rebuild(rb, "docs/wiki")
+front()
+want("DOC-27.4 a structure with the nine columns, the reviewed line, no How-to page and every figure shown has nothing to report", notes() == [])
+front(readme=FRONT.replace("| Review |", "| Mine |"))
+want("DOC-27.4 a principle table that lost its Review column is reported", any("principle table columns" in x[2] and x[1] == "README" for x in notes()))
+front(home=FRONT.replace("| Today | Reference |", "| Reference | Today |"))
+want("DOC-27.4 a principle table with two columns swapped is reported", any("principle table columns" in x[2] and x[1] == "Home" for x in notes()))
+front(readme="x\n\n" + HEADER)
+want("DOC-27.4 a front page with no 'N of M reviewed' line is reported", any("N of M reviewed" in x[2] for x in notes()))
+front(extra={"How-to-use-Topic": "h"})
+want("DOC-27.4 a How-to-use page is reported with its count", any("1 How-to-use pages to remove" in x[2] for x in notes()))
+front(extra={"Stray": "s"})
+want("DOC-27.4 a wiki page of no listed kind is reported", any("pages of no listed kind (Stray)" in x[2] for x in notes()))
+front(figs=("old.svg", "older.svg"))
+want("DOC-27.4 figure files no page shows are reported, counted", any("2 figure files no page shows" in x[2] for x in notes()))
+want("DOC-27.4 every item is a NOTE, so the default check reports it and does not fail", all(x[0] == "NOTE" for x in notes()))
+# --strict turns every NOTE into a failure; without it a NOTE alone passes
+import docs  # noqa: E402
+docs.top = lambda: rb
+docs.read_map = lambda r: {"Topic": ["skills"]}
+docs.problems = lambda r, b: []
+docs.counts = lambda r: []
+docs.entry.problems = lambda r: []
+docs.entry.perm_check = lambda r: []
+docs.contract = lambda r: [("NOTE", "Topic", "DOC-27 27.4: 1 How-to-use pages to remove (x)")]
+mk = lambda strict: SimpleNamespaceX(base="", own=None, strict=strict)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    plain = docs.cmd_check(mk(False))
+    hard = docs.cmd_check(mk(True))
+want("DOC-27.4 docs.py check reports a rebuild NOTE and passes, and --strict fails on the same NOTE", plain == 0 and hard == 1)
 sys.exit(1 if fails else 0)
 PY
 then :; else fails=1; fi

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The Tests renderings (DOC-9, DOC-10) and the front-page checks and blocks; setup runs `render.py blocks`."""
-import importlib
+"""The Tests renderings (DOC-9, DOC-10), the front-page checks and blocks; setup runs `render.py blocks`."""
+import importlib.util
 import json
 import os
 import re
@@ -22,12 +22,11 @@ FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regressio
 
 
 def tests_format(held={}):
-    import importlib.util as iu
     if "m" not in held:
         sys.dont_write_bytecode, held["m"] = True, None
         try:
-            spec = iu.spec_from_file_location("regression_tests", FORMAT)
-            mod = held["m"] = iu.module_from_spec(spec)
+            spec = importlib.util.spec_from_file_location("regression_tests", FORMAT)
+            mod = held["m"] = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
             mod.fields, mod.issues_of, mod.entries
         except Exception as err:
@@ -37,7 +36,7 @@ def tests_format(held={}):
 
 
 def ran_of(root):
-    """{row: (status, date, " FLAKY" if the 5th cell names a commit, REG-9)}."""
+    """{row: (status, date, FLAKY?)}."""
     return {row[0]: (row[1], row[2], " FLAKY" if (row + [""] * 5)[4] else "") for row in cr.tsv(root, "regression-runs.tsv")}
 
 
@@ -49,7 +48,7 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO from counting.repo_slug (template_repo or the origin), else a milestone URL."""
+    """OWNER/REPO (template_repo or origin)."""
     return counting.repo_slug(root) or pf.owner_repo(text)
 
 
@@ -134,6 +133,16 @@ def generated(root):
     return []
 
 
+def rebuild_notes(root):
+    try:
+        s = importlib.util.spec_from_file_location("brief", FORMAT.replace("regression/scripts/tests", "release/scripts/brief"))
+        m = importlib.util.module_from_spec(s)
+        s.loader.exec_module(m)
+        return m.rebuild(root, cr.folder_of(root))
+    except Exception:
+        return []
+
+
 def front(root, names):
     """DOC-4 on Home, DOC-23 on the README and Principles page."""
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
@@ -149,7 +158,7 @@ def front(root, names):
     if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
         out += pf.frontdoor("README", readme, listing, ids, old=old) + (pf.frontdoor("Principles", page, listing, ids, "Principles", old) if page else [])
-    return out + (own and home is not None and sections.run(folder, readme, home, names) or [])
+    return out + (own and home is not None and sections.run(folder, readme, home, names) or []) + rebuild_notes(root)
 
 
 def home_fresh(root, names):

@@ -2,16 +2,12 @@
 """DEL-23 tasks and DOC-28 release briefs: frozen briefs, the one task list, and the gates that read them.
 
   brief.py freeze task|release NAME --owner-record ID   freeze .loop/tasks/NAME.md or docs/release-brief-NAME.md
-  brief.py check                                         every frozen brief still hashes to its freeze line
-  brief.py tasks                                         the one list: name, state, goals, ETA
-  brief.py finish NAME --met N,N                         mark a task done (every goal merged, every done-when met)
-  brief.py gate merge|bump|cut ...                       the refusals the release scripts call; exit 1 refuses
+  brief.py check | tasks | finish NAME --met N,N         check hashes | the one list | mark a task done (goals merged, lines met)
+  brief.py gate merge|start|bump|cut|notes|result ...    the checks the release scripts call; exit 1 refuses
 
-A task brief is `.loop/tasks/<name>.md`: Feature:, Purpose:, optional Needs: and Replaces:, Kind: feature|fix, then
-`## Done when` numbered lines. A release brief is `docs/release-brief-<version>.md`: `## Tasks` numbered with task names
-in order. Freezing appends one last line `Frozen: <sha256 of everything above> <record id> <date>`; a changed word
-fails check. Every refusal prints what, fix and a code (BRF-n) and exits 1; it never prints the owner's words.
-"""
+A task brief: Feature:, Purpose:, optional Needs: and Replaces:, Kind: feature|fix, then `## Done when` numbered lines. A release
+brief: `## Tasks` numbered with task names in order. Freezing appends `Frozen: <sha256 of all above> <record id> <date>`; a
+changed word fails check. A refusal prints what, fix and a code (BRF-n), exits 1, and never prints the owner's words."""
 import argparse
 import datetime
 import glob
@@ -281,6 +277,33 @@ def held(root, state):
     if text is None or field(text, "Kind") == "fix":
         return ""
     return next((v for v, x in briefs(root, "release").items() if "## Results" not in x and task in (release_tasks(root, v) or [])), "")
+
+
+COLS27 = "Feature,Promise,Success metrics,Today,Reference,Topic,Adoption,Confidence,Review".split(",")
+
+
+def rebuild(root, rel):
+    """DOC-27.4, the page rebuild still to build, as NOTE findings (docs.py check --strict fails them), one per category."""
+    wiki = os.path.join(root, rel)
+    pages = {n[:-3]: read(os.path.join(wiki, n)) for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
+    pages["README"], out = read(os.path.join(root, "README.md")), []
+    for name in ("README", "Home", "Principles"):
+        text = pages.get(name, "")
+        head = next((x for x in text.splitlines() if x.startswith(("| Requirement |", "| Feature |"))), "")
+        cols = [c.strip() for c in head.strip("|").split("|")]
+        head and cols != COLS27 and out.append(("NOTE", name, "DOC-27 27.4: principle table columns are %s, not %s" % (", ".join(cols), ", ".join(COLS27))))
+        name != "Principles" and text and not re.search(r"\d+ of \d+ reviewed", text) and out.append(("NOTE", name, "DOC-27 27.4: no 'N of M reviewed' line at the top"))
+    try:
+        listed = {x.split("\t")[0] for x in read(os.path.join(root, ".loop", "docs.tsv")).splitlines() if x[:1] not in ("#", "")}
+    except OSError:
+        listed = set()
+    how = [n for n in pages if n.startswith("How-to-use-")]
+    odd = [n for n in pages if n not in listed | {"Home", "Principles", "Tests", "Roadmap", "README"} and n not in how]
+    shown = "".join(pages.values())
+    loose = sorted(f for _, _, fs in os.walk(wiki) for f in fs if f.endswith(".svg") and f not in shown)
+    for found, what in ((how, "How-to-use pages to remove"), (odd, "pages of no listed kind"), (loose, "figure files no page shows")):
+        found and out.append(("NOTE", rel, "DOC-27 27.4: %d %s (%s)" % (len(found), what, ", ".join(found[:3]))))
+    return out
 
 
 def known_red(root):
