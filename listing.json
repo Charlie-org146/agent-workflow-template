@@ -193,6 +193,6 @@
     "Regression runs each row's command through a shell, so Agensi's scan flags shell=True in regression.py, actions.py and defect.py.",
     "The regression workflow command writes a small runner into the repo, so the Actions run needs no skill files.",
     "Each background agent needs its own access to these skills, and scripts that call a sibling script need them on disk: mending, and health's criteria and docs rules, say so and skip otherwise.",
-    "This repo itself runs with no gates: no check step, auto-approval and auto-merge. A new repo keeps auto-approval and auto-merge off until its owner turns them on."
+    "This repo itself runs with no check step and with auto-merge on; auto-approval is off, so what a step leaves for the owner waits. A new repo keeps auto-approval and auto-merge off until its owner turns them on."
   ]
 }

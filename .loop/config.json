@@ -32,7 +32,7 @@
   "criteria": true,
   "criteria_max": 24,
   "max_suite_seconds": 2800,
-  "auto_approve": true,
+  "auto_approve": false,
   "auto_merge": true,
   "merge_queue": false,
   "regression_cron": "17 */4 * * *",

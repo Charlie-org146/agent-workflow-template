@@ -45,8 +45,8 @@ step and it replaces that routine. With no flow file, delivery refuses with one 
 Code. No marketplace listing yet. What is left before V1 is in the [V1 section](docs/ROADMAP.md#v1) of the roadmap.** See the [wiki](docs/wiki/Home.md) for the features and the
 [roadmap](docs/ROADMAP.md).
 
-**This repo runs with no gates.** Its `.loop/config.json` turns on `auto_approve` and `auto_merge`. Review is the only gate: delivery runs no check step. What the skills leave for the
-owner is approved automatically and logged as auto-approved, in the goal's log and on the board. The release step then
+**This repo keeps the owner's decisions and merges the rest by itself.** Its `.loop/config.json` turns on `auto_merge` and leaves `auto_approve` off (the owner's word, o806). Delivery runs no check step. What the skills leave for the
+owner waits: the goal stops with a `WAITING` line, the item shows under Needs you on the board, and nothing is approved until the owner answers. One exception: `full_auto` is on in this repo, so the operation session may answer a worker's question that has a recommended option. Once no owner item is left, the release step
 merges the pull request into `main` by itself, after bringing the wiki pages the goal touched up to date, and publishes the wiki once it has merged. The skills' own built-in refusals still apply, and the private-name leak
 scan still guards every commit. The risk is plain: a broken or wrong change can reach `main` with nobody looking, and
 the only check left is the regression workflow on GitHub, which reports and never blocks. A repo set up from this

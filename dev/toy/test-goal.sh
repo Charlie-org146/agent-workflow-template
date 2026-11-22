@@ -111,7 +111,8 @@ done
 git switch -q main; $goal new pnmix --here --goal "Add pnmix" --done "calc has pnmix" >/dev/null
 out=$(FAKE_SKILL_OUT='PENDING: none\nPENDING: approve the plan\nDEPTH: full\nSTEP: done' step pnmix idea 2>&1)
 python3 -c "import json,sys;w=json.load(open(sys.argv[1]))['waiting'];assert 'approve the plan' in w['ask'] and 'none' not in w['ask'].lower()" "$C/loop/runs/pnmix.json" && grep -q "WAITING pnmix" <<<"$out" \
-  && ok "a real PENDING item among none lines still waits, with its own ask" || bad "mixed none and real item: ${out:0:160}"
+  && python3 -c "import json,sys;assert json.load(open(sys.argv[1]))['auto_approve'] is False" "$here/.loop/config.json" \
+  && ok "a real PENDING item among none lines still waits, with its own ask" || bad "mixed none and real item, or this repo's committed auto_approve is not false (o806): ${out:0:160}"
 git switch -q main; $goal new pnedge --here --goal "Add pnedge" --done "calc has pnedge" >/dev/null
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full' step pnedge idea 2>&1 | grep -q "gave no STEP line" && ok "PENDING: none with no STEP line is a failed try, not a wait" || bad "none with no STEP line"
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full\nSTEP: pending' step pnedge idea 2>&1 | grep -q "WAITING pnedge" && ok "PENDING: none with STEP: pending still waits (the step asked to)" || bad "none with STEP: pending"
