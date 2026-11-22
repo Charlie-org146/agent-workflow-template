@@ -129,8 +129,8 @@ def untrusted(folder):
     try:
         with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
             known = json.load(handle)["projects"]
-        path = os.path.realpath(folder) + "/"
-        return "" if any(v.get("hasTrustDialogAccepted") and path.startswith(os.path.realpath(k).rstrip("/") + "/") for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
+        at = lambda p: os.path.normcase(os.path.realpath(p)).rstrip(os.sep)+os.sep
+        return "" if any(v.get("hasTrustDialogAccepted") and at(folder).startswith(at(k)) for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return ""
 
