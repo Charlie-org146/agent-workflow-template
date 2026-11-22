@@ -263,13 +263,6 @@ def relock(root, slug="", only=()):
     return done
 
 
-def restamp_own(root, slug, _=()):
-    """DOC-2: relock the pages check --own calls STALE for this goal."""
-    seen = subprocess.run([sys.executable, join(os.path.dirname(__file__), "docs.py"), "check", "--own", "HEAD"], cwd=root, capture_output=True, text=True).stdout
-    only = {l.split()[1].rstrip(":") for l in seen.splitlines() if l.startswith("STALE ") and l.split()[1:]}
-    return relock(root, slug, only) if only else []
-
-
 from prdcopy import sync  # noqa: E402,F401  (docs.py sync: moved to prdcopy.py)
 
 
@@ -383,6 +376,6 @@ if __name__ == "__main__":
         print("".join("RERENDERED %s\n" % rel for rel in rerender(os.getcwd(), sys.argv[2])), end="")
         sys.exit(0)
     if sys.argv[1:2] in (["restamp"], ["restamp-own"]) and len(sys.argv) > 3 - (sys.argv[1] == "restamp-own"):
-        print("".join("RESTAMPED %s\n" % p for p in (restamp_own if sys.argv[1] == "restamp-own" else relock)(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
+        print("".join("RESTAMPED %s\n" % p for p in (docs.restamp_own if sys.argv[1] == "restamp-own" else relock)(os.getcwd(), sys.argv[2], sys.argv[3:])), end="")
         sys.exit(0)
     sys.exit(perm_main(sys.argv[2:]) if sys.argv[1:2] == ["permissions"] else print((__doc__ or "") + PERM_DOC) or 0)

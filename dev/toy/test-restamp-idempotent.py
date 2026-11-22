@@ -3,7 +3,7 @@
 # reads: skills/workflow-docs/scripts/audit.py skills/workflow-docs/scripts/docs.py skills/workflow-docs/scripts/counting.py
 """restamp-own is idempotent (#5797, Operation TD969): with nothing stale it makes no commit and appends no rows; with
 one really stale page it restamps that page once, and a second run makes no commit. The negative control runs the same
-check against audit.py with the fix undone (an empty stale set restamping every page) and the check must fail.
+check against a copy with each fix undone (an empty stale set restamping every page; a failed check restamping on) and the check must fail.
 usage: test-restamp-idempotent.py"""
 import os
 import shutil
@@ -99,6 +99,15 @@ def run(folder):
     return clean, (done, again, count(repo) == base + 1 and t1 == t2 and t2[2] == "", rows)
 
 
+def crash_case(folder):
+    """A failed docs.py check (here: an unreadable .loop/config.json) makes restamp-own exit non-zero and change nothing."""
+    repo = build()
+    write(repo, ".loop/config.json", "{not json")
+    s0 = snap(repo)
+    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True)
+    return out.returncode, snap(repo) == s0
+
+
 def relock_all(folder):
     """relock with a slug and an empty set still means every Reviewed page (the overload restamp-own's guard leans on)."""
     repo = build()
@@ -115,19 +124,30 @@ check("one stale page: it appends only that page's row, once, in one commit (%s)
 check("one stale page: the second run restamps nothing", stale[1] == [])
 relocked = relock_all(scripts)
 check("relock with a slug and an empty set still restamps every Reviewed page (%s)" % relocked, relocked == ["A", "AB"])
+code, same = crash_case(scripts)
+check("a failed docs check: restamp-own exits non-zero (%s) and changes nothing" % code, code != 0 and same)
 
-broken = tempfile.mkdtemp(prefix="restamp-idem-broken-")
-shutil.rmtree(broken)
-shutil.copytree(os.path.dirname(scripts), broken, ignore=shutil.ignore_patterns("__pycache__"))
-copy = os.path.join(broken, "scripts", "audit.py")
-text = open(copy).read()
-undone = text.replace("if only else []", "")
-check("negative control: the fix is in audit.py to undo", undone != text)
-with open(copy, "w") as handle:
-    handle.write(undone)
-bad_clean, bad_stale = run(os.path.join(broken, "scripts"))
-check("negative control: with the fix undone, a run with nothing stale restamps pages and makes a commit",
+def undone(old):
+    """A copy of skills/workflow-docs (scripts and references, so the rules block loads) whose docs.py has `old` removed."""
+    broken = tempfile.mkdtemp(prefix="restamp-idem-broken-")
+    shutil.rmtree(broken)
+    shutil.copytree(os.path.dirname(scripts), broken, ignore=shutil.ignore_patterns("__pycache__"))
+    copy = os.path.join(broken, "scripts", "docs.py")
+    text = open(copy).read()
+    check("negative control: %r is in docs.py to undo" % old, old in text)
+    with open(copy, "w") as handle:
+        handle.write(text.replace(old, "if False:" if old.startswith("if not") else ""))
+    return os.path.join(broken, "scripts"), broken
+
+
+folder, broken = undone("if only else []")
+bad_clean, bad_stale = run(folder)
+check("negative control: with the empty-set fix undone, a run with nothing stale restamps pages and makes a commit",
       bad_clean[0] != [] and not (bad_clean[2] and bad_clean[3]))
-check("negative control: with the fix undone, the second run after a real stale page makes another commit", bad_stale[1] != [] or not bad_stale[2])
+check("negative control: with the empty-set fix undone, the second run after a real stale page makes another commit", bad_stale[1] != [] or not bad_stale[2])
+shutil.rmtree(broken, ignore_errors=True)
+folder, broken = undone("if not done.stdout:")
+code, same = crash_case(folder)
+check("negative control: with the fail-closed check undone, a failed docs check still exits zero (%s)" % code, code == 0)
 shutil.rmtree(broken, ignore_errors=True)
 sys.exit(1 if fails else 0)
