@@ -18,6 +18,9 @@ render.py (18,737 LF bytes) is not touched. sections.py is 11,575 LF bytes; the 
 
 Gates before push: private.py scan, package check, LF byte counts of every touched file, docs check (after the re-stamp), `regression.py red` for follows-adoption, the whole toy green.
 
+## Lane section (later, only on operation-pc's say; TD885 render-last order, TD915, TD756)
+1. Merge origin/main up; 0 behind. 2. `criteria.py render --tables` and commit it (no Confidence cell may move). 3. `audit.py restamp-own` for any stale page (the Documentation page goes stale because docs.tsv maps skills/workflow-docs; this is my step, not operation-pc's). 4. `wiki.py prepare`. 5. `docs.py check --own` clean and `git status` empty. 6. THEN ONE lane on the PC's own lane with the .ok copy, env cleared (`env -u CLAUDE_CODE_HOST_SESSION_ID -u CLAUDE_CODE_SESSION_ID -u CLAUDE_SESSION_ID -u LOOP_POD_ID -u LOOP_OPERATION_SESSION LOOP_ROLE=worker`), one lane at a time on the PC. Never run dev/toy/test-machine-log.py or dev/toy/test-platform-limits.py.
+
 ## Out of scope
 The sub-requirement half (above), render.py, DEL-3's text and rows, known-list edits, any live render committed from this branch.
 
