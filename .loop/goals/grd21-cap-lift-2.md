@@ -2,7 +2,7 @@
 
 - Slug: grd21-cap-lift-2
 - Touches: dev/package.py, dev/toy, docs/wiki, docs, .loop/regression.tsv, README.md
-- ETA: 360 active minutes (estimate 288m plus a 25% margin)
+- ETA: 90 active minutes (the owner's budget, o762)
 
 ## Done lines
 

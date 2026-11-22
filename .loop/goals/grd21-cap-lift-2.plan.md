@@ -4,6 +4,19 @@ Plan step for grd21-cap-lift-2, run CONDENSED. This goal redoes grd21-cap-lift f
 
 --- plan reply of grd21-cap-lift follows ---
 
+--- delta against the real diff of 35a789cc8 (this goal's own build commit; 14 files against main abe55bdf7 including the goal file, 9 regression rows) ---
+
+What the carried-over plan below got wrong, plainly:
+- D5 says only four rows are touched and that trim-package-98 changes. Nine rows change text (the commands are unchanged except package-gate-controls' grep string): plan-sizes, package-passes, package-gate-controls, package-gate-head, package-caps-held, package-headroom-held, package-passes-3800, release-static-rules and package-static-toy. trim-package-98 does NOT change (its "holds 100 files" is still true).
+- D6 and amendments A4 and A5 say docs/ROADMAP.md and dev/toy/test-plan-cache.sh are left unchanged. Both change: docs/ROADMAP.md (the Size row sentence only, 200 files temporarily per o718, under 5 MB, published by website upload) and dev/toy/test-plan-cache.sh (row plan-sizes now reads the cap from dev/package.py instead of a hard-coded 100), the latter by the operation's ruling 1.
+- dev/toy/test-package-tracked.py is also changed (its loose-file controls are MAX_FILES + 10 so they still bite at the new cap); the plan does not list it.
+- The files that change, in all: dev/package.py, dev/toy/test-package-caps.py, test-package-gate.py, test-package-headroom.py, test-package-static.py, test-package-tracked.py, test-plan-cache.sh, .loop/regression.tsv, docs/ROADMAP.md, docs/wiki/How-to-use-Guardrails.md and the generated Tests tables in docs/wiki/Delivery.md, Guardrails.md and Setup.md; plus this goal file.
+- Still not changed: dev/test-package.sh:19 (unwired), skills/workflow-health/references/commands.md:330, .loop/regression-known.tsv, GRD-20 and GRD-21 requirement text and review marks.
+Facts about how the work was done, not hidden: the first goal's review did not converge in three passes (the last pass at 453c5e83e had no findings, and the code changed after it in bf57f9287, which this redo reviewed fresh); /verify was not run before committing, since it would run the toys against the ban on running them in the real tree.
+
+--- the carried-over plan follows; where it disagrees with the delta above, the delta is right ---
+
+
 Plan step for grd21-cap-lift (hand fallback: the autoplan guard refused, see 'How this plan step ran'). The amended implementation plan comes first, then the review record and the report.
 
 ## Implementation plan
