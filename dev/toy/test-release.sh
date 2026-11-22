@@ -113,7 +113,12 @@ echo "== 3d. four-number versions and bracket changelogs"
 (cd "$here" && python3 - <<'PY'
 import importlib.util
 s = importlib.util.spec_from_file_location("r", "skills/workflow-release/scripts/release.py"); m = importlib.util.module_from_spec(s); s.loader.exec_module(m)
-assert m.bump("1.3.3.3", "patch") == "1.3.3.4" and m.bump("1.3.3.3", "minor") == "1.4.0.0" and m.bump("1.3.3.3", "major") == "2.0.0.0"
+assert m.bump("1.3.3.3", "patch") == "1.3.3.4" and m.bump("1.3.3.3", "minor") == "1.4.0.0"
+try:
+    m.bump("1.3.3.3", "major")
+    raise AssertionError("a goal's major bump was not refused")
+except SystemExit as refused:
+    assert "MAJOR_GATE" in str(refused) and "REL-1" in str(refused), refused
 assert m.bump("0.1.9", "patch") == "0.1.10" and m.bump("0.1.9", "minor") == "0.2.0"
 out = m.changelog_text("# Changelog\n\nIntro.\n\n## [1.0.0.0] - 2026-01-01\n\nOld.\n", "1.0.0.1", "2026-02-02", ["New"], "1. Step\n   Expect: x")
 assert out.index("Intro.") < out.index("## [1.0.0.1] - 2026-02-02") < out.index("## [1.0.0.0]")

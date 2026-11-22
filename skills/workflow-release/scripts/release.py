@@ -349,6 +349,8 @@ def cmd_cut(args):
     save(state, "cutting %s from %s" % (tag, old_version))
     open(vpath, "w").write(version + "\n")
     open(cpath, "w").write(changelog_text(old, version, day, bullets, steps))
+    brief.result(cwd, version)
+    files += brief.files(cwd, version)
     if run(["git", "add", "--"] + files, cwd).returncode or run(["git", "commit", "-m", message, "--"] + files, cwd).returncode:
         restore(cwd, files, before, message)
         sys.exit("REFUSED: could not commit the release files.")
@@ -376,7 +378,6 @@ def cmd_cut(args):
     url = (made.stdout.strip().splitlines() or [""])[-1]
     state.update(release="cut", release_version=version, release_url=url, status="done", waiting=None)
     save(state, "release cut %s draft %s" % (tag, url))
-    brief.result(cwd, version)
     print("CUT %s %s -> %s on %s (%d changelog lines)" % (slug, old_version, version, branch, len(bullets)))
     print("DRAFT " + url)
     print("You publish it. The draft stays unpublished until you do. Nothing was merged.")
