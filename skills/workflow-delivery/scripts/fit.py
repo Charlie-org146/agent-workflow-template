@@ -8,8 +8,6 @@ import subprocess
 import sys
 import time
 
-import lanekit
-
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 STEPS = ("idea", "plan", "review", "qa", "ship")
@@ -19,6 +17,7 @@ SMALL_DONE = 3
 
 
 def deadline(held):
+    import lanekit  # lazy: other skills load fit.py by path, where lanekit is not importable
     if "markers" not in held:
         return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
     began = lanekit.mtime(held["rc"] + ".started")
