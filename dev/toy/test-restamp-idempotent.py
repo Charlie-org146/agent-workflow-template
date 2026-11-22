@@ -66,8 +66,9 @@ def restamp(repo, folder):
 
 
 def snap(repo):
-    """HEAD, the kept file and the working tree: what one restamp-own call may change."""
-    return (git(repo, "rev-parse", "HEAD"), kept(repo), git(repo, "status", "--porcelain"))
+    """HEAD, the kept file, the working tree and the reviews log: what one restamp-own call may change."""
+    log = os.path.join(repo, ".git", "loop", "reviews.tsv")
+    return (git(repo, "rev-parse", "HEAD"), kept(repo), git(repo, "status", "--porcelain"), open(log).read() if os.path.isfile(log) else "")
 
 
 def count(repo):
@@ -87,7 +88,7 @@ def run(folder):
     s1 = snap(repo)
     two = restamp(repo, folder)
     s2 = snap(repo)
-    clean = (one, two, s0 == s1 == s2, kept(repo) == [] and s2[2] == "")
+    clean = (one, two, s0 == s1 == s2, kept(repo) == [] and s2[2] == "" and s2[3] == "")
     write(repo, "a.py", '"""Docs."""\n\n\ndef run():\n    return 2\n')
     git(repo, "commit", "-q", "-am", "a real change to a.py")
     base = count(repo)
@@ -96,7 +97,7 @@ def run(folder):
     again = restamp(repo, folder)
     t2 = snap(repo)
     rows = [row.split("\t")[0] for row in kept(repo)]
-    return clean, (done, again, count(repo) == base + 1 and t1 == t2 and t2[2] == "", rows)
+    return clean, (done, again, count(repo) == base + 1 and t1 == t2 and t2[2] == "" and t1[3].count("\n") == 1 and "restamp\tA\tmy-goal" in t1[3], rows)
 
 
 def crash_case(folder):
@@ -136,7 +137,7 @@ def undone(old):
     text = open(copy).read()
     check("negative control: %r is in docs.py to undo" % old, old in text)
     with open(copy, "w") as handle:
-        handle.write(text.replace(old, "if False:" if old.startswith("if not") else ""))
+        handle.write(text.replace(old, "pass" if old.startswith("sys.exit") else ""))
     return os.path.join(broken, "scripts"), broken
 
 
@@ -146,7 +147,7 @@ check("negative control: with the empty-set fix undone, a run with nothing stale
       bad_clean[0] != [] and not (bad_clean[2] and bad_clean[3]))
 check("negative control: with the empty-set fix undone, the second run after a real stale page makes another commit", bad_stale[1] != [] or not bad_stale[2])
 shutil.rmtree(broken, ignore_errors=True)
-folder, broken = undone("if not done.stdout:")
+folder, broken = undone('sys.exit(done.stderr or "no check report")')
 code, same = crash_case(folder)
 check("negative control: with the fail-closed check undone, a failed docs check still exits zero (%s)" % code, code == 0)
 shutil.rmtree(broken, ignore_errors=True)
