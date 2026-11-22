@@ -147,7 +147,32 @@ good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, t
 check(good.returncode == 0 and "DOCS OK" in good.stdout, "a pull request whose docs pass passes the docs step (exit %d)" % good.returncode)
 setup = os.path.join(clone, "docs", "wiki", "Setup.md")
 lines = open(setup).read().split("\n")
-at = next(i for i, x in enumerate(lines) if re.match(r"- [A-Z]+-\d+: \*\*Reviewed", x))
+# The fixture holds its own Reviewed line (the live pages may hold none: a feature is marked Reviewed only by the owner's words):
+# the first requirement of the copied Setup page, marked Reviewed with its seal, which the docs step must accept before it is changed.
+sys.path.insert(0, os.path.join(root, "skills", "workflow-docs", "scripts"))
+import criteria  # noqa: E402
+
+
+def reviewed_fixture(page_lines):
+    """The page's lines with its first requirement marked Reviewed (with its seal), and that line's index; None when the page has no requirement line."""
+    found = next((i for i, x in enumerate(page_lines) if criteria.LINE.match(x)), None)
+    if found is None:
+        return None
+    mine = criteria.LINE.match(page_lines[found])
+    out = list(page_lines)
+    out[found] = "- %s: **Reviewed 2026-11-20** %s <!-- reviewed %s -->" % (
+        mine.group(1), mine.group(4), criteria.seal_of(mine.group(4), criteria.subs(page_lines, found)))
+    return out, found
+
+
+check(reviewed_fixture(["# Setup", "no requirement here"]) is None and reviewed_fixture(lines) is not None,
+      "negative control: a page with no requirement line gives no Reviewed fixture (the step then fails), a page with one does")
+lines, at = reviewed_fixture(lines)
+open(setup, "w").write("\n".join(lines))
+subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "fixture: one requirement marked Reviewed", "--allow-empty"], cwd=clone, check=True, capture_output=True)
+subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=clone, check=True)
+good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+check(good.returncode == 0 and "DOCS OK" in good.stdout, "the fixture's Reviewed requirement passes the docs step before it is changed (exit %d)" % good.returncode)
 lines[at] += " (changed with no review)"
 open(setup, "w").write("\n".join(lines))
 subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change a reviewed requirement"], cwd=clone, check=True, capture_output=True)

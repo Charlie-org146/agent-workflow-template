@@ -15,22 +15,44 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ## Requirements
 
 ### Functional
-- DOC-2: **Reviewed 2026-11-20** Only I write the principles and requirements; the repo copy is the PRD <!-- reviewed 22a8ca15 -->
+- DOC-2: **Unreviewed** Only I write the principles and requirements; the repo copy is the PRD
   - Each principle's sentence, its table and every requirement's text are written only by me. [DOC-2]
   - An agent may draft and propose; only my own words make it the text, and only my words mark it Reviewed, or operation-top under my delegation: after reading the full text it may approve wording I asked for and mark it Reviewed, except safety classes, and it lists each such approval in the next check-in so I can revert any. [DOC-2]
   - Goals never edit Reviewed text while building. [DOC-2]
   - A change is a dated, approved revision; old revisions are kept and IDs are never reused. [DOC-2]
   - The repo copy is the PRD: an outside document may sync into it but never overrides it, and checks read only the repo. [DOC-2]
-- DOC-25: **Reviewed 2026-11-20** Every page has the same fixed sections, and README and Home match <!-- reviewed 45ba875e -->
+
+  - Feature markers v1
+  - Reference: GitHub CODEOWNERS with required review: adapted; OpenGitOps: adapted
+  - Line 1: metric missing; test 13 linked rows, see Tests
+  - Line 2: metric missing; test 13 linked rows, see Tests
+  - Line 3: metric missing; test 13 linked rows, see Tests
+  - Line 4: metric missing; test 13 linked rows, see Tests
+  - Line 5: metric missing; test 13 linked rows, see Tests
+- DOC-25: **Unreviewed** Every page has the same fixed sections, and README and Home match
   - The README and the wiki Home have exactly these sections, in order: What this is, System design, one section per principle, Requirements by feature. [DOC-25]
   - Every principle table has the columns shown here, including Adoption and Confidence, and each principle's heading shows both for the whole principle. [DOC-25]
   - Health generates the two scores; no one types them. [DOC-25]
   - Every wiki page has the sections of its kind. [DOC-25]
   - Every requirement row links to its own workflow figure. [DOC-25]
   - Generated sections stay current. [DOC-25]
-- DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
+
+  - Feature markers v1
+  - Reference: markdownlint MD043: adapted; Diátaxis: adapted; C4 system context diagram: adapted
+  - Line 1: metric missing; test 32 linked rows, see Tests
+  - Line 2: metric missing; test 32 linked rows, see Tests
+  - Line 3: metric missing; test 32 linked rows, see Tests
+  - Line 4: metric missing; test 32 linked rows, see Tests
+  - Line 5: metric missing; test 32 linked rows, see Tests
+  - Line 6: metric missing; test 32 linked rows, see Tests
+- DOC-26: **Unreviewed** Each principle has at most five requirements, each dense and fully covering
   - A new need is written into an existing requirement before a new one is added. [DOC-26]
   - Health fails a principle with more than five, and a goal that would add a sixth is refused at freeze. [DOC-26]
+
+  - Feature markers v1
+  - Reference: Google re:Work OKR guide, three to five objectives (checked at build): adapted
+  - Line 1: metric missing; test missing
+  - Line 2: metric missing; test missing
 - DOC-27: **Reviewed 2026-11-21** The new standard: every feature is one unit you can review <!-- reviewed e4161660 -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
