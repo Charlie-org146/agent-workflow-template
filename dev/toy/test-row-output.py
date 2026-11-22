@@ -7,6 +7,7 @@
 Rows like `bash dev/toy/test-X.sh 2>&1 | grep -q "PASS: ..."` print nothing, so their issues (#3133, #3773, #3784) had an empty
 block. Checks the Mac tick path (runs.execute) and the workflow's inline block (actions.render, run with gh stubbed)."""
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -62,7 +63,7 @@ _s.run, _s.Popen = _fake, _popen
 """
 with tempfile.TemporaryDirectory() as tmp:
     text = actions.render("17 */4 * * *")
-    block = text.split("python3 - --live <<'PY'\n", 1)[1].split("\n          PY\n", 1)[0]
+    block = re.split(r"python3 - \S* ?<<'PY'\n", text, 1)[1].split("\n          PY\n", 1)[0]
     block = "\n".join(line[10:] for line in block.split("\n"))
     marker = "sys.exit(1 if red"
     assert marker in block

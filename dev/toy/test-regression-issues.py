@@ -11,6 +11,7 @@ import io
 import json
 import os
 import re
+import shutil
 import runpy
 import subprocess
 import sys
@@ -92,7 +93,7 @@ def issue(number, row, skipped=False):
 def block_source():
     """(does the step pass --live, the CI block of the written workflow cut out the way the bash toys do)."""
     text = actions.render("17 */4 * * *")
-    found = re.search(r"python3 - (--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S)
+    found = re.search(r"python3 - (\$live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S)
     return bool(found.group(1)), NL.join(line[10:] for line in found.group(2).split(NL))
 
 
@@ -153,7 +154,7 @@ def local(gh, outcome):
         subprocess.run = real_run
 
 
-check(block_source()[0], "the written workflow starts its issue block with --live")
+check(block_source()[0], "the written workflow passes --live only through $live, which its shell block sets on the default branch")
 for label, run_it in (("the CI block", lambda g: ci(g, "fail", "--live")), ("the local run", lambda g: local(g, "FAIL"))):
     gh = FakeGh([issue(3700, "red", True), issue(2596, "red", True), issue(3119, "red", True)])
     run_it(gh)
@@ -188,6 +189,44 @@ gh.down = {"graphql", "rest"}
 local(gh, "PASS")
 check(gh.open_for("red") == [2596] and not [c for c in gh.writes() if c[0] == "issue"],
       "the local run: with both reads timing out it changes no issue (writes: %s)" % gh.writes()[:2])
+def default_branch_gate():
+    """#5773: the step's shell prelude sets live=--live only on a run of the default branch; a bash -e run of it, a fake gh on PATH."""
+    text = actions.render("17 */4 * * *").replace("\r\n", "\n")
+    found = re.search(r"\n( +)live=\n(.*?)\n +python3 - \$live <<'PY'\n", text, re.S)
+    prelude = "set -e\nlive=\n" + "\n".join(line[len(found.group(1)):] for line in found.group(2).split("\n")) + '\necho "LIVE=[$live]"\n'
+    bash = shutil.which("bash")
+    if not bash:
+        check(False, "default branch gate: bash is on PATH (this proof fails, it never skips, where bash is missing)")
+        return
+    results = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        fake = os.path.join(tmp, "gh")
+        with open(fake, "w", newline="\n") as handle:
+            handle.write('#!/bin/bash\necho "$*" >> "$FAKE_LOG"\ncase " $* " in *" -X "*|*" -f "*|*" -F "*|*" --method "*) exit 99;; esac\n'
+                         '[ -n "$FAKE_FAIL" ] && exit 1\ncase "$*" in *.default_branch*) printf "%s" "$FAKE_DEFAULT";; esac\n')
+        os.chmod(fake, 0o755)
+        for name, ref, default, fail in (
+                ("a schedule run on main", "refs/heads/main", "main", ""), ("a dispatch on main", "refs/heads/main", "main", ""),
+                ("a dispatch on a feature branch", "refs/heads/feature", "main", ""), ("refs/pull/7/merge", "refs/pull/7/merge", "main", ""),
+                ("a tag", "refs/tags/v1", "main", ""), ("main-evil against main", "refs/heads/main-evil", "main", ""),
+                ("a glob default branch", "refs/heads/main", "ma*", ""), ("an empty default branch read", "refs/heads/main", "", ""),
+                ("an unreadable default branch", "refs/heads/main", "main", "1")):
+            log = os.path.join(tmp, "calls.log")
+            env = dict(os.environ, PATH=tmp + os.pathsep + os.environ["PATH"], GITHUB_REF=ref, GITHUB_REPOSITORY="o/r",
+                       FAKE_DEFAULT=default, FAKE_FAIL=fail, FAKE_LOG=log)
+            done = subprocess.run([bash, "-e", "-c", prelude], capture_output=True, text=True, env=env)
+            results[name] = done.stdout + done.stderr
+            live = "LIVE=[--live]" in done.stdout
+            want = name in ("a schedule run on main", "a dispatch on main")
+            check(done.returncode == 0 and live == want and (want or "DRY RUN:" in done.stdout),
+                  "default branch gate: %s %s --live under bash -e (%s)" % (name, "gets" if want else "gets no", done.stdout.strip()[:90]))
+            check(not os.path.exists(log) or not [c for c in open(log) if re.search(r" (-X|-f|-F|--method) ", " " + c)],
+                  "default branch gate: %s: the shell block issues no gh api write" % name)
+
+
+default_branch_gate()
+
+
 if not failed:
     print("PASS: each failing row keeps one open issue and no issue is written without --live")
 sys.exit(1 if failed else 0)

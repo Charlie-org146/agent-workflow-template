@@ -80,7 +80,10 @@ jobs:
           TESTS_PY_EOF
           python3 -I "$here/tests.py" list --tsv > "$here/map.tsv" 2>/dev/null || true
           export REGRESSION_MAP="$here/map.tsv"
-          python3 - --live <<'PY'
+          live=
+          def=$(gh api repos/$GITHUB_REPOSITORY --jq .default_branch 2>/dev/null) || def=
+          if [ -n "$def" ] && [ "$GITHUB_REF" = "refs/heads/$def" ]; then live=--live; else echo "DRY RUN: $GITHUB_REF is not the default branch ($def), nothing is written"; fi
+          python3 - $live <<'PY'
           import json, os, re, subprocess, sys, tempfile, time, urllib.parse
           def rows(path):
               if not os.path.exists(path):
@@ -123,11 +126,6 @@ jobs:
                       child.wait(timeout=limit)
                   except subprocess.TimeoutExpired:
                       timed_out = True
-                      try:
-                          ps = subprocess.run(["ps", "-o", "pid,ppid,stat,wchan:20,args", "-s", str(child.pid)], capture_output=True, text=True)
-                          log.write("\nprocesses at the timeout:\n" + ps.stdout)
-                      except OSError:
-                          pass
                   try:
                       os.killpg(child.pid, 9)
                   except OSError:
