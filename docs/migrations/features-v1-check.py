@@ -57,6 +57,41 @@ def units(text):
     return out
 
 
+STATE = re.compile(r"(\[#\d+\]\([^)]*\)) (open|closed|state unknown)( \(\d{4}-\d\d-\d\d\))?")
+TESTROW = re.compile(r"^\| (<a id=\"t-[\w.-]+\"></a>[\w.-]+|\[[\w.-]+\]\(Tests#t-[\w.-]+\)) \|")
+
+
+def gen_row(line):
+    """A generated Tests row: on a feature page `| [id](Tests#t-id) | ...`, on the Tests page `| <a id="t-id"></a>id | ...`."""
+    return bool(TESTROW.match(line.rstrip("\r")))
+
+
+def norm_row(line):
+    """A generated row with its issue state word and date left out (pr rewrites exactly that, from the issue's state)."""
+    return STATE.sub(r"\1 STATE", line) if gen_row(line) else line
+
+
+def tests_pair(gone, came):
+    return gen_row(gone) and gen_row(came) and norm_row(gone) == norm_row(came)
+
+
+def issues_pair(gone, came):
+    g, c = gone.split("\t"), came.split("\t")
+    return len(g) == len(c) >= 3 and g[0] == c[0] and g[3:] == c[3:]
+
+
+def only_bookkeeping(diff, pair):
+    """True when every removed line pairs one-to-one with an added line that differs only as pair() allows."""
+    gone = [x[1:] for x in diff.split("\n") if x.startswith("-") and not x.startswith("---")]
+    came = [x[1:] for x in diff.split("\n") if x.startswith("+") and not x.startswith("+++")]
+    return len(gone) == len(came) and all(pair(g, c) for g, c in zip(gone, came))
+
+
+def same_page(new, base):
+    """Page lines equal BASE's, the generated Tests rows compared without their issue state."""
+    return "\n".join(norm_row(x) for x in new.split("\n")) == "\n".join(norm_row(x) for x in base.split("\n"))
+
+
 def strip_blocks(lines):
     out, k = [], 0
     while k < len(lines):
@@ -118,8 +153,9 @@ def main():
             sys.exit("REFUSED: git diff failed")
         changed = [x for x in diff.split("\n") if x]
         names = {r[1] for r in rows}
+        BOOK = {".loop/regression-issues.tsv", "docs/wiki/Tests.md"}  # pr's bookkeeping files: allowed only line by line (2 bookkeeping, below)
         mine = {"docs/migrations/features-v1.py", "docs/migrations/features-v1-check.py", "docs/migrations/features-v1-report.md", ".loop/kept/migrate-features.tsv", ".loop/kept/migrate-features-2.tsv", ".loop/regression-known.tsv", "README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md", "dev/toy/test-shard-balance.py", "dev/toy/test-operate.sh"}  # the two toys whose fixtures changed (Operation TD948)
-        allowed = lambda x: (x in mine or re.match(r"\.loop/goals/migrate-features(-2)?\.", x) or x in {"docs/wiki/%s.md" % n for n in names} or x in a.allow.split(","))
+        allowed = lambda x: (x in mine or re.match(r"\.loop/goals/migrate-features(-2)?\.", x) or x in {"docs/wiki/%s.md" % n for n in names} or x in BOOK or x in a.allow.split(","))
         extra = [x for x in changed if not allowed(x)]
         ok("2 every changed file is a named page, the report, the scripts, a goal record or an allowed path", not extra, ", ".join(extra))
         known = run("git", "diff", "-U0", base, "HEAD", "--", ".loop/regression-known.tsv")
@@ -142,9 +178,32 @@ def main():
                     if x.rstrip("\r").startswith(pat):
                         new[i] = r[6] + ("\r" if x.endswith("\r") else "")
                         break
-            if "\n".join(new) != show(base, rel):
+            if not same_page("\n".join(new), show(base, rel)):
                 bad.append(n)
-        ok("2 each page, blocks stripped and marks restored, equals BASE byte for byte", not bad, ", ".join(bad))
+        ok("2 each page, blocks stripped and marks restored, equals BASE byte for byte (generated Tests rows without their issue state)", not bad, ", ".join(bad))
+        books = {}
+        for rel, pair in ((".loop/regression-issues.tsv", issues_pair), ("docs/wiki/Tests.md", tests_pair)):
+            d = run("git", "diff", "-U0", base, "HEAD", "--", rel)
+            if d is None:
+                sys.exit("REFUSED: git diff of %s failed" % rel)
+            books[rel] = only_bookkeeping(d, pair)
+        ok("2 bookkeeping: regression-issues.tsv and Tests.md change only in pr's lines (an issue's state and date; a generated row's state word)", all(books.values()),
+           ", ".join(k for k, v in books.items() if not v))
+        # negative controls (a change that must still be seen), run on synthetic lines, not on the tree
+        row = "| [x-1](Tests#t-x-1) | defect | [#9](https://example.test/issues/9) open (2026-11-22) | Given a, then b. | not run |"
+        ok("2 control: a closed state alone passes", same_page(row.replace("open", "closed"), row))
+        ok("2 control: one word changed in a generated row still fails", not same_page(row.replace("then b", "then c"), row))
+        ok("2 control: one word changed in migrated page text still fails", not same_page("- DOC-1: **Reviewed 2026-11-20** Only I write it.", "- DOC-1: **Reviewed 2026-11-20** Only we write it."))
+        tp = "| <a id=\"t-x-1\"></a>x-1 | defect | [#9](https://example.test/issues/9) open (2026-11-22) | not run | - | local | 2026-11-22 |"
+        ok("2 control: Tests.md, a state change passes", only_bookkeeping("-" + tp + "\n+" + tp.replace("open", "closed"), tests_pair))
+        ok("2 control: Tests.md, any change beyond a generated row's state fails",
+           not only_bookkeeping("-" + tp + "\n+" + tp.replace("not run", "PASS"), tests_pair)
+           and not only_bookkeeping("-| some other line |\n+| some other line, edited |", tests_pair)
+           and not only_bookkeeping("+" + tp, tests_pair))
+        ok("2 control: regression-issues.tsv, a state and date change passes; another issue or extra column fails",
+           only_bookkeeping("-u/9\topen\t2026-11-21\t\n+u/9\tclosed\t2026-11-22\t", issues_pair)
+           and not only_bookkeeping("-u/9\topen\t2026-11-21\t\n+u/8\tclosed\t2026-11-22\t", issues_pair)
+           and not only_bookkeeping("-u/9\topen\t2026-11-21\tx\n+u/9\tclosed\t2026-11-22\ty", issues_pair))
         # done line 3: counts follow from unchanged Revisions (inside the pages), the regression table and the Principles table
         ok("3 test rows untouched (regression.tsv)", ".loop/regression.tsv" not in changed)
         # narrowed (#5728, owner-approved): the three generated tables may differ from BASE only in the Confidence cell; Follows and every other cell equal BASE's
