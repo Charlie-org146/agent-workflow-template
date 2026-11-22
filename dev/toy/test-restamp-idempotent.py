@@ -27,7 +27,7 @@ def check(name, ok):
 
 
 def git(repo, *args):
-    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false"] + list(args),
+    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"] + list(args),
                           cwd=repo, capture_output=True, text=True).stdout.strip()
 
 
@@ -49,8 +49,8 @@ def build():
     repo = tempfile.mkdtemp(prefix="restamp-idem-")
     git(repo, "init", "-q", "-b", "main")
     write(repo, ".loop/config.json", "{}\n")
-    write(repo, ".loop/docs.tsv", "A\ta.py\nB\tb.py\n")
-    for n in "ab":
+    write(repo, ".loop/docs.tsv", "A\ta.py\nAB\tab.py\n")
+    for n in ("a", "ab"):
         write(repo, n + ".py", '"""Docs."""\n\n\ndef run():\n    return 1\n')
         write(repo, "docs/wiki/%s.md" % n.upper(), page(n.upper(), "Readers need a page that says what %s.py does today." % n))
     git(repo, "add", "-A")
@@ -60,7 +60,14 @@ def build():
 
 def restamp(repo, folder):
     out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True)
-    return out.stdout.split()
+    if out.returncode:
+        print("restamp-own exited %d: %s" % (out.returncode, out.stderr.strip()[-300:]))
+    return out.stdout.split() if not out.returncode else ["EXIT-%d" % out.returncode]
+
+
+def snap(repo):
+    """HEAD, the kept file and the working tree: what one restamp-own call may change."""
+    return (git(repo, "rev-parse", "HEAD"), kept(repo), git(repo, "status", "--porcelain"))
 
 
 def count(repo):
@@ -75,15 +82,29 @@ def kept(repo):
 def run(folder):
     """Both done lines against the audit.py in folder; returns the outcomes."""
     repo = build()
-    first = count(repo)
-    one, two = restamp(repo, folder), restamp(repo, folder)
-    clean = (one, two, count(repo) == first, kept(repo) == [])
+    s0 = snap(repo)
+    one = restamp(repo, folder)
+    s1 = snap(repo)
+    two = restamp(repo, folder)
+    s2 = snap(repo)
+    clean = (one, two, s0 == s1 == s2, kept(repo) == [] and s2[2] == "")
     write(repo, "a.py", '"""Docs."""\n\n\ndef run():\n    return 2\n')
     git(repo, "commit", "-q", "-am", "a real change to a.py")
     base = count(repo)
-    done, again = restamp(repo, folder), restamp(repo, folder)
+    done = restamp(repo, folder)
+    t1 = snap(repo)
+    again = restamp(repo, folder)
+    t2 = snap(repo)
     rows = [row.split("\t")[0] for row in kept(repo)]
-    return clean, (done, again, count(repo) == base + 1, rows)
+    return clean, (done, again, count(repo) == base + 1 and t1 == t2 and t2[2] == "", rows)
+
+
+def relock_all(folder):
+    """relock with a slug and an empty set still means every Reviewed page (the overload restamp-own's guard leans on)."""
+    repo = build()
+    code = "import sys; sys.path.insert(0, sys.argv[1]); import audit; print(' '.join(audit.relock(sys.argv[2], 'my-goal', ())))"
+    out = subprocess.run([sys.executable, "-c", code, folder, repo], cwd=repo, capture_output=True, text=True)
+    return sorted(out.stdout.split()) if not out.returncode else ["EXIT-%d" % out.returncode]
 
 
 clean, stale = run(scripts)
@@ -92,6 +113,8 @@ check("nothing stale: no commit and no kept rows", clean[2] and clean[3])
 check("one stale page: the first run restamps exactly that page (%s)" % stale[0], stale[0] == ["RESTAMPED", "A"])
 check("one stale page: it appends only that page's row, once, in one commit (%s)" % stale[3], stale[3] == ["A"] and stale[2])
 check("one stale page: the second run restamps nothing", stale[1] == [])
+relocked = relock_all(scripts)
+check("relock with a slug and an empty set still restamps every Reviewed page (%s)" % relocked, relocked == ["A", "AB"])
 
 broken = tempfile.mkdtemp(prefix="restamp-idem-broken-")
 shutil.rmtree(broken)
