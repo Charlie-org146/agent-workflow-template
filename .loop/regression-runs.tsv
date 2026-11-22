@@ -153,12 +153,12 @@ goal-levels-nightly	PASS	2026-11-11
 grd1-guardrail-list	PASS	2026-11-19	
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
-guards-extra	PASS	2026-11-22	
+guards-extra	PASS	2026-11-10	
 guards-null-report-nofiles	PASS	2026-11-12	
 guards-null-report-reset	PASS	2026-11-12	
 guards-resume	PASS	2026-11-12	
-guards-rule-start	PASS	2026-11-22	
-guards-worker-role	PASS	2026-11-22	
+guards-rule-start	PASS	2026-11-10	
+guards-worker-role	PASS	2026-11-10	
 health-feature-always	PASS	2026-11-17	
 health-findings-table	PASS	2026-11-17	
 health-group-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -191,7 +191,6 @@ home-topic-live	PASS	2026-11-19
 hook-count	PASS	2026-11-19	
 hook-stub-mark-foreign	PASS	2026-11-17	
 hook-stub-mark-own	PASS	2026-11-17	
-issue-117-bind-self	PASS	2026-11-22	
 issue-129-docs-published	PASS	2026-11-12	
 issue-closed-ignored	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-gh-fail-unread	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -372,8 +371,8 @@ schedule-setting	PASS	2026-11-20
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
 scripts-no-hang	PASS	2026-11-12	
-session-assign	PASS	2026-11-22	
-session-board-issue98	PASS	2026-11-22	
+session-assign	PASS	2026-11-20	
+session-board-issue98	PASS	2026-11-12	
 session-ended-waiting	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 session-fallback	PASS	2026-11-12	
 session-holds-slot	PASS	2026-11-12	

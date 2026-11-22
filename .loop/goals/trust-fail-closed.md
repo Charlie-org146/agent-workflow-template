@@ -29,6 +29,8 @@ Deviations from the gated plan, stated plainly:
 - Retry dropped, so a trust file caught mid-write now refuses the bind (fail closed) instead of retrying once after 0.2 s. Follow-up: #5751.
 - Headroom: operate.py has 14 bytes left; machines.py 73 below its 19,000 line.
 
+Upgraders trust once: a repo that bound before this lands has no trust entry the check can read, so its first bind is refused with the folder and the trust file named; open the folder once in Claude Code, then binds work. Nothing creates trust for the owner (o727). Toy cases for a new repo and an upgraded one are in test-new-binds.py (the refusal names the step, then bind goes through after it). The stray .loop/regression-runs.tsv change from the toy-setup commit is reverted (not in touches).
+
 Red team: three fresh reviews, each recorded verbatim with `notify.py plan-record`. Autoplan was refused by its hook (init_unbindable, then "Existing restore does not match this initialization"), so the hand fallback ran at full depth. The six breaks (principles 1 to 6) are accepted as stated under owner record o727 ("trust-fail-closed may accept the red team's breaks as stated; a fresh machine must trust the repo once in the app before workers can start"). They include: writes to the trust file are out of scope (anything running as the same user can still write the file; this closes the read side only); a worker's own HOME can still redirect the read, the same trust boundary as before; the Windows path is unverified beyond pc-path-trust's simulation; a stale home file under `CLAUDE_CONFIG_DIR` is refused, never trusted; and a fresh machine has no trust file until the repo is trusted once in the app.
 
 Tests, assert counts (main at 977f4f067 against this branch, by `check(` call lines):

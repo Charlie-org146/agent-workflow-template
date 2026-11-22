@@ -101,6 +101,7 @@ if only in ("", "operation"):  # #5616: the governing session is never a worker,
     check("bind refuses the operation session's app id", code != 0 and "never a worker" in said and "local_app-toy" in said)
     code, said = tool(os.path.join(scripts, "sessions.py"), "bind", "g", "w1", LOOP_ROLE="worker")
     check("and still binds an ordinary session", code == 0 and "w1" in said)
+sep_name = lambda path: path.replace("\\", "/")
 if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.json is refused, and the file is never written
     repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
     loop, tree = os.path.join(repo, ".git", "loop"), os.path.join(repo, "tree")
@@ -140,6 +141,20 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
     json.dump({"projects": {repo: {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
     code, said = bind()
     check("a trusted parent folder lets it through", code == 0 and "w1" in said)
+    for kind in ("new repo, no trust file yet", "upgraded repo, trust file knows only other projects"):  # TD862: the one-time step is named, never taken for the owner
+        claude = os.path.join(repo, ".claude.json")
+        if kind.startswith("new"):
+            os.remove(claude)
+        else:
+            json.dump({"numStartups": 7, "projects": {os.path.join(repo, "older-repo"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
+        json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+        json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+        code, said = bind()
+        check("%s: the refusal names the step (open the folder once in Claude Code) and the trust file" % kind, code != 0 and tree in said and "open it once in Claude Code" in said and sep_name(claude) in said.replace("\\", "/"))
+        projects = {os.path.join(repo, "older-repo"): {"hasTrustDialogAccepted": True}, tree: {"hasTrustDialogAccepted": True}} if not kind.startswith("new") else {tree: {"hasTrustDialogAccepted": True}}
+        json.dump({"numStartups": 8, "projects": projects}, open(claude, "w"))  # what opening the folder once in the app writes
+        code, said = bind()
+        check("%s: after that one step, bind goes through" % kind, code == 0 and "w1" in said)
 if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bound sessions and worktree entries whose folder is gone
     repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
     loop, tree = os.path.join(repo, ".git", "loop"), os.path.join(repo, "tree")
