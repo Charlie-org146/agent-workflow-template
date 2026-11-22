@@ -76,6 +76,13 @@ Added after the first report (operation-mac: all of (a) to (f) in scope, (g) my 
 - DOC-28 refuses a major while the known-red list is non-empty (o714's narrow reading); main's list holds about 30 rows, so no major can be cut until they are cleared. That is the owner's intent, not a regression. Two separate holds exist and readers should see both: this one (DOC-28.1, `brief.known_red`, refuses a MAJOR only, no waiver) and v110-fast-clock's main-red-issue hold (DEL-17.5), which blocks ANY release while main has an open red issue.
 - Docstring trims keep meaning (words shortened, never what a function does or refuses): render.py (`ran_of`, `repo_of`, the module line), brief.py (module line), criteria.py (usage text), autorelease.py (module line and four function lines), deployments.py comments, merge.py, release.py, review.py, live_board.py, proctree.py x3, goal.py, sections.py.
 - Steps page: the generated line in `Delivery.md` meets line 3 only as the operation session ruled (v110-fast-steps-2 lands the generated page first or after; the later merges up).
+- Files already over 19,000 bytes on main that grew (TD845; none may reach 20,480 and no file newly crosses 19,000), bytes before on origin/main f8118b117 and after:
+  - `workflow-delivery/scripts/fit.py` 20,443 -> 20,471 (+28)
+  - `workflow-delivery/scripts/role.py` 20,335 -> 20,350 (+15)
+  - `workflow-docs/scripts/deployments.py` 19,654 -> 20,424 (+770)
+  - `workflow-docs/scripts/milestones.py` 19,242 -> 20,403 (+1,161)
+  - `workflow-docs/scripts/criteria.py` shrank 20,455 -> 20,402 (-53). No other file over 19,000 changed.
+- `docs.py check` without `--base` prints a spurious "STALE Home" on this branch (the README commit 68cb3e62d); with `--base origin/main` it does not. Left alone as ruled.
 - Not done: `watch.py go --task`; scheduling.
 
 ## Verify by hand
