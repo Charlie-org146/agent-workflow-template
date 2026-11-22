@@ -291,4 +291,14 @@ want("DOC-27.4 docs.py check reports a rebuild NOTE and passes, and --strict fai
 sys.exit(1 if fails else 0)
 PY
 then :; else fails=1; fi
+# review-findings-skill-lines (TD1082): the row admits exactly four named DOC-27 NOTE kinds; the toy runs the row's own filter on sample lines
+rowcmd=$(awk -F'\t' '$1 == "review-findings-skill-lines" {print $3}' "$here/.loop/regression.tsv")
+rowrun() { printf '%s\n' "$1" > "$T_ROW"; ( cd "$here" && bash -c "${rowcmd//python3 skills\/workflow-docs\/scripts\/docs.py check --own/cat $T_ROW}" ) >/dev/null 2>&1; }
+T_ROW=$(mktemp)
+ok4=$'NOTE Delivery:DEL-19: DOC-27 27.1: the sections are [x], not [y] in order. Fix: z\nNOTE Delivery:DEL-19: DOC-27 27.1: Requirements needs Functional, then Non-functional. Fix: z\nNOTE Documentation:DOC-27: DOC-27 27.5: the Reviewed mark has no line in .loop/reviews.tsv naming the typed record. Fix: z\nNOTE README: DOC-27 27.4: principle table columns are A, B, not C. Fix: z\nCHANGED a\nDOCS OK: 1 pages'
+rowrun "$ok4" && echo "PASS: DOC-27 the row admits the four named NOTE kinds" || { echo "FAIL: DOC-27 the row admits the four named NOTE kinds"; fails=1; }
+for bad in "NOTE README: DOC-27 27.4: no 'N of M reviewed' line at the top" "NOTE docs/wiki: DOC-27 27.4: 13 How-to-use pages to remove (a)" "NOTE docs/wiki: DOC-27 27.4: 34 figure files no page shows (a)" "NOTE Delivery: some other note" "NOTE Delivery: DOC-27 27.2: requirement 1.1 has no test case" "STALE Delivery: 1 commits since the page"; do
+  if rowrun "$ok4"$'\n'"$bad"; then echo "FAIL: DOC-27 negative control: the row passes $bad"; fails=1; else echo "PASS: DOC-27 negative control: the row fails on: ${bad:0:60}"; fi
+done
+rm -f "$T_ROW"
 [ $fails = 0 ] && echo "ALL PASS" || { echo "FAILED"; exit 1; }
