@@ -16,20 +16,12 @@ Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 ## Requirements
 
 ### Functional
-- MCH-1: **Unreviewed** Any machine sets up identically, and work moves between them safely
+- MCH-1: **Reviewed 2026-11-20** Any machine sets up identically, and work moves between them safely <!-- reviewed 5820cfff -->
   - A fresh clone, the checklist, a dry run and an apply reach a working operation session on a Mac or on Windows. [MCH-1]
   - Each goal has one owning machine; handover and adoption move it safely. [MCH-1]
   - Failed steps retry three times and then stop with a reason; crashed goals resume. [MCH-1]
   - Backup and restore move state, never secrets. [MCH-1]
   - **A restart loses nothing:** committed and in-progress work survives, each machine's timers, sessions and folder trust come back on their own, and the only step left to me is reopening the app. **Cloud sessions** add capacity for read-only and test work, and never push (DEL-9). [MCH-1]
-
-  - Feature markers v1
-  - Reference: Dev Containers: adapted; chezmoi: adapted; Kubernetes Lease: adapted; Temporal durable execution: adapted; macOS launchd; Claude Code cloud sessions: adopted
-  - Line 1: metric missing; test 27 linked rows, see Tests
-  - Line 2: metric missing; test 27 linked rows, see Tests
-  - Line 3: metric missing; test 27 linked rows, see Tests
-  - Line 4: metric missing; test 27 linked rows, see Tests
-  - Line 5: metric missing; test 27 linked rows, see Tests
 
 ### Non-functional
 
