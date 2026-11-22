@@ -262,7 +262,7 @@ def feature(page, fid, mark, date, lines, slug, reviews):
         bad("27.3", "Reference has no entry or an entry with no valid tag", "tag each source adopted, adapted, own or reference", False)
     for tag, text in pairs:
         if not re.match(r"\[[^\]]+\]\(https?://[^/)]+/[^)]*\)", text):
-            bad("27.3", "a %s reference names no linked source" % tag, "start the entry with [source](https://...)", False)
+            bad("27.3", "a %s reference names no linked source" % tag, "start the entry with [source](link)", False)
     if mark == "Reviewed" and not reviews.get(fid):
         bad("27.5", "the Reviewed mark has no line in .loop/reviews.tsv naming the typed record", "run the mark command where the owner-words ledger is (a NOTE until %s)" % LANDS, bool(date) and date.split()[0] >= LANDS)
     return out

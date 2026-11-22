@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DEL-23 tasks and DOC-28 release briefs: frozen briefs, the one task list, and the gates that read them.
+"""DEL-23 tasks and DOC-28 release briefs: frozen briefs, the one task list, the gates that read them.
 
   brief.py freeze task|release NAME --owner-record ID   freeze .loop/tasks/NAME.md or docs/release-brief-NAME.md
   brief.py check | tasks | finish NAME --met N,N         check hashes | the one list | mark a task done (goals merged, lines met)
@@ -12,6 +12,7 @@ import argparse
 import datetime
 import glob
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -77,7 +78,9 @@ def scan(text):
     here = os.path.dirname(os.path.abspath(__file__))
     try:
         sys.path.insert(0, os.path.join(here, "..", "..", "workflow-delivery", "scripts"))
-        import private
+        spec = importlib.util.spec_from_file_location("private", os.path.join(sys.path[0], "private.py"))
+        private = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(private)
         got = private.scan(top(), None, texts={"brief": text})
         return "a private name" if got.get("state") in ("hit", "broken") else ""
     except Exception:
@@ -96,11 +99,11 @@ def freeze(root, kind, name, record):
     path = path_of(root, kind, name)
     text = read(path)
     text or refuse("BRF-3", "no brief at %s" % os.path.relpath(path, root), "write it first")
-    frozen(text) and refuse("BRF-4", "%s is already frozen" % name, "a change is a new task that replaces this one: brief.py freeze task NEW --replaces %s" % name)
+    frozen(text) and refuse("BRF-4", "%s is already frozen" % name, "a change is a new task: brief.py freeze task NEW (Replaces: %s)" % name)
     row = ledger_row(root, record)
     if not row or row[4].split(",") != [name] or row[2] not in ("operation", "owner"):
         refuse("BRF-2", "no owner record naming exactly %s (record %s)" % (name, record or "none"),
-               "the owner types one decision: \"Freeze %s? Recommended: yes\"; the operation session records it with sessions.py owner-words --from owner. A lane stops with status waiting" % name)
+               "the owner types one decision (\"Freeze %s? Recommended: yes\"), recorded with sessions.py owner-words --from owner; a lane stops, status waiting" % name)
     bad = scan(text)
     bad and refuse("BRF-7", "the brief holds %s" % bad, "remove it, then freeze")
     body = text if text.endswith("\n") else text + "\n"
@@ -124,7 +127,7 @@ def check(root):
         for name, text in briefs(root, kind).items():
             if FROZEN.search(text) and frozen(text) == ("", "", ""):
                 bad.append("%s %s" % (kind, name))
-    bad and refuse("BRF-4", "frozen brief changed after the freeze: %s" % ", ".join(bad), "restore the words, or freeze a new task that replaces it")
+    bad and refuse("BRF-4", "frozen brief changed after the freeze: %s" % ", ".join(bad), "restore the words, or freeze a replacing task")
     print("BRIEFS OK")
 
 
@@ -160,7 +163,7 @@ def tasks(root):
 
 
 def lines(root):
-    """Board lines: each task and its goals."""
+    """Board lines: tasks and goals."""
     return ["task %s: %s%s%s" % (n, s, " (%s)" % note if note else "", " eta %sm" % e if e else "") + "".join("\n    goal %s" % g for g in gs) for n, s, gs, e, note in tasks(root)]
 
 
@@ -216,7 +219,7 @@ def freeze_check(g, args, lines):
 
 def can_start(root, name):
     text = briefs(root, "task").get(name)
-    text is None and refuse("BRF-5", "task %s has no brief" % name, "write .loop/tasks/%s.md and freeze it" % name)
+    text is None and refuse("BRF-5", "task %s has no brief" % name, "write and freeze .loop/tasks/%s.md" % name)
     frozen(text) or refuse("BRF-3", "task %s is not frozen" % name, "brief.py freeze task %s --owner-record ID" % name)
     states = {n: s for n, s, *_ in tasks(root)}
     wait = [d for d in names(field(text, "Needs")) if states.get(d) != "done"]
@@ -325,7 +328,7 @@ def notes(root, version):
 
 
 def files(root, version):
-    """The release brief's path, if it exists."""
+    """The release brief path, if any."""
     path = path_of(root, "release", version)
     return [os.path.relpath(path, root)] * os.path.exists(path)
 
