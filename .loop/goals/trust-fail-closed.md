@@ -36,6 +36,8 @@ Tests, assert counts (main at 977f4f067 against this branch, by `check(` call li
 - dev/toy/test-board-held.sh 74 to 74 and dev/toy/test-monitoring-prd.sh 77 to 77: one line each writes a trusting file into the toy's temporary HOME.
 - New defect row defect-5741-trust-fail-closed (goal line 1, #5741): seen failing with the reader broken to fail open in a fresh clone, passing at the head.
 
+- Windows path separator: operate.py prints the trust file as `expanduser("~/.claude.json")`, which keeps a slash on Windows (`C:\x\repo/.claude.json`), while the toy builds it with `os.path.join` (a backslash). The five unreadable-shape checks in dev/toy/test-new-binds.py now turn `/` into the platform separator on both the expected and the actual text, so the whole reason line must still match exactly except that one character; operate.py is unchanged.
+
 Toys that fail identically on main at 977f4f067 (same counts at this branch; the lane's own run decides): test-board-held.sh 8 FAILED, test-monitoring-prd.sh 29 FAILED, test-operate.sh 14 FAILED (and a timeout), test-session-workers.sh 30 FAILED, test-workers.sh one failure ("pid: unbound variable"), test-defects-a.py ("no case", it needs a case argument), test-who-merges.py (mailbox.py starts merge.py). Without the one-line trusting file, board-held failed 14 and monitoring-prd 32 on this branch.
 
 Checks at the build head: docs.py check --own DOCS OK (16 pages; Tests re-rendered, six pages restamped); private-name scan clean; test-new-binds.py and test-pods.sh pass. No lane had run when these notes were written.
