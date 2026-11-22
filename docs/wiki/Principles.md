@@ -2,7 +2,7 @@
 <!-- workflow-docs guide -->
 # Principles
 
-Six principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. Each table has one row per consolidated requirement: a summary that names the requirements it absorbs, what it follows (a specific tool, standard or production system and its tag), its feature, its adoption score and its confidence, and a link to its own flow diagram inside the requirement cell. The README and Home show the same eight, then every requirement with its complete text by topic and feature.
+Eight principles sit above the features. Health gives one verdict for each, red when any of its groups fails, and each is made true by the requirements it names. Each table has one row per consolidated requirement: a summary that names the requirements it absorbs, what it follows (a specific tool, standard or production system and its tag), its feature, its adoption score and its confidence, and a link to its own flow diagram inside the requirement cell. The README and Home show the same eight, then every requirement with its complete text by topic and feature.
 
 ![How principles, health and features fit](principles-overview.svg)
 
