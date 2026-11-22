@@ -15,7 +15,7 @@ PIN_OLD, PIN_NEW = "cd66455a83be4a0b", "c952ee382c4153f8"
 MILE = "https://github.com/Charlie-org146/agent-workflow-template/milestone/34"
 META_MILE = "Milestone: [v1.1.0 dry run](%s)" % MILE
 FAST = "Principle 3, Fast · Topic: Delivery"
-UNITS = {  # id: (page, topic, pinned h2 start, metadata lines before the first heading)
+UNITS = {  # id: (page, pinned h2 start, metadata lines before the first heading)
     "DEL-17": ("docs/wiki/Delivery.md", "DEL-17 (revised)", [FAST]),
     "DEL-19": ("docs/wiki/Delivery.md", "DEL-19 (revised again", ["Principle 1, Guided · Topic: Delivery · Release: v1.1.0", META_MILE]),
     "DEL-22": ("docs/wiki/Delivery.md", "DEL-22 ·", [FAST, META_MILE]),
@@ -108,7 +108,8 @@ def main(old_html, new_html, marked):
         print(("PASS: " if ok else "FAIL: ") + text)
         bad += not ok
 
-    cases = [(k, v, unit(old, v[1], v[2])) for k, v in OLD_UNITS.items()] + [(k, v, u) for (k, v), u in zip(UNITS.items(), units(new_html).values())]
+    parsed = units(new_html)
+    cases = [(k, v, unit(old, v[1], v[2])) for k, v in OLD_UNITS.items()] + [(k, v, parsed[k]) for k, v in UNITS.items()]
     for fid, (path, _, _), (title, want, _) in cases:
         lines = open(path, encoding="utf-8").read().split("\n")
         at = [i for i, l in enumerate(lines) if (m := LINE.match(l)) and m[1] == fid]
@@ -122,12 +123,14 @@ def main(old_html, new_html, marked):
             subs.append(l[4:])
         say(LINE.match(lines[at[0]])[2] == title, "%s title equals the pinned title" % fid)
         say(subs == want, "%s: its %d sub-bullets equal the pinned page's, line by line" % (fid, len(want)))
-        say("**Reviewed " in lines[at[0]] if (marked or fid in OLD_UNITS) else True, "%s is marked Reviewed (required: %s)" % (fid, bool(marked or fid in OLD_UNITS)))
+        need = bool(marked or fid in OLD_UNITS)
+        say(not need or "**Reviewed " in lines[at[0]], "%s is marked Reviewed (required: %s)" % (fid, need))
         svg = open("docs/wiki/flows/%s.svg" % fid, encoding="utf-8").read()
         say("<title>%s %s</title>" % (fid, title.replace("'", "&#x27;")) in svg, "%s: its flow figure is titled with its own ID and title" % fid)
     say(not any("Tokens" in l for l in open("docs/wiki/Delivery.md", encoding="utf-8").read().split("- DEL-17:")[1].split("\n- DEL-")[0].split("\n")), "DEL-17 holds no Tokens line (the pin has none)")
     # the principle sentences: the list health reads, and README, Home and the Principles page
     sent = sentences(new_html)
+    say(sorted(sent) == [3, 4, 5], "the pin yields the sentences of principles 3, 4 and 5")
     book = open("skills/workflow-health/references/commands.md", encoding="utf-8").read()
     for n, s in sent.items():
         row = re.search(r"^\| %d \| [^|]* \| ([^|]*) \|" % n, book, re.M)
@@ -135,7 +138,7 @@ def main(old_html, new_html, marked):
         for page in ("README.md", "docs/wiki/Home.md", "docs/wiki/Principles.md"):
             say(s in open(page, encoding="utf-8").read().split("\n"), "principle %d: %s carries the pinned sentence" % (n, page))
     # the control: two emitted units against hand-read pin text, so the parser's own reading is checked
-    u = units(new_html)
+    u = parsed
     say(u["DEL-19"][2][1][1].replace("**", "").startswith("Every goal runs one list of steps: freeze, plan, build, quick checks, tests, merge, after the merge, release."), "control: DEL-19.2 reads as the pin does")
     say(u["DEL-26"][2][4][1].replace("**", "").startswith("Nothing private goes to GitHub: no private-name list and no secrets; CI uses the empty list."), "control: DEL-26.5 reads as the pin does")
     # the brief: the pinned section, one name swapped, first line frozen
