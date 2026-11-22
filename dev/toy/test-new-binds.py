@@ -174,7 +174,7 @@ if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bou
     os.makedirs(tree)
     json.dump({"slug": "g", "status": "running", "session": {"id": "w1"}, "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
     claude = os.path.join(repo, ".claude.json")
-    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo)
+    env = {k: v for k, v in dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo).items() if k != "CLAUDE_CONFIG_DIR"}
 
     def selfcheck():
         done = subprocess.run([sys.executable, os.path.join(scripts, "unattended.py"), "selfcheck"], cwd=repo, capture_output=True, text=True, env=env)
@@ -274,7 +274,7 @@ print(json.dumps(out))
     homes.append(posix_root)
     for folder in (os.path.join(posix_root, "wt"), posix_root + "2", posix_root + bs, os.path.dirname(posix_root)):
         plan.append((home(trust(posix_root)), folder, False))
-    done = subprocess.run([sys.executable, "-I", "-c", CHILD, scripts, OLD, json.dumps([{"home": h, "folder": f, "win": w} for h, f, w in plan])], capture_output=True, text=True)
+    done = subprocess.run([sys.executable, "-I", "-c", CHILD, scripts, OLD, json.dumps([{"home": h, "folder": f, "win": w} for h, f, w in plan])], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k != "CLAUDE_CONFIG_DIR"})
     try:
         got = json.loads(done.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):

@@ -56,3 +56,9 @@ Checked against origin/main (977f4f067): `operate.untrusted` is at operate.py li
 
 ### Red-team round 2, B4 decided by operation
 CLAUDE_CONFIG_DIR is dropped: the reader looks only at the home folder's trust file. The refusal keeps its opening "ask the owner to trust FOLDER (FOLDER_TRUST)" so the existing toy asserts still match, then says to open the folder once in Claude Code and names the trust file. The docs sentence and the PR notes say a machine that sets CLAUDE_CONFIG_DIR is refused.
+
+## Shipped behaviour (after TD884, supersedes the text above where they differ)
+
+- The reader stayed in `operate.py` (not `machines.py`): `untrusted()` there is 20,472 bytes, 8 under the 20,480 line; there is no retry, so a trust file caught mid-write refuses once (fail closed; follow-up #5751).
+- `CLAUDE_CONFIG_DIR` is read: the trust file is `$CLAUDE_CONFIG_DIR/.claude.json` when that variable is set, else `~/.claude.json` (top's TD884). A worker controls its own environment, so a worker that points the variable at a file it wrote can steer the check: the same same-user boundary as its own HOME. The refusal names the file it read.
+- Callers: `sessions.py` bind and assign (via `worker.py` cmd_bind) refuse; `board_log.py` selfcheck reports `MISSING folder trust`. `worker.py` has no start command.

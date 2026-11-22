@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do case "$1" in --dir) T=$2; shift 2;; *) cases+=("$1"); shi
 T=${T:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"; [ -n "${KEEP:-}" ] || toy_on_exit 'rm -rf "$T"'
 S="$here/skills/workflow-monitoring/scripts"
 export HOME="$T/home" LOOP_BOARD_HEALTH=green PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$T/gh"; mkdir -p "$HOME"
-export USERPROFILE="$HOME"
+export USERPROFILE="$HOME"; unset CLAUDE_CONFIG_DIR  # #5741: the trust file read is $CLAUDE_CONFIG_DIR/.claude.json when set, so the fixture under $HOME needs it unset
 echo '{"projects": {"/": {"hasTrustDialogAccepted": true}}}' > "$HOME/.claude.json"  # #5741: no readable trust file trusts nothing, so bind needs one
 fails=0
 ok() { echo "PASS: $1"; }

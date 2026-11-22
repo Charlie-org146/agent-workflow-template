@@ -12,7 +12,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
 d=${1:-$(mktemp -d)}; part=${2:-all}; rm -rf "${d:?}"; mkdir -p "$d"
 export HOME="$d/home"; mkdir -p "$HOME"
-export USERPROFILE="$HOME"
+export USERPROFILE="$HOME"; unset CLAUDE_CONFIG_DIR  # #5741: the trust file read is $CLAUDE_CONFIG_DIR/.claude.json when set, so the fixture under $HOME needs it unset
 echo '{"projects": {"/": {"hasTrustDialogAccepted": true}}}' > "$HOME/.claude.json"  # #5741: no readable trust file trusts nothing, so bind needs one
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
 D="$here/skills/workflow-delivery/scripts"; S="$here/skills/workflow-monitoring/scripts"

@@ -26,3 +26,9 @@ The refusal keeps today's opening ("ask the owner to trust FOLDER (FOLDER_TRUST)
 
 - A machine with no ~/.claude.json at all (Claude Code never run) now cannot bind. That is the intent: nothing is trusted. Recommended: yes.
 - #5743 (case folding) and the unmerged pc-path-trust (#5722) touch the same function; merge up when it lands; the reader now lives in machines.py, so the conflict is one delegating function.
+
+## Shipped behaviour (after TD884, supersedes the text above where they differ)
+
+- The reader stayed in `operate.py` (not `machines.py`): `untrusted()` there is 20,472 bytes, 8 under the 20,480 line; there is no retry, so a trust file caught mid-write refuses once (fail closed; follow-up #5751).
+- `CLAUDE_CONFIG_DIR` is read: the trust file is `$CLAUDE_CONFIG_DIR/.claude.json` when that variable is set, else `~/.claude.json` (top's TD884). A worker controls its own environment, so a worker that points the variable at a file it wrote can steer the check: the same same-user boundary as its own HOME. The refusal names the file it read.
+- Callers: `sessions.py` bind and assign (via `worker.py` cmd_bind) refuse; `board_log.py` selfcheck reports `MISSING folder trust`. `worker.py` has no start command.

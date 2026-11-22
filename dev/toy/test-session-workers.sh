@@ -20,7 +20,7 @@ T=${1:-$(mktemp -d)}; rm -rf "${T:?}"; mkdir -p "$T"
 S="$here/skills/workflow-monitoring/scripts"
 W="python3 $S/watch.py"; SE="python3 $S/sessions.py"; LB="python3 $S/live_board.py"
 export HOME="$T/home" FAKE_AGENT="$T/fake" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME" "$FAKE_AGENT"
-export USERPROFILE="$HOME"
+export USERPROFILE="$HOME"; unset CLAUDE_CONFIG_DIR  # #5741: the trust file read is $CLAUDE_CONFIG_DIR/.claude.json when set, so the fixture under $HOME needs it unset
 echo '{"projects": {"/": {"hasTrustDialogAccepted": true}}}' > "$HOME/.claude.json"  # #5741: no readable trust file trusts nothing, so bind needs one
 fails=0
 ok() { echo "PASS: $1"; }
