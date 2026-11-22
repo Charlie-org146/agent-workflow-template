@@ -21,7 +21,7 @@ back to full depth and to top.
    `toy_on_exit 'cmd //c rmdir "C:\loop-toy-$$"'`. Removal is `rmdir` only, never `rm -rf`, which could follow the junction
    into the real fixture. If mklink fails the toy prints a FAIL naming it (never a silent skip).
 2. test-home-guard.py reg-toy case: write the path with forward slashes: bash `d=${d//\\//}` (pattern: one backslash) before printf, which inside the Python
-   single-quoted source line 73 is written with doubled backslashes so bash receives exactly `${d//\//}` (a bare `${d//\//}` would delete every slash).
+   single-quoted source line 73 is written with each backslash doubled again, so bash receives exactly that text (a pattern without the backslash would delete every slash).
 3. Control in test-docs-link.sh: a page whose PRD link holds a literal `/Users/x/prd.md` line; `docs.py check` must report the
    `LINKS ... DOC-19 ... outside this repo` text, not just any finding ("PASS: a /Users/ path in a link is still flagged (DOC-19)"). Runs on every platform.
 
