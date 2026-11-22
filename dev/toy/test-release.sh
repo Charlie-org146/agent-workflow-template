@@ -100,7 +100,7 @@ finish mincut
 nextmin=$(python3 -c "import sys;n=[int(x) for x in sys.argv[1].split('.')];print('%d.%d.0' % (n[0], n[1] + 1))" "$(cat VERSION)")
 $rel cut mincut --bump minor 2>&1 | grep -q "REFUSED BRF-3" && [ "$(cat VERSION)" != "$nextmin" ] && ok "DOC-28: a minor cut with no frozen release brief is refused" || bad "DOC-28: minor with no brief"
 mkdir -p .loop/tasks docs
-printf '# ok1\n\nFeature: ZZ-1\nPurpose: p\nKind: feature\n## Done when\n\n1. it works\n' > .loop/tasks/ok1.md; frz .loop/tasks/ok1.md
+printf '# ok1\n\n- Feature: ZZ-1\n- Kind: feature\n\n## Purpose\n\np\n\n## Done when\n\n- it works\n' > .loop/tasks/ok1.md; frz .loop/tasks/ok1.md
 printf '# v%s\n\n## Tasks\n\n1. ok1\n' "$nextmin" > docs/release-brief-$nextmin.md; frz docs/release-brief-$nextmin.md
 git add -A; git commit -qm "brief for $nextmin" >/dev/null
 $rel cut mincut --bump minor 2>&1 | grep -q "REFUSED BRF-5" && grep -q "tasks not done: ok1" <<<"$($rel cut mincut --bump minor 2>&1)" && ok "DOC-28: a minor cut with a named task not done is refused" || bad "DOC-28: minor with an open task"

@@ -99,7 +99,7 @@ with contextlib.redirect_stderr(err):
     said(GF, starts, SimpleNamespace(task="no-brief"), good)
 check("BRF-5" in err.getvalue() and "no-brief" in err.getvalue(), "DEL-23 a goal that names a task with no brief is refused when the repo keeps tasks")
 for kind, name in (("feature", "newthing"), ("fix", "bugfix")):
-    open(os.path.join(with_tasks, ".loop", "tasks", name + ".md"), "w").write("# T\n\nFeature: ZZ-1\nPurpose: p\nKind: %s\n## Done when\n\n1. x\n" % kind)
+    open(os.path.join(with_tasks, ".loop", "tasks", name + ".md"), "w").write("# T\n\n- Feature: ZZ-1\n- Kind: %s\n\n## Purpose\n\np\n\n## Done when\n\n- x\n" % kind)
 os.makedirs(os.path.join(with_tasks, "docs", "wiki"))
 open(os.path.join(with_tasks, "docs", "wiki", "P.md"), "w").write("- ZZ-1: **Unreviewed** a feature\n")
 import hashlib  # noqa: E402

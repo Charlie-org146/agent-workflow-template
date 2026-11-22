@@ -398,7 +398,8 @@ def brief_file(name, text, kind="task"):
 
 
 def task_text(extra=""):
-    return "# T\n\nFeature: DEL-23\nPurpose: it works\n%s\n## Done when\n\n1. it works\n2. it is tested\n" % extra
+    """A task brief in main's DEL-23 format: bullets, ## Purpose and ## Done when bullets."""
+    return "# T\n\n- Feature: DEL-23\n%s\n## Purpose\n\nit works\n\n## Done when\n\n- it works\n- it is tested\n" % "".join("- %s\n" % x for x in extra.split("\n") if x)
 
 
 L = lambda fn, leg: leg
@@ -443,6 +444,36 @@ check("DEL-23 a task whose goals merged and lines are met is done", said(brief.f
 check("DEL-23 a task that names a finished one can now start", said(brief.can_start, "beta") == "", "", "del23")
 brief_file("delta", task_text("Replaces: gamma"))
 check("DEL-23 a task that replaces another marks it replaced", "task gamma: replaced" in "\n".join(brief.lines(bt)), "", "del23")
+
+# one fixture, read by main's board and by the freeze check (DEL-23, TD1060)
+spec_b = importlib.util.spec_from_file_location("board_tasks", os.path.join(root, "skills", "workflow-monitoring", "scripts", "board_tasks.py"))
+sys.path.insert(0, os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+board_tasks = importlib.util.module_from_spec(spec_b)
+spec_b.loader.exec_module(board_tasks)
+SHARED = "# The shared task\n\n- Feature: DEL-23\n- Release: v1.2.0\n- Goals: \n- Needs: \n- Replaced by: \n- Source: the owner's words, o11\n- Kind: feature\n\n## Purpose\n\nit works\n\n## Done when\n\n- it works\n- it is tested\n"
+brief_file("shared", SHARED)
+record("o11", "shared")
+brief.freeze(bt, "task", "shared", "o11")
+row = next((r for r in board_tasks.task_rows(bt) if r["slug"] == "shared"), {})
+check("DEL-23 the board's task list reads the shared brief as complete", row.get("note") == "" and row.get("name") == "The shared task", str(row), "del23")
+check("DEL-23 the freeze check reads the same brief and starts it", said(brief.can_start, "shared") == "" and brief.field(brief.read(brief.path_of(bt, "task", "shared")), "Feature") == "DEL-23", "", "del23")
+# a brief frozen by its Source: the source file holds the section word for word
+os.makedirs(os.path.join(bt, ".loop", "sources"), exist_ok=True)
+SRC = "# The source\n\n## Purpose\n\nit works\n\n## Done when\n\n- it works\n- it is tested\n"
+srcpath = os.path.join(bt, ".loop", "sources", "frozen-source-x.md")
+open(srcpath, "w").write(SRC)
+import hashlib
+sha = hashlib.sha256(SRC.encode()).hexdigest()[:16]
+SRCB = "# By source\n\n- Feature: DEL-23\n- Release: v1.2.0\n- Source: frozen-source-x (sha256 %s), owner o12\n\n## Purpose\n\nit works\n\n## Done when\n\n- it works\n- it is tested\n" % sha
+spath = brief_file("bysource", SRCB)
+check("DEL-23 a brief whose Source is a verified owner-frozen source counts as frozen", said(brief.can_start, "bysource") == "" and "task bysource: queued" in "\n".join(brief.lines(bt)), "", "del23")
+open(spath, "w").write(SRCB.replace("it works\n\n## Done", "it work\n\n## Done", 1))
+check("DEL-23 one changed word in a Source-frozen brief fails the check and the start", "BRF-4" in said(lambda r: brief.check(r)) and "BRF-4" in said(brief.can_start, "bysource"), "", "del23")
+open(spath, "w").write(SRCB)
+open(srcpath, "w").write(SRC.replace("it works", "it works well", 1))
+check("DEL-23 a changed source file fails the Source-frozen brief", "BRF-4" in said(brief.can_start, "bysource"), "", "del23")
+os.remove(srcpath)
+check("DEL-23 a Source with no file in the repo is frozen but reported as unverified", said(brief.can_start, "bysource") == "", "", "del23")
 
 # the command line: freeze, check, tasks and finish through brief.py itself
 BRIEF = [sys.executable, os.path.join(root, "skills", "workflow-release", "scripts", "brief.py")]

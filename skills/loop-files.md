@@ -488,23 +488,27 @@ rc tag until the tag exists `merge.py` refuses any goal naming no gate failure (
 
 ## Tasks and release briefs (DEL-23, DOC-28)
 
-A task brief is `.loop/tasks/<name>.md`: `Feature:`, `Purpose:`, optional `Needs:` (task names that must be done first),
-`Replaces:` and `Kind: feature|fix`, then `## Done when` numbered lines. A release brief is `docs/release-brief-<version>.md`:
-`## Tasks` numbered with task names in order, `About:` and `Done:`. `brief.py freeze task|release NAME --owner-record ID`
-appends one last line, `Frozen: <sha256 of everything above> <record id> <date>`, only when that owner-words record names
-exactly NAME and its source is the owner; one changed word makes `brief.py check` fail. `brief.py tasks` prints the one list
+A task brief is `.loop/tasks/<name>.md` in one format, the one the board reads: a title line, the bullets `- Feature:`, `- Release:`,
+`- Goals:`, `- Needs:` (task names that must be done first), `- Replaced by:` and `- Source:`, then `## Purpose` and `## Done when`
+with one bullet per line; `- Kind: feature|fix` (a patch Release is a fix) and `- Replaces:` are optional. A release brief is
+`docs/release-brief-<version>.md`: `## Tasks` numbered with task names in order, `About:` and `Done:`. A brief is frozen in one of
+two ways. `brief.py freeze task|release NAME --owner-record ID` appends one last line, `Frozen: <sha256 of everything above>
+<record id> <date>`, only when that owner-words record names exactly NAME and its source is the owner. Or its `- Source: NAME
+(sha256 HEX), owner oN` names an owner-frozen source: the file `.loop/sources/NAME.*` must have that sha, and the brief's `## Purpose`
+and `## Done when` text must appear in it word for word; with no such file the brief counts as frozen and `brief.py check` says
+it is not verified here. One changed word makes `brief.py check` and a start fail (BRF-4). `brief.py tasks` prints the one list
 (name, state queued, running, waiting, done or replaced, goals, ETA); `brief.py finish NAME --met 1,2` marks a task done once every
 goal is merged and every done-when line is met (a row in `.loop/tasks.tsv`). A cut appends `## Results` to the release brief,
-once. Example: write `.loop/tasks/migrate.md` with `Feature: DEL-23`, `Purpose: move the pages`, `## Done when` and `1. every page
-passes`; ask the owner to type "Freeze migrate? Recommended: yes"; the operation session records it; then `brief.py freeze task
-migrate --owner-record ID`.
+once. Example: write `.loop/tasks/migrate.md` with `- Feature: DEL-23`, `## Purpose`, `move the pages`, `## Done when` and
+`- every page passes`; ask the owner to type "Freeze migrate? Recommended: yes"; the operation session records it; then
+`brief.py freeze task migrate --owner-record ID`.
 
 | Code | Refusal | Fix |
 |---|---|---|
 | BRF-1 | a name that is not lowercase letters, digits and dashes (a version for a release) | rename it |
 | BRF-2 | no owner record naming exactly that ID | the owner types one decision; a lane stops with status waiting and never retries |
 | BRF-3 | a brief is missing, or not frozen | write it, then freeze it |
-| BRF-4 | a frozen brief changed | restore the words, or freeze a new task with `Replaces: NAME` |
+| BRF-4 | a frozen brief changed | restore the words, or freeze a new task with `- Replaces: NAME` |
 | BRF-5 | a task is not startable (no brief, or a `Needs:` task not done) or not done (goals unmerged, done-when lines unmet) | finish what it names |
 | BRF-6 | a feature task named by no frozen release brief; a patch that would ship a feature task; a major with a known-red row | name it in a frozen brief; fix the row (there is no waiver) |
 | BRF-7 | a private value (an email address, the home folder, a name on the private list) in a brief or its result | remove it |

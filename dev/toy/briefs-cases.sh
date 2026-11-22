@@ -10,8 +10,8 @@ BRIEF="python3 $here/skills/workflow-release/scripts/brief.py"
 if want briefs; then
   echo "== DOC-28: tasks and release briefs through merge.py and the automatic release"
   git switch -q main; git pull -q origin main; mkdir -p .loop/tasks docs
-  printf '# feat\n\nFeature: ZZ-1\nPurpose: p\nKind: feature\n## Done when\n\n1. it works\n' > .loop/tasks/feat.md; frz .loop/tasks/feat.md
-  printf '# fixt\n\nFeature: ZZ-1\nPurpose: p\nKind: fix\n## Done when\n\n1. it works\n' > .loop/tasks/fixt.md; frz .loop/tasks/fixt.md
+  printf '# feat\n\n- Feature: ZZ-1\n- Kind: feature\n\n## Purpose\n\np\n\n## Done when\n\n- it works\n' > .loop/tasks/feat.md; frz .loop/tasks/feat.md
+  printf '# fixt\n\n- Feature: ZZ-1\n- Kind: fix\n\n## Purpose\n\np\n\n## Done when\n\n- it works\n' > .loop/tasks/fixt.md; frz .loop/tasks/fixt.md
   sed 's/fixt/t/' .loop/tasks/fixt.md | sed '$d' > .loop/tasks/t.md; frz .loop/tasks/t.md
   git add -A; git commit -qm "tasks feat and fixt"; git push -q origin main
   TASK=feat finish ft1; v=$(remote_file VERSION)
