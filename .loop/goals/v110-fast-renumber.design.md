@@ -15,5 +15,6 @@ No sentence, feature text, mark, retirement or DEL-22 (part 1b, v110-fast-text-2
 Done line 2 (health not red) cannot hold with an empty Cheap principle: measured in a scratch clone of main, `PRINCIPLE 4 Cheap: RED (none)`, `FAIL requirements principle 4 principle-map: principle 4 has no Reviewed requirement`, and `FORMAT README/Home/Principles ... (got 0 rows)` from docs.py check. The goal waits for the owner's answer on which feature goes under 4 Cheap (operation TD791 iii). Planning and the gate run now; no build.
 
 ## Open
-- The principles list is `skills/workflow-health/references/commands.md`; the goal's Touches name `skills/workflow-delivery/references/commands.md`, which holds no principle text (grep). Operation is asked which is meant; if health's is not added, the build stops at the list.
+- The principles list is `skills/workflow-health/references/commands.md`; it is in Touches (operation, TD793). The delivery commands.md named in the first Touches holds no principle text.
 - TD793: no page lists DEL-19.2's eight step names on main; every page carries the old list (README.md:11,31,134; docs/wiki/Home.md:8,28,131; Principles.md:18; Delivery.md:39 Reviewed, :240 history). Reported, not reworded.
+- DEL-28 (o750, o756): its source is missing on the page; reported for the owner (DEL-21), not invented.
