@@ -5,6 +5,7 @@
 one really stale page it restamps that page once, and a second run makes no commit. The negative control runs the same
 check against a copy with each fix undone (an empty stale set restamping every page; a failed check restamping on) and the check must fail.
 usage: test-restamp-idempotent.py"""
+import atexit
 import os
 import shutil
 import subprocess
@@ -26,7 +27,12 @@ def check(name, ok):
     fails += 0 if ok else 1
 
 
-ENV = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")  # no global signing, hooks or identity reach the fixture
+# No GIT_* variable from the caller (a hook's GIT_DIR, GIT_INDEX_FILE, GIT_CONFIG_PARAMETERS) may steer the fixture's git
+# into the caller's checkout; no global signing, hooks or identity reach it either.
+ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+ENV.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+REPOS = []
+atexit.register(lambda: [shutil.rmtree(path, ignore_errors=True) for path in REPOS])
 
 
 def git(repo, *args):
@@ -49,6 +55,7 @@ def page(name, body_text):
 
 def build():
     repo = tempfile.mkdtemp(prefix="restamp-idem-")
+    REPOS.append(repo)
     git(repo, "init", "-q", "-b", "main")
     for key, value in (("user.name", "t"), ("user.email", "t@t"), ("commit.gpgsign", "false"), ("core.hooksPath", os.devnull), ("core.autocrlf", "false")):
         git(repo, "config", key, value)
@@ -85,7 +92,7 @@ def kept(repo):
 
 
 def run(folder):
-    """Both done lines against the audit.py in folder; returns the outcomes."""
+    """Two scenarios (nothing stale; one real change) against the scripts in folder; returns both outcomes."""
     repo = build()
     s0 = snap(repo)
     one = restamp(repo, folder)
