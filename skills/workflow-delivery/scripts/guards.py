@@ -26,6 +26,11 @@ TOUCHES_PATH, WAITING_OWNER, ANSWER_STATUS = "TOUCHES_PATH", "WAITING_OWNER", "A
 REFUSALS, FINDING_LOCAL = "refused records in a row", "FINDING_LOCAL"
 
 
+def says_bump(goal):
+    found = re.search(r"\b(minor|major)\b", goal or "", re.I)
+    return found.group(1).lower() if found else ""
+
+
 def read(path):
     with open(path) as handle:
         return handle.read()

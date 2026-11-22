@@ -20,6 +20,30 @@ MARK = r"(?:\*\*|\()(Un)?[Rr]eviewed(?:\s+(\d{4}-\d\d-\d\d))?(?:\*\*|\))"
 KIND = re.compile(r"^(Functional|Non-?functional)\s*:?\s*", re.I)
 
 
+def topics_of(root):
+    """The `topics` setting as {topic: [pages]}, or {} when none (Home then has no Topic column)."""
+    import counting
+    topics = counting.config_of(root).get("topics")
+    return {str(k): [str(x) for x in v] for k, v in topics.items() if isinstance(v, list)} if isinstance(topics, dict) else {}
+
+
+def put(path, source, have, base):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
+    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("".join("%s\t%s\n" % item for item in base.items()))
+
+
+def subs(lines, number):
+    out = []
+    for line in lines[number + 1:]:
+        if not line.strip() or not line[:1].isspace():
+            break
+        out.append(line.rstrip())
+    return out
+
+
 def path_of(root, page):
     return os.path.join(root, ".loop", "prd", page + ".md")
 

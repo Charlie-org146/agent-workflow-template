@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, queue, PR body."""
+"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, set, queue, the PR body, owed."""
 import importlib.util
 import json
 import os
@@ -17,13 +17,13 @@ SMALL_DONE = 3
 
 
 def deadline(held):
-    import lanekit  # lazy: skills load fit.py by path
+    import lanekit  # lazy: other skills load fit.py by path, where lanekit is not importable
     if "markers" not in held:
         return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
     began = lanekit.mtime(held["rc"] + ".started")
     if began:
         return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
-    if held.get("prep_by"):  # preparation budget first
+    if held.get("prep_by"):  # before the first row the preparation budget rules
         return held["prep_by"], "past its preparation budget"
     at = held["started"]
     if os.path.exists(held["rc"] + ".queued"):
@@ -201,11 +201,6 @@ def again(state, step):
     return cleared
 
 
-def says_bump(goal):
-    found = re.search(r"\b(minor|major)\b", goal or "", re.I)
-    return found.group(1).lower() if found else ""
-
-
 SET_AFTER_RECORD = "SET_AFTER_RECORD"
 
 
@@ -237,7 +232,7 @@ def cmd_set(g, args):
         if any(was[k] and (not held[k] or held[k] > was[k]) for k in was):
             held["record"] = monitor("auto", True).eta_record(g, args.owner_record, args.slug, "raising a budget")
         elif (view(state, runs).get("budget") or {}).get("record"):
-            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps its raising record
+            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps the record that raised it: used once
         guards.add_set(runs, args.slug, "budget", held, "set budget %dm, %d tokens: %s" % (held["minutes"], held["tokens"], why))
     if args.eta_extend or args.eta_choice:
         args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
@@ -311,9 +306,11 @@ def frozen_fields(g, args, lines, touches):
     bad = [t for t in touches if surface(t) is None]
     if bad:
         g.no("%s isn't a GitHub surface. Fix: one of github:%s" % (", ".join(bad), ", github:".join(SURFACES)))
-    if says_bump(args.goal):
+    import guards
+    bump = guards.says_bump(args.goal)
+    if bump:
         print("WARN: the goal text says %s; the operation records it with goal.py set %s --bump %s --why ..." % (
-            says_bump(args.goal), args.slug, says_bump(args.goal)))
+            bump, args.slug, bump))
     held = budget_of(g.config())
     return {"size": size_of(lines, touches, g.root()), "budget": held, "task": getattr(args, "task", ""),
             "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"], g.config()),

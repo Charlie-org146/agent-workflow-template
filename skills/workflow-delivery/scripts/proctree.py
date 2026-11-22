@@ -7,7 +7,8 @@ start time (a reused pid reads differently), and proctree.alive(pid) on Windows.
 POSIX: kill is os.killpg, so the child's whole session goes; pstart is ps. Windows has no process group a signal
 reaches (and os.kill(pid, 0) there sends Ctrl+C, os.getuid and ps do not exist), so kill runs taskkill /T /F, which stops
 the child and every process it started, and alive and pstart ask the process itself. Either kill is quiet when gone.
-Also here (one identical copy per skill): alive_since, tmp_for, rm_tmp, FLOW, TEMPLATE, flow_set, outcap and Capped.
+Also here (one identical copy per skill): alive_since, tmp_for and rm_tmp (lane.py), FLOW, TEMPLATE and flow_set (goal.py),
+and outcap, outcap_free and Capped (the 2,000-character output cap goal.py, flow.py and sessions.py install, GRD-15).
 Tokens measured from a session's own transcript (DEL-16): transcript, calls, measure, add (a step's tokens into a run record), live,
 fresh (input + cache writes + output, the budget's unit) and total (adds cache reads). A transcript is <projects>/<folder>/<session id>.jsonl
 (the id is CLAUDE_CODE_SESSION_ID; LOOP_TRANSCRIPT_DIR replaces ~/.claude/projects); a call spanning lines counts once by message.id,

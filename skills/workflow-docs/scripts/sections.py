@@ -1,4 +1,9 @@
-"""DOC-25: each page kind has its fixed ## headings in order (KINDS); README and Home match. DOC-27: new-form features."""
+"""DOC-25: each page kind has its fixed ## headings in order; README and Home match.
+
+KINDS maps a page kind to one regex per heading, each matching a whole heading. A "?" prefix makes a heading optional,
+a "+" prefix one or more. A page kind with a heading missing, extra, renamed or out of order fails the docs check;
+README and Home share the "front" row. DOC-27: a feature in the new form is checked by feature().
+"""
 import os
 import re
 import sys
@@ -68,7 +73,7 @@ def same(readme, home):
 
 
 def targets(root, folder, read, block_re, both):
-    """DOC-15:"""
+    """DOC-15: each generated block lives on its How-to-use page, under the page's own section, once it carries the markers."""
     out = []
     for name, block in both:
         rel = os.path.join(folder, "How-to-use-%s.md" % ("Setup" if name == "settings" else "Automation"))
@@ -88,7 +93,7 @@ TAGS = "adopted|adapted|planned|own"
 
 
 def bullets(cell):
-    """DEL-21:"""
+    """DEL-21: a Follows cell as "- source: tag" lines joined by <br>; an old "a; b: adapted" cell is migrated (an untagged source takes the tag to its right)."""
     if cell.lstrip().startswith("- "):
         return cell.strip()
     parts, tag, out = [p.strip() for p in re.split(r";\s+(?![^()]*\))", cell.strip()) if p.strip()], "", []
@@ -100,18 +105,18 @@ def bullets(cell):
 
 
 def follows(cell):
-    """The (source, tag) lines of a bullet Follows cell;"""
+    """The (source, tag) lines of a bullet Follows cell; tag is "" when a line has none."""
     return [(re.sub(r"[:] (%s)$" % TAGS, "", x[2:]), (re.search(r"[:] (%s)$" % TAGS, x) or [0, ""])[1]) for x in cell.split("<br>") if x.startswith("- ")]
 
 
 def adoption(cell):
-    """The share of a row's Follows lines tagged adopted (adapted, planned and own count 0);"""
+    """The share of a row's Follows lines tagged adopted (adapted, planned and own count 0); None with no lines."""
     tags = [t for _, t in follows(cell)]
     return round(100 * tags.count("adopted") / len(tags)) if tags else None
 
 
 def latest_full(slug, ids):
-    """DEL-21:"""
+    """DEL-21: {test id: state} of the latest finished regression run on main whose results cover most tests (a full run, not a row or lane run), read from its results-* artifacts with gh; None when none can be read."""
     import json, subprocess, tempfile
     got = subprocess.run(["gh", "run", "list", "-R", slug, "--workflow", "regression", "--branch", "main", "--limit", "12", "--json", "databaseId,conclusion"], capture_output=True, text=True)
     for run in (json.loads(got.stdout) if got.returncode == 0 and got.stdout.strip() else []):
@@ -127,7 +132,7 @@ def latest_full(slug, ids):
 
 
 def confidence(row, tests, runs):
-    """DEL-21:"""
+    """DEL-21: the share of the requirement's tests (rows of .loop/regression.tsv naming it or an ID it absorbs) that PASS on the latest run; not measured with none."""
     ids = re.findall(r"\b[A-Z]{2,5}-\d+\b", (re.match(r"\[([^\]]*)\]", row) or [0, ""])[1])
     ran = [runs.get(t[0]) for t in tests if len(t) > 3 and t[3] in ids]
     ran = [r for r in ran if r in ("PASS", "FAIL")]
@@ -135,7 +140,7 @@ def confidence(row, tests, runs):
 
 
 def tables(text, tests=(), runs=None, keep=False):
-    """DOC-25, DEL-21:"""
+    """DOC-25, DEL-21: each principle table in the new columns; Follows as a tagged bullet list, Adoption computed from it, Confidence from the tests (keep: an existing figure is kept), one score line under it."""
     lines, out, i = text.split("\n"), [], 0
     while i < len(lines):
         head = [c.strip() for c in SPLIT.split(lines[i].strip()[1:-1])] if lines[i].startswith("| Requirement | Summary") else []
@@ -161,18 +166,18 @@ def tables(text, tests=(), runs=None, keep=False):
 
 
 def what(page):
-    """The What this is section, written from DEL-19's text on the Delivery page;"""
+    """The What this is section, written from DEL-19's text on the Delivery page; None when the page has no DEL-19."""
     found = re.search(r"^- DEL-19: .*\n((?:  - .*\n?)*)", page or "", re.M)
     return found and "## What this is\n\n" + " ".join(re.sub(r"\s*\[[A-Z]{3}-\d+\]$", "", b[4:]) for b in found[1].splitlines()) + "\n"
 
 
 def relink(text, slug):
-    """Links to this repository's own pages and files name its owner now, whoever owned it"""
+    """Links to this repository's own pages and files name its owner now, whoever owned it when the page was written."""
     return re.sub(r"https://github\.com/[\w.-]+/%s/" % re.escape(slug.split("/")[1]), "https://github.com/%s/" % slug, text) if slug.count("/") == 1 else text
 
 
 def fresh(text, folder, read, slug="", keep=False):
-    """README, Home or Principles with its generated parts current (What this is:"""
+    """README, Home or Principles with its generated parts current (What this is: only its first paragraph; later ones are the owner's); text with no System design section is left alone."""
     tests = [x.split("\t") for x in (read(os.path.join(os.path.dirname(os.path.dirname(folder)), ".loop", "regression.tsv")) or "").splitlines()[1:]]
     runs = None if keep or slug.count("/") != 1 else latest_full(slug, [t[0] for t in tests])
     text = relink(tables(text, tests, runs or {}, keep or runs is None), slug)
@@ -185,7 +190,7 @@ def fresh(text, folder, read, slug="", keep=False):
 
 
 def pages(root, folder, listed):
-    """The front pages whose generated parts (tables, What this is) the render keeps, if not"""
+    """The front pages whose generated parts (tables, What this is) the render keeps, if not listed already."""
     have = [rel for rel, _ in listed]
     return [(rel, []) for rel in ("README.md", folder + "/Home.md", folder + "/Principles.md") if rel not in have and os.path.exists(os.path.join(root, rel))]
 
@@ -330,7 +335,7 @@ def stale(page, text):
 
 
 def run(folder, readme, home, names):
-    """DOC-25 findings by page kind"""
+    """DOC-25 findings for the README, Home and every wiki page, by the page's kind."""
     out = [("FORMAT", "%s:%d" % (n, i), "Sections: DOC-25 the principle tables have the columns %s (no Version, no Flow). Fix: run /workflow-docs render" % " | ".join(NEW))
            for n, t in (("README", readme), ("Home", home), ("Principles", _read(os.path.join(folder, "Principles.md")) if os.path.exists(os.path.join(folder, "Principles.md")) else ""))
            for i, x in enumerate(t.splitlines(), 1) if x.startswith("| Requirement | Summary") and "| Version | Flow |" in x]

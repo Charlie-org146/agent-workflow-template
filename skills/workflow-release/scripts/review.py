@@ -7,7 +7,8 @@ usage: review.py record SLUG
        review.py revert vX
 
 With "review_hold": true, merge.py merges only a head the operation session ran record on (else REVIEW_HOLD).
---suite-from RUN takes REL-3's suite from a completed run on the gate ref (every shard, nothing UNRUN); its id goes in loop/gate/vX.json.
+--suite-from RUN takes REL-3's suite from a completed regression run on the gate ref with every shard reported, nothing UNRUN
+and every row logged; else "suite run does not cover the candidate". The run id goes in loop/gate/vX.json.
 """
 import glob
 import importlib

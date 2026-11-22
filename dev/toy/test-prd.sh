@@ -321,7 +321,7 @@ $prd convert --write | grep -q "^Delivery skipped$" && ok "converting twice chan
 $cri render >/dev/null; out=$(check)
 grep -q "^UNWRITTEN Delivery" <<<"$out" && ! grep -q "^SECTIONS" <<<"$out" && ok "a converted page is UNWRITTEN until its placeholder drafts are replaced" || bad "convert unwritten: $out"
 sed -i.bak 's/^- Write this page from what is really in the repo\./- A real draft line./' $P; rm $P.bak
-! check | grep -vE "^(FORMAT|HOWTO)" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
+! check | grep -vE "^(FORMAT|HOWTO|NOTE)" | grep -q . && ok "with real drafts the converted page passes all but the format checks, which want a rewrite" || bad "drafted: $(check)"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Criteria\n\n%s\n\n## Non-goals\n\n- None.\n\n## Tests\n\n' "$REQS" > $P
 $prd convert --write | grep -q "^Delivery completed$" && grep -q "^## Requirements$" $P && grep -q "^## Success metrics$" $P && [ "$(grep -c '^Review:' $P)" = 1 ] && ok "a half-converted page is completed" || bad "completed"
 printf '<!-- workflow-docs -->\n# Delivery\n\nReview: **Unreviewed**\n\nHow to use: [How-to-use-Delivery](How-to-use-Delivery)\n\n## Problem\n\nHalf done.\n\n## Requirements\n\n%s\n\n## Success metrics\n\n- m\n\n## Tests\n\n' "$REQS" > $P

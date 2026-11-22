@@ -86,7 +86,7 @@ def deployments(page, name, lines, page_cols=PAGE_COLS, delivery_cols=DELIVERY_C
     return out
 
 
-# The page rules of criteria.py (imported back).
+# The page rules of criteria.py, moved here unchanged; criteria.py imports them back.
 CRITERIA_MAX_DEFAULT = 10
 SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")
 
@@ -245,8 +245,9 @@ def criteria_max(root):
     return value
 
 
-# --- owner words (criteria.py review|unreview --owner-record ID): written by the operation session, never a worker; once per command
-# (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record counts for unreview only.
+# --- the owner's recorded words (criteria.py review|unreview --owner-record ID), written by the operation session, never a worker:
+# it counts for its IDs or pages once per command (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record (MON-11,
+# o118) counts for any page, any number of times, for unreview only (never for a review).
 
 def safety(text):
     """The safety class (auto.CLASSES, read from workflow-monitoring, never copied) the text falls in; 'unreadable' when it can't be read."""
@@ -303,7 +304,7 @@ def link_of(text, listed=""):
     return found if found is None or found.startswith(("url:", "mcp:")) else "url:" + found
 
 
-from prdcopy import link_page  # noqa: E402,F401
+from prdcopy import link_page, topics_of  # noqa: E402,F401  (moved: the docs check of a page that has a source reads its copy)
 
 
 UNREAD = set()  # link-form pages unread in this run
@@ -312,13 +313,6 @@ UNREAD = set()  # link-form pages unread in this run
 def linked(root, page, text):
     import counting
     return link_of(text, counting.sources(root).get(page, ""))
-
-
-def topics_of(root):
-    """The `topics` setting as {topic: [pages]}, or {} when none (Home then has no Topic column)."""
-    import counting
-    topics = counting.config_of(root).get("topics")
-    return {str(k): [str(x) for x in v] for k, v in topics.items() if isinstance(v, list)} if isinstance(topics, dict) else {}
 
 
 def regroup(text, topics):

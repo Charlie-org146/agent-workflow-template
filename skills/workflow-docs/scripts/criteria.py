@@ -4,19 +4,23 @@
 usage: criteria.py <command> [options]
 
   review ID|PAGE [...] --user [--date D]
-                               mark requirements, or a PRD, Reviewed today (or on D); --user: the owner's words
+                               mark requirements, or a whole PRD, Reviewed today (or on D); --user: the owner's own
+                               words said so
   unreview ID|PAGE [...] --user
-                               mark them Unreviewed. With no terminal both need LOOP_OWNER_WORDS (the owner's words),
-                               logged in .git/loop/reviews.tsv
+                               mark them Unreviewed, so their wording may change. With no terminal, both need
+                               LOOP_OWNER_WORDS, the owner's own words; each change is logged with them in .git/loop/reviews.tsv
   review|unreview ... --user --owner-record ID   the words come from owner-words.tsv record ID
   render [--check] [--tables]  rewrite each feature page's Tests from the regression rows and their last runs;
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
                                README blocks alone
 
+A feature page is a short PRD (references/commands.md): Review, Problem, Requirements, Non-goals, Success metrics, Tests.
 A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text <!-- reviewed HASH -->' (seal_of its text
-and sub-bullets; docs.py check fails when either changes), at most criteria_max lines. An argument shaped like an ID is
-a requirement; any other is a page (prd.py). A new-form feature's review needs the owner's record naming exactly that
-ID and adds its line to .loop/reviews.tsv (sections.reviewed). render writes each Tests table and the Tests page.
+and sub-bullets; docs.py check fails when either changes), at most criteria_max lines (default
+CRITERIA_MAX_DEFAULT, .loop/config.json). An argument shaped like an ID is a requirement; any other is a page, whose PRD
+review prd.py writes. A new-form feature's review needs the owner's record naming exactly that ID and adds its line to
+.loop/reviews.tsv (sections.reviewed). A row whose goal is '-' proves no requirement yet and is left out. render writes each Tests table and
+the full Tests page (render.py), printing WROTE per file. It runs git only.
 """
 import argparse
 import datetime
@@ -40,6 +44,7 @@ SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
 SCRIPT_FILE = re.compile(r"[\w./-]*\w\.(?:py|sh|bash|zsh|js|mjs|cjs|ts|rb|pl|php|ps1|bat)\b", re.I)
 import deployments  # noqa: E402
+from prdcopy import put, subs  # noqa: E402,F401
 from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, rules  # noqa: E402,F401
 link_of, link_page, owner_words, safety, slurp = deployments.link_of, deployments.link_page, deployments.owner_words, deployments.safety, deployments.slurp
 
@@ -60,23 +65,6 @@ SYNC_MARK = "<!-- prd-sync: owned -->"
 
 def sha(text):
     return None if text is None else seal(text)
-
-
-def put(path, source, have, base):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(SYNC_MARK + "\n<!-- source: %s -->\n" % source + "".join("- %s: %s\n" % item for item in have.items()))
-    with open(path[:-3] + ".base", "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("".join("%s\t%s\n" % item for item in base.items()))
-
-
-def subs(lines, number):
-    out = []
-    for line in lines[number + 1:]:
-        if not line.strip() or not line[:1].isspace():
-            break
-        out.append(line.rstrip())
-    return out
 
 
 def seal_of(text, below=()):
@@ -313,7 +301,7 @@ def today():
 
 
 def delegated(root, rid, text):
-    # True: delegated and allowed; False: delegated, not allowed; None: not delegated
+    # True: delegated (operation-top:delegated:TDn:DOC-2:rN), DOC-2 has rN, no safety class; False: delegated but not; None: not one
     log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop", "owner-words.tsv")
     try:
         row = next(r for r in (x.rstrip("\n").split("\t") for x in open(log, encoding="utf-8")) if len(r) == 5 and r[0] == rid)

@@ -6,7 +6,8 @@ Refuses unless "auto_merge" is true and the goal is done with its PR open. Runs 
 (`gh pr merge --match-head-commit`), releases (autorelease.py; failure: `release_error`) and publishes the wiki (wiki.py;
 refused: `wiki_error`); a stale wiki page, REVIEW_HOLD, a private name, REQUIREMENT_MISSING or another pod's goal refuse
 first. --go-head SHA: GO_HEAD unless the PR head is SHA; CI_PENDING, CI_RED, CI_MISSING unless its checks are green.
-merge_queue (off): skips BASE_MOVED; prints MERGED once gh reports it.
+Setting merge_queue (off): GitHub's merge queue checks the moved base, so merge.py skips BASE_MOVED and prints MERGED
+only once gh reports the pull request merged.
 
 --batch (setting merge_batch, off): machines.py `batch` merges 2-3 green goals as one (commands.md).
 Also the release pull request (`merge.advance`): pushes `release/vX-<slug>`, merges it with `gh pr merge --merge`.
