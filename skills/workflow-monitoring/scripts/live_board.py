@@ -25,7 +25,9 @@ import board_lines  # noqa: E402
 bb = board_lines  # budget, depth and private-name lines (its section 4)
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
+from board_tasks import age, parse_at, task_lines  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
@@ -82,24 +84,6 @@ def run_files(root):
     """Every goal with a run file on disk, retired ones included: a busy pool entry for one of these is not freezing."""
     folder = os.path.join(loop_dir(root), "runs")
     return {name[:-5] for name in os.listdir(folder) if name.endswith(".json")} if os.path.isdir(folder) else set()
-
-
-def parse_at(text):
-    """A recorded time as an aware UTC datetime (naive counts as UTC), or None when it is missing or bad."""
-    try:
-        found = datetime.datetime.fromisoformat(str(text).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return found if found.tzinfo else found.replace(tzinfo=datetime.timezone.utc)
-
-
-def age(text, at):
-    """How long ago a recorded time was: Nm under an hour, Nh under two days, else Nd; '' when the time is unknown."""
-    then = parse_at(text)
-    if not then or not at:
-        return ""
-    minutes = max(0, int((at - then).total_seconds() // 60))
-    return "%dm" % minutes if minutes < 60 else "%dh" % (minutes // 60) if minutes < 48 * 60 else "%dd" % (minutes // 1440)
 
 
 current = bs.current
@@ -304,7 +288,8 @@ def render(root=None, at=None):
     for goal in queue:
         out.append("- %s  %s%s" % (goal["slug"], bs.estimate_text(next(i["est"] for i in items if i["slug"] == goal["slug"])),
                                    "  waits on " + ", ".join(waits(goal["depends"])) if waits(goal["depends"]) else ""))
-    out += ([] if queue or held else ["- (none)"]) + ["", "Dependencies"]
+    out += [] if queue or held else ["- (none)"]
+    out += task_lines(root, runs, at, gone) + ["", "Dependencies"]
     out += board_lines.render([dict(i, mark="held" if i["slug"] in {r["slug"] for r in held} else i["mark"]) for i in items])
     seconds, _, _ = board_page.chain(items)
     missing = board_page.unknown(items) or any(i["partial"] for i in items) or held or freezing

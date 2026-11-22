@@ -463,6 +463,7 @@ sync-first-adopts	PASS	2026-11-18
 sync-not-connected	PASS	2026-11-20	
 sync-repo-delta	PASS	2026-11-18	
 sync-source-delta	PASS	2026-11-18	
+tasks-list-states	FAIL	2026-11-22	
 template-sheet	PASS	2026-11-12	
 test-caps-consolidate-allowed	PASS	2026-11-16	
 test-caps-controls	PASS	2026-11-16	
