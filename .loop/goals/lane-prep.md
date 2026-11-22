@@ -1,7 +1,7 @@
 # Lane prep never moves HEAD or fails on a fresh clone (patch for DEL-17; fixes #5728, #5730, #5735)
 
 - Slug: lane-prep
-- Touches: skills/workflow-delivery, skills/workflow-docs, dev/toy, .loop/regression.tsv, docs
+- Touches: skills/workflow-delivery, skills/workflow-docs, dev/toy, .loop/regression.tsv, docs, skills/workflow-release
 - ETA: 265 active minutes (estimate 210m plus a 25% margin)
 
 ## Done lines
