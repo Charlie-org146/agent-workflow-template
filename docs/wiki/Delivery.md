@@ -43,7 +43,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 4: metric missing; test 10 linked rows, see Tests
   - Line 5: metric missing; test 10 linked rows, see Tests
   - Line 6: metric missing; test 10 linked rows, see Tests
-- DEL-17: **Unreviewed** Fast end to end: every step has a time limit, and lead time is measured per step
+- DEL-17: **Reviewed 2026-11-22** Fast end to end: every step has a time limit, and lead time is measured per step <!-- reviewed ea780fe5 -->
   - Principle 3, Fast · Topic: Delivery
   - ### Requirements
   - DEL-17.1 **Every step on DEL-19's list has a time limit in settings,** with template defaults, and a repo may change them. The checks themselves (health, the docs check, the board) also have limits.
@@ -68,7 +68,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [Google SRE: service level objectives](https://sre.google/sre-book/service-level-objectives/).
   - reference
   - Monte Carlo forecasting from past runs, for ETAs.
-- DEL-22: **Unreviewed** Fast plans: a goal's plan is ready in a set time and never stalls on a tool fault
+- DEL-22: **Reviewed 2026-11-22** Fast plans: a goal's plan is ready in a set time and never stalls on a tool fault <!-- reviewed 92d4311b -->
   - Principle 3, Fast · Topic: Delivery
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - ### Problem
@@ -109,7 +109,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [Circuit breaker (Martin Fowler)](https://martinfowler.com/bliki/CircuitBreaker.html). A known fault switches to a declared fallback instead of failing the caller, and the switch is recorded.
   - reference
   - [Google engineering practices: speed of code reviews](https://google.github.io/eng-practices/review/reviewer/speed.html). Slow reviews hold up the whole team, so a review has a response-time limit.
-- DEL-25: **Unreviewed** Fast build and checks: quick checks before every push, no local test lane
+- DEL-25: **Reviewed 2026-11-22** Fast build and checks: quick checks before every push, no local test lane <!-- reviewed f1432693 -->
   - Principle 3, Fast · Topic: Delivery
   - ### Problem
   - Each goal ran three 15-minute test lanes on the Mac, one goal at a time, and queued for hours behind the single slot.
@@ -131,7 +131,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [pre-commit](https://pre-commit.com/).
   - adapted
   - [trunk-based development](https://trunkbaseddevelopment.com/): small changes, checked fast.
-- DEL-26: **Unreviewed** Fast tests: on GitHub, in parallel, only what the change reaches, results reused
+- DEL-26: **Reviewed 2026-11-22** Fast tests: on GitHub, in parallel, only what the change reaches, results reused <!-- reviewed b8a1141c -->
   - Principle 3, Fast · Topic: Delivery
   - ### Problem
   - A PR's tests took about 21 minutes, and a test cut for time still showed green (#5757).
@@ -158,7 +158,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [actions/cache](https://github.com/actions/cache).
   - adapted
   - [test impact analysis](https://martinfowler.com/articles/rise-test-impact-analysis.html).
-- DEL-27: **Unreviewed** Fast merge: the full tests run once, on the merged result, through the merge queue
+- DEL-27: **Reviewed 2026-11-22** Fast merge: the full tests run once, on the merged result, through the merge queue <!-- reviewed 2b87aa0a -->
   - Principle 3, Fast · Topic: Delivery
   - ### Problem
   - Tests ran on the PR and again in the merge queue, and PRs could open only one at a time.
@@ -184,7 +184,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Feature markers v1
   - Reference: GitHub merge queue: adopted; DORA lead time: adapted
   - Line 1: metric missing; test missing
-- DEL-19: **Unreviewed** One change, one goal, one list of steps, every step logged
+- DEL-19: **Reviewed 2026-11-22** One change, one goal, one list of steps, every step logged <!-- reviewed dee74654 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - ### Problem
