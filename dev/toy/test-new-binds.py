@@ -60,7 +60,7 @@ def trust(home, shape="trusting"):
 
 
 def freeze(repo, session):
-    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_CODE_HOST_SESSION_ID"}
+    env = {k: v for k, v in os.environ.items() if k not in ("CLAUDE_CODE_HOST_SESSION_ID", "CLAUDE_CONFIG_DIR")}
     env.update(HOME=repo, USERPROFILE=repo, LOOP_FLOW=os.path.join(repo, "flow.json"), LOOP_ROLE="worker", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
     if session:
         env["CLAUDE_CODE_HOST_SESSION_ID"] = session
