@@ -80,6 +80,17 @@ ALLOWED=$(printf "%s\n%s" skills/workflow-monitoring/scripts/board_tasks.py skil
 check "this change adds no file under skills/ except board_tasks.py (o790) and brief.py (o719)" '[ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
 out=$(printf "%s\n%s\n%s\n" skills/workflow-monitoring/scripts/board_tasks.py skills/workflow-release/scripts/brief.py skills/x/scripts/other.py)
 check "negative control: a second new skills/ file still fails" '! [ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ] && [ -n "$out" ]'
+# full-auto-no-new-file admits exactly brief.py (o718, o719; TD1093): the row's own command on a toy repo
+rowcmd=$(awk -F'\t' '$1 == "full-auto-no-new-file" {print $3}' "$here/.loop/regression.tsv")
+nf="$T/nofile"; mkdir -p "$nf"; git -C "$nf" init -q -b main; git -C "$nf" config user.email t@example.test; git -C "$nf" config user.name Toy
+mkdir -p "$nf/skills/workflow-release/scripts"; echo x > "$nf/f"; git -C "$nf" add -A; git -C "$nf" commit -qm base; git -C "$nf" switch -qc topic
+rowis() { ( cd "$nf" && bash -c "$rowcmd" ) >/dev/null 2>&1; }
+echo 1 > "$nf/skills/workflow-release/scripts/brief.py"; git -C "$nf" add -A; git -C "$nf" commit -qm "brief"
+rowis && echo "PASS: the row admits brief.py" || { echo "FAIL: the row admits brief.py"; fails=$((fails+1)); }
+echo 1 > "$nf/skills/workflow-release/scripts/other.py"; git -C "$nf" add -A; git -C "$nf" commit -qm "other"
+rowis && { echo "FAIL: negative control: the row passes another new skills file"; fails=$((fails+1)); } || echo "PASS: negative control: another new skills file still fails the row"
+git -C "$nf" reset -q --hard HEAD~1; echo '{}' > "$nf/listing.json"; git -C "$nf" add -A; git -C "$nf" commit -qm "listing"
+rowis && { echo "FAIL: negative control: the row passes a new listing.json"; fails=$((fails+1)); } || echo "PASS: negative control: a new listing.json still fails the row"
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ "$fails" = 0 ]
