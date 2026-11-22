@@ -229,6 +229,9 @@ else:
     rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
     check(not [l for l in rows if l.startswith("-") and not l.startswith("---")], "no existing regression row is changed or removed")
     added = git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout + git("ls-files", "-o", "--exclude-standard", "--", "skills").stdout
-ALLOWED = "skills/workflow-monitoring/scripts/board_tasks.py"  # owner o788: the one file this goal may add under skills/
-check(all(l.split("\t")[-1] == ALLOWED for l in added.splitlines() if l.strip()) and added.count(ALLOWED) <= 2, "no file is added under skills/ except board_tasks.py (o788)")
+ALLOWED = ("skills/workflow-monitoring/scripts/board_tasks.py",  # owner o788: the file this goal may add under skills/
+           "skills/workflow-release/scripts/brief.py")  # o719 and TD721: the implementation's one file (o718)
+okfile = lambda text: all(l.split("\t")[-1] in ALLOWED for l in text.splitlines() if l.strip())
+check(okfile(added) and sum(added.count(a) for a in ALLOWED) <= 4, "no file is added under skills/ except board_tasks.py (o788) and brief.py (o719)")
+check(not okfile("A\tskills/workflow-release/scripts/brief.py\nA\tskills/x/scripts/other.py\n"), "negative control: any other new skills/ file still fails")
 sys.exit(1 if failed else 0)

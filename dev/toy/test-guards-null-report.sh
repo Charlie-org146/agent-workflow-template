@@ -75,10 +75,10 @@ if want nofiles; then
 echo "== no new file under skills/"
 base=$(git -C "$here" merge-base HEAD origin/main 2>/dev/null || git -C "$here" rev-parse HEAD)
 out=$(git -C "$here" diff --diff-filter=A --name-only "$base" HEAD -- skills)
-# owner o790: the one file o788 allows may be added; any other new skills/ file still fails
-ALLOWED=skills/workflow-monitoring/scripts/board_tasks.py
-check "this change adds no file under skills/ except board_tasks.py (o790)" '[ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
-out=$(printf "%s\n%s\n" "$ALLOWED" skills/x/scripts/other.py)
+# owner o790: the one file o788 allows may be added; o719 and TD721: brief.py is the implementation's file (o718/o719); any other new skills/ file still fails
+ALLOWED=$(printf "%s\n%s" skills/workflow-monitoring/scripts/board_tasks.py skills/workflow-release/scripts/brief.py)
+check "this change adds no file under skills/ except board_tasks.py (o790) and brief.py (o719)" '[ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
+out=$(printf "%s\n%s\n%s\n" skills/workflow-monitoring/scripts/board_tasks.py skills/workflow-release/scripts/brief.py skills/x/scripts/other.py)
 check "negative control: a second new skills/ file still fails" '! [ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ] && [ -n "$out" ]'
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
