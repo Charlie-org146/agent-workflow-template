@@ -167,6 +167,13 @@ has() { check | grep -q "$1"; }
 
 echo "== a link-form page passes when its link is readable"
 dw=$(cd "$d" && { pwd -W 2>/dev/null || pwd; })
+# On Windows the temp path holds /Users/, which DOC-19 rightly flags in a link: link the PRD through a drive-root junction to
+# this fixture (mklink //J: no admin, nothing outside the toy), removed with rmdir (never rm -rf) at exit.
+if command -v cygpath >/dev/null 2>&1; then case "$dw" in */[Uu]sers/*)
+  junc="C:/loop-toy-$$"; cmd //c rmdir "$(cygpath -w "$junc")" >/dev/null 2>&1
+  if cmd //c mklink //J "$(cygpath -w "$junc")" "$(cygpath -w "$d")" >/dev/null 2>&1 && [ -d "$junc" ]; then dw=$junc
+  else echo "FAIL: no drive-root junction for the PRD link (mklink //J $junc)"; fi
+  toy_on_exit 'cmd //c rmdir "$(cygpath -w "C:/loop-toy-$$")" >/dev/null 2>&1';; esac; fi
 cat > "$d/linked-prd.md" <<'EOF'
 # Delivery PRD
 
@@ -195,6 +202,12 @@ $cri render >/dev/null
 grep -q "DEL-1" $P && ok "render fills the Tests table from the linked PRD's ids" || bad "tests table: $(cat $P)"
 grep -q "calculator prints" $P && bad "the linked PRD's text was copied into the page" || ok "the linked text is not copied into the repo"
 out=$(check); grep -q "^DOCS OK" <<<"$out" && ok "a link-form page passes the docs check" || bad "link page: $out"
+
+echo "== control: a /Users/ path in a link is still flagged"
+edit $P "$dw/linked-prd.md" "/Users/x/linked-prd.md"
+out=$(check)
+grep -q "^LINKS Delivery: DOC-19 .*outside this repo" <<<"$out" && ok "a /Users/ path in a link is still flagged (DOC-19)" || bad "no DOC-19 for a /Users/ link: $out"
+edit $P "/Users/x/linked-prd.md" "$dw/linked-prd.md"
 
 echo "== an unreadable link is UNREAD, never a pass"
 edit $P "$dw/linked-prd.md" "$dw/missing-prd.md"

@@ -70,7 +70,7 @@ with tempfile.TemporaryDirectory() as tmp:
     open(reg, "w").write('{"repos": {}}')
     # Keep the fixture under Python's temp root: macOS mktemp can ignore a lane's TMPDIR.
     # TemporaryDirectory owns both the fixture and its deliberately leaked registration.
-    code, said = toy(tmp, "reg-toy.sh", 'd="$TOY_REAL_WL/../fixture"; mkdir -p "$d"; printf \'{"repos": {"fixture": {"path": "%s"}}}\' "$d" > "$TOY_REAL_WL/schedule/repos.json"')
+    code, said = toy(tmp, "reg-toy.sh", 'd="$TOY_REAL_WL/../fixture"; mkdir -p "$d"; d=${d//\\\\//}; printf \'{"repos": {"fixture": {"path": "%s"}}}\' "$d" > "$TOY_REAL_WL/schedule/repos.json"')
     check("a toy that registers a fixture repo in the temp folder fails with a LEAK line (#4760)", code != 0 and "LEAK" in said and "schedule/repos.json#fixture" in said, said)
     open(reg, "w").write('{"repos": {}}')
     # skills-main: another session moves the checkout (clean afterwards); a toy leaves a modified or an untracked file

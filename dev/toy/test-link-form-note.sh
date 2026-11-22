@@ -147,6 +147,13 @@ has() { check | grep -q "$1"; }
 
 echo "== link-form pages plus one migrated local page"
 dw=$(cd "$d" && { pwd -W 2>/dev/null || pwd; })
+# On Windows the temp path holds /Users/, which DOC-19 rightly flags in a link: link the PRD through a drive-root junction to
+# this fixture (mklink //J: no admin, nothing outside the toy), removed with rmdir (never rm -rf) at exit.
+if command -v cygpath >/dev/null 2>&1; then case "$dw" in */[Uu]sers/*)
+  junc="C:/loop-toy-$$"; cmd //c rmdir "$(cygpath -w "$junc")" >/dev/null 2>&1
+  if cmd //c mklink //J "$(cygpath -w "$junc")" "$(cygpath -w "$d")" >/dev/null 2>&1 && [ -d "$junc" ]; then dw=$junc
+  else echo "FAIL: no drive-root junction for the PRD link (mklink //J $junc)"; fi
+  toy_on_exit 'cmd //c rmdir "$(cygpath -w "C:/loop-toy-$$")" >/dev/null 2>&1';; esac; fi
 howto
 for n in Alpha Beta; do
   low=$(printf %s "$n" | tr A-Z a-z); id=$(printf %s "$n" | cut -c1-3 | tr a-z A-Z)
