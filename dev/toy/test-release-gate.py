@@ -336,6 +336,6 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
             if size > cap and name in ("review.py", "merge.py", "release.py", "checkin.py"):
                 over.append("%s %d" % (name, size))
 check("review.py, merge.py and release.py are within GRD-20 (none over 20,480 bytes), and checkin.py at or under 19,495", not over, ", ".join(over), "major")
-added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
-check("no file is added to the shipped package", not added.strip(), added, "major")
+pkg = subprocess.run([sys.executable, os.path.join(root, "dev", "package.py"), "--static"], cwd=root, capture_output=True, text=True)  # o719/o745: the package may grow within MAX_FILES
+check("the shipped package stays within MAX_FILES", pkg.returncode == 0 and "files, the static rules hold" in pkg.stdout, pkg.stdout + pkg.stderr, "major")
 sys.exit(1 if fails else 0)

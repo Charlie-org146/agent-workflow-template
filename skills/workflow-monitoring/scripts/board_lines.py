@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import time
+import board_model as bm
 import board_page
 import board_status as bs
 import graph
