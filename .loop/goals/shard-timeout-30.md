@@ -1,7 +1,7 @@
 # Raise the pull-request shard job's time limit from 20 to 30 minutes at the workflow generator (TD847, o755's 30-minute code PR-checks limit)
 
 - Slug: shard-timeout-30
-- Touches: skills/workflow-regression/scripts/lanes_cli.py, .github/workflows/regression-pr.yml, dev/toy, .loop/regression.tsv, docs/wiki
+- Touches: skills/workflow-regression/scripts/lanes_cli.py, .github/workflows/regression-pr.yml, dev/toy, .loop/regression.tsv, docs/wiki, .loop/regression-known.tsv
 - ETA: 265 active minutes (estimate 210m plus a 25% margin)
 
 ## Done lines
