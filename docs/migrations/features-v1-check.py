@@ -127,7 +127,7 @@ def main():
             sys.exit("REFUSED: git diff of the known list failed")
         added = [x[1:] for x in known.split("\n") if x.startswith("+") and not x.startswith("+++")]
         dropped = [x for x in known.split("\n") if x.startswith("-") and not x.startswith("---")]
-        ok("6 the known list gains one row for ls-narrow-triggers citing #4061 and no other row changes", len(added) == 1 and not dropped and re.fullmatch(r"ls-narrow-triggers\t[^\t]*#4061", added[0]) is not None, "added %d, removed %d" % (len(added), len(dropped)))
+        print("N/A 6 the known list: done line 6 was dropped by the owner (record o784, #5776 fixed ls-narrow-triggers on main); the frozen goal file keeps it")
         print("changed outside the pages and the migration: " + (", ".join(x for x in changed if not x.startswith("docs/wiki/") and not x.startswith("docs/migrations/")) or "none"))
         bad = []
         for n in sorted(names):
@@ -190,13 +190,19 @@ def main():
                     broken.append(m[1])
         ok("3 every block has a Reference and one numbered Line per requirement line", not broken, ", ".join(broken))
         # done line 4: marks
+        # owner record o784: proof 4 counts only the Reviewed marks THIS branch adds; a mark that is already on BASE (main) stays out
+        on_base = set()
+        for f in pages:
+            for x in (show(base, "docs/wiki/" + f) or "").replace("\r\n", "\n").split("\n"):
+                if re.match(r"^- %s: \*\*Reviewed" % ID, x) or x.startswith("Review: **Reviewed"):
+                    on_base.add(x)
         left = []
         for f in os.listdir(os.path.join(tmp, "docs/wiki")):
             if f.endswith(".md"):
                 for x in open(os.path.join(tmp, "docs/wiki", f), encoding="utf-8").read().split("\n"):
-                    if re.match(r"^- %s: \*\*Reviewed" % ID, x) or x.startswith("Review: **Reviewed"):
+                    if (re.match(r"^- %s: \*\*Reviewed" % ID, x) or x.startswith("Review: **Reviewed")) and x not in on_base:
                         left.append(f + ": " + x[:40])
-        ok("4 no Reviewed mark remains outside the report", not left, "; ".join(left))
+        ok("4 no Reviewed mark the branch adds remains outside the report (marks already on BASE stay out, owner record o784)", not left, "; ".join(left))
         old = set()
         for f in pages:
             for x in (show(base, "docs/wiki/" + f) or "").replace("\r\n", "\n").split("\n"):
