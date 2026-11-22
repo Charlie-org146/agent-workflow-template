@@ -17,7 +17,7 @@ TOKENS = re.compile(r"(\d[\d,]*) (?:total )?tokens", re.I)
 
 
 def guard(name, slug=None):
-    """Goal steps run in a worker (LOOP_ROLE=worker); elsewhere they refuse, naming the command or how to start one."""
+    """Goal steps run in a worker (LOOP_ROLE=worker); elsewhere they refuse, naming the command or how to start a worker."""
     if os.environ.get("LOOP_ROLE") == "worker":
         return
     state = {}
@@ -62,7 +62,7 @@ def tokens(text):
 
 
 def usage(text):
-    """(tokens, reply) from an agent's JSON output (input, output, cache-creation tokens); else (printed count or None, text)."""
+    """(tokens, reply) from an agent's JSON output (input + output + cache-creation tokens); else (printed count or None, text)."""
     try:
         data = json.loads(text)
         use = data["usage"]
@@ -86,7 +86,7 @@ def save(path, state):
 
 
 def sync(base):
-    """Merge the base into this branch: (current|merged|conflict|dirty, detail); a conflict is aborted."""
+    """Merge the latest base into this branch: (current|merged|conflict|dirty, detail). A conflict is aborted."""
     git("fetch", "origin", base)
     ref = "origin/" + base if git("rev-parse", "--verify", "--quiet", "origin/" + base).returncode == 0 else base
     if git("merge-base", "--is-ancestor", ref, "HEAD").returncode == 0:
@@ -114,7 +114,7 @@ def goal_state(runs, slug):
 
 
 def recorded_gate(args, runs, job):
-    """A recorded step isn't rerun by accident (DEL-7); --again clears it and every later step, not tries or tokens."""
+    """A recorded step isn't rerun by accident (DEL-7); --again clears it and every later step, never tries or tokens."""
     record = os.path.join(runs, args.slug + ".json")
     import fit
     state = goal_state(runs, args.slug)
@@ -145,7 +145,7 @@ def after(step):
 
 
 def begin(record, step):
-    """Label the step in the run record and log its start, so the time to the recorded step is its own."""
+    """Set the step's label in the run record and log its start, so the time to the recorded step is the step's own."""
     state = goal_state(*os.path.split(record[:-5]))
     if not state:
         return
@@ -164,7 +164,7 @@ STEP = re.compile(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", re.M | re.I)
 
 
 def depth_of(cfg, state=None, runs=None):
-    """The depth a step runs at: fit.depth_for over the setting and the goal (DEL-6), or the setting alone."""
+    """The depth a step must run at: fit.depth_for over the setting and the goal (DEL-6), or the setting alone."""
     setting = setting_of(cfg)
     if state is None:
         return setting
@@ -173,7 +173,7 @@ def depth_of(cfg, state=None, runs=None):
 
 
 def setting_of(cfg):
-    """review_depth from the base branch's .loop/config.json (a worker can't change it); condensed only if it says so."""
+    """review_depth from the base branch's .loop/config.json (a worker can't change it): condensed only if it says so."""
     cfg = cfg or {}
     base = cfg.get("base") or "main"
     for ref in ("origin/" + base, base):
@@ -187,7 +187,7 @@ def setting_of(cfg):
 
 
 def markers(step):
-    """(markers, error): strings a full plan or review reply must carry, from full_markers in both flow files."""
+    """(markers, error): the strings a full plan or review reply must carry, from full_markers in both flow files."""
     found = []
     flow = "~/.workflow-loop/flow.json"
     for path in dict.fromkeys(os.path.expanduser(p) for p in (flow, os.environ.get("LOOP_FLOW") or flow)):
@@ -246,7 +246,7 @@ def need_lane(runs, slug, reply, step="qa"):
 
 
 def over_caps():
-    """A refusal when the repo is over a test cap and this goal adds rows net (base branch caps; removing as many passes)."""
+    """A refusal when the repo is over a test cap and this goal adds rows net (the base branch's caps; removing or merging as many always passes)."""
     top = git_out("rev-parse", "--show-toplevel")
     at = "origin/" + (json.loads(git_out("show", "HEAD:.loop/config.json") or "{}").get("base") or "main")
 

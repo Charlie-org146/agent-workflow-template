@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""  new SLUG --here --goal TEXT --task T --done LINE [--touches A,B] [--release R]
+"""Hold one goal's record: done lines, flow steps, PR.
+
+usage: goal.py <command> <slug> [options]
+
+  new SLUG --here --goal TEXT --task T --done LINE [--touches A,B] [--release R]
   queue SLUG --goal TEXT --done LINE [--touches A,B] [--depends-on A,B]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
@@ -59,14 +63,7 @@ def git(*args, check=True):
     return run(["git"] + list(args), check=check).stdout.strip()
 
 
-def read(path):
-    with open(path) as handle:
-        return handle.read()
-
-
-def write(path, text, mode="w"):
-    with open(path, mode) as handle:
-        handle.write(text)
+read, write = guards.read, guards.write
 
 
 now = guards.now

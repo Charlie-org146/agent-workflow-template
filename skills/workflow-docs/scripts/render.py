@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The Tests renderings (DOC-9, DOC-10), the front-page checks and blocks; setup runs `render.py blocks`."""
-import importlib.util
+"""The Tests renderings (DOC-9, DOC-10) and the front-page checks and blocks; setup runs `render.py blocks`."""
+import importlib
 import json
 import os
 import re
@@ -12,6 +12,7 @@ import criteria as cr
 import pageformat as pf
 import sections
 from deployments import link_of, regroup, topics_of
+from entry import parsed
 
 os.environ["GIT_TERMINAL_PROMPT"] = "0"
 
@@ -22,11 +23,12 @@ FORMAT = os.path.join(os.path.dirname(cr.SHEET), "..", "..", "workflow-regressio
 
 
 def tests_format(held={}):
+    import importlib.util as iu
     if "m" not in held:
         sys.dont_write_bytecode, held["m"] = True, None
         try:
-            spec = importlib.util.spec_from_file_location("regression_tests", FORMAT)
-            mod = held["m"] = importlib.util.module_from_spec(spec)
+            spec = iu.spec_from_file_location("regression_tests", FORMAT)
+            mod = held["m"] = iu.module_from_spec(spec)
             spec.loader.exec_module(mod)
             mod.fields, mod.issues_of, mod.entries
         except Exception as err:
@@ -36,7 +38,7 @@ def tests_format(held={}):
 
 
 def ran_of(root):
-    """{row: (status, date, FLAKY?)}."""
+    """{row: (status, date, " FLAKY" if the 5th cell names a commit, REG-9)}."""
     return {row[0]: (row[1], row[2], " FLAKY" if (row + [""] * 5)[4] else "") for row in cr.tsv(root, "regression-runs.tsv")}
 
 
@@ -48,7 +50,7 @@ def table(root, ids, linked):
 
 
 def repo_of(root, text=""):
-    """OWNER/REPO (template_repo or origin)."""
+    """OWNER/REPO from counting.repo_slug (template_repo or the origin), else a milestone URL."""
     return counting.repo_slug(root) or pf.owner_repo(text)
 
 
@@ -134,9 +136,10 @@ def generated(root):
 
 
 def rebuild_notes(root):
+    import importlib.util as iu
     try:
-        s = importlib.util.spec_from_file_location("brief", FORMAT.replace("regression/scripts/tests", "release/scripts/brief"))
-        m = importlib.util.module_from_spec(s)
+        s = iu.spec_from_file_location("brief", FORMAT.replace("regression/scripts/tests", "release/scripts/brief"))
+        m = iu.module_from_spec(s)
         s.loader.exec_module(m)
         return m.rebuild(root, cr.folder_of(root))
     except Exception:
@@ -255,15 +258,6 @@ def reference():
         if found:
             rows.append((found.group(1), found.group(2).strip("`"), found.group(3)))
     return rows
-
-
-def parsed(text):
-    if text == "(empty)":
-        return ""
-    try:
-        return json.loads(text)
-    except ValueError:
-        return text
 
 
 def shown(value):

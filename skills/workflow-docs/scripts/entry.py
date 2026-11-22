@@ -38,6 +38,15 @@ PARTS = ("Loop", "Release", "Operation and workers", "Docs", "Regression", "Heal
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
+def parsed(text):
+    if text == "(empty)":
+        return ""
+    try:
+        return json.loads(text)
+    except ValueError:
+        return text
+
+
 def version_key(text):
     return tuple(int(x) for x in re.findall(r"\d+", str(text or ""))[:3])
 

@@ -26,6 +26,16 @@ TOUCHES_PATH, WAITING_OWNER, ANSWER_STATUS = "TOUCHES_PATH", "WAITING_OWNER", "A
 REFUSALS, FINDING_LOCAL = "refused records in a row", "FINDING_LOCAL"
 
 
+def read(path):
+    with open(path) as handle:
+        return handle.read()
+
+
+def write(path, text, mode="w"):
+    with open(path, mode) as handle:
+        handle.write(text)
+
+
 def now():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
