@@ -125,14 +125,14 @@ def refresh(common, base="main"):
 
 
 def untrusted(folder):
-    """FOLDER's refusal if ~/.claude.json lists projects and none trusts it or a parent, else ""; read only."""
+    """FOLDER's refusal unless the trust file in $CLAUDE_CONFIG_DIR or ~ lists it or a parent; unreadable: none."""
+    conf = os.path.expanduser(os.path.join(os.getenv("CLAUDE_CONFIG_DIR") or "~", ".claude.json"))
+    at = lambda p: os.path.normcase(os.path.realpath(p)).rstrip(os.sep) + os.sep
     try:
-        with open(os.path.join(os.path.expanduser("~"), ".claude.json")) as handle:
-            known = json.load(handle)["projects"]
-        at = lambda p: os.path.normcase(os.path.realpath(p)).rstrip(os.sep)+os.sep
-        return "" if any(v.get("hasTrustDialogAccepted") and at(folder).startswith(at(k)) for k, v in known.items()) else "REFUSED: ask the owner to trust %s (FOLDER_TRUST)." % folder
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        return ""
+        if any(v.get("hasTrustDialogAccepted") and at(folder).startswith(at(k)) for k, v in json.load(open(conf))["projects"].items()): return ""
+    except Exception:
+        pass
+    return "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; %s must be readable." % (folder, conf)
 
 
 def behind_ask(common, base="main"):

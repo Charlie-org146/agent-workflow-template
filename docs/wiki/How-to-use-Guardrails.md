@@ -83,6 +83,7 @@ Each requirement and how it is delivered:
 - **Dry run:** none: it records the binding.
 - **Reads:** the session pool and the goal's run record.
 - **Writes:** the goal's run record; it prints the `WORKER` command and the `WORKTREE`.
+- **Before you bind:** a fresh machine must trust the repo once in the app before workers can start (the owner's rule). Bind reads Claude's trust file (`.claude.json` in `CLAUDE_CONFIG_DIR` when that is set, else in your home folder) and never writes it; the refusal names the file it read. If the file is missing, unreadable or unparseable, no folder is trusted and bind refuses and names the file. Upgraders trust once: a repo that bound before this check has no entry the new check can read, so open the repo folder once in Claude Code (the trust prompt) and bind works from then on; nothing creates the trust for you.
 - **Exit codes:** 0 when it prints `BOUND`; nonzero with a `REFUSED` line.
 
 ### API/file contract: .loop/config.json

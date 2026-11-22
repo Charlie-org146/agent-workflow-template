@@ -24,8 +24,8 @@ def check(name, ok):
 
 
 def run(top, script, *args, **env):
-    keep = {k: v for k, v in os.environ.items() if k != "LOOP_ROLE"}
-    done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, **env))
+    keep = {k: v for k, v in os.environ.items() if k not in ("LOOP_ROLE", "CLAUDE_CONFIG_DIR")}
+    done = subprocess.run([sys.executable, script] + list(args), cwd=top, capture_output=True, text=True, env=dict(keep, HOME=home, USERPROFILE=home, **env))
     return done.returncode, done.stdout + done.stderr
 
 
@@ -39,6 +39,10 @@ def count(top):
 
 top = tempfile.mkdtemp(prefix="limits-toy-")
 subprocess.run(["git", "init", "-q", "-b", "main"], cwd=top, capture_output=True)
+home = os.path.join(top, "home")  # #5741: a readable trust file under a temporary HOME; no trust file trusts nothing, so assign needs one
+os.makedirs(home)
+with open(os.path.join(home, ".claude.json"), "w") as handle:
+    json.dump({"projects": {top: {"hasTrustDialogAccepted": True}}}, handle)
 loop = os.path.join(top, ".git", "loop")
 os.makedirs(os.path.join(loop, "runs"))
 os.makedirs(os.path.join(top, ".loop"))
