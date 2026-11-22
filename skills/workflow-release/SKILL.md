@@ -117,7 +117,7 @@ two files and reports the error. Report it too. Don't retry with other flags.
 A major ships only through `review.py gate vX`, then `promote vX` (operation session only) and `revert vX`; the waivers and refusals are in [loop-files.md](../loop-files.md#a-major-gate-promote-and-revert) (`shared/` in a pack).
 
 ## Refusals
-Every refusal and its fix is in [loop-files.md](../loop-files.md) (`shared/` in a pack), under Release: commands and flows.
+Every refusal and its fix is in [loop-files.md](../loop-files.md) (`shared/` in a pack), under Release: commands and flows. That includes the brief refusals BRF-1 to BRF-7: a minor or major needs a frozen release brief naming its tasks; a feature task merges only once one names it.
 
 ## Rules
 
@@ -142,3 +142,7 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-release gate vX` | `python3 scripts/review.py gate vX [--ref REF] [--no-suite]` |
 | `/workflow-release promote vX` | `python3 scripts/review.py promote vX --owner-record ID [--ref REF]` |
 | `/workflow-release revert vX` | `python3 scripts/review.py revert vX` |
+| `/workflow-release freeze task NAME` | `python3 scripts/brief.py freeze task NAME --owner-record ID` |
+| `/workflow-release freeze release VERSION` | `python3 scripts/brief.py freeze release VERSION --owner-record ID` |
+| `/workflow-release tasks` | `python3 scripts/brief.py tasks` |
+| `/workflow-release finish NAME` | `python3 scripts/brief.py finish NAME --met 1,2` |

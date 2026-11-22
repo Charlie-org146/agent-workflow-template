@@ -43,7 +43,7 @@ freeze -> idea -> plan -> build -> review -> qa -> ship -> pr -> release
 A background agent skips this step: its goal is already frozen. With `--here`, work from the base branch.
 
 ```bash
-python3 scripts/goal.py new <slug> --here --goal "<goal>" --done "<line>" --touches "<file,file>"
+python3 scripts/goal.py new <slug> --here --goal "<goal>" --task "<task>" --done "Given ..., when ..., then ..." --touches "<file,file>"
 ```
 
 This writes `.loop/goals/<slug>.md`, makes branch `loop/<slug>` and freezes the done lines. Never edit them. A wrong

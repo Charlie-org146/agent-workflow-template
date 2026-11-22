@@ -480,11 +480,38 @@ Each refusal says `REFUSED:` and a fix. Common ones:
 ## A major: gate, promote and revert
 
 A major ships only through `review.py gate vX`, which refuses naming each open milestone issue (unless an owner waiver `moved`
-names it), each red or known-red suite row (unless a `red` waiver names its issue), a health failure, an Unreviewed
+names it), each red suite row (unless a `red` waiver names its issue) and every row on the known-red list (no waiver, DOC-28.1), a health failure, an Unreviewed
 requirement and a stale page. Waivers are lines `kind<TAB>subject<TAB>detail<TAB>owner record` in the git folder's
 `loop/release-waivers.tsv`, and count only when that owner-words record names the subject. `promote vX --owner-record ID` (operation
 session only; the record must name `vX.0.0`) tags `vX.0.0`, keeps `release/vX`, moves main and mails the state report; from a major's
 rc tag until the tag exists `merge.py` refuses any goal naming no gate failure (`FROZEN`). `revert vX` opens a PR back to the snapshot.
+
+## Tasks and release briefs (DEL-23, DOC-28)
+
+A task brief is `.loop/tasks/<name>.md`: `Feature:`, `Purpose:`, optional `Needs:` (task names that must be done first),
+`Replaces:` and `Kind: feature|fix`, then `## Done when` numbered lines. A release brief is `docs/release-brief-<version>.md`:
+`## Tasks` numbered with task names in order, `About:` and `Done:`. `brief.py freeze task|release NAME --owner-record ID`
+appends one last line, `Frozen: <sha256 of everything above> <record id> <date>`, only when that owner-words record names
+exactly NAME and its source is the owner; one changed word makes `brief.py check` fail. `brief.py tasks` prints the one list
+(name, state queued, running, waiting, done or replaced, goals, ETA); `brief.py finish NAME --met 1,2` marks a task done once every
+goal is merged and every done-when line is met (a row in `.loop/tasks.tsv`). A cut appends `## Results` to the release brief,
+once. Example: write `.loop/tasks/migrate.md` with `Feature: DEL-23`, `Purpose: move the pages`, `## Done when` and `1. every page
+passes`; ask the owner to type "Freeze migrate? Recommended: yes"; the operation session records it; then `brief.py freeze task
+migrate --owner-record ID`.
+
+| Code | Refusal | Fix |
+|---|---|---|
+| BRF-1 | a name that is not lowercase letters, digits and dashes (a version for a release) | rename it |
+| BRF-2 | no owner record naming exactly that ID | the owner types one decision; a lane stops with status waiting and never retries |
+| BRF-3 | a brief is missing, or not frozen | write it, then freeze it |
+| BRF-4 | a frozen brief changed | restore the words, or freeze a new task with `Replaces: NAME` |
+| BRF-5 | a task is not startable (no brief, or a `Needs:` task not done) or not done (goals unmerged, done-when lines unmet) | finish what it names |
+| BRF-6 | a feature task named by no frozen release brief; a patch that would ship a feature task; a major with a known-red row | name it in a frozen brief; fix the row (there is no waiver) |
+| BRF-7 | a private value (an email address, the home folder, a name on the private list) in a brief or its result | remove it |
+
+Refusals print what, fix and the code on stderr, never the owner's typed words. A repo with no task briefs is untouched: a goal
+that names a task with no brief merges as before, but `goal.py new` in a repo that keeps `.loop/tasks/` refuses a task with no
+frozen brief.
 
 # Regression: commands and flows
 

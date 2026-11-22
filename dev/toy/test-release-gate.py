@@ -8,6 +8,7 @@ bumps a major; the Release page holds REL-1 to REL-14, Unreviewed; the scripts s
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
 process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major|del23|doc28]  (one leg: only its checks decide the exit)"""
 import contextlib
+import importlib.util
 import io
 import json
 import os
@@ -336,8 +337,22 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
             if size > cap and name in ("review.py", "merge.py", "release.py", "checkin.py"):
                 over.append("%s %d" % (name, size))
 check("review.py, merge.py and release.py are within GRD-20 (none over 20,480 bytes), and checkin.py at or under 19,495", not over, ", ".join(over), "major")
-added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
-check("no file is added to the shipped package", not added.strip(), added, "major")
+# o719: "no file is added to the shipped package" became "the shipped package stays within MAX_FILES", with a control one file over
+_spec = importlib.util.spec_from_file_location("package_check", os.path.join(root, "dev", "package.py"))
+pkg = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(pkg)
+count = len(pkg.walk(root))
+check("the shipped package stays within MAX_FILES (o719)", count <= pkg.MAX_FILES, "%d files, MAX_FILES %d" % (count, pkg.MAX_FILES), "major")
+fake = tempfile.mkdtemp(prefix="pkgcap-")
+subprocess.run(["git", "init", "-q", fake], capture_output=True)
+os.makedirs(os.path.join(fake, "skills"))
+for n in range(pkg.MAX_FILES + 1):
+    open(os.path.join(fake, "skills", "f%03d.md" % n), "w").write("x\n")
+subprocess.run(["git", "-C", fake, "add", "-A"], capture_output=True)
+seen = len(pkg.failures)
+with contextlib.redirect_stdout(io.StringIO()):
+    pkg.check_files(fake, pkg.walk(fake))
+check("control: a package one file over MAX_FILES fails", len(pkg.walk(fake)) == pkg.MAX_FILES + 1 and any("at most" in f[1] for f in pkg.failures[seen:]), str(pkg.failures[seen:]), "major")
 
 # DEL-23 (tasks) and DOC-28 (release briefs): brief.py in a throwaway repo with its own owner-words ledger and run records
 import importlib.util
