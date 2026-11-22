@@ -381,7 +381,7 @@ def new_form(root, strict=False):
     import sections as sc
     rel, out, b = cr.folder_of(root), [], "origin/" + (counting.config_of(root).get("base") or "main")
     for n in sorted(x for x in os.listdir(join(root, rel)) if x.endswith(".md")):
-        t = open(join(root, rel, n), encoding="utf-8").read()
+        t = deployments.slurp(join(root, rel, n))
         old = cr.git("-C", root, "show", "%s:%s/%s" % (b, rel, n), check=False)
         heads = [h[3:].strip() for h in t.splitlines() if h.startswith("## ")]
         if "Reference" in heads:

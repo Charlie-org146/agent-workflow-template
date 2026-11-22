@@ -48,13 +48,14 @@ def path_of(root, kind, name):
 
 def read(path):
     try:
-        return open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
     except OSError:
         return ""
 
 
 def frozen(text):
-    """(body, record, date) of a frozen brief, or None."""
+    """(body, record, date) or None."""
     found = FROZEN.search(text)
     if not found:
         return None
@@ -294,7 +295,7 @@ COLS27 = "Feature,Promise,Success metrics,Today,Reference,Topic,Adoption,Confide
 
 
 def rebuild(root, rel):
-    """DOC-27.4: page-rebuild NOTEs (docs.py check --strict fails them)."""
+    """DOC-27.4: page-rebuild NOTEs."""
     wiki = os.path.join(root, rel)
     pages = {n[:-3]: read(os.path.join(wiki, n)) for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
     pages["README"], out = read(os.path.join(root, "README.md")), []
@@ -334,7 +335,7 @@ def files(root, version):
 
 
 def result(root, version):
-    """DOC-28.5: after the cut, each task's merged goals, once."""
+    """DOC-28.5: each task's merged goals, once."""
     path = path_of(root, "release", version)
     text = read(path)
     if "## Results" in text or release_tasks(root, version) is None:

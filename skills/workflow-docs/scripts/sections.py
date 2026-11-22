@@ -17,6 +17,12 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1")  # DEL-10: gh
 LINK = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/(?:wiki/|blob/main/docs/wiki/)|\(docs/wiki/")
 
 
+
+def _read(path):
+    with open(path, encoding="utf-8") as handle:
+        return handle.read()
+
+
 def heads(text):
     out, fenced = [], False
     for n, line in enumerate(text.splitlines(), 1):
@@ -113,7 +119,7 @@ def latest_full(slug, ids):
             continue
         with tempfile.TemporaryDirectory() as tmp:
             subprocess.run(["gh", "run", "download", str(run["databaseId"]), "-R", slug, "-p", "results-*", "-D", tmp], capture_output=True, text=True)
-            rows = [x.split("\t") for d, _, fs in os.walk(tmp) for f in fs for x in open(os.path.join(d, f), encoding="utf-8").read().splitlines() if x[:1] != "#"]
+            rows = [x.split("\t") for d, _, fs in os.walk(tmp) for f in fs for x in _read(os.path.join(d, f)).splitlines() if x[:1] != "#"]
         results = {x[0]: x[1] for x in rows if len(x) > 1}
         if len(set(results) & set(ids)) * 5 >= len(ids) * 4:
             return results
@@ -273,7 +279,7 @@ def reviewed(root, folder, command, ids, rec, common, day):
     """DOC-27.5."""
     if command != "review":
         return
-    new = {b[0] for f in sorted(os.listdir(folder)) if f.endswith(".md") for b in blocks(open(os.path.join(folder, f), encoding="utf-8").read())}
+    new = {b[0] for f in sorted(os.listdir(folder)) if f.endswith(".md") for b in blocks(_read(os.path.join(folder, f)))}
     mine = [i for i in ids if i in new]
     ledger = os.path.join(common, "owner-words.tsv")
     row = next((r for r in (x.rstrip("\n").split("\t") for x in open(ledger, encoding="utf-8")) if len(r) == 5 and r[0] == rec), None) if rec and os.path.exists(ledger) else None
@@ -288,7 +294,7 @@ def reviewed(root, folder, command, ids, rec, common, day):
 def principled(folder, fid):
     """DOC-27.1: one principle."""
     path = os.path.join(folder, "Principles.md")
-    secs = re.split(r"(?m)^## ", open(path, encoding="utf-8").read())[1:] if os.path.exists(path) else []
+    secs = re.split(r"(?m)^## ", _read(path))[1:] if os.path.exists(path) else []
     n = sum(bool(re.search(r"\[%s " % fid, x)) for x in secs)
     return [] if n == 1 or not secs else [("FORMAT", fid, "DOC-27 27.1: listed under %d principles. Fix: exactly one principle holds it" % n)]
 
@@ -301,7 +307,7 @@ def features(folder, page, text):
     import counting
     root = os.path.dirname(os.path.dirname(os.path.abspath(folder)))
     path = os.path.join(root, ".loop", "reviews.tsv")
-    reviews = {r[0]: r[1] for r in (x.split("\t") for x in open(path, encoding="utf-8").read().splitlines() if x[:1] != "#") if len(r) > 1} if os.path.exists(path) else {}
+    reviews = {r[0]: r[1] for r in (x.split("\t") for x in _read(path).splitlines() if x[:1] != "#") if len(r) > 1} if os.path.exists(path) else {}
     slug, out = counting.repo_slug(root), []
     for fid, mark, date, lines in found:
         out += feature(page, fid, mark, date, lines, slug, reviews) + principled(folder, fid)
@@ -313,7 +319,7 @@ BLOCK = re.compile(r"(<!-- steps -->)(.*?)(<!-- /steps -->)", re.S)
 
 def steps():
     """DEL-19.4."""
-    got = re.search(r"^STEPS = \(([^)]*)\)", open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "flow.py"), encoding="utf-8").read(), re.M)
+    got = re.search(r"^STEPS = \(([^)]*)\)", _read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "flow.py")), re.M)
     return "Steps: %s." % ", ".join(re.findall(r'"(\w+)"', got[1])) if got else "Steps: unreadable."
 
 
@@ -326,12 +332,12 @@ def stale(page, text):
 def run(folder, readme, home, names):
     """DOC-25 findings by page kind"""
     out = [("FORMAT", "%s:%d" % (n, i), "Sections: DOC-25 the principle tables have the columns %s (no Version, no Flow). Fix: run /workflow-docs render" % " | ".join(NEW))
-           for n, t in (("README", readme), ("Home", home), ("Principles", open(os.path.join(folder, "Principles.md"), encoding="utf-8").read() if os.path.exists(os.path.join(folder, "Principles.md")) else ""))
+           for n, t in (("README", readme), ("Home", home), ("Principles", _read(os.path.join(folder, "Principles.md")) if os.path.exists(os.path.join(folder, "Principles.md")) else ""))
            for i, x in enumerate(t.splitlines(), 1) if x.startswith("| Requirement | Summary") and "| Version | Flow |" in x]
     out += check("README", "front-adopted" if "## The template's principles" in readme else "front", readme) + check("Home", "front", home) + same(readme, home)
     for page in sorted(x[:-3] for x in os.listdir(folder) if x.endswith(".md")):
         kind = "howto" if page.startswith("How-to-use-") else {"Principles": "principles", "Tests": "tests", "Roadmap": "roadmap"}.get(page, "feature" if page in names else "")
-        text = open(os.path.join(folder, page + ".md"), encoding="utf-8").read()
+        text = _read(os.path.join(folder, page + ".md"))
         out += (check(page, kind, text) + features(folder, page, text) + stale(page, text)) if kind else []
     return out
 
@@ -339,7 +345,7 @@ def run(folder, readme, home, names):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["steps"]:
         for name in sys.argv[3:] or ["docs/wiki/Delivery.md"]:
-            old = open(name, encoding="utf-8").read()
+            old = _read(name)
             new = BLOCK.sub(lambda m: m[1] + steps() + m[3], old)
             print(name, "stale" if new != old else "fresh")
             if "--write" in sys.argv and new != old:

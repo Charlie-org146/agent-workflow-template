@@ -384,10 +384,10 @@ def scores(root):
     import criteria as cr
     import sections as sc
     rel, out, rows = cr.folder_of(root), [], os.path.join(root, ".loop", "regression.tsv")
-    tests = [x.split("\t") for x in open(rows, encoding="utf-8").read().splitlines()[1:]] if os.path.exists(rows) else []
+    tests = [x.split("\t") for x in slurp(rows).splitlines()[1:]] if os.path.exists(rows) else []
     runs = sc.latest_full(counting.repo_slug(root), [t[0] for t in tests])
     for n in ("README.md", rel + "/Home.md", rel + "/Principles.md"):
-        for ln in open(os.path.join(root, n), encoding="utf-8").read().splitlines() if os.path.exists(os.path.join(root, n)) else []:
+        for ln in slurp(os.path.join(root, n)).splitlines() if os.path.exists(os.path.join(root, n)) else []:
             c = [x.strip() for x in sc.SPLIT.split(ln[1:-1])] if ln.startswith("| [") else []
             if len(c) == 6 and re.fullmatch(r"\d+% \(\d+ of \d+\)", c[5]) and (not runs or sc.confidence(c[0], tests, runs) != c[5]):
                 out.append(("FORMAT", n, "DOC-27 27.3: %s: %s" % (c[0][:20], "typed score differs from health's latest run" if runs else "no health run to compare")))
