@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/10
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-20** <!-- prd P=a45649a4 R=e1b516f0 N=e081872e M=4670eeeb U=03828777 --> <!-- kept fast-3min@d0a4c4b38 -->
 
 How to use: [How-to-use-Automation](How-to-use-Automation)
 
@@ -15,25 +15,15 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 ## Requirements
 
 ### Functional
-- AUT-1: **Unreviewed** Routines run on schedule, by runbook
+- AUT-1: **Reviewed 2026-11-20** Routines run on schedule, by runbook <!-- reviewed 6aac93e4 -->
   - Health and regression run on schedule wherever they can run fully. [AUT-1]
   - They report where they ran and what they skipped, catch up missed runs, and follow runbooks. [AUT-1]
 
-  - Feature markers v1
-  - Reference: GitHub Actions `schedule`: adopted; Google SRE on-call playbooks: adapted
-  - Line 1: metric missing; test 12 linked rows, see Tests
-  - Line 2: metric missing; test 12 linked rows, see Tests
-
 
 ### Non-functional
-- AUT-5: **Unreviewed** Routines and publishing stay under my control
+- AUT-5: **Reviewed 2026-11-20** Routines and publishing stay under my control <!-- reviewed bd5f6128 -->
   - Each routine turns off or reschedules with one setting and writes nothing without secrets. [AUT-5]
   - Publishing never deletes or overwrites pages it didn't write, and it can be undone. [AUT-5]
-
-  - Feature markers v1
-  - Reference: GitHub environments with required reviewers: own
-  - Line 1: metric missing; test 4 linked rows, see Tests
-  - Line 2: metric missing; test 4 linked rows, see Tests
 
 ## Non-goals
 - The scheduled routines never push, merge or release; they only write issues, labels, comments, run reports (an Actions run summary or a local report on my Mac) and the digest email.
@@ -143,8 +133,8 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 |---|---|---|---|---|
 | [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-20 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-20 |
-| [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given AUT-1, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 3 merged rows checke; the issue gains the defect label. | PASS 2026-11-20 |
-| [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given AUT-1, when test-local-schedule.sh runs its 3 cases, then each passes: health runs, the regression runs live, one issue i; health runs, no regression runs the tick says REGR; it says Last ran and MISSED, a recent last run say. | not run |
+| [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given AUT-1, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 3 merged rows checke; the issue gains the defect label. | PASS 2026-11-22 |
+| [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given AUT-1, when test-local-schedule.sh runs its 3 cases, then each passes: health runs, the regression runs live, one issue i; health runs, no regression runs the tick says REGR; it says Last ran and MISSED, a recent last run say. | PASS 2026-11-22 |
 | [st-pass](Tests#t-st-pass) | requirement | AUT-1 | Given AUT-1, when test-statuses.sh runs its 2 cases, then each passes: one success per required check is posted with a de; only failure is posted, only for a head already on. | not run |
 | [aut-email-file](Tests#t-aut-email-file) | requirement | AUT-1 | Given AUT-1, when test-automation-email.sh runs its 2 cases, then each passes: each is tagged with its group on no milestone (and; its defect issue is filed with no milestone read,. | PASS 2026-11-12 |
 | [runbook-good](Tests#t-runbook-good) | requirement | AUT-1 | Given AUT-1, when test-runbook.sh runs its 4 cases, then each passes: it passes, and a Runbook placed before Problem is; each is refused naming the page, the routine and t; the page is neither locked nor marked changed; each routine in the registry has every field, says. | not run |
@@ -155,7 +145,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [perms-docs-check](Tests#t-perms-docs-check) | requirement | AUT-1 | Given a routine with no declared permissions, when docs.py check runs, then it prints a PERMISSIONS finding (the same check as audit.py permissions check, run inside docs.py check). | not run |
 | [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given AUT-5, when test-docs.sh runs its 2 cases, then each passes: that page is never overwritten; the original page is back. | PASS 2026-11-20 |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-12 |
-| [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given AUT-5, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 5 merged rows checke; it prints every PASS line the 3 merged rows checke. | PASS 2026-11-20 |
+| [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given AUT-5, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 5 merged rows checke; it prints every PASS line the 3 merged rows checke. | PASS 2026-11-22 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | AUT-5 | Given the AUT-5 cases of test-publish-tables.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | PASS 2026-11-13 |
 | [capture-row-ci](Tests#t-capture-row-ci) | defect | [#3789](https://github.com/jcl2018/agent-workflow-template/issues/3789) closed (2026-11-13) | Given a failing row that ends in grep -q and prints nothing, when the scheduled workflow files its issue, then the body holds the row's last 40 output lines, not an empty block (#3789). | FAIL 2026-11-13 |
 | [automation-table-health](Tests#t-automation-table-health) | defect | [#3857](https://github.com/jcl2018/agent-workflow-template/issues/3857) closed (2026-11-13) | Given a repo with health on and no health workflow file, when the Automation table renders, then health and the digest email read the Mac's local schedule and owe no health.yml. | not run |

@@ -236,9 +236,14 @@ def adopt(args, repo):
             to and git(repo, "add", "-A", "--", *to)
             changed = [p for p in changed if p not in held_back or p in seed.FORCED]
             scan = agents.sibling("workflow-delivery", "private.py")  # SET-8: no private name in setup's commit
-            if scan and subprocess.run([sys.executable, scan, "hook", "staged"], cwd=repo).returncode:
+            scanned = scan and subprocess.run([sys.executable, scan, "hook", "staged"], cwd=repo).returncode
+            if scanned == 1:
                 return undo(tx, "REFUSED: a staged adoption file holds a private name (places above). Fix: remove it from that file, then run "
                                 "setup again; nothing written (SETUP_PRIVATE_NAME).")
+            if scanned:
+                return undo(tx, "REFUSED: the private-name scan could not run (hook exit %s): the line above names the "
+                                "cause and its repair; an empty list scans nothing. "
+                                "Nothing written; run setup again after the repair (SETUP_PRIVATE_LIST)." % scanned)
             hits = update.guard_staged(repo, changed)
             if hits:
                 return undo(tx, "REFUSED: the adoption would commit a local setting or private value at %s (SETUP_PRIVATE_VALUE). Fix: set it in the "

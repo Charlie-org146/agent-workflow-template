@@ -15,7 +15,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 ### Functional
 
-- OPS-1: **Unreviewed** One operation session governs the loop for me
+- OPS-1: **Reviewed 2026-11-20** One operation session governs the loop for me <!-- reviewed 5ee683ee -->
   - **Layers:** top, one session per machine, workers; top only governs. [OPS-1]
   - **Relay:** my words go to the machines word for word, on fixed message forms; a machine's message is never my approval. [OPS-1]
   - **Full auto:** top decides process choices and numbers each decision; the safety classes wait for my typed words. [OPS-1]
@@ -29,23 +29,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - It decides which machine takes a goal, how many run at once, when to wake or archive a session, and when to pause one. [OPS-1]
   - Each decision cites the log line it used. [OPS-1]
   - The board shows each machine's latest line, and health fails a machine whose log is more than 5 minutes old. [OPS-1]
-
-  - Feature markers v1
-  - Reference: Kubernetes controller reconcile loop: adapted; Google SRE incident command: adapted
-  - Line 1: metric missing; test 18 linked rows, see Tests
-  - Line 2: metric missing; test 18 linked rows, see Tests
-  - Line 3: metric missing; test 18 linked rows, see Tests
-  - Line 4: metric missing; test 18 linked rows, see Tests
-  - Line 5: metric missing; test 18 linked rows, see Tests
-  - Line 6: metric missing; test 18 linked rows, see Tests
-  - Line 7: metric missing; test 18 linked rows, see Tests
-  - Line 8: metric missing; test 18 linked rows, see Tests
-  - Line 9: metric missing; test 18 linked rows, see Tests
-  - Line 10: metric missing; test 18 linked rows, see Tests
-  - Line 11: metric missing; test 18 linked rows, see Tests
-  - Line 12: metric missing; test 18 linked rows, see Tests
-  - Line 13: metric missing; test 18 linked rows, see Tests
-- OPS-16: **Unreviewed** Every ready goal starts within capacity limits
+- OPS-16: **Reviewed 2026-11-20** Every ready goal starts within capacity limits <!-- reviewed dada51c6 -->
   - Every ready goal gets its own worker at once unless a capacity limit holds it. [OPS-16]
   - The memory floor is measured per machine. [OPS-16]
   - **Memory is guarded on every machine by set limits.** At most one live session per 2 GB of memory, counting the operation sessions (8 on a 16 GB machine). [OPS-16]
@@ -54,17 +38,6 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - Below 10% free, or at 95% swap, the lowest-priority building goal is paused: its work is committed, not pushed, and it restarts when memory recovers. [OPS-16]
   - Each reading is the lower of two taken a minute apart, so one swing does not trigger. [OPS-16]
   - Every STATUS reports the free figure, swap and live sessions, and health fails a machine that crossed a limit with no action recorded. [OPS-16]
-
-  - Feature markers v1
-  - Reference: Kubernetes ResourceQuota: adapted; Kanban WIP limits: adapted
-  - Line 1: metric missing; test 5 linked rows, see Tests
-  - Line 2: metric missing; test 5 linked rows, see Tests
-  - Line 3: metric missing; test 5 linked rows, see Tests
-  - Line 4: metric missing; test 5 linked rows, see Tests
-  - Line 5: metric missing; test 5 linked rows, see Tests
-  - Line 6: metric missing; test 5 linked rows, see Tests
-  - Line 7: metric missing; test 5 linked rows, see Tests
-  - Line 8: metric missing; test 5 linked rows, see Tests
 
 ### Non-functional
 
@@ -222,8 +195,8 @@ None
 | [dependency-held](Tests#t-dependency-held) | requirement | OPS-1 | Given OPS-1, when test-board.sh runs its 2 cases, then each passes: it is held until that goal merges; it records what it waits on. | PASS 2026-11-09 |
 | [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given OPS-1, when test-batch.sh runs its 2 cases, then each passes: no goal runs inside it; it says the operation session only governs. | PASS 2026-11-20 |
 | [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
-| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given OPS-1, when test-workers.sh runs its 2 cases, then each passes: it prints every PASS line the 2 merged rows checke; it shows its pull request. Given a goal with a PR,. | PASS 2026-11-20 |
-| [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-20 |
+| [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given OPS-1, when test-workers.sh runs its 2 cases, then each passes: it prints every PASS line the 2 merged rows checke; it shows its pull request. Given a goal with a PR,. | PASS 2026-11-22 |
+| [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-22 |
 | [operate-all](Tests#t-operate-all) | requirement | OPS-1 | Given OPS-1, when test-operate.sh runs its 2 cases, then each passes: the whole suite passes; the report reaches its agent once. | PASS 2026-11-09 |
 | [session-assign](Tests#t-session-assign) | requirement | OPS-1 | Given OPS-1, when test-session-workers.sh runs its 3 cases, then each passes: it prints every PASS line the 6 merged rows checke; it prints every PASS line the 6 merged rows checke; it reaches the worker session by session message. | PASS 2026-11-20 |
 | [mon6-merged-frees](Tests#t-mon6-merged-frees) | requirement | OPS-1 | Given OPS-1, when test-monitoring-prd.sh runs its 3 cases, then each passes: its session goes back to the pool (archived above; it shows under Needs you; at 29 minutes it does no; each start, merge and split is logged once with it. | PASS 2026-11-10 |

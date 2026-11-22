@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Unreviewed**
+Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -15,32 +15,16 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Unreviewed** Any repo adopts the template, stays current, and is proven by replay
+- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
   - One safe, idempotent command adopts any repo byte for byte. [SET-1]
   - Adopted repos hold only their own data, record their template version, take updates, flag lag, and send fixes upstream. [SET-1]
   - Adoption is proven by a step-by-step replay against the golden result. [SET-1]
-
-  - Feature markers v1
-  - Reference: Copier: adapted; GitHub template repositories: adapted; Renovate: adapted; Jest snapshots: adapted
-  - Line 1: metric missing; test 19 linked rows, see Tests
-  - Line 2: metric missing; test 19 linked rows, see Tests
-  - Line 3: metric missing; test 19 linked rows, see Tests
-- SET-2: **Unreviewed** Layered settings and a generated entry page
+- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
-
-  - Feature markers v1
-  - Reference: Twelve-Factor App, factor III Config: adapted
-  - Line 1: metric missing; test 9 linked rows, see Tests
-  - Line 2: metric missing; test 9 linked rows, see Tests
 - SET-10: **Unreviewed** One versioned package; every agent runs one loop
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
   - Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10]
-
-  - Feature markers v1
-  - Reference: Semantic Versioning 2.0.0: adopted; Agent Skills format: adopted
-  - Line 1: metric missing; test 8 linked rows, see Tests
-  - Line 2: metric missing; test 8 linked rows, see Tests
 
 ### Non-functional
 
@@ -253,8 +237,8 @@ None
 |---|---|---|---|---|
 | [adopt-set-1](Tests#t-adopt-set-1) | requirement | SET-1 | Given SET-1, when test-adopt.sh runs its 4 cases, then each passes: it holds; apply, when the toy adopt-and-update test runs, th; check shows the change, apply keeps the repo's dat; the skills update, the repo half lands on workflow. | FAIL 2026-11-12 |
 | [setup-both-halves](Tests#t-setup-both-halves) | requirement | SET-1 | Given a repo, when setup runs, then it writes the repo half and, outside the repo, the private half. | PASS 2026-11-12 |
-| [migration-clean](Tests#t-migration-clean) | requirement | SET-1 | Given SET-1, when test-migration.sh runs its 6 cases, then each passes: each prints MIGRATION OK and exits 0; migration-check names it by code with a Fix line,; migration-check names each state gap by code, neve; each exits as specified (0, 1, 2 or 4), the last l; the tree, index, branches, stash, git files, home; it prints the same gap codes through the migration. | not run |
-| [migration-base-config](Tests#t-migration-base-config) | requirement | SET-1 | Given SET-1, when test-migration.sh runs its 5 cases, then each passes: it reports the base branch's config and never says; it warns and goes on, refuses a differing major wi; its README and Home hold both blocks and the READM; each gets exactly one migrate-<repo> goal line, a; mac is kept, no DRIFT line prints and only origin/. | not run |
+| [migration-clean](Tests#t-migration-clean) | requirement | SET-1 | Given SET-1, when test-migration.sh runs its 6 cases, then each passes: each prints MIGRATION OK and exits 0; migration-check names it by code with a Fix line,; migration-check names each state gap by code, neve; each exits as specified (0, 1, 2 or 4), the last l; the tree, index, branches, stash, git files, home; it prints the same gap codes through the migration. | PASS 2026-11-22 |
+| [migration-base-config](Tests#t-migration-base-config) | requirement | SET-1 | Given SET-1, when test-migration.sh runs its 5 cases, then each passes: it reports the base branch's config and never says; it warns and goes on, refuses a differing major wi; its README and Home hold both blocks and the READM; each gets exactly one migrate-<repo> goal line, a; mac is kept, no DRIFT line prints and only origin/. | PASS 2026-11-22 |
 | [migration-robustness](Tests#t-migration-robustness) | requirement | SET-1 | Given SET-1, when test-migration.sh runs its 2 cases, then each passes: each ends with a verdict line and no traceback, an; it prints the exact version line, nothing for a cu. | not run |
 | [sync-check-preview](Tests#t-sync-check-preview) | requirement | SET-1 | Given SET-1, when test-sync-update.sh runs its 5 cases, then each passes: it shows the installed and available versions, the; it lists that repo under Issues with the fix; it still finds the template through the installed; it refuses rather than read another repo's release; it shows as a local fix, is kept, and --propose --. | not run |
 | [set1-health-bracket](Tests#t-set1-health-bracket) | requirement | SET-1 | Given SET-1, when test-setup-adopt.sh runs its 6 cases, then each passes: HEALTH START comes before the first write line, AD; it adopts and commits with exit 0, names each gap,; one findings line lists both and one issue tagged; for real, then the dry run writes nothing anywhere; it prints NO CHANGE, adds no commit, leaves a clea; it borrows the portable settings and page shape, h. | not run |
@@ -280,7 +264,7 @@ None
 | [review-hold-setting-listed](Tests#t-review-hold-setting-listed) | requirement | SET-2 | Given the settings table, when review_hold is read, then it is a repo setting that is off by default. | not run |
 | [goal-pr-regenerates-start](Tests#t-goal-pr-regenerates-start) | requirement | SET-2 | Given a goal whose START.md inputs changed after the last commit, when goal.py pr runs, then it commits the regenerated START.md before the push and the entry check is OK. | not run |
 | [adopt-set-3](Tests#t-adopt-set-3) | requirement | SET-10 | Given SET-3, when the toy adopt-and-update test runs, then it holds. | FAIL 2026-11-19 |
-| [skill-kept](Tests#t-skill-kept) | requirement | SET-10 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-19 |
+| [skill-kept](Tests#t-skill-kept) | requirement | SET-10 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-22 |
 | [agents-wire](Tests#t-agents-wire) | requirement | SET-10 | Given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing. | PASS 2026-11-12 |
 | [codex-ro-home](Tests#t-codex-ro-home) | requirement | SET-10 | Given SET-10, when test-codex.sh runs its 4 cases, then each passes: it says the private settings were not written and; no goal or binding is lost, a repeated slug is ref; the run records it as SKIPPED, never PASS, opens n; setup adopts, go freezes the goal, the live board. | not run |
 | [package-gate-head](Tests#t-package-gate-head) | requirement | SET-10 | Given the merged head of a pull request, when package.py's file and script checks run on its tracked files, then the lane fails if a script is over 20,480 bytes, the package has over 100 files, or a script is not standalone; it runs on Windows too. | FAIL 2026-11-16 |
@@ -290,7 +274,7 @@ None
 | [setup-zero-tests-119](Tests#t-setup-zero-tests-119) | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/119 https://github.com/jcl2018/agent-workflow-template/issues/127) state unknown | Given SET-1, when test-setup-adopt.sh runs its 2 cases, then each passes: the command finds at least one test, and with no p; the ignore is exempted by a written line and the h. | not run |
 | [pr-statuses-only-lane-3840](Tests#t-pr-statuses-only-lane-3840) | defect | [#3840](https://github.com/jcl2018/agent-workflow-template/issues/3840) closed (2026-11-14) | Given required checks whose jobs do more than the lane, or that no workflow job names, when goal.py pr posts statuses, then only a check whose job runs only the lane's regression command gets one and each other is printed as BLOCKS (issue 3840). | PASS 2026-11-14 |
 | [migration-runs](Tests#t-migration-runs) | defect | 3821 | Given a public repo (actions, regression.yml present) and a private repo (mac), when migration-check runs, then only the wrong settings and a private repo's leftover regression.yml are gaps. | not run |
-| [skill-size-116](Tests#t-skill-size-116) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/116 https://github.com/jcl2018/agent-workflow-template/issues/139 https://github.com/jcl2018/agent-workflow-template/issues/141) state unknown | Given SET-10, when test-defect.sh runs its 3 cases, then each passes: every one is under 150 lines, so test-board passes; neither file warns and every moved name resolves t; neither file fails (warn at 19,000, fail at 20,480. | PASS 2026-11-19 |
+| [skill-size-116](Tests#t-skill-size-116) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/116 https://github.com/jcl2018/agent-workflow-template/issues/139 https://github.com/jcl2018/agent-workflow-template/issues/141) state unknown | Given SET-10, when test-defect.sh runs its 3 cases, then each passes: every one is under 150 lines, so test-board passes; neither file warns and every moved name resolves t; neither file fails (warn at 19,000, fail at 20,480. | PASS 2026-11-22 |
 | [size-140](Tests#t-size-140) | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) closed (2026-11-19) | Given docs.py's page map moved into counting.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on docs. | PASS 2026-11-12 |
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
 | [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 100 files, no Safety or Disclosure failure (issue 3800). | not run |

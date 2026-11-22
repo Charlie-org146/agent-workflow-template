@@ -31,4 +31,5 @@ hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
+defect-categories	fails on main (order-dependent: runs after a row writes regression-runs.tsv); known until its fix right after the v1.1.0 cut, see #5774 (owner o760)
 ls-narrow-triggers	red on main 48ac06e7d, macOS only (test-local-schedule.sh skips non-Darwin hosts); see #4061

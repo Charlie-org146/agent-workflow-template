@@ -13,12 +13,8 @@ Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 ## Requirements
 
 ### Functional
-- INT-1: **Unreviewed** Every integration is a declared, visible adapter
+- INT-1: **Reviewed 2026-11-20** Every integration is a declared, visible adapter <!-- reviewed 2f1e2663 -->
   - Outside systems are opt-in integrations in one registry, added as adapters without changes to the loop's code, with state and deltas shown and counted. [INT-1]
-
-  - Feature markers v1
-  - Reference: Model Context Protocol: adopted
-  - Line 1: metric missing; test missing
 
 ### Non-functional
 

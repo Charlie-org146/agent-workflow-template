@@ -15,35 +15,19 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Requirements
 
 ### Functional
-- DEL-1: **Unreviewed** One sentence runs unattended to a release, and a major ships only through the gate
+- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
   - A sentence and its done lines run unattended to a recorded pull request and a release made from a tag. [DEL-1]
   - A merge is refused only for the goal's own findings, never left half done. [DEL-1]
   - A major exists only after the gate: milestone closed, full suite run, health green, everything Reviewed. [DEL-1]
   - Promotion and revert need the operation session and my words. [DEL-1]
-
-  - Feature markers v1
-  - Reference: GitHub merge queue, tag release workflow, Semantic Versioning: adopted; SonarQube quality gates: adapted; the sentence-to-PR pipeline: own
-  - Line 1: metric missing; test 27 linked rows, see Tests
-  - Line 2: metric missing; test 27 linked rows, see Tests
-  - Line 3: metric missing; test 27 linked rows, see Tests
-  - Line 4: metric missing; test 27 linked rows, see Tests
-- DEL-3: **Unreviewed** It stops only for decisions that are mine, and asks them clearly
+- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
   - My decisions wait for me or are auto-approved where allowed. [DEL-3]
   - Full auto applies everything except the safety classes. [DEL-3]
   - Merges wait only on gates I set. [DEL-3]
   - Every question to me is one decision in plain words, with a recommendation, the exact words or button that answers it, and what happens if I don't answer. [DEL-3]
   - Questions are numbered and never asked twice. [DEL-3]
   - What was decided for me is listed. [DEL-3]
-
-  - Feature markers v1
-  - Reference: GitHub auto-merge with required checks: adopted; GitHub environments required reviewers: adapted
-  - Line 1: metric missing; test 10 linked rows, see Tests
-  - Line 2: metric missing; test 10 linked rows, see Tests
-  - Line 3: metric missing; test 10 linked rows, see Tests
-  - Line 4: metric missing; test 10 linked rows, see Tests
-  - Line 5: metric missing; test 10 linked rows, see Tests
-  - Line 6: metric missing; test 10 linked rows, see Tests
-- DEL-17: **Unreviewed** Every change runs on one clock, from my ask to main
+- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 01f97e9e -->
   - **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17]
   - **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17]
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-17]
@@ -51,33 +35,14 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A merge never makes another ready pull request re-run. [DEL-17]
   - **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17]
   - Test count and suite time stay capped. [DEL-17]
-
-  - Feature markers v1
-  - Reference: GitHub merge queue: adopted; DORA lead time: adapted
-  - Line 1: metric missing; test 23 linked rows, see Tests
-  - Line 2: metric missing; test 23 linked rows, see Tests
-  - Line 3: metric missing; test 23 linked rows, see Tests
-  - Line 4: metric missing; test 23 linked rows, see Tests
-  - Line 5: metric missing; test 23 linked rows, see Tests
-  - Line 6: metric missing; test 23 linked rows, see Tests
-  - Line 7: metric missing; test 23 linked rows, see Tests
-- DEL-19: **Unreviewed** Every change is a goal inside the loop, serving a requirement
+- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
   - The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. [DEL-19]
   - Everything in the repo is part of one of those steps or keeps them running. [DEL-19]
   - Main changes only through a goal's pull request. [DEL-19]
   - A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. [DEL-19]
   - Done lines never change after the freeze. [DEL-19]
   - "What this is" is generated from this text. [DEL-19]
-
-  - Feature markers v1
-  - Reference: GitHub closing keywords linking a PR to an issue: adapted; Conventional Commits 1.0.0: adapted
-  - Line 1: metric missing; test 5 linked rows, see Tests
-  - Line 2: metric missing; test 5 linked rows, see Tests
-  - Line 3: metric missing; test 5 linked rows, see Tests
-  - Line 4: metric missing; test 5 linked rows, see Tests
-  - Line 5: metric missing; test 5 linked rows, see Tests
-  - Line 6: metric missing; test 5 linked rows, see Tests
-- DEL-21: **Unreviewed** Every requirement names what it follows and adopts a standard tool by default, scored
+- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
   - Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21]
   - General guidance is not a reference. [DEL-21]
   - A drop-in tool is used as it is; adapted names the design it copies and why. [DEL-21]
@@ -86,25 +51,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Every goal that adds or rewrites a requirement first checks whether a tool can be adopted. [DEL-21]
   - A change that lowers the score needs my words. [DEL-21]
 
-  - Feature markers v1
-  - Reference: MADR decision records: adapted; OpenSSF Scorecard: adapted
-  - Line 1: metric missing; test 1 linked rows, see Tests
-  - Line 2: metric missing; test 1 linked rows, see Tests
-  - Line 3: metric missing; test 1 linked rows, see Tests
-  - Line 4: metric missing; test 1 linked rows, see Tests
-  - Line 5: metric missing; test 1 linked rows, see Tests
-  - Line 6: metric missing; test 1 linked rows, see Tests
-  - Line 7: metric missing; test 1 linked rows, see Tests
-
 ### Non-functional
-- DEL-9: **Unreviewed** Nothing private is committed, shipped or copied
+- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
   - Every commit, push and pull request passes the scoped private-name scan. [DEL-9]
   - Private files, the mail address and keys stay local and are never copied. [DEL-9]
-
-  - Feature markers v1
-  - Reference: gitleaks: adopted; GitHub push protection: adopted; GitGuardian on the organization: adopted
-  - Line 1: metric missing; test 11 linked rows, see Tests
-  - Line 2: metric missing; test 11 linked rows, see Tests
 
 ## Non-goals
 - It doesn't decide what to build.
@@ -305,12 +255,12 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given DEL-1, when test-rows.sh runs its 4 cases, then each passes: it is refused; it never waits on a terminal prompt; it does not start; it is refused. | PASS 2026-11-20 |
 | [stop-after-3-tries](Tests#t-stop-after-3-tries) | requirement | DEL-1 | Given DEL-1, when test-goal.sh runs its 5 cases, then each passes: the goal stops and files a finding; nothing is merged; it is refused; it starts at the idea step; it is accepted only if the flow ran that step. | PASS 2026-11-09 |
 | [wiki-release](Tests#t-wiki-release) | requirement | DEL-1 | Given DEL-1, when test-wiki.sh runs its 2 cases, then each passes: its wiki pages are published, even when python lea; it lists the page as a finding and does not refuse. | PASS 2026-11-20 |
-| [auto-release](Tests#t-auto-release) | requirement | DEL-1 | Given DEL-1, when test-autorelease.sh runs its 2 cases, then each passes: it is released automatically; it prints REFUSED with its fix on stderr, exits no. | PASS 2026-11-12 |
-| [defect-flow-steps](Tests#t-defect-flow-steps) | requirement | DEL-1 | Given DEL-1, when test-defect.sh runs its 2 cases, then each passes: it has no checks step and every step can be mapped; it carries the goal, the done lines, the verify st. | PASS 2026-11-12 |
+| [auto-release](Tests#t-auto-release) | requirement | DEL-1 | Given DEL-1, when test-autorelease.sh runs its 2 cases, then each passes: it is released automatically; it prints REFUSED with its fix on stderr, exits no. | PASS 2026-11-22 |
+| [defect-flow-steps](Tests#t-defect-flow-steps) | requirement | DEL-1 | Given DEL-1, when test-defect.sh runs its 2 cases, then each passes: it has no checks step and every step can be mapped; it carries the goal, the done lines, the verify st. | PASS 2026-11-22 |
 | [depth-in-pr-body](Tests#t-depth-in-pr-body) | requirement | DEL-1 | Given a goal whose steps are recorded, when its pull request opens, then the body lists every step with its depth. | PASS 2026-11-10 |
 | [guards-extra](Tests#t-guards-extra) | requirement | DEL-1 | Given a stopped or waiting goal, when answer, record or a second reservation comes in, then answer refuses a stopped goal, a waiting goal can't advance, and two goals can't take one session. | PASS 2026-11-10 |
 | [del5-patch-default](Tests#t-del5-patch-default) | requirement | DEL-1 | Given DEL-1, when test-delivery-release.sh runs its 4 cases, then each passes: the version bump is patch; the bump is minor; the version and changelog land through a release p; it prints WIKI REFUSED with its fix, exits 1 with. | PASS 2026-11-12 |
-| [ptb-mend](Tests#t-ptb-mend) | requirement | DEL-1 | Given DEL-1, when test-pr-tries.sh runs its 3 cases, then each passes: the merge is mended and the PR goes on with no try; it reruns without spending a try, at most 3 times,; the finding, the journal and findings.md hold no a. | PASS 2026-11-12 |
+| [ptb-mend](Tests#t-ptb-mend) | requirement | DEL-1 | Given DEL-1, when test-pr-tries.sh runs its 3 cases, then each passes: the merge is mended and the PR goes on with no try; it reruns without spending a try, at most 3 times,; the finding, the journal and findings.md hold no a. | PASS 2026-11-22 |
 | [del5-docs-bump-minor](Tests#t-del5-docs-bump-minor) | requirement | DEL-1 | Given the DEL-1 cases of test-docs-only-bump.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | PASS 2026-11-15 |
 | [resume-ask-worker-step](Tests#t-resume-ask-worker-step) | requirement | DEL-1 | Given the DEL-1 cases of test-resume-ask.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [package-gate-controls](Tests#t-package-gate-controls) | requirement | DEL-1 | Given a package with a script over 20,480 bytes, more than 100 files or a script that needs a file outside its folder, when package.py's own checks run, then each fails the package. | not run |
@@ -328,7 +278,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [rel-major-refused](Tests#t-rel-major-refused) | requirement | DEL-1 | Given a goal whose release would bump a major, when release.py bumps the version, then it refuses naming review.py promote; a minor and a patch still bump. | not run |
 | [rel-open-issue-refused](Tests#t-rel-open-issue-refused) | requirement | DEL-1 | Given DEL-1, when test-release-gate.py runs its 6 cases, then each passes: it refuses naming the issue; an issue with a waive; it refuses naming the row. Also, given a CI run th; it refuses naming the check, the requirement or th; merge.py refuses with frozen for vX.0.0 and merges; it tags vX.0.0, keeps release/vX, moves main, publ; a branch with the snapshot's tree on top of main i. | not run |
 | [rel-owner-only](Tests#t-rel-owner-only) | requirement | DEL-1 | Given a worker, or an owner record that does not name the version, when promote or revert runs, then it is refused and nothing changes. | not run |
-| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | DEL-1 | Given DEL-1, when test-docs-gate-scope.py runs its 5 cases, then each passes: it does not refuse on them; it prints every PASS line the 9 merged rows checke; the issue sits on Backlog: X or Backlog: Documenta; nothing is filed and the merge check does not cras; only the goal's own and generated findings remain,. | PASS 2026-11-18 |
+| [gate-untouched-not-refused](Tests#t-gate-untouched-not-refused) | requirement | DEL-1 | Given DEL-1, when test-docs-gate-scope.py runs its 5 cases, then each passes: it does not refuse on them; it prints every PASS line the 9 merged rows checke; the issue sits on Backlog: X or Backlog: Documenta; nothing is filed and the merge check does not cras; only the goal's own and generated findings remain,. | PASS 2026-11-22 |
 | [pending-waits](Tests#t-pending-waits) | requirement | DEL-3 | Given a step that leaves a decision for the owner, when it ends, then the goal stops and waits. | PASS 2026-11-20 |
 | [auto-approved](Tests#t-auto-approved) | requirement | DEL-3 | Given an auto-approved step, when it ends, then it is logged and nothing waits. | PASS 2026-11-09 |
 | [depth-condensed-refused](Tests#t-depth-condensed-refused) | requirement | DEL-3 | Given the DEL-3 cases of test-review-depth.sh, when it runs once, then it prints every PASS line the 7 merged rows checked and no FAIL line. | PASS 2026-11-18 |
@@ -345,10 +295,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [reg7-floor-test](Tests#t-reg7-floor-test) | requirement | DEL-17 | Given DEL-17, when test-budget.sh runs its 6 cases, then each passes: it is refused with a fix line and runs nothing; the step budget is 30 minutes and the test budget; it reuses them and runs none; those that fit run in tier order and the rest are; it says what it left and the goal's record names t; it warns. | not run |
 | [reg7-unmapped-tier](Tests#t-reg7-unmapped-tier) | requirement | DEL-17 | Given a new file no row reads, when a reusing run happens, then it picks the rows that name it and the runners and never forces a full run. | not run |
 | [reg7-prep-setting](Tests#t-reg7-prep-setting) | requirement | DEL-17 | Given DEL-17, when test-prep-budget.sh runs its 4 cases, then each passes: it defaults to 15 minutes, a value under 15 is ref; its LANE line and its .last record say how long pr; it fails with LANE_PREP_BUDGET naming the part tha; planning is named with exit 125, bad records read. | not run |
-| [tree-once-lock](Tests#t-tree-once-lock) | requirement | DEL-17 | Given a stand-in for test-tree.sh, when tree-once.sh runs twice and once more over a lock left by a dead holder, then it runs once, replays the output and exit code, and takes the dead lock over at once. | not run |
+| [tree-once-lock](Tests#t-tree-once-lock) | requirement | DEL-17 | Given a stand-in for test-tree.sh, when tree-once.sh runs twice and once more over a lock left by a dead holder, then it runs once, replays the output and exit code, and takes the dead lock over at once. | PASS 2026-11-22 |
 | [grd7-round-cost](Tests#t-grd7-round-cost) | requirement | DEL-17 | Given a scheduled round, when its digest is posted, then the round cost shows its minutes and Actions minutes. | not run |
 | [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | DEL-17 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
-| [budgets-agree](Tests#t-budgets-agree) | requirement | DEL-17 | Given the regression budget, when the wiki and regression.yml are read, then REG-7, AUT-7 and the workflow name the same 30 minute budget and the suite is sharded to fit it. | not run |
+| [budgets-agree](Tests#t-budgets-agree) | requirement | DEL-17 | Given the regression budget, when the wiki and regression.yml are read, then REG-7, AUT-7 and the workflow name the same 30 minute budget and the suite is sharded to fit it. | PASS 2026-11-22 |
 | [reg7-unrun-warn-cost](Tests#t-reg7-unrun-warn-cost) | requirement | DEL-17 | Given the REG-7 cases of test-unrun-warn.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [rerun-both-touched](Tests#t-rerun-both-touched) | requirement | DEL-17 | Given a goal rerun after main moved, when the lane plans, then it runs only the rows touched by both the goal's diff and main's new commits. | not run |
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | DEL-17 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
@@ -369,7 +319,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [goal-pr-push-error](Tests#t-goal-pr-push-error) | requirement | DEL-19 | Given a remote that always refuses, when goal.py pr runs, then it exits non-zero and prints git's own error. | not run |
 | [follows-adoption](Tests#t-follows-adoption) | requirement | DEL-21 | Given a principle table, when render and docs check run, then Follows is a tagged bullet list, Adoption is the adopted share of its lines, Confidence is the passing share of the requirement's tests, and an untagged line is refused. | not run |
 | - | requirement | DEL-21 | no passing test | not enforced |
-| [aut-email-secrets](Tests#t-aut-email-secrets) | requirement | DEL-9 | Given the mail settings in the schedule's mail.env, when the tick runs, then they reach only the mail step and never a log, the summary, an issue or the digest comment, a mail.env of the wrong mode sends nothing, and without it nothing is written and the digest says why. | PASS 2026-11-12 |
+| [aut-email-secrets](Tests#t-aut-email-secrets) | requirement | DEL-9 | Given the mail settings in the schedule's mail.env, when the tick runs, then they reach only the mail step and never a log, the summary, an issue or the digest comment, a mail.env of the wrong mode sends nothing, and without it nothing is written and the digest says why. | PASS 2026-11-22 |
 | [del9-pr-refuses](Tests#t-del9-pr-refuses) | requirement | DEL-9 | Given a branch that adds a private name from the list, when goal.py pr runs, then nothing is pushed and the refusal names the place, never the text. Also, given a goal that changes a Reviewed requirement no done line states and no owner record covers, when goal.py pr runs, then it refuses naming the requirement, and a gap is filed as a finding on the page's Backlog milestone. | PASS 2026-11-18 |
 | [del9-merge-refuses](Tests#t-del9-merge-refuses) | requirement | DEL-9 | Given a pull request whose branch holds a private name, when merge.py runs, then nothing is merged. | PASS 2026-11-12 |
 | [del9-scan-sites](Tests#t-del9-scan-sites) | requirement | DEL-9 | Given the delivery, release and monitoring scripts, when any function pushes or writes to GitHub, then it calls the private-name scan first. | not run |
@@ -380,10 +330,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [health-mail-env-named](Tests#t-health-mail-env-named) | requirement | DEL-9 | Given DEL-9, when test-health-on-windows.py runs its 2 cases, then each passes: it reads that file, else mail.env in the schedule; it is not refused as MAIL_ENV_MODE (Windows has no. | PASS 2026-11-14 |
 | [perms-private-never-written](Tests#t-perms-private-never-written) | requirement | DEL-9 | Given a routine's permission row holding a home path or a token, when the project settings are written, then it is refused and nothing private reaches the committed file. | not run |
 | [private-names-scoped](Tests#t-private-names-scoped) | requirement | DEL-9 | Given a private-name line scoped to one repo, when another repo stages that name, then it is refused only in the scoped repo. | PASS 2026-11-19 |
-| [scripts-no-hang](Tests#t-scripts-no-hang) | defect | [PR 62](https://github.com/jcl2018/agent-workflow-template/issues/35 https://github.com/jcl2018/agent-workflow-template/pull/61 https://github.com/jcl2018/agent-workflow-template/pull/62) state unknown | Given DEL-1, when test-defect.sh runs its 3 cases, then each passes: it fails with an error instead of hanging; it runs the release step itself; it says nothing about checks and lists each step's. | PASS 2026-11-12 |
+| [scripts-no-hang](Tests#t-scripts-no-hang) | defect | [PR 62](https://github.com/jcl2018/agent-workflow-template/issues/35 https://github.com/jcl2018/agent-workflow-template/pull/61 https://github.com/jcl2018/agent-workflow-template/pull/62) state unknown | Given DEL-1, when test-defect.sh runs its 3 cases, then each passes: it fails with an error instead of hanging; it runs the release step itself; it says nothing about checks and lists each step's. | PASS 2026-11-22 |
 | [wiki-release-pycache](Tests#t-wiki-release-pycache) | defect | [#58](https://github.com/jcl2018/agent-workflow-template/issues/58) closed (2026-11-09) | Given python leaves cache files behind, when a goal merges, then its wiki pages are still published. | PASS 2026-11-19 |
 | [guards-rule-start](Tests#t-guards-rule-start) | defect | [#157](https://github.com/jcl2018/agent-workflow-template/issues/147 https://github.com/jcl2018/agent-workflow-template/issues/148 https://github.com/jcl2018/agent-workflow-template/issues/157) state unknown | Given DEL-1, when test-guards.sh runs its 3 cases, then each passes: the rule doesn't bind it, and a step started after; no try is used, the goal keeps running and the fix; touches widen with a logged reason and the finishe. | PASS 2026-11-10 |
-| [builtin-flow](Tests#t-builtin-flow) | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | Given a flow file whose steps are built-in and no probe, when a goal starts and its steps run, then delivery runs its own routine for each step, and with no flow file it still refuses. | PASS 2026-11-12 |
+| [builtin-flow](Tests#t-builtin-flow) | defect | [#47](https://github.com/jcl2018/agent-workflow-template/issues/47) closed (2026-11-11) | Given a flow file whose steps are built-in and no probe, when a goal starts and its steps run, then delivery runs its own routine for each step, and with no flow file it still refuses. | PASS 2026-11-22 |
 | [issue-38-verdicts](Tests#t-issue-38-verdicts) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a step reply with VERDICT lines, when the goal opens its pull request, then each verdict is listed under its step (issue: Record the Codex judge and idea-run results). | not run |
 | [issue-129-docs-published](Tests#t-issue-129-docs-published) | defect | [#170](https://github.com/jcl2018/agent-workflow-template/issues/129 https://github.com/jcl2018/agent-workflow-template/issues/134 https://github.com/jcl2018/agent-workflow-template/issues/154 https://github.com/jcl2018/agent-workflow-template/issues/170) state unknown | Given DEL-1, when test-delivery-release.sh runs its 5 cases, then each passes: they say merge.py publishes the release with no dr; the error names how to create the first page (issu; a release PR lands the version and exactly one Git; it records the owner's merge command (issue: merge; the bump is patch and the removal is named in the. | PASS 2026-11-12 |
 | [pr-body-by-file](Tests#t-pr-body-by-file) | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | Given a lane that lists hundreds of rows, or a long issue body from merge.py, milestones.py or prdcopy.py, when goal.py or those scripts call gh, then the body goes in a file or on stdin (--body-file), not on the command line, which Windows caps. | PASS 2026-11-13 |
