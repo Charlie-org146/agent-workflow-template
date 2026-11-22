@@ -23,6 +23,7 @@ A major version (a milestone) ships only through a hard gate: every milestone is
 [Command: review.py gate | the operation session] --every check passes--> [Command: review.py promote | the operation session] --tag, release branch, main moved--> (GitHub)
 [Command: review.py promote | the operation session] --state report--> (the owner's mail)
 [Command: review.py revert | the operation session] --a pull request putting main back on the release branch--> (GitHub)
+[Command: brief.py | the worker or the operation session] --the frozen release brief and task briefs, or one REFUSED BRF-n line--> [Command: review.py gate | the operation session]
 
 Legend: a box is Kind, Component and where it runs; --text--> a flow of data or control; (text) a part outside the table.
 ```
