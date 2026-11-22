@@ -1,7 +1,7 @@
 # Write DEL-19 (revised), DEL-23 (new) and DOC-28 (revised) and the re-frozen v1.1.0 brief into the docs exactly as on the pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b), with the owner's Reviewed marks (owner o721)
 
 - Slug: v110-text
-- Touches: docs/wiki, docs, README.md, skills/workflow-docs, skills/workflow-health, dev/toy, .loop/regression.tsv
+- Touches: docs/wiki, docs, README.md, skills/workflow-docs, skills/workflow-health, dev/toy, .loop/regression.tsv, scripts/public-origins.json, listing.json
 - ETA: 270 active minutes (estimate 214m plus a 25% margin)
 
 ## Done lines
