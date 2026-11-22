@@ -475,6 +475,11 @@ check("DEL-23 a changed source file fails the Source-frozen brief", "BRF-4" in s
 os.remove(srcpath)
 check("DEL-23 a Source with no file in the repo is frozen but reported as unverified", said(brief.can_start, "bysource") == "", "", "del23")
 
+tp = brief.path_of(bt, "task", "alpha")
+keepa = brief.read(tp)
+open(tp, "w").write(keepa.replace("it works", "it work", 1))
+check("DEL-23 the task list says a task brief changed after its freeze", "task alpha: " in "\n".join(brief.lines(bt)) and "changed after the freeze" in "\n".join(brief.lines(bt)), "\n".join(brief.lines(bt)), "del23")
+open(tp, "w").write(keepa)
 # the command line: freeze, check, tasks and finish through brief.py itself
 BRIEF = [sys.executable, os.path.join(root, "skills", "workflow-release", "scripts", "brief.py")]
 cli = lambda *a: subprocess.run(BRIEF + list(a), cwd=bt, capture_output=True, text=True)
@@ -525,6 +530,22 @@ check("DOC-28 cutting a patch that would ship an unshipped feature task is refus
 open(os.path.join(bt, ".loop", "regression-known.tsv"), "w").write("row-a\tit is red\n")
 check("DOC-28 a major with a non-empty known-red list is refused, naming the row, with no waiver path", "BRF-6" in said(brief.gate_bump, "major", "2.0.0") and "row-a" in said(brief.gate_bump, "major", "2.0.0") and "no waiver" in said(brief.gate_bump, "major", "2.0.0"), "", "doc28")
 check("DOC-28 the review gate lists every known-red row as a refusal", brief.known_red(bt) == [("known-red", "row row-a is on the known-red list; clearing a row is the only path", ["row-a"])], "", "doc28")
+# a frozen release brief whose words changed is refused by every gate that reads it; an untouched one passes
+record("o20", "8.0.0")
+brief_file("theta", task_text())
+brief_file("8.0.0", "# v8.0.0\n\n## Tasks\n\n1. alpha\n2. theta\n", "release")
+brief.freeze(bt, "release", "8.0.0", "o20")
+rpath = brief.path_of(bt, "release", "8.0.0")
+keep8 = brief.read(rpath)
+check("DOC-28 an untouched frozen release brief passes every gate", said(brief.gate_bump, "minor", "8.0.0") == "" and said(brief.gate_merge, "theta") == "" and brief.notes(bt, "8.0.0") == ["- task alpha", "- task theta"], "", "doc28")
+open(rpath, "a").write("## Results\n- alpha: g1\n")
+check("DOC-28 a result appended after the frozen line still passes", said(brief.gate_bump, "minor", "8.0.0") == "" and brief.release_tasks(bt, "8.0.0") == ["alpha", "theta"], "", "doc28")
+open(rpath, "w").write(keep8.replace("2. theta\n", "2. theta\n3. extra\n", 1))
+refused = [said(brief.gate_bump, "minor", "8.0.0"), said(brief.gate_cut, "8.0.0"), said(brief.gate_merge, "theta"), said(lambda r, v: brief.notes(r, v), "8.0.0")]
+check("DOC-28 an edited frozen release brief is refused by the bump, cut, merge and notes gates", all("BRF-4" in x for x in refused), str(refused), "doc28")
+open(rpath, "w").write(keep8)
+check("DOC-28 restoring the words passes again", said(brief.gate_bump, "minor", "8.0.0") == "" and brief.release_tasks(bt, "8.0.0") == ["alpha", "theta"], "", "doc28")
+os.remove(rpath)
 # nothing private is frozen into a brief
 brief_file("private1", task_text() + "Contact: someone@example.org\n")
 record("o8", "private1")

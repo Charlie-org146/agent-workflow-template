@@ -2,14 +2,14 @@
 """DEL-23 tasks and DOC-28 release briefs: frozen briefs, the one task list, the gates that read them.
 
   brief.py freeze task|release NAME --owner-record ID   freeze .loop/tasks/NAME.md or docs/release-brief-NAME.md
-  brief.py check | tasks | finish NAME --met N,N         check freezes | the one list | mark a task done (goals merged, lines met)
+  brief.py check | tasks | finish NAME --met N,N         check freezes | the one list | mark a task done
   brief.py gate merge|start|bump|cut|notes|result ...    the checks the release scripts call; exit 1 refuses
 
-A task brief is main's DEL-23 format: a title, bullets Feature, Release, Goals, Needs, Replaced by, Source, then ## Purpose and
-## Done when bullets; optional Kind: feature|fix (a patch Release is a fix) and Replaces. A release brief: ## Tasks, numbered.
-Frozen: a last line `Frozen: <sha256 of all above> <record> <date>`, or a Source `NAME (sha256 HEX), owner oN` whose file
-.loop/sources/NAME.* has that sha and holds the Purpose and Done when text word for word (no file: frozen, not verified).
-A refusal prints what, fix and a code (BRF-n), exits 1."""
+A task brief is main's DEL-23 format (bullets Feature, Release, Goals, Needs, Replaced by, Source, then ## Purpose and
+## Done when; optional Kind: feature|fix and Replaces). A release brief: ## Tasks, numbered. Frozen: a last line
+`Frozen: <sha256 of all above> <record> <date>`, or a Source `NAME (sha256 HEX), owner oN` whose file
+.loop/sources/NAME.* has that sha and holds the Purpose and Done when text (no file: frozen, not verified).
+A refusal prints what, fix and a code (BRF-n) and exits 1."""
 import argparse
 import datetime
 import glob
@@ -44,7 +44,7 @@ def common(root):
 
 
 def path_of(root, kind, name):
-    (VERSION if kind == "release" else NAME).match(name) or refuse("BRF-1", "%r is not a name" % name, "use lowercase letters, digits and dashes")
+    (VERSION if kind == "release" else NAME).match(name) or refuse("BRF-1", "%r is not a name" % name, "lowercase letters, digits, dashes")
     return os.path.join(root, ".loop", "tasks", name + ".md") if kind == "task" else os.path.join(root, "docs", "release-brief-%s.md" % name)
 
 
@@ -64,7 +64,7 @@ def norm(text):
 
 
 def frozen(text, root=None):
-    """(body, record, date) or None; ("", "", "") when the freeze no longer matches."""
+    """(body, record, date), or None: not frozen, or the words no longer match (fails closed)."""
     found = FROZEN.search(text)
     if not found:
         src = SOURCE.search(text)
@@ -76,13 +76,24 @@ def frozen(text, root=None):
         if not files:
             return (text, src[3], "unverified")
         ok = hashlib.sha256(raw.encode()).hexdigest().startswith(src[2]) and mine and mine in norm(raw)
-        return (text, src[3], "source") if ok else ("", "", "")
+        return (text, src[3], "source") if ok else None
     body = text[:found.start()]
-    return (body, found[2], found[3]) if hashlib.sha256(body.encode()).hexdigest() == found[1] else ("", "", "")
+    return (body, found[2], found[3]) if hashlib.sha256(body.encode()).hexdigest() == found[1] else None
+
+
+def tampered(text, root=None):
+    """A freeze that no longer matches the words."""
+    return bool(FROZEN.search(text) or (root and SOURCE.search(text))) and not frozen(text, root)
+
+
+def sealed(text):
+    """The words the freeze covers; what follows the Frozen line is not read as a brief."""
+    found = FROZEN.search(text)
+    return text[:found.start()] if found else text
 
 
 def field(text, key):
-    found = re.search(r"^(?:- +)?%s *: *(.*)$" % key, text, re.M | re.I)
+    found = re.search(r"^(?:- +)?%s *: *(.*)$" % key, sealed(text), re.M | re.I)
     return found[1].strip() if found else ""
 
 
@@ -95,7 +106,6 @@ def names(text):
 
 
 def scan(text):
-    """A private value in text, or ''."""
     if re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", text) or (len(os.path.expanduser("~")) > 1 and os.path.expanduser("~") in text):
         return "an email address or the home folder"
     here = os.path.dirname(os.path.abspath(__file__))
@@ -122,11 +132,11 @@ def freeze(root, kind, name, record):
     path = path_of(root, kind, name)
     text = read(path)
     text or refuse("BRF-3", "no brief at %s" % os.path.relpath(path, root), "write it first")
-    frozen(text, root) and refuse("BRF-4", "%s is already frozen" % name, "a change is a new task: brief.py freeze task NEW (Replaces: %s)" % name)
+    (frozen(text, root) or FROZEN.search(text)) and refuse("BRF-4", "%s is already frozen" % name, "a change is a new task (Replaces: %s)" % name)
     row = ledger_row(root, record)
     if not row or row[4].split(",") != [name] or row[2] not in ("operation", "owner"):
         refuse("BRF-2", "no owner record naming exactly %s (record %s)" % (name, record or "none"),
-               "the owner types one decision (\"Freeze %s? Recommended: yes\"), recorded with sessions.py owner-words --from owner; a lane stops, status waiting" % name)
+               "the owner types \"Freeze %s? Recommended: yes\"; a lane stops, status waiting" % name)
     bad = scan(text)
     bad and refuse("BRF-7", "the brief holds %s" % bad, "remove it, then freeze")
     body = text if text.endswith("\n") else text + "\n"
@@ -148,7 +158,7 @@ def check(root):
     bad = []
     for kind in ("task", "release"):
         for name, text in briefs(root, kind).items():
-            if frozen(text, root) == ("", "", ""):
+            if tampered(text, root):
                 bad.append("%s %s" % (kind, name))
             elif kind == "task" and (frozen(text, root) or ("", "", ""))[2] == "unverified":
                 print("NOTE task %s: its source file is not in .loop/sources, so the words are not verified here" % name)
@@ -175,7 +185,6 @@ def done_rows(root):
 
 
 def tasks(root):
-    """The one list: (name, state, goals, ETA, note)."""
     all_runs, finished, out = runs(root), done_rows(root), []
     briefs_ = briefs(root, "task")
     replaced = {field(t, "Replaces") for t in briefs_.values()} | {n for n, t in briefs_.items() if field(t, "Replaced by")}
@@ -183,12 +192,11 @@ def tasks(root):
         mine = [r for r in all_runs if r.get("task") == name]
         state = "replaced" if name in replaced else "done" if name in finished else "waiting" if any(r.get("waiting") for r in mine if r.get("status") != "done") else "running" if any(r.get("status") != "done" for r in mine) else "queued"
         eta = next((str((r.get("eta") or {}).get("minutes", "")) for r in mine if r.get("eta")), "")
-        out.append((name, state, [r.get("slug", "") for r in mine], eta, "" if frozen(text, root) else "not frozen"))
+        out.append((name, state, [r.get("slug", "") for r in mine], eta, "changed after the freeze" if tampered(text, root) else "" if frozen(text, root) else "not frozen"))
     return out
 
 
 def lines(root):
-    """Board lines: tasks and goals."""
     return ["task %s: %s%s%s" % (n, s, " (%s)" % note if note else "", " eta %sm" % e if e else "") + "".join("\n    goal %s" % g for g in gs) for n, s, gs, e, note in tasks(root)]
 
 
@@ -197,7 +205,6 @@ DONE = re.compile(r"^(?:\d+\.|-) \S.*$", re.M)
 
 
 def feature_state(root, fid):
-    """'Reviewed', 'Unreviewed' or '' for a feature id."""
     try:
         wiki = json.load(open(os.path.join(root, ".loop", "config.json"))).get("wiki_dir") or "docs/wiki"
     except (OSError, ValueError):
@@ -210,21 +217,18 @@ def feature_state(root, fid):
 
 
 def parts_missing(text):
-    """DEL-19.1: the parts a new-format goal file lacks."""
     need = (("title", "# "), ("Slug", "- Slug: "), ("Touches", "- Touches: "), ("ETA", "- ETA: "), ("Task", "- Task: "), ("Release", "- Release: "), ("Done lines", "## Done lines"), ("a done line", "1. "))
     have = lambda n: any(l == n.rstrip() or (l.startswith(n) and l[len(n):].strip()) for l in text.splitlines())
     return [] if "\n- Task: " not in text else [name for name, n in need if not have(n)]
 
 
 def pr_gate(g, slug):
-    """DEL-19: the PR gate."""
     str(g.load(slug).get("flow", {}).get("review", "")).startswith("skipped") and g.no("the review step was skipped (DEL-19.2). Fix: run flow.py %s review and record it." % slug)
     miss = parts_missing(g.read(g.goal_file(slug)))
     miss and g.no("the goal file lacks %s (DEL-19.1). Fix: restore those lines in .loop/goals/%s.md." % (", ".join(miss), slug))
 
 
 def freeze_check(g, args, lines):
-    """DEL-19.1, DEL-23.1, DOC-27.5: what a goal needs to freeze."""
     root, task = g.root(), getattr(args, "task", None)
     if task is None:  # goal.py adopt: the goal file already says
         text = read(g.goal_file(args.slug))
@@ -247,7 +251,7 @@ def freeze_check(g, args, lines):
 def can_start(root, name):
     text = briefs(root, "task").get(name)
     text is None and refuse("BRF-5", "task %s has no brief" % name, "write and freeze .loop/tasks/%s.md" % name)
-    frozen(text, root) == ("", "", "") and refuse("BRF-4", "task %s changed after the freeze" % name, "restore the words, or freeze a replacing task")
+    tampered(text, root) and refuse("BRF-4", "task %s changed after the freeze" % name, "restore the words, or freeze a replacing task")
     frozen(text, root) or refuse("BRF-3", "task %s is not frozen" % name, "brief.py freeze task %s --owner-record ID" % name)
     states = {n: s for n, s, *_ in tasks(root)}
     wait = [d for d in names(field(text, "Needs")) if states.get(d) != "done"]
@@ -256,6 +260,7 @@ def can_start(root, name):
 
 def finish(root, name, met):
     text = briefs(root, "task").get(name) or refuse("BRF-3", "no task %s" % name, "check the name")
+    text = sealed(text)
     lines_ = DONE.findall(re.split(r"^## ", text.split("## Done when", 1)[-1].split("\n", 1)[-1], 1, re.M)[0]) if "## Done when" in text else []
     unmet = [str(i) for i in range(1, len(lines_) + 1) if str(i) not in names(met)]
     open_ = [r.get("slug") for r in runs(root) if r.get("task") == name and not merged(r)]
@@ -268,50 +273,47 @@ def finish(root, name, met):
 
 def release_tasks(root, version):
     text = read(path_of(root, "release", version))
-    return [x for x in re.findall(r"^\d+\. (\S+)", text.split("## Tasks", 1)[-1], re.M)] if frozen(text) else None
+    tampered(text) and refuse("BRF-4", "release brief %s changed after the freeze" % version, "restore the words, or freeze a replacing brief")
+    return re.findall(r"^\d+\. (\S+)", sealed(text).split("## Tasks", 1)[-1], re.M) if frozen(text) else None
 
 
 def gate_merge(root, task):
-    """DOC-28.3: the merge gate."""
     text = briefs(root, "task").get(task)
     if text is None or kind_of(text) == "fix":
         return
     if not any(task in (release_tasks(root, v) or []) for v in briefs(root, "release")):
-        refuse("BRF-6", "feature task %s is named by no frozen release brief" % task, "it builds and waits; name it in the release brief, freeze that, then merge")
+        refuse("BRF-6", "feature task %s is named by no frozen release brief" % task, "name it in a frozen release brief, then merge")
 
 
 def gate_bump(root, kind, version):
     """DOC-28.2: major or minor needs a frozen brief."""
     if kind == "major":
         rows = [k for x in known_red(root) for k in x[2]]
-        rows and refuse("BRF-6", "a major needs an empty known-red list; it holds %s" % ", ".join(rows), "fix each row; clearing a row is the only path, there is no waiver")
+        rows and refuse("BRF-6", "a major needs an empty known-red list; it holds %s" % ", ".join(rows), "fix each row (no waiver)")
     if kind in ("major", "minor") and release_tasks(root, version) is None:
         refuse("BRF-3", "no frozen release brief for %s" % version, "brief.py freeze release %s --owner-record ID" % version)
 
 
 def gate_cut(root, version):
-    """DOC-28.4: every named task is done."""
     named = release_tasks(root, version)
     named is None and refuse("BRF-3", "no frozen release brief for %s" % version, "freeze it first")
     states = {n: s for n, s, *_ in tasks(root)}
     open_ = [t for t in named if states.get(t) != "done"]
-    open_ and refuse("BRF-5", "tasks not done: %s" % ", ".join(open_), "finish them (brief.py finish NAME --met ..) before the cut")
+    open_ and refuse("BRF-5", "tasks not done: %s" % ", ".join(open_), "finish them first (brief.py finish)")
 
 
 def gate(root, kind, version):
-    """The bump hook (DOC-28)."""
     if kind == "patch":
         all_ = briefs(root, "release")
         shipped = {t for v, x in all_.items() if "## Results" in x for t in release_tasks(root, v) or []}
         loose = [n for n, x in briefs(root, "task").items() if kind_of(x) != "fix" and n not in shipped and any(r.get("task") == n and merged(r) for r in runs(root))]
-        loose and refuse("BRF-6", "a patch cannot ship feature task %s" % ", ".join(loose), "cut it as a minor named in a frozen release brief, or leave it unmerged")
+        loose and refuse("BRF-6", "a patch cannot ship feature task %s" % ", ".join(loose), "cut it as a minor in a frozen brief, or leave it unmerged")
     elif kind == "minor":
         gate_bump(root, kind, version)
         gate_cut(root, version)
 
 
 def held(root, state):
-    """DOC-28.3: the brief holding this task."""
     task, text = state.get("task") or "", briefs(root, "task").get(state.get("task") or "")
     if text is None or kind_of(text) == "fix":
         return ""
@@ -322,7 +324,6 @@ COLS27 = "Feature,Promise,Success metrics,Today,Reference,Topic,Adoption,Confide
 
 
 def rebuild(root, rel):
-    """DOC-27.4: page-rebuild NOTEs."""
     wiki = os.path.join(root, rel)
     pages = {n[:-3]: read(os.path.join(wiki, n)) for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
     pages["README"], out = read(os.path.join(root, "README.md")), []
@@ -346,7 +347,6 @@ def rebuild(root, rel):
 
 
 def known_red(root):
-    """DOC-28.1: known-red rows (o714)."""
     rows = [x.split("\t")[0] for x in read(os.path.join(root, ".loop", "regression-known.tsv")).splitlines() if x.strip() and x[:1] != "#"]
     return [("known-red", "row %s is on the known-red list; clearing a row is the only path" % r, [r]) for r in rows]
 
@@ -356,13 +356,11 @@ def notes(root, version):
 
 
 def files(root, version):
-    """The release brief path, if any."""
     path = path_of(root, "release", version)
     return [os.path.relpath(path, root)] * os.path.exists(path)
 
 
 def result(root, version):
-    """DOC-28.5: each task's merged goals, once."""
     path = path_of(root, "release", version)
     text = read(path)
     if "## Results" in text or release_tasks(root, version) is None:
