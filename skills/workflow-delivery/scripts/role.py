@@ -212,12 +212,17 @@ import lanekit  # noqa: E402
 from lanekit import FILES, REG, generated  # noqa: E402
 
 
+def passing(runs, slug, step):
+    head = git_out("rev-parse", "HEAD")
+    ok, src = lanekit.lane_ok(runs, slug, step, head)
+    src = src if ok == head else step
+    last = lanekit.read_json(lanekit.lane_base(runs, slug, src) + ".last") or {}
+    return src, last if src == step or (last.get("head"), last.get("state")) == (ok, "pass") else {}
+
+
 def lane_note(runs, slug, step):
     """'N pass; M not runnable here' from the step's lane line (GRD-11), or ''."""
-    try:
-        line = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, step)))).get("line", "")
-    except (OSError, ValueError):
-        return ""
+    line = passing(runs, slug, step)[1].get("line", "")
     found = re.search(r"\d+ pass; \d+ not runnable here", line)
     return found.group(0) if found else ""
 
@@ -229,15 +234,12 @@ def need_lane(runs, slug, reply, step="qa"):
     if found and found[-1].lower() == "failed" and not guards.pending_items(text):
         return None
     head = git_out("rev-parse", "HEAD")
-    try:
-        ok = open(os.path.join(runs, "%s.%s-lane.ok" % (slug, step))).read().strip()
-    except OSError:
-        ok = ""
+    ok, src = lanekit.lane_ok(runs, slug, step, head)
     fix = "python3 %s lane %s %s" % (os.path.join(HERE, "role.py"), slug, step)
     if not ok:
         return ("the %s lane has not passed on %s" % (step, head[:12]), fix, "LANE_MISSING")
     if ok != head:
-        return ("HEAD moved since the %s lane passed (lane on %s, HEAD %s)" % (step, ok[:12], head[:12]),
+        return ("HEAD moved since the %s lane passed (lane on %s, HEAD %s)" % (src, ok[:12], head[:12]),
                 fix + " (reruns only the rows the change can affect)",
                 "HEAD_MOVED")
     return over_caps() if step == "qa" else None
@@ -309,12 +311,14 @@ def cap_rows(rows, lines=300, chars=30000):
 
 def lane_part(slug):
     common = git_out("rev-parse", "--git-common-dir")
-    base = os.path.join(os.path.abspath(common), "loop", "runs", "%s.pr-lane" % slug) if common and slug else ""
+    runs = os.path.join(os.path.abspath(common), "loop", "runs") if common and slug else ""
+    src, last = passing(runs, slug, "pr")
     try:
-        with open(base + ".last") as handle:
+        with open(lanekit.lane_base(runs, slug, src) + ".txt") as handle:
             import private
-            line = private.plain(re.sub(r"; log: \S+", "", str(json.load(handle).get("line", "")).split("\n")[0]))
-        with open(base + ".txt") as handle:
+            line = private.plain(re.sub(r"; log: \S+", "", last.get("line", "").split("\n")[0]))
+            if src != "pr":
+                line += " (%s lane ended %s)" % (src, str(datetime.datetime.fromtimestamp(last.get("ended", 0), datetime.timezone.utc))[:16])
             rows = [private.plain(text.rstrip()) for text in handle if text.startswith(("SELECTED ", "FULL (", "UNMAPPED "))]
     except (OSError, ValueError):
         return ""
@@ -335,6 +339,7 @@ NO_PUSH = "REFUSED: the bookkeeping commit did not land, so nothing was pushed (
 
 
 def record(state, base):
+    part = lane_part(state.get("slug", ""))
     top = git_out("rev-parse", "--show-toplevel")
     if top:
         issues(top)
@@ -367,7 +372,7 @@ def record(state, base):
                 os.remove(lock)
             undo(top, changed)
             sys.exit(NO_PUSH)
-    state["pr_lane"] = lane_part(state.get("slug", ""))
+    state["pr_lane"] = part
     head = git_out("rev-parse", "HEAD")
     state["pr_head"] = head
     state["pr_base"] = git_out("merge-base", head, "origin/" + base) or git_out("rev-parse", "origin/" + base)
