@@ -356,13 +356,15 @@ Syntax, what each prints, and each refusal with its message and exit code.
 
 ## The principles
 
-The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principle 6 reads UNREAD until its Attention group exists.
+The one list the README, the Principles page and health's roll-up read (DOC-23, HLT-2): `| # | Principle | Sentence | Groups |`. Principle 8 reads UNREAD until its Attention group exists.
 
 | # | Principle | Sentence | Groups |
 |---|---|---|---|
 | 1 | Guided: documentation-driven and standard | The principles and requirements are my guardrails and the only part I write, and each one follows a named industry standard, adopted wherever one can run. The agents implement the code, tests and pages from them, so I never deal with implementation details. Nothing is built that a Reviewed requirement doesn't ask for, and tests come from the requirements. | traceability,references |
 | 2 | Sensed: enforced, verified and honest | Every principle and requirement is enforced by the loop's own machinery, and everything the loop says is verified. Tests, health, CI, the merge queue, the routines and a fresh-context reviewer check each one. Every claim carries its evidence and clock time. Every ETA is a commitment, and a miss stays recorded with its cause. Whatever falls short becomes tracked work until it is fixed. | requirements,tests,controls,consistency,docs,freshness,hygiene,honesty |
-| 3 | Fast, cheap and small | Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits. | performance,size |
-| 4 | Private and guarded | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
-| 5 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent. Any repo adopts the template cleanly, plugs into other systems through adapters, and survives a failure without losing work. | adoption |
-| 6 | Autonomous and human-friendly | It runs by itself across machines and stops for me only when a decision is truly mine. At any moment I can see where everything stands, on one board and in one check-in layout, in plain words that read on a phone. When it needs me, it asks one clear question with a recommendation. | attention |
+| 3 | Fast | Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits. | performance |
+| 4 | Cheap | Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits. | none |
+| 5 | Small | Every change runs on one clock from my ask to main, with a limit and a token budget for each step, and sizes stay inside their limits. | size |
+| 6 | Private and guarded | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
+| 7 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent. Any repo adopts the template cleanly, plugs into other systems through adapters, and survives a failure without losing work. | adoption |
+| 8 | Autonomous and human-friendly | It runs by itself across machines and stops for me only when a decision is truly mine. At any moment I can see where everything stands, on one board and in one check-in layout, in plain words that read on a phone. When it needs me, it asks one clear question with a recommendation. | attention |

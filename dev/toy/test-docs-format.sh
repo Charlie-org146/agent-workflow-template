@@ -196,8 +196,8 @@ os.makedirs("docs/wiki/flows", exist_ok=True); open("docs/wiki/flows/DEL-1.svg",
 PY
 git add -A; git commit -qm "principles README"
 check | grep -q "^FORMAT README" && bad "good principles README: $(check | grep '^FORMAT README')" || ok "DOC-23 a README of the eight principles passes"
-edit README.md "## 3. Fast, cheap and small" "## 3. Fast, cheap and small (enforce score 3/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a principle heading with a score after its name fails" || bad "readme score heading"; reset
-edit README.md "## 3. Fast, cheap and small" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast, cheap and small'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
+edit README.md "## 3. Fast" "## 3. Fast (enforce score 3/5)"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast'" && ok "DOC-23 a principle heading with a score after its name fails" || bad "readme score heading"; reset
+edit README.md "## 3. Fast" "## 3. Something else"; has "^FORMAT README:[0-9]*: Principles: DOC-23 section '3. Fast'" && ok "DOC-23 a README section off the list fails" || bad "readme section"; reset
 printf '\n## How to use\n\nmore\n' >> README.md; has "^FORMAT README:[0-9]*: Principles: DOC-23 no section after the principles" && ok "DOC-23 a ninth README section fails" || bad "readme extra"; reset
 edit README.md "tests come from the requirements" "tests come from the requirements, quietly"; has "^FORMAT README:[0-9]*: Principles: DOC-23 its sentence and a table" && ok "DOC-23 a principle sentence off by a word fails" || bad "readme sentence"; reset
 edit README.md "semantic-release ([source](https://x.y)): adapted" ""; has "^FORMAT README:[0-9]*: Principles: DOC-23 a Follows cell" && ok "DOC-23 a requirement row with an empty Follows cell fails" || bad "readme empty follows"; reset

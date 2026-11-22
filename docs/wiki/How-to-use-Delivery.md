@@ -129,7 +129,7 @@ Every change runs on one clock, from my ask to main. The normal goal and the sma
 Rules that hold across the clock:
 
 - A merge never makes another ready pull request re-run; the queue tests the merged result.
-- A step that passes its limit says so at once. A small fix that passes one becomes a normal goal. A normal goal that reaches its ETA finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. A missed limit or ETA stays on the board as missed, with its cause (principle 8).
+- A step that passes its limit says so at once. A small fix that passes one becomes a normal goal. A normal goal that reaches its ETA finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. A missed limit or ETA stays on the board as missed, with its cause (principle 2).
 - Tests the change does not reach go to the scheduled full suite, which names how many; a change to a goal's own record files reaches fewer than 20 tests; test count and suite time stay capped.
 - CI runs or minutes per day past a set limit raise one alarm.
 - Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
@@ -144,6 +144,7 @@ Each requirement and how it is delivered:
 - DEL-19: The goal loop: one change, one goal, one fixed format
 - DEL-21: Adopt a standard tool by default (v2.0 planned). Each requirement's Follows cell says whether it adopts the standard tool or adapts the proven design with a one-line reason. Example: a requirement with no reference is replaced by its industry-standard counterpart or cut. Also (was DOC-24): Every requirement names what it follows (v2.0 planned). The README's principle tables show each requirement's Follows cell, its tool or standard, a link to its source and its verdict, for example adapted from GitHub CODEOWNERS for DOC-2. Example: a requirement row with an empty Follows cell fails the docs check.
 - DEL-23: Tasks: a brief I write once and freeze, run as goals
+- DEL-28: Every step has a token budget: a step far past its budget (twice its measured usual) is flagged, and waiting is done in a script.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"
