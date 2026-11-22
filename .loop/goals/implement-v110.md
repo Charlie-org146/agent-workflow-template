@@ -17,6 +17,17 @@ Frozen. A wrong done line needs a new goal.
 7. Given the package, then DOC-28's brief logic and DEL-23's task logic live in skills/workflow-release/scripts/brief.py (one new file, o718/o719), the rest in existing scripts; every script stays under 20,480 bytes (19,000 warns); the package stays within MAX_FILES; and test-release-gate.py's "no file is added to the shipped package" becomes "the shipped package stays within MAX_FILES", keeping a control where one file over fails (o719).
 8. Given the regression list, then net rows rise by at most 4, one per feature (DOC-27, DEL-19, DEL-23, DOC-28), new cases fold into existing scripts, and no existing test turns red.
 
+## Notes
+
+- o710 items 1 to 3: allow iso.org, basecamp.com, peps.python.org and scrumguides.org as link origins; change "the two tests" to "both tests"; the milestone is "v1.1.0 dry run", which DOC-27 and DOC-28 carry.
+- Plan by hand only if autoplan refuses (o713, o716, o721), with all three reviews in full and DEPTH: full. Autoplan did not refuse for this goal.
+- o714 (the narrow reading): a major with a non-empty known-red list is refused, with no waiver.
+- o718: MAX_FILES is 200 (the grd21-cap-lift goal); this goal merges after it, because brief.py is file 101.
+- o719: the release-gate check "no file is added to the shipped package" becomes "the shipped package stays within MAX_FILES", keeping a control where one file over fails.
+- o736: the implementation may add up to 4 regression rows, one per feature.
+- TD702 Q2: report-only, as done line 6 states.
+- Byte room and trims are measured in `.loop/goals/implement-v110.bytes.md`.
+
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
