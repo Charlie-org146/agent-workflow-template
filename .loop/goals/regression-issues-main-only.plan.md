@@ -17,3 +17,9 @@ Checked against the code: the row step lives in `ROUTINE`-prefixed `WORKFLOW` te
 
 ## Out of scope
 The `summary` job (it has `issues: write` but only writes a run summary with an empty token); `regression.py run` locally; any other workflow.
+
+## Changes from the independent review (gated plan)
+- The shell block must survive GitHub's default `bash -e`: `def=$(gh api repos/$GITHUB_REPOSITORY --jq .default_branch 2>/dev/null) || def=`; compare only with quoted `[ "$GITHUB_REF" = "refs/heads/$def" ]` and require `[ -n "$def" ]` (no case, no `[[ ==` with glob characters). Use `$GITHUB_REPOSITORY`, not `{owner}/{repo}`, for this one read. The toy runs the block under `bash -e` and its fake `gh` fails on any `api` call carrying `-X` or `-f` (the gate treats every `gh api` as a read, so that, not the wrapper, is what proves "no api write").
+- The changed `python3 -` line also breaks four more extractors, each updated to `python3 -(?: \S+)? <<'PY'`: dev/toy/test-ci-summary.py:15, dev/toy/test-regression.sh:135 and :264, and the plan's own dev/toy/test-regression-issues.py:95/:156. dev/toy/test-ci-target.sh:30-39 runs the whole step with GITHUB_REF unset: it gets GITHUB_REF and a fake `gh` answering the default-branch read, so its row-ran assertions and any calls.log check stay as they were. These toy files are in dev/toy (in Touches).
+- Byte budget: the new block is about 250-350 bytes; step 1 names the cuts: the Windows-only `except AttributeError: taskkill` branch in run() (dead on ubuntu CI) and, if still short, shorter REFUSED/NOTE wording, after grepping that no toy asserts the text removed. Measured in LF bytes against main's 18,980.
+- The defect-row step (5) turns a criterion row (GRD-5) into the #5773 defect row: flagged to operation-pc as the one decision for top.
