@@ -6,7 +6,7 @@
 # reads: skills/workflow-docs/scripts/deployments.py skills/workflow-docs/scripts/counting.py
 # reads: skills/workflow-regression/scripts/runs.py
 # reads: skills/ docs/ README.md .loop/regression.tsv .loop/regression-runs.tsv .loop/regression-issues.tsv
-# reads: .loop/regression-known.tsv .loop/docs.tsv .loop/config.json
+# reads: .loop/regression-known.tsv .loop/docs.tsv .loop/config.json scripts/public-origins.json
 # Prove the defect-tests goal's done lines, and guard the known defects. usage: test-defect.sh [CASE]
 # With a CASE it exits non-zero if that case fails (regression rows call it so); with none it prints one PASS per case.
 set -u
@@ -46,6 +46,7 @@ toy() { # a toy repo with the loop set up, the stand-in flow and the fake gh
 }
 real() { # a git copy of what the repo-wide checks read (skills, docs, README, the loop's tables); never the repo itself
   mkdir -p "$d/real/.loop" && cp -R "$here/skills" "$here/docs" "$here/README.md" "$d/real/" \
+    && { [ ! -f "$here/scripts/public-origins.json" ] || { mkdir -p "$d/real/scripts" && cp "$here/scripts/public-origins.json" "$d/real/scripts/"; }; } \
     && cp "$here/.loop/regression.tsv" "$here/.loop/regression-runs.tsv" "$here/.loop/regression-issues.tsv" \
       "$here/.loop/regression-known.tsv" "$here/.loop/docs.tsv" "$here/.loop/routines.tsv" "$here/.loop/config.json" "$d/real/.loop/" \
     && cp -R "$here/.loop/goals" "$d/real/.loop/" && { [ ! -d "$here/.github" ] || cp -R "$here/.github" "$d/real/"; } \
