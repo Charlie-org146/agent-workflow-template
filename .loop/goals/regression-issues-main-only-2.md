@@ -16,3 +16,17 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. In GitHub's Actions tab, start the `regression` workflow from the default branch (the nightly does the same), with target `land`.
+   Expect: the "Run the rows" step log has no `DRY RUN` line, and a failing row still gets its issue opened or commented on.
+2. Only after step 1, and never on a branch you care about: read the workflow file's "Run the rows" step on the branch you would dispatch from.
+   Expect: it holds a `live=` line, a `gh api repos/$GITHUB_REPOSITORY --jq .default_branch` read, and `python3 - $live <<'PY'`; on any non-default ref the log prints `DRY RUN: <ref> is not the default branch (...), nothing is written`.
+
+## PR notes
+
+What this changes: the generated regression workflow (`actions.py`, re-rendered into `.github/workflows/regression.yml`, never edited by hand) now reads the repository's default branch at run time (`gh api repos/$GITHUB_REPOSITORY --jq .default_branch`, one read per shard) and passes `--live` to the issue script only when `$GITHUB_REF` is exactly `refs/heads/<default>`. Any other ref (a feature branch, a tag, a pull ref), an empty read or a failed read gets no `--live`, prints one `DRY RUN` line, and writes nothing, so a dispatch on a branch can no longer open, comment on or close main's regression issues (fixes #5773, SAFETY). Label creation sits inside the dry run because it goes through the same `gh()` wrapper.
+
+Rows: +1, the defect row `defect-5773-issues-default-branch` (seen failing with the gate broken to always set `--live`); top granted +1 under TD867 and this goal's done line 4 says so (the first goal's net-0 line was re-frozen here under TD869). Every other row is net 0: `issues-live-only-ci` stays a criterion row (GRD-5); the toy updates fold into existing toys (test-regression-issues.py holds the new gate cases; test-ci-summary.py, test-regression.sh at two places, test-row-output.py and test-ci-target.sh follow the changed `python3 - $live` line).
+
+Stated limits: a fail-closed unreadable default branch stops nightly filing with one `DRY RUN` log line only; a branch can edit its own workflow file, so the guard protects against mistakes, not intent; whether the first real nightly (schedule run) reads the default branch and sets `--live` is unproven until it runs after the merge; actions.py has no byte slack (18,940 LF bytes, main 18,980); `gh()` still treats every `gh api` as a read, so the toy's fake gh fails on `api -X/-f`; a dry run on a branch still counts `filed` and, in cleanup mode, sleeps its pace per would-be write (follow-up, nothing is written). The new toy fails rather than skips when bash is missing. To fit the bytes the timeout `ps` diagnostic in the row runner was dropped (no row asserted it); the Windows taskkill branch stays.
+
+Depth: idea and plan condensed (TD867 override): one independent reviewer, two red-team gate runs (the first recorded four breaks, fixed in the plan; the second, NO BREAKS), no gstack.
