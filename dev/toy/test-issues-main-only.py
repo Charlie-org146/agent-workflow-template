@@ -2,12 +2,13 @@
 # reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/tests.py
 """issue-gate-main: the written workflow's issue block writes issues only when the run is on main.
 
-The block of the generated workflow is cut out and run against a fake gh on PATH that logs every call. The argument its
-`python3 -` line gets is the one GitHub's expression gives for the ref: --live on refs/heads/main, the word false on any other
+The block of the generated workflow is cut out and run against a fake gh on PATH that logs every call. The value of L (the
+step's one expression, passed on its `python3 -` line) is the one GitHub's expression gives for the ref: --live on refs/heads/main, the word false on any other
 ref. On main the failing row's issue is written; on a branch the row still runs and reports and the log holds no write call.
 usage: test-issues-main-only.py; LOOP_TOY_GATE_OFF=1 drops the gate from the argument, as a red proof."""
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,14 +29,33 @@ def check(ok, text):
         failed.append(text)
 
 
-found = re.search(r"python3 - (.*?) <<'PY'\n(.*?)\n\s+PY\n", actions.render("17 */4 * * *"), re.S)
-gate, source = found.group(1), "\n".join(line[10:] for line in found.group(2).split("\n"))
+text = actions.render("17 */4 * * *")
+found = re.search(r"python3 - (\$L) <<'PY'\n(.*?)\n\s+PY\n", text, re.S)
+check(bool(found), "the issue block's command line passes the step's L variable, so its run text holds no expression")
+source = "\n".join(line[10:] for line in found.group(2).split("\n")) if found else ""
+env_line = re.search(r"^ +L: (.*)$", text, re.M)
+gate = env_line.group(1) if env_line else ""
 parts = re.fullmatch(r"\$\{\{ github\.ref == '([^']+)' && '([^']+)' \}\}", gate)
-check(bool(parts) and parts.groups() == ("refs/heads/main", "--live"), "the issue block's argument is --live only when github.ref is refs/heads/main (%s)" % gate)
+check(bool(parts) and parts.groups() == ("refs/heads/main", "--live"), "L is --live only when github.ref is refs/heads/main (%s)" % gate)
+step = text[text.index("here=$(mktemp -d)"):]
+step = step[:step.index("\n      - name:")]
+check("${{" not in step and len(step) > 0, "the step's run text holds no ${{ expression (it is %d characters; GitHub parses a run text holding one as one expression of at most 21000)" % len(step))
+check(all(len(x) <= 21000 for x in re.findall(r"\$\{\{.*?\}\}", text)), "every expression in the written workflow is short")
+loaded = None
+try:
+    import yaml
+    loaded = yaml.safe_load(text)
+except ImportError:
+    done = subprocess.run(["ruby", "-ryaml", "-e", "puts YAML.load(STDIN.read).keys.inspect"], input=text, capture_output=True, text=True) if shutil.which("ruby") else None
+    loaded = done is not None and done.returncode == 0 and "jobs" in done.stdout
+    if done is None:
+        print("NOTE: neither PyYAML nor ruby is here, so the file was not loaded as YAML")
+        loaded = True
+check(bool(loaded) and (not isinstance(loaded, dict) or "jobs" in loaded), "the written workflow loads as YAML")
 
 
 def argument(ref):
-    """What GitHub puts in the command line for this ref: the expression's value, false when the comparison is false."""
+    """What GitHub puts in L for this ref: the expression's value, false when the comparison is false."""
     if os.environ.get("LOOP_TOY_GATE_OFF"):
         return "--live"
     return gate if not parts else parts.group(2) if ref == parts.group(1) else "false"

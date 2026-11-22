@@ -92,8 +92,9 @@ def issue(number, row, skipped=False):
 def block_source():
     """(does the step pass --live, the CI block of the written workflow cut out the way the bash toys do)."""
     text = actions.render("17 */4 * * *")
-    found = re.search(r"python3 - (--live |\$\{\{ github\.ref == 'refs/heads/main' && '--live' \}\} )<<'PY'\n(.*?)\n\s+PY\n", text, re.S)
-    return "--live" in found.group(1) and "refs/heads/main" in found.group(1), NL.join(line[10:] for line in found.group(2).split(NL))
+    found = re.search(r"python3 - (\$L) <<'PY'\n(.*?)\n\s+PY\n", text, re.S)
+    gated = "L: ${{ github.ref == 'refs/heads/main' && '--live' }}" in text
+    return bool(found) and gated, NL.join(line[10:] for line in found.group(2).split(NL))
 
 
 def in_repo(gh, argv, env, action):

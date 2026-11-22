@@ -63,7 +63,7 @@ _s.run, _s.Popen = _fake, _popen
 """
 with tempfile.TemporaryDirectory() as tmp:
     text = actions.render("17 */4 * * *")
-    block = re.split(r"python3 - (?:--live|\$\{\{ github\.ref == 'refs/heads/main' && '--live' \}\}) <<'PY'\n", text, 1)[1].split("\n          PY\n", 1)[0]
+    block = re.split(r"python3 - \$L <<'PY'\n", text, 1)[1].split("\n          PY\n", 1)[0]
     block = "\n".join(line[10:] for line in block.split("\n"))
     marker = "sys.exit(1 if red"
     assert marker in block
