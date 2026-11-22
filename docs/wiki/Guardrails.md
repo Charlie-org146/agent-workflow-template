@@ -58,7 +58,7 @@ None
 - GRD-12: moved to OPS-16
 - GRD-13: moved to DEL-17
 - GRD-14: moved to DEL-17
-- GRD-15: moved to DEL-17
+- GRD-15: moved to DEL-28
 - GRD-16: moved to GRD-6
 - GRD-17: moved to DEL-17
 - GRD-18: moved to MCH-1
@@ -68,7 +68,7 @@ None
 - GRD-22: moved to GRD-20
 - GRD-3: moved to DEL-9
 - GRD-7: moved to DEL-17
-- GRD-8: moved to DEL-17
+- GRD-8: moved to DEL-28
 - GRD-9: moved to HLT-2
 
 ### GRD-1

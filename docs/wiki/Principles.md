@@ -61,8 +61,9 @@ Every change runs on one clock from my ask to main, with a limit and a token bud
 
 | Requirement | Summary | Follows | Feature | Adoption | Confidence |
 |---|---|---|---|---|---|
+| [DEL-28 Every step has a token budget](Delivery) ([DEL-28 flow](https://github.com/Charlie-org146/agent-workflow-template/blob/main/docs/wiki/flows/DEL-28.svg)) | **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28] | - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue): adopted<br>- [DORA lead time](https://dora.dev/guides/dora-metrics-four-keys): adapted | Delivery (Build loop), Regression (Quality), Release (Other), Guardrails (Quality) | 50% | not measured: no data yet |
 
-Adoption: not measured: no references recorded yet.
+Adoption: 50% (the average of this principle's rows).
 
 ## 5. Small
 
