@@ -239,6 +239,9 @@ def counts(root):
     return counting.counts(root, wiki_dir(root), read_map(root), config(root).get("criteria"))
 
 
+STRICT = False
+
+
 def contract(root):
     if not config(root).get("criteria"):
         return []
@@ -250,7 +253,8 @@ def contract(root):
             found.append(("FORMAT", page, "DOC-1 a guide page holds no requirement or Review line (got %s). Fix: remove "
                           "the line %s and use the feature page format, or move them to a feature page"
                           % (guarded(root, page), pageformat.GUIDE)))
-    return found + criteria.contract(root, names, {}) + render.front(root, names) + deployments.howto(root, wiki_dir(root), names)
+    import milestones
+    return found + criteria.contract(root, names, {}) + render.front(root, names) + deployments.howto(root, wiki_dir(root), names) + milestones.new_form(root, STRICT)
 
 
 def cmd_criteria(args):
@@ -275,6 +279,8 @@ def cmd_criteria(args):
 
 
 def cmd_check(args):
+    global STRICT
+    STRICT = bool(args.strict)
     root = top()
     if not read_map(root):
         print("NO PAGES: run add first")

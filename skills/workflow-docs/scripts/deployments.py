@@ -86,7 +86,7 @@ def deployments(page, name, lines, page_cols=PAGE_COLS, delivery_cols=DELIVERY_C
     return out
 
 
-# The page rules of criteria.py, moved here unchanged; criteria.py imports them back.
+# The page rules of criteria.py (imported back).
 CRITERIA_MAX_DEFAULT = 10
 SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")
 
@@ -245,9 +245,8 @@ def criteria_max(root):
     return value
 
 
-# --- the owner's recorded words (criteria.py review|unreview --owner-record ID), written by the operation session, never a worker:
-# it counts for its IDs or pages once per command (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record (MON-11,
-# o118) counts for any page, any number of times, for unreview only (never for a review).
+# --- owner words (criteria.py review|unreview --owner-record ID): written by the operation session, never a worker; once per command
+# (reviews.tsv logs "record ID: TEXT"); the standing full-auto-rule record counts for unreview only.
 
 def safety(text):
     """The safety class (auto.CLASSES, read from workflow-monitoring, never copied) the text falls in; 'unreadable' when it can't be read."""
@@ -304,7 +303,7 @@ def link_of(text, listed=""):
     return found if found is None or found.startswith(("url:", "mcp:")) else "url:" + found
 
 
-from prdcopy import link_page  # noqa: E402,F401  (moved: the docs check of a page that has a source reads its copy)
+from prdcopy import link_page  # noqa: E402,F401
 
 
 UNREAD = set()  # link-form pages unread in this run
@@ -378,3 +377,18 @@ def howto(root, folder, features):
         if not linked(root, page, feature) and "How to use: [%s](%s)" % (name, name) not in feature.splitlines():
             found.append(("HOWTO", page, "DOC-18 the page doesn't link its How-to-use page. Fix: add the line 'How to use: [%s](%s)' under its title" % (name, name)))
     return found + milestones.alone(root, folder, render.repo_of(root))
+
+
+def scores(root):
+    import counting
+    import criteria as cr
+    import sections as sc
+    rel, out, rows = cr.folder_of(root), [], os.path.join(root, ".loop", "regression.tsv")
+    tests = [x.split("\t") for x in open(rows, encoding="utf-8").read().splitlines()[1:]] if os.path.exists(rows) else []
+    runs = sc.latest_full(counting.repo_slug(root), [t[0] for t in tests])
+    for n in ("README.md", rel + "/Home.md", rel + "/Principles.md"):
+        for ln in open(os.path.join(root, n), encoding="utf-8").read().splitlines() if os.path.exists(os.path.join(root, n)) else []:
+            c = [x.strip() for x in sc.SPLIT.split(ln[1:-1])] if ln.startswith("| [") else []
+            if len(c) == 6 and re.fullmatch(r"\d+% \(\d+ of \d+\)", c[5]) and (not runs or sc.confidence(c[0], tests, runs) != c[5]):
+                out.append(("FORMAT", n, "DOC-27 27.3: %s: %s" % (c[0][:20], "typed score differs from health's latest run" if runs else "no health run to compare")))
+    return out

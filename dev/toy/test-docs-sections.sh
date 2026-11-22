@@ -187,6 +187,50 @@ principles("X-1", "X-1")
 want("a feature listed under two principles fails", "2 principles" in str(s.principled(pd, "X-1")))
 principles("Y-1", "Y-2")
 want("a feature listed under no principle fails", "0 principles" in str(s.principled(pd, "X-1")))
+# DOC-27.1 and 27.3: whole-page shape, a text change with no new revision row, a typed score against health's latest run
+import milestones, deployments, counting  # noqa: E402
+check_ = lambda name, ok: want(name, bool(ok))
+check_("a change outside Revisions with Revisions untouched is a change with no new row", milestones.unrowed("## Problem\ntext\n## Revisions\nr1\n", "## Problem\nnew\n## Revisions\nr1\n"))
+check_("a change with a new Revisions row is fine", not milestones.unrowed("## Problem\ntext\n## Revisions\nr1\n", "## Problem\nnew\n## Revisions\nr1\nr2\n"))
+check_("an unchanged page is fine", not milestones.unrowed("## Problem\ntext\n## Revisions\nr1\n", "## Problem\ntext\n## Revisions\nr1\n"))
+import subprocess as sp
+rt = tempfile.mkdtemp()
+g = lambda *a: sp.run(["git", "-c", "user.name=t", "-c", "user.email=t@t"] + list(a), cwd=rt, capture_output=True, text=True)
+g("init", "-q", "-b", "main")
+os.makedirs(os.path.join(rt, "docs", "wiki")); os.makedirs(os.path.join(rt, ".loop"))
+open(os.path.join(rt, ".loop", "config.json"), "w").write('{"criteria": true, "base": "main"}\n')
+PAGE = "<!-- workflow-docs -->\n# P\n\n## Problem\n\nx\n\n## Requirements\n\n## Non-goals\n\n## Success metrics\n\n## Reference\n\n## Revisions\n\n| r1 |\n\n## Tests\n"
+open(os.path.join(rt, "docs", "wiki", "P.md"), "w").write(PAGE)
+g("add", "-A"); g("commit", "-qm", "base"); g("update-ref", "refs/remotes/origin/main", "HEAD")
+counting.repo_slug = lambda r: "o/r"
+check_("a whole page of the seven sections passes", milestones.new_form(rt) == [])
+open(os.path.join(rt, "docs", "wiki", "P.md"), "w").write(PAGE.replace("## Non-goals\n\n", ""))
+check_("a whole page missing a section fails", any("sections are not" in x[2] for x in milestones.new_form(rt)))
+open(os.path.join(rt, "docs", "wiki", "P.md"), "w").write(PAGE.replace("x\n", "changed\n"))
+check_("a page whose text changed with no new revision row fails", any("no new revision row" in x[2] for x in milestones.new_form(rt)))
+open(os.path.join(rt, "docs", "wiki", "P.md"), "w").write(PAGE.replace("x\n", "changed\n").replace("| r1 |\n", "| r1 |\n| r2 |\n"))
+check_("the same change with a new revision row passes", milestones.new_form(rt) == [])
+FEATP = "- X-1: **Unreviewed** A feature\n  - ### Problem\n  - old\n  - ### Revisions\n  - r1\n"
+open(os.path.join(rt, "docs", "wiki", "Q.md"), "w").write(FEATP)
+g("add", "-A"); g("commit", "-qm", "q"); g("update-ref", "refs/remotes/origin/main", "HEAD")
+open(os.path.join(rt, "docs", "wiki", "Q.md"), "w").write(FEATP.replace("old", "new"))
+check_("a feature whose text changed with no new revision row fails", any("Q:X-1" in x[1] and "no new revision row" in x[2] for x in milestones.new_form(rt)))
+open(os.path.join(rt, "docs", "wiki", "Q.md"), "w").write(FEATP.replace("old", "new").replace("  - r1\n", "  - r1\n  - r2\n"))
+check_("a feature changed with a new revision row passes", not [x for x in milestones.new_form(rt) if x[1].startswith("Q")])
+import sections  # noqa: E402
+ROW = "| [XX-1 A](u) | s | f | Docs | 50%% | %s |\n"
+open(os.path.join(rt, "README.md"), "w").write("|a|\n" + ROW % "100% (1 of 1)")
+tests = [["t1", "land", "c", "XX-1"]]
+open(os.path.join(rt, ".loop", "regression.tsv"), "w").write("id\tlevel\tcommand\tgoal\n" + "\t".join(tests[0]) + "\n")
+sections.latest_full = lambda slug, ids: {"t1": "PASS"}
+check_("a typed score equal to health's latest run passes", milestones.new_form(rt, True) == [])
+open(os.path.join(rt, "README.md"), "w").write("|a|\n" + ROW % "100% (2 of 2)")
+check_("a typed score that differs from health's latest run fails the strict check", any("differs from health's latest run" in x[2] for x in milestones.new_form(rt, True)))
+check_("the same typed score is not compared when not strict", not any("health" in x[2] for x in milestones.new_form(rt, False)))
+sections.latest_full = lambda slug, ids: None
+check_("a typed score with no health run says there is no run to compare, and fails", any("no health run to compare" in x[2] for x in milestones.new_form(rt, True)))
+open(os.path.join(rt, "README.md"), "w").write("|a|\n" + ROW % "not measured: no data yet")
+check_("a score that is not a typed number needs no run", not any("health" in x[2] for x in milestones.new_form(rt, True)))
 sys.exit(1 if fails else 0)
 PY
 then :; else fails=1; fi

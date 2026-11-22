@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""Milestone sync (DOC-17): the repo's GitHub milestones against an external Milestones page, opt-in (`milestones_source`
-in config), via `docs.py sync`; a delta or CONFLICT is posted once, nothing is overwritten (`--accept milestones:TITLE=repo|source`).
-Also DOC-19 how-to checks and DOC-20 revisions."""
+"""Milestone sync (DOC-17, opt-in via `milestones_source`; `docs.py sync`), DOC-19 how-to checks, DOC-20 revisions, DOC-27 shape."""
 import json
 import os
 import re
@@ -10,6 +8,7 @@ from os.path import join
 
 import counting
 import criteria as cr
+import deployments
 from counting import origins  # noqa: F401
 import pageformat as pf
 import prd
@@ -368,3 +367,25 @@ from audit import home_diagram  # noqa: E402,F401
 from entry import unlisted  # noqa: E402,F401
 from prd import diagram  # noqa: E402,F401
 from prdcopy import alone, stands_alone  # noqa: E402,F401
+
+
+H7 = "Problem,Requirements,Non-goals,Success metrics,Reference,Revisions,Tests".split(",")
+
+
+def unrowed(old, new):
+    c = lambda t: t.partition("### Revisions" if "### Revisions" in t else "## Revisions")
+    return c(new)[0].strip() != c(old)[0].strip() and c(new)[2].strip() == c(old)[2].strip()
+
+
+def new_form(root, strict=False):
+    import sections as sc
+    rel, out, b = cr.folder_of(root), [], "origin/" + (counting.config_of(root).get("base") or "main")
+    for n in sorted(x for x in os.listdir(join(root, rel)) if x.endswith(".md")):
+        t = open(join(root, rel, n), encoding="utf-8").read()
+        old = cr.git("-C", root, "show", "%s:%s/%s" % (b, rel, n), check=False)
+        heads = [h[3:].strip() for h in t.splitlines() if h.startswith("## ")]
+        if "Reference" in heads:
+            out += [("FORMAT", n[:-3], "DOC-27 27.1: sections are not %s" % ", ".join(H7))] * (heads != H7) + [("FORMAT", n[:-3], "DOC-27 27.1: text changed, no new revision row")] * bool(old and unrowed(old, t))
+        was = {x[0]: "\n".join(x[3]) for x in sc.blocks(old)}
+        out += [("FORMAT", "%s:%s" % (n[:-3], x[0]), "DOC-27 27.1: text changed, no new revision row") for x in sc.blocks(t) if x[0] in was and unrowed(was[x[0]], "\n".join(x[3]))]
+    return out + deployments.scores(root) * bool(strict)
