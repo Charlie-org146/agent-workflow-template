@@ -1,90 +1,72 @@
-# Plan: v110-fast-text-2 (DRAFT, not yet gated)
+# Plan: v110-fast-text-2
 
-Base (TD1016): planned against the renumber's head bb7a38bc8 (loop/v110-fast-renumber), whose changes are fixed; the build lands on top of it, and main is merged up again after it lands, before the lane.
+Source: the owner's final page frozen-source-final-1742 (sha256 c952ee382c4153f8, checked against the HTML). Done lines are frozen in `.loop/goals/v110-fast-text-2.md`. Planned against the renumber's head bb7a38bc8 (loop/v110-fast-renumber, merged into this branch); main is merged up again after the renumber lands, before the lane. Scope: the owner's line o797 ("v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19, add DEL-22, DEL-25, DEL-26 and DEL-27, and retire HLT-7 into DEL-17, all as on the 17:42 pin"; ids v110-fast-text-2, Delivery, Health, DEL-17, DEL-19, DEL-22, DEL-25, DEL-26, DEL-27, HLT-7) and the rulings TD1022 (DEL-22 is reviewed text under Fast, o747; the HLT-7 fold is in this goal, o752; no hand fallback) and the owner's o794 (build now in v1.1.0).
 
-Source: the owner's final page frozen-source-final-1742 (sha256 c952ee382c4153f8, checked against the HTML). Done lines are frozen in `.loop/goals/v110-fast-text-2.md`. Base: main 65e242e28 (features format from #5793, marks cleared) merged in at 02e6df764.
+## Implementation plan
 
-## What the renumber goal does (v110-fast-renumber, built at bb7a38bc8) and this goal leaves to it
+### What the renumber (bb7a38bc8) already does; this goal leaves it alone
 
-This goal does not touch any of these; it merges after the renumber and builds on it:
+- The principles list in `skills/workflow-health/references/commands.md` (3 Fast, 4 Cheap, 5 Small; old 4, 5, 6 become 6, 7, 8) and the headings `## 3. Fast` to `## 8.` on README, Home and the Principles page; the figure renames (`principle-03-fast.svg`, `principle-04-cheap.svg`, `principle-05-small.svg`) and the regenerated system-design figures.
+- DEL-17's Tokens line moved word for word into DEL-28 under 4 Cheap (o756), with marks o791 (DEL-17) and o792 (DEL-28); GRD-8 and GRD-15 re-pointed to DEL-28; GRD-7 kept on DEL-17 (o757); GRD-20 under 5 Small; OPS-16 under 7 Reproducible; the old-number sweep of toys and how-to pages. No principle sentence is changed by it.
 
-- The principles list in `skills/workflow-health/references/commands.md` (3 Fast, 4 Cheap, 5 Small; old 4, 5, 6 become 6, 7, 8) and the headings `## 3. Fast`, `## 4. Cheap`, `## 5. Small`, `## 6.` to `## 8.` on README, Home and the Principles page.
-- The figure renames (`principle-03-fast.svg`, `principle-04-cheap.svg`, `principle-05-small.svg`) and the regenerated system-design figures.
-- Moving DEL-17's Tokens line, word for word, into DEL-28 under 4 Cheap, under o756, with marks o791 (DEL-17) and o792 (DEL-28); GRD-8 and GRD-15 re-pointed to DEL-28, GRD-7 kept on DEL-17 under o757; GRD-8 and GRD-15 pointers; GRD-20 under 5 Small; OPS-16 under 7 Reproducible.
-- The old-number sweep of toys and how-to pages, and the sentence lines (kept as on main, "no principle sentence is changed").
+### What this goal builds (on top of that)
 
-## What this goal does (after the renumber merges and main is merged up again)
+Order: text first, marks last (a mark seals the text; a record can be used once). Every tool refusal stops the step and goes to operation word for word; nothing is edited by hand past a refusal.
 
-1. Principle sentences: write the page's sentences for 3 Fast, 4 Cheap and 5 Small (the page text, lines 84 to 86 of the pinned page) into README, Home and the Principles page, replacing the old combined sentence the renumber kept. Words come from the pinned page only.
-2. DEL-17 (revised): `criteria.py revise DEL-17` with the pinned five lines (DEL-17.1 to DEL-17.5; the Tokens part already left for DEL-28); HLT-7's fold is deferred (TD1018, outside the done lines): the PR notes name it as left for v1.2.0.
-3. DEL-19 (revised again): `criteria.py revise DEL-19` with the pinned DEL-19.1 to DEL-19.5, including the one list of eight step names; the pages that carry the old step list (README, Home, Principles, Delivery) follow the generated rows.
-4. DEL-25, DEL-26 and DEL-27 (new, principle 3 Fast, Delivery): added with the repo's own functions (`pf.unit`, `pf.enc`, `ms.rput`), as DEL-23 was added; each with its flow figure from the repo's route and its how-to item.
-5. DEL-22 (TD1019, revises Q1): a new unit with its pinned title "Fast plans" and its pinned text, word for word from the pinned page (lines 108 to 147 of the extracted text, five requirement lines; the default-settings note and the test-lane line are not requirement text unless the page marks them so, checked against the HTML). Added with the repo's own functions (`pf.unit`, `pf.enc`, `ms.rput`) under 3 Fast on Delivery, Milestone v1.2.0, left Unreviewed (no record names DEL-22). No stub.
-6. Reviewed marks last: `criteria.py review ... --user --owner-record` with o738 to o742, each record used once (mapping: Open question 2). A refusal stops and goes to operation word for word.
-7. Old-number references: re-sweep for `Principle N`, `## N.` and `principle-0N` after the renumber merges; fix any the renumber missed.
-8. Regenerate (`criteria.py render`, `dev/system-design.py`, `render.py blocks`), then run: `docs.py check --base origin/main --own`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan, and the committed read-only compare script (a copy of the `docs/v110-text-check.py` pattern) comparing every new or revised unit (DEL-22 included) to the pinned page sentence by sentence, with a changed word failing it.
+- B0. Baseline at build start, re-measured (line numbers go stale while main moves): `docs.py check`, health's PRINCIPLE lines, `wc -c` of every script under skills/, `criteria.py` size (20,455, 25 under the 20,480 limit; this goal does not change it), the rows per principle.
+- B1. Extract the pinned units from the pinned page with a scratch script outside the repo; check the page hash first. Units: the 3, 4 and 5 sentences (page lines 84 to 86), DEL-17.1 to DEL-17.5, DEL-19.1 to DEL-19.5, DEL-22 (title "Fast plans" and its requirement lines), DEL-25, DEL-26, DEL-27. DEL-17 is used without any Tokens text (o756 and o791 are later than the pin and rule); the compare script states this exception.
+- B2. The 3, 4 and 5 principle sentences: written word for word into README, Home and the Principles page in place of the old combined sentence the renumber kept. The same sentences also live in `skills/workflow-health/references/commands.md` (lines 365 to 367), which the docs check compares the pages to (`pageformat.py:165`) and which is outside this goal's Touches and o797. So B2 is blocked until operation rules on that file (Open for operation, 1); the build stops at B1 with a finding if not allowed. Nothing is hand-edited past the check.
+- B3. `criteria.py revise DEL-17 --owner-record o797 --why <words> --text-file <file>` and the same for DEL-19 (`--why` is required, `milestones.py:362`; the branch gives the slug). File layout: line 1 the requirement text, later lines sub-bullets (`milestones.py:288-291`). Pinned text; the pin's DEL-17 has no Tokens text, so there is no exception: the compare script asserts DEL-17 equals the pin, with a negative control that adds a Tokens line to a scratch copy. DEL-19 keeps its two existing metadata lines (Principle, Topic, Release; Milestone link); DEL-17, DEL-25, DEL-26 and DEL-27 carry only "Principle 3, Fast · Topic: Delivery"; DEL-22 adds "Milestone: v1.2.0" with no invented link (operation may overrule, Open for operation, 3).
+- B4. Add DEL-22, DEL-25, DEL-26 and DEL-27 with the repo's own functions (`pf.unit`, `pf.enc`, `ms.rput`), as DEL-23 was added, each with its `### DEL-2x` Revisions table and an r1 row whose "approved" cell cites o797; under 3 Fast on Delivery; DEL-22 with Milestone v1.2.0 as the page says; the reviewed text on the pin (o747 marks DEL-22 in B8).
+- B5. HLT-7 fold (o752, o797): `criteria.py retire HLT-7 --as moved:DEL-17 --owner-record o797 --why <words>`; delete `docs/wiki/flows/HLT-7.svg`; update `How-to-use-Health.md` and the five pages that say "moved to HLT-7" only as `docs.py check` requires (run it right after this step); its five regression rows (docs-check-speed, mon9-board-fast, aut-email-rounds, hlt7-fast-check, aut7-budget-agrees) change goal HLT-7 to DEL-17 in the goal column only; commands and PASS text untouched; then the Tests tables re-render. 3 Fast then holds DEL-17, DEL-22, DEL-25, DEL-26, DEL-27 (five), inside DOC-26's cap.
+- B6. Front-page rows and figures. `criteria.py render` regenerates only Follows, Adoption and Confidence (`sections.py:134-158`), so a scratch script outside the repo writes the DEL-17 row (replace), the DEL-22, DEL-25, DEL-26 and DEL-27 rows (new, each with its `flows/DEL-xx.svg` link, `<title>ID title</title>` and aria-label as the compare script asserts, and Follows lines from the pin's adopted and adapted lines only) and removes the HLT-7 row, on README, Home and the Principles page, plus the "Requirements by feature" rows on README and Home (which must match each other). The "What this is" paragraph on the three pages regenerates from DEL-19's sub-bullets. Then `criteria.py render`, `dev/system-design.py`, `render.py blocks`. How-to items: `How-to-use-Delivery.md` and `How-to-use-Health.md`. The identical "How it works" paragraph under 3, 4 and 5 is left (the pin gives none; reported).
+- B7. Old-number re-sweep after the renumber is in: grep `Principle N`, `## N.` and `principle-0N`; fix any the renumber missed.
+- B8. Marks last, as `criteria.py review <ID> --user --owner-record oNNN` (`criteria.py:343`), one ID per record, each only on a word-for-word match and a record the tool accepts, in this order so principle 3 never lacks a Reviewed requirement for more than one command: o739 DEL-17, o747 DEL-22, then o740 DEL-25, o741 DEL-26, o742 DEL-27, o738 DEL-19; each ID must already be listed on the Principles table (`rules.py:380-384`); o797 is used for no mark. A refused mark leaves that feature Unreviewed with exactly the approved words, and the refusal goes to operation word for word.
+- B9. Run order: `docs.py check`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static` and the compare script's text units after B3, B4 and B5 and again before B8, then once more after B8 (a text fix after a mark burns the single-use record). Compare script: extend `docs/v110-text-check.py` with this goal's IDs and the new pin: two HTML arguments and two pins (DEL-19 moves to the new pin; DEL-23, DOC-28 and the brief stay on the old one), reading dt/dd from the HTML as it does now, comparing DEL-22's whole unit (Problem, 22.1 to 22.5, the default-settings note in its HTML position, Non-goals, Success metrics, Reference, Adoption and confidence) but never a Revisions table; it writes nothing, re-derives every unit from the pinned page and compares the repo to it (a changed word fails it, shown by hostile checks on scratch copies: one word of DEL-19.3, one of DEL-22.5, a Tokens line in DEL-17). No new script. It runs by hand against an HTML that never enters the repo; no regression row can hold it (accepted by operation under o776, listed in the check-in).
+- B10. Checks: `docs.py check --base origin/main --own`, `criteria.py render --check`, `dev/system-design.py --check`, `dev/package.py --static`, the private-name scan over the changes and notes (the service repo is never named), health read-only compared with B0 (no new FAIL), `wc -c` on all scripts (none over 20,480, none newly over 19,000), file count within MAX_FILES (the new figures are docs, not skills).
 
-## Open questions for operation (answers needed before the build)
+### Merge order and conflicts
 
-1. DEL-22 is not in the docs on main (it exists only as `.loop/tasks/v120-del22.md`, release v1.2.0, source frozen-source-v1.2.0-0942). Done line 1 says "DEL-22's title 'Fast plans' as pinned". Which is meant: (a) add DEL-22 with the pinned title and its five lines as a new feature on Delivery; (b) change only a title that already exists elsewhere; (c) leave DEL-22's text to v120-text and write nothing here?
-2. Which of o738 to o742 marks which feature (DEL-19, DEL-17, DEL-25, DEL-26, DEL-27, and DEL-22 if (a))? Five records, up to six features.
-3. HLT-7's fold: is a Retired pointer line plus its row moving into DEL-17 wanted here (the renumber goal explicitly leaves the fold to this goal)?
-4. DEL-19's build is in v1.2.0 (o749) but its text stays here: confirm the revised DEL-19 text goes in exactly as pinned, including the eight step names that no code yet runs.
+v110-fast-checks edits `.loop/regression.tsv`, `docs/wiki/Tests.md` and `How-to-use-Delivery.md` (it names DEL-25); whichever merges second re-renders `Tests.md`. `v110-fast-checks` (DEL-25 code, o775) builds before this goal's DEL-25 text lands; I check its branch before the lane and report the merge order. The renumber merges first; main is merged up again before the lane.
 
-## Not in scope
+### Verify by hand (added to the goal's section if goal.py allows; else reported)
 
-Principle numbers and names, DEL-28 and the Tokens move, any code, DEL-19's build, DEL-22's tests, v120 tasks, any regression row change beyond one that a page rename forces.
+1. Open the Principles page (the new pinned HTML comes from operation; the old one is `frozen-source-v1.1.0-1052`). Expect: eight principles, 3 Fast, 4 Cheap and 5 Small carrying the page's sentences, and 3 Fast listing DEL-17, DEL-22, DEL-25, DEL-26, DEL-27.
+2. Open the Delivery page. Expect: DEL-17 without a Tokens line, DEL-19 with five lines and the eight step names, and DEL-22, DEL-25, DEL-26, DEL-27 as pinned.
+3. Run `python3 docs/v110-text-check.py <old-pin HTML> <new-pin HTML>`. Expect: every unit equal, and a scratch copy with one changed word failing it.
 
-## Test for each done line
+### NOT in scope
 
-1. `docs.py check` prints DOCS OK; the compare script finds every pinned sentence in the repo and no extra word; marks present for the named features; grep for old principle numbers is empty outside history.
-2. Size: `wc -c` on every script under skills/ unchanged (text files only); file count by `dev/package.py --static` unchanged or within MAX_FILES; no regression row edited; no new file under skills/; the committed text never names the service repo (private-name scan).
+Principle numbers, names and the Tokens move (the renumber); DEL-28's text; any code or tool change (criteria.py stays untouched); DEL-19's build (its eight step names are built in v1.2.0, o749; the PR notes say so); DEL-22's task and tests (v1.2.0); a Reviewed mark by a record that does not name the feature.
 
-## Answered (operation, from owner-words)
+### Test for each done line
 
-- Marks: o738 = DEL-19, o739 = DEL-17, o740 = DEL-25, o741 = DEL-26, o742 = DEL-27. No record exists for DEL-22.
-- DEL-17 carries o791 after the renumber; revising it to the pinned five lines clears that mark. Re-mark with o739 only on a word-for-word match with the pinned page; if the tool refuses o739, leave DEL-17 Unreviewed and send the refusal word for word.
-- Open with top: Q1 (DEL-22), Q3 (HLT-7 fold), Q4 (DEL-19 as pinned).
+1. `docs.py check` prints DOCS OK; the compare script finds every pinned unit and sentence equal; the principles are numbered 1 to 8; no old principle number remains outside history and Revisions rows.
+2. `wc -c` on every script under skills/: none over 20,480 and none newly over 19,000; `dev/package.py --static` passes with the file count within MAX_FILES; the five re-keyed rows change goal only; no test is loosened; the private-name scan is clean.
 
-## Rulings (TD1018)
+### What could break
 
-- Q1: DEL-22 title only, exactly as done line 1; its body comes with its v1.2.0 task.
-- Q3: HLT-7 fold deferred; named in the PR notes as left for v1.2.0.
-- Q4: DEL-19 exactly as pinned (o738); the PR notes say its eight step names get built in v1.2.0 (o749).
-- Every mark only on a word-for-word match and a record the tool accepts; on refusal the feature stays Unreviewed and the refusal goes to operation verbatim.
+- A tool refusal on a revise, retire, add or mark: the step stops and the refusal goes to operation.
+- DEL-17's o791 mark is cleared by the revise; a refused o739 leaves DEL-17 Unreviewed.
+- The renumber changes before it merges: line references shift; B0 re-measures.
+- Health principle-map: DEL-17 is Unreviewed after B3 and is the only Reviewed requirement under 3 Fast until B8 marks it, so health may print "principle 3 has no Reviewed requirement" between B3 and B8; B8 marks DEL-17 and DEL-22 first.
+- The 7-day clock: a Reviewed requirement with no regression row warns for 7 days then fails (`enforce.py:20,50-53`). DEL-22, DEL-25, DEL-26 and DEL-27 have no row keyed to them (DEL-25's row sits on v110-fast-checks as v110-fast-checks:1); the clock starts at B8 and B0 cannot measure it.
+- Hand-kept rows (B6) must match README and Home; `docs.py check` finds a mismatch.
+- The B2 file outside Touches (above).
+- Health: Reviewed requirements DEL-25, DEL-26 and DEL-27 may lack tests (the done lines freeze text only; tests are the implementation tasks); measured at B0, reported.
 
-## Placement question (open)
+## Review record
 
-A title without the feature has no unit to live in. I would carry it as the title of the DEL-22 row in the principle-3 Fast table only if the docs check accepts a row with no unit; I will test that in a scratch clone and report; if it fails, I ask where else before building.
+Depth, stated exactly: autoplan was not run. The three review skills were run by hand, by one fresh agent that loaded and followed each from its own files, taking recommended answers, read-only; no outside voice ran (missing coverage, not a clean result). Read in full: plan-ceo-review `sections/review-sections.md` lines 1 to 962 and SKILL.md lines 1-60, 213-330, 520-870, 965-1030 (HOLD SCOPE); plan-devex-review SKILL.md lines 183-330, 372-411, 456-811 and `sections/review-sections.md` lines 1-330, 547-720, 1004-1023, without the hall-of-fame file (scores are first-principles with repo evidence); plan-eng-review SKILL.md lines 265-345, 466-545 and `sections/review-sections.md` lines 126-181, 386-870, 1099-1263. Skipped: preambles, telemetry, outside-voice mechanics, review-log and dashboard parts, decision-ledger mechanics. A first red-team gate (run by operation) ran earlier on an older text of this plan and is superseded by the gate on this text.
 
-## TD1019
+Results: CEO HOLD SCOPE accepted with changes; DevEx 6.7 to 7.9 with the flags written out; Eng scope accepted as-is, 3 critical gaps. Findings folded into the plan above (within o797 and the rulings): the missing `--why` and `--user` flags (B3, B5, B8), the principles list outside Touches (B2, blocked on a ruling), the mark order and the run order (B8, B9), the front-page rows are hand-kept (B6), the moot Tokens exception (B3, B9), DEL-22's full unit (B9), unit metadata lines (B3), the compare script's two pins (B9), HLT-7's orphan figure and how-to (B5), the health principle-map and 7-day clock states (What could break), and runnable verify steps.
 
-DEL-22 goes in as a full unit, Unreviewed, Milestone v1.2.0, accepted by top under o776 as a plan break (owner-pinned text only, no reviewed text changed, no check weakened). The "Placement question" above is closed: no bare row, no stub. Risk to check in the build: a new Unreviewed unit with a v1.2.0 milestone must pass the docs check and the milestone checks; if either refuses, stop and send the refusal verbatim.
+### Open for operation (outside this plan's scope; each goes to operation, nothing is built on a guess)
 
-## Gate 1 findings folded in (no ruling needed)
-
-- Compare script (C): extend `docs/v110-text-check.py` (it already takes PINNED_HTML and a PIN) with this goal's IDs and pin; no second script. Add a regression row for it only if one can be added without changing any existing row; otherwise name the gap in the PR notes (B2: it runs by hand against an HTML that never enters the repo).
-- Never hand-edit past a tool refusal (B2): every `revise`, `retire`, `review` or add refusal goes to operation word for word and the step stops; the earlier "else page text" fallback for HLT-7 is withdrawn.
-- Size: `criteria.py` is 20,455 bytes, 25 under the 20,480 limit. No change to it; a refusal that would need one goes to operation.
-- Verify by hand: the goal's section is empty; I will add numbered steps with `Expect:` lines (open the Principles page and see principles 1 to 8 with the pinned 3, 4, 5 sentences; open Delivery and see DEL-17, DEL-19, DEL-22, DEL-25, DEL-26, DEL-27 as pinned) unless operation says the frozen file may not take them.
-- DEL-17 pin: before revising, check whether the pinned five lines still hold a Tokens line; the renumber moved Tokens to DEL-28, so DEL-17 and DEL-28 must not duplicate it. If the pin holds Tokens, stop and ask.
-- Regression rows: HLT-7 has five rows (docs-check-speed, mon9-board-fast, aut-email-rounds, hlt7-fast-check, aut7-budget-agrees). Retiring HLT-7 is deferred (TD1018), so none moves; if the owner's o752 and a record that passes the tool bring the fold back, the rows' goal column moves in the same change.
-- DOC-26 cap: 3 Fast would hold DEL-17, HLT-7, DEL-22, DEL-25, DEL-26, DEL-27 (six or more) while HLT-7 stays. Stop and ask before the build if no ruling allows it.
-- Revisions tables: each new unit (DEL-22, DEL-25, DEL-26, DEL-27) needs a Revisions table with an r1 row (pageformat REV-ROW); the "approved" cell uses a record the tool accepts, never invented text.
-- Merge order: v110-fast-checks (DEL-25 code) and this goal both touch DEL-25; I check its branch before the lane and report the order.
-- o794 means build now in v1.1.0; scope unchanged.
-- Line numbers refer to bb7a38bc8 and are re-measured at build start.
-
-## Held for top (owner records)
-
-o738 to o742 carry no slug, so `revise` refuses on them (REV-RECORD); o756 is the only record naming this slug, for a different text. o747 (DEL-22) and o752 (HLT-7 retired, folded into DEL-17) already exist. The build waits for one record whose ids hold the slug and the IDs (operation is asking top).
-
-## TD1022 (withdraws TD1018 Q1, Q3 and TD1019; supersedes earlier DEL-22, HLT-7 and record text above)
-
-1. DEL-22 goes in as reviewed text on the 17:42 pin, under 3 Fast (o747), Milestone v1.2.0 as the pin says. No stub, no title-only.
-2. The HLT-7 fold happens in this goal (o752): HLT-7 is retired into DEL-17 with the repo's own `criteria.py retire`, and its five regression rows (docs-check-speed, mon9-board-fast, aut-email-rounds, hlt7-fast-check, aut7-budget-agrees) are re-keyed from goal HLT-7 to DEL-17 in the goal column only; commands and PASS text untouched, nothing loosened. This also brings 3 Fast to DEL-17, DEL-22, DEL-25, DEL-26, DEL-27 (five), inside DOC-26's cap.
-3. DEL-17 stays without its Tokens line (o756 and o791 are later than the pin and rule): the five pinned DEL-17 lines are used minus any Tokens text; the compare script states this exception explicitly.
-4. No hand fallback. Every tool refusal goes to operation word for word and the step stops.
-5. The compare script is `docs/v110-text-check.py`, extended, no new script.
-6. Records: one scope record (id to come from operation) names this slug and covers revise (DEL-17, DEL-19), add (DEL-22, DEL-25, DEL-26, DEL-27) and retire (HLT-7 into DEL-17); it is not used for marks. Marks, one ID per record: o738 DEL-19, o739 DEL-17, o740 DEL-25, o741 DEL-26, o742 DEL-27, o747 DEL-22; a refused one ships that feature Unreviewed with exactly the approved words, refusal sent verbatim. The r1 Revisions rows of the new units use the scope record in their "approved" cell.
-7. criteria.py has a 25-byte margin: I do not change it; I measure with `wc -c` before and after.
+1. `skills/workflow-health/references/commands.md` lines 365 to 367 hold the 3, 4 and 5 sentences and the docs check compares the pages to them; the file is not in Touches or o797. Add it to Touches (as the renumber had, TD793), or this goal stops at B1.
+2. DEL-25's regression row sits on v110-fast-checks (keyed v110-fast-checks:1); whether to re-key it, add rows for DEL-22, DEL-25, DEL-26, DEL-27, or accept the 7-day WARN-then-FAIL clock at marking.
+3. Release and Milestone lines: the pin gives none for DEL-17, DEL-19, DEL-25, DEL-26, DEL-27 and no v1.2.0 URL for DEL-22; o794 says build now in v1.1.0.
+4. The identical "How it works" paragraph under 3, 4 and 5 is Fast text; the pin gives no replacement.
+5. The pinned DEL-17 does not restate the board under 10 seconds, rounds under 45 minutes or the worker's 5-minute turn; the five re-keyed rows still prove the first two (informational).
+6. Adopted repos: the `commands.md` sentence change ships by update and their page copies fail the docs check until rewritten (PR note).
+7. Single-sourcing the sentences (generate the page copies from `commands.md`) is a tool change for a later goal.
