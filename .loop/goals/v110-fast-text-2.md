@@ -1,7 +1,7 @@
 # Write the principle 3 split and the Fast features' text (v1.1.0 task 5, part 1b)
 
 - Slug: v110-fast-text-2
-- Touches: docs/wiki, docs, README.md, dev/toy, .loop/regression.tsv
+- Touches: docs/wiki, docs, README.md, dev/toy, .loop/regression.tsv, skills/workflow-health/references/commands.md, skills/workflow-docs/scripts/milestones.py, .loop/readme-gap-table.md, .loop/goals/rows-600-c.map.tsv
 - ETA: 245 active minutes (estimate 196m plus a 25% margin)
 
 ## Done lines
