@@ -43,55 +43,176 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 4: metric missing; test 10 linked rows, see Tests
   - Line 5: metric missing; test 10 linked rows, see Tests
   - Line 6: metric missing; test 10 linked rows, see Tests
-- DEL-17: **Reviewed 2026-11-22** Every change runs on one clock, from my ask to main <!-- reviewed 59e467e1 -->
-  - **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17]
-  - **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17]
-  - **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17]
-  - A merge never makes another ready pull request re-run. [DEL-17]
-  - **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17]
-  - Test count and suite time stay capped. [DEL-17]
-
-  - Feature markers v1
-  - Reference: GitHub merge queue: adopted; DORA lead time: adapted
-  - Line 1: metric missing; test 23 linked rows, see Tests
-  - Line 2: metric missing; test 23 linked rows, see Tests
-  - Line 3: metric missing; test 23 linked rows, see Tests
-  - Line 4: metric missing; test 23 linked rows, see Tests
-  - Line 5: metric missing; test 23 linked rows, see Tests
-  - Line 6: metric missing; test 23 linked rows, see Tests
+- DEL-17: **Unreviewed** Fast end to end: every step has a time limit, and lead time is measured per step
+  - Principle 3, Fast · Topic: Delivery
+  - ### Requirements
+  - DEL-17.1 **Every step on DEL-19's list has a time limit in settings,** with template defaults, and a repo may change them. The checks themselves (health, the docs check, the board) also have limits.
+  - **Metric.** Steps with no limit in settings. Target 0.
+  - **Test.** Change a step's limit in settings: the new limit applies with no code change.
+  - DEL-17.2 **Lead time is measured per step and per goal,** from my ask to main, and shown on the board.
+  - **Metric.** Merged goals with no per-step lead time. Target 0.
+  - **Test.** After a toy goal merges, the board shows its minutes for each step.
+  - DEL-17.3 **A step over its limit shows as missed with its cause,** and the next step starts at once; no step waits silently.
+  - **Metric.** Steps over their limit not shown missed. Target 0.
+  - **Test.** A step past its limit shows "missed (was …): cause".
+  - DEL-17.4 **Every ETA is a commitment**: who made it, when and on what basis, and a passed one shows as missed. ETAs come from measured history, not guesses.
+  - **Metric.** Passed ETAs not shown missed; ETAs with no basis. Target 0.
+  - **Test.** An ETA records its basis, the history it came from.
+  - DEL-17.5 **No release while main is known broken.** Merges go on; the first push after main is green again releases everything since.
+  - **Metric.** Releases made while main was known red. Target 0.
+  - **Test.** With a main-red issue open, a cut is refused naming the issue.
+  - ### Reference
+  - adapted
+  - [DORA four keys](https://dora.dev/guides/dora-metrics-four-keys/), lead time for changes.
+  - adapted
+  - [Google SRE: service level objectives](https://sre.google/sre-book/service-level-objectives/).
+  - reference
+  - Monte Carlo forecasting from past runs, for ETAs.
+- DEL-22: **Unreviewed** Fast plans: a goal's plan is ready in a set time and never stalls on a tool fault
+  - Principle 3, Fast · Topic: Delivery
+  - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
+  - ### Problem
+  - Last night no full plan finished in any worker session. The planning tool's guard refused every plan in a session that had once planned a file since deleted. Its log shows 6 such refusals.
+  - Two goals stopped on it (the #5727 fix and H1). To unblock them you started a fresh session and typed two lines.
+  - Nothing says how long a plan may take, the reviews inside a plan run one after another, and a one-line bug fix gets the same depth as a feature.
+  - ### Requirements
+  - DEL-22.1 **Every goal gets one plan level, by fixed rules.** When a goal is frozen, the tool gives it a level from one list of levels, using rules it can check on its own, for example how many files it touches and whether it changes what a feature promises. The level and the rule that chose it are recorded, and the board shows them.
+  - **Metric.** Frozen goals without a recorded level and rule. Target 0.
+  - **Test.** Freeze two toy goals of different sizes: each gets the level its rule says, with the rule recorded; the same goal always gets the same level.
+  - DEL-22.2 **Each level's needs and time limit are settings.** For each level, a setting says what its plan must include and how long it may take. The template ships default values, and a repo may change them in its settings. Past its limit, the plan step says so and the board shows it as missed with its cause.
+  - **Metric.** Plans over their level's time limit, per release. Target 0. Today: no limits.
+  - **Test.** Set a level's limit to 1 minute in a toy repo: a plan that takes longer is reported missed. Change the setting, and the new limit applies without a code change.
+  - DEL-22.3 **A plan's reviews run side by side,** and the plan is ready when the slowest finishes.
+  - **Metric.** A plan's time beyond its slowest review. Target 5 minutes or less. Today: the reviews run one after another.
+  - **Test.** Three stand-in reviews of 2, 4 and 6 minutes produce a ready plan in under 8 minutes.
+  - Default settings, not part of the requirement (you can change them later): three levels. **Small**: touches a few files and changes no feature's promise; one review; 10 minutes. **Normal**: changes one feature's behaviour; the full set of reviews; 30 minutes. **Large**: changes a safety check or more than one feature; the full set plus one extra independent review; 45 minutes.
+  - DEL-22.4 A tool fault never stops a goal. When the planning tool refuses for a reason that isn't the goal's own (a record it can't read, an old file that's gone), the step takes the tool's own fallback at once. It quotes the refusal word for word in the goal's record and opens one issue. No one has to start a session or type words. The guard itself is never bypassed or changed. The fallback is the route the tool offers, and you approve it once in the release's brief.
+  - **Metric.** Goals stopped by a planning-tool fault. Target 0. Last night: 2.
+  - **Test.** A stand-in guard refuses with "evidence". The goal goes on through the fallback, its record quotes the refusal, and one issue is opened.
+  - DEL-22.5 Each plan records the minutes and tokens of every review it ran. The board shows them, and a review past twice its usual is flagged.
+  - **Metric.** Plans with time and tokens recorded per review. Target 100%. Today: 0%.
+  - **Test.** After a plan finishes, the board shows each review's minutes and tokens. A review recorded at three times its usual shows a flag.
+  - ### Non-goals
+  - It doesn't decide what gets built; the brief does.
+  - It doesn't pick reviews by hand: the level's setting decides.
+  - It never changes or works around a guard or hook. It only takes the fallback the tool itself names.
+  - Test-lane and CI speed stay in DEL-17, fixed as patches.
+  - It doesn't fix the outside planning tool. That's reported to its makers, which is your call.
+  - ### Success metrics
+  - Plans within their level's time limit · 100% · not measured
+  - Goals stopped by a planning-tool fault · 0 · 2 (last night)
+  - Your words or sessions needed to unblock a plan · 0 · 2 lines and 1 fresh session (last night)
+  - ### Reference
+  - adapted
+  - [DORA four keys, lead time for changes](https://dora.dev/guides/dora-metrics-four-keys/). The plan step gets its own measured share of lead time.
+  - adapted
+  - [Circuit breaker (Martin Fowler)](https://martinfowler.com/bliki/CircuitBreaker.html). A known fault switches to a declared fallback instead of failing the caller, and the switch is recorded.
+  - reference
+  - [Google engineering practices: speed of code reviews](https://google.github.io/eng-practices/review/reviewer/speed.html). Slow reviews hold up the whole team, so a review has a response-time limit.
+- DEL-25: **Unreviewed** Fast build and checks: quick checks before every push, no local test lane
+  - Principle 3, Fast · Topic: Delivery
+  - ### Problem
+  - Each goal ran three 15-minute test lanes on the Mac, one goal at a time, and queued for hours behind the single slot.
+  - ### Requirements
+  - DEL-25.1 **Quick checks run before every push** through the standard pre-commit framework: lint, the docs check, the private-name scan and the size limits.
+  - **Metric.** Pushes that skipped the quick checks. Target 0.
+  - **Test.** A push with a private word or an over-size file is refused before it leaves the machine.
+  - DEL-25.2 **The quick checks finish within their limit,** default 1 minute.
+  - **Metric.** Quick-check runs over their limit. Target 0.
+  - **Test.** The quick checks on a typical goal finish within the default limit.
+  - DEL-25.3 **No full test lane runs on the machine.** Tests run on GitHub (DEL-26). A machine runs a lane only when GitHub is unavailable.
+  - **Metric.** Local full lanes while GitHub was available. Target 0.
+  - **Test.** With GitHub available, a goal reaches its PR without a local lane.
+  - DEL-25.4 **Generated files are made the same way every time and checked, never rewritten at PR time,** so opening a PR never changes the version that was tested.
+  - **Metric.** PR openings that changed the tested version. Target 0.
+  - **Test.** Opening a PR on a tested head leaves the head unchanged.
+  - ### Reference
+  - adopted
+  - [pre-commit](https://pre-commit.com/).
+  - adapted
+  - [trunk-based development](https://trunkbaseddevelopment.com/): small changes, checked fast.
+- DEL-26: **Unreviewed** Fast tests: on GitHub, in parallel, only what the change reaches, results reused
+  - Principle 3, Fast · Topic: Delivery
+  - ### Problem
+  - A PR's tests took about 21 minutes, and a test cut for time still showed green (#5757).
+  - ### Requirements
+  - DEL-26.1 **Tests run as parallel jobs on GitHub,** split so each job finishes within its limit.
+  - **Metric.** PR test runs over their limit. Target 0.
+  - **Test.** A PR's tests finish within the default limit, split across jobs.
+  - DEL-26.2 **A PR runs only the tests its change reaches,** chosen by the standard affected-test method, and never fewer than that.
+  - **Metric.** Reached tests skipped. Target 0.
+  - **Test.** A change to one script runs that script's tests and nothing unrelated.
+  - DEL-26.3 **Results for unchanged inputs are reused** from the cache, never re-run.
+  - **Metric.** Tests re-run with unchanged inputs. Target 0.
+  - **Test.** Rerunning a PR with no change reuses every result.
+  - DEL-26.4 **A test cut for time, or not run, fails the checks** and names the test and its time. Green means every chosen test ran and passed.
+  - **Metric.** Green runs with a cut or missing test. Target 0.
+  - **Test.** A toy job with one test over its limit doesn't end green.
+  - DEL-26.5 **Nothing private goes to GitHub:** no private-name list and no secrets; CI uses the empty list.
+  - **Metric.** Private data in CI. Target 0.
+  - **Test.** CI's logs and inputs contain no private-name list.
+  - ### Reference
+  - adopted
+  - [GitHub Actions matrix jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs).
+  - adopted
+  - [actions/cache](https://github.com/actions/cache).
+  - adapted
+  - [test impact analysis](https://martinfowler.com/articles/rise-test-impact-analysis.html).
+- DEL-27: **Unreviewed** Fast merge: the full tests run once, on the merged result, through the merge queue
+  - Principle 3, Fast · Topic: Delivery
+  - ### Problem
+  - Tests ran on the PR and again in the merge queue, and PRs could open only one at a time.
+  - ### Requirements
+  - DEL-27.1 **A PR opens within its limit**, default 1 minute, and any number of goals can open PRs at once.
+  - **Metric.** PR openings over their limit or waiting in line. Target 0.
+  - **Test.** Two goals open PRs at the same moment; both open.
+  - DEL-27.2 **A green PR enters the merge queue at once,** and the queue tests several PRs together on the merged result.
+  - **Metric.** Green PRs waiting outside the queue past 2 minutes. Target 0.
+  - **Test.** A green PR is in the queue within 2 minutes.
+  - DEL-27.3 **The full test set runs once, on the merged result;** the PR itself runs only the quick set and the reached tests.
+  - **Metric.** Full test runs per merged change. Target 1.
+  - **Test.** A merged PR shows one full run, in the queue.
+  - DEL-27.4 **From green to main within its limit,** default 10 minutes, and a merge never makes another ready PR re-test.
+  - **Metric.** Green-to-main time over its limit. Target 0.
+  - **Test.** A green PR in a quiet queue reaches main within the default limit.
+  - ### Reference
+  - adopted
+  - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), with merge groups.
 - DEL-28: **Reviewed 2026-11-22** Every step has a token budget <!-- reviewed 5c225018 -->
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28]
 
   - Feature markers v1
   - Reference: GitHub merge queue: adopted; DORA lead time: adapted
   - Line 1: metric missing; test missing
-- DEL-19: **Reviewed 2026-11-21** The goal loop: one change, one goal, one fixed format <!-- reviewed 2c388429 -->
+- DEL-19: **Unreviewed** One change, one goal, one list of steps, every step logged
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
   - ### Problem
-  - The goal loop already runs every change, but its format is spread over many pages and scripts. I can't see in one place what a goal is, what steps it takes, or what it leaves behind.
-  - Last night, goals were re-frozen, relabelled and restarted in ways I couldn't follow from the board.
+  - Two features described the goal round: DEL-19 with the old steps, and a new step-log draft with a different list. There should be one.
+  - Nothing recorded each step, so the same problems repeated and nobody could see which step cost most.
   - ### Requirements
-  - DEL-19.1 A goal is one change, written in one fixed file format: its title, the task it serves, its done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that. A wrong done line needs a new goal.
-  - **Metric.** Goals whose file is missing a part, or whose done lines changed after the freeze. Target 0.
+  - DEL-19.1 **A goal is one change, in one fixed file format:** title, the task it serves, done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that.
+  - **Metric.** Goals missing a part, or whose done lines changed after the freeze. Target 0.
   - **Test.** Freezing a goal with no task named, or editing a frozen done line, is refused.
-  - DEL-19.2 Every goal runs the same steps in its own worktree and session: plan, build, review, test lanes, pull request, merge queue, merge. Each step writes its result to the goal's run record, and the board shows the current step.
-  - **Metric.** Merged goals with a step missing from their run record. Target 0.
-  - **Test.** A goal that skips its review step can't open its pull request.
-  - DEL-19.3 Main changes only through a goal's pull request, merged when every check is green on its exact head.
-  - **Metric.** Commits on main that came from no goal's pull request. Target 0.
-  - **Test.** A direct push to main is refused, and a pull request whose head moved after its checks can't merge.
-  - DEL-19.4 The goal format and its steps are drawn on one page, generated from the code, so the picture can't drift from what runs.
-  - **Metric.** Differences between the drawn steps and the steps the code runs. Target 0.
+  - DEL-19.2 **Every goal runs one list of steps:** freeze, plan, build, quick checks, tests, merge, after the merge, release. Every feature, report and the board use this list, and main changes only through a goal's merge.
+  - **Metric.** Places that name a step outside the list, and commits on main from no goal. Target 0.
+  - **Test.** A report naming a step not on the list fails the docs check; a direct push to main is refused.
+  - DEL-19.3 **Every step is logged:** start, end, minutes, tokens and result. When a step goes wrong (refused, failed, over its time limit or redone), the log says what happened and why, in plain words.
+  - **Metric.** Steps with no log entry, and wrong steps with no cause. Target 0.
+  - **Test.** After a toy goal merges, its log has one entry per step; a step refused twice shows both refusals quoted with a cause.
+  - DEL-19.4 **Each cause gets one suggested fix,** to a tool, a setting or a feature, filed once, linked to its step and grouped with the same cause seen again. Every release shows a per-step summary, worst first. A fix is applied only through the normal routes: a bug fix, or your review if it changes a feature.
+  - **Metric.** Repeat causes filed more than once; releases without the step summary. Target 0.
+  - **Test.** Two goals hitting the same refusal produce one issue with both linked; the release record lists each step's time and failures.
+  - DEL-19.5 **The goal format and the steps are drawn on one page, generated from the code,** so the picture can't drift from what runs.
+  - **Metric.** Differences between the drawn steps and the code. Target 0.
   - **Test.** Add a step to the code without regenerating, and the docs check fails.
-  - ### Non-goals
-  - It doesn't decide what to build; tasks do. It doesn't decide when to release; releases do.
-  - No change to how the steps work today. This feature describes and enforces the existing loop.
   - ### Reference
   - adopted
-  - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Merging only on green checks for the exact merged result.
+  - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue).
   - adapted
-  - [Trunk-based development](https://trunkbaseddevelopment.com/). Short-lived branches, one per change, merged to main.
+  - [trunk-based development](https://trunkbaseddevelopment.com/).
+  - adapted
+  - [Google SRE: blameless postmortems](https://sre.google/sre-book/postmortem-culture/).
 - DEL-21: **Unreviewed** Every requirement names what it follows and adopts a standard tool by default, scored
   - Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21]
   - General guidance is not a reference. [DEL-21]
@@ -308,6 +429,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r10 | 2026-11-22 | Fast end to end: every step has a time limit, and lead time is measured per step <br> Principle 3, Fast · Topic: Delivery <br> ### Requirements <br> DEL-17.1 **Every step on DEL-19's list has a time limit in settings,** with template defaults, and a repo may change them. The checks themselves (health, the docs check, the board) also have limits. <br> **Metric.** Steps with no limit in settings. Target 0. <br> **Test.** Change a step's limit in settings: the new limit applies with no code change. <br> DEL-17.2 **Lead time is measured per step and per goal,** from my ask to main, and shown on the board. <br> **Metric.** Merged goals with no per-step lead time. Target 0. <br> **Test.** After a toy goal merges, the board shows its minutes for each step. <br> DEL-17.3 **A step over its limit shows as missed with its cause,** and the next step starts at once; no step waits silently. <br> **Metric.** Steps over their limit not shown missed. Target 0. <br> **Test.** A step past its limit shows "missed (was …): cause". <br> DEL-17.4 **Every ETA is a commitment**: who made it, when and on what basis, and a passed one shows as missed. ETAs come from measured history, not guesses. <br> **Metric.** Passed ETAs not shown missed; ETAs with no basis. Target 0. <br> **Test.** An ETA records its basis, the history it came from. <br> DEL-17.5 **No release while main is known broken.** Merges go on; the first push after main is green again releases everything since. <br> **Metric.** Releases made while main was known red. Target 0. <br> **Test.** With a main-red issue open, a cut is refused naming the issue. <br> ### Reference <br> adapted <br> [DORA four keys](https://dora.dev/guides/dora-metrics-four-keys/), lead time for changes. <br> adapted <br> [Google SRE: service level objectives](https://sre.google/sre-book/service-level-objectives/). <br> reference <br> Monte Carlo forecasting from past runs, for ETAs. | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
 | r9 | 2026-11-22 | Every change runs on one clock, from my ask to main <br> **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17] <br> **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17] <br> **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17] <br> A merge never makes another ready pull request re-run. [DEL-17] <br> **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17] <br> Test count and suite time stay capped. [DEL-17] | The Tokens line moves to DEL-28, Cheap's feature (owner record o756) | o756: "DEL-17 without its Tokens line is reviewed; DEL-28, Cheap's feature holding that" |
 | r8 | 2026-11-20 | Every change runs on one clock, from my ask to main <br> **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17] <br> **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17] <br> **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-17] <br> **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17] <br> A merge never makes another ready pull request re-run. [DEL-17] <br> **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17] <br> Test count and suite time stay capped. [DEL-17] | TD507 clause, owner record o672 (the owner typed it: release should pause) | o672: "release should pause yes" |
 | r7 | 2026-11-20 | Every change runs on one clock, from my ask to main <br> **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17] <br> **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17] <br> **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-17] <br> **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17] <br> A merge never makes another ready pull request re-run. [DEL-17] <br> **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17] <br> Test count and suite time stay capped. [DEL-17] | v2.0 text, owner record o667 (relayed by operation-top) | o667: "Yes, please be aware that we need to apply the three minutes" |
@@ -329,6 +451,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-22 | One change, one goal, one list of steps, every step logged <br> Principle 1, Guided · Topic: Delivery · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> Two features described the goal round: DEL-19 with the old steps, and a new step-log draft with a different list. There should be one. <br> Nothing recorded each step, so the same problems repeated and nobody could see which step cost most. <br> ### Requirements <br> DEL-19.1 **A goal is one change, in one fixed file format:** title, the task it serves, done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that. <br> **Metric.** Goals missing a part, or whose done lines changed after the freeze. Target 0. <br> **Test.** Freezing a goal with no task named, or editing a frozen done line, is refused. <br> DEL-19.2 **Every goal runs one list of steps:** freeze, plan, build, quick checks, tests, merge, after the merge, release. Every feature, report and the board use this list, and main changes only through a goal's merge. <br> **Metric.** Places that name a step outside the list, and commits on main from no goal. Target 0. <br> **Test.** A report naming a step not on the list fails the docs check; a direct push to main is refused. <br> DEL-19.3 **Every step is logged:** start, end, minutes, tokens and result. When a step goes wrong (refused, failed, over its time limit or redone), the log says what happened and why, in plain words. <br> **Metric.** Steps with no log entry, and wrong steps with no cause. Target 0. <br> **Test.** After a toy goal merges, its log has one entry per step; a step refused twice shows both refusals quoted with a cause. <br> DEL-19.4 **Each cause gets one suggested fix,** to a tool, a setting or a feature, filed once, linked to its step and grouped with the same cause seen again. Every release shows a per-step summary, worst first. A fix is applied only through the normal routes: a bug fix, or your review if it changes a feature. <br> **Metric.** Repeat causes filed more than once; releases without the step summary. Target 0. <br> **Test.** Two goals hitting the same refusal produce one issue with both linked; the release record lists each step's time and failures. <br> DEL-19.5 **The goal format and the steps are drawn on one page, generated from the code,** so the picture can't drift from what runs. <br> **Metric.** Differences between the drawn steps and the code. Target 0. <br> **Test.** Add a step to the code without regenerating, and the docs check fails. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). <br> adapted <br> [trunk-based development](https://trunkbaseddevelopment.com/). <br> adapted <br> [Google SRE: blameless postmortems](https://sre.google/sre-book/postmortem-culture/). | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
 | r4 | 2026-11-21 | The goal loop: one change, one goal, one fixed format <br> Principle 1, Guided · Topic: Delivery · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> The goal loop already runs every change, but its format is spread over many pages and scripts. I can't see in one place what a goal is, what steps it takes, or what it leaves behind. <br> Last night, goals were re-frozen, relabelled and restarted in ways I couldn't follow from the board. <br> ### Requirements <br> DEL-19.1 A goal is one change, written in one fixed file format: its title, the task it serves, its done lines (each "Given … when … then …"), what it touches, and its release. It's frozen when it starts, and its done lines never change after that. A wrong done line needs a new goal. <br> **Metric.** Goals whose file is missing a part, or whose done lines changed after the freeze. Target 0. <br> **Test.** Freezing a goal with no task named, or editing a frozen done line, is refused. <br> DEL-19.2 Every goal runs the same steps in its own worktree and session: plan, build, review, test lanes, pull request, merge queue, merge. Each step writes its result to the goal's run record, and the board shows the current step. <br> **Metric.** Merged goals with a step missing from their run record. Target 0. <br> **Test.** A goal that skips its review step can't open its pull request. <br> DEL-19.3 Main changes only through a goal's pull request, merged when every check is green on its exact head. <br> **Metric.** Commits on main that came from no goal's pull request. Target 0. <br> **Test.** A direct push to main is refused, and a pull request whose head moved after its checks can't merge. <br> DEL-19.4 The goal format and its steps are drawn on one page, generated from the code, so the picture can't drift from what runs. <br> **Metric.** Differences between the drawn steps and the steps the code runs. Target 0. <br> **Test.** Add a step to the code without regenerating, and the docs check fails. <br> ### Non-goals <br> It doesn't decide what to build; tasks do. It doesn't decide when to release; releases do. <br> No change to how the steps work today. This feature describes and enforces the existing loop. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Merging only on green checks for the exact merged result. <br> adapted <br> [Trunk-based development](https://trunkbaseddevelopment.com/). Short-lived branches, one per change, merged to main. | the owner's pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b): the goal loop as one fixed format | o721: "DEL-19, DEL-23 and DOC-28 reviewed as in frozen-source-v1.1.0-1052; principle 1 may hold" |
 | r3 | 2026-11-20 | Every change is a goal inside the loop, serving a requirement <br> The loop's steps are: ask, frozen goal, worker build in its own worktree, tests, CI and the merge queue, merge, release from a tag, then health and the reviewer, whose findings become the next goal. [DEL-19] <br> Everything in the repo is part of one of those steps or keeps them running. [DEL-19] <br> Main changes only through a goal's pull request. [DEL-19] <br> A goal freezes only when it names a Reviewed requirement and the step of the loop it changes; a goal that serves no step is refused. [DEL-19] <br> Done lines never change after the freeze. [DEL-19] <br> "What this is" is generated from this text. [DEL-19] | readme-six: the owner-approved final README (o514) | o570: "yes build it" |
 | r2 | 2026-11-19 | Every change is a goal serving a requirement <br> Every change to a repo's main branch arrives through a goal: its pull request and its release commit. Nothing else writes to main, and health's Traceability group flags a commit on main that no goal accounts for. [DEL-18] <br> A goal is frozen only when it names the Reviewed requirement it builds, fixes or keeps true. A goal that names none is refused at freeze, and health's Traceability group flags any that slipped through. [DEL-19] <br> Work that no requirement covers starts as a goal that changes the PRD, with the new text in its done lines and my approval; the build follows as a second goal. [DEL-19] <br> Done lines can't change once the goal starts; a change means a new goal. [DEL-2] | consolidation (TOP-DECISION 89) | o197: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
@@ -341,11 +464,35 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | r2 | 2026-11-20 | Every requirement names what it follows and adopts a standard tool by default, scored <br> Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21] <br> General guidance is not a reference. [DEL-21] <br> A drop-in tool is used as it is; adapted names the design it copies and why. [DEL-21] <br> The adoption score is shown per requirement, per principle and overall. [DEL-21] <br> The target is 50%, and I set it. [DEL-21] <br> Every goal that adds or rewrites a requirement first checks whether a tool can be adopted. [DEL-21] <br> A change that lowers the score needs my words. [DEL-21] | readme-six: the owner-approved final README (o514) | o590: "yes build it" |
 | r1 | 2026-11-19 | Adopt a standard tool by default <br> Adopt by default: a requirement with a drop-in standard tool uses it. Adapted is an exception that names the proven design it copies and gives a one-line reason, and health lists every exception. A requirement with no reference is replaced by its industry-standard counterpart or cut. [DEL-21] | principle-7-readme: the seventh principle, Standard, not home-made. Wording approved by operation-top under owner delegation (DOC-2 r4), TD221; owner records o474, o475. | o474: "Apply your recommendation and fill the reconstruction in V2. And also" |
 
+### DEL-22
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-22 | Fast plans: a goal's plan is ready in a set time and never stalls on a tool fault <br> Principle 3, Fast · Topic: Delivery <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> Last night no full plan finished in any worker session. The planning tool's guard refused every plan in a session that had once planned a file since deleted. Its log shows 6 such refusals. <br> Two goals stopped on it (the #5727 fix and H1). To unblock them you started a fresh session and typed two lines. <br> Nothing says how long a plan may take, the reviews inside a plan run one after another, and a one-line bug fix gets the same depth as a feature. <br> ### Requirements <br> DEL-22.1 **Every goal gets one plan level, by fixed rules.** When a goal is frozen, the tool gives it a level from one list of levels, using rules it can check on its own, for example how many files it touches and whether it changes what a feature promises. The level and the rule that chose it are recorded, and the board shows them. <br> **Metric.** Frozen goals without a recorded level and rule. Target 0. <br> **Test.** Freeze two toy goals of different sizes: each gets the level its rule says, with the rule recorded; the same goal always gets the same level. <br> DEL-22.2 **Each level's needs and time limit are settings.** For each level, a setting says what its plan must include and how long it may take. The template ships default values, and a repo may change them in its settings. Past its limit, the plan step says so and the board shows it as missed with its cause. <br> **Metric.** Plans over their level's time limit, per release. Target 0. Today: no limits. <br> **Test.** Set a level's limit to 1 minute in a toy repo: a plan that takes longer is reported missed. Change the setting, and the new limit applies without a code change. <br> DEL-22.3 **A plan's reviews run side by side,** and the plan is ready when the slowest finishes. <br> **Metric.** A plan's time beyond its slowest review. Target 5 minutes or less. Today: the reviews run one after another. <br> **Test.** Three stand-in reviews of 2, 4 and 6 minutes produce a ready plan in under 8 minutes. <br> Default settings, not part of the requirement (you can change them later): three levels. **Small**: touches a few files and changes no feature's promise; one review; 10 minutes. **Normal**: changes one feature's behaviour; the full set of reviews; 30 minutes. **Large**: changes a safety check or more than one feature; the full set plus one extra independent review; 45 minutes. <br> DEL-22.4 A tool fault never stops a goal. When the planning tool refuses for a reason that isn't the goal's own (a record it can't read, an old file that's gone), the step takes the tool's own fallback at once. It quotes the refusal word for word in the goal's record and opens one issue. No one has to start a session or type words. The guard itself is never bypassed or changed. The fallback is the route the tool offers, and you approve it once in the release's brief. <br> **Metric.** Goals stopped by a planning-tool fault. Target 0. Last night: 2. <br> **Test.** A stand-in guard refuses with "evidence". The goal goes on through the fallback, its record quotes the refusal, and one issue is opened. <br> DEL-22.5 Each plan records the minutes and tokens of every review it ran. The board shows them, and a review past twice its usual is flagged. <br> **Metric.** Plans with time and tokens recorded per review. Target 100%. Today: 0%. <br> **Test.** After a plan finishes, the board shows each review's minutes and tokens. A review recorded at three times its usual shows a flag. <br> ### Non-goals <br> It doesn't decide what gets built; the brief does. <br> It doesn't pick reviews by hand: the level's setting decides. <br> It never changes or works around a guard or hook. It only takes the fallback the tool itself names. <br> Test-lane and CI speed stay in DEL-17, fixed as patches. <br> It doesn't fix the outside planning tool. That's reported to its makers, which is your call. <br> ### Success metrics <br> Plans within their level's time limit · 100% · not measured <br> Goals stopped by a planning-tool fault · 0 · 2 (last night) <br> Your words or sessions needed to unblock a plan · 0 · 2 lines and 1 fresh session (last night) <br> ### Reference <br> adapted <br> [DORA four keys, lead time for changes](https://dora.dev/guides/dora-metrics-four-keys/). The plan step gets its own measured share of lead time. <br> adapted <br> [Circuit breaker (Martin Fowler)](https://martinfowler.com/bliki/CircuitBreaker.html). A known fault switches to a declared fallback instead of failing the caller, and the switch is recorded. <br> reference <br> [Google engineering practices: speed of code reviews](https://google.github.io/eng-practices/review/reviewer/speed.html). Slow reviews hold up the whole team, so a review has a response-time limit. | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
+
 ### DEL-23
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
 | r1 | 2026-11-21 | Tasks: a brief I write once and freeze, run as goals <br> Principle 1, Guided · Topic: Delivery · Release: v1.1.0 <br> Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34) <br> ### Problem <br> I think in tasks ("migrate the features", "fix #5727"), but the loop only knows goals. Last night T1, T2 and T3 lived in a brief while their goals were re-frozen four or five times, and I couldn't tell what a "T" was. <br> I want to keep adding work whenever I think of it, without tying it to a release. <br> ### Requirements <br> DEL-23.1 A task starts from a short brief I write: its name, the feature it serves, what it's for in my words, and its done-when lines. My typed word freezes it, and a frozen brief can't be edited. A change means a new task that replaces it. <br> **Metric.** Tasks running without a frozen brief, plus edits to a frozen brief. Target 0. <br> **Test.** Starting a task with no frozen brief is refused. Changing one word of a frozen brief fails the check. <br> DEL-23.2 I can add a task at any time. It goes on one task list with its name, state (queued, running, waiting, done or replaced), the goals it produced and its ETA. A task doesn't need a release to exist. <br> **Metric.** Tasks I added that don't appear on the list within one minute. Target 0. <br> **Test.** Add a task. It shows on the list as queued, by name. <br> DEL-23.3 Tasks are independent of each other. A task that needs another one finished names it, and doesn't start before that one is done. Two tasks that touch the same files can both build; the second merges up before its tests. <br> **Metric.** Tasks started before a task they name was done. Target 0. <br> **Test.** A task naming another can't start until that one is done. Two tasks with no dependency can both be running at once. <br> DEL-23.4 A task runs as one or more goals, using the goal loop (DEL-19). It's done when every done-when line in its brief is met and all its goals have merged. The board shows each task by name, with its goals under it. <br> **Metric.** Tasks marked done with a done-when line unmet or a goal unmerged. Target 0. <br> **Test.** A task whose last goal is still open can't be marked done. <br> ### Non-goals <br> It doesn't decide when a task starts or in what order tasks run. Scheduling is left for later. <br> It doesn't pick what goes into a release; the release brief does. <br> It never writes a brief for me. An agent may draft one; freezing it is mine. <br> ### Reference <br> adapted <br> [Shape Up: the pitch](https://basecamp.com/shapeup). A short written brief, fixed before work starts. | the owner's pinned page frozen-source-v1.1.0-1052 (sha256 cd66455a83be4a0b): tasks as a frozen brief run as goals | o721: "DEL-19, DEL-23 and DOC-28 reviewed as in frozen-source-v1.1.0-1052; principle 1 may hold" |
+
+### DEL-25
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-22 | Fast build and checks: quick checks before every push, no local test lane <br> Principle 3, Fast · Topic: Delivery <br> ### Problem <br> Each goal ran three 15-minute test lanes on the Mac, one goal at a time, and queued for hours behind the single slot. <br> ### Requirements <br> DEL-25.1 **Quick checks run before every push** through the standard pre-commit framework: lint, the docs check, the private-name scan and the size limits. <br> **Metric.** Pushes that skipped the quick checks. Target 0. <br> **Test.** A push with a private word or an over-size file is refused before it leaves the machine. <br> DEL-25.2 **The quick checks finish within their limit,** default 1 minute. <br> **Metric.** Quick-check runs over their limit. Target 0. <br> **Test.** The quick checks on a typical goal finish within the default limit. <br> DEL-25.3 **No full test lane runs on the machine.** Tests run on GitHub (DEL-26). A machine runs a lane only when GitHub is unavailable. <br> **Metric.** Local full lanes while GitHub was available. Target 0. <br> **Test.** With GitHub available, a goal reaches its PR without a local lane. <br> DEL-25.4 **Generated files are made the same way every time and checked, never rewritten at PR time,** so opening a PR never changes the version that was tested. <br> **Metric.** PR openings that changed the tested version. Target 0. <br> **Test.** Opening a PR on a tested head leaves the head unchanged. <br> ### Reference <br> adopted <br> [pre-commit](https://pre-commit.com/). <br> adapted <br> [trunk-based development](https://trunkbaseddevelopment.com/): small changes, checked fast. | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
+
+### DEL-26
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-22 | Fast tests: on GitHub, in parallel, only what the change reaches, results reused <br> Principle 3, Fast · Topic: Delivery <br> ### Problem <br> A PR's tests took about 21 minutes, and a test cut for time still showed green (#5757). <br> ### Requirements <br> DEL-26.1 **Tests run as parallel jobs on GitHub,** split so each job finishes within its limit. <br> **Metric.** PR test runs over their limit. Target 0. <br> **Test.** A PR's tests finish within the default limit, split across jobs. <br> DEL-26.2 **A PR runs only the tests its change reaches,** chosen by the standard affected-test method, and never fewer than that. <br> **Metric.** Reached tests skipped. Target 0. <br> **Test.** A change to one script runs that script's tests and nothing unrelated. <br> DEL-26.3 **Results for unchanged inputs are reused** from the cache, never re-run. <br> **Metric.** Tests re-run with unchanged inputs. Target 0. <br> **Test.** Rerunning a PR with no change reuses every result. <br> DEL-26.4 **A test cut for time, or not run, fails the checks** and names the test and its time. Green means every chosen test ran and passed. <br> **Metric.** Green runs with a cut or missing test. Target 0. <br> **Test.** A toy job with one test over its limit doesn't end green. <br> DEL-26.5 **Nothing private goes to GitHub:** no private-name list and no secrets; CI uses the empty list. <br> **Metric.** Private data in CI. Target 0. <br> **Test.** CI's logs and inputs contain no private-name list. <br> ### Reference <br> adopted <br> [GitHub Actions matrix jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs). <br> adopted <br> [actions/cache](https://github.com/actions/cache). <br> adapted <br> [test impact analysis](https://martinfowler.com/articles/rise-test-impact-analysis.html). | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
+
+### DEL-27
+
+| rev | date | text | why | approved |
+|---|---|---|---|---|
+| r1 | 2026-11-22 | Fast merge: the full tests run once, on the merged result, through the merge queue <br> Principle 3, Fast · Topic: Delivery <br> ### Problem <br> Tests ran on the PR and again in the merge queue, and PRs could open only one at a time. <br> ### Requirements <br> DEL-27.1 **A PR opens within its limit**, default 1 minute, and any number of goals can open PRs at once. <br> **Metric.** PR openings over their limit or waiting in line. Target 0. <br> **Test.** Two goals open PRs at the same moment; both open. <br> DEL-27.2 **A green PR enters the merge queue at once,** and the queue tests several PRs together on the merged result. <br> **Metric.** Green PRs waiting outside the queue past 2 minutes. Target 0. <br> **Test.** A green PR is in the queue within 2 minutes. <br> DEL-27.3 **The full test set runs once, on the merged result;** the PR itself runs only the quick set and the reached tests. <br> **Metric.** Full test runs per merged change. Target 1. <br> **Test.** A merged PR shows one full run, in the queue. <br> DEL-27.4 **From green to main within its limit,** default 10 minutes, and a merge never makes another ready PR re-test. <br> **Metric.** Green-to-main time over its limit. Target 0. <br> **Test.** A green PR in a quiet queue reaches main within the default limit. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), with merge groups. | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
 
 ### DEL-28
 
@@ -394,16 +541,19 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [auto-owner-words-wait](Tests#t-auto-owner-words-wait) | requirement | DEL-3 | Given full auto on and a standing owner rule recorded, when a question asks for the owner's words (an un-review, a criteria_max raise), then it is answered with its recommendation and not held for an owner-words record (o118, which supersedes #4287). | PASS 2026-11-17 |
 | [review-hold-blocks](Tests#t-review-hold-blocks) | requirement | DEL-3 | Given DEL-3, when test-review-hold.py runs its 3 cases, then each passes: merge.py refuses REVIEW_HOLD, merges nothing and t; merge.py merges, and with the setting off merging; it is refused and nothing is recorded. | not run |
 | [review-help-runs-alone](Tests#t-review-help-runs-alone) | requirement | DEL-3 | Given the review script, when it runs alone with --help, then it prints its usage and exits 0, so the package gate accepts it. | not run |
+| [docs-check-speed](Tests#t-docs-check-speed) | requirement | DEL-17 | Given this repo, when the docs check runs, then it finishes in under 30 seconds. | PASS 2026-11-22 |
+| [aut-email-rounds](Tests#t-aut-email-rounds) | requirement | DEL-17 | Given a round's runs, when the digest is written, then the run summary shows the round's job time and Actions minutes and flags a round over 45 minutes. | PASS 2026-11-12 |
 | [suite-time-recorded](Tests#t-suite-time-recorded) | requirement | DEL-17 | Given a toy repo, when regression.py run nightly runs plainly and other runs name a row, land, --kind or --reuse, then only the plain run appends a full line to the git common dir's suite-times.tsv and prints SUITE_TIME, health reads it, regression.yml uploads CI's line as artifact suite-time and health.yml's fetch step adds it with the ci column or continues without one. | PASS 2026-11-10 |
 | [health-timing](Tests#t-health-timing) | requirement | DEL-17 | Given a goal lane that took long and a full suite over 30 minutes, when health checks, then only the suite warns (a goal lane has no limit but its budget), and with no suite time it says how to get one. | PASS 2026-11-11 |
 | [lane-over-minutes](Tests#t-lane-over-minutes) | requirement | DEL-17 | Given DEL-17, when test-tiers.sh runs its 2 cases, then each passes: its LANE line carries no over note: the lane budge; its own time limit is test_budget_minutes plus fiv. | PASS 2026-11-11 |
 | [reg7-floor-test](Tests#t-reg7-floor-test) | requirement | DEL-17 | Given DEL-17, when test-budget.sh runs its 6 cases, then each passes: it is refused with a fix line and runs nothing; the step budget is 30 minutes and the test budget; it reuses them and runs none; those that fit run in tier order and the rest are; it says what it left and the goal's record names t; it warns. | not run |
 | [reg7-unmapped-tier](Tests#t-reg7-unmapped-tier) | requirement | DEL-17 | Given a new file no row reads, when a reusing run happens, then it picks the rows that name it and the runners and never forces a full run. | not run |
 | [reg7-prep-setting](Tests#t-reg7-prep-setting) | requirement | DEL-17 | Given DEL-17, when test-prep-budget.sh runs its 4 cases, then each passes: it defaults to 15 minutes, a value under 15 is ref; its LANE line and its .last record say how long pr; it fails with LANE_PREP_BUDGET naming the part tha; planning is named with exit 125, bad records read. | not run |
+| [hlt7-fast-check](Tests#t-hlt7-fast-check) | requirement | DEL-17 | Given this repo, when health checks it without controls, then it finishes in under 60 seconds, and a check past 60 seconds warns. | PASS 2026-11-12 |
 | [tree-once-lock](Tests#t-tree-once-lock) | requirement | DEL-17 | Given a stand-in for test-tree.sh, when tree-once.sh runs twice and once more over a lock left by a dead holder, then it runs once, replays the output and exit code, and takes the dead lock over at once. | PASS 2026-11-22 |
 | [grd7-round-cost](Tests#t-grd7-round-cost) | requirement | DEL-17 | Given a scheduled round, when its digest is posted, then the round cost shows its minutes and Actions minutes. | not run |
-| [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | DEL-17 | Given a worker silent past silent_minutes, when the board prints, then it shows under Needs you. | not run |
-| [budgets-agree](Tests#t-budgets-agree) | requirement | DEL-17 | Given the regression budget, when the wiki and regression.yml are read, then REG-7, AUT-7 and the workflow name the same 30 minute budget and the suite is sharded to fit it. | PASS 2026-11-22 |
+| [grd8-silent-worker](Tests#t-grd8-silent-worker) | requirement | DEL-17 | Given a worker silent past silent_minutes and 12 goals with pull requests on a slow GitHub, when the board prints, then a worker silent 31 minutes shows under Needs you, and the board is built in under 10 seconds. | not run |
+| [budgets-agree](Tests#t-budgets-agree) | requirement | DEL-17 | Given the regression budget, when test-automation-budgets.sh runs its three cases (budgets, digest, health), then each passes: REG-7, AUT-7 and the workflow name the same 30 minute budget and the suite is sharded to fit it; it names the 45 minute round as the 30 minute regression budget; it says TRUNCATED instead of presenting cut counts; and it waits for the run to complete instead of a fixed wait. | PASS 2026-11-22 |
 | [reg7-unrun-warn-cost](Tests#t-reg7-unrun-warn-cost) | requirement | DEL-17 | Given the REG-7 cases of test-unrun-warn.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
 | [rerun-both-touched](Tests#t-rerun-both-touched) | requirement | DEL-17 | Given a goal rerun after main moved, when the lane plans, then it runs only the rows touched by both the goal's diff and main's new commits. | not run |
 | [merge-batch-split](Tests#t-merge-batch-split) | requirement | DEL-17 | Given 3 ready pull requests with disjoint touches, when wiki.py batch run verifies them on one tree, then they merge together, and a failing batch splits to name the culprit; and the template's .loop/config.json has merge_batch true, so merge.py --batch is not refused. | not run |
@@ -417,6 +567,10 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [rel-update-asset](Tests#t-rel-update-asset) | requirement | DEL-17 | Given a release with a package asset, when update downloads it, then it uses the asset, and with no asset it falls back to the source archive. | not run |
 | [queue-use](Tests#t-queue-use) | requirement | DEL-17 | Given the last merges where one PR entered the merge queue 162 seconds after its checks passed, when health reads the queue use, then it FAILS naming that PR and prints PRs per merge and the longest wait. | not run |
 | [release-hold-red](Tests#t-release-hold-red) | requirement | DEL-17 | Given an open issue labeled main-red, when release.yml runs on a push to main, then it ends green printing held: main red (#N) and publishes nothing; given none open, it releases as before. | not run |
+| - | requirement | DEL-22 | no passing test | not enforced |
+| - | requirement | DEL-25 | no passing test | not enforced |
+| - | requirement | DEL-26 | no passing test | not enforced |
+| - | requirement | DEL-27 | no passing test | not enforced |
 | - | requirement | DEL-28 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
 | [defect-closing-keywords](Tests#t-defect-closing-keywords) | requirement | DEL-19 | Given DEL-19, when test-defect.sh runs its 2 cases, then each passes: goal.py pr refuses with one line naming the fix an; it opens its pull request without any closing keyw. | not run |

@@ -48,7 +48,7 @@ None
 - MON-6: moved to OPS-1
 - MON-7: moved to GRD-4
 - MON-8: moved to OPS-1
-- MON-9: moved to HLT-7
+- MON-9: moved to DEL-17
 
 ### MON-1
 
