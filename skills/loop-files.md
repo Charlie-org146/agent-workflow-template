@@ -509,6 +509,8 @@ migrate --owner-record ID`.
 | BRF-6 | a feature task named by no frozen release brief; a patch that would ship a feature task; a major with a known-red row | name it in a frozen brief; fix the row (there is no waiver) |
 | BRF-7 | a private value (an email address, the home folder, a name on the private list) in a brief or its result | remove it |
 
+Two holds are separate: a major with a non-empty known-red list is refused (BRF-6, DOC-28.1, a major only, no waiver), and v110-fast-clock's main-red-issue hold (DEL-17.5) blocks any release while main has an open red issue.
+
 Refusals print what, fix and the code on stderr, never the owner's typed words. A repo with no task briefs is untouched: a goal
 that names a task with no brief merges as before, but `goal.py new` in a repo that keeps `.loop/tasks/` refuses a task with no
 frozen brief.
