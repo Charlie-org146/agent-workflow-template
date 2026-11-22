@@ -1,7 +1,7 @@
 # Migrate every live template requirement into the feature format in place (goal G1 of the v1.1.0 brief, owner o700 typed 23:18; Operation TD658, TD659): each keeps its ID, page and every word, no page is rebuilt, nothing is lost, every old Reviewed mark is cleared and listed, missing metrics, tests and references are marked, features over five requirements are listed to split, with a report and a safe re-run. Re-frozen as migrate-features-2 (owner o711) to add ls-narrow-triggers to the known-to-fail list, citing #4061
 
 - Slug: migrate-features-2
-- Touches: docs/wiki, README.md, docs, .loop/regression-known.tsv
+- Touches: docs/wiki, README.md, docs, .loop/regression-known.tsv, dev/toy
 - ETA: 325 active minutes (estimate 259m plus a 25% margin)
 
 ## Done lines
