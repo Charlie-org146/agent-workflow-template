@@ -175,6 +175,7 @@
 | <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-goal-format-del19"></a>goal-format-del19 | requirement | DEL-19 | not run | - | local | 2026-11-22 |
 
 ## Documentation
 
@@ -237,6 +238,8 @@
 | <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-guide-page-stamp"></a>guide-page-stamp | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-feature-standard-doc27"></a>feature-standard-doc27 | requirement | DOC-27 | not run | - | local | 2026-11-22 |
+| <a id="t-release-briefs-doc28"></a>release-briefs-doc28 | requirement | DOC-28 | not run | - | local | 2026-11-22 |
 
 ## Guardrails
 
@@ -750,3 +753,4 @@
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) closed (2026-11-21) | not run | - | local | no |
 | <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) closed (2026-11-21) | not run | - | local | 2026-11-21 |
 | <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |
+| <a id="t-tasks-del23"></a>tasks-del23 | requirement | DEL-23 | not run | - | local | 2026-11-22 |

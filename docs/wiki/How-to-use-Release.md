@@ -12,6 +12,7 @@ A major version (a milestone) ships only through a hard gate: every milestone is
 | `review.py gate` | Command | Runs the five gate checks on a release candidate and prints `GATE PASS` or one `GATE REFUSED` line per failure, naming the issue, row, requirement or page. | `python3 skills/workflow-release/scripts/review.py gate v2`. |
 | `review.py promote` | Command | Promotes a major: gate, tag `vX.0.0`, branch `release/vX`, main moved, state report published and mailed. | `python3 skills/workflow-release/scripts/review.py promote v2 --owner-record ID`. |
 | `review.py revert` | Command | Opens a pull request that puts main back on the `release/vX` snapshot. | `python3 skills/workflow-release/scripts/review.py revert v2`. |
+| `brief.py` | Command | Freezes task briefs and release briefs with the owner's record, lists the tasks, and holds the gates a release reads (a minor needs a frozen brief, a feature task merges once a brief names it, a cut needs every named task done). | `python3 skills/workflow-release/scripts/brief.py freeze task NAME --owner-record ID`. |
 | `release-waivers.tsv` | API/file contract | The owner's waivers for the gate, kept in the git folder outside the repo. | The operation session adds a line after you name the issue or row in your own words. |
 
 ### System diagram
@@ -79,6 +80,13 @@ Each requirement and how it is delivered:
 - **Reads:** branch `release/vX` and the base.
 - **Writes:** a branch `revert/vX-STAMP` and a pull request to the base; never the base itself.
 - **Exit codes:** 0 with `REVERT PR`; nonzero when `release/vX` does not exist or the caller is a worker.
+
+### Command: brief.py
+- **Command:** `python3 skills/workflow-release/scripts/brief.py freeze task|release NAME --owner-record ID` (also `check`, `tasks`, `finish NAME --met 1,2`)
+- **Dry run:** none: `tasks` and `check` only read.
+- **Reads:** `.loop/tasks/*.md`, `docs/release-brief-*.md`, the git folder's `loop/owner-words.tsv` and run records.
+- **Writes:** the `Frozen:` line of a brief, `.loop/tasks.tsv` for a finished task, and `## Results` on a release brief after a cut; never the owner's words.
+- **Exit codes:** 0 when done; 1 with `REFUSED BRF-n: what. Fix: how` on stderr (BRF-1 to BRF-7, in loop-files.md).
 
 ### API/file contract: release-waivers.tsv
 - **Path:** `loop/release-waivers.tsv` in the git folder (outside the repo).

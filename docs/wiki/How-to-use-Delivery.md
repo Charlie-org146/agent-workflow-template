@@ -153,7 +153,7 @@ Each requirement and how it is delivered:
 - **Command:** `/workflow-release merge SLUG`
 
 ### Command: goal.py
-- **Command:** `python3 skills/workflow-delivery/scripts/goal.py new SLUG --goal "goal" --done "line"` (also `record`, `pr`, `goal.py adopt SLUG`, `show`)
+- **Command:** `python3 skills/workflow-delivery/scripts/goal.py new SLUG --goal "goal" --task "task" --done "Given ..., when ..., then ..."` (also `record`, `pr`, `goal.py adopt SLUG`, `show`)
 - **Dry run:** none: `new` freezes the goal when it runs; `show SLUG` only prints the record.
 - **Reads:** `.loop/config.json` and the goal's run record under the git common dir's `loop/runs`.
 - **Writes:** `.loop/goals/SLUG.md`, the goal's branch and its run record; `pr` pushes the branch and opens the pull request.
