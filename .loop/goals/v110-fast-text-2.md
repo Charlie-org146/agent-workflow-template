@@ -14,3 +14,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Open the Principles page. Expect: eight principles, 3 Fast listing DEL-17, DEL-22, DEL-25, DEL-26 and DEL-27, and 4 Cheap and 5 Small each with their features.
+2. Open the Delivery page. Expect: DEL-17 without a Tokens line, DEL-19 with five lines and its eight step names, and DEL-22, DEL-25, DEL-26 and DEL-27 as pinned.
+3. Run `python3 docs/v110-text-check.py <old-pin HTML> <new-pin HTML>` (operation supplies the pages). Expect: every unit equal, and a scratch copy with one changed word failing it.
