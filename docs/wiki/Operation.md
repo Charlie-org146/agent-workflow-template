@@ -15,7 +15,7 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
 
 ### Functional
 
-- OPS-1: **Reviewed 2026-11-20** One operation session governs the loop for me <!-- reviewed 5ee683ee -->
+- OPS-1: **Unreviewed** One operation session governs the loop for me
   - **Layers:** top, one session per machine, workers; top only governs. [OPS-1]
   - **Relay:** my words go to the machines word for word, on fixed message forms; a machine's message is never my approval. [OPS-1]
   - **Full auto:** top decides process choices and numbers each decision; the safety classes wait for my typed words. [OPS-1]
@@ -29,7 +29,23 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - It decides which machine takes a goal, how many run at once, when to wake or archive a session, and when to pause one. [OPS-1]
   - Each decision cites the log line it used. [OPS-1]
   - The board shows each machine's latest line, and health fails a machine whose log is more than 5 minutes old. [OPS-1]
-- OPS-16: **Reviewed 2026-11-20** Every ready goal starts within capacity limits <!-- reviewed dada51c6 -->
+
+  - Feature markers v1
+  - Reference: Kubernetes controller reconcile loop: adapted; Google SRE incident command: adapted
+  - Line 1: metric missing; test 18 linked rows, see Tests
+  - Line 2: metric missing; test 18 linked rows, see Tests
+  - Line 3: metric missing; test 18 linked rows, see Tests
+  - Line 4: metric missing; test 18 linked rows, see Tests
+  - Line 5: metric missing; test 18 linked rows, see Tests
+  - Line 6: metric missing; test 18 linked rows, see Tests
+  - Line 7: metric missing; test 18 linked rows, see Tests
+  - Line 8: metric missing; test 18 linked rows, see Tests
+  - Line 9: metric missing; test 18 linked rows, see Tests
+  - Line 10: metric missing; test 18 linked rows, see Tests
+  - Line 11: metric missing; test 18 linked rows, see Tests
+  - Line 12: metric missing; test 18 linked rows, see Tests
+  - Line 13: metric missing; test 18 linked rows, see Tests
+- OPS-16: **Unreviewed** Every ready goal starts within capacity limits
   - Every ready goal gets its own worker at once unless a capacity limit holds it. [OPS-16]
   - The memory floor is measured per machine. [OPS-16]
   - **Memory is guarded on every machine by set limits.** At most one live session per 2 GB of memory, counting the operation sessions (8 on a 16 GB machine). [OPS-16]
@@ -38,6 +54,17 @@ How to use: [How-to-use-Operation](How-to-use-Operation)
   - Below 10% free, or at 95% swap, the lowest-priority building goal is paused: its work is committed, not pushed, and it restarts when memory recovers. [OPS-16]
   - Each reading is the lower of two taken a minute apart, so one swing does not trigger. [OPS-16]
   - Every STATUS reports the free figure, swap and live sessions, and health fails a machine that crossed a limit with no action recorded. [OPS-16]
+
+  - Feature markers v1
+  - Reference: Kubernetes ResourceQuota: adapted; Kanban WIP limits: adapted
+  - Line 1: metric missing; test 5 linked rows, see Tests
+  - Line 2: metric missing; test 5 linked rows, see Tests
+  - Line 3: metric missing; test 5 linked rows, see Tests
+  - Line 4: metric missing; test 5 linked rows, see Tests
+  - Line 5: metric missing; test 5 linked rows, see Tests
+  - Line 6: metric missing; test 5 linked rows, see Tests
+  - Line 7: metric missing; test 5 linked rows, see Tests
+  - Line 8: metric missing; test 5 linked rows, see Tests
 
 ### Non-functional
 
