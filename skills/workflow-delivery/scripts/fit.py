@@ -16,6 +16,21 @@ SURFACES = ("wiki", "milestones", "projects", "releases", "labels", "issues")
 SMALL_DONE = 3
 
 
+def deadline(held):
+    import lanekit  # lazy: other skills load fit.py by path, where lanekit is not importable
+    if "markers" not in held:
+        return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
+    began = lanekit.mtime(held["rc"] + ".started")
+    if began:
+        return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
+    if held.get("prep_by"):  # before the first row the preparation budget rules
+        return held["prep_by"], "past its preparation budget"
+    at = held["started"]
+    if os.path.exists(held["rc"] + ".queued"):
+        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
+    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
+
+
 def surface(path):
     if not path.startswith("github:"):
         return ""
