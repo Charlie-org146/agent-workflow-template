@@ -15,3 +15,33 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+## PR notes
+
+Raises the pull-request shard job's time limit from 20 to 30 minutes at the generator. Basis: the owner's record o755 and TD847 (code PR-checks limit 30 minutes).
+
+**The one-line workflow diff** (`.github/workflows/regression-pr.yml`, shard job, regenerated with `regression.py workflow --visibility public`, not hand-edited):
+
+```
+-    timeout-minutes: 20
++    timeout-minutes: 30
+```
+
+**Where it comes from.** `skills/workflow-regression/scripts/lanes_cli.py:187` (same byte length; the file stays 20,477 bytes). `regression.yml` is unchanged; the committed `regression-pr.yml` equals the generator's output (`test-tree-first.py` and `test-shard-balance.py` still pass).
+
+| Job | Limit (minutes) |
+|---|---|
+| shard | 30 (was 20) |
+| affected | 8 (unchanged) |
+| small | 5 (unchanged) |
+| regression.yml (scheduled) | unchanged |
+
+**Red proof.** In `dev/toy/test-local-schedule.sh` the `triggers` case (row `ls-narrow-triggers`) gains a separate check that reads the generated file: shard 30, affected 8, small 5, and the shard matrix still runs shards 0 to 7 and tree. With the generator at 20 that check FAILS; at 30 the case prints ALL PASS.
+
+**The stale clause fix (named, approved by operation).** The case's existing clause expected `shard: [0, 1, 2, 3, 4, 5, 6, 7]`, but the generated file has had the tree cell (`[0, 1, 2, 3, 4, 5, 6, 7, tree]`) since TD504, so `ls-narrow-triggers` was already red on main. The clause now expects the tree cell. Removing the `ls-narrow-triggers` known row waits for fix-5727's PR (#5772) to merge; #4061 is closed only with evidence that the tree cell was its only cause, otherwise commented and left open.
+
+**Depth.** The plan ran at condensed depth for this goal only (TD850): the change is one generator line plus one assertion, so a full multi-round review costs far more than it can find. The plan gate recorded one BREAK (principle 3: DEL-17's 5-minute clock against 30), accepted on the owner's record o759 (`plan-accept`).
+
+**The plain limit.** Raising the limit does not make shard (1) faster. If it needs more than 30 minutes, the next fix is the shard balance, not the limit.
+
+**Named follow-up.** Rebalance the PR shards so shard (1) fits well under 30 minutes.
