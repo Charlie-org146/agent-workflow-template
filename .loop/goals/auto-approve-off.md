@@ -14,4 +14,8 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+1. Run `python3 skills/workflow-setup/scripts/settings.py show`. Expect: the line `auto_approve | false | repo | .loop/config.json`.
+2. Run `git show HEAD:.loop/config.json` and look for `auto_approve`. Expect: `"auto_approve": false` and `"auto_merge": true`.
+3. In a scratch repo with this config, record a step reply that ends with `PENDING: approve the design`, `DEPTH: full`, `STEP: pending` (goal.py record). Expect: a line starting `WAITING` with the ask, the run record's status `waiting`, and no `AUTO-APPROVED` line.
+4. Open `docs/wiki/How-to-use-Delivery.md` and `listing.json`. Expect: neither says this repo runs with no gates or that owner items are approved automatically; both say `auto_merge` is on and `auto_approve` is off.
+5. Run `bash dev/toy/test-goal.sh 2>&1 | grep -F "PASS: a real PENDING item among none lines still waits"`. Expect: one PASS line.

@@ -3,20 +3,28 @@
 Design: .loop/designs/auto-approve-off.md. Goal: .loop/goals/auto-approve-off.md (done lines frozen).
 
 ## Implementation plan
-1. `.loop/config.json`: `"auto_approve": false`. Nothing else in the file changes (`auto_merge` stays true). The goal's worktree carries no local floor edit.
-2. Regenerate, never hand-edit: `entry.py write` (workflow-docs) for `.loop/START.md`; the settings render (`docs.py`/`criteria.py render`, whichever owns `docs/wiki/How-to-use-Setup.md` row `auto_approve`) so the row reads default, not "overridden: true". Revert unrelated churn the render makes. Restamp the pages it touches (`audit.py restamp auto-approve-off`).
-3. `docs/wiki/How-to-use-Delivery.md:48`: rewrite the sentence "This repo runs with no gates ..." to say `auto_merge` is on, `auto_approve` is off, and what a step leaves for the owner waits (WAITING, under Needs you) until the owner answers; review stays the only check step.
-4. `dev/toy/test-goal.sh`: after the "No gates" block (its negative control, auto_approve true prints `AUTO-APPROVED`, stays unchanged), add a case that reads this repo's committed `.loop/config.json` from `$here`, asserts `auto_approve` is false, copies that value into the fixture config, runs a step replying `PENDING: <item>` and asserts `WAITING`, run record status `waiting` with `waiting.ask` set (guards.hold, guards.py:134-135), and no `AUTO-APPROVED` and no `auto-approved` in the goal log. One new PASS line.
-5. `dev/toy/test-goal.sh` header: add `.loop/config.json` to its `# reads:` lines. The lane selects a row for a config change only when the script reads `.loop/config.json` and names the changed key (narrow.py:69-75), and the new case now depends on the committed value; without the header a later flip back to true would not rerun the row.
-6. `.loop/regression.tsv`: extend the existing `auto-approved` row's command with a second grep for the new PASS line. No new row; `reads:` header of the row unchanged unless the row has one that must name `.loop/config.json`.
+(Revised after the red team's GATE 1 reply on 93967a2d8: the C lines are taken, the A and R lines are answered below.)
+1. `.loop/config.json`: `"auto_approve": false`. Nothing else in the file changes (`auto_merge` stays true). No local floor edit in this worktree.
+2. Regenerate, never hand-edit: `entry.py write` for `.loop/START.md`; the settings render for the `auto_approve` row of `docs/wiki/How-to-use-Setup.md` (`overridden: true` becomes `default`). Revert unrelated churn the render makes. Restamp the pages it touches.
+3. Rewrite the WHOLE "no gates" paragraph in `docs/wiki/How-to-use-Delivery.md` (lines 48-49), not one sentence: "runs with no gates", "approved automatically and logged as auto-approved" and "Review is the only gate" all become false. It must say `auto_merge` is on, `auto_approve` is off, what a step leaves for the owner waits under Needs you, and the release step merges after review. Also rewrite `listing.json:196` ("This repo itself runs with no gates: no check step, auto-approval and auto-merge"), which `dev/package.py:33` ships; done line 1 stays false unless both change.
+4. No new fixture case and no change to row `auto-approved`. Fold one assertion into the existing pnmix case of `dev/toy/test-goal.sh` (about line 111-114): the repo's committed `.loop/config.json` has `auto_approve` false. Its PASS line, "a real PENDING item among none lines still waits, with its own ask", already backs row `pending-real-waits` (`.loop/regression.tsv:265`), whose text matches (a real PENDING item waits on the owner); the row command is unchanged. The existing "No gates" block keeps proving the true side (AUTO-APPROVED), so both sides of goal.py:280 stay covered.
+5. The assertion was run RED first, against the committed true value, before the flip (REG-4): `dev/toy/test-goal.sh` printed `FAIL: mixed none and real item, or this repo's committed auto_approve is not false (o806): WAITING pnmix: idea left this for you: approve the plan` (the wait itself held; the config assertion failed on the true value). It runs green after the flip; both results go in the PR notes.
+   Authority for the PR notes: DEL-3 (it stops for the owner's decisions) and o806, which is newer than the 2026-11-20 flip and revert (1943c87a9, ab4651036). DOC-27.5 exempts a fix that restores what a feature already promises, so this is a patch with no requirement of its own (TD1062).
+6. `dev/toy/test-goal.sh` header gets no `.loop/config.json` read: that would select the 9 full test-goal rows on every future config change (narrow.py:69-75). The assertion is a one-line growth of a toy script; it is a deliberate guard that goes red when the owner flips the key back, and the PR notes say so: a red pnmix row after a flip means "the owner changed the setting, update the guard", not a behaviour bug.
+7. `goal.py` is not touched (18,997 bytes, 3 under the 19,000 warn line).
 
 ## Verification
-- `settings.py show` reports auto_approve false; `docs.py check --own` clean.
-- Sweep: every toy that renders settings/START or runs record, before and after, on a fresh clone; no assertion changed except one that reads the repo value (none expected: test-goal, test-review-depth, test-delivery-prd set their own config; test-defect.sh:255 quotes the generic commands.md line).
-- Byte caps: no script changes, so every script's size is unchanged.
+- `settings.py show` lists `auto_approve | false | repo | .loop/config.json` after the flip; the source column stays `repo`, with no private-layer override (the private layer is read only by `settings.py`, and `goal.py:131` reads only the repo file).
+- `docs.py check --own` clean; `git status` clean before the lane.
+- Done line 3 scope: "every script stays under 20,480 bytes" covers the shipped scripts (`skills/*/scripts/*.py`, the size-budget row `.loop/regression.tsv:183`). `dev/toy` scripts are dev tooling and many are already over 20,480 (test-goal.sh is 22,712); this goal grows test-goal.sh by one assertion line and nothing else.
+- Sweep after the flip: the toys that render settings/START or run record, on a fresh clone; no assertion loosened.
+- Records before the config flip is committed read the old true value: no record in this goal carries a PENDING owner item (replies say `PENDING: none`); any record that would carry one is held and its text sent to operation-mac (TD1051).
+
+## ETA
+The tool set 295 active minutes; the real work is a key flip, two text rewrites, one assertion line and a render: about 20-30 minutes plus one lane. DEL-17's small fix is 10 minutes from the ask. The lane runs once, at the head, from the clean fresh clone.
 
 ## NOT in scope
-auto_merge; plan_ahead (an owner's "approve ahead" answer); any script or wording change in goal.py; the headless case.
+auto_merge; full_auto; plan_ahead (an owner's "approve ahead" answer); any script or wording change in goal.py; the headless case; a new fixture case; a new regression row.
 
 ## What already exists
 `goal.py:280` already holds a PENDING step when auto_approve is not true; the "No gates" block in test-goal.sh already proves the true side. Only the committed value and the sentence that describes it are wrong.
@@ -96,7 +104,7 @@ Minimum change: one key plus the sentence that describes it. No script change, s
 
 ### Findings
 E1 (CORRECTED in the plan): the plan said a held step leaves status running. guards.hold sets status "waiting" and waiting.ask (guards.py:134-135). The toy asserts waiting, not running (the "running" check at test-goal.sh:164 is the auto-approved side).
-E2 (CORRECTED in the plan): the lane selects a row for a config change only if its script reads .loop/config.json and names the changed key (narrow.py:69-75). test-goal.sh reads neither in its header. The new case reads the committed value, so the header gets `.loop/config.json` (test-goal.sh names auto_approve already). Cost: this goal's config flip selects the 9 test-goal rows and test-defect.sh/test-auto-owner-words.py (already reading config.json) in the lane; the lane budget (15 min) is the thing to watch, so the lane note goes in the PR.
+E2 (SUPERSEDED by GATE 1, C line 1: no reads header and no new case; the assertion folds into the pnmix case): the lane selects a row for a config change only if its script reads .loop/config.json and names the changed key (narrow.py:69-75). test-goal.sh reads neither in its header. The new case reads the committed value, so the header gets `.loop/config.json` (test-goal.sh names auto_approve already). Cost: this goal's config flip selects the 9 test-goal rows and test-defect.sh/test-auto-owner-words.py (already reading config.json) in the lane; the lane budget (15 min) is the thing to watch, so the lane note goes in the PR.
 E3 (OK): test-auto-owner-words.py:57 asserts full_auto true in the repo config and never reads auto_approve; test-defect.sh:255 quotes the generic commands.md line. Neither changes.
 E4 (OK): the fixture config comes from the fixture repo; the new case passes the repo's value through the existing cfg helper (cfg 'auto_approve=<value>'), so the case holds even if the fixture default changes.
 
@@ -139,7 +147,7 @@ Scores: getting-started n/a (no change), error messages n/a, docs accuracy 6/10 
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | HOLD SCOPE, 0 critical gaps; C1 (revert history of the same flip) and C2 (full_auto stays true) noted |
 | Outside Review | none | Independent 2nd opinion | 0 | not run | no completed external or native fallback review; coverage missing |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 4 issues, 0 critical gaps; E1 (hold status is waiting) and E2 (reads header for the lane) corrected in the plan |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 4 issues, 0 critical gaps; E1 (hold status is waiting) corrected in the plan; E2 (reads header) superseded by GATE 1 |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | skipped | no UI scope |
 | DX Review | `/plan-devex-review` | Developer experience gaps | 1 | CLEAR | score 6/10 to 10/10 after the sentence rewrite; no TTHW change |
 
