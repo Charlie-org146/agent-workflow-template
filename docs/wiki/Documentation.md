@@ -15,22 +15,44 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ## Requirements
 
 ### Functional
-- DOC-2: **Reviewed 2026-11-20** Only I write the principles and requirements; the repo copy is the PRD <!-- reviewed 22a8ca15 -->
+- DOC-2: **Unreviewed** Only I write the principles and requirements; the repo copy is the PRD
   - Each principle's sentence, its table and every requirement's text are written only by me. [DOC-2]
   - An agent may draft and propose; only my own words make it the text, and only my words mark it Reviewed, or operation-top under my delegation: after reading the full text it may approve wording I asked for and mark it Reviewed, except safety classes, and it lists each such approval in the next check-in so I can revert any. [DOC-2]
   - Goals never edit Reviewed text while building. [DOC-2]
   - A change is a dated, approved revision; old revisions are kept and IDs are never reused. [DOC-2]
   - The repo copy is the PRD: an outside document may sync into it but never overrides it, and checks read only the repo. [DOC-2]
-- DOC-25: **Reviewed 2026-11-20** Every page has the same fixed sections, and README and Home match <!-- reviewed 45ba875e -->
+
+  - Feature markers v1
+  - Reference: GitHub CODEOWNERS with required review: adapted; OpenGitOps: adapted
+  - Line 1: metric missing; test 13 linked rows, see Tests
+  - Line 2: metric missing; test 13 linked rows, see Tests
+  - Line 3: metric missing; test 13 linked rows, see Tests
+  - Line 4: metric missing; test 13 linked rows, see Tests
+  - Line 5: metric missing; test 13 linked rows, see Tests
+- DOC-25: **Unreviewed** Every page has the same fixed sections, and README and Home match
   - The README and the wiki Home have exactly these sections, in order: What this is, System design, one section per principle, Requirements by feature. [DOC-25]
   - Every principle table has the columns shown here, including Adoption and Confidence, and each principle's heading shows both for the whole principle. [DOC-25]
   - Health generates the two scores; no one types them. [DOC-25]
   - Every wiki page has the sections of its kind. [DOC-25]
   - Every requirement row links to its own workflow figure. [DOC-25]
   - Generated sections stay current. [DOC-25]
-- DOC-26: **Reviewed 2026-11-20** Each principle has at most five requirements, each dense and fully covering <!-- reviewed a075bf15 -->
+
+  - Feature markers v1
+  - Reference: markdownlint MD043: adapted; Diátaxis: adapted; C4 system context diagram: adapted
+  - Line 1: metric missing; test 32 linked rows, see Tests
+  - Line 2: metric missing; test 32 linked rows, see Tests
+  - Line 3: metric missing; test 32 linked rows, see Tests
+  - Line 4: metric missing; test 32 linked rows, see Tests
+  - Line 5: metric missing; test 32 linked rows, see Tests
+  - Line 6: metric missing; test 32 linked rows, see Tests
+- DOC-26: **Unreviewed** Each principle has at most five requirements, each dense and fully covering
   - A new need is written into an existing requirement before a new one is added. [DOC-26]
   - Health fails a principle with more than five, and a goal that would add a sixth is refused at freeze. [DOC-26]
+
+  - Feature markers v1
+  - Reference: Google re:Work OKR guide, three to five objectives (checked at build): adapted
+  - Line 1: metric missing; test missing
+  - Line 2: metric missing; test missing
 - DOC-27: **Reviewed 2026-11-21** The new standard: every feature is one unit you can review <!-- reviewed e4161660 -->
   - Principle 1, Guided · Topic: Documentation · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
@@ -503,7 +525,7 @@ None
 | [docs-locked-hint-issue-133](Tests#t-docs-locked-hint-issue-133) | defect | [#133](https://github.com/jcl2018/agent-workflow-template/issues/133) closed (2026-11-13) | Given a reviewed requirement whose wording changed, when docs check runs, then its LOCKED hint says restore or unreview, never review. | PASS 2026-11-10 |
 | [stale-comments-only-3122](Tests#t-stale-comments-only-3122) | defect | [#3867](https://github.com/jcl2018/agent-workflow-template/issues/3122 https://github.com/jcl2018/agent-workflow-template/issues/3867) state unknown | Given DOC-2, when test-merge-unblock.py runs its 4 cases, then each passes: the page is not stale; a real code change still st; it is kept by the goal's slug, no longer stale, an; the branch gets a re-stamp commit and nothing is s; it is not re-stamped and stays LOCKED (issue 3867). | PASS 2026-11-15 |
 | [doc-nongoal-milestone-sync](Tests#t-doc-nongoal-milestone-sync) | defect | [#4546](https://github.com/jcl2018/agent-workflow-template/issues/4546) closed (2026-11-16) | Given the Documentation page, when INT-3 syncs milestones, then no Non-goals line leaves milestone sync for later. | not run |
-| [restamp-own-idempotent-5797](Tests#t-restamp-own-idempotent-5797) | defect | [#5797](https://github.com/Charlie-org146/agent-workflow-template/issues/5797) open (2026-11-22) | Given a repo whose stamps are all current, when restamp-own runs twice, then it makes no commit and appends no rows; given one really stale stamp, it restamps exactly that page once and a second run makes no commit; with the fix undone the check fails (issue 5797). | not run |
+| [restamp-own-idempotent-5797](Tests#t-restamp-own-idempotent-5797) | defect | [#5797](https://github.com/Charlie-org146/agent-workflow-template/issues/5797) closed (2026-11-22) | Given a repo whose stamps are all current, when restamp-own runs twice, then it makes no commit and appends no rows; given one really stale stamp, it restamps exactly that page once and a second run makes no commit; with the fix undone the check fails (issue 5797). | not run |
 | [docs-counts-issue-39](Tests#t-docs-counts-issue-39) | defect | [#107](https://github.com/jcl2018/agent-workflow-template/issues/39 https://github.com/jcl2018/agent-workflow-template/issues/104 https://github.com/jcl2018/agent-workflow-template/issues/105 https://github.com/jcl2018/agent-workflow-template/issues/106 https://github.com/jcl2018/agent-workflow-template/issues/107) state unknown | Given DOC-25, when test-criteria.sh runs its 5 cases, then each passes: it fails (issue 39); it fails, and a part such as "other" is not read; it is skipped while the same indent inside a list; a tests count of both passes; its skills count is still checked and its tests co. | PASS 2026-11-12 |
 | [docs-guide-page-issue-125](Tests#t-docs-guide-page-issue-125) | defect | [#156](https://github.com/jcl2018/agent-workflow-template/issues/125 https://github.com/jcl2018/agent-workflow-template/issues/156) state unknown | Given DOC-25, when test-docs-issues.sh runs its 2 cases, then each passes: it passes with no PRD sections, Home row or README; the base's commits don't make its page stale. | PASS 2026-11-10 |
 | [merge-main-own-finding](Tests#t-merge-main-own-finding) | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | Given merge.py run from the main checkout with a page stale on main from another goal, when it checks the wiki, then the page is a FINDING and the goal still merges. | not run |
