@@ -87,7 +87,7 @@ Each requirement and how it is delivered:
 - **Command:** `/workflow-docs check`
 
 ### Command: docs.py
-- **Command:** `python3 skills/workflow-docs/scripts/docs.py check [--base REF] [--own]` (also `docs.py audit`, `docs.py automation`, `docs.py criteria PAGE`, `docs.py publish`, `docs.py sync`)
+- **Command:** `python3 skills/workflow-docs/scripts/docs.py check [--base REF] [--own] [--strict]` (`--strict` makes every NOTE fail; a feature in the new form is checked against DOC-27) (also `docs.py audit`, `docs.py automation`, `docs.py criteria PAGE`, `docs.py publish`, `docs.py sync`)
 - **Dry run:** `docs.py audit --dry-run` and `docs.py publish --dry-run` say what they would do; `check` writes nothing.
 - **Reads:** `.loop/docs.tsv`, `.loop/config.json`, `docs/wiki/` and the git history of the paths each page describes.
 - **Writes:** `audit` fixes the mechanical trouble (Tests tables, generated blocks); `publish` copies the pages to the GitHub wiki.

@@ -68,7 +68,7 @@ Updating the board writes `board.json` and prints what changed; drawing the page
 An operation session only assigns, watches and reports. It puts goals in a named batch, `start` begins one worker for
 each goal, each worker runs its own loop to the end, and each sends its result (merged, failed or waiting, with the pull
 request) back as a prompt message that the board shows. A check-in prints the live board: Issues, Running goals,
-Queued goals, Dependencies, Finish:
+Queued goals, Dependencies, Tasks, Finish:
 
 ```text
 "add a goal to the nightly batch: <goal>, done when <line>"
