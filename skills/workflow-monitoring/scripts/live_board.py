@@ -27,6 +27,7 @@ import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
+from board_tasks import age, parse_at, task_lines  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
@@ -45,20 +46,6 @@ def plain(text, size=200):
             word = word.replace(core, core.rstrip("/").rsplit("/", 1)[-1])
         words.append(word)
     return " ".join(words)[:size]
-
-
-def task_lines(root, runs, at, gone=()):  # DEL-23: each task by name with state, goals finished and ETA, then its goals and their step
-    try:
-        out = ["", "Tasks"]
-        for t in board_lines.tasks(root, runs, gone):
-            live = [r for _, _, r in t["goals"] if r]
-            left = [bs.left_time(r, runs, at, root) for r in live]
-            eta = "-" if not live else "awaiting merge" if all(r.get("status") == "done" for r in live) else "?" if None in left else board_page.span(max(left))
-            out.append(f"- {t['name']}: {t['state']}{t['note'] and ' (%s)' % t['note']}, {sum(f for _, f, _ in t['goals'])} of {len(t['goals'])} goals finished, ETA {eta}")
-            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else FLOW[current(r)]) for s, f, r in t["goals"]]
-    except Exception as e:  # never stop the check-in or the board
-        return ["", "Tasks", "- tasks unavailable: " + type(e).__name__]
-    return out if len(out) > 2 else []
 
 
 def tally(pod, at):
@@ -97,24 +84,6 @@ def run_files(root):
     """Every goal with a run file on disk, retired ones included: a busy pool entry for one of these is not freezing."""
     folder = os.path.join(loop_dir(root), "runs")
     return {name[:-5] for name in os.listdir(folder) if name.endswith(".json")} if os.path.isdir(folder) else set()
-
-
-def parse_at(text):
-    """A recorded time as an aware UTC datetime (naive counts as UTC), or None when it is missing or bad."""
-    try:
-        found = datetime.datetime.fromisoformat(str(text).replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return found if found.tzinfo else found.replace(tzinfo=datetime.timezone.utc)
-
-
-def age(text, at):
-    """How long ago a recorded time was: Nm under an hour, Nh under two days, else Nd; '' when the time is unknown."""
-    then = parse_at(text)
-    if not then or not at:
-        return ""
-    minutes = max(0, int((at - then).total_seconds() // 60))
-    return "%dm" % minutes if minutes < 60 else "%dh" % (minutes // 60) if minutes < 48 * 60 else "%dd" % (minutes // 1440)
 
 
 current = bs.current

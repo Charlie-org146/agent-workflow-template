@@ -401,30 +401,6 @@ def shown(run):
     return bool(run.get("goal") and run.get("status")) and run["status"] != "stopped" and run.get("release") != "leave"
 
 
-def tasks(root, runs, gone=()):  # DEL-23: the briefs with state (replaced > done > running > waiting > queued)
-    by, rows = {r["slug"]: r for r in runs}, bm.task_rows(root)
-    ids = {t["slug"]: t for t in rows}
-    end = lambda s: s in gone or graph.merged(by.get(s))
-    st = lambda s: by[s].get("status")
-    live = lambda s: s in by and not end(s) and st(s) != "queued"
-
-    def hop(s):
-        for _ in range(5): s = ids.get(s, {}).get("by") or s
-        return s
-
-    for t in rows:
-        g = t["goals"]
-        t["state"] = "replaced" if t["by"] else "done" if g and all(map(end, g)) else "running" if any(live(s) and st(s) not in ("waiting", "failed", "stopped") for s in g) else "waiting" if any(map(live, g)) else "queued"
-    cut = cycled([dict(slug=t["slug"], depends=[hop(s) for s in t["needs"]]) for t in rows])
-    for t in rows:
-        bad = [ids[s]["name"] if s in ids else s + " (no brief)" for s in map(hop, t["needs"]) if s not in ids or ids[s]["state"] != "done"]
-        if t["state"] == "queued" and (bad or t["slug"] in cut):
-            t["state"], t["note"] = "waiting", t["note"] + "; " * bool(t["note"]) + ("cycle" * (t["slug"] in cut) or "needs " + ", ".join(bad))
-        t["done"] = sum(map(end, t["goals"]))
-        t["goals"] = [(s, end(s), by[s] if live(s) else None) for s in t["goals"]]
-    return rows
-
-
 def gather(root, at, stamp=None):
     import live_board as lb  # lazy: live_board imports this module
     folder, cfg = lb.loop_dir(root), bs.read_json(os.path.join(root, ".loop", "config.json")) or {}

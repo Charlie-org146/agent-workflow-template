@@ -21,6 +21,7 @@ for key in ("HOME", "USERPROFILE"):
 os.environ["LOOP_MACHINE_NAME"] = "pc"
 import board_lines  # noqa: E402
 import board_model  # noqa: E402
+import board_tasks  # noqa: E402
 import checkin  # noqa: E402
 import live_board  # noqa: E402
 import reply_hook  # noqa: E402
@@ -65,7 +66,7 @@ def repo(briefs, runs):
 
 
 def listed(root, runs, gone=()):
-    return {t["slug"]: t for t in board_lines.tasks(root, runs, set(gone))}
+    return {t["slug"]: t for t in board_tasks.tasks(root, runs, set(gone))}
 
 
 def shown(root, name, gone=()):
@@ -208,7 +209,7 @@ check(not any(re.search(r"merged|hist|closed|milestone|tokens|total|done lines|l
 folder = os.path.join(top, ".loop", "tasks")
 names = sorted(n for n in os.listdir(folder) if n.endswith(".md")) if os.path.isdir(folder) else []
 check(len(names) >= 11, "the repo holds at least the eleven briefs: %d" % len(names))
-real = board_model.task_rows(top)
+real = board_tasks.task_rows(top)
 check(all(not t["note"] for t in real) and len(real) == len(names), "every real brief has its feature, release and source lines")
 bodies = [open(os.path.join(folder, n), encoding="utf-8").read() for n in names]
 check(all("## Purpose" in b and "## Done when" in b for b in bodies), "every real brief has a Purpose and a Done when section")

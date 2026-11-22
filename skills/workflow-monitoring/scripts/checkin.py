@@ -27,6 +27,7 @@ import pool as pl
 import replan
 import unattended
 import board_page
+from board_tasks import blocks, quoted
 from board_status import feature_of, goal_line, release_of
 
 MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed": "stuck", "stopped": "stuck",
@@ -35,10 +36,6 @@ MARK = {"running": "running", "held": "holding", "waiting": "waiting", "failed":
 
 def cell(text, size=48):
     return lb.plain(text, size).replace("|", "/") or "-"
-
-
-def quoted(words):
-    return " / ".join('"%s"' % w for w in words)
 
 
 def last_at(root):
@@ -271,15 +268,6 @@ def body(text):
         elif start is not None and name in NEXT:
             return "\n".join(lines[start:i])
     return None if start is None else "\n".join(lines[start:])
-
-
-def blocks(section):
-    found, name = {"": []}, ""
-    for line in section.splitlines():
-        head = re.match(r"^\s*==\s*(.+?)\s*==\s*$", line)
-        name = head.group(1) if head else name
-        found.setdefault(name, []).append("" if head else line)
-    return {key: re.sub(r"-\s*\n\s*", "-", "\n".join(rows)) for key, rows in found.items()}
 
 
 def unranked(text):
