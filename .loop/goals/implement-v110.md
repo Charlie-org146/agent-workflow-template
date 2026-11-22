@@ -28,6 +28,44 @@ Frozen. A wrong done line needs a new goal.
 - TD702 Q2: report-only, as done line 6 states.
 - Byte room and trims are measured in `.loop/goals/implement-v110.bytes.md`.
 
+## PR notes
+
+Owner words: o737 accepted the red team's six principle breaks as stated; the Reviewed-file protection is filed as #5760.
+Cost and bytes: `.loop/goals/implement-v110.bytes.md` (every touched script, base and now, room left; no script reaches
+20,480 and none newly crosses 19,000). Exactly one new file, `skills/workflow-release/scripts/brief.py` (o718, o719).
+
+Behavior changes (file, old, new):
+- `goal.py new` / `fit.goal_format`: old, a goal needed only a done line; new, it needs `--task` and Given/when/then done lines, and
+  the goal file carries Task and Release lines (`goal.py adopt` is exempt). Every toy caller was updated in the same commit.
+- `role.requirement_gate`: a goal whose review step was skipped can no longer open its pull request (DEL-19.2).
+- `sections.features` and `docs.py check [--strict]`: DOC-27's sections, five requirements, metric and test case each, the metrics
+  table as the index, tagged references with a specific source, the milestone, one principle, and the Reviewed mark. A missing
+  metric, test or reference on an Unreviewed feature is a NOTE (reported, not failed); `--strict` fails every NOTE.
+- `criteria.py review` -> `sections.reviewed`: a new-form Reviewed mark needs an owner record naming exactly that ID and adds its
+  ID, record id and date to `.loop/reviews.tsv` (the file's protection is #5760); with no line the check reports a NOTE for a mark
+  dated before 2026-11-22 and fails one dated after.
+- The steps block in `docs/wiki/Delivery.md` is generated from `flow.py`'s STEPS; a stale one fails `docs.py check`.
+- `brief.py` and its hooks: `merge.py` refuses a feature task no frozen release brief names; `release.py cut` and `autorelease.py`
+  refuse a minor without a frozen brief or with a named task not done, and a patch that would ship a feature task; the tag notes and
+  `## Results` list every task; `review.py gate` refuses every known-red row with no waiver (o714); `live_board.py` shows the task
+  list; `fit.goal_format` refuses a task with no frozen brief when the repo keeps `.loop/tasks/`.
+- `dev/toy/test-release-gate.py`: "no file is added" became "the shipped package stays within MAX_FILES" with a control one over (o719).
+- Four rows (o736), each seen red: feature-standard-doc27, goal-format-del19, tasks-del23, release-briefs-doc28.
+
+Preconditions still open when this was written: MAX_FILES 200 (grd21-cap-lift) is not on the merge base, so the MAX_FILES check and
+`test-pods.sh size` count 101 files against 100; DEL-23's text is not on the pages, so `docs.py check` prints `LINK regression: rows
+link to DEL-23`. Both clear when those goals merge and this branch merges main.
+
+Test evidence (toys run one at a time with the lane env form, an empty private-name list and a git identity): test-goal, test-new-here,
+test-docs, test-criteria, test-goal-adopt, test-autorelease, test-delivery-release pass; test-docs-sections, test-guards, test-defect,
+test-release, test-release-gate, test-milestones, test-migration, test-delivery-prd, test-codex and test-lanes show the same failures on
+an unmodified copy of the base (DOC-25 migrate and template render, resume from another checkout, size-140, "four numbers", the Release
+page's live requirements, milestone setup text, migration trace, private-name cases, codex), except `categories` in test-defect, which fails
+only because this worktree's local config holds a 2.5 GB memory floor that changes a generated settings block.
+
+Not done: a `render.py` gate for a whole page in the new form (new-form features live inside topic pages today); DOC-27's "typed score
+differs from health's latest run" and the 27.4 structure cases beyond the existing DOC-25 rows; `watch.py go --task`; scheduling.
+
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
