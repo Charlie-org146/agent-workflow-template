@@ -79,8 +79,8 @@ Added after the first report (operation-mac: all of (a) to (f) in scope, (g) my 
 - Files already over 19,000 bytes on main that grew (TD845; none may reach 20,480 and no file newly crosses 19,000), bytes before on origin/main f8118b117 and after:
   - `workflow-delivery/scripts/fit.py` 20,443 -> 20,471 (+28)
   - `workflow-delivery/scripts/role.py` 20,335 -> 20,350 (+15)
-  - `workflow-docs/scripts/deployments.py` 19,654 -> 20,424 (+770)
-  - `workflow-docs/scripts/milestones.py` 19,242 -> 20,403 (+1,161)
+  - `workflow-docs/scripts/deployments.py` 19,654 -> 20,376 (+722)
+  - `workflow-docs/scripts/milestones.py` 19,242 -> 20,391 (+1,149)
   - `workflow-docs/scripts/criteria.py` shrank 20,455 -> 20,402 (-53). No other file over 19,000 changed.
 - `docs.py check` without `--base` prints a spurious "STALE Home" on this branch (the README commit 68cb3e62d); with `--base origin/main` it does not. Left alone as ruled.
 - Comparison with main: the local full-suite main-vs-head diff was stopped (about 14 hours; main side reached 48 rows, all pass). The before-merge comparison is the PR's CI (regression-pr, 8 shards) plus the LEFT/CUT check: reached rows within a budget, not the full suite; the full suite runs after merge on main.
