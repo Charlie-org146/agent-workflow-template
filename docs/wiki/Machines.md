@@ -16,12 +16,20 @@ Review: **Unreviewed** <!-- kept merge-queue-ci@2b2c3a54a -->
 ## Requirements
 
 ### Functional
-- MCH-1: **Reviewed 2026-11-20** Any machine sets up identically, and work moves between them safely <!-- reviewed 5820cfff -->
+- MCH-1: **Unreviewed** Any machine sets up identically, and work moves between them safely
   - A fresh clone, the checklist, a dry run and an apply reach a working operation session on a Mac or on Windows. [MCH-1]
   - Each goal has one owning machine; handover and adoption move it safely. [MCH-1]
   - Failed steps retry three times and then stop with a reason; crashed goals resume. [MCH-1]
   - Backup and restore move state, never secrets. [MCH-1]
   - **A restart loses nothing:** committed and in-progress work survives, each machine's timers, sessions and folder trust come back on their own, and the only step left to me is reopening the app. **Cloud sessions** add capacity for read-only and test work, and never push (DEL-9). [MCH-1]
+
+  - Feature markers v1
+  - Reference: Dev Containers: adapted; chezmoi: adapted; Kubernetes Lease: adapted; Temporal durable execution: adapted; macOS launchd; Claude Code cloud sessions: adopted
+  - Line 1: metric missing; test 27 linked rows, see Tests
+  - Line 2: metric missing; test 27 linked rows, see Tests
+  - Line 3: metric missing; test 27 linked rows, see Tests
+  - Line 4: metric missing; test 27 linked rows, see Tests
+  - Line 5: metric missing; test 27 linked rows, see Tests
 
 ### Non-functional
 
@@ -169,4 +177,4 @@ None
 | [held-time-3878](Tests#t-held-time-3878) | defect | [#3878](https://github.com/jcl2018/agent-workflow-template/issues/3878) closed (2026-11-15) | Given a goal held 772 minutes and active 20 minutes, when a new step starts at a 300 minute budget, then it is not refused (#3878). | PASS 2026-11-14 |
 | [prd-no-dunder-import-3800](Tests#t-prd-no-dunder-import-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the scripts under skills/*/scripts (prd.py and render.py relock and render through importlib), when the package Safety rule scans them, then none holds __import__ (issue 3800). | PASS 2026-11-16 |
 | [machines-handover-4787](Tests#t-machines-handover-4787) | defect | [#4787](https://github.com/jcl2018/agent-workflow-template/issues/4787) closed (2026-11-18) | Given the missing machine ownership, handover, merge order and structured snapshots, when its full fixture runs, then every promised behavior is required and fails without the implementation. | PASS 2026-11-18 |
-| [win-trust-prefix](Tests#t-win-trust-prefix) | defect | [#5722](https://github.com/Charlie-org146/agent-workflow-template/issues/5722) open (2026-11-21) | Given a trusted Windows root, when a worktree under it, a different drive-letter case, the root, an outside folder, a prefix-only sibling, a drive root, a non-dict entry and a POSIX sibling named with a trailing backslash are checked, then the trust test answers trusted, trusted, trusted, refused, refused, trusted, empty and refused, and the embedded old text refuses the first. | not run |
+| [win-trust-prefix](Tests#t-win-trust-prefix) | defect | [#5722](https://github.com/Charlie-org146/agent-workflow-template/issues/5722) closed (2026-11-21) | Given a trusted Windows root, when a worktree under it, a different drive-letter case, the root, an outside folder, a prefix-only sibling, a drive root, a non-dict entry and a POSIX sibling named with a trailing backslash are checked, then the trust test answers trusted, trusted, trusted, refused, refused, trusted, empty and refused, and the embedded old text refuses the first. | not run |
