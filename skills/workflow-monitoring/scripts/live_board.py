@@ -3,14 +3,10 @@
 
 usage: live_board.py [--html]
 
-LIVE BOARD header (repo, local time, version, health), then Issues (only what is open now, a stuck worker first, each with
-its fix in plain words; stopped goals grouped by cause by board_lines.py), Running goals (10-cell bar, time left, tries, the
-step flow with the current step in brackets, worker, depth, next step; [freezing] for a goal handed over before it was
-frozen; then the session pool line), Queued goals (held goals marked held, with their held time), Dependencies (board_lines.py's
-top-to-bottom graph) and one Finish time ("paused until ..." while every goal waits out one usage limit). Goal state comes
-from graph.py, pull request states from board_lines.py. Merged work, history and totals are left out. Health is
-workflow-health's verdict, or "unknown"; LOOP_BOARD_HEALTH replaces it (tests). Printed by report, dashboard and the
-status question, never by a check-in (MON-4). Imported by board_status.py.
+LIVE BOARD header, Issues (only what is open now, each with its fix), Running goals (bar, time left, tries, step flow,
+worker, depth, next step), Queued goals, Dependencies, Tasks (each by name with its goals; DEL-23) and one Finish time.
+Goal state comes from graph.py, pull request states from board_lines.py. LOOP_BOARD_HEALTH replaces health (tests).
+Printed by report, dashboard and the status question, never by a check-in (MON-4). Imported by board_status.py.
 """
 import argparse
 import datetime
@@ -106,8 +102,7 @@ current = bs.current
 
 
 def flow_lines(run, over=0):
-    """The step flow, indented four, packed into lines of at most WIDTH that break at the " > " joints (steps stay whole).
-    The current step reads "[build over by 12m]" when it ran a minute or more past its usual time."""
+    """The step flow, indented four, packed to WIDTH at the " > " joints; "[build over by 12m]" marks an overrun."""
     if run.get("status") == "freezing":
         steps = ["[freezing]"] + list(FLOW)
     else:
@@ -125,8 +120,7 @@ def flow_lines(run, over=0):
 
 
 def fit(lines, width=WIDTH):
-    """Wrap every line to width at word boundaries, continuations indented two past the line's own indent; a word longer than
-    the width is cut. Runs on the text model before it becomes HTML, so markup is never split."""
+    """Wrap every line to width at word boundaries, continuations indented two; an overlong word is cut."""
     out = []
     for line in lines:
         indent = line[:len(line) - len(line.lstrip())]
@@ -136,8 +130,7 @@ def fit(lines, width=WIDTH):
 
 
 def latest_report(run):
-    """The newer of the run's report and its last session report (a tie or a missing time: the last report), unless it
-    is older than the run's bound_at, when a new worker took the goal."""
+    """The newer of the run's report and its last session report, unless older than bound_at (a new worker)."""
     report = run.get("report") if isinstance(run.get("report"), dict) else {}
     last = run.get("reports")[-1] if isinstance(run.get("reports"), list) and run.get("reports") else {}
     last = last if isinstance(last, dict) else {}
@@ -310,7 +303,19 @@ def render(root=None, at=None):
     missing = board_page.unknown(items) or any(i["partial"] for i in items) or held or freezing
     finish = "nothing left" if not items else "no estimate yet" if not seconds else "%sfinish about %s" % (
         "at least " if missing else "", graph.clock(at + datetime.timedelta(seconds=seconds)))
-    return fit(out + ["", "Finish", board_lines.paused(live) or finish, bs.accuracy_text(runs, at, root)])
+    return fit(out + ["", "Tasks"] + task_lines(root) + ["", "Finish", board_lines.paused(live) or finish, bs.accuracy_text(runs, at, root)])
+
+def task_lines(root):
+    """DEL-23: the task list (brief.py); a failed load says so."""
+    import importlib.util as u
+    try:
+        s = u.spec_from_file_location("brief", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts", "brief.py"))
+        m = u.module_from_spec(s)
+        s.loader.exec_module(m)
+        return sum((x.split("\n") for x in m.lines(root)), []) or ["- (none)"]
+    except Exception as err:  # noqa: BLE001
+        return ["- task list unavailable: %s" % type(err).__name__]
+
 
 def pool_line(found, root):
     import pool as pl  # pool.py imports sessions.py; only the board's pool line needs it

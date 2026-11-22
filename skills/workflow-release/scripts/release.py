@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
-"""Ask whether a finished goal is released: cut a draft GitHub release or leave it.
+"""Ask whether a finished goal is released: cut a draft or leave it.
 
 usage: release.py ask|leave|show SLUG   |   release.py cut SLUG [--bump patch|minor|major] [--user]
-
-ask shows the docs and verify steps and asks cut or leave; cut bumps the version, writes the changelog,
-pushes and creates a DRAFT; it never publishes or merges.
 """
 import argparse
 import datetime
@@ -16,6 +13,7 @@ import sys
 import tempfile
 import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import brief  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -220,7 +218,7 @@ def docs_trouble(top, base, fix=False, whole=False):
 
 
 def untouched(top, base, lines, filer=None):
-    """DOC-19 and DOC-4 findings on pages the goal leaves alone go to filer, not a refusal."""
+    """DOC-19/DOC-4 findings on untouched pages go to filer."""
     made = run(["git", "log", "--format=%H", "--grep=^Wiki: re-render and re-stamp ", base + "..HEAD"], top).stdout.split()[::-1]
     spans = [a + b for a, b in zip([base + "..."] + [c + ".." for c in made], [c + "^" for c in made] + ["HEAD"])]
     diffs = [run(["git", "-c", "core.quotepath=off", "diff", "--name-only", "-z", span], top) for span in spans]
@@ -338,11 +336,12 @@ def cmd_cut(args):
     old_version = open(vpath).read().strip() if os.path.exists(vpath) else "none"
     version = bump(old_version, args.bump) if os.path.exists(vpath) else "0.1.0"
     tag = "v" + version
+    brief.gate(cwd, args.bump, version)  # DOC-28
     if run(["git", "rev-parse", "--verify", "--quiet", "refs/tags/" + tag], cwd=cwd).returncode == 0 or \
             run(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=cwd).returncode == 0:
         sys.exit("REFUSED: tag %s already exists. Fix: pick another --bump or set the version by hand." % tag)
     import wiki  # wiki imports release
-    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd)
+    bullets = subjects(base, cwd) + wiki.fixes_lines(cwd) + brief.notes(cwd, version)
     day = now()[:10]
     old = open(cpath).read() if os.path.exists(cpath) else ""
     files, message, before = [version_file, "CHANGELOG.md"], "Release " + tag, git("rev-parse", "HEAD", cwd=cwd)
@@ -377,6 +376,7 @@ def cmd_cut(args):
     url = (made.stdout.strip().splitlines() or [""])[-1]
     state.update(release="cut", release_version=version, release_url=url, status="done", waiting=None)
     save(state, "release cut %s draft %s" % (tag, url))
+    brief.result(cwd, version)
     print("CUT %s %s -> %s on %s (%d changelog lines)" % (slug, old_version, version, branch, len(bullets)))
     print("DRAFT " + url)
     print("You publish it. The draft stays unpublished until you do. Nothing was merged.")

@@ -67,7 +67,7 @@ list() { mkdir -p "$HOME/.workflow-loop"; printf '%s\n' "$@" > "$HOME/.workflow-
 finish() {  # finish SLUG [LINE]: a done goal with a pull request; PRE runs before the commit
   local slug=$1
   git switch -q main; git pull -q origin main
-  $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" >/dev/null || bad "goal new $slug"
+  $goal new "$slug" --here --goal "Add $slug" --task t --done "Given a repo, when calc has $slug, then it holds" >/dev/null || bad "goal new $slug"
   printf '\n\ndef %s():\n    return 1\n%s\n' "${slug//-/_}" "${2:-}" >> calc.py
   ${PRE:-true}
   git add -A calc.py; git commit -qam "Add $slug to calc"
@@ -237,7 +237,7 @@ fi
 
 if want wikiname || want firstpage || want wikinull; then
   git switch -q main; git pull -q origin main
-  $goal new wk --here --goal "Wiki checks" --done "the wiki is checked" >/dev/null
+  $goal new wk --here --goal "Wiki checks" --task t --done "Given a repo, when the wiki is checked, then it holds" >/dev/null
 fi
 
 if want wikiname; then

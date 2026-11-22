@@ -23,7 +23,7 @@ git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin ma
 no() { echo "FAIL $id: $1"; exit 1; }
 
 finish() { # finish SLUG STEPS: a finished goal with these verify steps
-  $goal new "$1" --here --goal "Add $1" --done "calc has $1" >/dev/null || no "new"
+  $goal new "$1" --here --goal "Add $1" --task t --done "Given a repo, when calc has $1, then it holds" >/dev/null || no "new"
   python3 - "$1" "$2" <<'PY'
 import sys
 path = ".loop/goals/%s.md" % sys.argv[1]
@@ -41,13 +41,13 @@ case "$id" in
     $watch go "No line" --slug nodone2 2>&1 | grep -q "REFUSED" || no "go started with no done line"
     [ -z "$(ls "$(git rev-parse --git-common-dir)/loop/runs" 2>/dev/null)" ] || no "a run record was written";;
   DEL-2)
-    LOOP_FLOW="$d/none.json" $goal new noflow --here --goal "No flow" --done "x" 2>&1 | grep -q "no skill flow is set. Fix:" || no "started with no flow"
+    LOOP_FLOW="$d/none.json" $goal new noflow --here --goal "No flow" --task t --done "Given a repo, when x, then it holds" 2>&1 | grep -q "no skill flow is set. Fix:" || no "started with no flow"
     sed 's/"FAKE_MODE": "unattended"/"FAKE_MODE": "interactive"/' "$LOOP_FLOW" > "$d/interactive.json"
-    $goal new plain --here --goal "Plain" --done "plain" >/dev/null || no "new"
+    $goal new plain --here --goal "Plain" --task t --done "Given a repo, when plain, then it holds" >/dev/null || no "new"
     LOOP_FLOW="$d/interactive.json" python3 "$here/skills/workflow-delivery/scripts/flow.py" plain idea 2>&1 | grep -q "wouldn't run unattended" || no "a step ran outside the unattended mode"
     [ ! -e "$(git rev-parse --git-common-dir)/loop/runs/plain.idea.txt" ] || no "a step started anyway";;
   DEL-3)
-    $goal new held --here --goal "Held" --done "held" >/dev/null || no "new"
+    $goal new held --here --goal "Held" --task t --done "Given a repo, when held, then it holds" >/dev/null || no "new"
     F="python3 $here/skills/workflow-delivery/scripts/flow.py"; R="$(git rev-parse --git-common-dir)/loop/runs"
     FAKE_SKILL_OUT='PENDING: approve the plan\nDEPTH: full\nSTEP: done' $F held plan --wait 5 >/dev/null; FAKE_SKILL_OUT='x' $F held plan --wait 10 >/dev/null
     $goal record held plan --file "$R/held.plan.txt" | grep -q "^WAITING held" || no "a pending decision didn't wait"

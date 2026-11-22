@@ -90,7 +90,7 @@ grep -q "^== No feature: 1 ==" <<<"$out" && ok "triage lists the issue on v1.0 u
 
 echo "== goal.py pr puts the pull request in no milestone"
 f0=$fails
-$goal new calc-goal --here --goal "Change calc" --done "calc changes" --touches "calc.py" >/dev/null
+$goal new calc-goal --here --goal "Change calc" --task t --done "Given a repo, when calc changes, then it holds" --touches "calc.py" >/dev/null
 echo "# change" >> calc.py; git commit -qam "Change calc"
 python3 - <<'PYEND'
 p = ".loop/goals/calc-goal.md"

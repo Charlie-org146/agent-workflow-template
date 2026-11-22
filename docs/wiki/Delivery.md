@@ -61,6 +61,8 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 - It never changes a done line once started.
 - It doesn't run several goals at once (Monitoring does).
 
+<!-- steps -->Steps: idea, plan, build, review, qa, ship, pr, release.<!-- /steps -->
+
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.
 - A goal that fails three tries stops and says why.

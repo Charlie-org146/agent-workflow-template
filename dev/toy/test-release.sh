@@ -28,7 +28,7 @@ bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 finish() {  # finish SLUG [extra goal.py new args]: a done 0 goal with a pull request
   local slug=$1; shift
   git switch -q main
-  $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" "$@" >/dev/null
+  $goal new "$slug" --here --goal "Add $slug" --task t --done "Given a repo, when calc has $slug, then it holds" "$@" >/dev/null
   mkdir -p "$(dirname "${FILE:-calc.py}")"
   printf '\n\ndef %s():\n    return 1\n' "${slug//-/_}" >> "${FILE:-calc.py}"
   git add "${FILE:-calc.py}"; git commit -qm "${MSG:-Add ${slug} to calc}"

@@ -39,7 +39,7 @@ mainmoves() { ( cd "$other" && git pull -q origin main && "$@" && git add -A && 
 
 if want mend; then
 echo "== a conflict caused only by main moving is mended: no try"
-git switch -q main; $goal new m1 --here --goal "M1" --done "m1" >/dev/null; row m1-row >> .loop/regression.tsv; git commit -qam m1; flowall m1; git switch -q main
+git switch -q main; $goal new m1 --here --goal "M1" --task t --done "Given a repo, when m1, then it holds" >/dev/null; row m1-row >> .loop/regression.tsv; git commit -qam m1; flowall m1; git switch -q main
 mainmoves bash -c "$(declare -f row); row main-row >> .loop/regression.tsv"
 git switch -q loop/m1
 out=$($goal pr m1 2>&1); echo "$out" | sed 's/^/  /'
@@ -47,7 +47,7 @@ check "main appended rows to the regression file: pr mends the merge, says so, o
 check "both sides rows survive, nothing duplicated, no conflict markers" '[ "$(grep -c "^m1-row" .loop/regression.tsv)" = 1 ] && [ "$(grep -c "^main-row" .loop/regression.tsv)" = 1 ] && [ "$(grep -c "^base-row" .loop/regression.tsv)" = 1 ] && ! grep -q "^[<>=]\{7\}" .loop/regression.tsv && [ ! -e "$(git rev-parse --git-dir)/MERGE_HEAD" ]'
 
 echo "== a real conflict is a try lost to main moving: not counted, with its own cap (#3877)"
-git switch -q main; $goal new m2 --here --goal "M2" --done "m2" >/dev/null; printf '# from m2\n' >> calc.py; row m2-row >> .loop/regression.tsv; git commit -qam m2; flowall m2; git switch -q main
+git switch -q main; $goal new m2 --here --goal "M2" --task t --done "Given a repo, when m2, then it holds" >/dev/null; printf '# from m2\n' >> calc.py; row m2-row >> .loop/regression.tsv; git commit -qam m2; flowall m2; git switch -q main
 mainmoves bash -c "printf '# from main\n' >> calc.py; $(declare -f row); row main-row2 >> .loop/regression.tsv"
 git switch -q loop/m2
 out=$($goal pr m2 2>&1); echo "$out" | sed 's/^/  /'
@@ -94,7 +94,7 @@ cd "$T/repo"
 fi
 if want lane; then
 echo "== a lane killed from outside reruns free, bounded; a real failure still costs one"
-git switch -q main; $goal new d1 --here --goal "D1" --done "d1" >/dev/null; echo d1 > d1.txt; git add d1.txt; git commit -qm d1; flowall d1
+git switch -q main; $goal new d1 --here --goal "D1" --task t --done "Given a repo, when d1, then it holds" >/dev/null; echo d1 > d1.txt; git add d1.txt; git commit -qm d1; flowall d1
 dead() { python3 - "$R" "$(git rev-parse HEAD)" "$1" <<'PY'
 import json, sys, time
 runs, head, slug = sys.argv[1:]
@@ -153,7 +153,7 @@ git checkout -q -- calc.py
 fi
 if want paths; then
 echo "== finding and report text carries no absolute path"
-git switch -q main; $goal new d1 --here --goal "D1" --done "d1" >/dev/null
+git switch -q main; $goal new d1 --here --goal "D1" --task t --done "Given a repo, when d1, then it holds" >/dev/null
 out=$(python3 - "$D" d1 "$T" <<'PY'
 import sys
 sys.path.insert(0, sys.argv[1]); import goal, private

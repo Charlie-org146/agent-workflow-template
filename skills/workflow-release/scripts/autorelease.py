@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 
+import brief
 import release
 import wiki  # noqa: E402
 
@@ -173,14 +174,16 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
       cur = open(vpath).read().strip() if os.path.exists(vpath) else None
       version = "0.1.0" if cur is None else release.bump(cur, "minor" if part == "major" and cur.startswith("0.") else part)
       tag = "v" + version
+      brief.gate(top, part, version)  # DOC-28
       if sh(["git", "ls-remote", "--exit-code", "--tags", "origin", tag], cwd=top).returncode == 0:
         fail(state, "tag %s already exists" % tag)
       cpath = os.path.join(tree, "CHANGELOG.md")
       old = open(cpath).read() if os.path.exists(cpath) else ""
       day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
       open(vpath, "w").write(version + "\n")
-      open(cpath, "w").write(release.changelog_text(old, version, day, state["release_bullets"], state["release_steps"]))
-      files = [version_file, "CHANGELOG.md"]
+      open(cpath, "w").write(release.changelog_text(old, version, day, state["release_bullets"] + brief.notes(tree, version), state["release_steps"]))
+      brief.result(tree, version)
+      files = [version_file, "CHANGELOG.md"] + brief.files(tree, version)
       if sh(["git", "add", "--"] + files, cwd=tree).returncode or sh(
         ["git", "commit", "-q", "-m", "Release %s (%s)" % (tag, slug), "--"] + files, cwd=tree).returncode:
         fail(state, "could not commit the release files")
@@ -197,7 +200,6 @@ def push_release_commit(top, cfg, state, part, to_branch=False):
       if PROTECTED.search(pushed.stderr):
         print("NOTE: origin/%s is protected; the release goes through a pull request" % base)
         return None, pushed.stderr
-            # another goal moved the base: redo the bump on top
     fail(state, "push to %s was rejected %d times: %s" % (base, PUSH_TRIES, pushed.stderr.strip()[-200:]))
   finally:
     drop(top, tree, temp)

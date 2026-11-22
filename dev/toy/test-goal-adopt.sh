@@ -35,7 +35,7 @@ C=$(cd "$(git rev-parse --git-common-dir)" && pwd)
 field() { python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get(sys.argv[2]))" "$C/loop/runs/$1.json" "$2"; }
 
 # The other machine freezes and pushes a goal; this machine then drops that run record, as a second machine never had it.
-$goal new far --here --goal "Do far" --done "far works" --touches "calc.py" >/dev/null || bad "new"
+$goal new far --here --goal "Do far" --task t --done "Given a repo, when far works, then it holds" --touches "calc.py" >/dev/null || bad "new"
 git push -q -u origin loop/far
 rm -f "$C/loop/runs/far.json"
 
@@ -59,12 +59,12 @@ out=$($goal adopt near 2>&1); echo "$out" | grep -q "REFUSED: loop/near is not o
 
 echo "== a stale running record with no pid is replaced; one with a pid is refused"
 git switch -q main
-$goal new stale --here --goal "Do stale" --done "stale works" --touches "calc.py" >/dev/null || bad "new stale"
+$goal new stale --here --goal "Do stale" --task t --done "Given a repo, when stale works, then it holds" --touches "calc.py" >/dev/null || bad "new stale"
 git push -q -u origin loop/stale
 out=$($goal adopt stale 2>&1); echo "$out" | grep -q "^ADOPTED stale at qa.*; replaced a stale record: running, no pid, no steps" && ok "stale record replaced" || bad "stale: $out"
 [ "$(field stale step)" = qa ] && grep -q "replaced a stale record" "$C/loop/runs/stale.json" && ok "replacement logged, record at qa" || bad "stale record"
 git switch -q main
-$goal new busy --here --goal "Do busy" --done "busy works" --touches "calc.py" >/dev/null || bad "new busy"
+$goal new busy --here --goal "Do busy" --task t --done "Given a repo, when busy works, then it holds" --touches "calc.py" >/dev/null || bad "new busy"
 git push -q -u origin loop/busy
 python3 - "$C/loop/runs/busy.json" <<'PY'
 import json, sys

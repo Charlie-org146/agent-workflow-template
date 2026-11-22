@@ -121,8 +121,8 @@ def wall_minutes(state):
         return 0
 
 
-def monitor(name, paths=False):
-    path = tool("workflow-monitoring", "scripts", name + ".py")
+def monitor(name, paths=False, skill="workflow-monitoring"):
+    path = tool(skill, "scripts", name + ".py")
     paths and sys.path.insert(0, os.path.dirname(path))
     spec = importlib.util.spec_from_file_location("fit_" + name, path)
     module = importlib.util.module_from_spec(spec)
@@ -291,7 +291,24 @@ def bind_here(g, slug):
         print(done.stdout + done.stderr, end="")
 
 
+GWT = re.compile(r"^\d+\. Given .+ when .+ then .+", re.I)
+
+
+def head(args):
+    """DEL-19.1: the Task and Release lines of a goal file."""
+    return "- Task: %s\n- Release: %s\n" % (args.task, args.release or "none")
+
+
+def goal_format(g, args, lines):
+    """DEL-19.1: a goal names its task and every done line reads Given, when, then."""
+    args.task.strip() or g.no("no task. Fix: --task NAME, the task this goal serves.")
+    bad = [x for x in lines if not GWT.match(x)]
+    bad and g.no("done line %r is not Given ... when ... then ... Fix: write it that way." % bad[0][:50])
+    os.path.isdir(os.path.join(g.root(), ".loop", "tasks")) and monitor("brief", False, "workflow-release").can_start(g.root(), args.task)  # DEL-23.1
+
+
 def frozen_fields(g, args, lines, touches):
+    goal_format(g, args, lines)
     bad = [t for t in touches if surface(t) is None]
     if bad:
         g.no("%s isn't a GitHub surface. Fix: one of github:%s" % (", ".join(bad), ", github:".join(SURFACES)))
@@ -299,7 +316,7 @@ def frozen_fields(g, args, lines, touches):
         print("WARN: the goal text says %s; the operation records it with goal.py set %s --bump %s --why ..." % (
             says_bump(args.goal), args.slug, says_bump(args.goal)))
     held = budget_of(g.config())
-    return {"size": size_of(lines, touches, g.root()), "budget": held,
+    return {"size": size_of(lines, touches, g.root()), "budget": held, "task": args.task,
             "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"], g.config()),
             "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
 

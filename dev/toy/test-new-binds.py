@@ -43,7 +43,7 @@ def freeze(repo, session):
     env.update(HOME=repo, USERPROFILE=repo, LOOP_FLOW=os.path.join(repo, "flow.json"), LOOP_ROLE="worker", GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t")
     if session:
         env["CLAUDE_CODE_HOST_SESSION_ID"] = session
-    done = subprocess.run([sys.executable, goal, "new", "g", "--here", "--goal", "x", "--done", "one"], cwd=repo, capture_output=True, text=True, env=env)
+    done = subprocess.run([sys.executable, goal, "new", "g", "--here", "--goal", "x", "--task", "t", "--done", "Given a repo, when one, then it holds"], cwd=repo, capture_output=True, text=True, env=env)
     path = os.path.join(repo, ".git", "loop", "runs", "g.json")
     state = json.load(open(path)) if os.path.exists(path) else {}
     return done.stdout + done.stderr, state

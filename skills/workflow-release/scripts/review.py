@@ -7,8 +7,7 @@ usage: review.py record SLUG
        review.py revert vX
 
 With "review_hold": true, merge.py merges only a head the operation session ran record on (else REVIEW_HOLD).
---suite-from RUN takes REL-3's suite from a completed regression run on the gate ref with every shard reported, nothing UNRUN
-and every row logged; else "suite run does not cover the candidate". The run id goes in loop/gate/vX.json.
+--suite-from RUN takes REL-3's suite from a completed run on the gate ref (every shard, nothing UNRUN); its id goes in loop/gate/vX.json.
 """
 import glob
 import importlib
@@ -22,6 +21,7 @@ import tempfile
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import brief  # noqa: E402
 import release  # noqa: E402
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
@@ -217,7 +217,7 @@ def gate_refusals(top, cfg, ver, ref, suite=True, run=""):
     work, moved, base = tempfile.mkdtemp(prefix="gate-"), waivers(top, "moved"), release.base_of(top, cfg)
     got = gh_json("issue", "list", "--milestone", "v%d.0" % ver, "--state", "open")
     out = [("issues", "#%d %s" % (i["number"], i["title"][:60]), ["#%d" % i["number"]]) for i in got or [] if "#%d" % i["number"] not in moved]
-    out += [("issues", "gh could not list milestone v%d.0" % ver, ["gh"])] * (got is None)
+    out += [("issues", "gh could not list milestone v%d.0" % ver, ["gh"])] * (got is None) + brief.known_red(top)
     facts = {"ref": ref, "suite": {}, "health": "skipped (--no-suite)"}
     if release.run(["git", "worktree", "add", "-q", "--detach", work, ref], cwd=top).returncode:
         out += [("ref", "cannot check out " + ref, ["ref"])]

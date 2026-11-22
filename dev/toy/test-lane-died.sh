@@ -89,7 +89,7 @@ python3 - "$T/flow.json" "$T/slowskill.sh" <<'PY'
 import json, sys
 spec = json.load(open(sys.argv[1])); spec.update({"command": ["bash", sys.argv[2]], "limit": 2}); json.dump(spec, open(sys.argv[1], "w"))
 PY
-$goal new bg --here --goal "Stale job goal" --done "a stale job kills nothing" >/dev/null
+$goal new bg --here --goal "Stale job goal" --task t --done "Given a repo, when a stale job kills nothing, then it holds" >/dev/null
 check "the toy goal exists, so the flow step really ran" '[ -s "$RUNS/bg.json" ]'
 python3 - "$RUNS/bg.json" <<'PY'
 import json, sys

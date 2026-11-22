@@ -55,7 +55,7 @@ real() { # a git copy of what the repo-wide checks read (skills, docs, README, t
     && { u=$(git -C "$here/." remote get-url origin 2>/dev/null) && git remote add origin "$u" || true; } || no "cannot copy the repo"  # the Tests page links runs to origin; "$here/." not "$here": the plain form is a root runner again (issue 172)
 }
 finish() { # finish SLUG TEXT: a goal whose flow is done, with a change committed
-  $goal new "$1" --here --goal "Add $1" --done "$2" >/dev/null || no "new"
+  $goal new "$1" --here --goal "Add $1" --task t --done "Given a repo, when $2, then it holds" >/dev/null || no "new"
   printf '\n# %s\n' "$1" >> calc.py; git commit -qam "Add $1 to calc"
   bash "$here/dev/toy/flow-done.sh" "$1" || no "flow"
 }
@@ -104,7 +104,7 @@ base = {"command": ["bash", d + "/say.sh"], "env": {"FAKE_MODE": "unattended"}, 
 json.dump(dict(base, suite=suite, steps={"review": "own-review"}), open(d + "/mapped.json", "w"))
 json.dump(dict(base, suite={s: suite[s] for s in ("idea", "plan", "review", "qa", "ship")}), open(d + "/five.json", "w"))
 PY
-    $goal new fs --here --goal "Map" --done "mapped" >/dev/null || no "new"
+    $goal new fs --here --goal "Map" --task t --done "Given a repo, when mapped, then it holds" >/dev/null || no "new"
     for step in build review; do
       LOOP_FLOW="$d/mapped.json" $flow fs $step --wait 5 >/dev/null; LOOP_FLOW="$d/mapped.json" $flow fs $step --wait 10 >/dev/null
     done

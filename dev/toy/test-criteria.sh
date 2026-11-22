@@ -312,7 +312,7 @@ PYEND
 }
 echo "== cut needs a passing row for every criterion"
 git push -q origin main
-$goal new crit --here --goal "Change calc" --done "calc changed" >/dev/null
+$goal new crit --here --goal "Change calc" --task t --done "Given a repo, when calc changed, then it holds" >/dev/null
 printf '\nCRIT = 1\n' >> calc.py
 python3 - <<'PY'
 p = ".loop/goals/crit.md"; t = open(p).read().replace("## Verify by hand\n", "## Verify by hand\n\n1. Open calc.py.\n   Expect: the change.\n", 1); open(p, "w").write(t)

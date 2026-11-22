@@ -40,7 +40,7 @@ PY
 git commit -qam "Config: $*"; git push -q origin main; }
 w() { LOOP_ROLE=worker "$@"; }  # goal steps run in a worker; set and touches run as the operation
 step() { git switch -q "loop/$1" 2>/dev/null; w $F "$1" "$2" --wait 5 >/dev/null 2>&1; w $F "$1" "$2" --wait 10 > "$d/flow-$1-$2" 2>&1; w $goal record "$1" "$2" --file "$R/$1.$2.txt" 2>&1; }
-new() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --done "Line $1" ${2:+--touches "$2"} 2>&1; }
+new() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --task t --done "Given a repo, when Line $1, then it holds" ${2:+--touches "$2"} 2>&1; }
 run_all() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done; }
 on() { [ "$case" = all ] || [ "$case" = "$1" ]; }
 
@@ -239,7 +239,7 @@ if on guard; then
   { printf '# Page\n\n## Requirements\n\n### Functional\n\n'; for n in 1 2 20 3 4 5 6 7; do printf -- "$R1" $n $n $n; done; printf '\n### Non-functional\n\nNone\n\n## Tests\n\n'; } > docs/wiki/Page.md
   git add docs/wiki/Page.md; git commit -qm "page"; git push -q origin main
   mkdir -p "$C/loop"; printf 'o1\t2026-11-17T00:00:00Z\toperation\t"reword it"\tg3,g8,g10,g11,g12,Page\no2\t2026-11-17T00:00:00Z\toperation\t"other"\tPage,ABC-4\n' > "$C/loop/owner-words.tsv"
-  gnew() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --done "$2" --touches docs/wiki 2>&1 >/dev/null; }
+  gnew() { git switch -q main; w $goal new "$1" --here --goal "Goal $1" --task t --done "Given a repo, when $2, then it holds" --touches docs/wiki 2>&1 >/dev/null; }
   edit() { sed -i.bak "s/Text $1 /Text $1 changed /" docs/wiki/Page.md; rm -f docs/wiki/Page.md.bak; }
   gnew g1 "Line one"; edit 1; git commit -qam "reword ABC-1"
   out=$($cri guard origin/main g1 2>&1); rc=$?

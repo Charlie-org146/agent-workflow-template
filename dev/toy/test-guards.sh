@@ -32,7 +32,7 @@ import json, sys
 s = json.load(open(sys.argv[1])); s.update(json.loads(sys.argv[2])); json.dump(s, open(sys.argv[1], "w"), indent=2)
 PY
 }
-new() { git switch -q main; LOOP_ROLE=worker $goal new "$1" --here --goal "Goal $1" --done "Line $1" --touches skills/a >/dev/null; }
+new() { git switch -q main; LOOP_ROLE=worker $goal new "$1" --here --goal "Goal $1" --task t --done "Given a repo, when Line $1, then it holds" --touches skills/a >/dev/null; }
 rec() { printf '%b\n' "$3" > "$d/reply.txt"; LOOP_ROLE=worker $goal record "$1" "$2" --file "$d/reply.txt" --in-session 2>&1; }
 cat > "$d/tool.sh" <<'TOOL'
 #!/bin/bash
@@ -107,7 +107,7 @@ echo "== g3 (149): the operation resumes a stopped session goal"
 # or resume takes a session serving another goal; why_new=only watch.py resume (headless) existed; seam=a stand-in session
 # tool; no_claim=a real app session receiving the message
 W3="$d/wt3"; git worktree add -q -b loop/g3 "$W3" main; W3=$(cd "$W3" && pwd -P)  # the goal's own worktree
-cd "$W3"; LOOP_ROLE=worker $goal new g3 --here --goal "Goal g3" --done "Line g3" >/dev/null
+cd "$W3"; LOOP_ROLE=worker $goal new g3 --here --goal "Goal g3" --task t --done "Given a repo, when Line g3, then it holds" >/dev/null
 $SE bind g3 s3 >/dev/null; rec g3 idea 'DEPTH: full\nSTEP: done' >/dev/null; cd "$d/repo"
 stop3() { setf g3 '{"status": "stopped", "tries": 3, "free": 3, "refusals": 2, "finding": "Failed 3 tries", "report": {"status": "failed"}, "note": {"text": "x"}}'; }
 free3() { python3 - "$C/loop/session-pool.json" "$1" "$2" <<'PY'

@@ -212,7 +212,7 @@ PY
 git switch -q main; git push -q origin main
 step() { all=""; for _ in $(seq 20); do out=$($F "$1" "$2" --wait 10 2>&1); all="$all$out"$'\n'; grep -q "^NEXT:" <<<"$out" && break; done
          echo "$all"; $goal record "$1" "$2" --file "$common/loop/runs/$1.$2.txt" 2>&1; }
-$goal new lg --here --goal "Lane goal" --done "lanes work" >/dev/null
+$goal new lg --here --goal "Lane goal" --task t --done "Given a repo, when lanes work, then it holds" >/dev/null
 for s in idea plan review; do step lg $s >/dev/null; done
 out=$($goal record lg qa --file "$d/flow.json" 2>&1)
 check "record refuses qa before the qa lane passed on HEAD" 'grep -q "the qa lane has not passed on .* (LANE_MISSING)" <<<"$out"'
@@ -246,7 +246,7 @@ check "a red pr lane fails pr with its row ids and pushes nothing" '[ $rc = 1 ] 
 printf 'ok\n' > src/a.txt; git commit -qam "Fix a after the PR"
 
 echo "== a red lane never starts the skill and costs a try"
-git switch -q main; $goal new lf --here --goal "Red goal" --done "red" >/dev/null
+git switch -q main; $goal new lf --here --goal "Red goal" --task t --done "Given a repo, when red, then it holds" >/dev/null
 printf 'bad\n' > src/a.txt; git commit -qam "Break a"
 for s in idea plan review; do step lf $s >/dev/null; done
 out=$(step lf qa); echo "$out"

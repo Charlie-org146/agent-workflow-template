@@ -69,9 +69,9 @@ echo "== new needs --here: one session governs"
 $goal new blocked --goal "No" --done "no" 2>&1 | grep -q "one session governs" && ok "new refused without --here" || bad "new refused"
 
 echo "== one flow, no levels: a goal starts at the idea step"
-out=$($goal new low --here --goal "Add low" --done "calc has low"); echo "$out"
+out=$($goal new low --here --goal "Add low" --task t --done "Given a repo, when calc has low, then it holds"); echo "$out"
 grep -q "step=idea" <<<"$out" && ! grep -qi "level" .loop/goals/low.md && ok "starts at idea, with no level" || bad "start"
-$goal new lvl --here --goal "L" --done "l" --level 1 2>&1 | grep -q "unrecognized arguments: --level" && ok "--level is gone" || bad "level flag"
+$goal new lvl --here --goal "L" --task t --done "Given a repo, when l, then it holds" --level 1 2>&1 | grep -q "unrecognized arguments: --level" && ok "--level is gone" || bad "level flag"
 
 echo "== a step runs only in the flow's unattended mode"
 LOOP_FLOW="$d/flow-interactive.json" $F low idea 2>&1 | grep -q "wouldn't run unattended" && [ ! -e "$C/loop/runs/low.idea.txt" ] && ok "a probe that isn't unattended starts nothing" || bad "probe guard"
@@ -101,18 +101,18 @@ git switch -q main
 echo "== PENDING: none, nothing, n/a and an empty PENDING line never make a goal wait; a real item still does"
 pnall=1; pn=0
 for reply in 'PENDING: none' 'PENDING: nothing' 'PENDING: **none**' 'PENDING: n/a' 'PENDING:'; do
-  pn=$((pn + 1)); git switch -q main; $goal new pn$pn --here --goal "Add pn$pn" --done "calc has pn$pn" >/dev/null
+  pn=$((pn + 1)); git switch -q main; $goal new pn$pn --here --goal "Add pn$pn" --task t --done "Given a repo, when calc has pn$pn, then it holds" >/dev/null
   out=$(FAKE_SKILL_OUT="$reply\nDEPTH: full\nSTEP: done" step pn$pn idea 2>&1)
   if grep -q "^RECORDED idea" <<<"$out" && grep -q "^NEXT: flow.py pn$pn plan" <<<"$out" && [ "$(field pn$pn status)" = running ] \
      && [ "$(field pn$pn waiting)" = None ] && python3 -c "import json,sys;f=json.load(open(sys.argv[1]))['flow']['idea'];assert f.startswith('done') and 'DEPTH' not in f and 'STEP' not in f" "$C/loop/runs/pn$pn.json"; then :; else
     pnall=0; bad "PENDING reply [$reply] made the goal wait or swallowed the next line: ${out:0:160}"; fi
 done
 [ $pnall = 1 ] && ok "PENDING none, nothing, **none**, n/a and empty record and go on"
-git switch -q main; $goal new pnmix --here --goal "Add pnmix" --done "calc has pnmix" >/dev/null
+git switch -q main; $goal new pnmix --here --goal "Add pnmix" --task t --done "Given a repo, when calc has pnmix, then it holds" >/dev/null
 out=$(FAKE_SKILL_OUT='PENDING: none\nPENDING: approve the plan\nDEPTH: full\nSTEP: done' step pnmix idea 2>&1)
 python3 -c "import json,sys;w=json.load(open(sys.argv[1]))['waiting'];assert 'approve the plan' in w['ask'] and 'none' not in w['ask'].lower()" "$C/loop/runs/pnmix.json" && grep -q "WAITING pnmix" <<<"$out" \
   && ok "a real PENDING item among none lines still waits, with its own ask" || bad "mixed none and real item: ${out:0:160}"
-git switch -q main; $goal new pnedge --here --goal "Add pnedge" --done "calc has pnedge" >/dev/null
+git switch -q main; $goal new pnedge --here --goal "Add pnedge" --task t --done "Given a repo, when calc has pnedge, then it holds" >/dev/null
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full' step pnedge idea 2>&1 | grep -q "gave no STEP line" && ok "PENDING: none with no STEP line is a failed try, not a wait" || bad "none with no STEP line"
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full\nSTEP: pending' step pnedge idea 2>&1 | grep -q "WAITING pnedge" && ok "PENDING: none with STEP: pending still waits (the step asked to)" || bad "none with STEP: pending"
 python3 - "$here/skills/workflow-delivery/scripts" <<'PY' && ok "pending_items drops none, n/a, no decisions and bare punctuation and keeps none left" || bad "pending_items values"
@@ -143,12 +143,12 @@ git checkout -q -- .loop/queue.md
 
 echo "== done lines stay frozen, 3 failed tries stop a goal, nothing merges"
 git switch -q main
-$goal new frz --here --goal "Add frz" --done "calc has frz" >/dev/null
+$goal new frz --here --goal "Add frz" --task t --done "Given a repo, when calc has frz, then it holds" >/dev/null
 sed -i.bak 's/calc has frz/calc has something else/' .loop/goals/frz.md; rm .loop/goals/frz.md.bak; git commit -qam "Change a done line"
 $goal pr frz >/dev/null 2>&1; rc=$?
 [ "$rc" = 3 ] && [ "$(field frz status)" = stopped ] && ok "a changed done line stops the goal" || bad "frozen done line ($rc $(field frz status))"
 git checkout -q -- . ; git switch -q main
-$goal new tries --here --goal "Add tries" --done "calc has tries" >/dev/null
+$goal new tries --here --goal "Add tries" --task t --done "Given a repo, when calc has tries, then it holds" >/dev/null
 for n in 1 2 3; do FAKE_SKILL_OUT='STEP: failed no' step tries idea >/dev/null 2>&1; rc=$?; done
 [ "$rc" = 3 ] && [ "$(field tries status)" = stopped ] && grep -q "tries: Failed 3 tries" .loop/findings.md && ok "three failed tries stop the goal with a finding" || bad "3 tries ($rc $(field tries status))"
 git checkout -q -- . ; git switch -q main
@@ -159,7 +159,7 @@ echo "== no gates: auto_approve and auto_merge on, in this repo only"
 git switch -q main
 cp .loop/config.json "$d/cfg.gated"
 cfg 'auto_approve=true' 'auto_merge=true'; git commit -qam "No gates"; git push -q origin main
-$goal new open --here --goal "Add open" --done "calc has open" >/dev/null
+$goal new open --here --goal "Add open" --task t --done "Given a repo, when calc has open, then it holds" >/dev/null
 FAKE_SKILL_OUT='PENDING: approve the design\nDEPTH: full\nSTEP: pending' step open idea | grep -q "AUTO-APPROVED open idea: approve the design" && ok "a pending decision is auto-approved" || bad "auto-approve"
 [ "$(field open status)" = running ] && grep -q "auto-approved" "$C/loop/runs/open.json" && python3 -c "import json,sys;s=json.load(open(sys.argv[1]));assert s['note']['text'].startswith('auto-approved at idea')" "$C/loop/runs/open.json" && ok "logged and on the board as auto-approved, nothing waits" || bad "auto-approve log"
 for s2 in plan review qa ship; do step open $s2 >/dev/null; done
@@ -168,7 +168,7 @@ out=$($goal pr open); grep -q "^PR " <<<"$out" && grep -q "NEXT: workflow-releas
 FAKE_GH_PR_STATE=OPEN python3 "$here/skills/workflow-release/scripts/merge.py" open | grep -q "^MERGED" && grep -q "^pr merge .* --merge" "$FAKE_GH_DIR/calls.log" && [ "$(field open release)" = cut ] && ok "auto_merge: the release step merges the pull request and releases it" || bad "auto merge"
 git fetch -q origin; git switch -q main; git merge -q --ff-only origin/main
 FAKE_GH_PR_STATE=CLOSED python3 "$here/skills/workflow-release/scripts/merge.py" open 2>&1 | grep -q "is CLOSED, not open" && ok "a closed pull request is not merged" || bad "closed pr"
-git switch -q main; $goal new ng --here --goal "Add ng" --done "calc has ng" >/dev/null
+git switch -q main; $goal new ng --here --goal "Add ng" --task t --done "Given a repo, when calc has ng, then it holds" >/dev/null
 out=$(FAKE_SKILL_OUT='PENDING: none\nDEPTH: full\nSTEP: done' step ng idea 2>&1)
 grep -q "^RECORDED idea" <<<"$out" && ! grep -q "AUTO-APPROVED" <<<"$out" && ok "auto_approve: PENDING none records and is never reported as auto-approved" || bad "auto_approve with PENDING none: ${out:0:160}"
 git switch -q main; rm -f "$C/loop/runs/ng".*; git branch -q -D loop/ng 2>/dev/null
@@ -184,7 +184,7 @@ done
 echo "== pr_bumps_version moves the last number once"
 echo 1.3.3.3 > VERSION; git add -A; git commit -qm "Version"; git push -q origin main
 cfg 'pr_bumps_version=true'; git commit -qam "Bump config"; git push -q origin main
-$goal new bump --here --goal "Add bump" --done "calc has bump" >/dev/null
+$goal new bump --here --goal "Add bump" --task t --done "Given a repo, when calc has bump, then it holds" >/dev/null
 printf '\n\ndef bump():\n    return 1\n' >> calc.py; git commit -qam "Add bump"
 flowall bump; $goal pr bump >/dev/null
 [ "$(cat VERSION)" = "1.3.3.4" ] && ok "VERSION bumped" || bad "bump: $(cat VERSION)"
@@ -193,7 +193,7 @@ flowall bump; $goal pr bump >/dev/null
 $goal pr bump >/dev/null; [ "$(cat VERSION)" = "1.3.3.4" ] && ok "second pr doesn't bump again" || bad "double bump"
 E="python3 $here/skills/workflow-docs/scripts/entry.py"
 git switch -q main; $E write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "START.md" 2>/dev/null; git push -q origin main
-$goal new regen --here --goal "Add regen" --done "calc has regen" >/dev/null
+$goal new regen --here --goal "Add regen" --task t --done "Given a repo, when calc has regen, then it holds" >/dev/null
 printf '
 
 def regen():
@@ -210,13 +210,13 @@ echo "== a failed push is retried, and a final failure prints git's error"
 hook="$d/origin.git/hooks/pre-receive"
 printf '#!/bin/bash\n[ -e "%s/pushed-once" ] && exit 0\ntouch "%s/pushed-once"\necho "busy, try again" >&2\nexit 1\n' "$d" "$d" > "$hook"
 chmod +x "$hook"
-$goal new retry --here --goal "Add retry" --done "calc has retry" >/dev/null
+$goal new retry --here --goal "Add retry" --task t --done "Given a repo, when calc has retry, then it holds" >/dev/null
 printf '\n\ndef retry():\n    return 1\n' >> calc.py; git commit -qam "Add retry"
 flowall retry
 $goal pr retry | grep -q "^PR " && ok "second push worked" || bad "retry"
 git switch -q main
 printf '#!/bin/bash\necho "the remote said no" >&2\nexit 1\n' > "$hook"
-$goal new nopush --here --goal "Add nopush" --done "calc has nopush" >/dev/null
+$goal new nopush --here --goal "Add nopush" --task t --done "Given a repo, when calc has nopush, then it holds" >/dev/null
 printf '\n\ndef nopush():\n    return 1\n' >> calc.py; git commit -qam "Add nopush"
 flowall nopush
 $goal pr nopush > "$d/np" 2>&1; rc=$?

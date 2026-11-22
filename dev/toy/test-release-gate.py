@@ -6,7 +6,7 @@ writes the state report and mails it; a cut rc freezes the merge; `revert` opens
 bumps a major; the Release page holds REL-1 to REL-14, Unreviewed; the scripts stay under their size caps.
 
 Builds a throwaway repo with a bare origin; gh, the suite, health, the docs audit and the mail are stood in for inside this
-process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major]  (one leg: only its checks decide the exit)"""
+process (no network). usage: test-release-gate.py [issues|rows|checks|owner|promote|revert|freeze|major|del23|doc28]  (one leg: only its checks decide the exit)"""
 import contextlib
 import io
 import json
@@ -338,4 +338,131 @@ for dirpath, _, files in os.walk(os.path.join(root, "skills")):
 check("review.py, merge.py and release.py are within GRD-20 (none over 20,480 bytes), and checkin.py at or under 19,495", not over, ", ".join(over), "major")
 added = subprocess.run(["git", "diff", "--name-status", "--diff-filter=A", "origin/main", "--", "skills", "listing.json"], cwd=root, capture_output=True, text=True).stdout
 check("no file is added to the shipped package", not added.strip(), added, "major")
+
+# DEL-23 (tasks) and DOC-28 (release briefs): brief.py in a throwaway repo with its own owner-words ledger and run records
+import importlib.util
+import time
+spec = importlib.util.spec_from_file_location("brief", os.path.join(root, "skills", "workflow-release", "scripts", "brief.py"))
+brief = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(brief)
+bt = tempfile.mkdtemp(prefix="brief-")
+git("init", "-q", "-b", "main", bt, cwd=tmp)
+for d in (".loop/tasks", "docs", ".git/loop/runs"):
+    os.makedirs(os.path.join(bt, d), exist_ok=True)
+LEDGER = os.path.join(bt, ".git", "loop", "owner-words.tsv")
+
+
+def said(fn, *a):
+    """The refusal a brief.py call prints (code and text), or '' when it passes."""
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        try:
+            fn(bt, *a)
+        except SystemExit:
+            pass
+    return err.getvalue()
+
+
+def record(rid, ids, src="operation"):
+    open(LEDGER, "a").write("%s\t2026-11-22T00:00:00Z\t%s\t%s\t%s\n" % (rid, src, json.dumps("typed words"), ids))
+
+
+def run_rec(slug, task, status="running", release="", waiting=None):
+    json.dump({"slug": slug, "task": task, "status": status, "release": release, "waiting": waiting, "eta": {"minutes": 30}}, open(os.path.join(bt, ".git", "loop", "runs", slug + ".json"), "w"))
+
+
+def brief_file(name, text, kind="task"):
+    path = brief.path_of(bt, kind, name)
+    open(path, "w").write(text)
+    return path
+
+
+def task_text(extra=""):
+    return "# T\n\nFeature: DEL-23\nPurpose: it works\n%s\n## Done when\n\n1. it works\n2. it is tested\n" % extra
+
+
+L = lambda fn, leg: leg
+# DEL-23.1: a task starts only from a frozen brief; one changed word fails the check
+check("DEL-23 starting a task with no brief is refused", "BRF-5" in said(brief.can_start, "alpha"), "", "del23")
+brief_file("alpha", task_text())
+check("DEL-23 starting a task whose brief is not frozen is refused", "BRF-3" in said(brief.can_start, "alpha"), "", "del23")
+check("DEL-23 freezing with no owner record is refused and says what the owner types", "BRF-2" in said(brief.freeze, "task", "alpha", "") and "Freeze alpha?" in said(brief.freeze, "task", "alpha", ""), "", "del23")
+record("o1", "alpha,beta")
+check("DEL-23 a record naming two tasks does not freeze either", "BRF-2" in said(brief.freeze, "task", "alpha", "o1"), "", "del23")
+record("o2", "alpha", src="operation-top")
+check("DEL-23 a relayed record does not freeze", "BRF-2" in said(brief.freeze, "task", "alpha", "o2"), "", "del23")
+record("o3", "alpha")
+check("DEL-23 freezing with the owner's record naming exactly the task works", said(brief.freeze, "task", "alpha", "o3") == "" and brief.frozen(brief.read(brief.path_of(bt, "task", "alpha"))), "", "del23")
+check("DEL-23 refusals never print the owner's words", "typed words" not in said(brief.freeze, "task", "alpha", "o1"), "", "del23")
+check("DEL-23 a frozen brief passes the check", said(lambda r: brief.check(r)) == "", "", "del23")
+path = brief.path_of(bt, "task", "alpha")
+keep = open(path).read()
+open(path, "w").write(keep.replace("it works", "it work", 1))
+check("DEL-23 changing one word of a frozen brief fails the check", "BRF-4" in said(lambda r: brief.check(r)), "", "del23")
+open(path, "w").write(keep)
+# DEL-23.2: the one list, by name, within a minute
+t0 = time.time()
+brief_file("beta", task_text("Needs: alpha"))
+listing = "\n".join(brief.lines(bt))
+check("DEL-23 an added task shows on the list by name, queued, within a minute", "task beta: queued" in listing and time.time() - t0 < 60, listing, "del23")
+check("DEL-23 the list shows each task's state", "task alpha: queued" in listing and "not frozen" in listing, listing, "del23")
+# DEL-23.3: dependencies
+record("o4", "beta")
+brief.freeze(bt, "task", "beta", "o4")
+check("DEL-23 a task naming another does not start before that one is done", "BRF-5" in said(brief.can_start, "beta") and "alpha" in said(brief.can_start, "beta"), "", "del23")
+brief_file("gamma", task_text())
+record("o5", "gamma")
+brief.freeze(bt, "task", "gamma", "o5")
+check("DEL-23 two independent tasks can both start", said(brief.can_start, "alpha") == "" and said(brief.can_start, "gamma") == "", "", "del23")
+# DEL-23.4: done only when every goal merged and every done-when line met
+run_rec("g1", "alpha", "running")
+check("DEL-23 a task with an unmerged goal cannot be finished", "BRF-5" in said(brief.finish, "alpha", "1,2") and "g1" in said(brief.finish, "alpha", "1,2"), "", "del23")
+run_rec("g1", "alpha", "done", "merged")
+check("DEL-23 a task with an unmet done-when line cannot be finished", "BRF-5" in said(brief.finish, "alpha", "1"), "", "del23")
+check("DEL-23 a task whose goals merged and lines are met is done", said(brief.finish, "alpha", "1,2") == "" and "task alpha: done" in "\n".join(brief.lines(bt)) and "goal g1" in "\n".join(brief.lines(bt)), "\n".join(brief.lines(bt)), "del23")
+check("DEL-23 a task that names a finished one can now start", said(brief.can_start, "beta") == "", "", "del23")
+brief_file("delta", task_text("Replaces: gamma"))
+check("DEL-23 a task that replaces another marks it replaced", "task gamma: replaced" in "\n".join(brief.lines(bt)), "", "del23")
+
+# DOC-28: the frozen release brief names the tasks; the cut contains exactly those
+REL = "# v1.2.0\n\nAbout: the next minor\n\n## Tasks\n\n1. alpha\n2. beta\n\nDone: both tasks done\n"
+brief_file("1.2.0", REL, "release")
+check("DOC-28 a minor with no frozen release brief is refused", "BRF-3" in said(brief.gate_bump, "minor", "1.2.0"), "", "doc28")
+check("DOC-28 a patch needs no brief", said(brief.gate_bump, "patch", "1.2.1") == "", "", "doc28")
+record("o6", "1.2.0")
+check("DOC-28 freezing the release brief needs the owner's record naming it", "BRF-2" in said(brief.freeze, "release", "1.2.0", "o1") and said(brief.freeze, "release", "1.2.0", "o6") == "", "", "doc28")
+check("DOC-28 the frozen brief lists its tasks in order", brief.release_tasks(bt, "1.2.0") == ["alpha", "beta"], str(brief.release_tasks(bt, "1.2.0")), "doc28")
+run_rec("g2", "beta", "running")
+check("DOC-28 cutting a minor with a named task still running is refused", "BRF-5" in said(brief.gate_cut, "1.2.0") and "beta" in said(brief.gate_cut, "1.2.0"), "", "doc28")
+run_rec("g2", "beta", "done", "merged")
+brief.finish(bt, "beta", "1,2")
+check("DOC-28 the cut passes once every named task is done", said(brief.gate_cut, "1.2.0") == "" and said(brief.gate, "minor", "1.2.0") == "", "", "doc28")
+check("DOC-28 the tag notes list every task", brief.notes(bt, "1.2.0") == ["- task alpha", "- task beta"], str(brief.notes(bt, "1.2.0")), "doc28")
+brief.result(bt, "1.2.0")
+brief.result(bt, "1.2.0")
+after = brief.read(brief.path_of(bt, "release", "1.2.0"))
+check("DOC-28 after the cut the brief lists each task with its merged goals, once", after.count("## Results") == 1 and "- alpha: g1" in after and "- beta: g2" in after and brief.release_tasks(bt, "1.2.0") == ["alpha", "beta"], after, "doc28")
+check("DOC-28 a result record leaves the frozen part intact", said(lambda r: brief.check(r)) == "", "", "doc28")
+# a feature task merges only once a frozen brief names it; a fix task any time
+brief_file("epsilon", task_text("Kind: feature"))
+brief_file("zeta", task_text("Kind: fix"))
+check("DOC-28 a feature task named in no frozen brief cannot merge", "BRF-6" in said(brief.gate_merge, "epsilon"), "", "doc28")
+check("DOC-28 a bug-fix task merges any time", said(brief.gate_merge, "zeta") == "", "", "doc28")
+check("DOC-28 a goal of a task with no brief is not held (a repo without tasks is untouched)", said(brief.gate_merge, "") == "" and said(brief.gate_merge, "no-such-task") == "", "", "doc28")
+brief_file("1.3.0", REL.replace("alpha", "epsilon").replace("beta", "zeta").replace("1.2.0", "1.3.0"), "release")
+record("o7", "1.3.0")
+brief.freeze(bt, "release", "1.3.0", "o7")
+check("DOC-28 once a frozen brief names the feature task it merges", said(brief.gate_merge, "epsilon") == "", "", "doc28")
+# a patch never ships a feature task
+run_rec("g3", "epsilon", "done", "merged")
+check("DOC-28 cutting a patch that would ship an unshipped feature task is refused", "BRF-6" in said(brief.gate, "patch", "1.2.1") and "epsilon" in said(brief.gate, "patch", "1.2.1"), "", "doc28")
+# a major: an empty known-red list, no waiver
+open(os.path.join(bt, ".loop", "regression-known.tsv"), "w").write("row-a\tit is red\n")
+check("DOC-28 a major with a non-empty known-red list is refused, naming the row, with no waiver path", "BRF-6" in said(brief.gate_bump, "major", "2.0.0") and "row-a" in said(brief.gate_bump, "major", "2.0.0") and "no waiver" in said(brief.gate_bump, "major", "2.0.0"), "", "doc28")
+check("DOC-28 the review gate lists every known-red row as a refusal", brief.known_red(bt) == [("known-red", "row row-a is on the known-red list; clearing a row is the only path", ["row-a"])], "", "doc28")
+# nothing private is frozen into a brief
+brief_file("private1", task_text() + "Contact: someone@example.org\n")
+record("o8", "private1")
+check("DOC-28 a brief holding an email address is not frozen", "BRF-7" in said(brief.freeze, "task", "private1", "o8"), "", "doc28")
+
 sys.exit(1 if fails else 0)

@@ -47,7 +47,7 @@ git add -A; git commit -qm "Add the page"; git push -q origin main
 $docs publish >/dev/null
 
 echo "== a goal that changes a mapped path"
-$goal new w --here --goal "Add w" --done "calc has w" >/dev/null
+$goal new w --here --goal "Add w" --task t --done "Given a repo, when calc has w, then it holds" >/dev/null
 printf '\n\ndef w():\n    return 1\n' >> calc.py; git add calc.py; git commit -qm "Add w to calc"
 python3 - <<'PY'
 path = ".loop/goals/w.md"
@@ -78,7 +78,7 @@ printf '<!-- workflow-docs -->\n# Notes\n\nThe toy keeps its notes in notes.txt,
 echo one > notes.txt; git add -A; git commit -qm "Add the Notes page"; git push -q origin main
 $docs publish >/dev/null
 echo two >> notes.txt; git commit -qam "Change the notes"; git push -q origin main
-$goal new x --here --goal "Add x" --done "calc has x" >/dev/null
+$goal new x --here --goal "Add x" --task t --done "Given a repo, when calc has x, then it holds" >/dev/null
 printf '\n\ndef x():\n    return 1\n' >> calc.py; git add calc.py; git commit -qm "Add x to calc"
 python3 - <<'PY'
 path = ".loop/goals/x.md"

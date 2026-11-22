@@ -38,7 +38,7 @@ remote_file() { git fetch -q origin; git show "origin/main:$1"; }
 finish() {  # finish SLUG: a done goal with a pull request; MSG sets the commit subject
   local slug=$1
   git switch -q main; git pull -q origin main
-  $goal new "$slug" --here --goal "Add $slug" --done "calc has $slug" >/dev/null
+  $goal new "$slug" --here --goal "Add $slug" --task t --done "Given a repo, when calc has $slug, then it holds" >/dev/null
   printf '\n\ndef %s():\n    return 1\n' "${slug//-/_}" >> calc.py
   git add calc.py; git commit -qm "${MSG:-Add ${slug} to calc}"
   python3 - "$slug" <<'PY'

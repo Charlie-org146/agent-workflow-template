@@ -95,7 +95,7 @@ spec = json.load(open(sys.argv[1])); spec.update(json.loads(sys.argv[2])); json.
 PY2
 }
 setflow "{\"command\": [\"bash\", \"$d/slowskill.sh\"], \"limit\": 2}"
-$goal new bg --here --goal "Budget goal" --done "budgets hold" >/dev/null
+$goal new bg --here --goal "Budget goal" --task t --done "Given a repo, when budgets hold, then it holds" >/dev/null
 python3 - "$runs/bg.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s["flow"] = {"idea": "done", "plan": "done"}; s["step"] = "review"; json.dump(s, open(sys.argv[1], "w"))

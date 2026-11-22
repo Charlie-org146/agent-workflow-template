@@ -38,7 +38,7 @@ adopted() {
 commands() {
   echo "setup: LOOP_NO_GIT_HOOKS=1 python3 $S/workflow-setup/scripts/setup.py"
   echo "merge: git switch -q main && git merge -q --no-edit workflow-setup"
-  echo "go: LOOP_ROLE=worker python3 $S/workflow-delivery/scripts/goal.py new codex-toy --here --goal 'Add a subtract function' --done 'calc.py has subtract(a, b) returning a - b'"
+  echo "go: LOOP_ROLE=worker python3 $S/workflow-delivery/scripts/goal.py new codex-toy --here --goal 'Add a subtract function' --task t --done 'Given a repo, when calc.py has subtract(a, b) returning a - b, then it holds'"
   echo "board: python3 $S/workflow-monitoring/scripts/monitor.py report"
   echo "health: python3 $S/workflow-health/scripts/health.py check"
   echo "regression: python3 $S/workflow-regression/scripts/regression.py run land"

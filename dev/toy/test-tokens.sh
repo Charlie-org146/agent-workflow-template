@@ -33,7 +33,7 @@ json.dump({"command": [d + "/bin/claude", "-p"], "env": {"FAKE_MODE": "unattende
            "probe_expect": "unattended", "steps": {s: "x" for s in ("idea", "plan", "review", "qa", "ship")}}, open(d + "/flow.json", "w"))
 PY
 export LOOP_FLOW="$T/flow.json"
-$goal new tok --here --goal "Count tokens" --done "tokens are counted" >/dev/null
+$goal new tok --here --goal "Count tokens" --task t --done "Given a repo, when tokens are counted, then it holds" >/dev/null
 C=$(cd "$(git rev-parse --git-common-dir)" && pwd)
 $F tok idea --wait 5 >/dev/null; out=$($F tok idea --wait 10)
 echo "$out"

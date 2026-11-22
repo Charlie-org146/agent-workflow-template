@@ -33,7 +33,7 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 C=$(cd "$(git rev-parse --git-common-dir)" && pwd); R="$C/loop/runs"
 AT="2026-11-10T10:35:00+00:00"
-new() { git switch -q main; LOOP_ROLE=worker $goal new "$1" --here --goal "Goal $1" --done "Line $1" >/dev/null 2>&1 || bad "goal.py new $1"; }
+new() { git switch -q main; LOOP_ROLE=worker $goal new "$1" --here --goal "Goal $1" --task t --done "Given a repo, when Line $1, then it holds" >/dev/null 2>&1 || bad "goal.py new $1"; }
 # edit SLUG CODE: run python statements on the run record s (json loaded), then save it.
 edit() { python3 - "$R/$1.json" "$2" <<'PY'
 import json, sys

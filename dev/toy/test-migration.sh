@@ -352,15 +352,15 @@ fi
 if want major-refused; then fresh
   r=$(cleanrepo mr); export LOOP_FLOW="$d/mr/flow.json" LOOP_ROLE=worker; G="python3 $S/workflow-delivery/scripts/goal.py"
   C=$(cd "$r" && cd "$(git rev-parse --git-common-dir)" && pwd)
-  out=$(cd "$r" && LOOP_INSTALLED_VERSION=2.0.0 $G new wrongmajor --here --goal "g" --done "d" 2>&1 < /dev/null); rc=$?
+  out=$(cd "$r" && LOOP_INSTALLED_VERSION=2.0.0 $G new wrongmajor --here --goal "g" --task t --done "Given a repo, when d, then it holds" 2>&1 < /dev/null); rc=$?
   check "goal.py new refuses a differing major with exit 2, prints the recovery line, and creates no goal state or branch" '[ $rc = 2 ] && grep -q "REFUSED: this repo is at v1.0.0 and the template at v2.0.0 (different major). Fix: start it as a migrate-" <<<"$out" && [ ! -e "$C/loop/runs/wrongmajor.json" ] && [ -z "$(git -C "$r" branch --list loop/wrongmajor)" ]'
-  out=$(cd "$r" && LOOP_INSTALLED_VERSION=2.0.0 $G new migrate-mr --here --goal "g" --done "d" 2>&1 < /dev/null); rc=$?
+  out=$(cd "$r" && LOOP_INSTALLED_VERSION=2.0.0 $G new migrate-mr --here --goal "g" --task t --done "Given a repo, when d, then it holds" 2>&1 < /dev/null); rc=$?
   check "a migrate- slug is let through a differing major (it prints the version line and freezes the goal)" '[ $rc = 0 ] && grep -q "^this repo is at v1.0.0, the template is at v2.0.0, run the migrate goal" <<<"$out" && grep -q "^FROZEN migrate-mr" <<<"$out"'
   ( cd "$r" && git switch -q main )
-  out=$(cd "$r" && LOOP_INSTALLED_VERSION=1.5.0 $G new warned --here --goal "g" --done "d" 2>&1 < /dev/null); rc=$?
+  out=$(cd "$r" && LOOP_INSTALLED_VERSION=1.5.0 $G new warned --here --goal "g" --task t --done "Given a repo, when d, then it holds" 2>&1 < /dev/null); rc=$?
   check "an older repo of the same major only gets the warning line: the goal is created" '[ $rc = 0 ] && grep -q "^this repo is at v1.0.0, the template is at v1.5.0, run the migrate goal" <<<"$out" && grep -q "^FROZEN warned" <<<"$out"'
   ( cd "$r" && git switch -q main ); rm -rf "$d/sk4"; cp -R "$S" "$d/sk4"; rm -rf "$d/sk4/workflow-docs"
-  out=$(cd "$r" && python3 "$d/sk4/workflow-delivery/scripts/goal.py" new nonag --here --goal "g" --done "d" 2>&1 < /dev/null); rc=$?
+  out=$(cd "$r" && python3 "$d/sk4/workflow-delivery/scripts/goal.py" new nonag --here --goal "g" --task t --done "Given a repo, when d, then it holds" 2>&1 < /dev/null); rc=$?
   check "with entry.py missing it prints a NOTE on stderr and never blocks" '[ $rc = 0 ] && grep -q "^NOTE: entry.py is missing, so the template version was not checked. Fix: reinstall the skills" <<<"$out" && grep -q "^FROZEN nonag" <<<"$out"'
 fi
 

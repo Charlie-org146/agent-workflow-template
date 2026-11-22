@@ -99,7 +99,7 @@ def step_adopt(work, skills, env):
 
 def step_freeze(repo, skills, env):
     goal = [sys.executable, os.path.join(skills, "workflow-delivery", "scripts", "goal.py")]
-    code, text = run(goal + ["new", "smoke", "--here", "--goal", "Add a subtract function", "--done", "calc.py has subtract(a, b)"],
+    code, text = run(goal + ["new", "smoke", "--here", "--goal", "Add a subtract function", "--task", "t", "--done", "Given a repo, when calc.py has subtract(a, b), then it holds"],
                      repo, dict(env, LOOP_ROLE="worker"))
     say("FROZEN smoke" in text, "freeze", "goal frozen" if "FROZEN smoke" in text else text.strip()[-160:])
 
@@ -149,7 +149,7 @@ def step_relay(repo, skills, env, work):
                      "subprocess.run = run\n")
     pods = dict(env, PYTHONPATH=stub)
     run(["git", "switch", "-q", "main"], repo)
-    code, text = run(goal + ["new", "relay", "--here", "--goal", "Relay goal", "--done", "relay works", "--touches", "calc.py"],
+    code, text = run(goal + ["new", "relay", "--here", "--goal", "Relay goal", "--task", "t", "--done", "Given a repo, when relay works, then it holds", "--touches", "calc.py"],
                      repo, dict(pods, LOOP_POD_ID="pod-a", LOOP_ROLE="worker"))
     pushed = code == 0 and run(["git", "push", "-q", "-u", "origin", "loop/relay"], repo)[0] == 0
     common = os.path.abspath(os.path.join(repo, run(["git", "rev-parse", "--git-common-dir"], repo)[1].strip()))

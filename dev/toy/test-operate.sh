@@ -195,11 +195,11 @@ flowall() { for s in idea plan review qa ship; do step "$1" $s >/dev/null; done;
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 >/dev/null; $goal record "$1" "$2" --file "$C/loop/runs/$1.$2.txt"; }
 wt() { git worktree add -q -b "loop/$1" "$T/wt-$1" HEAD; }
 wt s1; wt s2
-( cd "$T/wt-s1" && $goal new s1 --here --goal "S1" --done "s1" >/dev/null; echo s1 > s1.txt; git add s1.txt; git commit -qm s1
+( cd "$T/wt-s1" && $goal new s1 --here --goal "S1" --task t --done "Given a repo, when s1, then it holds" >/dev/null; echo s1 > s1.txt; git add s1.txt; git commit -qm s1
   FAKE_SKILL_OUT='used 4,200 tokens\nDEPTH: full\nSTEP: done' step s1 idea >/dev/null )
 check "a flow step records the tokens its agent reported" 'python3 -c "import json,sys;assert json.load(open(sys.argv[1]))[\"tokens\"][\"idea\"]==4200" "$C/loop/runs/s1.json"'
 ( cd "$T/wt-s1" && flowall s1 )
-( cd "$T/wt-s2" && $goal new s2 --here --goal "S2" --done "s2" >/dev/null; printf '# from s2\n' >> calc.py; git commit -qam s2; flowall s2 )
+( cd "$T/wt-s2" && $goal new s2 --here --goal "S2" --task t --done "Given a repo, when s2, then it holds" >/dev/null; printf '# from s2\n' >> calc.py; git commit -qam s2; flowall s2 )
 other="$T/other"; git clone -q "$T/origin.git" "$other"
 ( cd "$other" && git config user.email t@example.test && git config user.name Toy && echo n1 > n1.txt && printf '# from main\n' >> calc.py && git add -A && git commit -qm "Main moves" && git push -q origin main )
 out=$(cd "$T/wt-s1" && $goal pr s1 2>&1); echo "$out" | sed 's/^/  /'

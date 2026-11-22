@@ -104,7 +104,7 @@ assert c[\"depends\"]==[\"a\",\"b\"], c
 assert graph.parse(\"- slug: x | goal: X\")[\"depends\"]==[]"'
 
 echo "== the step label"
-$goal new lv --here --goal "Label" --done "label" >/dev/null
+$goal new lv --here --goal "Label" --task t --done "Given a repo, when label, then it holds" >/dev/null
 label() { python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['step'])" "$C/loop/runs/lv.json"; }
 $F lv plan --wait 0 >/dev/null
 check "the label changes when the step starts, before anything is recorded" '[ "$(label)" = plan ] && grep -q " start plan\"" "$C/loop/runs/lv.json" && block | grep -q "^- lv  .*" && block | grep -q "\[plan\]"'

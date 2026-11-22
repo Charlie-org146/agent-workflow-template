@@ -45,7 +45,7 @@ PY
 git add -A; git commit -qm "Setup, auto_merge and an old defect row"; git tag v0.1.0; git push -q origin main v0.1.0
 
 echo "== a goal that fixes #5 runs its flow"
-$goal new fix5 --here --goal "Fix the median (fixes #5)" --done "calc has fix5 (fixes #5)" >/dev/null || bad "goal new"
+$goal new fix5 --here --goal "Fix the median (fixes #5)" --task t --done "Given a repo, when calc has fix5 (fixes #5), then it holds" >/dev/null || bad "goal new"
 printf '\n\ndef fix5():\n    return 5\n' >> calc.py
 git add calc.py; git commit -qm "Fix the median"
 python3 - <<'PY'

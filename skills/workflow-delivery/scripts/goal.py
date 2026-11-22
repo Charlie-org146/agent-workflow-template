@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Hold one goal's record: done lines, flow steps, PR.
+"""A goal's record.
 
-usage: goal.py <command> <slug> [options]
-
-  new SLUG --here --goal TEXT --done LINE [--touches A,B] [--release R]
+  new SLUG --here --goal TEXT --task T --done LINE [--touches A,B] [--release R]
   queue SLUG --goal TEXT --done LINE [--touches A,B] [--depends-on A,B]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
@@ -214,7 +212,7 @@ def cmd_new(args):
     path = goal_file(slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
-                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
+                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), extra=fit.head(args), done="\n".join(lines)))
     git("add", path)
     git("commit", "-m", "Goal: %s" % slug, "--", path)
     state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
@@ -420,7 +418,7 @@ def main():
             item.add_argument(flag, **kinds)
     goal = (("--goal", {"required": True}), ("--done", {"action": "append", "default": []}),
             ("--touches", {"default": ""}))
-    add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--here", {"action": "store_true"}))
+    add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--task", {"default": ""}), ("--here", {"action": "store_true"}))
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))

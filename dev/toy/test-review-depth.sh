@@ -37,7 +37,7 @@ json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 }
 step() { $F "$1" "$2" --wait 5 >/dev/null; $F "$1" "$2" --wait 10 > "$d/flow-$1-$2" 2>&1; $goal record "$1" "$2" --file "$C/loop/runs/$1.$2.txt" 2>&1; }
-new() { git switch -q main; $goal new "$1" --here --goal "Goal $1" --done "Line $1" --touches "src/$1" >/dev/null 2>&1; }  # small: one area (DEL-6)
+new() { git switch -q main; $goal new "$1" --here --goal "Goal $1" --task t --done "Given a repo, when Line $1, then it holds" --touches "src/$1" >/dev/null 2>&1; }  # small: one area (DEL-6)
 
 echo "== setup writes the setting"
 check "setup writes review_depth full with its one-line explanation" '[ "$(python3 -c "import json;c=json.load(open(\".loop/config.json\"));print(c[\"review_depth\"], bool(c[\"_help\"][\"review_depth\"]))")" = "full True" ]'

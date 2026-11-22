@@ -46,7 +46,7 @@ if want builtin; then
   python3 -c "import sys;sys.path.insert(0,'$SU/scripts');import settings;settings.fill_private('$B/flow.json')"
   check "setup fills a never-configured suite with built-in and leaves no probe" \
     "python3 -c \"import json;d=json.load(open('$B/flow.json'));assert set(d['suite'].values())=={'built-in'} and not d['probe']\""
-  check "goal.py new starts a goal with an all-built-in flow and no probe" "$G new bf --here --goal 'Built in' --done 'It works' >/dev/null 2>&1"
+  check "goal.py new starts a goal with an all-built-in flow and no probe" "$G new bf --here --goal 'Built in' --task t --done 'Given a repo, when It works, then it holds' >/dev/null 2>&1"
   python3 -c "import json;d=json.load(open('$B/flow.json'));d['suite']['plan']='mine';d['steps']={'plan':'mine'};json.dump(d,open('$B/flow.json','w'))"
   out=$(cd "$B/repo" && LOOP_ROLE=worker $F bf idea 2>&1)
   check "a mixed flow whose named-skill step has no probe refuses up front, before any step starts (FLOW_UNRUNNABLE)" \
@@ -64,13 +64,13 @@ if want builtin; then
   R="$(cd "$(git rev-parse --git-common-dir)" && pwd)/loop/runs/bf.json"
   check "an all-built-in goal records every flow step done" \
     "python3 -c \"import json;f=json.load(open('$R'))['flow'];assert all(str(f.get(s,'')).startswith('done') for s in ('idea','plan','review','qa','ship')),f\""
-  git switch -q main; $G new bs --here --goal 'In session' --done 'It works' >/dev/null 2>&1
+  git switch -q main; $G new bs --here --goal 'In session' --task t --done 'Given a repo, when It works, then it holds' >/dev/null 2>&1
   python3 -c "import json;p='$(dirname "$R")/bs.json';d=json.load(open(p));d['worker']='session';json.dump(d,open(p,'w'))"
   out=$(LOOP_ROLE=worker $F bs idea 2>&1)
   check "in a worker session a built-in step prints IN SESSION with the routine and needs no command" \
     "grep -q \"^IN SESSION idea: no headless agent; run delivery's built-in routine\" <<<\"\$out\" && grep -q 'design.md' <<<\"\$out\""
   rm -f "$B/flow.json"
-  git switch -q main; out=$($G new nf --here --goal 'No flow' --done 'x' 2>&1)
+  git switch -q main; out=$($G new nf --here --goal 'No flow' --task t --done 'Given a repo, when x, then it holds' 2>&1)
   check "with no flow file a goal still refuses to start" "grep -q 'no skill flow is set' <<<\"\$out\""
   unset LOOP_FLOW
 fi
