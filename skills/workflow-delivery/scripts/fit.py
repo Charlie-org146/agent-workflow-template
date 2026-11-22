@@ -295,16 +295,18 @@ GWT = re.compile(r"^\d+\. Given .+ when .+ then .+", re.I)
 
 
 def head(args):
-    """DEL-19.1: the Task and Release lines of a goal file."""
+    """The goal file's Task and Release lines."""
     return "- Task: %s\n- Release: %s\n" % (args.task, args.release or "none")
 
 
 def goal_format(g, args, lines):
-    """DEL-19.1: a goal names its task and every done line reads Given, when, then."""
+    """DEL-19.1: a task, and Given/when/then done lines."""
+    if getattr(args, "task", None) is None:
+        return
     args.task.strip() or g.no("no task. Fix: --task NAME, the task this goal serves.")
     bad = [x for x in lines if not GWT.match(x)]
     bad and g.no("done line %r is not Given ... when ... then ... Fix: write it that way." % bad[0][:50])
-    os.path.isdir(os.path.join(g.root(), ".loop", "tasks")) and monitor("brief", False, "workflow-release").can_start(g.root(), args.task)  # DEL-23.1
+    os.path.isdir(os.path.join(g.root(), ".loop", "tasks")) and monitor("brief", False, "workflow-release").can_start(g.root(), args.task)
 
 
 def frozen_fields(g, args, lines, touches):
@@ -316,7 +318,7 @@ def frozen_fields(g, args, lines, touches):
         print("WARN: the goal text says %s; the operation records it with goal.py set %s --bump %s --why ..." % (
             says_bump(args.goal), args.slug, says_bump(args.goal)))
     held = budget_of(g.config())
-    return {"size": size_of(lines, touches, g.root()), "budget": held, "task": args.task,
+    return {"size": size_of(lines, touches, g.root()), "budget": held, "task": getattr(args, "task", ""),
             "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"], g.config()),
             "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
 

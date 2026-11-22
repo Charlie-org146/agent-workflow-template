@@ -97,6 +97,14 @@ if want removed; then
     && ok "#170: a removed file releases a patch, the removal named in the reason" || bad "#170: removed file"
 fi
 
+# DOC-28: a minor needs a frozen release brief (an empty task list here), so the goal-set minor bumps below have one
+rel_brief() { mkdir -p docs; python3 - "$1" <<'PY'
+import hashlib, sys
+body = "# v%s\n\n## Tasks\n\n" % sys.argv[1]
+open("docs/release-brief-%s.md" % sys.argv[1], "w").write(body + "Frozen: %s r1 2026-11-22\n" % hashlib.sha256(body.encode()).hexdigest())
+PY
+}
+
 if want bump; then
   echo "== DEL-5: the goal's own bump (goal.py set --bump minor writes the sidecar)"
   finish minorone; v=$(remote_file VERSION)
@@ -106,6 +114,7 @@ data = json.load(open(sys.argv[1])) if os.path.exists(sys.argv[1]) else {}
 data.setdefault("set", {})["bump"] = "minor"
 json.dump(data, open(sys.argv[1], "w"))
 PY
+  rel_brief "$(bumped "$v" minor)"
   out=$(merge minorone); echo "$out" | tail -3
   [ "$(state minorone release_part)" = minor ] && [ "$(remote_file VERSION)" = "$(bumped "$v" minor)" ] \
     && ok "DEL-5: goal.py set --bump minor (the sidecar) releases a minor" || bad "DEL-5: set bump"
@@ -212,6 +221,7 @@ if want latebump; then
   finish late "# owner: late-secret-zz"; list "late-secret-zz"; merge late >/dev/null
   : > "$HOME/.workflow-loop/private-names"; v=$(remote_file VERSION)
   python3 -c "import json,os;p='$R/late.extra.json';x=json.load(open(p)) if os.path.exists(p) else {};x.setdefault('set',{})['bump']='minor';json.dump(x,open(p,'w'))"
+  rel_brief "$(bumped "$v" minor)"
   out=$(merge late); echo "$out" | tail -1
   [ "$(state late release_part)" = minor ] && [ "$(remote_file VERSION)" = "$(bumped "$v" minor)" ] \
     && ok "DEL-5: goal.py set --bump after a refused merge.py releases the bump set" || bad "DEL-5: late bump"

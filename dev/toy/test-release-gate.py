@@ -439,6 +439,20 @@ check("DEL-23 a task that names a finished one can now start", said(brief.can_st
 brief_file("delta", task_text("Replaces: gamma"))
 check("DEL-23 a task that replaces another marks it replaced", "task gamma: replaced" in "\n".join(brief.lines(bt)), "", "del23")
 
+# the command line: freeze, check, tasks and finish through brief.py itself
+BRIEF = [sys.executable, os.path.join(root, "skills", "workflow-release", "scripts", "brief.py")]
+cli = lambda *a: subprocess.run(BRIEF + list(a), cwd=bt, capture_output=True, text=True)
+brief_file("omega", task_text())
+record("o10", "omega")
+frozen_out = cli("freeze", "task", "omega", "--owner-record", "o10")
+check("DEL-23 brief.py freeze task NAME --owner-record ID freezes from the command line", frozen_out.returncode == 0 and "FROZEN task omega by record o10" in frozen_out.stdout, frozen_out.stderr, "del23")
+again = cli("freeze", "task", "omega", "--owner-record", "o10")
+check("DEL-23 a frozen task cannot be frozen again; the fix names the replace path", again.returncode == 1 and "BRF-4" in again.stderr and "--replaces omega" in again.stderr, again.stderr, "del23")
+check("DEL-23 brief.py tasks prints the list by name", "task omega: queued" in cli("tasks").stdout, cli("tasks").stderr, "del23")
+bad_name = cli("freeze", "task", "Bad Name", "--owner-record", "o10")
+check("DEL-23 a name that is not lowercase letters, digits and dashes is refused (BRF-1)", bad_name.returncode == 1 and "BRF-1" in bad_name.stderr, bad_name.stderr, "del23")
+check("DEL-23 brief.py check passes on frozen briefs", cli("check").returncode == 0 and "BRIEFS OK" in cli("check").stdout, cli("check").stderr, "del23")
+
 # DOC-28: the frozen release brief names the tasks; the cut contains exactly those
 REL = "# v1.2.0\n\nAbout: the next minor\n\n## Tasks\n\n1. alpha\n2. beta\n\nDone: both tasks done\n"
 brief_file("1.2.0", REL, "release")

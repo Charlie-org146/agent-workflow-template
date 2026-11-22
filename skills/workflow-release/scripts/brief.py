@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")  # DEL-10: git never waits on a prompt
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 VERSION = re.compile(r"^\d+(\.\d+){1,3}$")
 FROZEN = re.compile(r"^Frozen: ([0-9a-f]{64}) (\S+) (\S+)$", re.M)
@@ -252,7 +253,7 @@ def result(root, version):
     """DOC-28.5: after the cut the brief records each task's merged goals (written once; a retry adds nothing)."""
     path = path_of(root, "release", version)
     text = read(path)
-    if "## Results" in text:
+    if "## Results" in text or release_tasks(root, version) is None:
         return
     body = "\n## Results\n" + "".join("- %s: %s\n" % (t, ", ".join(r.get("slug", "") for r in runs(root) if r.get("task") == t and merged(r)) or "no goals") for t in release_tasks(root, version) or [])
     bad = scan(body)
