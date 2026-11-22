@@ -111,7 +111,7 @@ def affected(root, rows, paths, cache):
         if not os.path.exists(os.path.join(root, path)) and not lanes.no_effect(path):
             ids |= picked(root, rows, path, cache)
             notes.append("DELETED %s: the rows that name it and the runners" % path)
-            real = True  # a deleted non-NO_EFFECT file is a real change: root runners run (#4554)
+            real = True  # a deleted non-NO_EFFECT file is a real change: root runners run
             continue
         if path == ".loop/regression-known.tsv" and known is not None:
             hit = {r["id"] for r in rows} & known
@@ -131,13 +131,13 @@ def affected(root, rows, paths, cache):
             real = real or not no_effect
             continue
         ids, real = ids | hit, real or not no_effect
-    if real:  # root runners rerun on a real change, not on NO_EFFECT files only
+    if real:  # root runners rerun on a real change only
         ids |= {r["id"] for r in rows if lanes.closure(root, r["command"], cache)[1]}
     return sorted(ids), notes
 
 
 def check(root, scripts, cache):
-    """Every header problem of the test scripts as (code, file, line, what); LANES-DECL-NONE for no header."""
+    """Header problems of the test scripts as (code, file, line, what)."""
     out = []
     for rel in scripts:
         paths, problems = narrow.header(root, rel, cache)
@@ -276,6 +276,8 @@ MATRIX_JOB = """
         with:
           python-version: "3.12"
       - name: Smoke set on Linux
+        env:
+          LOOP_PRIVATE_NAMES: /dev/null
         run: |
           if [ -f dev/toy/matrix-smoke.py ]; then python3 dev/toy/matrix-smoke.py --agent ci; else echo "no dev/toy/matrix-smoke.py in this repo; nothing to prove"; fi
       - name: Keep the matrix record
@@ -374,7 +376,7 @@ def _slots():
 
 
 def free_gb():
-    """Free memory in GB (LOOP_FREE_GB fakes it); None when unreadable: a lane is then never held."""
+    """Free memory in GB (LOOP_FREE_GB fakes it); None if unreadable, so no lane is held."""
     try:
         if os.environ.get("LOOP_FREE_GB"):
             return float(os.environ["LOOP_FREE_GB"])
@@ -397,7 +399,7 @@ def free_gb():
 
 def wait_memory(root):
     """A lane about to run rows waits while free memory is below min_free_memory_gb (default 3, 0 is off); a running lane is
-    never stopped. Waits go to <git common dir>/loop/memory-waits.log; past 4x the lane's limit it exits 6 (EXIT_ENV)."""
+    never stopped. Waits are logged in <git common dir>/loop/memory-waits.log; past 4x the limit it exits 6 (EXIT_ENV)."""
     try:
         need = json.load(open(os.path.join(root, ".loop", "config.json"))).get("min_free_memory_gb", 3)
     except (OSError, ValueError, AttributeError):
