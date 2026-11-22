@@ -78,7 +78,7 @@ cost-time-warn	PASS	2026-11-12
 cut-draft	PASS	2026-11-09	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-categories	FAIL	2026-11-12	
-defect-flow-steps	PASS	2026-11-12	
+defect-flow-steps	PASS	2026-11-22		4b4df1e18d54
 defect-health	PASS	2026-11-12	
 defect-owed-branch-proved	PASS	2026-11-10	
 defect-wording	PASS	2026-11-12	
@@ -212,7 +212,7 @@ lane-walk-skips-node-modules	PASS	2026-11-14
 lanes-abs-not-walked	PASS	2026-11-14	
 lanes-declared	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-headers	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-lanes-pr-affected	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+lanes-pr-affected	PASS	2026-11-22		4b4df1e18d54
 lanes-reuse	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lanes-trace	FAIL	2026-11-10	
 lanes-trace-check	PASS	2026-11-10	
@@ -370,7 +370,7 @@ same-lines	PASS	2026-11-20
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
-scripts-no-hang	PASS	2026-11-12	
+scripts-no-hang	PASS	2026-11-22		4b4df1e18d54
 session-assign	PASS	2026-11-20	
 session-board-issue98	PASS	2026-11-12	
 session-ended-waiting	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
