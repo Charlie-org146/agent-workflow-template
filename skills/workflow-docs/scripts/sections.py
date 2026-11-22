@@ -191,7 +191,7 @@ LANDS = "2026-11-22"  # DOC-27.5: a Reviewed mark dated on or after this day nee
 
 
 def blocks(text):
-    """DOC-27: (id, mark, date, lines) of each new-form feature (sub-bullets open with ### Problem)."""
+    """DOC-27: new-form features."""
     out, cur = [], None
     for line in text.splitlines():
         found = FEAT.match(line)
@@ -206,7 +206,7 @@ def blocks(text):
 
 
 def part(lines, name):
-    """The lines under one ### name of a feature block."""
+    """One ### part of a feature."""
     out, inside = [], False
     for x in lines:
         inside = x[4:] == name if x.startswith("### ") else inside
@@ -215,7 +215,7 @@ def part(lines, name):
 
 
 def feature(page, fid, mark, date, lines, slug, reviews):
-    """DOC-27 findings of one new-form feature: FORMAT fails, NOTE is reported."""
+    """DOC-27 findings of one feature."""
     at, out = "%s:%s" % (page, fid), []
     bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if hard or (mark == "Reviewed" and rule != "27.5") else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
     got = [x[4:] for x in lines if x.startswith("### ")]
@@ -261,7 +261,7 @@ def feature(page, fid, mark, date, lines, slug, reviews):
     if not pairs or [x for x in ref if re.fullmatch(r"[a-z]+", x) and x not in ("adopted", "adapted", "own", "reference")]:
         bad("27.3", "Reference has no entry or an entry with no valid tag", "tag each source adopted, adapted, own or reference", False)
     for tag, text in pairs:
-        if not re.match(r"\[[^\]]+\]\(https?://[^)]+\)", text):
+        if not re.match(r"\[[^\]]+\]\(https?://[^/)]+/[^)]*\)", text):
             bad("27.3", "a %s reference names no linked source" % tag, "start the entry with [source](https://...)", False)
     if mark == "Reviewed" and not reviews.get(fid):
         bad("27.5", "the Reviewed mark has no line in .loop/reviews.tsv naming the typed record", "run the mark command where the owner-words ledger is (a NOTE until %s)" % LANDS, bool(date) and date.split()[0] >= LANDS)
@@ -269,7 +269,7 @@ def feature(page, fid, mark, date, lines, slug, reviews):
 
 
 def reviewed(root, folder, command, ids, rec, common, day):
-    """DOC-27.5: a new-form review needs the owner's record naming exactly that ID; its line (ID, record, date) joins .loop/reviews.tsv."""
+    """DOC-27.5: record check, reviews line."""
     if command != "review":
         return
     new = {b[0] for f in sorted(os.listdir(folder)) if f.endswith(".md") for b in blocks(open(os.path.join(folder, f), encoding="utf-8").read())}
@@ -284,8 +284,16 @@ def reviewed(root, folder, command, ids, rec, common, day):
             fh.writelines("%s\t%s\t%s\n" % (i, rec or "typed", day) for i in mine)
 
 
+def principled(folder, fid):
+    """DOC-27.1: one principle."""
+    path = os.path.join(folder, "Principles.md")
+    secs = re.split(r"(?m)^## ", open(path, encoding="utf-8").read())[1:] if os.path.exists(path) else []
+    n = sum(bool(re.search(r"\[%s " % fid, x)) for x in secs)
+    return [] if n == 1 or not secs else [("FORMAT", fid, "DOC-27 27.1: listed under %d principles. Fix: exactly one principle holds it" % n)]
+
+
 def features(folder, page, text):
-    """DOC-27 findings for the new-form features of one page."""
+    """DOC-27 findings of a page."""
     found = blocks(text)
     if not found:
         return []
@@ -295,7 +303,7 @@ def features(folder, page, text):
     reviews = {r[0]: r[1] for r in (x.split("\t") for x in open(path, encoding="utf-8").read().splitlines() if x[:1] != "#") if len(r) > 1} if os.path.exists(path) else {}
     slug, out = counting.repo_slug(root), []
     for fid, mark, date, lines in found:
-        out += feature(page, fid, mark, date, lines, slug, reviews)
+        out += feature(page, fid, mark, date, lines, slug, reviews) + principled(folder, fid)
     return out
 
 
@@ -303,13 +311,13 @@ BLOCK = re.compile(r"(<!-- steps -->)(.*?)(<!-- /steps -->)", re.S)
 
 
 def steps():
-    """DEL-19.4: the loop's steps, read from flow.py's STEPS tuple (never imported)."""
+    """DEL-19.4: steps from flow.py."""
     got = re.search(r"^STEPS = \(([^)]*)\)", open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "flow.py"), encoding="utf-8").read(), re.M)
     return "Steps: %s." % ", ".join(re.findall(r'"(\w+)"', got[1])) if got else "Steps: unreadable."
 
 
 def stale(page, text):
-    """DEL-19.4: a drawn steps block that differs from the code is a finding."""
+    """DEL-19.4: a stale steps block."""
     found = BLOCK.search(text)
     return [("FORMAT", page, "Steps: DEL-19.4 the drawn steps '%s' differ from the code ('%s'). Fix: python3 sections.py steps --write" % (found[2], steps()))] if found and found[2] != steps() else []
 

@@ -118,6 +118,7 @@ PY
   out=$(merge minorone); echo "$out" | tail -3
   [ "$(state minorone release_part)" = minor ] && [ "$(remote_file VERSION)" = "$(bumped "$v" minor)" ] \
     && ok "DEL-5: goal.py set --bump minor (the sidecar) releases a minor" || bad "DEL-5: set bump"
+  rm -f docs/release-brief-*.md
 fi
 
 if want protected; then
@@ -225,6 +226,7 @@ if want latebump; then
   out=$(merge late); echo "$out" | tail -1
   [ "$(state late release_part)" = minor ] && [ "$(remote_file VERSION)" = "$(bumped "$v" minor)" ] \
     && ok "DEL-5: goal.py set --bump after a refused merge.py releases the bump set" || bad "DEL-5: late bump"
+  rm -f docs/release-brief-*.md
 fi
 
 if want private; then

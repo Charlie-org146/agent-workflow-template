@@ -129,7 +129,7 @@ check "a running goal doesn't resume" 'grep -q "g3 is running; only a failed or 
 stop3; free3 busy other
 out=$($goal resume g3 --why "x" 2>&1)
 check "a session now serving another goal is refused, and nothing changes" 'grep -q "session s3 now serves goal other.*(SESSION_TAKEN)" <<<"$out" && [ "$(field g3 status)" = stopped ] && grep -q "\"slug\": \"other\"" "$C/loop/session-pool.json"'
-free3 free g3; sed -i.bak 's/^1\. Line g3$/1. Line g3 changed/' "$W3/.loop/goals/g3.md"
+free3 free g3; sed -i.bak 's/^1\. Given a repo, when Line g3, then it holds$/1. Given a repo, when Line g3 changed, then it holds/' "$W3/.loop/goals/g3.md"
 out=$($goal resume g3 --why "x" 2>&1); rc=$?
 check "changed done lines are refused with exit 1 and nothing written" '[ $rc = 1 ] && grep -q "(DONE_LINES_CHANGED)" <<<"$out" && [ "$(field g3 status)" = stopped ]'
 mv "$W3/.loop/goals/g3.md.bak" "$W3/.loop/goals/g3.md"

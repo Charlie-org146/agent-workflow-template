@@ -177,6 +177,16 @@ want("typed words naming two IDs at once are refused", "exactly X-1" in mark(["X
 want("an unknown record is refused", "exactly X-1" in mark(["X-1"], "o99"))
 want("an owner record naming exactly the ID passes and writes only ID, record and date", mark(["X-1"], "o1") == "" and open(os.path.join(d, ".loop", "reviews.tsv")).read() == "X-1\to1\t2026-11-22\n")
 want("an old-form requirement needs no line", mark(["Y-1"], "o2") == "" and open(os.path.join(d, ".loop", "reviews.tsv")).read() == "X-1\to1\t2026-11-22\n")
+case("a reference naming only a host, no specific source, is reported", sub("https://example.org/a", "https://example.org"), "NOTE", "no linked source")
+pd = tempfile.mkdtemp()
+def principles(a, b):
+    open(os.path.join(pd, "Principles.md"), "w").write("## 1. One\n\n| [%s name](P) |\n\n## 2. Two\n\n| [%s name](P) |\n" % (a, b))
+principles("X-1", "Y-1")
+want("a feature listed under exactly one principle passes", s.principled(pd, "X-1") == [])
+principles("X-1", "X-1")
+want("a feature listed under two principles fails", "2 principles" in str(s.principled(pd, "X-1")))
+principles("Y-1", "Y-2")
+want("a feature listed under no principle fails", "0 principles" in str(s.principled(pd, "X-1")))
 sys.exit(1 if fails else 0)
 PY
 then :; else fails=1; fi
