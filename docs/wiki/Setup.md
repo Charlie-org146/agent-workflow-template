@@ -3,7 +3,7 @@
 
 Milestone: https://github.com/jcl2018/agent-workflow-template/milestone/9
 
-Review: **Reviewed 2026-11-20** <!-- prd P=7f1b1066 R=c8e485ef N=9c385754 M=471a58c6 U=03828777 -->
+Review: **Unreviewed**
 
 How to use: [How-to-use-Setup](How-to-use-Setup)
 
@@ -15,16 +15,32 @@ How to use: [How-to-use-Setup](How-to-use-Setup)
 ## Requirements
 
 ### Functional
-- SET-1: **Reviewed 2026-11-20** Any repo adopts the template, stays current, and is proven by replay <!-- reviewed e36ea742 -->
+- SET-1: **Unreviewed** Any repo adopts the template, stays current, and is proven by replay
   - One safe, idempotent command adopts any repo byte for byte. [SET-1]
   - Adopted repos hold only their own data, record their template version, take updates, flag lag, and send fixes upstream. [SET-1]
   - Adoption is proven by a step-by-step replay against the golden result. [SET-1]
-- SET-2: **Reviewed 2026-11-20** Layered settings and a generated entry page <!-- reviewed 129441cc -->
+
+  - Feature markers v1
+  - Reference: Copier: adapted; GitHub template repositories: adapted; Renovate: adapted; Jest snapshots: adapted
+  - Line 1: metric missing; test 19 linked rows, see Tests
+  - Line 2: metric missing; test 19 linked rows, see Tests
+  - Line 3: metric missing; test 19 linked rows, see Tests
+- SET-2: **Unreviewed** Layered settings and a generated entry page
   - Settings come in layers (template, repo, private), each with a default and an explanation. [SET-2]
   - Every repo has one entry page generated from committed settings only, and two pull requests that each change a setting do not conflict in it. [SET-2]
+
+  - Feature markers v1
+  - Reference: Twelve-Factor App, factor III Config: adapted
+  - Line 1: metric missing; test 9 linked rows, see Tests
+  - Line 2: metric missing; test 9 linked rows, see Tests
 - SET-10: **Unreviewed** One versioned package; every agent runs one loop
   - One versioned skills package works out of the box in Claude Code and Codex. [SET-10]
   - Steps map to agents, with a warned fallback and recorded tokens. A private setting maps each step and goal size to an agent profile. [SET-10]
+
+  - Feature markers v1
+  - Reference: Semantic Versioning 2.0.0: adopted; Agent Skills format: adopted
+  - Line 1: metric missing; test 8 linked rows, see Tests
+  - Line 2: metric missing; test 8 linked rows, see Tests
 
 ### Non-functional
 
@@ -267,8 +283,8 @@ None
 | [skill-kept](Tests#t-skill-kept) | requirement | SET-10 | Given detail moved out of the workflow-delivery and workflow-docs SKILL.md files, when their references are read, then every moved sentence is there word for word and SKILL.md points to it. | PASS 2026-11-22 |
 | [agents-wire](Tests#t-agents-wire) | requirement | SET-10 | Given a repo, when setup or agents.py wire runs, then CLAUDE.md and AGENTS.md hold the same workflow-loop block, text outside it is kept, and a second run changes nothing. | PASS 2026-11-12 |
 | [codex-ro-home](Tests#t-codex-ro-home) | requirement | SET-10 | Given SET-10, when test-codex.sh runs its 4 cases, then each passes: it says the private settings were not written and; no goal or binding is lost, a repeated slug is ref; the run records it as SKIPPED, never PASS, opens n; setup adopts, go freezes the goal, the live board. | not run |
-| [package-gate-head](Tests#t-package-gate-head) | requirement | SET-10 | Given the merged head of a pull request, when package.py's file and script checks run on its tracked files, then the lane fails if a script is over 20,480 bytes, the package has over 100 files, or a script is not standalone; it runs on Windows too. | FAIL 2026-11-16 |
-| [package-headroom-held](Tests#t-package-headroom-held) | requirement | SET-10 | Given the shipped package, when rules.py, lane.py, goal.py, actions.py or report.py passes 19,000 bytes or the package passes 100 files, then the check fails; today all five are at most 19,000 and the package has 100 files. | FAIL 2026-11-15 |
+| [package-gate-head](Tests#t-package-gate-head) | requirement | SET-10 | Given the merged head of a pull request, when package.py's file and script checks run on its tracked files, then the lane fails if a script is over 20,480 bytes, the package has over 200 files, or a script is not standalone; it runs on Windows too. | FAIL 2026-11-16 |
+| [package-headroom-held](Tests#t-package-headroom-held) | requirement | SET-10 | Given the shipped package, when rules.py, lane.py, goal.py, actions.py or report.py passes 19,000 bytes or the package passes 200 files, then the check fails; today all five are at most 19,000 and the package has 100 files. | FAIL 2026-11-15 |
 | [package-rows-tracked](Tests#t-package-rows-tracked) | requirement | SET-10 | Given untracked files such as __pycache__ in a checkout, when package.py walks it, then only the files git tracks are counted, and a package row that fails prints its reason. | FAIL 2026-11-15 |
 | [agent-routing](Tests#t-agent-routing) | workflow | SET-10 | Given a config that routes build to Codex and review to Claude, when a small goal runs, then build runs through the Codex command, review stays on Claude, the run record names both agents with their tokens, and a missing or write-blocked Codex falls back to Claude with one warning line. | not run |
 | [setup-zero-tests-119](Tests#t-setup-zero-tests-119) | defect | [#127](https://github.com/jcl2018/agent-workflow-template/issues/119 https://github.com/jcl2018/agent-workflow-template/issues/127) state unknown | Given SET-1, when test-setup-adopt.sh runs its 2 cases, then each passes: the command finds at least one test, and with no p; the ignore is exempted by a written line and the h. | not run |
@@ -277,4 +293,4 @@ None
 | [skill-size-116](Tests#t-skill-size-116) | defect | [#141](https://github.com/jcl2018/agent-workflow-template/issues/116 https://github.com/jcl2018/agent-workflow-template/issues/139 https://github.com/jcl2018/agent-workflow-template/issues/141) state unknown | Given SET-10, when test-defect.sh runs its 3 cases, then each passes: every one is under 150 lines, so test-board passes; neither file warns and every moved name resolves t; neither file fails (warn at 19,000, fail at 20,480. | PASS 2026-11-22 |
 | [size-140](Tests#t-size-140) | defect | [#140](https://github.com/jcl2018/agent-workflow-template/issues/140) closed (2026-11-19) | Given docs.py's page map moved into counting.py by a pure move, when health's size rule and the split checks run, then neither file warns and every moved name resolves the same on docs. | PASS 2026-11-12 |
 | [codex-key-commands](Tests#t-codex-key-commands) | defect | [#38](https://github.com/jcl2018/agent-workflow-template/issues/38) closed (2026-11-11) | Given a clean toy repo with no private settings and a Codex that is installed, signed in and able to answer, when Codex runs setup, go, the live board, health check and regression run, then each runs and leaves what it should; where Codex is not available the row exits 77 and is SKIPPED, never PASS. | not run |
-| [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 100 files, no Safety or Disclosure failure (issue 3800). | not run |
+| [package-passes-3800](Tests#t-package-passes-3800) | defect | [#3800](https://github.com/jcl2018/agent-workflow-template/issues/3800) closed (2026-11-15) | Given the shipped tree, when dev/package.py runs, then it passes: no script over 20,480 bytes, at most 200 files, no Safety or Disclosure failure (issue 3800). | not run |

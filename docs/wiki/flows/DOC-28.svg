@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 356" width="440" role="img" aria-label="Flow of DOC-28 Releases: major, minor and patch, each with one job, and a brief you write first">
-<title>DOC-28 Releases: major, minor and patch, each with one job, and a brief you write first</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 355" width="440" role="img" aria-label="Flow of DOC-28 Releases: a frozen release brief picks the tasks for a cut">
+<title>DOC-28 Releases: a frozen release brief picks the tasks for a cut</title>
 <style>
 .f-t{font:600 15px system-ui,-apple-system,Segoe UI,sans-serif;fill:#1b2430}
 .f-h{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#566173;letter-spacing:.05em}
@@ -26,20 +26,20 @@
 @media (prefers-color-scheme: dark){.k-shipped{stroke:#5c6b7d}.k-v20{stroke:#f0a050}.k-planned{stroke:#b08cf0}.p-shipped{fill:#3d9c58}.p-v20{fill:#c46f1c}.p-planned{fill:#7a4cc6}}
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="f-ah"/></marker></defs>
-<rect width="440" height="356" class="f-bg"/>
-<text x="12" y="22" class="f-t">DOC-28 Releases: major, minor and</text>
-<text x="12" y="42" class="f-t">patch, each with one job, and a brief</text>
-<text x="12" y="62" class="f-t">you write first</text>
-<rect x="12.0" y="102" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="121" text-anchor="middle" class="f-s">28.1 Three kinds of release, each with one job</text>
-<rect x="12.0" y="147" width="416.0" height="48" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="166" text-anchor="middle" class="f-s">28.2 A brief is written before each major or minor release,</text>
-<text x="220.0" y="183" text-anchor="middle" class="f-s">and frozen</text>
-<rect x="12.0" y="209" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="228" text-anchor="middle" class="f-s">28.3 Only the brief&#x27;s features are built</text>
-<rect x="12.0" y="254" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="273" text-anchor="middle" class="f-s">28.4 Patches keep flowing between briefs</text>
-<rect x="12.0" y="299" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="318" text-anchor="middle" class="f-s">28.5 Each kind ships only when its gate passes</text>
-<text x="12" y="348" class="f-x">Documentation | v1.1.0 dry run</text>
+<rect width="440" height="355" class="f-bg"/>
+<text x="12" y="22" class="f-t">DOC-28 Releases: a frozen release</text>
+<text x="12" y="42" class="f-t">brief picks the tasks for a cut</text>
+<rect x="12.0" y="82" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="101" text-anchor="middle" class="f-s">28.1 Three kinds of release, each with one job</text>
+<rect x="12.0" y="127" width="416.0" height="48" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="146" text-anchor="middle" class="f-s">28.2 Before a major or minor, I write a release brief and</text>
+<text x="220.0" y="163" text-anchor="middle" class="f-s">freeze it</text>
+<rect x="12.0" y="189" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="208" text-anchor="middle" class="f-s">28.3 A release contains exactly the tasks its brief names</text>
+<rect x="12.0" y="234" width="416.0" height="48" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="253" text-anchor="middle" class="f-s">28.4 The cut happens when every task in the brief is done,</text>
+<text x="220.0" y="270" text-anchor="middle" class="f-s">in the brief&#x27;s order, and the gate for its kind passes</text>
+<rect x="12.0" y="296" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
+<text x="220.0" y="315" text-anchor="middle" class="f-s">28.5 The brief stays as the release&#x27;s record</text>
+<text x="12" y="347" class="f-x">Documentation | v1.1.0 dry run</text>
 </svg>

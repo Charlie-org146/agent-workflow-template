@@ -15,14 +15,14 @@
 <text x="600" y="128" text-anchor="middle" class="n">Total</text>
 <rect x="12" y="140" width="616" height="26" class="stripe"/>
 <text x="86" y="157" class="s">Delivery</text>
-<circle cx="196.0" cy="153.0" r="8.5" class="c1"/><text x="196.0" y="156.6" text-anchor="middle" class="k">2</text>
+<circle cx="196.0" cy="153.0" r="8.5" class="c1"/><text x="196.0" y="156.6" text-anchor="middle" class="k">3</text>
 <circle cx="246.0" cy="153.0" r="8.5" class="c2"/><text x="246.0" y="156.6" text-anchor="middle" class="k">2</text>
 <circle cx="296.0" cy="153.0" r="8.5" class="c3"/><text x="296.0" y="156.6" text-anchor="middle" class="k">1</text>
 <circle cx="346.0" cy="153.0" r="8.5" class="c4"/><text x="346.0" y="156.6" text-anchor="middle" class="k">1</text>
 <circle cx="446.0" cy="153.0" r="8.5" class="c6"/><text x="446.0" y="156.6" text-anchor="middle" class="k">1</text>
 <circle cx="496.0" cy="153.0" r="8.5" class="c7"/><text x="496.0" y="156.6" text-anchor="middle" class="k">2</text>
 <circle cx="546.0" cy="153.0" r="8.5" class="c8"/><text x="546.0" y="156.6" text-anchor="middle" class="k">1</text>
-<text x="600" y="157" text-anchor="middle" class="s" style="font-weight:600">10</text>
+<text x="600" y="157" text-anchor="middle" class="s" style="font-weight:600">11</text>
 <text x="86" y="183" class="s">Operation</text>
 <circle cx="246.0" cy="179.0" r="8.5" class="c2"/><text x="246.0" y="182.6" text-anchor="middle" class="k">1</text>
 <circle cx="296.0" cy="179.0" r="8.5" class="c3"/><text x="296.0" y="182.6" text-anchor="middle" class="k">1</text>

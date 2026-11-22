@@ -137,7 +137,7 @@ For agent-workflow-template's own Agensi release, `dev/package.sh` builds the ZI
 | Pack | Two or more `SKILL.md` files make one listing; the README's title names it, and `shared/` reaches every skill |
 | Listing fields | `summary` is 300 characters at most; 10 tags, 10 keywords, 8 use cases at most |
 | Files | Text only; no executables, bundled dependencies, `.git` or caches |
-| Size | Under 100 files and 5 MB, so upload from an agent also works; the website takes 50 MB and 1,000 files |
+| Size | Within the file cap (200 files, temporarily per owner words o718, until a later minor revises GRD-21) and under 5 MB; the package is published by website upload, which takes 50 MB and 1,000 files |
 | Scripts | Each under 20 KB, and each runs alone with its data embedded |
 | Safety | No secrets, obfuscation, encoded text, dangerous commands, or phrases the prompt injection scan fails |
 | Disclosure | The listing states every command, file write and network host |
