@@ -237,6 +237,7 @@
 | <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-guide-page-stamp"></a>guide-page-stamp | requirement | DOC-2 | not run | - | local | 2026-11-20 |
+| <a id="t-restamp-own-idempotent-5797"></a>restamp-own-idempotent-5797 | defect | [#5797](https://github.com/Charlie-org146/agent-workflow-template/issues/5797) open (2026-11-22) | not run | - | local | 2026-11-22 |
 
 ## Guardrails
 
