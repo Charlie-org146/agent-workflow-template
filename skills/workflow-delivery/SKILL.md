@@ -110,7 +110,7 @@ stale pages it lists and commit them on the goal's branch; after the merge it pu
 
 Two keys in `.loop/config.json` remove gates, each off unless the owner turns it on: `auto_approve` (record approves
 a step's pending gate) and `auto_merge` (the release step merges and releases); `references/commands.md` (Switches).
-This repo has both on. Say so whenever you report a goal here.
+This repo has `auto_merge` on and `auto_approve` off. Say so whenever you report a goal here.
 
 ## When a goal stops
 

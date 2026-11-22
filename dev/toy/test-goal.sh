@@ -156,7 +156,7 @@ git checkout -q -- . ; git switch -q main
 MG="python3 $here/skills/workflow-release/scripts/merge.py"
 $MG low 2>&1 | grep -q "REFUSED: auto_merge is off in this repo, so the owner merges" && ! grep -q "^pr merge" "$FAKE_GH_DIR/calls.log" && ok "with auto_merge off, merge.py refuses and nothing merges" || bad "merge gate"
 
-echo "== no gates: auto_approve and auto_merge on, in this repo only"
+echo "== negative control: auto_approve and auto_merge on in this fixture only (this repo keeps auto_approve off, asserted above)"
 git switch -q main
 cp .loop/config.json "$d/cfg.gated"
 cfg 'auto_approve=true' 'auto_merge=true'; git commit -qam "No gates"; git push -q origin main
