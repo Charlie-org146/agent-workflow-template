@@ -17,9 +17,9 @@ usage: docs.py <command> [options]
   restore                      revert the last publish
   automation                   each routine's live state
 
-With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the
-page format and a fresh Tests page. Publish never deletes a page, replaces only one with this tool's marker (or --adopt),
-and copies the images its pages embed. It runs git only."""
+With "criteria": true, check also enforces the PRD page contract (references/commands.md), the page format and a fresh
+Tests page. Publish never deletes a page, replaces only one with its marker (or --adopt), and copies embedded images.
+It runs git only."""
 import argparse
 import json
 import os
@@ -101,8 +101,8 @@ def web_url(url):
 def clone(url, into):
     done = run(["git", "clone", "--quiet", url, into])
     if done.returncode:
-        sys.exit("REFUSED: can't read the wiki at %s. Fix: turn the wiki on and create its first page in the browser "
-                 "(GitHub makes the wiki's repo only then), then run this again." % url)
+        sys.exit("REFUSED: can't read the wiki at %s. Fix: turn the wiki on and create its first page in the browser, "
+                 "then run this again." % url)
 
 
 def state_file():
@@ -141,10 +141,10 @@ def cmd_survey(_args):
 
 def cmd_add(args):
     if not PAGE.match(args.page):
-        sys.exit("REFUSED: bad page name. Fix: letters, digits and dashes, such as Using-the-workflow.")
+        sys.exit("REFUSED: bad page name. Fix: letters, digits and dashes.")
     paths = [item.strip() for item in args.paths.split(",") if item.strip()]
     if not paths:
-        sys.exit("REFUSED: no paths. Fix: name what the page describes with --paths.")
+        sys.exit("REFUSED: no paths. Fix: pass --paths.")
     root = top()
     rows = read_map(root)
     rows[args.page] = paths
@@ -239,22 +239,19 @@ def counts(root):
     return counting.counts(root, wiki_dir(root), read_map(root), config(root).get("criteria"))
 
 
-STRICT = False
-
-
-def contract(root):
+def contract(root, strict=False):
     if not config(root).get("criteria"):
         return []
     found, names = [], feature_pages(root)
     for page in sorted(read_map(root)):
         if not PAGE.match(page):
-            found.append(("PAGE", page, "not a page name. Fix: letters, digits and hyphens, or remove its .loop/docs.tsv row"))
+            found.append(("PAGE", page, "not a page name. Fix: letters, digits and hyphens, or remove its docs.tsv row"))
         elif guide(root, page) and guarded(root, page):
             found.append(("FORMAT", page, "DOC-1 a guide page holds no requirement or Review line (got %s). Fix: remove "
                           "the line %s and use the feature page format, or move them to a feature page"
                           % (guarded(root, page), pageformat.GUIDE)))
     import milestones
-    return found + criteria.contract(root, names, {}) + render.front(root, names) + deployments.howto(root, wiki_dir(root), names) + milestones.new_form(root, STRICT)
+    return found + criteria.contract(root, names, {}) + render.front(root, names) + deployments.howto(root, wiki_dir(root), names) + milestones.new_form(root, strict)
 
 
 def cmd_criteria(args):
@@ -279,15 +276,13 @@ def cmd_criteria(args):
 
 
 def cmd_check(args):
-    global STRICT
-    STRICT = bool(args.strict)
     root = top()
     if not read_map(root):
         print("NO PAGES: run add first")
         return 1
     point = entry.problems(root)
     notes = [item for item in point if item[0] in ("LAG", "SKIPPED")]
-    found = problems(root, args.base) + contract(root) + counts(root) + [i for i in point if i not in notes]
+    found = problems(root, args.base) + contract(root, args.strict) + counts(root) + [i for i in point if i not in notes]
     notes += [i for i in found if i[0] == "NOTE"]
     found = [i for i in found if i[0] != "NOTE"]
     from entry import perm_check
@@ -296,7 +291,7 @@ def cmd_check(args):
     if args.own:
         import audit
         found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main", args.own)
-    found += [i for i in notes if i[0] == "NOTE"] * bool(args.strict)  # DOC-27: --strict makes every NOTE fail
+    found += [i for i in notes if i[0] == "NOTE"] * bool(args.strict)
     for kind, page, detail in found + notes:
         print("%s %s: %s" % (kind, page, detail))
     if found:
@@ -354,8 +349,8 @@ def cmd_publish(args):
             if os.path.exists(target):
                 old = slurp(target)
                 if not old.startswith(MARKER) and page not in args.adopt:
-                    sys.exit("REFUSED: the wiki already has %s, and this tool didn't write it. Nothing was published. "
-                             "Fix: rename your page, or pass --adopt %s to replace it." % (page, page))
+                    sys.exit("REFUSED: the wiki already has %s, and this tool didn't write it. "
+                             "Fix: rename your page, or pass --adopt %s." % (page, page))
             if old != text:
                 changed.append(page)
                 if not args.dry_run:
@@ -412,7 +407,7 @@ def cmd_restore(_args):
         wiki = os.path.join(temp, "wiki")
         clone(held["url"], wiki)
         if git("rev-parse", "HEAD", cwd=wiki) != held["after"]:
-            sys.exit("REFUSED: the wiki changed after the last publish, so nothing was reverted.")
+            sys.exit("REFUSED: the wiki changed after the last publish.")
         git(*identity(wiki), "revert", "--no-edit", held["after"], cwd=wiki)
         push(wiki)
     finally:
