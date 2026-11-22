@@ -60,3 +60,10 @@ Verdicts: feasibility BLOCKED on bytes, correctness 1 break, scope gaps only.
 ## Decisions for operation-pc
 1. Approve moving one function out of criteria.py into the new sibling `subreq.py` (GRD-20 allows moves) so the sub support fits; otherwise the build stops at the cap.
 2. Confirm the 600-row cap meaning (698 lines today).
+
+## No new file: the helper goes into an existing one (operation-pc, package at 100 of 100)
+Replaces the `subreq.py` proposal above; the package file count does not change and this goal needs no grd21-cap-lift-2.
+- `declared(text)` (the raw-line Requirements scan) and the sub-aware table helper go into `skills/workflow-docs/scripts/sections.py` (LF 11,575; room of about 7,400 to 19,000; it imports only os and re, so `criteria.py` and `render.py` can import it without a cycle).
+- To make room in `criteria.py` (20,455, 25 under 20,480) one self-contained function moves to `sections.py` unchanged and is called through `sections.`: candidates `done_count` (criteria.py:147, 9 lines, uses only os and re, one caller at 134) and `defect_rows` (156, 6 lines). The build moves whichever frees at least the bytes the `seen` and `table` edits need, with `git diff -w --numstat` equal to `git diff --numstat` and no reformat. If the two together do not free enough, the build stops and reports; nothing is trimmed.
+- If `render.py` (18,737) needs more than about 260 bytes for the sub-aware Tests rows, `tests_table` itself moves to `sections.py` the same way.
+- Row count (TD625): this goal adds one row (`confidence-subs-counted`) and needs a grant or an offsetting removal from top; the build does not start until that is answered.
