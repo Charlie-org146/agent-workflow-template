@@ -96,3 +96,7 @@ Review of this goal: full review of 6eaeecb7a carried over; one reviewer on b085
 Scoped review of the order-change diff (everything since 30ee5e1ff), one reviewer, verdict recorded: no other proof weakened, no assertion removed beyond the one named, no defect in the changed lines; `VERDICT: SAFE`. Its one cosmetic point (a stale paragraph about the old failing proof) is fixed above.
 
 Regression lane (qa, Operation TD676 and TD680): run only in a fresh clean clone at the final head, with the session variables cleared, and its result is the Result section of this pull request. The earlier lane run in the working tree was void. `ls-narrow-triggers` fails on main itself (macOS only, #4061) and is on the known list in this change (owner o711, done line 6).
+
+Open items for the owner (the merge waits for the owner's words on both, and for another pull request to merge first):
+1. Proof 4 of the check fails at this head by design: it names exactly DOC-27 and DOC-28, which carry the owner's own Reviewed marks from main (#5732), written after this goal froze. Every other proof passes. The check is unchanged. The question for the owner: proof 4 may count only Reviewed marks the branch itself adds.
+2. Done line 6's row is stale after #5776: ls-narrow-triggers was fixed on main and its known row was removed there on purpose. This branch still adds that row, as the frozen done line requires (owner record o711), and proof 6 passes. Only the owner can drop or replace done line 6; until then the row stays.
