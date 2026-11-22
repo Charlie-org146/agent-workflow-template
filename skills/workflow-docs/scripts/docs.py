@@ -17,9 +17,9 @@ usage: docs.py <command> [options]
   restore                      revert the last publish
   automation                   each routine's live state
 
-With "criteria": true, check also enforces the PRD page contract (references/commands.md), the page format and a fresh
-Tests page. Publish never deletes a page, replaces only one with its marker (or --adopt), and copies embedded images.
-It runs git only."""
+With "criteria": true in .loop/config.json, check also enforces the PRD page contract (references/commands.md), the
+page format and a fresh Tests page. Publish never deletes a page, replaces only one with this tool's marker (or --adopt),
+and copies the images its pages embed. It runs git only."""
 import argparse
 import json
 import os
@@ -101,8 +101,8 @@ def web_url(url):
 def clone(url, into):
     done = run(["git", "clone", "--quiet", url, into])
     if done.returncode:
-        sys.exit("REFUSED: can't read the wiki at %s. Fix: turn the wiki on and create its first page in the browser, "
-                 "then run this again." % url)
+        sys.exit("REFUSED: can't read the wiki at %s. Fix: turn the wiki on and create its first page in the browser "
+                 "(GitHub makes the wiki's repo only then), then run this again." % url)
 
 
 def state_file():
@@ -141,10 +141,10 @@ def cmd_survey(_args):
 
 def cmd_add(args):
     if not PAGE.match(args.page):
-        sys.exit("REFUSED: bad page name. Fix: letters, digits and dashes.")
+        sys.exit("REFUSED: bad page name. Fix: letters, digits and dashes, such as Using-the-workflow.")
     paths = [item.strip() for item in args.paths.split(",") if item.strip()]
     if not paths:
-        sys.exit("REFUSED: no paths. Fix: pass --paths.")
+        sys.exit("REFUSED: no paths. Fix: name what the page describes with --paths.")
     root = top()
     rows = read_map(root)
     rows[args.page] = paths
@@ -159,12 +159,8 @@ def cmd_add(args):
     return 0
 
 
-def netless(root, judged, mine):
-    tip = git("rev-list", "--no-walk=sorted", "-n1", *judged, cwd=root, check=False)
-    return bool(tip) and not git("diff", "--name-only", tip, "HEAD", "--", *mine, cwd=root, check=False)
-
-
 def problems(root, base):
+    import audit
     found = []
     folder = wiki_dir(root)
     rows = deployments.mapped(root, read_map(root), folder)
@@ -190,7 +186,7 @@ def problems(root, base):
         mine = paths + [":(exclude).loop/config.json"] * pageformat.is_guide(text)
         changed = counting.real(root, git("log", "--no-merges", "--full-history", "--format=%h %s", "HEAD", *["^" + sha for sha in judged], "--", *mine,
                                           cwd=root).splitlines(), mine)
-        if changed and not netless(root, judged, mine):
+        if changed and not audit.netless(root, judged, mine):
             found.append(("STALE", page, "%d commits since the page: %s" % (len(changed), changed[0][:70])))
     found += counting.image_trouble(root, folder, rows)
     held = os.path.join(root, folder)
@@ -245,7 +241,7 @@ def contract(root, strict=False):
     found, names = [], feature_pages(root)
     for page in sorted(read_map(root)):
         if not PAGE.match(page):
-            found.append(("PAGE", page, "not a page name. Fix: letters, digits and hyphens, or remove its docs.tsv row"))
+            found.append(("PAGE", page, "not a page name. Fix: letters, digits and hyphens, or remove its .loop/docs.tsv row"))
         elif guide(root, page) and guarded(root, page):
             found.append(("FORMAT", page, "DOC-1 a guide page holds no requirement or Review line (got %s). Fix: remove "
                           "the line %s and use the feature page format, or move them to a feature page"
@@ -349,8 +345,8 @@ def cmd_publish(args):
             if os.path.exists(target):
                 old = slurp(target)
                 if not old.startswith(MARKER) and page not in args.adopt:
-                    sys.exit("REFUSED: the wiki already has %s, and this tool didn't write it. "
-                             "Fix: rename your page, or pass --adopt %s." % (page, page))
+                    sys.exit("REFUSED: the wiki already has %s, and this tool didn't write it. Nothing was published. "
+                             "Fix: rename your page, or pass --adopt %s to replace it." % (page, page))
             if old != text:
                 changed.append(page)
                 if not args.dry_run:
@@ -407,7 +403,7 @@ def cmd_restore(_args):
         wiki = os.path.join(temp, "wiki")
         clone(held["url"], wiki)
         if git("rev-parse", "HEAD", cwd=wiki) != held["after"]:
-            sys.exit("REFUSED: the wiki changed after the last publish.")
+            sys.exit("REFUSED: the wiki changed after the last publish, so nothing was reverted.")
         git(*identity(wiki), "revert", "--no-edit", held["after"], cwd=wiki)
         push(wiki)
     finally:

@@ -25,6 +25,7 @@ import entry
 import pageformat as pf
 import prd
 from criteria import put, sha
+from docs import git
 from entry import req_key, requirements
 from prd import out as post
 from render import mirror_of
@@ -35,6 +36,11 @@ if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 REWRITE = {"CAP", "SCRIPT", "STALE", "UNWRITTEN", "PROBLEM", "SECTIONS", "CRITERION", "NONGOALS", "METRICS", "REVIEW", "SCENARIO", "FORMAT"}
+
+
+def netless(root, judged, mine):
+    tip = git("rev-list", "--no-walk=sorted", "-n1", *judged, cwd=root, check=False)
+    return bool(tip) and not git("diff", "--name-only", tip, "HEAD", "--", *mine, cwd=root, check=False)
 
 
 def release_trouble(root):

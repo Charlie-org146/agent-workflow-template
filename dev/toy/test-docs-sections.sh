@@ -139,9 +139,12 @@ def case(name, text, kind=None, want="", reviews=None):
     fails += not ok
 case("a feature of the fixed shape passes", GOOD)
 OLDFORM = sub("  - ### Revisions\n  - r1 2026-11-22\n", "", sub("  - ### Success metrics\n  - \\# | Metric | Target | Today\n  - 1.1 | Things broken. | 0 | not measured\n", "", GOOD))
-case("a Reviewed feature with neither a Success metrics nor a Revisions section is reported as NOTE only (awaiting the page rebuild)", sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM), "NOTE", "the sections are")
-fails += any(x[0] == "FORMAT" for x in run(sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM)))
-print(("FAIL" if fails else "PASS") + ": DOC-27 the awaiting-rebuild feature has no FORMAT finding")
+for fid in ("DEL-19", "DEL-23"):
+    sealed = sub("- X-1:", "- %s:" % fid, sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM))
+    case("%s, sealed with its sections missing, is reported as NOTE only (o721)" % fid, sealed, "NOTE", "the sections are")
+    fails += any(x[0] == "FORMAT" for x in run(sealed))
+    print(("FAIL" if fails else "PASS") + ": DOC-27 %s has no FORMAT finding" % fid)
+case("negative control: any other feature with the same sections missing still fails", sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM), "FORMAT", "the sections are")
 case("a feature missing only its Revisions section still fails", sub("  - ### Revisions\n  - r1 2026-11-22\n", ""), "FORMAT", "the sections are")
 case("an empty Problem fails", sub("  - Something is wrong.\n", ""), "FORMAT", "Problem is empty")
 case("a feature with no milestone fails", sub("  - Milestone: [v1](https://github.com/o/r/milestone/3)\n", ""), "FORMAT", "Milestone")
