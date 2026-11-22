@@ -49,7 +49,7 @@ A row must be seen failing once before it counts. Known failures don't block, an
 | "Prove the cache test can fail" | The test runs against deliberately broken code, and is marked seen failing or flagged as proving nothing. |
 | "What's untested?" | Requirements with no test, draft tests and tests never seen failing are listed. |
 | "List every test" | Every test, grouped by feature, with its kind, what it guards, what it checks and its last result. |
-| "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. |
+| "Write the GitHub workflow" | The GitHub Actions run is written, so the same tests run there on its schedule. The run files and closes issues only on the default branch; any other ref prints DRY RUN and writes nothing. |
 | "Which tests does this change reach?" | The rows the change can affect are listed. Any change but one only to NO_EFFECT files such as VERSION or a goal file, a deleted file included, also reaches the root runners, on Windows as on Linux. An edit to `.loop/regression.tsv` or `.loop/regression-known.tsv` re-runs only the rows whose own line changed, plus the rows whose command or directly named script names `.loop/regression.tsv` and the rows that run tools on the repo's own files (TOP-DECISION 46, widened). A row that reads the table only through an unnamed helper isn't re-run on a table edit; the gate's full suite and the pull request's CI still run it. |
 | (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes), even on the lane's one rerun of it: it is not a failure, so rerun it when memory allows. |
 
