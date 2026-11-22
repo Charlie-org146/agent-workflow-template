@@ -6,6 +6,7 @@ README and Home share the "front" row.
 """
 import os
 import re
+import pageformat as pf
 
 KINDS = {
     'front': ('What this is', 'System design', '+\\d+\\. .+', 'Requirements by feature'),
@@ -187,6 +188,105 @@ def pages(root, folder, listed):
     return [(rel, []) for rel in ("README.md", folder + "/Home.md", folder + "/Principles.md") if rel not in have and os.path.exists(os.path.join(root, rel))]
 
 
+HEADS = ("Problem", "Requirements", "Non-goals", "Success metrics", "Reference", "Revisions")
+FEAT = re.compile(r"^- ([A-Z]+-\d+): \*\*(Unreviewed|Reviewed)([^*]*)\*\*")
+NUM = re.compile(r"^(\d+\.\d+) \S")
+LANDS = "2026-11-22"  # DOC-27.5: a Reviewed mark dated on or after this day needs its line in .loop/reviews.tsv
+
+
+def blocks(text):
+    """DOC-27: (id, mark, date, lines) of each feature in the new form: a requirement line whose indented sub-bullets open with "### Problem"."""
+    out, cur = [], None
+    for line in text.splitlines():
+        found = FEAT.match(line)
+        if found:
+            cur = [found[1], found[2], found[3].strip(), []]
+            out.append(cur)
+        elif cur and line.startswith("  - "):
+            cur[3].append(line[4:].rstrip())
+        elif line.strip():
+            cur = None
+    return [b for b in out if "### Problem" in b[3]]
+
+
+def part(lines, name):
+    """The lines under one "### name" sub-heading of a feature block, up to the next sub-heading."""
+    out, inside = [], False
+    for x in lines:
+        inside = x[4:] == name if x.startswith("### ") else inside
+        out += [x] * (inside and not x.startswith("### "))
+    return out
+
+
+def feature(page, fid, mark, date, lines, slug, reviews):
+    """DOC-27 findings for one new-form feature: ("FORMAT", ...) fails the check, ("NOTE", ...) is reported only."""
+    at, out = "%s:%s" % (page, fid), []
+    bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if hard or (mark == "Reviewed" and rule != "27.5") else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
+    got = [x[4:] for x in lines if x.startswith("### ")]
+    if got != list(HEADS):
+        bad("27.1", "the sections are %s, not %s in order" % (got, list(HEADS)), "use exactly Problem, Requirements, Non-goals, Success metrics, Reference, Revisions")
+    for name in ("Problem", "Non-goals"):
+        if not [x for x in part(lines, name) if x.strip()]:
+            bad("27.1", "%s is empty" % name, "write it, or None for Non-goals")
+    head = lines[:lines.index("### Problem")] if "### Problem" in lines else []
+    links = [pf.owner_repo(x) for x in head if x.startswith("Milestone:") and "/milestone/" in x]
+    if not links or any(x != slug for x in links):
+        bad("27.1", "its Milestone line is missing or does not link a milestone of %s" % slug, "add 'Milestone: [name](https://github.com/%s/milestone/N)'" % slug)
+    req = part(lines, "Requirements")
+    cut = req.index("Non-functional") if "Non-functional" in req else len(req)
+    if "Functional" not in req or "Non-functional" not in req or req.index("Functional") > cut:
+        bad("27.1", "Requirements needs Functional, then Non-functional", "add both lines (Non-functional may say None)")
+    nums = [(i, NUM.match(x)[1]) for i, x in enumerate(req) if NUM.match(x)]
+    if len([n for i, n in nums if i < cut]) > 5:
+        bad("27.2", "more than five functional requirements", "split the feature")
+    metrics = {}
+    for k, (i, n) in enumerate(nums):
+        end = nums[k + 1][0] if k + 1 < len(nums) else len(req)
+        seg = req[i:min(end, cut) if i < cut else end]
+        mine = [x for x in seg if x.startswith("**Success metric %s.**" % n)]
+        if len(mine) != 1:
+            bad("27.2", "requirement %s has %d success metrics" % (n, len(mine)), "give it exactly one 'Success metric %s.'" % n, False)
+        elif not any(x.startswith("Target **") for x in seg) or not any(x.startswith("Today **") for x in seg):
+            bad("27.2", "the metric of %s has no target or no today value" % n, "add 'Target **x**' and 'Today **y**'", False)
+        else:
+            metrics[n] = (mine[0][len("**Success metric %s.**" % n):].strip(), [x for x in seg if x.startswith("Target **")][0][9:-2], [x for x in seg if x.startswith("Today **")][0][8:-2])
+        cases = seg[seg.index("Test cases") + 1:] if "Test cases" in seg else []
+        if not [c for c in cases if c.strip() and not NUM.match(c) and not c.startswith("Non-functional")]:
+            bad("27.2", "requirement %s has no test case" % n, "add a 'Test cases' list with at least one case", False)
+    table = {}
+    for x in part(lines, "Success metrics"):
+        cells = [c.strip() for c in x.split("|")]
+        if len(cells) == 4 and NUM.match(cells[0] + " x"):
+            table[cells[0]] = (cells[1], cells[2], cells[3])
+    if metrics and table != metrics:
+        bad("27.2", "the Success metrics table does not match the inline metrics (%s)" % ", ".join(sorted(set(table) ^ set(metrics)) or ["text differs"]), "make each table line equal its inline metric, target and today")
+    ref = part(lines, "Reference")
+    pairs = [(ref[i], ref[i + 1] if i + 1 < len(ref) else "") for i, x in enumerate(ref) if x in ("adopted", "adapted", "own", "reference")]
+    if not pairs or [x for x in ref if re.fullmatch(r"[a-z]+", x) and x not in ("adopted", "adapted", "own", "reference")]:
+        bad("27.3", "Reference has no entry or an entry with no valid tag", "add 'adopted', 'adapted', 'own' or 'reference' above each source", False)
+    for tag, text in pairs:
+        if not re.match(r"\[[^\]]+\]\(https?://[^)]+\)", text):
+            bad("27.3", "a %s reference names no linked source" % tag, "start the entry with [source](https://...)", False)
+    if mark == "Reviewed" and not reviews.get(fid):
+        bad("27.5", "the Reviewed mark has no line in .loop/reviews.tsv naming the typed record", "run the mark command on the machine that holds the owner-words ledger (until then this is a NOTE for a mark dated before %s)" % LANDS, bool(date) and date.split()[0] >= LANDS)
+    return out
+
+
+def features(folder, page, text):
+    """DOC-27 findings for the new-form features of one page (none for a page in the old form)."""
+    found = blocks(text)
+    if not found:
+        return []
+    import counting
+    root = os.path.dirname(os.path.dirname(os.path.abspath(folder)))
+    path = os.path.join(root, ".loop", "reviews.tsv")
+    reviews = {r[0]: r[1] for r in (x.split("\t") for x in open(path, encoding="utf-8").read().splitlines() if x[:1] != "#") if len(r) > 1} if os.path.exists(path) else {}
+    slug, out = counting.repo_slug(root), []
+    for fid, mark, date, lines in found:
+        out += feature(page, fid, mark, date, lines, slug, reviews)
+    return out
+
+
 def run(folder, readme, home, names):
     """DOC-25 findings for the README, Home and every wiki page, by the page's kind."""
     out = [("FORMAT", "%s:%d" % (n, i), "Sections: DOC-25 the principle tables have the columns %s (no Version, no Flow). Fix: run /workflow-docs render" % " | ".join(NEW))
@@ -195,5 +295,6 @@ def run(folder, readme, home, names):
     out += check("README", "front-adopted" if "## The template's principles" in readme else "front", readme) + check("Home", "front", home) + same(readme, home)
     for page in sorted(x[:-3] for x in os.listdir(folder) if x.endswith(".md")):
         kind = "howto" if page.startswith("How-to-use-") else {"Principles": "principles", "Tests": "tests", "Roadmap": "roadmap"}.get(page, "feature" if page in names else "")
-        out += check(page, kind, open(os.path.join(folder, page + ".md"), encoding="utf-8").read()) if kind else []
+        text = open(os.path.join(folder, page + ".md"), encoding="utf-8").read()
+        out += (check(page, kind, text) + features(folder, page, text)) if kind else []
     return out

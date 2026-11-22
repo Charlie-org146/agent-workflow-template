@@ -290,6 +290,7 @@ def cmd_check(args):
     if args.own:
         import audit
         found, notes = audit.own_split(root, found, notes, read_map(root), config(root).get("base") or "main", args.own)
+    found += [i for i in notes if i[0] == "NOTE"] * bool(args.strict)  # DOC-27: --strict makes every NOTE fail
     for kind, page, detail in found + notes:
         print("%s %s: %s" % (kind, page, detail))
     if found:
@@ -412,7 +413,7 @@ def main():
     for name, func, *opts in (
             ("survey", cmd_survey),
             ("add", cmd_add, ("page",), ("--paths", {"required": True})),
-            ("check", cmd_check, ("--base", {"default": ""}), ("--own", {"nargs": "?", "const": "HEAD"})),
+            ("check", cmd_check, ("--base", {"default": ""}), ("--own", {"nargs": "?", "const": "HEAD"}), ("--strict", flag)),
             ("audit", cmd_audit, ("--base", {"default": ""}), ("--dry-run", flag), ("--relock", flag)),
             ("criteria", cmd_criteria, ("page",)),
             ("publish", cmd_publish, ("--dry-run", flag), ("--adopt", {"action": "append", "default": []})),

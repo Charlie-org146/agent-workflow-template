@@ -87,4 +87,73 @@ if python3 -c '
 import sys, counting
 o = counting.origins(sys.argv[1])
 sys.exit(not ("https://rework.withgoogle.com" in o and "https://www.gitguardian.com" in o and "https://example.invalid" not in o))' "$here"; then echo "PASS: DOC-19 public_origins holds the two new hosts and still refuses an unlisted one"; else echo "FAIL: DOC-19 public_origins"; fails=1; fi
+# DOC-27: a feature in the new form (sections, five requirements, metric and tests each, reference, milestone, Reviewed mark)
+if python3 - "$here" <<'PY'
+import os, sys, tempfile
+sys.path.insert(0, os.path.join(sys.argv[1], "skills/workflow-docs/scripts"))
+import sections as s
+slug = "o/r"
+GOOD = """- X-1: **Unreviewed** A feature <!-- reviewed abcd1234 -->
+  - Milestone: [v1](https://github.com/o/r/milestone/3)
+  - **Promise.** It works.
+  - ### Problem
+  - Something is wrong.
+  - ### Requirements
+  - Functional
+  - 1.1 A rule
+  - **Success metric 1.1.** Things broken.
+  - Target **0**
+  - Today **not measured**
+  - Test cases
+  - A broken thing fails the check.
+  - Non-functional
+  - None
+  - ### Non-goals
+  - It does nothing else.
+  - ### Success metrics
+  - \\# | Metric | Target | Today
+  - 1.1 | Things broken. | 0 | not measured
+  - ### Reference
+  - adopted
+  - [A source](https://example.org/a). Why it applies.
+  - ### Revisions
+  - r1 2026-11-22
+"""
+def run(text, reviews=None):
+    d = tempfile.mkdtemp()
+    out = []
+    for f in s.blocks(text):
+        out += s.feature("P", *f, slug, reviews or {})
+    return out
+def sub(a, b, text=GOOD):
+    assert a in text, a
+    return text.replace(a, b, 1)
+fails = 0
+def case(name, text, kind=None, want="", reviews=None):
+    global fails
+    got = run(text, reviews)
+    hit = [x for x in got if (kind is None or x[0] == kind) and want in x[2]]
+    ok = (not got) if kind is None and not want else bool(hit)
+    print(("PASS" if ok else "FAIL") + ": DOC-27 " + name + ("" if ok else ": %s" % got))
+    fails += not ok
+case("a feature of the fixed shape passes", GOOD)
+case("an empty Problem fails", sub("  - Something is wrong.\n", ""), "FORMAT", "Problem is empty")
+case("a feature with no milestone fails", sub("  - Milestone: [v1](https://github.com/o/r/milestone/3)\n", ""), "FORMAT", "Milestone")
+case("a milestone link to another repo fails", sub("github.com/o/r/", "github.com/x/y/"), "FORMAT", "Milestone")
+case("Non-goals before Requirements fails", sub("  - ### Requirements\n", "  - ### Non-goals\n  - none\n  - ### Requirements\n", sub("  - ### Non-goals\n  - It does nothing else.\n", "")), "FORMAT", "the sections are")
+case("a sixth functional requirement fails", sub("  - Non-functional\n", "".join("  - 1.%d R\n  - **Success metric 1.%d.** M.\n  - Target **0**\n  - Today **1**\n  - Test cases\n  - c\n" % (i, i) for i in range(2, 7)) + "  - Non-functional\n"), "FORMAT", "more than five")
+case("a requirement with no metric is reported, not failed, while Unreviewed", sub("  - **Success metric 1.1.** Things broken.\n", ""), "NOTE", "no target" if False else "success metrics")
+case("a requirement with no metric fails once Reviewed", sub("**Unreviewed**", "**Reviewed 2026-11-22**", sub("  - **Success metric 1.1.** Things broken.\n", "")), "FORMAT", "success metrics", {"X-1": "o9"})
+case("a requirement with no test case is reported", sub("  - A broken thing fails the check.\n", ""), "NOTE", "no test case")
+case("a metric with no target is reported", sub("  - Target **0**\n", ""), "NOTE", "no target")
+case("a table that differs from the inline metrics fails", sub("1.1 | Things broken. | 0", "1.1 | Other. | 0", GOOD), "FORMAT", "does not match")
+case("a reference with no tag is reported", sub("  - adopted\n", ""), "NOTE", "Reference has no entry")
+case("a reference with no link is reported", sub("[A source](https://example.org/a). Why", "A source. Why"), "NOTE", "no linked source")
+RV = sub("**Unreviewed**", "**Reviewed 2026-11-22**")
+case("a Reviewed mark dated on or after the rule with no .loop/reviews.tsv line fails", RV, "FORMAT", "no line in .loop/reviews.tsv")
+case("the same mark with its line passes", RV, None, "", {"X-1": "o9"})
+case("a Reviewed mark from before the rule with no line is reported, not failed", sub("**Unreviewed**", "**Reviewed 2026-11-21**"), "NOTE", "no line in .loop/reviews.tsv")
+sys.exit(1 if fails else 0)
+PY
+then :; else fails=1; fi
 [ $fails = 0 ] && echo "ALL PASS" || { echo "FAILED"; exit 1; }
