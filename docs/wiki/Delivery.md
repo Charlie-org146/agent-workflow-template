@@ -43,7 +43,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 4: metric missing; test 10 linked rows, see Tests
   - Line 5: metric missing; test 10 linked rows, see Tests
   - Line 6: metric missing; test 10 linked rows, see Tests
-- DEL-17: **Unreviewed** Every change runs on one clock, from my ask to main
+- DEL-17: **Reviewed 2026-11-22** Every change runs on one clock, from my ask to main <!-- reviewed 59e467e1 -->
   - **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17]
   - **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17]
   - **Every ETA is a commitment:** it records who made it, when, and on what basis; a passed one shows as missed with its cause and stays visible. [DEL-17]
