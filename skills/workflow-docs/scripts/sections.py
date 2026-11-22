@@ -215,10 +215,11 @@ def part(lines, name):
 
 
 def feature(page, fid, mark, date, lines, slug, reviews):
-    """DOC-27 findings of one feature."""
+    """DOC-27 findings."""
     at, out = "%s:%s" % (page, fid), []
-    bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if hard or (mark == "Reviewed" and rule != "27.5") else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
+    bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if not old and (hard or (mark == "Reviewed" and rule != "27.5")) else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
     got = [x[4:] for x in lines if x.startswith("### ")]
+    old = not {"Success metrics", "Revisions"} & set(got)
     if got != list(HEADS):
         bad("27.1", "the sections are %s, not %s in order" % (got, list(HEADS)), "use the six sections in order")
     for name in ("Problem", "Non-goals"):
@@ -269,7 +270,7 @@ def feature(page, fid, mark, date, lines, slug, reviews):
 
 
 def reviewed(root, folder, command, ids, rec, common, day):
-    """DOC-27.5: record check, reviews line."""
+    """DOC-27.5."""
     if command != "review":
         return
     new = {b[0] for f in sorted(os.listdir(folder)) if f.endswith(".md") for b in blocks(open(os.path.join(folder, f), encoding="utf-8").read())}
@@ -293,7 +294,7 @@ def principled(folder, fid):
 
 
 def features(folder, page, text):
-    """DOC-27 findings of a page."""
+    """DOC-27 findings."""
     found = blocks(text)
     if not found:
         return []
@@ -311,19 +312,19 @@ BLOCK = re.compile(r"(<!-- steps -->)(.*?)(<!-- /steps -->)", re.S)
 
 
 def steps():
-    """DEL-19.4: steps from flow.py."""
+    """DEL-19.4."""
     got = re.search(r"^STEPS = \(([^)]*)\)", open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "flow.py"), encoding="utf-8").read(), re.M)
     return "Steps: %s." % ", ".join(re.findall(r'"(\w+)"', got[1])) if got else "Steps: unreadable."
 
 
 def stale(page, text):
-    """DEL-19.4: a stale steps block."""
+    """DEL-19.4."""
     found = BLOCK.search(text)
     return [("FORMAT", page, "Steps: DEL-19.4 the drawn steps '%s' differ from the code ('%s'). Fix: python3 sections.py steps --write" % (found[2], steps()))] if found and found[2] != steps() else []
 
 
 def run(folder, readme, home, names):
-    """DOC-25 findings for the README, Home and every wiki page, by the page's kind"""
+    """DOC-25 findings by page kind"""
     out = [("FORMAT", "%s:%d" % (n, i), "Sections: DOC-25 the principle tables have the columns %s (no Version, no Flow). Fix: run /workflow-docs render" % " | ".join(NEW))
            for n, t in (("README", readme), ("Home", home), ("Principles", open(os.path.join(folder, "Principles.md"), encoding="utf-8").read() if os.path.exists(os.path.join(folder, "Principles.md")) else ""))
            for i, x in enumerate(t.splitlines(), 1) if x.startswith("| Requirement | Summary") and "| Version | Flow |" in x]

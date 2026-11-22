@@ -138,6 +138,11 @@ def case(name, text, kind=None, want="", reviews=None):
     print(("PASS" if ok else "FAIL") + ": DOC-27 " + name + ("" if ok else ": %s" % got))
     fails += not ok
 case("a feature of the fixed shape passes", GOOD)
+OLDFORM = sub("  - ### Revisions\n  - r1 2026-11-22\n", "", sub("  - ### Success metrics\n  - \\# | Metric | Target | Today\n  - 1.1 | Things broken. | 0 | not measured\n", "", GOOD))
+case("a Reviewed feature with neither a Success metrics nor a Revisions section is reported as NOTE only (awaiting the page rebuild)", sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM), "NOTE", "the sections are")
+fails += any(x[0] == "FORMAT" for x in run(sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM)))
+print(("FAIL" if fails else "PASS") + ": DOC-27 the awaiting-rebuild feature has no FORMAT finding")
+case("a feature missing only its Revisions section still fails", sub("  - ### Revisions\n  - r1 2026-11-22\n", ""), "FORMAT", "the sections are")
 case("an empty Problem fails", sub("  - Something is wrong.\n", ""), "FORMAT", "Problem is empty")
 case("a feature with no milestone fails", sub("  - Milestone: [v1](https://github.com/o/r/milestone/3)\n", ""), "FORMAT", "Milestone")
 case("a milestone link to another repo fails", sub("github.com/o/r/", "github.com/x/y/"), "FORMAT", "Milestone")
@@ -273,7 +278,7 @@ docs.problems = lambda r, b: []
 docs.counts = lambda r: []
 docs.entry.problems = lambda r: []
 docs.entry.perm_check = lambda r: []
-docs.contract = lambda r: [("NOTE", "Topic", "DOC-27 27.4: 1 How-to-use pages to remove (x)")]
+docs.contract = lambda r, s=False: [("NOTE", "Topic", "DOC-27 27.4: 1 How-to-use pages to remove (x)")]
 mk = lambda strict: SimpleNamespaceX(base="", own=None, strict=strict)
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
