@@ -59,7 +59,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - Line 4: metric missing; test 23 linked rows, see Tests
   - Line 5: metric missing; test 23 linked rows, see Tests
   - Line 6: metric missing; test 23 linked rows, see Tests
-- DEL-28: **Unreviewed** Every step has a token budget
+- DEL-28: **Reviewed 2026-11-22** Every step has a token budget <!-- reviewed 5c225018 -->
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28]
 
   - Feature markers v1
