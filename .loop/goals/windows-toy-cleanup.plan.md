@@ -15,14 +15,18 @@ goes back to full depth and to top.
 
 ## Build steps (after the plan gate)
 
-1. test-machines.py and test-desk.py: wrap the body after the `with` opens in try/finally whose finally does
-   `os.chdir(HERE)` (the toy's own folder); in test-desk.py also, before leaving, wait (bounded, 10 s) for the background
-   worker pid to end (os.waitpid is not portable: poll `machines`-free via a small loop on `os.kill(pid, 0)`-equivalent;
-   on Windows use `subprocess` poll by `tasklist`-free approach: sleep until the worker's log file can be opened for append).
-2. test-restart-tick.py: `PATH=bin_ + os.pathsep + PATH`; when `os.name == "nt"`, write `sitecustomize.py` into a temp dir and
-   put it first on PYTHONPATH of `env`. The shim wraps `subprocess.run` and `subprocess.Popen` so a call whose argv[0] is `gh`
-   or the path in LOOP_LAUNCHCTL runs `bash <that script> args` (the same stub scripts the toy already writes). On other
-   systems nothing is written.
+1. test-machines.py and test-desk.py: a small helper `wait_pid(pid, seconds=15)` that waits for a process to end (on Windows
+   ctypes OpenProcess(SYNCHRONIZE) plus WaitForSingleObject; elsewhere poll `os.kill(pid, 0)`; never `os.kill(pid, 0)` on
+   Windows, which terminates the process; an append-open of the log proves nothing because Python's open shares the file).
+   The background worker the toy starts is `worker.py loop` (watch.launch), which outlives the call, has the temp tree as its
+   cwd and the log as stdout: in test-desk.py (`machines.start_worker`, state["pid"]) and in test-machines.py (the `take` child,
+   pid in its state). Before the temp tree is removed: wait for each such pid, then `os.chdir(HERE)` in a finally. If a worker
+   is still running after the wait the toy says so (it never hides it); a worker that never ends is a product finding: stop.
+2. test-restart-tick.py: flip the marker from `# windows: skip` to `# windows: ok`; `PATH=bin_ + os.pathsep + PATH`; when
+   `os.name == "nt"`, write a `sitecustomize.py` into a temp dir and put it first on PYTHONPATH, keeping the existing
+   PYTHONPATH entries after it and importing any sitecustomize already on the path (check-reads.sh puts one there). The shim
+   wraps `subprocess.run` and `subprocess.Popen` so a call whose argv[0] is `gh` or the LOOP_LAUNCHCTL path runs
+   `bash <script with forward slashes> args`. Nothing is written on other systems.
 3. Run the three toys directly on the PC, before and after: the PASS lines the Mac prints must all be present and none removed.
 
 ## Tests per done line (no new rows; the existing rows run these toys)
@@ -42,3 +46,7 @@ goes back to full depth and to top.
 ## Out of scope
 
 Every product script, make.sh, DOC-19, the home guard, the known list, G1's toys.
+
+## Review
+
+Red-team (fresh reviewer, run from this worktree: pwd /c/Users/chang/code/agent-workflow-template/.git/loop/worktrees/windows-toy-cleanup, HEAD 56a18493e): CHANGES on the worker child (worker.py loop outlives the call, also in test-machines.py), the wait method, the `# windows: skip` marker and the sitecustomize chaining; all folded into the build steps above. No product file is needed so far.

@@ -8,7 +8,7 @@ starts a background worker (`machines.start_worker`) whose log file may still be
 is a process's cwd or holds an open file, so TemporaryDirectory cleanup raises WinError 32. (2) test-restart-tick.py builds PATH
 with ":" instead of os.pathsep, and its fake `gh` is a shell script, which CreateProcess cannot launch (it resolves "gh" to
 gh.exe only); the tick therefore never calls the stub merge.py and merge.log is never written. No product script is the holder:
-the cwd is the toy's own, and the worker's log is opened by machines.start_worker for a `python -c pass` child that exits at once.
+the cwd is the toy's own, and the worker is `worker.py loop`, which outlives the call with the temp tree as its cwd and its log as stdout; the toy must wait for it.
 
 ## Approaches
 
