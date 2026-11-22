@@ -129,7 +129,7 @@ Every change runs on one clock, from my ask to main. The normal goal and the sma
 Rules that hold across the clock:
 
 - A merge never makes another ready pull request re-run; the queue tests the merged result.
-- A step that passes its limit says so at once. A small fix that passes one becomes a normal goal. A normal goal that reaches its ETA finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. A missed limit or ETA stays on the board as missed, with its cause (principle 8).
+- A step that passes its limit says so at once. A small fix that passes one becomes a normal goal. A normal goal that reaches its ETA finishes its current step, starts no new one, and I choose: ship now, extend once, or defer. A missed limit or ETA stays on the board as missed, with its cause (principle 2).
 - Tests the change does not reach go to the scheduled full suite, which names how many; a change to a goal's own record files reaches fewer than 20 tests; test count and suite time stay capped.
 - CI runs or minutes per day past a set limit raise one alarm.
 - Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
