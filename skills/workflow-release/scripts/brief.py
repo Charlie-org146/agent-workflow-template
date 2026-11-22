@@ -71,7 +71,7 @@ def names(text):
 
 
 def scan(text):
-    """A private value in text (the home folder, an email address, or a name on the private list), or ''."""
+    """A private value in text, or ''."""
     if re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", text) or (len(os.path.expanduser("~")) > 1 and os.path.expanduser("~") in text):
         return "an email address or the home folder"
     here = os.path.dirname(os.path.abspath(__file__))
@@ -147,7 +147,7 @@ def done_rows(root):
 
 
 def tasks(root):
-    """The one list: [(name, state, [goal slugs], eta)], states queued, running, waiting, done or replaced."""
+    """The one list: (name, state, goals, ETA, note)."""
     all_runs, finished, out = runs(root), done_rows(root), []
     briefs_ = briefs(root, "task")
     replaced = {field(t, "Replaces") for t in briefs_.values()}
@@ -160,16 +160,15 @@ def tasks(root):
 
 
 def lines(root):
-    """Board lines: each task by name, its state and its goals underneath."""
+    """Board lines: each task and its goals."""
     return ["task %s: %s%s%s" % (n, s, " (%s)" % note if note else "", " eta %sm" % e if e else "") + "".join("\n    goal %s" % g for g in gs) for n, s, gs, e, note in tasks(root)]
 
 
 GWT = re.compile(r"^\d+\. Given .+ when .+ then .+", re.I)
-PARTS = (("title", r"^# \S"), ("Slug", r"^- Slug: \S"), ("Touches", r"^- Touches: \S"), ("ETA", r"^- ETA: \S"), ("Task", r"^- Task: \S"), ("Release", r"^- Release: \S"), ("Done lines", r"^## Done lines$"), ("a done line", r"^\d+\. \S"))
 
 
 def feature_state(root, fid):
-    """'Reviewed' or 'Unreviewed' for a feature id on the wiki pages, '' when none lists it."""
+    """'Reviewed', 'Unreviewed' or '' for a feature id."""
     try:
         wiki = json.load(open(os.path.join(root, ".loop", "config.json"))).get("wiki_dir") or "docs/wiki"
     except (OSError, ValueError):
@@ -182,12 +181,21 @@ def feature_state(root, fid):
 
 
 def parts_missing(text):
-    """DEL-19.1: the parts a goal file in the fixed format lacks (a file with no Task line is an older one: none)."""
-    return [] if "\n- Task:" not in text else [n for n, p in PARTS if not re.search(p, text, re.M)]
+    """DEL-19.1: the parts a new-format goal file lacks."""
+    need = (("title", "# "), ("Slug", "- Slug: "), ("Touches", "- Touches: "), ("ETA", "- ETA: "), ("Task", "- Task: "), ("Release", "- Release: "), ("Done lines", "## Done lines"), ("a done line", "1. "))
+    have = lambda n: any(l == n.rstrip() or (l.startswith(n) and l[len(n):].strip()) for l in text.splitlines())
+    return [] if "\n- Task: " not in text else [name for name, n in need if not have(n)]
+
+
+def pr_gate(g, slug):
+    """DEL-19: a skipped review or a missing goal-file part blocks the PR."""
+    str(g.load(slug).get("flow", {}).get("review", "")).startswith("skipped") and g.no("the review step was skipped (DEL-19.2). Fix: run flow.py %s review and record it." % slug)
+    miss = parts_missing(g.read(g.goal_file(slug)))
+    miss and g.no("the goal file lacks %s (DEL-19.1). Fix: restore those lines in .loop/goals/%s.md." % (", ".join(miss), slug))
 
 
 def freeze_check(g, args, lines):
-    """DEL-19.1, DEL-23.1, DOC-27.5: what a goal needs before it freezes (g is the goal module)."""
+    """DEL-19.1, DEL-23.1, DOC-27.5: what a goal needs to freeze."""
     root, task = g.root(), getattr(args, "task", None)
     if task is None:  # goal.py adopt: the goal file already says
         text = read(g.goal_file(args.slug))
@@ -233,7 +241,7 @@ def release_tasks(root, version):
 
 
 def gate_merge(root, task):
-    """DOC-28.3: a feature task merges only once a frozen release brief names it; a fix task any time."""
+    """DOC-28.3: a feature task merges only once a frozen brief names it."""
     text = briefs(root, "task").get(task)
     if text is None or field(text, "Kind") == "fix":
         return
@@ -242,7 +250,7 @@ def gate_merge(root, task):
 
 
 def gate_bump(root, kind, version):
-    """DOC-28.2: a major or minor needs a frozen release brief; a major also needs an empty known-red list."""
+    """DOC-28.2: a major or minor needs a frozen brief; a major, an empty known-red list."""
     if kind == "major":
         rows = [k for x in known_red(root) for k in x[2]]
         rows and refuse("BRF-6", "a major needs an empty known-red list; it holds %s" % ", ".join(rows), "fix each row; clearing a row is the only path, there is no waiver")
@@ -251,7 +259,7 @@ def gate_bump(root, kind, version):
 
 
 def gate_cut(root, version):
-    """DOC-28.4: every named task is done; the tag notes and the result record are built from the brief."""
+    """DOC-28.4: every named task is done."""
     named = release_tasks(root, version)
     named is None and refuse("BRF-3", "no frozen release brief for %s" % version, "freeze it first")
     states = {n: s for n, s, *_ in tasks(root)}
@@ -260,7 +268,7 @@ def gate_cut(root, version):
 
 
 def gate(root, kind, version):
-    """The bump hook (release.bump): a patch ships no feature task; a minor needs its frozen brief with every task done."""
+    """The bump hook: patch ships no feature task; minor needs its brief and done tasks."""
     if kind == "patch":
         all_ = briefs(root, "release")
         shipped = {t for v, x in all_.items() if "## Results" in x for t in release_tasks(root, v) or []}
@@ -272,7 +280,7 @@ def gate(root, kind, version):
 
 
 def held(root, state):
-    """DOC-28.3: the unshipped release brief that names this goal's feature task, else ''."""
+    """DOC-28.3: the unshipped brief naming this feature task."""
     task, text = state.get("task") or "", briefs(root, "task").get(state.get("task") or "")
     if text is None or field(text, "Kind") == "fix":
         return ""
@@ -283,7 +291,7 @@ COLS27 = "Feature,Promise,Success metrics,Today,Reference,Topic,Adoption,Confide
 
 
 def rebuild(root, rel):
-    """DOC-27.4, the page rebuild still to build, as NOTE findings (docs.py check --strict fails them), one per category."""
+    """DOC-27.4: page-rebuild NOTEs (docs.py check --strict fails them)."""
     wiki = os.path.join(root, rel)
     pages = {n[:-3]: read(os.path.join(wiki, n)) for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
     pages["README"], out = read(os.path.join(root, "README.md")), []
@@ -307,7 +315,7 @@ def rebuild(root, rel):
 
 
 def known_red(root):
-    """DOC-28.1: [(check, subject, keys)] for every row on the known-red list; a major has no waiver (o714)."""
+    """DOC-28.1: known-red rows as refusals; no waiver (o714)."""
     rows = [x.split("\t")[0] for x in read(os.path.join(root, ".loop", "regression-known.tsv")).splitlines() if x.strip() and x[:1] != "#"]
     return [("known-red", "row %s is on the known-red list; clearing a row is the only path" % r, [r]) for r in rows]
 
@@ -317,13 +325,13 @@ def notes(root, version):
 
 
 def files(root, version):
-    """The release brief's path when it exists, for the release commit."""
+    """The release brief's path, if it exists."""
     path = path_of(root, "release", version)
     return [os.path.relpath(path, root)] * os.path.exists(path)
 
 
 def result(root, version):
-    """DOC-28.5: after the cut the brief records each task's merged goals (written once; a retry adds nothing)."""
+    """DOC-28.5: after the cut, each task's merged goals, once."""
     path = path_of(root, "release", version)
     text = read(path)
     if "## Results" in text or release_tasks(root, version) is None:

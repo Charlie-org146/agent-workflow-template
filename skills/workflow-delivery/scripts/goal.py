@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""A goal's record.
-
-  new SLUG --here --goal TEXT --task T --done LINE [--touches A,B] [--release R]
+"""  new SLUG --here --goal TEXT --task T --done LINE [--touches A,B] [--release R]
   queue SLUG --goal TEXT --done LINE [--touches A,B] [--depends-on A,B]
   step SLUG NAME [--note TEXT] [--tokens N]
   record SLUG STEP --file REPLY [--in-session] [--tokens N|unknown]
@@ -212,7 +210,7 @@ def cmd_new(args):
     path = goal_file(slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
-                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), extra=fit.head(args), done="\n".join(lines)))
+                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), task=args.task, release=args.release or "none", done="\n".join(lines)))
     git("add", path)
     git("commit", "-m", "Goal: %s" % slug, "--", path)
     state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, set, queue, the PR body, owed."""
+"""What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, queue, PR body."""
 import importlib.util
 import json
 import os
@@ -14,6 +14,21 @@ STEPS = ("idea", "plan", "review", "qa", "ship")
 NOT_AREAS = ("docs/", ".loop/", "dev/toy/", "test/", "tests/")
 SURFACES = ("wiki", "milestones", "projects", "releases", "labels", "issues")
 SMALL_DONE = 3
+
+
+def deadline(held):
+    import lanekit  # lazy: skills load fit.py by path
+    if "markers" not in held:
+        return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
+    began = lanekit.mtime(held["rc"] + ".started")
+    if began:
+        return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
+    if held.get("prep_by"):  # preparation budget first
+        return held["prep_by"], "past its preparation budget"
+    at = held["started"]
+    if os.path.exists(held["rc"] + ".queued"):
+        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
+    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
 
 
 def surface(path):
@@ -222,7 +237,7 @@ def cmd_set(g, args):
         if any(was[k] and (not held[k] or held[k] > was[k]) for k in was):
             held["record"] = monitor("auto", True).eta_record(g, args.owner_record, args.slug, "raising a budget")
         elif (view(state, runs).get("budget") or {}).get("record"):
-            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps the record that raised it: used once
+            held["record"] = view(state, runs)["budget"]["record"]  # a lowering keeps its raising record
         guards.add_set(runs, args.slug, "budget", held, "set budget %dm, %d tokens: %s" % (held["minutes"], held["tokens"], why))
     if args.eta_extend or args.eta_choice:
         args.eta_extend and args.eta_choice and g.no("give --eta-extend or --eta-choice, not both")
@@ -291,18 +306,8 @@ def bind_here(g, slug):
         print(done.stdout + done.stderr, end="")
 
 
-def head(args):
-    """The goal file's Task and Release lines."""
-    return "- Task: %s\n- Release: %s\n" % (args.task, args.release or "none")
-
-
-def goal_format(g, args, lines):
-    """DEL-19.1, DEL-23.1: what a goal needs before it freezes (brief.freeze_check)."""
-    monitor("brief", False, "workflow-release").freeze_check(g, args, lines)
-
-
 def frozen_fields(g, args, lines, touches):
-    goal_format(g, args, lines)
+    monitor("brief", False, "workflow-release").freeze_check(g, args, lines)
     bad = [t for t in touches if surface(t) is None]
     if bad:
         g.no("%s isn't a GitHub surface. Fix: one of github:%s" % (", ".join(bad), ", github:".join(SURFACES)))

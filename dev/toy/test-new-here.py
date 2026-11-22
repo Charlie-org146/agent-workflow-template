@@ -82,20 +82,21 @@ def said(fn, *a):
 
 
 plain = tempfile.mkdtemp()
+GF = fit.monitor("brief", False, "workflow-release").freeze_check
 stub = SimpleNamespace(no=no, root=lambda: plain)
 good = ["1. Given a repo, when a goal is frozen, then it names its task."]
-check("no task" in said(fit.goal_format, stub, SimpleNamespace(task=""), good), "DEL-19 freezing a goal with no task named is refused")
-check("no task" in said(fit.goal_format, stub, SimpleNamespace(task="  "), good), "DEL-19 a blank task counts as none")
-check("not Given" in said(fit.goal_format, stub, SimpleNamespace(task="t"), ["1. it works"]), "DEL-19 a done line that is not Given, when, then is refused")
-check("not Given" in said(fit.goal_format, stub, SimpleNamespace(task="t"), good + ["2. Given a repo, when x"]), "DEL-19 one bad line among good ones is refused")
-check(said(fit.goal_format, stub, SimpleNamespace(task="t"), good) == "", "DEL-19 a goal with a task and Given/when/then lines is accepted")
+check("no task" in said(GF, stub, SimpleNamespace(task=""), good), "DEL-19 freezing a goal with no task named is refused")
+check("no task" in said(GF, stub, SimpleNamespace(task="  "), good), "DEL-19 a blank task counts as none")
+check("not Given" in said(GF, stub, SimpleNamespace(task="t"), ["1. it works"]), "DEL-19 a done line that is not Given, when, then is refused")
+check("not Given" in said(GF, stub, SimpleNamespace(task="t"), good + ["2. Given a repo, when x"]), "DEL-19 one bad line among good ones is refused")
+check(said(GF, stub, SimpleNamespace(task="t"), good) == "", "DEL-19 a goal with a task and Given/when/then lines is accepted")
 with_tasks = tempfile.mkdtemp()
 os.makedirs(os.path.join(with_tasks, ".loop", "tasks"))
 starts = SimpleNamespace(no=no, root=lambda: with_tasks)
 import io, contextlib  # noqa: E401,E402
 err = io.StringIO()
 with contextlib.redirect_stderr(err):
-    said(fit.goal_format, starts, SimpleNamespace(task="no-brief"), good)
+    said(GF, starts, SimpleNamespace(task="no-brief"), good)
 check("BRF-5" in err.getvalue() and "no-brief" in err.getvalue(), "DEL-23 a goal that names a task with no brief is refused when the repo keeps tasks")
 for kind, name in (("feature", "newthing"), ("fix", "bugfix")):
     open(os.path.join(with_tasks, ".loop", "tasks", name + ".md"), "w").write("# T\n\nFeature: ZZ-1\nPurpose: p\nKind: %s\n## Done when\n\n1. x\n" % kind)
@@ -106,18 +107,17 @@ for name in ("newthing", "bugfix"):
     pth = os.path.join(with_tasks, ".loop", "tasks", name + ".md")
     body = open(pth).read()
     open(pth, "a").write("Frozen: %s r1 2026-11-22\n" % hashlib.sha256(body.encode()).hexdigest())
-check("Unreviewed" in said(fit.goal_format, starts, SimpleNamespace(task="newthing"), good), "DOC-27 freezing a new-work goal whose task serves an Unreviewed feature is refused")
-check(said(fit.goal_format, starts, SimpleNamespace(task="bugfix"), good) == "", "DOC-27 a bug-fix goal is allowed against an Unreviewed feature")
+check("Unreviewed" in said(GF, starts, SimpleNamespace(task="newthing"), good), "DOC-27 freezing a new-work goal whose task serves an Unreviewed feature is refused")
+check(said(GF, starts, SimpleNamespace(task="bugfix"), good) == "", "DOC-27 a bug-fix goal is allowed against an Unreviewed feature")
 open(os.path.join(with_tasks, "docs", "wiki", "P.md"), "w").write("- ZZ-1: **Reviewed 2026-11-22** a feature\n")
-check(said(fit.goal_format, starts, SimpleNamespace(task="newthing"), good) == "", "DOC-27 the same goal freezes once the feature is Reviewed")
-check(fit.head(SimpleNamespace(task="t1", release="v1.1.0")) == "- Task: t1\n- Release: v1.1.0\n" and "Release: none" in fit.head(SimpleNamespace(task="t1", release="")), "DEL-19 the goal file carries its Task and Release lines")
-text = proctree.TEMPLATE.format(goal="G", slug="s", touches="a", eta="1m", extra=fit.head(SimpleNamespace(task="t1", release="")), done="1. Given a, when b, then c.")
+check(said(GF, starts, SimpleNamespace(task="newthing"), good) == "", "DOC-27 the same goal freezes once the feature is Reviewed")
+text = proctree.TEMPLATE.format(goal="G", slug="s", touches="a", eta="1m", task="t1", release="none", done="1. Given a, when b, then c.")
 check("\n- Task: t1\n- Release: none\n\n## Done lines" in text and text.index("## Done lines") < text.index("1. Given"), "DEL-19 the goal file is title, slug, touches, ETA, task, release, then the done lines")
 copies = {open(os.path.join(root, "skills", name, "scripts", "proctree.py"), "rb").read() for name in ("workflow-delivery", "workflow-monitoring", "workflow-regression")}
 check(len(copies) == 1, "DEL-19 the three proctree.py copies stay identical")
-skipped = SimpleNamespace(no=no, load=lambda slug: {"flow": {"review": "skipped no reviewer"}})
+skipped = SimpleNamespace(no=no, load=lambda slug: {"flow": {"review": "skipped no reviewer"}}, fit=fit, read=lambda p: "", goal_file=lambda slug: "")
 check("review step was skipped" in said(role.requirement_gate, skipped, "g"), "DEL-19 a goal that skipped its review cannot open its pull request")
-GOODFILE = proctree.TEMPLATE.format(goal="G", slug="s", touches="a", eta="1m", extra=fit.head(SimpleNamespace(task="t1", release="")), done="1. Given a, when b, then c.")
+GOODFILE = proctree.TEMPLATE.format(goal="G", slug="s", touches="a", eta="1m", task="t1", release="none", done="1. Given a, when b, then c.")
 gfile = os.path.join(plain, "s.md")
 open(gfile, "w").write(GOODFILE)
 done_review = SimpleNamespace(no=no, load=lambda slug: {"flow": {"review": "done"}}, guards=SimpleNamespace(extra=lambda d, s: {"findings": []}), state_dir=lambda: "", SKILLS="/nowhere", run=lambda *a: None, config=lambda: {"base": "main"},
@@ -134,10 +134,10 @@ check("lacks" in said(role.requirement_gate, done_review, "g"), "DEL-19 a goal f
 adopt_args = SimpleNamespace(slug="s")
 adopting = SimpleNamespace(no=no, root=lambda: plain, goal_file=lambda slug: gfile)
 open(gfile, "w").write(GOODFILE)
-fit.goal_format(adopting, adopt_args, good)
+GF(adopting, adopt_args, good)
 check(adopt_args.task == "t1", "DEL-19 an adopted goal takes the task its goal file names")
 open(gfile, "w").write(GOODFILE.replace("- Task: t1\n", ""))
-check("no task" in said(fit.goal_format, adopting, SimpleNamespace(slug="s"), good), "DEL-19 an adopted goal file with a Release line and no task is refused")
+check("no task" in said(GF, adopting, SimpleNamespace(slug="s"), good), "DEL-19 an adopted goal file with a Release line and no task is refused")
 block = lambda body: "x\n<!-- steps -->%s<!-- /steps -->\n" % body
 check(sections.stale("P", block(sections.steps())) == [] and sections.stale("P", "no block here") == [], "DEL-19 a drawn steps block equal to the code's steps is fresh")
 check(bool(sections.stale("P", block("Steps: idea, plan."))) and "DEL-19.4" in sections.stale("P", block("Steps: idea, plan."))[0][2], "DEL-19 a step added to the code without regenerating the block fails the docs check")

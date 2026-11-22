@@ -127,7 +127,9 @@ TEMPLATE = """# {goal}
 - Slug: {slug}
 - Touches: {touches}
 - ETA: {eta}
-{extra}
+- Task: {task}
+- Release: {release}
+
 ## Done lines
 
 Frozen. A wrong done line needs a new goal.
