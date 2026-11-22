@@ -61,7 +61,7 @@ def argument(ref):
     return gate if not parts else parts.group(2) if ref == parts.group(1) else "false"
 
 
-def run(ref):
+def run(ref, value=None):
     """The block once on this ref, its row failing: (exit code, output, the gh calls it made)."""
     work = tempfile.mkdtemp(prefix="issue-gate-")
     log, shim = os.path.join(work, "gh.log"), os.path.join(work, "bin")
@@ -80,7 +80,8 @@ def run(ref):
     open(log, "w").close()
     env = dict(os.environ, PATH=shim + os.pathsep + os.environ["PATH"], GH_LOG=log, GH_TOKEN="x", REGRESSION_TARGET="land", GITHUB_REF=ref,
                REGRESSION_RESULTS=os.path.join(work, "res.tsv"), LOOP_PRIVATE_NAMES=os.devnull)
-    done = subprocess.run([sys.executable, "-", argument(ref)], input=source, cwd=work, env=env, capture_output=True, text=True, timeout=120)
+    given = argument(ref) if value is None else value  # an empty L leaves `python3 - $L` with no argument, as the shell does
+    done = subprocess.run([sys.executable, "-"] + ([given] if given else []), input=source, cwd=work, env=env, capture_output=True, text=True, timeout=120)
     return done.returncode, done.stdout + done.stderr, [x.strip() for x in open(log).read().splitlines()]
 
 
@@ -91,5 +92,11 @@ for ref, writes in (("refs/heads/main", True), ("refs/heads/some-branch", False)
         check(any(x.startswith("issue create") for x in wrote), "on %s the failing row's issue is written (writes: %s)" % (ref, wrote[:2]))
     else:
         check(not wrote and "red" in out and code == 1, "on %s the row runs and fails the run but no issue call is made (writes: %s, exit %d)" % (ref, wrote[:2], code))
+for label, value in (("false", "false"), ("empty", "")):
+    code, out, calls = run("refs/heads/some-branch", value)
+    wrote = [x for x in calls if x.startswith(WRITES)]
+    check(not wrote and code == 1 and "red" in out and "Traceback" not in out and "usage" not in out.lower(),
+          "with L=%r the block takes it as not live: the row runs and fails the run as usual, no write call, no error on the argument (writes: %s, exit %d)" % (value, wrote[:2], code))
+    check(all(x.startswith("api ") for x in calls), "with L=%r every gh call the block makes is an api read (%d calls)" % (value, len(calls)))
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
