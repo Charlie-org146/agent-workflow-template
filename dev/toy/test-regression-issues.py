@@ -92,8 +92,8 @@ def issue(number, row, skipped=False):
 def block_source():
     """(does the step pass --live, the CI block of the written workflow cut out the way the bash toys do)."""
     text = actions.render("17 */4 * * *")
-    found = re.search(r"python3 - (--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S)
-    return bool(found.group(1)), NL.join(line[10:] for line in found.group(2).split(NL))
+    found = re.search(r"python3 - (--live |\$\{\{ github\.ref == 'refs/heads/main' && '--live' \}\} )<<'PY'\n(.*?)\n\s+PY\n", text, re.S)
+    return "--live" in found.group(1) and "refs/heads/main" in found.group(1), NL.join(line[10:] for line in found.group(2).split(NL))
 
 
 def in_repo(gh, argv, env, action):
@@ -153,7 +153,7 @@ def local(gh, outcome):
         subprocess.run = real_run
 
 
-check(block_source()[0], "the written workflow starts its issue block with --live")
+check(block_source()[0], "the written workflow passes --live to its issue block, on main only")
 for label, run_it in (("the CI block", lambda g: ci(g, "fail", "--live")), ("the local run", lambda g: local(g, "FAIL"))):
     gh = FakeGh([issue(3700, "red", True), issue(2596, "red", True), issue(3119, "red", True)])
     run_it(gh)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Actions workflow regression.py writes: runs the rows on a schedule, one issue per failing row."""
+"""The Actions workflow regression.py writes: the rows on a schedule, one issue per failure."""
 import json
 import os
 import re
@@ -71,7 +71,7 @@ jobs:
           REGRESSION_TARGET: ${{ inputs.target }}
           REGRESSION_CLEANUP: ${{ inputs.cleanup }}
           REGRESSION_LEVELS: "@LEVELS@"
-          LOOP_PRIVATE_NAMES: /dev/null  # no list in CI: an empty one (o675)
+          LOOP_PRIVATE_NAMES: /dev/null  # CI: no list (o675)
           REGRESSION_SHARD: "${{ matrix.shard }}/@SHARDS@"
         run: |
           here=$(mktemp -d)
@@ -80,7 +80,7 @@ jobs:
           TESTS_PY_EOF
           python3 -I "$here/tests.py" list --tsv > "$here/map.tsv" 2>/dev/null || true
           export REGRESSION_MAP="$here/map.tsv"
-          python3 - --live <<'PY'
+          python3 - ${{ github.ref == 'refs/heads/main' && '--live' }} <<'PY'
           import json, os, re, subprocess, sys, tempfile, time, urllib.parse
           def rows(path):
               if not os.path.exists(path):
