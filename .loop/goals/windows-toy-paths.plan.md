@@ -16,16 +16,19 @@ back to full depth and to top.
 ## Build steps (after the plan gate)
 
 1. Both link toys: after `dw=` is set, if it holds `/Users/` (only native Windows), make a junction `C:/loop-toy-$$` to `$d`
-   with `cmd //c mklink /J` (first removing a stale one of that name), set `dw` to the junction path, and register
+   with `cmd //c mklink //J "$(cygpath -w C:/loop-toy-$$)" "$(cygpath -w "$d")"` (`//J` so MSYS does not rewrite the flag; both names
+   as backslash Windows paths; target is the real fixture dir; first removing a stale one of that name; then a `[ -d ]` check), set `dw` to the junction path, and register
    `toy_on_exit 'cmd //c rmdir "C:\loop-toy-$$"'`. Removal is `rmdir` only, never `rm -rf`, which could follow the junction
    into the real fixture. If mklink fails the toy prints a FAIL naming it (never a silent skip).
-2. test-home-guard.py reg-toy case: write the path with forward slashes (`d=${d//\//}` before printf).
+2. test-home-guard.py reg-toy case: write the path with forward slashes: bash `d=${d//\//}` before printf, which inside the Python
+   single-quoted source line 73 is written with doubled backslashes so bash receives exactly `${d//\//}` (a bare `${d//\//}` would delete every slash).
 3. Control in test-docs-link.sh: a page whose PRD link holds a literal `/Users/x/prd.md` line; `docs.py check` must report the
-   DOC-19 finding ("PASS: a /Users/ path in a link is still flagged (DOC-19)"). Runs on every platform.
+   `LINKS ... DOC-19 ... outside this repo` text, not just any finding ("PASS: a /Users/ path in a link is still flagged (DOC-19)"). Runs on every platform.
 
 ## Test per done line (no new rows: the existing rows run these toys)
 
-1. link-page-passes and gate-untouched-not-refused: seen red on the PC (issues #5763, #5765), expected green after.
+1. The "merge.py runs finds nothing" PASS string exists only in test-link-form-note.sh; for test-docs-link.sh the check is no FAIL and
+   its own PASS lines. link-page-passes and gate-untouched-not-refused: seen red on the PC (issues #5763, #5765), expected green after.
 2. home-guard-catches-leak: seen red on the PC, green after.
 3. The control PASS line in test-docs-link.sh, which link-page-passes already requires to have no FAIL. Net rows 0.
 
@@ -47,3 +50,7 @@ no data (deleting it with rmdir leaves the target alone), the next run removes a
 ## Out of scope
 
 make.sh, DOC-19, the home guard, every product script, the known list, G2's toys (cleanup, restart-tick).
+
+## Review
+
+Red-team (fresh reviewer, run from this worktree: pwd /c/Users/chang/code/agent-workflow-template/.git/loop/worktrees/windows-toy-paths, HEAD 43e9d11a3): CHANGES on escaping, mklink quoting, the PASS string and the control text; all four are folded in above. No product file is needed.
