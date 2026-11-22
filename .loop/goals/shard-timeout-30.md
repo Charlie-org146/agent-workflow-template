@@ -40,6 +40,8 @@ Raises the pull-request shard job's time limit from 20 to 30 minutes at the gene
 
 **The stale clause fix (named, approved by operation).** The case's existing clause expected `shard: [0, 1, 2, 3, 4, 5, 6, 7]`, but the generated file has had the tree cell (`[0, 1, 2, 3, 4, 5, 6, 7, tree]`) since TD504, so `ls-narrow-triggers` was already red on main. The clause now expects the tree cell. This PR merges before fix-5727's PR (#5772), which needs this patch to go green, so no `ls-narrow-triggers` known row exists on main when this merges and nothing is removed here; fix-5727 removes the row itself after it merges main up and the row passes. #4061 is not closed by this PR.
 
+**Known row added (owner o760).** `.loop/regression-known.tsv` gains `defect-categories`: it fails on main (order-dependent: it runs after a row writes regression-runs.tsv) and stays known until its fix, which lands right after the v1.1.0 cut and removes the entry, see #5774.
+
 **Depth.** The plan ran at condensed depth for this goal only (TD850): the change is one generator line plus one assertion, so a full multi-round review costs far more than it can find. The plan gate recorded one BREAK (principle 3: DEL-17's 5-minute clock against 30), accepted on the owner's record o759 (`plan-accept`).
 
 **The plain limit.** Raising the limit does not make shard (1) faster. If it needs more than 30 minutes, the next fix is the shard balance, not the limit.
