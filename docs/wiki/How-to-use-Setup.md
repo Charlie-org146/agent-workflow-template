@@ -179,6 +179,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds a flow step may run when the flow file sets none; 0 is built-in. | set "step_limit" in .loop/config.json | `0` | default |
+| `plan_levels` | Levels {small|normal|large: {needs, minutes}}, defaults 10, 30, 45 min; also guard_log, fault_codes, review_command, fallback_approved. | set "plan_levels" in .loop/config.json | `{}` | **overridden:** `{"fallback_approved": {"id": "o807", "release": "v1.1.0"}}` |
 | `goal_levels` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). | set "goal_levels" in .loop/config.json | `land` | default |
 | `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
 | `machine_setup` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. | set "machine_setup" in .loop/config.json | `[]` | default |

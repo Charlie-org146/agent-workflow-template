@@ -5,10 +5,10 @@ usage: flow.py SLUG STEP [--note TEXT] [--wait SECONDS] [--limit SECONDS]
 
 STEP is idea, plan, build, review, qa, ship, pr or release. A private file, ~/.workflow-loop/flow.json (or $LOOP_FLOW),
 names a default suite under "suite" and, under "steps", a skill for any one step. It also names the command that runs
-them, the environment that makes them run unattended, and a probe that proves it. Each call waits a short while and
+them, the environment that makes them run unattended, and a probe that proves it. Each call waits briefly and
 prints RUNNING (run the same command again) or NEXT (the goal.py line that records the step). Nothing here approves,
-merges or pushes. It refuses outside a worker (LOOP_ROLE=worker) and prints what the operation session sent the worker.
-In a worker session (the run's worker is "session") it starts no agent: it prints IN SESSION with the skill to invoke
+merges or pushes. It refuses outside a worker (LOOP_ROLE=worker); it prints what the operation session sent.
+In a worker session (worker "session") it starts no agent: it prints IN SESSION with the skill to invoke
 and the reply path, then NEXT. A step's first call past the goal's ETA or budget is refused.
 """
 import argparse
@@ -132,7 +132,7 @@ def RUNS():
 def step_prompt(spec, args):
     skill = skill_of(spec, args.step)
     text = PROMPT.format(skill=skill, step=args.step, slug=args.slug, branch=git("branch", "--show-current"),
-                         purpose=PURPOSE[args.step].format(slug=args.slug, lane=role.lane_text()),
+                         purpose=fit.plan_ask(args, PURPOSE[args.step]).format(slug=args.slug, lane=role.lane_text()),
                          note="The owner said: " + args.note + "\n" if args.note else "",
                          depth=depth_rule(args.step, role.goal_state(RUNS(), args.slug), RUNS())).rstrip()
     if skill == BUILTIN:
@@ -315,6 +315,7 @@ def main():
             open(base + ".ran", "w").close()
             print("NEXT: goal.py record %s %s --file %s" % (args.slug, args.step, reply))
             return 0
+    if fit.plan_hold(args, runs, reply, job): return 0
     if not os.path.exists(job) and in_session(args, runs, reply, base):
         return 0
     if not os.path.exists(job):

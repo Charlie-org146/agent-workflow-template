@@ -249,6 +249,11 @@ def failed_try(g, state, why, step, fix):
         g.save(state, "lane died, not counted (%d of 3)" % state["free"])
         print("TRY NOT COUNTED (free rerun %d of 3; the next death counts)\nNEXT: run the same command again" % state["free"])
         return
+    if step == "plan" and not state.get("plan_free") and fit.plan_fault(state):  # the planning tool's own refusal, not the goal's: one free retry, never more
+        state["plan_free"], state["step"] = 1, step
+        g.save(state, "the planning tool refused, not counted (1 of 1)")
+        print("TRY NOT COUNTED (the planning tool refused; its fallback runs on the next ask)\nNEXT: run the same command again")
+        return
     state["tries"] = state.get("tries", 0) + 1
     most = int(g.config().get("max_tries") or g.MAX_TRIES)
     if state["tries"] >= most:

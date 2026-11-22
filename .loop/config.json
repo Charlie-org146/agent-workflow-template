@@ -181,5 +181,8 @@
       "cadence": "with each health round",
       "runs": "mac:agent-workflow-template-health-regression"
     }
-  ]
+  ],
+  "plan_levels": {
+    "fallback_approved": {"id": "o807", "release": "v1.1.0"}
+  }
 }

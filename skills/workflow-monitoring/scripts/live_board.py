@@ -253,7 +253,7 @@ def render(root=None, at=None):
     cfg = bs.read_json(os.path.join(root, ".loop", "config.json")) or {}
     setting = "condensed" if cfg.get("review_depth") == "condensed" else "full"
     folder = os.path.join(loop_dir(root), "runs")  # depth decided and budget lines (board_lines.py section 4)
-    fits = lambda run: [p + x for p, x in (("    depth decided: ", bb.depth(run, setting, folder)), ("    ", bb.line(run, cfg, at, folder))) if x]
+    fits = lambda run: [p + x for p, x in (("    depth decided: ", bb.depth(run, setting, folder)), ("    ", bb.line(run, cfg, at, folder)), ("    ", bb.fit.plan_note(run) if bb.fit else "plan info unavailable: fit did not load")) if x]
     head = "LIVE BOARD  %s  %s  %s  health: %s" % (os.path.basename(root), graph.clock(at), version(root), health(root))
     if len(head) > WIDTH:
         head, tail = head.rsplit("  ", 2)[0], "  ".join(head.rsplit("  ", 2)[1:])

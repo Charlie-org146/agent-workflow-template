@@ -13,12 +13,14 @@ Takes one sentence and its done lines to a merged, released pull request (a draf
 | `workflow-release` | Skill | Releases a goal once it has a pull request. | Say "Merge it" for a ready pull request. |
 | `goal.py` | Command | Holds one goal's record: its done lines, the skill flow's steps and its pull request. | `python3 skills/workflow-delivery/scripts/goal.py <command> <slug>`. |
 | `flow.py` | Command | Runs one step of a goal's skill flow (idea, plan, review, qa, ship). | `python3 skills/workflow-delivery/scripts/flow.py SLUG STEP`, again until it stops printing `RUNNING`. |
+| `planlevel.py` | Command | Gives each frozen goal one plan level (small, normal, large), orders that level's reviews side by side, stamps each review's start and end, and says when the plan is ready. | `python3 skills/workflow-delivery/scripts/planlevel.py ready SLUG --wait 240`, once per turn; a session review runs `planlevel.py stamp SLUG REVIEW start` and `end`. |
 
 ### System diagram
 
 ```text
 [Skill: workflow-delivery | the agent session] --freezes the done lines--> [Command: goal.py | the worker's worktree]
 [Command: goal.py | the worker's worktree] --runs each step: idea, plan, build, review, qa, ship--> [Command: flow.py | the worker's worktree]
+[Command: flow.py | the worker's worktree] --the plan step orders the level's reviews, side by side--> [Command: planlevel.py | the worker's worktree]
 [Command: goal.py | the worker's worktree] --pr opens it--> (GitHub pull request)
 (GitHub pull request) --a ready pull request--> [Skill: workflow-release | the agent session]
 [Skill: workflow-release | the agent session] --merges and publishes--> (main and its release)
@@ -168,6 +170,17 @@ Each requirement and how it is delivered:
 - **Exit codes:** 0 when the step prints its `NEXT` line or `RUNNING`; nonzero when it refuses or the step fails.
 
 Backup and restore (the folded DEL-7): `machine.py backup DIR` copies the restorable state to a folder outside every repo and `machine.py restore DIR` puts it back on a new machine.
+
+### Command: planlevel.py
+- **Command:** `python3 skills/workflow-delivery/scripts/planlevel.py ready SLUG --wait N` | `stamp SLUG REVIEW start|end` | `issue SLUG`
+- **Other `plan_levels` keys:** `guard_log` (the planning tool's own log), `fault_codes` (default `snapshot`), `review_command` (the command that runs one review, given its name last) and `fallback_approved` (the approval the fallback is pinned to; set only on the base branch).
+- **Plan levels:** the plan step's prompt names the goal's level and its reviews (small: eng; normal: ceo, dx, eng; large: ceo, dx, eng, outside) and its minutes (10, 30, 45). The `plan_levels` setting in `.loop/config.json` on the base branch changes any of it without a code change; a plan past its limit is reported as missed, with its cause, on the board.
+- **Side by side:** with `plan_levels.review_command` set, a background runner starts every review at once and writes `<slug>.plan-reviews.json` (measured); a session worker launches them as concurrent subagents, each marking `stamp ... start` and `stamp ... end` (self-reported). `ready` prints `READY` once the runner's file is there or every review has ended, `WAITING (n seconds left)` otherwise, exit 3 past the limit, and `NOT READY` when the goal's run or plan record cannot be read, when a goal that has a plan level has no record of its reviews, or when a review's command failed. A goal with no plan level and no record is `READY` at once.
+- **When the planning tool refuses:** a denial that names the tool's own fallback in the tool's own guard log, for a goal named by the approved release's frozen brief, makes the next ask say to plan by hand with every review at full depth; the refusal is quoted in the goal's record (private words, home paths, emails, other URLs and tokens masked, each mark saying what it hid) and `issue SLUG` previews the one issue it opens; main's Actions run files it with `--from-body FILE --live`.
+- **Dry run:** `ready` and `issue SLUG` (the preview) change nothing; `issue --from-body FILE` without `--live` only previews.
+- **Reads:** the goal's run record and plan record in the common git dir's `loop/runs`, `plan_levels` from the base branch after a fetch, the planning tool's guard log, and the frozen release brief on the base branch.
+- **Writes:** `stamp` writes one small file per review in `loop/runs`; the ask writes the plan record there; nothing is committed. `issue --live` (main's Actions run only) creates one GitHub issue.
+- **Exit codes:** 0 after it prints (READY, or WAITING before the limit); 3 when `ready` is past the reviews' limit or cannot trust the record; 2 for a refused `stamp` (a bad name, or an `end` with no `start` in this attempt) or unknown arguments; 1 when `issue --live` could not look up or create the issue.
 
 ## URLs and deployments
 

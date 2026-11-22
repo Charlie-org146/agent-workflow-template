@@ -11,71 +11,8 @@ import time
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 STEPS = ("idea", "plan", "review", "qa", "ship")
-NOT_AREAS = ("docs/", ".loop/", "dev/toy/", "test/", "tests/")
-SURFACES = ("wiki", "milestones", "projects", "releases", "labels", "issues")
-SMALL_DONE = 3
-
-
-def deadline(held):
-    import lanekit  # lazy: other skills load fit.py by path, where lanekit is not importable
-    if "markers" not in held:
-        return held["started"] + held["limit"], "past its time limit of %ds" % held["limit"]
-    began = lanekit.mtime(held["rc"] + ".started")
-    if began:
-        return began + lanekit.lane_limit(held)[0], "past its time limit of %ds (%s)" % lanekit.lane_limit(held)
-    if held.get("prep_by"):  # before the first row the preparation budget rules
-        return held["prep_by"], "past its preparation budget"
-    at = held["started"]
-    if os.path.exists(held["rc"] + ".queued"):
-        at = max(at, lanekit.last_change(held.get("pool") or lanekit.lanes_dir()))
-    return at + 4 * held["limit"], "queued or planning past %ds" % (4 * held["limit"])
-
-
-def surface(path):
-    if not path.startswith("github:"):
-        return ""
-    name = path[len("github:"):]
-    return name if name in SURFACES else None
-
-
-def area(path, top=None):
-    clean = path.strip().strip("/")
-    if not clean or surface(path) != "" or any((clean + "/").startswith(item) for item in NOT_AREAS):
-        return None
-    parts = clean.split("/")
-    if len(parts) >= 2:
-        return "/".join(parts[:2])
-    return clean if top and os.path.isdir(os.path.join(top, clean)) else None
-
-
-def size_of(done_lines, touches, top=None):
-    count = len(done_lines)
-    if not touches:
-        return {"small": False, "why": "large: no touches declared"}
-    if any(surface(t) not in ("", None) for t in touches):
-        return {"small": False, "why": "large: it touches GitHub (%s)" % ", ".join(t for t in touches if t.startswith("github:"))}
-    areas = sorted({a for a in (area(t, top) for t in touches) if a})
-    small = count <= SMALL_DONE and len(areas) <= 1
-    return {"small": small, "why": "%s: %d done line%s, %s" % (
-        "small" if small else "large", count, "" if count == 1 else "s",
-        "%d areas (%s)" % (len(areas), ", ".join(areas)) if len(areas) > 1 else "one area" if areas else "no code area")}
-
-
-def sidecar(runs, slug):
-    try:
-        with open(os.path.join(runs, slug + ".extra.json")) as handle:
-            found = json.load(handle)
-    except (OSError, ValueError):
-        return {}
-    got = found.get("set") if isinstance(found, dict) else None
-    return got if isinstance(got, dict) else {}
-
-
-def view(state, runs=None):
-    merged = dict(state or {})
-    if runs and merged.get("slug"):
-        merged.update(sidecar(runs, merged["slug"]))
-    return merged
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # the board loads fit.py by path
+from fitkit import NOT_AREAS, SMALL_DONE, SURFACES, area, deadline, main_here, next_command, off_reply, off_rows, pr_open, sidecar, size_of, surface, view  # noqa: E402,F401
 
 
 def depth_for(setting, seen):
@@ -184,12 +121,6 @@ def resume_at(state, moved=None):
     return left[0]
 
 
-def next_command(state, step):
-    slug = state.get("slug", "SLUG")
-    return {"pr": "goal.py pr %s" % slug, "build": "goal.py step %s build, then flow.py %s review" % (slug, slug)}.get(
-        step, "flow.py %s %s" % (slug, step))
-
-
 def again(state, step):
     later = list(STEPS[STEPS.index(step):])
     cleared = [s for s in later if s in (state.get("flow") or {})]
@@ -268,8 +199,68 @@ def cmd_show(g, args):
     print(json.dumps(state, indent=2))
 
 
+def plan_level(lines, touches, g):
+    try:
+        import planlevel
+        return planlevel.level_of(lines, touches, g.root(), planlevel.config(g.root()))
+    except Exception as why:  # a fault in the optional plan code never stops a freeze
+        return {"level": "large", "rule": "plan info unavailable: " + type(why).__name__}
+
+
+def plan_fault(state):
+    try:
+        import planlevel
+        return planlevel.fault_now(state["slug"])
+    except Exception:
+        return False
+
+
+def plan_keep(state, step):
+    try:
+        import planlevel
+        planlevel.record(state["slug"], state, step)
+        state.pop("plan_failed", None)
+    except Exception as why:  # an optional record never stops a goal, but its failure is stored and shown, never swallowed
+        state["plan_failed"] = "plan info unavailable: %s; the goal record is unaffected; report it as a finding" % type(why).__name__
+
+
+def plan_note(run):
+    try:
+        import planlevel
+        return planlevel.note(run["slug"], run) + ("\n    " + run["plan_failed"] if run.get("plan_failed") else "")
+    except Exception as why:
+        return "plan info unavailable: %s; the goal record is unaffected; report it as a finding" % type(why).__name__
+
+
+def plan_ask(args, base):
+    if args.step != "plan":
+        return base
+    try:
+        import planlevel
+        return planlevel.ask(args.slug, base)
+    except Exception:  # the same prompt as before DEL-22
+        return base
+
+
+def plan_hold(args, runs, reply, job):
+    try:
+        import planwait
+        return planwait.hold(args, runs, reply, job)
+    except Exception:  # no hold: the hand-off is as it was before DEL-22
+        return False
+
+
+def plan_block(seen):
+    try:
+        import planlevel
+        return "\n" + planlevel.block(seen["slug"]) + "\n" if planlevel.block(seen["slug"]) else ""
+    except Exception:
+        return ""
+
+
 def keep(g, state, step, text):
     state.setdefault("verdicts", {})[step] = verdicts(text)
+    plan_keep(state, step)
     if step == "plan":
         state["plan_head"] = g.git("rev-parse", "HEAD")
 
@@ -314,7 +305,7 @@ def frozen_fields(g, args, lines, touches):
         print("WARN: the goal text says %s; the operation records it with goal.py set %s --bump %s --why ..." % (
             says_bump(args.goal), args.slug, says_bump(args.goal)))
     held = budget_of(g.config())
-    return {"size": size_of(lines, touches, g.root()), "budget": held,
+    return {"size": size_of(lines, touches, g.root()), "plan": plan_level(lines, touches, g), "budget": held,
             "eta": monitor("auto", True).eta_new(g.root(), args.slug, lines, touches, held["minutes"], g.config()),
             "preflight": monitor("replan", True).preflight_new(g.root(), g.config(), held["minutes"], touches)}
 
@@ -326,22 +317,6 @@ def plan_ahead(state, runs, step):
 def eta_line(fields):
     eta = fields.get("eta") or {}
     return "%d active minutes (%s)" % (eta.get("minutes", 0), eta.get("basis", "none"))
-
-
-def pr_open(g, state, base, info, body):
-    for wait in (2, 5, 0):
-        pushed = g.run(["git", "push", "-u", "origin", state["branch"]])
-        if not pushed.returncode:
-            break
-        time.sleep(wait)
-    if pushed.returncode:
-        g.no("push failed:\n" + pushed.stderr)
-    if info.get("state") == "OPEN":
-        return info["url"]
-    path = g.state_path(state["slug"]) + ".body"
-    g.write(path, body)
-    done = g.run(["gh", "pr", "create", "--base", base, "--head", state["branch"], "--title", state["goal"][:70], "--body-file", path], check=True)
-    return done.stdout.strip().splitlines()[-1]
 
 
 def pr_text(g, state):
@@ -395,6 +370,7 @@ def pr_body(goal_text, seen, cfg, setting, scan_note, warnings, base_note=""):
     parts = ["%dm" % held["minutes"] if held["minutes"] else "", "%s tokens" % format(held["tokens"], ",") if held["tokens"] else ""]
     body = goal_text + "\n## Result\n\nSkill flow:" + "".join(step_line(step, seen) for step in STEPS) + "\n"
     body += seen.get("pr_lane", "")
+    body += plan_block(seen)
     body += "\nReview depth: %s (%s).\n" % (depth, why)
     body += "Budget: %s (%s); spent: %s.\n" % (", ".join(p for p in parts if p) or "none set", source, tokens_text(seen))
     body += scan_note + "\n"
@@ -408,20 +384,8 @@ def pr_body(goal_text, seen, cfg, setting, scan_note, warnings, base_note=""):
     return body
 
 
-def off_rows(text):
-    bad, un = re.findall(r"^FAIL (\S+)", text, re.M), re.findall(r"^UNPROVEN ([^\s:]+)", text, re.M)
-    return un if un and not bad and set(un) <= set(re.findall(r"^SKIPPED (\S+)", text, re.M)) else []
-
-
 def off_line(text):
     return "\nLANE_OWED %s: skipped on this platform and never seen failing" % ", ".join(off_rows(text))
-
-
-def off_reply(lane_line):
-    m = re.search(r"^LANE_OWED (.+?):", lane_line, re.M)
-    return m and ("%s\nPENDING: waiting for off-platform proof of %s. On a Linux or Mac runner run regression.py red ID --break "
-                  "CMD for each, then here regression.py red ID --off-platform --runner NAME --commit SHA; then answer go on\nSTEP: pending\n"
-                  % (lane_line, m.group(1))) or ""
 
 
 def pr_fail(g, state, head, line, ids):
@@ -433,13 +397,6 @@ def pr_fail(g, state, head, line, ids):
     g.failed_try(state, "regression lane failed: " + (", ".join(ids) or line.splitlines()[-1][:200]), "build",
                  "fix the failing rows, commit, then run pr again")
     return 1
-
-
-def main_here(g, args):
-    gitdir, common = (os.path.realpath(g.git("rev-parse", flag)) for flag in ("--git-dir", "--git-common-dir"))
-    if gitdir == common and os.path.isdir(os.path.join(common, "loop", "worktrees")):
-        g.no("--here in the repo's main checkout would leave it on a loop branch. Fix: git worktree add -b loop/%s "
-             "%s origin/main, then run goal.py new there" % (args.slug, os.path.join(common, "loop", "worktrees", args.slug).replace(os.sep, "/")))
 
 
 def owed(root, text):

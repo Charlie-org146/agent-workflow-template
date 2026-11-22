@@ -191,7 +191,6 @@ held-time-stopped	PASS	2026-11-14
 hlt2-twelve-groups	PASS	2026-11-19	
 hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-controls-fire	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-hlt6-refused	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
 home-guard-catches-leak	PASS	2026-11-18	
 home-header-both	PASS	2026-11-14	
@@ -222,7 +221,6 @@ lane-walk-skips-node-modules	PASS	2026-11-14
 lanes-abs-not-walked	PASS	2026-11-14	
 lanes-declared	PASS	2026-11-22	
 lanes-headers	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-lanes-pr-affected	PASS	2026-11-22	
 lanes-reuse	PASS	2026-11-22	
 lanes-trace	FAIL	2026-11-10	
 lanes-trace-check	PASS	2026-11-10	
