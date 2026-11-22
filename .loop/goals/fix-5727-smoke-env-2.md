@@ -1,7 +1,7 @@
 # Fix #5727: the full regression workflow's matrix-smoke job fails on main at the adopt step with SETUP_PRIVATE_NAME because #5682 made the private-name hook fail closed when no list exists and gave only the regression step an empty list (owner o712, Operation TD687). Re-frozen as fix-5727-smoke-env-2 to widen the Touches: the matrix-smoke job is generated from lanes_cli.py MATRIX_JOB, the setup skill lists its refusal codes, and the Tests page is rendered
 
 - Slug: fix-5727-smoke-env-2
-- Touches: .github/workflows/regression.yml, skills/workflow-setup/scripts/setup.py, dev/toy, .loop/regression.tsv, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-setup/SKILL.md, docs/wiki
+- Touches: .github/workflows/regression.yml, skills/workflow-setup/scripts/setup.py, dev/toy, .loop/regression.tsv, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-setup/SKILL.md, docs/wiki, .loop/regression-known.tsv
 - ETA: 225 active minutes (estimate 179m plus a 25% margin)
 
 ## Done lines
@@ -40,3 +40,5 @@ Fixes #5727.
 2. Whether `regression.py workflow` should patch an existing consumer repo's matrix-smoke job: it appends the job only when absent, so a repo that already holds the old job does not get the env line.
 
 **Follow-ups for the owner (none changed here):** `release.py:244` and `workflow-health` `controls.py:464` read the hook's exit codes the same way `setup.py` did (any nonzero is a hit); `private.py`'s own repair text says "an empty file passes", but an empty list scans nothing; `setup.py`'s call to the hook has no parent-side timeout (the hook has its own 30-second alarm on POSIX only); a crash inside `private.py` that exits 1 still reads as a private name; a missing sibling `private.py` skips the scan silently (existing behavior).
+
+**Merged-in work by the toy identity.** The branch holds the known-list row for `ls-narrow-triggers` (owner o711, #4061) in `.loop/regression-known.tsv`, from commit 546b5500f, whose author is the leaked toy identity "Toy" (#5749), not a person. The history is left as it is.
