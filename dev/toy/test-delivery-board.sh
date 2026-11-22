@@ -19,6 +19,7 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 d=${1:-$(mktemp -d)}; rm -rf "${d:?}"; mkdir -p "$d"
 export HOME="$d/home" LOOP_BOARD_HEALTH=green LOOP_FLOW="$d/flow.json"; mkdir -p "$HOME"
 export USERPROFILE="$HOME"
+echo '{"projects": {"/": {"hasTrustDialogAccepted": true}}}' > "$HOME/.claude.json"  # #5741: no readable trust file trusts nothing, so bind needs one
 "$here/dev/toy/make.sh" "$d" >/dev/null || exit 1
 S="$here/skills/workflow-monitoring/scripts"
 goal="python3 $here/skills/workflow-delivery/scripts/goal.py"; SE="python3 $S/sessions.py"
