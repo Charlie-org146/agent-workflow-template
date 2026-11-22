@@ -124,7 +124,8 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
         json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
         code, said = bind()
         want = "REFUSED: ask the owner to trust %s (FOLDER_TRUST): open it once in Claude Code; %s must be readable." % (tree, claude)
-        check("a %s trust file trusts nothing: bind is refused with the whole plain reason" % shape, code != 0 and want in said)
+        sep = lambda t: t.replace("/", os.sep)  # Windows separator effect: expanduser keeps "/" in "~/.claude.json" where os.path.join gives "\"; nothing else is normalised
+        check("a %s trust file trusts nothing: bind is refused with the whole plain reason" % shape, code != 0 and sep(want) in sep(said))
         check("and the %s trust file is never written" % shape, (open(claude).read() if os.path.isfile(claude) else None) == before and (shape == "missing") != os.path.exists(claude))
     claude = os.path.join(repo, ".claude.json")
     json.dump({"projects": {os.path.join(repo, "elsewhere"): {"hasTrustDialogAccepted": True}}}, open(claude, "w"))
