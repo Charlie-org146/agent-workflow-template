@@ -83,13 +83,17 @@ ops1_ok() {  # an Operation page holds OPS-1 as the approved rewrite (Reviewed, 
     && grep -q '^  - \*\*Layers:\*\* top, one session per machine, workers; top only governs\. \[OPS-1\]' "$1" \
     && awk '/^### OPS-1$/ {on = 1; next} /^### / {on = 0} on' "$1" | grep -Eq '^\| r[0-9]+ \| [0-9-]+ \| One operation session governs the loop for me <br>'
 }
-ops1_page="$here/docs/wiki/Operation.md"
+# The fixture is the live Operation page with its OPS-1 line holding the Reviewed mark the check below requires: the live page may hold
+# Unreviewed (a feature is marked Reviewed only by the owner's words), so the mark is set here, in a copy, and nothing else is changed.
+sed 's/^- OPS-1: \*\*Unreviewed\*\* /- OPS-1: **Reviewed 2026-11-14** /' "$here/docs/wiki/Operation.md" > "$T/ops1-fixture.md"
+ops1_page="$T/ops1-fixture.md"
 check "OPS-1 is the approved rewrite on the Operation page, with its revision" 'ops1_ok "$ops1_page"'
 sed 's/^- OPS-1: .*$//' "$ops1_page" > "$T/ops1-none.md"
 sed 's/^- OPS-1: \*\*Reviewed [0-9-]*\*\* One operation session governs.*$/- OPS-1: **Unreviewed** One command starts the operation session/' "$ops1_page" > "$T/ops1-old.md"
 sed 's/^### OPS-1$/### OPS-1x/' "$ops1_page" > "$T/ops1-norev.md"
 sed 's/^| r\([0-9]*\) | \([0-9-]*\) | One operation session governs the loop for me/| r\1 | \2 | One command starts the operation session/' "$ops1_page" > "$T/ops1-revold.md"
-check "negative control: a page with no OPS-1 line, the pre-consolidation OPS-1 line, no OPS-1 revision, or an old revision text each fails" '! ops1_ok "$T/ops1-none.md" && ! ops1_ok "$T/ops1-old.md" && ! ops1_ok "$T/ops1-norev.md" && ! ops1_ok "$T/ops1-revold.md" && ! cmp -s "$ops1_page" "$T/ops1-none.md"'
+sed 's/^- OPS-1: \*\*Reviewed [0-9-]*\*\* /- OPS-1: **Unreviewed** /' "$ops1_page" > "$T/ops1-unrev.md"
+check "negative control: a page with no OPS-1 line, the pre-consolidation OPS-1 line, no OPS-1 revision, an old revision text, or an Unreviewed OPS-1 line each fails" '! ops1_ok "$T/ops1-none.md" && ! ops1_ok "$T/ops1-old.md" && ! ops1_ok "$T/ops1-norev.md" && ! ops1_ok "$T/ops1-revold.md" && ! ops1_ok "$T/ops1-unrev.md" && ! cmp -s "$ops1_page" "$T/ops1-none.md"'
 fi
 
 echo "== a goal waits only for the goals it depends on"

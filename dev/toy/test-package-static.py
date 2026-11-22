@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # reads: dev/package.py
 """dev/package.py --static (the pull request check): the release's static rules without the --help pass or the ZIP.
-A 101st shipped file fails it on the file count, and so does the 105-file state main's release push once held; the real tree passes it;
+A shipped file over MAX_FILES fails it on the file count, and so does a state four files further over (the 105-file state main's release push once held, at the old cap of 100); the real tree passes it;
 a script that fails its own --help does not fail it (the full run still does)."""
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -10,6 +11,10 @@ import sys
 import tempfile
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+spec = importlib.util.spec_from_file_location("package", os.path.join(root, "dev", "package.py"))
+cap_of = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(cap_of)
+CAP = cap_of.MAX_FILES  # the cap the check enforces: read, never repeated here
 fails = 0
 
 
@@ -49,16 +54,16 @@ with tempfile.TemporaryDirectory() as tmp:
     code, out = package(tmp, "--static")
     base = len([l for l in out.splitlines() if l.startswith("PASS")]) and int(out.split("PASS: ")[1].split(" ")[0]) if code == 0 else 0
     check("a copy of the tree passes too (%d files)" % base, code == 0 and base >= 1)
-    add_files(tmp, 101 - base)
+    add_files(tmp, CAP + 1 - base)
     code, out = package(tmp, "--static")
-    check("a tree of 101 files fails the static rules on the file count", code == 1 and "Size: 101 files, at most 100 allowed" in out)
+    check("a tree of %d files fails the static rules on the file count" % (CAP + 1), code == 1 and "Size: %d files, at most %d allowed" % (CAP + 1, CAP) in out)
     add_files_more = 5 - 1
-    for n in range(100, 100 + add_files_more):
+    for n in range(CAP, CAP + add_files_more):
         path = os.path.join(tmp, "skills", "workflow-docs", "references", "more%d.md" % n)
         open(path, "w").write("extra\n")
         subprocess.run(["git", "-C", tmp, "add", path], capture_output=True, check=True)
     code, out = package(tmp, "--static")
-    check("the 105-file state replayed fails it", code == 1 and "Size: 105 files, at most 100 allowed" in out)
+    check("the %d-file state replayed fails it" % (CAP + 5), code == 1 and "Size: %d files, at most %d allowed" % (CAP + 5, CAP) in out)
 with tempfile.TemporaryDirectory() as tmp:
     copy_of_tree(tmp)
     script = os.path.join(tmp, "skills", "workflow-docs", "scripts", "counting.py")

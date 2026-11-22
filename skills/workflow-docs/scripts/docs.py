@@ -305,6 +305,16 @@ def cmd_check(args):
     return 0
 
 
+def restamp_own(root, slug, _=()):
+    """DOC-2: relock this goal's STALE pages; fails closed (#5797)."""
+    import audit
+    r = run([sys.executable, os.path.abspath(__file__), "check", "--own", "HEAD"], cwd=root)
+    if r.returncode not in (0, 1) or not re.search(r"^(DOCS OK|[A-Z]+ \S+:)", r.stdout, re.M):
+        sys.exit(r.stderr or "no check report")
+    only = {l.split()[1].rstrip(":") for l in r.stdout.splitlines() if l.startswith("STALE ") and l.split()[1:]}
+    return audit.relock(root, slug, only) if only else []
+
+
 def cmd_audit(args):
     import audit
     if args.relock:
