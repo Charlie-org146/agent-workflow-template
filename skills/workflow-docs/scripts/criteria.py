@@ -14,12 +14,10 @@ usage: criteria.py <command> [options]
                                --check only says which pages are stale; --tables leaves the Settings, Automation and
                                README blocks alone
 
-A feature page is a short PRD (references/commands.md): Review, Problem, Requirements, Non-goals, Success metrics, Tests.
 A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text <!-- reviewed HASH -->' (seal_of its text
-and sub-bullets; docs.py check fails when either changes), at most criteria_max lines (default
-CRITERIA_MAX_DEFAULT, .loop/config.json). An argument shaped like an ID is a requirement; any other is a page, whose PRD
-review prd.py writes. A row whose goal is '-' proves no requirement yet and is left out. render writes each Tests table and
-the full Tests page (render.py), printing WROTE per file. It runs git only.
+and sub-bullets; docs.py check fails when either changes), at most criteria_max lines. An argument shaped like an ID is
+a requirement; any other is a page (prd.py). A new-form feature's review needs the owner's record naming exactly that
+ID and adds its line to .loop/reviews.tsv (sections.reviewed). render writes each Tests table and the Tests page.
 """
 import argparse
 import datetime
@@ -372,6 +370,8 @@ def mark_all(args, make, page_change):
         if why:
             sys.exit("REFUSED: %s: %s. Nothing was changed." % (name, why))
         held[rel] = fresh
+    import sections
+    sections.reviewed(root, os.path.join(root, folder_of(root)), args.command, args.ids, args.owner_record, os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop"), day)
     write(root, held.items())
     log = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir")), "loop")
     os.makedirs(log, exist_ok=True)

@@ -153,6 +153,30 @@ RV = sub("**Unreviewed**", "**Reviewed 2026-11-22**")
 case("a Reviewed mark dated on or after the rule with no .loop/reviews.tsv line fails", RV, "FORMAT", "no line in .loop/reviews.tsv")
 case("the same mark with its line passes", RV, None, "", {"X-1": "o9"})
 case("a Reviewed mark from before the rule with no line is reported, not failed", sub("**Unreviewed**", "**Reviewed 2026-11-21**"), "NOTE", "no line in .loop/reviews.tsv")
+# DOC-27.5: the mark command's record check and the committed line
+import json
+d = tempfile.mkdtemp()
+os.makedirs(os.path.join(d, "wiki")); os.makedirs(os.path.join(d, ".loop")); os.makedirs(os.path.join(d, "common"))
+open(os.path.join(d, "wiki", "P.md"), "w").write(GOOD)
+rows = [("o1", "operation", "X-1"), ("o2", "operation", "X-1,X-2"), ("o3", "operation-top", "X-1")]
+open(os.path.join(d, "common", "owner-words.tsv"), "w").write("".join("%s\t2026-11-22T00:00:00Z\t%s\t%s\t%s\n" % (r, src, json.dumps("words"), ids) for r, src, ids in rows))
+def mark(ids, rec):
+    try:
+        s.reviewed(d, os.path.join(d, "wiki"), "review", ids, rec, os.path.join(d, "common"), "2026-11-22")
+        return ""
+    except SystemExit as e:
+        return str(e)
+def want(name, ok):
+    global fails
+    print(("PASS" if ok else "FAIL") + ": DOC-27 " + name)
+    fails += not ok
+out = mark(["X-1"], "o2")
+want("one record naming two IDs is refused for a new-form mark", "exactly X-1" in out and not os.path.exists(os.path.join(d, ".loop", "reviews.tsv")))
+want("a relayed record (not the owner's source) is refused", "exactly X-1" in mark(["X-1"], "o3"))
+want("typed words naming two IDs at once are refused", "exactly X-1" in mark(["X-1", "Z-9"], ""))
+want("an unknown record is refused", "exactly X-1" in mark(["X-1"], "o99"))
+want("an owner record naming exactly the ID passes and writes only ID, record and date", mark(["X-1"], "o1") == "" and open(os.path.join(d, ".loop", "reviews.tsv")).read() == "X-1\to1\t2026-11-22\n")
+want("an old-form requirement needs no line", mark(["Y-1"], "o2") == "" and open(os.path.join(d, ".loop", "reviews.tsv")).read() == "X-1\to1\t2026-11-22\n")
 sys.exit(1 if fails else 0)
 PY
 then :; else fails=1; fi

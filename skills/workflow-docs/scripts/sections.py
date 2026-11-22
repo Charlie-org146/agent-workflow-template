@@ -6,6 +6,7 @@ README and Home share the "front" row.
 """
 import os
 import re
+import sys
 import pageformat as pf
 
 KINDS = {
@@ -195,7 +196,7 @@ LANDS = "2026-11-22"  # DOC-27.5: a Reviewed mark dated on or after this day nee
 
 
 def blocks(text):
-    """DOC-27: (id, mark, date, lines) of each feature in the new form: a requirement line whose indented sub-bullets open with "### Problem"."""
+    """DOC-27: (id, mark, date, lines) of each new-form feature (sub-bullets open with ### Problem)."""
     out, cur = [], None
     for line in text.splitlines():
         found = FEAT.match(line)
@@ -210,7 +211,7 @@ def blocks(text):
 
 
 def part(lines, name):
-    """The lines under one "### name" sub-heading of a feature block, up to the next sub-heading."""
+    """The lines under one ### name of a feature block."""
     out, inside = [], False
     for x in lines:
         inside = x[4:] == name if x.startswith("### ") else inside
@@ -219,19 +220,19 @@ def part(lines, name):
 
 
 def feature(page, fid, mark, date, lines, slug, reviews):
-    """DOC-27 findings for one new-form feature: ("FORMAT", ...) fails the check, ("NOTE", ...) is reported only."""
+    """DOC-27 findings of one new-form feature: FORMAT fails, NOTE is reported."""
     at, out = "%s:%s" % (page, fid), []
     bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if hard or (mark == "Reviewed" and rule != "27.5") else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
     got = [x[4:] for x in lines if x.startswith("### ")]
     if got != list(HEADS):
-        bad("27.1", "the sections are %s, not %s in order" % (got, list(HEADS)), "use exactly Problem, Requirements, Non-goals, Success metrics, Reference, Revisions")
+        bad("27.1", "the sections are %s, not %s in order" % (got, list(HEADS)), "use the six sections in order")
     for name in ("Problem", "Non-goals"):
         if not [x for x in part(lines, name) if x.strip()]:
             bad("27.1", "%s is empty" % name, "write it, or None for Non-goals")
     head = lines[:lines.index("### Problem")] if "### Problem" in lines else []
     links = [pf.owner_repo(x) for x in head if x.startswith("Milestone:") and "/milestone/" in x]
     if not links or any(x != slug for x in links):
-        bad("27.1", "its Milestone line is missing or does not link a milestone of %s" % slug, "add 'Milestone: [name](https://github.com/%s/milestone/N)'" % slug)
+        bad("27.1", "its Milestone line is missing or does not link a milestone of %s" % slug, "add Milestone: [name](https://github.com/%s/milestone/N)" % slug)
     req = part(lines, "Requirements")
     cut = req.index("Non-functional") if "Non-functional" in req else len(req)
     if "Functional" not in req or "Non-functional" not in req or req.index("Functional") > cut:
@@ -252,28 +253,44 @@ def feature(page, fid, mark, date, lines, slug, reviews):
             metrics[n] = (mine[0][len("**Success metric %s.**" % n):].strip(), [x for x in seg if x.startswith("Target **")][0][9:-2], [x for x in seg if x.startswith("Today **")][0][8:-2])
         cases = seg[seg.index("Test cases") + 1:] if "Test cases" in seg else []
         if not [c for c in cases if c.strip() and not NUM.match(c) and not c.startswith("Non-functional")]:
-            bad("27.2", "requirement %s has no test case" % n, "add a 'Test cases' list with at least one case", False)
+            bad("27.2", "requirement %s has no test case" % n, "add a Test cases list", False)
     table = {}
     for x in part(lines, "Success metrics"):
         cells = [c.strip() for c in x.split("|")]
         if len(cells) == 4 and NUM.match(cells[0] + " x"):
             table[cells[0]] = (cells[1], cells[2], cells[3])
     if metrics and table != metrics:
-        bad("27.2", "the Success metrics table does not match the inline metrics (%s)" % ", ".join(sorted(set(table) ^ set(metrics)) or ["text differs"]), "make each table line equal its inline metric, target and today")
+        bad("27.2", "the Success metrics table does not match the inline metrics (%s)" % ", ".join(sorted(set(table) ^ set(metrics)) or ["text differs"]), "make each line equal its inline metric")
     ref = part(lines, "Reference")
     pairs = [(ref[i], ref[i + 1] if i + 1 < len(ref) else "") for i, x in enumerate(ref) if x in ("adopted", "adapted", "own", "reference")]
     if not pairs or [x for x in ref if re.fullmatch(r"[a-z]+", x) and x not in ("adopted", "adapted", "own", "reference")]:
-        bad("27.3", "Reference has no entry or an entry with no valid tag", "add 'adopted', 'adapted', 'own' or 'reference' above each source", False)
+        bad("27.3", "Reference has no entry or an entry with no valid tag", "tag each source adopted, adapted, own or reference", False)
     for tag, text in pairs:
         if not re.match(r"\[[^\]]+\]\(https?://[^)]+\)", text):
             bad("27.3", "a %s reference names no linked source" % tag, "start the entry with [source](https://...)", False)
     if mark == "Reviewed" and not reviews.get(fid):
-        bad("27.5", "the Reviewed mark has no line in .loop/reviews.tsv naming the typed record", "run the mark command on the machine that holds the owner-words ledger (until then this is a NOTE for a mark dated before %s)" % LANDS, bool(date) and date.split()[0] >= LANDS)
+        bad("27.5", "the Reviewed mark has no line in .loop/reviews.tsv naming the typed record", "run the mark command where the owner-words ledger is (a NOTE until %s)" % LANDS, bool(date) and date.split()[0] >= LANDS)
     return out
 
 
+def reviewed(root, folder, command, ids, rec, common, day):
+    """DOC-27.5: a new-form review needs the owner's record naming exactly that ID; its line (ID, record, date) joins .loop/reviews.tsv."""
+    if command != "review":
+        return
+    new = {b[0] for f in sorted(os.listdir(folder)) if f.endswith(".md") for b in blocks(open(os.path.join(folder, f), encoding="utf-8").read())}
+    mine = [i for i in ids if i in new]
+    ledger = os.path.join(common, "owner-words.tsv")
+    row = next((r for r in (x.rstrip("\n").split("\t") for x in open(ledger, encoding="utf-8")) if len(r) == 5 and r[0] == rec), None) if rec and os.path.exists(ledger) else None
+    for i in mine:
+        if (rec and not (row and row[4].split(",") == [i] and row[2] in ("operation", "owner"))) or (not rec and len(ids) > 1):
+            sys.exit("REFUSED: %s needs the owner's record naming exactly %s (record %s covers %s). Nothing was changed. Fix: sessions.py owner-words --from owner, for this one ID." % (i, i, rec or "none", row[4] if row else "nothing"))
+    if mine:
+        with open(os.path.join(root, ".loop", "reviews.tsv"), "a", encoding="utf-8") as fh:
+            fh.writelines("%s\t%s\t%s\n" % (i, rec or "typed", day) for i in mine)
+
+
 def features(folder, page, text):
-    """DOC-27 findings for the new-form features of one page (none for a page in the old form)."""
+    """DOC-27 findings for the new-form features of one page."""
     found = blocks(text)
     if not found:
         return []
