@@ -110,7 +110,7 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
     json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
     json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
     claude = os.path.join(repo, ".claude.json")
-    env = dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo)
+    env = {k: v for k, v in dict(os.environ, LOOP_ROLE="worker", HOME=repo, USERPROFILE=repo).items() if k != "CLAUDE_CONFIG_DIR"}
 
     def bind():
         done = subprocess.run([sys.executable, os.path.join(scripts, "sessions.py"), "bind", "g", "w1"], cwd=tree, capture_output=True, text=True, env=env)
@@ -155,6 +155,18 @@ if only in ("", "trust"):  # TD509: a folder with no trust entry in ~/.claude.js
         json.dump({"numStartups": 8, "projects": projects}, open(claude, "w"))  # what opening the folder once in the app writes
         code, said = bind()
         check("%s: after that one step, bind goes through" % kind, code == 0 and "w1" in said)
+    cfg = os.path.join(repo, "cfgdir")  # TD884: CLAUDE_CONFIG_DIR set means Claude keeps its trust file at $CLAUDE_CONFIG_DIR/.claude.json
+    os.makedirs(cfg, exist_ok=True)
+    env["CLAUDE_CONFIG_DIR"] = cfg
+    os.remove(os.path.join(repo, ".claude.json"))
+    json.dump({"slug": "g", "status": "queued", "worktree": tree}, open(os.path.join(loop, "runs", "g.json"), "w"))
+    json.dump({"w1": {"state": "free", "name": "w1"}}, open(os.path.join(loop, "session-pool.json"), "w"))
+    code, said = bind()
+    check("CLAUDE_CONFIG_DIR set with no file there: bind is refused, naming that path", code != 0 and tree in said and sep_name(os.path.join(cfg, ".claude.json")) in said.replace("\\", "/"))
+    json.dump({"projects": {tree: {"hasTrustDialogAccepted": True}}}, open(os.path.join(cfg, ".claude.json"), "w"))
+    code, said = bind()
+    check("CLAUDE_CONFIG_DIR set with a trusting file there and none in HOME: bind goes through", code == 0 and "w1" in said)
+    del env["CLAUDE_CONFIG_DIR"]
 if only in ("", "restart"):  # TD509: selfcheck names untrusted worktrees of bound sessions and worktree entries whose folder is gone
     repo, scripts = fresh(), os.path.join(root, "skills", "workflow-monitoring", "scripts")
     loop, tree = os.path.join(repo, ".git", "loop"), os.path.join(repo, "tree")
