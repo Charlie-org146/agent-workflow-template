@@ -26,9 +26,11 @@ def check(name, ok):
     fails += 0 if ok else 1
 
 
+ENV = dict(os.environ, GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")  # no global signing, hooks or identity reach the fixture
+
+
 def git(repo, *args):
-    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null"] + list(args),
-                          cwd=repo, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(["git"] + list(args), cwd=repo, capture_output=True, text=True, env=ENV).stdout.strip()
 
 
 def write(repo, path, text):
@@ -48,6 +50,8 @@ def page(name, body_text):
 def build():
     repo = tempfile.mkdtemp(prefix="restamp-idem-")
     git(repo, "init", "-q", "-b", "main")
+    for key, value in (("user.name", "t"), ("user.email", "t@t"), ("commit.gpgsign", "false"), ("core.hooksPath", os.devnull), ("core.autocrlf", "false")):
+        git(repo, "config", key, value)
     write(repo, ".loop/config.json", "{}\n")
     write(repo, ".loop/docs.tsv", "A\ta.py\nAB\tab.py\n")
     for n in ("a", "ab"):
@@ -59,7 +63,7 @@ def build():
 
 
 def restamp(repo, folder):
-    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True)
+    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True, env=ENV)
     if out.returncode:
         print("restamp-own exited %d: %s" % (out.returncode, out.stderr.strip()[-300:]))
     return out.stdout.split() if not out.returncode else ["EXIT-%d" % out.returncode]
@@ -105,7 +109,7 @@ def crash_case(folder):
     repo = build()
     write(repo, ".loop/config.json", "{not json")
     s0 = snap(repo)
-    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True)
+    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True, env=ENV)
     return out.returncode, snap(repo) == s0
 
 
@@ -113,7 +117,7 @@ def relock_all(folder):
     """relock with a slug and an empty set still means every Reviewed page (the overload restamp-own's guard leans on)."""
     repo = build()
     code = "import sys; sys.path.insert(0, sys.argv[1]); import audit; print(' '.join(audit.relock(sys.argv[2], 'my-goal', ())))"
-    out = subprocess.run([sys.executable, "-c", code, folder, repo], cwd=repo, capture_output=True, text=True)
+    out = subprocess.run([sys.executable, "-c", code, folder, repo], cwd=repo, capture_output=True, text=True, env=ENV)
     return sorted(out.stdout.split()) if not out.returncode else ["EXIT-%d" % out.returncode]
 
 
@@ -128,27 +132,46 @@ check("relock with a slug and an empty set still restamps every Reviewed page (%
 code, same = crash_case(scripts)
 check("a failed docs check: restamp-own exits non-zero (%s) and changes nothing" % code, code != 0 and same)
 
-def undone(old):
-    """A copy of skills/workflow-docs (scripts and references, so the rules block loads) whose docs.py has `old` removed."""
+def copy_scripts(*edits):
+    """A copy of skills/workflow-docs (scripts and references, so the rules block loads) whose docs.py has each (old, new) edit applied."""
     broken = tempfile.mkdtemp(prefix="restamp-idem-broken-")
     shutil.rmtree(broken)
     shutil.copytree(os.path.dirname(scripts), broken, ignore=shutil.ignore_patterns("__pycache__"))
     copy = os.path.join(broken, "scripts", "docs.py")
     text = open(copy).read()
-    check("negative control: %r is in docs.py to undo" % old, old in text)
+    for old, new in edits:
+        check("negative control: %r is in docs.py to change" % old, old in text)
+        text = text.replace(old, new)
     with open(copy, "w") as handle:
-        handle.write(text.replace(old, "pass" if old.startswith("sys.exit") else ""))
+        handle.write(text)
     return os.path.join(broken, "scripts"), broken
 
 
-folder, broken = undone("if only else []")
+def killed_case(guard):
+    """The docs check prints a STALE line and then exits 3 (a stub standing in for a crash or a kill): restamp-own must exit non-zero and restamp nothing."""
+    stub = os.path.join(tempfile.mkdtemp(prefix="restamp-idem-stub-"), "check.py")
+    write(os.path.dirname(stub), "check.py", "import sys\nprint('STALE A: 1 commits since the page')\nsys.exit(3)\n")
+    edits = [("os.path.abspath(__file__)", repr(stub))] + ([] if guard else [("r.returncode not in (0, 1) or ", "")])
+    folder, broken = copy_scripts(*edits)
+    repo = build()
+    out = subprocess.run([sys.executable, os.path.join(folder, "audit.py"), "restamp-own", "my-goal"], cwd=repo, capture_output=True, text=True, env=ENV)
+    shutil.rmtree(broken, ignore_errors=True)
+    shutil.rmtree(os.path.dirname(stub), ignore_errors=True)
+    return out.returncode, [row.split("\t")[0] for row in kept(repo)]
+
+
+code, rows = killed_case(True)
+check("a docs check that prints a STALE line and then exits 3: restamp-own exits non-zero (%s) and restamps nothing (%s)" % (code, rows), code != 0 and rows == [])
+folder, broken = copy_scripts(("if only else []", ""))
 bad_clean, bad_stale = run(folder)
 check("negative control: with the empty-set fix undone, a run with nothing stale restamps pages and makes a commit",
       bad_clean[0] != [] and not (bad_clean[2] and bad_clean[3]))
 check("negative control: with the empty-set fix undone, the second run after a real stale page makes another commit", bad_stale[1] != [] or not bad_stale[2])
 shutil.rmtree(broken, ignore_errors=True)
-folder, broken = undone('sys.exit(done.stderr or "no check report")')
+folder, broken = copy_scripts(('sys.exit(r.stderr or "no check report")', "pass"))
 code, same = crash_case(folder)
-check("negative control: with the fail-closed check undone, a failed docs check still exits zero (%s)" % code, code == 0)
+check("negative control: with the report-shape check undone, a failed docs check still exits zero (%s)" % code, code == 0)
 shutil.rmtree(broken, ignore_errors=True)
+code, rows = killed_case(False)
+check("negative control: with the exit-status test undone, the killed check restamps A anyway (%s, %s)" % (code, rows), code == 0 and rows == ["A"])
 sys.exit(1 if fails else 0)
