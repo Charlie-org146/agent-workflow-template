@@ -15,19 +15,35 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 ## Requirements
 
 ### Functional
-- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
+- DEL-1: **Unreviewed** One sentence runs unattended to a release, and a major ships only through the gate
   - A sentence and its done lines run unattended to a recorded pull request and a release made from a tag. [DEL-1]
   - A merge is refused only for the goal's own findings, never left half done. [DEL-1]
   - A major exists only after the gate: milestone closed, full suite run, health green, everything Reviewed. [DEL-1]
   - Promotion and revert need the operation session and my words. [DEL-1]
-- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
+
+  - Feature markers v1
+  - Reference: GitHub merge queue, tag release workflow, Semantic Versioning: adopted; SonarQube quality gates: adapted; the sentence-to-PR pipeline: own
+  - Line 1: metric missing; test 27 linked rows, see Tests
+  - Line 2: metric missing; test 27 linked rows, see Tests
+  - Line 3: metric missing; test 27 linked rows, see Tests
+  - Line 4: metric missing; test 27 linked rows, see Tests
+- DEL-3: **Unreviewed** It stops only for decisions that are mine, and asks them clearly
   - My decisions wait for me or are auto-approved where allowed. [DEL-3]
   - Full auto applies everything except the safety classes. [DEL-3]
   - Merges wait only on gates I set. [DEL-3]
   - Every question to me is one decision in plain words, with a recommendation, the exact words or button that answers it, and what happens if I don't answer. [DEL-3]
   - Questions are numbered and never asked twice. [DEL-3]
   - What was decided for me is listed. [DEL-3]
-- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 01f97e9e -->
+
+  - Feature markers v1
+  - Reference: GitHub auto-merge with required checks: adopted; GitHub environments required reviewers: adapted
+  - Line 1: metric missing; test 10 linked rows, see Tests
+  - Line 2: metric missing; test 10 linked rows, see Tests
+  - Line 3: metric missing; test 10 linked rows, see Tests
+  - Line 4: metric missing; test 10 linked rows, see Tests
+  - Line 5: metric missing; test 10 linked rows, see Tests
+  - Line 6: metric missing; test 10 linked rows, see Tests
+- DEL-17: **Unreviewed** Every change runs on one clock, from my ask to main
   - **Normal goal:** freeze to build takes the goal's own ETA; then one local lane (5 minutes, only the tests the change reaches, reused by later steps), push and PR CI (5 minutes, one run per push, parallel jobs), and ready to main (5 minutes: the merge queue tests the merged result, merges, and the release is made from a tag; **no release while main is known red:** while an open main-red issue names a failing test on main, merges go on but no release is made, and the first push after it closes releases everything since); **from push to main takes at most 3 minutes**, checks and queue together. [DEL-17]
   - **Small fix:** 2 minutes to edit and push, 2 for the lane, 3 for CI, 3 for the queue: 10 minutes from my ask. [DEL-17]
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-17]
@@ -35,6 +51,16 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - A merge never makes another ready pull request re-run. [DEL-17]
   - **The merge queue runs at full use:** every pull request goes into the queue the moment its check is green on its exact head, never later; goals are planned and stacked so several turn green together, and the queue builds and merges up to its limit of five at once; health prints the queue's use for the last 20 merges (pull requests per merge, and minutes a green pull request waited outside the queue) and fails any wait over 2 minutes. [DEL-17]
   - Test count and suite time stay capped. [DEL-17]
+
+  - Feature markers v1
+  - Reference: GitHub merge queue: adopted; DORA lead time: adapted
+  - Line 1: metric missing; test 23 linked rows, see Tests
+  - Line 2: metric missing; test 23 linked rows, see Tests
+  - Line 3: metric missing; test 23 linked rows, see Tests
+  - Line 4: metric missing; test 23 linked rows, see Tests
+  - Line 5: metric missing; test 23 linked rows, see Tests
+  - Line 6: metric missing; test 23 linked rows, see Tests
+  - Line 7: metric missing; test 23 linked rows, see Tests
 - DEL-19: **Reviewed 2026-11-21** The goal loop: one change, one goal, one fixed format <!-- reviewed 2c388429 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
@@ -62,7 +88,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue). Merging only on green checks for the exact merged result.
   - adapted
   - [Trunk-based development](https://trunkbaseddevelopment.com/). Short-lived branches, one per change, merged to main.
-- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
+- DEL-21: **Unreviewed** Every requirement names what it follows and adopts a standard tool by default, scored
   - Every requirement names a specific tool, standard or production system, links its source, and gives each one a tag: adopted, adapted or own. [DEL-21]
   - General guidance is not a reference. [DEL-21]
   - A drop-in tool is used as it is; adapted names the design it copies and why. [DEL-21]
@@ -70,6 +96,16 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - The target is 50%, and I set it. [DEL-21]
   - Every goal that adds or rewrites a requirement first checks whether a tool can be adopted. [DEL-21]
   - A change that lowers the score needs my words. [DEL-21]
+
+  - Feature markers v1
+  - Reference: MADR decision records: adapted; OpenSSF Scorecard: adapted
+  - Line 1: metric missing; test 1 linked rows, see Tests
+  - Line 2: metric missing; test 1 linked rows, see Tests
+  - Line 3: metric missing; test 1 linked rows, see Tests
+  - Line 4: metric missing; test 1 linked rows, see Tests
+  - Line 5: metric missing; test 1 linked rows, see Tests
+  - Line 6: metric missing; test 1 linked rows, see Tests
+  - Line 7: metric missing; test 1 linked rows, see Tests
 - DEL-23: **Reviewed 2026-11-21** Tasks: a brief I write once and freeze, run as goals <!-- reviewed 7129cd65 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
   - Milestone: [v1.1.0 dry run](https://github.com/Charlie-org146/agent-workflow-template/milestone/34)
@@ -98,9 +134,14 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [Shape Up: the pitch](https://basecamp.com/shapeup). A short written brief, fixed before work starts.
 
 ### Non-functional
-- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
+- DEL-9: **Unreviewed** Nothing private is committed, shipped or copied
   - Every commit, push and pull request passes the scoped private-name scan. [DEL-9]
   - Private files, the mail address and keys stay local and are never copied. [DEL-9]
+
+  - Feature markers v1
+  - Reference: gitleaks: adopted; GitHub push protection: adopted; GitGuardian on the organization: adopted
+  - Line 1: metric missing; test 11 linked rows, see Tests
+  - Line 2: metric missing; test 11 linked rows, see Tests
 
 ## Non-goals
 - It doesn't decide what to build.

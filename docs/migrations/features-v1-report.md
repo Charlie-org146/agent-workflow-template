@@ -12,7 +12,6 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 | DEL-1 | Delivery | 248f04935abe | 248f04935abe | 4 | missing | 27 | GitHub merge queue, tag release workflow, Semantic Versioning: adopted; SonarQube quality gates: adapted; the sentence-to-PR pipeline: own |
 | DEL-3 | Delivery | 3b27fdd3bca7 | 3b27fdd3bca7 | 6 | missing | 10 | GitHub auto-merge with required checks: adopted; GitHub environments required reviewers: adapted |
 | DEL-17 | Delivery | 896e67888270 | 896e67888270 | 7 | missing | 23 | GitHub merge queue: adopted; DORA lead time: adapted |
-| DEL-19 | Delivery | 5a4ac9d17f0f | 5a4ac9d17f0f | 6 | missing | 5 | GitHub closing keywords linking a PR to an issue: adapted; Conventional Commits 1.0.0: adapted |
 | DEL-21 | Delivery | ef308e97f103 | ef308e97f103 | 7 | missing | 1 | MADR decision records: adapted; OpenSSF Scorecard: adapted |
 | DEL-9 | Delivery | 0dc04849af9b | 0dc04849af9b | 2 | missing | 11 | gitleaks: adopted; GitHub push protection: adopted; GitGuardian on the organization: adopted |
 | DOC-2 | Documentation | 9f2097eacc80 | 9f2097eacc80 | 5 | missing | 13 | GitHub CODEOWNERS with required review: adapted; OpenGitOps: adapted |
@@ -77,21 +76,20 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 - DEL-17 (Delivery): 7 lines
 - DEL-21 (Delivery): 7 lines
 - DEL-3 (Delivery): 6 lines
-- DEL-19 (Delivery): 6 lines
 - DOC-25 (Documentation): 6 lines
 
 ## Skipped (added in the new format by a later goal)
 
-- DOC-27, DOC-28 (skipped if present; nothing is required if absent, the goal that adds them lands later)
+- DEL-19, DEL-23, DOC-27, DOC-28 (skipped if present; nothing is required if absent, the goal that adds them lands later)
 
 ## Totals
 
-- features migrated: 27
+- features migrated: 26
 - requirement marks cleared: 26
 - page-level marks cleared: 3
-- features to split: 9
-- lines: 121
-- lines with metric missing, by line: 121, by ID: 27
+- features to split: 8
+- lines: 115
+- lines with metric missing, by line: 115, by ID: 26
 - lines with test missing, by line: 3, by ID: 2
 - features with reference missing: 0
 
