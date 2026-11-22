@@ -229,5 +229,6 @@ else:
     rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
     check(not [l for l in rows if l.startswith("-") and not l.startswith("---")], "no existing regression row is changed or removed")
     added = git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout + git("ls-files", "-o", "--exclude-standard", "--", "skills").stdout
-check(not added.strip(), "no file is added under skills/")
+ALLOWED = "skills/workflow-monitoring/scripts/board_tasks.py"  # owner o788: the one file this goal may add under skills/
+check(all(l.split("\t")[-1] == ALLOWED for l in added.splitlines() if l.strip()) and added.count(ALLOWED) <= 2, "no file is added under skills/ except board_tasks.py (o788)")
 sys.exit(1 if failed else 0)
