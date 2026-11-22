@@ -44,7 +44,6 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 | entry | Delivery | DEL-1 | 2026-11-20 | 8a6cfd0a | 2026-11-20 o616 |
 | entry | Delivery | DEL-3 | 2026-11-20 | e3b04ded | 2026-11-20 o631 |
 | entry | Delivery | DEL-17 | 2026-11-20 | 01f97e9e | 2026-11-20 o672 |
-| entry | Delivery | DEL-19 | 2026-11-20 | 24b6865a | 2026-11-20 o614 |
 | entry | Delivery | DEL-21 | 2026-11-20 | b530df14 | 2026-11-20 o634 |
 | entry | Delivery | DEL-9 | 2026-11-20 | 753012f1 | 2026-11-20 o622 |
 | entry | Documentation | DOC-2 | 2026-11-20 | 22a8ca15 | 2026-11-20 o613 |
@@ -85,7 +84,7 @@ Written by `docs/migrations/features-v1.py run`; it holds no run date, so a re-r
 ## Totals
 
 - features migrated: 26
-- requirement marks cleared: 26
+- requirement marks cleared: 25
 - page-level marks cleared: 3
 - features to split: 8
 - lines: 115
@@ -103,7 +102,6 @@ entry	Check-in-and-board	CHK-1	2026-11-20	e1ba8975	2026-11-20 o673	- CHK-1: **Re
 entry	Delivery	DEL-1	2026-11-20	8a6cfd0a	2026-11-20 o616	- DEL-1: **Reviewed 2026-11-20** One sentence runs unattended to a release, and a major ships only through the gate <!-- reviewed 8a6cfd0a -->
 entry	Delivery	DEL-3	2026-11-20	e3b04ded	2026-11-20 o631	- DEL-3: **Reviewed 2026-11-20** It stops only for decisions that are mine, and asks them clearly <!-- reviewed e3b04ded -->
 entry	Delivery	DEL-17	2026-11-20	01f97e9e	2026-11-20 o672	- DEL-17: **Reviewed 2026-11-20** Every change runs on one clock, from my ask to main <!-- reviewed 01f97e9e -->
-entry	Delivery	DEL-19	2026-11-20	24b6865a	2026-11-20 o614	- DEL-19: **Reviewed 2026-11-20** Every change is a goal inside the loop, serving a requirement <!-- reviewed 24b6865a -->
 entry	Delivery	DEL-21	2026-11-20	b530df14	2026-11-20 o634	- DEL-21: **Reviewed 2026-11-20** Every requirement names what it follows and adopts a standard tool by default, scored <!-- reviewed b530df14 -->
 entry	Delivery	DEL-9	2026-11-20	753012f1	2026-11-20 o622	- DEL-9: **Reviewed 2026-11-20** Nothing private is committed, shipped or copied <!-- reviewed 753012f1 -->
 entry	Documentation	DOC-2	2026-11-20	22a8ca15	2026-11-20 o613	- DOC-2: **Reviewed 2026-11-20** Only I write the principles and requirements; the repo copy is the PRD <!-- reviewed 22a8ca15 -->
