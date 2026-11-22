@@ -42,7 +42,7 @@ Principle numbers, names and the Tokens move (the renumber); DEL-28's text; any 
 ### Test for each done line
 
 1. `docs.py check` prints DOCS OK; the compare script finds every pinned unit and sentence equal; the principles are numbered 1 to 8; no old principle number remains outside history and Revisions rows.
-2. `wc -c` on every script under skills/: none over 20,480 and none newly over 19,000; `dev/package.py --static` passes with the file count within MAX_FILES; the re-keyed rows (`docs-check-speed`, `aut-email-rounds`, `hlt7-fast-check`, `mon9-board-fast`) change goal only, and the one folded row (`aut7-budget-agrees` with `budgets-agree`) runs all three of its cases with nothing lost; no test is loosened; the private-name scan is clean.
+2. `wc -c` on every script under skills/: none over 20,480 and none newly over 19,000; `dev/package.py --static` passes with the file count within MAX_FILES; the re-keyed rows (`docs-check-speed`, `aut-email-rounds`, `hlt7-fast-check`) change goal only, and the two folded rows (`aut7-budget-agrees` with `budgets-agree`; `mon9-board-fast` into `grd8-silent-worker`, whose Windows skip moves to the case level) run every case of their script with nothing lost; no test is loosened; the private-name scan is clean.
 
 ### What could break
 
