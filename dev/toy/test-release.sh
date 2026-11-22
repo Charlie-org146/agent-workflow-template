@@ -89,6 +89,26 @@ $rel ask noverify | grep -q "NONE YET" && ok "ask warns about verify" || bad "as
 $rel cut noverify && bad "cut without verify steps" || ok "cut refused without verify steps"
 [ "$(git log -1 --format=%s)" != "Release v0.1.2" ] && ok "no release commit" || bad "release commit made"
 
+echo "== 3e. DOC-28: a minor cut needs a frozen release brief; the notes list its tasks"
+frz() { python3 - "$1" <<'PY'
+import hashlib, sys
+text = open(sys.argv[1]).read()
+open(sys.argv[1], "a").write("Frozen: %s r1 2026-11-22\n" % hashlib.sha256(text.encode()).hexdigest())
+PY
+}
+finish mincut
+nextmin=$(python3 -c "import sys;n=[int(x) for x in sys.argv[1].split('.')];print('%d.%d.0' % (n[0], n[1] + 1))" "$(cat VERSION)")
+$rel cut mincut --bump minor 2>&1 | grep -q "REFUSED BRF-3" && [ "$(cat VERSION)" != "$nextmin" ] && ok "DOC-28: a minor cut with no frozen release brief is refused" || bad "DOC-28: minor with no brief"
+mkdir -p .loop/tasks docs
+printf '# ok1\n\nFeature: ZZ-1\nPurpose: p\nKind: feature\n## Done when\n\n1. it works\n' > .loop/tasks/ok1.md; frz .loop/tasks/ok1.md
+printf '# v%s\n\n## Tasks\n\n1. ok1\n' "$nextmin" > docs/release-brief-$nextmin.md; frz docs/release-brief-$nextmin.md
+git add -A; git commit -qm "brief for $nextmin" >/dev/null
+$rel cut mincut --bump minor 2>&1 | grep -q "REFUSED BRF-5" && grep -q "tasks not done: ok1" <<<"$($rel cut mincut --bump minor 2>&1)" && ok "DOC-28: a minor cut with a named task not done is refused" || bad "DOC-28: minor with an open task"
+python3 "$here/skills/workflow-release/scripts/brief.py" finish ok1 --met 1 >/dev/null; git add -A; git commit -qm "ok1 done" >/dev/null
+$rel cut mincut --bump minor >/dev/null 2>&1
+[ "$(cat VERSION)" = "$nextmin" ] && grep -q "task ok1" CHANGELOG.md && grep -q "^- ok1: no goals" docs/release-brief-$nextmin.md && grep -q "task ok1" "$FAKE_GH_DIR/notes.log" \
+  && ok "DOC-28: the cut names every task in the changelog and the release notes, and the brief records each task's goals" || bad "DOC-28: the minor cut"
+
 echo "== 3d. four-number versions and bracket changelogs"
 (cd "$here" && python3 - <<'PY'
 import importlib.util

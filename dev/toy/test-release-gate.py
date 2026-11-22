@@ -149,6 +149,11 @@ owner(("o1", "t", "operation", "moved #7 to v2.1", "#7"), ("o2", "t", "operation
 OPEN[:] = [{"number": 7, "title": "an open thing"}]
 code, said = gate()
 check("an open issue on the milestone refuses, naming the issue", code == 1 and "GATE REFUSED v2.0 (issues): #7 an open thing" in said, said)
+known = os.path.join(repo, ".loop", "regression-known.tsv")
+open(known, "w").write("row-a\tit is red\n")
+code, said = gate()
+check("DOC-28 review.py gate refuses every known-red row, naming it, with no waiver path", code == 1 and "(known-red)" in said and "row row-a is on the known-red list" in said, said, "doc28")
+os.remove(known)
 waive(("moved", "#7", "v2.1", "o1"))
 code, said = gate()
 check("an issue the owner moved by name (a waiver whose record names it) does not refuse", code == 0 and "GATE PASS v2.0" in said, said)
