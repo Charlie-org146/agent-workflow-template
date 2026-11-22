@@ -183,7 +183,7 @@ def build(root, base, skip, cr, pf, prd, refresh=False):
 
 
 def report(feats, marks, skip, kept):
-    seen = {(r[0], r[1], r[2]): r for r in kept}
+    seen = {(r[0], r[1], r[2]): r for r in kept if r[2] not in skip}  # a skipped ID keeps its mark on main (owner record o786): no old mark of it is listed
     seen.update({(r[0], r[1], r[2]): r for r in marks})
     rows = list(seen.values())
     out = ["# Feature migration report (features-v1)", "",
@@ -273,7 +273,7 @@ def main():
             "; delete " + REPORT + " if it is new, else git checkout -- " + REPORT if REPORT in done else ""))
     finally:
         tmp and shutil.rmtree(tmp, ignore_errors=True)
-    print("MIGRATED %d features on %d pages, %d marks cleared; wrote %d files (base %s)" % (len(feats), len(pages), len(marks or kept_rows(root)), len(done), base[:9]))
+    print("MIGRATED %d features on %d pages, %d marks cleared; wrote %d files (base %s)" % (len(feats), len(pages), len(marks or [r for r in kept_rows(root) if r[2] not in skip]), len(done), base[:9]))
 
 
 if __name__ == "__main__":
