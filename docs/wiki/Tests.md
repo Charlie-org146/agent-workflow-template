@@ -175,8 +175,8 @@
 | <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-lane-fresh-clone-runs-5735"></a>lane-fresh-clone-runs-5735 | defect | 5735 | not run | - | local | 2026-11-21 |
-| <a id="t-pr-regen-commits-readme-5728"></a>pr-regen-commits-readme-5728 | defect | 5728 | not run | - | local | 2026-11-21 |
+| <a id="t-lane-fresh-clone-runs-5735"></a>lane-fresh-clone-runs-5735 | defect | [#5735](https://github.com/Charlie-org146/agent-workflow-template/issues/5735) state unknown | not run | - | local | 2026-11-21 |
+| <a id="t-pr-regen-commits-readme-5728"></a>pr-regen-commits-readme-5728 | defect | [#5728](https://github.com/Charlie-org146/agent-workflow-template/issues/5728) state unknown | not run | - | local | 2026-11-21 |
 
 ## Documentation
 
@@ -239,7 +239,7 @@
 | <a id="t-sections-controls"></a>sections-controls | requirement | DOC-25 | not run | - | local | 2026-11-20 |
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-guide-page-stamp"></a>guide-page-stamp | requirement | DOC-2 | not run | - | local | 2026-11-20 |
-| <a id="t-restamp-own-nothing-stale-5730"></a>restamp-own-nothing-stale-5730 | defect | 5730 | not run | - | local | 2026-11-21 |
+| <a id="t-restamp-own-nothing-stale-5730"></a>restamp-own-nothing-stale-5730 | defect | [#5730](https://github.com/Charlie-org146/agent-workflow-template/issues/5730) state unknown | not run | - | local | 2026-11-21 |
 
 ## Guardrails
 
