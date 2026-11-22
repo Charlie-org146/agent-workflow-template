@@ -65,7 +65,7 @@ echo "== a bad target fails with BAD_TARGET and runs nothing"
 rm -f "$FAKE_GH_DIR/calls.log"
 for value in 'x;touch HACKED' 'no-such-row' '$(touch HACKED)'; do
   out=$(step "$value"); rc=$?
-  if [ "$rc" = 1 ] && [ -z "$(ran)" ] && [ ! -e HACKED ] && [ -z "$(grep -v default_branch "$FAKE_GH_DIR/calls.log" 2>/dev/null)" ] \
+  if [ "$rc" = 1 ] && [ -z "$(ran)" ] && [ ! -e HACKED ] && [ -z "$(grep -vx "api repos/.* --jq .default_branch" "$FAKE_GH_DIR/calls.log" 2>/dev/null)" ] \
      && grep -qxF "REFUSED (BAD_TARGET): bad target \"$value\": use land, nightly or a row id from regression.py list. Fix: rerun the workflow with one of those" <<<"$out"; then
     ok "target '$value' fails with the BAD_TARGET line, exit 1, no row run and no issue touched"
   else bad "target '$value': rc=$rc ran=$(ran) $out"; fi
