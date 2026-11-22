@@ -397,6 +397,8 @@ def bump_version(g, state, head):
 def requirement_gate(g, slug):
     """Refuse pr while a requirement finding is unfiled or criteria.py guard refuses a changed Reviewed requirement."""
     str(g.load(slug).get("flow", {}).get("review", "")).startswith("skipped") and g.no("the review step was skipped (DEL-19.2). Fix: run flow.py %s review and record it." % slug)
+    miss = g.fit.monitor("brief", False, "workflow-release").parts_missing(g.read(g.goal_file(slug)))
+    miss and g.no("the goal file lacks %s (DEL-19.1). Fix: restore those lines in .loop/goals/%s.md." % (", ".join(miss), slug))
     rows = [r for r in g.guards.extra(g.state_dir(), slug)["findings"] if r.get("requirement")]
     loose = {r["text"] for r in rows if not r["filed"]} - {r["text"] for r in rows if r["filed"]}
     tool = os.path.join(g.SKILLS, "workflow-docs", "scripts", "criteria.py")

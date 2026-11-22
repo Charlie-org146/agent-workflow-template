@@ -291,22 +291,14 @@ def bind_here(g, slug):
         print(done.stdout + done.stderr, end="")
 
 
-GWT = re.compile(r"^\d+\. Given .+ when .+ then .+", re.I)
-
-
 def head(args):
     """The goal file's Task and Release lines."""
     return "- Task: %s\n- Release: %s\n" % (args.task, args.release or "none")
 
 
 def goal_format(g, args, lines):
-    """DEL-19.1: a task, and Given/when/then done lines."""
-    if getattr(args, "task", None) is None:
-        return
-    args.task.strip() or g.no("no task. Fix: --task NAME, the task this goal serves.")
-    bad = [x for x in lines if not GWT.match(x)]
-    bad and g.no("done line %r is not Given ... when ... then ... Fix: write it that way." % bad[0][:50])
-    os.path.isdir(os.path.join(g.root(), ".loop", "tasks")) and monitor("brief", False, "workflow-release").can_start(g.root(), args.task)
+    """DEL-19.1, DEL-23.1: what a goal needs before it freezes (brief.freeze_check)."""
+    monitor("brief", False, "workflow-release").freeze_check(g, args, lines)
 
 
 def frozen_fields(g, args, lines, touches):

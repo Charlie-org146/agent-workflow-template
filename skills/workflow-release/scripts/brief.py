@@ -168,6 +168,48 @@ def lines(root):
     return ["task %s: %s%s%s" % (n, s, " (%s)" % note if note else "", " eta %sm" % e if e else "") + "".join("\n    goal %s" % g for g in gs) for n, s, gs, e, note in tasks(root)]
 
 
+GWT = re.compile(r"^\d+\. Given .+ when .+ then .+", re.I)
+PARTS = (("title", r"^# \S"), ("Slug", r"^- Slug: \S"), ("Touches", r"^- Touches: \S"), ("ETA", r"^- ETA: \S"), ("Task", r"^- Task: \S"), ("Release", r"^- Release: \S"), ("Done lines", r"^## Done lines$"), ("a done line", r"^\d+\. \S"))
+
+
+def feature_state(root, fid):
+    """'Reviewed' or 'Unreviewed' for a feature id on the wiki pages, '' when none lists it."""
+    try:
+        wiki = json.load(open(os.path.join(root, ".loop", "config.json"))).get("wiki_dir") or "docs/wiki"
+    except (OSError, ValueError):
+        wiki = "docs/wiki"
+    for path in sorted(glob.glob(os.path.join(root, wiki, "*.md"))):
+        found = re.search(r"^- %s: \*\*(Reviewed|Unreviewed)" % re.escape(fid), read(path), re.M)
+        if found:
+            return found[1]
+    return ""
+
+
+def parts_missing(text):
+    """DEL-19.1: the parts a goal file in the fixed format lacks (a file with no Task line is an older one: none)."""
+    return [] if "\n- Task:" not in text else [n for n, p in PARTS if not re.search(p, text, re.M)]
+
+
+def freeze_check(g, args, lines):
+    """DEL-19.1, DEL-23.1, DOC-27.5: what a goal needs before it freezes (g is the goal module)."""
+    root, task = g.root(), getattr(args, "task", None)
+    if task is None:  # goal.py adopt: the goal file already says
+        text = read(g.goal_file(args.slug))
+        found = re.search(r"^- Task: (\S.*)$", text, re.M)
+        if "\n- Release:" in text and not found:
+            g.no("the goal file has a Release line and no task. Fix: add '- Task: NAME' before adopting it.")
+        args.task = found[1].strip() if found else ""
+        return
+    task.strip() or g.no("no task. Fix: --task NAME, the task this goal serves.")
+    bad = [x for x in lines if not GWT.match(x)]
+    bad and g.no("done line %r is not Given ... when ... then ... Fix: write it that way." % bad[0][:50])
+    if os.path.isdir(os.path.join(root, ".loop", "tasks")):
+        can_start(root, task)
+        text = briefs(root, "task").get(task) or ""
+        if field(text, "Kind") != "fix" and feature_state(root, field(text, "Feature")) == "Unreviewed":
+            g.no("task %s serves %s, which is Unreviewed. Fix: the owner reviews it first; a bug fix is Kind: fix." % (task, field(text, "Feature")))
+
+
 def can_start(root, name):
     text = briefs(root, "task").get(name)
     text is None and refuse("BRF-5", "task %s has no brief" % name, "write .loop/tasks/%s.md and freeze it" % name)
