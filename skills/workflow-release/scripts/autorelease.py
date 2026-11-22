@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""The automatic release, called by merge.py: routines, then after the merge a version bump, the CHANGELOG entry, a push to
-the base and a GitHub release (a release pull request on a protected base; with merge_queue, release.yml instead).
-Failures: `release_error`. Commit and notes pass the private-name scan first (PRIVATE_MODULE)."""
+"""The automatic release (merge.py): version bump, CHANGELOG, push, GitHub release; failures are `release_error`."""
 import datetime
 import importlib.util
 import json
@@ -156,7 +154,7 @@ def drop(top, tree, temp):
 
 
 def push_release_commit(top, cfg, state, part, to_branch=False):
-  """(version, sha); (None, stderr) if the base refused the push. to_branch pushes release/vX-<slug>."""
+  """(version, sha); (None, stderr) if the base refused the push."""
   base, slug = cfg.get("base", "main"), state["slug"]
   temp = tempfile.mkdtemp(prefix="release-")
   tree = os.path.join(temp, "tree")
@@ -217,7 +215,7 @@ ROW = re.compile(r":\d{6} 100(?:644|755) \w+ \w+ [AM]\t(.+)")
 
 
 def tems(top, old, new, extra="", allow=None):
-  """Tree equal modulo stamps: old to new only edits regular files at STAMPS paths (and extra, allow's)."""
+  """Tree equal modulo stamps: only STAMPS paths (and extra, allow) differ."""
   done = sh(["git", "diff", "--raw", "--no-renames", old, new], cwd=top)
   rows = [ROW.fullmatch(line) for line in done.stdout.splitlines()]
   return done.returncode == 0 and bool(rows) and all(
@@ -293,7 +291,7 @@ def main_reds(top, base, info, red):
 
 
 def go_gate(top, base, info, go):
-  """None, or the refusal, unless the head is the GO's and every check is green (#5171)."""
+  """None, or the refusal, unless the head is the GO's and green (#5171)."""
   head = str(info.get("headRefOid"))
   if len(go) < 7 or not head.startswith(go):
     return "REFUSED (GO_HEAD): the GO was for %s, the PR head is %s. Nothing merged." % (go[:12], head[:12])
@@ -314,7 +312,7 @@ def go_gate(top, base, info, go):
 
 
 def status_held(state, url, number, seen=None):
-  """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head has no passing status or is red."""
+  """Refuse (RELEASE_STATUS_*, RELEASE_CHECKS_FAILED) if the release PR head is not green."""
   red = [str(c.get("name") or c.get("context")) for c in (seen or {}).get("statusCheckRollup") or []
     if isinstance(c, dict) and (c.get("conclusion") in RED or c.get("state") in RED)]
   why = state.get("release_status") in ("failure", "untested") and state.get("release_status_why")
@@ -363,6 +361,12 @@ def finish(top, cfg, state):
   if state.get("release") == "cut" and state.get("release_url"):
     print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
     return
+  hold = brief.held(top, state)
+  if hold:  # DOC-28.3: a feature task ships in its minor cut, not in a release of its own
+    state.update(release="merged", status="done", waiting=None)
+    release.save(state, "held for the %s cut" % hold)
+    print("HELD %s for its minor cut %s" % (state["slug"], hold))
+    return True
   base = cfg.get("base", "main")
   if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))

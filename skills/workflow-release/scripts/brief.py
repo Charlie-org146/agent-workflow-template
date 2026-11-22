@@ -275,6 +275,14 @@ def gate(root, kind, version):
         gate_cut(root, version)
 
 
+def held(root, state):
+    """DOC-28.3: the unshipped release brief that names this goal's feature task, else ''."""
+    task, text = state.get("task") or "", briefs(root, "task").get(state.get("task") or "")
+    if text is None or field(text, "Kind") == "fix":
+        return ""
+    return next((v for v, x in briefs(root, "release").items() if "## Results" not in x and task in (release_tasks(root, v) or [])), "")
+
+
 def known_red(root):
     """DOC-28.1: [(check, subject, keys)] for every row on the known-red list; a major has no waiver (o714)."""
     rows = [x.split("\t")[0] for x in read(os.path.join(root, ".loop", "regression-known.tsv")).splitlines() if x.strip() and x[:1] != "#"]

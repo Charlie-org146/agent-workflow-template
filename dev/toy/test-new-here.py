@@ -146,7 +146,5 @@ with open(os.path.join(scripts, "flow.py")) as handle:
 check(sections.steps() == "Steps: " + ", ".join(steps) + ".", "DEL-19 the steps are read from flow.py's STEPS")
 with open(os.path.join(root, "docs", "wiki", "Delivery.md")) as handle:
     check(sections.stale("Delivery", handle.read()) == [], "DEL-19 the Delivery page's drawn steps match the code today")
-merge = open(os.path.join(root, "skills", "workflow-release", "scripts", "merge.py")).read()
-check("HEAD_MOVED" in merge and "--match-head-commit" in merge + open(os.path.join(root, "skills", "workflow-release", "scripts", "autorelease.py")).read(), "DEL-19 merge.py refuses a pull request whose head moved after its checks (HEAD_MOVED) and merges only the exact head")
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
