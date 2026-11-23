@@ -465,6 +465,13 @@ over two lines
   mig "$r" --offline --pr
   check "--pr prints no toolchain step" '! grep -q "toolchain" <<<"$out"'
   rm -f "$r/package.json" "$r/pyproject.toml"
+  # report-only NOTE lines (the DOC-27.4 page rebuild) are not gaps (TD1169); a FORMAT line of the same check still is
+  export LOOP_TEMPLATE_HAS=usage-kept; mig "$r" --offline
+  check "the page-rebuild NOTE lines (27.4) are no MIG_FORMAT gap, and the clean toy exits 0" '[ $rc = 0 ] && ! grep -q "27\.4" <<<"$out" && ! grep -q "MIG_FORMAT" <<<"$out"'
+  feat="$r/docs/wiki/Feat.md"; printf 'Feat\tcalc.py\n' >> "$r/.loop/docs.tsv"
+  { echo "<!-- workflow-docs -->"; echo "# Feat"; printf '\n## Problem\n\n- I want it.\n\n## Requirements\n\n- ZZ-1: **Unreviewed** A feature\n\n## Non-goals\n\n- None.\n\n## Success metrics\n\n- m\n\n## Revisions\n\n## Tests\n'; } > "$feat"; mig "$r" --offline
+  check "negative control: a FORMAT line of the same docs check (a requirement outside its sections) is still a MIG_FORMAT gap, exit 1" '[ $rc = 1 ] && grep -q "^GAP MIG_FORMAT Feat:[0-9]*: Requirements: DOC-7" <<<"$out"'
+  rm -f "$feat"; sed -i.bak '/^Feat\t/d' "$r/.loop/docs.tsv"; rm -f "$r/.loop/docs.tsv.bak"
   unset LOOP_TEMPLATE_HAS LOOP_SCHEDULED_TASKS_DIR
 fi
 
