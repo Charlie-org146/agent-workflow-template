@@ -139,7 +139,7 @@ def case(name, text, kind=None, want="", reviews=None):
     fails += not ok
 case("a feature of the fixed shape passes", GOOD)
 OLDFORM = sub("  - ### Revisions\n  - r1 2026-11-22\n", "", sub("  - ### Success metrics\n  - \\# | Metric | Target | Today\n  - 1.1 | Things broken. | 0 | not measured\n", "", GOOD))
-for fid in ("DEL-19", "DEL-23"):
+for fid in ("DEL-19", "DEL-23", "DEL-22", "DEL-25", "DEL-26", "DEL-27"):
     sealed = sub("- X-1:", "- %s:" % fid, sub("**Unreviewed**", "**Reviewed 2026-11-21**", OLDFORM))
     case("%s, sealed with its sections missing, is reported as NOTE only (o721)" % fid, sealed, "NOTE", "the sections are")
     fails += any(x[0] == "FORMAT" for x in run(sealed))

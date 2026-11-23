@@ -230,7 +230,7 @@ def feature(page, fid, mark, date, lines, slug, reviews):
     at, out = "%s:%s" % (page, fid), []
     bad = lambda rule, why, fix, hard=True: out.append(("FORMAT" if not old and (hard or (mark == "Reviewed" and rule != "27.5")) else "NOTE", at, "DOC-27 %s: %s. Fix: %s" % (rule, why, fix)))
     got = [x[4:] for x in lines if x.startswith("### ")]
-    old = fid in ("DEL-19", "DEL-23")  # o721: sealed pages, report-only until rebuilt
+    old = fid in ("DEL-19", "DEL-23", "DEL-22", "DEL-25", "DEL-26", "DEL-27")  # sealed pages (o721; TD1156): report-only until rebuilt
     if got != list(HEADS):
         bad("27.1", "the sections are %s, not %s in order" % (got, list(HEADS)), "use the six sections in order")
     for name in ("Problem", "Non-goals"):
