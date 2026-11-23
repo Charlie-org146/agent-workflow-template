@@ -45,7 +45,7 @@ except ImportError:
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 STAMP, KEPT = "workflow-package.json", ".workflow-kept"
-SHARED = ("loop-files.md",)
+SHARED = ("loop-files.md", "steps.py")
 CAP = 20 * 1024 * 1024
 
 
@@ -158,7 +158,7 @@ def safe(name):
 
 
 def from_tree(names, get):
-    """A manifest from a source tree (skills/, VERSION, CHANGELOG.md), keyed as dev/package.py keys a package."""
+    """A manifest from a source tree (skills/, VERSION, CHANGELOG.md), keyed as package.py keys it."""
     firsts = {n.split("/")[0] for n in names}
     top = "" if "skills" in firsts or len(firsts) != 1 else firsts.pop() + "/"
     files, data = {}, {}

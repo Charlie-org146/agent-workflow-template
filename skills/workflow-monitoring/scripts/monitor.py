@@ -87,11 +87,8 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
-    path = record_path(state["slug"])
-    temp = path + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, path)
+    import moved_mon
+    moved_mon.steps().commit(record_path(state["slug"]), state, state["updated"])
 
 
 def runs():

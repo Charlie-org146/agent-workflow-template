@@ -31,6 +31,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.modules.setdefault("sessions", sys.modules[__name__])
 import graph  # noqa: E402
+import moved_mon  # noqa: E402
 import proctree  # noqa: E402
 import worker  # noqa: E402
 from worker import HUNG, LAST_ERROR, call, fcntl, git, merged, now, tool  # noqa: E402
@@ -115,7 +116,7 @@ def load(slug):
 def save(state, note):
     state["updated"] = now()
     state.setdefault("log", []).append("%s %s" % (state["updated"], note))
-    write(os.path.join(base(), "runs", state["slug"] + ".json"), state)
+    moved_mon.steps().commit(os.path.join(base(), "runs", state["slug"] + ".json"), state, state["updated"])
     print("%s %s: %s" % (state["updated"], state["slug"], note))
 
 
@@ -239,23 +240,7 @@ def cmd_assign(args):
     return 0
 
 
-def cmd_owner_words(args):
-    import auto
-    ids = [item.strip() for item in args.ids.split(",") if item.strip()]
-    if os.environ.get("LOOP_ROLE") == "worker":
-        sys.exit("REFUSED: only the operation session records the owner's words; a worker never does. Nothing was written.")
-    if not args.text.strip() or not ids:
-        sys.exit("REFUSED: give the owner's exact message and --ids (requirement IDs or page names it covers). Nothing was written.")
-    import layers
-    ok, why = layers.relay(args.via, args.text)
-    if not ok:
-        sys.exit("REFUSED: %s. Nothing was written." % why)
-    if args.delegated:
-        proctree.require_operation(".", "a delegated approval")
-    count = auto.add_owner_words(args, ids)
-    import unattended; unattended.reset()
-    print("OWNER-WORDS o%d covers %s" % (count, ",".join(ids)))
-    return 0
+cmd_owner_words = moved_mon.cmd_owner_words
 
 
 def cmd_bind(args):

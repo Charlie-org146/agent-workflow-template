@@ -16,6 +16,7 @@ import sys
 import tempfile
 import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import moved_rel  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -62,11 +63,7 @@ def save(state, note=None):
     state["updated"] = now()
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
-    path = state_path(state["slug"])
-    temp = path + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, path)
+    moved_rel.steps().commit(state_path(state["slug"]), state, state["updated"])
 
 
 def finished(state):
@@ -279,13 +276,7 @@ def subjects(base, cwd):
     return lines
 
 
-def changelog_text(old, version, day, bullets, steps):
-    title = "## [%s] - %s" % (version, day) if re.search(r"^## \[", old, re.M) else "## v%s - %s" % (version, day)
-    entry = "%s\n\n%s\n\n### How to verify\n\n%s\n" % (title, "\n".join("- " + item for item in bullets) or "- No code changes", steps)
-    if not old.strip():
-        return "# Changelog\n\n" + entry
-    first = re.search(r"^## ", old, re.M)
-    return old[:first.start()] + entry + "\n" + old[first.start():] if first else old.rstrip("\n") + "\n\n" + entry
+changelog_text = moved_rel.changelog_text
 
 
 def restore(cwd, files, sha_before, message):
@@ -314,6 +305,7 @@ def cmd_cut(args):
     current = git("branch", "--show-current", cwd=cwd)
     if current != branch:
         sys.exit("REFUSED: %s is on branch %r, not %s. Fix: switch to %s first." % (cwd, current, branch, branch))
+    moved_rel.stage_steps(cwd, state)  # the cut-time block is the later and fuller one
     if git("status", "--porcelain", "--untracked-files=no", cwd=cwd):
         sys.exit("REFUSED: uncommitted changes in %s. Fix: commit or set them aside first." % cwd)
     cfg = read_config(cwd)

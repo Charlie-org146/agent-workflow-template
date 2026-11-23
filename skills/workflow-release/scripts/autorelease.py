@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 
+import moved_rel
 import release
 import wiki  # noqa: E402
 
@@ -87,17 +88,7 @@ def sh_text(args, text, flag="--body-file", cwd=None):
     os.remove(f.name)
 
 
-def fail(state, text):
-  state["release_error"] = text if len(text) <= 400 else text[:330] + " ... " + text[-65:]
-  report, note = state.get("report"), ""
-  if not isinstance(report, dict):
-    note = "" if report is None else "(the stored report was a %s and was reset) " % type(report).__name__
-    report = state["report"] = {}
-  report["text"] = ("%s %sRelease failed: %s" % (str(report.get("text") or ""), note, text)).strip()[:600]
-  if state.get("release") != "merged":
-    state["status"] = "failed"
-  release.save(state, "release failed: " + text[:200])
-  sys.exit("REFUSED: " + text)
+fail = moved_rel.fail
 
 
 def reopen(state, code):
@@ -137,8 +128,8 @@ def run_routines(top, cfg, state):
 def stage_notes(top, state, cfg):
   if "release_bullets" not in state:
     state["release_bullets"] = release.subjects(release.base_of(top, cfg), top) + wiki.fixes_lines(top)
-    state["release_steps"] = release.verify_steps(top, state["slug"]) or "No manual steps were recorded."
-    release.save(state)
+  moved_rel.stage_steps(top, state)
+  release.save(state)
 
 
 def stage_part(top, state):
@@ -361,9 +352,14 @@ def finish(top, cfg, state):
   if state.get("release") == "cut" and state.get("release_url"):
     print("ALREADY released %s as v%s" % (state["slug"], state.get("release_version")))
     return
+  state["step"] = "after the merge"
+  release.save(state)
   base = cfg.get("base", "main")
   if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
+    state["step"] = "release"
+    release.save(state)
+    release.save(state, "released from CI")
     return True
   if not state.get("release_pushed"):
     stage_notes(top, state, cfg)
@@ -381,6 +377,8 @@ def finish(top, cfg, state):
     state.update(release_pushed=version, release_part=part, release_target=sha)
     release.save(state, "version pushed: v%s (%s)" % (version, reason))
   version = state["release_pushed"]
+  state["step"] = "release"
+  release.save(state)
   url = create_release(top, cfg, state, version, state.get("release_target") or base)
   state.update(release="cut", release_version=version, release_url=url, status="done", waiting=None)
   for key in ("release_error", "release_pr_waiting"):

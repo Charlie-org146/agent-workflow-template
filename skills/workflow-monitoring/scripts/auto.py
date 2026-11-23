@@ -142,10 +142,8 @@ def decide_all(root=None, now=None, dry=False):
         fresh = bs.read_json(path)
         if isinstance(fresh, dict) and fresh.get("status") == "waiting" and key_of((fresh.get("waiting") or {}).get("ask")) == key_of(waiting.get("ask")):
             fresh["waiting"]["auto"] = waiting["auto"]
-            tmp = path + ".%d.tmp" % os.getpid()
-            with open(tmp, "w") as handle:
-                json.dump(fresh, handle, indent=2)
-            os.replace(tmp, path)
+            import moved_mon
+            moved_mon.steps().commit(path, fresh, fresh.get("updated") or at)
     return out
 
 

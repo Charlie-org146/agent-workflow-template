@@ -92,10 +92,8 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
-    temp = path_of(state["slug"]) + ".%d.tmp" % os.getpid()
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(temp, path_of(state["slug"]))
+    import moved_mon
+    moved_mon.steps().commit(path_of(state["slug"]), state, state["updated"])
 
 
 def merged(url):

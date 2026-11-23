@@ -23,6 +23,7 @@ import sys
 import time
 
 import autorelease as ar
+import moved_rel
 import release
 import review
 import wiki
@@ -366,9 +367,7 @@ def main():
   ar.mark_merged(state)
   state["updated"] = at
   state.setdefault("log", []).append("%s merged %s (auto_merge)" % (at, state["pr"]))
-  with open(path + ".tmp", "w") as handle:
-    json.dump(state, handle, indent=2)
-  os.replace(path + ".tmp", path)
+  moved_rel.steps().commit(path, state, at)
   print("MERGED %s into %s" % (state["pr"], base))
   print(run([sys.executable, OPERATE, "forward", base], top).stdout.strip())
   leave_queue(path, slug)

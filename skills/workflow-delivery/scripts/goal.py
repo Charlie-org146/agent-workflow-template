@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lanekit, guards, fit, private, routing  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
+import moved  # noqa: E402
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
 
 ME = sys.modules.setdefault("goal", sys.modules[__name__])
@@ -110,12 +111,10 @@ def save(state, note=None):
             disk = json.loads(read(path))
         except (OSError, ValueError):
             disk = {}
-        was = json.loads(SEEN.get(slug, "{}"))
-        merged = dict(disk, **{k: v for k, v in state.items() if k not in was or was[k] != v})
-        merged = {k: v for k, v in merged.items() if k in state or k not in was}
-        have = disk.get("log") or []
-        merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
+        step = moved.steps()
+        merged = step.merge(disk, state, json.loads(SEEN.get(slug, "{}")))
         role.report(disk, merged, state["updated"])
+        step.transition(disk, merged, state["updated"])
         temp = path + ".tmp"
         write(temp, json.dumps(merged, indent=2))
         os.replace(temp, path)

@@ -14,6 +14,7 @@ import private  # noqa: E402
 import lanekit  # noqa: E402
 fcntl = lanekit.fcntl
 import role  # noqa: E402
+import moved  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -192,19 +193,7 @@ def check_path(path, have):
     return None
 
 
-def sync_touches(goal_file, touches):
-    try:
-        with open(goal_file) as handle:
-            text = handle.read()
-    except OSError:
-        return False
-    line = "- Touches: " + (", ".join(touches) or "not declared")
-    new = re.sub(r"^- Touches: .*$", lambda _: line, text, count=1, flags=re.M)
-    if new == text:
-        return False
-    with open(goal_file, "w") as handle:
-        handle.write(new)
-    return True
+sync_touches = moved.sync_touches
 
 
 def write_finding(g, state, text):
