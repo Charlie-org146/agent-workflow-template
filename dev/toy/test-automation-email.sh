@@ -4,6 +4,7 @@
 # usage: test-automation-email.sh GROUP   (mail secrets retry mailtest digest rounds file regression, or all)
 # Exits 0 only when every case in the group passes, so each regression row runs one group.
 set -u
+export L=--live  # the issue step's env on main: the written workflow sets it from github.ref
 group=${1:-all}
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
