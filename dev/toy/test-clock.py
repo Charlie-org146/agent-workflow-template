@@ -387,10 +387,20 @@ if want("17.4"):
     oldm, oldb = bm.model, bm.backtest
     bm.model = lambda *a, **k: {}
     bm.backtest = lambda *a, **k: 1 / 0
+    clock.BASIS.clear()
     broken = auto.eta_new(REPO, "next3", 3, ["docs"], 240, root_cfg)
     bm.model, bm.backtest, bs.estimate_full = oldm, oldb, old
     check(broken["basis"].endswith(", clock unavailable (CLOCK_ERROR: ZeroDivisionError)") and broken["estimate"] == 60,
           "a failing backtest never breaks the ETA: the basis says clock unavailable (CLOCK_ERROR)")
+    builds = []
+    realm = bm.model
+    bm.model = lambda *a, **k: builds.append(1) or realm(*a, **k)
+    clock.BASIS.clear()
+    first = clock.basis_suffix([{"slug": "m1", "updated": "2026-01-01T00:00:00Z"}], None, REPO)
+    after_first = len(builds)
+    second = clock.basis_suffix([{"slug": "m1", "updated": "2026-01-01T00:00:00Z"}], None, REPO)
+    bm.model = realm
+    check(first == second and after_first > 0 and len(builds) == after_first, "the ETA history is built once for one run set, not once per goal (%d then %d model builds)" % (after_first, len(builds)))
     check(abs(auto.eta_margin({"eta_margin_percent": 40}) - 1.4) < 1e-9 and "%d%% margin" in open(os.path.join(MON, "auto.py")).read(), "the margin text of the basis is unchanged")
 
 # ---------------------------------------------------------------------------------------------------------------- 17.5
@@ -407,8 +417,8 @@ if want("17.5"):
     rows = [("no issue", dict(issues=[]), "none"),
             ("one issue", dict(issues=[{"number": 12, "title": "regression row a is red"}]), "open 12"),
             ("two issues, the lowest named", dict(issues=[{"number": 30, "title": "b"}, {"number": 7, "title": "a"}]), "open 7"),
-            ("the fourth row of the release.yml table", dict(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12}]}]), "none"),
-            ("another issue stays", dict(issues=[{"number": 12, "title": "t"}, {"number": 13, "title": "u"}], prs=[{"closingIssuesReferences": [{"number": 12}]}]), "open 13"),
+            ("the fourth row of the release.yml table", dict(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12, "url": "https://github.com/acme/widget/issues/12"}]}]), "none"),
+            ("another issue stays", dict(issues=[{"number": 12, "title": "t"}, {"number": 13, "title": "u"}], prs=[{"closingIssuesReferences": [{"number": 12, "url": "https://github.com/acme/widget/issues/12"}]}]), "open 13"),
             ("no merged pull request for the tip", dict(issues=[{"number": 12, "title": "t"}], prs=[]), "open 12"),
             ("closing references unreadable", dict(issues=[{"number": 12, "title": "t"}], prs_fail=True), "unreadable"),
             ("gh fails with a token in its stderr", dict(mode="fail"), "unreadable"),
@@ -509,7 +519,7 @@ if want("17.5"):
     back()
     check(door.startswith("REFUSED (MAIN_RED): issue 12"), "the real review.py promote refuses on an open main-red issue, naming it")
     auto_text = gate.hold(REPO, "toy-goal", 1)
-    check(auto_text.startswith("(MAIN_RED) the merge is done;") and "merge.py toy-goal again" in auto_text and len(auto_text) < 400, "the autorelease door returns its own recovery text, within release_error's size")
+    check(auto_text.startswith("(MAIN_RED) hold=main-red:12 the merge is done;") and "merge.py toy-goal again" in auto_text and len(auto_text) < 400, "the autorelease door returns its own recovery text, within release_error's size")
     state = {"slug": "toy-goal", "status": "done", "release": "merged"}
     fake(issues=[{"number": 12, "title": "t"}])
     try:
@@ -589,6 +599,76 @@ if want("17.5"):
     other_b = {"slug": "other-b", "pr": "8", "release": "merged", "status": "done", "release_bullets": ["goal b work"], "release_steps": "steps of b"}
     check("goal b work" in autorelease.notes_text(other_b) and "goal a work" not in autorelease.notes_text(other_b),
           "another goal's release lists only its own notes, so each held goal is released by its own merge.py run")
+    # review finding: a closing reference to ANOTHER repository's issue with the same number does not clear this repository's hold
+    fake(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12, "url": "https://github.com/acme/other/issues/12"}]}])
+    check(gate.main_red(REPO) == ("open", "12: t"), "a closing reference to another repository's issue with the same number does not clear the hold")
+    fake(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12}]}])
+    check(gate.main_red(REPO)[0] == "open", "a closing reference that names no repository clears nothing")
+    # review finding: the marker leads the hold text, so a long goal name cannot push it out of the 400 characters release_error keeps
+    fake(issues=[{"number": 12345, "title": "x" * 300}])
+    long_a = {"slug": "g" * 90, "pr": "9", "release": "merged", "status": "done", "release_bullets": [], "release_steps": ""}
+    try:
+        autorelease.fail(long_a, gate.hold(REPO, long_a["slug"], 1))
+    except SystemExit:
+        pass
+    held_card = clock.lead_line(dict(goal("long-held", [("freeze", 3)], status="done"), release_error=long_a["release_error"]))
+    check("hold=main-red:12345" in long_a["release_error"][:60] and any("release held by main-red (12345)" in x for x in held_card), "with a 90-character goal name the hold marker still survives release_error and the card shows the held line")
+    # review finding: the door cells (cut, promote, autorelease) x (hold unreadable, no hold, rerun after the issue is resolved)
+    class Past(Exception):
+        pass
+    def past(*a, **k):
+        raise Past()
+    rel = autorelease.release
+    def refused(call):
+        try:
+            call()
+        except SystemExit as stop:
+            return str(stop)
+        except Past:
+            return "PAST"
+        return "RETURNED"
+    kept = {k: getattr(rel, k) for k in ("load", "toplevel", "finished", "git")}
+    cut_state = {"slug": "cut-x", "status": "done", "pr": "5"}
+    rel.load, rel.toplevel, rel.finished, rel.git = (lambda slug: cut_state), (lambda state: REPO), (lambda state: None), past
+    cut = lambda: rel.cmd_cut(_ap.Namespace(slug="cut-x", bump="patch", user=False, auto=True))
+    fake(mode="fail")
+    check("MAIN_RED_UNREADABLE" in refused(cut), "cut: an unreadable issue list refuses through release.cmd_cut before any git call")
+    fake(issues=[{"number": 12, "title": "t"}])
+    check("MAIN_RED" in refused(cut), "cut: an open issue refuses through release.cmd_cut")
+    fake(issues=[])
+    check(refused(cut) == "PAST", "cut: once the issue is resolved the same state goes past the hold and on to the branch check")
+    for k, v in kept.items():
+        setattr(rel, k, v)
+    import review as rv
+    keep_rv = {k: getattr(rv, k) for k in ("table", "OK", "gate_refusals")}
+    rv.table, rv.OK, rv.gate_refusals = (lambda top, name: [["rec", "", "", "", "v9.0.0"]]), (lambda refs, top: False), past
+    promote = lambda: rv.promote(REPO, {"base": "main"}, 9, "rec", "ref")
+    fake(mode="fail")
+    check("MAIN_RED_UNREADABLE" in refused(promote), "promote: an unreadable issue list refuses through review.promote before the gate")
+    fake(issues=[])
+    check(refused(promote) == "PAST", "promote: once the issue is resolved the same call goes past the hold and on to the gate")
+    for k, v in keep_rv.items():
+        setattr(rv, k, v)
+    keep_ar = autorelease.stage_notes
+    autorelease.stage_notes = past
+    fin_state = {"slug": "fin-x", "pr": "6", "release": "merged", "status": "done", "release_bullets": ["w"], "release_steps": "s"}
+    fake(mode="fail")
+    out = refused(lambda: autorelease.finish(REPO, {}, fin_state))
+    check("MAIN_RED_UNREADABLE" in fin_state.get("release_error", "") and fin_state["status"] == "done" and out.startswith("REFUSED"), "autorelease: an unreadable issue list is recorded as release_error and the goal stays done and mergeable")
+    fake(issues=[])
+    check(refused(lambda: autorelease.finish(REPO, {}, fin_state)) == "PAST", "autorelease: once the issue is resolved the same held goal goes past the hold and on to stage its notes")
+    autorelease.stage_notes = keep_ar
+    # review finding: the measured usual takes the 20 most recent finished goals by completion time, not by file name
+    old = [dict(goal("zz-old%d" % i, [("tests", 100)], status="done"), updated=stamp(-100000 + i)) for i in range(20)]
+    new = [dict(goal("aa-new%d" % i, [("tests", 10)], status="done"), updated=stamp(-1000 + i)) for i in range(20)]
+    check(clock.usual(new + old).get("tests") == 10, "the measured usual comes from the 20 most recent goals by completion time, not from file-name order")
+    # review finding: small hardening
+    cfg_list = os.path.join(TMP, "listcfg.json")
+    write(cfg_list, "[1, 2]")
+    got = sh([sys.executable, os.path.join(MON, "clock.py"), "check", cfg_list])
+    check("Traceback" not in got.stderr, "a config that is not a JSON object does not make the settings check print a traceback")
+    check(clock.pr_checks({"pr": "--repo=other/repo"}) is None and clock.pr_checks({"pr": "https://example.test/pull/1"}) is None, "a pull request value that is not a number or a github.com pull request URL is never passed to gh")
+    check(clock.lead_for("../x") == [] or all("lead" not in x for x in clock.lead_for("../x")), "a slug with a path separator reads no run record")
     # moved code is byte for byte what it was
     import ast
     def source(path, name):

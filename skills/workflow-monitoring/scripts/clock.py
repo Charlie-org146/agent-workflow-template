@@ -31,6 +31,7 @@ DEFAULTS = {("quick checks", None): 1, ("tests", None): 5, ("merge", None): 5, (
 DOC = re.compile(r"^(docs|tests?|dev/toy)/|\.md$|(^|/)test[-_.]|[-_.]test\.")  # release.auto_need's pattern (release.py)
 LINE = re.compile(r"\bmissed \(was (\d+)m, limit (\d+)m\): (.*)$")
 CTX = {}
+BASIS = {}
 
 
 def steps():
@@ -154,7 +155,7 @@ def usual(runs):
         listing = one_list()
     except ImportError:
         listing = None
-    done = [r for r in runs if isinstance(r, dict) and r.get("status") == "done"][-20:]
+    done = sorted((r for r in runs if isinstance(r, dict) and r.get("status") == "done"), key=lambda r: str(r.get("updated") or ""))[-20:]
     seen = {}
     for r in done:
         for step, mins in (minutes_of(listing.entries(r)) if listing else {}).items():
@@ -235,7 +236,9 @@ def pr_checks(run):
         left = CTX.setdefault("gh_end", time.monotonic() + 10) - time.monotonic()  # one 10 s allowance for every goal of a render
         if left <= 0:
             return None
-        done = subprocess.run(["gh", "pr", "checks", pr, "--required", "--json", "startedAt,completedAt,state"], capture_output=True, text=True, timeout=left)
+        if not re.fullmatch(r"\d+|https://github\.com/[\w.-]+/[\w.-]+/pull/\d+", pr):
+            return None
+        done = subprocess.run(["gh", "pr", "checks", pr, "--required", "--json", "startedAt,completedAt,state"], cwd=CTX.get("root") or None, capture_output=True, text=True, timeout=left)
         rows = json.loads(done.stdout) if done.returncode == 0 else None
     except (OSError, subprocess.SubprocessError, ValueError):
         return None
@@ -305,6 +308,8 @@ def lead_for(slug, at=None):
     """lead_line for a goal named by its slug (the check-in prints through board_lines.bars); the run record is read from the common dir."""
     ctx = context()
     diag, ctx["diag"] = ctx.pop("diag", []), []
+    if not re.fullmatch(r"[\w.-]+", str(slug)):
+        return diag
     try:
         run = json.load(open(os.path.join(loop_dir(ctx["root"]), "runs", slug + ".json")))
     except (OSError, ValueError):
@@ -331,6 +336,9 @@ def check_missed(name, seconds, cfg):
 def basis_suffix(runs, at, root):
     """The history an ETA's basis rests on, from board_model's backtest: its count of scored goals and typical error."""
     import board_model as bm
+    key = (root, len(runs), max([str(r.get("updated")) for r in runs if isinstance(r, dict)] or [""])) if at is None else None
+    if key and key in BASIS:  # the same run set gives the same history: the backtest is built once per set, not once per goal
+        return BASIS[key]
     at = at or datetime.datetime.now(datetime.timezone.utc)
     try:
         m = bm.model(runs, at, root)
@@ -338,10 +346,14 @@ def basis_suffix(runs, at, root):
             bm.backtest(runs, at, root)
         scores, n = m.get("scores", ({}, 0))
         if not scores:
-            return ", too few finished goals (%d of %d)" % (n, bm.MIN_BACKTEST)
-        return ", scored on %d past goals, typically off by a factor of %.1f (repo-wide)" % (n, math.exp(scores[bm.chosen(runs, at, root)]))
+            text = ", too few finished goals (%d of %d)" % (n, bm.MIN_BACKTEST)
+        else:
+            text = ", scored on %d past goals, typically off by a factor of %.1f (repo-wide)" % (n, math.exp(scores[bm.chosen(runs, at, root)]))
     except (ArithmeticError, ValueError, TypeError, KeyError) as error:
         return ", clock unavailable (CLOCK_ERROR: %s)" % type(error).__name__
+    if key:
+        BASIS[key] = text
+    return text
 
 
 def cache_path(root):
@@ -355,7 +367,8 @@ def cache_path(root):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["check"] and len(sys.argv) == 3:  # settings.py fill-repo validates the setting through this
         try:
-            parse((json.load(open(sys.argv[2])) if os.path.exists(sys.argv[2]) else {}).get("step_report_limits", ""))
+            held = json.load(open(sys.argv[2])) if os.path.exists(sys.argv[2]) else {}
+            parse((held if isinstance(held, dict) else {"step_report_limits": "config is not a JSON object"}).get("step_report_limits", ""))
         except ValueError as error:
             sys.exit("REFUSED (STEP_LIMITS_BAD): %s. Fix: edit .loop/config.json and run settings.py fill-repo again. Nothing was changed. "
                      "See docs/wiki/How-to-use-Delivery.md" % error)

@@ -99,7 +99,7 @@ def read_red(top):
         if why:
             return "unreadable", "closing references of the merged pull request: " + why
         try:
-            closed = {int(r["number"]) for p in json.loads(out) for r in p.get("closingIssuesReferences") or []}
+            closed = {int(r["number"]) for p in json.loads(out) for r in p.get("closingIssuesReferences") or [] if str(r.get("url") or "").endswith("/%s/issues/%d" % (repo, int(r["number"])))}
         except (ValueError, KeyError, TypeError):
             return "unreadable", "closing references: bad reply"
     held = [i for i in issues if i["number"] not in closed]
@@ -116,12 +116,12 @@ def hold(top, slug="", auto=0):
         fix = ("gh auth login, or set GH_TOKEN for the session" if what.startswith("auth") else "point the origin remote at a github.com repository" if "origin" in what
                else "resolve the fixed main-red issues so fewer than 200 are open" if "200" in what else "rerun with LOOP_DEBUG=1 and report the trace" if what.startswith("unexpected")
                else "check the network and the gh login")
-        text = ("(MAIN_RED_UNREADABLE) the merge is done; the release is held, main-red issues cannot be read (%s). Fix: %s. Then run merge.py %s again (hold=main-red:unreadable)." % (what, fix, slug) if auto
+        text = ("(MAIN_RED_UNREADABLE) hold=main-red:unreadable the merge is done; the release is held, main-red issues cannot be read (%s). Fix: %s. Then run merge.py %s again." % (what, fix, slug) if auto
                 else "REFUSED (MAIN_RED_UNREADABLE) cannot read main-red issues (%s). Nothing was released or changed. Fix: %s. Then run %s again." % (what, fix, again))
     elif auto:
-        text = ("(MAIN_RED) the merge is done; the release is held by open issue %s. Fix: the owner or the goal that filed it resolves it once main is green; "
-                "an automated session never does (hold=main-red:%s). Then run merge.py %s again; it does not merge twice."
-                % (what.replace(": ", ' "', 1) + '"', what.split(":")[0], slug))
+        text = ("(MAIN_RED) hold=main-red:%s the merge is done; the release is held by open issue %s. Fix: the owner or the goal that filed it resolves it once main is green; "
+                "an automated session never does. Then run merge.py %s again; it does not merge twice."
+                % (what.split(":")[0], what.replace(": ", ' "', 1) + '"', slug))
     else:
         text = ("REFUSED (MAIN_RED): issue %s is open. Nothing was released or changed. Fix: the owner, or the goal that filed it, "
                 "resolves it once main is repaired and green; an automated session never does (hold=main-red:%s). Then run %s again. "
