@@ -72,14 +72,36 @@ out=""; check "empty and null values of a new record are kept (flow {}, waiting 
 import json; d = json.load(open(\"$T/fresh/.git/loop/runs/n.json\")); assert d[\"flow\"] == {} and \"waiting\" in d and d[\"tries\"] == 0, d"'
 fi
 if want nofiles; then
-echo "== no new file under skills/"
-base=$(git -C "$here" merge-base HEAD origin/main 2>/dev/null || git -C "$here" rev-parse HEAD)
-out=$(git -C "$here" diff --diff-filter=A --name-only "$base" HEAD -- skills)
-# owner o790: the one file o788 allows may be added; any other new skills/ file still fails
+echo "== no new file under skills/ from the two merges this row guards"
+# o863, TD1194: the row reads the change it was written for and v110-tasks' own merge, each against its first parent on origin/main;
+# GRD-21's package cap (200 files) stays in force.
 ALLOWED=skills/workflow-monitoring/scripts/board_tasks.py
-check "this change adds no file under skills/ except board_tasks.py (o790)" '[ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
-out=$(printf "%s\n%s\n" "$ALLOWED" skills/x/scripts/other.py)
-check "negative control: a second new skills/ file still fails" '! [ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ] && [ -n "$out" ]'
+added_by() {  # $1 repo, $2 branch name: the skills files added by the first-parent merge of that branch's pull request on origin/main
+  local m; m=$(git -C "$1" log origin/main --first-parent --merges --format=%H -1 --grep "/loop/$2\$")
+  [ -n "$m" ] || { echo "NOMERGE"; return; }
+  git -C "$1" diff --diff-filter=A --name-only "$m^1" "$m" -- skills
+}
+out=$(added_by "$here" guards-null-report)
+check "the change this row was written for adds no file under skills/" '[ -z "$out" ]'
+out=$(added_by "$here" v110-tasks)
+check "v110-tasks' own merge adds no file under skills/ except board_tasks.py (o790, o863)" '[ -n "$out" ] && [ "$out" != NOMERGE ] && [ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
+fx=$T/nofiles; git init -q -b main "$fx"; git -C "$fx" config user.email t@example.test; git -C "$fx" config user.name t; git -C "$fx" commit -q --allow-empty -m base
+mkmerge() {  # $1 branch, rest: files added under skills/ by its merge
+  local b=$1; shift; git -C "$fx" checkout -q -b "loop/$b" main
+  for f in "$@"; do mkdir -p "$fx/$(dirname "$f")"; echo x > "$fx/$f"; done
+  git -C "$fx" add -A; git -C "$fx" commit -q --allow-empty -m "add $b"; git -C "$fx" checkout -q main
+  git -C "$fx" merge -q --no-ff -m "Merge pull request #1 from o/loop/$b" "loop/$b"; git -C "$fx" update-ref refs/remotes/origin/main HEAD
+}
+mkmerge v110-tasks "$ALLOWED"
+out=$(added_by "$fx" v110-tasks)
+check "a fixture of v110-tasks' merge adding only board_tasks.py reads as allowed" '[ "$out" = "$ALLOWED" ]'
+mkmerge guards-null-report skills/x/scripts/other.py
+out=$(added_by "$fx" guards-null-report)
+check "negative control: a fixture of the row's own change adding a skills file still fails" '[ -n "$out" ] && [ "$out" != NOMERGE ] && [ "$out" = skills/x/scripts/other.py ] && ! [ -z "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
+fx=$T/nofiles2; git init -q -b main "$fx"; git -C "$fx" config user.email t@example.test; git -C "$fx" config user.name t; git -C "$fx" commit -q --allow-empty -m base
+mkmerge v110-tasks "$ALLOWED" skills/x/scripts/other2.py
+out=$(added_by "$fx" v110-tasks)
+check "negative control: a fixture of v110-tasks' merge adding another skills file still fails" '[ -n "$(grep -vxF "$ALLOWED" <<<"$out")" ]'
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ "$fails" = 0 ]

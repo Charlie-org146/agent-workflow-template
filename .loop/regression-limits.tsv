@@ -1,0 +1,4 @@
+# id	limit	reason
+# The owner's per-row exceptions to the run's row limit (o889, TD1326). A number is that row's own limit in seconds; the word nightly keeps a nightly row out of the PR shards (it still runs nightly). Each entry needs a limit:<id> or nightly:<id> line in dev/toy/approved-row-changes.tsv. Settled by pr-rows-under-limit / the v1.1.0 cut.
+tables-prep-151	300	recorded GitHub time 196.3 s and cut at the 200 s limit on PR #5859 (run 45220846174); 300 s is 50% over the 200 s it reached, so it can finish; it is the only row whose limit changes
+lanes-trace	nightly	nightly-tier row that reached the 200 s limit on the PR run (recorded 200.0 s); it stays a nightly row and no assertion changes

@@ -39,7 +39,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
@@ -300,9 +300,9 @@ def cmd_run(args):
     i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     path = os.environ.get("LOOP_ROW_TIMES", "")
-    if args.tree or n > 1:  # TD504: whole-tree rows run in the tree job only
+    if args.tree or n > 1:
         tree = {r["id"] for r in picked if lanes.whole(root, r, {})}
-        todo = [k for k in todo if (k in tree) == args.tree]
+        todo = [k for k in todo if (k in tree) == args.tree and k not in completion.off_pr(root)]
     every, seen = todo, merged(path)
     todo.sort(key=lambda k: seen.get(k, [0, ""])[1] != "CUT")  # TD497: cut last time, first now
     if n > 1:
@@ -317,15 +317,16 @@ def cmd_run(args):
         slots.started()
     limit = (args.budget or runs.budget(root)) if args.reuse and args.budget >= 0 else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
-    late = [r["id"] for r in results if n > 1 and r["state"] == "FAIL" and r["rc"] == 124]
+    completion.tree_timeouts(results) if args.tree else 0
+    late = [r["id"] for r in results if n > 1 and r["state"] in ("FAIL", "KNOWN") and r["rc"] == 124]
     results, cut = [r for r in results if r["id"] not in late], cut + late
     if late:
-        print("LEFT %d over the %d s row limit, not failed: %s" % (len(late), args.timeout, ", ".join(late)))
+        print("LEFT %d over the %d s row limit: %s" % (len(late), args.timeout, ", ".join(late)))
     if path:
         rows = merged(path, results, late, args.timeout)
-        for key in every:  # RAN: this shard's, CUT: budget, SEL: others'
+        for key in every:
             row = rows.setdefault(key, [0, ""])
-            row[1] = row[1] if row[1] == "LEFT" else "CUT" if key in cut else "RAN" if key in todo else "SEL"
+            row[1] = completion.state(row[1], key, cut, todo, results)
         open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)
