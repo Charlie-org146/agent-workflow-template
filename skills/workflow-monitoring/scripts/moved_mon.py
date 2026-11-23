@@ -1,6 +1,7 @@
 """The one way to reach the shared steps.py (skills/ in the repo, shared/ in a pack)."""
 import importlib
 import os
+import re
 import sys
 
 
@@ -104,3 +105,15 @@ def over_budget(states):
     return [(state["slug"], "%s %s hit its %s-minute budget; left: %s" % (
         steps().name_of(hit.get("step")), {"step": "step", "prep": "preparation"}.get(hit.get("kind"), "tests"), hit.get("minutes"), hit.get("left")))
         for state in states for hit in state.get("budget_hits") or [] if isinstance(hit, dict)]
+
+
+def parse_reply(text):
+    """layers.py's, moved whole: the A, I and R lists of a red-team reply; exactly one R line."""
+    lists = {"A": [], "I": [], "R": []}
+    for line in str(text or "").splitlines():
+        found = re.match(r"^\W*([AIR])\s*[:.)]\s*(\S.*)$", line)
+        if found:
+            lists[found.group(1)].append(found.group(2).strip())
+    if len(lists["R"]) != 1:
+        sys.exit("REFUSED: the reply has %d R: lines, and a red-team pass names exactly one biggest risk. Fix: send one `R: <risk>` line; nothing was recorded." % len(lists["R"]))
+    return lists

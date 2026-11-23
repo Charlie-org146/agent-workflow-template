@@ -30,6 +30,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import graph  # noqa: E402
 import machines  # noqa: E402
+import moved_mon  # noqa: E402
+parse_reply = moved_mon.parse_reply  # moved whole
 
 REF, STALE_SECONDS, TOP_GAP = "refs/loop/status/", 30 * 60, 300
 ROLES = ("", "top", "machine")
@@ -117,7 +119,7 @@ def build(common, cfg, now=None):
         if status == "waiting" and ask.get("ask") and live:
             needs.append({"slug": slug, "words": ask.get("ask"), "recommend": ask.get("recommend") or "", "options": ask.get("words") or []})
         if status in ("failed", "stopped") or run.get("held"):
-            parked.append({"slug": slug, "reason": "%s at %s" % (status if status in ("failed", "stopped") else "held", run.get("step") or "no step")})
+            parked.append({"slug": slug, "reason": "%s at %s" % (status if status in ("failed", "stopped") else "held", moved_mon.steps().name_of(run.get("step") or "no step"))})
     stale and parked.append({"slug": "stale", "reason": "%d records have no live session: %s" % (len(stale), ", ".join(stale[:5]))})
     for sid, item in sorted((pool or {}).items()):
         if isinstance(item, dict) and item.get("state") == "free":
@@ -210,7 +212,7 @@ def board(statuses, now=None):
     out += ["  %d. [%s/%s] %s -> recommended: %s" % (i, m, n.get("slug"), n.get("words"), n.get("recommend") or "none") for i, (m, n) in enumerate(needs, 1)] or ["  Nothing needs you"]
     stale = [m for m, a in sorted(ages.items()) if a * 60 > STALE_SECONDS]
     out += ["STALE: %s STATUS is %d minutes old (over 30)" % (m, ages[m]) for m in stale]
-    sections = (("Running", lambda s: ["%s/%s %s %s" % (s["machine"], w["slug"], w.get("step"), w.get("status")) for w in s.get("workers", []) if w.get("status") == "running"]),
+    sections = (("Running", lambda s: ["%s/%s %s %s" % (s["machine"], w["slug"], moved_mon.steps().name_of(w.get("step")), w.get("status")) for w in s.get("workers", []) if w.get("status") == "running"]),
                 ("PRs", lambda s: ["%s/%s #%s" % (s["machine"], w["slug"], w["pr"]) for w in s.get("workers", []) if w.get("pr")]),
                 ("Merges", lambda s: ["%s/%s #%s" % (s["machine"], m["slug"], m.get("pr")) for m in s.get("merges", [])]),
                 ("Parked and idle", lambda s: ["%s/%s parked: %s" % (s["machine"], p["slug"], p["reason"]) for p in s.get("parked", [])]
@@ -248,17 +250,6 @@ def reviewer_input(common, now=None):
     rows = ["STATUS %s (%d min old): %s" % (s["machine"], (now - float(s.get("at") or 0)) // 60, json.dumps(
         {k: v for k, v in s.items() if k not in ("machine", "at")}, sort_keys=True, separators=(",", ":"))) for s in found]
     return chr(10).join(["RED-TEAM INPUT " + iso(now), "", board(found, now), ""] + rows + ["", ASK])
-
-
-def parse_reply(text):
-    lists = {"A": [], "I": [], "R": []}
-    for line in str(text or "").splitlines():
-        found = re.match(r"^\W*([AIR])\s*[:.)]\s*(\S.*)$", line)
-        if found:
-            lists[found.group(1)].append(found.group(2).strip())
-    if len(lists["R"]) != 1:
-        sys.exit("REFUSED: the reply has %d R: lines, and a red-team pass names exactly one biggest risk. Fix: send one `R: <risk>` line; nothing was recorded." % len(lists["R"]))
-    return lists
 
 
 def record(common, text, now=None):

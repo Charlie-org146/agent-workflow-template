@@ -23,14 +23,12 @@ import json
 import os
 import re
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
-import threading
 import zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from package_extra import private_prefixes  # noqa: E402
+from package_extra import CHILD_SECONDS, arm, private_prefixes, run_alone, wait_on, waiting  # noqa: E402
 
 SHIPPED = ["skills", "listing.json", "README.md", "LICENSE"]
 BAD_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", "vendor"}
@@ -47,105 +45,7 @@ DANGEROUS = [r"\bos\.system\(", r"chmod\s+777", r"\brm\s+-rf\s+/(\s|$)", r"\b(cu
 INJECTION = [r"(?i)ignore previous instructions", r"(?i)do not tell the user", r"(?i)\bsecretly\b"]
 SHARED = {"skills/" + n: "shared/" + n for n in ("loop-files.md", "steps.py")}  # in a pack, only shared/ reaches every skill
 LIMITS = {"tags": 10, "keywords": 10, "use_cases": 8}
-try:
-    CHILD_SECONDS = max(1, int(os.environ.get("PACKAGE_CHILD_SECONDS") or 30))
-except ValueError:
-    CHILD_SECONDS = 30
 failures = []
-waiting = {"on": "starting", "child": None, "part": None, "lone": None, "stopping": False}
-STOP_SIGNALS = [getattr(signal, n) for n in ("SIGALRM", "SIGTERM", "SIGINT", "SIGHUP") if hasattr(signal, n)]
-
-
-def wait_on(what):
-    waiting["on"] = what
-
-
-def stop(line, code):
-    """Kill the running child's group, drop a half-written ZIP, print one line and exit at once."""
-    if waiting["stopping"]:  # a second signal while stopping: the first one finishes the job
-        return
-    waiting["stopping"] = True
-    child = waiting["child"]
-    if child is not None:
-        kill_group(child)
-    for path in (waiting["part"],):
-        try:
-            if path:
-                os.remove(path)
-        except OSError:
-            pass
-    if waiting["lone"]:
-        shutil.rmtree(waiting["lone"], ignore_errors=True)
-    if line:
-        os.write(1, (line + "\n").encode("utf-8", "replace"))  # never print() in a handler: it may interrupt one
-    os._exit(code)
-
-
-def on_timeout(seconds):
-    return lambda *_: stop("TIMEOUT: package.py stopped after %d seconds waiting on %s" % (seconds, waiting["on"]), 3)
-
-
-def on_signal(signum, frame):
-    stop("STOPPED: package.py got signal %d while waiting on %s" % (signum, waiting["on"]), 128 + signum)
-
-
-def arm(seconds):
-    """The hard bound: SIGALRM where it exists, else a timer thread (Windows). Outside kills also stop the child."""
-    if hasattr(signal, "SIGALRM"):
-        signal.signal(signal.SIGALRM, on_timeout(seconds))
-        signal.alarm(max(1, seconds))
-    else:
-        timer = threading.Timer(max(1, seconds), on_timeout(seconds))
-        timer.daemon = True
-        timer.start()
-    for name in ("SIGTERM", "SIGINT", "SIGHUP"):
-        if hasattr(signal, name) and signal.getsignal(getattr(signal, name)) is not signal.SIG_IGN:  # keep nohup's ignore
-            signal.signal(getattr(signal, name), on_signal)
-
-
-def kill_group(proc):
-    try:
-        if hasattr(os, "killpg"):
-            os.killpg(proc.pid, signal.SIGKILL)
-        else:  # Windows: the child and its whole tree
-            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
-    except (OSError, ProcessLookupError, subprocess.SubprocessError):
-        pass
-
-
-def run_alone(cmd, cwd, what):
-    """Run one child with no stdin and a time limit; kill its whole process group when the limit is hit."""
-    wait_on(what)
-    group = ({"start_new_session": True, "preexec_fn": lambda: signal.pthread_sigmask(signal.SIG_UNBLOCK, STOP_SIGNALS)}
-             if hasattr(os, "killpg") else {"creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)})
-    # the child must not inherit the block below, or it would ignore a reaper's TERM
-    mask = hasattr(signal, "pthread_sigmask")
-    if mask:  # no stop signal between the child starting and its being recorded, so none escapes the bound
-        signal.pthread_sigmask(signal.SIG_BLOCK, STOP_SIGNALS)
-    try:
-        proc = subprocess.Popen(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                text=True, encoding="utf-8", errors="replace", **group)  # UTF-8 whatever the locale
-        waiting["child"] = proc
-    finally:
-        if mask:
-            signal.pthread_sigmask(signal.SIG_UNBLOCK, STOP_SIGNALS)
-    try:
-        out, err = proc.communicate(timeout=CHILD_SECONDS)
-        return proc.returncode, err
-    except subprocess.TimeoutExpired:
-        kill_group(proc)
-        try:  # a detached grandchild may still hold the pipes: do not wait on it
-            proc.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            for pipe in (proc.stdout, proc.stderr):
-                pipe.close()
-            proc.wait(timeout=5)
-        return None, ""
-    finally:
-        waiting["child"] = None
-
-
 def fail(rule, text):
     failures.append((rule, text))
     print("FAIL %s: %s" % (rule, text), flush=True)  # flushed, so a stopped run keeps the failures it found

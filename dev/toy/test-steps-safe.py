@@ -146,6 +146,11 @@ seen = [free.stderr + free.stdout, watch, notice, shown]
 case("owner-facing-lines-say-the-list-names", all(w in " ".join(seen) for w in ("(tests left this for you", "WAITS ON YOU ww: tests left", "NEEDS YOU ff: Failed 3 tries. Last: tests failed", "ff failed step=tests", "step tests done"))
      and not any(w in " ".join(seen) for w in ("review left", "review failed", "step=review", "step ship")), str(seen)[:600])
 
+# the status a machine sends to top names a parked goal's step by the list
+parked = importlib.import_module("layers").build(os.path.join(root, ".git"), json.load(open(os.path.join(root, ".loop", "config.json"))))["parked"]
+shown = importlib.import_module("layers").board([{"machine": "m", "workers": [{"slug": "rr", "step": "review", "status": "running"}]}])
+case("the-status-to-top-says-the-list-name", any(p["slug"] == "ff" and p["reason"] == "failed at tests" for p in parked) and "m/rr tests running" in shown, str((parked, shown)))
+
 for folder in made:
     shutil.rmtree(folder, ignore_errors=True)
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
