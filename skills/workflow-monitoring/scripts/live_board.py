@@ -176,8 +176,13 @@ def max_tries(root):
 
 def depth_of(run, setting):
     """Each recorded step's depth, in flow order, and the current review_depth setting."""
-    got = run.get("depth") if isinstance(run.get("depth"), dict) else {}
-    done = ", ".join("%s %s" % (step, got[step]) for step in FLOW if step in got)
+    import moved_mon
+    one, got, by = moved_mon.steps(), run.get("depth") if isinstance(run.get("depth"), dict) else {}, {}
+    for step in FLOW:
+        if step in got:
+            by.setdefault(one.name_of(step), [])
+            got[step] in by[one.name_of(step)] or by[one.name_of(step)].append(got[step])
+    done = ", ".join("%s %s" % (name, "/".join(by[name])) for name in one.STEPS if name in by)
     return "%s (setting %s)" % (done or "none recorded yet", setting)
 
 

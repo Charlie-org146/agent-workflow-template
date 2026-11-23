@@ -181,5 +181,13 @@ case("note-reverted-to-write-is-caught", rev1 != board_src and not commits(rev1,
 case("note-reverted-to-open-write-is-caught", rev2 != board_src and not commits(rev2, "cmd_note"))
 case("retire-reverted-to-write-is-caught", rev3 != board_src and not commits(rev3, "cmd_retire"))
 
+# 20. the board's depth line names the steps of the one list (TD1148): same values show once, differing values are joined with /
+live_board = importlib.import_module("live_board")
+same = live_board.depth_of({"depth": {"idea": "full", "plan": "full", "review": "full", "qa": "full", "ship": "full"}}, "full")
+diff = live_board.depth_of({"depth": {"idea": "full", "plan": "condensed", "review": "full", "qa": "condensed", "ship": "full"}}, "full")
+case("depth-line-same-values-show-once", same == "freeze full, plan full, tests full (setting full)", same)
+case("depth-line-differing-values-are-joined", diff == "freeze full, plan condensed, tests full/condensed (setting full)", diff)
+case("depth-line-has-no-older-names", not re.search(r"\b(idea|review|qa|ship)\b", same + diff), same + " | " + diff)
+
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)
