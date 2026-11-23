@@ -80,6 +80,9 @@ if seed:
         rows = regression.merged(path)
     check(code == 0 and rows.get("a") == [40.0, ""] and rows.get("b") == [5.0, ""] and rows.get("c") == [7.0, "CUT"] and not left,
           "the cache's times override the committed ones, its CUT marks stay, and the restored file is moved out of the checkout")
+    code, text, left = run_seed({".github/workflows/row-times.tsv": committed, "all.tsv": "a\t40\tRAN\nb\t2\tLEFT\nc\t7\tCUT\nd\t1\tSKIP\n"})
+    check(code == 0 and sorted(text.splitlines()) == sorted(["a\t100.0\t", "b\t5.0\t", "a\t40\t", "b\t2\t", "c\t7\tCUT", "d\t1\t"]),
+          "the seed keeps CUT and drops every other status, so a leg that dies before the runner writes cannot carry a stale RAN (%s)" % text.splitlines())
     code, text, left = run_seed({})
     check(code == 0 and text == "" and not left, "a repo with no committed times and no cache gets an empty times file and the step goes on (exit %d)" % code)
 

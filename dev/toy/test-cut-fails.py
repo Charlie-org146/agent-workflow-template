@@ -146,6 +146,8 @@ if case("generated"):
           "the times cache is saved even when the affected step is red, so cut rows keep their marks")
     check("T=${{ runner.temp }}/t.tsv;" in flow and '>>$T; exit 0' in flow and "> $T; exit 0" not in flow,
           "the documents-only exit creates the shard file with >> and never truncates the restored times")
+    last = flow.split("\n  affected:")[1].split("\n  small:")[0].rstrip().splitlines()[-1].strip()
+    check(last == '- run: test "${{ needs.shard.result }}" = success', "the last step of the affected job fails it when a shard job failed: %s" % last)
     check("regression.py run \"$id\"" not in flow and "not failed" not in flow,
           "the affected step reruns nothing and no log line says a cut row is not failed")
 

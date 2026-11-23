@@ -22,3 +22,4 @@ skip:ls-private-tick	TD1215	by-design skip on main run 45110588623 at c2ce6460a
 skip:ls-size-budget	TD1215	by-design skip on main run 45110588623 at c2ce6460a
 skip:ls-usage-steps	TD1215	by-design skip on main run 45110588623 at c2ce6460a
 skip:package-rows-tracked	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+full-auto-no-new-file	TD1225	reads full-auto-all's own merge against its first parent (o863's reasoning: GRD-21's package cap stays in force); negative controls run in the row

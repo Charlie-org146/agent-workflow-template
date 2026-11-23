@@ -213,6 +213,14 @@ if case("tree-skip"):  # a whole-tree row that skips goes through the same list 
     check(code != 0 and "FAIL skipped and not skipped on main: ts" in out, "a whole-tree row that skips and is not on main's skip list fails the tree job by name (exit %d)" % code)
     code, out, times = run_step(tree_project(0), "tree")
     check(code == 0 and "FAIL" not in out, "control: a whole-tree row that passes ends the tree job green (exit %d)" % code)
+    here = tree_project(1)
+    code, out, times = run_step(here, "tree")
+    check(code != 0 and not os.path.exists(os.path.join(here, "tree.tsv")), "a whole-tree row that fails ends the tree job red before the gate runs (exit %d)" % code)
+    here = tree_project(77)
+    with open(os.path.join(here, ".loop", "regression-skips.tsv"), "w") as handle:
+        handle.write("# id\treason\nts\tskips by design\n")
+    code, out, times = run_step(here, "tree")
+    check(code == 0 and "SKIPPED ts: skips by design" in out, "control: a whole-tree row on main's skip list is SKIPPED and the tree job is green (exit %d)" % code)
 
 if case("notrun"):
     notrun = {"s/shard-0/t.tsv": "fast\t1\tRAN\nnr\t0\tNOTRUN\n", "s/shard-1/t.tsv": "fast\t0\tSEL\nnr\t0\tSEL\n"}
