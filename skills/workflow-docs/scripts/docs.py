@@ -247,7 +247,7 @@ def contract(root, strict=False):
                           "the line %s and use the feature page format, or move them to a feature page"
                           % (guarded(root, page), pageformat.GUIDE)))
     import milestones
-    return found + criteria.contract(root, names, {}) + render.front(root, names) + deployments.howto(root, wiki_dir(root), names) + milestones.new_form(root, strict)
+    return found + criteria.contract(root, names, {}) + render.front(root, names, 1) + deployments.howto(root, wiki_dir(root), names) + milestones.new_form(root, strict)
 
 
 def cmd_criteria(args):

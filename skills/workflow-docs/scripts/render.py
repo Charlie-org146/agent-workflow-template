@@ -146,7 +146,7 @@ def rebuild_notes(root):
         return []
 
 
-def front(root, names):
+def front(root, names, rb=0):
     """DOC-4 on Home, DOC-23 on the README and Principles page."""
     on, folder, out = cr.rules()["format"], os.path.join(root, cr.folder_of(root)), []
     readme, home = read(os.path.join(root, "README.md")) or "", read(os.path.join(folder, "Home.md"))
@@ -161,7 +161,7 @@ def front(root, names):
     if "frontdoor" in on and own:
         page = read(os.path.join(folder, "Principles.md"))
         out += pf.frontdoor("README", readme, listing, ids, old=old) + (pf.frontdoor("Principles", page, listing, ids, "Principles", old) if page else [])
-    return out + (own and home is not None and sections.run(folder, readme, home, names) or []) + rebuild_notes(root)
+    return out + (own and home is not None and sections.run(folder, readme, home, names) + (rb and rebuild_notes(root) or []) or [])
 
 
 def home_fresh(root, names):
