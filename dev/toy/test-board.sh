@@ -74,7 +74,7 @@ $B board --at $AT --since "$O/board.json" --out "$T/out3" > "$T/b3"
 has "$T/b3" "CHANGED no" "same state since the last board: CHANGED no"
 rec runa running 1 review 2026-01-01T11:55:00Z 'checks="pass"' 'note={"text":"<b>hi</b> building","at":"x"}'
 $B board --at $AT --since "$O/board.json" --out "$T/out3" > "$T/b4"
-grep -q "^CHANGE .*runa step: build -> review" "$T/b4" && ok "CHANGE line names the changed field" || bad "CHANGE line"
+grep -q "^CHANGE .*runa step: build -> tests" "$T/b4" && ! grep -q "runa step: build -> review" "$T/b4" && ok "CHANGE line names the changed field" || bad "CHANGE line"
 [ "$(grep -c '^CHANGE ' "$T/b4")" = 1 ] && ok "only the changed field is listed" || bad "changed field count: $(grep -c '^CHANGE ' "$T/b4")"
 rec runa running 1 build 2026-01-01T11:50:00Z 'checks="pass"' 'note={"text":"<b>hi</b> building","at":"x"}'
 H="$O/board.html"
@@ -221,7 +221,7 @@ $B board --at $AT --since "$T/c3/board.json" --out "$T/c4" > "$T/c.out"
 grep -q "CHANGED no" "$T/c.out" && ok "and gh answering again is no change" || bad "pull request state flapped"
 rec chg1 running 1 review 2026-01-01T11:50:00Z 'pr="https://x/pull/3"'
 $B board --at $AT --since "$T/c4/board.json" --out "$T/c5" > "$T/c.out"
-grep -q "^CHANGE repo/chg1 step: build -> review" "$T/c.out" && [ "$(grep -c '^CHANGE ' "$T/c.out")" = 1 ] && ok "a real change is still reported, alone" || bad "real change"
+grep -q "^CHANGE repo/chg1 step: build -> tests" "$T/c.out" && ! grep -q "chg1 step: build -> review" "$T/c.out" && [ "$(grep -c '^CHANGE ' "$T/c.out")" = 1 ] && ok "a real change is still reported, alone" || bad "real change"
 rm "$R/chg1.json"
 # board_page.py alone draws a finished board.json
 mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/board_page.py" "$T/lone/"; $B board --at $AT --out "$T/c6" >/dev/null

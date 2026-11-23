@@ -177,8 +177,8 @@ touch "$C/loop/runs/c.json"
 for _ in $(seq $tries); do [ "$(grep -c "^LIVE BOARD" "$T/op.out")" -gt "$blocks" ] && break; sleep 0.1; done
 check "a worker's report wakes it before the cadence, and it prints the full board, never a one-line mode" '[ "$(grep -c "^LIVE BOARD" "$T/op.out")" -gt "$blocks" ] && ! grep -q "Nothing changed\|NO_CHANGE" "$T/op.out"'
 (cd "$C/loop/worktrees/c" && $goal step c review >/dev/null)
-until_text "$T/op.out" "step: build -> review"
-check "a change prints the live board and the CHANGE line" 'grep -q "^CHANGE .*c step: build -> review" "$T/op.out" && [ "$(grep -c "^LIVE BOARD" "$T/op.out")" -ge 2 ]'
+until_text "$T/op.out" "step: build -> tests"
+check "a change prints the live board and the CHANGE line" 'grep -q "^CHANGE .*c step: build -> tests" "$T/op.out" && ! grep -q "c step: build -> review" "$T/op.out" && [ "$(grep -c "^LIVE BOARD" "$T/op.out")" -ge 2 ]'
 rm "$FAKE_AGENT/hold-c"; until_status c done
 # The test plays the merge from outside while c's worker may still be saving its last record, which can write the
 # old release field back (in a real goal the worker itself merges, so nothing races). Set it until it holds.
