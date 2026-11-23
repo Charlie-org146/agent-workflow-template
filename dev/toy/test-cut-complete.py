@@ -6,6 +6,10 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
   known-timeout  a row on the known list that passes its row limit is LEFT, so the cut gate fails it by name;
   skipped        a row that cannot run is written SKIP, never RAN; the gate passes it only when main's skip list holds it (SKIPPED,
                  never counted as run), and fails a skip main does not have;
+  tree-budget    the tree job runs with no budget, so a whole-tree row is never cut by one;
+  notrun         a row that could not start is NOTRUN and fails unless its skip-list row carries the notrun flag; a skip count is printed;
+  validate       an unreadable skip list, a malformed times line and a missing argument each fail with a message, and a
+                 failed run leaves the times cache as it was;
   empty-cache    a run that has no rows leaves the times cache's last record alone, a run with rows writes it;
   diff-fails     the shard step stops with a message when it cannot read the diff against the base, and does not call it
                  a documents-only change; controls: a documents-only diff ends green at once, a code diff reaches the runner.
@@ -105,21 +109,21 @@ if case("skipped"):
 STEP_START, STEP_END = "      - run: |\n", "      - if: always()\n        uses: actions/upload-artifact"
 
 
-def shard_step():
+def shard_step(cell="0"):
     """The shard job's run block, with its Actions values filled in; None-safe: the toy fails if it holds any other expression."""
     job = lanes_cli.NARROW.split("\n  shard:")[1].split("\n  affected:")[0]
     block = job.split(STEP_START, 1)[1].split(STEP_END, 1)[0]
     lines = [x[10:] if x.startswith(" " * 10) else x.strip() for x in block.splitlines()]
     text = "\n".join(lines).replace("@BASE@", "main").replace("@LEVELS@", "nightly")
-    text = text.replace("${{ runner.temp }}", "$TEMP_DIR").replace("${{ matrix.shard }}", "0")
+    text = text.replace("${{ runner.temp }}", "$TEMP_DIR").replace("${{ matrix.shard }}", cell)
     if "${{" in text:
         sys.exit("FAIL: the shard step holds an Actions expression this toy does not fill in")
     return text
 
 
-def run_step(here):
+def run_step(here, cell="0"):
     temp = tempfile.mkdtemp(prefix="cut-complete-temp-")
-    done = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", shard_step()], cwd=here, capture_output=True, text=True,
+    done = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", shard_step(cell)], cwd=here, capture_output=True, text=True,
                           env=dict(env, TEMP_DIR=temp))
     return done.returncode, done.stdout + done.stderr, os.path.join(temp, "t.tsv")
 
@@ -131,7 +135,7 @@ if case("diff-fails"):
         here = repo({"fast": "exit 0"})
         os.makedirs(os.path.join(here, os.path.dirname(stub)))
         with open(os.path.join(here, stub), "w") as handle:
-            handle.write("print('RUNNER-REACHED')\n")
+            handle.write("import sys\nprint('RUNNER-REACHED', ' '.join(sys.argv[1:]))\n")
         git(here, "add", "-A")
         git(here, "commit", "-qm", "stub")
         if with_base:
@@ -160,6 +164,70 @@ if case("empty-cache"):  # the times cache keeps the last real record: a run wit
             open(os.path.join(work, rel), "w").write(text)
         done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv"], cwd=work, capture_output=True, text=True)
         check(done.returncode == 0 and os.path.exists(os.path.join(work, "all.tsv")) == wrote, "%s: the times file is %s (exit %d)" % (name, "written" if wrote else "not written", done.returncode))
+
+if case("tree-budget"):
+    here = repo({"fast": "exit 0"})
+    os.makedirs(os.path.join(here, "skills", "workflow-regression", "scripts"))
+    with open(os.path.join(here, "skills", "workflow-regression", "scripts", "regression.py"), "w") as handle:
+        handle.write("import sys\nprint('RUNNER-REACHED', ' '.join(sys.argv[1:]))\n")
+    git(here, "add", "-A")
+    git(here, "commit", "-qm", "stub")
+    git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
+    git(here, "checkout", "-q", "-b", "pr")
+    with open(os.path.join(here, "dev.py"), "w") as handle:
+        handle.write("x\n")
+    git(here, "add", "-A")
+    git(here, "commit", "-qm", "change")
+    code, out, times = run_step(here, "tree")
+    check(code == 0 and "RUNNER-REACHED" in out and "--tree" in out and "--budget -1" in out,
+          "the tree job runs with no budget (--budget -1), so a whole-tree row is not cut by one (exit %d)" % code)
+    code, out, times = run_step(here, "3")
+    check(code == 0 and "--budget 120" in out and "--tree" not in out, "control: a numbered shard keeps its budget and does not take the tree line (exit %d)" % code)
+
+if case("notrun"):
+    notrun = {"s/shard-0/t.tsv": "fast\t1\tRAN\nnr\t0\tNOTRUN\n", "s/shard-1/t.tsv": "fast\t0\tSEL\nnr\t0\tSEL\n"}
+    code, out = gate(notrun, known=["nr"])
+    check(code == 1 and "FAIL could not run: nr" in out, "a row that could not start fails even when its id is on the skip list (exit %d)" % code)
+    code, out = gate(notrun, known=["nr\tcould not start here\tnotrun"])
+    check(code == 0 and "SKIPPED nr" in out and "FAIL" not in out, "a skip-list row carrying the notrun flag and its reason passes a row that could not start (exit %d)" % code)
+    two = {"s/shard-0/t.tsv": "fast\t1\tRAN\nsk\t0\tSKIP\n", "s/shard-1/t.tsv": "fast\t0\tSEL\nsk\t0\tSEL\n"}
+    code, out = gate(two, known=["sk"])
+    check("skipped, never counted as run: sk (1 of 2 selected rows)" in out, "the gate prints how many of the selected rows were skipped (exit %d)" % code)
+    from completion import state  # noqa: E402
+    check(state("", "x", [], ["x"], [{"id": "x", "state": "SKIPPED", "notrun": True}]) == "NOTRUN"
+          and state("", "x", [], ["x"], [{"id": "x", "state": "SKIPPED", "notrun": False}]) == "SKIP", "the writer tells a skip the row asked for from a row that could not start")
+
+if case("validate"):
+    work = tempfile.mkdtemp(prefix="cut-complete-validate-")
+    os.makedirs(os.path.join(work, "s", "shard-0"))
+    good = "a\t3\tRAN\n"
+    open(os.path.join(work, "s", "shard-0", "t.tsv"), "w").write(good)
+    open(os.path.join(work, "all.tsv"), "w").write("keep\t1\t\n")
+
+    def call(*args, files=None):
+        if files is not None:
+            open(os.path.join(work, "s", "shard-0", "t.tsv"), "w").write(files)
+        done = subprocess.run([sys.executable, GATE, *args], cwd=work, capture_output=True, text=True)
+        return done.returncode, done.stdout + done.stderr
+
+    code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", "no-such-list.tsv")
+    check(code == 1 and "FAIL cannot read the skip list no-such-list.tsv" in out and "not skipped on main" not in out, "an unreadable skip list is named as such, not blamed on the rows (exit %d)" % code)
+    for bad, why in (("a\tx\tRAN\n", "seconds"), ("a\t-3\tRAN\n", "seconds"), ("a\t3\tWHAT\n", "status"), ("a\n", "fields"), ("a\tnan\tRAN\n", "seconds")):
+        before = open(os.path.join(work, "all.tsv")).read()
+        code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", files=bad)
+        check(code == 1 and "FAIL malformed times line: s/shard-0/t.tsv:1" in out and why in out and open(os.path.join(work, "all.tsv")).read() == before,
+              "a malformed times line (%s) fails with its file and line, and the times cache is left as it was (exit %d)" % (why, code))
+    code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", files="old\t9\t\na\t3\tRAN\n")
+    check(code == 0, "control: a historical line with an empty status is not malformed (exit %d)" % code)
+    done = subprocess.run([sys.executable, GATE], cwd=work, capture_output=True, text=True)
+    check(done.returncode == 2 and "usage:" in done.stderr, "no arguments: exit 2 with a usage line on stderr (exit %d)" % done.returncode)
+    os.chmod(work, 0o500)
+    try:
+        code, out = call("s/shard-[0-7]/t.tsv", "new.tsv", files=None)
+    except OSError:
+        code, out = 99, ""
+    os.chmod(work, 0o700)
+    check(code == 1 and "FAIL cannot write the times file new.tsv" in out, "a times file that cannot be written is named, with exit 1 (exit %d)" % code)
 
 print("ALL PASS" if not failed else "FAILED: %d" % len(failed))
 sys.exit(1 if failed else 0)

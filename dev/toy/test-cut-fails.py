@@ -56,6 +56,7 @@ def written(rows, path):
 def step(files):
     """Run the step's command on {relative path: text} in a fresh tree: (exit code, output)."""
     work = tempfile.mkdtemp(prefix="cut-fails-")
+    files = dict({".loop/regression-skips.tsv": "# id\treason\n"}, **files)  # the checkout of the affected job holds main's skip list
     for name, text in files.items():
         os.makedirs(os.path.dirname(os.path.join(work, name)), exist_ok=True)
         open(os.path.join(work, name), "w").write(text)
@@ -136,8 +137,11 @@ if case("generated"):
     flow = lanes_cli.NARROW
     disk = open(os.path.join(root, ".github", "workflows", "regression-pr.yml")).read()
     check(lanes_cli.NARROW in disk or all(x in disk for x in ("cutgate.py", "shard-[0-7]")), "the workflow on disk carries the step")
-    check("      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv'\n" in flow and "FAIL cut or not run" not in flow,
-          "the affected step calls the one script on the numbered shard files only, and the template holds no copy of its check")
+    call = "      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv\n"
+    check(call in flow and "FAIL cut or not run" not in flow,
+          "the affected step calls the one script on the numbered shard files with the times file and main's skip list, and the template holds no copy of its check")
+    check(call not in flow.replace(" .loop/regression-skips.tsv", "") and call not in flow.replace(" all.tsv", "") and call not in flow.replace("[0-7]", "0"),
+          "negative control: a call without the skip list, the times file or the numbered glob is not the call the step must make")
     check("if: always() && needs.shard.result == 'success'\n        uses: actions/cache/save" in flow,
           "the times cache is saved even when the affected step is red, so cut rows keep their marks")
     check('>>${{ runner.temp }}/t.tsv; exit 0' in flow and "> ${{ runner.temp }}/t.tsv; exit 0" not in flow,

@@ -32,7 +32,7 @@ def problems(skips, approved, rows):
         if line.startswith("#"):
             continue
         cells = line.split("\t")
-        if len(cells) != 2 or not cells[1].strip():
+        if len(cells) not in (2, 3) or not cells[1].strip() or (len(cells) == 3 and cells[2] != "notrun"):
             found.append("no reason: " + cells[0])
         elif cells[0] not in rows:
             found.append("not a regression row: " + cells[0])
@@ -45,7 +45,14 @@ skips, approved = table(".loop/regression-skips.tsv"), table("dev/toy/approved-r
 rows = {l.split("\t")[0] for l in table(".loop/regression.tsv") if not l.startswith("#")}
 entries = [l for l in skips if not l.startswith("#")]
 check(len(entries) >= 1 and "main run 45110588623 at c2ce6460a" in "\n".join(l for l in skips if l.startswith("#")), "the list names its source run and holds rows")
+FIX = {"no reason": "give the row a reason (and, for a row the runner may not be able to start, the flag notrun in the third column) in .loop/regression-skips.tsv",
+       "not a regression row": "remove the id from .loop/regression-skips.tsv, or add the row to .loop/regression.tsv",
+       "no approved-row-changes line": "add `skip:<id><TAB>TD<n><TAB><reason>` to dev/toy/approved-row-changes.tsv, with the record that allows the skip"}
+for one in problems(skips, approved, rows):
+    print("FAIL: %s. Fix: %s" % (one, FIX[next(k for k in FIX if one.startswith(k))]))
 check(problems(skips, approved, rows) == [], "every row on the skip list is a regression row with a reason and an approved record: %s" % problems(skips, approved, rows))
+check(all(any(one.startswith(k) for k in FIX) for one in problems(skips + ["x\t"], approved, rows | {"x"}) + problems(skips + ["y\tr"], approved, rows) + problems(skips + ["z\tr"], approved, rows | {"z"})),
+      "every failure the list check reports has its own repair line")
 check(problems(skips + ["no-such-approval\tgood reason"], approved, rows | {"no-such-approval"}) == ["no approved-row-changes line for skip:no-such-approval"],
       "negative control: an id added to the list with no approved-row-changes line fails")
 check(problems(skips + ["not-a-row\tgood reason"], approved + ["skip:not-a-row\tTD0\tr"], rows) == ["not a regression row: not-a-row"],

@@ -3,11 +3,14 @@
 
 def state(old, key, cut, todo, results):
     """The times-file status of a selected row: LEFT stays, CUT when the budget ran out, SEL on another shard's rows, SKIP when
-    the row could not run here (never counted as run), else RAN."""
+    the row asked to be skipped and NOTRUN when the runner could not start it (neither counts as run), else RAN."""
     if old == "LEFT":
         return old
     if key in cut:
         return "CUT"
     if key not in todo:
         return "SEL"
-    return "SKIP" if any(r["id"] == key and r["state"] == "SKIPPED" for r in results) else "RAN"
+    for r in results:
+        if r["id"] == key and r["state"] == "SKIPPED":
+            return "NOTRUN" if r.get("notrun") else "SKIP"
+    return "RAN"

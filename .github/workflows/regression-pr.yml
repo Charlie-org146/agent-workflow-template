@@ -37,7 +37,7 @@ jobs:
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv >${{ runner.temp }}/t.tsv 2>/dev/null||:; rm all.tsv  # o852: committed times, the cache's over them
           R="python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal"
           B=120; printf %s "$D" | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
-          [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200
+          [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200 --budget -1
           LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 200
       - if: always()
         uses: actions/upload-artifact@v4

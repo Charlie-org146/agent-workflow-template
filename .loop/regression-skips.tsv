@@ -1,4 +1,4 @@
-# id	reason
+# id	reason	flag (notrun: the runner may report the row as not startable here; only package-rows-tracked)
 # Rows that skip by design on main's CI run (SKIPPED, never counted as run). Source: main run 45110588623 at c2ce6460a. A new id needs a skip:<id> line in dev/toy/approved-row-changes.tsv.
 aut-email-secrets	macOS only: test-local-schedule.sh skips itself on any other host (toy_skip, exit 77, REG-10; launchd, SCHEDULE_PLATFORM)
 codex-key-commands	test-codex.sh live exits 77 when codex is not installed or not signed in on the runner
@@ -12,4 +12,4 @@ ls-private-no-workflow	macOS only: test-local-schedule.sh skips itself on any ot
 ls-private-tick	macOS only: test-local-schedule.sh skips itself on any other host (toy_skip, exit 77, REG-10; launchd, SCHEDULE_PLATFORM)
 ls-size-budget	macOS only: test-local-schedule.sh skips itself on any other host (toy_skip, exit 77, REG-10; launchd, SCHEDULE_PLATFORM)
 ls-usage-steps	macOS only: test-local-schedule.sh skips itself on any other host (toy_skip, exit 77, REG-10; launchd, SCHEDULE_PLATFORM)
-package-rows-tracked	the runner classes it not runnable on the CI runner (a tool it needs is missing); main's run prints SKIPPED with no skip message
+package-rows-tracked	the runner classes it not runnable on the CI runner (a tool it needs is missing); main's run prints SKIPPED with no skip message	notrun

@@ -1,7 +1,7 @@
 # Implement DEL-26.4: a test cut for time, or not run, fails the checks (v1.1.0 task 5, part 5a)
 
 - Slug: v110-fast-cut
-- Touches: .github/workflows, skills/workflow-regression, skills/workflow-delivery, dev/toy, .loop/regression.tsv, docs
+- Touches: .github/workflows, skills/workflow-regression, skills/workflow-delivery, dev/toy, .loop/regression.tsv, docs, .loop/regression-skips.tsv
 - ETA: 225 active minutes (estimate 179m plus a 25% margin)
 
 ## Done lines
@@ -84,3 +84,11 @@ The cut-gate check is no longer inline in the generated `affected` step. It is `
 - Negative controls run in the row: a fixture of either merge adding another skills file still fails. Mutation checks (each turned the row red, exit 1): the v110-tasks fixture no longer adds its extra file; every file allowed; the row's own-change fixture adds nothing.
 - The package cap still holds: `dev/toy/test-package-caps.py` asserts 200 files pass and 201 fail, and a temp copy with 201 skills files was refused by `dev/package.py --static` (`Size: 204 files, at most 200 allowed`).
 - The record in `dev/toy/approved-row-changes.tsv` cites "o863, TD1194".
+
+### A row counts as run only when it finished (TD1202, TD1215; plan revision 4)
+
+- `completion.py` gives each selected row its status: RAN only when it finished on the shard, SKIP when the row asked to be skipped, NOTRUN when the runner could not start it. A known row past its row limit is LEFT. `cutgate.py` never counts SKIP or NOTRUN as run: such a row passes only when its id is on `.loop/regression-skips.tsv` (the 13 rows main's run 45110588623 at c2ce6460a reports SKIPPED, each with its own reason), printed `SKIPPED <id>: <reason>`, with a count of skipped rows among the selected ones; any other skipped row fails and names the repair. A row the runner could not start passes only if its list row carries the `notrun` flag; only `package-rows-tracked` has it. It is the one list row without its own skip message: main's run prints SKIPPED for it with no message, and finding the missing tool is on the list of work after the cut.
+- The list cannot grow without a record: each id needs a `skip:<id>` line in `dev/toy/approved-row-changes.tsv` (TD1215), checked by `dev/toy/test-skip-list.py`, row `skip-list-approved`, with negative controls.
+- The shard step reads the diff once and fails with a message when it cannot; the tree job runs with `--budget -1`; `cutgate.py` fails with a message on an unreadable skip list, a malformed times line (file and line), a times file it cannot write, or no arguments, and writes the times cache whole and only when there is a record.
+- Toy `dev/toy/test-cut-complete.py`, row `cut-complete`: each case runs the real runner, the real gate or the generated step and was seen red before its fix (known timeout, skip, could not start, unreadable diff, empty record, tree budget, skip-list read, malformed line, usage, write failure), with controls that stay green. The rows `cut-fails-checks` and `skip-list-approved` check the generated call in full and the list.
+- The row-table PR rule is unchanged: a change to `.loop/regression.tsv` runs every row with no budget, so this PR's first run shows each shard's measured time against 866 s; the budget commit follows that run (o852, TD1183, TD1202).
