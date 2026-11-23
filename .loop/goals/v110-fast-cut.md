@@ -31,7 +31,7 @@ Frozen. A wrong done line needs a new goal.
 
 ### Targeted fix after the gate (top's TD832)
 
-- `known-no-block` ran `test-regression.sh` six times in one row; it is split into five rows (`known-no-block`, `-reads-all`, `-cut-off-refused`, `-job-skip`, `-opens-issue`), same commands, same requirement HLT-4, each seen red on its own break and each now under the 200 s row limit (142, 111, 141, 45 and 6 s, measured by `regression.py run`). It adds four rows to a table already over its cap; no coverage is lost.
+- `known-no-block` ran `test-regression.sh` six times in one row; it is split into five rows (`known-no-block`, `-reads-all`, `-cut-off-refused`, `-job-skip`, `-opens-issue`), same commands, same requirement HLT-4, each seen red on its own break and each now under the 200 s row limit (142, 111, 141, 45 and 6 s, measured by `regression.py run`). It adds four rows; no coverage is lost.
 - The cache save can no longer store an empty times file: the step's first command is `ls $T>/dev/null`, so with no shard file it stops before `all.tsv` exists and `actions/cache/save` finds nothing to save; the toy asserts no `all.tsv` is left. Helper files are named `r` and `b`; lanes_cli.py is 20,454 bytes [measured: wc -c] (26 free), regression.py 20,467.
 - Other DEL-26 and DEL-27 requirements belong to their own goals.
 - `test-regression.sh` prints the same failures on `origin/main` and on this tree (8 `FAIL` lines each, identical sets): not caused by this change.
@@ -77,3 +77,10 @@ The cut-gate check is no longer inline in the generated `affected` step. It is `
 
 - TD1176 points the skills-file half of `tasks-rows-only-added` at the files v110-tasks' merge added under skills/. TD1184 accepts that under done line 3 on one condition: the negative control is in the toy and runs in the PR. The control is that a fixture of that merge adding another skills file still fails.
 - The row now also requires that control's PASS line, so a FAIL in it turns the row red. Mutation check: with the control broken (its fixture's extra file renamed), the row exits 1; intact, it exits 0. The record in `dev/toy/approved-row-changes.tsv` cites "TD1176, TD1184".
+
+### The row `guards-null-report-nofiles` follows o863 (TD1194)
+
+- This goal adds `cutgate.py` (allowed by o745, 99 of 100 files), so the old form of the row, which read every change for added skills files, failed on it. The owner's answer (o863, "Yes, narrow it") is carried here under TD1194: the row now reads the change it was written for and v110-tasks' own merge against their first parents, with `board_tasks.py` allowed. GRD-21's package cap (200 files) stays in force.
+- Negative controls run in the row: a fixture of either merge adding another skills file still fails. Mutation checks (each turned the row red, exit 1): the v110-tasks fixture no longer adds its extra file; every file allowed; the row's own-change fixture adds nothing.
+- The package cap still holds: `dev/toy/test-package-caps.py` asserts 200 files pass and 201 fail, and a temp copy with 201 skills files was refused by `dev/package.py --static` (`Size: 204 files, at most 200 allowed`).
+- The record in `dev/toy/approved-row-changes.tsv` cites "o863, TD1194".

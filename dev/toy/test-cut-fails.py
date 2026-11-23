@@ -114,7 +114,7 @@ if case("stale"):
     files["s/shard-0/t.tsv"] += "old\t9\tCUT\n"
     files["s/shard-1/t.tsv"] += "gone\t9\tRAN\nlate\t9\tLEFT\n"
     code, out = step(files)
-    check(code == 0, "control: a stale CUT, RAN or LEFT line for a row nobody selected this run is not counted (exit %d)" % code)
+    check(code == 0, "control: the gate reads this run's selected rows, so a line left over for a row not selected this run changes nothing (exit %d)" % code)
     docs = {"s/shard-%d/t.tsv" % i: "x\t5\tRAN\ny\t9\tLEFT\nz\t3\tCUT\n" for i in range(8)}
     code, out = step(docs)
     check(code == 0, "control: a documents-only run (every shard uploads the restored previous file, no SEL line) is green (exit %d)" % code)

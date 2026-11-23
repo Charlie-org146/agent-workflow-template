@@ -118,7 +118,7 @@ for name, body in (("shard-0", "a\t5\tRAN\nb\t1\tSEL\nc\t1\tSEL\nd\t2\tSEL\nold\
         handle.write(body)
 gate = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script], cwd=work, capture_output=True, text=True)
 check(gate.returncode == 1 and "FAIL cut or not run: d not run" in gate.stdout and "run twice: c" in gate.stdout and "FAIL cut or not run: e" not in gate.stdout,
-      "affected fails the row no shard ran by name, names the row two shards ran, and leaves the LEFT row with no SEL alone (exit %d)" % gate.returncode)
+      "affected fails the row no shard ran by name, names the row two shards ran, and reads only rows selected in this run (exit %d)" % gate.returncode)
 kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
 # D3 (pr-check-fast, fast-3min): 8 shards of 120 seconds; docs.py check runs once per merge, in the merge-queue job `small` on the merged

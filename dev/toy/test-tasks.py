@@ -279,7 +279,7 @@ def row_changes(repo, change):
     return unapproved(git_in(repo, "diff", base, "--", ".loop/regression.tsv").stdout.splitlines(), set())
 
 
-# negative controls: the skills-file half sees v110-tasks' merge adding another file, and the row half sees any PR change an existing row
+# negative controls: a fixture of v110-tasks' merge adding another skills file fails, and a PR changing an existing row fails
 check(tasks_added(fixture([]))[1] == [ALLOWED], "a fixture of v110-tasks' merge adding only board_tasks.py reads as allowed")
 check([f for f in tasks_added(fixture(["skills/x/other.py"]))[1] if f != ALLOWED] == ["skills/x/other.py"],
       "negative control: a fixture of v110-tasks' merge adding another skills file still fails")
@@ -292,7 +292,7 @@ if base.returncode:
     check(False, "origin/main is missing here, so skills/ and the regression rows cannot be compared")
 else:
     sha = base.stdout.strip()
-    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base: every PR
+    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
     check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
     merge, added = tasks_added(top)
     check(bool(merge), "v110-tasks' pull request merge is found on origin/main by its message")

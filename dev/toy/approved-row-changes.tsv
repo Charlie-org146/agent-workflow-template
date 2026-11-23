@@ -8,3 +8,4 @@ aut7-budget-agrees	o797, TD1036 (REG-4: one row per script and requirement)	fold
 budgets-agree	o797, TD1036 (REG-4)	now runs the budgets, digest and health cases with one merged description
 known-no-block	TD842 (the five split rows granted under the TD815 rule)	split into five one-run rows (known-no-block and four siblings), each seen red, no coverage lost
 tasks-rows-only-added	TD1176, TD1184	the skills-file half reads the files v110-tasks' merge added under skills/ (o788 allows board_tasks.py); the row half is unchanged; the row also requires the negative control that a fixture of that merge adding another skills file fails (TD1184)
+guards-null-report-nofiles	o863, TD1194	reads the change it was written for and v110-tasks' own merge against their first parents, board_tasks.py allowed; negative controls run in the row and are mutation-checked; the package cap (GRD-21) stays in force
