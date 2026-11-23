@@ -78,9 +78,9 @@ Every step, task and release has a token budget from its measured usual, and I c
 
 | Requirement | Summary | Follows | Feature | Adoption | Confidence |
 |---|---|---|---|---|---|
-| [DEL-28 Every step has a token budget](https://github.com/Charlie-org146/agent-workflow-template/wiki/Delivery) ([DEL-28 flow](docs/wiki/flows/DEL-28.svg)) | **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28] | - [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue): adopted<br>- [DORA lead time](https://dora.dev/guides/dora-metrics-four-keys): adapted | Delivery (Build loop), Regression (Quality), Release (Other), Guardrails (Quality) | 50% | not measured: no data yet |
+| [DEL-28 Every step has a token budget](https://github.com/Charlie-org146/agent-workflow-template/wiki/Delivery) ([DEL-28 flow](docs/wiki/flows/DEL-28.svg)) | **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28] | - not named yet: planned | - | 0% | not measured: no data yet |
 
-Adoption: 50% (the average of this principle's rows).
+Adoption: 0% (the average of this principle's rows).
 
 **How it works:** the merge queue enforces "ready to main" today: four merges tonight took between 50 seconds and 2 min 39 s. The 5-minute CI is being built now. Health prints each step's time and tokens for the last 20 changes and fails a step over its limit.
 
