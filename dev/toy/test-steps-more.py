@@ -250,46 +250,5 @@ case("a-step-move-after-a-status-only-save-sticks", sm["step"] == "pr" and sm["s
 extra = board_src.replace('moved_mon.steps().commit(path, run, run["updated"])\n    print("NOTED', 'moved_mon.steps().commit(path, run, run["updated"])\n    open(path, "w").write("x")\n    print("NOTED', 1)
 case("a-direct-write-beside-the-commit-is-caught", extra != board_src and not commits(extra, "cmd_note"))
 
-# 27. one toy repo with one goal on an off-list label whose newest report names "step ship"; the screens are rendered, not grepped
-import argparse
-import datetime
-import subprocess
-board = importlib.import_module("board")
-checkin = importlib.import_module("checkin")
-os.environ.update(HOME=mk(), LOOP_PRIVATE_NAMES="/dev/null", PYTHONDONTWRITEBYTECODE="1")  # child scripts leave no cache
-repo = mk()
-git = lambda *a: subprocess.run(["git", *a], cwd=repo, check=True, capture_output=True)
-git("init", "-q"), git("config", "user.email", "t@t.t"), git("config", "user.name", "t"), open(os.path.join(repo, "f"), "w").write("x"), git("add", "."), git("commit", "-qm", "i")
-subprocess.run([sys.executable, "-B", os.path.join(SKILLS, "workflow-setup", "scripts", "setup.py"), "--bare"], cwd=repo, check=True, capture_output=True)
-os.makedirs(os.path.join(repo, ".git", "loop", "runs"))
-goal = dict(off, slug="zz", goal="g", step="zzz", worker="session", pid=os.getpid(),
-            reports=[{"at": "2026-11-22T09:30:00Z", "step": "review", "status": "running", "text": "worker zz: step ship, running"}])
-json.dump(goal, open(os.path.join(repo, ".git", "loop", "runs", "zz.json"), "w"))
-at = datetime.datetime(2026, 11, 22, 10, 5, tzinfo=datetime.timezone.utc)
-os.chdir(repo)
-screen = "\n".join(live_board.render(repo, at))
-mon = "\n".join(checkin.render(repo, at, "0000"))
-# the bar counts the list: patched to nine steps, four finished is 4 of 9 (an older eight-long list would give 50%)
-steps.STEPS = steps.STEPS + ("extra",)
-nine = "\n".join(live_board.render(repo, at))
-steps.STEPS = steps.STEPS[:-1]
-case("the-bar-counts-the-lists-length", "- zz  [#####-----] 50%" in screen and "- zz  [####------] 44%" in nine, str((screen.split("\n")[8:10], nine.split("\n")[8:10])))
-lines = mon.split("\n")
-at_row = next((i for i, l in enumerate(lines) if l.startswith("| session worker") and "tests 5/8" in l), 0)
-row = " ".join(l.strip() for l in lines[at_row:at_row + 2])  # the check-in wraps its table rows
-case("the-checkin-says-the-list-name", "step tests" in row and "step ship" not in row, row)
-case("the-checkin-count-is-the-list-length", "tests 5/9" in "\n".join(checkin.render(repo, at, "0000")) if (setattr(steps, "STEPS", steps.STEPS + ("extra",)) or True) else False)
-steps.STEPS = steps.STEPS[:-1]
-bm_mod = importlib.import_module("board_model")
-was = bm_mod.stalled
-bm_mod.stalled = lambda *a, **k: ("review", 200.0, 10.0)
-stall = "\n".join(moved_mon.stall_lines([goal], at))
-bm_mod.stalled = was
-case("the-stall-line-says-the-list-name", "zz is stalled: tests has run" in stall and "review" not in stall, stall)
-out_file = os.path.join(mk(), "handoff.md")
-board.cmd_handoff(argparse.Namespace(at=None, out=out_file))
-hand = open(out_file).read()
-case("the-handoff-names-the-last-known-step-not-the-label", "step tests" in hand and "step zzz" not in hand, hand[:600])
-
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

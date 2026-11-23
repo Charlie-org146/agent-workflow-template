@@ -24,6 +24,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import moved_mon  # noqa: E402
+from moved_mon import started  # noqa: E402,F401  (moved whole)
 from board_log import stamp, unread  # noqa: E402,F401  (aware UTC or None; a zone-less stamp is named, not guessed)
 try:  # without board_status.py there is no estimate
     import board_status  # noqa: E402
@@ -159,14 +161,6 @@ def queue_of(path):
     return goals
 
 
-def started(run):
-    for entry in run.get("log") or []:
-        found = stamp(str(entry).split(" ", 1)[0])
-        if found:
-            return found
-    return stamp(run.get("updated"))
-
-
 def span(seconds):
     seconds = max(0, int(seconds))
     return "%dh%02dm" % divmod(seconds // 60, 60) if seconds >= 3600 else "%dm" % (seconds // 60)
@@ -202,7 +196,6 @@ def collect(name, path, base, at):
         pr = clean(run.get("pr"))
         get = lambda field, size=300: clean(run.get(field), size)
         import board_log
-        import moved_mon
         rows.append({
             "repo": run.get("repo") or name, "slug": run["slug"], "goal": get("goal", 80), "level": kind(run), "status": get("status"),
             "step": get("step") or "-", "shown": moved_mon.shown(run, board_log.FLOW[board_log.current(run)])[0], "tries": run.get("tries", 0), "pr": pr, "prstate": ((known.get(pr) or "unknown").lower() if pr in known else pr_state(pr, path)) if pr else "",
@@ -265,7 +258,7 @@ def build(at, since):
             words = [clean(w) for w in r["waiting"].get("words") or []]
             waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": clean(r["waiting"].get("ask")), "words": words})
         elif r["status"] in ("failed", "stopped"):
-            waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": "%s: %s" % (r["status"], r["report"] or r["finding"] or "see its log"),
+            waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": "%s: %s" % (r["status"], moved_mon.steps().say(r["report"] or r["finding"] or "see its log")),
                             "words": ["resume %s" % r["slug"]]})
         else:
             continue
@@ -296,8 +289,9 @@ def changes(old, new):
     for key in sorted(set(old) | set(new)):
         before, after = old.get(key) or {}, new.get(key) or {}
         for field in sorted(set(before) | set(after)):
-            if clean(before.get(field)) != clean(after.get(field)):
-                lines.append("CHANGE %s %s: %s -> %s" % (key, field, clean(before.get(field), 80) or "-", clean(after.get(field), 80) or "-"))
+            name = moved_mon.steps().name_of if field == "step" else lambda v: v  # a step is said by the one list's name
+            if clean(name(before.get(field))) != clean(name(after.get(field))):
+                lines.append("CHANGE %s %s: %s -> %s" % (key, field, clean(name(before.get(field)), 80) or "-", clean(name(after.get(field)), 80) or "-"))
     return lines
 
 

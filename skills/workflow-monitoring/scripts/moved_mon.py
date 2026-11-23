@@ -59,6 +59,27 @@ def stall_lines(runs, at, root=None, held=()):
     return out
 
 
+def depth_of(run, setting):
+    """Each recorded step's depth, in flow order, and the current review_depth setting."""
+    from board_log import FLOW
+    one, got, by = steps(), run.get("depth") if isinstance(run.get("depth"), dict) else {}, {}
+    for step in FLOW:
+        if step in got:
+            by.setdefault(one.name_of(step), [])
+            got[step] in by[one.name_of(step)] or by[one.name_of(step)].append(got[step])
+    done = ", ".join("%s %s" % (name, "/".join(by[name])) for name in one.STEPS if name in by)
+    return "%s (setting %s)" % (done or "none recorded yet", setting)
+
+
+def started(run):
+    from board_log import stamp
+    for entry in run.get("log") or []:
+        found = stamp(str(entry).split(" ", 1)[0])
+        if found:
+            return found
+    return stamp(run.get("updated"))
+
+
 def chain(items):
     """(seconds, path, cycles): the longest chain of what is left, the goals on it, and the goals where a cycle was cut."""
     by, memo, cut = {node["slug"]: node for node in items}, {}, []

@@ -27,6 +27,7 @@ import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
+from moved_mon import depth_of  # noqa: E402,F401  (moved whole)
 from board_tasks import age, parse_at, task_lines  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
@@ -180,19 +181,8 @@ def max_tries(root):
         return 3
 
 
-def depth_of(run, setting):
-    """Each recorded step's depth, in flow order, and the current review_depth setting."""
-    import moved_mon
-    one, got, by = moved_mon.steps(), run.get("depth") if isinstance(run.get("depth"), dict) else {}, {}
-    for step in FLOW:
-        if step in got:
-            by.setdefault(one.name_of(step), [])
-            got[step] in by[one.name_of(step)] or by[one.name_of(step)].append(got[step])
-    done = ", ".join("%s %s" % (name, "/".join(by[name])) for name in one.STEPS if name in by)
-    return "%s (setting %s)" % (done or "none recorded yet", setting)
-
-
 def issues(runs, gone, root, at=None, taken=None, why="", freezing=()):
+    import moved_mon
     stuck, other = [], []
     if why:
         other += ["- the session pool can't be read (%s)" % plain(why, 120),
@@ -206,7 +196,7 @@ def issues(runs, gone, root, at=None, taken=None, why="", freezing=()):
         if run.get("status") == "waiting":
             ask = run.get("waiting") or {}
             words = ask.get("words") or ["resume " + slug]
-            stuck.append("- %s is %s: %s" % (slug, run["status"], plain(ask.get("ask") or report or run.get("finding") or "see its log")))
+            stuck.append("- %s is %s: %s" % (slug, run["status"], plain(moved_mon.steps().say(ask.get("ask") or report or run.get("finding") or "see its log"))))
             stuck.append("    fix: answer by typing %s" % " or ".join('"%s"' % w for w in words))
         if run.get("release_error") and bs.error_open(run, gone, "release failed"):
             other += ["- %s: the release failed: %s" % (slug, plain(run["release_error"])), '    fix: look at the problem, then type "resume %s"' % slug]
