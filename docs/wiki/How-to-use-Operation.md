@@ -5,7 +5,7 @@
 
 One session governs many goals at once: it gives every ready goal its own worker session, passes the owner's answers along, runs unattended and never builds.
 
-A stop records a structured cause in the goal's record. `python3 skills/workflow-docs/scripts/steps_page.py file` previews each cause once, grouped with its repeats, with one fix per cause; filing is off in v1.1.0 and nothing is written to GitHub.
+A stop records a structured cause in the goal's record. `python3 skills/workflow-docs/scripts/steps_page.py file` previews each cause once, grouped with its repeats, with one fix per cause; filing is off in v1.1.0 and nothing is written to GitHub. The operation session's board, check-in, handoff, report and dashboard all say a goal's step by the one list's name.
 
 ### What's delivered
 

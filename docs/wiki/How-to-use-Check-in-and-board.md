@@ -5,7 +5,7 @@
 
 Shows what is running, stuck or waiting on the owner the same way every time: the live board, a check-in on a cadence in one layout, and a dependency map with this machine's status.
 
-The check-in shows each goal's step by its DEL-19 name and its place in the eight (for example `tests 5/8`); a goal whose pull request is open shows as `merge`.
+The check-in shows each goal's step by its DEL-19 name and its place in the eight (for example `tests 5/8`); a goal whose pull request is open shows as `merge`. The live board, the handoff and its CHANGE lines say every step the same way, in reports and waiting asks too, never by an older label such as `qa` or `ship`.
 
 ### What's delivered
 
