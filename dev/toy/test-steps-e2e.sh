@@ -134,7 +134,7 @@ ran queuec "merge" && ran queuec "after the merge" && ran queuec "release" && ok
 out=$(preview); [ "$(grep -c "merge:failed" <<<"$out")" = 1 ] && grep -q "merge:failed (2 goals: postb, queuec)" <<<"$out" && ok "a repeated cause is previewed once, grouped with its repeats" || bad "the grouping: $(grep "merge:failed" <<<"$out" | tr '\n' ' ')"
 [ "$(writes)" = 0 ] && ok "no pull request was edited and no issue was made at any point" || bad "something was written to GitHub"
 
-echo "== the live board shows each running goal's step from the one list"
+echo "== the live board draws each running goal's flow from the one list"
 git switch -q main 2>/dev/null
 $goal new liveg --here --goal "A running goal" --done "calc has liveg" >/dev/null 2>&1 || bad "goal new liveg"
 python3 -B - "$(git rev-parse --git-common-dir)" "$$" <<'PY'  # a live goal on the review step, as a fixture
@@ -145,6 +145,6 @@ r.update(status="running", step="review", worker="session", pid=int(sys.argv[2])
 json.dump(r, open(p, "w"), indent=2)
 PY
 board=$(python3 -B "$PK/workflow-monitoring/scripts/live_board.py" 2>&1)
-grep -q "^    step: tests 5/8$" <<<"$board" && ok "the live board has a step line from the one list for the running goal" || bad "no step line on the live board: $(grep -m2 "step" <<<"$board" | tr '\n' '|' | cut -c1-200)"
+grep -qx "    freeze✓ > plan✓ > build✓ > quick checks✓ > \[tests\] >" <<<"$board" && grep -qx "    merge > after the merge > release" <<<"$board" && ! grep -q "review" <<<"$(grep -E "^    (idea|freeze)" <<<"$board")" && ok "the live board draws the running goal's flow from the one list" || bad "the live board's flow line is not from the one list: $(grep -m2 "freeze\|idea" <<<"$board" | tr '\n' '|' | cut -c1-200)"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }
