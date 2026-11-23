@@ -1,0 +1,11 @@
+# v110-fast-ci-2 design
+
+Problem: a PR that touches code takes 16 to 26 minutes on GitHub, a rerun with no change takes as long, and the merge queue runs no tests (its only job is `small`), so DEL-26 (tests split, affected-only, reused) and DEL-27 (a green PR enters the queue at once, one full run in the queue, to main within 10 minutes) are not met. The generated workflows and `lanes_cli.py` are off limits (v110-fast-cut holds those bytes), every regression script is within 1 KB of its cap, and the package is at its 100-file cap, so only new files outside `skills/` can carry the change (o745), with one granted `DEFAULTS` line in clock.py (TD1154).
+
+Approaches:
+1. Edit the generator so the PR workflow does everything. Cheapest in files, but lanes_cli.py has 3 bytes free and belongs to another goal. Rejected.
+2. New hand-written workflows plus one small tool in `dev/`. Chosen: `pr-tests.yml` runs the PR's reached tests in balanced shards with result reuse (DEL-26.1 to 26.3); `queue-full.yml` runs the full set once on the merged result in the merge queue; `queue-cache.yml` saves row times and result keys on the default branch so the queue can read them; `queue-enter.yml` arms auto-merge on a green PR's exact head; `dev/ci_plan.py` holds the balancing, the reuse keys, the shard run and the clock. Cut and not-run detection is v110-fast-cut's `cutgate.py`, called by both gates, not copied. Time limits come from `clock.limit`, not from a number in a script.
+
+Done lines need: 1 each DEL-26/27 case is a toy case with a control and a row (26.2 stays red until v110-fast-reads lands; the 27.x timing cases are text and fixture proofs, with the real clocks measured on GitHub); 2 a PR path and a queue path that split, select, reuse and gate; 3 queue entry within a minute or two, one full run in the queue, no re-test of other PRs; 4 new files, plus one granted DEFAULTS line in clock.py (TD1154).
+
+Open questions (recommended answers taken): whether the 10-minute queue clock holds for a code change (recommended: measure it, on this PR's own queue run where the queue is on, else after the first merge, and report); whether the owner sets the repository variable that turns queue entry on (recommended: yes, off until set, after review on the workflows and `dev/ci_plan.py` is in place).
