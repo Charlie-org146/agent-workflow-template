@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """DEL-25.4, shipped with the skills. check(): the generated files that are stale, as (name, needs an agent) pairs, writing nothing.
-regen(): at goal.py pr they are checked, never rewritten."""
+regen(): at goal.py pr they are checked, never rewritten; a stale entry page is refused."""
 import os
 import sys
 
+ENTRY = ("START.md", "CLAUDE.md", "AGENTS.md")
 SKILLS = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 
@@ -21,11 +22,15 @@ def check(g, slug):
 
 
 def regen(g, slug):
-    """goal.py pr: names stale generated files in a NOTE (a hard stop ships in v1.2.0, after #5728 and #5783); commits nothing (DEL-25.4)."""
+    """goal.py pr: a stale START.md (or CLAUDE.md, AGENTS.md) is refused, the head unchanged; a page that needs an agent is
+    named in a NOTE. Writes and commits nothing (DEL-25.4): the files are made before the tested commit."""
     found = check(g, slug)
+    fix = ("Fix, in order: 1. python3 skills/workflow-docs/scripts/entry.py write 2. python3 skills/workflow-release/scripts/wiki.py "
+           "prepare %s --commit 3. git commit any change 4. re-run the lane at the new head, then goal.py pr" % slug)
+    entry = [n for n, agent in found if not agent and n.endswith(ENTRY)]
+    if entry:
+        raise SystemExit("REFUSED: REGEN_STALE: %s; not rewritten at PR time, the head is unchanged. %s" % (", ".join(entry), fix))
     if found:
         names = ", ".join(n + (" (needs an agent to rewrite)" if agent else "") for n, agent in found)
-        print("NOTE: REGEN_STALE: %s; not rewritten here. Fix, in order: 1. python3 skills/workflow-docs/scripts/entry.py write 2. python3 "
-              "skills/workflow-release/scripts/wiki.py prepare %s --commit 3. git commit any change 4. re-run the lane at the new "
-              "head, then goal.py pr" % (names, slug))
+        print("NOTE: REGEN_STALE: %s; not rewritten here. %s" % (names, fix))
     return g.git("rev-parse", "HEAD")

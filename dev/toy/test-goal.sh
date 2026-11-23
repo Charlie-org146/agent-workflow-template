@@ -201,10 +201,12 @@ def regen():
 ' >> calc.py; git commit -qam "Add regen"; flowall regen
 cfg 'cadence=7'; git commit -qam "Stale START.md"
 $E check 2>&1 | grep -q "STALE" && ok "a START.md input changed after the last commit is stale" || bad "no stale START.md to mend"
-$goal pr regen >/dev/null 2>&1; [ "$(git log -1 --format=%s)" = "Regenerate START.md for regen" ] && $E check 2>&1 | grep -q "ENTRY OK" && ok "pr commits the regenerated START.md before the push" || bad "pr left START.md stale"
+h=$(git rev-parse HEAD); out=$($goal pr regen 2>&1); rc=$?; [ "$rc" != 0 ] && [ "$(git rev-parse HEAD)" = "$h" ] && printf '%s\n' "$out" | grep -q "REFUSED: REGEN_STALE: .*START.md" && $E check 2>&1 | grep -q "STALE" && ok "pr refuses a stale START.md, naming it, and leaves the head unchanged (DEL-25.4)" || bad "pr went on with a stale START.md or changed the head: rc $rc"
+$E write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "The Fix: START.md regenerated"
+n=$(git rev-list --count HEAD); $goal pr regen >/dev/null 2>&1; [ -z "$(git log --format=%s -n $(( $(git rev-list --count HEAD) - n )) | grep -v '^Bump version')" ] && [ "$(field regen pr)" != None ] && $E check 2>&1 | grep -q "ENTRY OK" && ok "after the Fix (regenerated before the tested commit) pr opens the PR and adds no commit but the version bump" || bad "pr after the Fix: $(field regen pr)"
 n=$(git rev-list --count HEAD); $goal pr regen >/dev/null 2>&1; [ "$(git rev-list --count HEAD)" = "$n" ] && ok "nothing generated stale: pr adds no commit" || bad "pr added a commit with nothing stale"
 git switch -q main
-cfg 'pr_bumps_version=false'; git commit -qam "Bump off"; git push -q origin main
+cfg 'pr_bumps_version=false'; git commit -qam "Bump off"; $E write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "START.md" 2>/dev/null; git push -q origin main  # DEL-25.4: made before the tested commit
 
 echo "== a failed push is retried, and a final failure prints git's error"
 hook="$d/origin.git/hooks/pre-receive"
@@ -244,7 +246,7 @@ PY
 A
 export FAKE_AGENT="$d/fake" COMMON="$C"; mkdir -p "$FAKE_AGENT"
 cfg "agent_command=[\"bash\", \"$d/agent.sh\"]" 'parallel=2'
-git commit -qam "Agent"; git push -q origin main
+git commit -qam "Agent"; $E write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "START.md" 2>/dev/null; git push -q origin main
 head0=$(git rev-parse HEAD)
 $W go "Add alpha" --done "alpha works" --touches a.py --slug alpha | tee "$d/g1"
 grep -q "STARTED alpha" "$d/g1" && ok "go started it" || bad "go"
