@@ -95,7 +95,7 @@ def render(check):
     """Re-render the Tests tables (check: list stale ones), as paths."""
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        cr.cmd_render(argparse.Namespace(check=check))
+        cr.cmd_render(argparse.Namespace(check=check, keep=True))
     return [line.split(" ", 1)[1] for line in out.getvalue().splitlines() if line.startswith(("STALE ", "WROTE "))]
 
 
