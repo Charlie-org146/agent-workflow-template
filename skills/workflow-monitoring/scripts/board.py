@@ -256,7 +256,7 @@ def build(at, since):
     for r in rows:
         if r["status"] == "waiting" and r["waiting"]:
             words = [clean(w) for w in r["waiting"].get("words") or []]
-            waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": clean(r["waiting"].get("ask")), "words": words})
+            waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": clean(moved_mon.steps().say(r["waiting"].get("ask"))), "words": words})
         elif r["status"] in ("failed", "stopped"):
             waiting.append({"repo": r["repo"], "slug": r["slug"], "ask": "%s: %s" % (r["status"], moved_mon.steps().say(r["report"] or r["finding"] or "see its log")),
                             "words": ["resume %s" % r["slug"]]})
@@ -289,7 +289,7 @@ def changes(old, new):
     for key in sorted(set(old) | set(new)):
         before, after = old.get(key) or {}, new.get(key) or {}
         for field in sorted(set(before) | set(after)):
-            name = moved_mon.steps().name_of if field == "step" else lambda v: v  # a step is said by the one list's name
+            name = moved_mon.steps().name_of if field == "step" else moved_mon.steps().say  # steps by the list's names
             if clean(name(before.get(field))) != clean(name(after.get(field))):
                 lines.append("CHANGE %s %s: %s -> %s" % (key, field, clean(name(before.get(field)), 80) or "-", clean(name(after.get(field)), 80) or "-"))
     return lines

@@ -36,8 +36,12 @@ def name_of(label):
 
 
 def say(text):
-    """A sentence naming a step by an older label ("step ship") says it by the one list's name ("step tests")."""
-    return re.sub(r"\bstep (\w+)", lambda m: "step " + name_of(m.group(1)), text or "")
+    """A sentence naming a step by an older label ("step ship", "ship step", a leading "qa:") says it by the one list's name."""
+    if text is not None and not isinstance(text, str):
+        return text  # a number or flag names no step
+    text = re.sub(r"\bstep (\w+)", lambda m: "step " + name_of(m.group(1)), text or "")
+    text = re.sub(r"\b(\w+) step\b", lambda m: name_of(m.group(1)) + " step", text)
+    return re.sub(r"^(\w+):", lambda m: name_of(m.group(1)) + ":", text)
 
 
 def valid(label):

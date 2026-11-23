@@ -49,7 +49,7 @@ write("heldk", status="running", step="build", worker="session", session={"id": 
       worktree=tree, updated=at(-7200))
 write("heldn", status="running", step="idea", worktree=tree, updated="")
 write("deadpid", status="running", step="qa", pid=999999)
-write("offflow", status="running", step="checks", pid=1, reports=[{"at": at(-30), "step": "build", "status": "running", "text": ""}])
+write("offflow", status="running", step="lint", pid=1, reports=[{"at": at(-30), "step": "build", "status": "running", "text": ""}])
 write("rel", status="running", step="release", pid=1)
 write("usedup", status="running", step="ship", pid=1, tries=3)
 write("donep", status="done", step="pr")
@@ -103,9 +103,9 @@ check "the freezing goal says what happens next and how long ago it was assigned
 check "the freezing goal leaves Queued goals" '! sec "Queued goals" Dependencies | grep -q "^- newgoal " && sec "Queued goals" Dependencies | grep -q "^- later "'
 check "a freezing goal assigned longer than the quiet time is named under Issues with its fix" 'sec Issues "Running goals" | grep -q "^- oldassign: assigned to session worker · oldassign 2h ago and still not frozen" && grep -q "sessions.py free oldassign" "$T/board"'
 check "a retired goal with a busy pool entry is not shown as freezing" '! grep -q "retired1" "$T/board"'
-# the bar counts the DEL-19 list: finished steps (freeze, plan, build = 3) over the list's own length, derived here, not typed in
-read hashes dashes pct < <(python3 -B -c 'import importlib.util as u,sys; sp=u.spec_from_file_location("steps", sys.argv[1]); m=u.module_from_spec(sp); sys.dont_write_bytecode=True; sp.loader.exec_module(m); n=len(m.STEPS); h=round(10*3/n); print("#"*h, "-"*(10-h), round(100*3/n))' "$here/skills/steps.py")
-check "a step outside the flow keeps the last known flow step, not idea 0%" 'goal offflow | grep -qx "    freeze✓ > plan✓ > build✓ > \[quick checks\] > tests > merge > after the merge > release" && ! goal offflow | grep -qx "    idea✓ > plan✓ > \[build\] > review > qa > ship > pr > release" && goal offflow | grep -q "^- offflow  \\[$hashes$dashes\\] $pct%" && ! goal offflow | grep -q "25%"'
+# the bar counts the DEL-19 list: finished steps (freeze, plan = 2; lint is off the list) over the list's own length, derived here, not typed in
+read hashes dashes pct < <(python3 -B -c 'import importlib.util as u,sys; sp=u.spec_from_file_location("steps", sys.argv[1]); m=u.module_from_spec(sp); sys.dont_write_bytecode=True; sp.loader.exec_module(m); n=len(m.STEPS); h=round(10*2/n); print("#"*h, "-"*(10-h), round(100*2/n))' "$here/skills/steps.py")
+check "a step outside the flow keeps the last known flow step, not idea 0%" 'goal offflow | grep -qx "    freeze✓ > plan✓ > \[build\] > quick checks > tests > merge > after the merge > release" && ! goal offflow | grep -qx "    idea✓ > plan✓ > \[build\] > review > qa > ship > pr > release" && goal offflow | grep -q "^- offflow  \\[$hashes$dashes\\] $pct%" && ! goal offflow | grep -q " 0%"'
 check "a running goal at the release step reads finish release" 'goal rel | grep -qx "    next: finish release"'
 check "a done goal still reads merge the pull request" 'goal donep | grep -qx "    next: merge the pull request"'
 check "a goal that failed a try shows try N of M" 'goal heldg | grep -q "^- heldg .*  try 2 of 3  held$"'

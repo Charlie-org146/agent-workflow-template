@@ -97,3 +97,10 @@ def chain(items):
 
     found = max([walk(node["slug"], ()) for node in items] + [(0, [])], key=lambda found: found[0])
     return found[0], found[1], sorted(set(cut))
+
+
+def over_budget(states):
+    """monitor.py's, moved whole: (slug, line) for each step or test run that reached its time budget, with what it left (the run file's budget_hits)."""
+    return [(state["slug"], "%s %s hit its %s-minute budget; left: %s" % (
+        steps().name_of(hit.get("step")), {"step": "step", "prep": "preparation"}.get(hit.get("kind"), "tests"), hit.get("minutes"), hit.get("left")))
+        for state in states for hit in state.get("budget_hits") or [] if isinstance(hit, dict)]

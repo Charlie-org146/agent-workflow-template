@@ -310,5 +310,23 @@ board.cmd_handoff(argparse.Namespace(at=None, out=out_file))
 hand = open(out_file).read()
 case("the-failed-ask-says-the-list-name", "ff" in hand and "failed: worker ff: step tests failed" in hand and "step ship failed" not in hand, hand[-900:])
 
+# a waiting goal's own ask in the handoff, CHANGE lines of text fields, and the report and dashboard say the list's names
+put("wa", "waiting", "build", "x", waiting={"ask": "step ship needs your word", "words": ["go"]})
+board.cmd_handoff(argparse.Namespace(at=None, out=out_file))
+hand = open(out_file).read()
+case("the-waiting-ask-says-the-list-name", "wa: step tests needs your word" in hand and "step ship needs" not in hand, hand[-900:])
+moves = board.changes({"a": {"report": "x", "note": "a"}}, {"a": {"report": "w: step ship, running", "note": "qa: 2 refusals"}})
+case("change-text-fields-say-the-list-name", moves == ["CHANGE a note: a -> tests: 2 refusals", "CHANGE a report: x -> w: step tests, running"], str(moves))
+put("qq", "failed", "qa", "x", finding="step pr broke", budget_hits=[{"step": "ship", "kind": "step", "minutes": 30, "left": "x"}])
+mon_py = os.path.join(SKILLS, "workflow-monitoring", "scripts", "monitor.py")
+rep = subprocess.run([sys.executable, "-B", mon_py, "report"], cwd=repo, capture_output=True, text=True).stdout
+row = next((" ".join(l.split()) for l in rep.splitlines() if l.startswith("qq ")), "")
+case("the-report-says-the-list-name", row.startswith("qq goal failed tests ") and "- qq: tests step hit its 30-minute budget" in rep
+     and "step merge broke" in rep and "wa: step tests needs your word" in rep and "ship step" not in rep, rep[-900:])
+dash = os.path.join(mk(), "d.html")
+subprocess.run([sys.executable, "-B", mon_py, "dashboard", "--out", dash], cwd=repo, capture_output=True)
+page = open(dash).read() if os.path.exists(dash) else ""
+case("the-dashboard-says-the-list-name", "<td>tests</td>" in page and "<td>qa</td>" not in page and "tests step hit" in page and "<b>wa</b>: step tests needs your word" in page and "step ship" not in page, page[-900:])
+
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

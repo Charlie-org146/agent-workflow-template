@@ -24,6 +24,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import proctree  # noqa: E402
+import moved_mon  # noqa: E402
+from moved_mon import over_budget  # noqa: E402,F401  (moved whole)
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -87,7 +89,6 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
-    import moved_mon
     moved_mon.steps().commit(record_path(state["slug"]), state, state["updated"])
 
 
@@ -204,19 +205,12 @@ def status_block(fragment=False):
     return subprocess.run([sys.executable, helper] + ["--html"] * fragment, capture_output=True, text=True, cwd=root()).stdout
 
 
-def over_budget(states):
-    """(slug, line) for each step or test run that reached its time budget, with what it left (the run file's budget_hits)."""
-    return [(state["slug"], "%s %s hit its %s-minute budget; left: %s" % (
-        hit.get("step"), {"step": "step", "prep": "preparation"}.get(hit.get("kind"), "tests"), hit.get("minutes"), hit.get("left")))
-        for state in states for hit in state.get("budget_hits") or [] if isinstance(hit, dict)]
-
-
 def cmd_report(args):
     states, held = facts()
     print(status_block())
     rows = [("SLUG", "KIND", "STATUS", "STEP", "TRIES", "PR")]
     for state in states:
-        rows.append((state["slug"], state.get("kind") or "goal", state.get("status", ""), state.get("step") or "-",
+        rows.append((state["slug"], state.get("kind") or "goal", state.get("status", ""), moved_mon.steps().name_of(state.get("step") or "-"),
                      str(state.get("tries", 0)), state.get("pr") or "-"))
     widths = [max(len(row[col]) for row in rows) for col in range(6)]
     for row in rows:
@@ -227,7 +221,7 @@ def cmd_report(args):
     waiting = [state for state in states if state.get("status") == "waiting"]
     for state in waiting:
         wait = state.get("waiting") or {}
-        print("- %s: %s" % (state["slug"], wait.get("ask", "")))
+        print("- %s: %s" % (state["slug"], moved_mon.steps().say(wait.get("ask", ""))))
         for words in wait.get("words") or []:
             print("    type: %s" % words)
     if not waiting:
@@ -235,7 +229,7 @@ def cmd_report(args):
     print("\nFINDINGS")
     found = [state for state in states if state.get("status") in ("stopped", "failed")]
     for state in found:
-        print("- %s (%s): %s" % (state["slug"], state["status"], " ".join(str(state.get("finding", "")).split())))
+        print("- %s (%s): %s" % (state["slug"], state["status"], moved_mon.steps().say(" ".join(str(state.get("finding", "")).split()))))
     if not found:
         print("(none)")
     over = over_budget(states)
@@ -286,7 +280,7 @@ def cmd_dashboard(args):
     out.append("<section class=wait><h2>Waiting on you (%d)</h2>" % len(waiting))
     for state in waiting:
         wait = state.get("waiting") or {}
-        out.append("<p><b>%s</b>: %s</p><ul>" % (e(state["slug"]), e(wait.get("ask", ""))))
+        out.append("<p><b>%s</b>: %s</p><ul>" % (e(state["slug"]), e(moved_mon.steps().say(wait.get("ask", "")))))
         out.extend("<li>Type <code>%s</code></li>" % e(words) for words in wait.get("words") or [])
         out.append("</ul>")
     if not waiting:
@@ -296,12 +290,12 @@ def cmd_dashboard(args):
     for state in states:
         status = state.get("status", "")
         out.append("<tr><td>%s</td><td>%s</td><td class='%s'>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
-            e(state["slug"]), e(state.get("kind") or "goal"), e(status), e(status), e(state.get("step") or "-"),
+            e(state["slug"]), e(state.get("kind") or "goal"), e(status), e(status), e(moved_mon.steps().name_of(state.get("step") or "-")),
             e(state.get("tries", 0)), e(state.get("pr") or "-")))
     out.append("</table></div>" + ("" if states else "<p>No runs yet.</p>"))
     out.append("<h2>Findings</h2><ul>")
     found = [state for state in states if state.get("status") in ("stopped", "failed")]
-    out.extend("<li><b>%s</b> (%s): %s</li>" % (e(state["slug"]), e(state["status"]), e(state.get("finding")))
+    out.extend("<li><b>%s</b> (%s): %s</li>" % (e(state["slug"]), e(state["status"]), e(moved_mon.steps().say(state.get("finding"))))
                for state in found)
     over = over_budget(states)
     out.append(("" if found else "<li>None.</li>") + "</ul>" + ("<h2>Budget hits</h2><ul>" + "".join(
