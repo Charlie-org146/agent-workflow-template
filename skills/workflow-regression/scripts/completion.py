@@ -1,4 +1,30 @@
-"""What a PR shard writes for a selected row (DEL-26.4): RAN only when the row finished on this shard."""
+"""What a PR shard writes for a selected row (DEL-26.4): RAN only when the row finished on this shard.
+
+.loop/regression-limits.tsv (`id TAB limit TAB reason`) holds the owner's per-row exceptions: a number is that row's own row limit in
+seconds; the word `nightly` keeps a nightly row out of the PR shards (it still runs in the nightly run). A row not on it keeps the
+run's own limit. Whole-tree rows run in the tree job only (TD504)."""
+import os
+
+
+def limits(root):
+    got = {}
+    try:
+        for line in open(os.path.join(root, ".loop", "regression-limits.tsv")):
+            cells = line.rstrip("\n").split("\t")
+            if len(cells) == 3 and cells[0][:1] != "#" and (cells[1] == "nightly" or cells[1].isdigit()):
+                got[cells[0]] = cells[1]
+    except OSError:
+        pass
+    return got
+
+
+def limit(root, key, default):
+    got = limits(root).get(key, "")
+    return int(got) if got.isdigit() else default
+
+
+def off_pr(root):
+    return {k for k, v in limits(root).items() if v == "nightly"}
 
 
 def state(old, key, cut, todo, results):

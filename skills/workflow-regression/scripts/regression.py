@@ -300,9 +300,9 @@ def cmd_run(args):
     i, n = map(int, os.environ.pop("LOOP_PR_SHARD", "0/1").split("/"))
     est = {key: item.get("seconds") or 0 for key, item in (old["rows"] if args.reuse and picked and old else {}).items()}
     path = os.environ.get("LOOP_ROW_TIMES", "")
-    if args.tree or n > 1:  # TD504: whole-tree rows run in the tree job only
+    if args.tree or n > 1:
         tree = {r["id"] for r in picked if lanes.whole(root, r, {})}
-        todo = [k for k in todo if (k in tree) == args.tree]
+        todo = [k for k in todo if (k in tree) == args.tree and k not in completion.off_pr(root)]
     every, seen = todo, merged(path)
     todo.sort(key=lambda k: seen.get(k, [0, ""])[1] != "CUT")  # TD497: cut last time, first now
     if n > 1:

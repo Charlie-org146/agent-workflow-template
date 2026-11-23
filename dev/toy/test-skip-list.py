@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# reads: .loop/regression-skips.tsv dev/toy/approved-row-changes.tsv .loop/regression.tsv
+# reads: .loop/regression-skips.tsv .loop/regression-limits.tsv dev/toy/approved-row-changes.tsv .loop/regression.tsv
 """skip-list-approved (TD1215): the rows that skip by design on main are a committed list, and it cannot grow without a record.
 
 .loop/regression-skips.tsv holds `id TAB reason` for every row main's CI run reports SKIPPED. Each id must be a regression row,
@@ -41,6 +41,23 @@ def problems(skips, approved, rows):
     return found
 
 
+def limit_problems(limits, approved, rows):
+    """o889, TD1326: each entry of .loop/regression-limits.tsv is a regression row with a number or `nightly`, a reason, and an approved line."""
+    ok = {a.split("\t")[0] for a in approved if not a.startswith("#") and len(a.split("\t")) == 3}
+    found = []
+    for line in limits:
+        cells = line.split("\t")
+        if line.startswith("#"):
+            continue
+        if len(cells) != 3 or not cells[2].strip() or not (cells[1] == "nightly" or cells[1].isdigit()):
+            found.append("bad limit entry: " + cells[0])
+        elif cells[0] not in rows:
+            found.append("not a regression row: " + cells[0])
+        elif ("nightly:" if cells[1] == "nightly" else "limit:") + cells[0] not in ok:
+            found.append("no approved-row-changes line for " + cells[0])
+    return found
+
+
 skips, approved = table(".loop/regression-skips.tsv"), table("dev/toy/approved-row-changes.tsv")
 rows = {l.split("\t")[0] for l in table(".loop/regression.tsv") if not l.startswith("#")}
 entries = [l for l in skips if not l.startswith("#")]
@@ -58,5 +75,11 @@ check(problems(skips + ["no-such-approval\tgood reason"], approved, rows | {"no-
 check(problems(skips + ["not-a-row\tgood reason"], approved + ["skip:not-a-row\tTD0\tr"], rows) == ["not a regression row: not-a-row"],
       "negative control: an id that is no regression row fails")
 check(problems(skips + ["ls-plist\t"], approved, rows) == ["no reason: ls-plist"], "negative control: an entry with no reason fails")
+limits = table(".loop/regression-limits.tsv")
+check(limit_problems(limits, approved, rows) == [], "every entry of the limits file is a regression row with a number or nightly, a reason and a limit:/nightly: line in approved-row-changes.tsv: %s" % limit_problems(limits, approved, rows))
+check(limit_problems(limits + ["tables-prep-151\t999\tr"], approved, rows) == [] and limit_problems(limits + ["fast-row\t5\tr"], approved, rows | {"fast-row"}) == ["no approved-row-changes line for fast-row"],
+      "negative control: a limit with no approved-row-changes line fails")
+check(limit_problems(limits + ["no-such-row\tnightly\tr"], approved + ["nightly:no-such-row\tTD0\tr"], rows) == ["not a regression row: no-such-row"] and limit_problems(limits + ["tables-prep-151\tabc\tr"], approved, rows) == ["bad limit entry: tables-prep-151"] and limit_problems(limits + ["tables-prep-151\t5"], approved, rows) == ["bad limit entry: tables-prep-151"],
+      "negative control: an id that is no row, a limit that is no number and an entry with no reason each fail")
 print("ALL PASS" if not failed else "FAILED: %d" % len(failed))
 sys.exit(1 if failed else 0)

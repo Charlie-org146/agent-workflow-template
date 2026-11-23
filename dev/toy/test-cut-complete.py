@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/cutgate.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/completion.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/cutgate.py
 """cut-complete (DEL-26.4, TD1202): a row counts as run only when it finished, and a shard that cannot read its diff fails.
 
 Each case uses the real runner (regression.py run, as a PR shard) on a temp repo, and the real cutgate.py or the generated shard step:
@@ -15,6 +15,9 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
   validate       an unreadable skip list, a malformed times line and a missing argument each fail with a message, and a
                  failed run leaves the times cache as it was;
   empty-cache    a run that has no rows leaves the times cache's last record alone, a run with rows writes it;
+  row-limits     .loop/regression-limits.tsv (o889, TD1326): a row with its own limit finishes past the run's limit and is RAN, and
+                 without the entry it is LEFT; a row marked nightly is not selected by a PR shard (no times line, gate green) and
+                 still runs in a nightly run; a malformed entry changes nothing;
   diff-fails     the shard step stops with a message when it cannot read the diff against the base, and does not call it
                  a documents-only change; controls: a documents-only diff ends green at once, a code diff reaches the runner.
 LOOP_TOY_ONLY=<case> runs one case (red proofs)."""
@@ -66,13 +69,13 @@ def repo(rows, known=()):
     return here
 
 
-def shards(here, n=2):
+def shards(here, n=2, level="land"):
     """Run each PR shard of the repo with the real runner (row limit 2 s); the times files by shard."""
     files = {}
     for i in range(n):
         stamp = os.path.join(here, "t.%d" % i)
         open(stamp, "w").close()
-        subprocess.run([sys.executable, REG, "run", "land", "--timeout", "2"], cwd=here, capture_output=True, text=True,
+        subprocess.run([sys.executable, REG, "run", level, "--timeout", "2"], cwd=here, capture_output=True, text=True,
                        env=dict(env, LOOP_PR_SHARD="%d/%d" % (i, n), LOOP_ROW_TIMES=stamp))
         files["s/shard-%d/t.tsv" % i] = open(stamp).read()
     return files
@@ -110,6 +113,36 @@ if case("skipped"):
     check(code == 1 and "FAIL skipped and not skipped on main: sk" in out, "a skip that main's list does not hold turns the gate red, naming the row (exit %d)" % code)
     code, out = gate(files)
     check(code == 1 and "FAIL skipped and not skipped on main: sk" in out, "with no skip list at all a skipped row fails the gate (exit %d)" % code)
+
+def shards2(here):
+    return shards(here, 2, "nightly")  # the PR workflow runs land and nightly rows (ci_levels)
+
+
+if case("row-limits"):
+    def limited(text):
+        here = repo({"fast": "exit 0", "slow": "sleep 4", "night": "exit 0"})
+        path = os.path.join(here, ".loop", "regression.tsv")
+        rows = open(path).read().replace("night\tland", "night\tnightly")
+        open(path, "w").write(rows)
+        open(os.path.join(here, ".loop", "regression-limits.tsv"), "w").write(text)
+        git(here, "add", "-A")
+        git(here, "commit", "-qm", "limits")
+        return here
+    files = shards2(limited(""))
+    code, out = gate(files)
+    check(code == 1 and "FAIL cut or not run: slow" in out, "control: with no entry the row that passes the run's limit is LEFT and the gate fails it (exit %d)" % code)
+    ran = [l for t in files.values() for l in t.splitlines() if l.startswith("night\t")]
+    check(any(l.endswith("RAN") for l in ran), "control: with no entry a nightly row is selected and run by the PR shards (%s)" % ran)
+    files = shards2(limited("# id\tlimit\treason\nslow\t30\tr\nnight\tnightly\tr\n"))
+    code, out = gate(files)
+    check(code == 0 and "FAIL" not in out, "a row with its own limit finishes past the run's limit and is RAN; the gate is green (exit %d): %s" % (code, out.strip()[-160:]))
+    check(not [l for t in files.values() for l in t.splitlines() if l.startswith("night\t")], "a row marked nightly gets no times line in any PR shard")
+    here = limited("night\tnightly\tr\n")
+    run = subprocess.run([sys.executable, REG, "run", "nightly", "--timeout", "30"], cwd=here, capture_output=True, text=True, env=env)
+    check("PASS night" in run.stdout, "a nightly run still runs the row marked nightly (%s)" % run.stdout.strip()[-120:])
+    files = shards2(limited("slow\tabc\tr\nslow\t30\n"))
+    code, out = gate(files)
+    check(code == 1 and "FAIL cut or not run: slow" in out, "a malformed entry (non-number limit, missing reason) changes nothing: the row is still LEFT (exit %d)" % code)
 
 STEP_START, STEP_END = "      - run: |\n", "      - if: always()\n        uses: actions/upload-artifact"
 
