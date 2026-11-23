@@ -30,6 +30,16 @@ Failure modes: a PR whose rows exceed the shard budget fails and names them; a c
 
 Not in scope: reruns (ordered out), and the other DEL-26 and DEL-27 requirements (their own goals).
 
+### Answers to the tool's red team of this plan (recorded 2026-11-23, plan sha 8a5a1bec)
+
+- **Bytes and evidence order.** Bytes at the final sha [measured: wc -c]: `lanes_cli.py` 20,448 (32 free), `regression.py` 20,461 (19 free), `cutgate.py` 6,754, `completion.py` 994; MAX_FILES is 200 (dev/package.py), 103 files. The 866 s fit and the cache restore are shown by this PR's one unbudgeted run, not before.
+- **Cost.** The whole goal, with the red-team passes, the plan gate and the review, measured 4.44M tokens at 01:33 (47 subagents), by the operation session.
+- **Private names.** `dev/package.py` (non-static) passes with 103 files at 7c0edca87 with the built-in scans only (no private list in the temporary HOME); the private-name list scan runs in the PR's own run.
+- **Cache.** The shard log's "Cache restored" line, in the PR's run, shows the cache hit.
+- **Records.** Each line in `approved-row-changes.tsv` cites its owner or top record (TD842, TD1176, TD1184, o863, TD1194, TD1225, TD1215, o852/TD1183); none is the worker's own word.
+- **No retry.** A cut row is named with its time and the repair; there is no rerun, by TD786/TD787.
+- **Times table.** Refreshing `row-times.tsv` from a main run's times file is work after the cut; until then a stale split costs balance, not correctness.
+
 ## Review record
 
 Reviews run for this revision: `/plan-ceo-review` (HOLD SCOPE), `/plan-eng-review` and `/plan-devex-review`, each loaded and run against this plan and the code in this worktree. The Skill tool did not list `plan-eng-review`, so its installed SKILL.md and sections were read directly from disk and followed (scope challenge, sections 1 to 4, outputs). Not run: the outside voice (no second model was invoked; the fresh red-team gate that follows is the independent read) and the design review (no UI). This replaces the record of 64dfaf64b (retired v110-fast-ci), whose "DEPTH: full" overstated its depth: that plan's reviews were short notes written by hand and the three skills were not loaded.
