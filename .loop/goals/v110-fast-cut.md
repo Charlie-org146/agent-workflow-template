@@ -1,7 +1,7 @@
 # Implement DEL-26.4: a test cut for time, or not run, fails the checks (v1.1.0 task 5, part 5a)
 
 - Slug: v110-fast-cut
-- Touches: .github/workflows, skills/workflow-regression, skills/workflow-delivery, dev/toy, .loop/regression.tsv, docs, .loop/regression-skips.tsv
+- Touches: .github/workflows, skills/workflow-regression, skills/workflow-delivery, dev/toy, .loop/regression.tsv, docs, .loop/regression-skips.tsv, .loop/regression-limits.tsv
 - ETA: 225 active minutes (estimate 179m plus a 25% margin)
 
 ## Done lines
