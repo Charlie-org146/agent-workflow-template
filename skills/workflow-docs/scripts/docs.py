@@ -32,8 +32,10 @@ import tempfile
 import counting
 import criteria
 import entry
+import moved_docs
 import render
 import pageformat
+import steps_page
 import deployments
 from deployments import slurp
 from counting import map_path, read_map, sources, write_map  # noqa: F401
@@ -69,12 +71,7 @@ def top():
     return git("rev-parse", "--show-toplevel")
 
 
-def config(root):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            return json.load(handle)
-    except (OSError, ValueError):
-        sys.exit("REFUSED: no readable .loop/config.json. Fix: run workflow-setup and merge its branch.")
+config = moved_docs.config
 
 
 def wiki_dir(root):
@@ -198,6 +195,7 @@ def problems(root, base):
         for name in sorted(os.listdir(held)):
             if name.endswith(".md") and name[:-3] not in rows and name[:-3] not in pageformat.GENERATED:
                 found.append(("UNMAPPED", name[:-3], "not in .loop/docs.tsv" + (" (a How-to-use page whose feature has no page: an orphan)" if name.startswith(deployments.HOWTO) else "")))
+    found += [("STALE", "Steps", why) for why in steps_page.stale(root)] if "Steps" in rows else []
     if config(root).get("criteria"):
         found += render.stale_blocks(root) + (render.generated(root) if feature_pages(root) else [])
     return found

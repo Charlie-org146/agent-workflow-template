@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from slots import ROUTINE_STEP, SUMMARY_JOB
+from stepfile import ROUTINE_STEP, SUMMARY_JOB
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():

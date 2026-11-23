@@ -2,7 +2,7 @@
 """Page format checks for docs.py (DOC-4..DOC-23)."""
 import re
 
-GENERATED = {"Tests"}
+GENERATED = {"Tests", "Steps"}
 GUIDE = "<!-- workflow-docs guide -->"
 CHECKS = ("home", "frontdoor", "usage", "bullets", "problem", "tests", "deployments", "runbook")
 BANNED = "script, function, regex, json, tsv, stdout"

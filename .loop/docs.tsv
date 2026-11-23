@@ -15,3 +15,4 @@ Setup	skills/workflow-setup,dev/install-local.sh,:(exclude)skills/workflow-setup
 Release	skills/workflow-release/scripts/review.py,dev/toy/test-release-gate.py
 Integrations	skills/workflow-docs/scripts/milestones.py,skills/workflow-docs/scripts/prdcopy.py
 Principles	skills/workflow-health/references/commands.md,README.md
+Steps	skills/steps.py,skills/workflow-docs/scripts/steps_page.py

@@ -1090,6 +1090,12 @@ jobs:
             }
             printf '\nSHARDS %s of %s reported. UNRUN %s (rows skipped for out of job time).\n' "$reported" "$SHARDS" "$unrun"
           } | tee -a "$GITHUB_STEP_SUMMARY"  # the run's log shows the counts too
+      - name: Preview the step causes
+        if: always()
+        continue-on-error: true
+        run: |
+          f=skills/workflow-docs/scripts/steps_page.py
+          if [ -f "$f" ]; then python3 "$f" file; else echo "NOTE: $f is not in this repo, so step causes are not previewed (SC_MISSING). Fix: install the workflow package's skills here"; fi
 
   matrix-smoke:
     if: github.event_name != 'workflow_dispatch' || inputs.target == ''
