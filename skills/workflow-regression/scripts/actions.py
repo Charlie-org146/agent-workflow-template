@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The Actions workflow regression.py writes: rows on a schedule, one issue per failure."""
+"""Actions workflow regression.py writes: rows on a schedule, one issue per failure."""
 import json
 import os
 import re

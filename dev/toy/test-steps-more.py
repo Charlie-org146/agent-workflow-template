@@ -250,5 +250,13 @@ case("a-step-move-after-a-status-only-save-sticks", sm["step"] == "pr" and sm["s
 extra = board_src.replace('moved_mon.steps().commit(path, run, run["updated"])\n    print("NOTED', 'moved_mon.steps().commit(path, run, run["updated"])\n    open(path, "w").write("x")\n    print("NOTED', 1)
 case("a-direct-write-beside-the-commit-is-caught", extra != board_src and not commits(extra, "cmd_note"))
 
+# what say() reads and leaves alone, and where goal.py names the step
+case("say-leaves-other-text-alone", [steps.say(t) for t in ("plan-review step", "next step review the diff", "review: approve?", "step pr-check failed", "pre-step ship, x", None, 3)]
+     == ["plan-review step", "next step review the diff", "review: approve?", "step pr-check failed", "pre-step ship, x", None, 3], "")
+src = open(os.path.join(SKILLS, "workflow-delivery", "scripts", "goal.py")).read()  # goal.py names the step where it writes the ask and the note
+case("goal-names-the-step-at-the-source", "name_of(step), took[:240]" in src and 'name_of(step), "; ".join(pending)' in src
+     and all("name_of(step)" in l for l in src.splitlines() if any(k in l for k in ("wasn't run by flow.py", "has no STEP line", "gave no STEP line"))), "")
+case("say-reads-the-written-asks", steps.say("review left this for you: x") == "tests left this for you: x" and steps.say("auto-approved at qa: y") == "auto-approved at tests: y", "")
+
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

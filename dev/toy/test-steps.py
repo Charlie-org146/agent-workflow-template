@@ -315,8 +315,8 @@ put("wa", "waiting", "build", "x", waiting={"ask": "step ship needs your word", 
 board.cmd_handoff(argparse.Namespace(at=None, out=out_file))
 hand = open(out_file).read()
 case("the-waiting-ask-says-the-list-name", "wa: step tests needs your word" in hand and "step ship needs" not in hand, hand[-900:])
-moves = board.changes({"a": {"report": "x", "note": "a"}}, {"a": {"report": "w: step ship, running", "note": "qa: 2 refusals"}})
-case("change-text-fields-say-the-list-name", moves == ["CHANGE a note: a -> tests: 2 refusals", "CHANGE a report: x -> w: step tests, running"], str(moves))
+moves = board.changes({"a": {"report": "x", "note": "a"}}, {"a": {"report": "w: step ship, running", "note": "auto-approved at qa: one gate"}})
+case("change-text-fields-say-the-list-name", moves == ["CHANGE a note: a -> auto-approved at tests: one gate", "CHANGE a report: x -> w: step tests, running"], str(moves))
 put("qq", "failed", "qa", "x", finding="step pr broke", budget_hits=[{"step": "ship", "kind": "step", "minutes": 30, "left": "x"}])
 mon_py = os.path.join(SKILLS, "workflow-monitoring", "scripts", "monitor.py")
 rep = subprocess.run([sys.executable, "-B", mon_py, "report"], cwd=repo, capture_output=True, text=True).stdout
@@ -326,7 +326,7 @@ case("the-report-says-the-list-name", row.startswith("qq goal failed tests ") an
 dash = os.path.join(mk(), "d.html")
 subprocess.run([sys.executable, "-B", mon_py, "dashboard", "--out", dash], cwd=repo, capture_output=True)
 page = open(dash).read() if os.path.exists(dash) else ""
-case("the-dashboard-says-the-list-name", "<td>tests</td>" in page and "<td>qa</td>" not in page and "tests step hit" in page and "<b>wa</b>: step tests needs your word" in page and "step ship" not in page, page[-900:])
+case("the-dashboard-says-the-list-name", "<td>tests</td>" in page and "<td>qa</td>" not in page and "tests step hit" in page and "<b>wa</b>: step tests needs your word" in page and "step ship" not in page and "step merge broke" in page and "step pr broke" not in page, page[-900:])
 
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

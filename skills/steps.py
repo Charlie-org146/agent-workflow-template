@@ -36,12 +36,13 @@ def name_of(label):
 
 
 def say(text):
-    """A sentence naming a step by an older label ("step ship", "ship step", a leading "qa:") says it by the one list's name."""
-    if text is not None and not isinstance(text, str):
-        return text  # a number or flag names no step
-    text = re.sub(r"\bstep (\w+)", lambda m: "step " + name_of(m.group(1)), text or "")
-    text = re.sub(r"\b(\w+) step\b", lambda m: name_of(m.group(1)) + " step", text)
-    return re.sub(r"^(\w+):", lambda m: name_of(m.group(1)) + ":", text)
+    """A sentence naming a step by an older label says it by the one list's name. Only the forms the code writes are read:
+    "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:" and "review left this for you"; a hyphenated word or any other text is left alone."""
+    if not isinstance(text, str):
+        return text  # a number, flag or nothing names no step
+    text = re.sub(r"(?<![\w-])step (\w+)(?=[,;:.)]|$| (?:running|failed|pending|needs|left|broke|hit|stopped|done|is|was|has)\b)", lambda m: "step " + name_of(m.group(1)), text)
+    text = re.sub(r"(?<![\w-])(auto-approved at )(\w+):", lambda m: m.group(1) + name_of(m.group(2)) + ":", text)
+    return re.sub(r"^(\w+)( left this for you:)", lambda m: name_of(m.group(1)) + m.group(2), text)
 
 
 def valid(label):
