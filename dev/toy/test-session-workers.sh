@@ -192,7 +192,7 @@ $SE report d --step review >/dev/null
 $LB > "$T/board3"
 issues=$(sed -n '/^Issues/,/^Running goals/p' "$T/board3")
 check "issue 98: a goal worked in a session shows its session name and current step, never as a failed background worker" \
-  'grep -q "^- d " "$T/board3" && grep -q "^    worker: session worker · d$" "$T/board3" && grep -q "\[review\]" "$T/board3" && ! grep -q "d is failed" <<<"$issues" && ! grep -q "usage limit" "$T/board3" && [ "$(field d status)" = running ]'
+  'grep -q "^- d " "$T/board3" && grep -q "^    worker: session worker · d$" "$T/board3" && grep -q "\[tests\]" "$T/board3" && ! grep -q "\[review\]" "$T/board3" && ! grep -q "d is failed" <<<"$issues" && ! grep -q "usage limit" "$T/board3" && [ "$(field d status)" = running ]'
 python3 - "$R/c.json" "$$" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1])); s.update(status="running", pid=int(sys.argv[2])); json.dump(s, open(sys.argv[1], "w"))
