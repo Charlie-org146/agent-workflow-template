@@ -245,6 +245,10 @@
 | <a id="t-delegated-record-accepted"></a>delegated-record-accepted | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-guide-page-stamp"></a>guide-page-stamp | requirement | DOC-2 | not run | - | local | 2026-11-20 |
 | <a id="t-restamp-own-idempotent-5797"></a>restamp-own-idempotent-5797 | defect | [#5797](https://github.com/Charlie-org146/agent-workflow-template/issues/5797) closed (2026-11-22) | not run | - | local | 2026-11-22 |
+| <a id="t-wiki-front-commit"></a>wiki-front-commit | requirement | DOC-25 | not run | - | local | 2026-11-23 |
+| <a id="t-wiki-front-tree"></a>wiki-front-tree | requirement | DOC-25 | not run | - | local | 2026-11-23 |
+| <a id="t-wiki-front-private-scan"></a>wiki-front-private-scan | requirement | DOC-25 | not run | - | local | 2026-11-23 |
+| <a id="t-wiki-front-hardening"></a>wiki-front-hardening | requirement | DOC-25 | not run | - | local | 2026-11-23 |
 
 ## Guardrails
 
@@ -332,6 +336,7 @@
 | <a id="t-known-no-block-cut-off-refused"></a>known-no-block-cut-off-refused | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-known-no-block-job-skip"></a>known-no-block-job-skip | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-known-no-block-opens-issue"></a>known-no-block-opens-issue | requirement | HLT-4 | not run | - | local | 2026-11-22 |
+| <a id="t-wiki-front-stable"></a>wiki-front-stable | requirement | HLT-2 | not run | - | local | 2026-11-23 |
 
 ## Machines
 
