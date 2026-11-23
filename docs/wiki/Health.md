@@ -53,14 +53,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
   - Line 3: metric missing; test 17 linked rows, see Tests
 
 ### Non-functional
-- HLT-7: **Unreviewed** Checks, check-ins and instructions answer fast
-  - Health under 60 seconds, docs under 30, the board under 10, rounds under 45 minutes. [HLT-7]
-  - A worker's turn ends at least every 5 minutes, so an instruction reaches it within 5. [HLT-7]
-
-  - Feature markers v1
-  - Reference: DORA four keys: adapted
-  - Line 1: metric missing; test 5 linked rows, see Tests
-  - Line 2: metric missing; test 5 linked rows, see Tests
+None
 
 ## Non-goals
 - It never changes code, pages or requirements; it reports and files issues.
@@ -84,6 +77,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 - HLT-3: moved to HLT-2
 - HLT-5: moved to HLT-4
 - HLT-6: moved to HLT-2
+- HLT-7: moved to DEL-17
 - HLT-8: moved to HLT-4
 - HLT-9: moved to HLT-4
 
@@ -153,6 +147,7 @@ How to use: [How-to-use-Health](How-to-use-Health)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-22 | Checks, check-ins and instructions answer fast <br> Health under 60 seconds, docs under 30, the board under 10, rounds under 45 minutes. [HLT-7] <br> A worker's turn ends at least every 5 minutes, so an instruction reaches it within 5. [HLT-7] | folded into DEL-17 on the owner's 17:42 pin (o752), scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
 | r4 | 2026-11-20 | Checks, check-ins and instructions answer fast <br> Health under 60 seconds, docs under 30, the board under 10, rounds under 45 minutes. [HLT-7] <br> A worker's turn ends at least every 5 minutes, so an instruction reaches it within 5. [HLT-7] | readme-six: the owner-approved final README (o514) | o575: "yes build it" |
 | r3 | 2026-11-19 | Checks, check-ins and rounds answer fast <br> The health rule check, run without its controls, finishes in under 60 seconds on this repo. [HLT-7] <br> The docs check finishes in under 30 seconds on this repo, every time. [DOC-12] <br> The live board builds and prints in under 10 seconds on this repo. [CHK-8] <br> A scheduled round finishes within 45 minutes, and each report shows how long the round took. [AUT-7] <br> A scheduled check-in that is the same as the last full one, apart from its machine line and numbers, is one line, printed without a model turn, for at most two hours in a row. Each check-in logs the tokens the operation session spent. [CHK-4] | consolidation (TOP-DECISION 89) | o271: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
 | r2 | 2026-11-18 | Fast check <br> The rule check, run without its controls, finishes in under 60 seconds on this repo. | v2 rewrite (prd-rewrite-to-10) | o155: "start regroup 3 and 4" |
@@ -252,11 +247,6 @@ How to use: [How-to-use-Health](How-to-use-Health)
 | [rowtail-block-in-workflow](Tests#t-rowtail-block-in-workflow) | requirement | HLT-4 | Given the row-output code that runs.py keeps, when regression.py workflow renders the GitHub workflow, then the workflow carries that code once and needs no separate rowtail module. | not run |
 | [judge-key-savings](Tests#t-judge-key-savings) | requirement | HLT-4 | Given HLT-4, when test-judge-stable-keys.py runs its 3 cases, then each passes: the second round updates the open issue instead of; the second round updates the open issue, and a fin; that issue is matched by rule and subject, updated. | not run |
 | [health-feature-always](Tests#t-health-feature-always) | requirement | HLT-4 | Given findings filed by health.py file, when issues are created or updated, then each carries its feature label whatever feature_labels says, and a finding with no feature is filed under Other. | PASS 2026-11-17 |
-| [docs-check-speed](Tests#t-docs-check-speed) | requirement | HLT-7 | Given this repo, when the docs check runs, then it finishes in under 30 seconds. | PASS 2026-11-22 |
-| [mon9-board-fast](Tests#t-mon9-board-fast) | requirement | HLT-7 | Given 12 goals with pull requests and a slow GitHub, when the board is built, then it takes under 10 seconds. | PASS 2026-11-10 |
-| [aut-email-rounds](Tests#t-aut-email-rounds) | requirement | HLT-7 | Given a round's runs, when the digest is written, then the run summary shows the round's job time and Actions minutes and flags a round over 45 minutes. | PASS 2026-11-12 |
-| [hlt7-fast-check](Tests#t-hlt7-fast-check) | requirement | HLT-7 | Given this repo, when health checks it without controls, then it finishes in under 60 seconds, and a check past 60 seconds warns. | PASS 2026-11-12 |
-| [aut7-budget-agrees](Tests#t-aut7-budget-agrees) | requirement | HLT-7 | Given HLT-7, when test-automation-budgets.sh runs its 3 cases, then each passes: it names the 45 minute round as the 30 minute regr; it says TRUNCATED instead of presenting cut counts; it waits for the run to complete instead of a fixe. | PASS 2026-11-22 |
 | [health-tokens-124](Tests#t-health-tokens-124) | defect | [#159](https://github.com/jcl2018/agent-workflow-template/issues/124 https://github.com/jcl2018/agent-workflow-template/issues/159) state unknown | Given HLT-2, when test-health-prd.sh runs its 2 cases, then each passes: neither keeps the repo red; they describe check's twelve groups, review, filin. | not run |
 | [health-unreviewed-warn-issue-118](Tests#t-health-unreviewed-warn-issue-118) | defect | [#118](https://github.com/jcl2018/agent-workflow-template/issues/118) closed (2026-11-11) | Given an Unreviewed requirement with no test, when health runs, then it warns and never fails. | PASS 2026-11-10 |
 | [workers-setting-listed](Tests#t-workers-setting-listed) | defect | [#4040](https://github.com/jcl2018/agent-workflow-template/issues/4040) closed (2026-11-14) | Given the workers setting, when the settings are listed, then workers is in the settings table beside the other guardrails. | not run |

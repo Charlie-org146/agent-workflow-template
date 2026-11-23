@@ -52,7 +52,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 - AUT-3: moved to AUT-1
 - AUT-4: moved to CHK-1
 - AUT-6: moved to DEL-9
-- AUT-7: moved to HLT-7
+- AUT-7: moved to DEL-17
 - AUT-8: moved to AUT-1
 - AUT-9: moved to GRD-4
 
