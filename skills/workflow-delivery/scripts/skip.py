@@ -46,26 +46,23 @@ def lane(base, head, name):
 
 
 def accepts(runs, slug, name, head):
-    """lanekit.lane_ok's reader of the skip record: `head` when a skip is recorded for it, and, once a pull request exists for the branch, GitHub's
-    check runs on that exact head are all green; '' otherwise (no PR yet: nothing to read, the merge gate decides; gh failing: refused)."""
+    """lanekit.lane_ok's reader of the skip record: `head` when a skip is recorded for it, `.last` still says skipped at that head, and every
+    GitHub check run on that exact head is green (and there is at least one); '' otherwise, and always '' when gh does not answer."""
     import lanekit
+    base = lanekit.lane_base(runs, slug, name)
     try:
-        with open(lanekit.lane_base(runs, slug, name) + ".skip") as handle:
+        with open(base + ".skip") as handle:
             if handle.read().strip() != head:
                 return ""
     except OSError:
         return ""
-    branch = lanekit.git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    last = lanekit.read_json(base + ".last") or {}
+    if (last.get("state"), last.get("head")) != ("skipped", head):
+        return ""
+    ask = ["gh", "api", "repos/{owner}/{repo}/commits/%s/check-runs" % head, "--jq",
+           '[.check_runs[].conclusion]|if length>0 and all(.=="success") then "green" else "no" end']
     try:
-        seen = subprocess.run(["gh", "pr", "list", "--head", branch, "--state", "open", "--json", "number", "--jq", "length"],
-                              capture_output=True, text=True, timeout=10)
-        if seen.returncode:
-            return ""
-        if seen.stdout.strip() in ("", "0"):
-            return head
-        runs_ = subprocess.run(["gh", "api", "repos/{owner}/{repo}/commits/%s/check-runs" % head, "--jq",
-                                '[.check_runs[].conclusion]|if length>0 and all(.=="success") then "green" else "no" end'],
-                               capture_output=True, text=True, timeout=10)
+        seen = subprocess.run(ask, capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
         return ""
-    return head if runs_.stdout.strip() == "green" else ""
+    return head if not seen.returncode and seen.stdout.strip() == "green" else ""

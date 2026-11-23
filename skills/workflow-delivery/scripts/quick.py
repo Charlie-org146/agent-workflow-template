@@ -73,9 +73,13 @@ def limit():
     return DEFAULT, "DEL-25.2 default; clock not present" if module is None else "DEL-25.2 default"
 
 
+def base_ref():
+    return "origin/" + str(config().get("base") or "main")
+
+
 def changed():
-    """Files this push changes against the base branch; every tracked file when there is no base to compare."""
-    base = run(["git", "merge-base", "HEAD", "origin/main"])
+    """Files this push changes against the configured base branch; every tracked file when there is no base to compare."""
+    base = run(["git", "merge-base", "HEAD", base_ref()])
     names = run(["git", "diff", "--name-only", "--diff-filter=d", base.stdout.strip() + "...HEAD"]) if not base.returncode else None
     names = names or run(["git", "ls-files"])
     return [n for n in names.stdout.splitlines() if n]
@@ -105,8 +109,9 @@ def check_docs():
         done = run([sys.executable, os.path.join(SKILLS, *command), "check"])
         found = [l for l in done.stdout.splitlines() if l and not l.startswith(("UNTESTED", "DOCS OK", "ENTRY OK", "NOTE"))
                  and not (l.startswith("STALE ") and " commits since the page" in l or " commit since the page" in l)]
-        if done.returncode and found:
-            bad.append("%s: %s" % (part, found[0][:100]))
+        if done.returncode and (found or done.stderr.strip() or not done.stdout.strip()):  # any non-zero exit that is not only a restamp note, a crash included
+            why = found[0] if found else (done.stderr.strip().splitlines() or ["exit %d with no output" % done.returncode])[-1]
+            bad.append("%s: %s" % (part, why[:100]))
     return "; ".join(bad), "python3 skills/workflow-docs/scripts/entry.py write (or docs.py audit), commit, push again"
 
 
@@ -120,7 +125,7 @@ def check_size():
             continue
         with open(path, "rb") as handle:
             size = len(handle.read().replace(b"\r\n", b"\n"))
-        before = run(["git", "show", "origin/main:" + name])
+        before = run(["git", "show", base_ref() + ":" + name])
         was = len(before.stdout.encode()) if not before.returncode else 0
         if size >= WARN > was:
             bad.append("%s is %d bytes and newly over %d" % (name, size, WARN))

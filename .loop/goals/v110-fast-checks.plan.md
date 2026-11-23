@@ -39,6 +39,7 @@ Measured on the local build (committed LF; main from origin/main 65e242e28): fit
 
 ## PR notes (stated, not hidden)
 
+- The whole `private.py` change is two lines at `private.py:317-318` (an early return in `pr_result` for `ok is None`); no scan pattern, path or exit code changes. It goes on the owner's merge list by name.
 - `.ok` is a tested pass only; a skip is recorded apart and `lane-wait` exits 3 for it. By the owner's word (o830) DEL-25.3 governs the test lane where it conflicts with DEL-17, whose text is not edited here.
 - The real-push case needs network (it skips with exit 77 when offline) and the pip install counts toward suite time; it runs on the Mac and Linux only.
 - The private-name scan runs as pre-commit's legacy hook, not as a framework hook (ruling 4); native Windows runs the stub alone; adopted repos get the quick checks through `quick.py install`.
@@ -51,7 +52,7 @@ Measured on the local build (committed LF; main from origin/main 65e242e28): fit
 - Order: fast-text-2, then merge main up (expect conflicts in `.loop/regression.tsv` and `docs/wiki/Delivery.md`; keep both sides' rows), re-measure bytes, re-set the local `auto_approve` read-back, re-key the row, push the code only after the operation's word, then the TD1038 pre-pr check (clean `git status --porcelain`, HEAD equal to the `.ok` sha) before `goal.py pr`.
 - v110-fast-clock is not on main: `quick.py` runs on the default limit and a toy covers it; the `quick checks` name row of `clock.py` is added by whichever of the two lands second.
 - Touches (unchanged, now sufficient): `.pre-commit-config.yaml`, `skills/workflow-setup`, `skills/workflow-delivery`, `dev/toy`, `.loop/regression.tsv`, `docs`. `skills/workflow-release` and `skills/workflow-monitoring` are not touched.
-- Local state now: the lane skip (`skip.py` and its hooks), `regen.py`, `quick.py` (run, install, doctor), the one-hook `.pre-commit-config.yaml`, the `seed.py` change, the three rows and the docs line are built locally and pass on Windows (`test-quick-checks.py`, `test-pr-regen.py` and `test-local-lane.py` ALL PASS; the real-push case and the fake-`gh` cases did not run here; the real `quick.py run` on this tree takes about 23 seconds). They are not pushed. Only this plan is pushed until the Mac gives gate 6.
+- Local state now: the lane skip (`skip.py` and its hooks), `regen.py`, `quick.py` (run, install, doctor), the one-hook `.pre-commit-config.yaml`, the `seed.py` change, the three rows and the docs line are built locally and pass on Windows (`test-quick-checks.py`, `test-pr-regen.py` and `test-local-lane.py` ALL PASS, with cases for each gate-6 finding that fail on the code they fix; the real-push case and the fake-`gh` cases did not run here; the real `quick.py run` on this tree takes about 23 seconds). They are not pushed. Only this plan is pushed until the Mac gives gate 6.
 
 ## Out of scope
 

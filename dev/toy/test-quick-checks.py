@@ -56,7 +56,7 @@ def git(cwd, *args):
     return sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args], cwd, env, True).stdout.strip()
 
 
-def fixture(name, docs_rc=0, entry_rc=0):
+def fixture(name, docs_rc=0, entry_rc=0, docs_code=None):
     repo = os.path.join(tmp, name)
     os.makedirs(repo)
     git(repo, "init", "-q", "-b", "main")
@@ -67,6 +67,8 @@ def fixture(name, docs_rc=0, entry_rc=0):
     write(os.path.join(repo, "dev", "package.py"), "import sys\nsys.exit(0)\n")  # the real packager is checked on this repo below
     for stub, rc in (("docs.py", docs_rc), ("entry.py", entry_rc)):
         write(os.path.join(repo, "skills", "workflow-docs", "scripts", stub), "import sys\nprint('STALE x: fixture')\nsys.exit(%d)\n" % rc)
+    if docs_code:
+        write(os.path.join(repo, "skills", "workflow-docs", "scripts", "docs.py"), docs_code)
     write(os.path.join(repo, "skills", "workflow-docs", "scripts", "ok.py"), "x = 1\n")
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "base")
@@ -108,6 +110,13 @@ stale = fixture("bad-docs", docs_rc=1)
 done = quick(stale, "docs-check")
 check(done.returncode == 1 and "REFUSED: docs-check failed" in done.stdout and "Fix: python3 skills/workflow-docs/scripts/entry.py write" in done.stdout, "docs-check refuses a failing docs check with a Fix: %s" % done.stdout.strip()[-100:])
 check(quick(stale, "lint").returncode == 0, "a failing docs check breaks only docs-check")
+crash = fixture("crash-docs", docs_code="import sys\nsys.stderr.write('Traceback: boom' + chr(10))\nsys.exit(1)\n")
+done = quick(crash, "docs-check")
+check(done.returncode == 1 and "REFUSED: docs-check failed" in done.stdout, "a docs check that exits non-zero with only a stderr message is refused: %s" % done.stdout.strip()[-100:])
+silent = fixture("silent-docs", docs_code="import sys\nsys.exit(2)\n")
+check(quick(silent, "docs-check").returncode == 1, "a docs check that exits non-zero with no output at all is refused")
+restamp = fixture("restamp-docs", docs_code="import sys\nprint('STALE Home: 3 commits since the page: abc')\nprint('NOTE: restamp')\nsys.exit(1)\n")
+check(quick(restamp, "docs-check").returncode == 0, "a page stale only by commits since its stamp passes (the restamp is DOC-2's), while a real STALE line is refused above")
 big = fixture("bad-size")
 write(os.path.join(big, "skills", "workflow-docs", "scripts", "big.py"), "x = 1\n" + "# " + "y" * 19100 + "\n")
 git(big, "add", "-A")
@@ -115,6 +124,25 @@ git(big, "commit", "-q", "-m", "big")
 done = quick(big, "size-limits")
 check(done.returncode == 1 and "big.py is 19" in done.stdout and "newly over 19000" in done.stdout, "size-limits refuses a script newly over 19,000 bytes: %s" % done.stdout.strip()[-100:])
 check(quick(big, "lint").returncode == 0, "an over-size script breaks only size-limits")
+grown = fixture("grow-size")
+write(os.path.join(grown, "skills", "workflow-docs", "scripts", "big.py"), "x = 1\n" + "# " + "y" * 19100 + "\n")
+git(grown, "add", "-A")
+git(grown, "commit", "-q", "-m", "big on main")
+git(grown, "update-ref", "refs/remotes/origin/main", "HEAD")
+write(os.path.join(grown, "skills", "workflow-docs", "scripts", "big.py"), "x = 1\n" + "# " + "y" * 19300 + "\n")
+git(grown, "add", "-A")
+git(grown, "commit", "-q", "-m", "grow")
+check(quick(grown, "size-limits").returncode == 0, "a script already over 19,000 on the base branch may grow (control: only a NEWLY crossing script is refused)")
+cfgbase = fixture("cfg-base")
+os.makedirs(os.path.join(cfgbase, ".loop"))
+write(os.path.join(cfgbase, ".loop", "config.json"), '{"base": "trunk"}')
+git(cfgbase, "add", "-A")
+git(cfgbase, "commit", "-q", "-m", "config")
+git(cfgbase, "update-ref", "refs/remotes/origin/trunk", "HEAD~1")
+write(os.path.join(cfgbase, "skills", "workflow-docs", "scripts", "broken.py"), "def (:" + chr(10))
+git(cfgbase, "add", "-A")
+git(cfgbase, "commit", "-q", "-m", "broken")
+check(quick(cfgbase, "lint").returncode == 1, "the base branch comes from the config (trunk here), not a fixed origin/main")
 
 # 3. the limit: one run, one clock, the missed line, the clock stub
 slow = fixture("slow")
@@ -157,6 +185,10 @@ check(seed.hook_state(os.path.join(hooks, "pre-push")) == "installed", "seed: ou
 write(os.path.join(hooks, "pre-push"), shim)
 write(os.path.join(hooks, "pre-push.legacy"), ours)
 check(seed.hook_state(os.path.join(hooks, "pre-push")) == "installed", "seed: a pre-commit shim over our stub (kept as .legacy) is installed, so setup does not report it foreign")
+if os.name != "nt":
+    os.chmod(os.path.join(hooks, "pre-push.legacy"), 0o644)
+    check(seed.hook_state(os.path.join(hooks, "pre-push")) == "foreign", "seed: a legacy stub that is not executable is never counted, since the shim would not run it")
+    os.chmod(os.path.join(hooks, "pre-push.legacy"), 0o755)
 os.remove(os.path.join(hooks, "pre-push.legacy"))
 check(seed.hook_state(os.path.join(hooks, "pre-push")) == "foreign", "seed: a pre-commit shim with no legacy stub is foreign")
 write(os.path.join(hooks, "pre-push"), "#!/bin/sh\nexit 0\n")

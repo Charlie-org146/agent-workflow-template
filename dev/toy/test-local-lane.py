@@ -3,11 +3,11 @@
 """local-lane (DEL-25.3): no local full lane while GitHub runs the tests.
 
 Done: with regression-pr.yml in the repo and GitHub answering, a goal's lane is recorded `skipped` (never pass, never .ok): pr goes on with a
-SKIPPED first line (the PR body prints it), qa and ship wait (running, LANE_WAITING) until every GitHub check run on the head is green and
-only then count it. Controls: GitHub not answering, LOOP_LANE_LOCAL=1, no workflow file, a dirty tree and a lane already running each run
+SKIPPED first line (the PR body prints it), and qa and ship count the skip only while every GitHub check run on that exact head is green (otherwise
+they refuse with LANE_MISSING). Controls: GitHub not answering, LOOP_LANE_LOCAL=1, no workflow file, a dirty tree and a lane already running each run
 the lane (or refuse) exactly as before, and a lane that was never a skip is refused as before. The probe and the checks are stubs here;
-skip.probe and skip.checks run against a fake gh on a POSIX machine.
-Needs fcntl (lane.py does): Mac, Linux and CI. usage: test-local-lane.py"""
+skip.probe and skip.accepts run against a fake gh on a POSIX machine.
+Needs fcntl (lane.py does): Mac, Linux and CI; without it the toy exits 77 (skipped). usage: test-local-lane.py"""
 import json
 import os
 import shutil
@@ -25,7 +25,7 @@ try:
     import lane  # noqa: E402
 except ImportError as err:
     print("SKIP: lane.py needs fcntl (%s); this toy runs on Mac, Linux and CI" % err)
-    sys.exit(0)
+    sys.exit(77)
 import lanekit  # noqa: E402
 import role  # noqa: E402
 import skip  # noqa: E402
@@ -104,24 +104,37 @@ check(lane.lane_status(runs, SLUG, "pr")[0] == "none" and ask("qa")[0] == "skipp
 real_run = skip.subprocess.run
 
 
-def fake_gh(prs, runs_out, rc=0):
-    """skip.accepts with a fake gh: `pr list` answers prs, the check-runs call answers runs_out."""
+def fake_gh(runs_out, rc=0):
+    """skip.accepts with a fake gh: the check-runs call answers runs_out."""
     def run(argv, **kw):
         if argv[0] != "gh":
             return real_run(argv, **kw)
-        out = prs if argv[1] == "pr" else runs_out
-        return subprocess.CompletedProcess(argv, rc, stdout=out + chr(10), stderr="")
+        return subprocess.CompletedProcess(argv, rc, stdout=runs_out + chr(10), stderr="")
     return run
 
 
-skip.subprocess.run = fake_gh("0", "")
-check(role.need_lane(runs, SLUG, reply, "qa") is None and role.need_lane(runs, SLUG, reply, "ship") is None, "no pull request yet: record qa and ship accept the recorded skip (the merge gate decides), and role.py is unchanged")
-skip.subprocess.run = fake_gh("1", "green")
-check(skip.accepts(runs, SLUG, "ship", head1) == head1, "a pull request exists and every check run on this exact head is green: ship accepts the skip")
-skip.subprocess.run = fake_gh("1", "no")
-check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "a pull request exists and a check is pending or failed: ship refuses the skip")
-skip.subprocess.run = fake_gh("", "", rc=1)
+skip.subprocess.run = fake_gh("")
+check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "with no check run on this exact head, record ship refuses the skip")
+check(skip.accepts(runs, SLUG, "qa", head1) == "" and (role.need_lane(runs, SLUG, reply, "qa") or ("",) * 3)[2] == "LANE_MISSING", "with no check run on this exact head, record qa refuses the skip")
+skip.subprocess.run = fake_gh("green")
+check(skip.accepts(runs, SLUG, "ship", head1) == head1 and role.need_lane(runs, SLUG, reply, "ship") is None and role.need_lane(runs, SLUG, reply, "qa") is None, "every check run on this exact head is green: qa and ship accept the skip, and role.py is unchanged")
+skip.subprocess.run = fake_gh("no")
+check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "a check pending or failed on that head: ship refuses the skip")
+skip.subprocess.run = fake_gh("", rc=1)
 check(skip.accepts(runs, SLUG, "ship", head1) == "", "gh failing is a refusal, never an acceptance")
+# a skip, then a real lane on the same head that fails: the old .skip no longer counts, for every step
+skip.subprocess.run = fake_gh("green")
+kept = {}
+for step in ("qa", "ship", "pr"):
+    with open(base(step) + ".last") as handle:
+        kept[step] = handle.read()
+    with open(base(step) + ".last", "w") as handle:
+        json.dump({"attempt": "real", "head": head1, "state": "fail", "line": "LANE %s FAIL" % step, "ended": time.time()}, handle)
+check(os.path.exists(base("ship") + ".skip") and skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING",
+      "a skip followed by a failing real lane on the same head: the old .skip no longer counts")
+for step in kept:
+    with open(base(step) + ".last", "w") as handle:
+        handle.write(kept[step])
 skip.subprocess.run = real_run
 waited = subprocess.run([sys.executable, os.path.join(scripts, "role.py"), "lane-wait", SLUG, "pr"], cwd=repo, capture_output=True, text=True,
                         env=dict(os.environ, LOOP_ROLE="worker"))
@@ -141,7 +154,7 @@ git("commit", "-qm", "two")
 head2 = git("rev-parse", "HEAD")
 check((role.need_lane(runs, SLUG, reply, "qa") or ("",) * 3)[2] == "HEAD_MOVED", "setup: a real .ok on the older head alone is HEAD_MOVED")
 got = ask("qa")
-skip.subprocess.run = fake_gh("0", "")
+skip.subprocess.run = fake_gh("green")
 check(got[0] == "skipped" and open(base("qa") + ".ok").read() == head1 and open(base("qa") + ".skip").read() == head2 and role.need_lane(runs, SLUG, reply, "qa") is None, "a skipped head after an older real .ok leaves .ok on the old head and records the skip apart: record qa is satisfied, no HEAD_MOVED loop")
 skip.subprocess.run = real_run
 
@@ -157,6 +170,14 @@ private.pr_result(repo, "main", head1, "loop/x", None)
 check(posted == [], "pr_result(ok=None), the skipped pr lane, posts no status")
 private.pr_result(repo, "main", head1, "loop/x", True)
 check(posted == [True], "pr_result(ok=True) still posts success for a real pass")
+del posted[:]
+check(private.pr_result(repo, "main", head1, "loop/x", None) is True and posted == [], "pr_result(ok=None) returns True (goal.py records statuses ok) and posts nothing")
+remote_dir = os.path.join(tmp, "remote.git")
+git("init", "-q", "--bare", remote_dir)
+git("remote", "add", "origin", remote_dir)
+git("push", "-q", "origin", head1 + ":refs/heads/loop/x")
+private.pr_result(repo, "main", head1, "loop/x", False)
+check(posted == [False], "pr_result(ok=False) posts failure when the head is on the remote")
 goal_src = open(os.path.join(scripts, "goal.py"), encoding="utf-8").read()
 check('gate == "pass" or None' in goal_src, "goal.py pr passes the gate-derived value, so only a real pass can post success")
 private.repo_is_private, private.required_checks, private.post_statuses = real
