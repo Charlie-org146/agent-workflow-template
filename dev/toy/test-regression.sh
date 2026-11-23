@@ -132,7 +132,7 @@ python3 - <<'PY' && ok "workflow keys and inline block are valid" || bad "workfl
 import ast, re
 text = open(".github/workflows/regression.yml").read()
 assert "issues: write" in text and "workflow_dispatch" in text and text.startswith("# Written by workflow-regression")
-block = re.search(r"python3 - (?:--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
+block = re.search(r"python3 - (?:\$L )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
 block = "\n".join(line[10:] for line in block.split("\n"))
 ast.parse(block)
 open("ci-block.py", "w").write(block)
@@ -261,7 +261,7 @@ $reg workflow >/dev/null
 python3 - <<'PY'
 import re
 text = open(".github/workflows/regression.yml").read()
-block = re.search(r"python3 - (?:--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
+block = re.search(r"python3 - (?:\$L )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
 open("ci-block.py", "w").write("\n".join(line[10:] for line in block.split("\n")))
 PY
 agree() { # agree NAME: the local run and the workflow's block end the same way and open the same issues
