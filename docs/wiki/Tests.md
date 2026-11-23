@@ -180,6 +180,7 @@
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-cut-fails-checks"></a>cut-fails-checks | requirement | DEL-26 | PASS | 2026-11-22 | [CI 2026-11-22](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-22) | 2026-11-22 |
 | <a id="t-shard-fits-budget"></a>shard-fits-budget | requirement | DEL-26 | not run | - | local | 2026-11-23 |
+| <a id="t-cut-complete"></a>cut-complete | requirement | DEL-26 | not run | - | local | 2026-11-23 |
 
 ## Documentation
 

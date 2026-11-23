@@ -203,10 +203,11 @@ jobs:
           key: row-times-${{ github.sha }}
           restore-keys: row-times-
       - run: |
-          git diff --name-only origin/@BASE@...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; >>${{ runner.temp }}/t.tsv; exit 0; }
+          D=$(git diff --name-only origin/@BASE@...HEAD) || { echo "FAIL cannot read the diff against origin/@BASE@: fetch the base (fetch-depth 0) and rerun the shard"; exit 1; }
+          printf %s "$D" | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; >>${{ runner.temp }}/t.tsv; exit 0; }
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv >${{ runner.temp }}/t.tsv 2>/dev/null||:; rm all.tsv  # o852: committed times, the cache's over them
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
-          B=120; git diff --name-only origin/@BASE@...HEAD | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
+          B=120; printf %s "$D" | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
           [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200
           LOOP_ROW_TIMES=${{ runner.temp }}/t.tsv LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 200
       - if: always()

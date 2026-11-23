@@ -39,7 +39,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
@@ -317,7 +317,7 @@ def cmd_run(args):
         slots.started()
     limit = (args.budget or runs.budget(root)) if args.reuse and args.budget >= 0 else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
-    late = [r["id"] for r in results if n > 1 and r["state"] == "FAIL" and r["rc"] == 124]
+    late = [r["id"] for r in results if n > 1 and r["state"] in ("FAIL", "KNOWN") and r["rc"] == 124]
     results, cut = [r for r in results if r["id"] not in late], cut + late
     if late:
         print("LEFT %d over the %d s row limit: %s" % (len(late), args.timeout, ", ".join(late)))
@@ -325,7 +325,7 @@ def cmd_run(args):
         rows = merged(path, results, late, args.timeout)
         for key in every:  # RAN: this shard's, CUT: budget, SEL: others'
             row = rows.setdefault(key, [0, ""])
-            row[1] = row[1] if row[1] == "LEFT" else "CUT" if key in cut else "RAN" if key in todo else "SEL"
+            row[1] = completion.state(row[1], key, cut, todo, results)
         open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))
     for line in tiers.flaky_apply(record, results, head, not unclean):
         print(line)

@@ -22,11 +22,15 @@ def main(pattern, out="all.tsv"):
     for row in sorted(rows, key=lambda r: (r[0], [-ord(c) for c in r[2]], r)):
         if row[2] != "SEL":
             best.setdefault(row[0], row)
-    with open(out, "w") as handle:
-        handle.writelines("\t".join(r) + "\n" for r in best.values())
+    if best:  # an empty record is never written: the times cache keeps the last real one
+        with open(out, "w") as handle:
+            handle.writelines("\t".join(r) + "\n" for r in best.values())
     ran = [r[0] for r in rows if r[2] == "RAN"]
     print("run twice: " + ",".join(sorted({i for i in ran if ran.count(i) > 1})))
-    bad = sorted({r[0] for r in rows if r[2] in ("SEL", "RAN")} - set(ran))
+    skip = sorted({r[0] for r in rows if r[2] == "SKIP"})
+    if skip:
+        print("skipped: " + ",".join(skip))
+    bad = sorted({r[0] for r in rows if r[2] in ("SEL", "RAN")} - set(ran) - set(skip))
     for i in bad:
         what = "%s %ss" % (best[i][2], best[i][1]) if i in best else "not run"
         print("FAIL cut or not run: %s %s: raise the shard budget (owner) or move the row" % (i, what))
