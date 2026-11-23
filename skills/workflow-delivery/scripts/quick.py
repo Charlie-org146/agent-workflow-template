@@ -145,9 +145,10 @@ def doctor():
     scans = "private.py" in text or (os.path.exists(legacy) and "private.py" in open(legacy, encoding="utf-8", errors="replace").read())
     problems, notes = [], []
     if os.name == "nt":  # pre-commit cannot run the stub's #!/bin/sh there, which would refuse every push: it is not installed
-        notes.append("NOTE: the quick checks run through pre-commit on macOS and Linux; here run python3 %s run by hand before a push." % SELF)
+        notes.append("NOTE: native Windows keeps the git-native push stub only; pre-commit is not installed here (DEL-25.1's framework route is "
+                     "Mac and Linux). Run python3 %s run by hand before a push." % SELF)
         if "pre-commit" in text:
-            problems.append("pre-commit's hook is installed here and would refuse every push. Fix, in order: "
+            problems.append("pre-commit is installed on native Windows and cannot run the git-native stub, so every push is refused. Fix, in order: "
                             "1. pre-commit uninstall --hook-type pre-push 2. python3 skills/workflow-setup/scripts/setup.py --git-hooks")
         scans = "private.py" in text
     else:
@@ -164,14 +165,14 @@ def doctor():
 
 
 def install():
-    """Write .pre-commit-config.yaml when absent and install the pre-push hook; never overwrites a hook."""
+    """Write .pre-commit-config.yaml when absent and install the pre-push hook; never overwrites a hook. Native Windows keeps the stub alone."""
     path = os.path.join(ROOT, ".pre-commit-config.yaml")
     if not os.path.exists(path):
         with open(path, "w", newline="\n") as handle:
             handle.write(CONFIG)
         print("wrote .pre-commit-config.yaml")
     if os.name == "nt":
-        print("NOTE: the quick checks run through pre-commit on macOS and Linux; here run python3 %s run by hand." % SELF)
+        print("NOTE: native Windows keeps the git-native push stub only; pre-commit is not installed here. Run python3 %s run by hand." % SELF)
         return 0
     done = run(["pre-commit", "install", "-t", "pre-push"]) if shutil.which("pre-commit") else None
     if done is None or done.returncode:
