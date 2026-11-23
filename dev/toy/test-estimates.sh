@@ -18,7 +18,7 @@ cat > "$T/checks.py" <<'PY'
 import contextlib, datetime, importlib.util, io, json, math, os, re, shutil, statistics, subprocess, sys, tempfile, time
 M = sys.argv[1]
 sys.path.insert(0, M)
-import board_model as bm, board_status as bs, graph, live_board  # noqa: E402
+import board_model as bm, board_status as bs, graph, live_board, moved_mon  # noqa: E402
 AT = datetime.datetime(2026, 6, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
 STEPS = bs.STEPS
 
@@ -222,7 +222,8 @@ def check_offflow_done():
     repo.goal("rd", 3, 2)
     run = [r for r in repo.records() if r["slug"] == "rd"][0]
     need(bs.current(run) == STEPS.index("qa"), "a goal at checks after review done is at qa: %s" % bs.FLOW[bs.current(run)])
-    need("- rd is stalled: qa has run 1h50m" in "\n".join(repo.board()), "its qa time counts, so it stalls past 3x")
+    shown = "\n".join(repo.board())  # the stall line names the step from the one list: qa is tests there (was "qa has run")
+    need("- rd is stalled: %s has run 1h50m" % moved_mon.steps().name_of("qa") in shown and "qa has run" not in shown, "its qa time counts, so it stalls past 3x")
 
 
 def check_flow_seconds():

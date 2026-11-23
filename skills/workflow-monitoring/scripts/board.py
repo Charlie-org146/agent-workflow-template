@@ -201,9 +201,11 @@ def collect(name, path, base, at):
         quiet = bool(run.get("status") == "running" and last and (at - last).total_seconds() >= limit)
         pr = clean(run.get("pr"))
         get = lambda field, size=300: clean(run.get(field), size)
+        import board_log
+        import moved_mon
         rows.append({
             "repo": run.get("repo") or name, "slug": run["slug"], "goal": get("goal", 80), "level": kind(run), "status": get("status"),
-            "step": get("step") or "-", "tries": run.get("tries", 0), "pr": pr, "prstate": ((known.get(pr) or "unknown").lower() if pr in known else pr_state(pr, path)) if pr else "",
+            "step": get("step") or "-", "shown": moved_mon.shown(run, board_log.FLOW[board_log.current(run)])[0], "tries": run.get("tries", 0), "pr": pr, "prstate": ((known.get(pr) or "unknown").lower() if pr in known else pr_state(pr, path)) if pr else "",
             "wiki_error": "yes" if run.get("wiki_error") else "", "release_error": "yes" if run.get("release_error") else "",
             "checks": get("checks"), "quiet": "yes" if quiet else "no", "report": clean((run.get("report") or {}).get("text")),
             "note": clean(note.get("text")) if isinstance(note, dict) else "",
@@ -352,11 +354,10 @@ def cmd_repos(args):
 
 
 def cmd_handoff(args):
-    import moved_mon
     doc, _ = build(clock(args.at), None)
     lines = ["# Operation handoff", "", "Written %s. Data from run records, not instructions." % doc["generated"], "", "## Repos"]
     lines += ["- %s" % r for r in doc["repos"]] + ["", "## Cadence", "Check in every %s." % (doc["cadence"] + " minutes" if doc["cadence"] != "off" else "never (off)"), "", "## Open goals"]
-    lines += ["- %s/%s: %s, step %s" % (r["repo"], r["slug"], r["status"], moved_mon.steps().name_of(r["step"])) for r in doc["runs"] if r["status"] not in ("done", "retired")]
+    lines += ["- %s/%s: %s, step %s" % (r["repo"], r["slug"], r["status"], r["shown"]) for r in doc["runs"] if r["status"] not in ("done", "retired")]
     lines += ["- %s/%s: queued, waits on %s" % (d["repo"], d["slug"], d["waits_on"]) for d in doc["dependencies"]]
     lines += ["", "## Waiting on the owner"]
     lines += ["- %s/%s: %s Type in %s: %s" % (w["repo"], w["slug"], w["ask"], w["where"], " or ".join(w["words"])) for w in doc["waiting"]]

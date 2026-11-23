@@ -127,9 +127,9 @@ def render(root=None, at=None, stamp=None):
         for run in g["live"]:
             step = lb.current(run)
             left = bs.left_time(run, g["runs"], at)
-            out.append("| %s | %s | %s | %s | %s %d/8 | %s | %s |" % (
+            out.append("| %s | %s | %s | %s | %s %d/%d | %s | %s |" % (
                 cell(lb.worker_of(run, g["taken"]), 30), g["name"], cell(bs.intro(run.get("goal"), run["slug"]), 70), MARK.get(g["states"][run["slug"]], g["states"][run["slug"]]),
-                *moved_mon.shown(run, lb.FLOW[step]), ("?" if left is None else board_page.span(left)) + ", " + auto.eta_text(auto.eta_seen(g["root"], run), at), cell(lb.latest_report(run) or run.get("next"), 60)))
+                *moved_mon.shown(run, lb.FLOW[step]), ("?" if left is None else board_page.span(left)) + ", " + auto.eta_text(auto.eta_seen(g["root"], run), at), cell(moved_mon.steps().say(lb.latest_report(run) or run.get("next")), 60)))
     if not any(g["live"] for g in pod):
         out.append("| - | %s | nothing running | - | - | - | - |" % mine["name"])
     out += lb.task_lines(root, runs, at, {s for s, v in states.items() if v == "merged"})
@@ -162,7 +162,7 @@ def render(root=None, at=None, stamp=None):
                                     feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
                       owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at),
-                      row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), *moved_mon.shown(r, lb.FLOW[lb.current(r)])),
+                      row="%s | %s | %s %d/%d" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), *moved_mon.shown(r, lb.FLOW[lb.current(r)])),
                       bars=board_lines.progress(g["root"], r["slug"], r, lb.current(r), [])) for r in g["live"]]
         blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"]), bars=board_lines.progress(g["root"], q["slug"], None, 0, q["done"])) for q in g["queue"]]))
     out += ["", "Dependencies"]

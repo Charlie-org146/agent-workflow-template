@@ -40,11 +40,23 @@ def cmd_owner_words(args):
 
 
 def shown(run, old):
-    """(DEL-19 step name, its place in the eight) for a run record: the step the clock follows, else the old label."""
+    """(DEL-19 step name, its place in the list, the list's length) for a run record: the step the clock follows, else the old label."""
     one = steps()
     label = one.eff(run)
     name = one.name_of(label if label in one.STEPS or label in one.LEGACY else old)  # an off-list label keeps the last known step
-    return name, (one.STEPS.index(name) + 1 if name in one.STEPS else 0)
+    return name, (one.STEPS.index(name) + 1 if name in one.STEPS else 0), len(one.STEPS)
+
+
+def stall_lines(runs, at, root=None, held=()):
+    """The Issues lines for stalled goals."""
+    import board_model as bm
+    out = []
+    for run in runs:
+        found = bm.stalled(run, runs, at, root, held)
+        if found:
+            out += ["- %s is stalled: %s has run %s (estimate %s)" % (run["slug"], steps().name_of(found[0]), bm.span(found[1]), bm.span(found[2])),
+                    "    fix: look at its worker session; stop and resume the goal if it is stuck"]
+    return out
 
 
 def chain(items):

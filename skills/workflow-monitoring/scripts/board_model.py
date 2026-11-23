@@ -11,6 +11,7 @@ import traceback
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from board_log import STEPS, current, flow_seconds, git, named, size_of, stamp  # noqa: E402
 import board_page  # noqa: E402
+from moved_mon import stall_lines  # noqa: E402,F401  (moved whole)
 
 SIMILAR = 5     # similar finished goals needed before an estimate stops being rough
 STEP_UP = 60    # seconds one more done line or touched area adds at least
@@ -345,17 +346,6 @@ def stalled(run, runs, at, root=None, held=()):
     pace-adjusted estimate and more than STALL_FLOOR seconds; None otherwise (never without an estimate)."""
     now = None if run.get("slug") in (held or ()) else step_now(run, runs, at, root, held)
     return now if now and now[1] > max(STALL * now[2], STALL_FLOOR) else None
-
-
-def stall_lines(runs, at, root=None, held=()):
-    """The Issues lines for stalled goals."""
-    out = []
-    for run in runs:
-        found = stalled(run, runs, at, root, held)
-        if found:
-            out += ["- %s is stalled: %s has run %s (estimate %s)" % (run["slug"], found[0], span(found[1]), span(found[2])),
-                    "    fix: look at its worker session; stop and resume the goal if it is stuck"]
-    return out
 
 
 def estimate_text(found):
