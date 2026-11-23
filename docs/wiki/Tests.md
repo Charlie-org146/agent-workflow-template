@@ -179,6 +179,7 @@
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
 | <a id="t-del19-steps-all"></a>del19-steps-all | requirement | DEL-19 | not run | - | local | 2026-11-23 |
+| <a id="t-del19-steps-more"></a>del19-steps-more | requirement | DEL-19 | not run | - | local | 2026-11-23 |
 | <a id="t-del19-steps-e2e"></a>del19-steps-e2e | requirement | DEL-19 | not run | - | local | 2026-11-23 |
 
 ## Documentation
