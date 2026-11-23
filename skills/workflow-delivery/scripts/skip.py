@@ -47,7 +47,7 @@ def lane(base, head, name):
 
 
 def required_jobs(text):
-    """The job ids of regression-pr.yml (its text at the head being accepted) that a pull request runs, not the ones only for the merge queue;
+    """The job ids of regression-pr.yml (its text on the base branch) that a pull request runs, not the ones only for the merge queue;
     [] when the text is empty or the parse looks short: every job has a runs-on or uses line, so a different count means a job id was missed."""
     lines, jobs, inside, bodies = text.splitlines(), [], False, 0
     for line in lines:
@@ -77,7 +77,9 @@ def accepts(runs, slug, name, head):
     last = lanekit.read_json(base + ".last") or {}
     if (last.get("state"), last.get("head")) != ("skipped", head):
         return ""
-    need = required_jobs(lanekit.git("show", "%s:%s" % (head, WORKFLOW)).stdout)  # the file at the head being accepted, never the working tree
+    top = lanekit.git("rev-parse", "--show-toplevel").stdout.strip()
+    cfg = lanekit.read_json(os.path.join(top, ".loop", "config.json")) or {}
+    need = required_jobs(lanekit.git("show", "origin/%s:%s" % (cfg.get("base") or "main", WORKFLOW)).stdout)  # the base branch's workflow, never the head's or the working tree's
     ask = ["gh", "api", "--paginate", "repos/{owner}/{repo}/commits/%s/check-runs" % head, "--jq",
            '.check_runs[]|[.name,.status,.conclusion]|@tsv']
     try:
