@@ -17,37 +17,37 @@ export LOOP_ROLE=worker
 export HOME=$(mktemp -d); export USERPROFILE="$HOME"
 export LOOP_PRIVATE_NAMES=/dev/null  # exactly as CI does (o675); the list is never read or printed here
 toy_on_exit 'rm -rf "$HOME"'
-d=$(mktemp -d); toy_on_exit 'rm -rf "$d"'
+d=$(mktemp -d); toy_on_exit 'for _ in $(seq 40); do pgrep -f "$d" >/dev/null || break; sleep 1; done; rm -rf "$d"'  # wait for what still runs inside it
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 
 echo "== a built pack is what an adopter installs"
 pack="$d/pack"; mkdir -p "$pack"
-python3 "$here/dev/package.py" --root "$here" --out "$d/pack.zip" >"$d/package.log" 2>&1 && ok "the pack builds" || bad "the pack does not build: $(grep -m3 FAIL "$d/package.log" | tr '\n' ' ')"
-[ -f "$d/pack.zip" ] && python3 -c 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$d/pack.zip" "$pack"
+python3 -B "$here/dev/package.py" --root "$here" --out "$d/pack.zip" >"$d/package.log" 2>&1 && ok "the pack builds" || bad "the pack does not build: $(grep -m3 FAIL "$d/package.log" | tr '\n' ' ')"
+[ -f "$d/pack.zip" ] && python3 -B -c 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$d/pack.zip" "$pack"
 [ -f "$pack/shared/steps.py" ] && ok "the pack carries shared/steps.py" || bad "the pack has no shared/steps.py (SHARED in dev/package.py)"
-python3 - "$here/skills/workflow-setup/scripts" <<'PY' && ok "update.py keeps skills/steps.py when it reads a tree" || bad "update.py drops skills/steps.py from an update"
+python3 -B - "$here/skills/workflow-setup/scripts" <<'PY' && ok "update.py keeps skills/steps.py when it reads a tree" || bad "update.py drops skills/steps.py from an update"
 import sys; sys.path.insert(0, sys.argv[1]); import update
 names = ["skills/steps.py", "skills/x/scripts/a.py", "VERSION"]
 manifest, _ = update.from_tree(names, lambda n: b"1.0.0\n" if n == "VERSION" else b"x")
 sys.exit(0 if "steps.py" in manifest["files"] else 1)
 PY
 PK="$pack/skills"
-goal="python3 $PK/workflow-delivery/scripts/goal.py"
-flow="python3 $PK/workflow-delivery/scripts/flow.py"
-filer="python3 $PK/workflow-docs/scripts/steps_page.py"
+goal="python3 -B $PK/workflow-delivery/scripts/goal.py"
+flow="python3 -B $PK/workflow-delivery/scripts/flow.py"
+filer="python3 -B $PK/workflow-docs/scripts/steps_page.py"
 [ -f "$PK/workflow-delivery/scripts/goal.py" ] || { bad "no goal.py in the pack"; echo "$fails FAILED"; exit 1; }
-python3 "$PK/workflow-delivery/scripts/goal.py" --help >/dev/null 2>&1 && ok "goal.py runs alone from the pack (its steps import resolves)" || bad "goal.py --help fails from the pack"
+python3 -B "$PK/workflow-delivery/scripts/goal.py" --help >/dev/null 2>&1 && ok "goal.py runs alone from the pack (its steps import resolves)" || bad "goal.py --help fails from the pack"
 
 # One toy repo with a bare origin and fakegh (the same stand-ins the release toy uses).
 "$here/dev/toy/make.sh" "$d/t" >/dev/null || exit 1
 export LOOP_FLOW="$d/t/flow.json"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" FAKE_GH_ORIGIN="$d/t/origin.git"
 cd "$d/t/repo" || exit 1
-python3 "$PK/workflow-setup/scripts/setup.py" --bare >"$d/setup.log" 2>&1 || bad "setup.py from the pack: $(tail -2 "$d/setup.log" | tr '\n' ' ')"
+python3 -B "$PK/workflow-setup/scripts/setup.py" --bare >"$d/setup.log" 2>&1 || bad "setup.py from the pack: $(tail -2 "$d/setup.log" | tr '\n' ' ')"
 git switch -q main 2>/dev/null; git merge -q --no-edit workflow-setup 2>/dev/null
-python3 - <<'PY'
+python3 -B - <<'PY'
 import json
 c = json.load(open(".loop/config.json")); c["auto_merge"] = True
 json.dump(c, open(".loop/config.json", "w"), indent=2)
@@ -56,9 +56,9 @@ git add -A; git commit -qm "Setup and auto_merge" 2>/dev/null; git tag v0.1.0
 
 writes() { grep -cE "pr create --draft|pr edit|pr ready|issue " "$FAKE_GH_DIR/calls.log" 2>/dev/null || true; }  # filing ships off: nothing but goal.py pr's own pull request may reach GitHub
 preview() { (cd "$d/t/repo" && env -u LOOP_ROLE $filer file 2>&1); }  # the summary job's step: previews the causes the records hold, grouped by key
-ran() { (cd "$d/t/repo" && python3 "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>/dev/null | awk -v n="$2" 'index($0, n) == 1 && $0 ~ / ran / && $0 !~ / start - / && $0 !~ / end - / {f=1} END {exit f ? 0 : 1}'); }
-table() { (cd "$d/t/repo" && python3 "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>&1 | tr '\n' '|' | cut -c1-420); }
-causes_of() { python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1])).get("causes") or []))' "$(cd "$d/t/repo" && git rev-parse --git-common-dir)/loop/runs/$1.json" 2>/dev/null || echo 0; }
+ran() { (cd "$d/t/repo" && python3 -B "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>/dev/null | awk -v n="$2" 'index($0, n) == 1 && $0 ~ / ran / && $0 !~ / start - / && $0 !~ / end - / {f=1} END {exit f ? 0 : 1}'); }
+table() { (cd "$d/t/repo" && python3 -B "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>&1 | tr '\n' '|' | cut -c1-420); }
+causes_of() { python3 -B -c 'import json, sys; print(len(json.load(open(sys.argv[1])).get("causes") or []))' "$(cd "$d/t/repo" && git rev-parse --git-common-dir)/loop/runs/$1.json" 2>/dev/null || echo 0; }
 flowdone() {  # every step of a goal's flow, through the pack's flow.py, with the stand-in flow
   local slug=$1 runs; runs="$(cd "$(git rev-parse --git-common-dir)" && pwd)/loop/runs"
   for step in idea plan review qa ship; do
@@ -73,7 +73,7 @@ newgoal() {  # a goal with one commit, its verify steps and its flow done, then 
   git switch -q main 2>/dev/null; git merge -q --no-edit "loop/$2" 2>/dev/null
   $goal new "$1" --here --goal "Goal $1" --done "calc has $1" >"$d/new.log" 2>&1 || { bad "goal new $1: $(tail -2 "$d/new.log" | tr '\n' ' ')"; return 1; }
   printf 'def g_%s():\n    return 1\n' "$1" > "g_$1.py"; git add "g_$1.py"; git commit -qm "$1"
-  python3 - "$1" <<'PY'
+  python3 -B - "$1" <<'PY'
 import sys
 p = ".loop/goals/%s.md" % sys.argv[1]; t = open(p).read().replace("## Verify by hand\n", "## Verify by hand\n\n1. Open calc.py.\n   Expect: it has the function.\n", 1); open(p, "w").write(t)
 PY
@@ -101,35 +101,35 @@ git switch -q main 2>/dev/null
 
 echo "== a refusal after the pull request is previewed once and grouped, and the release summary reaches the merged goal"
 newgoal postb main
-FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_FAIL=1 python3 "$PK/workflow-release/scripts/merge.py" postb >/dev/null 2>&1
+FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_FAIL=1 python3 -B "$PK/workflow-release/scripts/merge.py" postb >/dev/null 2>&1
 [ "$(causes_of postb)" -ge 1 ] && ok "the refused merge recorded a cause" || bad "postb: no cause recorded after the refusal"
 out=$(preview); grep -q "merge:failed (1 goal: postb)" <<<"$out" && ok "the refusal is previewed once for its goal" || bad "postb's preview: $(head -3 <<<"$out" | tr '\n' ' ')"
-FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_BRANCH=loop/postb python3 "$PK/workflow-release/scripts/merge.py" postb >"$d/mergeb.log" 2>&1
+FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_BRANCH=loop/postb python3 -B "$PK/workflow-release/scripts/merge.py" postb >"$d/mergeb.log" 2>&1
 ran postb "merge" && ran postb "after the merge" && ran postb "release" && ok "postb's merge, after the merge and release each have a start and an end" || bad "postb: a step has no start and end: $(table postb)"
 grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the release note carries the per-step summary" || bad "the release note has no Steps summary: $(tail -2 "$d/mergeb.log" | tr '\n' ' ')"
 
 echo "== a goal left unreleased: its merge row ends"
 git switch -q main 2>/dev/null; newgoal leavd main
-python3 "$PK/workflow-release/scripts/release.py" leave leavd >"$d/leave.log" 2>&1 || bad "release.py leave leavd: $(tail -2 "$d/leave.log" | tr '\n' ' ')"
+python3 -B "$PK/workflow-release/scripts/release.py" leave leavd >"$d/leave.log" 2>&1 || bad "release.py leave leavd: $(tail -2 "$d/leave.log" | tr '\n' ' ')"
 ran leavd "merge" && ok "a goal left unreleased has its merge row ended" || bad "leavd: the merge row is not ended: $(table leavd)"
 
 echo "== a release cut by hand carries the per-step summary"
 git switch -q main 2>/dev/null; newgoal cutg main
 : > "$FAKE_GH_DIR/notes.log"  # only the cut's own notes count: the automatic release above already wrote its block
-python3 "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1
+python3 -B "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1
 grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the manual cut's draft notes carry the Steps block" || bad "the manual cut's notes have no Steps summary: $(tail -2 "$d/cut.log" | tr '\n' ' ')"
 git show HEAD --format= -- CHANGELOG.md 2>/dev/null | grep "^+" | grep -qF "### Steps" && ok "the manual cut's changelog carries the Steps block" || bad "the manual cut's changelog has no Steps block"
 
 echo "== a merge-queue merge: its steps start and end, and a repeated cause is previewed grouped under one key"
-python3 - <<'PY'
+python3 -B - <<'PY'
 import json
 c = json.load(open(".loop/config.json")); c["merge_queue"] = True
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 git add -A; git commit -qm "merge_queue on" 2>/dev/null
 git switch -q main 2>/dev/null; newgoal queuec main
-FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_FAIL=1 python3 "$PK/workflow-release/scripts/merge.py" queuec >/dev/null 2>&1  # the queue first refuses once: that is the cause
-FAKE_GH_QUEUE=1 FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_BRANCH=loop/queuec python3 "$PK/workflow-release/scripts/merge.py" queuec >"$d/mergec.log" 2>&1
+FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_FAIL=1 python3 -B "$PK/workflow-release/scripts/merge.py" queuec >/dev/null 2>&1  # the queue first refuses once: that is the cause
+FAKE_GH_QUEUE=1 FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_BRANCH=loop/queuec python3 -B "$PK/workflow-release/scripts/merge.py" queuec >"$d/mergec.log" 2>&1
 ran queuec "merge" && ran queuec "after the merge" && ran queuec "release" && ok "queuec's merge, after the merge and release each have a start and an end (merge queue)" || bad "queuec: a step has no start and end: $(table queuec)"
 out=$(preview); [ "$(grep -c "merge:failed" <<<"$out")" = 1 ] && grep -q "merge:failed (2 goals: postb, queuec)" <<<"$out" && ok "a repeated cause is previewed once, grouped with its repeats" || bad "the grouping: $(grep "merge:failed" <<<"$out" | tr '\n' ' ')"
 [ "$(writes)" = 0 ] && ok "no pull request was edited and no issue was made at any point" || bad "something was written to GitHub"
@@ -137,14 +137,14 @@ out=$(preview); [ "$(grep -c "merge:failed" <<<"$out")" = 1 ] && grep -q "merge:
 echo "== the live board shows each running goal's step from the one list"
 git switch -q main 2>/dev/null
 $goal new liveg --here --goal "A running goal" --done "calc has liveg" >/dev/null 2>&1 || bad "goal new liveg"
-python3 - "$(git rev-parse --git-common-dir)" "$$" <<'PY'  # a live goal on the review step, as a fixture
+python3 -B - "$(git rev-parse --git-common-dir)" "$$" <<'PY'  # a live goal on the review step, as a fixture
 import datetime, json, os, sys
 p = os.path.join(sys.argv[1], "loop", "runs", "liveg.json"); r = json.load(open(p))
 now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 r.update(status="running", step="review", worker="session", pid=int(sys.argv[2]), updated=now, report={"at": now, "text": "working"})
 json.dump(r, open(p, "w"), indent=2)
 PY
-board=$(python3 "$PK/workflow-monitoring/scripts/live_board.py" 2>&1)
+board=$(python3 -B "$PK/workflow-monitoring/scripts/live_board.py" 2>&1)
 grep -q "^    step: tests 5/8$" <<<"$board" && ok "the live board has a step line from the one list for the running goal" || bad "no step line on the live board: $(grep -m2 "step" <<<"$board" | tr '\n' '|' | cut -c1-200)"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

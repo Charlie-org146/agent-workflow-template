@@ -76,7 +76,7 @@ h=re.search(r\"^LIVE BOARD  \\S+  (\\d\\d):(\\d\\d)\", t, re.M); f=re.search(r\"
 gap=(int(f[1])*60+int(f[2])-int(h[1])*60-int(h[2]))%1440
 chain=left[\"b\"]+left[\"c\"]+left[\"d\"]
 assert abs(gap-chain)<=1 and abs(gap-sum(left.values()))>1, (gap, chain, left)"'
-check "a running goal shows its step flow with the current step in brackets" 'grep -qx "    idea✓ > \[plan\] > build > review > qa > ship > pr >" "$T/block"'
+check "a running goal shows its step flow with the current step in brackets" 'grep -qx "    freeze✓ > \[plan\] > build > quick checks > tests >" "$T/block" && ! grep -qx "    idea✓ > \[plan\] > build > review > qa > ship > pr >" "$T/block"'
 
 echo "== the pure graph"
 python3 - "$M" <<'PY' && ok "no estimate gives at least, a cycle is cut, an empty queue is empty" || bad "pure graph"
@@ -111,7 +111,7 @@ check "the label changes when the step starts, before anything is recorded" '[ "
 $F lv plan --wait 10 >/dev/null
 check "a finished but unrecorded step is still the current one" '[ "$(label)" = plan ]'
 $goal record lv plan --file "$C/loop/runs/lv.plan.txt" >/dev/null
-check "recording moves the label on, so the finished step is never shown as current" '[ "$(label)" = build ] && block | grep -q "idea✓ > plan✓ > \[build\]"'
+check "recording moves the label on, so the finished step is never shown as current" '[ "$(label)" = build ] && block | grep -q "freeze✓ > plan✓ > \[build\]" && ! block | grep -q "idea✓ > plan✓ > \[build\]"'
 
 echo "== sizes"
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

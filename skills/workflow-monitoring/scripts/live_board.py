@@ -92,12 +92,14 @@ current = bs.current
 def flow_lines(run, over=0):
     """The step flow, indented four, packed into lines of at most WIDTH that break at the " > " joints (steps stay whole).
     The current step reads "[build over by 12m]" when it ran a minute or more past its usual time."""
+    import moved_mon
+    names = moved_mon.steps().STEPS
     if run.get("status") == "freezing":
-        steps = ["[freezing]"] + list(FLOW)
+        steps = ["[%s]" % names[0]] + list(names[1:])
     else:
-        here = current(run)
+        here = moved_mon.shown(run, FLOW[current(run)])[1] - 1
         steps = ["[%s%s]" % (step, " over by " + board_page.span(over) if over >= 60 else "") if i == here
-                 else step + "✓" if i < here else step for i, step in enumerate(FLOW)]
+                 else step + "✓" if i < here else step for i, step in enumerate(names)]
     lines, line = [], "    "
     for i, step in enumerate(steps):
         piece = step + (" >" if i < len(steps) - 1 else "")
@@ -139,8 +141,9 @@ def next_line(run):
         return text
     if run.get("status") == "waiting":
         return "answer the question under Issues"
-    here = current(run)
-    return "finish release" if here == len(FLOW) - 1 else "finish %s, then %s" % (FLOW[here], FLOW[here + 1])
+    import moved_mon
+    names, here = moved_mon.steps().STEPS, moved_mon.shown(run, FLOW[current(run)])[1] - 1
+    return "finish release" if here == len(names) - 1 else "finish %s, then %s" % (names[here], names[here + 1])
 
 
 def worker_of(run, taken=None):
@@ -232,7 +235,6 @@ def issues(runs, gone, root, at=None, taken=None, why="", freezing=()):
 
 
 def render(root=None, at=None):
-    import moved_mon
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
     runs = load(root)
@@ -269,7 +271,6 @@ def render(root=None, at=None):
     est_of = lambda run: next(i["est"] for i in items if i["slug"] == run["slug"])
     for run in running:
         out += [bar(run, current(run)), *flow_lines(run, bs.overrun(run, runs, at, root)), "    worker: " + worker_of(run, taken),
-                "    step: %s %d/8" % moved_mon.shown(run, FLOW[current(run)]),
                 "    depth: " + depth_of(run, setting), *fits(run), "    next: " + next_line(run)]
     for entry in freezing:
         name, ago = entry.get("name") or entry["id"], age(entry.get("since"), at)

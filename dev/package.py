@@ -43,7 +43,7 @@ AGENT_AIMED = [r"(?i)ignore (all |any )?(previous|prior|above) instructions", r"
                r"(?i)disregard (your|the) (system|safety)", r"(?i)you must (secretly|silently) "]
 DANGEROUS = [r"\bos\.system\(", r"chmod\s+777", r"\brm\s+-rf\s+/(\s|$)", r"\b(curl|wget)\b[^\n|]*\|\s*(ba)?sh\b"]
 INJECTION = [r"(?i)ignore previous instructions", r"(?i)do not tell the user", r"(?i)\bsecretly\b"]
-SHARED = {"skills/" + n: "shared/" + n for n in ("loop-files.md", "steps.py")}  # in a pack only shared/ reaches every skill
+SHARED = {"skills/" + n: "shared/" + n for n in ("loop-files.md", "steps.py")}  # in a pack, only shared/ reaches every skill
 LIMITS = {"tags": 10, "keywords": 10, "use_cases": 8}
 try:
     CHILD_SECONDS = max(1, int(os.environ.get("PACKAGE_CHILD_SECONDS") or 30))
@@ -60,7 +60,7 @@ def wait_on(what):
 
 def stop(line, code):
     """Kill the running child's group, drop a half-written ZIP, print one line and exit at once."""
-    if waiting["stopping"]:  # a second signal while stopping: first finishes the job
+    if waiting["stopping"]:  # a second signal while stopping: the first one finishes the job
         return
     waiting["stopping"] = True
     child = waiting["child"]
@@ -105,7 +105,7 @@ def kill_group(proc):
     try:
         if hasattr(os, "killpg"):
             os.killpg(proc.pid, signal.SIGKILL)
-        else:  # Windows: the child and its tree
+        else:  # Windows: the child and its whole tree
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
     except (OSError, ProcessLookupError, subprocess.SubprocessError):
@@ -117,9 +117,9 @@ def run_alone(cmd, cwd, what):
     wait_on(what)
     group = ({"start_new_session": True, "preexec_fn": lambda: signal.pthread_sigmask(signal.SIG_UNBLOCK, STOP_SIGNALS)}
              if hasattr(os, "killpg") else {"creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)})
-    # the child must not inherit the block below, or it ignores a reaper's TERM
+    # the child must not inherit the block below, or it would ignore a reaper's TERM
     mask = hasattr(signal, "pthread_sigmask")
-    if mask:  # no stop signal between the child starting and being recorded, so none escapes the bound
+    if mask:  # no stop signal between the child starting and its being recorded, so none escapes the bound
         signal.pthread_sigmask(signal.SIG_BLOCK, STOP_SIGNALS)
     try:
         proc = subprocess.Popen(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,

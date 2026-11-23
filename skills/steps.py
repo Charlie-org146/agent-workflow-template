@@ -76,8 +76,11 @@ def eff(state):
 def transition(old, new, at):
     """Update new's step clock and append the start/end lines for the change from old to new (old is the record on disk)."""
     check(old.get("step"), new.get("step"))
+    if new.get("status") in ("running", None):
+        new.pop("steps_done", None)  # a goal that runs again has steps again
     log = new.setdefault("log", [])
     clock = dict(new.get("step_clock") or old.get("step_clock") or {})
+    mark = int(clock.get("mark") or 0) + ((old.get("step"), old.get("status")) != (new.get("step"), new.get("status")))
     if clock.get("since") and (old.get("status") == "running" or name_of(clock.get("step")) in POST + ("merge",)):
         clock["active_s"] = int(clock.get("active_s") or 0) + max(0, int((when(at) - when(clock["since"])).total_seconds()))
     clock["since"] = at
@@ -89,11 +92,11 @@ def transition(old, new, at):
         result = {"done": "done", "stopped": "stopped", "failed": "failed"}.get(status) or "moved on"
         log.append("%s end %s: %dm active, tokens %s, %s" % (at, clock["step"], int(clock.get("active_s") or 0) // 60, token, result))
         ended, clock = clock["step"], {"since": at}
-    if step and (status in ("running", None) or name_of(step) in POST + ("merge",) and status == "done") and not clock.get("step") and step not in ("-", "", ended):
+    if step and (status in ("running", None) or name_of(step) in POST + ("merge",) and status == "done") and not clock.get("step") and not new.get("steps_done") and step not in ("-", "", ended):
         if not (log and re.search(r"(?:start|began) %s$" % re.escape(step), log[-1])):
             log.append("%s began %s" % (at, step))
         clock.update(step=step, active_s=0, tok0=spent(new))
-    new["step_clock"] = clock
+    new["step_clock"] = dict(clock, mark=mark)
     return bool(status in ("stopped", "failed") and add_cause(new, clock_step(old, new), new.get("finding") or new.get("release_error") or ""))
 
 
@@ -141,8 +144,8 @@ def merge(disk, state, was=None):
 
 def commit(path, state, at):
     """The shared writer: lock the record, merge over the disk record, run transition, write atomically; state gets the result.
-    The step clock and the cause list belong to the disk record, and a copy loaded before the disk record's last step change
-    (its clock is older) cannot move the step or the status back."""
+    The step clock and the cause list belong to the disk record, and a copy loaded before the disk record's last step or status change
+    (its change mark is older) cannot move either back."""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -151,7 +154,7 @@ def commit(path, state, at):
         except (OSError, ValueError):
             disk = {}
         merged = merge(disk, state)
-        stale = disk.get("step_clock") and state.get("step_clock") and state["step_clock"].get("since") != disk["step_clock"].get("since") and state.get("step") != disk.get("step")
+        stale = disk.get("step_clock") and state.get("step_clock") and state["step_clock"].get("mark") != disk["step_clock"].get("mark") and (state.get("step"), state.get("status")) != (disk.get("step"), disk.get("status"))
         for key in ("step_clock", "causes"):
             if key in disk:
                 merged[key] = disk[key]
