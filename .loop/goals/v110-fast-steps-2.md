@@ -15,3 +15,14 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. In this repository run `python3 skills/workflow-docs/scripts/steps_page.py show v110-fast-steps-2`.
+   Expect: eight rows named freeze, plan, build, quick checks, tests, merge, after the merge and release, each with its start, end, minutes, tokens and result.
+2. Run `python3 skills/workflow-docs/scripts/steps_page.py file`.
+   Expect: one `preview:` line per cause (a `<step>:<CODE>` key with its goals and one fix), or "no step cause is recorded here"; nothing is written to GitHub.
+3. Run `python3 skills/workflow-monitoring/scripts/monitor.py report`.
+   Expect: the STEP column, the waiting asks and the findings name steps by the list (a goal in review shows `tests`, never `qa` or `ship`).
+4. Run `python3 dev/toy/test-steps-safe.py`.
+   Expect: it ends with ALL PASS; its cases show a save refusing a held lock (LOCK_TIMEOUT) and an unreadable run record (RECORD_UNREADABLE).
+5. Run `python3 skills/workflow-docs/scripts/docs.py check --base origin/main`.
+   Expect: `DOCS OK: 17 pages`.
