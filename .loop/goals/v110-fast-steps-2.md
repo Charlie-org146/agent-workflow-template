@@ -1,7 +1,7 @@
 # Implement DEL-19's one step list, step logging, causes and the per-release summary (v1.1.0 task 5, part 2)
 
 - Slug: v110-fast-steps-2
-- Touches: skills/workflow-delivery, skills/workflow-monitoring, skills/workflow-docs, skills/workflow-release, dev/toy, .loop/regression.tsv, docs, .loop/docs.tsv
+- Touches: skills/workflow-delivery, skills/workflow-monitoring, skills/workflow-docs, skills/workflow-release, dev/toy, .loop/regression.tsv, docs, .loop/docs.tsv, .github/workflows, skills/workflow-regression, dev/package.py, skills/steps.py, skills/workflow-setup/scripts/update.py, .github/workflows/regression.yml, dev/package_extra.py, skills/workflow-setup
 - ETA: 285 active minutes (estimate 226m plus a 25% margin)
 
 ## Done lines
