@@ -99,7 +99,7 @@ def read_red(top):
         if why:
             return "unreadable", "closing references of the merged pull request: " + why
         try:
-            closed = {int(r["number"]) for p in json.loads(out) for r in p.get("closingIssuesReferences") or [] if str(r.get("url") or "").endswith("/%s/issues/%d" % (repo, int(r["number"])))}
+            closed = {int(r["number"]) for p in json.loads(out) for r in p.get("closingIssuesReferences") or [] if str(r.get("url") or "").lower().endswith(("/%s/issues/%d" % (repo, int(r["number"]))).lower())}
         except (ValueError, KeyError, TypeError):
             return "unreadable", "closing references: bad reply"
     held = [i for i in issues if i["number"] not in closed]

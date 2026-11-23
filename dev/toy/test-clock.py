@@ -604,6 +604,8 @@ if want("17.5"):
     check(gate.main_red(REPO) == ("open", "12: t"), "a closing reference to another repository's issue with the same number does not clear the hold")
     fake(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12}]}])
     check(gate.main_red(REPO)[0] == "open", "a closing reference that names no repository clears nothing")
+    fake(issues=[{"number": 12, "title": "t"}], prs=[{"closingIssuesReferences": [{"number": 12, "url": "https://github.com/ACME/Widget/issues/12"}]}])
+    check(gate.main_red(REPO) == ("none", ""), "the repository of a closing reference is compared without regard to letter case")
     # review finding: the marker leads the hold text, so a long goal name cannot push it out of the 400 characters release_error keeps
     fake(issues=[{"number": 12345, "title": "x" * 300}])
     long_a = {"slug": "g" * 90, "pr": "9", "release": "merged", "status": "done", "release_bullets": [], "release_steps": ""}
@@ -667,8 +669,21 @@ if want("17.5"):
     write(cfg_list, "[1, 2]")
     got = sh([sys.executable, os.path.join(MON, "clock.py"), "check", cfg_list])
     check("Traceback" not in got.stderr, "a config that is not a JSON object does not make the settings check print a traceback")
-    check(clock.pr_checks({"pr": "--repo=other/repo"}) is None and clock.pr_checks({"pr": "https://example.test/pull/1"}) is None, "a pull request value that is not a number or a github.com pull request URL is never passed to gh")
-    check(clock.lead_for("../x") == [] or all("lead" not in x for x in clock.lead_for("../x")), "a slug with a path separator reads no run record")
+    spawned2, real_run2 = [], subprocess.run
+    subprocess.run = lambda *a, **k: spawned2.append((a[0], k.get("cwd"))) or real_run2(*a, **k)
+    clock.CTX["gh_end"] = time.monotonic() + 10
+    bad = [clock.pr_checks({"pr": "--repo=other/repo"}), clock.pr_checks({"pr": "https://example.test/pull/1"})]
+    n_bad = len(spawned2)
+    clock.CTX["root"] = REPO
+    clock.pr_checks({"pr": "7"})
+    subprocess.run = real_run2
+    check(bad == [None, None] and n_bad == 0 and spawned2 and spawned2[-1][1] == REPO, "a pull request value that is not a number or a github.com pull request URL is never passed to gh, and a good one runs in the board's checkout")
+    outside = goal("secret", [("freeze", 3), ("tests", 9)], status="done")
+    os.remove(os.path.join(RUNS, "secret.json"))
+    write(os.path.join(os.path.dirname(RUNS), "secret.json"), json.dumps(outside))
+    clock.CTX.clear()
+    clock.begin(REPO)
+    check(clock.lead_for("../secret") == [] and clock.lead_for("secret") == [] , "a slug with a path separator reads no run record outside the runs folder (the record one folder up is not read)")
     # moved code is byte for byte what it was
     import ast
     def source(path, name):

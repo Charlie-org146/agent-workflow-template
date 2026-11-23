@@ -352,6 +352,7 @@ def basis_suffix(runs, at, root):
     except (ArithmeticError, ValueError, TypeError, KeyError) as error:
         return ", clock unavailable (CLOCK_ERROR: %s)" % type(error).__name__
     if key:
+        BASIS.clear()  # one run set at a time: the newest history is the only one worth keeping
         BASIS[key] = text
     return text
 
