@@ -249,6 +249,7 @@
 | <a id="t-wiki-front-tree"></a>wiki-front-tree | requirement | DOC-25 | not run | - | local | 2026-11-23 |
 | <a id="t-wiki-front-private-scan"></a>wiki-front-private-scan | requirement | DOC-25 | not run | - | local | 2026-11-23 |
 | <a id="t-wiki-front-hardening"></a>wiki-front-hardening | requirement | DOC-25 | not run | - | local | 2026-11-23 |
+| <a id="t-wiki-front-tracked"></a>wiki-front-tracked | requirement | DOC-25 | not run | - | local | 2026-11-23 |
 
 ## Guardrails
 

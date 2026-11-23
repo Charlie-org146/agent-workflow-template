@@ -523,6 +523,7 @@ None
 | [wiki-front-tree](Tests#t-wiki-front-tree) | requirement | DOC-25 | Given the wiki step renders in a throwaway tree, when it finishes or is stopped by TERM, then the tree is removed, holds no mail address, home path, checkout path or private-name list, and ignores inherited GIT_ variables. | not run |
 | [wiki-front-private-scan](Tests#t-wiki-front-private-scan) | requirement | DOC-25 | Given a private name in the wiki folder the wiki step copies to its throwaway tree, when wiki.py prepare --commit runs, then the private-name scan refuses by name before the render and nothing is committed. | not run |
 | [wiki-front-hardening](Tests#t-wiki-front-hardening) | requirement | DOC-25 | Given a wiki folder outside the checkout, a private name in a subfolder page, a failing commit hook, a dangling temp entry or a credential in the origin URL, when the wiki step commits, then it refuses by name, leaves nothing staged, survives the sweep and writes no credential into the throwaway tree. | not run |
+| [wiki-front-tracked](Tests#t-wiki-front-tracked) | requirement | DOC-25 | Given a symlink inside the wiki folder or a wiki edit the owner staged before a failing commit, when the wiki step commits, then the symlink is refused by name and the staged edit stays staged. | not run |
 | - | requirement | DOC-26 | no passing test | not enforced |
 | - | requirement | DOC-27 | no passing test | not enforced |
 | - | requirement | DOC-28 | no passing test | not enforced |
