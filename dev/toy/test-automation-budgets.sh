@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py skills/workflow-health/scripts/automation.py .github/workflows/regression.yml docs/wiki/Regression.md docs/wiki/How-to-use-Automation.md docs/wiki/How-to-use-Health.md
+# reads: skills/workflow-regression/scripts/actions.py skills/workflow-regression/scripts/slots.py skills/workflow-health/scripts/automation.py .github/workflows/regression.yml docs/wiki/Regression.md docs/wiki/How-to-use-Automation.md docs/wiki/How-to-use-Delivery.md
 # Test that REG-7, AUT-7 and regression.yml name one regression budget with the suite sharded to fit it, and that the digest never cuts its counts silently.
 # usage: test-automation-budgets.sh [budgets|digest|health]   Exits 0 only when every case in the group passes.
 set -u
@@ -20,26 +20,26 @@ words = "zero one two three four five six seven eight nine ten eleven twelve thi
 
 
 def agree(yml, reg, aut):
-    """The budget the workflow names, what the approved wiki says of it (REG-7's budget is now the 30-minute regression budget in Health's HLT-7
-    item; the sharding is in Regression's Steps), and the 45-minute round that is that budget plus 15."""
+    """The budget the workflow names, what the approved wiki says of it (REG-7's budget is now the 30-minute regression budget in the DEL-17 how-to
+    item, which holds HLT-7's text since the fold; the sharding is in Regression's Steps), and the 45-minute round that is that budget plus 15."""
     errs = []
     if "timeout-minutes: %d" % b not in yml: errs.append("regression.yml timeout is not %d" % b)
     if "(%d - 2) * 60" % b not in yml: errs.append("the job seconds do not come from the budget")
     if "shard: %s" % list(range(n)) not in yml: errs.append("regression.yml has no %d-shard matrix" % n)
     if "REGRESSION_SHARD" not in yml: errs.append("no REGRESSION_SHARD")
     if "%s parallel jobs" % words[n] not in reg or "exactly one shard" not in reg: errs.append("the Regression page does not say the rows are split over %s parallel jobs, each row in exactly one shard" % words[n])
-    found = re.search(r"^- HLT-7:.*(?:\n(?:  .*|))*", aut, re.M)
+    found = re.search(r"^- DEL-17:.*(?:\n(?:  .*|))*", aut, re.M)
     req = found.group(0) if found else ""
-    if "45 minutes" not in req or "%d-minute regression budget of Regression REG-7" % b not in req: errs.append("HLT-7 does not name the 45-minute round as the %d-minute regression budget of REG-7 plus health" % b)
+    if "45 minutes" not in req or "%d-minute regression budget of Regression REG-7" % b not in req: errs.append("DEL-17 (was HLT-7) does not name the 45-minute round as the %d-minute regression budget of REG-7 plus health" % b)
     if 45 - b != 15: errs.append("round budget is not the regression budget plus 15")
     return errs
 
 
 yml = open(".github/workflows/regression.yml").read()
 reg = open("docs/wiki/Regression.md").read()
-aut = open("docs/wiki/How-to-use-Health.md").read()
+aut = open("docs/wiki/How-to-use-Delivery.md").read()
 errs = agree(yml, reg, aut)
-controls = {"HLT-7 without the 30-minute budget": agree(yml, reg, aut.replace("%d-minute regression budget" % b, "regression budget")),
+controls = {"DEL-17 (was HLT-7) without the 30-minute budget": agree(yml, reg, aut.replace("%d-minute regression budget" % b, "regression budget")),
             "Regression without the sharding": agree(yml, reg.replace("exactly one shard", "one place"), aut),
             "a workflow timeout of another size": agree(yml.replace("timeout-minutes: %d" % b, "timeout-minutes: %d" % (b + 5)), reg, aut)}
 errs += ["negative control passed: %s" % k for k, v in controls.items() if not v]
