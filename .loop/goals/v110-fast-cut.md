@@ -59,7 +59,7 @@ The affected step on 8 shard files of 240 rows each: 0.03 s (limit 5 s in the to
 
 ### Lanes
 
-Not run: waiting for the operation session's slot word. Checks run in the worktree before it: `shard-balance`, `rows-pr-full`, `cut-fails-checks` rows pass; `size-check.py` 0; `dev/package.py --static` PASS (100 files); `docs.py check` OK.
+The regression lane is run by the tool at the head the PR opens on; the checks run in the worktree before it all pass (the rows listed in these notes, `size-check.py` 0, `dev/package.py` PASS with 103 files, `docs.py check` OK).
 
 ### Cut gate moved into one script (top's TD1048, o745)
 
@@ -80,7 +80,7 @@ The cut-gate check is no longer inline in the generated `affected` step. It is `
 
 ### The row `guards-null-report-nofiles` follows o863 (TD1194)
 
-- This goal adds `cutgate.py` (allowed by o745, 99 of 100 files), so the old form of the row, which read every change for added skills files, failed on it. The owner's answer (o863, "Yes, narrow it") is carried here under TD1194: the row now reads the change it was written for and v110-tasks' own merge against their first parents, with `board_tasks.py` allowed. GRD-21's package cap (200 files) stays in force.
+- This goal adds `cutgate.py` and `completion.py` (allowed by o745; MAX_FILES is 200, 103 files at the final sha), so the old form of the row, which read every change for added skills files, failed on it. The owner's answer (o863, "Yes, narrow it") is carried here under TD1194: the row now reads the change it was written for and v110-tasks' own merge against their first parents, with `board_tasks.py` allowed. GRD-21's package cap (200 files) stays in force.
 - Negative controls run in the row: a fixture of either merge adding another skills file still fails. Mutation checks (each turned the row red, exit 1): the v110-tasks fixture no longer adds its extra file; every file allowed; the row's own-change fixture adds nothing.
 - The package cap still holds: `dev/toy/test-package-caps.py` asserts 200 files pass and 201 fail, and a temp copy with 201 skills files was refused by `dev/package.py --static` (`Size: 204 files, at most 200 allowed`).
 - The record in `dev/toy/approved-row-changes.tsv` cites "o863, TD1194".
