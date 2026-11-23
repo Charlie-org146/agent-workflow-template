@@ -467,7 +467,17 @@ over two lines
   rm -f "$r/package.json" "$r/pyproject.toml"
   # report-only NOTE lines (the DOC-27.4 page rebuild) are not gaps (TD1169); a FORMAT line of the same check still is
   export LOOP_TEMPLATE_HAS=usage-kept; mig "$r" --offline
-  check "the page-rebuild NOTE lines (27.4) are no MIG_FORMAT gap, and the clean toy exits 0" '[ $rc = 0 ] && ! grep -q "27\.4" <<<"$out" && ! grep -q "MIG_FORMAT" <<<"$out"'
+  check "an adopted repo gets no page-rebuild (27.4) line and no MIG_FORMAT gap, and the clean toy exits 0" '[ $rc = 0 ] && ! grep -q "27\.4" <<<"$out" && ! grep -q "MIG_FORMAT" <<<"$out"'
+  out=$(cd "$HEALTH" && python3 - <<'PY' 2>&1
+import subprocess, enforce
+lines = ["NOTE README: DOC-27 27.4: no 'N of M reviewed' line at the top", "NOTE Feat:ZZ-1: DOC-27 27.5: no line in .loop/reviews.tsv. Fix: x (a NOTE until 2026-11-22)",
+         "FORMAT Feat:ZZ-1: DOC-27 27.5: no line in .loop/reviews.tsv. Fix: x (a NOTE until 2026-11-22)", "FORMAT Feat:3: Requirements: DOC-7 outside its sections. Fix: y"]
+subprocess.run = lambda *a, **k: subprocess.CompletedProcess(a, 1, "\n".join(lines) + "\n", "")
+enforce.docs_gaps(".", lambda kind, page, what, fix: print("GAP", kind, page, what))
+PY
+)
+  check "NOTE lines (27.4, and 27.5 before its day) are no gap" '! grep -q "27\.4" <<<"$out" && [ "$(grep -c "^GAP" <<<"$out")" = 2 ]'
+  check "negative control: an expired 27.5 FORMAT line and a DOC-7 FORMAT line are each a MIG_FORMAT gap" 'grep -q "^GAP MIG_FORMAT Feat:ZZ-1 DOC-27 27.5" <<<"$out" && grep -q "^GAP MIG_FORMAT Feat:3 Requirements: DOC-7" <<<"$out"'
   feat="$r/docs/wiki/Feat.md"; printf 'Feat\tcalc.py\n' >> "$r/.loop/docs.tsv"
   { echo "<!-- workflow-docs -->"; echo "# Feat"; printf '\n## Problem\n\n- I want it.\n\n## Requirements\n\n- ZZ-1: **Unreviewed** A feature\n\n## Non-goals\n\n- None.\n\n## Success metrics\n\n- m\n\n## Revisions\n\n## Tests\n'; } > "$feat"; mig "$r" --offline
   check "negative control: a FORMAT line of the same docs check (a requirement outside its sections) is still a MIG_FORMAT gap, exit 1" '[ $rc = 1 ] && grep -q "^GAP MIG_FORMAT Feat:[0-9]*: Requirements: DOC-7" <<<"$out"'
