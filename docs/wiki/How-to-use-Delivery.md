@@ -151,7 +151,7 @@ Each requirement and how it is delivered:
 - DEL-25: Fast build and checks: quick checks before every push, no local test lane
 - DEL-26: Fast tests: on GitHub, in parallel, only what the change reaches, results reused
 - DEL-27: Fast merge: the full tests run once, on the merged result, through the merge queue
-- DEL-28: Every step has a token budget: a step far past its budget (twice its measured usual) is flagged, and waiting is done in a script.
+- DEL-28: Every step has a token budget: each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script.
 
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"

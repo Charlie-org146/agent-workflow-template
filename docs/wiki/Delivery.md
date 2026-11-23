@@ -182,7 +182,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - **Tokens:** each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script. [DEL-28]
 
   - Feature markers v1
-  - Reference: GitHub merge queue: adopted; DORA lead time: adapted
+  - Reference: reference missing
   - Line 1: metric missing; test missing
 - DEL-19: **Reviewed 2026-11-22** One change, one goal, one list of steps, every step logged <!-- reviewed dee74654 -->
   - Principle 1, Guided · Topic: Delivery · Release: v1.1.0
