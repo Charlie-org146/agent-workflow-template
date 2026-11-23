@@ -59,7 +59,8 @@ def git(*args):
 with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
     json.dump({"min_free_memory_gb": 0, "base": "main"}, handle)
 with open(os.path.join(repo, skip.WORKFLOW), "w") as handle:
-    handle.write("name: regression-pr\n")
+    handle.write("name: regression-pr\njobs:\n  shard:\n    if: github.event_name != 'merge_group'\n    runs-on: ubuntu-latest\n  affected:\n    needs: shard\n    if: always() && github.event_name != 'merge_group'\n"
+                 "  small:\n    if: github.event_name == 'merge_group'\n")
 git("init", "-q", "-b", "main")
 git("add", "-A")
 git("commit", "-qm", "one")
@@ -104,26 +105,42 @@ check(lane.lane_status(runs, SLUG, "pr")[0] == "none" and ask("qa")[0] == "skipp
 real_run = skip.subprocess.run
 
 
+SHARDS = "".join("shard (%d)" % n + chr(9) + "completed" + chr(9) + "success" + chr(10) for n in range(40))  # more than one page of 30
+GREEN = SHARDS + "affected" + chr(9) + "completed" + chr(9) + "success" + chr(10)
+FAIL = GREEN.replace("shard (7)" + chr(9) + "completed" + chr(9) + "success", "shard (7)" + chr(9) + "completed" + chr(9) + "failure")
+UNRELATED = "lint" + chr(9) + "completed" + chr(9) + "success" + chr(10)
+QUEUED = "shard (0)" + chr(9) + "queued" + chr(9) + chr(10) + UNRELATED
+asked = []
+
+
 def fake_gh(runs_out, rc=0):
-    """skip.accepts with a fake gh: the check-runs call answers runs_out."""
+    """skip.accepts with a fake gh: the check-runs call answers runs_out in the shape of its --jq projection (name, status, conclusion)."""
     def run(argv, **kw):
         if argv[0] != "gh":
             return real_run(argv, **kw)
-        return subprocess.CompletedProcess(argv, rc, stdout=runs_out + chr(10), stderr="")
+        asked.append(argv)
+        return subprocess.CompletedProcess(argv, rc, stdout=runs_out, stderr="")
     return run
 
 
 skip.subprocess.run = fake_gh("")
 check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "with no check run on this exact head, record ship refuses the skip")
 check(skip.accepts(runs, SLUG, "qa", head1) == "" and (role.need_lane(runs, SLUG, reply, "qa") or ("",) * 3)[2] == "LANE_MISSING", "with no check run on this exact head, record qa refuses the skip")
-skip.subprocess.run = fake_gh("green")
-check(skip.accepts(runs, SLUG, "ship", head1) == head1 and role.need_lane(runs, SLUG, reply, "ship") is None and role.need_lane(runs, SLUG, reply, "qa") is None, "every check run on this exact head is green: qa and ship accept the skip, and role.py is unchanged")
-skip.subprocess.run = fake_gh("no")
+skip.subprocess.run = fake_gh(UNRELATED)
+check(skip.accepts(runs, SLUG, "ship", head1) == "", "an unrelated green check run does not count while regression-pr's jobs are not there")
+skip.subprocess.run = fake_gh(QUEUED)
+check(skip.accepts(runs, SLUG, "ship", head1) == "", "regression-pr's shard still queued beside an unrelated green check: refused")
+skip.subprocess.run = fake_gh(SHARDS)
+check(skip.accepts(runs, SLUG, "ship", head1) == "", "regression-pr's shards green but its other pull-request job missing: refused")
+skip.subprocess.run = fake_gh(GREEN)
+check(skip.accepts(runs, SLUG, "ship", head1) == head1 and role.need_lane(runs, SLUG, reply, "ship") is None and role.need_lane(runs, SLUG, reply, "qa") is None, "every regression-pr job (41 runs here, more than one page) is green on this exact head: qa and ship accept the skip, and role.py is unchanged")
+check("--paginate" in asked[-1] and not any("merge_group" in a for a in asked[-1]), "the check-runs call is paginated")
+skip.subprocess.run = fake_gh(FAIL)
 check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "a check pending or failed on that head: ship refuses the skip")
 skip.subprocess.run = fake_gh("", rc=1)
 check(skip.accepts(runs, SLUG, "ship", head1) == "", "gh failing is a refusal, never an acceptance")
 # a skip, then a real lane on the same head that fails: the old .skip no longer counts, for every step
-skip.subprocess.run = fake_gh("green")
+skip.subprocess.run = fake_gh(GREEN)
 kept = {}
 for step in ("qa", "ship", "pr"):
     with open(base(step) + ".last") as handle:
@@ -154,7 +171,7 @@ git("commit", "-qm", "two")
 head2 = git("rev-parse", "HEAD")
 check((role.need_lane(runs, SLUG, reply, "qa") or ("",) * 3)[2] == "HEAD_MOVED", "setup: a real .ok on the older head alone is HEAD_MOVED")
 got = ask("qa")
-skip.subprocess.run = fake_gh("green")
+skip.subprocess.run = fake_gh(GREEN)
 check(got[0] == "skipped" and open(base("qa") + ".ok").read() == head1 and open(base("qa") + ".skip").read() == head2 and role.need_lane(runs, SLUG, reply, "qa") is None, "a skipped head after an older real .ok leaves .ok on the old head and records the skip apart: record qa is satisfied, no HEAD_MOVED loop")
 skip.subprocess.run = real_run
 
@@ -172,14 +189,50 @@ private.pr_result(repo, "main", head1, "loop/x", True)
 check(posted == [True], "pr_result(ok=True) still posts success for a real pass")
 del posted[:]
 check(private.pr_result(repo, "main", head1, "loop/x", None) is True and posted == [], "pr_result(ok=None) returns True (goal.py records statuses ok) and posts nothing")
-remote_dir = os.path.join(tmp, "remote.git")
-git("init", "-q", "--bare", remote_dir)
-git("remote", "add", "origin", remote_dir)
-git("push", "-q", "origin", head1 + ":refs/heads/loop/x")
+origin_dir = os.path.join(tmp, "origin")  # a non-bare local origin; nothing is pushed in this toy (TD1152): its branch is made by a fetch into it
+os.makedirs(origin_dir)
+subprocess.run(["git", "init", "-q", "-b", "other"], cwd=origin_dir, capture_output=True, check=True)
+subprocess.run(["git", "fetch", "-q", repo, head1 + ":refs/heads/loop/x"], cwd=origin_dir, capture_output=True, check=True)
+git("remote", "add", "origin", origin_dir)
 private.pr_result(repo, "main", head1, "loop/x", False)
 check(posted == [False], "pr_result(ok=False) posts failure when the head is on the remote")
-goal_src = open(os.path.join(scripts, "goal.py"), encoding="utf-8").read()
-check('gate == "pass" or None' in goal_src, "goal.py pr passes the gate-derived value, so only a real pass can post success")
+# goal.py pr itself, run with everything around it stubbed: what it hands pr_result and what it records in the goal's statuses
+import types  # noqa: E402
+import goal  # noqa: E402
+
+
+def run_pr(gate):
+    seen, saved = [], {}
+    stubs = dict(held=lambda slug: {"flow": {s: "done" for s in goal.FLOW}, "branch": "loop/x", "log": [""]}, config=lambda: {"base": "main"},
+                 queue=lambda *a, **k: None, pods=None, round_stop=lambda *a, **k: None, git=lambda *a, **k: "", read=lambda path: "", goal_file=lambda slug: "g.md",
+                 root=lambda: repo, state_dir=lambda: runs, save=lambda state, note=None: saved.update(state=dict(state)),
+                 run=lambda argv, **k: subprocess.CompletedProcess(argv, 1, "", ""), no=lambda text: (_ for _ in ()).throw(AssertionError(text)))
+    fits = dict(budget_stop=lambda *a, **k: None, owed=lambda *a, **k: [], regen=lambda g, slug: "H", pr_text=lambda g, state: "",
+                pr_open=lambda *a, **k: "URL", monitor=lambda name: types.SimpleNamespace(pr_closing=lambda top, body: []))
+    roles = dict(sync=lambda base: ("none", ""), requirement_gate=lambda *a, **k: None, bump_version=lambda g, state, head: head,
+                 lane=lambda *a, **k: (gate, "LANE LINE", []), record=lambda *a, **k: None, flow_spec=lambda: {})
+    guard = dict(waiting_gate=lambda *a, **k: None, sync_touches=lambda *a, **k: None, touches_of=lambda *a, **k: [])
+    pr_result = lambda top, base, head, branch, ok: seen.append(ok) or True
+    originals = []
+    for module, table in ((goal, stubs), (goal.fit, fits), (goal.role, roles), (goal.guards, guard), (goal.private, dict(pr_result=pr_result))):
+        for name, value in table.items():
+            originals.append((module, name, getattr(module, name, None)))
+            setattr(module, name, value)
+    try:
+        code = goal.cmd_pr(types.SimpleNamespace(slug="g"))
+    finally:
+        for module, name, value in reversed(originals):
+            setattr(module, name, value)
+    return seen, saved.get("state", {}).get("statuses"), code
+
+
+import io  # noqa: E402
+import contextlib  # noqa: E402
+with contextlib.redirect_stdout(io.StringIO()):
+    got_skip = run_pr("skipped")
+    got_pass = run_pr("pass")
+check(got_skip[0] == [None] and got_skip[1] == "ok" and got_skip[2] == 0, "goal.py pr with a skipped gate hands pr_result None and records statuses ok: %s" % (got_skip,))
+check(got_pass[0] == [True] and got_pass[1] == "ok", "goal.py pr with a real pass hands pr_result True: %s" % (got_pass,))
 private.repo_is_private, private.required_checks, private.post_statuses = real
 
 # every .ok reader is pinned: a new reader fails this until it is reviewed

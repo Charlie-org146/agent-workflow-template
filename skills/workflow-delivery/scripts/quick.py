@@ -107,9 +107,9 @@ def check_docs():
     for part, command in (("docs.py check", ("workflow-docs", "scripts", "docs.py")),
                           ("entry.py check", ("workflow-docs", "scripts", "entry.py"))):
         done = run([sys.executable, os.path.join(SKILLS, *command), "check"])
-        found = [l for l in done.stdout.splitlines() if l and not l.startswith(("UNTESTED", "DOCS OK", "ENTRY OK", "NOTE"))
-                 and not (l.startswith("STALE ") and " commits since the page" in l or " commit since the page" in l)]
-        if done.returncode and (found or done.stderr.strip() or not done.stdout.strip()):  # any non-zero exit that is not only a restamp note, a crash included
+        restamp = lambda l: l.startswith("STALE ") and (" commits since the page" in l or " commit since the page" in l)
+        found = [l for l in done.stdout.splitlines() if l.strip() and not restamp(l) and not l.startswith(("DOCS OK", "ENTRY OK"))]
+        if done.returncode and (found or done.stderr.strip() or not done.stdout.strip()):  # any non-zero exit that is not only restamp lines, a crash or an unknown line included
             why = found[0] if found else (done.stderr.strip().splitlines() or ["exit %d with no output" % done.returncode])[-1]
             bad.append("%s: %s" % (part, why[:100]))
     return "; ".join(bad), "python3 skills/workflow-docs/scripts/entry.py write (or docs.py audit), commit, push again"
@@ -145,10 +145,9 @@ def doctor():
     scans = "private.py" in text or (os.path.exists(legacy) and "private.py" in open(legacy, encoding="utf-8", errors="replace").read())
     problems, notes = [], []
     if os.name == "nt":  # pre-commit cannot run the stub's #!/bin/sh there, which would refuse every push: it is not installed
-        notes.append("NOTE: native Windows keeps the git-native push stub only; pre-commit is not installed here (DEL-25.1's framework route is "
-                     "Mac and Linux). Run python3 %s run by hand before a push." % SELF)
+        notes.append("NOTE: the quick checks run through pre-commit on macOS and Linux; here run python3 %s run by hand before a push." % SELF)
         if "pre-commit" in text:
-            problems.append("pre-commit is installed on native Windows and cannot run the git-native stub, so every push is refused. Fix, in order: "
+            problems.append("pre-commit's hook is installed here and would refuse every push. Fix, in order: "
                             "1. pre-commit uninstall --hook-type pre-push 2. python3 skills/workflow-setup/scripts/setup.py --git-hooks")
         scans = "private.py" in text
     else:
@@ -165,14 +164,14 @@ def doctor():
 
 
 def install():
-    """Write .pre-commit-config.yaml when absent and install the pre-push hook; never overwrites a hook. Native Windows keeps the stub alone."""
+    """Write .pre-commit-config.yaml when absent and install the pre-push hook; never overwrites a hook."""
     path = os.path.join(ROOT, ".pre-commit-config.yaml")
     if not os.path.exists(path):
         with open(path, "w", newline="\n") as handle:
             handle.write(CONFIG)
         print("wrote .pre-commit-config.yaml")
     if os.name == "nt":
-        print("NOTE: native Windows keeps the git-native push stub only; pre-commit is not installed here. Run python3 %s run by hand." % SELF)
+        print("NOTE: the quick checks run through pre-commit on macOS and Linux; here run python3 %s run by hand." % SELF)
         return 0
     done = run(["pre-commit", "install", "-t", "pre-push"]) if shutil.which("pre-commit") else None
     if done is None or done.returncode:
