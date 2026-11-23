@@ -7,6 +7,7 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
   skipped        a row that cannot run is written SKIP, never RAN; the gate passes it only when main's skip list holds it (SKIPPED,
                  never counted as run), and fails a skip main does not have;
   tree-budget    the tree job runs with no budget, so a whole-tree row is never cut by one;
+  tree-skip      a whole-tree row that skips is judged by the same list rule as the numbered shards' rows;
   notrun         a row that could not start is NOTRUN and fails unless its skip-list row carries the notrun flag; a skip count is printed;
   validate       an unreadable skip list, a malformed times line and a missing argument each fail with a message, and a
                  failed run leaves the times cache as it was;
@@ -170,6 +171,9 @@ if case("tree-budget"):
     os.makedirs(os.path.join(here, "skills", "workflow-regression", "scripts"))
     with open(os.path.join(here, "skills", "workflow-regression", "scripts", "regression.py"), "w") as handle:
         handle.write("import sys\nprint('RUNNER-REACHED', ' '.join(sys.argv[1:]))\n")
+    os.symlink(GATE, os.path.join(here, "skills", "workflow-regression", "scripts", "cutgate.py"))
+    os.makedirs(os.path.join(here, ".loop"), exist_ok=True)
+    open(os.path.join(here, ".loop", "regression-skips.tsv"), "w").write("# id\treason\n")
     git(here, "add", "-A")
     git(here, "commit", "-qm", "stub")
     git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
@@ -183,6 +187,32 @@ if case("tree-budget"):
           "the tree job runs with no budget (--budget -1), so a whole-tree row is not cut by one (exit %d)" % code)
     code, out, times = run_step(here, "3")
     check(code == 0 and "--budget 120" in out and "--tree" not in out, "control: a numbered shard keeps its budget and does not take the tree line (exit %d)" % code)
+
+if case("tree-skip"):  # a whole-tree row that skips goes through the same list rule as a numbered shard's rows
+    def tree_project(command_exit):
+        here = repo({"ts": "python3 dev/package.py"})
+        os.makedirs(os.path.join(here, "dev"))
+        with open(os.path.join(here, "dev", "package.py"), "w") as handle:
+            handle.write("raise SystemExit(0)  # before the change\n")
+        os.makedirs(os.path.join(here, "skills", "workflow-regression"))
+        os.symlink(scripts, os.path.join(here, "skills", "workflow-regression", "scripts"))
+        os.makedirs(os.path.join(here, ".loop"), exist_ok=True)
+        with open(os.path.join(here, ".loop", "regression-skips.tsv"), "w") as handle:
+            handle.write("# id\treason\n")
+        git(here, "add", "-A")
+        git(here, "commit", "-qm", "tree row")
+        git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
+        git(here, "checkout", "-q", "-b", "pr")
+        with open(os.path.join(here, "dev", "package.py"), "w") as handle:  # the PR changes the whole-tree row's own script
+            handle.write("raise SystemExit(%d)\n" % command_exit)
+        git(here, "add", "-A")
+        git(here, "commit", "-qm", "change")
+        return here
+
+    code, out, times = run_step(tree_project(77), "tree")
+    check(code != 0 and "FAIL skipped and not skipped on main: ts" in out, "a whole-tree row that skips and is not on main's skip list fails the tree job by name (exit %d)" % code)
+    code, out, times = run_step(tree_project(0), "tree")
+    check(code == 0 and "FAIL" not in out, "control: a whole-tree row that passes ends the tree job green (exit %d)" % code)
 
 if case("notrun"):
     notrun = {"s/shard-0/t.tsv": "fast\t1\tRAN\nnr\t0\tNOTRUN\n", "s/shard-1/t.tsv": "fast\t0\tSEL\nnr\t0\tSEL\n"}

@@ -144,7 +144,7 @@ if case("generated"):
           "negative control: a call without the skip list, the times file or the numbered glob is not the call the step must make")
     check("if: always() && needs.shard.result == 'success'\n        uses: actions/cache/save" in flow,
           "the times cache is saved even when the affected step is red, so cut rows keep their marks")
-    check('>>${{ runner.temp }}/t.tsv; exit 0' in flow and "> ${{ runner.temp }}/t.tsv; exit 0" not in flow,
+    check("T=${{ runner.temp }}/t.tsv;" in flow and '>>$T; exit 0' in flow and "> $T; exit 0" not in flow,
           "the documents-only exit creates the shard file with >> and never truncates the restored times")
     check("regression.py run \"$id\"" not in flow and "not failed" not in flow,
           "the affected step reruns nothing and no log line says a cut row is not failed")

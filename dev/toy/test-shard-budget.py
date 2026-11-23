@@ -41,13 +41,16 @@ def cache_paths(text):
     return path("restore"), path("save")
 
 
+budget = re.search(r"B=(\d+);", flow)
+check(budget is not None and int(budget.group(1)) <= TARGET, "the workflow's own shard budget (B=%s) never exceeds the owner's %d s" % (budget and budget.group(1), TARGET))
+check(budget is not None and int(budget.group(1)) in (120, TARGET), "the workflow's shard budget is the current 120 s or the owner's %d s, nothing else" % TARGET)
 got = cache_paths(flow)
 check(got[0] == got[1] == "all.tsv", "the shard job restores the times cache from the path the affected job saves it to: %s" % (got,))
 old = flow.replace("          path: all.tsv\n          key: row-times-", "          path: ${{ runner.temp }}/t.tsv\n          key: row-times-", 1)
 check(len(set(cache_paths(old))) == 2, "negative control: the old restore path differs from the save path, so the cache never hits")
 
 seed = [x.strip() for x in flow.splitlines() if "row-times.tsv" in x and "cat " in x]
-check(len(seed) == 1 and "${{" in seed[0], "the shard step has one seed line")
+check(len(seed) == 1 and ">$T" in seed[0], "the shard step has one seed line, written to the shard's times file $T")
 
 
 def run_seed(files):
@@ -59,7 +62,7 @@ def run_seed(files):
     for name, body in files.items():
         with open(os.path.join(work, name), "w") as handle:
             handle.write(body)
-    line = seed[0].split("  #")[0].replace("${{ runner.temp }}", temp)
+    line = seed[0].split("  #")[0].replace("$T", temp + "/t.tsv")
     r = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", line], cwd=work, capture_output=True, text=True)
     out = os.path.join(temp, "t.tsv")
     return r.returncode, open(out).read() if os.path.exists(out) else None, os.path.exists(os.path.join(work, "all.tsv"))
