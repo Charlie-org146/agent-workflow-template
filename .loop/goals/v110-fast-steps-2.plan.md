@@ -26,7 +26,7 @@ A save waits at most 30 seconds for another writer's lock and then refuses with 
 
 ## Package rule (done line 3)
 
-Every touched script is under 19,000 bytes (largest: merge.py 18,935, docs.py 18,876, goal.py 18,831); guards.py (19,664) and auto.py are already over and shrink; `update.py` shrinks (19,419 on main, 19,139 here) and `dev/package.py` ends at 22,174 (22,593 on main); no comment is trimmed. Eight new files under `skills/` (steps.py, moved.py, moved_mon.py, moved_rel.py, moved_docs.py, steps_page.py, stepfile.py, workflow-setup's moved_set.py) and dev/package_extra.py: 108 files against MAX_FILES 200, allowed by #5794 (b9accac1d). Existing toys whose assertions named an older step label are edited under TD1141: only the label text changes (old and new are listed in the PR notes), each with a control that the old label is gone; no row command or text changes and no check is narrowed.
+Every touched script is under 19,000 bytes (largest: merge.py 18,935, docs.py 18,876, goal.py 18,831); guards.py (19,635) and auto.py are already over and shrink; `update.py` shrinks (19,419 on main, 19,139 here) and `dev/package.py` ends at 22,174 (22,593 on main); no comment is trimmed. Eight new files under `skills/` (steps.py, moved.py, moved_mon.py, moved_rel.py, moved_docs.py, steps_page.py, stepfile.py, workflow-setup's moved_set.py) and dev/package_extra.py: 108 files against MAX_FILES 200, allowed by #5794 (b9accac1d). Existing toys whose assertions named an older step label are edited under TD1141: only the label text changes (old and new are listed in the PR notes), each with a control that the old label is gone; no row command or text changes and no check is narrowed.
 
 ## PR notes (the only claims)
 
