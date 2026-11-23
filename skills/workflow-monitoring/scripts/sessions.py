@@ -255,7 +255,7 @@ def cmd_free(args):
         if state.get("pid") and state.get("status") == "running" and alive(state["pid"]):
             sys.exit("REFUSED: %s is running as background pid %s; let it end first." % (args.slug, state["pid"]))
         if state.get("status") == "waiting":
-            ask = (state.get("waiting") or {}).get("ask") or "a question"
+            ask = moved_mon.steps().say((state.get("waiting") or {}).get("ask") or "a question")
             sys.exit("REFUSED: %s is waiting on the owner (%s); answer it first. Nothing was changed." % (args.slug, ask))
         count = release(args.slug, found, mark=True)
         save_pool(found)

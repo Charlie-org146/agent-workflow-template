@@ -28,6 +28,7 @@ import replan as lim  # noqa: E402
 import proctree  # noqa: E402
 from batch import agent_command  # noqa: E402
 from worker import now  # noqa: E402
+import moved_mon  # noqa: E402
 try:
     import sessions  # noqa: E402
 except ImportError:  # without it, background processes
@@ -135,7 +136,6 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
-    import moved_mon
     moved_mon.steps().commit(record_path(state["slug"]), state, state["updated"])
 
 
@@ -397,11 +397,11 @@ def tell(seen, told):
         now_is = (state.get("status"), state.get("step"), state.get("pr"))
         if seen.get(state["slug"]) != now_is:
             seen[state["slug"]] = now_is
-            print("%s %s step=%s pr=%s" % (state["slug"], now_is[0], now_is[1] or "-", now_is[2] or "-"), flush=True)
+            print("%s %s step=%s pr=%s" % (state["slug"], now_is[0], moved_mon.steps().name_of(now_is[1] or "-"), now_is[2] or "-"), flush=True)
         ask = state.get("waiting")
         if state.get("status") == "waiting" and ask and state["slug"] not in told:
             told.add(state["slug"])
-            print("WAITS ON YOU %s: %s Type: %s" % (state["slug"], ask.get("ask"), " or ".join(ask.get("words", []))),
+            print("WAITS ON YOU %s: %s Type: %s" % (state["slug"], moved_mon.steps().say(ask.get("ask")), " or ".join(ask.get("words", []))),
                   flush=True)
 
 
@@ -430,7 +430,7 @@ def cmd_watch(args):
         print("STILL QUEUED %s: %s" % (goal["slug"], why))
     for state in runs():
         if state.get("status") in ("failed", "stopped"):
-            print("NEEDS YOU %s: %s" % (state["slug"], " ".join((state.get("finding") or "see its log").split())[:200]))
+            print("NEEDS YOU %s: %s" % (state["slug"], " ".join(moved_mon.steps().say(state.get("finding") or "see its log").split())[:200]))
     if not args.once:
         print("NOTHING LEFT TO RUN. Nothing was merged.")
     return 0

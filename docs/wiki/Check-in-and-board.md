@@ -49,7 +49,7 @@ None
 
 - The board and every full check-in print in the same layout every time, at least every 30 minutes by default.
 - Every item under Needs you says what it holds up, and the board builds in under 10 seconds.
-- The check-in names and numbers each goal's step from the one step list (DEL-19); a goal whose pull request is open shows as merge, as in its step log. The live board, the handoff and its CHANGE lines say steps the same way, in reports, in the Needs-you asks and in waiting asks too.
+- The check-in names and numbers each goal's step from the one step list (DEL-19); a goal whose pull request is open shows as merge, as in its step log. The live board, the handoff and its CHANGE lines say steps the same way, in reports, in the Needs-you asks and in waiting asks too. The watcher's status, WAITS ON YOU and NEEDS YOU lines, `sessions.py free`'s refusal, the notice of a stopped goal and a done run's report do the same.
 
 ## Revisions
 

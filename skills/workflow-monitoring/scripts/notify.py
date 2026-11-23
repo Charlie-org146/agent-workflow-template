@@ -33,6 +33,7 @@ sys.path.insert(0, HERE)
 import auto  # noqa: E402
 import graph  # noqa: E402
 import live_board as lb  # noqa: E402
+import moved_mon  # noqa: E402
 import mailbox  # noqa: E402
 
 HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
@@ -123,7 +124,7 @@ def events(root, text):
     for run in runs:
         slug, status = run["slug"], run.get("status")
         if status in ("stopped", "failed"):
-            why = run.get("finding") or "it stopped at %s" % (run.get("step") or "a step")
+            why = moved_mon.steps().say(run.get("finding")) or "it stopped at %s" % moved_mon.steps().name_of(run.get("step") or "a step")
             out.append(("stopped:%s:%s" % (slug, run.get("attempt") or 1), "stopped", slug,
                         "%s stopped: %s. You: resume it or retire it." % (slug, lb.plain(why, 160))))
         seen = auto.eta_seen(root, run)

@@ -5,7 +5,7 @@
 
 One session governs many goals at once and shows a live board of what's running and what needs you, and each check-in draws live goals with their time left and waits, with this machine's status. New mail events share a send budget across machines; a deferred event retries on a later check-in.
 
-Whoever saves a goal's run record (the worker, the mender, the monitor, the watcher, a session report) saves through the one save hook, so each step's start and end are logged once; every screen (the live board, the check-in, the handoff and its CHANGE lines, `monitor.py report` and the dashboard) says a step by its DEL-19 name; a goal's own ask, note, refusal and failure are read the same way.
+Whoever saves a goal's run record (the worker, the mender, the monitor, the watcher, a session report) saves through the one save hook, so each step's start and end are logged once; every screen (the live board, the check-in, the handoff and its CHANGE lines, `monitor.py report` and the dashboard) says a step by its DEL-19 name; a goal's own ask, note, refusal and failure are read the same way, and so are the watcher's lines and the owner notices.
 
 ### What's delivered
 

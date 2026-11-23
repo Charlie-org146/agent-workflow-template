@@ -124,6 +124,28 @@ ar.finish(root, {"merge_queue": True}, st)
 rows = {r["step"]: r for r in steps.entries(st)}
 case("a-release-through-ci-records-the-release-row", rows["release"]["state"] == "ran" and rows["after the merge"]["state"] == "ran" and rows["merge"]["attempts"] == 0, str(rows["release"]) + str(rows["merge"]))
 
+
+# owner-facing lines say the list's step names: the watcher's status, asks and needs, the free refusal, the notices, the done-run report
+root = tempfile.mkdtemp()
+made.append(root)
+env = {"PATH": os.environ["PATH"], "HOME": root, "LOOP_PRIVATE_NAMES": "/dev/null", "LOOP_ROLE": "worker", "LANG": "en_US.UTF-8"}
+git = lambda *a: subprocess.run(["git", *a], cwd=root, check=True, capture_output=True, env=env)
+git("init", "-q"), git("config", "user.email", "t@t.t"), git("config", "user.name", "t"), open(os.path.join(root, "f"), "w").write("x"), git("add", "."), git("commit", "-qm", "i")
+subprocess.run([sys.executable, "-B", os.path.join(SKILLS, "workflow-setup", "scripts", "setup.py"), "--bare"], cwd=root, check=True, capture_output=True, env=env)
+runs = os.path.join(root, ".git", "loop", "runs")
+os.makedirs(runs, exist_ok=True)
+for slug, more in (("ff", {"status": "failed", "finding": "Failed 3 tries. Last: review failed: boom"}),
+                   ("ww", {"status": "waiting", "waiting": {"ask": "review left this for you: approve", "words": ["go"]}})):
+    json.dump(dict({"slug": slug, "goal": "g", "step": "review", "worker": "session", "pid": None, "updated": "2026-11-22T10:00:00Z", "log": []}, **more), open(os.path.join(runs, slug + ".json"), "w"))
+mon = os.path.join(SKILLS, "workflow-monitoring", "scripts")
+free = subprocess.run([sys.executable, "-B", os.path.join(mon, "sessions.py"), "free", "ww"], cwd=root, capture_output=True, text=True, env=env)
+watch = subprocess.run([sys.executable, "-B", os.path.join(mon, "watch.py"), "watch", "--once"], cwd=root, capture_output=True, text=True, env=env, timeout=120).stdout
+notice = " ".join(str(e) for e in importlib.import_module("notify").events(root, ""))
+shown = importlib.import_module("live_board").next_line({"status": "done", "report": {"text": "worker x: step ship done"}})
+seen = [free.stderr + free.stdout, watch, notice, shown]
+case("owner-facing-lines-say-the-list-names", all(w in " ".join(seen) for w in ("(tests left this for you", "WAITS ON YOU ww: tests left", "NEEDS YOU ff: Failed 3 tries. Last: tests failed", "ff failed step=tests", "step tests done"))
+     and not any(w in " ".join(seen) for w in ("review left", "review failed", "step=review", "step ship")), str(seen)[:600])
+
 for folder in made:
     shutil.rmtree(folder, ignore_errors=True)
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))

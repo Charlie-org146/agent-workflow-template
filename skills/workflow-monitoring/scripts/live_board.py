@@ -141,7 +141,8 @@ def latest_report(run):
 
 def next_line(run):
     if run.get("status") == "done":
-        return plain((run.get("report") or {}).get("text") or "merge the pull request", 120)
+        import moved_mon
+        return plain(moved_mon.steps().say((run.get("report") or {}).get("text") or "merge the pull request"), 120)
     import moved_mon
     text = plain(moved_mon.steps().say(latest_report(run) or run.get("next") or ""), 120)
     if text:
