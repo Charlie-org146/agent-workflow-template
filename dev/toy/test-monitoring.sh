@@ -183,9 +183,10 @@ sets slow 'status="done"'
 mkdir -p "$T/lone"; cp "$here/skills/workflow-monitoring/scripts/watch.py" "$here/skills/workflow-monitoring/scripts/graph.py" "$here/skills/workflow-monitoring/scripts/proctree.py" "$here/skills/workflow-monitoring/scripts/replan.py" "$here/skills/workflow-monitoring/scripts/worker.py" "$here/skills/workflow-monitoring/scripts/sessions.py" "$here/skills/workflow-monitoring/scripts/auto.py" "$here/skills/workflow-monitoring/scripts/board_log.py" "$here/skills/workflow-monitoring/scripts/board_model.py" "$here/skills/workflow-monitoring/scripts/board_page.py" "$here/skills/workflow-monitoring/scripts/board_status.py" "$T/lone/"  # watch.py and what it imports, but no mend.py
 check "watch.py alone runs, and says it mended nothing" 'python3 "$T/lone/watch.py" watch --once | grep -q "mend.py isn.t beside"'
 check "watch.py alone refuses resume, and says why" 'python3 "$T/lone/watch.py" resume late 2>&1 | grep -q "needs mend.py"'
-rm -f "$T/lone/board_page.py"; cp "$here/skills/workflow-monitoring/scripts/board.py" "$T/lone/"  # no board_page.py beside board.py
-check "board.py alone refuses a run command, and says why" 'python3 "$T/lone/board.py" note late hi 2>&1 | grep -q "needs board_page.py"'
-check "board.py alone still writes a board" 'python3 "$T/lone/board.py" board --out "$T/lone/b" | grep -q "^JSON "'
+rm -f "$T/lone/board_page.py"; cp "$here/skills/workflow-monitoring/scripts/board.py" "$here/skills/workflow-monitoring/scripts/moved_mon.py" "$T/lone/"  # no board_page.py beside board.py
+mkdir -p "$T/pack/skills/workflow-monitoring"; cp -R "$T/lone" "$T/pack/skills/workflow-monitoring/scripts"; cp "$here/skills/steps.py" "$T/pack/skills/"  # the shared step list sits where a package puts it
+check "board.py alone refuses a run command, and says why" 'python3 "$T/pack/skills/workflow-monitoring/scripts/board.py" note late hi 2>&1 | grep -q "needs board_page.py"'
+check "board.py alone still writes a board" 'python3 "$T/pack/skills/workflow-monitoring/scripts/board.py" board --out "$T/lone/b" | grep -q "^JSON "'
 
 echo "== a goal with no pid is left alone"
 python3 - "$C/loop/runs/own.json" <<'PY'
