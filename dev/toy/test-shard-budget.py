@@ -43,7 +43,7 @@ def cache_paths(text):
 
 budget = re.search(r"B=(\d+);", flow)
 check(budget is not None and int(budget.group(1)) <= TARGET, "the workflow's own shard budget (B=%s) never exceeds the owner's %d s" % (budget and budget.group(1), TARGET))
-check(budget is not None and int(budget.group(1)) in (120, TARGET), "the workflow's shard budget is the current 120 s or the owner's %d s, nothing else" % TARGET)
+check(budget is not None and int(budget.group(1)) == TARGET, "the workflow's shard budget is the owner's %d s (o852), never raised or removed to fit a shard" % TARGET)
 got = cache_paths(flow)
 check(got[0] == got[1] == "all.tsv", "the shard job restores the times cache from the path the affected job saves it to: %s" % (got,))
 old = flow.replace("          path: all.tsv\n          key: row-times-", "          path: ${{ runner.temp }}/t.tsv\n          key: row-times-", 1)

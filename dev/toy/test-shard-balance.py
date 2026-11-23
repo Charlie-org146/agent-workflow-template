@@ -121,10 +121,10 @@ check(gate.returncode == 1 and "FAIL cut or not run: d not run" in gate.stdout a
       "affected fails the row no shard ran by name, names the row two shards ran, and reads only rows selected in this run (exit %d)" % gate.returncode)
 kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
-# D3 (pr-check-fast, fast-3min): 8 shards of 120 seconds; docs.py check runs once per merge, in the merge-queue job `small` on the merged
+# D3 (pr-check-fast, fast-3min): 8 shards of 866 seconds (o852); docs.py check runs once per merge, in the merge-queue job `small` on the merged
 # ref with no review log (a clone has none), so a page-level LOCKED or FORMAT line fails the merge group, not the pull request's affected job.
-check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in flow and "matrix.shard }}/8 " in flow and "B=120;" in flow and "--budget $B " in flow,
-      "the PR workflow runs 8 shards with a 120-second budget each, and the tree cell")
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in flow and "matrix.shard }}/8 " in flow and "B=866;" in flow and "--budget $B " in flow,
+      "the PR workflow runs 8 shards with an 866-second budget each (o852), and the tree cell")
 job = flow.split("\n  affected:")[1].split("\n  small:")[0]
 small = flow.split("\n  small:")[1]
 docs = "- run: python3 skills/workflow-docs/scripts/docs.py check"
@@ -197,8 +197,8 @@ def budget_of(changed):
 got = {rel: budget_of(rel) for rel in (".loop/regression.tsv", ".loop/regression-known.tsv", "dev/a.py", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak")}
 check(got[".loop/regression.tsv"] == "-1" and got[".loop/regression-known.tsv"] == "-1",
       "a PR that changes .loop/regression.tsv or the known list runs its shard with no budget (--budget -1): %s" % got)
-check(all(got[k] == "120" for k in ("dev/a.py", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak")),
-      "negative control: a PR that changes any other file, even one named like the table, keeps the 120-second budget")
+check(all(got[k] == "866" for k in ("dev/a.py", ".loop/regression-runs.tsv", "dev/regression.tsv", ".loop/regression.tsv.bak")),
+      "negative control: a PR that changes any other file, even one named like the table, keeps the 866-second budget")
 rows = tempfile.mkdtemp(prefix="rows-full-run-")
 for step in (["git", "init", "-q", "-b", "main"], ["git", "config", "commit.gpgsign", "false"]):
     subprocess.run(step, cwd=rows, check=True, capture_output=True)

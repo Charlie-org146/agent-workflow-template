@@ -6,6 +6,7 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
   known-timeout  a row on the known list that passes its row limit is LEFT, so the cut gate fails it by name;
   skipped        a row that cannot run is written SKIP, never RAN; the gate passes it only when main's skip list holds it (SKIPPED,
                  never counted as run), and fails a skip main does not have;
+  over-budget    the generated shard step fails a shard whose rows pass its budget B: the rows it had no time for are CUT and the gate names them;
   tree-budget    the tree job runs with no budget, so a whole-tree row is never cut by one;
   tree-skip      a whole-tree row that skips is judged by the same list rule as the numbered shards' rows;
   notrun         a row that could not start is NOTRUN and fails unless its skip-list row carries the notrun flag; a skip count is printed;
@@ -16,6 +17,7 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
                  a documents-only change; controls: a documents-only diff ends green at once, a code diff reaches the runner.
 LOOP_TOY_ONLY=<case> runs one case (red proofs)."""
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -166,6 +168,42 @@ if case("empty-cache"):  # the times cache keeps the last real record: a run wit
         done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv"], cwd=work, capture_output=True, text=True)
         check(done.returncode == 0 and os.path.exists(os.path.join(work, "all.tsv")) == wrote, "%s: the times file is %s (exit %d)" % (name, "written" if wrote else "not written", done.returncode))
 
+if case("over-budget"):
+    def budgeted(budget, sleep):
+        """Four rows of `sleep` seconds, two shards of the generated step run on the real runner with B set to budget; the gate's verdict."""
+        names = ["t1", "t2", "t3", "t4"]
+        here = repo({n: "bash dev/%s.sh" % n for n in names})
+        os.makedirs(os.path.join(here, "dev"))
+        for n in names:
+            with open(os.path.join(here, "dev", n + ".sh"), "w") as handle:
+                handle.write("exit 0  # before the change\n")
+        os.makedirs(os.path.join(here, "skills", "workflow-regression"))
+        os.symlink(scripts, os.path.join(here, "skills", "workflow-regression", "scripts"))
+        git(here, "add", "-A")
+        git(here, "commit", "-qm", "scripts")
+        git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
+        git(here, "checkout", "-q", "-b", "pr")
+        for n in names:  # the PR changes each row's own script, so every row is selected
+            with open(os.path.join(here, "dev", n + ".sh"), "w") as handle:
+                handle.write("sleep %s\n" % sleep)
+        git(here, "add", "-A")
+        git(here, "commit", "-qm", "change")
+        files = {}
+        trees = {cell: shutil.copytree(here, here + "-cell" + cell, symlinks=True) for cell in ("0", "1")}  # each shard is its own checkout
+        for cell in ("0", "1"):
+            temp = tempfile.mkdtemp(prefix="cut-complete-over-")
+            step = shard_step(cell).replace("/8 ", "/2 ")
+            assert "B=866;" in step or "B=120;" in step, "the step's budget line is not B=<n>"
+            step = step.replace("B=866;", "B=%d;" % budget).replace("B=120;", "B=%d;" % budget)
+            subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=trees[cell], capture_output=True, text=True, env=dict(env, TEMP_DIR=temp))
+            files["s/shard-%s/t.tsv" % cell] = open(os.path.join(temp, "t.tsv")).read() if os.path.exists(os.path.join(temp, "t.tsv")) else ""
+        return gate(files, known=[])
+
+    code, out = budgeted(1, 2)
+    check(code == 1 and "FAIL cut or not run: t" in out and "CUT" in out, "a shard whose rows pass its budget B has the rows it had no time for CUT, and the gate fails and names them (exit %d)" % code)
+    code, out = budgeted(866, 2)
+    check(code == 0 and "FAIL" not in out, "control: the same rows within the budget end green (exit %d)" % code)
+
 if case("tree-budget"):
     here = repo({"fast": "exit 0"})
     os.makedirs(os.path.join(here, "skills", "workflow-regression", "scripts"))
@@ -186,7 +224,7 @@ if case("tree-budget"):
     check(code == 0 and "RUNNER-REACHED" in out and "--tree" in out and "--budget -1" in out,
           "the tree job runs with no budget (--budget -1), so a whole-tree row is not cut by one (exit %d)" % code)
     code, out, times = run_step(here, "3")
-    check(code == 0 and "--budget 120" in out and "--tree" not in out, "control: a numbered shard keeps its budget and does not take the tree line (exit %d)" % code)
+    check(code == 0 and "--budget 866" in out and "--tree" not in out, "control: a numbered shard keeps its budget and does not take the tree line (exit %d)" % code)
 
 if case("tree-skip"):  # a whole-tree row that skips goes through the same list rule as a numbered shard's rows
     def tree_project(command_exit):
