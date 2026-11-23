@@ -568,6 +568,9 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [queue-use](Tests#t-queue-use) | requirement | DEL-17 | Given the last merges where one PR entered the merge queue 162 seconds after its checks passed, when health reads the queue use, then it FAILS naming that PR and prints PRs per merge and the longest wait. | not run |
 | [release-hold-red](Tests#t-release-hold-red) | requirement | DEL-17 | Given an open issue labeled main-red, when release.yml runs on a push to main, then it ends green printing held: main red (#N) and publishes nothing; given none open, it releases as before. | not run |
 | - | requirement | DEL-22 | no passing test | not enforced |
+| [fast-checks-quick](Tests#t-fast-checks-quick) | requirement | DEL-25 | Given a push, when the quick checks run through pre-commit, then the one quick hook runs lint, the docs check and the size limits on one clock, each failing only on its own rule, inside the 1-minute limit (DEL-25.1, DEL-25.2); a network-only case skips with exit 77 offline. | not run |
+| [fast-checks-regen](Tests#t-fast-checks-regen) | requirement | DEL-25 | Given a stale generated file at goal.py pr, when the regen check runs, then it prints a REGEN_STALE note with an ordered Fix, changes nothing and commits nothing, and a second run of the Fix changes nothing (DEL-25.4). | not run |
+| [fast-checks-lane](Tests#t-fast-checks-lane) | requirement | DEL-25 | Given a repo whose tests run on GitHub, when a goal asks for its pr, qa or ship lane, then the lane is recorded skipped (never pass, no .ok), lane-wait exits 3 for it, record qa and ship follow the skip reader, and a skipped pr lane posts no status (DEL-25.3); the fake-gh cases skip on Windows. | not run |
 | - | requirement | DEL-25 | no passing test | not enforced |
 | - | requirement | DEL-26 | no passing test | not enforced |
 | - | requirement | DEL-27 | no passing test | not enforced |
