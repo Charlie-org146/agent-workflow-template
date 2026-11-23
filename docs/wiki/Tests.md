@@ -761,3 +761,4 @@
 | <a id="t-lane-once-5734"></a>lane-once-5734 | defect | [#5734](https://github.com/Charlie-org146/agent-workflow-template/issues/5734) closed (2026-11-21) | not run | - | local | 2026-11-21 |
 | <a id="t-fast-checks-quick"></a>fast-checks-quick | requirement | done line v110-fast-checks:1 | not run | - | local | 2026-11-22 |
 | <a id="t-fast-checks-regen"></a>fast-checks-regen | requirement | done line v110-fast-checks:1 | not run | - | local | 2026-11-22 |
+| <a id="t-fast-checks-lane"></a>fast-checks-lane | requirement | done line v110-fast-checks:1 | not run | - | local | 2026-11-22 |

@@ -2,7 +2,7 @@
 """The lane's kit, imported by lane.py and goal.py; not a command. Parts:
 1. COPIED (flow_file ... rows_line): copies of slots.py pieces; they must match workflow-regression/scripts/slots.py (test-lane-control.sh).
 2. prep, generated: the one commit a lane may make first (re-rendered Tests tables), else LANE_DIRTY or LANE_PREP_FAILED.
-3. record(state, base), run by goal.py pr after its lane passes: issue states, run results, one commit, pr_lane, pr_head, pr_base.
+3. record(state, base), run by goal.py pr after its lane: issue states, run results, one commit, pr_lane, pr_head, pr_base.
 4. Step budgets: step_budget_minutes (30), test_budget_minutes (15), neither under 15; budget_hits names what a stopped step left.
 5. pstart/same, audit (runs/kills.log), died/death (LANE_DIED): who may signal a lane.
 """
@@ -203,12 +203,14 @@ def lane_base(runs, slug, name):
 
 
 def lane_ok(runs, slug, step, head):
+    import skip
     oks = []
     for n in (step,) + tuple(x for x in LANES if x != step):
         try:
-            oks.append((open(lane_base(runs, slug, n) + ".ok").read().strip(), n))
+            ok = open(lane_base(runs, slug, n) + ".ok").read().strip()
         except OSError:
-            oks.append(("", n))
+            ok = ""
+        oks.append((skip.accepts(runs, slug, n, head) or ok, n))
     return next((o for o in oks if o[0] == head), next((o for o in oks if o[0]), ("", step)))
 
 

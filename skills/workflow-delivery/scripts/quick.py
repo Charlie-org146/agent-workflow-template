@@ -9,6 +9,7 @@
 The whole run has the limit of the "quick checks" row of clock.py (default 1 minute, o755); a run over it prints clock's
 `missed (was Xm, limit Ym)` line. The private-name scan is NOT here: it stays the git-native pre-push stub that seed.py writes.
 """
+import importlib
 import json
 import os
 import shutil
@@ -47,8 +48,7 @@ def clock():
     for part in ("workflow-delivery", "workflow-monitoring"):
         sys.path.append(os.path.join(SKILLS, part, "scripts"))
     try:
-        import clock as module
-        return module
+        return importlib.import_module("clock")  # optional: v110-fast-clock may not be in this tree
     except Exception:  # not built yet, or it does not import here
         return None
 

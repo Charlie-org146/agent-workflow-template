@@ -314,6 +314,8 @@ def post_statuses(top, head, ok, contexts):
 
 
 def pr_result(top, base, head, branch, ok):
+    if ok is None:
+        return print("STATUSES none: the pr lane was skipped; GitHub decides") or True
     got = repo_is_private(top) and required_checks(top, base)
     if not got:
         return print("STATUSES none: public or unreadable") or True

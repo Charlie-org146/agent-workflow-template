@@ -3,6 +3,7 @@
 lane.py lane-exec is a lane's child). A lane tests committed HEAD, never pushes, may commit the re-rendered Tests tables;
 one per goal runs at a time, one on an older HEAD is stopped first. Result: <runs>/<slug>.<name>-lane.last. Messages: lanekit.py.
 """
+import importlib
 import json
 import os
 import re
@@ -19,6 +20,7 @@ REG = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "sc
 sys.path.insert(0, HERE)
 import lanekit  # noqa: E402
 import fit  # noqa: E402
+import skip  # noqa: E402
 import proctree  # noqa: E402
 from proctree import alive_since as alive, rm_tmp, tmp_for  # noqa: E402,F401
 fcntl = lanekit.fcntl
@@ -33,12 +35,9 @@ flow_spec = lanekit._flow  # the flow file as a dict
 
 
 def lane_checks(top, contexts):
-    import importlib.util as u
     sys.path.insert(0, REG)
-    spec = u.spec_from_file_location("tests", os.path.join(REG, "tests.py"))
-    tests = u.module_from_spec(spec)
-    spec.loader.exec_module(tests)
-    return tests.lane_checks(top, contexts)
+    return importlib.import_module("tests").lane_checks(top, contexts)
+
 
 def lane_argv(seconds=0):
     return ["python3", os.path.join(REG, "regression.py"), "run", "land", "--reuse", "--tier", "goal"] + (
@@ -205,6 +204,8 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
         held = None
     if not held and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
         return "pass", answer(runs, slug, src, name), []
+    if not held and (hit := skip.lane(base, head, name)):
+        return hit
     if not held:
         top = rev("--show-toplevel")
         began_prep = time.time()
