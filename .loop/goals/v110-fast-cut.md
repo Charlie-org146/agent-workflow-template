@@ -72,3 +72,8 @@ The cut-gate check is no longer inline in the generated `affected` step. It is `
 - Fit: with `regression.split` over the committed times (rows with no time weigh the median), every one of the 8 shards carries 778 s. A split made from the first run's times and applied to the second run's times gives 653 to 696 s.
 - Test: toy `dev/toy/test-shard-budget.py`, row `shard-fits-budget` (seen red on the parent generator). It checks that the restore and save paths match, that the seed line works with and without a cache and with neither file, and that the most loaded shard fits 866 s. Its negative controls are the old restore path and one row grown past the budget.
 - The budget stays 120 s in this commit. It moves to 866 s in a separate commit, only after a real PR run shows every shard under 866 s.
+
+### test-tasks' negative control runs in the PR (TD1176, TD1184)
+
+- TD1176 points the skills-file half of `tasks-rows-only-added` at the files v110-tasks' merge added under skills/. TD1184 accepts that under done line 3 on one condition: the negative control is in the toy and runs in the PR. The control is that a fixture of that merge adding another skills file still fails.
+- The row now also requires that control's PASS line, so a FAIL in it turns the row red. Mutation check: with the control broken (its fixture's extra file renamed), the row exits 1; intact, it exits 0. The record in `dev/toy/approved-row-changes.tsv` cites "TD1176, TD1184".

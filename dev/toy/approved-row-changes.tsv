@@ -7,4 +7,4 @@ grd8-silent-worker	o797, TD1046, TD1054 (REG-4)	now runs mon8 and mon9 and requi
 aut7-budget-agrees	o797, TD1036 (REG-4: one row per script and requirement)	folded into budgets-agree; its three cases kept
 budgets-agree	o797, TD1036 (REG-4)	now runs the budgets, digest and health cases with one merged description
 known-no-block	TD842 (the five split rows granted under the TD815 rule)	split into five one-run rows (known-no-block and four siblings), each seen red, no coverage lost
-tasks-rows-only-added	TD1176	the skills-file half reads the files v110-tasks' merge added under skills/ (o788 allows board_tasks.py); the row half is unchanged
+tasks-rows-only-added	TD1176, TD1184	the skills-file half reads the files v110-tasks' merge added under skills/ (o788 allows board_tasks.py); the row half is unchanged; the row also requires the negative control that a fixture of that merge adding another skills file fails (TD1184)
