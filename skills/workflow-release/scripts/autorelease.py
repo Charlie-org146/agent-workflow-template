@@ -359,6 +359,7 @@ def finish(top, cfg, state):
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
     state["step"] = "release"
     release.save(state)
+    state["steps_done"] = True
     release.save(state, "released from CI")
     return True
   if not state.get("release_pushed"):
@@ -380,7 +381,7 @@ def finish(top, cfg, state):
   state["step"] = "release"
   release.save(state)
   url = create_release(top, cfg, state, version, state.get("release_target") or base)
-  state.update(release="cut", release_version=version, release_url=url, status="done", waiting=None)
+  state.update(release="cut", release_version=version, release_url=url, status="done", waiting=None, steps_done=True)
   for key in ("release_error", "release_pr_waiting"):
     state.pop(key, None)
   release.save(state, "release v%s published %s" % (version, url))

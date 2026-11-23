@@ -115,7 +115,10 @@ ran leavd "merge" && ok "a goal left unreleased has its merge row ended" || bad 
 
 echo "== a release cut by hand carries the per-step summary"
 git switch -q main 2>/dev/null; newgoal cutg main
-python3 "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1; grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the manual cut's draft notes carry the Steps block" || bad "the manual cut has no Steps summary: $(tail -2 "$d/cut.log" | tr '\n' ' ')"
+: > "$FAKE_GH_DIR/notes.log"  # only the cut's own notes count: the automatic release above already wrote its block
+python3 "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1
+grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the manual cut's draft notes carry the Steps block" || bad "the manual cut's notes have no Steps summary: $(tail -2 "$d/cut.log" | tr '\n' ' ')"
+git show HEAD:CHANGELOG.md 2>/dev/null | grep -qF "### Steps" && ok "the manual cut's changelog carries the Steps block" || bad "the manual cut's changelog has no Steps block"
 
 echo "== a merge-queue merge: its steps start and end, and a repeated cause is previewed grouped under one key"
 python3 - <<'PY'
@@ -130,5 +133,18 @@ FAKE_GH_QUEUE=1 FAKE_GH_PR_STATE=OPEN FAKE_GH_MERGE_BRANCH=loop/queuec python3 "
 ran queuec "merge" && ran queuec "after the merge" && ran queuec "release" && ok "queuec's merge, after the merge and release each have a start and an end (merge queue)" || bad "queuec: a step has no start and end: $(table queuec)"
 out=$(preview); [ "$(grep -c "merge:failed" <<<"$out")" = 1 ] && grep -q "merge:failed (2 goals: postb, queuec)" <<<"$out" && ok "a repeated cause is previewed once, grouped with its repeats" || bad "the grouping: $(grep "merge:failed" <<<"$out" | tr '\n' ' ')"
 [ "$(writes)" = 0 ] && ok "no pull request was edited and no issue was made at any point" || bad "something was written to GitHub"
+
+echo "== the live board shows each running goal's step from the one list"
+git switch -q main 2>/dev/null
+$goal new liveg --here --goal "A running goal" --done "calc has liveg" >/dev/null 2>&1 || bad "goal new liveg"
+python3 - "$(git rev-parse --git-common-dir)" "$$" <<'PY'  # a live goal on the review step, as a fixture
+import datetime, json, os, sys
+p = os.path.join(sys.argv[1], "loop", "runs", "liveg.json"); r = json.load(open(p))
+now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+r.update(status="running", step="review", worker="session", pid=int(sys.argv[2]), updated=now, report={"at": now, "text": "working"})
+json.dump(r, open(p, "w"), indent=2)
+PY
+board=$(python3 "$PK/workflow-monitoring/scripts/live_board.py" 2>&1)
+grep -q "^    step: tests 5/8$" <<<"$board" && ok "the live board has a step line from the one list for the running goal" || bad "no step line on the live board: $(grep -m2 "step" <<<"$board" | tr '\n' '|' | cut -c1-200)"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

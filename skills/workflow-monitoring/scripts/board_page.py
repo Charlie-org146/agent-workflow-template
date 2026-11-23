@@ -136,14 +136,16 @@ def run_of(slug):
 
 
 def cmd_note(args):
+    import moved_mon
     path, run = run_of(args.slug)
     run["note"] = {"text": clean(args.text), "at": run["updated"]}
-    write(path, json.dumps(run, indent=2))
+    moved_mon.steps().commit(path, run, run["updated"])
     print("NOTED %s" % args.slug)
     return 0
 
 
 def cmd_retire(args):
+    import moved_mon
     path, run = run_of(args.slug)
     landed = args.pr and subprocess.run(["gh", "pr", "view", args.pr, "--json", "state", "-q", ".state"], capture_output=True, text=True).stdout.strip() == "MERGED"
     if run.get("status") == "running" and not landed:
@@ -151,7 +153,7 @@ def cmd_retire(args):
     run["retired"] = {"reason": clean(args.reason), "at": run["updated"]}
     run["status"], run["waiting"] = "retired", None
     run.setdefault("log", []).append("%s retired: %s" % (run["updated"], clean(args.reason)))
-    write(path, json.dumps(run, indent=2))
+    moved_mon.steps().commit(path, run, run["updated"])
     print("RETIRED %s" % args.slug)
     return 0
 
@@ -316,28 +318,14 @@ def completed(items):
     return items + extra
 
 
-def chain(items):
-    """(seconds, path, cycles): the longest chain of what is left, the goals on it, and the goals where a cycle was cut."""
-    by, memo, cut = {node["slug"]: node for node in items}, {}, []
-
-    def walk(slug, stack):
-        if slug in memo:
-            return memo[slug]
-        if slug in stack:
-            cut.append(slug)
-            return 0, []
-        node = by[slug]
-        best = max([walk(dep, stack + (slug,)) for dep in node["depends"] if dep in by] + [(0, [])], key=lambda found: found[0])
-        memo[slug] = (best[0] + (node["left"] or 0), best[1] + [slug])
-        return memo[slug]
-
-    found = max([walk(node["slug"], ()) for node in items] + [(0, [])], key=lambda found: found[0])
-    return found[0], found[1], sorted(set(cut))
-
-
 def unknown(items):
     """Goals not finished that have no estimate yet."""
     return [node["slug"] for node in items if node["left"] is None and node["mark"] not in DONE]
+
+
+def chain(items):
+    import moved_mon
+    return moved_mon.chain(items)
 
 
 def total(items, at=None):

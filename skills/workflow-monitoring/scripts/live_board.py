@@ -232,6 +232,7 @@ def issues(runs, gone, root, at=None, taken=None, why="", freezing=()):
 
 
 def render(root=None, at=None):
+    import moved_mon
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
     runs = load(root)
@@ -268,6 +269,7 @@ def render(root=None, at=None):
     est_of = lambda run: next(i["est"] for i in items if i["slug"] == run["slug"])
     for run in running:
         out += [bar(run, current(run)), *flow_lines(run, bs.overrun(run, runs, at, root)), "    worker: " + worker_of(run, taken),
+                "    step: %s %d/8" % moved_mon.shown(run, FLOW[current(run)]),
                 "    depth: " + depth_of(run, setting), *fits(run), "    next: " + next_line(run)]
     for entry in freezing:
         name, ago = entry.get("name") or entry["id"], age(entry.get("since"), at)

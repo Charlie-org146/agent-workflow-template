@@ -574,9 +574,11 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | - | requirement | DEL-28 | no passing test | not enforced |
 | [frozen-done-lines](Tests#t-frozen-done-lines) | requirement | DEL-19 | Given a running goal, when a frozen done line is changed, then the goal stops. | PASS 2026-11-09 |
 | [defect-closing-keywords](Tests#t-defect-closing-keywords) | requirement | DEL-19 | Given DEL-19, when test-defect.sh runs its 2 cases, then each passes: goal.py pr refuses with one line naming the fix an; it opens its pull request without any closing keyw. | not run |
+| [goal-commands-page](Tests#t-goal-commands-page) | requirement | DEL-19 | Given goal.py's usage and flags, when the Delivery commands reference is checked, then it names every goal.py command and flag (wrapped usage lines are not read as words). | not run |
+| [goal-pr-push-retried](Tests#t-goal-pr-push-retried) | requirement | DEL-19 | Given a remote that refuses the first push, when goal.py pr runs, then it retries and the second push opens the pull request. | not run |
+| [goal-pr-push-error](Tests#t-goal-pr-push-error) | requirement | DEL-19 | Given a remote that always refuses, when goal.py pr runs, then it exits non-zero and prints git's own error. | not run |
 | [del19-steps-all](Tests#t-del19-steps-all) | requirement | DEL-19 | Given DEL-19's one step list, when dev/toy/test-steps.py runs every case (DEL-19.2 the list and its one save hook, DEL-19.3 the step log, DEL-19.4 the causes, DEL-19.5 the generated Steps page, and the package rule), then each case passes and each fails on a fixture that breaks only its rule. | not run |
 | [del19-steps-e2e](Tests#t-del19-steps-e2e) | requirement | DEL-19 | Given a packaged install, when a goal stops before its pull request, is refused after it, is left unreleased or merges through the queue, then each cause is recorded and previewed once, grouped with its repeats (filing ships off in v1.1.0), nothing is written to GitHub, and every step that ran has a start and an end (DEL-19.2, DEL-19.3, DEL-19.4). | not run |
-| - | requirement | DEL-19 | no passing test | not enforced |
 | [follows-adoption](Tests#t-follows-adoption) | requirement | DEL-21 | Given a principle table, when render and docs check run, then Follows is a tagged bullet list, Adoption is the adopted share of its lines, Confidence is the passing share of the requirement's tests, and an untagged line is refused. | not run |
 | - | requirement | DEL-21 | no passing test | not enforced |
 | - | requirement | DEL-23 | no passing test | not enforced |

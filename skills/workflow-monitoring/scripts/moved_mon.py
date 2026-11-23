@@ -44,3 +44,22 @@ def shown(run, old):
     one = steps()
     name = one.name_of(one.eff(run) or old)
     return name, (one.STEPS.index(name) + 1 if name in one.STEPS else 0)
+
+
+def chain(items):
+    """(seconds, path, cycles): the longest chain of what is left, the goals on it, and the goals where a cycle was cut."""
+    by, memo, cut = {node["slug"]: node for node in items}, {}, []
+
+    def walk(slug, stack):
+        if slug in memo:
+            return memo[slug]
+        if slug in stack:
+            cut.append(slug)
+            return 0, []
+        node = by[slug]
+        best = max([walk(dep, stack + (slug,)) for dep in node["depends"] if dep in by] + [(0, [])], key=lambda found: found[0])
+        memo[slug] = (best[0] + (node["left"] or 0), best[1] + [slug])
+        return memo[slug]
+
+    found = max([walk(node["slug"], ()) for node in items] + [(0, [])], key=lambda found: found[0])
+    return found[0], found[1], sorted(set(cut))

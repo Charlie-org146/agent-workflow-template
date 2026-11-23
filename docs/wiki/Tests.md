@@ -80,7 +80,7 @@
 |---|---|---|---|---|---|---|
 | <a id="t-no-done-line-refused"></a>no-done-line-refused | requirement | DEL-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
 | <a id="t-pending-waits"></a>pending-waits | requirement | DEL-3 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-07 |
-| <a id="t-frozen-done-lines"></a>frozen-done-lines | requirement | DEL-19 | not run | - | local | 2026-11-22 |
+| <a id="t-frozen-done-lines"></a>frozen-done-lines | requirement | DEL-19 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
 | <a id="t-stop-after-3-tries"></a>stop-after-3-tries | requirement | DEL-1 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
 | <a id="t-auto-approved"></a>auto-approved | requirement | DEL-3 | PASS | 2026-11-09 | [CI 2026-11-09](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-09) | 2026-11-07 |
 | <a id="t-wiki-release"></a>wiki-release | requirement | DEL-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-09 |
@@ -175,8 +175,11 @@
 | <a id="t-follows-adoption"></a>follows-adoption | requirement | DEL-21 | not run | - | local | 2026-11-20 |
 | <a id="t-release-hold-red"></a>release-hold-red | requirement | DEL-17 | not run | - | local | 2026-11-20 |
 | <a id="t-defect-closing-keywords"></a>defect-closing-keywords | requirement | DEL-19 | not run | - | local | 2026-11-21 |
-| <a id="t-del19-steps-all"></a>del19-steps-all | requirement | DEL-19 | not run | - | local | 2026-11-22 |
-| <a id="t-del19-steps-e2e"></a>del19-steps-e2e | requirement | DEL-19 | not run | - | local | 2026-11-22 |
+| <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | not run | - | local | 2026-11-21 |
+| <a id="t-del19-steps-all"></a>del19-steps-all | requirement | DEL-19 | not run | - | local | no |
+| <a id="t-del19-steps-e2e"></a>del19-steps-e2e | requirement | DEL-19 | not run | - | local | no |
 
 ## Documentation
 

@@ -83,7 +83,7 @@ def transition(old, new, at):
     clock["since"] = at
     step, status = eff(new), new.get("status")
     ended = ""
-    if clock.get("step") and (step != clock["step"] or status in ("stopped", "failed") or status == "done" and name_of(step) != "merge"):
+    if clock.get("step") and (step != clock["step"] or status in ("stopped", "failed") or new.get("steps_done") or status == "done" and name_of(step) not in POST + ("merge",)):
         used, then = spent(new), clock.get("tok0")
         token = "not reported" if used is None or then is None or used <= then else str(used - then)
         result = {"done": "done", "stopped": "stopped", "failed": "failed"}.get(status) or "moved on"
@@ -141,7 +141,8 @@ def merge(disk, state, was=None):
 
 def commit(path, state, at):
     """The shared writer: lock the record, merge over the disk record, run transition, write atomically; state gets the result.
-    The step clock and the cause list belong to the disk record, so a stale copy never overwrites them."""
+    The step clock and the cause list belong to the disk record, and a copy loaded before the disk record's last step change
+    (its clock is older) cannot move the step or the status back."""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path + ".lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -150,16 +151,42 @@ def commit(path, state, at):
         except (OSError, ValueError):
             disk = {}
         merged = merge(disk, state)
+        stale = disk.get("step_clock") and state.get("step_clock") and state["step_clock"].get("since") != disk["step_clock"].get("since") and state.get("step") != disk.get("step")
         for key in ("step_clock", "causes"):
             if key in disk:
                 merged[key] = disk[key]
+        if stale:
+            merged["step"], merged["status"] = disk.get("step"), disk.get("status")
         transition(disk, merged, at)
-        temp = "%s.%d.tmp" % (path, os.getpid())
-        with open(temp, "w") as handle:
-            json.dump(merged, handle, indent=2)
-        os.replace(temp, path)
+        write(path, merged)
     state.clear()
     state.update(merged)
+
+
+def write(path, record):
+    temp = "%s.%d.tmp" % (path, os.getpid())
+    with open(temp, "w") as handle:
+        json.dump(record, handle, indent=2)
+    os.replace(temp, path)
+
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def update(path, change, at=None):
+    """Read the record inside the lock, let change(record) edit it, run transition and write it back; False when there is no record."""
+    with open(path + ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            disk = json.load(open(path))
+        except (OSError, ValueError):
+            return False
+        old = json.loads(json.dumps(disk))
+        change(disk)
+        transition(old, disk, at or now())
+        write(path, disk)
+    return True
 
 
 def add_cause(state, step, text=""):

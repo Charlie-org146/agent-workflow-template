@@ -353,7 +353,8 @@ def main():
         state = json.loads(read(record))
         fit.tokens().add(state, args.step, spent)
         import moved
-        moved.steps().commit(record, state, state.get("updated") or "1970-01-01T00:00:00Z")
+        one = moved.steps()
+        one.commit(record, state, one.now())
     print("\n".join(re.findall(r"^\W*(?:PENDING|STEP): .*", text, re.M)) or "STEP: it gave no STEP line")
     print("NEXT: goal.py record %s %s --file %s" % (args.slug, args.step, reply))
     return 0

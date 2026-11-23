@@ -78,7 +78,7 @@ rows = check_in_rows([{"slug": "rev-goal", "status": "running", "step": "review"
 case("reports-derive-from-the-list", "tests 5/8" in rows and "review 4/8" not in rows, "the check-in names a review goal by the old list")
 case("reports-name-an-open-pull-request-merge", "merge 6/8" in rows and "release 8/8" not in rows, "the check-in puts an open pull request at the old last step")
 case("reports-break-on-a-label-off-the-list", moved_mon.shown({"step": "zzz", "status": "running"}, "zzz")[1] == 0)  # the fixture that breaks only the rule
-case("list-bad-label-refused", subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, %r); import steps; steps.check('build', 'bogus')" % SKILLS],
+case("list-bad-label-refused", subprocess.run([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, %r); import steps; steps.check('build', 'bogus')" % SKILLS],
                                              capture_output=True, text=True).returncode != 0)
 
 # 2. the step log
@@ -154,7 +154,7 @@ threads = [threading.Thread(target=writer, args=(n,)) for n in range(3)]
 [t.join() for t in threads]
 final = json.load(open(path))["log"]
 case("commit-two-writers-lose-nothing", not errors and all(("w%d-%d" % (n, i)) in " ".join(final) for n in range(3) for i in range(10)), str(errors))
-case("commit-bad-label-refused", subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, %r); import steps; steps.commit(%r, {'slug': 'x', 'step': 'bogus', 'status': 'running'}, '2026-11-22T10:00:00Z')" % (SKILLS, path)],
+case("commit-bad-label-refused", subprocess.run([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, %r); import steps; steps.commit(%r, {'slug': 'x', 'step': 'bogus', 'status': 'running'}, '2026-11-22T10:00:00Z')" % (SKILLS, path)],
                                                capture_output=True, text=True).returncode != 0)
 
 # 4. every writer calls the one hook
@@ -170,7 +170,7 @@ def real_save(mod, extra=""):
     subprocess.run(["git", "init", "-q", repo], capture_output=True, env=env)
     code = ("import sys, json; sys.path.insert(0, %r); import %s as w; st = {'slug': 'hk', 'step': 'build', 'status': 'running', 'log': []}; %s"
             "w.save(st, 'one'); st['status'] = 'done'; w.save(st, 'two'); print(json.dumps(st['log']))") % (os.path.join(SKILLS, SCR[mod], "scripts"), mod, extra)
-    done = subprocess.run([sys.executable, "-c", code], cwd=repo, capture_output=True, text=True, env=env)
+    done = subprocess.run([sys.executable, "-B", "-c", code], cwd=repo, capture_output=True, text=True, env=env)
     try:
         return json.loads(done.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
@@ -190,7 +190,7 @@ for dirpath, _dirs, files in os.walk(SKILLS):
 case("hook-no-unrouted-writer", not [w for w in writers if w not in ("flow.py", "lanekit.py", "machines.py", "notify.py", "workflows.py")], "unrouted record writers: %s" % writers)
 
 # 5. the package and the page
-page = subprocess.run([sys.executable, os.path.join(SKILLS, "workflow-docs", "scripts", "steps_page.py"), "render"], capture_output=True, text=True).stdout
+page = subprocess.run([sys.executable, "-B", os.path.join(SKILLS, "workflow-docs", "scripts", "steps_page.py"), "render"], capture_output=True, text=True).stdout
 case("page-equals-render", page.strip() == text("docs/wiki/Steps.md").strip())
 case("page-names-the-list", all(n in page for n in steps.STEPS))
 sp = importlib.import_module("steps_page") if SKILLS + "/workflow-docs/scripts" in sys.path else None
@@ -265,6 +265,58 @@ case("fix-per-cause", sp.fix_for("merge:failed") != sp.fix_for("merge:HEAD_MOVED
 WRITES = ['audit.py', 'board_lines.py', 'board_model.py', 'controls.py', 'docs.py', 'flow.py', 'govern_hook.py', 'graph.py', 'guards.py', 'lane.py', 'lanekit.py', 'lanes.py', 'layers.py', 'machines.py', 'mailbox.py', 'mend.py', 'monitor.py', 'notify.py', 'replan.py', 'review.py', 'routing.py', 'sessions.py', 'settings.py', 'steps.py', 'sync.py', 'unattended.py', 'update.py', 'workflows.py']
 found_writers = sorted({n for dp, _d, fs in os.walk(SKILLS) for n in fs if n.endswith(".py") and "json.dump(" in open(os.path.join(dp, n)).read()})
 case("writers-are-all-known", found_writers == WRITES, "new or gone JSON writers: %s" % sorted(set(found_writers) ^ set(WRITES)))
+
+# 12. a record written as write(path, json.dumps(...)) must not appear outside the known non-record files
+FORMS = re.compile(r"\bwrite\([^\n]*json\.dumps\(|handle\.write\(json\.dumps\(")
+KNOWN_FORMS = ['agents.py', 'auto.py', 'board.py', 'board_page.py', 'board_status.py', 'controls.py', 'defects.py', 'goal.py', 'govern_hook.py', 'lane.py', 'narrow.py', 'operate.py', 'reply_hook.py', 'setup.py', 'slots.py', 'unattended.py']
+found_forms = sorted({n for dp, _d, fs in os.walk(SKILLS) for n in fs if n.endswith(".py") and FORMS.search(open(os.path.join(dp, n)).read())})
+case("writers-by-dumps-are-known", found_forms == KNOWN_FORMS, "new or gone write(json.dumps) users: %s" % sorted(set(found_forms) ^ set(KNOWN_FORMS)))
+
+# 13. a step stays open across saves until the step changes (autorelease.finish's save order)
+seq = run_state("after the merge", "done", log=["2026-11-22T10:00:00Z began after the merge"], release="cut")
+seq["step_clock"] = {"step": "after the merge", "since": "2026-11-22T10:00:00Z", "active_s": 0}
+prev = dict(seq, step_clock=dict(seq["step_clock"]))
+for at in ("2026-11-22T10:05:00Z", "2026-11-22T10:10:00Z"):
+    cur = dict(prev, step_clock=dict(prev["step_clock"]))
+    steps.transition(dict(prev), cur, at)
+    prev = cur
+cur = dict(prev, step="release", step_clock=dict(prev["step_clock"]))
+steps.transition(dict(prev), cur, "2026-11-22T10:16:00Z")
+fin = dict(cur, steps_done=True, step_clock=dict(cur["step_clock"]))
+steps.transition(dict(cur), fin, "2026-11-22T10:20:00Z")
+rows_seq = {r["step"]: r for r in steps.entries(fin)}
+case("a-step-stays-open-across-saves", rows_seq["after the merge"]["minutes"] == 16 and rows_seq["after the merge"]["attempts"] == 1 and rows_seq["release"]["minutes"] == 4,
+     str({k: (v["minutes"], v["attempts"]) for k, v in rows_seq.items() if v["state"] != "not run"}))
+
+# 14. a copy loaded before the disk record's last step change cannot move the step or status back
+tmps = os.path.join(tempfile.mkdtemp(), "runs", "st.json")
+steps.commit(tmps, run_state("build", "running", log=[]), "2026-11-22T10:00:00Z")
+stale_copy, fresh = json.load(open(tmps)), json.load(open(tmps))
+fresh.update(step="tests")
+steps.commit(tmps, fresh, "2026-11-22T10:10:00Z")
+stale_copy["note"] = "late"
+steps.commit(tmps, stale_copy, "2026-11-22T10:11:00Z")
+after = json.load(open(tmps))
+case("a-stale-copy-cannot-move-the-step-back", after["step"] == "tests" and after.get("note") == "late", str((after["step"], after.get("note"))))
+
+# 15. layers: a done goal at "after the merge" is a pending merge, not a worker
+layers = importlib.import_module("layers")
+with tempfile.TemporaryDirectory() as tmp:
+    repo = os.path.join(tmp, "r")
+    subprocess.run(["git", "init", "-q", "-b", "main", repo], check=True)
+    os.makedirs(os.path.join(repo, ".git", "loop", "runs"))
+    for slug, step, num in (("late-goal", "after the merge", 3), ("pr-goal", "release", 4)):
+        json.dump({"slug": slug, "status": "done", "step": step, "pr": "https://example.test/pull/%d" % num}, open(os.path.join(repo, ".git", "loop", "runs", slug + ".json"), "w"))
+    built = layers.build(os.path.join(repo, ".git"), {})
+case("layers-list-after-the-merge-as-a-pending-merge", sorted(m["slug"] for m in built["merges"]) == ["late-goal", "pr-goal"] and not built["workers"], str(built["merges"]))
+
+# 16. lanekit.hit saves through the hook, reading inside the lock
+lanekit = importlib.import_module("lanekit")
+hit_path = os.path.join(tempfile.mkdtemp(), "hk.json")
+steps.commit(hit_path, run_state("build", "running", log=["2026-11-22T10:00:00Z first"], slug="hk"), "2026-11-22T10:00:00Z")
+lanekit.hit(os.path.dirname(hit_path), "hk", "build", "step", 10, "2m")
+hit_rec = json.load(open(hit_path))
+case("budget-hit-saves-through-the-hook", hit_rec.get("budget_hits") and any("first" in l for l in hit_rec["log"]) and hit_rec["step_clock"]["since"] > "2026", str(hit_rec.get("step_clock")))
 
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

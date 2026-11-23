@@ -406,16 +406,13 @@ def left_of(text):
 
 
 def hit(runs, slug, step, kind, limit, left):
-    path = os.path.join(runs, slug + ".json")
-    try:
-        with open(path) as handle:
-            state = json.load(handle)
-    except (OSError, ValueError):
-        return
-    kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
-    state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
     import moved
-    moved.steps().commit(path, state, state.get("updated") or "1970-01-01T00:00:00Z")
+
+    def change(state):
+        kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
+        state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
+    moved.steps().update(os.path.join(runs, slug + ".json"), change)
+
 
 
 def reached(state, step):

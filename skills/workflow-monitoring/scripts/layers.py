@@ -107,10 +107,11 @@ def build(common, cfg, now=None):
         if not run.get("slug") or graph.foreign(run) or run.get("external"):
             continue
         slug, status, pr = run["slug"], run.get("status"), number(run.get("pr"))
+        done = status == "done" and run.get("step") in ("release", "after the merge")
         live = machines.live(run, taken, at, cfg)  # a live session, not a leftover record (TD430)
-        if status in ("running", "waiting", "failed", "stopped", "done") and not (status == "done" and run.get("step") == "release"):
+        if status in ("running", "waiting", "failed", "stopped", "done") and not done:
             workers.append({"slug": slug, "step": run.get("step"), "status": status, "pr": pr, "eta": eta_at(root, run, now)}) if live else stale.append(slug)
-        if status == "done" and run.get("step") == "release":
+        if done:
             merges.append({"slug": slug, "pr": pr})
         ask = run.get("waiting") or {}
         if status == "waiting" and ask.get("ask") and live:

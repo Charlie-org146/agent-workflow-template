@@ -147,6 +147,7 @@ format-frontdoor	PASS	2026-11-19
 format-home	PASS	2026-11-19	
 format-key	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 format-usage-api	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+frozen-done-lines	PASS	2026-11-09	
 full-auto-all-answers	PASS	2026-11-17	
 full-auto-no-new-file	PASS	2026-11-17	
 full-auto-record-carried	PASS	2026-11-17	
