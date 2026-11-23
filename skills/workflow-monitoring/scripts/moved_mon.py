@@ -42,7 +42,8 @@ def cmd_owner_words(args):
 def shown(run, old):
     """(DEL-19 step name, its place in the eight) for a run record: the step the clock follows, else the old label."""
     one = steps()
-    name = one.name_of(one.eff(run) or old)
+    label = one.eff(run)
+    name = one.name_of(label if label in one.STEPS or label in one.LEGACY else old)  # an off-list label keeps the last known step
     return name, (one.STEPS.index(name) + 1 if name in one.STEPS else 0)
 
 

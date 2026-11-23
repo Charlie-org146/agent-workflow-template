@@ -89,6 +89,11 @@ def run_files(root):
 current = bs.current
 
 
+def place(run):
+    import moved_mon
+    return moved_mon.shown(run, FLOW[current(run)])[1] - 1
+
+
 def flow_lines(run, over=0):
     """The step flow, indented four, packed into lines of at most WIDTH that break at the " > " joints (steps stay whole).
     The current step reads "[build over by 12m]" when it ran a minute or more past its usual time."""
@@ -136,7 +141,8 @@ def latest_report(run):
 def next_line(run):
     if run.get("status") == "done":
         return plain((run.get("report") or {}).get("text") or "merge the pull request", 120)
-    text = plain(latest_report(run) or run.get("next") or "", 120)
+    import moved_mon
+    text = plain(moved_mon.steps().say(latest_report(run) or run.get("next") or ""), 120)
     if text:
         return text
     if run.get("status") == "waiting":
@@ -270,17 +276,19 @@ def render(root=None, at=None):
         out = [head, "", "Issues"]
     out += issues([r for r in runs if r["slug"] not in shut], gone, root, at, taken, why, freezing) + ["", "Running goals"]
     most = max_tries(root)
+    import moved_mon
+    n = len(moved_mon.steps().STEPS)  # the bar counts the one list
     bar = lambda run, done, end="": "- %s  [%s%s] %d%%  %s%s%s" % (
-        run["slug"], "#" * round(10 * done / len(FLOW)), "-" * (10 - round(10 * done / len(FLOW))), round(100 * done / len(FLOW)),
+        run["slug"], "#" * round(10 * done / n), "-" * (10 - round(10 * done / n)), round(100 * done / n),
         bs.estimate_text(est_of(run)), tries(run, most), end)
     est_of = lambda run: next(i["est"] for i in items if i["slug"] == run["slug"])
     for run in running:
-        out += [bar(run, current(run)), *flow_lines(run, bs.overrun(run, runs, at, root)), "    worker: " + worker_of(run, taken),
+        out += [bar(run, place(run)), *flow_lines(run, bs.overrun(run, runs, at, root)), "    worker: " + worker_of(run, taken),
                 "    depth: " + depth_of(run, setting), *fits(run), "    next: " + next_line(run)]
     for entry in freezing:
         name, ago = entry.get("name") or entry["id"], age(entry.get("since"), at)
         out += [bar(dict(entry, status="freezing"), 0), *flow_lines({"status": "freezing"}), "    worker: session " + name,
-                "    next: the worker freezes it (goal.py new %s --here in its worktree), binds again, then idea%s"
+                "    next: the worker freezes it (goal.py new %s --here in its worktree), binds again, then plan%s"
                 % (entry["slug"], " (assigned %s ago)" % ago if ago else "")]
     out += ([] if running or freezing else ["- (none)"])
     out += [pool_line(pool, root)] if pool else []  # a repo with no session pool shows no pool line
@@ -291,7 +299,7 @@ def render(root=None, at=None):
         state = ", ".join(x for x in ("held %s" % ago if ago else "held", "worktree kept" if tree else "worktree gone",
                                        "holds a slot" if graph.holds_slot(run) else "") if x)
         fix = "" if tree else "; make its worktree again first (git worktree add <common>/loop/worktrees/%s loop/%s)" % (run["slug"], run["slug"])
-        out += [bar(run, current(run), "  held"), *flow_lines(run), "    worker: none (%s)" % state, "    depth: " + depth_of(run, setting), *fits(run),
+        out += [bar(run, place(run), "  held"), *flow_lines(run), "    worker: none (%s)" % state, "    depth: " + depth_of(run, setting), *fits(run),
                 "    next: give it a worker session (sessions.py bind %s ID, where ID is the session's id from the app)%s" % (run["slug"], fix)]
     for goal in queue:
         out.append("- %s  %s%s" % (goal["slug"], bs.estimate_text(next(i["est"] for i in items if i["slug"] == goal["slug"])),

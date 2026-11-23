@@ -71,7 +71,7 @@ def task_lines(root, runs, at, gone=()):  # DEL-23: each task by name with state
             left = [bs.left_time(r, runs, at, root) for r in live]
             eta = "-" if not live else "awaiting merge" if all(r.get("status") == "done" for r in live) else "?" if None in left else board_page.span(max(left))
             out.append(f"- {t['name']}: {t['state']}{t['note'] and ' (%s)' % t['note']}, {sum(f for _, f, _ in t['goals'])} of {len(t['goals'])} goals finished, ETA {eta}")
-            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else moved_mon.steps().label(FLOW[current(r)])) for s, f, r in t["goals"]]
+            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else moved_mon.shown(r, FLOW[current(r)])[0]) for s, f, r in t["goals"]]
     except Exception as e:  # never stop the check-in or the board
         return ["", "Tasks", "- tasks unavailable: " + type(e).__name__]
     return out if len(out) > 2 else []

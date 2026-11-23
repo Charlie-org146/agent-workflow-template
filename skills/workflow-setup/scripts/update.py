@@ -43,6 +43,7 @@ except ImportError:
     fcntl = types.SimpleNamespace(LOCK_SH=1, LOCK_EX=2, LOCK_NB=4, LOCK_UN=8, flock=_flock)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import moved_set  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 STAMP, KEPT = "workflow-package.json", ".workflow-kept"
 SHARED = ("loop-files.md", "steps.py")
@@ -96,15 +97,7 @@ def guard_staged(repo, paths):
     return out
 
 
-def stop(proc, sig):
-    """Kill proc's tree on Windows, else signal its group; an ended one is fine."""
-    if os.name == "nt":
-        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
-        return
-    try:
-        os.killpg(proc.pid, sig)  # posix-only branch
-    except ProcessLookupError:
-        pass
+stop = moved_set.stop
 
 
 def commit(repo, message, files):
@@ -158,7 +151,7 @@ def safe(name):
 
 
 def from_tree(names, get):
-    """A manifest from a source tree (skills/, VERSION, CHANGELOG.md), keyed as package.py keys it."""
+    """A manifest from a source tree (skills/, VERSION, CHANGELOG.md), keyed as dev/package.py keys a package."""
     firsts = {n.split("/")[0] for n in names}
     top = "" if "skills" in firsts or len(firsts) != 1 else firsts.pop() + "/"
     files, data = {}, {}

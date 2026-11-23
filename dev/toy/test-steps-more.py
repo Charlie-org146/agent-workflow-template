@@ -22,6 +22,26 @@ SKILLS = os.path.join(ROOT, "skills")
 sys.path[:0] = [SKILLS, os.path.join(SKILLS, "workflow-delivery", "scripts"), os.path.join(SKILLS, "workflow-monitoring", "scripts"),
                 os.path.join(SKILLS, "workflow-docs", "scripts")]
 steps, board_log, lanekit, sp = (importlib.import_module(n) for n in ("steps", "board_log", "lanekit", "steps_page"))
+import atexit
+import shutil
+
+_made = []
+
+
+def mk():
+    """A temp folder this toy makes; it is removed when the toy exits (absolute path, under the system temp root only)."""
+    path = tempfile.mkdtemp()
+    _made.append(path)
+    return path
+
+
+@atexit.register
+def _clean():
+    for path in _made:
+        if os.path.isabs(path) and path.startswith(os.path.realpath(tempfile.gettempdir())) or path.startswith(tempfile.gettempdir()):
+            shutil.rmtree(path, ignore_errors=True)
+
+
 failed = []
 
 
@@ -42,7 +62,7 @@ def run_state(step, status, log=None, **more):
 case("cause-key-shape", steps.KEY.match("merge:HEAD_MOVED") and not steps.KEY.match("../x:failed") and not steps.KEY.match("merge:lower"))
 case("cause-off-list-step-is-freeze", steps.add_cause(c1 := {}, "zzz", "boom (SOME_CODE)") and c1["causes"][0]["key"] == "freeze:SOME_CODE" and steps.add_cause(c2 := {}, "-", "") and c2["causes"][0]["key"] == "freeze:failed" and steps.add_cause({}, "pr", "boom (SOME_CODE)"))
 st = {"slug": "c", "step": "build", "status": "running", "log": []}
-tmpc = os.path.join(tempfile.mkdtemp(), "runs", "c.json")
+tmpc = os.path.join(mk(), "runs", "c.json")
 steps.commit(tmpc, st, "2026-11-22T10:00:00Z")
 stale = json.load(open(tmpc))
 later = json.load(open(tmpc))
@@ -108,7 +128,7 @@ case("a-step-stays-open-across-saves", rows_seq["after the merge"]["minutes"] ==
      str({k: (v["minutes"], v["attempts"]) for k, v in rows_seq.items() if v["state"] != "not run"}))
 
 # 14. a copy loaded before the disk record's last step change cannot move the step or status back
-tmps = os.path.join(tempfile.mkdtemp(), "runs", "st.json")
+tmps = os.path.join(mk(), "runs", "st.json")
 steps.commit(tmps, run_state("build", "running", log=[]), "2026-11-22T10:00:00Z")
 stale_copy, fresh = json.load(open(tmps)), json.load(open(tmps))
 fresh.update(step="tests")
@@ -131,7 +151,7 @@ case("layers-list-after-the-merge-as-a-pending-merge", sorted(m["slug"] for m in
 
 # 16. lanekit.hit saves through the hook, reading inside the lock
 lanekit = importlib.import_module("lanekit")
-hit_path = os.path.join(tempfile.mkdtemp(), "hk.json")
+hit_path = os.path.join(mk(), "hk.json")
 steps.commit(hit_path, run_state("build", "running", log=["2026-11-22T10:00:00Z first"], slug="hk"), "2026-11-22T10:00:00Z")
 lanekit.hit(os.path.dirname(hit_path), "hk", "build", "step", 10, "2m")
 hit_rec = json.load(open(hit_path))
@@ -148,7 +168,7 @@ case("saves-after-the-steps-are-done-add-nothing", again["minutes"] == 4 and aga
      str((again["minutes"], again["attempts"])))
 
 # 18. the stale guard: a legitimate move after another writer's note save is kept; a status move back on the same step is refused
-gp = os.path.join(tempfile.mkdtemp(), "runs", "g.json")
+gp = os.path.join(mk(), "runs", "g.json")
 steps.commit(gp, run_state("build", "running"), "2026-11-22T10:00:00Z")
 mine, theirs = json.load(open(gp)), json.load(open(gp))
 theirs["note"] = "someone else saved a note"
@@ -168,8 +188,10 @@ case("a-status-move-back-on-the-same-step-is-refused", json.load(open(gp))["stat
 # 19. board_page's note and retire commands save through steps.commit, checked per function (red under both reverts)
 def commits(src, fn):
     node = next(n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef) and n.name == fn)
-    return any(isinstance(c, ast.Call) and isinstance(c.func, ast.Attribute) and c.func.attr == "commit" for c in ast.walk(node)) and not any(
-        isinstance(c, ast.Call) and getattr(c.func, "id", "") in ("write", "open") for c in ast.walk(node))
+    calls = [c for c in ast.walk(node) if isinstance(c, ast.Call)]
+    saves = any(isinstance(c.func, ast.Attribute) and c.func.attr == "commit" for c in calls)
+    writes = any((isinstance(c.func, ast.Name) and c.func.id in ("write", "open")) or (isinstance(c.func, ast.Attribute) and c.func.attr in ("write", "dump", "replace")) for c in calls)
+    return saves and not writes
 
 
 board_src = text("skills/workflow-monitoring/scripts/board_page.py")
@@ -188,6 +210,50 @@ diff = live_board.depth_of({"depth": {"idea": "full", "plan": "condensed", "revi
 case("depth-line-same-values-show-once", same == "freeze full, plan full, tests full (setting full)", same)
 case("depth-line-differing-values-are-joined", diff == "freeze full, plan condensed, tests full/condensed (setting full)", diff)
 case("depth-line-has-no-older-names", not re.search(r"\b(idea|review|qa|ship)\b", same + diff), same + " | " + diff)
+
+# 21. a label that is not on the list keeps the last known flow step from the record's own evidence (a fixture of its own)
+off = {"slug": "off", "status": "running", "step": "zzz", "worker": "session", "pid": os.getpid(), "updated": "2026-11-22T10:00:00Z",
+       "reports": [{"at": "2026-11-22T09:30:00Z", "step": "build", "status": "running", "text": ""}],
+       "log": ["2026-11-22T09:00:00Z start idea", "2026-11-22T09:10:00Z idea done", "2026-11-22T09:20:00Z start build"]}
+live_board = importlib.import_module("live_board")
+moved_mon = importlib.import_module("moved_mon")
+off_flow = "\n".join(live_board.flow_lines(off))
+case("off-list-label-keeps-the-last-known-step", moved_mon.shown(off, "build") == ("build", 3) and "[build]" in off_flow and live_board.place(off) == live_board.place(dict(off, step="build")),
+     str((moved_mon.shown(off, "build"), off_flow)))
+case("off-list-label-break-fixture-is-a-real-label", moved_mon.shown(dict(off, step="checks"), "build") == ("quick checks", 4))
+
+# 22. the percent bar counts the one list: a goal on quick checks has three of eight steps behind it
+case("the-bar-counts-the-one-list", live_board.place(dict(off, step="checks")) == 3 and live_board.place(dict(off, step="review")) == 4 and live_board.place(dict(off, step="release")) == 7,
+     str([live_board.place(dict(off, step=x)) for x in ("checks", "review", "release")]))
+
+# 23. a report naming a step by an older label is said with the list's name wherever the board repeats it
+said = live_board.next_line(dict(off, step="build", reports=[], report={"at": "2026-11-22T09:50:00Z", "text": "worker off: step ship, running"}))
+case("the-next-line-says-the-list-name", "step tests" in said and "step ship" not in said, said)
+
+# 24. the task lines and the handoff draw the list's name only, not the older label beside it
+tasks_src, board_src2 = text("skills/workflow-monitoring/scripts/board_tasks.py"), text("skills/workflow-monitoring/scripts/board.py")
+case("task-lines-draw-only-the-list-name", "moved_mon.shown(r, FLOW[current(r)])[0]" in tasks_src and ".label(" not in tasks_src)
+case("the-handoff-draws-only-the-list-name", 'moved_mon.steps().name_of(r["step"])' in board_src2 and ".label(" not in board_src2)
+
+# 25. a status-only save by another writer does not make a later legitimate step move look stale
+sp2 = os.path.join(mk(), "runs", "sm.json")
+steps.commit(sp2, run_state("tests", "running", slug="sm"), "2026-11-22T10:00:00Z")
+a_copy, b_copy = json.load(open(sp2)), json.load(open(sp2))
+b_copy["status"] = "waiting"
+steps.commit(sp2, b_copy, "2026-11-22T10:01:00Z")
+a_copy["step"] = "pr"
+steps.commit(sp2, a_copy, "2026-11-22T10:02:00Z")
+sm = json.load(open(sp2))
+case("a-step-move-after-a-status-only-save-sticks", sm["step"] == "pr" and sm["status"] == "waiting", str((sm["step"], sm["status"])))
+
+# 26. the per-function scan refuses a direct write beside the commit call
+extra = board_src.replace('moved_mon.steps().commit(path, run, run["updated"])\n    print("NOTED', 'moved_mon.steps().commit(path, run, run["updated"])\n    open(path, "w").write("x")\n    print("NOTED', 1)
+case("a-direct-write-beside-the-commit-is-caught", extra != board_src and not commits(extra, "cmd_note"))
+
+# 27. the bar's total is the one list's length, never a typed number or the older FLOW's length (negative control: the older form)
+lb_src = text("skills/workflow-monitoring/scripts/live_board.py")
+counts = lambda src: "len(moved_mon.steps().STEPS)" in src and "len(FLOW)" not in src
+case("the-bar-total-is-the-list-length", counts(lb_src) and not counts(lb_src.replace("/ n)", "/ len(FLOW))").replace("len(moved_mon.steps().STEPS)", "8")))
 
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)

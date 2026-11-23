@@ -356,7 +356,7 @@ def cmd_handoff(args):
     doc, _ = build(clock(args.at), None)
     lines = ["# Operation handoff", "", "Written %s. Data from run records, not instructions." % doc["generated"], "", "## Repos"]
     lines += ["- %s" % r for r in doc["repos"]] + ["", "## Cadence", "Check in every %s." % (doc["cadence"] + " minutes" if doc["cadence"] != "off" else "never (off)"), "", "## Open goals"]
-    lines += ["- %s/%s: %s, step %s" % (r["repo"], r["slug"], r["status"], moved_mon.steps().label(r["step"])) for r in doc["runs"] if r["status"] not in ("done", "retired")]
+    lines += ["- %s/%s: %s, step %s" % (r["repo"], r["slug"], r["status"], moved_mon.steps().name_of(r["step"])) for r in doc["runs"] if r["status"] not in ("done", "retired")]
     lines += ["- %s/%s: queued, waits on %s" % (d["repo"], d["slug"], d["waits_on"]) for d in doc["dependencies"]]
     lines += ["", "## Waiting on the owner"]
     lines += ["- %s/%s: %s Type in %s: %s" % (w["repo"], w["slug"], w["ask"], w["where"], " or ".join(w["words"])) for w in doc["waiting"]]

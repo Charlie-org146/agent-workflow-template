@@ -23,6 +23,26 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 SKILLS = os.path.join(ROOT, "skills")
 sys.path.insert(0, SKILLS)
 steps = importlib.import_module("steps")
+import atexit
+import shutil
+
+_made = []
+
+
+def mk():
+    """A temp folder this toy makes; it is removed when the toy exits (absolute path, under the system temp root only)."""
+    path = tempfile.mkdtemp()
+    _made.append(path)
+    return path
+
+
+@atexit.register
+def _clean():
+    for path in _made:
+        if os.path.isabs(path) and path.startswith(os.path.realpath(tempfile.gettempdir())) or path.startswith(tempfile.gettempdir()):
+            shutil.rmtree(path, ignore_errors=True)
+
+
 failed = []
 
 
@@ -124,7 +144,7 @@ for i, name in enumerate(["plan", "build", "tests"] * 12):
 case("log-over-30-transitions", len(steps.entries(many)) == 8 and sum(r["attempts"] for r in steps.entries(many)) > 30)
 
 # 3. one writer for every record writer
-tmp = tempfile.mkdtemp()
+tmp = mk()
 path = os.path.join(tmp, "runs", "x.json")
 s1 = run_state("build", "running", log=["2026-11-22T10:00:00Z first"])
 steps.commit(path, s1, "2026-11-22T10:00:00Z")
@@ -164,7 +184,7 @@ SCR = {"goal": "workflow-delivery", "release": "workflow-release", "sessions": "
 
 def real_save(mod, extra=""):
     """Run one real save of a record by the writer `mod` in a throwaway git repo; return the saved record's log."""
-    repo = tempfile.mkdtemp()
+    repo = mk()
     env = dict(os.environ, HOME=repo, USERPROFILE=repo, LOOP_PRIVATE_NAMES="/dev/null", LOOP_ROLE="worker")
     for k in ("CLAUDE_CODE_HOST_SESSION_ID", "CLAUDE_CODE_SESSION_ID", "CLAUDE_SESSION_ID", "LOOP_POD_ID", "LOOP_OPERATION_SESSION"):
         env.pop(k, None)
@@ -202,7 +222,7 @@ was = steps.STEPS
 steps.STEPS = was + ("zzz",)
 changed = sp.render()
 steps.STEPS = was
-tmp_root = tempfile.mkdtemp()
+tmp_root = mk()
 os.makedirs(os.path.join(tmp_root, "docs", "wiki"))
 open(os.path.join(tmp_root, "docs", "wiki", "Steps.md"), "w").write(text("docs/wiki/Steps.md"))
 clean = sp.stale(tmp_root)

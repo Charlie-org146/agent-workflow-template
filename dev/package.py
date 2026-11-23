@@ -29,6 +29,8 @@ import sys
 import tempfile
 import threading
 import zipfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from package_extra import private_prefixes  # noqa: E402
 
 SHIPPED = ["skills", "listing.json", "README.md", "LICENSE"]
 BAD_DIRS = {".git", "__pycache__", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", "vendor"}
@@ -303,17 +305,6 @@ def check_scripts(root, files):
             elif rc:
                 fail("Scripts", "%s does not run alone: %s" % (rel, err.strip()[-200:]))
             waiting["lone"] = None
-
-
-def private_prefixes():
-    """The private leak_prefixes setting (flow file, outside the repo): case-insensitive regexes the local leak hook blocks."""
-    path = os.environ.get("LOOP_FLOW") or os.path.expanduser("~/.workflow-loop/flow.json")
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return [p for p in json.load(handle).get("leak_prefixes", []) if isinstance(p, str) and p]
-    except (OSError, ValueError, AttributeError):
-        print("NOTE: no leak_prefixes in %s; only the built-in scans ran" % path)
-        return []
 
 
 def check_safety(root, files):

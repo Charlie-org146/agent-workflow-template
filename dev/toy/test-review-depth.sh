@@ -160,7 +160,8 @@ import json, sys
 s = json.load(open(sys.argv[1])); s["status"] = "running"; s.pop("pr", None); json.dump(s, open(sys.argv[1], "w"))
 PY
 $LB > "$d/board" 2>&1
-check "the live board shows each recorded step's depth and the setting" 'grep -qx "    depth: freeze full, plan full, tests full (setting full)" "$d/board" && ! grep -q "review full" "$d/board" && ! grep -A1 -qx "    depth: idea full, plan full, review full, qa full, ship" "$d/board"'
-grep -qx '      full (setting full)' "$d/board" || { echo "board around full1 (status $(field full1 status)):"; grep -n -A8 'full1' "$d/board" | grep -E "full1|depth|full\)" | head -6; } >> "$DIAG"
+block1() { awk -v s="- full1 " 'index($0, s) == 1 {on=1; print; next} on && /^    / {print; next} {on=0}' "$d/board"; }  # full1's own block, nothing of the other goals
+check "the live board shows each recorded step's depth and the setting" 'block1 | grep -qx "    depth: freeze full, plan full, tests full (setting full)" && ! block1 | grep -q "review full" && ! block1 | grep -A1 -qx "    depth: idea full, plan full, review full, qa full, ship"'
+block1 | grep -qx "    depth: freeze full, plan full, tests full (setting full)" || { echo "board around full1 (status $(field full1 status)):"; grep -n -A8 'full1' "$d/board" | grep -E "full1|depth|full\)" | head -6; } >> "$DIAG"
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED CHECKS: $failed"; [ ! -s "$DIAG" ] || { echo "--- what the failing checks saw (last 14 lines):"; tail -14 "$DIAG"; }; echo "$fails FAILED"; exit 1; }
