@@ -8,7 +8,6 @@ import datetime
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 try:
@@ -102,12 +101,12 @@ def transition(old, new, at):
     smark = int(clock.get("smark") or 0) + (old.get("status") != new.get("status"))
     if clock.get("since") and (old.get("status") == "running" or name_of(clock.get("step")) in POST + ("merge",)):
         clock["active_s"] = int(clock.get("active_s") or 0) + max(0, int((when(at) - when(clock["since"])).total_seconds()))
-    clock["since"] = at
+    clock["since"] = max(at, clock.get("since") or "")  # a delayed save never moves the clock back
     step, status = eff(new), new.get("status")
     ended = ""
     if clock.get("step") and (step != clock["step"] or status in ("stopped", "failed") or new.get("steps_done") or status == "done" and name_of(step) not in POST + ("merge",)):
         used, then = spent(new), clock.get("tok0")
-        token = "not reported" if used is None or then is None or used <= then else str(used - then)
+        token = "not reported" if used is None or used <= (then or 0) else str(used - (then or 0))
         result = {"done": "done", "stopped": "stopped", "failed": "failed"}.get(status) or "moved on"
         put("%s end %s: %dm active, tokens %s, %s" % (at, clock["step"], int(clock.get("active_s") or 0) // 60, token, result))
         ended, clock = clock["step"], {"since": at}
@@ -137,6 +136,7 @@ def entries(state):
             row = rows.get(name_of(label))
             if row:
                 row.update(end=at, minutes=row["minutes"] + int(mins), result=result)
+                tokens = str(int(tokens) + int(row["tokens"])) if tokens.isdigit() and row["tokens"].isdigit() else tokens  # attempts add up
                 row["tokens"] = tokens if tokens != "not reported" else row["tokens"]
                 row["state"] = "ran"
         elif begin and name_of(begin.group(2)) in rows:
@@ -210,8 +210,9 @@ def commit(path, state, at):
                 merged[key] = disk[key]
         if stale_step:
             merged["step"] = disk.get("step")
-        if stale_status:
+        if stale_status:  # the status and the question that goes with it come from the same record
             merged["status"] = disk.get("status")
+            merged.update(waiting=disk["waiting"]) if "waiting" in disk else merged.pop("waiting", None)
         transition(disk, merged, at)
         write(path, merged)
     state.clear()

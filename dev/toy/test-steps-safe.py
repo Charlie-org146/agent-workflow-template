@@ -11,6 +11,7 @@ import fcntl
 import importlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -150,6 +151,42 @@ case("owner-facing-lines-say-the-list-names", all(w in " ".join(seen) for w in (
 parked = importlib.import_module("layers").build(os.path.join(root, ".git"), json.load(open(os.path.join(root, ".loop", "config.json"))))["parked"]
 shown = importlib.import_module("layers").board([{"machine": "m", "workers": [{"slug": "rr", "step": "review", "status": "running"}]}])
 case("the-status-to-top-says-the-list-name", any(p["slug"] == "ff" and p["reason"] == "failed at tests" for p in parked) and "m/rr tests running" in shown, str((parked, shown)))
+
+# review fixes: a stale writer keeps a disk-only key, the first step's tokens are measured, tokens add across attempts, the clock never goes back
+folder = tempfile.mkdtemp()
+made.append(folder)
+rec = os.path.join(folder, "rv.json")
+first = {"slug": "rv", "step": "build", "status": "running", "log": []}
+steps.commit(rec, first, "2026-11-23T10:00:00Z")
+stale = json.loads(json.dumps(first))
+other = json.loads(json.dumps(first))
+other.update(status="waiting", waiting={"ask": "q", "words": ["go"]})
+steps.commit(rec, other, "2026-11-23T10:01:00Z")
+stale["note"] = "later"
+steps.commit(rec, stale, "2026-11-23T10:02:00Z")
+held = json.load(open(rec))
+case("stale-writer-keeps-the-disk-only-key", held.get("status") == "waiting" and (held.get("waiting") or {}).get("ask") == "q" and held.get("note") == "later", str(held)[:300])
+gone = {"slug": "gn", "step": "release", "status": "running", "log": [], "release_error": "gh failed"}
+steps.commit(os.path.join(folder, "gn.json"), gone, "2026-11-23T10:00:00Z")
+gone = json.load(open(os.path.join(folder, "gn.json")))
+gone.pop("release_error")
+steps.commit(os.path.join(folder, "gn.json"), gone, "2026-11-23T10:05:00Z")
+case("a-key-the-caller-removed-stays-removed", "release_error" not in json.load(open(os.path.join(folder, "gn.json"))), "the removed key came back from the disk record")
+fixes = importlib.import_module("steps_page").FIX
+bad = [k for k, v in fixes.items() if re.search(r"goal\.py record SLUG (?!(?:idea|plan|review|qa|ship)\b)\w", v)]
+case("no-suggested-fix-names-a-record-step-goal-py-refuses", not bad, str(bad))
+new_rec = {"slug": "tk", "step": "plan", "status": "running", "log": []}
+steps.commit(os.path.join(folder, "tk.json"), new_rec, "2026-11-23T10:00:00Z")
+new_rec.update(step="build", tokens={"plan": 150})
+steps.commit(os.path.join(folder, "tk.json"), new_rec, "2026-11-23T10:05:00Z")
+case("first-step-tokens-are-measured", any(" end plan:" in line and "tokens 150," in line for line in new_rec["log"]), str(new_rec["log"]))
+rows = steps.entries({"log": ["a began tests", "a end tests: 1m active, tokens 100, moved on", "b began tests", "b end tests: 2m active, tokens 200, moved on",
+                              "c began tests", "c end tests: 1m active, tokens not reported, done"]})
+case("tokens-add-across-attempts", [r for r in rows if r["step"] == "tests"][0]["tokens"] == "300", str([r for r in rows if r["step"] == "tests"][0]))
+back = {"slug": "bk", "step": "build", "status": "running", "log": []}
+steps.commit(os.path.join(folder, "bk.json"), back, "2026-11-23T10:10:00Z")
+steps.commit(os.path.join(folder, "bk.json"), back, "2026-11-23T10:05:00Z")
+case("a-delayed-save-does-not-move-the-clock-back", back["step_clock"]["since"] == "2026-11-23T10:10:00Z", str(back["step_clock"]))
 
 for folder in made:
     shutil.rmtree(folder, ignore_errors=True)
