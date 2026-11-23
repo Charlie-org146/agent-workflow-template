@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """DEL-25.3, shipped with the skills. lane(): skip the local lane when GitHub runs the tests (not on LOOP_LANE_LOCAL=1, with no
 regression-pr.yml, or when GitHub does not answer; never a pass)."""
+import json
 import os
 import re
 import subprocess
@@ -62,6 +63,21 @@ def required_jobs(text):
     return [name for name, queue_only in jobs if not queue_only] if jobs and bodies == len(jobs) else []
 
 
+def base_ref():
+    """origin/<default branch>, the branch name read from the default branch's own config (else the remote's default); '' when neither resolves."""
+    import lanekit
+    shown = lanekit.git("show", "origin/HEAD:.loop/config.json")
+    try:
+        cfg = json.loads(shown.stdout) if not shown.returncode else {}
+    except ValueError:
+        cfg = {}
+    name = cfg.get("base") if isinstance(cfg, dict) else None
+    if not name:
+        ref = lanekit.git("symbolic-ref", "refs/remotes/origin/HEAD")
+        name = ref.stdout.strip().rsplit("/", 1)[-1] if not ref.returncode else ""
+    return "origin/" + name if name else ""
+
+
 def accepts(runs, slug, name, head):
     """lanekit.lane_ok's reader of the skip record: `head` when a skip is recorded for it, `.last` still says skipped at that head, and every job
     regression-pr.yml runs for a pull request has check runs on that exact head, all completed with success (other check runs never count; all pages
@@ -77,9 +93,8 @@ def accepts(runs, slug, name, head):
     last = lanekit.read_json(base + ".last") or {}
     if (last.get("state"), last.get("head")) != ("skipped", head):
         return ""
-    top = lanekit.git("rev-parse", "--show-toplevel").stdout.strip()
-    cfg = lanekit.read_json(os.path.join(top, ".loop", "config.json")) or {}
-    need = required_jobs(lanekit.git("show", "origin/%s:%s" % (cfg.get("base") or "main", WORKFLOW)).stdout)  # the base branch's workflow, never the head's or the working tree's
+    ref = base_ref()
+    need = required_jobs(lanekit.git("show", "%s:%s" % (ref, WORKFLOW)).stdout) if ref else []  # the base branch's workflow, whatever the head's says
     ask = ["gh", "api", "--paginate", "repos/{owner}/{repo}/commits/%s/check-runs" % head, "--jq",
            '.check_runs[]|[.name,.status,.conclusion]|@tsv']
     try:

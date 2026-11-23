@@ -91,6 +91,7 @@ def clear():
 
 head1 = git("rev-parse", "HEAD")
 git("update-ref", "refs/remotes/origin/main", head1)  # the base branch the required jobs are read from
+git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
 
 # the skip: a skipped lane is never a pass, in pr, qa or ship
 reply = os.path.join(tmp, "reply.txt")
@@ -144,7 +145,7 @@ check(skip.accepts(runs, SLUG, "ship", head1) == head1 and role.need_lane(runs, 
 # a head that edits the workflow still gets the base branch's required set
 with open(os.path.join(repo, skip.WORKFLOW), "w") as handle:
     handle.write("name: regression-pr" + chr(10) + "jobs:" + chr(10) + "  small:" + chr(10) + "    runs-on: ubuntu-latest" + chr(10))
-check(skip.accepts(runs, SLUG, "ship", head1) == head1, "an edited working copy changes nothing: the required jobs come from the base branch's workflow")
+check(skip.accepts(runs, SLUG, "ship", head1) == head1, "the required set is the base branch's, whatever the working copy's workflow says")
 git("add", "-A")
 git("commit", "-qm", "edit the workflow")
 head_edit = git("rev-parse", "HEAD")
@@ -154,9 +155,31 @@ for step in ("ship",):
     with open(base(step) + ".last", "w") as handle:
         json.dump({"attempt": "skip", "head": head_edit, "state": "skipped", "skipped": True, "line": "SKIPPED", "ended": time.time()}, handle)
 skip.subprocess.run = fake_gh("small" + chr(9) + "completed" + chr(9) + "success" + chr(10))
-check(skip.accepts(runs, SLUG, "ship", head_edit) == "", "a head that edits the workflow down to one job is still held to the base branch's set: only the edited job green is refused")
+check(skip.accepts(runs, SLUG, "ship", head_edit) == "", "the required set is the base branch's, whatever the head's workflow says: only the head's own job green is refused")
 skip.subprocess.run = fake_gh(GREEN)
 check(skip.accepts(runs, SLUG, "ship", head_edit) == head_edit, "the same head with the base branch's jobs green is accepted")
+# the base branch name comes from the default branch's config: a head that sets its own base still gets the default branch's set
+with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
+    json.dump({"min_free_memory_gb": 0, "base": "elsewhere"}, handle)
+git("add", "-A")
+git("commit", "-qm", "own base")
+head_cfg = git("rev-parse", "HEAD")
+with open(base("ship") + ".skip", "w") as handle:
+    handle.write(head_cfg)
+with open(base("ship") + ".last", "w") as handle:
+    json.dump({"attempt": "skip", "head": head_cfg, "state": "skipped", "skipped": True, "line": "SKIPPED", "ended": time.time()}, handle)
+skip.subprocess.run = fake_gh("small" + chr(9) + "completed" + chr(9) + "success" + chr(10))
+check(skip.accepts(runs, SLUG, "ship", head_cfg) == "", "the base name comes from the default branch's config: a head that names another base is still held to the default branch's set")
+skip.subprocess.run = fake_gh(GREEN)
+check(skip.accepts(runs, SLUG, "ship", head_cfg) == head_cfg, "the same head with the default branch's jobs green is accepted")
+# a base ref that is missing or cannot be read refuses
+git("update-ref", "-d", "refs/remotes/origin/main")
+check(skip.accepts(runs, SLUG, "ship", head_cfg) == "", "a missing base ref refuses")
+git("symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+check(skip.base_ref() == "" and skip.accepts(runs, SLUG, "ship", head_cfg) == "", "a default branch that cannot be resolved refuses")
+git("update-ref", "refs/remotes/origin/main", head1)
+git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+check(skip.base_ref() == "origin/main", "the base branch is resolved again once the ref exists")
 git("reset", "-q", "--hard", head1)
 skip.subprocess.run = fake_gh(GREEN)
 check("--paginate" in asked[-1] and not any("merge_group" in a for a in asked[-1]), "the check-runs call is paginated")
