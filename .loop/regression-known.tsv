@@ -39,3 +39,10 @@ del7-kill-resume	local-lane only; green on main 45110588623 and on 45232018029; 
 del9-pr-refuses	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 issue-38-verdicts	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 stuck-stays-top	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
+del5-patch-default	local-lane only; green on main 45110588623; lane-home-isolation
+del9-merge-refuses	local-lane only; green on main 45110588623; lane-home-isolation
+issue-129-docs-published	local-lane only; green on main 45110588623; lane-home-isolation
+builtin-flow	local-lane only; green on main 45110588623; lane-home-isolation
+del8-floor-step	local-lane only; green on main 45110588623; lane-home-isolation
+grd2-step-budget	local-lane only; green on main 45110588623; lane-home-isolation
+lanes-pr-affected	local-lane only; green on main 45110588623; lane-home-isolation

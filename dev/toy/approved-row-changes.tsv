@@ -34,3 +34,10 @@ known:del7-kill-resume	o889, TD1326 (5), TD1344	local-lane only; green on main 4
 known:del9-pr-refuses	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
 known:issue-38-verdicts	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
 known:stuck-stays-top	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:del5-patch-default	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:del9-merge-refuses	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:issue-129-docs-published	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:builtin-flow	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:del8-floor-step	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:grd2-step-budget	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
+known:lanes-pr-affected	o889, TD1326 (5), TD1344, TD1345, TD1363	local-lane only; green on main 45110588623
