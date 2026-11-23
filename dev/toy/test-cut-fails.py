@@ -145,6 +145,11 @@ if case("generated"):
     check("regression.py run \"$id\"" not in flow and "not failed" not in flow,
           "the affected step reruns nothing and no log line says a cut row is not failed")
 
+if case("help"):  # the package check runs every script alone with --help and wants exit 0 (dev/package.py)
+    for flag in ("--help", "-h"):
+        r = subprocess.run([sys.executable, "-E", "-s", os.path.join(scripts, "cutgate.py"), flag], capture_output=True, text=True, cwd=tempfile.mkdtemp(prefix="cut-fails-help-"))
+        check(r.returncode == 0 and "cut gate" in r.stdout, "cutgate.py %s answers with its description and exits 0 (exit %d)" % (flag, r.returncode))
+
 if case("time"):  # job-time measurement: the step on 8 shard files of 240 rows each
     rows = {"row%03d" % i: (i % 8, 1, "ran") for i in range(240)}
     files = shards(rows, 8)

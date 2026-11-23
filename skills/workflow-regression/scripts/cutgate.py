@@ -34,4 +34,7 @@ def main(pattern, out="all.tsv"):
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        print(__doc__)
+        sys.exit(0)
     sys.exit(main(*sys.argv[1:3]) if len(sys.argv) > 1 else 2)
