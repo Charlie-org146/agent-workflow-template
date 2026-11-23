@@ -30,7 +30,7 @@ Every touched script is under 19,000 bytes (largest: merge.py 18,935, docs.py 18
 
 ## PR notes (the only claims)
 
-"Filing ships off in v1.1.0." Net rows +3. The macOS-only failures above are known and green on Linux CI. The changed assertions are listed old and new; the rows known red are `hands-off-size` (red on main) and `guards-null-report-nofiles` (clears with fast-cut, TD1194).
+"Filing ships off in v1.1.0." Net rows +4 (704 on main, 708 here). The macOS-only failures above are known and green on Linux CI. The changed assertions are listed old and new; the rows known red are `hands-off-size` (red on main) and `guards-null-report-nofiles` (clears with fast-cut, TD1194).
 
 ## Open
 
