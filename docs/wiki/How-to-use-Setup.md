@@ -5,7 +5,7 @@
 
 Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, keeps it in step with the template, adopts several repos in one pass through `board.py repos adopt`, and lists, with the exact instruction, what the owner must still do on a new machine.
 
-`update.py` ships `steps.py` as a shared file, so an updated pack still has `shared/steps.py`; `update.py`'s helpers that moved whole into `moved_set.py` ship beside it.
+`update.py` ships `steps.py` as a shared file, so an updated pack still has `shared/steps.py`; `update.py`'s helpers that moved whole into `moved_set.py` ship beside it, with the same no-prompt guard variables as the other scripts.
 
 ### What's delivered
 

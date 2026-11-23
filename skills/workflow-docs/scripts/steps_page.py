@@ -74,15 +74,17 @@ def git(root, *args):
 
 
 def records(root):
-    """{slug: record} for every run record of this repository's git common dir; {} where there are none (a CI checkout)."""
-    common = git(root, "rev-parse", "--git-common-dir").stdout.strip()
-    folder = os.path.join(os.path.abspath(os.path.join(root, common)), "loop", "runs")
+    """{slug: record} for every run record of this repository's git common dir; {} where there are none (a CI checkout); a repository git cannot find or a record that cannot be read is refused."""
+    found = git(root, "rev-parse", "--git-common-dir")
+    if found.returncode:
+        sys.exit("REFUSED: git cannot find this repository's records from %s (%s). Fix: run it from the repository the goals belong to (DISCOVERY_FAILED)" % (root, found.stderr.strip()[:120]))
+    folder = os.path.join(os.path.abspath(os.path.join(root, found.stdout.strip())), "loop", "runs")
     out = {}
-    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:  # no folder: a valid empty store (a CI checkout)
         try:
             out[name[:-5]] = json.load(open(os.path.join(folder, name))) if name.endswith(".json") else None
-        except (OSError, ValueError):
-            continue
+        except (OSError, ValueError) as why:
+            sys.exit("REFUSED: the run record %s cannot be read (%s). Fix: restore it from a copy or move it aside, then run again (RECORD_UNREADABLE)" % (name, type(why).__name__))
     return {k: v for k, v in out.items() if isinstance(v, dict)}
 
 

@@ -105,13 +105,10 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
     path, slug = state_path(state["slug"]), state["slug"]
-    with open(path + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            disk = json.loads(read(path))
-        except (OSError, ValueError):
-            disk = {}
-        step = moved.steps()
+    step = moved.steps()
+    with open(path + ".lock", "w") as handle:
+        step.lock(handle, path)
+        disk = step.load(path)
         merged = step.merge(disk, state, json.loads(SEEN.get(slug, "{}")))
         role.report(disk, merged, state["updated"])
         step.transition(disk, merged, state["updated"])

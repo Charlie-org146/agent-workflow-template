@@ -50,7 +50,7 @@ None
 - It never commits private settings or values.
 - An update never overwrites a repo's own config, requirements, docs or local settings.
 - It doesn't rewrite a page that has its own sections; that page is listed for a person.
-- It does not copy the step list into every skill: `update.py` ships the one `steps.py` as `shared/steps.py`, and its helpers moved whole into `moved_set.py` ship beside it.
+- It does not copy the step list into every skill: `update.py` ships the one `steps.py` as `shared/steps.py`, and its helpers moved whole into `moved_set.py` ship beside it, and set the same no-prompt guard variables as the other scripts.
 
 ## Success metrics
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.

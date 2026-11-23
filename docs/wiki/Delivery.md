@@ -275,7 +275,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 ## Success metrics
 - Every merged pull request carries its done lines, plan, verify steps and step results.
-- A goal that fails three tries stops and says why, naming its step by the one list's name on every screen.
+- A goal that fails three tries stops and says why, naming its step by the one list's name on every screen. A save waits at most 30 seconds for another writer's lock and refuses a run record it cannot read, each with a stable code, never waiting without end or overwriting it.
 - No goal merges while a wiki page its own diff made stale is still stale. Routing subprocesses disable Git and GitHub terminal prompts so unattended commands fail instead of waiting for input.
 
 ## Revisions
@@ -580,6 +580,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [del19-steps-all](Tests#t-del19-steps-all) | requirement | DEL-19 | Given DEL-19's one step list, when dev/toy/test-steps.py runs its cases (DEL-19.2 the list and its one save hook, DEL-19.3 the step log, DEL-19.5 the generated Steps page, and the package rule), then each case passes and each fails on a fixture that breaks only its rule. | not run |
 | [del19-steps-more](Tests#t-del19-steps-more) | requirement | DEL-19 | Given DEL-19's causes, writers and saves, when dev/toy/test-steps-more.py runs its cases (DEL-19.3 a step stays open across saves and a stale copy cannot move it back, DEL-19.4 causes and one fix per cause, the writers scans, layers, the board's numbers and lanekit's budget hits), then each case passes and each fails on a fixture that breaks only its rule. | not run |
 | [del19-steps-e2e](Tests#t-del19-steps-e2e) | requirement | DEL-19 | Given a packaged install, when a goal stops before its pull request, is refused after it, is left unreleased or merges through the queue, then each cause is recorded and previewed once, grouped with its repeats (filing ships off in v1.1.0), nothing is written to GitHub, and every step that ran has a start and an end (DEL-19.2, DEL-19.3, DEL-19.4). | not run |
+| [del19-steps-safe](Tests#t-del19-steps-safe) | requirement | DEL-19 | Given a save of a run record, when another process holds the record's lock past the wait, the record cannot be read, or the repository git cannot find, then the save or the preview refuses with a stable code and writes nothing; and the step list keeps a flow-file key as written, a stop leaves the budget's numbers alone, and a release through CI records the release row, not a second merge. | not run |
 | [follows-adoption](Tests#t-follows-adoption) | requirement | DEL-21 | Given a principle table, when render and docs check run, then Follows is a tagged bullet list, Adoption is the adopted share of its lines, Confidence is the passing share of the requirement's tests, and an untagged line is refused. | not run |
 | - | requirement | DEL-21 | no passing test | not enforced |
 | - | requirement | DEL-23 | no passing test | not enforced |

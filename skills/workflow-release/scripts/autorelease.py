@@ -357,7 +357,7 @@ def finish(top, cfg, state):
   base = cfg.get("base", "main")
   if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
-    state["step"] = "release"
+    state.update(step="release", release_ci=True)  # the release is CI's: this row records it, not a second merge
     release.save(state)
     state["steps_done"] = True
     release.save(state, "released from CI")

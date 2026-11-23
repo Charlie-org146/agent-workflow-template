@@ -9,10 +9,11 @@ import json
 import os
 import re
 import subprocess
+import sys
+import time
 try:
     import fcntl
 except ImportError:  # Windows: lanekit.py's own shim, loaded the way scan() loads private.py
-    import sys
     for _dir in (os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflow-delivery", "scripts"),
                  os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "skills", "workflow-delivery", "scripts")):
         if os.path.exists(os.path.join(_dir, "lanekit.py")):
@@ -38,7 +39,8 @@ def name_of(label):
 def say(text):
     """A sentence naming a step by an older label says it by the one list's name. Only the forms the code writes are read:
     "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:", "<label> refused:" and "<label> failed:" (at the start or after "Last: " or "in a row: "),
-    "<label> left this for you:", "<label> gave no STEP line", "<label> wasn't run", "for <label> in the flow file|is missing", "<label>: " before full_markers or a refusal count, and "the <label> step ran|lane has not passed|reply has no"; any other text is left alone."""
+    "<label> left this for you:", "<label> gave no STEP line", "<label> wasn't run", "<label>: <n> refusals" and "the <label> step ran|reply has no".
+    A flow-file key or a lane name (a command argument) is never rewritten, so an ask that names one keeps it; any other text is left alone."""
     if not isinstance(text, str):
         return text  # a number, flag or nothing names no step
     say_one = lambda m: m.group(1) + name_of(m.group(2)) + (m.group(3) if m.re.groups > 2 else "")
@@ -46,9 +48,8 @@ def say(text):
     text = re.sub(r"(?<![\w-])(auto-approved at )(\w+)(:)", say_one, text)
     text = re.sub(r"(?<![\w-])()(\w+)(?= left this for you:| gave no STEP line| wasn't run)", say_one, text)
     text = re.sub(r"(^|Last: |in a row: )(\w+)(?= failed:| refused:)", say_one, text)
-    text = re.sub(r"(?<![\w-])(for )(\w+)(?= (?:in the flow file|is missing))", say_one, text)
-    text = re.sub(r"(?<![\w-])(the |since the )(\w+)(?= (?:step ran|lane has not|lane passed|reply has no)\b)", say_one, text)
-    return re.sub(r"^()(\w+)(?=: (?:full_markers|\d+ refus))", say_one, text)
+    text = re.sub(r"(?<![\w-])(the )(\w+)(?= (?:step ran|reply has no)\b)", say_one, text)
+    return re.sub(r"^()(\w+)(?=: \d+ refus)", say_one, text)
 
 
 def valid(label):
@@ -79,7 +80,7 @@ def spent(state):
 def eff(state):
     """The step the clock follows: a done goal still on the label release, before any release was pushed, is waiting in merge; one left unreleased has no step."""
     label = state.get("step")
-    if label == "release" and state.get("status") == "done" and not state.get("release_pushed") and state.get("release") != "cut":
+    if label == "release" and state.get("status") == "done" and not (state.get("release_pushed") or state.get("release_ci")) and state.get("release") != "cut":
         return None if state.get("release") == "leave" else "pr"  # left unreleased: the merge is over and nothing runs after it
     return label
 
@@ -90,6 +91,12 @@ def transition(old, new, at):
     if new.get("status") in ("running", None):
         new.pop("steps_done", None)  # a goal that runs again has steps again
     log = new.setdefault("log", [])
+    had = old.get("log") or []
+    place = [len(had) if log[:len(had)] == had else len(log)]  # our lines go before the caller's, so its stopped/failed entry stays next to the entry that resumes it
+
+    def put(line):
+        log.insert(place[0], line)
+        place[0] += 1
     clock = dict(new.get("step_clock") or old.get("step_clock") or {})
     mark = int(clock.get("mark") or 0) + (old.get("step") != new.get("step"))
     smark = int(clock.get("smark") or 0) + (old.get("status") != new.get("status"))
@@ -102,11 +109,11 @@ def transition(old, new, at):
         used, then = spent(new), clock.get("tok0")
         token = "not reported" if used is None or then is None or used <= then else str(used - then)
         result = {"done": "done", "stopped": "stopped", "failed": "failed"}.get(status) or "moved on"
-        log.append("%s end %s: %dm active, tokens %s, %s" % (at, clock["step"], int(clock.get("active_s") or 0) // 60, token, result))
+        put("%s end %s: %dm active, tokens %s, %s" % (at, clock["step"], int(clock.get("active_s") or 0) // 60, token, result))
         ended, clock = clock["step"], {"since": at}
     if step and (status in ("running", None) or name_of(step) in POST + ("merge",) and status == "done") and not clock.get("step") and not new.get("steps_done") and step not in ("-", "", ended):
         if not (log and re.search(r"(?:start|began) %s$" % re.escape(step), log[-1])):
-            log.append("%s began %s" % (at, step))
+            put("%s began %s" % (at, step))
         clock.update(step=step, active_s=0, tok0=spent(new))
     new["step_clock"] = dict(clock, mark=mark, smark=smark)
     return bool(status in ("stopped", "failed") and add_cause(new, clock_step(old, new), new.get("finding") or new.get("release_error") or ""))
@@ -115,7 +122,7 @@ def transition(old, new, at):
 def clock_step(old, new):
     """The step a stop or failure belongs to: the step the record is on, a release not yet pushed counting as the merge."""
     label = new.get("step") or old.get("step") or "-"
-    return "pr" if label == "release" and not new.get("release_pushed") and new.get("release") != "cut" else label
+    return "pr" if label == "release" and not (new.get("release_pushed") or new.get("release_ci")) and new.get("release") != "cut" else label
 
 
 def entries(state):
@@ -154,17 +161,46 @@ def merge(disk, state, was=None):
     return merged
 
 
+LOCK_WAIT = int(os.environ.get("STEPS_LOCK_WAIT") or 30)  # seconds a save waits for another writer's lock (a toy shortens it)
+
+
+def lock(handle, path):
+    """Take the record's lock, waiting at most LOCK_WAIT seconds: a holder that never lets go gets a clear refusal, never an endless wait."""
+    end = time.monotonic() + LOCK_WAIT
+    while True:
+        try:
+            return fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            if time.monotonic() >= end:
+                sys.exit("REFUSED: another process has held the lock on %s for over %ds. Fix: wait for it, or stop it; remove %s.lock only when no "
+                         "process holds it; nothing was written (LOCK_TIMEOUT)" % (path, LOCK_WAIT, path))
+            time.sleep(0.05)
+
+
+def load(path):
+    """The record on disk: {} where there is none yet. One that exists but cannot be read is refused, never taken as empty and overwritten."""
+    try:
+        with open(path) as handle:
+            disk = json.load(handle)
+        if isinstance(disk, dict):
+            return disk
+        why = "not a record"
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as error:
+        why = type(error).__name__
+    sys.exit("REFUSED: the run record %s cannot be read (%s). Fix: restore it from a copy or move it aside, then run again; nothing was written "
+             "(RECORD_UNREADABLE)" % (path, why))
+
+
 def commit(path, state, at):
     """The shared writer: lock the record, merge over the disk record, run transition, write atomically; state gets the result.
     The step clock and the cause list belong to the disk record, and a copy loaded before the disk record's last step change cannot move the step back,
     nor one loaded before its last status change the status (each has its own mark)."""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            disk = json.load(open(path))
-        except (OSError, ValueError):
-            disk = {}
+    with open(path + ".lock", "w") as handle:
+        lock(handle, path)
+        disk = load(path)
         merged = merge(disk, state)
         mine, held = state.get("step_clock") or {}, disk.get("step_clock") or {}
         stale_step = held and mine and mine.get("mark") != held.get("mark") and state.get("step") != disk.get("step")
@@ -194,13 +230,12 @@ def now():
 
 
 def update(path, change, at=None):
-    """Read the record inside the lock, let change(record) edit it, run transition and write it back; False when there is no record."""
-    with open(path + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        try:
-            disk = json.load(open(path))
-        except (OSError, ValueError):
+    """Read the record inside the lock, let change(record) edit it, run transition and write it back; False when there is no record (one that cannot be read is refused)."""
+    with open(path + ".lock", "w") as handle:
+        lock(handle, path)
+        if not os.path.exists(path):
             return False
+        disk = load(path)
         old = json.loads(json.dumps(disk))
         change(disk)
         transition(old, disk, at or now())
